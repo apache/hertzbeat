@@ -22,6 +22,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.http.Header;
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpHeaders;
@@ -43,7 +45,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -60,6 +67,9 @@ public class DorisStreamLoadWriter {
     private static final int CONNECTION_REQUEST_TIMEOUT = 5000;
     private static final int MAX_TOTAL_CONNECTIONS = 20;
     private static final int MAX_PER_ROUTE_CONNECTIONS = 10;
+    private static final long RETRY_BACKOFF_MS = 200L;
+    private static final DateTimeFormatter DORIS_DATETIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
     private final String databaseName;
     private final String tableName;
@@ -70,7 +80,27 @@ public class DorisStreamLoadWriter {
     private final DorisProperties.StreamLoadConfig config;
 
     private final AtomicLong transactionId = new AtomicLong(0);
+    private final AtomicBoolean loadToSingleTabletHeaderEnabled;
     private final CloseableHttpClient httpClient;
+
+    private enum LoadResult {
+        SUCCESS,
+        RETRYABLE_FAILURE,
+        NON_RETRYABLE_FAILURE
+    }
+
+    private static final class StreamLoadMetricRow {
+        public String instance;
+        public String app;
+        public String metrics;
+        public String metric;
+        public String recordTime;
+        public Byte metricType;
+        public Integer int32Value;
+        public Double doubleValue;
+        public String strValue;
+        public String labels;
+    }
 
     /**
      * -- GETTER --
@@ -88,28 +118,48 @@ public class DorisStreamLoadWriter {
         this.password = password;
         this.config = config;
 
-        // Extract host from JDBC URL (jdbc:mysql://host:port/...)
-        String hostPart = jdbcUrl.substring("jdbc:mysql://".length());
-
-        // Remove database/path part if exists
-        int slashIndex = hostPart.indexOf('/');
-        if (slashIndex > 0) {
-            hostPart = hostPart.substring(0, slashIndex);
-        }
-
-        // Remove MySQL port (9030) if present, keep only host
-        int colonIndex = hostPart.indexOf(':');
-        if (colonIndex > 0) {
-            hostPart = hostPart.substring(0, colonIndex);
-        }
-
-        this.feHost = hostPart;
+        this.feHost = parseHostFromJdbcUrl(jdbcUrl);
         this.feHttpPort = parseHttpPort(config.httpPort());
+        this.loadToSingleTabletHeaderEnabled = new AtomicBoolean(config.loadToSingleTablet());
 
         // Create HTTP client with connection pool and redirect support
         this.httpClient = createHttpClient();
 
         log.info("[Doris StreamLoad] Writer initialized for {}.{}", databaseName, tableName);
+    }
+
+    private String parseHostFromJdbcUrl(String jdbcUrl) {
+        if (jdbcUrl == null || jdbcUrl.isBlank()) {
+            return "127.0.0.1";
+        }
+
+        String hostPart = jdbcUrl;
+        if (hostPart.startsWith("jdbc:mysql://")) {
+            hostPart = hostPart.substring("jdbc:mysql://".length());
+        }
+
+        int slashIndex = hostPart.indexOf('/');
+        if (slashIndex > 0) {
+            hostPart = hostPart.substring(0, slashIndex);
+        }
+
+        int queryIndex = hostPart.indexOf('?');
+        if (queryIndex > 0) {
+            hostPart = hostPart.substring(0, queryIndex);
+        }
+
+        // Multi-host URL: use first host
+        int commaIndex = hostPart.indexOf(',');
+        if (commaIndex > 0) {
+            hostPart = hostPart.substring(0, commaIndex);
+        }
+
+        int colonIndex = hostPart.lastIndexOf(':');
+        if (colonIndex > 0) {
+            hostPart = hostPart.substring(0, colonIndex);
+        }
+
+        return hostPart;
     }
 
     private int parseHttpPort(String portStr) {
@@ -188,8 +238,11 @@ public class DorisStreamLoadWriter {
                 }
 
                 // Create new redirect request
-                String method = request.getRequestLine().getMethod();
-                HttpUriRequest redirect = new HttpPut(uri);
+                HttpPut redirect = new HttpPut(uri);
+                if (request instanceof HttpEntityEnclosingRequest sourceRequest
+                        && sourceRequest.getEntity() != null) {
+                    redirect.setEntity(sourceRequest.getEntity());
+                }
                 // Copy headers from original request
                 copyHeaders(request, redirect);
 
@@ -197,23 +250,15 @@ public class DorisStreamLoadWriter {
             }
 
             private void copyHeaders(HttpRequest source, HttpUriRequest target) {
-                // Copy all essential headers
-                String[] headersToCopy = {
-                        HttpHeaders.AUTHORIZATION,
-                        HttpHeaders.EXPECT,
-                        "label",
-                        "max_filter_ratio",
-                        "format",
-                        "read_json_by_line",
-                        "strip_outer_array",
-                        "timeout",
-                        "jsonpaths",
-                        "columns"
-                };
-                for (String header : headersToCopy) {
-                    if (source.getFirstHeader(header) != null) {
-                        target.setHeader(header, source.getFirstHeader(header).getValue());
+                // Keep all business headers for redirected PUT request.
+                for (Header header : source.getAllHeaders()) {
+                    String name = header.getName();
+                    if (HttpHeaders.CONTENT_LENGTH.equalsIgnoreCase(name)
+                            || HttpHeaders.HOST.equalsIgnoreCase(name)
+                            || HttpHeaders.TRANSFER_ENCODING.equalsIgnoreCase(name)) {
+                        continue;
                     }
+                    target.setHeader(name, header.getValue());
                 }
             }
         };
@@ -260,65 +305,156 @@ public class DorisStreamLoadWriter {
             return false;
         }
 
-        HttpPut httpPut = null;
-        CloseableHttpResponse response = null;
-        try {
-            String label = buildLabel();
-            String jsonData = JsonUtil.toJson(rows);
+        return writeWithAutoSplit(new ArrayList<>(rows));
+    }
 
-            log.debug("[Doris StreamLoad] Sending {} rows with label: {}", rows.size(), label);
+    private boolean writeWithAutoSplit(List<DorisMetricRow> rows) {
+        List<StreamLoadMetricRow> streamLoadRows = toStreamLoadRows(rows);
+        String jsonData = JsonUtil.toJson(streamLoadRows);
+        if (jsonData == null) {
+            log.error("[Doris StreamLoad] Failed to serialize {} rows to JSON.", rows.size());
+            return false;
+        }
 
-            // Build the Stream Load URL
-            String loadUrl = buildLoadUrl();
+        int payloadBytes = jsonData.getBytes(StandardCharsets.UTF_8).length;
+        int maxBytesPerBatch = config.maxBytesPerBatch();
+        if (payloadBytes > maxBytesPerBatch && rows.size() > 1) {
+            int mid = rows.size() / 2;
+            List<DorisMetricRow> left = new ArrayList<>(rows.subList(0, mid));
+            List<DorisMetricRow> right = new ArrayList<>(rows.subList(mid, rows.size()));
+            log.debug("[Doris StreamLoad] Split batch: rows={}, bytes={}, maxBytes={}",
+                    rows.size(), payloadBytes, maxBytesPerBatch);
+            return writeWithAutoSplit(left) && writeWithAutoSplit(right);
+        }
 
-            // Create HTTP PUT request
-            httpPut = new HttpPut(loadUrl);
+        String label = buildLabel();
+        return writeSingleBatch(rows.size(), jsonData, label);
+    }
+
+    private List<StreamLoadMetricRow> toStreamLoadRows(List<DorisMetricRow> rows) {
+        List<StreamLoadMetricRow> result = new ArrayList<>(rows.size());
+        for (DorisMetricRow row : rows) {
+            StreamLoadMetricRow item = new StreamLoadMetricRow();
+            item.instance = row.instance;
+            item.app = row.app;
+            item.metrics = row.metrics;
+            item.metric = row.metric;
+            item.recordTime = formatRecordTime(row.recordTime);
+            item.metricType = row.metricType;
+            item.int32Value = row.int32Value;
+            item.doubleValue = row.doubleValue;
+            item.strValue = row.strValue;
+            item.labels = row.labels;
+            result.add(item);
+        }
+        return result;
+    }
+
+    private String formatRecordTime(Timestamp timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        return DORIS_DATETIME_FORMATTER.format(timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+    }
+
+    private boolean writeSingleBatch(int rowCount, String jsonData, String label) {
+        String loadUrl = buildLoadUrl();
+        int maxAttempts = Math.max(1, config.retryTimes() + 1);
+        boolean useLoadToSingleTablet = loadToSingleTabletHeaderEnabled.get();
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            LoadResult loadResult;
+            String responseBody = "";
+            int statusCode = -1;
+            String action = String.format("label=%s attempt=%d/%d rows=%d",
+                    label, attempt, maxAttempts, rowCount);
+
+            HttpPut httpPut = new HttpPut(loadUrl);
             httpPut.setHeader(HttpHeaders.EXPECT, "100-continue");
             httpPut.setHeader(HttpHeaders.AUTHORIZATION, basicAuthHeader(username, password));
             httpPut.setHeader("label", label);
-            httpPut.setHeader("max_filter_ratio", "0.1");
             httpPut.setHeader("format", "json");
-            httpPut.setHeader("read_json_by_line", "true");
             httpPut.setHeader("strip_outer_array", "true");
             httpPut.setHeader("timeout", String.valueOf(config.timeout()));
-
-            // Map JSON fields to table columns using jsonpaths and columns
-            // JSON fields: instance, app, metrics, metric, metricType, int32Value, doubleValue, strValue, recordTime, labels
-            // Table columns: instance, app, metrics, metric, record_time, metric_type, int32_value, double_value, str_value, labels
+            httpPut.setHeader("max_filter_ratio", String.valueOf(config.maxFilterRatio()));
+            httpPut.setHeader("strict_mode", String.valueOf(config.strictMode()));
+            if (useLoadToSingleTablet) {
+                httpPut.setHeader("load_to_single_tablet", "true");
+            }
             httpPut.setHeader("jsonpaths",
                     "[\"$.instance\",\"$.app\",\"$.metrics\",\"$.metric\",\"$.recordTime\",\"$.metricType\",\"$.int32Value\",\"$.doubleValue\",\"$.strValue\",\"$.labels\"]");
             httpPut.setHeader("columns",
                     "instance,app,metrics,metric,record_time,metric_type,int32_value,double_value,str_value,labels");
-
-            // Set request body
-            StringEntity entity = new StringEntity(jsonData, "UTF-8");
-            httpPut.setEntity(entity);
-
-            // Execute request (HttpClient will automatically follow 307 redirect)
-            response = httpClient.execute(httpPut);
-
-            // Parse response
-            String loadResult = "";
-            if (response.getEntity() != null) {
-                loadResult = EntityUtils.toString(response.getEntity());
+            setHeaderIfHasText(httpPut, "timezone", config.timezone());
+            setHeaderIfHasText(httpPut, "redirect-policy", config.redirectPolicy());
+            setHeaderIfHasText(httpPut, "group_commit", config.groupCommit());
+            if (config.sendBatchParallelism() > 0) {
+                httpPut.setHeader("send_batch_parallelism", String.valueOf(config.sendBatchParallelism()));
             }
+            httpPut.setEntity(new StringEntity(jsonData, StandardCharsets.UTF_8));
 
-            int statusCode = response.getStatusLine().getStatusCode();
-
-            return handleResponse(statusCode, loadResult, rows.size());
-
-        } catch (Exception e) {
-            log.error("[Doris StreamLoad] Failed to write {} rows: {}", rows.size(), e.getMessage(), e);
-            return false;
-        } finally {
-            // Close response
-            if (response != null) {
-                try {
-                    response.close();
-                } catch (IOException e) {
-                    log.warn("[Doris StreamLoad] Failed to close response", e);
+            try (CloseableHttpResponse response = httpClient.execute(httpPut)) {
+                statusCode = response.getStatusLine().getStatusCode();
+                if (response.getEntity() != null) {
+                    responseBody = EntityUtils.toString(response.getEntity());
                 }
+                if (useLoadToSingleTablet && isLoadToSingleTabletDistributionError(statusCode, responseBody)) {
+                    if (loadToSingleTabletHeaderEnabled.compareAndSet(true, false)) {
+                        log.warn("[Doris StreamLoad] Detected incompatible table distribution, disable load_to_single_tablet globally.");
+                    }
+                    log.warn("[Doris StreamLoad] Auto fallback: retry without load_to_single_tablet. {}", action);
+                    useLoadToSingleTablet = false;
+                    attempt--;
+                    continue;
+                }
+                loadResult = handleResponse(statusCode, responseBody, rowCount);
+            } catch (Exception e) {
+                log.warn("[Doris StreamLoad] Request error, {}: {}", action, e.getMessage());
+                loadResult = LoadResult.RETRYABLE_FAILURE;
             }
+
+            if (loadResult == LoadResult.SUCCESS) {
+                return true;
+            }
+
+            if (loadResult == LoadResult.NON_RETRYABLE_FAILURE || attempt >= maxAttempts) {
+                log.error("[Doris StreamLoad] Batch failed, {} statusCode={} response={}",
+                        action, statusCode, responseBody);
+                return false;
+            }
+
+            try {
+                Thread.sleep(RETRY_BACKOFF_MS * attempt);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("[Doris StreamLoad] Retry interrupted, {}", action);
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private boolean isLoadToSingleTabletDistributionError(int statusCode, String body) {
+        if (statusCode != 200 || body == null || body.isBlank()) {
+            return false;
+        }
+        JsonNode jsonNode = JsonUtil.fromJson(body);
+        if (jsonNode == null) {
+            return false;
+        }
+        String status = jsonNode.has("Status") ? jsonNode.get("Status").asText("") : "";
+        if (!"Fail".equalsIgnoreCase(status)) {
+            return false;
+        }
+        String message = jsonNode.has("Message") ? jsonNode.get("Message").asText("") : "";
+        String normalized = message.toLowerCase();
+        return normalized.contains("load_to_single_tablet")
+                && normalized.contains("random distribution");
+    }
+
+    private void setHeaderIfHasText(HttpPut httpPut, String name, String value) {
+        if (value != null && !value.isBlank()) {
+            httpPut.setHeader(name, value.trim());
         }
     }
 
@@ -328,56 +464,52 @@ public class DorisStreamLoadWriter {
      * Note: statusCode 200 only indicates the BE service is OK, not that stream load succeeded.
      * We must parse the response JSON to check the actual status.
      */
-    private boolean handleResponse(int statusCode, String body, int rowCount) {
+    private LoadResult handleResponse(int statusCode, String body, int rowCount) {
         if (statusCode != 200) {
-            log.error("[Doris StreamLoad] HTTP request failed with status {}. Response: {}",
+            log.warn("[Doris StreamLoad] HTTP request returned status {}, response: {}",
                     statusCode, body);
-            return false;
+            return statusCode >= 500 ? LoadResult.RETRYABLE_FAILURE : LoadResult.NON_RETRYABLE_FAILURE;
         }
 
-        // Parse JSON response to check actual Stream Load status
         JsonNode jsonNode = JsonUtil.fromJson(body);
-        if (jsonNode == null) {
-            log.error("[Doris StreamLoad] Failed to parse response JSON: {}", body);
-            return false;
+        if (jsonNode == null || !jsonNode.has("Status")) {
+            log.error("[Doris StreamLoad] Invalid response body: {}", body);
+            return LoadResult.NON_RETRYABLE_FAILURE;
         }
 
-        if (!jsonNode.has("Status")) {
-            log.error("[Doris StreamLoad] Response missing Status field: {}", body);
-            return false;
-        }
-
-        String status = jsonNode.get("Status").asText();
+        String status = jsonNode.get("Status").asText("");
 
         if ("Success".equals(status)) {
             log.info("[Doris StreamLoad] Successfully loaded {} rows", rowCount);
-            return true;
+            return LoadResult.SUCCESS;
         }
 
-        // Check for partial success - data may still be loaded
         if ("Publish Timeout".equals(status)) {
-            log.warn("[Doris StreamLoad] Publish Timeout for {} rows, data may be loaded. Response: {}",
+            log.warn("[Doris StreamLoad] Publish Timeout for {} rows, treated as success. Response: {}",
                     rowCount, body);
-            return true;
+            return LoadResult.SUCCESS;
         }
 
-        // Label already exists - could be a retry, treat as success if previous load finished
         if ("Label Already Exists".equals(status)) {
-            if (jsonNode.has("ExistingJobStatus")) {
-                String existingStatus = jsonNode.get("ExistingJobStatus").asText();
-                if ("FINISHED".equals(existingStatus) || "VISIBLE".equals(existingStatus)) {
-                    log.info("[Doris StreamLoad] Label already exists and finished, {} rows loaded", rowCount);
-                    return true;
-                }
+            String existingStatus = jsonNode.has("ExistingJobStatus")
+                    ? jsonNode.get("ExistingJobStatus").asText("")
+                    : "";
+            if ("FINISHED".equalsIgnoreCase(existingStatus) || "VISIBLE".equalsIgnoreCase(existingStatus)) {
+                log.info("[Doris StreamLoad] Label exists and already finished for {} rows", rowCount);
+                return LoadResult.SUCCESS;
             }
-            log.warn("[Doris StreamLoad] Label already exists but not finished. Response: {}", body);
-            return false;
+            return LoadResult.RETRYABLE_FAILURE;
         }
 
-        // Other failure cases
-        log.error("[Doris StreamLoad] Failed to load {} rows. Status: {}, Response: {}",
-                rowCount, status, body);
-        return false;
+        if ("Fail".equalsIgnoreCase(status) || "Cancelled".equalsIgnoreCase(status)) {
+            log.error("[Doris StreamLoad] Failed to load {} rows, status={}, response={}",
+                    rowCount, status, body);
+            return LoadResult.NON_RETRYABLE_FAILURE;
+        }
+
+        log.warn("[Doris StreamLoad] Unexpected status={} for {} rows, response={}",
+                status, rowCount, body);
+        return LoadResult.RETRYABLE_FAILURE;
     }
 
     /**

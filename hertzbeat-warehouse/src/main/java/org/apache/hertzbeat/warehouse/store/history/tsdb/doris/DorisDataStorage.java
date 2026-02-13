@@ -453,8 +453,12 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             // Use Stream Load for high-throughput writes
             boolean success = streamLoadWriter.write(rows);
             if (!success) {
-                log.warn("[Doris] Stream Load failed, falling back to JDBC for this batch");
-                doSaveDataJdbc(rows);
+                if (writeConfig.fallbackToJdbcOnFailure()) {
+                    log.warn("[Doris] Stream Load failed, fallbackToJdbcOnFailure=true, use JDBC for this batch");
+                    doSaveDataJdbc(rows);
+                } else {
+                    log.error("[Doris] Stream Load failed and JDBC fallback is disabled. rows={}", rows.size());
+                }
             }
         } else {
             // Use JDBC batch insert (default)
@@ -481,10 +485,10 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
 
             try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
                 for (DorisMetricRow row : rows) {
-                    pstmt.setString(1, truncate(row.instance, 128));
-                    pstmt.setString(2, truncate(row.app, 64));
-                    pstmt.setString(3, truncate(row.metrics, 128));
-                    pstmt.setString(4, truncate(row.metric, 128));
+                    pstmt.setString(1, row.instance);
+                    pstmt.setString(2, row.app);
+                    pstmt.setString(3, row.metrics);
+                    pstmt.setString(4, row.metric);
                     pstmt.setByte(5, row.metricType);
 
                     if (row.int32Value != null) {
@@ -499,9 +503,9 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                         pstmt.setNull(7, java.sql.Types.DOUBLE);
                     }
 
-                    pstmt.setString(8, truncate(row.strValue, 65533));
+                    pstmt.setString(8, row.strValue);
                     pstmt.setTimestamp(9, row.recordTime);
-                    pstmt.setString(10, truncate(row.labels, properties.tableConfig().strColumnMaxLength()));
+                    pstmt.setString(10, row.labels);
 
                     pstmt.addBatch();
                 }
@@ -517,16 +521,6 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         } catch (SQLException e) {
             log.error("[Doris] Failed to save metrics data: {}", e.getMessage(), e);
         }
-    }
-
-    /**
-     * Truncate string to max length
-     */
-    private String truncate(String str, int maxLength) {
-        if (str == null) {
-            return null;
-        }
-        return str.length() > maxLength ? str.substring(0, maxLength) : str;
     }
 
     @Override

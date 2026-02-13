@@ -113,6 +113,8 @@ public record DorisProperties(
             @DefaultValue("1000") int batchSize,
             // Batch write flush interval in seconds (for jdbc mode)
             @DefaultValue("5") int flushInterval,
+            // Fallback to JDBC when stream load fails (may introduce duplicate data in ambiguous cases)
+            @DefaultValue("false") boolean fallbackToJdbcOnFailure,
             // Stream load configuration (for stream mode)
             StreamLoadConfig streamLoadConfig) {
         public WriteConfig {
@@ -144,7 +146,21 @@ public record DorisProperties(
             // Enable data compression for stream load
             @DefaultValue("true") boolean enableCompression,
             // Load to single tablet (better for small batches)
-            @DefaultValue("true") boolean loadToSingleTablet) {
+            @DefaultValue("false") boolean loadToSingleTablet,
+            // Maximum allowed filter ratio in [0,1]
+            @DefaultValue("0.1") double maxFilterRatio,
+            // Enable strict mode
+            @DefaultValue("false") boolean strictMode,
+            // Import timezone, empty means Doris default
+            @DefaultValue("") String timezone,
+            // Redirect policy: direct/public/private
+            @DefaultValue("") String redirectPolicy,
+            // Group commit mode: async_mode/sync_mode/off_mode
+            @DefaultValue("") String groupCommit,
+            // Send batch parallelism, 0 means Doris default
+            @DefaultValue("0") int sendBatchParallelism,
+            // Retry times for one label when stream load is retryable
+            @DefaultValue("2") int retryTimes) {
         public StreamLoadConfig {
             if (timeout <= 0) {
                 timeout = 60;
@@ -152,13 +168,35 @@ public record DorisProperties(
             if (maxBytesPerBatch <= 0) {
                 maxBytesPerBatch = 10485760; // 10MB
             }
+            if (maxFilterRatio < 0 || maxFilterRatio > 1) {
+                maxFilterRatio = 0.1;
+            }
+            if (sendBatchParallelism < 0) {
+                sendBatchParallelism = 0;
+            }
+            if (retryTimes < 0) {
+                retryTimes = 2;
+            }
+            if (!isValidRedirectPolicy(redirectPolicy)) {
+                redirectPolicy = "";
+            }
         }
 
         /**
          * Factory method to create default StreamLoadConfig
          */
         public static StreamLoadConfig createDefault() {
-            return new StreamLoadConfig(":8030", 60, 10485760, true, false);
+            return new StreamLoadConfig(":8030", 60, 10485760, true, false,
+                    0.1, false, "", "", "", 0, 2);
+        }
+
+        private static boolean isValidRedirectPolicy(String value) {
+            if (value == null || value.isBlank()) {
+                return true;
+            }
+            return "direct".equalsIgnoreCase(value)
+                    || "public".equalsIgnoreCase(value)
+                    || "private".equalsIgnoreCase(value);
         }
     }
 
@@ -171,7 +209,7 @@ public record DorisProperties(
             poolConfig = new PoolConfig(5, 20, 30000, 0, 600000);
         }
         if (writeConfig == null) {
-            writeConfig = new WriteConfig("jdbc", 1000, 5, StreamLoadConfig.createDefault());
+            writeConfig = new WriteConfig("jdbc", 1000, 5, false, StreamLoadConfig.createDefault());
         }
     }
 }
