@@ -20,6 +20,8 @@ package org.apache.hertzbeat.warehouse.store.history.tsdb.doris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,13 +29,17 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
 
 /**
  * Tests for {@link DorisDataStorage}.
@@ -128,7 +134,27 @@ class DorisDataStorageTest {
 
     private DorisDataStorage createStorage(DorisProperties properties) {
         WarehouseWorkerPool workerPool = mock(WarehouseWorkerPool.class);
-        return new DorisDataStorage(properties, workerPool);
+        Connection initConnection = mock(Connection.class);
+        Statement initStatement = mock(Statement.class);
+        Connection tableConnection = mock(Connection.class);
+        Statement tableStatement = mock(Statement.class);
+        String baseUrl = properties.url();
+        String username = properties.username();
+        String password = properties.password();
+        try {
+            when(initConnection.createStatement()).thenReturn(initStatement);
+            when(tableConnection.createStatement()).thenReturn(tableStatement);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        try (MockedStatic<DriverManager> driverManagerMock = mockStatic(DriverManager.class);
+             MockedConstruction<HikariDataSource> hikariDataSourceMockedConstruction = mockConstruction(
+                     HikariDataSource.class, (mock, context) -> when(mock.getConnection()).thenReturn(tableConnection))) {
+            driverManagerMock.when(() -> DriverManager.getConnection(baseUrl, username, password))
+                    .thenReturn(initConnection);
+            return new DorisDataStorage(properties, workerPool);
+        }
     }
 
     private DorisProperties createProperties(boolean enablePartition) {
@@ -143,7 +169,7 @@ class DorisDataStorageTest {
         );
         return new DorisProperties(
                 true,
-                "jdbc:mysql://127.0.0.1:1/hertzbeat?connectTimeout=200&socketTimeout=200",
+                "jdbc:mysql://127.0.0.1:9030/hertzbeat",
                 "root",
                 "123456",
                 tableConfig,
