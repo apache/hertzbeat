@@ -657,6 +657,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         }
 
         Map<String, Long> timeRange = getTimeRange(history);
+        app = normalizeApp(app);
         Long start = timeRange.get(LABEL_KEY_START_TIME);
         Long end = timeRange.get(LABEL_KEY_END_TIME);
 
@@ -677,6 +678,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         }
 
         Map<String, Long> timeRange = getTimeRange(history);
+        app = normalizeApp(app);
         Long start = timeRange.get(LABEL_KEY_START_TIME);
         Long end = timeRange.get(LABEL_KEY_END_TIME);
 
