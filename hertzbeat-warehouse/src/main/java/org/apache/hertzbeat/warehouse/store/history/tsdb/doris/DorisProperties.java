@@ -97,6 +97,9 @@ public record DorisProperties(
             if (maximumPoolSize <= 0) {
                 maximumPoolSize = 20;
             }
+            if (minimumIdle > maximumPoolSize) {
+                minimumIdle = maximumPoolSize;
+            }
             if (connectionTimeout <= 0) {
                 connectionTimeout = 30000;
             }
@@ -118,8 +121,11 @@ public record DorisProperties(
             // Stream load configuration (for stream mode)
             StreamLoadConfig streamLoadConfig) {
         public WriteConfig {
-            if (!"jdbc".equals(writeMode) && !"stream".equals(writeMode)) {
+            String normalizedWriteMode = writeMode == null ? "" : writeMode.trim().toLowerCase();
+            if (!"jdbc".equals(normalizedWriteMode) && !"stream".equals(normalizedWriteMode)) {
                 writeMode = "jdbc";
+            } else {
+                writeMode = normalizedWriteMode;
             }
             if (batchSize <= 0) {
                 batchSize = 1000;
@@ -162,6 +168,11 @@ public record DorisProperties(
             // Retry times for one label when stream load is retryable
             @DefaultValue("2") int retryTimes) {
         public StreamLoadConfig {
+            if (httpPort == null || httpPort.isBlank()) {
+                httpPort = ":8030";
+            } else {
+                httpPort = httpPort.trim();
+            }
             if (timeout <= 0) {
                 timeout = 60;
             }
@@ -180,6 +191,10 @@ public record DorisProperties(
             if (!isValidRedirectPolicy(redirectPolicy)) {
                 redirectPolicy = "";
             }
+            if (!isValidGroupCommit(groupCommit)) {
+                groupCommit = "";
+            }
+            timezone = timezone == null ? "" : timezone.trim();
         }
 
         /**
@@ -197,6 +212,15 @@ public record DorisProperties(
             return "direct".equalsIgnoreCase(value)
                     || "public".equalsIgnoreCase(value)
                     || "private".equalsIgnoreCase(value);
+        }
+
+        private static boolean isValidGroupCommit(String value) {
+            if (value == null || value.isBlank()) {
+                return true;
+            }
+            return "async_mode".equalsIgnoreCase(value)
+                    || "sync_mode".equalsIgnoreCase(value)
+                    || "off_mode".equalsIgnoreCase(value);
         }
     }
 

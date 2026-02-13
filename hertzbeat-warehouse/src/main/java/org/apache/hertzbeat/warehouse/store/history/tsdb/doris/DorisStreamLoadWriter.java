@@ -77,9 +77,16 @@ public class DorisStreamLoadWriter {
     private static final String METRIC_COLUMNS =
             "instance,app,metrics,metric,record_time,metric_type,int32_value,double_value,str_value,labels";
     private static final String LOG_JSON_PATHS =
-            "[\"$.timeUnixNano\",\"$.observedTimeUnixNano\",\"$.eventTime\",\"$.severityNumber\",\"$.severityText\",\"$.body\",\"$.traceId\",\"$.spanId\",\"$.traceFlags\",\"$.attributes\",\"$.resource\",\"$.instrumentationScope\",\"$.droppedAttributesCount\"]";
+            "[\"$.timeUnixNano\",\"$.observedTimeUnixNano\",\"$.eventTime\",\"$.severityNumber\",\"$.severityText\""
+                    + ",\"$.body\",\"$.traceId\",\"$.spanId\",\"$.traceFlags\",\"$.attributes\",\"$.resource\""
+                    + ",\"$.instrumentationScope\",\"$.droppedAttributesCount\"]";
     private static final String LOG_COLUMNS =
             "time_unix_nano,observed_time_unix_nano,event_time,severity_number,severity_text,body,trace_id,span_id,trace_flags,attributes,resource,instrumentation_scope,dropped_attributes_count";
+
+    public static final String STATUS_SUCCESS = "Success";
+    public static final String STATUS_PUBLISH_TIMEOUT = "Publish Timeout";
+    public static final String STATUS_FAIL = "Fail";
+    public static final String STATUS_LABEL_ALREADY_EXISTS = "Label Already Exists";
 
     private final String databaseName;
     private final String tableName;
@@ -189,6 +196,9 @@ public class DorisStreamLoadWriter {
     }
 
     private int parseHttpPort(String portStr) {
+        if (portStr == null || portStr.isBlank()) {
+            return 8030;
+        }
         if (portStr.startsWith(":")) {
             portStr = portStr.substring(1);
         }
@@ -302,7 +312,7 @@ public class DorisStreamLoadWriter {
     private String basicAuthHeader(String username, String password) {
         String toBeEncode = username + ":" + (password != null ? password : "");
         byte[] encoded = Base64.encodeBase64(toBeEncode.getBytes(StandardCharsets.UTF_8));
-        return "Basic " + new String(encoded);
+        return "Basic " + new String(encoded, StandardCharsets.UTF_8);
     }
 
     /**
@@ -533,7 +543,7 @@ public class DorisStreamLoadWriter {
             return false;
         }
         String status = jsonNode.has("Status") ? jsonNode.get("Status").asText("") : "";
-        if (!"Fail".equalsIgnoreCase(status)) {
+        if (!STATUS_FAIL.equalsIgnoreCase(status)) {
             return false;
         }
         String message = jsonNode.has("Message") ? jsonNode.get("Message").asText("") : "";
@@ -569,18 +579,18 @@ public class DorisStreamLoadWriter {
 
         String status = jsonNode.get("Status").asText("");
 
-        if ("Success".equals(status)) {
+        if (STATUS_SUCCESS.equalsIgnoreCase(status)) {
             log.info("[Doris StreamLoad] Successfully loaded {} rows", rowCount);
             return LoadResult.SUCCESS;
         }
 
-        if ("Publish Timeout".equals(status)) {
+        if (STATUS_PUBLISH_TIMEOUT.equalsIgnoreCase(status)) {
             log.warn("[Doris StreamLoad] Publish Timeout for {} rows, treated as success. Response: {}",
                     rowCount, body);
             return LoadResult.SUCCESS;
         }
 
-        if ("Label Already Exists".equals(status)) {
+        if (STATUS_LABEL_ALREADY_EXISTS.equalsIgnoreCase(status)) {
             String existingStatus = jsonNode.has("ExistingJobStatus")
                     ? jsonNode.get("ExistingJobStatus").asText("")
                     : "";
@@ -588,10 +598,11 @@ public class DorisStreamLoadWriter {
                 log.info("[Doris StreamLoad] Label exists and already finished for {} rows", rowCount);
                 return LoadResult.SUCCESS;
             }
+
             return LoadResult.RETRYABLE_FAILURE;
         }
 
-        if ("Fail".equalsIgnoreCase(status) || "Cancelled".equalsIgnoreCase(status)) {
+        if (STATUS_FAIL.equalsIgnoreCase(status)) {
             log.error("[Doris StreamLoad] Failed to load {} rows, status={}, response={}",
                     rowCount, status, body);
             return LoadResult.NON_RETRYABLE_FAILURE;
@@ -613,6 +624,7 @@ public class DorisStreamLoadWriter {
      * Close the HTTP client and release resources
      */
     public void close() {
+        available = false;
         try {
             if (httpClient != null) {
                 httpClient.close();

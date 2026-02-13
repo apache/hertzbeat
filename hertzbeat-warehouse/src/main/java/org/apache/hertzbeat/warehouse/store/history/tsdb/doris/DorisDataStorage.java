@@ -261,7 +261,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         if (config.enablePartition()) {
             // Dynamic partition mode
             sql.append("PARTITION BY RANGE(record_time) ()\n");
-            sql.append("DISTRIBUTED BY HASH(instance, app) BUCKETS ").append(config.buckets()).append("\n");
+            sql.append("DISTRIBUTED BY HASH(instance, app, metrics) BUCKETS ").append(config.buckets()).append("\n");
             sql.append("PROPERTIES (\n");
             sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\",\n");
             sql.append("    \"dynamic_partition.enable\" = \"true\",\n");
@@ -274,7 +274,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             sql.append(")");
         } else {
             // Single table mode
-            sql.append("DISTRIBUTED BY HASH(instance) BUCKETS ").append(config.buckets()).append("\n");
+            sql.append("DISTRIBUTED BY HASH(instance, app, metrics) BUCKETS ").append(config.buckets()).append("\n");
             sql.append("PROPERTIES (\n");
             sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\"\n");
             sql.append(")");
@@ -354,7 +354,6 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                                 log.debug("[Doris] Flushed {} metrics items", batch.size());
                             }
 
-                            draining.set(false);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                             log.debug("[Doris] Flush task interrupted");
@@ -397,7 +396,6 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         String metrics = metricsData.getMetrics();
         long timestamp = metricsData.getTime();
 
-        List<CollectRep.Field> fields = metricsData.getFields();
         Map<String, String> customLabels = metricsData.getLabels();
 
         List<DorisMetricRow> rows = new ArrayList<>();
@@ -414,55 +412,70 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                     customLabels.forEach((k, v) -> rowLabels.put(k, String.valueOf(v)));
                 }
 
-                rowWrapper.cellStream().forEach(cell -> {
+                var cells = rowWrapper.cellStream().toList();
+
+                // Collect all labels in this row first, then build metrics rows.
+                for (var cell : cells) {
                     String value = cell.getValue();
+                    if (CommonConstants.NULL_VALUE.equals(value)) {
+                        continue;
+                    }
                     boolean isLabel = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
+                    if (!isLabel) {
+                        continue;
+                    }
+                    String fieldName = cell.getField().getName();
+                    rowLabels.put(fieldName, value);
+                }
+
+                for (var cell : cells) {
+                    String value = cell.getValue();
+                    if (CommonConstants.NULL_VALUE.equals(value)) {
+                        continue;
+                    }
+
+                    boolean isLabel = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
+                    if (isLabel) {
+                        continue;
+                    }
                     byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
                     String fieldName = cell.getField().getName();
 
-                    if (CommonConstants.NULL_VALUE.equals(value)) {
-                        return;
-                    }
+                    // Create a metric row for each non-label field.
+                    DorisMetricRow row = new DorisMetricRow();
+                    row.instance = instance;
+                    row.app = app;
+                    row.metrics = metrics;
+                    row.metric = fieldName;
+                    row.recordTime = new Timestamp(timestamp);
+                    row.labels = JsonUtil.toJson(rowLabels);
 
-                    if (isLabel) {
-                        rowLabels.put(fieldName, value);
-                    } else {
-                        // Create a metric row for each field
-                        DorisMetricRow row = new DorisMetricRow();
-                        row.instance = instance;
-                        row.app = app;
-                        row.metrics = metrics;
-                        row.metric = fieldName;
-                        row.recordTime = new Timestamp(timestamp);
-                        row.labels = JsonUtil.toJson(rowLabels);
-
-                        if (type == CommonConstants.TYPE_NUMBER) {
-                            row.metricType = METRIC_TYPE_NUMBER;
-                            try {
-                                row.doubleValue = Double.parseDouble(value);
-                            } catch (NumberFormatException e) {
-                                log.debug("[Doris] Failed to parse number value: {}", value);
-                                return;
-                            }
-                        } else if (type == CommonConstants.TYPE_STRING) {
-                            row.metricType = METRIC_TYPE_STRING;
-                            row.strValue = value;
-                        } else if (type == CommonConstants.TYPE_TIME) {
-                            row.metricType = METRIC_TYPE_TIME;
-                            try {
-                                row.int32Value = Integer.parseInt(value);
-                            } catch (NumberFormatException e) {
-                                log.debug("[Doris] Failed to parse time value: {}", value);
-                                return;
-                            }
-                        } else {
-                            row.metricType = METRIC_TYPE_STRING;
-                            row.strValue = value;
+                    if (type == CommonConstants.TYPE_NUMBER) {
+                        row.metricType = METRIC_TYPE_NUMBER;
+                        try {
+                            row.doubleValue = Double.parseDouble(value);
+                        } catch (NumberFormatException e) {
+                            log.debug("[Doris] Failed to parse number value: {}", value);
+                            continue;
                         }
-
-                        rows.add(row);
+                    } else if (type == CommonConstants.TYPE_STRING) {
+                        row.metricType = METRIC_TYPE_STRING;
+                        row.strValue = value;
+                    } else if (type == CommonConstants.TYPE_TIME) {
+                        row.metricType = METRIC_TYPE_TIME;
+                        try {
+                            row.int32Value = Integer.parseInt(value);
+                        } catch (NumberFormatException e) {
+                            log.debug("[Doris] Failed to parse time value: {}", value);
+                            continue;
+                        }
+                    } else {
+                        row.metricType = METRIC_TYPE_STRING;
+                        row.strValue = value;
                     }
-                });
+
+                    rows.add(row);
+                }
             }
 
         } catch (Exception e) {
@@ -482,14 +495,15 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
      * Send metrics to buffer queue
      */
     private void sendToBuffer(List<DorisMetricRow> rows) {
-        for (DorisMetricRow row : rows) {
+        for (int idx = 0; idx < rows.size(); idx++) {
+            DorisMetricRow row = rows.get(idx);
             boolean offered = false;
             int retryCount = 0;
             while (!offered && retryCount < MAX_RETRIES) {
                 try {
                     offered = metricsBufferQueue.offer(row, MAX_WAIT_MS, TimeUnit.MILLISECONDS);
                     if (!offered) {
-                        if (retryCount == 0) {
+                        if (retryCount == 0 && draining.compareAndSet(false, true)) {
                             log.debug("[Doris] Buffer queue is full, triggering immediate flush");
                             triggerImmediateFlush();
                         }
@@ -506,7 +520,9 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             }
             if (!offered) {
                 log.warn("[Doris] Failed to add metrics to buffer after {} retries, saving directly", MAX_RETRIES);
-                doSaveData(rows);
+                // Save only rows that are not successfully queued yet to avoid duplicate writes.
+                List<DorisMetricRow> remainingRows = new ArrayList<>(rows.subList(idx, rows.size()));
+                doSaveData(remainingRows);
                 return;
             }
         }
@@ -523,13 +539,24 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     private void triggerImmediateFlush() {
         List<DorisMetricRow> batch = new ArrayList<>(writeConfig.batchSize());
         metricsBufferQueue.drainTo(batch, writeConfig.batchSize());
-        draining.set(false);
-        if (!batch.isEmpty()) {
+        if (batch.isEmpty()) {
+            draining.set(false);
+            return;
+        }
+        try {
+            warehouseWorkerPool.executeJob(() -> {
+                try {
+                    doSaveData(batch);
+                } finally {
+                    draining.set(false);
+                }
+            });
+        } catch (RejectedExecutionException e) {
             try {
-                warehouseWorkerPool.executeJob(() -> doSaveData(batch));
-            } catch (RejectedExecutionException e) {
                 log.warn("[Doris] Immediate flush task rejected by WarehouseWorkerPool, fallback to sync flush");
                 doSaveData(batch);
+            } finally {
+                draining.set(false);
             }
         }
     }
@@ -544,7 +571,6 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         }
 
         if (WRITE_MODE_STREAM.equals(writeMode) && streamLoadWriter != null) {
-            // Use Stream Load for high-throughput writes
             boolean success = streamLoadWriter.write(rows);
             if (!success) {
                 if (writeConfig.fallbackToJdbcOnFailure()) {
@@ -964,17 +990,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         List<Object> params = new ArrayList<>();
         appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
         sql.append(" ORDER BY time_unix_nano DESC");
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-            bindParameters(pstmt, params);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return mapRowsToLogEntries(rs);
-            }
-        } catch (Exception e) {
-            log.error("[Doris] queryLogsByMultipleConditions error: {}", e.getMessage(), e);
-            return List.of();
-        }
+        return executeLogQuery(sql.toString(), params, "queryLogsByMultipleConditions");
     }
 
     @Override
@@ -998,17 +1014,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                 params.add(offset);
             }
         }
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-            bindParameters(pstmt, params);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return mapRowsToLogEntries(rs);
-            }
-        } catch (Exception e) {
-            log.error("[Doris] queryLogsByMultipleConditionsWithPagination error: {}", e.getMessage(), e);
-            return List.of();
-        }
+        return executeLogQuery(sql.toString(), params, "queryLogsByMultipleConditionsWithPagination");
     }
 
     @Override
@@ -1106,6 +1112,19 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     private void bindParameters(PreparedStatement pstmt, List<Object> params) throws SQLException {
         for (int i = 0; i < params.size(); i++) {
             pstmt.setObject(i + 1, params.get(i));
+        }
+    }
+
+    private List<LogEntry> executeLogQuery(String sql, List<Object> params, String queryName) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            bindParameters(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return mapRowsToLogEntries(rs);
+            }
+        } catch (Exception e) {
+            log.error("[Doris] {} error: {}", queryName, e.getMessage(), e);
+            return List.of();
         }
     }
 
