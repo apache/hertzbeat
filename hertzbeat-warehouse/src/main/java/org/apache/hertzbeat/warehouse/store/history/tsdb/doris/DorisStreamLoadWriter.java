@@ -52,7 +52,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -97,7 +96,6 @@ public class DorisStreamLoadWriter {
     private final DorisProperties.StreamLoadConfig config;
 
     private final AtomicLong transactionId = new AtomicLong(0);
-    private final AtomicBoolean loadToSingleTabletHeaderEnabled;
     private final CloseableHttpClient httpClient;
 
     private enum LoadResult {
@@ -153,7 +151,6 @@ public class DorisStreamLoadWriter {
 
         this.feHost = parseHostFromJdbcUrl(jdbcUrl);
         this.feHttpPort = parseHttpPort(config.httpPort());
-        this.loadToSingleTabletHeaderEnabled = new AtomicBoolean(config.loadToSingleTablet());
 
         // Create HTTP client with connection pool and redirect support
         this.httpClient = createHttpClient();
@@ -462,7 +459,6 @@ public class DorisStreamLoadWriter {
                                      String jsonPaths, String columns) {
         String loadUrl = buildLoadUrl();
         int maxAttempts = Math.max(1, config.retryTimes() + 1);
-        boolean useLoadToSingleTablet = loadToSingleTabletHeaderEnabled.get();
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             LoadResult loadResult;
@@ -480,9 +476,6 @@ public class DorisStreamLoadWriter {
             httpPut.setHeader("timeout", String.valueOf(config.timeout()));
             httpPut.setHeader("max_filter_ratio", String.valueOf(config.maxFilterRatio()));
             httpPut.setHeader("strict_mode", String.valueOf(config.strictMode()));
-            if (useLoadToSingleTablet) {
-                httpPut.setHeader("load_to_single_tablet", "true");
-            }
             httpPut.setHeader("jsonpaths", jsonPaths);
             httpPut.setHeader("columns", columns);
             setHeaderIfHasText(httpPut, "timezone", config.timezone());
@@ -497,15 +490,6 @@ public class DorisStreamLoadWriter {
                 statusCode = response.getStatusLine().getStatusCode();
                 if (response.getEntity() != null) {
                     responseBody = EntityUtils.toString(response.getEntity());
-                }
-                if (useLoadToSingleTablet && isLoadToSingleTabletDistributionError(statusCode, responseBody)) {
-                    if (loadToSingleTabletHeaderEnabled.compareAndSet(true, false)) {
-                        log.warn("[Doris StreamLoad] Detected incompatible table distribution, disable load_to_single_tablet globally.");
-                    }
-                    log.warn("[Doris StreamLoad] Auto fallback: retry without load_to_single_tablet. {}", action);
-                    useLoadToSingleTablet = false;
-                    attempt--;
-                    continue;
                 }
                 loadResult = handleResponse(statusCode, responseBody, rowCount);
             } catch (Exception e) {
@@ -532,24 +516,6 @@ public class DorisStreamLoadWriter {
             }
         }
         return false;
-    }
-
-    private boolean isLoadToSingleTabletDistributionError(int statusCode, String body) {
-        if (statusCode != 200 || body == null || body.isBlank()) {
-            return false;
-        }
-        JsonNode jsonNode = JsonUtil.fromJson(body);
-        if (jsonNode == null) {
-            return false;
-        }
-        String status = jsonNode.has("Status") ? jsonNode.get("Status").asText("") : "";
-        if (!STATUS_FAIL.equalsIgnoreCase(status)) {
-            return false;
-        }
-        String message = jsonNode.has("Message") ? jsonNode.get("Message").asText("") : "";
-        String normalized = message.toLowerCase();
-        return normalized.contains("load_to_single_tablet")
-                && normalized.contains("random distribution");
     }
 
     private void setHeaderIfHasText(HttpPut httpPut, String name, String value) {
