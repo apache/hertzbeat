@@ -33,7 +33,7 @@ import org.apache.http.ProtocolException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClients;
@@ -43,6 +43,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -54,6 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Doris Stream Load writer using Apache HttpClient for high-throughput writes.
@@ -133,6 +135,9 @@ public class DorisStreamLoadWriter {
         public String resource;
         public String instrumentationScope;
         public Integer droppedAttributesCount;
+    }
+
+    private record Payload(byte[] body, boolean compressed) {
     }
 
     /**
@@ -463,6 +468,11 @@ public class DorisStreamLoadWriter {
         String loadUrl = buildLoadUrl();
         int maxAttempts = Math.max(1, config.retryTimes() + 1);
         boolean useLoadToSingleTablet = loadToSingleTabletHeaderEnabled.get();
+        String actionPrefix = String.format("label=%s rows=%d", label, rowCount);
+        Payload payload = buildPayload(jsonData, actionPrefix);
+        if (payload == null) {
+            return false;
+        }
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             LoadResult loadResult;
@@ -491,7 +501,10 @@ public class DorisStreamLoadWriter {
             if (config.sendBatchParallelism() > 0) {
                 httpPut.setHeader("send_batch_parallelism", String.valueOf(config.sendBatchParallelism()));
             }
-            httpPut.setEntity(new StringEntity(jsonData, StandardCharsets.UTF_8));
+            if (payload.compressed()) {
+                httpPut.setHeader("compress_type", "gz");
+            }
+            httpPut.setEntity(new ByteArrayEntity(payload.body()));
 
             try (CloseableHttpResponse response = httpClient.execute(httpPut)) {
                 statusCode = response.getStatusLine().getStatusCode();
@@ -532,6 +545,36 @@ public class DorisStreamLoadWriter {
             }
         }
         return false;
+    }
+
+    private Payload buildPayload(String jsonData, String actionPrefix) {
+        byte[] plainBytes = jsonData.getBytes(StandardCharsets.UTF_8);
+        if (!config.enableCompression()) {
+            return new Payload(plainBytes, false);
+        }
+        try {
+            byte[] compressedBytes = gzip(plainBytes);
+            if (log.isDebugEnabled()) {
+                double ratio = plainBytes.length == 0 ? 0D : (double) compressedBytes.length / plainBytes.length;
+                log.debug("[Doris StreamLoad] GZIP payload enabled, {} plainBytes={} compressedBytes={} ratio={}",
+                        actionPrefix, plainBytes.length, compressedBytes.length, ratio);
+            }
+            return new Payload(compressedBytes, true);
+        } catch (IOException e) {
+            log.error("[Doris StreamLoad] Failed to gzip payload, {}: {}", actionPrefix, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    static byte[] gzip(byte[] source) throws IOException {
+        if (source == null || source.length == 0) {
+            return new byte[0];
+        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream(source.length);
+        try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(out)) {
+            gzipOutputStream.write(source);
+        }
+        return out.toByteArray();
     }
 
     private boolean isLoadToSingleTabletDistributionError(int statusCode, String body) {
