@@ -24,11 +24,13 @@ import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeDbData
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -50,7 +52,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest(classes = org.apache.hertzbeat.startup.HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@EnabledIf("isDockerAvailable")
 public class GreptimeLogStorageE2eTest {
+
+    static boolean isDockerAvailable() {
+        try {
+            return DockerClientFactory.instance().isDockerAvailable();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     private static final String VECTOR_IMAGE = "timberio/vector:latest-alpine";
     private static final int VECTOR_PORT = 8686;
@@ -74,14 +85,20 @@ public class GreptimeLogStorageE2eTest {
     static GenericContainer<?> greptimedb;
 
     static {
-        greptimedb = new GenericContainer<>(DockerImageName.parse(GREPTIME_IMAGE))
-                .withExposedPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT)
-                .withCommand("standalone", "start",
-                        "--http-addr", "0.0.0.0:" + GREPTIME_HTTP_PORT,
-                        "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT)
-                .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT))
-                .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
-        greptimedb.start();
+        try {
+            if (DockerClientFactory.instance().isDockerAvailable()) {
+                greptimedb = new GenericContainer<>(DockerImageName.parse(GREPTIME_IMAGE))
+                        .withExposedPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT)
+                        .withCommand("standalone", "start",
+                                "--http-addr", "0.0.0.0:" + GREPTIME_HTTP_PORT,
+                                "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT)
+                        .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT))
+                        .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
+                greptimedb.start();
+            }
+        } catch (Exception e) {
+            log.warn("Docker not available, skipping GreptimeDB container startup: {}", e.getMessage());
+        }
     }
 
     @DynamicPropertySource

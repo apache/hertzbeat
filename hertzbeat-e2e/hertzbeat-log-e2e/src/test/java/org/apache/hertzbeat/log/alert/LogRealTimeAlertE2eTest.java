@@ -26,9 +26,11 @@ import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -58,7 +60,16 @@ import static org.mockito.Mockito.doAnswer;
 @SpringBootTest(classes = org.apache.hertzbeat.startup.HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@EnabledIf("isDockerAvailable")
 public class LogRealTimeAlertE2eTest {
+
+    static boolean isDockerAvailable() {
+        try {
+            return DockerClientFactory.instance().isDockerAvailable();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     private static final String VECTOR_IMAGE = "timberio/vector:latest-alpine";
     private static final int VECTOR_PORT = 8686;
