@@ -31,6 +31,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.testcontainers.containers.GenericContainer;
@@ -48,7 +49,16 @@ import java.util.Map;
  */
 @Slf4j
 @ExtendWith(MockitoExtension.class)
+@EnabledIf("isDockerAvailable")
 public class ZookeeperMonitorE2eTest extends AbstractCollectE2eTest {
+
+    static boolean isDockerAvailable() {
+        try {
+            return org.testcontainers.DockerClientFactory.instance().isDockerAvailable();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     private static final String ZOOKEEPER_IMAGE_NAME = "zookeeper:3.8.4";
     private static final String ZOOKEEPER_NAME = "zookeeper";

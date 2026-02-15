@@ -28,6 +28,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
@@ -50,7 +51,16 @@ import java.util.stream.Stream;
  * KafkaCollectE2E
  */
 @Slf4j
+@EnabledIf("isDockerAvailable")
 public class KafkaCollectE2eTest {
+
+    static boolean isDockerAvailable() {
+        try {
+            return org.testcontainers.DockerClientFactory.instance().isDockerAvailable();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     private static final String ZOOKEEPER_IMAGE_NAME = "zookeeper:3.8.4";
     private static final String ZOOKEEPER_NAME = "zookeeper";
@@ -65,34 +75,53 @@ public class KafkaCollectE2eTest {
 
     @AfterAll
     public static void tearDown() {
-        kafkaContainer.stop();
-        zookeeperContainer.stop();
+        if (kafkaContainer != null) {
+            kafkaContainer.stop();
+        }
+        if (zookeeperContainer != null) {
+            zookeeperContainer.stop();
+        }
     }
 
     @BeforeEach
     public void setUp() {
         kafkaCollect = new KafkaCollectImpl();
         metrics = new Metrics();
-        Network.NetworkImpl network = Network.builder().build();
-        zookeeperContainer = new GenericContainer<>(DockerImageName.parse(ZOOKEEPER_IMAGE_NAME))
-                .withExposedPorts(ZOOKEEPER_PORT)
-                .withNetwork(network)
-                .withNetworkAliases(ZOOKEEPER_NAME)
-                .waitingFor(Wait.forListeningPort())
-                .withStartupTimeout(Duration.ofSeconds(120));
-        zookeeperContainer.setPortBindings(Collections.singletonList(ZOOKEEPER_PORT + ":" + ZOOKEEPER_PORT));
+        
+        try {
+            Network.NetworkImpl network = Network.builder().build();
+            zookeeperContainer = new GenericContainer<>(DockerImageName.parse(ZOOKEEPER_IMAGE_NAME))
+                    .withExposedPorts(ZOOKEEPER_PORT)
+                    .withNetwork(network)
+                    .withNetworkAliases(ZOOKEEPER_NAME)
+                    .waitingFor(Wait.forListeningPort())
+                    .withStartupTimeout(Duration.ofSeconds(120));
+            zookeeperContainer.setPortBindings(Collections.singletonList(ZOOKEEPER_PORT + ":" + ZOOKEEPER_PORT));
 
-        Startables.deepStart(Stream.of(zookeeperContainer)).join();
+            Startables.deepStart(Stream.of(zookeeperContainer)).join();
 
-        kafkaContainer = new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE_NAME))
-                .withExternalZookeeper(ZOOKEEPER_NAME + ":2181")
-                .withNetwork(network)
-                .withNetworkAliases(KAFKA_NAME)
-                .withLogConsumer(
-                        new Slf4jLogConsumer(
-                                DockerLoggerFactory.getLogger(KAFKA_IMAGE_NAME)))
-                .withStartupTimeout(Duration.ofSeconds(120));
-        Startables.deepStart(Stream.of(kafkaContainer)).join();
+            kafkaContainer = new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE_NAME))
+                    .withExternalZookeeper(ZOOKEEPER_NAME + ":2181")
+                    .withNetwork(network)
+                    .withNetworkAliases(KAFKA_NAME)
+                    .withLogConsumer(
+                            new Slf4jLogConsumer(
+                                    DockerLoggerFactory.getLogger(KAFKA_IMAGE_NAME)))
+                    .withStartupTimeout(Duration.ofSeconds(120));
+            Startables.deepStart(Stream.of(kafkaContainer)).join();
+        } catch (Exception e) {
+            log.error("Failed to start Kafka containers", e);
+            // Clean up any partially started containers
+            if (kafkaContainer != null) {
+                kafkaContainer.stop();
+                kafkaContainer = null;
+            }
+            if (zookeeperContainer != null) {
+                zookeeperContainer.stop();
+                zookeeperContainer = null;
+            }
+            throw new RuntimeException("Failed to start Kafka test environment", e);
+        }
     }
 
     @Test

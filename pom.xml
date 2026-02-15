@@ -619,6 +619,13 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <excludes>
+                        <exclude>net/sf/jsqlparser/**</exclude>
+                        <exclude>**/*CCJSqlParserTokenManager*</exclude>
+                        <exclude>**/generated/**</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>

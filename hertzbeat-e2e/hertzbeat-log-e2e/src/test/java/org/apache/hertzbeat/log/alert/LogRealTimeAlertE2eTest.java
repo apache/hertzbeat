@@ -65,7 +65,7 @@ public class LogRealTimeAlertE2eTest {
 
     static boolean isDockerAvailable() {
         try {
-            return DockerClientFactory.instance().isDockerAvailable();
+            return org.testcontainers.DockerClientFactory.instance().isDockerAvailable();
         } catch (Exception e) {
             return false;
         }
