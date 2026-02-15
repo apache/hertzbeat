@@ -30,7 +30,6 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -92,7 +91,7 @@ public class LogRealTimeAlertE2eTest {
     void setUpAll() {
         // Setup test alert definitions
         setupTestAlertDefines();
-        
+
         // Expose host ports for testcontainers
         Testcontainers.exposeHostPorts(port);
         vector = new GenericContainer<>(DockerImageName.parse(VECTOR_IMAGE))
