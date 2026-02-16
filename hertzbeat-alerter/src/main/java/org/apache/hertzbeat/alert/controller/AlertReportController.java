@@ -92,7 +92,6 @@ public class AlertReportController {
         log.error("Not support default extern alert");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Message.success("Not support the default source alert"));
-        BigInteger
     }
 
     @PostMapping("/api/v2/alerts")
