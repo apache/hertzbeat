@@ -14,6 +14,7 @@
 # limitations under the License.
 server:
   port: 1157
+  address: 0.0.0.0
 spring:
   application:
     name: ${HOSTNAME:@hertzbeat@}${PID}

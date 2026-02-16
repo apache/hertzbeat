@@ -20,7 +20,14 @@
 package org.apache.hertzbeat.manager.nativex;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Set;
+import org.apache.hertzbeat.common.entity.job.Configmap;
+import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.common.entity.plugin.PluginConfig;
 import org.apache.sshd.common.channel.ChannelListener;
 import org.apache.sshd.common.forward.PortForwardingEventListener;
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactory;
@@ -42,10 +49,19 @@ import org.springframework.util.ClassUtils;
  */
 public class HertzbeatRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
+    private static final MemberCategory[] YAML_MODEL_MEMBER_CATEGORIES = {
+            MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+            MemberCategory.INVOKE_DECLARED_METHODS,
+            MemberCategory.DECLARED_FIELDS
+    };
+
     private static final String SshConstantsClassName = "org.apache.sshd.common.SshConstants";
+    private static final String JobProtocolPackageNamePrefix = "org.apache.hertzbeat.common.entity.job.protocol.";
 
     @Override
     public void registerHints(@NonNull RuntimeHints hints, ClassLoader classLoader) {
+        registerResourceHints(hints);
+        registerYamlModelHints(hints);
         // see: https://github.com/spring-cloud/spring-cloud-config/blob/main/spring-cloud-config-server/src/main/java/org/springframework/cloud/config/server/config/ConfigServerRuntimeHints.java
         // TODO: move over to GraalVM reachability metadata
         if (ClassUtils.isPresent(SshConstantsClassName, classLoader)) {
@@ -59,6 +75,44 @@ public class HertzbeatRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
             hints.proxies().registerJdkProxy(TypeReference.of(ChannelListener.class),
                     TypeReference.of(PortForwardingEventListener.class), TypeReference.of(SessionListener.class));
         }
+    }
+
+    private void registerResourceHints(RuntimeHints hints) {
+        hints.resources().registerPattern("application*.yml");
+        hints.resources().registerPattern("banner.txt");
+        hints.resources().registerPattern("sureness.yml");
+        hints.resources().registerPattern("logback-spring.xml");
+        hints.resources().registerPattern("db/migration/**");
+        hints.resources().registerPattern("define/*.yml");
+        hints.resources().registerPattern("define/*.yaml");
+        hints.resources().registerPattern("templates/**");
+        hints.resources().registerPattern("grafana/*.json");
+        hints.resources().registerPattern("dist/**");
+        hints.resources().registerPattern("META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports");
+    }
+
+    private void registerYamlModelHints(RuntimeHints hints) {
+        registerTypeWithDeclaredMembers(hints, Job.class);
+        registerTypeWithDeclaredMembers(hints, Metrics.class);
+        registerTypeWithDeclaredMembers(hints, Metrics.Field.class);
+        registerTypeWithDeclaredMembers(hints, Configmap.class);
+        registerTypeWithDeclaredMembers(hints, ParamDefine.class);
+        registerTypeWithDeclaredMembers(hints, ParamDefine.Option.class);
+        registerTypeWithDeclaredMembers(hints, PluginConfig.class);
+
+        Arrays.stream(Metrics.class.getDeclaredFields())
+                .map(Field::getType)
+                .filter(this::isJobProtocolClass)
+                .forEach(type -> registerTypeWithDeclaredMembers(hints, type));
+    }
+
+    private boolean isJobProtocolClass(Class<?> type) {
+        return type.getName().startsWith(JobProtocolPackageNamePrefix);
+    }
+
+    private void registerTypeWithDeclaredMembers(RuntimeHints hints, Class<?> clazz) {
+        hints.reflection().registerType(clazz, hint -> hint.withMembers(YAML_MODEL_MEMBER_CATEGORIES));
+        registerConstructor(hints, clazz);
     }
 
     private void registerConstructor(RuntimeHints hints, Class<?> clazz) {

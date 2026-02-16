@@ -19,6 +19,8 @@ package org.apache.hertzbeat.alert.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import java.math.BigInteger;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
@@ -39,7 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Slf4j
 public class AlertReportController {
-    
+
     private final List<ExternAlertService> externAlertServiceList;
 
     public AlertReportController(List<ExternAlertService> externAlertServiceList) {
@@ -48,7 +50,7 @@ public class AlertReportController {
 
     @PostMapping("/api/alerts/report/{source}")
     @Operation(summary = "Api for receive external alarm information")
-    public ResponseEntity<Message<Void>> receiveExternAlert(@PathVariable(value = "source") String source, 
+    public ResponseEntity<Message<Void>> receiveExternAlert(@PathVariable(value = "source") String source,
                                                             @RequestBody String content) {
         log.info("Receive extern alert from source: {}, content: {}", source, content);
         if (!StringUtils.hasText(source)) {
@@ -58,10 +60,10 @@ public class AlertReportController {
             if (externAlertService.supportSource().equals(source)) {
                 try {
                     externAlertService.addExternAlert(content);
-                    return ResponseEntity.ok(Message.success("Add extern alert success"));      
+                    return ResponseEntity.ok(Message.success("Add extern alert success"));
                 } catch (Exception e) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(Message.fail(CommonConstants.FAIL_CODE, 
+                            .body(Message.fail(CommonConstants.FAIL_CODE,
                                     "Add extern alert failed: " + e.getMessage()));
                 }
             }
@@ -80,16 +82,17 @@ public class AlertReportController {
         if (externAlertService != null) {
             try {
                 externAlertService.addExternAlert(content);
-                return ResponseEntity.ok(Message.success("Add extern alert success"));   
+                return ResponseEntity.ok(Message.success("Add extern alert success"));
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Message.fail(CommonConstants.FAIL_CODE, 
+                        .body(Message.fail(CommonConstants.FAIL_CODE,
                                 "Add extern alert failed: " + e.getMessage()));
             }
         }
         log.error("Not support default extern alert");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Message.success("Not support the default source alert"));
+        BigInteger
     }
 
     @PostMapping("/api/v2/alerts")

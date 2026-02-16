@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --proxy-config proxy.conf.json",
+    "start": "ng serve --proxy-config proxy.conf.json --host 0.0.0.0",
     "build": "npm run ng-high-memory build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
