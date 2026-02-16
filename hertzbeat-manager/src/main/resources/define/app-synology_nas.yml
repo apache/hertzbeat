@@ -16,7 +16,7 @@
 # The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
 category: server
 # The monitoring type eg: linux windows tomcat mysql aws...
-app: synology
+app: synology_nas
 # The monitoring i18n name
 name:
   zh-CN: Synology NAS

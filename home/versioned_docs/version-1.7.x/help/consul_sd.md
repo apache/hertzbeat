@@ -15,7 +15,7 @@ Consul Service Discovery allows HertzBeat to connect to your Consul server and a
 
 #### Deploy Consul Server
 
-1. Deploy Consul server according to [Consul official documentation](https://www.consul.io/docs/install).
+1. Deploy Consul server according to [Consul official documentation](https://developer.hashicorp.com/consul/docs/fundamentals/install).
 2. Ensure Consul server is accessible from HertzBeat.
 3. Verify that you can access Consul UI at `http://your-consul-server:8500/ui/`
 4. Ensure the Consul HTTP API is accessible (default port: 8500)
