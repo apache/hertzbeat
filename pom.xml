@@ -81,7 +81,6 @@
         <module>hertzbeat-startup</module>
         <module>hertzbeat-manager</module>
         <module>hertzbeat-alerter</module>
-        <module>hertzbeat-common</module>
         <module>hertzbeat-common-core</module>
         <module>hertzbeat-common-spring</module>
         <module>hertzbeat-collector</module>
@@ -189,12 +188,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- common -->
-            <dependency>
-                <groupId>org.apache.hertzbeat</groupId>
-                <artifactId>hertzbeat-common</artifactId>
-                <version>${hertzbeat.version}</version>
-            </dependency>
             <!-- common-core -->
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
