@@ -15,6 +15,7 @@
 
 package org.apache.hertzbeat.common.util.export;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Cell;
@@ -24,7 +25,6 @@ import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * Excel export utils
@@ -64,11 +64,11 @@ public final class ExcelExportUtils {
         headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
 
         List<String> headers = new ArrayList<>();
-        ReflectionUtils.doWithFields(clazz, field -> {
-
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
             field.setAccessible(true);
             headers.add(field.getName());
-        });
+        }
 
         // set header
         Row headerRow = sheet.createRow(0);

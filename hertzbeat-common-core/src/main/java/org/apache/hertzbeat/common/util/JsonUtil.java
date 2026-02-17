@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import javax.annotation.concurrent.ThreadSafe;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
 
 /**
  * json util
@@ -63,7 +62,7 @@ public final class JsonUtil {
     }
 
     public static <T> T fromJson(String jsonStr, Class<T> clazz) {
-        if (!StringUtils.hasText(jsonStr)) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
             return null;
         }
         try {
@@ -75,7 +74,7 @@ public final class JsonUtil {
     }
 
     public static <T> T fromJson(String jsonStr, TypeReference<T> type) {
-        if (!StringUtils.hasText(jsonStr)) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
             return null;
         }
         try {
@@ -87,7 +86,7 @@ public final class JsonUtil {
     }
     
     public static JsonNode fromJson(String jsonStr) {
-        if (!StringUtils.hasText(jsonStr)) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
             return null;
         }
         try {
