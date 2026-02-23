@@ -57,3 +57,16 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 | innodb_data_writes  | none        | innodb average number of writes from file per second |
 | innodb_data_read    | KB          | innodb average amount of data read per second        |
 | innodb_data_written | KB          | innodb average amount of data written per second     |
+
+#### Metric set：account_expiry
+
+|       Metric name       | Metric unit |                          Metric help description                          |
+|-------------------------|-------------|---------------------------------------------------------------------------|
+| user                    | none        | Database user account name                                                 |
+| host                    | none        | Host from which the user can connect                                       |
+| password_expired        | none        | Whether the password has expired (Y/N)                                     |
+| password_lifetime       | days        | Password lifetime in days (0 = never expires)                              |
+| password_last_changed   | none        | Timestamp when password was last changed                                   |
+| days_until_expiry       | days        | Number of days remaining until password expires (calculated field)         |
+
+**Note**: This metric helps monitor database account security by tracking password expiration dates. Configure alerts to notify administrators before accounts expire, ensuring uninterrupted database access and compliance with security policies.

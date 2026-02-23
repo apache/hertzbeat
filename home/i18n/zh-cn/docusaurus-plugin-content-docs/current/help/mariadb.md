@@ -57,3 +57,16 @@ keywords: [开源监控系统, 开源数据库监控, MariaDB数据库监控]
 | innodb_data_writes  | 无    | innodb平均每秒从文件中写入的次数     |
 | innodb_data_read    | KB   | innodb平均每秒钟读取的数据量，单位为KB |
 | innodb_data_written | KB   | innodb平均每秒钟写入的数据量，单位为KB |
+
+#### 指标集合：account_expiry
+
+|          指标名称          | 指标单位 |           指标帮助描述            |
+|------------------------|------|------------------------------|
+| user                   | 无    | 数据库用户账户名                     |
+| host                   | 无    | 用户可连接的主机                     |
+| password_expired       | 无    | 密码是否已过期 (Y/N)                |
+| password_lifetime      | 天    | 密码生命周期天数 (0 = 永不过期)          |
+| password_last_changed  | 无    | 密码最后修改时间戳                    |
+| days_until_expiry      | 天    | 距离密码过期还有多少天（计算字段）            |
+
+**说明**：此指标用于监控数据库账户安全，跟踪密码过期日期。可配置告警规则在账户过期前提前通知管理员，确保数据库访问不中断并符合安全策略要求。
