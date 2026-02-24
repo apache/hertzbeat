@@ -300,3 +300,55 @@ metrics:
       queryType: oneRow
       sql: SELECT cntr_value as user_connection FROM sys.dm_os_performance_counters WHERE object_name = 'SQLServer:General Statistics' AND counter_name = 'User Connections';
       url: ^_^url^_^
+
+  - name: account_expiry
+    priority: 14
+    i18n:
+      zh-CN: 账户过期信息
+      en-US: Account Expiry Info
+      ja-JP: アカウント有効期限情報
+    fields:
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 用户名
+          en-US: User Name
+          ja-JP: ユーザー名
+      - field: type
+        type: 1
+        i18n:
+          zh-CN: 用户类型
+          en-US: User Type
+          ja-JP: ユーザータイプ
+      - field: is_disabled
+        type: 0
+        i18n:
+          zh-CN: 是否禁用
+          en-US: Is Disabled
+          ja-JP: 無効
+      - field: password_expiry_date
+        type: 1
+        i18n:
+          zh-CN: 密码过期日期
+          en-US: Password Expiry Date
+          ja-JP: パスワード有効期限日
+      - field: days_until_expiry
+        type: 0
+        unit: days
+        i18n:
+          zh-CN: 距离过期天数
+          en-US: Days Until Expiry
+          ja-JP: 有効期限までの日数
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: sqlserver
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT name, CASE WHEN type_desc = 'SQL_LOGIN' THEN 'SQL Login' WHEN type_desc = 'WINDOWS_LOGIN' THEN 'Windows Login' WHEN type_desc = 'WINDOWS_GROUP' THEN 'Windows Group' WHEN type_desc = 'CERTIFICATE_MAPPED_LOGIN' THEN 'Certificate' WHEN type_desc = 'ASYMMETRIC_KEY_MAPPED_LOGIN' THEN 'Asymmetric Key' ELSE type_desc END as type, is_disabled, password_expiry_date, DATEDIFF(day, GETDATE(), password_expiry_date) as days_until_expiry FROM sys.sql_logins WHERE is_disabled = 0 ORDER BY password_expiry_date ASC;
+      url: ^_^url^_^
