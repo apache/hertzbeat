@@ -77,4 +77,14 @@ public class SshTunnel implements CommonRequestProtocol, Protocol {
      * share connection session
      */
     private String shareConnection = "true";
+
+    @Override
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    @Override
+    public void setPort(String port) {
+        this.port = port;
+    }
 }

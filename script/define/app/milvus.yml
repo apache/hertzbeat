@@ -1,0 +1,40 @@
+app: milvus
+category: cache
+name:
+  zh-CN: Milvus Vector DB
+  en-US: Milvus Vector DB
+params:
+  - field: host
+    name:
+      zh-CN: Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: Port
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9091
+metrics:
+  - name: milvus_proxy_reqs_total
+    priority: 0
+    fields:
+      - field: type
+        type: 1
+        label: true
+      - field: status
+        type: 1
+        label: true
+      - field: value
+        type: 0
+    protocol: milvus
+    milvus:
+      host: ^_^host^_^
+      port: ^_^port^_^
+    aliasFields:
+      - type
+      - status
+      - value
