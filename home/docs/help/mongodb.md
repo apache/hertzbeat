@@ -93,15 +93,3 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 | pageSize        | none        | Size of a memory page in bytes.                        |
 | numPages        | none        | Total number of memory pages.                          |
 | maxOpenFiles    | none        | Maximum number of open files allowed.                  |
-
-#### Metric set：user_info
-
-|     Metric name      | Metric unit |                              Metric help description                               |
-|----------------------|-------------|------------------------------------------------------------------------------------|
-| user                 | none        | MongoDB database user account name                                                  |
-| db                   | none        | Authentication database for the user                                                |
-| roles                | none        | Roles assigned to the user (JSON format)                                            |
-| mechanisms           | none        | Authentication mechanisms available for the user (e.g., SCRAM-SHA-256)              |
-| passwordDisgest      | none        | Password digest method (client or server-side)                                      |
-
-**Note**: This metric provides visibility into database user accounts, roles, and authentication settings. Use it to audit user permissions, track authentication mechanisms, and maintain security compliance. Configure alerts for unauthorized user creation or role changes to enhance database security monitoring.
