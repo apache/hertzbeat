@@ -60,7 +60,7 @@
         <!-- HertzBeat common -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-common</artifactId>
+            <artifactId>hertzbeat-common-spring</artifactId>
         </dependency>
 
         <!-- HertzBeat base -->
