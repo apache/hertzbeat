@@ -28,6 +28,12 @@ Apache Doris 是一款面向实时分析场景的 MPP 数据库。在 HertzBeat 
 - FE MySQL 服务端口可访问（默认 `9030`）
 - FE HTTP 服务端口可访问（默认 `8030`）
 
+### 注意，必须添加 MYSQL jdbc 驱动 jar
+
+- 下载 MYSQL jdbc driver jar，例如 mysql-connector-java-8.1.0.jar。[https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0](https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0)
+- 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下。
+- 重启 HertzBeat 服务。
+
 ### 前置检查
 
 1. Doris FE、BE 节点状态正常。
@@ -36,26 +42,13 @@ Apache Doris 是一款面向实时分析场景的 MPP 数据库。在 HertzBeat 
    - FE HTTP 端口（默认 `8030`），用于 Stream Load 写入
 3. 配置的 Doris 用户具有建库建表、写入、查询权限。
 
-### 注意：复杂网络下的 Stream Load 重定向
-
-HertzBeat 使用 Stream Load 写入时，请求会先发到 FE，随后 FE 会返回一个可用 BE 的 HTTP 重定向地址，客户端再向该 BE 写入数据。
-
-在跨网络、Kubernetes、负载均衡等场景中，需要特别注意：
-
-- FE 返回的 BE 地址必须对 HertzBeat 可达。
-- 或者在 Doris 侧配置 BE 公网/内网地址标签，并在 HertzBeat 中设置 `redirect-policy`（`direct` / `public` / `private`），让 FE 返回可达的地址。
-
-参考文档：
-
-- [复杂网络下的 Stream Load 原理](https://doris.apache.org/zh-CN/docs/4.x/data-operate/import/load-internals/stream-load-in-complex-network)
-
 ### 在 HertzBeat `application.yml` 中配置 Doris
 
 1. 修改 `hertzbeat/config/application.yml`。
 
    Docker 容器部署需将配置文件挂载到主机本地，安装包部署直接修改解压目录下配置文件即可。
 
-2. 配置 `warehouse.store.doris`：
+2. 配置 `warehouse.store.doris`（生产环境推荐配置使用 Stream Load 模式）：
 
 ```yaml
 warehouse:
@@ -77,7 +70,7 @@ warehouse:
         # 预创建未来分区数量
         partition-future-days: 3
         buckets: 8
-        replication-num: 1
+        replication-num: 3
 
       pool-config:
         minimum-idle: 5
@@ -85,9 +78,8 @@ warehouse:
         connection-timeout: 30000
 
       write-config:
-        # jdbc 或 stream（高吞吐推荐 stream）
+        # 生产环境强烈推荐使用 stream 模式以获得高吞吐性能
         write-mode: stream
-        # 批量参数
         batch-size: 1000
         flush-interval: 5
         stream-load-config:
@@ -95,9 +87,78 @@ warehouse:
           http-port: ":8030"
           timeout: 60
           max-bytes-per-batch: 10485760
-          # 可选：direct / public / private
+          # 复杂网络环境（K8s/跨域）需配置：direct / public / private
           redirect-policy: ""
 ```
+
+### 切换到 Stream Load 模式
+
+#### 生产环境推荐配置
+
+在生产环境部署时，**强烈推荐使用 Stream Load 模式** 以保证大规模写入性能。Stream Load 直接写入 Doris 存储层，相比 JDBC 模式提供更高的吞吐量提升。
+
+#### 切换前的前置检查
+
+1. **网络可达性**
+   - 确保 HertzBeat 能访问 Doris FE HTTP 端口（默认 `8030`）
+   - 若无法直连，需在 Doris 侧配置 BE 公网/内网地址标签
+
+2. **复杂网络场景的特殊配置**
+   
+   在 K8s、跨域、负载均衡等环境下，Stream Load 的重定向机制需要特别注意：
+   - FE 会将请求重定向到某个可用的 BE，该 BE 地址必须对 HertzBeat 可达
+   - 通过配置 `redirect-policy` 来控制 FE 返回的 BE 地址类型：
+     - `direct`：直连 BE IP
+     - `public`：使用公网地址（云环境）
+     - `private`：使用内网地址（私有网络）
+     - 留空则使用 Doris 默认策略
+   
+   参考官方文档：[Doris Stream Load 复杂网络原理](https://doris.apache.org/zh-CN/docs/4.x/data-operate/import/load-internals/stream-load-in-complex-network)
+
+#### 切换步骤
+
+1. **修改配置文件**
+   
+   编辑 `hertzbeat/config/application.yml`，将 `write-mode` 改为 `stream`：
+   ```yaml
+   warehouse:
+     store:
+       doris:
+         write-config:
+           write-mode: stream  # 改这里：从 jdbc 改为 stream
+           stream-load-config:
+             http-port: ":8030"
+             timeout: 60
+             max-bytes-per-batch: 10485760
+             redirect-policy: ""  # 复杂网络需配置这里
+   ```
+
+2. **重启 HertzBeat 服务**
+
+3. **验证切换成功**
+
+查看 HertzBeat 日志，应出现 Stream Load 相关日志
+
+#### 常见切换问题
+
+**Q: 切换后需要重建表吗？**
+
+A: 不需要。Stream Load 和 JDBC 模式使用同一套表结构，数据完全兼容。
+
+**Q: 从 JDBC 切换到 Stream Load 会丢数据吗？**
+
+A: 不会。两种模式的写入是独立的，历史数据保持不变。
+
+**Q: Stream Load 失败了怎么回退？**
+
+A: 如果流处理失败了会自动尝试使用jdbc模式进行回退写入
+
+**Q: 跨网络环境配置了 redirect-policy 仍然超时？**
+
+A: 可能原因：
+- 在当前 `redirect-policy` 设置下，返回的 BE 地址仍不可达
+- 尝试其他 `redirect-policy` 值（`direct` / `public` / `private`）
+- 联系 Doris 管理员确认 BE 节点的地址标签配置是否正确
 
 ### 参数说明
 

@@ -28,6 +28,12 @@ For HertzBeat integration, ensure at least:
 - FE MySQL service port is reachable (default `9030`)
 - FE HTTP service port is reachable (default `8030`)
 
+### Note: Install MySQL JDBC Driver Jar
+
+- Download MySQL JDBC driver jar, for example mysql-connector-java-8.1.0.jar. [https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0](https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0)
+- Copy this jar to the `ext-lib` directory in HertzBeat installation directory.
+- Restart HertzBeat service.
+
 ### Prerequisites
 
 1. Doris FE and BE are running normally.
@@ -36,19 +42,6 @@ For HertzBeat integration, ensure at least:
    - FE HTTP port (default `8030`) for Stream Load
 3. The configured Doris user has permission to create database/table and insert/query data.
 
-### Important: Stream Load Redirect in Complex Networks
-
-When HertzBeat writes in Stream Load mode, the request is sent to FE first. FE then returns an HTTP redirect to an available BE endpoint, and the client writes to that BE.
-
-In cross-network/Kubernetes/LB scenarios, this means:
-
-- The redirected BE endpoint must be reachable from HertzBeat.
-- Or you should configure Doris BE endpoint tags and set a proper `redirect-policy` (`direct` / `public` / `private`) in HertzBeat so FE returns a reachable endpoint.
-
-Reference:
-
-- [Stream Load in Complex Network](https://doris.apache.org/zh-CN/docs/4.x/data-operate/import/load-internals/stream-load-in-complex-network)
-
 ### Configure Doris in HertzBeat `application.yml`
 
 1. Edit `hertzbeat/config/application.yml`.
@@ -56,7 +49,7 @@ Reference:
    For Docker deployment, mount the config file from host.
    For package deployment, modify `hertzbeat/config/application.yml` directly.
 
-2. Configure `warehouse.store.doris`:
+2. Configure `warehouse.store.doris` (Production Environment Recommended using Stream Load Mode):
 
 ```yaml
 warehouse:
@@ -78,7 +71,7 @@ warehouse:
         # Number of future partitions to pre-create
         partition-future-days: 3
         buckets: 8
-        replication-num: 1
+        replication-num: 3
 
       pool-config:
         minimum-idle: 5
@@ -86,9 +79,8 @@ warehouse:
         connection-timeout: 30000
 
       write-config:
-        # jdbc or stream (stream is recommended for higher throughput)
+        # Strongly recommend stream mode in production for high throughput
         write-mode: stream
-        # batch settings
         batch-size: 1000
         flush-interval: 5
         stream-load-config:
@@ -96,9 +88,78 @@ warehouse:
           http-port: ":8030"
           timeout: 60
           max-bytes-per-batch: 10485760
-          # Optional: direct / public / private
+          # For complex networks (K8s/cross-domain): direct / public / private
           redirect-policy: ""
 ```
+
+### Switching to Stream Load Mode
+
+#### Production Environment Configuration
+
+For production deployments, **strongly recommend using Stream Load mode** to ensure high-performance large-scale writes. Stream Load writes directly to Doris storage layer, providing better throughput improvement compared to JDBC mode.
+
+#### Pre-Switch Checklist
+
+1. **Network Reachability**
+   - Ensure HertzBeat can access Doris FE HTTP port (default `8030`)
+   - If direct connection is not possible, configure BE endpoint labels in Doris
+
+2. **Special Configuration for Complex Network Scenarios**
+   
+   In K8s, cross-domain, or load-balanced environments, Stream Load's redirect mechanism requires special attention:
+   - FE redirects requests to an available BE, which must be reachable from HertzBeat
+   - Control returned BE address type via `redirect-policy`:
+     - `direct`: Direct BE IP connection
+     - `public`: Use public IP (cloud environments)
+     - `private`: Use private IP (private networks)
+     - Leave empty to use Doris default policy
+   
+   Reference: [Doris Stream Load in Complex Networks](https://doris.apache.org/zh-CN/docs/4.x/data-operate/import/load-internals/stream-load-in-complex-network)
+
+#### Switching Steps
+
+1. **Modify Configuration File**
+   
+   Edit `hertzbeat/config/application.yml` and change `write-mode` to `stream`:
+   ```yaml
+   warehouse:
+     store:
+       doris:
+         write-config:
+           write-mode: stream  # Change here: from jdbc to stream
+           stream-load-config:
+             http-port: ":8030"
+             timeout: 60
+             max-bytes-per-batch: 10485760
+             redirect-policy: ""  # Configure if complex network
+   ```
+
+2. **Restart HertzBeat Service**
+
+3. **Verify Successful Switch**
+
+Check HertzBeat logs for Stream Load messages
+
+#### Common Switching Questions
+
+**Q: Do I need to rebuild tables after switching?**
+
+A: No. Stream Load and JDBC modes use the same table structure, fully compatible.
+
+**Q: Will data be lost when switching from JDBC to Stream Load?**
+
+A: No. Both write modes are independent, historical data remains unchanged.
+
+**Q: How do I rollback if Stream Load fails?**
+
+A: If the stream processing fails, it will automatically try to use the jdbc mode for fallback writing
+
+**Q: Still getting timeouts in cross-network setup with redirect-policy configured?**
+
+A: Possible causes:
+- Returned BE address under current `redirect-policy` setting is unreachable
+- Try different `redirect-policy` values (`direct` / `public` / `private`)
+- Contact Doris admin to verify BE endpoint label configuration
 
 ### Parameter Notes
 

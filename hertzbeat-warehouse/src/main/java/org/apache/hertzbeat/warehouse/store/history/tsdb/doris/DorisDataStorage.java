@@ -97,6 +97,58 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     private static final int MAX_RETRIES = 3;
     private static final String METRIC_BLOOM_FILTER_COLUMNS = "instance,app,metrics,metric";
     private static final String LOG_BLOOM_FILTER_COLUMNS = "trace_id,span_id,severity_number,severity_text";
+    private static final String CREATE_METRIC_TABLE_HEADER_TEMPLATE = """
+            CREATE TABLE IF NOT EXISTS %s (
+                instance                VARCHAR(128)   COMMENT 'Monitor instance address',
+                app                     VARCHAR(64)    COMMENT 'Monitor application type',
+                metrics                 VARCHAR(128)   COMMENT 'Metrics set name',
+                metric                  VARCHAR(128)   COMMENT 'Metric name',
+                record_time             DATETIME       COMMENT 'Record time',
+                metric_type             TINYINT        COMMENT 'Metric type: 1-number, 2-string, 3-time',
+                int32_value             INT            COMMENT 'Integer value',
+                double_value            DOUBLE         COMMENT 'Double value',
+                str_value               VARCHAR(65533) COMMENT 'String value',
+                labels                  VARCHAR(%d)  COMMENT 'Labels JSON'
+            ) DUPLICATE KEY(instance, app, metrics, metric, record_time)
+            """;
+    private static final String CREATE_LOG_TABLE_HEADER_TEMPLATE = """
+            CREATE TABLE IF NOT EXISTS %s (
+                time_unix_nano          BIGINT         COMMENT 'event unix time in nanoseconds',
+                trace_id                VARCHAR(64)    COMMENT 'trace id',
+                span_id                 VARCHAR(32)    COMMENT 'span id',
+                event_time              DATETIME       COMMENT 'event time for partition and query',
+                observed_time_unix_nano BIGINT         COMMENT 'observed unix time in nanoseconds',
+                severity_number         INT            COMMENT 'severity number',
+                severity_text           VARCHAR(32)    COMMENT 'severity text',
+                body                    VARCHAR(65533) COMMENT 'log body json',
+                trace_flags             INT            COMMENT 'trace flags',
+                attributes              VARCHAR(65533) COMMENT 'log attributes json',
+                resource                VARCHAR(65533) COMMENT 'resource json',
+                instrumentation_scope   VARCHAR(%d) COMMENT 'instrumentation scope json',
+                dropped_attributes_count INT           COMMENT 'dropped attributes count'
+            ) DUPLICATE KEY(time_unix_nano, trace_id, span_id, event_time)
+            """;
+    private static final String CREATE_TABLE_PARTITION_SUFFIX_TEMPLATE = """
+            PARTITION BY RANGE(%s) ()
+            DISTRIBUTED BY HASH(%s) BUCKETS %d
+            PROPERTIES (
+                "replication_num" = "%d",
+                "bloom_filter_columns" = "%s",
+                "dynamic_partition.enable" = "true",
+                "dynamic_partition.time_unit" = "%s",
+                "dynamic_partition.end" = "%d",
+                "dynamic_partition.prefix" = "p",
+                "dynamic_partition.buckets" = "%d",
+                "dynamic_partition.history_partition_num" = "%d"
+            )
+            """;
+    private static final String CREATE_TABLE_NON_PARTITION_SUFFIX_TEMPLATE = """
+            DISTRIBUTED BY HASH(%s) BUCKETS %d
+            PROPERTIES (
+                "replication_num" = "%d",
+                "bloom_filter_columns" = "%s"
+            )
+            """;
 
     private final DorisProperties properties;
     private HikariDataSource dataSource;
@@ -170,9 +222,49 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             // Step 4: Create table
             try (Connection conn = dataSource.getConnection();
                  Statement stmt = conn.createStatement()) {
-                stmt.execute(buildCreateTableSql());
+                DorisProperties.TableConfig tableConfig = properties.tableConfig();
+
+                String metricTableHeader = CREATE_METRIC_TABLE_HEADER_TEMPLATE
+                    .formatted(TABLE_NAME, tableConfig.strColumnMaxLength());
+                String metricTableSuffix = tableConfig.enablePartition()
+                    ? CREATE_TABLE_PARTITION_SUFFIX_TEMPLATE.formatted(
+                    "record_time",
+                    "instance, app, metrics",
+                    tableConfig.buckets(),
+                    tableConfig.replicationNum(),
+                    METRIC_BLOOM_FILTER_COLUMNS,
+                    tableConfig.partitionTimeUnit(),
+                    tableConfig.partitionFutureDays(),
+                    tableConfig.buckets(),
+                    tableConfig.partitionRetentionDays())
+                    : CREATE_TABLE_NON_PARTITION_SUFFIX_TEMPLATE.formatted(
+                    "instance, app, metrics",
+                    tableConfig.buckets(),
+                    tableConfig.replicationNum(),
+                    METRIC_BLOOM_FILTER_COLUMNS);
+
+                String logTableHeader = CREATE_LOG_TABLE_HEADER_TEMPLATE
+                    .formatted(LOG_TABLE_NAME, tableConfig.strColumnMaxLength());
+                String logTableSuffix = tableConfig.enablePartition()
+                    ? CREATE_TABLE_PARTITION_SUFFIX_TEMPLATE.formatted(
+                    "event_time",
+                    "time_unix_nano",
+                    tableConfig.buckets(),
+                    tableConfig.replicationNum(),
+                    LOG_BLOOM_FILTER_COLUMNS,
+                    tableConfig.partitionTimeUnit(),
+                    tableConfig.partitionFutureDays(),
+                    tableConfig.buckets(),
+                    tableConfig.partitionRetentionDays())
+                    : CREATE_TABLE_NON_PARTITION_SUFFIX_TEMPLATE.formatted(
+                    "time_unix_nano",
+                    tableConfig.buckets(),
+                    tableConfig.replicationNum(),
+                    LOG_BLOOM_FILTER_COLUMNS);
+
+                stmt.execute(metricTableHeader + metricTableSuffix);
                 log.info("[Doris] Table {} ensured", TABLE_NAME);
-                stmt.execute(buildCreateLogTableSql());
+                stmt.execute(logTableHeader + logTableSuffix);
                 log.info("[Doris] Table {} ensured", LOG_TABLE_NAME);
             }
 
@@ -235,104 +327,6 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             log.error("[Doris] Stream Load init failed: {}", e.getMessage(), e);
             this.writeMode = WRITE_MODE_JDBC;
         }
-    }
-
-    /**
-     * Build CREATE TABLE SQL statement
-     */
-    private String buildCreateTableSql() {
-        DorisProperties.TableConfig config = properties.tableConfig();
-
-        StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME).append(" (\n");
-        // DUPLICATE KEY columns must be the first columns in table definition
-        sql.append("    instance                VARCHAR(128)   COMMENT 'Monitor instance address',\n");
-        sql.append("    app                     VARCHAR(64)    COMMENT 'Monitor application type',\n");
-        sql.append("    metrics                 VARCHAR(128)   COMMENT 'Metrics set name',\n");
-        sql.append("    metric                  VARCHAR(128)   COMMENT 'Metric name',\n");
-        sql.append("    record_time             DATETIME       COMMENT 'Record time',\n");
-        // Non-key columns
-        sql.append("    metric_type             TINYINT        COMMENT 'Metric type: 1-number, 2-string, 3-time',\n");
-        sql.append("    int32_value             INT            COMMENT 'Integer value',\n");
-        sql.append("    double_value            DOUBLE         COMMENT 'Double value',\n");
-        sql.append("    str_value               VARCHAR(65533) COMMENT 'String value',\n");
-        sql.append("    labels                  VARCHAR(").append(config.strColumnMaxLength())
-                .append(")  COMMENT 'Labels JSON'\n");
-        sql.append(") DUPLICATE KEY(instance, app, metrics, metric, record_time)\n");
-
-        if (config.enablePartition()) {
-            // Dynamic partition mode
-            sql.append("PARTITION BY RANGE(record_time) ()\n");
-            sql.append("DISTRIBUTED BY HASH(instance, app, metrics) BUCKETS ").append(config.buckets()).append("\n");
-            sql.append("PROPERTIES (\n");
-            sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\",\n");
-            sql.append("    \"bloom_filter_columns\" = \"").append(METRIC_BLOOM_FILTER_COLUMNS).append("\",\n");
-            sql.append("    \"dynamic_partition.enable\" = \"true\",\n");
-            sql.append("    \"dynamic_partition.time_unit\" = \"").append(config.partitionTimeUnit()).append("\",\n");
-            sql.append("    \"dynamic_partition.end\" = \"").append(config.partitionFutureDays()).append("\",\n");
-            sql.append("    \"dynamic_partition.prefix\" = \"p\",\n");
-            sql.append("    \"dynamic_partition.buckets\" = \"").append(config.buckets()).append("\",\n");
-            sql.append("    \"dynamic_partition.history_partition_num\" = \"").append(config.partitionRetentionDays())
-                    .append("\"\n");
-            sql.append(")");
-        } else {
-            // Single table mode
-            sql.append("DISTRIBUTED BY HASH(instance, app, metrics) BUCKETS ").append(config.buckets()).append("\n");
-            sql.append("PROPERTIES (\n");
-            sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\",\n");
-            sql.append("    \"bloom_filter_columns\" = \"").append(METRIC_BLOOM_FILTER_COLUMNS).append("\"\n");
-            sql.append(")");
-        }
-
-        return sql.toString();
-    }
-
-    /**
-     * Build CREATE LOG TABLE SQL statement
-     */
-    private String buildCreateLogTableSql() {
-        DorisProperties.TableConfig config = properties.tableConfig();
-
-        StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE IF NOT EXISTS ").append(LOG_TABLE_NAME).append(" (\n");
-        sql.append("    time_unix_nano          BIGINT         COMMENT 'event unix time in nanoseconds',\n");
-        sql.append("    trace_id                VARCHAR(64)    COMMENT 'trace id',\n");
-        sql.append("    span_id                 VARCHAR(32)    COMMENT 'span id',\n");
-        sql.append("    event_time              DATETIME       COMMENT 'event time for partition and query',\n");
-        sql.append("    observed_time_unix_nano BIGINT         COMMENT 'observed unix time in nanoseconds',\n");
-        sql.append("    severity_number         INT            COMMENT 'severity number',\n");
-        sql.append("    severity_text           VARCHAR(32)    COMMENT 'severity text',\n");
-        sql.append("    body                    VARCHAR(65533) COMMENT 'log body json',\n");
-        sql.append("    trace_flags             INT            COMMENT 'trace flags',\n");
-        sql.append("    attributes              VARCHAR(65533) COMMENT 'log attributes json',\n");
-        sql.append("    resource                VARCHAR(65533) COMMENT 'resource json',\n");
-        sql.append("    instrumentation_scope   VARCHAR(").append(config.strColumnMaxLength())
-                .append(") COMMENT 'instrumentation scope json',\n");
-        sql.append("    dropped_attributes_count INT           COMMENT 'dropped attributes count'\n");
-        sql.append(") DUPLICATE KEY(time_unix_nano, trace_id, span_id, event_time)\n");
-
-        if (config.enablePartition()) {
-            sql.append("PARTITION BY RANGE(event_time) ()\n");
-            sql.append("DISTRIBUTED BY HASH(time_unix_nano) BUCKETS ").append(config.buckets()).append("\n");
-            sql.append("PROPERTIES (\n");
-            sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\",\n");
-            sql.append("    \"bloom_filter_columns\" = \"").append(LOG_BLOOM_FILTER_COLUMNS).append("\",\n");
-            sql.append("    \"dynamic_partition.enable\" = \"true\",\n");
-            sql.append("    \"dynamic_partition.time_unit\" = \"").append(config.partitionTimeUnit()).append("\",\n");
-            sql.append("    \"dynamic_partition.end\" = \"").append(config.partitionFutureDays()).append("\",\n");
-            sql.append("    \"dynamic_partition.prefix\" = \"p\",\n");
-            sql.append("    \"dynamic_partition.buckets\" = \"").append(config.buckets()).append("\",\n");
-            sql.append("    \"dynamic_partition.history_partition_num\" = \"")
-                    .append(config.partitionRetentionDays()).append("\"\n");
-            sql.append(")");
-        } else {
-            sql.append("DISTRIBUTED BY HASH(time_unix_nano) BUCKETS ").append(config.buckets()).append("\n");
-            sql.append("PROPERTIES (\n");
-            sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\",\n");
-            sql.append("    \"bloom_filter_columns\" = \"").append(LOG_BLOOM_FILTER_COLUMNS).append("\"\n");
-            sql.append(")");
-        }
-        return sql.toString();
     }
 
     /**
