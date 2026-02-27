@@ -1,0 +1,54 @@
+<div class="container">
+  <header-i18n showLangText="false" class="langs"></header-i18n>
+  <div class="wrap" style="display: flex; flex-direction: column">
+    <div class="top">
+      <div class="head">
+        <img class="logo" src="./assets/brand.svg" alt="" />
+      </div>
+      <div class="desc">{{ 'app.passport.desc' | i18n }}</div>
+    </div>
+    <div nz-row [nzGutter]="16">
+      <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 10, offset: 2 }">
+        <div class="-inner-content; mobile-hide" style="margin-left: 10%">
+          <div style="margin-top: 10px; font-weight: bolder; font-size: xxx-large; color: white">
+            {{ 'app.passport.intro-1' | i18n }}<br />{{ 'app.passport.intro-2' | i18n }}
+          </div>
+          <nz-divider></nz-divider>
+          <div style="margin-top: 15px; font-weight: normal; font-size: medium; color: white">
+            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+            {{ 'about.point.1' | i18n }}
+            <br />
+            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+            {{ 'about.point.2' | i18n }}
+            <br />
+            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+            {{ 'about.point.3' | i18n }}
+            <br />
+            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+            {{ 'about.point.4' | i18n }}
+            <br />
+            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+            {{ 'about.point.5' | i18n }}
+            <br />
+            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+            {{ 'about.point.6' | i18n }}
+            <br />
+          </div>
+          <nz-divider></nz-divider>
+        </div>
+      </div>
+      <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 12 }">
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+    <global-footer style="border-top: 1px solid #d692e3; margin-top: auto">
+      <div style="margin-top: 30px">
+        Apache HertzBeat™ {{ version }}<br />
+        Copyright &copy; {{ currentYear }}
+        <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat™</a>
+        <br />
+        Licensed under the Apache License, Version 2.0
+      </div>
+    </global-footer>
+  </div>
+</div>

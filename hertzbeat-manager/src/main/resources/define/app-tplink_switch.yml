@@ -1,0 +1,462 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: network
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: tplink_switch
+# The monitoring i18n name
+name:
+  zh-CN: TP-LINK通用交换机
+  en-US: TP-LINK Switch
+  ja-JP: TP-LINKスイッチングハブ
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 协议</a> 对 TP-LINK交换机 的通用指标(可用性，系统信息，端口流量等)进行采集监控。<br>您可以点击 “<i>新建 TP-LINK通用交换机</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring TP-LINK Switch general performance metrics. <br>You can click the "<i>New TP-LINK Switch</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 協議</a> 對 TP-LINK交換機 的通用指標(可用性，系統信息，端口流量等)進行采集監控。<br>您可以點擊 “<i>新建 TP-LINK通用交換機</i>” 並進行配置SNMP相關參數添加，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP プロトコルを介して</a> TP-LINKスイッチングハブの一般的なメトリクスを監視します。<br>「<i>新規 TP-LINKスイッチングハブ</i>」をクリックしてSNMPなどのパラメタを設定した後、新規することができます。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/tplink_switch
+  en-US: https://hertzbeat.apache.org/docs/help/tplink_switch
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+      ja-JP: 目標ホスト
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+      ja-JP: ポート
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 161
+  # field-param field key
+  - field: snmpVersion
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP 版本
+      en-US: SNMP Version
+      ja-JP: SNMPバージョン
+    # type-param field type(radio mapping the html radio tag)
+    type: radio
+    # required-true or false
+    required: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: SNMPv1
+        value: 0
+      - label: SNMPv2c
+        value: 1
+      - label: SNMPv3
+        value: 3
+  # field-param field key
+  - field: community
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP 团体字
+      en-US: SNMP Community
+      ja-JP: SNMPコミュニティ
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 100
+    # required-true or false
+    required: false
+    # param field input placeholder
+    placeholder: 'Snmp community for v1 v2c'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 0
+        - 1
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP username
+      en-US: SNMP username
+      ja-JP: SNMPユーザー名
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # param field input placeholder
+    placeholder: 'Snmp username for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+  # field-param field key
+  - field: contextName
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP contextName
+      en-US: SNMP contextName
+      ja-JP: SNMPコンテキスト名
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 100
+    # required-true or false
+    required: false
+    # param field input placeholder
+    placeholder: 'Snmp contextName for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+    # field-param field key
+  - field: authPassphrase
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP authPassword
+      en-US: SNMP authPassword
+      ja-JP: SNMP認証パスワード
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 100
+    # required-true or false
+    required: false
+    # param field input placeholder
+    placeholder: 'Snmp authPassword for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+    # field-param field key
+  - field: authPasswordEncryption
+    # name-param field display i18n name
+    name:
+      zh-CN: authPassword 加密方式
+      en-US: authPassword Encryption
+      ja-JP: 認証暗号
+    # type-param field type(radio mapping the html radio tag)
+    type: radio
+    # required-true or false
+    required: false
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: MD5
+        value: 0
+      - label: SHA1
+        value: 1
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+    # field-param field key
+  - field: privPassphrase
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP privPassphrase
+      en-US: SNMP privPassphrase
+      ja-JP: SNMPパスワードフレーズ
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 100
+    # required-true or false
+    required: false
+    # param field input placeholder
+    placeholder: 'Snmp authPassword for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+    # field-param field key
+  - field: privPasswordEncryption
+    # name-param field display i18n name
+    name:
+      zh-CN: privPassword 加密方式
+      en-US: privPassword Encryption
+      ja-JP: パスワードの暗号
+    # type-param field type(radio mapping the html radio tag)
+    type: radio
+    # required-true or false
+    required: false
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: DES
+        value: 0
+      - label: AES128
+        value: 1
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+    # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,100000]'
+    # required-true or false
+    required: false
+    # hide-is hide this field and put it in advanced layout
+    hide: true
+    # default value
+    defaultValue: 6000
+# collect metrics config list
+metrics:
+  # metrics - system
+  - name: system
+    i18n:
+      zh-CN: 系统信息
+      en-US: System Info
+      ja-JP: システム情報
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: name
+        type: 1
+        i18n:
+          zh-CN: 主机名称
+          en-US: Host Name
+          ja-JP: ホスト名
+      - field: descr
+        type: 1
+        i18n:
+          zh-CN: 描述信息
+          en-US: Description
+          ja-JP: 説明
+      - field: uptime
+        type: 1
+        i18n:
+          zh-CN: 运行时长
+          en-US: Uptime
+          ja-JP: アップタイム
+      - field: location
+        type: 1
+        i18n:
+          zh-CN: 位置
+          en-US: Location
+          ja-JP: 位置
+      - field: contact
+        type: 1
+        i18n:
+          zh-CN: 联系人
+          en-US: Contact
+          ja-JP: 連絡先
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+          ja-JP: 応答時間
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: snmp
+    # the config content when protocol is snmp
+    snmp:
+      # server host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # server port
+      port: ^_^port^_^
+      # snmp username
+      username: ^_^username^_^
+      # snmp authPassphrase
+      authPassphrase: ^_^authPassphrase^_^
+      # snmp privPassphrase
+      privPassphrase: ^_^privPassphrase^_^
+      # snmp privPasswordEncryption
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      # snmp authPasswordEncryption
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      # contextName
+      contextName: ^_^contextName^_^
+      # snmp connect timeout
+      timeout: ^_^timeout^_^
+      # snmp community
+      community: ^_^community^_^
+      # snmp version
+      version: ^_^snmpVersion^_^
+      # snmp operation: get, walk
+      operation: get
+      # metrics oids: metric_name - oid_value
+      oids:
+        name: 1.3.6.1.2.1.1.5.0
+        descr: 1.3.6.1.2.1.1.1.0
+        uptime: 1.3.6.1.2.1.1.3.0
+        location: 1.3.6.1.2.1.1.6.0
+        contact: 1.3.6.1.2.1.1.4.0
+
+  - name: interfaces
+    i18n:
+      zh-CN: 接口详情
+      en-US: Interfaces Detail
+      ja-JP: ネットワークカード詳細
+    priority: 1
+    fields:
+      - field: index
+        type: 1
+        i18n:
+          zh-CN: 编号
+          en-US: Index
+          ja-JP: 番号
+      - field: descr
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 接口名称
+          en-US: Interface Name
+          ja-JP: ネットワークカード名
+      - field: mtu
+        type: 0
+        unit: 'byte'
+        i18n:
+          zh-CN: MTU
+          en-US: MTU
+          ja-JP: MTU
+      - field: speed
+        type: 0
+        unit: 'MB/s'
+        i18n:
+          zh-CN: 接口速率
+          en-US: Interface Speed
+          ja-JP: ネットワークカード速度
+      - field: in_octets
+        type: 0
+        unit: 'MByte'
+        i18n:
+          zh-CN: 入流量
+          en-US: In Octets
+          ja-JP: 受信されたバイト数
+      - field: in_discards
+        type: 0
+        i18n:
+          zh-CN: 入丢包数
+          en-US: In Discards
+          ja-JP: 受信されたパケットのロス数
+      - field: in_errors
+        type: 0
+        i18n:
+          zh-CN: 入错包数
+          en-US: In Errors
+          ja-JP: 受信異常パケット数
+      - field: out_octets
+        type: 0
+        unit: 'MByte'
+        i18n:
+          zh-CN: 出流量
+          en-US: Out Octets
+          ja-JP: 転送されたバイト数
+      - field: out_discards
+        type: 0
+        i18n:
+          zh-CN: 出丢包数
+          en-US: Out Discards
+          ja-JP: 転送されたパケットのロス数
+      - field: out_errors
+        type: 0
+        i18n:
+          zh-CN: 出错包数
+          en-US: Out Errors
+          ja-JP: 転送異常パケット数
+      - field: admin_status
+        type: 1
+        i18n:
+          zh-CN: 配置状态
+          en-US: Config Status
+          ja-JP: 設定ステータス
+      - field: oper_status
+        type: 1
+        i18n:
+          zh-CN: 当前状态
+          en-US: Current Status
+          ja-JP: 現在のステータス
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - ifIndex
+      - ifDescr
+      - ifMtu
+      - ifSpeed
+      - ifInOctets
+      - ifInDiscards
+      - ifInErrors
+      - ifOutOctets
+      - ifOutDiscards
+      - ifOutErrors
+      - ifAdminStatus
+      - ifOperStatus
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - index=ifIndex
+      - descr=ifDescr
+      - mtu=ifMtu
+      - speed=ifSpeed / 1000 / 1000
+      - in_octets=ifInOctets / 1000 / 1000
+      - in_discards=ifInDiscards
+      - in_errors=ifInErrors
+      - out_octets=ifOutOctets / 1000 / 1000
+      - out_discards=ifOutDiscards
+      - out_errors=ifOutErrors
+      - admin_status=ifAdminStatus
+      - oper_status=ifOperStatus
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      authPassphrase: ^_^authPassphrase^_^
+      privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      contextName: ^_^contextName^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^snmpVersion^_^
+      operation: walk
+      oids:
+        ifIndex: 1.3.6.1.2.1.2.2.1.1
+        ifDescr: 1.3.6.1.2.1.2.2.1.2
+        ifMtu: 1.3.6.1.2.1.2.2.1.4
+        ifSpeed: 1.3.6.1.2.1.2.2.1.5
+        ifInOctets: 1.3.6.1.2.1.2.2.1.10
+        ifInDiscards: 1.3.6.1.2.1.2.2.1.13
+        ifInErrors: 1.3.6.1.2.1.2.2.1.14
+        ifOutOctets: 1.3.6.1.2.1.2.2.1.16
+        ifOutDiscards: 1.3.6.1.2.1.2.2.1.19
+        ifOutErrors: 1.3.6.1.2.1.2.2.1.20
+        ifAdminStatus: 1.3.6.1.2.1.2.2.1.7
+        ifOperStatus: 1.3.6.1.2.1.2.2.1.8

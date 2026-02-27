@@ -1,0 +1,62 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: DOC CI
+
+on:
+  push:
+    branches: [ master, dev, action* ]
+    paths:
+      - 'home/**'
+  pull_request:
+    branches: [ master, dev ]
+    paths:
+      - 'home/**'
+
+jobs:
+  docs-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Check Markdown
+        uses: DavidAnson/markdownlint-cli2-action@992badcdf24e3b8eb7e87ff9287fe931bcb00c6e
+        with:
+          globs: './home/**/*.md'
+
+      - name: Check filenames
+        run: python ./script/ci/docs/check_file_name.py ./script/ci/docs/check_file_name.json
+
+      - name: Dead Link Check
+        run: |
+          sudo npm install -g markdown-link-check@3.8.7
+          find ./home -name "*.md" > all_md_files.txt
+          grep -vFf ./script/ci/exclude_files.txt all_md_files.txt > to_check.txt
+          xargs -P 8 -a to_check.txt -I{} markdown-link-check -c ./script/ci/link_check.json -q "{}"
+
+      - name: NPM INSTALL
+        working-directory: home
+        run: npm install
+
+      - name: NPM BUILD
+        working-directory: home
+        run: npm run build

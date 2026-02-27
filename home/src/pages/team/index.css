@@ -1,0 +1,220 @@
+/* Derived from https://github.com/apache/streampark-website/tree/dev/src/pages/team */
+.team_page {
+    margin: 0 auto;
+    max-width: 1140px;
+    padding: 0 20px;
+    width: 100%;
+}
+.team_page a {
+    text-decoration: none;
+}
+.team_page .team_title {
+    font-size: 25px;
+    font-weight: 500;
+    margin-top: 50px;
+}
+.team_page .team_desc {
+    margin-bottom: 40px;
+}
+.team_page .team_indent {
+    line-height: 40px;
+}
+.team_page .desc {
+    font-size: 1rem;
+}
+.team_page .character_list {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-column-gap: 15px;
+    grid-row-gap: 15px;
+    padding: 20px 0 0px;
+}
+.team_page .character_list .character_item {
+    border: 1px solid rgba(205, 221, 250, 0.8);
+    background-color: rgba(205, 222, 234, 0.2);
+    box-shadow: 0 3px 5px rgb(47 85 26.5%);
+    border-radius: 2px;
+    min-width: 0;
+    padding: 0 10px 5px;
+    margin: 40px 0 42px 0;
+}
+.team_page .character_list .character_item .character_avatar {
+    width: 120px;
+    height: 120px;
+    background: #D8D8D8;
+    display: inline-block;
+    border-radius: 50%;
+    border: 5px solid rgba(255, 255, 255, 0.08);
+    margin: -4rem auto -0.5rem;
+}
+.team_page .character_list .character_item .character_name {
+    line-height: 36px;
+    font-size: 15px;
+    white-space: nowrap;
+    font-weight: 400;
+    overflow: hidden;
+    background-color: #fff;
+    margin-top: 20px;
+    border-radius: 18px;
+    text-overflow: ellipsis;
+    border: 1px solid rgba(205, 221, 250, 0.6);
+    box-shadow: 0 3px 5px rgb(47 85 42.4%);
+}
+.team_page .character_list .character_item .character_id {
+    color: #333;
+    line-height: 36px;
+    font-size: 12px;
+    white-space: nowrap;
+    font-weight: 400;
+    overflow: hidden;
+    border-radius: 18px;
+    background-color: #fff;
+    text-overflow: ellipsis;
+    border: 1px solid rgba(205, 221, 250, 0.6);
+    box-shadow: 0 3px 5px rgb(47 85 42.4%);
+}
+.team_page .character_list .character_item .character_id .githubId {
+    color: #666;
+    margin-right: 2px;
+}
+.team_page .character_list .character_item .character_link {
+    color: rgba(15, 18, 34, 0.65);
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.team-row {
+    --bs-gutter-x: 1.5rem;
+    --bs-gutter-y: 0;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    margin-top: calc(-1 * var(--bs-gutter-y));
+    margin-right: calc(-0.5 * var(--bs-gutter-x));
+    margin-left: calc(-0.5 * var(--bs-gutter-x));
+}
+.team-box {
+    width: 20% !important;
+    padding: 12px;
+}
+.team-user-img {
+    width: 80px;
+    border-radius: 50%;
+    border: 5px solid #fff;
+    box-shadow: 0 0.375rem 1.5rem 0 rgba(87, 96, 113, 0.125) !important;
+}
+[data-theme="dark"] .team-user-img {
+    border: 5px solid #95999c;
+}
+.hover-top-in .hover-top--in {
+    transition: ease-in-out all 0.35s;
+    position: relative;
+    top: 0;
+}
+.hover-top-in:hover .hover-top--in {
+    top: -10px;
+}
+.bg-team {
+    margin-top: -1.5rem !important;
+    padding: 2.5rem 1rem 0.5rem 1rem;
+    background-color: #ffffff !important;
+    border-radius: 0.75rem;
+    box-shadow: 0 0.375rem 1.5rem 0 rgba(87, 96, 113, 0.125) !important;
+}
+.team-link {
+    background-color: #fff;
+    border-radius: 50%;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 75%;
+    line-height: normal;
+    margin-right: 0.25rem;
+}
+.team-link .github-icon {
+    width: 20px;
+    height: 20px;
+    color: #fff;
+}
+[data-theme="dark"] .team-link {
+    background-color: #95999c;
+}
+[data-theme="dark"] .bg-team {
+    background-color: #0e1114 !important;
+}
+.team-name {
+    font-size: 1rem;
+}
+.contributor-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+.contributor-column {
+    flex: 0 0 calc((100% - 7 * 12px) / 8);
+    display: flex;
+    flex-direction: column;
+    padding: 12px 0;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    border: 1px solid #dfdfdf;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.contributor-avatar {
+    width: 64px;
+    height: 64px;
+    margin: 0 0;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0.375rem 1.5rem 0 rgba(87, 96, 113, 0.125);
+}
+.contributor-name, .contributor-type {
+    width: 100%;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    padding:6px 8px 0 6px;
+}
+.contributor-name a {
+    min-width: 0;
+}
+[data-theme="dark"] .contributor-column {
+    background-color: #0e1114;
+    border: 1px solid #0e1114;
+}
+@media (min-width: 1440px) {
+    .team-page {
+        max-width: 1140px;
+    }
+    .contributor-column {
+        flex: 0 0 calc((100% - 7 * 12px) / 8);
+    }
+}
+@media (max-width: 768px) {
+    .contributor-column {
+        flex: 0 0 calc((100% - 3 * 12px) / 4);
+    }
+    .team-box {
+        width: 50% !important;
+    }
+}
+@media (max-width: 480px) {
+    .contributor-column {
+        flex: 0 0 calc((100% - 1 * 12px) / 2);
+    }
+}

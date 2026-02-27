@@ -1,0 +1,169 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<main>
+  <div
+    class="tp-breadcrumb__area fix tp-breadcrumb-height"
+    style="background-image: url('../../../../assets/svg/breadcrumb.svg');height: 250px"
+  >
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <div class="tp-breadcrumb__content text-center z-index-5">
+            <div class="tp-breadcrumb__list">
+              <span><a href="#">Apache </a></span>
+              <span class="dvdr">.</span>
+              <span>HertzBeat</span>
+            </div>
+            <h3 class="tp-breadcrumb__title"
+              ><span class="p-relative z-index-5">
+                个人
+                <span class="tp-title-shape">
+                  <img src="assets/svg/title-line.svg">
+                </span>
+              </span>
+              中心
+            </h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tp-service-details-area pt-xxl-4 pb-xxl-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-2">
+          <div class="tp-service-widget">
+            <div class="tp-service-widget-item mb-4">
+              <div class="tp-service-widget-tab">
+                <ul>
+                  <li
+                    ><a href="javascript:">总览 <i class="fa-regular fa-arrow-right-long"></i></a
+                  ></li>
+                  <li
+                    ><a href="/user-center/assets">资产 <i class="fa-regular fa-arrow-right-long"></i></a
+                  ></li>
+                  <li
+                    ><a href="/user-center/star">收藏 <i class="fa-regular fa-arrow-right-long"></i></a
+                  ></li>
+                  <li
+                    ><a class="active" href="javascript:">上传 <i class="fa-regular fa-arrow-right-long"></i></a
+                  ></li>
+                  <li
+                    ><a href="javascript:">通知 <i class="fa-regular fa-arrow-right-long"></i></a
+                  ></li>
+                  <li
+                    ><a href="javascript:">设置 <i class="fa-regular fa-arrow-right-long"></i></a
+                  ></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-10">
+          <div class="tp-service-contact-form"
+               style="background-image: url('../../../../assets/svg/upload-bg.svg')">
+            <h6>新建模版</h6>
+            <span>按照规定格式上传自定义模版吧！</span>
+            <form nz-form>
+              <nz-form-item>
+                <nz-form-label [nzSpan]="2">模版名称</nz-form-label>
+                <nz-form-control
+                  [nzValidateStatus]="error"
+                  [nzSpan]="24"
+                  nzErrorTip="不能具备特殊字符"
+                >
+                  <input nz-input [(ngModel)]="templateInfo.name" name="name" />
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-form-label [nzSpan]="2">模版类别</nz-form-label>
+                <nz-form-control [nzValidateStatus]="error" [nzSpan]="24">
+                  <nz-select nzShowSearch nzAllowClear nzPlaceHolder="请选择模版类别"
+                             nzSize="large" [(ngModel)]="templateInfo.categoryId" name="categorySelect">
+                    <nz-option *ngFor="let temp of categoryList" [nzLabel]="temp.label" [nzValue]=temp.value></nz-option>
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-form-label [nzSpan]="2">模版标签</nz-form-label>
+                <nz-form-control
+                  [nzSpan]="24"
+                  [nzValidateStatus]="error"
+                >
+                  <input nz-input disabled [ngModel]="'该功能开发中'" name="tag" />
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-form-label [nzSpan]="2">首版版本号</nz-form-label>
+                <nz-form-control [nzSpan]="24" [nzValidateStatus]="error">
+                  <input nz-input [(ngModel)]="templateInfo.currentVersion" name="currentVersion" />
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-form-label [nzSpan]="2">模版描述</nz-form-label>
+                <nz-form-control
+                  [nzSpan]="24"
+                >
+                        <textarea nz-input placeholder="请对该模版进行简单描述" [nzAutosize]="{ minRows: 3, maxRows: 5 }"
+                                  [(ngModel)]="templateInfo.description" name="description"></textarea>
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-form-label [nzSpan]="2">首版描述</nz-form-label>
+                <nz-form-control
+                  [nzSpan]="24"
+                >
+                        <textarea nz-input placeholder="请对该模版进行简单描述" [nzAutosize]="{ minRows: 3, maxRows: 5 }"
+                                  [(ngModel)]="templateInfo.descriptionVersion" name="descriptionVersion"></textarea>
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-form-label [nzSpan]="2">首版文件</nz-form-label>
+                <nz-form-control [nzSpan]="48">
+                  <nz-upload
+                    nzType="drag"
+                    nzAccept=".yml"
+                    [nzAction]="'template/localFileUpload'"
+                    [nzLimit]="1"
+                    [nzMultiple]="true"
+                    [(nzFileList)]="fileList"
+                    (nzChange)="handleChange($event)"
+                    [nzBeforeUpload]="beforeUpload"
+                    [nzShowUploadList]="true"
+                  >
+                    <p class="ant-upload-drag-icon">
+                      <span nz-icon nzType="inbox"></span>
+                    </p>
+                    <p class="ant-upload-text">点击该区域上传文件</p>
+                  </nz-upload>
+                </nz-form-control>
+              </nz-form-item>
+              <div class="tp-service-contact-btn mt-4 z-index-5">
+                <button type="button" class="tp-main-btn w-100" (click)="uploadTemplate()">上传</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

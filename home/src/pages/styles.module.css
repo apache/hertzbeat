@@ -1,0 +1,239 @@
+/* stylelint-disable docusaurus/copyright-header */
+
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.section {
+    padding: 4rem 0;
+    width: 100%;
+    background: var(--md-surface);
+}
+
+.sectionRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.heroBanner {
+    padding: 3rem 0 5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+@media screen and (max-width: 966px) {
+    .heroBanner {
+        padding: 2rem 1rem 4rem;
+    }
+}
+
+.swiperContainer {
+    position: relative;
+    background: linear-gradient(180deg,
+        var(--md-surface) 0%,
+        var(--md-surface-container) 100%);
+    padding: 3rem 0;
+    overflow: hidden;
+}
+
+.swiperInner {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.swiperContainer::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: var(--md-secondary-container);
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.2;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.swiperContainer .swiper {
+    position: relative;
+    z-index: 1;
+    padding: 1rem 0;
+}
+
+.swiperContainer .swiper-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    width: 100%;
+}
+
+.swiperContainer .swiper-wrapper {
+    display: flex;
+    width: 100%;
+}
+
+.swiperContainer .swiper-slide img {
+    width: 100%;
+    max-width: 1200px;
+    height: auto;
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all var(--md-transition-medium);
+}
+
+.swiperContainer .swiper-slide img:hover {
+    box-shadow: 0 8px 30px rgba(103, 80, 164, 0.15);
+    transform: scale(1.01);
+}
+
+@media (max-width: 768px) {
+    .swiperContainer {
+        padding: 2rem 0;
+    }
+}
+
+.featuresSection {
+    background: var(--md-surface);
+    padding: 5rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.featuresSection::before {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: var(--md-tertiary-container);
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.15;
+    top: 20%;
+    right: -100px;
+    pointer-events: none;
+}
+
+.featuresRow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 996px) {
+    .featuresRow {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 650px) {
+    .featuresRow {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.featureCard {
+    background: var(--md-surface-container);
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: all var(--md-transition-medium);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.featureCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg,
+        var(--md-primary) 0%,
+        var(--md-tertiary) 100%);
+    opacity: 0;
+    transition: opacity var(--md-transition-medium);
+}
+
+.featureCard:hover {
+    box-shadow: 0 8px 24px rgba(103, 80, 164, 0.15);
+    transform: translateY(-4px) scale(1.02);
+    background: var(--md-surface-container-low);
+}
+
+.featureCard:hover::before {
+    opacity: 1;
+}
+
+.featureCard:active {
+    transform: translateY(-2px) scale(1.01);
+}
+
+.featureTitle {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--md-on-surface);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+}
+
+.featureDescription {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--md-on-surface-variant);
+    margin: 0;
+}
+
+.featureDescription code {
+    background: var(--md-surface-container-high);
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.9em;
+    color: var(--md-primary);
+    font-family: 'Courier New', monospace;
+}
+
+@media (max-width: 768px) {
+    .featureCard {
+        padding: 1.5rem;
+        border-radius: 20px;
+    }
+
+    .featureTitle {
+        font-size: 1.2rem;
+    }
+
+    .featureDescription {
+        font-size: 0.95rem;
+    }
+}

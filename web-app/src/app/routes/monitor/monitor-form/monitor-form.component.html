@@ -1,0 +1,307 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<nz-spin [nzSpinning]="loading" [nzTip]="loadingTip" nzSize="large">
+  <div class="-inner-content">
+    <form nz-form #form="ngForm">
+      <nz-form-item>
+        <nz-form-control nzSpan="4" nzOffset="9" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            style="text-align: center"
+            [nzDropdownStyle]="{ textAlign: 'center' }"
+            [(ngModel)]="monitor.scrape"
+            name="scrape"
+            (ngModelChange)="onScrapeChange($event)"
+          >
+            <nz-option nzValue="static" [nzLabel]="'monitor.scrape.type.static' | i18n"></nz-option>
+            <nz-option nzValue="http_sd" [nzLabel]="'monitor.scrape.type.http_sd' | i18n"></nz-option>
+            <nz-option nzValue="nacos_sd" [nzLabel]="'monitor.scrape.type.nacos_sd' | i18n"></nz-option>
+            <nz-option nzValue="dns_sd" [nzLabel]="'monitor.scrape.type.dns_sd' | i18n"></nz-option>
+            <nz-option nzValue="eureka_sd" [nzLabel]="'monitor.scrape.type.eureka_sd' | i18n"></nz-option>
+            <nz-option nzValue="consul_sd" [nzLabel]="'monitor.scrape.type.consul_sd' | i18n"></nz-option>
+            <nz-option nzValue="zookeeper_sd" [nzLabel]="'monitor.scrape.type.zookeeper_sd' | i18n"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <ng-container *ngIf="monitor.scrape != 'static'">
+        <ng-container *ngFor="let sdPramDefine of sdDefines; let i = index">
+          <nz-form-item *ngIf="sdParams[i].display !== false">
+            <nz-form-label nzSpan="7" [nzRequired]="sdPramDefine.required" [nzFor]="sdPramDefine.field"
+              >{{ sdPramDefine.name }}
+            </nz-form-label>
+            <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+              <app-form-field
+                [item]="sdPramDefine"
+                [name]="sdPramDefine.field"
+                [(ngModel)]="sdParams[i].paramValue"
+                (ngModelChange)="
+                  sdPramDefine.type === 'boolean'
+                    ? onParamBooleanChanged($event, sdPramDefine.field)
+                    : sdPramDefine.type === 'radio'
+                    ? onDependChanged($event, sdPramDefine.field)
+                    : null
+                "
+              />
+            </nz-form-control>
+          </nz-form-item>
+        </ng-container>
+      </ng-container>
+
+      <nz-form-item *ngIf="monitor.scrape == 'static' && hostParam">
+        <nz-form-label nzSpan="7" [nzRequired]="true" [nzFor]="'host'">{{ hostName ? hostName : ('monitor.host' | i18n) }} </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-form-field
+            [item]="{
+              field: 'host',
+              type: 'text',
+              required: true,
+              placeholder: 'monitor.host.tip' | i18n
+            }"
+            [name]="'host'"
+            [(ngModel)]="hostParam.paramValue"
+            (ngModelChange)="onHostChange($event)"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzSpan="7" [nzRequired]="true" [nzFor]="'name'">{{ 'monitor.name' | i18n }} </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-form-field
+            [item]="{
+              field: 'name',
+              type: 'text',
+              required: true,
+              placeholder: 'monitor.name.tip' | i18n
+            }"
+            [name]="'name'"
+            [(ngModel)]="monitor.name"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-divider></nz-divider>
+
+      <ng-container *ngFor="let paramDefine of paramDefines; let i = index">
+        <nz-form-item *ngIf="params[i].display !== false && paramDefine.field !== 'host'">
+          <nz-form-label nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field">{{ paramDefine.name }} </nz-form-label>
+          <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+            <app-form-field
+              [item]="paramDefine"
+              [name]="paramDefine.field"
+              [(ngModel)]="params[i].paramValue"
+              (ngModelChange)="
+                paramDefine.type === 'boolean'
+                  ? onParamBooleanChanged($event, paramDefine.field)
+                  : paramDefine.type === 'radio'
+                  ? onDependChanged($event, paramDefine.field)
+                  : null
+              "
+            />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
+
+      <nz-collapse *ngIf="hasAdvancedParams" [nzGhost]="true" style="background: ghostwhite; margin-bottom: 24px">
+        <ng-template #extraColHeader>
+          <button style="margin-left: 40%" nz-button nzType="dashed" nz-tooltip [nzTooltipTitle]="'monitor.advanced.tip' | i18n">
+            <span>{{ 'monitor.advanced' | i18n }}</span>
+            <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+          </button>
+        </ng-template>
+        <nz-collapse-panel [nzHeader]="extraColHeader" [nzShowArrow]="false">
+          <ng-container *ngFor="let paramDefine of advancedParamDefines; let i = index">
+            <nz-form-item *ngIf="advancedParams[i].display !== false">
+              <nz-form-label nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
+                >{{ paramDefine.name }}
+              </nz-form-label>
+              <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+                <app-form-field [item]="paramDefine" [name]="paramDefine.field" [(ngModel)]="advancedParams[i].paramValue" />
+              </nz-form-control>
+            </nz-form-item>
+          </ng-container>
+        </nz-collapse-panel>
+      </nz-collapse>
+
+      <nz-form-item>
+        <nz-form-label nzSpan="7" [nzFor]="'collector'" [nzTooltipTitle]="'monitor.collector.tip' | i18n"
+          >{{ 'monitor.collector' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-form-field
+            [item]="{
+              field: 'collector',
+              type: 'collectors-selection'
+            }"
+            [extra]="{collectors}"
+            [name]="'collector'"
+            [(ngModel)]="collector"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzSpan="7" [nzFor]="'scheduleType'" [nzTooltipTitle]="'monitor.scheduleType.tip' | i18n"
+          >{{ 'monitor.scheduleType' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select [(ngModel)]="monitor.scheduleType" name="scheduleType" nzPlaceHolder="{{ 'monitor.scheduleType.tip' | i18n }}">
+            <nz-option nzValue="interval" [nzLabel]="'monitor.scheduleType.interval' | i18n"></nz-option>
+            <nz-option nzValue="cron" [nzLabel]="'monitor.scheduleType.cron' | i18n"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="monitor.scheduleType === 'interval'">
+        <nz-form-label nzSpan="7" [nzFor]="'intervals'" [nzTooltipTitle]="'monitor.intervals.tip' | i18n"
+          >{{ 'monitor.intervals' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-form-field
+            [item]="{
+              field: 'intervals',
+              type: 'intervals'
+            }"
+            [extra]="{ interval_type: monitor.app }"
+            [name]="'intervals'"
+            [(ngModel)]="monitor.intervals"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="monitor.scheduleType === 'cron'">
+        <nz-form-label nzSpan="7" [nzFor]="'cronExpression'" [nzTooltipTitle]="'monitor.cronExpression.tip' | i18n"
+          >{{ 'monitor.cronExpression' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            nz-input
+            [(ngModel)]="monitor.cronExpression"
+            name="cronExpression"
+            id="cronExpression"
+            placeholder="{{ 'monitor.cronExpression.tip' | i18n }}"
+            required
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzSpan="7" [nzFor]="'labels'" [nzTooltipTitle]="'label.bind.tip' | i18n">{{ 'label.bind' | i18n }} </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-form-field
+            [item]="{
+              field: 'labels',
+              type: 'label-selector'
+            }"
+            [extra]="{
+              labelKeys: labelKeys,
+              labelMap: labelMap,
+              labelIsCustom: labelIsCustom
+            }"
+            [name]="'labels'"
+            [(ngModel)]="monitor.labels"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzSpan="7" [nzFor]="'annotation'" [nzTooltipTitle]="'common.annotation.bind.tip' | i18n"
+          >{{ 'common.annotation.bind' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-form-field
+            [item]="{
+              field: 'annotations',
+              type: 'labels'
+            }"
+            [name]="'annotations'"
+            [(ngModel)]="monitor.annotations"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzSpan="7" [nzFor]="'description'" [nzTooltipTitle]="'monitor.description.tip' | i18n"
+          >{{ 'monitor.description' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-form-field
+            [item]="{
+              field: 'description',
+              type: 'textarea-limit'
+            }"
+            [name]="'description'"
+            [(ngModel)]="monitor.description"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-divider *ngIf="monitor.app === 'prometheus'"></nz-divider>
+      <!-- grafana is enabled -->
+      <nz-form-item *ngIf="monitor.app === 'prometheus'">
+        <nz-form-label nzSpan="7" nzFor="grafana" [nzTooltipTitle]="'monitor.grafana.enabled.tip' | i18n">
+          {{ 'monitor.grafana.enabled.label' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-switch [(ngModel)]="grafanaDashboard.enabled" name="grafana" id="grafana"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <!-- upload grafana dashboard json -->
+      <nz-form-item *ngIf="monitor.app === 'prometheus' && grafanaDashboard.enabled">
+        <nz-form-label nzSpan="7" nzFor="grafanaJson" [nzTooltipTitle]="'monitor.grafana.upload.tip' | i18n">
+          {{ 'monitor.grafana.upload.label' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-upload
+            nzName="file"
+            nzListType="text"
+            [nzShowUploadList]="false"
+            [nzMultiple]="false"
+            [nzLimit]="1"
+            [nzCustomRequest]="handleTemplateInput"
+            (nzChange)="handleTemplateInput($event)"
+          >
+            <button nz-button>
+              <i nz-icon nzType="upload"></i>
+              {{ 'monitor.grafana.upload.label' | i18n }}
+            </button>
+          </nz-upload>
+        </nz-form-control>
+      </nz-form-item>
+
+      <div nz-row>
+        <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 7 }" style="text-align: center">
+          <button
+            nz-button
+            nzType="primary"
+            type="submit"
+            nz-tooltip
+            [nzTooltipTitle]="'monitor.detect.tip' | i18n"
+            (click)="onDetect(form.form)"
+          >
+            {{ 'common.button.detect' | i18n }}
+          </button>
+          <button nz-button nzType="primary" type="submit" (click)="onSubmit(form.form)"> {{ 'common.button.ok' | i18n }} </button>
+          <button nz-button nzType="primary" type="reset" (click)="onCancel()"> {{ 'common.button.cancel' | i18n }} </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</nz-spin>

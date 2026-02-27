@@ -1,0 +1,108 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: llm
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: deepseek
+# The monitoring i18n name
+name:
+  zh-CN: Deepseek
+  en-US: Deepseek
+  ja-JP: Deepseek
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 Deepseek Api进行测量监控。<br>您可以点击 “<i>新建 Deepseek</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors Deepseek Api. You could click the "<i>New Deepseek</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對Deepseek Api進行量測監控。<br>您可以點擊“<i>Deepseek</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: Hertzbeat は Deepseek Apiを監視します。<br>「<i>新規 Deepseek</i>」をクリックしてパラメタを設定した後、新規することができます。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/deepseek
+  en-US: https://hertzbeat.apache.org/docs/help/deepseek
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: token
+    # name-param field display i18n name
+    name:
+      zh-CN: 会话密钥
+      en-US: Session Key
+      ja-JP: セッション鍵
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: true
+
+# collect metrics config list
+metrics:
+  # metrics - auth
+  - name: billing
+    i18n:
+      zh-CN: 计费
+      en-US: Billing
+      ja-JP: 料金
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: currency
+        type: 1
+        i18n:
+          zh-CN: 货币
+          en-US: Currency
+          ja-JP: 通貨
+      - field: total_balance
+        type: 0
+        i18n:
+          zh-CN: 可用余额
+          en-US: Available Balance
+          ja-JP: 利用可能残高
+      - field: granted_balance
+        type: 0
+        i18n:
+          zh-CN: 未过期的赠金余额
+          en-US: Unexpired Gift Balance
+          ja-JP: 有効期限内のギフト残高
+      - field: topped_up_balance
+        type: 0
+        i18n:
+          zh-CN: 充值的余额
+          en-US: Topped Up Balance
+          ja-JP: 残高
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: api.deepseek.com
+      # http port
+      port: 443
+      # http url
+      url: /user/balance
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: true
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: Bearer Token
+        bearerTokenToken: ^_^token^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: jsonPath
+      parseScript: '$.balance_infos.*'

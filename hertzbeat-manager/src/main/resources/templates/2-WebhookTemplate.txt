@@ -1,0 +1,53 @@
+{
+  "title": "🔔 HertzBeat Alert Notification",
+  "status": "${status!"UNKNOWN"}",
+  "commonLabels": {
+    <#if commonLabels?? && commonLabels.severity??>
+    "severity": "${commonLabels.severity?switch("critical", "❤️ Critical", "warning", "💛 Warning", "info", "💚 Info", "Unknown")}"<#if commonLabels.alertname??>,</#if>
+    </#if>
+    <#if commonLabels?? && commonLabels.alertname??>
+    "alertName": "${commonLabels.alertname}"
+    </#if>
+  },
+  "alerts": [
+    <#if alerts?? && alerts?size gt 0>
+    <#list alerts as alert>
+    {
+      "index": ${alert?index + 1},
+      "labels": {
+        <#if alert.labels?? && alert.labels?size gt 0>
+        <#list alert.labels?keys as key>
+        "${key}": "${alert.labels[key]?json_string}"<#if key?has_next>,</#if>
+        </#list>
+        </#if>
+      },
+      <#if alert.content?? && alert.content != "">
+      "content": "${alert.content?json_string}",
+      </#if>
+      "triggerTimes": ${alert.triggerTimes!0},
+      "startAt": "${((alert.startAt!0)?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}",
+      <#if alert.activeAt?? && alert.activeAt gt 0>
+      "activeAt": "${((alert.activeAt!0)?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}",
+      </#if>
+      <#if alert.endAt?? && alert.endAt gt 0>
+      "endAt": "${(alert.endAt?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}"<#if alert.annotations?? && alert.annotations?size gt 0>,</#if>
+      </#if>
+      <#if alert.annotations?? && alert.annotations?size gt 0>
+      "annotations": {
+        <#list alert.annotations?keys as key>
+        "${key}": "${alert.annotations[key]?json_string}"<#if key?has_next>,</#if>
+        </#list>
+      }
+      </#if>
+    }<#if alert?has_next>,</#if>
+    </#list>
+    </#if>
+  ],
+  "commonAnnotations": {
+    <#if commonAnnotations?? && commonAnnotations?size gt 0>
+    <#list commonAnnotations?keys as key>
+    "${key}": "${commonAnnotations[key]?json_string}"<#if key?has_next>,</#if>
+    </#list>
+    </#if>
+  }
+}

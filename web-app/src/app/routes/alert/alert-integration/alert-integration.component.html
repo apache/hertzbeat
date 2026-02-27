@@ -1,0 +1,85 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-help-message-show
+  [help_message_content]="'alert.help.integration' | i18n"
+  [guild_link]="'alert.help.integration.link' | i18n"
+  [module_name]="'menu.alert.integration'"
+  [icon_name]="'api'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<div class="alert-integration-container">
+  <div class="data-sources">
+    <h2>{{ 'alert.integration.source' | i18n }}</h2>
+    <div class="source-list">
+      <div
+        class="source-item"
+        *ngFor="let source of dataSources"
+        (click)="selectSource(source)"
+        [class.active]="selectedSource?.id === source.id"
+      >
+        <img [src]="source.icon" [alt]="source.name" />
+        <span>{{ source.name }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="doc-content">
+    <ng-container *ngIf="selectedSource">
+      <div style="display: flex; justify-content: space-between">
+        <h2>{{ selectedSource.name }}</h2>
+        <button [nzLoading]="generateLoading" nz-button nzType="primary" (click)="generateToken()" style="margin-right: 16px">{{
+          'alert.integration.token.new' | i18n
+        }}</button>
+      </div>
+      <markdown [data]="markdownContent"></markdown>
+    </ng-container>
+  </div>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzMaskClosable="false"
+  nzWidth="40%"
+  [nzTitle]="'alert.integration.token.title' | i18n"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="handleOk()"
+  [nzOkText]="'common.button.confirm' | i18n"
+  [nzCancelText]="null"
+>
+  <div *nzModalContent class="-inner-content">
+    <div>
+      <p>{{ 'alert.integration.token.desc' | i18n }}</p>
+    </div>
+    <div style="width: 100%">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 8px">
+        <button nz-button nzType="primary" (click)="copyToken()">
+          {{ 'common.button.copy' | i18n }}
+        </button>
+      </div>
+      <div style="padding: 12px; border: 1px solid; border-radius: 4px; word-wrap: break-word">
+        {{ token }}
+      </div>
+    </div>
+    <div style="text-align: center; font-weight: lighter; margin-top: 16px">
+      <p>{{ 'alert.integration.token.notice' | i18n }}</p>
+    </div>
+  </div>
+</nz-modal>

@@ -1,0 +1,153 @@
+/* You can add global styles to this file, and also import other style files */
+@media screen and (max-width: 768px) {
+  .mobile-hide {
+    display: none;
+  }
+}
+
+/* Modern UI Enhancements */
+body {
+  background-color: #f5f7fa;
+  transition: background-color 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  font-weight: 400;
+}
+
+[data-theme='dark'] body {
+  background-color: #141414;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced card styling */
+.ant-card {
+  border-radius: 6px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  transition: all 0.3s ease !important;
+}
+
+.ant-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-2px) !important;
+}
+
+[data-theme='dark'] .ant-card {
+  background-color: #1f1f1f !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Enhanced button styling */
+.ant-btn {
+  transition: all 0.3s ease !important;
+}
+
+.ant-btn:hover {
+  transform: translateY(-1px) !important;
+}
+
+/* Enhanced table styling */
+.ant-table {
+  border-radius: 6px !important;
+  overflow: hidden !important;
+}
+
+.ant-table-thead > tr > th {
+  background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%) !important;
+  border-bottom: 2px solid #e8e8e8 !important;
+}
+
+[data-theme='dark'] .ant-table-thead > tr > th {
+  background: linear-gradient(135deg, #262626 0%, #1f1f1f 100%) !important;
+  border-bottom-color: #434343 !important;
+}
+
+/* Enhanced modal styling */
+.ant-modal-content {
+  border-radius: 6px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Enhanced form styling */
+.ant-form-item {
+  margin-bottom: 20px !important;
+}
+
+.ant-input,
+.ant-input-number,
+.ant-select-selector {
+  transition: all 0.3s ease !important;
+}
+
+.ant-input:focus,
+.ant-input-number:focus,
+.ant-select-focused .ant-select-selector {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(63, 81, 181, 0.15) !important;
+}
+
+/* Enhanced pagination styling */
+.ant-pagination-item {
+  transition: all 0.3s ease !important;
+}
+
+.ant-pagination-item:hover {
+  transform: translateY(-1px) !important;
+}
+
+/* Enhanced tag styling */
+.ant-tag {
+  transition: all 0.3s ease !important;
+}
+
+.ant-tag:hover {
+  transform: translateY(-1px) !important;
+}
+
+/* Loading animation enhancement */
+.ant-spin-dot {
+  animation: antSpinMove 1s infinite linear !important;
+}
+
+@keyframes antSpinMove {
+  to {
+    opacity: 1;
+    transform: rotate(405deg);
+  }
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

@@ -1,0 +1,157 @@
+@import '@delon/theme/index';
+@import '../../../styles/theme.less';
+:host ::ng-deep {
+  .ant-timeline {
+    .ant-timeline-label {
+      left: 20%;
+      width: calc(20% - 12px);
+    }
+    .ant-timeline-item-tail {
+      left: 20%;
+    }
+    .ant-timeline-item-head {
+      left: 20%;
+    }
+    .ant-timeline-item-label {
+      width: calc(20% - 12px);
+    }
+    .ant-timeline-item-left {
+      .ant-timeline-item-content {
+        left: calc(20% - 4px);
+        width: calc(80% - 14px);
+      }
+    }
+  }
+  .ant-card-head-title {
+    padding: 6px 0px;
+  }
+  .ant-card-head {
+    min-height: 24px;
+    padding: 0 12px;
+    font-weight: 400;
+    font-size: 12px;
+  }
+  .ant-card-body {
+    padding: 24px 24px 6px 24px;
+  }
+  .ant-timeline-item {
+    padding-bottom: 10px;
+  }
+  .tag-animation-delay {
+    cursor: pointer;
+  }
+  .ant-spin-nested-loading, .ant-spin-container {
+    height: 100%;
+  }
+  .timeline-card {
+    .ant-card {
+      display: flex;
+      flex-direction: column;
+      cursor: default!important;
+      .ant-card-head {
+        flex-shrink: 0;
+      }
+      .ant-card-body {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 12px;
+      }
+      .ant-timeline{
+        margin-top: 20px !important;
+      }
+    }
+  }
+  .dashboard-chart-card{
+    .ant-card-body {
+      padding: 10px !important;
+      height: inherit !important;
+    }
+  }
+  .dashboard-card-alert {
+    .ant-card-body {
+      padding: 20px 10px !important;
+    }
+  }
+  .dashboard-slider-tag{
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    padding:0 16px;
+  }
+  .slick-prev{
+    left: -12px;
+  }
+  .slick-next{
+    right: -12px;
+  }
+  .slick-prev,
+  .slick-next {
+    z-index:10;
+    &:before {
+      color: @primary-color !important;
+    }
+  }
+}
+
+[data-theme='dark'] {
+  :host ::ng-deep {
+    .ant-timeline {
+      .ant-timeline-label {
+        left: 20%;
+        width: calc(20% - 12px);
+      }
+      .ant-timeline-item-tail {
+        left: 20%;
+      }
+      .ant-timeline-item-head {
+        left: 20%;
+      }
+      .ant-timeline-item-label {
+        width: calc(20% - 12px);
+      }
+      .ant-timeline-item-left {
+        .ant-timeline-item-content {
+          left: calc(20% - 4px);
+          width: calc(80% - 14px);
+        }
+      }
+    }
+  }
+}
+
+[data-theme='compact'] {
+  :host ::ng-deep {
+    .ant-timeline {
+      .ant-timeline-label {
+        left: 20%;
+        width: calc(20% - 12px);
+      }
+      .ant-timeline-item-tail {
+        left: 20%;
+      }
+      .ant-timeline-item-head {
+        left: 20%;
+      }
+      .ant-timeline-item-label {
+        width: calc(20% - 12px);
+      }
+      .ant-timeline-item-left {
+        .ant-timeline-item-content {
+          left: calc(20% - 4px);
+          width: calc(80% - 14px);
+        }
+      }
+    }
+  }
+}
+
+.dashboard-rounded{
+  border-radius: 6px !important;
+}
+
+.hoverCard {
+  &:hover {
+    transform: scale(101%);
+    transition: 0.2s;
+  }
+}

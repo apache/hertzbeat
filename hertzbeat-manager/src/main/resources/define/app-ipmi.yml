@@ -1,0 +1,216 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: server
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: ipmi
+# The monitoring i18n name
+name:
+  zh-CN: IPMI
+  en-US: IPMI
+  ja-JP: IPMI
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对支持 IPMI 服务的服务器进行测量监控。<br>您可以点击 “<i>新建 IPMI</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitoring servers supporting IPMI services. You could click the "<i>New IPMI</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對支援 IPMI 服務的伺服器進行測量監控。<br>您可以點擊“<i>IPMI</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: Hertzbeat はIPMIサービスをサポートするサーバを監視します。<br>「<i>新規 IPMI</i>」をクリックしてパラメタを設定した後、新規することができます。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/ipmi
+  en-US: https://hertzbeat.apache.org/docs/help/ipmi
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+      ja-JP: 目標ホスト
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+      ja-JP: ポート
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 623
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+      ja-JP: ユーザー名
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+      ja-JP: パスワード
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+# collect metrics config list
+metrics:
+  # metrics - cpu
+  - name: Chassis
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: system_power
+        type: 1
+        i18n:
+          zh-CN: 系统电源状态
+          en-US: System Power
+          ja-JP: システム電源
+      - field: power_overload
+        type: 1
+        i18n:
+          zh-CN: 电源过载
+          en-US: Power Overload
+          ja-JP: オーバーロード
+      - field: power_interlock
+        type: 1
+        i18n:
+          zh-CN: 电源互锁
+          en-US: Power Interlock
+          ja-JP: インターロック
+      - field: power_fault
+        type: 1
+        i18n:
+          zh-CN: 主电源故障
+          en-US: Main Power Fault
+          ja-JP: 主電源故障
+      - field: power_control_fault
+        type: 1
+        i18n:
+          zh-CN: 电源控制故障
+          en-US: Power Control Fault
+          ja-JP: 電源制御故障
+      - field: power_restore_policy
+        type: 1
+        i18n:
+          zh-CN: 电源恢复策略
+          en-US: Power Restore Policy
+          ja-JP: 電源復旧ポリシー
+      - field: last_power_event
+        type: 1
+        i18n:
+          zh-CN: 最后一次电源事件
+          en-US: Last Power Event
+          ja-JP: 最後の電源イベント
+      - field: fan_fault
+        type: 1
+        i18n:
+          zh-CN: 风扇故障
+          en-US: Cooling/Fan Fault
+          ja-JP: ファン故障
+      - field: drive_fault
+        type: 1
+        i18n:
+          zh-CN: 硬盘故障
+          en-US: Drive Fault
+          ja-JP: ドライブ故障
+      - field: front_panel_lockout_active
+        type: 1
+        i18n:
+          zh-CN: 前面板锁定
+          en-US: Front-Panel Lockout
+          ja-JP: フロントパネルのロックアウト
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ipmi
+    # the config content when protocol is ipmi
+    ipmi:
+      # ipmi host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # ipmi port
+      port: ^_^port^_^
+      # ipmi username
+      username: ^_^username^_^
+      # ipmi password
+      password: ^_^password^_^
+      # ipmi command type: Chassis | Sensor
+      type: Chassis
+  - name: Sensor
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: sensor_id
+        type: 1
+        i18n:
+          zh-CN: 传感器标识
+          en-US: Sensor ID
+          ja-JP: センサーID
+      - field: entity_id
+        type: 1
+        i18n:
+          zh-CN: 实体标识
+          en-US: Entity ID
+          ja-JP: エンティティID
+      - field: sensor_type
+        type: 1
+        i18n:
+          zh-CN: 传感器类型
+          en-US: Sensor Type
+          ja-JP: センサータイプ
+      - field: sensor_reading
+        type: 1
+        i18n:
+          zh-CN: 传感器读数
+          en-US: Sensor Reading
+          ja-JP: センサーの読み取り値
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ipmi
+    # the config content when protocol is ipmi
+    ipmi:
+      # ipmi host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # ipmi port
+      port: ^_^port^_^
+      # ipmi username
+      username: ^_^username^_^
+      # ipmi password
+      password: ^_^password^_^
+      # ipmi command type: Chassis | Sensor
+      type: Sensor

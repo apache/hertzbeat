@@ -1,0 +1,393 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-help-message-show
+  *ngIf="app != undefined"
+  [help_message_content]="'monitor.app.' + app + '.help' | i18n"
+  [guild_link]="'monitor.app.' + app + '.helpLink' | i18n"
+  [icon_name]="getAppIconName(app)"
+></app-help-message-show>
+<app-help-message-show
+  *ngIf="app == undefined"
+  [help_message_content]="'monitor.center.help' | i18n"
+  [guild_link]="'monitor.center.help.link' | i18n"
+  [module_name]="'menu.monitor.center'"
+  [icon_name]="'laptop'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<app-toolbar>
+  <ng-template #left>
+    <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
+    <button *ngIf="isDefaultListMenu || app == undefined" nz-button nzType="primary" (click)="onAppSwitchModalOpen()">
+      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+      {{ 'monitor.new-monitor' | i18n }}
+    </button>
+    <button *ngIf="app != undefined" nz-button nzType="primary">
+      <a routerLink="/monitors/new" [queryParams]="{ app: app }">
+        <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+        {{ 'monitor.new' | i18n }} {{ 'monitor.app.' + app | i18n }}
+      </a>
+    </button>
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      <span nz-icon nzType="ellipsis"></span>
+    </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item>
+          <button nz-button (click)="onEnableManageMonitors()" class="mobile-hide">
+            <i nz-icon nzType="play-circle" nzTheme="outline"></i>
+            {{ 'monitor.enable' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <button nz-button (click)="onCancelManageMonitors()" class="mobile-hide">
+            <i nz-icon nzType="pause-circle" nzTheme="outline"></i>
+            {{ 'monitor.cancel' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <button nz-button nzDanger (click)="onDeleteMonitors()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'monitor.delete-monitor' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <button nz-button (click)="onExportMonitors()">
+            <i nz-icon nzType="export" nzTheme="outline"></i>
+            {{ 'monitor.export' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <button nz-button (click)="onExportAllMonitors()">
+            <i nz-icon nzType="export" nzTheme="outline"></i>
+            {{ 'monitor.export-all' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <nz-upload nzAction="/monitors/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportMonitors($event)">
+            <button nz-button>
+              <i nz-icon nzType="import" nzTheme="outline"></i>
+              {{ 'monitor.import' | i18n }}
+            </button>
+          </nz-upload>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
+  </ng-template>
+  <ng-template #right>
+    <nz-select
+      class="mobile-hide"
+      nzAllowClear
+      [nzPlaceHolder]="'monitor.status' | i18n"
+      [(ngModel)]="filterStatus"
+      (ngModelChange)="onFilterSearchMonitors()"
+    >
+      <nz-option [nzLabel]="'monitor.status.all' | i18n" [nzValue]="9"></nz-option>
+      <nz-option [nzLabel]="'monitor.status.up' | i18n" [nzValue]="1"></nz-option>
+      <nz-option [nzLabel]="'monitor.status.down' | i18n" [nzValue]="2"></nz-option>
+      <nz-option [nzLabel]="'monitor.status.paused' | i18n" [nzValue]="0"></nz-option>
+    </nz-select>
+    <app-multi-func-input
+      *ngIf="isDefaultListMenu"
+      groupStyle="width: 120px;"
+      class="mobile-hide"
+      [readonly]="true"
+      [placeholder]="'monitor.search.app' | i18n"
+      [(value)]="app"
+      (click)="onSearchAppClicked()"
+      (valueChange)="onAppChanged()"
+    />
+    <app-multi-func-input
+      groupStyle="width: 120px;"
+      class="mobile-hide"
+      [placeholder]="'monitor.search.label' | i18n"
+      [(value)]="labels"
+      (keydown.enter)="onFilterSearchMonitors()"
+      (cleared)="onFilterSearchMonitors()"
+    />
+    <app-multi-func-input
+      groupStyle="width: 180px;"
+      class="mobile-hide"
+      [placeholder]="'monitor.search.placeholder' | i18n"
+      [(value)]="filterContent"
+      (keydown.enter)="onFilterSearchMonitors()"
+      (cleared)="onFilterSearchMonitors()"
+    />
+    <button class="mobile-hide" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
+      {{ 'common.search' | i18n }}
+    </button>
+  </ng-template>
+</app-toolbar>
+
+<div class="monitor-card-list">
+  <div class="monitor-list-header">
+    <div class="monitor-header-actions">
+      <label nz-checkbox [(ngModel)]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
+      <nz-pagination
+        [(nzPageIndex)]="pageIndex"
+        [nzPageSize]="pageSize"
+        [nzTotal]="total"
+        (nzPageIndexChange)="onPageIndexChange($event)"
+        nzSimple
+      ></nz-pagination>
+    </div>
+  </div>
+
+  <nz-spin [nzSpinning]="tableLoading">
+    <div class="monitor-card-list-content">
+      <div
+        class="monitor-card"
+        *ngFor="let data of monitors"
+        [ngClass]="getMonitorDisplayClass(data)"
+        [class.monitor-unavailable]="isMonitorDisabled(data)"
+      >
+        <div class="monitor-card-checkbox">
+          <label
+            nz-checkbox
+            [ngModel]="checkedMonitorIds.has(data.id)"
+            [nzDisabled]="isMonitorDisabled(data)"
+            (ngModelChange)="onItemChecked(data.id, $event)"
+          ></label>
+        </div>
+        <div class="monitor-card-content">
+          <div class="monitor-card-header">
+            <div class="monitor-card-title">
+              <button nz-button nzType="link" [routerLink]="['/monitors/' + data.id]" [disabled]="isMonitorDisabled(data)">
+                <span nz-icon nzType="area-chart"></span>
+                {{ data.name }}
+                <nz-tag *ngIf="isMonitorDisabled(data)" nzColor="orange" style="margin-left: 8px">
+                  {{ 'monitor.status.unavailable' | i18n }}
+                </nz-tag>
+              </button>
+            </div>
+            <div class="monitor-card-status" [class.status-faded]="isMonitorDisabled(data)">
+              <nz-tag *ngIf="data.status == 0" [nzColor]="'#b2b2b2'">
+                <i nz-icon nzType="meh" nzTheme="outline"></i>
+                <span>{{ 'monitor.status.paused' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.status == 1" [nzColor]="'#498765'">
+                <i nz-icon nzType="smile" nzTheme="outline"></i>
+                <span>{{ 'monitor.status.up' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.status == 2" [nzColor]="'#fd4357'">
+                <i nz-icon nzType="frown" nzTheme="outline"></i>
+                <span>{{ 'monitor.status.down' | i18n }}</span>
+              </nz-tag>
+            </div>
+          </div>
+
+          <div class="monitor-card-info">
+            <div class="monitor-card-info-item host-item">
+              <button
+                *ngIf="data.scrape == 'static' || !data.scrape"
+                nz-button
+                nzType="text"
+                [cdkCopyToClipboard]="data.instance"
+                nz-tooltip
+                [nzTooltipTitle]="'common.button.copy.tip' | i18n"
+                (click)="notifyCopySuccess()"
+              >
+                <i nz-icon nzType="global"></i>
+                {{ data.instance }}
+              </button>
+              <button nz-button nzType="text" *ngIf="data.scrape && data.scrape != 'static'">
+                <i nz-icon nzType="partition"></i>
+                {{ 'monitor.scrape.type.' + data.scrape | i18n }}
+              </button>
+
+              <button nz-button nz-dropdown [nzDropdownMenu]="actionMenu" class="action-button" [disabled]="isMonitorDisabled(data)">
+                <span nz-icon nzType="ellipsis"></span>
+              </button>
+            </div>
+
+            <div class="monitor-card-info-item meta-row">
+              <a routerLink="/monitors" [queryParams]="{ app: data.app }">
+                <nz-tag nzColor="processing">
+                  <i nz-icon nzType="cloud"></i>
+                  <span>{{ 'monitor.app.' + data.app | i18n }}</span>
+                </nz-tag>
+              </a>
+
+              <div class="label-tags">
+                <nz-tag *ngFor="let label of data.labels | keyvalue" [nzColor]="getLabelColor(label.key)">
+                  {{ label.key }}:{{ label.value }}
+                </nz-tag>
+              </div>
+
+              <span
+                class="time-ago"
+                nz-tooltip
+                [nzTooltipTitle]="
+                  ('common.edit-time' | i18n) + ': ' + ((data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'yyyy-MM-dd HH:mm:ss')
+                "
+              >
+                <i nz-icon nzType="clock-circle"></i>
+                {{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | elapsedTime }}
+              </span>
+            </div>
+          </div>
+
+          <nz-dropdown-menu #actionMenu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item>
+                <button nz-button [routerLink]="['/monitors/' + data.id]" [disabled]="isMonitorDisabled(data)">
+                  <i nz-icon nzType="area-chart"></i>
+                  {{ 'monitor.detail' | i18n }}
+                </button>
+              </li>
+              <li nz-menu-item>
+                <button nz-button (click)="onEditOneMonitor(data.id)" [disabled]="isMonitorDisabled(data)">
+                  <i nz-icon nzType="edit"></i>
+                  {{ 'monitor.edit-monitor' | i18n }}
+                </button>
+              </li>
+              <li nz-menu-item>
+                <button nz-button (click)="copyMonitor(data.id)" [disabled]="isMonitorDisabled(data)">
+                  <i nz-icon nzType="copy"></i>
+                  {{ 'monitor.copy' | i18n }}
+                </button>
+              </li>
+              <li nz-menu-divider></li>
+              <li nz-menu-item *ngIf="data.status == 0">
+                <button nz-button (click)="onEnableManageOneMonitor(data.id)" [disabled]="isMonitorDisabled(data)">
+                  <i nz-icon nzType="play-circle"></i>
+                  {{ 'monitor.enable' | i18n }}
+                </button>
+              </li>
+              <li nz-menu-item *ngIf="data.status != 0">
+                <button nz-button (click)="onCancelManageOneMonitor(data.id)" [disabled]="isMonitorDisabled(data)">
+                  <i nz-icon nzType="pause-circle"></i>
+                  {{ 'monitor.cancel' | i18n }}
+                </button>
+              </li>
+              <li nz-menu-divider></li>
+              <li nz-menu-item>
+                <button nz-button nzDanger (click)="onDeleteOneMonitor(data.id)" [disabled]="isMonitorDisabled(data)">
+                  <i nz-icon nzType="delete"></i>
+                  {{ 'monitor.delete-monitor' | i18n }}
+                </button>
+              </li>
+            </ul>
+          </nz-dropdown-menu>
+        </div>
+      </div>
+    </div>
+  </nz-spin>
+</div>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
+<nz-modal
+  [(nzVisible)]="isSwitchExportTypeModalVisible"
+  [nzTitle]="'monitor.export.switch-type' | i18n"
+  (nzOnCancel)="isSwitchExportTypeModalVisible = false"
+  nzWidth="600px"
+  [nzFooter]="null"
+>
+  <ng-container *nzModalContent>
+    <div class="export-type-container">
+      <div
+        class="export-type-card"
+        (click)="exportMonitors('JSON')"
+        [class.loading]="exportJsonButtonLoading"
+        *ngIf="checkedMonitorIds.size > 0"
+      >
+        <div class="export-type-icon">
+          <i nz-icon nzType="code" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>JSON</h3>
+          <p>{{ 'monitor.export.use-type' | i18n : { type: 'JSON' } }}</p>
+        </div>
+      </div>
+      <div
+        class="export-type-card"
+        (click)="exportMonitors('EXCEL')"
+        [class.loading]="exportExcelButtonLoading"
+        *ngIf="checkedMonitorIds.size > 0"
+      >
+        <div class="export-type-icon">
+          <i nz-icon nzType="file-excel" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>EXCEL</h3>
+          <p>{{ 'monitor.export.use-type' | i18n : { type: 'EXCEL' } }}</p>
+        </div>
+      </div>
+      <div
+        class="export-type-card"
+        (click)="exportAllMonitors('JSON')"
+        [class.loading]="exportJsonButtonLoading"
+        *ngIf="checkedMonitorIds.size === 0"
+      >
+        <div class="export-type-icon">
+          <i nz-icon nzType="code" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>JSON</h3>
+          <p>{{ 'monitor.export-all.use-type' | i18n : { type: 'JSON' } }}</p>
+        </div>
+      </div>
+      <div
+        class="export-type-card"
+        (click)="exportAllMonitors('EXCEL')"
+        [class.loading]="exportExcelButtonLoading"
+        *ngIf="checkedMonitorIds.size === 0"
+      >
+        <div class="export-type-icon">
+          <i nz-icon nzType="file-excel" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>EXCEL</h3>
+          <p>{{ 'monitor.export-all.use-type' | i18n : { type: 'EXCEL' } }}</p>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<!-- filter app type modal -->
+<nz-modal
+  [(nzVisible)]="appSwitchModalVisible"
+  (nzOnCancel)="onAppSwitchModalCancel()"
+  nzClosable="true"
+  nzWidth="900px"
+  nzWrapClassName="monitor-select-menu-modal"
+  [nzTitle]="appSwitchModalVisibleType === 1 ? ('monitor.search.app' | i18n) : ('monitor.new-monitor' | i18n)"
+  [nzFooter]="null"
+  [nzOkLoading]="appSearchLoading"
+  nzCentered
+>
+  <div *nzModalContent class="-inner-content">
+    <app-monitor-select-menu
+      [searchPlaceholder]="'monitor.center.search.placeholder' | i18n"
+      [loading]="appSearchLoading"
+      [data]="appSearchOrigin"
+      (selectedChanged)="gotoMonitorAddDetail($event)"
+    >
+      <ng-template let-app="item" #prefix>
+        <i nz-icon [nzType]="getAppIconName(app.value)" nzTheme="outline"></i>
+      </ng-template>
+    </app-monitor-select-menu>
+  </div>
+</nz-modal>

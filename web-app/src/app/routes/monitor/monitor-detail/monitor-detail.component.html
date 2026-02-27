@@ -1,0 +1,228 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<nz-divider></nz-divider>
+<nz-breadcrumb>
+  <nz-breadcrumb-item>
+    <a [routerLink]="['/']">
+      <i nz-icon nzType="home"></i>
+      <span>{{ 'menu.dashboard' | i18n }}</span>
+    </a>
+  </nz-breadcrumb-item>
+  <nz-breadcrumb-item>
+    <a [routerLink]="['/monitors']" [queryParams]="{ app: app ? app : '' }">
+      <i nz-icon nzType="reconciliation"></i>
+      <span>{{ 'monitor.list' | i18n }}</span>
+    </a>
+  </nz-breadcrumb-item>
+  <nz-breadcrumb-item>
+    <span nz-icon nzType="pie-chart"></span>
+    <span>{{ 'monitor.detail' | i18n }}</span>
+  </nz-breadcrumb-item>
+  <nz-breadcrumb-item *ngIf="!!app">
+    <a routerLink="/setting/define" [queryParams]="{ app: app }">
+      <nz-tag style="font-size: 14px; margin-left: 4px" nzColor="#3f51b5" class="hoverClass">
+        <span>{{ 'monitor.app.' + app | i18n }}</span>
+      </nz-tag>
+    </a>
+  </nz-breadcrumb-item>
+</nz-breadcrumb>
+
+<nz-divider></nz-divider>
+
+<nz-layout>
+  <nz-content>
+    <nz-spin [nzSpinning]="isSpinning" nzTip="Loading..." nzSize="large">
+      <nz-tabset nzType="card" [nzTabBarExtraContent]="tab_extra_template">
+        <nz-tab [nzTitle]="titleTemplate" (nzClick)="loadRealTimeMetric()">
+          <ng-template #titleTemplate>
+            <i nz-icon nzType="pic-right"></i>
+            {{ 'monitor.detail.realtime' | i18n }}
+          </ng-template>
+          <div class="cards lists">
+            <app-monitor-data-table
+              class="card"
+              [height]="'400px'"
+              [monitor]="monitor"
+              [port]="port"
+              [monitorId]="monitorId"
+              [app]="app"
+            ></app-monitor-data-table>
+            <app-monitor-data-table
+              class="card"
+              [height]="'400px'"
+              *ngFor="let metric of displayedMetrics; let i = index"
+              [metrics]="metric"
+              [monitorId]="monitorId"
+              [app]="app"
+              [favoriteStatus]="favoriteMetricsSet.has(metric)"
+              (favoriteToggle)="toggleFavorite($event)"
+            ></app-monitor-data-table>
+            <!-- IO sentinel for lazy loading -->
+            <div id="metrics-load-sentinel" style="width: 100%; height: 1px"></div>
+          </div>
+        </nz-tab>
+        <nz-tab [nzTitle]="title2Template" (nzClick)="loadMetricChart()">
+          <ng-template #title2Template>
+            <i nz-icon nzType="line-chart"></i>
+            {{ 'monitor.detail.history' | i18n }}
+          </ng-template>
+          <div class="cards">
+            <app-monitor-data-chart
+              class="card"
+              *ngFor="let item of displayedChartMetrics; let i = index"
+              [app]="app"
+              [metrics]="item.metrics"
+              [metric]="item.metric"
+              [unit]="item.unit"
+              [monitorId]="monitorId"
+              [instance]="monitor.instance"
+              [monitorName]="monitor.name"
+            ></app-monitor-data-chart>
+            <!-- IO sentinel for lazy loading charts -->
+            <div id="charts-load-sentinel" style="width: 100%; height: 1px"></div>
+          </div>
+        </nz-tab>
+        <nz-tab [nzTitle]="favoriteTabTemplate" (nzClick)="loadFavoriteMetrics()">
+          <ng-template #favoriteTabTemplate>
+            <i nz-icon nzType="star" nzTheme="outline"></i>
+            {{ 'monitor.detail.favorite' | i18n }}
+          </ng-template>
+          <div class="favorite-content">
+            <div class="favorite-selector">
+              <nz-select
+                [(ngModel)]="favoriteTabIndex"
+                (ngModelChange)="onFavoriteTabChange($event)"
+                style="width: 200px; margin-bottom: 16px"
+              >
+                <nz-option [nzValue]="0" [nzLabel]="'monitor.detail.realtime' | i18n">
+                  <i nz-icon nzType="pic-right"></i>
+                  {{ 'monitor.detail.realtime' | i18n }}
+                </nz-option>
+                <nz-option [nzValue]="1" [nzLabel]="'monitor.detail.history' | i18n">
+                  <i nz-icon nzType="line-chart"></i>
+                  {{ 'monitor.detail.history' | i18n }}
+                </nz-option>
+              </nz-select>
+            </div>
+
+            <!-- realtime -->
+            <div *ngIf="favoriteTabIndex === 0">
+              <div class="cards lists" *ngIf="displayedFavoriteMetrics.length > 0">
+                <app-monitor-data-table
+                  class="card"
+                  [height]="'400px'"
+                  *ngFor="let metric of displayedFavoriteMetrics; let i = index"
+                  [metrics]="metric"
+                  [monitorId]="monitorId"
+                  [app]="app"
+                  [favoriteStatus]="favoriteMetricsSet.has(metric)"
+                  (favoriteToggle)="toggleFavorite($event)"
+                ></app-monitor-data-table>
+                <div
+                  id="favoriteMetricsLoadSentinel"
+                  style="width: 100%; height: 1px"
+                  *ngIf="hasMoreFavorites && !isLoadingMoreFavorites"
+                ></div>
+              </div>
+              <div class="empty-favorite" *ngIf="favoriteMetrics.length === 0">
+                <nz-empty [nzNotFoundContent]="emptyRealtimeTemplate">
+                  <ng-template #emptyRealtimeTemplate>
+                    <p style="margin-top: 16px; color: #999">{{ 'monitor.favorite.empty.realtime' | i18n }}</p>
+                  </ng-template>
+                </nz-empty>
+              </div>
+            </div>
+
+            <!-- history -->
+            <div *ngIf="favoriteTabIndex === 1">
+              <div class="cards" *ngIf="displayedFavoriteChartMetrics.length > 0">
+                <app-monitor-data-chart
+                  class="card"
+                  *ngFor="let metric of displayedFavoriteChartMetrics"
+                  [app]="app"
+                  [metrics]="metric.metrics"
+                  [metric]="metric.metric"
+                  [unit]="metric.unit"
+                  [monitorId]="monitorId"
+                  [instance]="monitor.instance"
+                  [monitorName]="monitor.name"
+                ></app-monitor-data-chart>
+              </div>
+              <div
+                id="favoriteChartsLoadSentinel"
+                style="width: 100%; height: 1px"
+                *ngIf="hasMoreFavoriteCharts && !isLoadingMoreFavoriteCharts"
+              ></div>
+              <div class="empty-favorite" *ngIf="favoriteChartMetrics.length === 0">
+                <nz-empty [nzNotFoundContent]="emptyHistoryTemplate">
+                  <ng-template #emptyHistoryTemplate>
+                    <p style="margin-top: 16px; color: #999">{{ 'monitor.favorite.empty.history' | i18n }}</p>
+                  </ng-template>
+                </nz-empty>
+              </div>
+            </div>
+          </div>
+        </nz-tab>
+        <nz-tab *ngIf="grafanaDashboard.enabled" [nzTitle]="title3Template">
+          <ng-template #title3Template>
+            <i nz-icon nzType="radar-chart" style="margin-left: 10px"></i>
+            Grafana
+          </ng-template>
+          <div style="width: 100%; height: 1200px; margin-bottom: 6px">
+            <iframe [src]="grafanaDashboard.url | safe : 'resourceUrl'" width="100%" height="100%" style="border: none"> </iframe>
+          </div>
+        </nz-tab>
+      </nz-tabset>
+    </nz-spin>
+  </nz-content>
+</nz-layout>
+
+<ng-template #tab_extra_template>
+  <nz-button-group class="mobile-hide">
+    <button nz-button nz-dropdown [nzDropdownMenu]="time_menu" nzPlacement="bottomLeft">
+      <span *ngIf="deadline > 0"> {{ 'monitor.detail.auto-refresh' | i18n : { time: countDownTime } }} </span>
+      <span *ngIf="deadline <= 0"> {{ 'monitor.detail.close-refresh' | i18n }} </span>
+    </button>
+    <button
+      style="margin-left: 4px"
+      nz-button
+      nzType="primary"
+      (click)="refreshMetrics()"
+      nz-tooltip
+      [nzTooltipTitle]="'common.refresh' | i18n"
+    >
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
+    <a [href]="'https://hertzbeat.apache.org/docs/help/' + app" target="_blank">
+      <button style="margin-left: 4px" nz-button nzType="primary" nz-tooltip [nzTooltipTitle]="'common.button.help' | i18n">
+        <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+      </button>
+    </a>
+  </nz-button-group>
+  <nz-dropdown-menu #time_menu="nzDropdownMenu">
+    <ul nz-menu>
+      <li nz-menu-item (click)="configRefreshDeadline(10)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 10 } }} </li>
+      <li nz-menu-item (click)="configRefreshDeadline(30)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 30 } }} </li>
+      <li nz-menu-item (click)="configRefreshDeadline(60)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 60 } }} </li>
+      <li nz-menu-item (click)="configRefreshDeadline(300)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 300 } }} </li>
+      <li nz-menu-item (click)="configRefreshDeadline(-1)"> {{ 'monitor.detail.close-refresh' | i18n }}</li>
+    </ul>
+  </nz-dropdown-menu>
+</ng-template>

@@ -1,0 +1,58 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+Thumbs.db
+.DS_Store
+.gradle
+build/
+out/
+micronaut-cli.yml
+*.log
+package-lock.json
+*.zip
+jdk/
+data/
+
+!/e2e/**/data/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### For icon.png ###
+!.idea/icon.png
+
+### NetBeans ###
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+# dependencies
+node_modules
+.docusaurus
+
+# h2 data
+*.mv.db
+*.trace.db
+
+# debug env
+application-dev.yml
+application-mysql.yml
+application-pg.yml
+/package.json
+/yarn.lock

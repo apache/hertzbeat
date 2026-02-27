@@ -1,0 +1,76 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: __system__
+# Monitoring application type name (consistent with file name) eg: linux windows tomcat mysql aws...
+app: consul_sd
+# The app api i18n name
+name:
+  zh-CN: Consul Service Discovery
+  en-US: Consul Service Discovery
+  ja-JP: Consulサービスディスカバリー
+# Input params define for app api(render web ui by the definition)
+params:
+  # field-param field key
+  - field: __sd_host__
+    # name-param field display i18n name
+    name:
+      zh-CN: Consul Host
+      en-US: Consul Host
+      ja-JP: Consulホスト
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: true
+  - field: __sd_port__
+    name:
+      zh-CN: Consul 端口
+      en-US: Consul Port
+      ja-JP: Consulポート
+    type: number
+    range: '[0,65535]'
+    required: true
+
+metrics:
+  - name: target
+    i18n:
+      zh-CN: 监控目标
+      en-US: Monitor Target
+      ja-JP: 監視対象
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: host
+        type: 1
+        i18n:
+          zh-CN: Host
+          en-US: Host
+          ja-JP: ホスト
+      - field: port
+        type: 1
+        i18n:
+          zh-CN: Port
+          en-US: Port
+          ja-JP: ポート
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: consul_sd
+    # the config content when protocol is http_sd
+    consul_sd:
+      host: ^_^__sd_host__^_^
+      port: ^_^__sd_port__^_^

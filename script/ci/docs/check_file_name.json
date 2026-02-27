@@ -1,0 +1,8 @@
+{
+  "directories": [
+    "./home/blog",
+    "./home/docs",
+    "./home/i18n/zh-cn/docusaurus-plugin-content-blog",
+    "./home/i18n/zh-cn/docusaurus-plugin-content-docs/current"
+  ]
+}

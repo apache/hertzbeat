@@ -1,0 +1,221 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: mid
+app: rocketmq
+name:
+  zh-CN: RocketMQ消息系统
+  en-US: RocketMQ
+  ja-JP: RocketMQメッセージシステム
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 RocketMQ 消息系统的通用指标进行测量监控。<br>您可以点击 “<i>新建 RocketMQ</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors RocketMQ Message System general performance metrics. You could click the "<i>New RocketMQ</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 RocketMQ 消息系統的通用指標進行測量監控。<br>您可以點擊 “<i>新建 RocketMQ</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は RocketMQメッセージシステムの一般的なメトリクスを監視します。<br>「<i>新規 RocketMQ</i>」をクリックしてパラメタを設定した後、新規することができます。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/rocketmq
+  en-US: https://hertzbeat.apache.org/docs/help/rocketmq
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 注册中心Host
+      en-US: Namesrv Host
+      ja-JP: ネームサーバーホスト
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+      ja-JP: ポート
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9876
+  - field: accessKey
+    name:
+      zh-CN: accessKey
+      en-US: accessKey
+      ja-JP: アクセスキー
+    type: text
+  - field: secretKey
+    name:
+      zh-CN: secretKey
+      en-US: secretKey
+      ja-JP: 秘密鍵
+    type: text
+metrics:
+  - name: cluster
+    i18n:
+      zh-CN: 集群
+      en-US: cluster
+      ja-JP: クラスター
+    priority: 0
+    fields:
+      - field: BrokerId
+        i18n:
+          zh-CN: BrokerId
+          en-US: BrokerId
+          ja-JP: ブローカーId
+        type: 1
+      - field: Address
+        i18n:
+          zh-CN: 地址
+          en-US: Address
+          ja-JP: アドレス
+        type: 1
+        label: true
+      - field: Version
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+          ja-JP: バージョン
+        type: 1
+      - field: Producer_Message_TPS
+        i18n:
+          zh-CN: 生产消息TPS
+          en-US: Producer_Message_TPS
+          ja-JP: プロデューサーの送信速度(TPS)
+        type: 0
+      - field: Consumer_Message_TPS
+        i18n:
+          zh-CN: 消费消息TPS
+          en-US: Consumer_Message_TPS
+          ja-JP: コンシューマーの受信速度(TPS)
+        type: 0
+      - field: Yesterday_Produce_Count
+        i18n:
+          zh-CN: 昨天生产消息数
+          en-US: Yesterday_Produce_Count
+          ja-JP: 昨日のプロデューサーの送信数
+        type: 0
+      - field: Yesterday_Consume_Count
+        i18n:
+          zh-CN: 昨天消费消息数
+          en-US: Yesterday_Consume_Count
+          ja-JP: 昨日のコンシューマーの受信数
+        type: 0
+      - field: Today_Produce_Count
+        i18n:
+          zh-CN: 今天生产消息数
+          en-US: Today_Produce_Count
+          ja-JP: 今日のプロデューサーの送信数
+        type: 0
+      - field: Today_Consume_Count
+        i18n:
+          zh-CN: 今天消费消息数
+          en-US: Today_Consume_Count
+          ja-JP: 今日のコンシューマーの受信数
+        type: 0
+    aliasFields:
+      - brokerId
+      - address
+      - version
+      - producerMessageTps
+      - consumerMessageTps
+      - yesterdayProduceCount
+      - yesterdayConsumeCount
+      - todayProduceCount
+      - todayConsumeCount
+    calculates:
+      - BrokerId=brokerId
+      - Address=address
+      - Version=version
+      - Producer_Message_TPS=producerMessageTps
+      - Consumer_Message_TPS=consumerMessageTps
+      - Yesterday_Produce_Count=yesterdayProduceCount
+      - Yesterday_Consume_Count=yesterdayConsumeCount
+      - Today_Produce_Count=todayProduceCount
+      - Today_Consume_Count=todayConsumeCount
+    # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, rocketmq
+    protocol: rocketmq
+    # This section describes how to configure data collection when protocol is http
+    rocketmq:
+      namesrvHost: ^_^host^_^
+      namesrvPort: ^_^port^_^
+      accessKey: ^_^accessKey^_^
+      secretKey: ^_^secretKey^_^
+      parseScript: $.clusterBrokerDataList.*
+  - name: consumer
+    i18n:
+      zh-CN: 消费者
+      en-US: Consumer
+      ja-JP: コンシューマー
+    priority: 1
+    fields:
+      - field: Consumer_group
+        i18n:
+          zh-CN: 消费者组
+          en-US: Consumer_group
+          ja-JP: コンシューマーグループ
+        type: 1
+        label: true
+      - field: Client_quantity
+        i18n:
+          zh-CN: 客户端数量
+          en-US: Client_quantity
+          ja-JP: クライアント数
+        type: 0
+      - field: Message_model
+        i18n:
+          zh-CN: 消息模式
+          en-US: Message_model
+          ja-JP: メッセージモデル
+        type: 1
+      - field: Consume_type
+        i18n:
+          zh-CN: 消费类型
+          en-US: Consume_type
+          ja-JP: 消費タイプ
+        type: 1
+      - field: Consume_tps
+        i18n:
+          zh-CN: 消费TPS
+          en-US: Consume_tps
+          ja-JP: 受信速度(TPS)
+        type: 0
+      - field: Delay
+        i18n:
+          zh-CN: 延迟
+          en-US: Delay
+          ja-JP: 遅延
+        type: 0
+    aliasFields:
+      - consumerGroup
+      - clientQuantity
+      - messageModel
+      - consumeType
+      - consumeTps
+      - diffTotal
+    calculates:
+      - Consumer_group=consumerGroup
+      - Client_quantity=clientQuantity
+      - Message_model=messageModel
+      - Consume_type=consumeType
+      - Consume_tps=consumeTps
+      - Delay=diffTotal
+    # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, rocketmq
+    protocol: rocketmq
+    # This section describes how to configure data collection when protocol is http
+    rocketmq:
+      namesrvHost: ^_^host^_^
+      namesrvPort: ^_^port^_^
+      parseScript: $.consumerInfoList.*

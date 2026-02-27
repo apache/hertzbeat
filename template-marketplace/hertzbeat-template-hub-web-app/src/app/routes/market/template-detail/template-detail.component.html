@@ -1,0 +1,277 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<main>
+  <div
+    class="tp-breadcrumb__area fix tp-breadcrumb-height"
+    style="background-image: url('../../../../assets/svg/breadcrumb.svg');height: 250px"
+  >
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <div class="tp-breadcrumb__content text-center z-index-5">
+            <div class="tp-breadcrumb__list">
+              <span><a href="index.html">Apache </a></span>
+              <span class="dvdr">.</span>
+              <span>HertzBeat</span>
+            </div>
+            <h3 class="tp-breadcrumb__title"
+              ><span class="p-relative z-index-5">
+                模版
+                <span class="tp-title-shape">
+                  <img src="assets/svg/title-line.svg" alt="">
+                </span>
+              </span>
+              详情
+            </h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tp-product-details-area pt-xxl-4">
+    <div class="container">
+      <div class="row">
+        <div class="col-xl-6 col-lg-6" style="display: grid; place-items: center;height: 400px">
+          <div class="tp-shop-details__wrapper">
+            <div class="tp-shop-details__tab-content-box">
+              <div class="tab-content" id="nav-tabContent" style="display: grid; place-items: center;height: 400px">
+                <img src="assets/svg/{{templateInfo.categoryId}}-img.svg" alt="">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-6 col-lg-6" style="height: 400px">
+          <div class="tp-shop-details__right-warp">
+            <h3 class="tp-shop-details__title-sm">{{ (templateInfo!=null)?templateInfo.name:'xxx' }}</h3>
+            <div class="tp-fea-product__star">
+              <div class="row">
+                <div class="col-3">
+                  <span nz-icon nzType="star" nzTheme="outline"></span>
+                  <span class="review-text">&emsp;{{ templateInfo.star }}</span>
+                </div>                <div class="col-3">
+                  <span nz-icon nzType="eye" nzTheme="outline"></span>
+                  <span class="review-text">&emsp;200</span>
+                </div>
+                <div class="col-3">
+                  <span nz-icon nzType="download" nzTheme="outline"></span>
+                  <span class="review-text">&emsp;{{ templateInfo.download>=1000?((templateInfo.download/1000).toFixed(2)+'k'):templateInfo.download }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="tp-shop-details__product-info">
+              <ul>
+                <li><span>类别 : </span>&emsp;{{ categoryStr }}</li>
+                <li><span>标签 : </span>&emsp;MySQL</li>
+                <li><span>最新版本 : </span>&emsp;{{ latestVersion?latestVersion.version:'xxx' }}</li>
+                <li><span>最后更新时间 : </span>&emsp;{{ templateInfo.updateTime }}</li>
+              </ul></div>
+            <div class="tp-shop-details__quantity-wrap d-flex align-items-center">
+              <div class="tp-shop-details__btn me-4">
+                <a class="btn-icon" href="javascript:" (click)="downloadTemplateNow()">
+                  <span class="material-symbols-outlined">download</span>下载
+                </a>
+              </div>
+              <div class="tp-shop-details__btn me-4">
+                <a class="btn-icon" href="javascript:" (click)="starTemplate(templateInfo.id)" *ngIf="!isStarNow">
+                  <span class="material-symbols-outlined">star</span>
+                  收藏</a>
+                <a class="btn-icon" href="javascript:" (click)="cancelStarTemplate(templateInfo.id)" *ngIf="isStarNow">
+                  <span class="material-symbols-outlined">star</span>取消收藏</a>
+              </div>
+              <div class="tp-shop-details__btn me-4">
+                <a class="btn-icon" href="javascript:" (click)="shareVersionNow(latestVersion.id)">
+                  <span class="material-symbols-outlined">share</span>分享</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="productdetails-tabs mb-5">
+          <div class="row">
+            <div class="col-xl-12 col-lg-12 col-12">
+              <div class="product-additional-tab">
+                <div class="pro-details-nav mb-4">
+                  <ul class="nav nav-tabs pro-details-nav-btn" id="myTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                      <button
+                        class="nav-links"
+                        [ngClass]="showPage==1?'active':''"
+                        id="home-tab-1"
+                        data-bs-toggle="tab"
+                        data-bs-target="#home-1"
+                        type="button"
+                        role="tab"
+                        aria-controls="home-1"
+                        aria-selected="true"
+                        (click)="showPage = 1"
+                        ><span>详情</span></button
+                      >
+                    </li>
+                    <li class="nav-item" role="presentation">
+                      <button
+                        [ngClass]="showPage==2?'active':''"
+                        class="nav-links"
+                        id="information-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#additional-information"
+                        type="button"
+                        role="tab"
+                        aria-controls="additional-information"
+                        aria-selected="false"
+                        (click)="showPage = 2"
+                        ><span>历史版本</span></button
+                      >
+                    </li>
+
+                    <li class="nav-item" role="presentation">
+                      <button
+                        [ngClass]="showPage==3?'active':''"
+                        class="nav-links"
+                        id="size-chart-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#chart"
+                        type="button"
+                        role="tab"
+                        aria-controls="chart"
+                        aria-selected="false"
+                        (click)="showPage = 3"
+                        ><span>FAQ</span></button
+                      >
+                    </li>
+                  </ul>
+                </div>
+                <div class="tab-content tp-content-tab" id="myTabContent-2">
+                  <div [hidden]="!(showPage == 1)" id="home-1" role="tabpanel" aria-labelledby="home-tab-1">
+                    <div class="product-details-list-box">
+                      <span> 概要信息 : </span>
+                      <p class="mb-30">{{ templateInfo.description }}</p>
+<!--                      <p class="pb-55">。。。。。</p>-->
+                    </div>
+                    <div class="product-details-list-box">
+                      <span> 详细信息 : </span>
+<!--                      <p class="mb-30">{{ templateInfo.description }}</p>-->
+                      <p class="pb-5">。。。。。</p>
+                    </div>
+                    <div class="product-details-list-box" style="width: 100%;">
+                      <span> 其他信息 : </span>
+                      <ul style="width: 100%;">
+                        <li>
+                          <span>
+                            <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path
+                                d="M15.794 2.17595C14.426 3.42395 13.094 4.87595 11.798 6.53195C10.67 7.95995 9.656 9.42395 8.756 10.924C7.94 12.268 7.346 13.42 6.974 14.38C6.962 14.416 6.938 14.446 6.902 14.47C6.866 14.506 6.824 14.524 6.776 14.524C6.764 14.536 6.752 14.542 6.74 14.542C6.656 14.542 6.596 14.518 6.56 14.47L0.134 7.93595C0.122 7.92395 0.278 7.76795 0.602 7.46795C0.926 7.15595 1.244 6.87395 1.556 6.62195C1.904 6.33395 2.09 6.20195 2.114 6.22595L5.642 8.99795C6.674 7.78595 7.832 6.58595 9.116 5.39795C11.048 3.62195 13.04 2.10995 15.092 0.861953C15.128 0.861953 15.266 1.02995 15.506 1.36595L15.866 1.88795C15.878 1.93595 15.878 1.98995 15.866 2.04995C15.854 2.09795 15.83 2.13995 15.794 2.17595Z"
+                                fill="currentColor"
+                              ></path>
+                            </svg>
+                          </span>
+                          <p class="mb-30">{{ templateInfo.description }}</p>
+                        </li>
+                        <li>
+                          <span>
+                            <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path
+                                d="M15.794 2.17595C14.426 3.42395 13.094 4.87595 11.798 6.53195C10.67 7.95995 9.656 9.42395 8.756 10.924C7.94 12.268 7.346 13.42 6.974 14.38C6.962 14.416 6.938 14.446 6.902 14.47C6.866 14.506 6.824 14.524 6.776 14.524C6.764 14.536 6.752 14.542 6.74 14.542C6.656 14.542 6.596 14.518 6.56 14.47L0.134 7.93595C0.122 7.92395 0.278 7.76795 0.602 7.46795C0.926 7.15595 1.244 6.87395 1.556 6.62195C1.904 6.33395 2.09 6.20195 2.114 6.22595L5.642 8.99795C6.674 7.78595 7.832 6.58595 9.116 5.39795C11.048 3.62195 13.04 2.10995 15.092 0.861953C15.128 0.861953 15.266 1.02995 15.506 1.36595L15.866 1.88795C15.878 1.93595 15.878 1.98995 15.866 2.04995C15.854 2.09795 15.83 2.13995 15.794 2.17595Z"
+                                fill="currentColor"
+                              ></path>
+                            </svg>
+                          </span>
+                          <p class="mb-30">{{ templateInfo.description }}</p>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div [hidden]="!(showPage == 2)" id="additional-information" role="tabpanel" aria-labelledby="information-tab">
+                    <div class="container">
+                      <div class="product__details-info table-responsive">
+                        <table class="table table-striped">
+                          <tbody>
+                          <tr>
+                            <td class="add-info">版本号</td>
+                            <td class="add-info-list">概要</td>
+                            <td class="add-info-list">更新时间</td>
+                            <td class="add-info-list">下载量</td>
+                            <td class="add-info-list">下载</td>
+                            <td class="add-info-list">分享链接</td>
+                          </tr>
+                          <tr *ngFor="let item of versionList; let i = index">
+                            <td class="add-info">{{ item.version }}</td>
+                            <td class="add-info-list"> {{ item.description }}</td>
+                            <td class="add-info-list"> {{ item.createTime }}</td>
+                            <td class="add-info-list"> {{ item.download>=1000?((item.download/1000).toFixed(2)+'k'):item.download }}</td>
+                            <td class="add-info-list">
+                              <a href="javascript:" (click)="downloadVersion(item.version,item.id)"> <span class="material-symbols-outlined">download</span></a
+                              ></td>
+                            <td class="add-info-list">
+                              <a href="javascript:" (click)="shareVersionNow(item.id)"> <span class="material-symbols-outlined">share</span></a
+                              ></td>
+                          </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="d-flex justify-content-center">
+                        <nz-pagination [nzPageIndex]="pageIndex+1" [nzTotal]="totalElements" nzShowSizeChanger
+                        [(nzPageSize)]="pageSize" (nzPageSizeChange)="pageSizeChange($event)" (nzPageIndexChange)="pageIndexChange($event)"
+                                       [nzPageSizeOptions]=pageSizeOptions ></nz-pagination>
+                      </div>
+                    </div>
+                  </div>
+                  <div [hidden]="!(showPage == 3)" id="chart" role="tabpanel" aria-labelledby="size-chart-tab">
+                    <div class="tp-service-details-faq tp-faq-inner__customize">
+                      <div class="tp-custom-accordion">
+                        <div class="accordion" id="accordionExample">
+                          <div class="accordion-items tp-faq-active">
+                            <h2 class="accordion-header" id="headingOne">
+                              <button
+                                class="accordion-buttons"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapseOne"
+                                aria-expanded="true"
+                                aria-controls="collapseOne"
+                              >
+                                这个模版怎么用?
+                              </button>
+                            </h2>
+                            <div
+                              id="collapseOne"
+                              class="accordion-collapse collapse show"
+                              aria-labelledby="headingOne"
+                              data-bs-parent="#accordionExample"
+                            >
+                              <div class="accordion-body"> 就这么用 </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

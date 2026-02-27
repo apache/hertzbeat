@@ -1,0 +1,123 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+version: '3.8'
+services:
+  init:
+    image: bitnami/kubectl:latest
+    privileged: true
+    depends_on:
+      k3s:
+        condition: service_healthy
+    entrypoint: /bin/bash
+    networks:
+      k3s_network:
+        ipv4_address: 172.29.0.10
+    volumes:
+      - ./data/config/k3s.yaml:/.kube/config
+      - ./data:/testcase
+    command:
+      - -c
+      - |
+        # Wait for k3s to start
+        until kubectl cluster-info; do sleep 1; done
+        sleep 5
+        # Create serviceaccount and clusterrolebinding
+        kubectl create serviceaccount -n kube-system cluster-admin-sa
+        kubectl create clusterrolebinding -n kube-system cluster-admin-binding --clusterrole=cluster-admin --serviceaccount=kube-system:cluster-admin-sa
+        cd /testcase
+        kubectl create token cluster-admin-sa -n kube-system --duration=24h
+        echo $(sed "s/#TOKEN#/$(echo $(kubectl create token cluster-admin-sa -n kube-system --duration=24h))/g" create_k8s_monitor_data.json)>tmp.json
+        # install metrics server 
+        kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+        sleep 30
+        tail -f /dev/null
+  k3s:
+    image: rancher/k3s:v1.31.0-k3s1
+    container_name: k3s
+    privileged: true
+    ports:
+      - "6443:6443"
+      - "80:80"
+    command: server  --bind-address 172.29.0.11
+    networks:
+      k3s_network:
+        ipv4_address: 172.29.0.11
+    healthcheck:
+      test: [ "CMD-SHELL",
+              "kubectl cluster-info && echo $(cat  /var/lib/rancher/k3s/server/node-token)>node-token.txt" ]
+      interval: 3s
+      retries: 30
+      start_period: 10s
+      timeout: 10s
+    volumes:
+      - ./data/config/k3s.yaml:/etc/rancher/k3s/k3s.yaml
+      - ./data/config/node-token.txt:/node-token.txt
+  testing:
+    image: ghcr.io/linuxsuren/api-testing:v0.0.17
+    environment:
+      SERVER: http://hertzbeat:1157
+    container_name: e2e-testing
+    volumes:
+      - ./data/:/work/data/
+      - ./data/testsuite.yaml:/work/testsuite.yaml
+    command: atest run -p /work/testsuite.yaml --level debug --thread 3
+    networks:
+      k3s_network:
+        ipv4_address: 172.29.0.12
+    depends_on:
+      checker:
+        condition: service_healthy
+      k3s:
+        condition: service_healthy
+    links:
+      - hertzbeat
+      - checker
+      - k3s
+  checker:
+    image: alpine:latest
+    container_name: e2e-checker
+    command: sh -c "apk add --update curl && tail -f /dev/null"
+    healthcheck:
+      test: [ "CMD-SHELL",
+              "curl -s -X POST -H \"Content-Type: application/json\" -d '{\"type\": 0,\"identifier\": \"admin\",\"credential\": \"hertzbeat\"}' http://hertzbeat:1157/api/account/auth/form | grep -q token"
+      ]
+      interval: 3s
+      timeout: 60s
+      retries: 10
+      start_period: 10s
+    networks:
+      k3s_network:
+        ipv4_address: 172.29.0.13
+    depends_on:
+      - init
+  hertzbeat:
+    image: apache/hertzbeat:test
+    container_name: e2e-hertzbeat
+    volumes:
+      - ./logs/:/opt/hertzbeat/logs/
+    ports:
+      - "1157:1157"
+    networks:
+      k3s_network:
+        ipv4_address: 172.29.0.14
+networks:
+  k3s_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.0.0/16

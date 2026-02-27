@@ -1,0 +1,56 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+version: '3.8'
+services:
+  testing:
+    image: ghcr.io/linuxsuren/api-testing:v0.0.17
+    environment:
+      SERVER: http://hertzbeat:1157
+    container_name: e2e-testing
+    volumes:
+      - ./data/:/work/data/
+      - ./testsuite.yaml:/work/testsuite.yaml
+      - ./report/report.md:/report.md
+    command: atest run -p /work/testsuite.yaml --level debug --thread 3 --report md --report-file /report.md
+    depends_on:
+      checker:
+        condition: service_healthy
+    links:
+      - hertzbeat
+      - checker
+  checker:
+    image: alpine:latest
+    container_name: e2e-checker
+    command: sh -c "apk add --update curl && tail -f /dev/null"
+    healthcheck:
+      test: [ "CMD-SHELL",
+              "curl -s -X POST -H \"Content-Type: application/json\" -d '{\"type\": 0,\"identifier\": \"admin\",\"credential\": \"hertzbeat\"}' http://hertzbeat:1157/api/account/auth/form | grep -q token"
+      ]
+      interval: 3s
+      timeout: 60s
+      retries: 10
+      start_period: 10s
+  hertzbeat:
+    image: apache/hertzbeat:test
+    container_name: e2e-hertzbeat
+    volumes:
+      - ./logs/:/opt/hertzbeat/logs/
+    ports:
+      - "1157:1157"
+    environment:
+      ALLOW_NONE_AUTHENTICATION: "yes"

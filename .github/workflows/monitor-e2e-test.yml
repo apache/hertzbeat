@@ -1,0 +1,53 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Monitor E2E Test
+
+
+on:
+  schedule:
+    # trigger at 01:00 everyday
+    - cron: '0 1 * * *'
+  push:
+    branches: [ action* ]
+jobs:
+  check-license-header:
+    name: Monitor E2E Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./script/ci/github-actions/setup-deps
+      - name: Build with Maven
+        run: mvn clean -B package -Prelease -Dmaven.test.skip=true --file pom.xml
+      - name: Build Image
+        uses: docker/build-push-action@v3
+        with:
+          context: ./dist
+          file: ./script/docker/server/Dockerfile
+          push: false
+          tags: apache/hertzbeat:test
+      - name: Run K8s Monitor E2E Test
+        run: |
+          sudo curl -L https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+          sudo chmod u+x /usr/local/bin/docker-compose
+          cd e2e/k8s
+          sudo docker-compose version
+          sudo docker-compose up --exit-code-from testing --remove-orphans

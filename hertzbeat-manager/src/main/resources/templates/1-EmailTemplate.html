@@ -1,0 +1,112 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HertzBeat Alert Notification</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { margin-bottom: 30px; }
+        .section { margin-bottom: 25px; }
+        .alert-item { margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px; }
+        .info-item { margin: 10px 0; }
+        .severity-critical { color: #dc3545; }
+        .severity-warning { color: #ffc107; }
+        .severity-info { color: #28a745; }
+        h2 { color: #2c3e50; }
+        h3 { color: #34495e; }
+        h4 { color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>🔔 HertzBeat Alert Notification</h2>
+        </div>
+
+        <div class="section">
+            <h3>Alert Summary</h3>
+            <div class="info-item">Status: ${status!"UNKNOWN"}</div>
+            <#if commonLabels??>
+                <#if commonLabels.severity??>
+                    <#assign severityClass = commonLabels.severity?switch(
+                        "critical", "severity-critical",
+                        "warning", "severity-warning",
+                        "info", "severity-info",
+                        "")>
+                    <div class="info-item ${severityClass}">Severity: ${commonLabels.severity?switch(
+                        "critical", "❤️ Critical",
+                        "warning", "💛 Warning",
+                        "info", "💚 Info",
+                        "Unknown")}</div>
+                </#if>
+                <#if commonLabels.alertname??>
+                    <div class="info-item">Alert Name: ${commonLabels.alertname?html}</div>
+                </#if>
+            </#if>
+        </div>
+
+        <div class="section">
+            <h3>Alert Details</h3>
+            <#if alerts?? && alerts?size gt 0>
+                <#list alerts as alert>
+                    <div class="alert-item">
+                        <h4>Alert ${alert?index + 1}</h4>
+                        <#if alert.labels?? && alert.labels?size gt 0>
+                            <#list alert.labels?keys as key>
+                                <div class="info-item">${key?html}: ${alert.labels[key]?html}</div>
+                            </#list>
+                        </#if>
+                        <#if alert.content?? && alert.content != "">
+                            <div class="info-item">Content: ${alert.content?html}</div>
+                        </#if>
+                        <div class="info-item">Trigger Count: ${alert.triggerTimes!0}</div>
+                        <div class="info-item">Start Time: ${((alert.startAt!0)?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}</div>
+                        <#if alert.activeAt?? && alert.activeAt gt 0>
+                            <div class="info-item">Active Time: ${((alert.activeAt!0)?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}</div>
+                        </#if>
+                        <#if alert.endAt?? && alert.endAt gt 0>
+                            <div class="info-item">End Time: ${(alert.endAt?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}</div>
+                        </#if>
+
+                        <#if alert.annotations?? && alert.annotations?size gt 0>
+                            <h4>Additional Information</h4>
+                            <#list alert.annotations?keys as key>
+                                <div class="info-item">${key?html}: ${alert.annotations[key]?html}</div>
+                            </#list>
+                        </#if>
+                    </div>
+                </#list>
+            </#if>
+        </div>
+
+        <#if commonAnnotations?? && commonAnnotations?size gt 0>
+            <div class="section">
+                <h3>Common Information</h3>
+                <#list commonAnnotations?keys as key>
+                    <div class="info-item">${key?html}: ${commonAnnotations[key]?html}</div>
+                </#list>
+            </div>
+        </#if>
+    </div>
+</body>
+</html>

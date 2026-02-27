@@ -1,0 +1,27 @@
+:host {
+  ::ng-deep {
+    .ant-input-affix-wrapper {
+      width: 100%!important;
+    }
+    .ant-input-prefix, .ant-input-suffix {
+      display: flex;
+      gap: 4px;
+      * {
+        margin-right: 0!important;
+      }
+    }
+    .ant-input-prefix {
+      margin-right: 0!important;
+      >:last-child {
+        margin-right: 4px!important;
+      }
+    }
+    .ant-input-suffix {
+      flex-direction: row-reverse;
+      margin-left: 0!important;
+      >:last-child {
+        margin-left: 4px!important;
+      }
+    }
+  }
+}

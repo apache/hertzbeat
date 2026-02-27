@@ -1,0 +1,393 @@
+/* Component Styles */
+/* Import system theme variables */
+@import 'src/styles/theme.less';
+/* CSS Variables for theme support */
+:host {
+  /* Light theme variables */
+  --background-color: #f5f7fa;
+  --sidebar-background: #ffffff;
+  --content-background: #ffffff;
+  --border-color: rgba(255, 255, 255, 0.2);
+  --shadow-color: rgba(0, 0, 0, 0.06);
+  --primary-color: @primary-color;
+  --primary-color-light: lighten(@primary-color, 10%);
+
+  display: block;
+  /* Change to block layout to avoid extra whitespace */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-color);
+  min-height: 100vh;
+
+  @media (max-width: 1200px) {
+    .page-header-item {
+      display: none;
+    }
+  }
+  @media (max-width: 992px) {
+    .page-header-item2 {
+      display: none;
+    }
+  }
+}
+
+/* Dark theme variables */
+:host.dark {
+  --background-color: #141414;
+  --sidebar-background: #1f1f1f;
+  --content-background: #1f1f1f;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark theme support for ng-alain */
+:host ::ng-deep .dark {
+  --background-color: #141414;
+  --sidebar-background: #1f1f1f;
+  --content-background: #1f1f1f;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Global dark theme support */
+[data-theme='dark'] :host,
+.dark :host {
+  --background-color: #141414;
+  --sidebar-background: #1f1f1f;
+  --content-background: #1f1f1f;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Modern Layout Styles with Rounded Separation - Complete Override */
+:host ::ng-deep {
+  /* Reset all default ng-alain positioning - exclude header items */
+  .alain-default {
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+  }
+
+  .alain-default__aside,
+  .alain-default__content {
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+  }
+
+  /* Layout container styling with CSS Grid */
+  .alain-default {
+    background-color: var(--background-color, #f5f7fa) !important;
+    padding: 12px !important;
+    display: grid !important;
+    grid-template-columns: 200px 1fr !important;
+    grid-template-rows: 64px 1fr !important;
+    grid-template-areas:
+      "header header"
+      "sidebar content" !important;
+    gap: 12px !important;
+    min-height: 100vh !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Collapsed sidebar layout */
+  .alain-default.alain-default__collapsed {
+    grid-template-columns: 64px 1fr !important;
+  }
+
+  /* Header modern styling */
+  .alain-default__header {
+    grid-area: header !important;
+    background: linear-gradient(135deg, var(--primary-color, @primary-color) 0%, var(--primary-color-light, lighten(@primary-color, 10%)) 100%) !important;
+    box-shadow: 0 4px 20px var(--shadow-color, rgba(0, 0, 0, 0.08)) !important;
+    border-radius: 6px !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    z-index: 10 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 64px !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+
+  /* Ensure header items are visible and properly positioned */
+  .alain-default__header-item,
+  .alain-default__header .alain-default__header-logo,
+  .alain-default__header .alain-default__header-trigger,
+  .alain-default__header .alain-default__header-action,
+  .alain-default__nav-item,
+  header-notify,
+  header-user,
+  header-search {
+    position: relative !important;
+    z-index: 11 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Fix notification badge positioning */
+  .alain-default__nav-item .ant-badge,
+  .alain-default__nav-item nz-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  /* Sidebar modern styling */
+  .alain-default__aside {
+    grid-area: sidebar !important;
+    background: var(--sidebar-background, #ffffff) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 8px 32px var(--shadow-color, rgba(0, 0, 0, 0.06)) !important;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2)) !important;
+    backdrop-filter: blur(20px) !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .alain-default__aside::after {
+    display: none !important;
+    /* Remove default border */
+  }
+
+  /* Content area modern styling */
+  .alain-default__content {
+    grid-area: content !important;
+    background: var(--content-background, #ffffff) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 8px 32px var(--shadow-color, rgba(0, 0, 0, 0.06)) !important;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2)) !important;
+    backdrop-filter: blur(20px) !important;
+    overflow: auto !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Sidebar navigation modern styling */
+  .sidebar-nav__item {
+    margin: 4px 12px;
+    border-radius: 6px;
+    border-left: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .sidebar-nav__item:hover {
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.08) 0%, rgba(63, 81, 181, 0.04) 100%);
+    transform: translateX(4px);
+  }
+
+  .sidebar-nav__selected {
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.12) 0%, rgba(63, 81, 181, 0.08) 100%);
+    border-left: none;
+    border-radius: 6px;
+    position: relative;
+  }
+
+  .sidebar-nav__selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    background: linear-gradient(135deg, @primary-color 0%, lighten(@primary-color, 20%) 100%);
+    border-radius: 0 3px 3px 0;
+  }
+
+  .sidebar-nav__item-link {
+    padding: 12px 16px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+    font-weight: 500;
+  }
+
+  .sidebar-nav__selected > .sidebar-nav__item-link {
+    font-weight: 600;
+  }
+
+  /* Header items modern styling */
+  .alain-default__nav-item {
+    border-radius: 6px;
+    margin: 0 4px;
+    transition: all 0.3s ease;
+  }
+
+  .alain-default__nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .alain-default__nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    transform: translateY(-1px);
+  }
+
+  /* Search component modern styling */
+  .alain-default__search {
+    .ant-input-affix-wrapper {
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .ant-input-affix-wrapper:hover,
+    .ant-input-affix-wrapper:focus {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  /* Logo area styling */
+  .alain-default__header-logo {
+    border-radius: 6px;
+    margin: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .alain-default__header-logo:hover {
+    transform: scale(1.02);
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .alain-default {
+      padding: 4px;
+    }
+
+    .alain-default__header {
+      border-radius: 6px;
+    }
+
+    .alain-default__aside {
+      margin-top: 4px;
+      border-radius: 6px;
+    }
+
+    .alain-default__content {
+      margin-top: 4px;
+      margin-left: 4px;
+      border-radius: 6px;
+    }
+  }
+
+  /* Dark theme support */
+  [data-theme='dark'] & {
+    :host {
+      background-color: #141414;
+    }
+
+    .alain-default__aside {
+      background: #1f1f1f;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .alain-default__content {
+      background: #1f1f1f;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-nav__item:hover {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    }
+
+    .sidebar-nav__selected {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
+    }
+  }
+}
+
+/* Footer styles */
+global-footer {
+  text-align: center;
+  padding: 16px;
+  border-top: 1px solid #e5e5e5;
+  min-height: 120px;
+}
+
+/* AI Chat Button styles */
+.ai-chat-button-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.ai-chat-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background-color: @primary-color;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.ai-chat-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.ai-chat-button:active {
+  transform: scale(0.95);
+}
+
+/* AI Chat Modal Styles */
+:host ::ng-deep .ai-chat-modal {
+  .ant-modal {
+    border-radius: 6px !important;
+    overflow: hidden !important;
+  }
+  .ant-modal-content {
+    border-radius: 6px !important;
+    overflow: hidden !important;
+  }
+
+
+
+  .ant-modal-header {
+    border-radius: 6px 6px 0 0 !important;
+    margin: 0 !important;
+    padding: 16px !important;
+  }
+  .ant-modal-body {
+    border-radius: 0 0 6px 6px !important;
+    padding: 0 !important;
+  }
+
+
+
+  .ant-modal-close {
+    top: 8px !important;
+    right: 8px !important;
+  }
+}
