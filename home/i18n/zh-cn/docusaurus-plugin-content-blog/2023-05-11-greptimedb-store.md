@@ -1,8 +1,8 @@
 ---
-title: GreptimeDB & HertzBeat, 使用开源时序数据库 GreptimeDB 存储开源实时监控 HertzBeat 的度量数据    
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: GreptimeDB & HertzBeat, 使用开源时序数据库 GreptimeDB 存储开源实时监控 HertzBeat 的度量数据
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [开源监控系统, 开源时序数据库, HertzBeat, GreptimeDB]
 ---
@@ -18,7 +18,7 @@ keywords: [开源监控系统, 开源时序数据库, HertzBeat, GreptimeDB]
 - 高效存储与计算，通过对象存储和高数据压缩率实现超低的存储成本。内置数据分析解决方案，避免将数据复制到外部数据仓库。
 - 分布式、高可靠与高可用，通过解耦的云原生架构，轻松独立地扩展每个模块。通过可配置的副本和自动的故障转移机制，确保数据的可靠性和可用性。
 
-Cloud: **[GreptimePlay](https://greptime.com/playground)**
+Cloud: **[GreptimePlay](https://greptime.com/product/cloud)**
 
 ### 什么是 HertzBeat
 
@@ -77,7 +77,7 @@ Cloud: **[TanCloud](https://console.tancloud.cn/)**
 
     注意⚠️ 本地挂载配置文件 `application.yml` 需提前存在，文件完整内容见项目仓库[/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
 
-2. 浏览器访问 <http://ip:1157/> 默认账户密码 admin/hertzbeat，查看 HertzBeat 是否启动成功。
+2. 浏览器访问 [http://ip:1157/](http://ip:1157/) 默认账户密码 admin/hertzbeat，查看 HertzBeat 是否启动成功。
 
 #### 配置使用 GreptimeDB 存储 HertzBeat 监控指标度量数据
 
@@ -106,7 +106,7 @@ Cloud: **[TanCloud](https://console.tancloud.cn/)**
 
 #### 观察验证效果
 
-1. 浏览器访问 HertzBeat <http://ip:1157/> 默认账户密码 admin/hertzbeat
+1. 浏览器访问 HertzBeat [http://ip:1157/](http://ip:1157/) 默认账户密码 admin/hertzbeat
 2. 使用 HertzBeat 添加应用监控，比如网站监控，Linux监控，Mysql监控
 3. 监控采集几个周期之后，查看 GreptimeDB 数据库是否存储指标度量数据，HertzBeat 指标数据图表数据是否展示正常。
 
@@ -123,8 +123,8 @@ Cloud: **[TanCloud](https://console.tancloud.cn/)**
 这篇文章带我们体验了如何使用开源时序数据库 GreptimeDB 存储开源实时监控 HertzBeat 的指标度量数据，总的来看两款开源产品上手是非常简单的，关键是如果嫌麻烦不想部署他俩都还有云服务😂让你折腾。
 作为特性 [HertzBeat支持GreptimeDB](https://github.com/apache/hertzbeat/pull/834) 的开发者之一，在实际适配使用过程中，GreptimeDB的丝滑原生SDK和类似关系数据库的SQL，让我们从其它时序数据库 `TDengine, IotDB, InfluxDB` 切换过去还是非常容易，体验丝滑的。
 
-GreptimeDB Github: <https://github.com/GreptimeTeam/greptimedb>
-HertzBeat Github: <https://github.com/apache/hertzbeat>
+GreptimeDB Github: [https://github.com/GreptimeTeam/greptimedb](https://github.com/GreptimeTeam/greptimedb)
+HertzBeat Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 **最后就是欢迎大家一定要多多了解，多多使用，多多提意见，多多ISSUE，多多PR，多多Star支持这俩没出来多久希望得到呵护的开源牛牛不怕困难 一颗小星星哦！做开源，我们是蒸(真)的，爱心💗**
 

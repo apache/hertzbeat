@@ -50,6 +50,6 @@ Bugfix.
 6. [[manager] bugfix the gmtUpdate not change when update monitor param #459](https://github.com/apache/hertzbeat/pull/459)
 7. [[home] fix typo in springboot2.md #464](https://github.com/apache/hertzbeat/pull/464) @eltociear
 
-Online <https://console.tancloud.cn>.
+Online [https://console.tancloud.cn](https://console.tancloud.cn).
 
 Have Fun!

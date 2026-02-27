@@ -47,6 +47,7 @@ import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.StrBuffer;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -68,8 +69,14 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     private static final String INSTANCE_NULL = "''";
     private static final String CONSTANTS_CREATE_DATABASE = "CREATE DATABASE IF NOT EXISTS %s";
     private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO `%s` USING `%s` TAGS (%s) VALUES %s";
-    private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS `%s` %s TAGS (monitor BIGINT)";
+    private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS `%s` %s TAGS (instance NCHAR(128))";
     private static final String NO_SUPER_TABLE_ERROR = "Table does not exist";
+    /**
+     * schema version suffix - increment when TAG definition changes.
+     * v1: instance BIGINT (original monitorId like 123456789)
+     * v2: instance NCHAR(128) (supports string instance values like 127.0.0.1:8080)
+     */
+    private static final String SUPER_TABLE_VERSION = "_v2";
 
     private static final String QUERY_HISTORY_WITH_INSTANCE_SQL =
             "SELECT ts, metric_labels, `%s` FROM `%s` WHERE metric_labels = '%s' AND ts >= now - %s order by ts desc";
@@ -185,7 +192,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
         String instance = metricsData.getInstance();
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
-        String superTable = getTable(app, metrics, "_super");
+        String superTable = getSuperTable(app, metrics);
         String table = getTable(app, metrics, instance);
         StringBuilder sqlBuffer = new StringBuilder();
         int i = 0;
@@ -215,7 +222,12 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                         } else {
                             try {
                                 double number = Double.parseDouble(value);
-                                sqlRowBuffer.append(number);
+                                // TDengine doesn't support NaN or Infinity literals, convert to NULL
+                                if (Double.isNaN(number) || Double.isInfinite(number)) {
+                                    sqlRowBuffer.append("NULL");
+                                } else {
+                                    sqlRowBuffer.append(number);
+                                }
                             } catch (Exception e) {
 
                                 if (log.isWarnEnabled()) {
@@ -230,7 +242,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                         if (CommonConstants.NULL_VALUE.equals(value)) {
                             sqlRowBuffer.append("NULL");
                         } else {
-                            sqlRowBuffer.append("'").append(formatStringValue(value)).append("'");
+                            sqlRowBuffer.append("'").append(StrBuffer.escapeForFormat(formatStringValue(value))).append("'");
                         }
                     }
 
@@ -246,7 +258,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 sqlBuffer.append(" ").append(String.format(sqlRowBuffer.toString(), formatStringValue(JsonUtil.toJson(labels))));
             }
 
-            String insertDataSql = String.format(INSERT_TABLE_DATA_SQL, table, superTable, instance, sqlBuffer);
+            String insertDataSql = String.format(INSERT_TABLE_DATA_SQL, table, superTable, "'" + formatStringValue(instance) + "'", sqlBuffer);
 
             if (log.isDebugEnabled()) {
                 log.debug(insertDataSql);
@@ -325,7 +337,12 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     .replace("[", "_")
                     .replace("]", "_");
         }
-        return app + "_" + metrics + "_" + instance;
+        return app + "_" + metrics + "_" + instance + SUPER_TABLE_VERSION;
+    }
+
+    @NotNull
+    private static String getSuperTable(String app, String metrics) {
+        return app + "_" + metrics + "_super" + SUPER_TABLE_VERSION;
     }
 
     private String formatStringValue(String value) {

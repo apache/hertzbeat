@@ -105,14 +105,42 @@ class LogSseFilterCriteriaTest {
         // Test Span ID filter - match
         filterCriteria.setSpanId("1234567890abcdef");
         assertTrue(filterCriteria.matches(testLogEntry));
-        
+
         // Test Span ID filter - no match
         filterCriteria.setSpanId("abcdef1234567890");
         assertFalse(filterCriteria.matches(testLogEntry));
-        
+
         // Test Span ID filter - case insensitive
         filterCriteria.setSpanId("1234567890ABCDEF");
         assertTrue(filterCriteria.matches(testLogEntry));
+    }
+
+    @Test
+    void testMatchesWithLogContentFilter() {
+        // Test log content filter - match
+        filterCriteria.setLogContent("Test log");
+        assertTrue(filterCriteria.matches(testLogEntry));
+
+        // Test log content filter - no match
+        filterCriteria.setLogContent("Error message");
+        assertFalse(filterCriteria.matches(testLogEntry));
+
+        // Test log content filter - case insensitive
+        filterCriteria.setLogContent("test log");
+        assertTrue(filterCriteria.matches(testLogEntry));
+
+        // Test log content filter - partial match
+        filterCriteria.setLogContent("message");
+        assertTrue(filterCriteria.matches(testLogEntry));
+
+        // Test log content filter with null body
+        LogEntry nullBodyLog = LogEntry.builder()
+                .severityNumber(9)
+                .severityText("INFO")
+                .body(null)
+                .build();
+        filterCriteria.setLogContent("test");
+        assertFalse(filterCriteria.matches(nullBodyLog));
     }
 
     @Test
@@ -163,14 +191,15 @@ class LogSseFilterCriteriaTest {
     void testConstructorWithAllParameters() {
         // Test constructor with all parameters
         LogSseFilterCriteria criteria = new LogSseFilterCriteria(
-                9, "INFO", "1234567890abcdef1234567890abcdef", "1234567890abcdef"
+                9, "INFO", null, "1234567890abcdef1234567890abcdef", "1234567890abcdef"
         );
-        
+
         assertEquals(9, criteria.getSeverityNumber());
         assertEquals("INFO", criteria.getSeverityText());
+        assertEquals(null, criteria.getLogContent());
         assertEquals("1234567890abcdef1234567890abcdef", criteria.getTraceId());
         assertEquals("1234567890abcdef", criteria.getSpanId());
-        
+
         // Test matching
         assertTrue(criteria.matches(testLogEntry));
     }
@@ -179,17 +208,19 @@ class LogSseFilterCriteriaTest {
     void testNoArgsConstructorAndSetters() {
         // Test no-args constructor and setter methods
         LogSseFilterCriteria criteria = new LogSseFilterCriteria();
-        
+
         criteria.setSeverityNumber(9);
         criteria.setSeverityText("INFO");
+        criteria.setLogContent("Test log");
         criteria.setTraceId("1234567890abcdef1234567890abcdef");
         criteria.setSpanId("1234567890abcdef");
-        
+
         assertEquals(9, criteria.getSeverityNumber());
         assertEquals("INFO", criteria.getSeverityText());
+        assertEquals("Test log", criteria.getLogContent());
         assertEquals("1234567890abcdef1234567890abcdef", criteria.getTraceId());
         assertEquals("1234567890abcdef", criteria.getSpanId());
-        
+
         // Test matching
         assertTrue(criteria.matches(testLogEntry));
     }

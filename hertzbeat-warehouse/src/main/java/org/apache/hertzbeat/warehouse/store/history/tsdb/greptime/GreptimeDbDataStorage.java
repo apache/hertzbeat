@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -143,7 +144,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         String instance = metricsData.getInstance();
-        String tableName = getTableName(metricsData.getMetrics());
+        String app = metricsData.getApp();
+        String tableName = getTableName(app, metricsData.getMetrics());
         TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(tableName);
 
         tableSchemaBuilder.addTag("instance", DataType.String)
@@ -220,8 +222,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         return getHistoryData(start, end, step, instance, app, metrics, metric);
     }
 
-    private String getTableName(String metrics) {
-        return metrics;
+    private String getTableName(String app, String metrics) {
+        return app + "_" + metrics;
     }
 
     @Override
@@ -246,7 +248,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         long effectiveStart = values.get(0).getTime() / 1000;
         long effectiveEnd = values.get(values.size() - 1).getTime() / 1000 + Duration.ofHours(4).getSeconds();
 
-        String name = getTableName(metrics);
+        String name = getTableName(app, metrics);
         String timeSeriesSelector = name + "{" + LABEL_KEY_INSTANCE + "=\"" + instance + "\"";
         if (!CommonConstants.PROMETHEUS.equals(app)) {
             timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"";
@@ -330,7 +332,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
      * @return history metric data
      */
     private Map<String, List<Value>> getHistoryData(long start, long end, String step, String instance, String app, String metrics, String metric) {
-        String name = getTableName(metrics);
+        String name = getTableName(app, metrics);
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + name + "\""
                 + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\"";
         if (!CommonConstants.PROMETHEUS.equals(app)) {
@@ -541,10 +543,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                                         String spanId, Integer severityNumber,
-                                                        String severityText) {
+                                                        String severityText, String searchContent) {
         try {
             StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
             sql.append(" ORDER BY time_unix_nano DESC");
 
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
@@ -558,10 +560,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
                                                                       String spanId, Integer severityNumber,
-                                                                      String severityText, Integer offset, Integer limit) {
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit) {
         try {
             StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
             sql.append(" ORDER BY time_unix_nano DESC");
 
             // Add pagination
@@ -583,10 +586,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                              String spanId, Integer severityNumber,
-                                             String severityText) {
+                                             String severityText, String searchContent) {
         try {
             StringBuilder sql = new StringBuilder("SELECT COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
 
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows != null && !rows.isEmpty()) {
@@ -623,7 +626,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
      * @param severityNumber severity number
      */
     private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
-                                     String spanId, Integer severityNumber, String severityText) {
+                                     String spanId, Integer severityNumber, String severityText, String searchContent) {
         List<String> conditions = new ArrayList<>();
 
         // Time range condition
@@ -649,6 +652,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         // SeverityText condition
         if (StringUtils.hasText(severityText)) {
             conditions.add("severity_text = '" + safeString(severityText) + "'");
+        }
+
+        // Search content condition - search in body field
+        if (StringUtils.hasText(searchContent)) {
+            conditions.add("body LIKE '%" + safeString(searchContent) + "%'");
         }
 
         // Add WHERE clause if there are conditions
@@ -758,7 +766,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         try {
             StringBuilder sql = new StringBuilder("DELETE FROM ").append(LOG_TABLE_NAME).append(" WHERE time_unix_nano IN (");
             sql.append(timeUnixNanos.stream()
-                    .filter(time -> time != null)
+                    .filter(Objects::nonNull)
                     .map(String::valueOf)
                     .collect(Collectors.joining(", ")));
             sql.append(")");

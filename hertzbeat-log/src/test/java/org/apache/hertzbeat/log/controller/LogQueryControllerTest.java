@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.log.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -87,10 +86,10 @@ class LogQueryControllerTest {
 
         List<LogEntry> mockLogs = Arrays.asList(logEntry1, logEntry2);
 
-        when(historyDataReader.countLogsByMultipleConditions(anyLong(), anyLong(), anyString(), 
-                anyString(), anyInt(), anyString())).thenReturn(2L);
-        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(anyLong(), anyLong(), 
-                anyString(), anyString(), anyInt(), anyString(), anyInt(), anyInt()))
+        when(historyDataReader.countLogsByMultipleConditions(anyLong(), anyLong(), any(),
+                any(), any(), any(), any())).thenReturn(2L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(anyLong(), anyLong(),
+                any(), any(), any(), any(), any(), anyInt(), anyInt()))
                 .thenReturn(mockLogs);
 
         mockMvc.perform(
@@ -127,10 +126,10 @@ class LogQueryControllerTest {
                         .build()
         );
 
-        when(historyDataReader.countLogsByMultipleConditions(isNull(), isNull(), isNull(), 
-                isNull(), isNull(), isNull())).thenReturn(1L);
-        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(isNull(), isNull(), 
-                isNull(), isNull(), isNull(), isNull(), eq(0), eq(20)))
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(1L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(),
+                any(), any(), any(), any(), any(), eq(0), eq(20)))
                 .thenReturn(mockLogs);
 
         mockMvc.perform(
@@ -163,8 +162,8 @@ class LogQueryControllerTest {
                 LogEntry.builder().severityNumber(21).build()
         );
 
-        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(), 
-                isNull(), isNull(), isNull())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(mockLogs);
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -188,8 +187,8 @@ class LogQueryControllerTest {
                 LogEntry.builder().severityNumber(17).build()
         );
 
-        when(historyDataReader.queryLogsByMultipleConditions(eq(1734005477000L), eq(1734005478000L), 
-                isNull(), isNull(), isNull(), isNull())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogsByMultipleConditions(eq(1734005477000L), eq(1734005478000L),
+                any(), any(), any(), any(), any())).thenReturn(mockLogs);
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -217,8 +216,8 @@ class LogQueryControllerTest {
                 LogEntry.builder().build() // null values
         );
 
-        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(), 
-                isNull(), isNull(), isNull())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(mockLogs);
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -244,8 +243,8 @@ class LogQueryControllerTest {
                 LogEntry.builder().timeUnixNano(1734009077630000000L).build()
         );
 
-        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(), 
-                isNull(), isNull(), isNull())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(mockLogs);
 
         mockMvc.perform(
                 MockMvcRequestBuilders
@@ -263,8 +262,8 @@ class LogQueryControllerTest {
                 LogEntry.builder().timeUnixNano(null).build() // This should be filtered out
         );
 
-        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(), 
-                isNull(), isNull(), isNull())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(mockLogs);
 
         mockMvc.perform(
                 MockMvcRequestBuilders

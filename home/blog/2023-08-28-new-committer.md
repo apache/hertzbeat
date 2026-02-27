@@ -84,6 +84,6 @@ HertzBeat HertzBeat is an open source real-time monitoring and alerting system w
 
 > `HertzBeat`'s powerful customization, multi-type support, high performance, easy to extend, low-coupling, and hopefully can help developers and teams to quickly build their own monitoring system.
 
-Github: <https://github.com/apache/hertzbeat>
+Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 More users are welcome to participate in `HertzBeat` open source collaboration, no matter a typo or punctuation we are very welcome.

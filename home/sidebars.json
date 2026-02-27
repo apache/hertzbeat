@@ -51,7 +51,8 @@
         },
         {
           "type": "category",
-          "label": "use-case",
+          "label": "Use Case",
+          "key": "quickstart-use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
             "start/usecase/springboot-auto-practice",
@@ -70,7 +71,8 @@
         "help/mcp_server",
         {
           "type": "category",
-          "label": "use-case",
+          "label": "Use Case",
+          "key": "guides-use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
             "start/usecase/springboot-auto-practice",
@@ -80,7 +82,8 @@
         },
         {
           "type": "category",
-          "label": "log",
+          "label": "Log (Beta)",
+          "key": "log",
           "items": [
             "help/log_integration",
             "help/log_stream",
@@ -118,6 +121,18 @@
             "help/alert_enterprise_wechat_app",
             "help/alert_smn",
             "help/alert_notification_template"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "service-discovery",
+          "items": [
+            "help/eureka_sd",
+            "help/nacos_sd",
+            "help/consul_sd",
+            "help/zookeeper_sd",
+            "help/http_sd",
+            "help/dns_sd"
           ]
         },
         {
@@ -288,7 +303,8 @@
         },
         {
           "type": "category",
-          "label": "custom",
+          "label": "Custom",
+          "key": "help-custom",
           "items": ["help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
         },
         "help/status",
@@ -303,7 +319,8 @@
     },
     {
       "type": "category",
-      "label": "custom",
+      "label": "Custom",
+      "key": "advanced-custom",
       "items": [
         "advanced/extend-point",
         "advanced/extend-tutorial",

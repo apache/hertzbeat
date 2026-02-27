@@ -427,6 +427,8 @@
   "log.stream.severity-number-placeholder": "Digite o número de severidade",
   "log.stream.severity-text": "Severidade:",
   "log.stream.severity-text-placeholder": "Digite a severidade",
+  "log.stream.content": "Conteúdo do Log",
+  "log.stream.content-placeholder": "Digite o conteúdo do log",
   "log.stream.show-filters": "Mostrar filtros",
   "log.stream.span": "Span:",
   "log.stream.span-id": "Span ID:",

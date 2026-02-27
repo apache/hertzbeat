@@ -1,6 +1,6 @@
 {
   "version.label": {
-    "message": "v1.7.x",
+    "message": "dev",
     "description": "The label for version current"
   },
   "sidebar.docs.category.quickstart": {
@@ -58,6 +58,10 @@
   "sidebar.docs.category.notice": {
     "message": "消息通知",
     "description": "The label for category notice in sidebar docs"
+  },
+  "sidebar.docs.category.service-discovery": {
+    "message": "服务发现",
+    "description": "The label for category service-discovery in sidebar docs"
   },
   "sidebar.docs.category.Others": {
     "message": "其它",
@@ -159,8 +163,24 @@
     "message": "集成平台部署",
     "description": "The label for category extern-deploy in sidebar docs"
   },
+  "sidebar.docs.category.quickstart-use-case": {
+    "message": "使用案例",
+    "description": "The label for category quickstart-use-case in sidebar docs"
+  },
+  "sidebar.docs.category.guides-use-case": {
+    "message": "使用案例",
+    "description": "The label for category guides-use-case in sidebar docs"
+  },
+  "sidebar.docs.category.help-custom": {
+    "message": "自定义监控",
+    "description": "The label for category help-custom in sidebar docs"
+  },
+  "sidebar.docs.category.advanced-custom": {
+    "message": "自定义监控",
+    "description": "The label for category advanced-custom in sidebar docs"
+  },
   "sidebar.docs.category.log": {
-    "message": "日志监控",
+    "message": "日志监控 (Beta)",
     "description": "The label for category log in sidebar docs"
   }
 }

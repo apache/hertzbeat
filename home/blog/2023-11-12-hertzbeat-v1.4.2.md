@@ -23,9 +23,9 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![HertzBeat](/img/docs/hertzbeat-arch.png)
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**
 
 ### HertzBeat's 1.4.2 version release
 
@@ -65,55 +65,55 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 
 > Welcome to explore more new version updates, thanks to the hard work of the community partners, love 💗!
 
-* bugfix counting wrong tasks num of collector by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1265>
-* [ospp] add push style collector by @vinci-897 in <https://github.com/apache/hertzbeat/pull/1222>
-* add 1.4.1 version doc by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1263>
-* support using Huawei Cloud OBS to store custom define yml file by @gcdd1993 in <https://github.com/apache/hertzbeat/pull/1266>
-* [doc] add more contact channel by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1272>
-* bugfix app-tomcat memory_pool unit mb  by @rbsrcy in <https://github.com/apache/hertzbeat/pull/1268>
-* add rbsrcy as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1271>
-* [doc] update docker.md by @ruanliang-hualun in <https://github.com/apache/hertzbeat/pull/1270>
-* add ruanliang-hualun as a contributor for doc by @allcontributors in <https://github.com/apache/hertzbeat/pull/1274>
-* bugfix jmx memory_pool unit and time unit error by @rbsrcy in <https://github.com/apache/hertzbeat/pull/1273>
-* bugfix old version monitor alert has no monitor name by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1278>
-* support edit monitor in monitor detail page by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1282>
-* reset alert converge reduce cache when restored alert trigger by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1281>
-* [ospp] add push style collector doc by @vinci-897 in <https://github.com/apache/hertzbeat/pull/1267>
-* bugfix threshold availability automatically carries threshold parameters by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1285>
-* [ospp] support custom notice template by @Eden4701 in <https://github.com/apache/hertzbeat/pull/1233>
-* add Eden4701 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1287>
-* bugfix AvailableAlertDefineInit - query did not return a unique result by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1288>
-* upgrade to version angular 15 by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1291>
-* support push style for multiple messages by @vinci-897 in <https://github.com/apache/hertzbeat/pull/1292>
-* update hertzbeat upgrade help doc by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1294>
-* feat alert converge, define, silence support search query by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1300>
-* feature:support monitoring udp port availability by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1295>
-* support emqx monitor by @vinci-897 in <https://github.com/apache/hertzbeat/pull/1302>
-* add an explicit tag filter by @vinci-897 in <https://github.com/apache/hertzbeat/pull/1303>
-* add hertzbeat icon by @zqr10159 in <https://github.com/apache/hertzbeat/pull/1305>
-* [doc] update kafka help doc by @XiaTian688 in <https://github.com/apache/hertzbeat/pull/1308>
-* add XiaTian688 as a contributor for doc by @allcontributors in <https://github.com/apache/hertzbeat/pull/1309>
-* support webhook custom template by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1306>
-* set ssh param connect reused default false by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1310>
-* upgrade greptimedb to v0.4 by @liyin in <https://github.com/apache/hertzbeat/pull/1311>
-* add liyin as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1313>
-* add some emqx monitoring metrics by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1312>
-* feature: app-mysql.yml by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1316>
-* modify default IoTDB version config to V_1_0 by @Ceilzcx in <https://github.com/apache/hertzbeat/pull/1315>
-* bugfix timestamp is null by @qyaaaa in <https://github.com/apache/hertzbeat/pull/1246>
-* [hertzbeat] release hertzbeat version v1.4.2 by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1317>
-* bugfix alarm time span match in silence and notice by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1318>
-* update available alert threshold trigger times default 2 by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1324>
-* bugfix rabbitmq contains duplicated metric by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1322>
-* [alerter] optimize the encoding of how to add Extern Alarm Manage API(#1320) by @SurryChen in <https://github.com/apache/hertzbeat/pull/1325>
-* bugfix webhook post body error and alarm recover exception by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1327>
-* build hertzbeat package with jdk runtime by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1328>
+* bugfix counting wrong tasks num of collector by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1265](https://github.com/apache/hertzbeat/pull/1265)
+* [ospp] add push style collector by @vinci-897 in [https://github.com/apache/hertzbeat/pull/1222](https://github.com/apache/hertzbeat/pull/1222)
+* add 1.4.1 version doc by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1263](https://github.com/apache/hertzbeat/pull/1263)
+* support using Huawei Cloud OBS to store custom define yml file by @gcdd1993 in [https://github.com/apache/hertzbeat/pull/1266](https://github.com/apache/hertzbeat/pull/1266)
+* [doc] add more contact channel by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1272](https://github.com/apache/hertzbeat/pull/1272)
+* bugfix app-tomcat memory_pool unit mb  by @rbsrcy in [https://github.com/apache/hertzbeat/pull/1268](https://github.com/apache/hertzbeat/pull/1268)
+* add rbsrcy as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1271](https://github.com/apache/hertzbeat/pull/1271)
+* [doc] update docker.md by @ruanliang-hualun in [https://github.com/apache/hertzbeat/pull/1270](https://github.com/apache/hertzbeat/pull/1270)
+* add ruanliang-hualun as a contributor for doc by @allcontributors in [https://github.com/apache/hertzbeat/pull/1274](https://github.com/apache/hertzbeat/pull/1274)
+* bugfix jmx memory_pool unit and time unit error by @rbsrcy in [https://github.com/apache/hertzbeat/pull/1273](https://github.com/apache/hertzbeat/pull/1273)
+* bugfix old version monitor alert has no monitor name by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1278](https://github.com/apache/hertzbeat/pull/1278)
+* support edit monitor in monitor detail page by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1282](https://github.com/apache/hertzbeat/pull/1282)
+* reset alert converge reduce cache when restored alert trigger by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1281](https://github.com/apache/hertzbeat/pull/1281)
+* [ospp] add push style collector doc by @vinci-897 in [https://github.com/apache/hertzbeat/pull/1267](https://github.com/apache/hertzbeat/pull/1267)
+* bugfix threshold availability automatically carries threshold parameters by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1285](https://github.com/apache/hertzbeat/pull/1285)
+* [ospp] support custom notice template by @Eden4701 in [https://github.com/apache/hertzbeat/pull/1233](https://github.com/apache/hertzbeat/pull/1233)
+* add Eden4701 as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1287](https://github.com/apache/hertzbeat/pull/1287)
+* bugfix AvailableAlertDefineInit - query did not return a unique result by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1288](https://github.com/apache/hertzbeat/pull/1288)
+* upgrade to version angular 15 by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1291](https://github.com/apache/hertzbeat/pull/1291)
+* support push style for multiple messages by @vinci-897 in [https://github.com/apache/hertzbeat/pull/1292](https://github.com/apache/hertzbeat/pull/1292)
+* update hertzbeat upgrade help doc by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1294](https://github.com/apache/hertzbeat/pull/1294)
+* feat alert converge, define, silence support search query by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1300](https://github.com/apache/hertzbeat/pull/1300)
+* feature:support monitoring udp port availability by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1295](https://github.com/apache/hertzbeat/pull/1295)
+* support emqx monitor by @vinci-897 in [https://github.com/apache/hertzbeat/pull/1302](https://github.com/apache/hertzbeat/pull/1302)
+* add an explicit tag filter by @vinci-897 in [https://github.com/apache/hertzbeat/pull/1303](https://github.com/apache/hertzbeat/pull/1303)
+* add hertzbeat icon by @zqr10159 in [https://github.com/apache/hertzbeat/pull/1305](https://github.com/apache/hertzbeat/pull/1305)
+* [doc] update kafka help doc by @XiaTian688 in [https://github.com/apache/hertzbeat/pull/1308](https://github.com/apache/hertzbeat/pull/1308)
+* add XiaTian688 as a contributor for doc by @allcontributors in [https://github.com/apache/hertzbeat/pull/1309](https://github.com/apache/hertzbeat/pull/1309)
+* support webhook custom template by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1306](https://github.com/apache/hertzbeat/pull/1306)
+* set ssh param connect reused default false by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1310](https://github.com/apache/hertzbeat/pull/1310)
+* upgrade greptimedb to v0.4 by @liyin in [https://github.com/apache/hertzbeat/pull/1311](https://github.com/apache/hertzbeat/pull/1311)
+* add liyin as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1313](https://github.com/apache/hertzbeat/pull/1313)
+* add some emqx monitoring metrics by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1312](https://github.com/apache/hertzbeat/pull/1312)
+* feature: app-mysql.yml by @a-little-fool in [https://github.com/apache/hertzbeat/pull/1316](https://github.com/apache/hertzbeat/pull/1316)
+* modify default IoTDB version config to V_1_0 by @Ceilzcx in [https://github.com/apache/hertzbeat/pull/1315](https://github.com/apache/hertzbeat/pull/1315)
+* bugfix timestamp is null by @qyaaaa in [https://github.com/apache/hertzbeat/pull/1246](https://github.com/apache/hertzbeat/pull/1246)
+* [hertzbeat] release hertzbeat version v1.4.2 by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1317](https://github.com/apache/hertzbeat/pull/1317)
+* bugfix alarm time span match in silence and notice by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1318](https://github.com/apache/hertzbeat/pull/1318)
+* update available alert threshold trigger times default 2 by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1324](https://github.com/apache/hertzbeat/pull/1324)
+* bugfix rabbitmq contains duplicated metric by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1322](https://github.com/apache/hertzbeat/pull/1322)
+* [alerter] optimize the encoding of how to add Extern Alarm Manage API(#1320) by @SurryChen in [https://github.com/apache/hertzbeat/pull/1325](https://github.com/apache/hertzbeat/pull/1325)
+* bugfix webhook post body error and alarm recover exception by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1327](https://github.com/apache/hertzbeat/pull/1327)
+* build hertzbeat package with jdk runtime by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1328](https://github.com/apache/hertzbeat/pull/1328)
 
 ## New Contributors
 
-* @rbsrcy made their first contribution in <https://github.com/apache/hertzbeat/pull/1268>
-* @XiaTian688 made their first contribution in <https://github.com/apache/hertzbeat/pull/1308>
-* @liyin made their first contribution in <https://github.com/apache/hertzbeat/pull/1311>
+* @rbsrcy made their first contribution in [https://github.com/apache/hertzbeat/pull/1268](https://github.com/apache/hertzbeat/pull/1268)
+* @XiaTian688 made their first contribution in [https://github.com/apache/hertzbeat/pull/1308](https://github.com/apache/hertzbeat/pull/1308)
+* @liyin made their first contribution in [https://github.com/apache/hertzbeat/pull/1311](https://github.com/apache/hertzbeat/pull/1311)
 
 ---
 
@@ -130,5 +130,5 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 
 ---
 
-**Github: <https://github.com/apache/hertzbeat>**
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**

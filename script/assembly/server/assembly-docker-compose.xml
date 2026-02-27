@@ -73,6 +73,17 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <outputDirectory>hertzbeat-postgresql-victoria-metrics</outputDirectory>
         </fileSet>
         <fileSet>
+            <directory>../script/docker-compose/hertzbeat-postgresql-greptimedb</directory>
+            <filtered>true</filtered>
+            <includes>
+                <include>conf/**</include>
+                <include>*.yaml</include>
+                <include>*.md</include>
+                <include>ext-lib/README</include>
+            </includes>
+            <outputDirectory>hertzbeat-postgresql-greptimedb</outputDirectory>
+        </fileSet>
+        <fileSet>
             <directory>../script/docker-compose</directory>
             <filtered>true</filtered>
             <includes>
