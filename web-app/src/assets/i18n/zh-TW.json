@@ -1109,5 +1109,13 @@
   "ai.chat.error.chat.response": "取得 AI 回覆失敗：",
   "ai.chat.error.processing": "處理您的請求時發生錯誤。請檢查 AI 智能體服務是否正在執行，然後重試。",
   "ai.chat.offline.mode": "AI 聊天服務不可用。正在離線模式下執行。",
-  "ai.chat.offline.response": "抱歉，AI 聊天服務目前不可用。請確保 HertzBeat AI 模組正在執行，稍後再試。"
+  "ai.chat.offline.response": "抱歉，AI 聊天服務目前不可用。請確保 HertzBeat AI 模組正在執行，稍後再試。",
+  "ai.chat.security.form.title": "安全表單",
+  "ai.chat.security.form.button": "輸入私有參數",
+  "ai.chat.security.form.complete": "完成",
+  "ai.chat.security.form.default.callback": "表單已完成",
+  "ai.chat.config.participation.model": "AI參與模式",
+   "ai.chat.config.participation.model.help": "信任模式：所有的資料都會傳送到大模型處理，受保護模式：限制一些AI能力，如私密資料不傳送給大模型處理",
+  "ai.chat.config.participation.model.protected": "受保護模式",
+  "ai.chat.config.participation.model.trusted": "信任模式"
 }

@@ -18,15 +18,22 @@
 
 package org.apache.hertzbeat.ai.service.impl;
 
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
@@ -43,9 +50,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implementation of the {@link ChatClientProviderService}.
- * Provides functionality to interact with the ChatClient for handling chat
- * messages.
+ * Implementation of the {@link ChatClientProviderService}. Provides functionality to interact with the ChatClient for
+ * handling chat messages.
  */
 @Slf4j
 @Service
@@ -54,14 +60,20 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     private final ApplicationContext applicationContext;
 
     private final GeneralConfigDao generalConfigDao;
-    
+
+    private ModelProviderConfig modelProviderConfig;
+
     @Autowired
     private ToolCallbackProvider toolCallbackProvider;
-    
+
     private boolean isConfigured = false;
 
     @Value("classpath:/prompt/system-message.st")
     private Resource systemResource;
+
+    @Value("classpath:/prompt/extra-message-protected.st")
+    private Resource extraResourceProtected;
+
 
     @Autowired
     public ChatClientProviderServiceImpl(ApplicationContext applicationContext, GeneralConfigDao generalConfigDao) {
@@ -74,7 +86,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         try {
             // Get the current (potentially refreshed) ChatClient instance
             ChatClient chatClient = applicationContext.getBean("openAiChatClient", ChatClient.class);
-            
+
             List<Message> messages = new ArrayList<>();
 
             // Add conversation history if available
@@ -91,15 +103,14 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
             messages.add(new UserMessage(context.getMessage()));
 
             log.info("Starting streaming chat for conversation: {}", context.getConversationId());
-
             return chatClient.prompt()
-                    .messages(messages)
-                    .system(SystemPromptTemplate.builder().resource(systemResource).build().getTemplate())
-                    .toolCallbacks(toolCallbackProvider)
-                    .stream()
-                    .content()
-                    .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
-                    .doOnError(error -> log.error("Error in streaming chat: {}", error.getMessage(), error));
+                .messages(messages)
+                .system(generateSystemMessage(context))
+                .toolCallbacks(toolCallbackProvider)
+                .stream()
+                .content()
+                .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
+                .doOnError(error -> log.error("Error in streaming chat: {}", error.getMessage(), error));
 
         } catch (Exception e) {
             log.error("Error setting up streaming chat: {}", e.getMessage(), e);
@@ -107,12 +118,33 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         }
     }
 
+    @SneakyThrows
+    private String generateSystemMessage(ChatRequestContext context) {
+        if (Objects.equals(modelProviderConfig.getParticipationModel(), "PROTECTED")) {
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("conversationId", context.getConversationId());
+            String systemMessage = systemResource.getContentAsString(StandardCharsets.UTF_8);
+            return systemMessage + SystemPromptTemplate.builder().resource(extraResourceProtected).build()
+                .create(metadata)
+                .getContents();
+        }
+        return SystemPromptTemplate.builder().resource(systemResource).build().getTemplate();
+    }
+
+    @EventListener(AiProviderConfigChangeEvent.class)
+    public void onAiProviderConfigChange(AiProviderConfigChangeEvent event) {
+        GeneralConfig providerConfig = generalConfigDao.findByType("provider");
+        this.modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
+    }
+
     @Override
     public boolean isConfigured() {
         if (!isConfigured) {
             GeneralConfig providerConfig = generalConfigDao.findByType("provider");
-            ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
-            isConfigured = modelProviderConfig != null && modelProviderConfig.getApiKey() != null;   
+            ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(),
+                ModelProviderConfig.class);
+            isConfigured = modelProviderConfig != null && modelProviderConfig.getApiKey() != null;
+            this.modelProviderConfig = modelProviderConfig;
         }
         return isConfigured;
     }

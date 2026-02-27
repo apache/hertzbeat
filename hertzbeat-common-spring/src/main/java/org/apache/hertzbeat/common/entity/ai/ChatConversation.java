@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.common.entity.ai;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -55,7 +56,7 @@ public class ChatConversation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Schema(title = "conversation title")
     private String title;
 
@@ -81,4 +82,6 @@ public class ChatConversation {
     @OneToMany
     @JoinColumn(name = "conversation_id")
     private List<ChatMessage> messages;
+
+    private String securityData;
 }

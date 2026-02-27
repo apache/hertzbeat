@@ -28,7 +28,22 @@ export interface ChatMessage {
   content: string;
   role: 'user' | 'assistant';
   gmtCreate: Date;
+  securityForm: SecurityForm;
 }
+
+export interface SecurityForm {
+  show: Boolean;
+  param: string;
+  content: string;
+  complete: boolean;
+}
+
+export const DEFAULT_SECURITY_FORM: SecurityForm = {
+  show: false,
+  param: '',
+  content: '',
+  complete: false
+};
 
 export interface ChatConversation {
   id: number;
@@ -121,7 +136,7 @@ export class AiChatService {
         const decoder = new TextDecoder();
         let buffer = '';
 
-        function readStream(): Promise<void> {
+        const readStream = (): Promise<void> => {
           if (!reader) {
             return Promise.resolve();
           }
@@ -148,6 +163,7 @@ export class AiChatService {
                       responseSubject.next({
                         content: data.response || '',
                         role: 'assistant',
+                        securityForm: DEFAULT_SECURITY_FORM,
                         gmtCreate: data.timestamp ? new Date(data.timestamp) : new Date()
                       });
                     }
@@ -157,6 +173,7 @@ export class AiChatService {
                       responseSubject.next({
                         content: jsonStr,
                         role: 'assistant',
+                        securityForm: DEFAULT_SECURITY_FORM,
                         gmtCreate: new Date()
                       });
                     }
@@ -167,7 +184,7 @@ export class AiChatService {
 
             return readStream();
           });
-        }
+        };
 
         return readStream();
       })
@@ -177,5 +194,9 @@ export class AiChatService {
       });
 
     return responseSubject.asObservable();
+  }
+
+  saveSecurityData(body: any): Observable<Message<any>> {
+    return this.http.post<Message<any>>(`${chat_uri}/security`, body);
   }
 }
