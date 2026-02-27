@@ -25,8 +25,10 @@ import { HeaderAiChatComponent } from './basic/widgets/chat-input.component';
 import { HeaderUserComponent } from './basic/widgets/user.component';
 import { HeaderNotifyComponent } from './basic/widgets/notify.component';
 import { LayoutBlankComponent } from './blank/blank.component';
+import { SettingDrawerI18nDirective } from './basic/directives/setting-drawer-i18n.directive';
 
 const COMPONENTS = [LayoutBasicComponent, LayoutBlankComponent, HeaderI18nComponent];
+const DIRECTIVES = [SettingDrawerI18nDirective];
 
 const HEADER_COMPONENTS = [
   HeaderAiChatComponent,
@@ -79,7 +81,7 @@ const PASSPORT = [LayoutPassportComponent];
     NzCheckboxComponent,
     I18nPipe
   ],
-  declarations: [...COMPONENTS, ...HEADER_COMPONENTS, ...PASSPORT],
+  declarations: [...COMPONENTS, ...HEADER_COMPONENTS, ...PASSPORT, ...DIRECTIVES],
   exports: [...COMPONENTS, ...PASSPORT]
 })
 export class LayoutModule {}
