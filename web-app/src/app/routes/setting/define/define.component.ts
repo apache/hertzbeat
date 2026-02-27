@@ -61,6 +61,7 @@ export class DefineComponent implements OnInit {
   currentApp: any = null;
   saveLoading = false;
   deleteLoading = false;
+  isEditing = false;
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((paramMap: ParamMap) => {
@@ -126,6 +127,7 @@ export class DefineComponent implements OnInit {
 
   loadAppDefineContent(app: any) {
     this.loading = true;
+    this.isEditing = false;
     this.currentApp = app;
     const getAppYml$ = this.appDefineSvc
       .getAppDefineYmlContent(app)
@@ -194,6 +196,7 @@ export class DefineComponent implements OnInit {
 
   onNewMonitorDefine() {
     this.currentApp = null;
+    this.isEditing = true;
     this.code = `${this.i18nSvc.fanyi('define.new.code')}\n\n\n\n\n`;
     this.originalCode = this.i18nSvc.fanyi('define.new.code');
   }
