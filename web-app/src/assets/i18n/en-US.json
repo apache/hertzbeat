@@ -83,7 +83,7 @@
   "alert.inhibit.equal_labels.common": "Common Labels",
   "alert.inhibit.equal_labels.custom": "Custom Labels",
   "alert.inhibit.equal_labels.more": "{{count}} more labels",
-  "alert.inhibit.equal_labels.placeholder": "Press Enter after entering label name, or select from dropdown",
+  "alert.inhibit.equal_labels.placeholder": "Input or select labels",
   "alert.inhibit.equal_labels.tip": "Source and target alerts must have equal values for these label keys, common keys like alertname, instance, severity etc",
   "alert.inhibit.name": "Inhibit Rule Name",
   "alert.inhibit.name.tip": "Name to identify this inhibit rule, must be unique",
