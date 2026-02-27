@@ -25,6 +25,7 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -45,7 +46,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * Alert group converge strategy entity
  */
 @Entity
-@Table(name = "hzb_alert_group_converge")
+@Table(name = "hzb_alert_group_converge", indexes = {
+    @Index(name = "idx_name", columnList = "name")
+})
 @Data
 @Builder
 @AllArgsConstructor
@@ -62,21 +65,22 @@ public class AlertGroupConverge {
     @Schema(title = "Policy name", example = "group-converge-1")
     @Size(max = 100)
     @NotNull
+    @Column(name = "name")
     private String name;
-    
+
     @Schema(title = "Labels to group by", example = "[\"instance\"]")
     @Convert(converter = JsonStringListAttributeConverter.class)
     @Column(name = "group_labels", length = 1024)
     private List<String> groupLabels;
-    
+
     @Schema(title = "Initial wait time before sending first group alert (s)", example = "30")
     @Column(name = "group_wait")
     private Long groupWait;
-    
+
     @Schema(title = "Interval between group alert sends (s)", example = "300")
     @Column(name = "group_interval")
     private Long groupInterval;
-    
+
     @Schema(title = "Interval for repeating firing alerts (s), set to 0 to disable repeating", example = "9000")
     @Column(name = "repeat_interval")
     private Long repeatInterval;
