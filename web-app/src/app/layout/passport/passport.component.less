@@ -21,12 +21,12 @@
   }
   .wrap {
     flex: 1;
-    padding: 32px 0;
+    padding: 12px 0;
   }
   .ant-form-item {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
   }
 
   @media (min-width: @screen-md-min) {
@@ -38,7 +38,7 @@
       background-size: cover;
     }
     .wrap {
-      padding: 32px 0 24px;
+      padding: 12px 0 8px;
     }
   }
   .top {
@@ -65,9 +65,76 @@
   }
   .desc {
     margin-top: 12px;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
     color: @text-color-secondary;
     font-size: @font-size-base;
+  }
+
+  .passport-left-content {
+    margin-left: 10%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+
+    &.long-lang {
+      .passport-intro {
+        font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+      }
+      .passport-points {
+        font-size: 12px;
+      }
+    }
+
+    nz-divider {
+      margin: 10px 0;
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .passport-intro {
+    margin-top: 0;
+    font-weight: bolder;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    color: white;
+    line-height: 1.2;
+    word-break: break-word;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .passport-points {
+    margin-top: 8px;
+    font-weight: normal;
+    font-size: 13px;
+    color: white;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px 24px;
+
+    @media (min-width: @screen-lg-min) {
+      .long-lang & {
+        grid-template-columns: 1fr 1fr;
+      }
+      @media (max-height: 750px) {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .point-item {
+      display: flex;
+      align-items: flex-start;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      nz-badge {
+        margin-top: 5px;
+        margin-right: 8px;
+        flex-shrink: 0;
+      }
+      span {
+        flex: 1;
+        opacity: 0.9;
+      }
+    }
   }
 }
 
