@@ -1152,5 +1152,21 @@
   "ai.chat.error.chat.response": "获取 AI 回复失败：",
   "ai.chat.error.processing": "处理您的请求时出错。请检查 AI 智能体服务是否正在运行，然后重试。",
   "ai.chat.offline.mode": "AI 聊天服务不可用。正在离线模式下运行。",
-  "ai.chat.offline.response": "抱歉，AI 聊天服务当前不可用。请确保 HertzBeat AI 模块正在运行，稍后再试。"
+  "ai.chat.offline.response": "抱歉，AI 聊天服务当前不可用。请确保 HertzBeat AI 模块正在运行，稍后再试。",
+  "setting.drawer.theme.color": "主题色",
+  "setting.drawer.settings": "设置",
+  "setting.drawer.top": "顶部",
+  "setting.drawer.sidebar": "侧边栏",
+  "setting.drawer.content": "内容",
+  "setting.drawer.other": "其它",
+  "setting.drawer.height": "高",
+  "setting.drawer.background.color": "背景色",
+  "setting.drawer.background.color.default": "默认同主色系",
+  "setting.drawer.top.padding": "顶部左右内边距",
+  "setting.drawer.fixed.header.sidebar": "固定头和侧边栏",
+  "setting.drawer.colorblind.mode": "色弱模式",
+  "setting.drawer.preview": "预览",
+  "setting.drawer.reset": "重置",
+  "setting.drawer.copy": "拷贝",
+  "setting.drawer.info.message": "配置栏只在开发环境用于预览,生产环境不会展现,请拷贝后手动修改参数配置文件 src/styles/theme.less"
 }

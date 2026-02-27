@@ -1149,5 +1149,21 @@
   "ai.chat.error.chat.response": "Failed to get AI response:",
   "ai.chat.error.processing": "Sorry, there was an error processing your request. Please check if the AI Agent service is running and try again.",
   "ai.chat.offline.mode": "AI Chat service unavailable. Running in offline mode.",
-  "ai.chat.offline.response": "I apologize, but the AI Chat service is currently unavailable. Please ensure the HertzBeat AI module is running and try again later."
+  "ai.chat.offline.response": "I apologize, but the AI Chat service is currently unavailable. Please ensure the HertzBeat AI module is running and try again later.",
+  "setting.drawer.theme.color": "Theme Color",
+  "setting.drawer.settings": "Settings",
+  "setting.drawer.top": "Top",
+  "setting.drawer.sidebar": "Sidebar",
+  "setting.drawer.content": "Content",
+  "setting.drawer.other": "Other",
+  "setting.drawer.height": "Height",
+  "setting.drawer.background.color": "Background Color",
+  "setting.drawer.background.color.default": "Default same as main color system",
+  "setting.drawer.top.padding": "Top left and right padding",
+  "setting.drawer.fixed.header.sidebar": "Fixed header and sidebar",
+  "setting.drawer.colorblind.mode": "Colorblind mode",
+  "setting.drawer.preview": "Preview",
+  "setting.drawer.reset": "Reset",
+  "setting.drawer.copy": "Copy",
+  "setting.drawer.info.message": "The configuration panel is only for preview in the development environment, it will not be displayed in the production environment. Please copy and manually modify the parameter configuration file src/styles/theme.less"
 }
