@@ -1,8 +1,8 @@
 ---
-title: GreptimeDB & HertzBeat, 使用开源时序数据库 GreptimeDB 存储开源实时监控 HertzBeat 的度量数据    
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: GreptimeDB & HertzBeat, 使用开源时序数据库 GreptimeDB 存储开源实时监控 HertzBeat 的度量数据
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [开源监控系统, 开源时序数据库, HertzBeat, GreptimeDB]
 ---
@@ -18,7 +18,7 @@ keywords: [开源监控系统, 开源时序数据库, HertzBeat, GreptimeDB]
 - 高效存储与计算，通过对象存储和高数据压缩率实现超低的存储成本。内置数据分析解决方案，避免将数据复制到外部数据仓库。
 - 分布式、高可靠与高可用，通过解耦的云原生架构，轻松独立地扩展每个模块。通过可配置的副本和自动的故障转移机制，确保数据的可靠性和可用性。
 
-Cloud: **[GreptimePlay](https://greptime.com/playground)**
+Cloud: **[GreptimePlay](https://greptime.com/product/cloud)**
 
 ### 什么是 HertzBeat
 

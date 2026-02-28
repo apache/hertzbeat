@@ -12,13 +12,14 @@
   ],
   "timeout": "10s",
   "retryOn429": true,
-  "retryCount": 10,
-  "fallbackRetryDelay": "1000s",
+  "retryCount": 3,
+  "fallbackRetryDelay": "30s",
   "aliveStatusCodes": [
     0,
     200,
     400,
     401,
-    403
+    403,
+    429
   ]
 }
