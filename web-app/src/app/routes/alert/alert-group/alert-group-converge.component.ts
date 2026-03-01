@@ -210,7 +210,7 @@ export class AlertGroupConvergeComponent implements OnInit {
 
   onNewGroupConverge() {
     this.groupConverge = new AlertGroupConverge();
-    this.groupConverge.groupLabels = [''];
+    this.groupConverge.groupLabels = [];
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -234,7 +234,7 @@ export class AlertGroupConvergeComponent implements OnInit {
           if (message.code === 0) {
             this.groupConverge = message.data;
             if (!Array.isArray(this.groupConverge.groupLabels) || this.groupConverge.groupLabels.length === 0) {
-              this.groupConverge.groupLabels = [''];
+              this.groupConverge.groupLabels = [];
             }
             this.isManageModalVisible = true;
           } else {

@@ -98,7 +98,9 @@
         <span>{{ data.name }}</span>
       </td>
       <td nzAlign="center">
-        <nz-tag *ngFor="let label of data.groupLabels">{{ label }}</nz-tag>
+        <nz-tag *ngFor="let label of data.groupLabels" nz-tooltip [nzTooltipTitle]="label.length > 15 ? label : null">
+          {{ label.length > 15 ? (label | slice : 0 : 15) + '...' : label }}
+        </nz-tag>
       </td>
       <td nzAlign="center"> {{ data.groupWait }}{{ 'alert.group-converge.seconds' | i18n }} </td>
       <td nzAlign="center"> {{ data.groupInterval }}{{ 'alert.group-converge.seconds' | i18n }} </td>
