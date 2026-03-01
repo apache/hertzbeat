@@ -1,0 +1,127 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: mysql_slow_query_diagnosis
+description: "Diagnose MySQL slow queries and provide optimization recommendations"
+version: "1.0"
+
+# Output configuration
+output:
+  type: report
+  format: markdown
+  language: zh
+  contentStep: generate_diagnosis
+
+parameters:
+  - name: monitorId
+    type: long
+    description: "MySQL monitor ID to diagnose"
+    required: true
+  - name: slowQueryLimit
+    type: integer
+    description: "Number of slow queries to analyze (default: 10)"
+    required: false
+    defaultValue: "10"
+
+steps:
+  # Step 1: Get slow query statistics
+  - id: get_slow_queries
+    type: tool
+    tool: get_mysql_slow_queries
+    args:
+      monitorId: "${monitorId}"
+      limit: "${slowQueryLimit}"
+
+  # Step 2: Get current process list
+  - id: get_process_list
+    type: tool
+    tool: get_mysql_process_list
+    args:
+      monitorId: "${monitorId}"
+
+  # Step 3: Get lock wait information
+  - id: get_lock_waits
+    type: tool
+    tool: get_mysql_lock_waits
+    args:
+      monitorId: "${monitorId}"
+
+  # Step 4: Get global status for slow query metrics
+  - id: get_slow_status
+    type: tool
+    tool: get_mysql_global_status
+    args:
+      monitorId: "${monitorId}"
+      pattern: "Slow%"
+
+  # Step 5: LLM analyze and generate diagnosis report
+  - id: generate_diagnosis
+    type: llm
+    prompt: |
+      You are a senior MySQL DBA expert. Based on the following diagnostic data, generate a comprehensive slow query diagnosis report.
+      
+      ## Slow Query Statistics (Top N by average execution time)
+      ${get_slow_queries}
+      
+      ## Current Process List (Active queries)
+      ${get_process_list}
+      
+      ## Lock Wait Information
+      ${get_lock_waits}
+      
+      ## Server Slow Query Status
+      ${get_slow_status}
+      
+      Please provide a diagnosis report with the following sections:
+      
+      1. **Problem Summary**
+         - Overall slow query situation
+         - Most critical issues found
+      
+      2. **Slow Query Analysis**
+         - Top slow queries and their characteristics
+         - Common patterns (full table scans, missing indexes, etc.)
+      
+      3. **Lock & Concurrency Issues**
+         - Any lock contention found
+         - Long-running transactions
+      
+      4. **Optimization Recommendations**
+         - Index recommendations
+         - Query optimization suggestions
+         - Configuration tuning tips
+      
+      5. **Urgent Actions**
+         - Queries that need immediate attention
+         - Recommended immediate steps
+      
+      Format the report in markdown. Be specific with SQL examples where applicable.
