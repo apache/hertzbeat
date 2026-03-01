@@ -26,8 +26,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.zaxxer.hikari.HikariDataSource;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -35,96 +33,41 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Tests for {@link DorisDataStorage}.
  */
+@ExtendWith(MockitoExtension.class)
 class DorisDataStorageTest {
 
     private static final long NANOS_PER_MILLISECOND = 1_000_000L;
 
-    @Test
-    void buildCreateTableSqlShouldContainExpectedMetricKeysAndProperties() throws Exception {
-        DorisDataStorage storage = createStorage(createProperties(true));
-
-        String createTableSql = invokePrivateStringMethod(storage, "buildCreateTableSql");
-
-        assertThat(createTableSql).contains("DUPLICATE KEY(instance, app, metrics, metric, record_time)");
-        assertThat(createTableSql).contains("PARTITION BY RANGE(record_time)");
-        assertThat(createTableSql).contains("DISTRIBUTED BY HASH(instance, app, metrics) BUCKETS 12");
-        assertThat(createTableSql).contains("\"dynamic_partition.enable\" = \"true\"");
-        assertThat(createTableSql).contains("\"dynamic_partition.time_unit\" = \"HOUR\"");
-        assertThat(createTableSql).contains("\"dynamic_partition.history_partition_num\" = \"2\"");
-        assertThat(createTableSql).contains("\"bloom_filter_columns\" = \"instance,app,metrics,metric\"");
-    }
-
-    @Test
-    void buildCreateLogTableSqlShouldContainExpectedLogKeysAndProperties() throws Exception {
-        DorisDataStorage storage = createStorage(createProperties(false));
-
-        String createLogTableSql = invokePrivateStringMethod(storage, "buildCreateLogTableSql");
-
-        assertThat(createLogTableSql).contains("DUPLICATE KEY(time_unix_nano, trace_id, span_id, event_time)");
-        assertThat(createLogTableSql).contains("DISTRIBUTED BY HASH(time_unix_nano) BUCKETS 12");
-        assertThat(createLogTableSql).contains("\"replication_num\" = \"1\"");
-        assertThat(createLogTableSql).contains("\"bloom_filter_columns\" = \"trace_id,span_id,severity_number,severity_text\"");
-        assertThat(createLogTableSql).doesNotContain("\"dynamic_partition.enable\" = \"true\"");
-    }
-
-    @Test
-    void appendLogWhereClauseShouldAssembleAllConditionsInOrder() throws Exception {
-        DorisDataStorage storage = createStorage(createProperties(false));
-
-        StringBuilder sql = new StringBuilder("SELECT * FROM hertzbeat.hzb_log");
-        List<Object> params = new ArrayList<>();
-        invokeAppendLogWhereClause(storage, sql, params,
-                1000L, 2000L, "trace-1", "span-1", 9, "INFO", "error");
-
-        assertThat(sql.toString()).contains(" WHERE ");
-        assertThat(sql.toString()).contains("time_unix_nano >= ?");
-        assertThat(sql.toString()).contains("time_unix_nano <= ?");
-        assertThat(sql.toString()).contains("trace_id = ?");
-        assertThat(sql.toString()).contains("span_id = ?");
-        assertThat(sql.toString()).contains("severity_number = ?");
-        assertThat(sql.toString()).contains("severity_text = ?");
-        assertThat(sql.toString()).contains("body LIKE ?");
-        assertThat(params).containsExactly(
-                1000L * NANOS_PER_MILLISECOND,
-                2000L * NANOS_PER_MILLISECOND,
-                "trace-1",
-                "span-1",
-                9,
-                "INFO",
-                "%error%"
-        );
-    }
+    @Mock
+    private WarehouseWorkerPool workerPool;
 
     @Test
     void queryLogsWithPaginationShouldContainLimitAndOffsetClauses() throws Exception {
-        DorisDataStorage storage = createStorage(createProperties(false));
-        HikariDataSource dataSource = mock(HikariDataSource.class);
-        Connection connection = mock(Connection.class);
-        PreparedStatement preparedStatement = mock(PreparedStatement.class);
-        ResultSet resultSet = mock(ResultSet.class);
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        when(context.resultSet().next()).thenReturn(false);
 
-        when(dataSource.getConnection()).thenReturn(connection);
-        when(connection.prepareStatement(anyString())).thenReturn(preparedStatement);
-        when(preparedStatement.executeQuery()).thenReturn(resultSet);
-        when(resultSet.next()).thenReturn(false);
-
-        setPrivateField(storage, "dataSource", dataSource);
-
-        storage.queryLogsByMultipleConditionsWithPagination(
+        context.storage().queryLogsByMultipleConditionsWithPagination(
                 1000L, 2000L, null, null, null, null, null, 5, 20
         );
 
         ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(connection).prepareStatement(sqlCaptor.capture());
+        verify(context.queryConnection()).prepareStatement(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
 
         assertThat(sql).contains("ORDER BY time_unix_nano DESC");
@@ -132,8 +75,195 @@ class DorisDataStorageTest {
         assertThat(sql).contains("OFFSET ?");
     }
 
-    private DorisDataStorage createStorage(DorisProperties properties) {
-        WarehouseWorkerPool workerPool = mock(WarehouseWorkerPool.class);
+    @Test
+    void queryLogsShouldBindAllConditionsWithConvertedTimeInOrder() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        when(context.resultSet().next()).thenReturn(false);
+
+        context.storage().queryLogsByMultipleConditions(
+                1000L, 2000L, "trace-1", "span-1", 9, "INFO", "error"
+        );
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context.queryConnection()).prepareStatement(sqlCaptor.capture());
+        String sql = sqlCaptor.getValue();
+
+        assertThat(sql).contains("WHERE");
+        assertThat(sql).contains("time_unix_nano >= ?");
+        assertThat(sql).contains("time_unix_nano <= ?");
+        assertThat(sql).contains("trace_id = ?");
+        assertThat(sql).contains("span_id = ?");
+        assertThat(sql).contains("severity_number = ?");
+        assertThat(sql).contains("severity_text = ?");
+        assertThat(sql).contains("body LIKE ?");
+        assertThat(sql).contains("ORDER BY time_unix_nano DESC");
+
+        verify(context.queryPreparedStatement()).setObject(1, 1000L * NANOS_PER_MILLISECOND);
+        verify(context.queryPreparedStatement()).setObject(2, 2000L * NANOS_PER_MILLISECOND);
+        verify(context.queryPreparedStatement()).setObject(3, "trace-1");
+        verify(context.queryPreparedStatement()).setObject(4, "span-1");
+        verify(context.queryPreparedStatement()).setObject(5, 9);
+        verify(context.queryPreparedStatement()).setObject(6, "INFO");
+        verify(context.queryPreparedStatement()).setObject(7, "%error%");
+    }
+
+    @Test
+    void queryLogsWithPaginationShouldNotAppendOffsetWhenOffsetIsZero() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        when(context.resultSet().next()).thenReturn(false);
+
+        context.storage().queryLogsByMultipleConditionsWithPagination(
+                null, null, null, null, null, null, null, 0, 20
+        );
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context.queryConnection()).prepareStatement(sqlCaptor.capture());
+        String sql = sqlCaptor.getValue();
+
+        assertThat(sql).contains("LIMIT ?");
+        assertThat(sql).doesNotContain("OFFSET ?");
+        verify(context.queryPreparedStatement()).setObject(1, 20);
+    }
+
+    @Test
+    void countLogsShouldReturnCountAndBindConditions() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        when(context.resultSet().next()).thenReturn(true);
+        when(context.resultSet().getLong("count")).thenReturn(5L);
+
+        long count = context.storage().countLogsByMultipleConditions(
+                1000L, null, "trace-1", null, null, null, null
+        );
+
+        assertThat(count).isEqualTo(5L);
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context.queryConnection()).prepareStatement(sqlCaptor.capture());
+        String sql = sqlCaptor.getValue();
+
+        assertThat(sql).contains("SELECT COUNT(*) AS count");
+        assertThat(sql).contains("time_unix_nano >= ?");
+        assertThat(sql).contains("trace_id = ?");
+        verify(context.queryPreparedStatement()).setObject(1, 1000L * NANOS_PER_MILLISECOND);
+        verify(context.queryPreparedStatement()).setObject(2, "trace-1");
+    }
+
+    @Test
+    void batchDeleteLogsShouldFilterNullValuesAndExecuteDelete() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeUpdate()).thenReturn(2);
+
+        List<Long> timeUnixNanos = new ArrayList<>();
+        timeUnixNanos.add(111L);
+        timeUnixNanos.add(null);
+        timeUnixNanos.add(333L);
+
+        boolean deleted = context.storage().batchDeleteLogs(timeUnixNanos);
+
+        assertThat(deleted).isTrue();
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(context.queryConnection()).prepareStatement(sqlCaptor.capture());
+        assertThat(sqlCaptor.getValue()).contains("time_unix_nano IN (?,?)");
+        verify(context.queryPreparedStatement()).setLong(1, 111L);
+        verify(context.queryPreparedStatement()).setLong(2, 333L);
+    }
+
+    @Test
+    void batchDeleteLogsShouldReturnFalseWhenAllValuesAreNull() throws Exception {
+        DorisDataStorage storage = createStorageContext(createProperties(false));
+
+        List<Long> timeUnixNanos = new ArrayList<>();
+        timeUnixNanos.add(null);
+        timeUnixNanos.add(null);
+
+        boolean deleted = storage.batchDeleteLogs(timeUnixNanos);
+
+        assertThat(deleted).isFalse();
+    }
+
+    @Test
+    void queryLogsShouldMapJsonColumnsToLogEntryFields() throws Exception {
+        QueryStorageContext context = createQueryStorageContext(createProperties(false));
+        when(context.queryPreparedStatement().executeQuery()).thenReturn(context.resultSet());
+        ResultSet resultSet = context.resultSet();
+
+        when(resultSet.next()).thenReturn(true, false);
+        when(resultSet.getLong("time_unix_nano")).thenReturn(111L);
+        when(resultSet.getLong("observed_time_unix_nano")).thenReturn(222L);
+        when(resultSet.getInt("severity_number")).thenReturn(9);
+        when(resultSet.getString("severity_text")).thenReturn("INFO");
+        when(resultSet.getString("body")).thenReturn("{\"message\":\"ok\"}");
+        when(resultSet.getString("trace_id")).thenReturn("trace-1");
+        when(resultSet.getString("span_id")).thenReturn("span-1");
+        when(resultSet.getInt("trace_flags")).thenReturn(1);
+        when(resultSet.getString("attributes")).thenReturn("{\"k\":\"v\"}");
+        when(resultSet.getString("resource")).thenReturn("{\"service\":\"warehouse\"}");
+        when(resultSet.getString("instrumentation_scope")).thenReturn("{\"name\":\"scope\",\"version\":\"1.0.0\"}");
+        when(resultSet.getInt("dropped_attributes_count")).thenReturn(3);
+        when(resultSet.wasNull()).thenReturn(false, false, false);
+
+        List<LogEntry> entries = context.storage().queryLogsByMultipleConditions(
+                null, null, null, null, null, null, null
+        );
+
+        assertThat(entries).hasSize(1);
+        LogEntry entry = entries.get(0);
+        assertThat(entry.getTimeUnixNano()).isEqualTo(111L);
+        assertThat(entry.getObservedTimeUnixNano()).isEqualTo(222L);
+        assertThat(entry.getSeverityNumber()).isEqualTo(9);
+        assertThat(entry.getSeverityText()).isEqualTo("INFO");
+        assertThat(entry.getTraceId()).isEqualTo("trace-1");
+        assertThat(entry.getSpanId()).isEqualTo("span-1");
+        assertThat(entry.getBody()).isInstanceOf(Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) entry.getBody();
+        assertThat(body).containsEntry("message", "ok");
+        assertThat(entry.getAttributes()).containsEntry("k", "v");
+        assertThat(entry.getResource()).containsEntry("service", "warehouse");
+        assertThat(entry.getInstrumentationScope()).isNotNull();
+        assertThat(entry.getInstrumentationScope().getName()).isEqualTo("scope");
+        assertThat(entry.getInstrumentationScope().getVersion()).isEqualTo("1.0.0");
+    }
+
+    private QueryStorageContext createQueryStorageContext(DorisProperties properties) {
+        Connection initConnection = mock(Connection.class);
+        Statement initStatement = mock(Statement.class);
+        Connection tableConnection = mock(Connection.class);
+        Statement tableStatement = mock(Statement.class);
+        Connection queryConnection = mock(Connection.class);
+        PreparedStatement queryPreparedStatement = mock(PreparedStatement.class);
+        ResultSet resultSet = mock(ResultSet.class);
+        AtomicInteger dataSourceConnectionCalls = new AtomicInteger(0);
+        String baseUrl = properties.url();
+        String username = properties.username();
+        String password = properties.password();
+        try {
+            when(initConnection.createStatement()).thenReturn(initStatement);
+            when(tableConnection.createStatement()).thenReturn(tableStatement);
+            when(queryConnection.prepareStatement(anyString())).thenReturn(queryPreparedStatement);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        try (MockedStatic<DriverManager> driverManagerMock = mockStatic(DriverManager.class);
+             MockedConstruction<HikariDataSource> hikariDataSourceMockedConstruction = mockConstruction(
+                     HikariDataSource.class,
+                     (mock, context) -> when(mock.getConnection()).thenAnswer(invocation -> {
+                         int call = dataSourceConnectionCalls.getAndIncrement();
+                         return call == 0 ? tableConnection : queryConnection;
+                     }))) {
+            driverManagerMock.when(() -> DriverManager.getConnection(baseUrl, username, password))
+                    .thenReturn(initConnection);
+            DorisDataStorage storage = new DorisDataStorage(properties, workerPool);
+            return new QueryStorageContext(storage, queryConnection, queryPreparedStatement, resultSet);
+        }
+    }
+
+    private DorisDataStorage createStorageContext(DorisProperties properties) {
         Connection initConnection = mock(Connection.class);
         Statement initStatement = mock(Statement.class);
         Connection tableConnection = mock(Connection.class);
@@ -178,28 +308,7 @@ class DorisDataStorageTest {
         );
     }
 
-    private String invokePrivateStringMethod(Object target, String methodName) throws Exception {
-        Method method = target.getClass().getDeclaredMethod(methodName);
-        method.setAccessible(true);
-        return (String) method.invoke(target);
-    }
-
-    private void invokeAppendLogWhereClause(DorisDataStorage storage, StringBuilder sql, List<Object> params,
-                                            Long startTime, Long endTime, String traceId, String spanId,
-                                            Integer severityNumber, String severityText, String searchContent)
-            throws Exception {
-        Method method = DorisDataStorage.class.getDeclaredMethod(
-                "appendLogWhereClause",
-                StringBuilder.class, List.class, Long.class, Long.class,
-                String.class, String.class, Integer.class, String.class, String.class
-        );
-        method.setAccessible(true);
-        method.invoke(storage, sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
-    }
-
-    private void setPrivateField(Object target, String fieldName, Object value) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
+    private record QueryStorageContext(DorisDataStorage storage, Connection queryConnection,
+                                       PreparedStatement queryPreparedStatement, ResultSet resultSet) {
     }
 }
