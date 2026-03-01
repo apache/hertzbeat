@@ -140,10 +140,10 @@ public class MonitorToolsImpl implements MonitorTools {
             // Include statistics if requested
             if (includeStats) {
                 // Get status distribution by calling with different status values
-                long onlineCount = monitorService.getMonitors(null, app, search, (byte) 1, null, null, 0, 1000, labels).getTotalElements();
-                long offlineCount = monitorService.getMonitors(null, app, search, (byte) 2, null, null, 0, 1000, labels).getTotalElements();
-                long unreachableCount = monitorService.getMonitors(null, app, search, (byte) 3, null, null, 0, 1000, labels).getTotalElements();
-                long pausedCount = monitorService.getMonitors(null, app, search, (byte) 0, null, null, 0, 1000, labels).getTotalElements();
+                long onlineCount = monitorService.getMonitors(null, app, search, (byte) 1, "id", "asc", 0, 1, labels).getTotalElements();
+                long offlineCount = monitorService.getMonitors(null, app, search, (byte) 2, "id", "asc", 0, 1, labels).getTotalElements();
+                long unreachableCount = monitorService.getMonitors(null, app, search, (byte) 3, "id", "asc", 0, 1, labels).getTotalElements();
+                long pausedCount = monitorService.getMonitors(null, app, search, (byte) 0, "id", "asc", 0, 1, labels).getTotalElements();
 
                 response.append("STATUS OVERVIEW:\n");
                 response.append("- Online: ").append(onlineCount).append("\n");
