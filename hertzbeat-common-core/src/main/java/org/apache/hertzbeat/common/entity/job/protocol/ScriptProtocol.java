@@ -69,4 +69,11 @@ public class ScriptProtocol implements CommonRequestProtocol, Protocol {
     public void setPort(String port) {
         this.scriptPath = port;
     }
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

@@ -51,4 +51,11 @@ public class TelnetProtocol implements CommonRequestProtocol, Protocol {
      */
     private String cmd;
 
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
+
 }

@@ -21,4 +21,11 @@ package org.apache.hertzbeat.common.entity.job.protocol;
  * Base class for all protocols
  */
 public interface Protocol {
+
+    /**
+     * Check Protocol params vaild.
+     * @return True or False.
+     */
+    boolean isInvalid();
+
 }

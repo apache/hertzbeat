@@ -104,4 +104,11 @@ public class PrometheusProtocol implements CommonRequestProtocol, Protocol {
          */
         private String digestAuthPassword;
     }
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

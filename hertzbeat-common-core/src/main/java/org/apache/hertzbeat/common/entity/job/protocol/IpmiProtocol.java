@@ -69,4 +69,11 @@ public class IpmiProtocol implements CommonRequestProtocol, Protocol {
     static class Field {
 
     }
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

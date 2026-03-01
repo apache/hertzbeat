@@ -78,7 +78,7 @@ public class NginxCollectImpl extends AbstractCollect {
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         final NginxProtocol nginxProtocol;
-        if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
+        if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInvalid()) {
             throw new IllegalArgumentException("Nginx collect must has nginx params");
         }
     }
@@ -141,7 +141,7 @@ public class NginxCollectImpl extends AbstractCollect {
         RequestBuilder requestBuilder = RequestBuilder.get();
         String portWithUri = nginxProtocol.getPort() + CollectUtil.replaceUriSpecialChar(nginxProtocol.getUrl());
         String host = nginxProtocol.getHost();
-        
+
         if (IpDomainUtil.isHasSchema(host)) {
             requestBuilder.setUri(host + ":" + portWithUri);
         } else {

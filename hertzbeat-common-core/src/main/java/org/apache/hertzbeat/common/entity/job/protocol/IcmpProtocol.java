@@ -44,4 +44,11 @@ public class IcmpProtocol implements CommonRequestProtocol, Protocol {
     @Override
     public void setPort(String port) {
     }
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

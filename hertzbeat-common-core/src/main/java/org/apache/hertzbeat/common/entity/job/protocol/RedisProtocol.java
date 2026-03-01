@@ -67,4 +67,11 @@ public class RedisProtocol implements CommonRequestProtocol, Protocol {
      */
     private SshTunnel sshTunnel;
 
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
+
 }

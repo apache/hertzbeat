@@ -79,4 +79,11 @@ public class JdbcProtocol implements CommonRequestProtocol, Protocol {
      * ssh tunnel
      */
     private SshTunnel sshTunnel;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }
