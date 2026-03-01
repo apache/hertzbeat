@@ -40,6 +40,7 @@ public class RegistryProtocol implements CommonRequestProtocol, Protocol {
     private String port;
     private String discoveryClientTypeName;
 
+    @Override
     public boolean isInvalid() {
 
         return validateIpDomain(host) && validPort(port)
