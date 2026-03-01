@@ -94,7 +94,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 * support victoriametrics as metrics data storage by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1361](https://github.com/apache/hertzbeat/pull/1361)
 * Add time type to support query_time of mysql and mariadb by @Clownsw in [https://github.com/apache/hertzbeat/pull/1364](https://github.com/apache/hertzbeat/pull/1364)
 * add Clownsw as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1365](https://github.com/apache/hertzbeat/pull/1365)
-* Error occured when I followed running steps to start Front-web by @Calvin979 in [https://github.com/apache/hertzbeat/pull/1366](https://github.com/apache/hertzbeat/pull/1366)
+* Error occurred when I followed running steps to start Front-web by @Calvin979 in [https://github.com/apache/hertzbeat/pull/1366](https://github.com/apache/hertzbeat/pull/1366)
 * add Calvin979 as a contributor for doc by @allcontributors in [https://github.com/apache/hertzbeat/pull/1367](https://github.com/apache/hertzbeat/pull/1367)
 * enriches the cncf landscape by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1368](https://github.com/apache/hertzbeat/pull/1368)
 * Fix flaky test in CollectUtilTest by @bbelide2 in [https://github.com/apache/hertzbeat/pull/1371](https://github.com/apache/hertzbeat/pull/1371)
