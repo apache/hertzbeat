@@ -77,4 +77,11 @@ public class MongodbProtocol implements CommonRequestProtocol, Protocol {
      */
     private String timeout;
 
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
+
 }

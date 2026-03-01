@@ -65,7 +65,7 @@ public class SshProtocol implements CommonRequestProtocol, Protocol {
      * private key passphrase (optional)
      */
     private String privateKeyPassphrase;
-    
+
     /**
      * reuse connection session
      */
@@ -110,4 +110,11 @@ public class SshProtocol implements CommonRequestProtocol, Protocol {
      * Proxy private key (optional)
      */
     private String proxyPrivateKey;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

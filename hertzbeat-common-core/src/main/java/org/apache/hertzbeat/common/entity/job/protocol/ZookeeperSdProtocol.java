@@ -30,8 +30,15 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ZookeeperSdProtocol implements Protocol{
-    
+
     private String url;
 
     private String pathPrefix;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

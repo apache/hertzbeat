@@ -52,4 +52,11 @@ public class PlcProtocol implements Protocol {
 
     private List<String> registerAddresses;
 
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
+
 }

@@ -51,7 +51,9 @@ public class RegistryImpl extends AbstractCollect {
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
+
         RegistryProtocol registryProtocol = metrics.getRegistry();
+
         if (Objects.isNull(registryProtocol) || registryProtocol.isInvalid()){
             throw new IllegalArgumentException("registry collect must have a valid registry protocol param! ");
         }

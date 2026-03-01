@@ -55,4 +55,11 @@ public class KafkaProtocol implements CommonRequestProtocol, Protocol {
      * Monitor internal topic
      */
     private String monitorInternalTopic = "false";
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

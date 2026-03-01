@@ -91,4 +91,11 @@ public class SnmpProtocol implements CommonRequestProtocol, Protocol {
      * v3 requires
      */
     private String privPasswordEncryption;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

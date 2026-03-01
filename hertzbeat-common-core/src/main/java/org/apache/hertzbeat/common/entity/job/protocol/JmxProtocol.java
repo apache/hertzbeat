@@ -65,4 +65,10 @@ public class JmxProtocol implements CommonRequestProtocol, Protocol {
      */
     private String objectName;
 
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

@@ -39,9 +39,16 @@ public class WebsocketProtocol implements CommonRequestProtocol, Protocol {
      * Port number
      */
     private String port;
-    
+
     /**
      * The path to the websocket endpoint
      */
     private String path;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

@@ -64,4 +64,10 @@ public class ImapProtocol implements CommonRequestProtocol, Protocol {
      */
     private String folderName;
 
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }
