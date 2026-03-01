@@ -48,6 +48,8 @@ public interface WarehouseConstants {
         String QUEST_DB = "questdb";
 
         String DUCKDB = "duckdb";
+
+        String DORIS = "doris";
     }
 
     /**
