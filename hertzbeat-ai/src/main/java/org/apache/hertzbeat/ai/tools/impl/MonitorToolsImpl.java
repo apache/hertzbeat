@@ -151,14 +151,10 @@ public class MonitorToolsImpl implements MonitorTools {
             // Include statistics if requested
             if (includeStats) {
                 // Get status distribution by calling with different status values
-                long onlineCount = monitorService.getMonitors(null, app, search, (byte) 1, null, null, 0, 1000, labels)
-                    .getTotalElements();
-                long offlineCount = monitorService.getMonitors(null, app, search, (byte) 2, null, null, 0, 1000, labels)
-                    .getTotalElements();
-                long unreachableCount = monitorService.getMonitors(null, app, search, (byte) 3, null, null, 0, 1000,
-                    labels).getTotalElements();
-                long pausedCount = monitorService.getMonitors(null, app, search, (byte) 0, null, null, 0, 1000, labels)
-                    .getTotalElements();
+                long onlineCount = monitorService.getMonitors(null, app, search, (byte) 1, "id", "asc", 0, 1, labels).getTotalElements();
+                long offlineCount = monitorService.getMonitors(null, app, search, (byte) 2, "id", "asc", 0, 1, labels).getTotalElements();
+                long unreachableCount = monitorService.getMonitors(null, app, search, (byte) 3, "id", "asc", 0, 1, labels).getTotalElements();
+                long pausedCount = monitorService.getMonitors(null, app, search, (byte) 0, "id", "asc", 0, 1, labels).getTotalElements();
 
                 response.append("STATUS OVERVIEW:\n");
                 response.append("- Online: ").append(onlineCount).append("\n");
@@ -210,35 +206,35 @@ public class MonitorToolsImpl implements MonitorTools {
 
     @Override
     @Tool(name = "add_monitor", description = """
-        HertzBeat: Add a new monitoring target to HertzBeat with comprehensive configuration.
-        This tool dynamically handles different parameter requirements for each monitor type.
+            HertzBeat: Add a new monitoring target to HertzBeat with comprehensive configuration.
+            This tool dynamically handles different parameter requirements for each monitor type.
 
-        This tool creates monitors with proper app-specific parameters.
+            This tool creates monitors with proper app-specific parameters.
 
-        *********
-        VERY IMPORTANT:
-        ALWAYS use get_monitor_additional_params to check the additional required parameters for the chosen type before adding a monitor or even mentioning it.
-        Use list_monitor_types tool to see available monitor type names to use here in the app parameter.
-        Use the information obtained from this to query user for parameters.
-        If the User has not given any parameters, ask them to provide the necessary parameters, until all the necessary parameters are provided.
-        **********
+            *********
+            VERY IMPORTANT:
+            ALWAYS use get_monitor_additional_params to check the additional required parameters for the chosen type before adding a monitor or even mentioning it.
+            Use list_monitor_types tool to see available monitor type names to use here in the app parameter.
+            Use the information obtained from this to query user for parameters.
+            If the User has not given any parameters, ask them to provide the necessary parameters, until all the necessary parameters are provided.
+            **********
 
-        Examples of natural language requests this tool handles:
-        - "Monitor website example.com with HTTPS on port 443"
-        - "Add MySQL monitoring for database server at 192.168.1.10 with user admin"
-        - "Monitor Linux server health on host server.company.com via SSH"
-        - "Set up Redis monitoring on localhost port 6379 with password"
+            Examples of natural language requests this tool handles:
+            - "Monitor website example.com with HTTPS on port 443"
+            - "Add MySQL monitoring for database server at 192.168.1.10 with user admin"
+            - "Monitor Linux server health on host server.company.com via SSH"
+            - "Set up Redis monitoring on localhost port 6379 with password"
 
-        PARAMETER MAPPING: Use the 'params' parameter to pass all monitor-specific configuration.
-        The params should be a JSON string containing key-value pairs for the monitor type.
-        Use get_monitor_additional_params tool to see what parameters are required for each monitor type.
+            PARAMETER MAPPING: Use the 'params' parameter to pass all monitor-specific configuration.
+            The params should be a JSON string containing key-value pairs for the monitor type.
+            Use get_monitor_additional_params tool to see what parameters are required for each monitor type.
 
-        PARAMS EXAMPLES:
-        - Website: {"host":"example.com", "port":"443", "uri":"/api/health", "ssl":"true", "method":"GET"}
-        - Linux: {"host":"192.168.1.10", "port":"22", "username":"root", "password":"xxx"}
-        - MySQL: {"host":"db.server.com", "port":"3306", "username":"admin", "password":"xxx", "database":"mydb"}
-        - Redis: {"host":"redis.server.com", "port":"6379", "password":"xxx"}
-        """)
+            PARAMS EXAMPLES:
+            - Website: {"host":"example.com", "port":"443", "uri":"/api/health", "ssl":"true", "method":"GET"}
+            - Linux: {"host":"192.168.1.10", "port":"22", "username":"root", "password":"xxx"}
+            - MySQL: {"host":"db.server.com", "port":"3306", "username":"admin", "password":"xxx", "database":"mydb"}
+            - Redis: {"host":"redis.server.com", "port":"6379", "password":"xxx"}
+            """)
     public String addMonitor(
         @ToolParam(description = "Monitor name (required)", required = true) String name,
         @ToolParam(description = "Monitor type: website, mysql, postgresql, redis, linux, windows, etc.", required = true) String app,
@@ -328,28 +324,28 @@ public class MonitorToolsImpl implements MonitorTools {
                 }
             }
             String host = paramList.stream()
-                .filter(p -> "host".equals(p.getField()))
-                .map(Param::getParamValue)
-                .findFirst()
-                .orElse("");
+                    .filter(p -> "host".equals(p.getField()))
+                    .map(Param::getParamValue)
+                    .findFirst()
+                    .orElse("");
             String port = paramList.stream()
-                .filter(p -> "port".equals(p.getField()))
-                .map(Param::getParamValue)
-                .findFirst()
-                .orElse(null);
+                    .filter(p -> "port".equals(p.getField()))
+                    .map(Param::getParamValue)
+                    .findFirst()
+                    .orElse(null);
 
             String instance = (port != null && !port.isEmpty()) ? host.trim() + ":" + port : host.trim();
 
             // Create Monitor entity
             Monitor monitor = Monitor.builder()
-                .name(name.trim())
-                .app(app.toLowerCase().trim())
-                .instance(instance)
-                .intervals(intervals)
-                .status((byte) 1)
-                .type((byte) 0)
-                .description(description != null ? description.trim() : "")
-                .build();
+                    .name(name.trim())
+                    .app(app.toLowerCase().trim())
+                    .instance(instance)
+                    .intervals(intervals)
+                    .status((byte) 1)
+                    .type((byte) 0)
+                    .description(description != null ? description.trim() : "")
+                    .build();
 
             // Validate that all required parameters for this monitor type are provided
             try {
@@ -367,7 +363,7 @@ public class MonitorToolsImpl implements MonitorTools {
             monitorService.addMonitor(monitor, paramList, null, null);
             log.info("Successfully added monitor '{}' with ID: {}", monitor.getName(), monitor.getId());
             return String.format("Successfully added %s monitor '%s' with ID: %d (Instance: %s, Interval: %d seconds)",
-                app.toUpperCase(), monitor.getName(), monitor.getId(), monitor.getInstance(), monitor.getIntervals());
+                    app.toUpperCase(), monitor.getName(), monitor.getId(), monitor.getInstance(), monitor.getIntervals());
 
         } catch (Exception e) {
             log.error("Failed to add monitor '{}': {}", name, e.getMessage(), e);
@@ -456,12 +452,12 @@ public class MonitorToolsImpl implements MonitorTools {
 
     @Override
     @Tool(name = "list_monitor_types", description = """
-        HertzBeat: List all available monitor types that can be added to HertzBeat.
-        This tool shows all supported monitor types with their display names.
-        Use this to see what types of monitors you can create with the add_monitor tool.
-        """)
+            HertzBeat: List all available monitor types that can be added to HertzBeat.
+            This tool shows all supported monitor types with their display names.
+            Use this to see what types of monitors you can create with the add_monitor tool.
+            """)
     public String listMonitorTypes(
-        @ToolParam(description = "Language code for localized names (en-US, zh-CN, etc.). Default: en-US", required = false) String language) {
+            @ToolParam(description = "Language code for localized names (en-US, zh-CN, etc.). Default: en-US", required = false) String language) {
 
         try {
             log.info("Listing available monitor types for language: {}", language);
@@ -486,19 +482,18 @@ public class MonitorToolsImpl implements MonitorTools {
 
             // Sort monitor types alphabetically by key
             List<Map.Entry<String, String>> sortedTypes = monitorTypes.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .toList();
+                    .sorted(Map.Entry.comparingByKey())
+                    .toList();
 
             for (Map.Entry<String, String> entry : sortedTypes) {
                 String typeKey = entry.getKey();
                 String displayName = entry.getValue();
                 response.append("• ").append(typeKey)
-                    .append(" - ").append(displayName)
-                    .append("\n");
+                       .append(" - ").append(displayName)
+                       .append("\n");
             }
 
-            response.append(
-                "\nTo add a monitor, use the add_monitor tool with one of these types as the 'app' parameter.");
+            response.append("\nTo add a monitor, use the add_monitor tool with one of these types as the 'app' parameter.");
 
             log.info("Successfully listed {} monitor types", monitorTypes);
             return response.toString();
@@ -511,13 +506,13 @@ public class MonitorToolsImpl implements MonitorTools {
 
     @Override
     @Tool(name = "get_monitor_params", description = """
-        HertzBeat: Get the parameter definitions required for a specific monitor type.
-        This tool shows what parameters are needed when adding a monitor of the specified type,
-        ALWAYS use this before adding a monitor to understand what parameters the user needs to provide.
-        Use the app parameter to specify the monitor type/application name (e.g., 'linux', 'mysql', 'redis') this can be obtained from the list_monitor_types tool.
-        """)
+            HertzBeat: Get the parameter definitions required for a specific monitor type.
+            This tool shows what parameters are needed when adding a monitor of the specified type,
+            ALWAYS use this before adding a monitor to understand what parameters the user needs to provide.
+            Use the app parameter to specify the monitor type/application name (e.g., 'linux', 'mysql', 'redis') this can be obtained from the list_monitor_types tool.
+            """)
     public String getMonitorParams(
-        @ToolParam(description = "Monitor type/application name (e.g., 'linux', 'mysql', 'redis')", required = true) String app) {
+            @ToolParam(description = "Monitor type/application name (e.g., 'linux', 'mysql', 'redis')", required = true) String app) {
 
         try {
             log.info("Getting parameter definitions for monitor type: {}", app);
@@ -534,7 +529,7 @@ public class MonitorToolsImpl implements MonitorTools {
 
             if (paramDefines == null || paramDefines.isEmpty()) {
                 return String.format("No parameter definitions found for monitor type '%s'. "
-                    + "This monitor type may not exist or may not require additional parameters.", app);
+                   + "This monitor type may not exist or may not require additional parameters.", app);
             }
 
             // Format the response
@@ -582,8 +577,7 @@ public class MonitorToolsImpl implements MonitorTools {
             }
 
             response.append("To add a monitor of this type, use the add_monitor tool with these parameters.\n");
-            response.append(
-                String.format("Example: add_monitor(name='my-monitor', app='%s', host='your-host', ...)", app));
+            response.append(String.format("Example: add_monitor(name='my-monitor', app='%s', host='your-host', ...)", app));
 
             log.info("Successfully retrieved {} parameter definitions for monitor type: {}", paramDefines.size(), app);
             return response.toString();

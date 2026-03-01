@@ -1118,4 +1118,20 @@
    "ai.chat.config.participation.model.help": "信任模式：所有的資料都會傳送到大模型處理，受保護模式：限制一些AI能力，如私密資料不傳送給大模型處理",
   "ai.chat.config.participation.model.protected": "受保護模式",
   "ai.chat.config.participation.model.trusted": "信任模式"
+  "setting.drawer.theme.color": "主題色",
+  "setting.drawer.settings": "設置",
+  "setting.drawer.top": "頂部",
+  "setting.drawer.sidebar": "側邊欄",
+  "setting.drawer.content": "內容",
+  "setting.drawer.other": "其它",
+  "setting.drawer.height": "高",
+  "setting.drawer.background.color": "背景色",
+  "setting.drawer.background.color.default": "默認同主色系",
+  "setting.drawer.top.padding": "頂部左右內邊距",
+  "setting.drawer.fixed.header.sidebar": "固定頭和側邊欄",
+  "setting.drawer.colorblind.mode": "色弱模式",
+  "setting.drawer.preview": "預覽",
+  "setting.drawer.reset": "重置",
+  "setting.drawer.copy": "拷貝",
+  "setting.drawer.info.message": "配置欄只在開發環境用於預覽,生產環境不會展現,請拷貝後手動修改參數配置文件 src/styles/theme.less"
 }

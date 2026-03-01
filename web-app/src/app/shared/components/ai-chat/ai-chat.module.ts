@@ -24,6 +24,7 @@ import { DelonFormModule } from '@delon/form';
 import { AlainThemeModule } from '@delon/theme';
 import { SharedModule } from '@shared';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -31,6 +32,8 @@ import { NzMessageModule } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { MarkdownComponent } from 'ngx-markdown';
 
@@ -45,6 +48,7 @@ import { ChatComponent } from './chat.component';
     AlainThemeModule.forChild(),
     DelonFormModule,
     NzButtonModule,
+    NzDividerModule,
     NzFormModule,
     NzIconModule,
     NzInputModule,
@@ -52,6 +56,8 @@ import { ChatComponent } from './chat.component';
     NzModalModule,
     NzSelectModule,
     NzSpinModule,
+    NzSwitchModule,
+    NzTableModule,
     MarkdownComponent,
     NzTooltipDirective,
     SharedModule
