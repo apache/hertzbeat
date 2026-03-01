@@ -49,15 +49,21 @@ jobs:
         with:
           node-version: '20'
 
+      # Setup pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       # Install dependencies in home directory
       - name: Install Dependencies
         working-directory: home
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       # Build the documentation site
       - name: Build Documentation
         working-directory: home
-        run: npm run build
+        run: pnpm run build
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
