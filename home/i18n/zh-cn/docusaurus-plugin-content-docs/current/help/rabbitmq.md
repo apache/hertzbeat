@@ -123,3 +123,13 @@ keywords: [开源监控系统, 开源消息中间件监控, RabbitMQ消息中间
 | message_bytes_unacknowledged | B    | Like message_bytes but counting only those messages delivered to clients but not yet acknowledged                                    |
 | message_bytes_ram            | B    | Like message_bytes but counting only those messages which are currently held in RAM                                                  |
 | message_bytes_persistent     | B    | Like message_bytes but counting only those messages which are persistent                                                             |
+
+#### 指标集合：node_alarms
+
+| 指标名称        | 指标单位 | 指标帮助描述             |
+|-----------------|------|-------------------------|
+| name            | 无   | RabbitMQ节点名称         |
+| disk_free_alarm | 无   | 磁盘空间告警是否触发     |
+| mem_alarm       | 无   | 内存告警是否触发         |
+| running         | 无   | 节点是否运行中           |
+| type            | 无   | 节点类型(disc或ram)      |

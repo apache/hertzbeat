@@ -661,3 +661,54 @@ metrics:
       parseType: jsonPath
       parseScript: '$.*'
 
+
+  - name: node_alarms
+    i18n:
+      zh-CN: 节点告警
+      en-US: Node Alarms
+      ja-JP: ノードアラーム
+    priority: 4
+    fields:
+      - field: name
+        type: 1
+        i18n:
+          zh-CN: 节点名称
+          en-US: Node Name
+          ja-JP: ノード名
+      - field: disk_free_alarm
+        type: 1
+        i18n:
+          zh-CN: 磁盘空间告警
+          en-US: Disk Free Alarm
+          ja-JP: ディスク空き容量アラーム
+      - field: mem_alarm
+        type: 1
+        i18n:
+          zh-CN: 内存告警
+          en-US: Memory Alarm
+          ja-JP: メモリアラーム
+      - field: running
+        type: 1
+        i18n:
+          zh-CN: 节点运行中
+          en-US: Running
+          ja-JP: ノード稼働中
+      - field: type
+        type: 1
+        i18n:
+          zh-CN: 节点类型
+          en-US: Node Type
+          ja-JP: ノードタイプ
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/nodes
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$.*'
