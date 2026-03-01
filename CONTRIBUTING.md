@@ -272,3 +272,5 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 ### 模块
 
 ![hertzBeat](home/static/img/docs/hertzbeat-arch.png)     
+
+- [Vaibhav Hample] (https://github.com/Vaibhav-rgb45)
