@@ -93,15 +93,19 @@ class NacosDiscoveryClientTest {
         try (MockedStatic<NamingFactory> mockedFactory = Mockito.mockStatic(NamingFactory.class)) {
             mockedFactory.when(() -> NamingFactory.createNamingService(HOST + ":" + PORT))
                     .thenReturn(namingService);
+            ListView<String> emptyView = new ListView<>();
+            emptyView.setData(Collections.emptyList());
+            when(namingService.getServicesOfServer(0, 1)).thenReturn(emptyView);
 
             nacosDiscoveryClient.initClient(config);
 
             mockedFactory.verify(() -> NamingFactory.createNamingService(HOST + ":" + PORT));
+            verify(namingService).getServicesOfServer(0, 1);
         }
     }
 
     @Test
-    void testInitClientFailed() throws NacosException {
+    void testInitClientFailedOnCreate() throws NacosException {
         ConnectConfig config = ConnectConfig.builder().host(HOST).port(PORT).build();
 
         try (MockedStatic<NamingFactory> mockedFactory = Mockito.mockStatic(NamingFactory.class)) {
@@ -109,6 +113,21 @@ class NacosDiscoveryClientTest {
                     .thenThrow(new NacosException(500, "connection refused"));
 
             assertThrows(RuntimeException.class, () -> nacosDiscoveryClient.initClient(config));
+        }
+    }
+
+    @Test
+    void testInitClientFailedOnProbe() throws NacosException {
+        ConnectConfig config = ConnectConfig.builder().host(HOST).port(PORT).build();
+
+        try (MockedStatic<NamingFactory> mockedFactory = Mockito.mockStatic(NamingFactory.class)) {
+            mockedFactory.when(() -> NamingFactory.createNamingService(anyString()))
+                    .thenReturn(namingService);
+            when(namingService.getServicesOfServer(0, 1))
+                    .thenThrow(new NacosException(500, "host unreachable"));
+
+            RuntimeException ex = assertThrows(RuntimeException.class, () -> nacosDiscoveryClient.initClient(config));
+            assertTrue(ex.getMessage().contains("Failed to connect"));
         }
     }
 
