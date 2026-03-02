@@ -64,6 +64,24 @@
         </h2>
         <h2 *ngIf="!currentConversation">{{ 'ai.chat.title' | i18n }}</h2>
       </div>
+
+      <!-- Spacer to push actions to the left of page-level buttons -->
+      <div class="header-spacer"></div>
+
+      <div class="chat-header-actions" *ngIf="currentConversation">
+        <button
+          nz-button
+          nzType="primary"
+          nzSize="small"
+          nzGhost
+          (click)="onShowScheduleModal()"
+          nz-tooltip
+          [nzTooltipTitle]="'ai.chat.schedule.tooltip' | i18n"
+        >
+          <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
+          <span>{{ 'ai.chat.schedule.button' | i18n }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- Messages area -->
@@ -98,13 +116,24 @@
       </div>
 
       <!-- Chat messages -->
-      <div *ngFor="let message of messages; let i = index" class="message" [class.user-message]="message.role === 'user'">
+      <div
+        *ngFor="let message of messages; let i = index"
+        class="message"
+        [class.user-message]="message.role === 'user'"
+        [class.system-push-message]="message.role === 'system_push'"
+      >
         <div class="message-avatar">
-          <i nz-icon [nzType]="message.role === 'user' ? 'user' : 'robot'"></i>
+          <i nz-icon [nzType]="message.role === 'user' ? 'user' : message.role === 'system_push' ? 'bell' : 'robot'"></i>
         </div>
         <div class="message-content">
           <div class="message-header">
-            <span class="message-role">{{ message.role === 'user' ? ('ai.chat.user' | i18n) : ('ai.chat.assistant' | i18n) }}</span>
+            <span class="message-role">
+              <ng-container [ngSwitch]="message.role">
+                <span *ngSwitchCase="'user'">{{ 'ai.chat.user' | i18n }}</span>
+                <span *ngSwitchCase="'system_push'">🔔 定时推送</span>
+                <span *ngSwitchDefault>{{ 'ai.chat.assistant' | i18n }}</span>
+              </ng-container>
+            </span>
             <span class="message-time">{{ formatTime(message.gmtCreate) }}</span>
             <span
               *ngIf="message.role === 'assistant' && isSendingMessage && i === messages.length - 1 && message.content !== ''"
@@ -116,7 +145,7 @@
           </div>
           <div class="message-text">
             <div *ngIf="message.role === 'user'" [innerHTML]="message.content"></div>
-            <markdown *ngIf="message.role === 'assistant'" [data]="message.content"></markdown>
+            <markdown *ngIf="message.role === 'assistant' || message.role === 'system_push'" [data]="message.content"> </markdown>
           </div>
           <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage" class="typing-indicator">
             <span>{{ 'ai.chat.typing' | i18n }}</span>
@@ -225,6 +254,161 @@
           <input nz-input [(ngModel)]="aiProviderConfig.model" name="model" placeholder="gpt-4" />
           <p class="form-help">{{ 'ai.chat.config.model.help' | i18n }}</p>
         </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>
+
+<!-- Schedule Configuration Modal -->
+<nz-modal
+  [(nzVisible)]="showScheduleModal"
+  [nzTitle]="'ai.chat.schedule.title' | i18n"
+  (nzOnCancel)="onCloseScheduleModal()"
+  [nzFooter]="null"
+  nzWidth="600px"
+>
+  <div *nzModalContent class="schedule-modal-content">
+    <!-- Existing Schedules List -->
+    <div class="schedule-list" *ngIf="schedules.length > 0">
+      <h4>{{ 'ai.chat.schedule.configured' | i18n }}</h4>
+      <nz-table #scheduleTable [nzData]="schedules" [nzShowPagination]="false" nzSize="small">
+        <thead>
+          <tr>
+            <th>{{ 'ai.chat.schedule.skill' | i18n }}</th>
+            <th>{{ 'ai.chat.schedule.cron' | i18n }}</th>
+            <th>{{ 'ai.chat.schedule.status' | i18n }}</th>
+            <th>{{ 'ai.chat.schedule.action' | i18n }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let schedule of scheduleTable.data">
+            <td>{{ schedule.sopName }}</td>
+            <td>{{ schedule.cronExpression }}</td>
+            <td>
+              <nz-switch [(ngModel)]="schedule.enabled" (ngModelChange)="onToggleSchedule(schedule)"></nz-switch>
+            </td>
+            <td>
+              <button
+                nz-button
+                nzType="text"
+                nzSize="small"
+                (click)="onEditSchedule(schedule)"
+                nz-tooltip
+                [nzTooltipTitle]="'common.button.edit' | i18n"
+              >
+                <i nz-icon nzType="edit"></i>
+              </button>
+              <button
+                nz-button
+                nzType="text"
+                nzDanger
+                nzSize="small"
+                (click)="onDeleteSchedule(schedule)"
+                nz-tooltip
+                [nzTooltipTitle]="'common.button.delete' | i18n"
+              >
+                <i nz-icon nzType="delete"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </div>
+
+    <nz-divider *ngIf="schedules.length > 0"></nz-divider>
+
+    <!-- Edit Schedule Form -->
+    <div *ngIf="editingSchedule">
+      <h4>{{ 'ai.chat.schedule.edit' | i18n }}</h4>
+      <form nz-form nzLayout="vertical">
+        <nz-form-item>
+          <nz-form-label>{{ 'ai.chat.schedule.skill' | i18n }}</nz-form-label>
+          <nz-form-control>
+            <input nz-input [value]="editingSchedule.sopName" disabled />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label nzRequired>{{ 'ai.chat.schedule.cron.label' | i18n }}</nz-form-label>
+          <nz-form-control>
+            <input nz-input [(ngModel)]="editingSchedule.cronExpression" name="editCronExpression" placeholder="0 0 9 * * ?" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <button
+            nz-button
+            nzType="primary"
+            (click)="onUpdateSchedule()"
+            [nzLoading]="scheduleLoading"
+            [disabled]="!editingSchedule.cronExpression"
+            style="margin-right: 8px"
+          >
+            <i nz-icon nzType="save"></i> {{ 'common.button.save' | i18n }}
+          </button>
+          <button nz-button (click)="onCancelEdit()">
+            {{ 'common.button.cancel' | i18n }}
+          </button>
+        </nz-form-item>
+      </form>
+      <nz-divider></nz-divider>
+    </div>
+
+    <!-- Add New Schedule Form -->
+    <h4>{{ schedules.length > 0 ? ('ai.chat.schedule.add' | i18n) : ('ai.chat.schedule.create' | i18n) }}</h4>
+    <form nz-form nzLayout="vertical">
+      <nz-form-item>
+        <nz-form-label nzRequired>{{ 'ai.chat.schedule.skill.select' | i18n }}</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            [(ngModel)]="newSchedule.sopName"
+            name="sopName"
+            [nzPlaceHolder]="'ai.chat.schedule.skill.placeholder' | i18n"
+            style="width: 100%"
+          >
+            <nz-option *ngFor="let skill of availableSkills" [nzValue]="skill.name" [nzLabel]="skill.name + ' - ' + skill.description">
+            </nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzRequired>{{ 'ai.chat.schedule.cron.label' | i18n }}</nz-form-label>
+        <nz-form-control>
+          <nz-input-group [nzSuffix]="cronHelpTpl">
+            <input nz-input [(ngModel)]="newSchedule.cronExpression" name="cronExpression" placeholder="0 0 9 * * ?" />
+          </nz-input-group>
+          <ng-template #cronHelpTpl>
+            <i
+              nz-icon
+              nzType="question-circle"
+              nz-tooltip
+              [nzTooltipTitle]="
+                ('ai.chat.schedule.cron.help' | i18n) +
+                '&#10;' +
+                ('ai.chat.schedule.cron.example.daily' | i18n) +
+                '&#10;' +
+                ('ai.chat.schedule.cron.example.weekly' | i18n)
+              "
+            ></i>
+          </ng-template>
+          <p class="form-help">
+            {{ 'ai.chat.schedule.cron.common' | i18n }} <code>0 0 9 * * ?</code> | {{ 'ai.chat.schedule.cron.monday' | i18n }}
+            <code>0 0 9 ? * MON</code>
+          </p>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <button
+          nz-button
+          nzType="primary"
+          (click)="onCreateSchedule()"
+          [nzLoading]="scheduleLoading"
+          [disabled]="!newSchedule.sopName || !newSchedule.cronExpression"
+        >
+          <i nz-icon nzType="plus"></i> {{ 'ai.chat.schedule.create' | i18n }}
+        </button>
       </nz-form-item>
     </form>
   </div>
