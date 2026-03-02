@@ -1235,7 +1235,7 @@
   "ai.chat.config.participation.model": "Modo de Participação da IA",
   "ai.chat.config.participation.model.help": "Modo Confiável: Todos os dados são enviados para o modelo principal para processamento. Modo Protegido: Restringe algumas funcionalidades da IA, como impedir que dados privados sejam enviados para o modelo principal para processamento.",
   "ai.chat.config.participation.model.protected": "Modo protegido",
-  "ai.chat.config.participation.model.trusted": "Modo confiável"
+  "ai.chat.config.participation.model.trusted": "Modo confiável",
   "define.enable": "Habilitar",
   "setting.drawer.theme.color": "Cor do Tema",
   "setting.drawer.settings": "Configurações",

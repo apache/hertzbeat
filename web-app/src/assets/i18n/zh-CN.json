@@ -1161,7 +1161,7 @@
   "ai.chat.config.participation.model": "AI参与模式",
   "ai.chat.config.participation.model.help": "信任模式：所有的数据都会发送到大模型处理，受保护模式：限制一些AI能力，如私密数据不发送给大模型处理",
   "ai.chat.config.participation.model.protected": "受保护模式",
-  "ai.chat.config.participation.model.trusted": "信任模式"
+  "ai.chat.config.participation.model.trusted": "信任模式",
   "ai.chat.schedule.title": "定时任务设置",
   "ai.chat.schedule.create": "创建定时任务",
   "ai.chat.schedule.add": "添加新任务",

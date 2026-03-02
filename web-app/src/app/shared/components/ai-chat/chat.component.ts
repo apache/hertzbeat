@@ -25,7 +25,15 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 
 import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
 import { ParamDefine } from '../../../pojo/ParamDefine';
-import { AiChatService, ChatMessage, ChatConversation, SecurityForm, DEFAULT_SECURITY_FORM,SopSchedule, SkillInfo } from '../../../service/ai-chat.service';
+import {
+  AiChatService,
+  ChatMessage,
+  ChatConversation,
+  SecurityForm,
+  DEFAULT_SECURITY_FORM,
+  SopSchedule,
+  SkillInfo
+} from '../../../service/ai-chat.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
 

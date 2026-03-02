@@ -1110,7 +1110,7 @@
   "setting.drawer.preview": "プレビュー",
   "setting.drawer.reset": "リセット",
   "setting.drawer.copy": "コピー",
-  "setting.drawer.info.message": "設定パネルは開発環境でのプレビューのみに使用され、本番環境では表示されません。コピーして、パラメータ設定ファイル src/styles/theme.less を手動で変更してください"
+  "setting.drawer.info.message": "設定パネルは開発環境でのプレビューのみに使用され、本番環境では表示されません。コピーして、パラメータ設定ファイル src/styles/theme.less を手動で変更してください",
   "ai.chat.offline.response": "申し訳ございませんが、AI チャットサービスは現在利用できません。HertzBeat AI モジュールが実行されていることを確認して、後でもう一度お試しください。",
   "ai.chat.security.form.title": "セキュアフォーム",
   "ai.chat.security.form.button": "プライベートパラメータを入力してください",
