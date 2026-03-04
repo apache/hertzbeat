@@ -76,6 +76,14 @@
           {{ 'app-' + currentApp + '.yml' }}
           <i nz-icon nzType="more" nzTheme="outline"></i>
         </button>
+        <button *ngIf="currentApp != null && !isEditing" nz-button nzType="primary" (click)="isEditing = true">
+          <i nz-icon nzType="edit" nzTheme="outline"></i>
+          {{ 'common.button.edit' | i18n }}
+        </button>
+        <button *ngIf="isEditing && currentApp != null" nz-button nzDanger (click)="isEditing = false; code = originalCode">
+          <i nz-icon nzType="close-circle" nzTheme="outline"></i>
+          {{ 'common.button.cancel' | i18n }}
+        </button>
         <button *ngIf="!loading && code != originalCode" nz-button nzType="primary" [nzLoading]="saveLoading" (click)="onSaveAndApply()">
           <i nz-icon nzType="save" nzTheme="outline"></i>
           {{ 'define.save-apply' | i18n }}
@@ -102,6 +110,15 @@
     </app-toolbar>
     <div style="flex: 1; margin: 4px 8px 4px 4px">
       <nz-code-editor
+        *ngIf="!isEditing || currentApp == null"
+        class="editor"
+        [nzLoading]="loading"
+        [(ngModel)]="code"
+        [nzEditorMode]="'normal'"
+        [nzEditorOption]="{ language: 'yaml', theme: 'vs', folding: true, automaticLayout: true, readOnly: !isEditing }"
+      ></nz-code-editor>
+      <nz-code-editor
+        *ngIf="isEditing && currentApp != null"
         class="editor"
         [nzLoading]="loading"
         [nzOriginalText]="originalCode"
