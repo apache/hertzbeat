@@ -149,4 +149,22 @@ public final class IpDomainUtil {
         }
     }
 
+    /**
+     * check port is valid.
+     * @return true if valid
+     */
+    public static boolean validPort(String portStr) {
+
+        if (portStr == null || portStr.trim().isEmpty()) {
+            return false;
+        }
+
+        try {
+            int port = Integer.parseInt(portStr);
+            return port >= 0 && port <= 65535;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
 }

@@ -56,4 +56,11 @@ public class S7Protocol implements Protocol {
     private String timeout;
 
     private List<String> registerAddresses;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

@@ -83,7 +83,7 @@
   "alert.inhibit.equal_labels.common": "共通ラベル",
   "alert.inhibit.equal_labels.custom": "カスタムラベル",
   "alert.inhibit.equal_labels.more": "{{count}} 個のラベルが追加",
-  "alert.inhibit.equal_labels.placeholder": "ラベル名を入力後、Enterキーを押すか、ドロップダウンから選択してください",
+  "alert.inhibit.equal_labels.placeholder": "ラベルを入力または選択",
   "alert.inhibit.equal_labels.tip": "ソースおよびターゲットのアラートは、これらのラベルキーに対して等しい値を持つ必要があります。共通キーとしてalertname、instance、severityなどがあります",
   "alert.inhibit.name": "抑制ルール名",
   "alert.inhibit.name.tip": "この抑制ルールを識別するための名前。ユニークでなければなりません",

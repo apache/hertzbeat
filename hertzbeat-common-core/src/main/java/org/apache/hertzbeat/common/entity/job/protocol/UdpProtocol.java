@@ -34,7 +34,7 @@ public class UdpProtocol implements CommonRequestProtocol, Protocol {
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
-    
+
     /**
      * Port number
      */
@@ -44,9 +44,16 @@ public class UdpProtocol implements CommonRequestProtocol, Protocol {
      * TIME OUT PERIOD
      */
     private String timeout;
-    
+
     /**
      * Custom protocol packet hexString Hexadecimal character string
      */
     private String content;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

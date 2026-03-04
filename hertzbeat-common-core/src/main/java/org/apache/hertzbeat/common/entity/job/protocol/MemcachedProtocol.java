@@ -41,5 +41,11 @@ public class MemcachedProtocol implements CommonRequestProtocol, Protocol {
      */
     private String port;
 
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 
 }
