@@ -133,4 +133,11 @@ public class HttpProtocol implements CommonRequestProtocol, Protocol {
          */
         private String digestAuthPassword;
     }
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

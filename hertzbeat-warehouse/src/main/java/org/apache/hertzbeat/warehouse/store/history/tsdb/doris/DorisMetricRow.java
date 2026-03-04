@@ -15,28 +15,32 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.doris;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 /**
- * eureka sd protocol
+ * Internal class to represent a metric row for Doris storage.
+ * This class is used by both DorisDataStorage and DorisStreamLoadWriter.
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class EurekaSdProtocol implements Protocol{
-
-    private String url;
-
-    @Override
-    public boolean isInvalid() {
-
-        // todo: add
-        return true;
-    }
+public class DorisMetricRow {
+    public String instance;
+    public String app;
+    public String metrics;
+    public String metric;
+    public byte metricType;
+    public Integer int32Value;
+    public Double doubleValue;
+    public String strValue;
+    public Timestamp recordTime;
+    public String labels;
 }
