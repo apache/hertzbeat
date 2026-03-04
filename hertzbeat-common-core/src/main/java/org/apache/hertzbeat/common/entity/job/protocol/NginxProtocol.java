@@ -60,7 +60,8 @@ public class NginxProtocol implements CommonRequestProtocol, Protocol {
      * Validates the relevant parameters
      * @return is invalid true or false
      */
-    public boolean isInValid() {
+    @Override
+    public boolean isInvalid() {
         return StringUtils.isAnyBlank(host, port, timeout);
     }
 }

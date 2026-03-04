@@ -61,6 +61,7 @@ public class Pop3Protocol implements CommonRequestProtocol, Protocol {
      */
     private String authorize;
 
+    @Override
     public boolean isInvalid() {
         return StringUtils.isAllBlank(host, port, timeout, ssl, email, authorize);
     }

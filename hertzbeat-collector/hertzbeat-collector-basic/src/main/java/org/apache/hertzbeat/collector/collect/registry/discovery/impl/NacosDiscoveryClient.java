@@ -53,10 +53,17 @@ public class NacosDiscoveryClient implements DiscoveryClient {
     @Override
     public void initClient(ConnectConfig connectConfig) {
         try {
+
             localConnectConfig = connectConfig;
             namingService = NamingFactory.createNamingService(connectConfig.getHost() + ":" + connectConfig.getPort());
+
+            // Perform a synchronous probe to verify connectivity eagerly,
+            // because NamingFactory.createNamingService() establishes the TCP
+            // connection in a background thread and getServerStatus() returns
+            // "UP" by default before that thread finishes.
+            namingService.getServicesOfServer(0, 1);
         } catch (NacosException exception) {
-            throw new RuntimeException("Failed to init namingService");
+            throw new RuntimeException("Failed to connect to Nacos server: " + exception.getErrMsg());
         }
     }
 

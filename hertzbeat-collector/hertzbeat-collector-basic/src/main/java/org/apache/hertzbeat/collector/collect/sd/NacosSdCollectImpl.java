@@ -39,12 +39,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class NacosSdCollectImpl extends AbstractCollect {
-    
+
     /**
      * Client management to interact with discovery services
      */
     private final DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
-    
+
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         // Validate the required configuration is present
@@ -55,7 +55,7 @@ public class NacosSdCollectImpl extends AbstractCollect {
             throw new IllegalArgumentException("Nacos service discovery monitoring, the config is invalid");
         }
     }
-    
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         // Create Registry protocol from NacosSd protocol
@@ -74,13 +74,13 @@ public class NacosSdCollectImpl extends AbstractCollect {
                 builder.setMsg("Failed to get Nacos discovery client");
                 return;
             }
-            
+
             // Get all services registered in Nacos
             List<ServiceInstance> services = discoveryClient.getServices();
             if (CollectionUtils.isEmpty(services)) {
                 return;
             }
-            
+
             // Populate the response data with service information
             services.forEach(service -> {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
@@ -106,7 +106,7 @@ public class NacosSdCollectImpl extends AbstractCollect {
             }
         }
     }
-    
+
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_NACOS_SD;
