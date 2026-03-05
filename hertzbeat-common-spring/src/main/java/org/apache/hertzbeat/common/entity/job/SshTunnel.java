@@ -77,4 +77,11 @@ public class SshTunnel implements CommonRequestProtocol, Protocol {
      * share connection session
      */
     private String shareConnection = "true";
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo add
+        return false;
+    }
 }

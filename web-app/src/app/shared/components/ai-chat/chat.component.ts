@@ -24,7 +24,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
 import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
-import { AiChatService, ChatMessage, ChatConversation } from '../../../service/ai-chat.service';
+import { AiChatService, ChatMessage, ChatConversation, SopSchedule, SkillInfo } from '../../../service/ai-chat.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
 
@@ -34,6 +34,12 @@ import { ThemeService } from '../../../service/theme.service';
   styleUrls: ['./chat.component.less']
 })
 export class ChatComponent implements OnInit, OnDestroy {
+  /**
+   * Marker for skill report content that should be displayed directly to users
+   * without further AI processing.
+   */
+  private readonly SKILL_REPORT_MARKER = '[[SKILL_REPORT]]';
+
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
   conversations: ChatConversation[] = [];
@@ -53,6 +59,18 @@ export class ChatComponent implements OnInit, OnDestroy {
   configLoading = false;
   aiProviderConfig: ModelProviderConfig = new ModelProviderConfig();
   providerOptions: ProviderOption[] = PROVIDER_OPTIONS;
+
+  // Schedule Configuration
+  showScheduleModal = false;
+  scheduleLoading = false;
+  schedules: SopSchedule[] = [];
+  availableSkills: SkillInfo[] = [];
+  newSchedule: Partial<SopSchedule> = {
+    sopName: '',
+    cronExpression: '',
+    enabled: true
+  };
+  editingSchedule: SopSchedule | null = null;
 
   constructor(
     private aiChatService: AiChatService,
@@ -312,6 +330,12 @@ export class ChatComponent implements OnInit, OnDestroy {
           lastMessage.content += chunk.content;
           lastMessage.gmtCreate = chunk.gmtCreate;
 
+          // Check for skill report marker and process it
+          if (lastMessage.content.includes(this.SKILL_REPORT_MARKER)) {
+            lastMessage.content = this.processSkillReportContent(lastMessage.content);
+            lastMessage.isSkillReport = true;
+          }
+
           this.cdr.detectChanges();
           this.scrollToBottom();
         }
@@ -429,6 +453,23 @@ export class ChatComponent implements OnInit, OnDestroy {
       // Ensure content is always a string
       message.content = String(message.content || '');
     }
+  }
+
+  /**
+   * Process skill report content by removing the marker and extracting the report.
+   * Skill reports are directly displayed to users without further AI processing.
+   */
+  private processSkillReportContent(content: string): string {
+    // Remove the marker and return the report content
+    const markerIndex = content.indexOf(this.SKILL_REPORT_MARKER);
+    if (markerIndex !== -1) {
+      // Extract content after the marker
+      let reportContent = content.substring(markerIndex + this.SKILL_REPORT_MARKER.length);
+      // Remove leading newlines
+      reportContent = reportContent.replace(/^\n+/, '');
+      return reportContent;
+    }
+    return content;
   }
 
   /**
@@ -617,5 +658,195 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
       this.aiProviderConfig.model = selectedProvider.defaultModel;
     }
+  }
+
+  // ===== Schedule Management Methods =====
+
+  /**
+   * Show schedule configuration modal
+   */
+  onShowScheduleModal(): void {
+    if (!this.currentConversation) {
+      this.message.warning('请先选择或创建一个对话');
+      return;
+    }
+    this.showScheduleModal = true;
+    this.loadSchedules();
+    this.loadAvailableSkills();
+  }
+
+  /**
+   * Close schedule modal
+   */
+  onCloseScheduleModal(): void {
+    this.showScheduleModal = false;
+  }
+
+  /**
+   * Load available SOP skills from backend
+   */
+  loadAvailableSkills(): void {
+    this.aiChatService.getAvailableSkills().subscribe({
+      next: response => {
+        if (response.code === 0 && response.data) {
+          this.availableSkills = response.data;
+        }
+      },
+      error: error => {
+        console.error('Error loading skills:', error);
+        // Fallback to empty - user will see nothing in dropdown
+      }
+    });
+  }
+
+  /**
+   * Load schedules for current conversation
+   */
+  loadSchedules(): void {
+    if (!this.currentConversation) return;
+
+    this.aiChatService.getSchedules(this.currentConversation.id).subscribe({
+      next: response => {
+        if (response.code === 0 && response.data) {
+          this.schedules = response.data;
+        }
+      },
+      error: error => {
+        console.error('Error loading schedules:', error);
+        this.message.error('加载定时任务失败');
+      }
+    });
+  }
+
+  /**
+   * Create a new schedule
+   */
+  onCreateSchedule(): void {
+    if (!this.currentConversation || !this.newSchedule.sopName || !this.newSchedule.cronExpression) {
+      return;
+    }
+
+    this.scheduleLoading = true;
+    const schedule: SopSchedule = {
+      conversationId: this.currentConversation.id,
+      sopName: this.newSchedule.sopName,
+      cronExpression: this.newSchedule.cronExpression,
+      enabled: true
+    };
+
+    this.aiChatService.createSchedule(schedule).subscribe({
+      next: response => {
+        this.scheduleLoading = false;
+        if (response.code === 0 && response.data) {
+          this.schedules.push(response.data);
+          this.newSchedule = { sopName: '', cronExpression: '', enabled: true };
+          this.message.success(this.i18nSvc.fanyi('ai.chat.schedule.create.success'));
+        } else {
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.schedule.create.failed')}: ${response.msg}`);
+        }
+      },
+      error: error => {
+        this.scheduleLoading = false;
+        console.error('Error creating schedule:', error);
+        this.message.error(this.i18nSvc.fanyi('ai.chat.schedule.create.failed'));
+      }
+    });
+  }
+
+  /**
+   * Toggle schedule enabled status
+   */
+  onToggleSchedule(schedule: SopSchedule): void {
+    if (!schedule.id) return;
+
+    this.aiChatService.toggleSchedule(schedule.id, schedule.enabled).subscribe({
+      next: response => {
+        if (response.code === 0) {
+          this.message.success(this.i18nSvc.fanyi('ai.chat.schedule.toggle.success'));
+        } else {
+          schedule.enabled = !schedule.enabled; // Revert on error
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.schedule.toggle.failed')}: ${response.msg}`);
+        }
+      },
+      error: error => {
+        schedule.enabled = !schedule.enabled; // Revert on error
+        console.error('Error toggling schedule:', error);
+        this.message.error(this.i18nSvc.fanyi('ai.chat.schedule.toggle.failed'));
+      }
+    });
+  }
+
+  /**
+   * Delete a schedule
+   */
+  onDeleteSchedule(schedule: SopSchedule): void {
+    if (!schedule.id) return;
+
+    this.modal.confirm({
+      nzTitle: this.i18nSvc.fanyi('ai.chat.conversation.delete.title'),
+      nzContent: `${this.i18nSvc.fanyi('ai.chat.conversation.delete.content')} "${schedule.sopName}"`,
+      nzOkText: this.i18nSvc.fanyi('ai.chat.conversation.delete.confirm'),
+      nzOkDanger: true,
+      nzOnOk: () => {
+        this.aiChatService.deleteSchedule(schedule.id!).subscribe({
+          next: response => {
+            if (response.code === 0) {
+              this.schedules = this.schedules.filter(s => s.id !== schedule.id);
+              this.message.success(this.i18nSvc.fanyi('ai.chat.schedule.delete.success'));
+            } else {
+              this.message.error(`${this.i18nSvc.fanyi('ai.chat.schedule.delete.failed')}: ${response.msg}`);
+            }
+          },
+          error: error => {
+            console.error('Error deleting schedule:', error);
+            this.message.error(this.i18nSvc.fanyi('ai.chat.schedule.delete.failed'));
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Start editing a schedule
+   */
+  onEditSchedule(schedule: SopSchedule): void {
+    this.editingSchedule = { ...schedule };
+  }
+
+  /**
+   * Cancel editing
+   */
+  onCancelEdit(): void {
+    this.editingSchedule = null;
+  }
+
+  /**
+   * Update an existing schedule
+   */
+  onUpdateSchedule(): void {
+    if (!this.editingSchedule || !this.editingSchedule.id) return;
+
+    this.scheduleLoading = true;
+    this.aiChatService.updateSchedule(this.editingSchedule.id, this.editingSchedule).subscribe({
+      next: response => {
+        this.scheduleLoading = false;
+        if (response.code === 0 && response.data) {
+          // Update the schedule in the list
+          const index = this.schedules.findIndex(s => s.id === this.editingSchedule!.id);
+          if (index !== -1) {
+            this.schedules[index] = response.data;
+          }
+          this.editingSchedule = null;
+          this.message.success(this.i18nSvc.fanyi('ai.chat.schedule.update.success'));
+        } else {
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.schedule.update.failed')}: ${response.msg}`);
+        }
+      },
+      error: error => {
+        this.scheduleLoading = false;
+        console.error('Error updating schedule:', error);
+        this.message.error(this.i18nSvc.fanyi('ai.chat.schedule.update.failed'));
+      }
+    });
   }
 }

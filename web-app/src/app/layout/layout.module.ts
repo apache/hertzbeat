@@ -4,7 +4,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { GlobalFooterModule } from '@delon/abc/global-footer';
-import { AlainThemeModule } from '@delon/theme';
+import { AlainThemeModule, I18nPipe } from '@delon/theme';
 import { LayoutDefaultModule } from '@delon/theme/layout-default';
 import { SettingDrawerModule } from '@delon/theme/setting-drawer';
 import { ThemeBtnModule } from '@delon/theme/theme-btn';
@@ -25,8 +25,10 @@ import { HeaderAiChatComponent } from './basic/widgets/chat-input.component';
 import { HeaderUserComponent } from './basic/widgets/user.component';
 import { HeaderNotifyComponent } from './basic/widgets/notify.component';
 import { LayoutBlankComponent } from './blank/blank.component';
+import { SettingDrawerI18nDirective } from './basic/directives/setting-drawer-i18n.directive';
 
 const COMPONENTS = [LayoutBasicComponent, LayoutBlankComponent, HeaderI18nComponent];
+const DIRECTIVES = [SettingDrawerI18nDirective];
 
 const HEADER_COMPONENTS = [
   HeaderAiChatComponent,
@@ -76,9 +78,10 @@ const PASSPORT = [LayoutPassportComponent];
     NzStringTemplateOutletDirective,
     NzListItemActionComponent,
     NzTooltipDirective,
-    NzCheckboxComponent
+    NzCheckboxComponent,
+    I18nPipe
   ],
-  declarations: [...COMPONENTS, ...HEADER_COMPONENTS, ...PASSPORT],
+  declarations: [...COMPONENTS, ...HEADER_COMPONENTS, ...PASSPORT, ...DIRECTIVES],
   exports: [...COMPONENTS, ...PASSPORT]
 })
 export class LayoutModule {}

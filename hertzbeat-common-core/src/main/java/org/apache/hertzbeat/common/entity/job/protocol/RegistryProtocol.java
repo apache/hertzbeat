@@ -25,6 +25,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 /**
  * Registry protocol
  */
@@ -37,7 +40,10 @@ public class RegistryProtocol implements CommonRequestProtocol, Protocol {
     private String port;
     private String discoveryClientTypeName;
 
+    @Override
     public boolean isInvalid() {
-        return StringUtils.isAnyBlank(host, String.valueOf(port), discoveryClientTypeName);
+
+        return validateIpDomain(host) && validPort(port)
+            && StringUtils.isAnyBlank(host, String.valueOf(port), discoveryClientTypeName);
     }
 }

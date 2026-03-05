@@ -9,30 +9,34 @@
     </div>
     <div nz-row [nzGutter]="16">
       <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 10, offset: 2 }">
-        <div class="-inner-content; mobile-hide" style="margin-left: 10%">
-          <div style="margin-top: 10px; font-weight: bolder; font-size: xxx-large; color: white">
-            {{ 'app.passport.intro-1' | i18n }}<br />{{ 'app.passport.intro-2' | i18n }}
-          </div>
+        <div class="mobile-hide passport-left-content">
+          <div class="passport-intro">{{ 'app.passport.intro-1' | i18n }}<br />{{ 'app.passport.intro-2' | i18n }}</div>
           <nz-divider></nz-divider>
-          <div style="margin-top: 15px; font-weight: normal; font-size: medium; color: white">
-            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
-            {{ 'about.point.1' | i18n }}
-            <br />
-            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
-            {{ 'about.point.2' | i18n }}
-            <br />
-            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
-            {{ 'about.point.3' | i18n }}
-            <br />
-            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
-            {{ 'about.point.4' | i18n }}
-            <br />
-            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
-            {{ 'about.point.5' | i18n }}
-            <br />
-            <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
-            {{ 'about.point.6' | i18n }}
-            <br />
+          <div class="passport-points">
+            <div class="point-item">
+              <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+              <span>{{ 'about.point.1' | i18n }}</span>
+            </div>
+            <div class="point-item">
+              <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+              <span>{{ 'about.point.2' | i18n }}</span>
+            </div>
+            <div class="point-item">
+              <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+              <span>{{ 'about.point.3' | i18n }}</span>
+            </div>
+            <div class="point-item">
+              <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+              <span>{{ 'about.point.4' | i18n }}</span>
+            </div>
+            <div class="point-item">
+              <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+              <span>{{ 'about.point.5' | i18n }}</span>
+            </div>
+            <div class="point-item">
+              <nz-badge nzColor="white" nzStatus="processing"></nz-badge>
+              <span>{{ 'about.point.6' | i18n }}</span>
+            </div>
           </div>
           <nz-divider></nz-divider>
         </div>
@@ -42,7 +46,7 @@
       </div>
     </div>
     <global-footer style="border-top: 1px solid #d692e3; margin-top: auto">
-      <div style="margin-top: 30px">
+      <div style="margin-top: 16px">
         Apache HertzBeat™ {{ version }}<br />
         Copyright &copy; {{ currentYear }}
         <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat™</a>

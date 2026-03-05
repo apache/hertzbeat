@@ -65,4 +65,11 @@ public class RocketmqProtocol implements CommonRequestProtocol, Protocol {
     public void setPort(String port) {
         this.namesrvPort = port;
     }
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

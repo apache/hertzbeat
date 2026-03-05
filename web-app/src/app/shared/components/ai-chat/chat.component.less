@@ -143,10 +143,32 @@
         font-size: 16px;
       }
 
-      .chat-title h2 {
-        margin: 0;
-        font-size: 18px;
-        color: @heading-color;
+      .chat-title {
+        flex: 1;
+
+        h2 {
+          margin: 0;
+          font-size: 18px;
+          color: @heading-color;
+        }
+      }
+
+      .header-spacer {
+        flex: 1;
+      }
+
+      .chat-header-actions {
+        margin-right: 80px; // Leave space for page-level buttons
+
+        button {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          i {
+            font-size: 14px;
+          }
+        }
       }
     }
 
@@ -267,6 +289,26 @@
           }
         }
 
+        &.system-push-message {
+          .message-avatar {
+            background: #e6f7ff;
+
+            i {
+              color: #1890ff;
+            }
+          }
+
+          .message-content {
+            background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+            border-left: 3px solid #1890ff;
+
+            .message-header .message-role {
+              color: #096dd9;
+              font-weight: 600;
+            }
+          }
+        }
+
         .message-avatar {
           width: 32px;
           height: 32px;
@@ -381,6 +423,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -406,6 +449,7 @@
     .chat-main {
       .messages-container {
         .message {
+
           &.user-message .message-content,
           .message-content {
             max-width: 85%;
@@ -475,140 +519,141 @@ body[data-theme='dark'] .chat-container {
       color: fade(@white, 85%);
     }
 
-      .conversation-list {
-        .conversation-item {
-          border-bottom-color: @border-color-split;
+    .conversation-list {
+      .conversation-item {
+        border-bottom-color: @border-color-split;
+        background: transparent;
+        border-left: 3px solid transparent;
+
+        &:hover {
           background: transparent;
-          border-left: 3px solid transparent;
 
-          &:hover {
-            background: transparent;
-
-            .conversation-content .conversation-title {
-              color: @primary-color;
-            }
-          }
-
-          &.active {
-            background: fade(@white, 5%);
-            border-left: 3px solid @primary-color;
-
-            .conversation-content .conversation-title {
-              color: @primary-color;
-            }
-          }
-
-          .conversation-content {
-            .conversation-title {
-              color: fade(@white, 65%);
-            }
-
-            .conversation-time {
-              color: fade(@white, 45%);
-            }
+          .conversation-content .conversation-title {
+            color: @primary-color;
           }
         }
-      }
-    }
 
-    .chat-main {
-      background: #000;
+        &.active {
+          background: fade(@white, 5%);
+          border-left: 3px solid @primary-color;
 
-      .chat-header {
-        border-bottom-color: @border-color-base;
-        background: #000;
-
-        .chat-title h2 {
-          color: fade(@white, 85%);
+          .conversation-content .conversation-title {
+            color: @primary-color;
+          }
         }
-      }
 
-      .messages-container {
-        background: #000;
-
-        .loading-container {
-          p {
+        .conversation-content {
+          .conversation-title {
             color: fade(@white, 65%);
           }
-        }
 
-        .welcome-message .welcome-content {
-          h3 {
-            color: fade(@white, 85%);
+          .conversation-time {
+            color: fade(@white, 45%);
           }
-
-          p, ul {
-            color: fade(@white, 65%);
-          }
-        }
-
-        .message {
-          .message-avatar {
-            background: fade(@white, 8%);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-
-            i {
-              color: fade(@white, 65%);
-            }
-          }
-
-          .message-content {
-            background: #141414 !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-
-            .message-header {
-              .message-role {
-                color: fade(@white, 85%);
-              }
-
-              .message-time {
-                color: fade(@white, 45%);
-              }
-
-              .streaming-indicator {
-                color: @primary-color;
-              }
-            }
-
-            .message-text {
-              color: fade(@white, 85%);
-            }
-
-            .typing-indicator {
-              color: fade(@white, 45%);
-            }
-          }
-
-          &.user-message .message-content {
-            background: @primary-color;
-
-            .message-text {
-              color: @white;
-            }
-
-            .message-header {
-              .message-role {
-                color: fade(@white, 90%);
-              }
-
-              .message-time {
-                color: fade(@white, 70%);
-              }
-            }
-          }
-        }
-      }
-
-      .input-area {
-        background: #000 !important;
-        border-top-color: @border-color-base;
-
-        .input-hint small {
-          color: fade(@white, 45%);
         }
       }
     }
   }
+
+  .chat-main {
+    background: #000;
+
+    .chat-header {
+      border-bottom-color: @border-color-base;
+      background: #000;
+
+      .chat-title h2 {
+        color: fade(@white, 85%);
+      }
+    }
+
+    .messages-container {
+      background: #000;
+
+      .loading-container {
+        p {
+          color: fade(@white, 65%);
+        }
+      }
+
+      .welcome-message .welcome-content {
+        h3 {
+          color: fade(@white, 85%);
+        }
+
+        p,
+        ul {
+          color: fade(@white, 65%);
+        }
+      }
+
+      .message {
+        .message-avatar {
+          background: fade(@white, 8%);
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+
+          i {
+            color: fade(@white, 65%);
+          }
+        }
+
+        .message-content {
+          background: #141414 !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+          .message-header {
+            .message-role {
+              color: fade(@white, 85%);
+            }
+
+            .message-time {
+              color: fade(@white, 45%);
+            }
+
+            .streaming-indicator {
+              color: @primary-color;
+            }
+          }
+
+          .message-text {
+            color: fade(@white, 85%);
+          }
+
+          .typing-indicator {
+            color: fade(@white, 45%);
+          }
+        }
+
+        &.user-message .message-content {
+          background: @primary-color;
+
+          .message-text {
+            color: @white;
+          }
+
+          .message-header {
+            .message-role {
+              color: fade(@white, 90%);
+            }
+
+            .message-time {
+              color: fade(@white, 70%);
+            }
+          }
+        }
+      }
+    }
+
+    .input-area {
+      background: #000 !important;
+      border-top-color: @border-color-base;
+
+      .input-hint small {
+        color: fade(@white, 45%);
+      }
+    }
+  }
+}
 
 
 
@@ -624,7 +669,8 @@ body[data-theme='dark'] .chat-container {
         color: fade(@white, 45%) !important;
       }
 
-      &:focus, &:hover {
+      &:focus,
+      &:hover {
         border-color: @primary-color !important;
         box-shadow: 0 0 0 2px fade(@primary-color, 20%) !important;
       }
@@ -745,7 +791,7 @@ body[data-theme='dark'] .chat-container {
   .form-item-with-help {
     margin-bottom: 8px;
 
-    + .form-help {
+    +.form-help {
       margin-bottom: 16px;
     }
   }

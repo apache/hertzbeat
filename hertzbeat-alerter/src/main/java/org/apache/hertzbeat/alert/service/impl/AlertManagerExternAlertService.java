@@ -46,7 +46,7 @@ public class AlertManagerExternAlertService implements ExternAlertService {
 
     @Override
     public void addExternAlert(String content) {
-        
+
         AlertManagerExternAlert alert = JsonUtil.fromJson(content, AlertManagerExternAlert.class);
         if (alert == null) {
             log.warn("parse alertmanager extern alert content failed! content: {}", content);
@@ -78,7 +78,9 @@ public class AlertManagerExternAlertService implements ExternAlertService {
             }
             labels.put("__source__", "alertmanager");
             String status = CommonConstants.ALERT_STATUS_FIRING;
-            if (prometheusAlert.getEndsAt() != null && prometheusAlert.getEndsAt().isBefore(Instant.now())) {
+            Instant now = Instant.now();
+            Instant endsAt = prometheusAlert.getEndsAt();
+            if (endsAt != null && endsAt.getEpochSecond() > 0 && endsAt.isBefore(now)) {
                 status = CommonConstants.ALERT_STATUS_RESOLVED;
             }
             SingleAlert singleAlert = SingleAlert.builder()
