@@ -21,12 +21,14 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
 import org.apache.hertzbeat.alert.reduce.AlarmGroupReduce;
 import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
+import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,41 +45,52 @@ import org.springframework.util.StringUtils;
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class AlertGroupConvergeServiceImpl implements AlertGroupConvergeService {
-    
+
     @Autowired
     private AlertGroupConvergeDao alertGroupConvergeDao;
-    
+
     @Autowired
     private AlarmGroupReduce alarmGroupReduce;
- 
+
+    protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+
     @Override
     public void validate(AlertGroupConverge alertGroupConverge, boolean isModify) throws IllegalArgumentException {
-        // todo 
+        if (alertGroupConverge == null || !StringUtils.hasText(alertGroupConverge.getName())) {
+            throw new IllegalArgumentException(bundle.getString("alerter.converge.empty.name"));
+        }
+        List<AlertGroupConverge> sameNameConverges = alertGroupConvergeDao.findAlertGroupConvergesByName(alertGroupConverge.getName());
+        if (sameNameConverges != null && !sameNameConverges.isEmpty()) {
+            boolean isDuplicate = sameNameConverges.stream().anyMatch(it -> !it.getId().equals(alertGroupConverge.getId()));
+            if (isDuplicate) {
+                throw new IllegalArgumentException(bundle.getString("alerter.converge.duplicate.name"));
+            }
+        }
     }
-    
+
     @Override
     public void addAlertGroupConverge(AlertGroupConverge alertGroupConverge) throws RuntimeException {
         alertGroupConvergeDao.save(alertGroupConverge);
         refreshAlertGroupConvergesCache();
     }
-    
+
     @Override
     public void modifyAlertGroupConverge(AlertGroupConverge alertGroupConverge) throws RuntimeException {
         alertGroupConvergeDao.save(alertGroupConverge);
         refreshAlertGroupConvergesCache();
     }
-    
+
     @Override
     public AlertGroupConverge getAlertGroupConverge(long convergeId) throws RuntimeException {
         return alertGroupConvergeDao.findById(convergeId).orElse(null);
     }
-    
+
     @Override
     public void deleteAlertGroupConverges(Set<Long> convergeIds) throws RuntimeException {
         alertGroupConvergeDao.deleteAlertGroupConvergesByIdIn(convergeIds);
         refreshAlertGroupConvergesCache();
     }
-    
+
     @Override
     public Page<AlertGroupConverge> getAlertGroupConverges(List<Long> convergeIds, String search, String sort, String order, int pageIndex, int pageSize) {
         Specification<AlertGroupConverge> specification = (root, query, criteriaBuilder) -> {
@@ -105,7 +118,7 @@ public class AlertGroupConvergeServiceImpl implements AlertGroupConvergeService 
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         return alertGroupConvergeDao.findAll(specification, pageRequest);
     }
-    
+
     private void refreshAlertGroupConvergesCache() {
         List<AlertGroupConverge> alertGroupConverges = alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue();
         alarmGroupReduce.refreshGroupDefines(alertGroupConverges);

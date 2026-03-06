@@ -71,4 +71,11 @@ public class NgqlProtocol implements CommonRequestProtocol, Protocol {
      * how to parse data
      */
     private String parseType;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

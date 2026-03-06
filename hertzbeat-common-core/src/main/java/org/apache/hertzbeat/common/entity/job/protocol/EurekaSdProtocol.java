@@ -32,4 +32,11 @@ import lombok.NoArgsConstructor;
 public class EurekaSdProtocol implements Protocol{
 
     private String url;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DnsSdProtocol implements Protocol {
-    
+
     private String host;
 
     private String port;
@@ -38,4 +38,11 @@ public class DnsSdProtocol implements Protocol {
     private String recordType;
 
     private String recordName;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

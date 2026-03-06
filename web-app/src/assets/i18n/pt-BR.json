@@ -305,7 +305,7 @@
   "alert.inhibit.equal_labels.common": "Tags comuns",
   "alert.inhibit.equal_labels.custom": "Tags personalizadas",
   "alert.inhibit.equal_labels.more": "Existem também {{count}} tags",
-  "alert.inhibit.equal_labels.placeholder": "Digite o nome da tag e pressione Enter ou selecione na lista suspensa",
+  "alert.inhibit.equal_labels.placeholder": "Insira ou selecione tags",
   "alert.inhibit.equal_labels.tip": "As chaves de tag e os valores correspondentes dos alarmes de origem e dos alarmes de destino devem ser iguais. As chaves de tag comuns incluem alertname, instância, gravidade, etc.",
   "alert.inhibit.name": "Suprimir nome da regra",
   "alert.inhibit.name.tip": "Um nome que identifique esta regra de supressão precisa ser exclusivo",

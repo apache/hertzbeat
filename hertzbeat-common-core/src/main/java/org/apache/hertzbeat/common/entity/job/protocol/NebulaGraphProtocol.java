@@ -57,4 +57,11 @@ public class NebulaGraphProtocol implements CommonRequestProtocol, Protocol {
      */
     private String timeout;
 
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
+
 }

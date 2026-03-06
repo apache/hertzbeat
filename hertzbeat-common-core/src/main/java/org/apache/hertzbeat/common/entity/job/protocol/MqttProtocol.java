@@ -109,4 +109,11 @@ public class MqttProtocol implements CommonRequestProtocol, Protocol {
         return StringUtils.isNotBlank(this.username) && StringUtils.isNotBlank(this.password);
     }
 
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
+
 }

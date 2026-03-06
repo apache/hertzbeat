@@ -54,4 +54,11 @@ public class SmtpProtocol implements CommonRequestProtocol, Protocol {
      * Sent command
      */
     private String cmd;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }
