@@ -1,28 +1,61 @@
 ---
 id: introduce  
-title: Apache HertzBeat™     
+title: Apache HertzBeat™ - 开源实时监控系统
 sidebar_label: 介绍
 slug: /
+description: Apache HertzBeat 是 AI 驱动的无代理开源监控系统，支持指标、日志、告警和可观测性的自定义监控模板。
 ---
 
 **官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
 
-## 🎡 介绍
+## 什么是 Apache HertzBeat？
 
-[Apache HertzBeat™](https://github.com/apache/hertzbeat) 是 AI 驱动的下一代开源实时观测系统。指标日志统一收集，告警一站分发，智能管控分析。无需 Agent，高性能集群，提供强大的自定义监控和状态页构建能力。
+Apache HertzBeat™ 是一款 AI 驱动的无代理开源实时监控系统。它统一了指标收集、日志聚合、告警分发和通知功能，无需安装代理即可运行。
 
-### 特点
+**可观测性系统定义：** 可观测性系统收集、分析和可视化运营数据（指标、日志、链路追踪），用于监控基础设施和应用健康状况。
 
-- 集```采集+分析+告警+通知```为一体，HertzBeat AI 驱动下的新交互与功能，也内置 MCP Server 对外能力。
-- 统一的指标平台，无需 Agent，兼容 Prometheus，支持应用服务，程序，数据库，缓存，操作系统，大数据，中间件，Web 服务器，云原生，网络，自定义等。
-- 统一的日志平台，通过 OTLP 协议多日志源无缝对接上报。
-- 统一的告警平台，内部告警与外部多种告警源集成接入，统一告警处理分析，灵活的实时与周期阈值规则，分组收敛，静默，抑制等。
-- 统一的消息分发，告警平台处理后通过 `邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式分发通知。
-- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需配置模板 `YML` 就能自定义采集指标。您相信只需简单配置即可快速适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
-- 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
-- 提供强大的状态页构建能力，轻松向用户传达您产品服务的实时状态。
+## 核心能力
 
-> `HertzBeat`的统一平台，AI智能，强大自定义，多类型支持，高性能，易扩展，希望能帮助用户快速方便实现观测需求。
+HertzBeat 提供四个集成能力：
+
+1. **指标收集** - 监控 200+ 服务，包括数据库、操作系统、中间件和云基础设施
+2. **日志聚合** - 通过 OTLP 协议统一收集多日志源进行分析
+3. **告警管理** - 处理内部和外部告警，支持灵活的阈值规则
+4. **通知分发** - 通过邮件、Slack、Discord、Telegram、钉钉、微信等方式发送告警
+
+**关键差异点：** 无需代理安装。HertzBeat 使用原生协议（HTTP、SNMP、JMX、SSH、JDBC）直接收集数据。
+
+## HertzBeat vs 传统监控
+
+| 特性 | HertzBeat | 传统代理式监控 |
+|------|-----------|----------------|
+| **代理安装** | 不需要 | 每台主机都需要 |
+| **部署时间** | Docker 几分钟 | 代理部署需要数小时 |
+| **监控类型** | 200+ 内置模板 | 有限的预定义类型 |
+| **自定义** | YML 模板通过 UI | 需要代码更改 |
+| **架构** | 统一平台 | 多个独立工具 |
+| **部署** | 单个 Docker 命令 | 复杂的多组件部署 |
+
+## 平台架构
+
+HertzBeat 统一四个监控功能：
+
+1. **收集** - 使用原生协议（HTTP、SNMP、JMX、SSH、JDBC、Prometheus）进行无代理数据收集
+2. **分析** - AI 驱动的模式检测和异常识别
+3. **告警** - 灵活的阈值规则，支持分组、收敛、静默和抑制
+4. **通知** - 多渠道分发（邮件、Discord、Slack、Telegram、钉钉、微信、短信、Webhook）
+
+**Prometheus 兼容性：** HertzBeat 支持 Prometheus 协议，可无缝集成现有的 Prometheus 导出器和指标。
+
+## 关键特性
+
+**基于模板的监控：** 通过编写 YML 配置文件创建自定义监控类型。无需编码即可监控新服务，如 Kubernetes 或 Docker。
+
+**高性能集群：** 多采集器集群的水平扩展。自动任务调度和故障转移确保大规模下的可靠性。
+
+**云边协同：** 监控隔离网络环境，边缘采集器向集中管理上报。
+
+**状态页构建器：** 创建公共状态页（类似 GitHub Status），向用户传达服务可用性。
 
 ---
 
@@ -319,10 +352,65 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 ---
 
-**更多功能欢迎探索呀。Have Fun!**
+## 常见问题
+
+### HertzBeat 用于什么？
+
+HertzBeat 监控 IT 基础设施，包括服务器、数据库、应用程序、网络和云服务。它收集指标、聚合日志、触发告警并发送通知，实现运营可观测性。
+
+### HertzBeat 需要安装代理吗？
+
+不需要。HertzBeat 使用无代理监控，通过原生协议（HTTP、SNMP、JMX、SSH、JDBC）收集数据。只需在 Web 界面提供 IP、端口和凭据。
+
+### 如何安装 HertzBeat？
+
+运行单个 Docker 命令：`docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat`
+
+访问 http://localhost:1157，默认账号：admin/hertzbeat
+
+### HertzBeat 可以监控哪些系统？
+
+HertzBeat 监控 200+ 服务，包括：
+- 数据库：MySQL、PostgreSQL、MongoDB、Redis、Oracle、SQL Server
+- 操作系统：Linux、Windows、Unix 变体
+- 中间件：Tomcat、Kafka、Zookeeper、RabbitMQ、Nginx
+- 云原生：Kubernetes、Docker
+- 网络：思科、华为、HPE 交换机
+
+### 可以创建自定义监控模板吗？
+
+可以。通过 Web UI 创建 YML 模板监控任何服务。模板定义指标、收集协议和阈值，无需编码。
+
+### HertzBeat 兼容 Prometheus 吗？
+
+兼容。HertzBeat 支持 Prometheus 协议，可从 Prometheus 导出器收集指标。
+
+### HertzBeat 与 Prometheus + Grafana 相比如何？
+
+HertzBeat 提供统一平台，包含收集、告警和通知。Prometheus + Grafana 需要独立的告警组件（Alertmanager），且缺乏内置的多渠道通知。
+
+### 支持哪些通知渠道？
+
+邮件、Discord、Slack、Telegram、钉钉、微信、飞书、短信、Webhook。
+
+### HertzBeat 能否大规模部署？
+
+可以。部署采集器集群实现水平扩展。采集器自动负载均衡任务并提供故障转移，确保高可用性。
+
+### HertzBeat 使用什么许可证？
+
+Apache License 2.0。HertzBeat 完全开源，无监控数量或类型限制。
+
+## 快速开始总结
+
+1. **安装：** `docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat`
+2. **访问：** http://localhost:1157 (admin/hertzbeat)
+3. **监控：** 通过 Web UI 添加服务，提供 IP、端口、凭据
+4. **告警：** 配置阈值规则和通知渠道
+5. **扩展：** 按需部署采集器集群
 
 ---
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**Home: [https://hertzbeat.apache.org/](https://hertzbeat.apache.org/)**
+**官网: [https://hertzbeat.apache.org/](https://hertzbeat.apache.org/)**

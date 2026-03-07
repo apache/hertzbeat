@@ -8,8 +8,8 @@ const repoUrl = `https://github.com/apache/${projectName}`
 const cdnUrl = null
 
 module.exports = {
-  title: 'Apache HertzBeat',
-  tagline: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
+  title: 'Apache HertzBeat - Agentless Monitoring System',
+  tagline: 'AI-powered open source real-time monitoring system for metrics, logs, alerts, and observability. No agent required.',
   url: 'https://hertzbeat.apache.org',
   baseUrl: '/',
   onBrokenLinks: 'throw',
@@ -40,7 +40,31 @@ module.exports = {
     metadata: [
       {
         name: 'keywords',
-        content: 'monitor, apm, 监控, 开源, uptime, opensource',
+        content: 'monitoring system, agentless monitoring, observability platform, metrics collection, log aggregation, alert management, prometheus compatible, open source monitoring, real-time monitoring, infrastructure monitoring, application monitoring, database monitoring, cloud monitoring, kubernetes monitoring, docker monitoring, network monitoring, APM, uptime monitoring, 监控系统, 开源监控',
+      },
+      {
+        name: 'description',
+        content: 'Apache HertzBeat is an AI-powered, agentless open source monitoring system. Monitor 200+ services including databases, servers, applications, and networks. Unified metrics, logs, alerts, and notifications in one platform.',
+      },
+      {
+        property: 'og:type',
+        content: 'website',
+      },
+      {
+        property: 'og:title',
+        content: 'Apache HertzBeat - Agentless Monitoring System',
+      },
+      {
+        property: 'og:description',
+        content: 'AI-powered open source monitoring for metrics, logs, alerts. No agent installation required. Monitor MySQL, PostgreSQL, Linux, Kubernetes, Docker, and 200+ services.',
+      },
+      {
+        name: 'twitter:card',
+        content: 'summary_large_image',
+      },
+      {
+        name: 'author',
+        content: 'Apache HertzBeat Community',
       },
     ],
     colorMode: {
@@ -328,6 +352,8 @@ module.exports = {
         sitemap: {
           changefreq: 'weekly',
           priority: 0.5,
+          ignorePatterns: ['/tags/**'],
+          filename: 'sitemap.xml',
         },
       },
     ],
