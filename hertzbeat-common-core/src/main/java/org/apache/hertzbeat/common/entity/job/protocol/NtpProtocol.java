@@ -44,4 +44,11 @@ public class NtpProtocol implements CommonRequestProtocol, Protocol {
      * TIME OUT PERIOD
      */
     private String timeout;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

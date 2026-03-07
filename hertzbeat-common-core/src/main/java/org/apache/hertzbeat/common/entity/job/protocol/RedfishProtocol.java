@@ -62,4 +62,11 @@ public class RedfishProtocol implements CommonRequestProtocol, Protocol {
     private String schema;
 
     private List<String> jsonPath;
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }

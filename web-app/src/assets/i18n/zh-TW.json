@@ -83,7 +83,7 @@
   "alert.inhibit.equal_labels.common": "常用標籤",
   "alert.inhibit.equal_labels.custom": "自定義標籤",
   "alert.inhibit.equal_labels.more": "還有 {{count}} 個標籤",
-  "alert.inhibit.equal_labels.placeholder": "輸入標籤名稱後按回車，或從下拉列表選擇",
+  "alert.inhibit.equal_labels.placeholder": "輸入或選擇標籤",
   "alert.inhibit.equal_labels.tip": "源告警和目標告警這些標籤Key和對應值必須相等，常用標籤Key如 alertname、instance、severity 等",
   "alert.inhibit.name": "抑制規則名稱",
   "alert.inhibit.name.tip": "標識此抑制規則的名稱，需要唯一",

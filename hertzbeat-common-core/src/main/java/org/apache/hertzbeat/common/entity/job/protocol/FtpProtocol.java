@@ -65,4 +65,11 @@ public class FtpProtocol implements CommonRequestProtocol, Protocol {
      *
      */
     private String ssl = "false";
+
+    @Override
+    public boolean isInvalid() {
+
+        // todo: add
+        return true;
+    }
 }
