@@ -99,7 +99,7 @@ cd apache-hertzbeat-1.8.0
 ./bin/startup.sh
 ```
 
-访问 Web UI：http://localhost:1157，凭据：admin/hertzbeat
+访问 Web UI：http://localhost:1157, 凭据：admin/hertzbeat
 
 ### 版本之间有什么区别？
 

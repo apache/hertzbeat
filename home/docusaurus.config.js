@@ -344,7 +344,9 @@ module.exports = {
           // Please change this to your repo.
           editUrl: `${repoUrl}/edit/${branch}/home/`,
           editLocalizedFiles: true,
-          blogSidebarCount: 'ALL'
+          blogSidebarCount: 'ALL',
+          onUntruncatedBlogPosts: 'ignore',
+          onInlineAuthors: 'ignore'
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
