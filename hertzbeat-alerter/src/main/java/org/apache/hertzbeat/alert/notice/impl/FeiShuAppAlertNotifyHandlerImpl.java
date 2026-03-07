@@ -26,10 +26,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -41,7 +39,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,7 +51,6 @@ import java.util.stream.Collectors;
  * FeiShu app alert notify impl
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class FeiShuAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
@@ -83,9 +79,6 @@ public class FeiShuAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
     private static final byte CHAT_RECEIVE_TYPE = 1;
     private static final byte PART_RECEIVE_TYPE = 2;
     private static final byte ALL_RECEIVE_TYPE = 3;
-
-    private final RestTemplate restTemplate;
-    private final AlerterProperties alerterProperties;
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) throws AlertNoticeException {

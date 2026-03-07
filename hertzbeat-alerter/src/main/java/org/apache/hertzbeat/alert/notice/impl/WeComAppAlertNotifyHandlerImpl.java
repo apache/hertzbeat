@@ -23,7 +23,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
@@ -34,13 +33,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * WeChat app alert notify impl
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class WeComAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
@@ -58,8 +55,6 @@ public class WeComAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerIm
      * app message send object
      */
     private static final String DEFAULT_ALL = "@all";
-
-    private final RestTemplate restTemplate;
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) throws AlertNoticeException {

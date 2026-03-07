@@ -21,7 +21,6 @@ import java.net.URI;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
@@ -32,17 +31,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * Send alarm information by Slack Webhook
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 final class SlackAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     private static final String SUCCESS = "ok";
-    private final RestTemplate restTemplate;
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) throws AlertNoticeException {

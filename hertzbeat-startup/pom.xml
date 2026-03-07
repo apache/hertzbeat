@@ -202,6 +202,60 @@
 
     <profiles>
         <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>process-aot</id>
+                                <goals>
+                                    <goal>process-aot</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <configuration>
+                            <mainClass>org.apache.hertzbeat.startup.HertzBeatApplication</mainClass>
+                            <fallback>false</fallback>
+                            <verbose>true</verbose>
+                            <buildArgs>
+                                <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                                <buildArg>-H:TempDirectory=${project.build.directory}/native-temp</buildArg>
+                                <buildArg>--initialize-at-build-time=org.apache.sshd.sftp.client.fs.SftpFileSystemProvider</buildArg>
+                                <buildArg>--initialize-at-run-time=io.grpc.netty.shaded.io.netty.channel.epoll</buildArg>
+                                <buildArg>--initialize-at-run-time=io.netty.channel.epoll</buildArg>
+                                <buildArg>--initialize-at-run-time=io.grpc.netty.shaded.io.netty.channel.unix</buildArg>
+                                <buildArg>--initialize-at-run-time=io.netty.channel.unix</buildArg>
+                            </buildArgs>
+                            <environment>
+                                <TMPDIR>${project.build.directory}/native-temp</TMPDIR>
+                                <TEMP>${project.build.directory}/native-temp</TEMP>
+                                <TMP>${project.build.directory}/native-temp</TMP>
+                            </environment>
+                            <metadataRepository>
+                                <enabled>true</enabled>
+                            </metadataRepository>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>release</id>
             <build>
                 <plugins>
