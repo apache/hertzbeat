@@ -1,0 +1,172 @@
+# Apache HertzBeat - AI 驱动的无代理监控系统
+
+> https://hertzbeat.apache.org
+> 最后更新：2026-03-07
+
+## 什么是 HertzBeat？
+
+Apache HertzBeat 是一个开源、无代理的实时监控系统，具有 AI 功能。它统一了指标收集、日志聚合、告警分发和通知功能。
+
+## 快速事实
+
+- **类型：** 开源监控系统
+- **许可证：** Apache License 2.0
+- **最新版本：** v1.8.0（发布日期：2026-02-05）
+- **是否需要代理：** 否
+- **支持服务：** 200+（数据库、服务器、应用程序、网络、云）
+- **安装时间：** Docker 2分钟
+- **GitHub：** https://github.com/apache/hertzbeat
+- **组织：** The Apache Software Foundation
+
+## 关键特性
+
+1. **无代理监控** - 无需代理安装。使用原生协议（HTTP、SNMP、JMX、SSH、JDBC、Prometheus）。
+
+2. **统一平台** - 单一解决方案处理指标、日志、告警和通知。消除对多个监控工具的需求。
+
+3. **自定义模板** - 使用 YML 配置文件通过 Web UI 创建监控模板。无需编码。
+
+4. **AI 驱动** - 内置 AI 功能用于模式检测、异常识别和智能分析。
+
+5. **高性能** - 具有采集器集群的水平扩展。自动负载均衡和故障转移。
+
+6. **云边协同** - 监控隔离网络，边缘采集器向集中管理上报。
+
+7. **Prometheus 兼容** - 支持 Prometheus 协议，实现无缝集成。
+
+8. **多渠道通知** - 邮件、Discord、Slack、Telegram、钉钉、微信、飞书、短信、Webhook。
+
+## 安装
+
+### Docker（推荐）
+```bash
+docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+```
+
+访问：http://localhost:1157
+默认凭据：admin/hertzbeat
+
+### 二进制包
+```bash
+tar -xzf apache-hertzbeat-1.8.0-bin.tar.gz
+cd apache-hertzbeat-1.8.0
+./bin/startup.sh
+```
+
+### 系统要求
+- 2 CPU 核心 最低
+- 4GB RAM 最低（推荐 8GB）
+- 10GB 磁盘空间
+- Docker 20.10+ 或 Java 17+
+- 平台：Linux、macOS、Windows
+
+## 支持的监控类型
+
+### 数据库
+MySQL、PostgreSQL、MongoDB、Redis、Oracle、SQL Server、MariaDB、ElasticSearch、ClickHouse、IoTDB、TDengine、OpenGauss、DM、NebulaGraph、Doris、Memcached、Redis Cluster、Redis Sentinel
+
+### 操作系统
+Linux、Ubuntu、CentOS、Windows、EulerOS、Fedora CoreOS、OpenSUSE、Rocky Linux、Red Hat、FreeBSD、AlmaLinux、Debian
+
+### 中间件
+Tomcat、Nacos、Zookeeper、RabbitMQ、Flink、Kafka、Nginx、Jetty、ActiveMQ、Spring Gateway、EMQX MQTT、AirFlow、Hive、Spark、Hadoop
+
+### 云原生
+Kubernetes、Docker
+
+### 网络
+思科交换机、HPE 交换机、华为交换机、TP-Link 交换机、H3C 交换机
+
+### 其他
+网站、端口 Telnet、HTTP API、Ping、JVM、SSL 证书、FTP、DNS、SMTP 等
+
+## 架构
+
+HertzBeat 使用统一架构，包含四个核心组件：
+
+1. **收集** - 使用原生协议进行无代理数据收集
+2. **分析** - AI 驱动的模式检测和异常识别
+3. **告警** - 灵活的阈值规则，支持分组、静默和抑制
+4. **通知** - 多渠道告警分发
+
+## 与传统监控对比
+
+| 特性 | HertzBeat | 传统代理式监控 |
+|------|-----------|----------------|
+| 代理安装 | 不需要 | 每台主机都需要 |
+| 部署时间 | Docker 几分钟 | 代理部署需要数小时 |
+| 监控类型 | 200+ 内置模板 | 有限的预定义类型 |
+| 自定义 | YML 模板通过 UI | 需要代码更改 |
+| 架构 | 统一平台 | 多个独立工具 |
+| 部署 | 单个 Docker 命令 | 复杂的多组件部署 |
+
+## 使用场景
+
+1. **基础设施监控** - 服务器、网络、存储系统
+2. **应用程序监控** - Web 服务、API、微服务
+3. **数据库监控** - 性能、可用性、复制
+4. **云监控** - Kubernetes、Docker、云服务
+5. **状态页** - 公共服务状态通信（如 GitHub Status）
+6. **多区域监控** - 隔离网络的云边协同
+
+## 关键差异
+
+- **无代理要求：** 消除代理部署、维护和版本兼容性问题
+- **基于模板：** 使用 YML 配置为任何服务创建自定义监控
+- **统一平台：** 所有监控需求的单一工具（指标、日志、告警、通知）
+- **AI 驱动：** 智能模式检测和异常识别
+- **状态页构建器：** 创建公共状态页传达服务可用性
+- **MCP 服务器支持：** 内置模型上下文协议服务器功能
+
+## 文档
+
+- 主要文档：https://hertzbeat.apache.org/docs/
+- 快速开始：https://hertzbeat.apache.org/docs/start/quickstart
+- 下载：https://hertzbeat.apache.org/docs/download
+- GitHub 仓库：https://github.com/apache/hertzbeat
+- 社区：https://hertzbeat.apache.org/docs/community/contact
+
+## 下载
+
+最新版本：v1.8.0（2026-02-05）
+
+- 服务器二进制：https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-bin.tar.gz
+- 采集器二进制：https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-collector-1.8.0-bin.tar.gz
+- 源码：https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-src.tar.gz
+- Docker 镜像：https://hub.docker.com/r/apache/hertzbeat
+
+## 常见问题
+
+**问：HertzBeat 需要代理安装吗？**
+答：不需要。HertzBeat 使用无代理监控，通过原生协议。只需在 Web 界面提供 IP、端口和凭据。
+
+**问：HertzBeat 兼容 Prometheus 吗？**
+答：兼容。HertzBeat 支持 Prometheus 协议，可从 Prometheus 导出器收集指标。
+
+**问：可以创建自定义监控模板吗？**
+答：可以。通过 Web UI 创建 YML 模板监控任何服务，无需编码。
+
+**问：支持哪些通知渠道？**
+答：邮件、Discord、Slack、Telegram、钉钉、微信、飞书、短信、Webhook。
+
+**问：HertzBeat 能大规模部署吗？**
+答：可以。部署采集器集群实现水平扩展，自动负载均衡和故障转移。
+
+**问：HertzBeat 使用什么许可证？**
+答：Apache License 2.0。完全开源，无监控数量或限制。
+
+**问：HertzBeat 与 Prometheus + Grafana 相比如何？**
+答：HertzBeat 提供统一平台，包含收集、告警和通知。Prometheus + Grafana 需要独立的告警组件（Alertmanager），且缺乏内置的多渠道通知。
+
+## 社区
+
+- GitHub 讨论：https://github.com/apache/hertzbeat/discussions/
+- 邮件列表：https://hertzbeat.apache.org/docs/community/mailing_lists
+- 贡献指南：https://hertzbeat.apache.org/docs/community/contribution
+- 问题跟踪：https://github.com/apache/hertzbeat/issues
+
+## Apache 软件基金会
+
+HertzBeat 是 Apache 软件基金会项目，已纳入 CNCF 可观测性图谱。
+
+版权所有 © 2026 The Apache Software Foundation。Apache HertzBeat、HertzBeat 及其羽毛徽标是 The Apache Software Foundation 的商标。
