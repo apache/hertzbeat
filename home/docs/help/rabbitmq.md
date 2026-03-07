@@ -123,3 +123,13 @@ keywords: [open source monitoring tool, open source rabbitmq monitoring tool, mo
 | message_bytes_unacknowledged | B           | Like message_bytes but counting only those messages delivered to clients but not yet acknowledged                                    |
 | message_bytes_ram            | B           | Like message_bytes but counting only those messages which are currently held in RAM                                                  |
 | message_bytes_persistent     | B           | Like message_bytes but counting only those messages which are persistent                                                             |
+
+#### Metric set：node_alarms
+
+| Metric name    | Metric unit | Metric help description                      |
+|----------------|-------------|----------------------------------------------|
+| name           | none        | RabbitMQ node name                           |
+| disk_free_alarm | none       | Whether disk free space alarm is triggered   |
+| mem_alarm      | none        | Whether memory alarm is triggered            |
+| running        | none        | Whether the node is running                  |
+| type           | none        | Node type (disc or ram)                      |
