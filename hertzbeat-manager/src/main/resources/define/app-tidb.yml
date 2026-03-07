@@ -350,3 +350,63 @@ metrics:
       # JDBC url
       url: ^_^url^_^
 
+
+  - name: account_expiry
+    priority: 14
+    i18n:
+      zh-CN: 账户过期信息
+      en-US: Account Expiry Info
+      ja-JP: アカウント有効期限情報
+    fields:
+      - field: user
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 用户名
+          en-US: User
+          ja-JP: ユーザー名
+      - field: host
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 主机
+          en-US: Host
+          ja-JP: ホスト
+      - field: password_expired
+        type: 1
+        i18n:
+          zh-CN: 密码是否过期
+          en-US: Password Expired
+          ja-JP: パスワード期限切れ
+      - field: password_lifetime
+        type: 0
+        unit: days
+        i18n:
+          zh-CN: 密码生命周期(天)
+          en-US: Password Lifetime (days)
+          ja-JP: パスワード有効期限（日）
+      - field: password_last_changed
+        type: 1
+        i18n:
+          zh-CN: 密码最后修改时间
+          en-US: Password Last Changed
+          ja-JP: パスワード最終変更
+      - field: days_until_expiry
+        type: 0
+        unit: days
+        i18n:
+          zh-CN: 距离过期天数
+          en-US: Days Until Expiry
+          ja-JP: 有効期限までの日数
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT User, Host, password_expired, IF(password_lifetime IS NULL OR password_lifetime = 0, 0, password_lifetime) as password_lifetime, password_last_changed, DATEDIFF(DATE_ADD(password_last_changed, INTERVAL IFNULL(password_lifetime, 0) DAY), CURDATE()) as days_until_expiry FROM mysql.user WHERE User != '' ORDER BY days_until_expiry ASC;
+      url: ^_^url^_^
