@@ -1,16 +1,35 @@
 ---
 id: quickstart  
-title: 快速开始    
+title: HertzBeat 快速开始 - 5分钟安装
 sidebar_label: 快速开始
+description: Apache HertzBeat 监控系统快速安装指南 - Docker、安装包、源码安装，支持 X86 和 ARM64 系统。
 ---
 
-### 🐕 开始使用
+## 如何安装 HertzBeat？
 
-- 如果您是想将 Apache HertzBeat™ 部署到本地搭建监控系统，请参考下面的部署文档进行操作。
+使用 Docker 在 5 分钟内安装 Apache HertzBeat™。HertzBeat 支持 Docker、二进制包和源码安装，兼容 X86/ARM64 架构。
 
-### 🍞 HertzBeat安装
+**快速安装命令：** `docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat`
 
-> HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署，CPU架构支持X86/ARM64。
+## 安装方式
+
+HertzBeat 提供四种安装选项：
+
+1. **Docker**（推荐）- 最快设置，生产就绪
+2. **二进制包** - 传统部署，手动配置
+3. **源码** - 开发和定制
+4. **Docker Compose** - 包含数据库和时间序列存储的全栈
+
+### 安装方式对比
+
+| 方式 | 部署时间 | 难度 | 适用场景 |
+|------|----------|------|----------|
+| Docker | 2分钟 | 简单 | 生产、测试 |
+| 安装包 | 10分钟 | 中等 | 自定义配置 |
+| 源码 | 30分钟 | 高级 | 开发 |
+| Docker Compose | 5分钟 | 简单 | 全栈部署 |
+
+## 安装说明
 
 #### 方式一：Docker方式快速安装
 
@@ -85,4 +104,61 @@ sidebar_label: 快速开始
 
 详细步骤参考 [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
-**HAVE FUN**
+## 安装常见问题
+
+### HertzBeat 的系统要求是什么？
+
+**最低要求：**
+- 2 CPU 核心
+- 4GB RAM
+- 10GB 磁盘空间
+- Docker 20.10+ 或 Java 17+
+
+**支持系统：** Linux、macOS、Windows（通过 Docker 或 WSL）
+
+### HertzBeat 使用哪些端口？
+
+- **1157** - Web UI 和 API
+- **1158** - 采集器通信（仅集群模式）
+
+### 如何验证 HertzBeat 是否运行？
+
+1. 检查容器状态：`docker ps | grep hertzbeat`
+2. 访问 Web UI：http://localhost:1157
+3. 使用账号：admin/hertzbeat 登录
+
+### 可以修改默认密码吗？
+
+可以。首次登录后，进入 设置 → 账号管理 修改密码。
+
+### 如何升级 HertzBeat？
+
+**Docker 升级：**
+```bash
+docker stop hertzbeat
+docker rm hertzbeat
+docker pull apache/hertzbeat:latest
+docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+```
+
+### HertzBeat 使用什么数据库？
+
+HertzBeat 默认使用 H2 嵌入式数据库。生产环境可配置外部数据库：
+- **元数据：** MySQL、PostgreSQL
+- **时序数据：** VictoriaMetrics、IoTDB、TDengine、InfluxDB
+
+### 如何添加第一个监控？
+
+1. 登录 Web UI
+2. 点击 监控 → 新增监控
+3. 选择监控类型（如 MySQL、Linux、网站）
+4. 输入 IP、端口、凭据
+5. 点击 确认 开始监控
+
+### 在哪里可以获得帮助？
+
+- **文档：** https://hertzbeat.apache.org/docs/
+- **GitHub Issues：** https://github.com/apache/hertzbeat/issues
+- **社区：** https://hertzbeat.apache.org/docs/community/contact
+
+**祝你使用愉快！**

@@ -55,6 +55,15 @@ jobs:
         with:
           version: latest
 
+      # Install Sharp for Linux platform to fix build issues
+      - name: Install Sharp for Linux
+        working-directory: home
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            pnpm remove sharp
+            pnpm add sharp --platform=linux --arch=x64
+          fi
+
       # Install dependencies in home directory
       - name: Install Dependencies
         working-directory: home

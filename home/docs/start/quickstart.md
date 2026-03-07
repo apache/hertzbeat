@@ -1,16 +1,35 @@
 ---
 id: quickstart  
-title: Quick Start    
+title: HertzBeat Quick Start - Install in 5 Minutes
 sidebar_label: Quick Start
+description: Install Apache HertzBeat monitoring system in minutes using Docker, package, or source code. Step-by-step guide for X86 and ARM64 systems.
 ---
 
-### 🐕 Quick Start
+## How to Install HertzBeat?
 
-- If you wish to deploy Apache HertzBeat™ locally, please refer to the following Deployment Documentation for instructions.
+Install Apache HertzBeat™ in under 5 minutes using Docker with a single command. HertzBeat supports Docker, binary packages, and source code installation on X86/ARM64 architectures.
 
-#### 🍞 Install HertzBeat
+**Quick Install Command:** `docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat`
 
-> Apache HertzBeat™ supports installation through source code, docker or package, cpu support X86/ARM64.
+## Installation Methods
+
+HertzBeat provides four installation options:
+
+1. **Docker** (Recommended) - Fastest setup, production-ready
+2. **Binary Package** - Traditional deployment with manual configuration
+3. **Source Code** - For development and customization
+4. **Docker Compose** - Full stack with database and time-series storage
+
+### Installation Method Comparison
+
+| Method | Setup Time | Difficulty | Use Case |
+|--------|-----------|-----------|----------|
+| Docker | 2 minutes | Easy | Production, testing |
+| Package | 10 minutes | Medium | Custom configurations |
+| Source Code | 30 minutes | Advanced | Development |
+| Docker Compose | 5 minutes | Easy | Full stack deployment |
+
+## Installation Instructions
 
 ##### 1：Install quickly via docker
 
@@ -80,5 +99,62 @@ Detailed steps refer to [Install via Docker-Compose](https://github.com/apache/h
 Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
 
 Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
+
+## Installation FAQ
+
+### What are HertzBeat's system requirements?
+
+**Minimum Requirements:**
+- 2 CPU cores
+- 4GB RAM
+- 10GB disk space
+- Docker 20.10+ or Java 17+
+
+**Operating Systems:** Linux, macOS, Windows (via Docker or WSL)
+
+### What ports does HertzBeat use?
+
+- **1157** - Web UI and API
+- **1158** - Collector communication (cluster mode only)
+
+### How do I verify HertzBeat is running?
+
+1. Check container status: `docker ps | grep hertzbeat`
+2. Access web UI: http://localhost:1157
+3. Login with: admin/hertzbeat
+
+### Can I change the default password?
+
+Yes. After first login, navigate to Settings → Account Management to change the password.
+
+### How do I upgrade HertzBeat?
+
+**Docker upgrade:**
+```bash
+docker stop hertzbeat
+docker rm hertzbeat
+docker pull apache/hertzbeat:latest
+docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+```
+
+### What database does HertzBeat use?
+
+HertzBeat uses H2 embedded database by default. For production, configure external databases:
+- **Metadata:** MySQL, PostgreSQL
+- **Time-series data:** VictoriaMetrics, IoTDB, TDengine, InfluxDB
+
+### How do I add my first monitor?
+
+1. Login to web UI
+2. Click "Monitors" → "New Monitor"
+3. Select monitoring type (e.g., MySQL, Linux, Website)
+4. Enter IP, port, credentials
+5. Click "Confirm" to start monitoring
+
+### Where can I get help?
+
+- **Documentation:** https://hertzbeat.apache.org/docs/
+- **GitHub Issues:** https://github.com/apache/hertzbeat/issues
+- **Community:** https://hertzbeat.apache.org/docs/community/contact
 
 **HAVE FUN**
