@@ -153,7 +153,7 @@ public final class JsonUtil {
         }
         try {
             return OBJECT_MAPPER.readValue(is, type);
-        } catch (Exception e) {
+        } catch (JacksonException e) {
             log.error("Error parsing JSON from InputStream to TypeReference: {}", e.getMessage(), e);
             return null;
         }
@@ -170,7 +170,7 @@ public final class JsonUtil {
         }
         try {
             OBJECT_MAPPER.writeValue(os, source);
-        } catch (Exception e) {
+        } catch (JacksonException e) {
             log.error("Error writing object to OutputStream as JSON: {}", e.getMessage(), e);
         }
     }
@@ -187,7 +187,7 @@ public final class JsonUtil {
         }
         try {
             return OBJECT_MAPPER.convertValue(fromValue, toValueType);
-        } catch (Exception e) {
+        } catch (JacksonException e) {
             log.error("Error converting value to {}: {}", toValueType.getName(), e.getMessage(), e);
             return null;
         }
