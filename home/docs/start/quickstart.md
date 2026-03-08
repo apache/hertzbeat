@@ -82,7 +82,7 @@ Detailed config refer to [Install HertzBeat via Package](package-deploy)
 ##### 3：Start via source code
 
 1. Local source code debugging needs to start the back-end project `manager` and the front-end project `web-app`.
-2. Backend：need `maven3+`, `java17`, `lombok`, start the `hertzbeat-startup` service.
+2. Backend：need `maven3+`, `java21`, `lombok`, start the `hertzbeat-startup` service.
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.
 4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`
 
@@ -108,7 +108,7 @@ Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hert
 - 2 CPU cores
 - 4GB RAM
 - 10GB disk space
-- Docker 20.10+ or Java 17+
+- Docker 20.10+ or Java 21+
 
 **Operating Systems:** Linux, macOS, Windows (via Docker or WSL)
 

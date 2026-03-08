@@ -10,7 +10,7 @@ sidebar_position: 4
 
 此发布过程在 UbuntuOS(可在 Windows Mac) 中进行操作，并需要以下环境：
 
-- JDK 17
+- JDK 21
 - Node18 pnpm
 - Apache Maven 3.x
 - GnuPG 2.x

@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     question: "HertzBeat 的系统要求是什么？",
-    answer: "最低：2 CPU 核心、4GB RAM（推荐 8GB）、10GB 磁盘空间、Docker 20.10+ 或 Java 17+。支持系统：Linux、macOS、Windows。"
+    answer: "最低：2 CPU 核心、4GB RAM（推荐 8GB）、10GB 磁盘空间、Docker 20.10+ 或 Java 21+。支持系统：Linux、macOS、Windows。"
   },
   {
     question: "如何升级 HertzBeat？",
