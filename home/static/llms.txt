@@ -1,0 +1,172 @@
+# Apache HertzBeat - AI-Powered Agentless Monitoring System
+
+> https://hertzbeat.apache.org
+> Last Updated: 2026-03-07
+
+## What is HertzBeat?
+
+Apache HertzBeat is an open source, agentless real-time monitoring system with AI capabilities. It unifies metrics collection, log aggregation, alerting, and notification in a single platform.
+
+## Quick Facts
+
+- **Type**: Open Source Monitoring System
+- **License**: Apache License 2.0
+- **Latest Version**: v1.8.0 (Released: 2026-02-05)
+- **Agent Required**: No
+- **Supported Services**: 200+ (databases, servers, applications, networks, cloud)
+- **Installation Time**: 2 minutes with Docker
+- **GitHub**: https://github.com/apache/hertzbeat
+- **Organization**: The Apache Software Foundation
+
+## Key Features
+
+1. **Agentless Monitoring** - No agent installation required. Uses native protocols (HTTP, SNMP, JMX, SSH, JDBC, Prometheus).
+
+2. **Unified Platform** - Single solution for metrics, logs, alerts, and notifications. Eliminates need for multiple monitoring tools.
+
+3. **Custom Templates** - Create monitoring templates using YML configuration files via web UI. No coding required.
+
+4. **AI-Powered** - Built-in AI capabilities for pattern detection, anomaly identification, and intelligent analysis.
+
+5. **High Performance** - Horizontal scaling with collector clusters. Auto load balancing and failover.
+
+6. **Cloud-Edge Collaboration** - Monitor isolated networks with edge collectors reporting to centralized management.
+
+7. **Prometheus Compatible** - Supports Prometheus protocol for seamless integration.
+
+8. **Multi-Channel Notifications** - Email, Discord, Slack, Telegram, DingTalk, WeChat, FeiShu, SMS, Webhook.
+
+## Installation
+
+### Docker (Recommended)
+```bash
+docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+```
+
+Access: http://localhost:1157
+Default credentials: admin/hertzbeat
+
+### Binary Package
+```bash
+tar -xzf apache-hertzbeat-1.8.0-bin.tar.gz
+cd apache-hertzbeat-1.8.0
+./bin/startup.sh
+```
+
+### System Requirements
+- 2 CPU cores minimum
+- 4GB RAM minimum (8GB recommended)
+- 10GB disk space
+- Docker 20.10+ or Java 17+
+- Platforms: Linux, macOS, Windows
+
+## Supported Monitoring Types
+
+### Databases
+MySQL, PostgreSQL, MongoDB, Redis, Oracle, SQL Server, MariaDB, ElasticSearch, ClickHouse, IoTDB, TDengine, OpenGauss, DM, NebulaGraph, Doris, Memcached, Redis Cluster, Redis Sentinel
+
+### Operating Systems
+Linux, Ubuntu, CentOS, Windows, EulerOS, Fedora CoreOS, OpenSUSE, Rocky Linux, Red Hat, FreeBSD, AlmaLinux, Debian
+
+### Middleware
+Tomcat, Nacos, Zookeeper, RabbitMQ, Flink, Kafka, Nginx, Jetty, ActiveMQ, Spring Gateway, EMQX MQTT, AirFlow, Hive, Spark, Hadoop
+
+### Cloud Native
+Kubernetes, Docker
+
+### Networks
+Cisco Switch, HPE Switch, Huawei Switch, TP-Link Switch, H3C Switch
+
+### Other
+Website, Port Telnet, HTTP API, Ping, JVM, SSL Certificate, FTP, DNS, SMTP, and more
+
+## Architecture
+
+HertzBeat uses a unified architecture with four core components:
+
+1. **Collection** - Agentless data gathering using native protocols
+2. **Analysis** - AI-powered pattern detection and anomaly identification
+3. **Alerting** - Flexible threshold rules with grouping, silence, and suppression
+4. **Notification** - Multi-channel alert distribution
+
+## Comparison with Traditional Monitoring
+
+| Feature | HertzBeat | Traditional Agent-Based |
+|---------|-----------|------------------------|
+| Agent Installation | Not required | Required on each host |
+| Setup Time | Minutes via Docker | Hours with agent deployment |
+| Monitoring Types | 200+ built-in templates | Limited predefined types |
+| Customization | YML templates via UI | Code changes required |
+| Architecture | Unified platform | Multiple separate tools |
+| Deployment | Single Docker command | Complex multi-component setup |
+
+## Use Cases
+
+1. **Infrastructure Monitoring** - Servers, networks, storage systems
+2. **Application Monitoring** - Web services, APIs, microservices
+3. **Database Monitoring** - Performance, availability, replication
+4. **Cloud Monitoring** - Kubernetes, Docker, cloud services
+5. **Status Pages** - Public service status communication (like GitHub Status)
+6. **Multi-Region Monitoring** - Cloud-edge collaboration for isolated networks
+
+## Key Differentiators
+
+- **No Agent Required**: Eliminates agent deployment, maintenance, and version compatibility issues
+- **Template-Based**: Create custom monitoring for any service using YML configuration
+- **Unified Platform**: Single tool for all monitoring needs (metrics, logs, alerts, notifications)
+- **AI-Powered**: Intelligent pattern detection and anomaly identification
+- **Status Page Builder**: Create public status pages to communicate service availability
+- **MCP Server Support**: Built-in Model Context Protocol server capabilities
+
+## Documentation
+
+- Main Documentation: https://hertzbeat.apache.org/docs/
+- Quick Start: https://hertzbeat.apache.org/docs/start/quickstart
+- Download: https://hertzbeat.apache.org/docs/download
+- GitHub Repository: https://github.com/apache/hertzbeat
+- Community: https://hertzbeat.apache.org/docs/community/contact
+
+## Downloads
+
+Latest Release: v1.8.0 (2026-02-05)
+
+- Server Binary: https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-bin.tar.gz
+- Collector Binary: https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-collector-1.8.0-bin.tar.gz
+- Source Code: https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-src.tar.gz
+- Docker Images: https://hub.docker.com/r/apache/hertzbeat
+
+## Common Questions
+
+**Q: Does HertzBeat require agent installation?**
+A: No. HertzBeat uses agentless monitoring via native protocols. Only provide IP, port, and credentials through the web interface.
+
+**Q: Is HertzBeat compatible with Prometheus?**
+A: Yes. HertzBeat supports Prometheus protocol and can collect metrics from Prometheus exporters.
+
+**Q: Can I create custom monitoring templates?**
+A: Yes. Create YML templates via the web UI to monitor any service without coding.
+
+**Q: What notification channels are supported?**
+A: Email, Discord, Slack, Telegram, DingTalk, WeChat, FeiShu, SMS, and Webhook.
+
+**Q: Can HertzBeat scale for large deployments?**
+A: Yes. Deploy collector clusters for horizontal scaling with auto load balancing and failover.
+
+**Q: What license does HertzBeat use?**
+A: Apache License 2.0. Completely open source with no monitoring limits or restrictions.
+
+**Q: How does HertzBeat compare to Prometheus + Grafana?**
+A: HertzBeat provides a unified platform including collection, alerting, and notifications. Prometheus + Grafana requires separate components for alerts (Alertmanager) and lacks built-in multi-channel notifications.
+
+## Community
+
+- GitHub Discussions: https://github.com/apache/hertzbeat/discussions/
+- Mailing Lists: https://hertzbeat.apache.org/docs/community/mailing_lists
+- Contribution Guide: https://hertzbeat.apache.org/docs/community/contribution
+- Issue Tracker: https://github.com/apache/hertzbeat/issues
+
+## Apache Software Foundation
+
+HertzBeat is an Apache Software Foundation project and is included in the CNCF Observability Landscape.
+
+Copyright © 2026 The Apache Software Foundation. Apache HertzBeat, HertzBeat, and its feather logo are trademarks of The Apache Software Foundation.

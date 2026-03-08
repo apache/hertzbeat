@@ -614,7 +614,10 @@ public class MonitorServiceImpl implements MonitorService {
             }
         };
         // Pagination is a must
-        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
+        // Handle null sort/order parameters with defaults
+        String effectiveSort = (sort == null || sort.isEmpty()) ? "id" : sort;
+        String effectiveOrder = (order == null || order.isEmpty()) ? "desc" : order;
+        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(effectiveOrder), effectiveSort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         return monitorDao.findAll(specification, pageRequest);
     }

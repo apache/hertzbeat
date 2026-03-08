@@ -39,7 +39,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <testcontainers.version>1.20.2</testcontainers.version>
+        <testcontainers.version>2.0.3</testcontainers.version>
         <junit.version>4.13.2</junit.version>
         <awaitility.version>4.2.0</awaitility.version>
     </properties>
@@ -87,5 +87,5 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-  
+
 </project>

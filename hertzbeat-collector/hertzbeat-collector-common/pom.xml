@@ -49,7 +49,7 @@
         <!-- common -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-common</artifactId>
+            <artifactId>hertzbeat-common-core</artifactId>
         </dependency>
         <!-- linux ssh -->
         <dependency>
