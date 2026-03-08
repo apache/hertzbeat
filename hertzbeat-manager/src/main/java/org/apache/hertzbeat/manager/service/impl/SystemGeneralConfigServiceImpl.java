@@ -17,8 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import jakarta.annotation.Resource;
 import java.lang.reflect.Type;
 import java.util.Objects;
@@ -37,18 +36,11 @@ import org.springframework.stereotype.Service;
 public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<SystemConfig> {
     @Resource
     private ApplicationContext applicationContext;
-    
-    /**
-     *
-     * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
-     *
-     * @param generalConfigDao ConfigDao object
-     * @param objectMapper     JSON tool object
-     */
-    public SystemGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
-        super(generalConfigDao, objectMapper);
+
+    public SystemGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao) {
+        super(generalConfigDao);
     }
-    
+
     @Override
     public void handler(SystemConfig systemConfig) {
         if (Objects.isNull(systemConfig)) {
@@ -58,12 +50,12 @@ public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigService
         TimeZoneUtil.setTimeZoneAndLocale(systemConfig.getTimeZoneId(), systemConfig.getLocale());
         applicationContext.publishEvent(new SystemConfigChangeEvent(applicationContext));
     }
-    
+
     @Override
     public String type() {
         return GeneralConfigTypeEnum.system.name();
     }
-    
+
     @Override
     public TypeReference<SystemConfig> getTypeReference() {
         return new TypeReference<>() {

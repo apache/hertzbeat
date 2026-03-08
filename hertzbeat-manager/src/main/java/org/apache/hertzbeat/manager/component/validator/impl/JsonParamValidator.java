@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.util.JsonUtil;

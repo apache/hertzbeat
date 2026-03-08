@@ -17,12 +17,11 @@
 
 package org.apache.hertzbeat.common.serialize;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Deserializer;
 
@@ -31,12 +30,6 @@ import org.apache.kafka.common.serialization.Deserializer;
  */
 @Slf4j
 public class KafkaLogEntryDeserializer implements Deserializer<LogEntry> {
-
-    private final ObjectMapper objectMapper;
-
-    public KafkaLogEntryDeserializer() {
-        this.objectMapper = new ObjectMapper();
-    }
 
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
@@ -49,13 +42,12 @@ public class KafkaLogEntryDeserializer implements Deserializer<LogEntry> {
             log.warn("Empty data received for topic: {}", topic);
             return null;
         }
-        try {
-            String jsonString = new String(data, StandardCharsets.UTF_8);
-            return objectMapper.readValue(jsonString, LogEntry.class);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to deserialize LogEntry from JSON for topic: {}", topic, e);
-            return null;
+        String jsonString = new String(data, StandardCharsets.UTF_8);
+        LogEntry logEntry = JsonUtil.fromJson(jsonString, LogEntry.class);
+        if (logEntry == null) {
+            log.warn("Failed to deserialize LogEntry from topic: {}", topic);
         }
+        return logEntry;
     }
 
     @Override
@@ -67,4 +59,4 @@ public class KafkaLogEntryDeserializer implements Deserializer<LogEntry> {
     public void close() {
         Deserializer.super.close();
     }
-} 
+}

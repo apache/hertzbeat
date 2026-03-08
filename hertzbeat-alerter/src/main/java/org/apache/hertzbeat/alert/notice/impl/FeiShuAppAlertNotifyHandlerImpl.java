@@ -18,9 +18,6 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -49,6 +46,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import tools.jackson.databind.JsonNode;
 
 /**
  * FeiShu app alert notify impl
@@ -78,7 +76,6 @@ public class FeiShuAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
      */
     private static final String APP_BATCH_MESSAGE_URL = "https://open.feishu.cn/open-apis/message/v4/batch_send/";
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final byte USER_RECEIVE_TYPE = 0;
     private static final byte CHAT_RECEIVE_TYPE = 1;
     private static final byte PART_RECEIVE_TYPE = 2;
@@ -134,7 +131,7 @@ public class FeiShuAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
      * @param messageContent Message content
      * @see <a href="https://open.feishu.cn/document/server-docs/im-v1/batch_message/send-messages-in-batches">send message</a>
      */
-    private void sendLarkMessage(String accessToken, String receiverIdType, String receiverId, JsonNode messageContent) throws JsonProcessingException {
+    private void sendLarkMessage(String accessToken, String receiverIdType, String receiverId, JsonNode messageContent) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(accessToken);
@@ -246,7 +243,7 @@ public class FeiShuAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
         return response.getBody();
     }
 
-    private JsonNode createLarkMessage(NoticeReceiver receiver, String notificationContent) throws JsonProcessingException {
+    private JsonNode createLarkMessage(NoticeReceiver receiver, String notificationContent) {
         String larkCardMessage = """
                 {
                       "schema": "2.0",
@@ -359,12 +356,12 @@ public class FeiShuAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
         String jsonStr = String.format(larkCardMessage,
                 notificationContent.replace("\"", "\\\"") + atUserElement,
                 alerterProperties.getConsoleUrl());
-        return OBJECT_MAPPER.readTree(jsonStr);
+        return JsonUtil.fromJson(jsonStr);
     }
 
 
-    private String escapedCompactJson(JsonNode json) throws JsonProcessingException {
-        return OBJECT_MAPPER.writeValueAsString(json);
+    private String escapedCompactJson(JsonNode json) {
+        return json.toString();
     }
 
     /**

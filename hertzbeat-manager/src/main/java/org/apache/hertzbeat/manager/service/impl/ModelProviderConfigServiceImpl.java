@@ -17,8 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import java.lang.reflect.Type;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
@@ -34,19 +33,12 @@ import org.springframework.stereotype.Service;
 public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigServiceImpl<ModelProviderConfig> {
 
     private final ApplicationContext applicationContext;
-    
-    /**
-     *
-     * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
-     *
-     * @param generalConfigDao ConfigDao object
-     * @param objectMapper     JSON tool object
-     */
-    public ModelProviderConfigServiceImpl(ApplicationContext applicationContext, GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
-        super(generalConfigDao, objectMapper);
+
+    public ModelProviderConfigServiceImpl(ApplicationContext applicationContext, GeneralConfigDao generalConfigDao) {
+        super(generalConfigDao);
         this.applicationContext = applicationContext;
     }
-    
+
     @Override
     public String type() {
         return GeneralConfigTypeEnum.provider.name();

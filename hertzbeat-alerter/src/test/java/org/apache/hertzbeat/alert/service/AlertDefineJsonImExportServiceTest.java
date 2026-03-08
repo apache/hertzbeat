@@ -19,20 +19,11 @@ package org.apache.hertzbeat.alert.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
@@ -40,22 +31,13 @@ import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineJsonImExportServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * test case for {@link AlertDefineJsonImExportServiceImpl}
  */
 
-@ExtendWith(MockitoExtension.class)
 class AlertDefineJsonImExportServiceTest {
 
-    @Mock
-    private ObjectMapper objectMapper;
-
-    @InjectMocks
     private AlertDefineJsonImExportServiceImpl service;
 
     @SuppressWarnings("checkstyle:OperatorWrap")
@@ -68,6 +50,7 @@ class AlertDefineJsonImExportServiceTest {
 
     @BeforeEach
     public void setup() {
+        service = new AlertDefineJsonImExportServiceImpl();
 
         inputStream = new ByteArrayInputStream(JSON_DATA.getBytes(StandardCharsets.UTF_8));
 
@@ -87,59 +70,43 @@ class AlertDefineJsonImExportServiceTest {
     }
 
     @Test
-    void testParseImport() throws IOException {
-
-        when(objectMapper.readValue(
-                any(InputStream.class),
-                any(TypeReference.class))
-        ).thenReturn(alertDefineList);
-
+    void testParseImport() {
         List<ExportAlertDefineDTO> result = service.parseImport(inputStream);
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(alertDefineList, result);
-        verify(objectMapper, times(1)).readValue(any(InputStream.class), any(TypeReference.class));
+        assertEquals("App1", result.get(0).getAlertDefine().getName());
+        assertEquals("realtime", result.get(0).getAlertDefine().getType());
     }
 
     @Test
-    void testParseImportFailed() throws IOException {
+    void testParseImportFailed() {
+        InputStream invalidInputStream = new ByteArrayInputStream("invalid json".getBytes(StandardCharsets.UTF_8));
 
-        when(objectMapper.readValue(
-                any(InputStream.class),
-                any(TypeReference.class))
-        ).thenThrow(new IOException("Test Exception"));
+        List<ExportAlertDefineDTO> result = service.parseImport(invalidInputStream);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> service.parseImport(inputStream));
-
-        assertEquals("import alertDefine failed", exception.getMessage());
-        verify(objectMapper, times(1)).readValue(any(InputStream.class), any(TypeReference.class));
+        assertNull(result);
     }
 
     @Test
-    void testWriteOs() throws IOException {
-
+    void testWriteOs() {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         service.writeOs(alertDefineList, outputStream);
 
-        verify(objectMapper, times(1)).writeValue(any(OutputStream.class), eq(alertDefineList));
+        String result = outputStream.toString(StandardCharsets.UTF_8);
+        assertNotNull(result);
+        assertTrue(result.contains("App1"));
+        assertTrue(result.contains("realtime"));
     }
 
     @Test
-    void testWriteOsFailed() throws IOException {
-
-        doThrow(new IOException("Test Exception")).when(objectMapper).writeValue(any(OutputStream.class), any());
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> service.writeOs(alertDefineList, outputStream)
-        );
-
-        assertEquals("export alertDefine failed", exception.getMessage());
-        verify(objectMapper, times(1)).writeValue(any(OutputStream.class), eq(alertDefineList));
+    void testType() {
+        assertEquals("JSON", service.type());
     }
 
+    @Test
+    void testGetFileName() {
+        assertTrue(service.getFileName().endsWith(".json"));
+    }
 }

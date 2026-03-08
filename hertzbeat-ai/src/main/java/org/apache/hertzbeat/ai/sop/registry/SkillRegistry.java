@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -92,12 +92,12 @@ public class SkillRegistry implements ToolCallbackProvider {
     @Override
     public ToolCallback[] getToolCallbacks() {
         List<ToolCallback> callbacks = new ArrayList<>();
-        
+
         for (SopDefinition skill : skillMap.values()) {
             log.debug("Registering SOP as tool: {}", skill.getName());
             callbacks.add(new SopToolCallback(skill, sopEngine));
         }
-        
+
         return callbacks.toArray(new ToolCallback[0]);
     }
 }

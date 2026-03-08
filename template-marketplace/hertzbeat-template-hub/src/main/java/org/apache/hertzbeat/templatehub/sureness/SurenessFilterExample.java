@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.templatehub.sureness;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.usthe.sureness.mgt.SurenessSecurityManager;
 import com.usthe.sureness.processor.exception.*;
 import com.usthe.sureness.subject.SubjectSum;

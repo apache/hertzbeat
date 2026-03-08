@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.templatehub.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.templatehub.model.dto.TemplateDto;
 import org.apache.hertzbeat.templatehub.model.entity.Version;
 import org.apache.hertzbeat.templatehub.service.StarService;

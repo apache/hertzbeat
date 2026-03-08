@@ -17,9 +17,8 @@
 
 package org.apache.hertzbeat.ai.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
@@ -31,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Utility class providing helper methods for field expression validation, parsing,
@@ -41,13 +41,13 @@ import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 @Slf4j
 @lombok.experimental.UtilityClass
 public class UtilityClass {
-    
+
     /**
      * Validates the syntax of field conditions expression
      * @param fieldConditions Field conditions string to validate
      * @return "VALID" if syntax is correct, error message otherwise
      */
-    
+
     public String validateExpressionSyntax(String fieldConditions) {
         try {
             log.debug("Validating expression syntax: {}", fieldConditions);
@@ -414,7 +414,7 @@ public class UtilityClass {
 
         return node;
     }
-    
+
     /**
      * Format timestamp to readable format
      */

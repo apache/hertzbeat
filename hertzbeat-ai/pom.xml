@@ -27,7 +27,7 @@
 	<version>${hertzbeat.version}</version>
 	<properties>
 		<spring-ai.version>1.1.1</spring-ai.version>
-		<java.version>17</java.version>
+		<java.version>21</java.version>
 	</properties>
 
 	<dependencies>
@@ -78,10 +78,7 @@
 			<groupId>com.usthe.sureness</groupId>
 			<artifactId>spring-boot3-starter-sureness</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.dataformat</groupId>
-			<artifactId>jackson-dataformat-yaml</artifactId>
-		</dependency>
+
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>

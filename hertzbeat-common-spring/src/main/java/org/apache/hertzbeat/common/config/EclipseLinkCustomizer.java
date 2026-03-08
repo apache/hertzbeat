@@ -20,17 +20,17 @@
 package org.apache.hertzbeat.common.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.persistence.config.SessionCustomizer;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
 import org.eclipse.persistence.mappings.DatabaseMapping;
 import org.eclipse.persistence.sessions.Session;
+import org.eclipse.persistence.sessions.SessionCustomizer;
 
 /**
  * change column name that from upper-case to lower-case-with-underscore
  */
 @Slf4j
 public class EclipseLinkCustomizer implements SessionCustomizer {
-    
+
     @Override
     public void customize(Session session) throws Exception {
         for (ClassDescriptor descriptor : session.getDescriptors().values()) {
@@ -47,9 +47,9 @@ public class EclipseLinkCustomizer implements SessionCustomizer {
                 }
             }
         }
-        
+
     }
-    
+
     private String convertCamelCase(String camelCase) {
         StringBuilder result = new StringBuilder();
         if (camelCase != null && !camelCase.isEmpty()) {

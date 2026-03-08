@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,15 +19,18 @@ package org.apache.hertzbeat.common.util;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import javax.annotation.concurrent.ThreadSafe;
+import java.io.InputStream;
+import java.io.OutputStream;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * json util
@@ -36,17 +39,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class JsonUtil {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
+        .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+        .changeDefaultVisibility(vc -> vc.withVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY))
+        .build();
 
     private JsonUtil() {
-    }
-
-    static {
-        OBJECT_MAPPER
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-                .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-                .registerModule(new JavaTimeModule());
     }
 
     public static String toJson(Object source) {
@@ -55,8 +56,8 @@ public final class JsonUtil {
         }
         try {
             return OBJECT_MAPPER.writeValueAsString(source);
-        } catch (JsonProcessingException e) {
-            log.error(e.getMessage(), e);
+        } catch (JacksonException e) {
+            log.error("Error converting object to JSON: {}", e.getMessage(), e);
             return null;
         }
     }
@@ -67,8 +68,8 @@ public final class JsonUtil {
         }
         try {
             return OBJECT_MAPPER.readValue(jsonStr, clazz);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        } catch (JacksonException e) {
+            log.error("Error parsing JSON to class {}: {}", clazz.getName(), e.getMessage(), e);
             return null;
         }
     }
@@ -79,20 +80,20 @@ public final class JsonUtil {
         }
         try {
             return OBJECT_MAPPER.readValue(jsonStr, type);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        } catch (JacksonException e) {
+            log.error("Error parsing JSON to TypeReference: {}", e.getMessage(), e);
             return null;
         }
     }
-    
+
     public static JsonNode fromJson(String jsonStr) {
         if (jsonStr == null || jsonStr.trim().isEmpty()) {
             return null;
         }
         try {
             return OBJECT_MAPPER.readTree(jsonStr);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        } catch (JacksonException e) {
+            log.error("Error reading JSON tree: {}", e.getMessage(), e);
             return null;
         }
     }
@@ -102,21 +103,18 @@ public final class JsonUtil {
      * @param jsonStr json string
      * @return true if the string is a json string
      */
-
-
     public static boolean isJsonStr(String jsonStr) {
         if (jsonStr == null || jsonStr.trim().isEmpty()) {
             return false;
         }
         jsonStr = jsonStr.trim();
-        if (!(jsonStr.startsWith("{") && jsonStr.endsWith("}"))
-                && !(jsonStr.startsWith("[") && jsonStr.endsWith("]"))) {
+        if (!isJsonLike(jsonStr)) {
             return false;
         }
         try {
             OBJECT_MAPPER.readTree(jsonStr);
             return true;
-        } catch (Exception ignored) {
+        } catch (JacksonException ignored) {
             return false;
         }
     }
@@ -128,7 +126,7 @@ public final class JsonUtil {
         try {
             JsonNode jsonNode = OBJECT_MAPPER.readTree(jsonStr);
             return jsonNode.isArray();
-        } catch (Exception ignore) {
+        } catch (JacksonException ignore) {
             return false;
         }
     }
@@ -141,5 +139,57 @@ public final class JsonUtil {
         char start = jsonStr.charAt(0);
         char end = jsonStr.charAt(jsonStr.length() - 1);
         return (start == '{' && end == '}') || (start == '[' && end == ']');
+    }
+
+    /**
+     * Parse JSON from InputStream to object
+     * @param is input stream
+     * @param type type reference
+     * @return parsed object or null if error
+     */
+    public static <T> T fromJson(InputStream is, TypeReference<T> type) {
+        if (is == null) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readValue(is, type);
+        } catch (Exception e) {
+            log.error("Error parsing JSON from InputStream to TypeReference: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Write object to OutputStream as JSON
+     * @param source object to serialize
+     * @param os output stream
+     */
+    public static void toJson(Object source, OutputStream os) {
+        if (source == null || os == null) {
+            return;
+        }
+        try {
+            OBJECT_MAPPER.writeValue(os, source);
+        } catch (Exception e) {
+            log.error("Error writing object to OutputStream as JSON: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Convert a value from one type to another using JSON serialization/deserialization
+     * @param fromValue source value
+     * @param toValueType target type
+     * @return converted value or null if error
+     */
+    public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
+        if (fromValue == null) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.convertValue(fromValue, toValueType);
+        } catch (Exception e) {
+            log.error("Error converting value to {}: {}", toValueType.getName(), e.getMessage(), e);
+            return null;
+        }
     }
 }
