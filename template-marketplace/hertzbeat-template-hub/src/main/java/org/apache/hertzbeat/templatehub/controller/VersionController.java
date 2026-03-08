@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.templatehub.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.templatehub.model.DO.VersionDO;
 import org.apache.hertzbeat.templatehub.model.DTO.Message;
