@@ -184,6 +184,7 @@
         <opentelemetry-starter.version>2.25.0</opentelemetry-starter.version>
         <opentelemetry-logback.version>2.25.0-alpha</opentelemetry-logback.version>
         <opentelemetry-proto.version>1.3.1-alpha</opentelemetry-proto.version>
+        <argLine></argLine>
     </properties>
 
     <dependencyManagement>
