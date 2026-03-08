@@ -17,11 +17,16 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * Prometheus Protocol configuration
@@ -107,8 +112,28 @@ public class PrometheusProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(timeout) && !CommonUtil.isNumeric(timeout)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(ssl) && !"true".equalsIgnoreCase(ssl) && !"false".equalsIgnoreCase(ssl)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(method) && !isValidHttpMethod(method)) {
+            return true;
+        }
+        return false;
+    }
 
-        // todo: add
-        return true;
+    private boolean isValidHttpMethod(String method) {
+        return method.equalsIgnoreCase("get")
+            || method.equalsIgnoreCase("post")
+            || method.equalsIgnoreCase("put")
+            || method.equalsIgnoreCase("delete")
+            || method.equalsIgnoreCase("patch")
+            || method.equalsIgnoreCase("head")
+            || method.equalsIgnoreCase("options");
     }
 }
