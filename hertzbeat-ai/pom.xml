@@ -59,7 +59,7 @@
         </dependency>
 		<dependency>
 			<groupId>org.apache.hertzbeat</groupId>
-			<artifactId>hertzbeat-common</artifactId>
+			<artifactId>hertzbeat-common-spring</artifactId>
 		</dependency>
         <!-- common -->
         <dependency>
@@ -77,6 +77,10 @@
 		<dependency>
 			<groupId>com.usthe.sureness</groupId>
 			<artifactId>spring-boot3-starter-sureness</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
 		</dependency>
 	</dependencies>
 	<dependencyManagement>

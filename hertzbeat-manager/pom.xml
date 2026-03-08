@@ -29,10 +29,10 @@
 
   
     <dependencies>
-        <!-- common -->
+        <!-- common-spring (includes common-core) -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-common</artifactId>
+            <artifactId>hertzbeat-common-spring</artifactId>
             <exclusions>
                 <exclusion>
                     <artifactId>commons-logging</artifactId>

@@ -225,6 +225,38 @@ warehouse:
       password: root
       expire-time: '30d'
       replication: 1
+    doris:
+      enabled: false
+      url: jdbc:mysql://127.0.0.1:9030
+      username: root
+      password:
+      table-config:
+        enable-partition: false
+        partition-time-unit: DAY
+        partition-retention-days: 30
+        partition-future-days: 3
+        buckets: 8
+        replication-num: 1
+      pool-config:
+        minimum-idle: 5
+        maximum-pool-size: 20
+        connection-timeout: 30000
+      write-config:
+        # Write mode: jdbc (default, suitable for small/medium scale) or stream (high throughput)
+        write-mode: jdbc
+        # JDBC mode: batch size and flush interval
+        batch-size: 1000
+        flush-interval: 5
+        # Stream Load mode configuration (only used when write-mode: stream)
+        stream-load-config:
+          # Doris FE HTTP port for Stream Load API
+          http-port: :8030
+          # Stream load timeout in seconds
+          timeout: 60
+          # Max batch size in bytes for stream load (10MB default)
+          max-bytes-per-batch: 10485760
+          # Redirect policy in complex networks: direct/public/private, empty means Doris default
+          redirect-policy: ""
   # store real-time metrics data, enable only one below
   real-time:
     memory:

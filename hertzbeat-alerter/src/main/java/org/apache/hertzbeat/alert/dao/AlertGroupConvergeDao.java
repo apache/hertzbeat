@@ -41,5 +41,12 @@ public interface AlertGroupConvergeDao extends JpaRepository<AlertGroupConverge,
      * @return group alarm converge list
      */
     List<AlertGroupConverge> findAlertGroupConvergesByEnableIsTrue();
-    
+
+    /**
+     * Query group alarm converge list based on the name
+     * @param name alert converge name
+     * @return group alarm converge list
+     */
+    List<AlertGroupConverge> findAlertGroupConvergesByName(String name);
+
 }

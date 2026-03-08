@@ -1,6 +1,6 @@
 ---
-id: security_model  
-title: Security Model      
+id: security_model
+title: Security Model
 sidebar_label: Security Model
 ---
 
@@ -9,6 +9,8 @@ Apache HertzBeat™ is a highly extensible system that provides users with a lot
 This document will introduce the security model of Apache HertzBeat.
 The security model here mainly involves the security boundaries that users need to pay attention to in the extension process, and how to ensure that user customization will not cause security risks to the system.
 :::
+
+> The users mentioned below refer to authenticated users of the system, regardless of their roles.
 
 ## User Permission Security
 
