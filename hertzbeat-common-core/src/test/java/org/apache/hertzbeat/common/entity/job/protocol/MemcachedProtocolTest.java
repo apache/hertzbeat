@@ -22,68 +22,85 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class HttpSdProtocolTest {
+class MemcachedProtocolTest {
 
     @Test
-    void isInvalidValidHttpUrl() {
-        HttpSdProtocol protocol = HttpSdProtocol.builder()
-                .url("http://example.com/api/discovery")
+    void isInvalidValidProtocol() {
+        MemcachedProtocol protocol = MemcachedProtocol.builder()
+                .host("192.168.1.1")
+                .port("11211")
                 .build();
         assertFalse(protocol.isInvalid());
     }
 
     @Test
-    void isInvalidValidHttpsUrl() {
-        HttpSdProtocol protocol = HttpSdProtocol.builder()
-                .url("https://example.com/api/discovery")
+    void isInvalidValidProtocolWithDomain() {
+        MemcachedProtocol protocol = MemcachedProtocol.builder()
+                .host("memcached.example.com")
+                .port("11211")
                 .build();
         assertFalse(protocol.isInvalid());
     }
 
     @Test
-    void isInvalidValidUrlWithPort() {
-        HttpSdProtocol protocol = HttpSdProtocol.builder()
-                .url("http://example.com:8080/api/discovery")
+    void isInvalidValidProtocolWithLocalhost() {
+        MemcachedProtocol protocol = MemcachedProtocol.builder()
+                .host("localhost")
+                .port("11211")
                 .build();
         assertFalse(protocol.isInvalid());
     }
 
     @Test
-    void isInvalidBlankUrl() {
-        HttpSdProtocol protocol = HttpSdProtocol.builder()
-                .url("")
+    void isInvalidValidProtocolWithIpv6() {
+        MemcachedProtocol protocol = MemcachedProtocol.builder()
+                .host("::1")
+                .port("11211")
+                .build();
+        assertFalse(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidInvalidHost() {
+        MemcachedProtocol protocol = MemcachedProtocol.builder()
+                .host("")
+                .port("11211")
                 .build();
         assertTrue(protocol.isInvalid());
     }
 
     @Test
-    void isInvalidNullUrl() {
-        HttpSdProtocol protocol = HttpSdProtocol.builder()
-                .url(null)
+    void isInvalidNullHost() {
+        MemcachedProtocol protocol = MemcachedProtocol.builder()
+                .host(null)
+                .port("11211")
                 .build();
         assertTrue(protocol.isInvalid());
     }
 
     @Test
-    void isInvalidInvalidUrlNoProtocol() {
-        HttpSdProtocol protocol = HttpSdProtocol.builder()
-                .url("example.com/api/discovery")
+    void isInvalidInvalidPort() {
+        MemcachedProtocol protocol = MemcachedProtocol.builder()
+                .host("192.168.1.1")
+                .port("99999")
                 .build();
         assertTrue(protocol.isInvalid());
     }
 
     @Test
-    void isInvalidInvalidUrlWrongProtocol() {
-        HttpSdProtocol protocol = HttpSdProtocol.builder()
-                .url("ftp://example.com/api/discovery")
+    void isInvalidBlankPort() {
+        MemcachedProtocol protocol = MemcachedProtocol.builder()
+                .host("192.168.1.1")
+                .port("")
                 .build();
         assertTrue(protocol.isInvalid());
     }
 
     @Test
-    void isInvalidInvalidUrlOnlyProtocol() {
-        HttpSdProtocol protocol = HttpSdProtocol.builder()
-                .url("http://")
+    void isInvalidNullPort() {
+        MemcachedProtocol protocol = MemcachedProtocol.builder()
+                .host("192.168.1.1")
+                .port(null)
                 .build();
         assertTrue(protocol.isInvalid());
     }
