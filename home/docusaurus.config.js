@@ -368,7 +368,6 @@ module.exports = {
       },
     ],
     'docusaurus-plugin-matomo',
-    '@docusaurus/plugin-ideal-image',
     [
       '@docusaurus/plugin-pwa',
       {
