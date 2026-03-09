@@ -20,6 +20,8 @@ package org.apache.hertzbeat.manager.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -35,8 +37,8 @@ public class JacksonConfig {
 
     /**
      * Define a custom ObjectMapper bean with specific date format.
-     * Note: Not marked as @Primary to avoid conflict with Spring Boot's auto-configured JsonMapper.
      */
+    @Primary
     @Bean(name = "objectMapper")
     public ObjectMapper objectMapper() {
         final String dateTimeFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
@@ -44,6 +46,7 @@ public class JacksonConfig {
         simpleDateFormat.setTimeZone(TimeZone.getDefault());
 
         return JsonMapper.builder()
+            .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
             .defaultTimeZone(TimeZone.getDefault())
             .defaultDateFormat(simpleDateFormat)
             .build();
