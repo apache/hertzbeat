@@ -131,7 +131,7 @@
         <jackson.version>3.1.0</jackson.version>
         <xml.bind.version>2.3.0</xml.bind.version>
         <snake.yaml.version>2.2</snake.yaml.version>
-        <okhttp.version>4.12.0</okhttp.version>
+        <okhttp.version>5.3.2</okhttp.version>
         <kafka-clients.version>3.7.1</kafka-clients.version>
         <netty.version>4.1.117.Final</netty.version>
         <mysql.version>8.4.0</mysql.version>
@@ -510,6 +510,11 @@
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>logging-interceptor</artifactId>
                 <version>${okhttp.version}</version>
             </dependency>
             <!-- caffeine-->
