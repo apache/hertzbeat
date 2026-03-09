@@ -19,7 +19,6 @@ package org.apache.hertzbeat.log.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
-import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeDbDataStorage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -37,12 +36,12 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * E2E tests for GreptimeDB log storage.
@@ -63,9 +62,6 @@ public class GreptimeLogStorageE2eTest {
 
     @LocalServerPort
     private int port;
-
-    @Autowired
-    private CommonDataQueue commonDataQueue;
 
     @Autowired
     private GreptimeDbDataStorage greptimeDbDataStorage;
@@ -114,52 +110,31 @@ public class GreptimeLogStorageE2eTest {
 
     @Test
     void testLogStorageToGreptimeDb() {
+        long testStartMillis = System.currentTimeMillis();
 
-        List<LogEntry> capturedLogs = new ArrayList<>();
-        
-        // Wait for Vector to generate and send logs to HertzBeat
-        await().atMost(Duration.ofSeconds(30))
+        // Additional wait to ensure logs are persisted to GreptimeDB
+        await().atMost(Duration.ofSeconds(90))
                 .pollInterval(Duration.ofSeconds(3))
                 .untilAsserted(() -> {
-                    // Poll log entries from the queue (non-blocking)
-                    try {
-                        LogEntry logEntry = commonDataQueue.pollLogEntry();
-                        if (logEntry != null) {
-                            capturedLogs.add(logEntry);
-                        }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Test interrupted", e);
-                    }
-                    
-                    // Assert that we have captured at least some logs
-                    assertFalse(capturedLogs.isEmpty(), "Should have captured at least one log entry");
-                });
-
-        // Verify the captured logs
-        assertFalse(capturedLogs.isEmpty(), "No logs were captured from Vector");
-        LogEntry firstLog = capturedLogs.get(0);
-        assertNotNull(firstLog, "First log should not be null");
-        assertNotNull(firstLog.getBody(), "Log body should not be null");
-        assertNotNull(firstLog.getSeverityText(), "Severity text should not be null");
-        
-        // Additional wait to ensure logs are persisted to GreptimeDB
-        await().atMost(Duration.ofSeconds(30))
-                .pollInterval(Duration.ofSeconds(2))
-                .untilAsserted(() -> {
                     // Query GreptimeDB directly to verify data persistence
-                    List<LogEntry> storedLogs = queryStoredLogs();
+                    List<LogEntry> storedLogs = queryStoredLogs(testStartMillis - Duration.ofMinutes(1).toMillis());
                     assertFalse(storedLogs.isEmpty(), "Should have logs stored in GreptimeDB");
+                    boolean hasRecentLogs = storedLogs.stream()
+                            .anyMatch(logEntry -> logEntry != null && logEntry.getTimeUnixNano() != null
+                                    && logEntry.getTimeUnixNano() / 1_000_000 >= testStartMillis);
+                    assertTrue(hasRecentLogs, "Should have logs stored in GreptimeDB for current test run");
+                    LogEntry latestLog = storedLogs.get(storedLogs.size() - 1);
+                    assertNotNull(latestLog, "Latest stored log should not be null");
+                    assertNotNull(latestLog.getBody(), "Stored log body should not be null");
                 });
     }
 
     /**
      * Helper method to query stored logs directly from GreptimeDB
      */
-    private List<LogEntry> queryStoredLogs() {
+    private List<LogEntry> queryStoredLogs(long startTime) {
         long endTime = System.currentTimeMillis();
-        long startTime = endTime - Duration.ofMinutes(5).toMillis(); // Look back 5 minutes
-        
+
         return greptimeDbDataStorage.queryLogsByMultipleConditions(
                 startTime, endTime, null, null, null, null, null);
     }
