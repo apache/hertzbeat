@@ -93,7 +93,7 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
 
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
             GreptimeSqlQueryContent responseBody = responseEntity.getBody();
-            if (responseBody != null && responseBody.getCode() == 0
+            if (responseBody != null && Integer.valueOf(0).equals(responseBody.getCode())
                     && responseBody.getOutput() != null && !responseBody.getOutput().isEmpty()) {
 
                 for (GreptimeSqlQueryContent.Output output : responseBody.getOutput()) {
