@@ -42,6 +42,7 @@ public class JacksonConfig {
             builder.defaultDateFormat(simpleDateFormat);
 
             builder.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
+            builder.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         };
     }
 }
