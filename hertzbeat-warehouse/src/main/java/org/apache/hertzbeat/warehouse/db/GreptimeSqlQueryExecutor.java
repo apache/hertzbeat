@@ -93,8 +93,9 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
 
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
             GreptimeSqlQueryContent responseBody = responseEntity.getBody();
-            if (responseBody != null && Integer.valueOf(0).equals(responseBody.getCode())
-                    && responseBody.getOutput() != null && !responseBody.getOutput().isEmpty()) {
+            // GreptimeDB SQL HTTP API may not return 'code' field in successful response
+            // Check if output exists and is not empty
+            if (responseBody != null && responseBody.getOutput() != null && !responseBody.getOutput().isEmpty()) {
 
                 for (GreptimeSqlQueryContent.Output output : responseBody.getOutput()) {
                     if (output.getRecords() != null && output.getRecords().getRows() != null) {

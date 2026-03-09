@@ -32,6 +32,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -60,6 +61,10 @@ import static org.mockito.Mockito.doAnswer;
  * E2E tests for periodic log alert processing.
  */
 @SpringBootTest(classes = org.apache.hertzbeat.startup.HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = {
+        "warehouse.store.duckdb.enabled=false",
+        "warehouse.store.greptime.enabled=true"
+})
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class LogPeriodicAlertE2eTest {
@@ -102,9 +107,7 @@ public class LogPeriodicAlertE2eTest {
 
     @DynamicPropertySource
     static void greptimeProps(DynamicPropertyRegistry r) {
-        // Configure GreptimeDB storage
-        r.add("warehouse.store.duckdb.enabled", () -> "false");
-        r.add("warehouse.store.greptime.enabled", () -> "true");
+        // Configure GreptimeDB storage endpoints (dynamic ports)
         r.add("warehouse.store.greptime.http-endpoint", () -> "http://localhost:" + greptimedb.getMappedPort(GREPTIME_HTTP_PORT));
         r.add("warehouse.store.greptime.grpc-endpoints", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_GRPC_PORT));
         r.add("warehouse.store.greptime.username", () -> "");
