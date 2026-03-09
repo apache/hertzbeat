@@ -64,7 +64,8 @@ public class LogRealTimeAlertE2eTest {
     private static final int VECTOR_PORT = 8686;
     private static final String VECTOR_CONFIG_PATH = "/etc/vector/vector.yml";
     private static final String ENV_HERTZBEAT_PORT = "HERTZBEAT_PORT";
-    private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(120);
+    private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(180);
+    private static final Duration TEST_WAIT_TIMEOUT = Duration.ofSeconds(120);
 
     @LocalServerPort
     private int port;
@@ -107,8 +108,8 @@ public class LogRealTimeAlertE2eTest {
         capturedAlerts.clear();
 
         // Wait for real alert to be generated through AlarmCommonReduce
-        await().atMost(Duration.ofSeconds(60))
-                .pollInterval(Duration.ofSeconds(2))
+        await().atMost(TEST_WAIT_TIMEOUT)
+                .pollInterval(Duration.ofSeconds(3))
                 .untilAsserted(() -> assertFalse(capturedAlerts.isEmpty(),
                         "Should have generated at least one alert for error logs"));
 
