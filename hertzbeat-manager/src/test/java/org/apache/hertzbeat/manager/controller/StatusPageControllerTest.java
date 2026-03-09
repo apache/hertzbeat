@@ -125,7 +125,7 @@ class StatusPageControllerTest {
 
         mockMvc.perform(post("/api/status/page/component")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"New Component\"}")
+                        .content("{\"name\":\"New Component\",\"method\":0,\"configState\":0,\"state\":0}")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
@@ -137,7 +137,7 @@ class StatusPageControllerTest {
 
         mockMvc.perform(put("/api/status/page/component")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Updated Component\"}")
+                        .content("{\"name\":\"Updated Component\",\"method\":0,\"configState\":0,\"state\":0}")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))

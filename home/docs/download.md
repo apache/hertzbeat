@@ -22,7 +22,7 @@ Download the latest Apache HertzBeat™ release (v1.8.0) as server binary, colle
 |-------------|------|---------|----------|
 | **Server Binary** | ~200MB | Main monitoring server | Linux, macOS, Windows |
 | **Collector Binary** | ~50MB | Distributed collectors | Linux, macOS, Windows |
-| **Source Code** | ~30MB | Build from source | Any with Java 17+ |
+| **Source Code** | ~30MB | Build from source | Any with Java 21+ |
 | **Docker Compose** | ~5MB | Full stack deployment | Docker environments |
 
 :::tip Security Verification
@@ -73,13 +73,13 @@ Import Apache HertzBeat KEYS first: `wget https://downloads.apache.org/hertzbeat
 ### What are the system requirements?
 
 **Server Binary Requirements:**
-- Java 17 or higher
+- Java 21 or higher
 - 4GB RAM minimum (8GB recommended)
 - 2 CPU cores minimum
 - 20GB disk space
 
 **Collector Binary Requirements:**
-- Java 17 or higher
+- Java 21 or higher
 - 2GB RAM minimum
 - 1 CPU core minimum
 - 5GB disk space

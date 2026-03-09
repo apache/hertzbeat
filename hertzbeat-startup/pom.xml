@@ -56,8 +56,13 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-manager</artifactId>
         </dependency>
-        
+
         <!-- HertzBeat common -->
+      <dependency>
+        <groupId>org.apache.hertzbeat</groupId>
+        <artifactId>hertzbeat-common-core</artifactId>
+      </dependency>
+
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-common-spring</artifactId>
@@ -91,13 +96,6 @@
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-ai</artifactId>
-        </dependency>
-
-        
-        <!-- Jackson -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
         </dependency>
 
         <!-- Commons Lang3 -->

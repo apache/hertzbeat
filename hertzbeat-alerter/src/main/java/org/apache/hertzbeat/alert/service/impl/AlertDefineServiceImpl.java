@@ -17,9 +17,8 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Resource;
+import tools.jackson.core.type.TypeReference;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,6 +38,7 @@ import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.manager.Label;
 import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -51,7 +51,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.Resource;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -98,7 +97,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             CommonConstants.LABEL_ALERT_SEVERITY,
             CommonConstants.ALERT_MODE_LABEL
     );
-    
+
     public AlertDefineServiceImpl(List<AlertDefineImExportService> alertDefineImExportServiceList, DataSourceService dataSourceService) {
         alertDefineImExportServiceList.forEach(it -> alertDefineImExportServiceMap.put(it.type(), it));
         this.dataSourceService = dataSourceService;
@@ -185,14 +184,9 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, String sort, String order, int pageIndex, int pageSize) {
         // parse translation content list
-        ObjectMapper objectMapper = new ObjectMapper();
         List<String> searchList = Collections.emptyList();
         if (StringUtils.hasText(search)) {
-            try {
-                searchList = objectMapper.readValue(URLDecoder.decode(search, StandardCharsets.UTF_8), new TypeReference<>() {});
-            } catch (JsonProcessingException e) {
-                throw new IllegalArgumentException("Failed to parse search parameter", e);
-            }
+            searchList = JsonUtil.fromJson(URLDecoder.decode(search, StandardCharsets.UTF_8), new TypeReference<>() {});
         }
         List<String> finalSearchList = searchList;
         // build search condition

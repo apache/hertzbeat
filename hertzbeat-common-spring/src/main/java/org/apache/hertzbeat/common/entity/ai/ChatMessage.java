@@ -19,14 +19,16 @@ package org.apache.hertzbeat.common.entity.ai;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
-
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
@@ -59,7 +61,13 @@ public class ChatMessage {
     private Long id;
     
     @Schema(title = "conversation id")
+    @Column(name = "conversation_id", insertable = false, updatable = false)
     private Long conversationId;
+
+    @Schema(title = "conversation", hidden = true)
+    @ManyToOne
+    @JoinColumn(name = "conversation_id")
+    private ChatConversation conversation;
 
     @Schema(title = "message content")
     @Lob

@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.sd;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.MalformedURLException;

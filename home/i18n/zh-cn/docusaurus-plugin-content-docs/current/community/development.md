@@ -11,7 +11,7 @@ sidebar_label: 运行编译
 
 ### 后端启动
 
-1. 需要 `maven3+`, `java17` 和 `lombok` 环境
+1. 需要 `maven3+`, `java21` 和 `lombok` 环境
 
 2. (可选)修改配置文件配置信息-`hertzbeat-startup/src/main/resources/application.yml`
 
@@ -37,7 +37,7 @@ sidebar_label: 运行编译
 
 ## 生成二进制包
 
-> 需要 `maven3+`, `java17`, `node` 和 `pnpm` 环境.
+> 需要 `maven3+`, `java21`, `node` 和 `pnpm` 环境.
 
 ### 前端打包
 
@@ -53,7 +53,7 @@ sidebar_label: 运行编译
 
 ### 后端打包
 
-1. 需要 `maven3+`, `java17` 环境
+1. 需要 `maven3+`, `java21` 环境
 
 2. 在项目根目录运行: `mvn clean package -Prelease`
 
@@ -61,7 +61,7 @@ HertzBeat 包将生成为 `dist/hertzbeat-{version}.tar.gz`
 
 ### 采样器打包
 
-1. 需要 `maven3+`, `java17` 环境
+1. 需要 `maven3+`, `java21` 环境
 
 2. 在项目根目录运行: `mvn clean install`
 
