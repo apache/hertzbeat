@@ -96,7 +96,7 @@ sinks:
     encoding:
       codec: json
 
-  # Send to HertzBeat
+  # Send to HertzBeat with increased timeout and retry
   emit_syslog:
     inputs: [ "remap_syslog" ]
     type: opentelemetry
@@ -114,14 +114,13 @@ sinks:
         strategy: basic
         user: admin
         password: hertzbeat
-    # Increase timeout and retry settings for stability
+    # Increase timeout and retry settings for stability in CI environments
     request:
-      timeout_secs: 30
-      retry_attempts: 5
-      retry_initial_backoff_secs: 1
-      retry_max_duration_secs: 60
+      timeout_secs: 60
+      retry_attempts: 10
+      retry_initial_backoff_secs: 2
+      retry_max_duration_secs: 120
     # Batch settings for better throughput
     batch:
-      max_bytes: 1048576
+      max_bytes: 524288
       timeout_secs: 5
-

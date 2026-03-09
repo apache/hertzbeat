@@ -100,9 +100,13 @@ public class GreptimeLogStorageE2eTest {
 
 
     @BeforeAll
-    void setUpAll() {
+    void setUpAll() throws InterruptedException {
         // Expose host ports for testcontainers
         Testcontainers.exposeHostPorts(port);
+
+        // Wait for HertzBeat to be fully ready before starting Vector
+        log.info("Waiting for HertzBeat to be fully ready on port {}...", port);
+        Thread.sleep(5000); // Give HertzBeat time to fully initialize
 
         vector = new GenericContainer<>(DockerImageName.parse(VECTOR_IMAGE))
                 .withExposedPorts(VECTOR_PORT)
