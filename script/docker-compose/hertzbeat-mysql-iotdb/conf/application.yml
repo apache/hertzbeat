@@ -102,12 +102,13 @@ spring:
       max-lifetime: 120000
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: mysql
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
           
   flyway:
     enabled: true

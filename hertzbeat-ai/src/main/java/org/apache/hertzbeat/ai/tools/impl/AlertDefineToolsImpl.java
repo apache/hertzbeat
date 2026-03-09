@@ -17,9 +17,9 @@
 
 package org.apache.hertzbeat.ai.tools.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.usthe.sureness.subject.SubjectSum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.config.McpContextHolder;
@@ -74,30 +74,30 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                 8. based on the user's output, conditionally call the bind_monitors_to_alert_rule tool to bind monitors to the alert rule
              VERY VERY IMPORTANT:
                  - ALWAYS USE the value field from the get_apps_metrics_hierarchy's json response when creating alert expressions on the field parameters
-            
+
             EXAMPLES FOR FIELD CONDITION EXPRESSION( Do not copy these examples, they are just for reference ):
             These are all just examples, you can take inspiration from them and create a rule based on hierarchy, always ask the user for all params, do not assume them, even for these examples:
-            
+
             1. Kafka JVM Alert:
                - App: "kafka", Metric: "jvm_basic"
                - Field condition: equals(VmName, "myVM")
                - Field condition expression: equals(VmName, "myVM")
-            
+
             2. LLM Credits Alert:
                - App: "openai", Metric: "credit_grants"
                - Field condition: total_granted > some_value
                - Field condition  expression: total_granted > 1000
-            
+
             3. HBase Master Alert:
                - App: "hbase_master", Metric: "server"
                - Field condition: heap_memory_used > 80 or some_factor<100
                - Field condition  expression: heap_memory_used > 80 or some_factor<100
-            
+
             4. Complex OpenAI Credits Alert:
                - App: "openai", Metric: "credit_grants"
                - Field condition: total_used > 123 and total_granted > 333 and (total_granted > 3444 and total_paid_available < 5556)
                - Field condition expression: total_used > 123 and total_granted > 333 and (total_granted > 3444 and total_paid_available < 5556)
-            
+
             FIELD CONDITIONS GUIDANCE:
             - Field names come from metric's children in hierarchy (leaf nodes)
             - Use the "value" field from the metric's children, not the label when creating conditions
@@ -109,7 +109,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             - String values should be quoted: equals(VmName, "my-vm")
             - Simple conditions: heap_memory_used > 80, total_granted <= 1000
             - Complex conditions: total_used > 123 and total_granted > 333 and (total_granted > 3444 and total_paid_available < 5556)
-            
+
             PRIORITY LEVELS:
             - 0: Critical (immediate action required)
             - 1: Warning (attention needed, default)
@@ -196,7 +196,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                 return expressionValidation; // Return expression validation error message
             }
 
-            String expr = String.format("equals(__app__,\"%s\") && equals(__metrics__,\"%s\") && %s", 
+            String expr = String.format("equals(__app__,\"%s\") && equals(__metrics__,\"%s\") && %s",
                     app.trim(), metrics.trim(), fieldConditions.trim());
 
 
@@ -242,7 +242,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                     .datasource(datasource)
                     .enable(enable)
                     .build();
-            
+
             log.debug("Current security subject for addAlertDefine: {}", subjectSum);
 
             alertDefineService.addAlertDefine(alertDefine);
@@ -251,9 +251,9 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             String bindingNote = String.format(" (Use bind_monitors_to_alert_rule tool to associate specific monitors)");
 
             log.info("Successfully created alert rule '{}' with ID: {}", name, alertDefine.getId());
-            
+
             StringBuilder response = new StringBuilder();
-            response.append(String.format("Successfully created %s alert rule '%s' with ID: %d\n", 
+            response.append(String.format("Successfully created %s alert rule '%s' with ID: %d\n",
                     type, name, alertDefine.getId()));
             response.append(String.format("Expression: %s\n", expr));
             response.append(String.format("Priority: %d (%s)\n", priority, severityLabel));
@@ -442,7 +442,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             HertzBeat: Get the hierarchical structure of all available apps and their metrics for alert rule creation.
             This tool provides the exact app name, metric name and corresponding param names according to each metric.
             Returns structured JSON data showing the complete hierarchy with field parameters for alert expressions.
-            
+
             JSON Structure:
             - app: The application name
             - description: Tool description
@@ -452,7 +452,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
               - Non-leaf nodes have: children array
              VERY IMPORTANT:
               - ALWAYS USE the value field from the field parameters when creating alert expressions.
-            
+
             This structured data is needed to create proper alert expressions.
             """)
     public String getAppsMetricsHierarchy(
@@ -524,7 +524,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             // Parse monitor IDs from comma-separated string
             String[] monitorIdArray = monitorIds.split(",");
             List<String> validMonitorIds = new ArrayList<>();
-            
+
             for (String monitorId : monitorIdArray) {
                 String trimmedId = monitorId.trim();
                 if (!trimmedId.isEmpty()) {
@@ -536,7 +536,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                     }
                 }
             }
-            
+
             if (validMonitorIds.isEmpty()) {
                 return "Error: No valid monitor IDs provided";
             }
@@ -560,19 +560,19 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             // Get the current expression and modify it
             String currentExpr = existingRule.getExpr();
             String newExpr;
-            
+
             // Check if the expression already has __instance__ conditions
             if (currentExpr.contains("__instance__")) {
                 // Extract existing monitor IDs and merge with new ones
                 List<String> existingMonitorIds = UtilityClass.extractExistingMonitorIds(currentExpr);
-                
+
                 // Add new monitor IDs that aren't already present
                 for (String newId : validMonitorIds) {
                     if (!existingMonitorIds.contains(newId)) {
                         existingMonitorIds.add(newId);
                     }
                 }
-                
+
                 String updatedMonitorCondition;
                 if (existingMonitorIds.size() == 1) {
                     updatedMonitorCondition = String.format("equals(__instance__, \"%s\")", existingMonitorIds.get(0));
@@ -587,31 +587,31 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                     conditionBuilder.append(")");
                     updatedMonitorCondition = conditionBuilder.toString();
                 }
-                
+
                 // Replace existing __instance__ conditions with updated ones
                 newExpr = UtilityClass.replaceInstanceConditions(currentExpr, updatedMonitorCondition);
-                
+
                 // Update the alert rule
                 existingRule.setExpr(newExpr);
                 log.debug("Current security subject for modifyAlertDefine: {}", subjectSum);
 
                 alertDefineService.modifyAlertDefine(existingRule);
-                
+
                 log.info("Successfully added monitors {} to existing bindings for alert rule ID: {}", validMonitorIds, ruleId);
-                return String.format("Successfully added %d new monitor(s) to alert rule ID %d.\nTotal bound monitors: %s\nUpdated expression: %s", 
+                return String.format("Successfully added %d new monitor(s) to alert rule ID %d.\nTotal bound monitors: %s\nUpdated expression: %s",
                     validMonitorIds.size(), ruleId, String.join(", ", existingMonitorIds), newExpr);
             }
-            
+
             // Insert the monitor condition after the metrics condition
             // Pattern: equals(__app__,"app") && equals(__metrics__,"metric") && [existing_conditions]
             // Result: equals(__app__,"app") && equals(__metrics__,"metric") && [monitor_condition] && [existing_conditions]
-            
+
             if (currentExpr.matches(".*equals\\(__app__,\"[^\"]+\"\\)\\s*&&\\s*equals\\(__metrics__,\"[^\"]+\"\\)\\s*&&\\s*.*")) {
                 // Find the position after the metrics condition
                 String metricsPattern = "equals\\(__metrics__,\"[^\"]+\"\\)";
                 java.util.regex.Pattern regex = java.util.regex.Pattern.compile(metricsPattern);
                 java.util.regex.Matcher matcher = regex.matcher(currentExpr);
-                
+
                 if (matcher.find()) {
                     int metricsEnd = matcher.end();
                     // Find the " && " after the metrics condition
@@ -636,7 +636,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             alertDefineService.modifyAlertDefine(existingRule);
 
             log.info("Successfully bound monitors {} to alert rule ID: {}", validMonitorIds, ruleId);
-            return String.format("Successfully bound %d monitor(s) to alert rule ID %d.\nMonitor IDs: %s\nUpdated expression: %s", 
+            return String.format("Successfully bound %d monitor(s) to alert rule ID %d.\nMonitor IDs: %s\nUpdated expression: %s",
                 validMonitorIds.size(), ruleId, String.join(", ", validMonitorIds), newExpr);
 
         } catch (Exception e) {

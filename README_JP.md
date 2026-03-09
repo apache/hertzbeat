@@ -7,7 +7,7 @@
 <p align="center">
 <b>Readme</b>:
 <a href="README.md">English</a> | <a href="README_CN.md">中文</a> | <b><a href="README_JP.md">日本語</a></b>
-</p>  
+</p>
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
@@ -20,13 +20,13 @@
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
 
 
-**公式サイト: [hertzbeat.apache.org](https://hertzbeat.apache.org)**    
+**公式サイト: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
 **メール:**　メーリングリストに登録するために、<a href="mailto:dev-subscribe@hertzbeat.apache.org">dev-subscribe@hertzbeat.apache.org</a>にメールを送ってください。
 
 
 ## 🎡 <font color="green">紹介</font>
 
-[Apache HertzBeat™](https://github.com/apache/hertzbeat) は AI 駆動の次世代オープンソースリアルタイム観測システムです。メトリクスとログの統一収集、アラートの一元配信、インテリジェント管理分析。エージェント不要、高性能クラスタ、強力なカスタム監視とステータスページ構築機能を提供します。     
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) は AI 駆動の次世代オープンソースリアルタイム観測システムです。メトリクスとログの統一収集、アラートの一元配信、インテリジェント管理分析。エージェント不要、高性能クラスタ、強力なカスタム監視とステータスページ構築機能を提供します。
 
 ### 特性
 
@@ -39,19 +39,19 @@
 - 高性能で、コレクタークラスタの水平拡張、マルチ分離ネットワーク監視、クラウドエッジ協調をサポート。
 - 強力なステータスページ構築機能を提供し、サービスのリアルタイムステータスをユーザーに簡単に伝達。
 
-> `HertzBeat`の統一プラットフォーム、AI インテリジェンス、強力なカスタマイズ、多種類サポート、高性能、容易な拡張性は、ユーザーが迅速かつ便利に観測要件を実現することを支援することを目的としています。    
+> `HertzBeat`の統一プラットフォーム、AI インテリジェンス、強力なカスタマイズ、多種類サポート、高性能、容易な拡張性は、ユーザーが迅速かつ便利に観測要件を実現することを支援することを目的としています。
 
 ----
 
 ----
 
-## 🥐 モジュール  
+## 🥐 モジュール
 
-![hertzBeat](home/static/img/docs/hertzbeat-arch.png)      
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
-## ⛄ 利用可能    
+## ⛄ 利用可能
 
-> `mysql`、`Java仮想マシン`、`k8s` などのすべての監視コレクション タイプを `YML` 監視テンプレートとして定義し、ユーザーがそれらをインポートして対応するタイプの監視をサポートできるようにしています。 
+> `mysql`、`Java仮想マシン`、`k8s` などのすべての監視コレクション タイプを `YML` 監視テンプレートとして定義し、ユーザーがそれらをインポートして対応するタイプの監視をサポートできるようにしています。
 > カスタマイズされた一般的なモニターのテンプレートを提供することを歓迎します。
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
@@ -93,7 +93,7 @@
 - その他、カスタマイズされたモニターテンプレート。
 - 通知利用可能 `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`。
 
-## 🐕 クイックスタート  
+## 🐕 クイックスタート
 
 - HertzBeat をローカルに展開する場合は、以下のデプロイメントドキュメントを参照してください。
 
@@ -102,7 +102,7 @@
 
 ##### 方式１：Docker
 
-1. `docker` で以下の指令を実行します： 
+1. `docker` で以下の指令を実行します：
 
    ```shell
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
@@ -156,7 +156,7 @@
 ##### 方式３：ローカルの実行
 
 1. ローカルの実行には、バックエンドのプロジェクト`hertzbeat-startup`とフロントエンドのプロジェクト`web-app`を起動する必要があります。
-2. バックエンド：`maven3+`、`java17`と`lombok`の環境は必要です。`YML` 設定を修正し、Java仮想マシンパラメータに`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加し、`hertzbeat-startup` を起動します。
+2. バックエンド：`maven3+`、`Java21`と`lombok`の環境は必要です。`YML` 設定を修正し、Java仮想マシンパラメータに`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加し、`hertzbeat-startup` を起動します。
 3. フロントエンド：`nodejs npm angular-cli`の環境は必要です。ローカルのバックエンドが立ち上がったら、`web-app` ディレクトリで `ng serve --open` というコマンドを実行します。
 4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
@@ -166,7 +166,7 @@
 
 [Docker-Compose 部署脚本](script/docker-compose)でpostgresql/mysqlデータベース、victoria-metrics、iotdb、またはtdengine時系列データベースとHertzbeat一括デプロイ。
 
-詳細ステップ [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)  
+詳細ステップ [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)
 
 ##### 方式５：Kubernetes Helm Charts
 
@@ -178,8 +178,8 @@ Helm ChartでHertzBeatクラスタコンポーネントをKubernetesクラスタ
 
 ## ✨ Contributors
 
-Thanks these wonderful people, welcome to join us:   
-[貢献ガイド](CONTRIBUTING.md)    
+Thanks these wonderful people, welcome to join us:
+[貢献ガイド](CONTRIBUTING.md)
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -557,7 +557,7 @@ Thanks these wonderful people, welcome to join us:
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
 
-<!-- ALL-CONTRIBUTORS-LIST:END -->  
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## 💬 コミュニティ交流
 

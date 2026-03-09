@@ -17,8 +17,7 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.sms.AwsSmsProperties;
 import org.apache.hertzbeat.alert.service.SmsClient;
@@ -110,7 +109,10 @@ public class AwsSmsClientImpl implements SmsClient {
         String endpoint = "https://" + SERVICE + "." + region + ".amazonaws.com";
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            String payloadInString = new ObjectMapper().writeValueAsString(payload);
+            String payloadInString = JsonUtil.toJson(payload);
+            if (payloadInString == null) {
+                throw new SendMessageException("Failed to serialize SMS payload");
+            }
             URI requestUri = new URI(endpoint);
 
             HttpPost httpPost = createHttpPost(requestUri, amzDate, payloadInString);

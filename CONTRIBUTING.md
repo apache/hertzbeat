@@ -32,7 +32,7 @@ Even small corrections to typos are very welcome :)
 
 #### Backend start
 
-1. Requires `maven3+`, `java17` and `lombok` environments
+1. Requires `maven3+`, `java21` and `lombok` environments
 
 2. (Optional) Modify the configuration file: `hertzbeat-startup/src/main/resources/application.yml`
 
@@ -172,7 +172,7 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 #### 后端启动
 
-1. 需要 `maven3+`, `java17` 和 `lombok` 环境
+1. 需要 `maven3+`, `java21` 和 `lombok` 环境
 
 2. (可选)修改配置文件配置信息-`hertzbeat-startup/src/main/resources/application.yml`
 

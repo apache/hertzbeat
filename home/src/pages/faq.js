@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     question: "What are HertzBeat's system requirements?",
-    answer: "Minimum: 2 CPU cores, 4GB RAM (8GB recommended), 10GB disk space, Docker 20.10+ or Java 17+. Supported on Linux, macOS, Windows."
+    answer: "Minimum: 2 CPU cores, 4GB RAM (8GB recommended), 10GB disk space, Docker 20.10+ or Java 21+. Supported on Linux, macOS, Windows."
   },
   {
     question: "How do I upgrade HertzBeat?",

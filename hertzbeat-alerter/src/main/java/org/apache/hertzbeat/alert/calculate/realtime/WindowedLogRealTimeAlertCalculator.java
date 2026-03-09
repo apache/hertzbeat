@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.alert.calculate.realtime;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.calculate.realtime.window.LogWorker;
 import org.apache.hertzbeat.alert.calculate.realtime.window.TimeService;
@@ -28,8 +30,6 @@ import org.apache.hertzbeat.common.util.BackoffUtils;
 import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -83,29 +83,29 @@ public class WindowedLogRealTimeAlertCalculator implements Runnable {
             }
         }
     }
-    
+
     private void processLogEntry(LogEntry logEntry) {
         // Extract event timestamp
         long eventTimestamp = extractEventTimestamp(logEntry);
-        
+
         // Check if timestamp is within reasonable range
         if (!timeService.isValidTimestamp(eventTimestamp)) {
             log.warn("Dropping log with invalid timestamp: {}", eventTimestamp);
             return;
         }
-        
+
         // Check if this is late data based on current watermark
         if (timeService.isLateData(eventTimestamp)) {
-            log.warn("Dropping late data, timestamp: {}, watermark: {}", 
+            log.warn("Dropping late data, timestamp: {}, watermark: {}",
                      eventTimestamp, timeService.getCurrentWatermark());
             return;
         }
-        
+
         // Update max timestamp (only validated timestamps can update watermark)
         timeService.updateMaxTimestamp(eventTimestamp);
         logWorker.reduceAndSendLogTask(logEntry);
     }
-    
+
     private long extractEventTimestamp(LogEntry logEntry) {
         if (logEntry.getTimeUnixNano() != null && logEntry.getTimeUnixNano() != 0) {
             return logEntry.getTimeUnixNano() / 1_000_000; // Convert to milliseconds
@@ -115,7 +115,7 @@ public class WindowedLogRealTimeAlertCalculator implements Runnable {
         }
         return System.currentTimeMillis();
     }
-    
+
     @PostConstruct
     public void start() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()

@@ -18,8 +18,7 @@
 package org.apache.hertzbeat.manager.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemSecret;
@@ -27,7 +26,6 @@ import org.apache.hertzbeat.manager.service.impl.SystemSecretServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 /**
  * test case for {@link SystemSecretServiceImpl}
@@ -38,28 +36,20 @@ class SystemSecretServiceTest {
     @Mock
     private GeneralConfigDao generalConfigDao;
 
-    @Mock
-    private ObjectMapper objectMapper;
-
     private SystemSecretServiceImpl systemSecretService;
 
     @BeforeEach
     void setUp() {
-
-        MockitoAnnotations.openMocks(this);
-
-        this.systemSecretService = new SystemSecretServiceImpl(generalConfigDao, objectMapper);
+        this.systemSecretService = new SystemSecretServiceImpl(generalConfigDao);
     }
 
     @Test
     void testType() {
-
         assertEquals(GeneralConfigTypeEnum.secret.name(), systemSecretService.type());
     }
 
     @Test
     void testGetTypeReference() {
-
         TypeReference<SystemSecret> typeReference = systemSecretService.getTypeReference();
         assertEquals(SystemSecret.class, typeReference.getType());
     }

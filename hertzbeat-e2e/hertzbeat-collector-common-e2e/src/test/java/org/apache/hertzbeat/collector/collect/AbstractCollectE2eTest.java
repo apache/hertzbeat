@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -71,7 +72,7 @@ public abstract class AbstractCollectE2eTest {
     public void setUp() throws Exception {
         // Initialize mocks
         MockitoAnnotations.openMocks(this);
-        when(defineDao.findAll()).thenReturn(new ArrayList<>());
+        lenient().when(defineDao.findAll()).thenReturn(new ArrayList<>());
         when(timeout.task()).thenReturn(timerJob);
         when(timerJob.getJob()).thenReturn(job);
         metricsCollect = new MetricsCollect(mock(Metrics.class), timeout, mock(CollectDataDispatch.class), null, List.of());

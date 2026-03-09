@@ -40,11 +40,6 @@ spring:
       static-locations:
         - classpath:/dist/
         - classpath:../dist/
-  # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed.
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
-  freemarker:
-    enabled: false
   servlet:
     multipart:
       max-file-size: 100MB
@@ -62,7 +57,8 @@ management:
           - 'metrics'
           - 'health'
           - 'prometheus'
-    enabled-by-default: on
+    access:
+      default: read_only
   endpoint:
     prometheus:
       access: read_only
@@ -103,12 +99,13 @@ spring:
 
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: h2
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
 
   flyway:
     enabled: true
@@ -225,6 +222,38 @@ warehouse:
       password: root
       expire-time: '30d'
       replication: 1
+    doris:
+      enabled: false
+      url: jdbc:mysql://127.0.0.1:9030
+      username: root
+      password:
+      table-config:
+        enable-partition: false
+        partition-time-unit: DAY
+        partition-retention-days: 30
+        partition-future-days: 3
+        buckets: 8
+        replication-num: 1
+      pool-config:
+        minimum-idle: 5
+        maximum-pool-size: 20
+        connection-timeout: 30000
+      write-config:
+        # Write mode: jdbc (default, suitable for small/medium scale) or stream (high throughput)
+        write-mode: jdbc
+        # JDBC mode: batch size and flush interval
+        batch-size: 1000
+        flush-interval: 5
+        # Stream Load mode configuration (only used when write-mode: stream)
+        stream-load-config:
+          # Doris FE HTTP port for Stream Load API
+          http-port: :8030
+          # Stream load timeout in seconds
+          timeout: 60
+          # Max batch size in bytes for stream load (10MB default)
+          max-bytes-per-batch: 10485760
+          # Redirect policy in complex networks: direct/public/private, empty means Doris default
+          redirect-policy: ""
   # store real-time metrics data, enable only one below
   real-time:
     memory:
