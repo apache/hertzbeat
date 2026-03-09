@@ -105,7 +105,6 @@
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
 
-
         <p3c-pmd.version>2.1.1</p3c-pmd.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
@@ -162,7 +161,7 @@
         <rocketmq-tools.version>4.9.4</rocketmq-tools.version>
         <dnsjava.version>3.6.2</dnsjava.version>
         <consul-api.version>1.4.5</consul-api.version>
-        <nacos-client.version>2.2.1</nacos-client.version>
+        <nacos-client.version>3.1.1</nacos-client.version>
         <vesoft-client.version>3.6.0</vesoft-client.version>
         <eclipse-jpa.version>4.0.2</eclipse-jpa.version>
         <jutf7.version>1.0.0</jutf7.version>
