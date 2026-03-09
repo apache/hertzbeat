@@ -28,8 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
@@ -81,7 +81,7 @@ public class LogPeriodicAlertE2eTest {
     AlertDefine errorCountAlertByGroup;
     AlertDefine errorCountAlertByIndividual;
 
-    @SpyBean
+    @MockitoSpyBean
     private AlarmCommonReduce alarmCommonReduce;
 
     static GenericContainer<?> vector;

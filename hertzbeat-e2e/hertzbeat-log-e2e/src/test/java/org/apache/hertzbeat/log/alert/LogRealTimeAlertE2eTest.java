@@ -27,8 +27,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -72,7 +72,7 @@ public class LogRealTimeAlertE2eTest {
     private final List<SingleAlert> capturedAlerts = new ArrayList<>();
     private final ArrayList<List<SingleAlert>> capturedGroupAlerts = new ArrayList<>();
 
-    @SpyBean
+    @MockitoSpyBean
     private AlarmCommonReduce alarmCommonReduce;
 
     static GenericContainer<?> vector;
