@@ -336,6 +336,7 @@ grafana:
   password: admin
 
 hertzbeat:
+  # Optional virtual-thread overrides. Remove this whole block to use built-in defaults.
   vthreads:
     enabled: true
     common:
