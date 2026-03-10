@@ -15,15 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.support.exception;
+package org.apache.hertzbeat.common.config;
+
+import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Expression visitor exception
+ * Spring Boot binding adapter for {@link SmsConfig}.
  */
-public class ExpressionVisitorException extends RuntimeException {
-
-
-    public ExpressionVisitorException(String message, Throwable cause) {
-        super(message, cause);
-    }
+@ConfigurationProperties(prefix = "alerter.sms")
+public class SmsConfigBinding extends SmsConfig {
 }

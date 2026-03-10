@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.controller;
 
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,11 +35,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.data.domain.PageImpl;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.data.web.config.SpringDataJacksonConfiguration;
+import org.springframework.data.web.config.SpringDataWebSettings;
 
 /**
  * Test case for {@link MonitorsController}
@@ -55,11 +63,22 @@ class MonitorsControllerTest {
 
     @BeforeEach
     void setUp() {
-        this.mockMvc = MockMvcBuilders.standaloneSetup(monitorsController).build();
+        MappingJackson2HttpMessageConverter messageConverter = new MappingJackson2HttpMessageConverter(
+                Jackson2ObjectMapperBuilder.json()
+                        .modules(new SpringDataJacksonConfiguration.PageModule(
+                                new SpringDataWebSettings(EnableSpringDataWebSupport.PageSerializationMode.DIRECT)))
+                        .build());
+        this.mockMvc = MockMvcBuilders.standaloneSetup(monitorsController)
+                .setMessageConverters(messageConverter)
+                .build();
     }
 
     @Test
     void getMonitors() throws Exception {
+        Monitor monitor = Monitor.builder().id(6565463543L).name("website-prod").app("website").build();
+        when(monitorService.getMonitors(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any()))
+                .thenReturn(new PageImpl<>(List.of(monitor)));
 
         this.mockMvc.perform(MockMvcRequestBuilders.get(
                         "/api/monitors?app={app}&ids={ids}&host={host}&id={id}",
@@ -70,14 +89,18 @@ class MonitorsControllerTest {
                 ))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content[0].name").value("website-prod"))
                 .andReturn();
     }
 
     @Test
     void getAppMonitors() throws Exception {
+        when(monitorService.getAppMonitors("linux"))
+                .thenReturn(List.of(Monitor.builder().id(1L).name("linux-prod").app("linux").build()));
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/{app}", "linux"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data[0].name").value("linux-prod"))
                 .andReturn();
     }
 

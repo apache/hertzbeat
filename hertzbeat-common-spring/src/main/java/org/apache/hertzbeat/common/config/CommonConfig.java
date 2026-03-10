@@ -21,6 +21,7 @@ import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
@@ -31,6 +32,11 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
         + SignConstants.DOT
         + ConfigConstants.FunctionModuleConstants.COMMON)
-@EnableConfigurationProperties({CommonProperties.class, VirtualThreadProperties.class})
+@EnableConfigurationProperties({CommonProperties.class, VirtualThreadPropertiesBinding.class, SmsConfigBinding.class})
 public class CommonConfig {
+
+    @Bean
+    public VirtualThreadProperties virtualThreadProperties(VirtualThreadPropertiesBinding binding) {
+        return binding.toRuntimeProperties();
+    }
 }

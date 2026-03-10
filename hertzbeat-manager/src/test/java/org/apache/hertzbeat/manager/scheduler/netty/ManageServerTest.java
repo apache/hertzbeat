@@ -32,8 +32,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.alert.calculate.CollectorAlertHandler;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
-import org.apache.hertzbeat.common.support.CommonThreadPool;
+import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
 import org.apache.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.apache.hertzbeat.remoting.RemotingServer;
@@ -55,17 +56,20 @@ class ManageServerTest {
     private CollectorJobScheduler collectorJobScheduler;
 
     @Mock
-    private CommonThreadPool commonThreadPool;
+    private BackgroundTaskExecutor commonThreadPool;
 
     @Mock
     private CollectorAlertHandler collectorAlertHandler;
+
+    @Mock
+    private CommonDataQueue commonDataQueue;
 
     private ManageServer manageServer;
 
     @BeforeEach
     void setUp() {
         manageServer = new ManageServer(schedulerProperties(), collectorJobScheduler, commonThreadPool,
-                collectorAlertHandler, new VirtualThreadProperties());
+                collectorAlertHandler, commonDataQueue, new VirtualThreadProperties());
         ReflectionTestUtils.setField(manageServer, "remotingServer", mock(RemotingServer.class));
     }
 

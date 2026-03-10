@@ -26,9 +26,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.calculate.CollectorAlertHandler;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.support.CommonThreadPool;
+import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
 import org.apache.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectCyclicDataResponseProcessor;
@@ -62,6 +63,8 @@ public class ManageServer implements CommandLineRunner {
 
     private final CollectorAlertHandler collectorAlertHandler;
 
+    private final CommonDataQueue commonDataQueue;
+
     private ScheduledExecutorService channelSchedule;
 
     private final ExecutorService channelCheckExecutor;
@@ -78,26 +81,29 @@ public class ManageServer implements CommandLineRunner {
 
     public ManageServer(final SchedulerProperties schedulerProperties,
                         final CollectorJobScheduler collectorJobScheduler,
-                        final CommonThreadPool threadPool,
-                        final CollectorAlertHandler collectorAlertHandler) {
-        this(schedulerProperties, collectorJobScheduler, threadPool, collectorAlertHandler,
+                        final BackgroundTaskExecutor threadPool,
+                        final CollectorAlertHandler collectorAlertHandler,
+                        final CommonDataQueue commonDataQueue) {
+        this(schedulerProperties, collectorJobScheduler, threadPool, collectorAlertHandler, commonDataQueue,
                 VirtualThreadProperties.defaults());
     }
 
     @Autowired
     public ManageServer(final SchedulerProperties schedulerProperties,
                         final CollectorJobScheduler collectorJobScheduler,
-                        final CommonThreadPool threadPool,
+                        final BackgroundTaskExecutor threadPool,
                         final CollectorAlertHandler collectorAlertHandler,
+                        final CommonDataQueue commonDataQueue,
                         final VirtualThreadProperties virtualThreadProperties) {
         this.collectorJobScheduler = collectorJobScheduler;
         this.collectorJobScheduler.setManageServer(this);
         this.collectorAlertHandler = collectorAlertHandler;
+        this.commonDataQueue = commonDataQueue;
         this.channelCheckExecutor = createChannelCheckExecutor(virtualThreadProperties);
         this.init(schedulerProperties, threadPool);
     }
 
-    private void init(final SchedulerProperties schedulerProperties, final CommonThreadPool threadPool) {
+    private void init(final SchedulerProperties schedulerProperties, final BackgroundTaskExecutor threadPool) {
         NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setPort(schedulerProperties.getServer().getPort());
         nettyServerConfig.setIdleStateEventTriggerTime(schedulerProperties.getServer().getIdleStateEventTriggerTime());
@@ -109,8 +115,10 @@ public class ManageServer implements CommandLineRunner {
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.GO_ONLINE, new CollectorOnlineProcessor(this));
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.GO_OFFLINE, new CollectorOfflineProcessor(this));
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA, new CollectOneTimeDataResponseProcessor(this));
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA, new CollectCyclicDataResponseProcessor());
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_SD_DATA, new CollectCyclicServiceDiscoveryDataResponseProcessor());
+        this.remotingServer.registerProcessor(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA,
+                new CollectCyclicDataResponseProcessor(commonDataQueue));
+        this.remotingServer.registerProcessor(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_SD_DATA,
+                new CollectCyclicServiceDiscoveryDataResponseProcessor(commonDataQueue));
 
         this.channelSchedule = Executors.newSingleThreadScheduledExecutor();
     }

@@ -24,6 +24,7 @@ import org.apache.hertzbeat.common.concurrent.AdmissionMode;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Bean;
 
 class VirtualThreadPropertiesTest {
 
@@ -102,7 +103,12 @@ class VirtualThreadPropertiesTest {
                 });
     }
 
-    @EnableConfigurationProperties(VirtualThreadProperties.class)
+    @EnableConfigurationProperties(VirtualThreadPropertiesBinding.class)
     static class BindingConfig {
+
+        @Bean
+        VirtualThreadProperties virtualThreadProperties(VirtualThreadPropertiesBinding binding) {
+            return binding.toRuntimeProperties();
+        }
     }
 }

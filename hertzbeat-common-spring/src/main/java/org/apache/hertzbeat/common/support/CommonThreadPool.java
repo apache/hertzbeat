@@ -25,6 +25,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.concurrent.ManagedExecutor;
 import org.apache.hertzbeat.common.concurrent.ManagedExecutors;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
@@ -37,7 +38,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class CommonThreadPool implements DisposableBean {
+public class CommonThreadPool implements BackgroundTaskExecutor, DisposableBean {
 
     private final ManagedExecutor workerExecutor;
 

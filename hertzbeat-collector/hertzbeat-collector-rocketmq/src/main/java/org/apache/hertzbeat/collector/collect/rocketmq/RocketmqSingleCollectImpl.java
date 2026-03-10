@@ -54,14 +54,12 @@ import org.apache.rocketmq.common.protocol.body.TopicList;
 import org.apache.rocketmq.common.protocol.route.BrokerData;
 import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.util.Assert;
 
 /**
  * rocketmq collect
  */
 @Slf4j
-public class RocketmqSingleCollectImpl extends AbstractCollect implements DisposableBean {
+public class RocketmqSingleCollectImpl extends AbstractCollect {
 
     private static final int WAIT_TIMEOUT = 10;
     static final int QUEUE_CAPACITY = 5000;
@@ -102,7 +100,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
                 corePoolSize, maximumPoolSize, QUEUE_CAPACITY, handler);
     }
 
-    @Override
     public void destroy() {
         this.executorService.close();
     }
@@ -113,10 +110,10 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
      */
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
-        Assert.isTrue(metrics != null && metrics.getRocketmq() != null, "Rocketmq collect must has rocketmq params");
+        require(metrics != null && metrics.getRocketmq() != null, "Rocketmq collect must has rocketmq params");
         RocketmqProtocol rocketmq = metrics.getRocketmq();
-        Assert.hasText(rocketmq.getNamesrvHost(), "Rocketmq Protocol namesrvHost is required.");
-        Assert.hasText(rocketmq.getNamesrvPort(), "Rocketmq Protocol namesrvPort is required.");
+        requireHasText(rocketmq.getNamesrvHost(), "Rocketmq Protocol namesrvHost is required.");
+        requireHasText(rocketmq.getNamesrvPort(), "Rocketmq Protocol namesrvPort is required.");
     }
 
     @Override
@@ -373,5 +370,15 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     void executeConsumerTask(Runnable runnable) {
         executorService.execute(runnable);
+    }
+
+    private static void require(boolean expression, String message) {
+        if (!expression) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    private static void requireHasText(String value, String message) {
+        require(value != null && !value.trim().isEmpty(), message);
     }
 }

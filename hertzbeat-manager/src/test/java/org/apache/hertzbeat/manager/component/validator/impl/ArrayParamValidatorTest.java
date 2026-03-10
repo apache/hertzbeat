@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -42,9 +42,9 @@ class ArrayParamValidatorTest {
     
     @Test
     void validate_ValidArray() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("array");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("val1,val2");
         
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
@@ -52,9 +52,9 @@ class ArrayParamValidatorTest {
     
     @Test
     void validate_ValidArrayWithBrackets() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("array");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("[val1,val2]");
         
         validator.validate(paramDefine, param);
@@ -63,10 +63,10 @@ class ArrayParamValidatorTest {
     
     @Test
     void validate_EmptyArray() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("array");
         paramDefine.setField("tags");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("");
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
         assertEquals("", param.getParamValue());

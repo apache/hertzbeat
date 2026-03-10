@@ -81,7 +81,7 @@ public class SshTunnel implements CommonRequestProtocol, Protocol {
     @Override
     public boolean isInvalid() {
 
-        // todo: add
-        return true;
+        // todo add
+        return false;
     }
 }

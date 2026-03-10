@@ -15,14 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.support.exception;
+package org.apache.hertzbeat.common.concurrent;
+
+import java.util.concurrent.RejectedExecutionException;
 
 /**
- * Alert expression exception
+ * Generic background task executor abstraction for runtime components.
  */
-public class AlertExpressionException extends RuntimeException {
+public interface BackgroundTaskExecutor {
 
-    public AlertExpressionException(String message) {
-        super(message);
-    }
+    /**
+     * Execute a short-lived task.
+     *
+     * @param runnable task
+     * @throws RejectedExecutionException when execution is rejected
+     */
+    void execute(Runnable runnable) throws RejectedExecutionException;
+
+    /**
+     * Execute a long-lived background task.
+     *
+     * @param runnable task
+     */
+    void executeLongRunning(Runnable runnable);
+
+    /**
+     * Release executor resources.
+     *
+     * @throws Exception close exception
+     */
+    void destroy() throws Exception;
 }

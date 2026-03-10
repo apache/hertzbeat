@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.common.entity.job;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Collections;
 import java.util.Comparator;
@@ -35,13 +34,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.springframework.util.CollectionUtils;
 
 /**
- * Collect task details
+ * Collect task details.
  */
 @Data
 @AllArgsConstructor
@@ -51,15 +48,15 @@ import org.springframework.util.CollectionUtils;
 public class Job {
 
     /**
-     * Task Job id
+     * Task Job id.
      */
     private long id;
     /**
-     * Tenant id
+     * Tenant id.
      */
     private long tenantId = 0;
     /**
-     * Monitoring Task ID
+     * Monitoring Task ID.
      */
     private long monitorId;
     /**
@@ -68,11 +65,11 @@ public class Job {
      */
     private Map<String, String> metadata;
     /**
-     * bind labels 
+     * bind labels.
      */
     private Map<String, String> labels;
     /**
-     * bind annotations
+     * bind annotations.
      */
     private Map<String, String> annotations;
     /**
@@ -86,12 +83,12 @@ public class Job {
      */
     private String category;
     /**
-     * Type of monitoring eg: linux | mysql | jvm
+     * Type of monitoring eg: linux | mysql | jvm.
      */
     private String app;
     /**
      * The internationalized name of the monitoring type
-     * PING CONNECT
+     * PING CONNECT.
      */
     private Map<String, String> name;
     /**
@@ -101,55 +98,54 @@ public class Job {
      */
     private Map<String, String> help;
     /**
-     * The monitor help link
+     * The monitor help link.
      */
     private Map<String, String> helpLink;
     /**
-     * Task dispatch start timestamp
+     * Task dispatch start timestamp.
      */
     private long timestamp;
     /**
-     * Default task collection time interval (unit: second) eg: 30,60,600
+     * Default task collection time interval (unit: second) eg: 30,60,600.
      */
     private long defaultInterval = 600L;
     /**
-     * Refresh time list for one cycle of the job
+     * Refresh time list for one cycle of the job.
      */
     private ConcurrentLinkedDeque<Long> intervals;
     /**
-     * Whether it is a recurring periodic task true is yes, false is no
+     * Whether it is a recurring periodic task true is yes, false is no.
      */
     private boolean isCyclic = false;
     /**
-     * monitor input need params
+     * monitor input need params.
      */
-    private List<ParamDefine> params;
+    private List<RuntimeParamDefine> params;
     /**
-     * Metrics configuration eg: cpu memory
-     * eg: cpu memory
+     * Metrics configuration eg: cpu memory.
      */
     private List<Metrics> metrics;
     /**
-     * Monitoring configuration parameter properties and values eg: username password timeout host
+     * Monitoring configuration parameter properties and values eg: username password timeout host.
      */
     private List<Configmap> configmap;
     /**
-     * Whether it is a service discovery job, true is yes, false is no
+     * Whether it is a service discovery job, true is yes, false is no.
      */
     private boolean isSd = false;
 
     /**
-     * Whether to use the Prometheus proxy
+     * Whether to use the Prometheus proxy.
      */
     private boolean prometheusProxyMode = false;
 
     /**
-     * Scheduling type: interval or cron
+     * Scheduling type: interval or cron.
      */
     private String scheduleType = "interval";
 
     /**
-     * Cron expression for scheduling, used when scheduleType is "cron"
+     * Cron expression for scheduling, used when scheduleType is "cron".
      */
     private String cronExpression = null;
 
@@ -160,7 +156,7 @@ public class Job {
     private Map<String, Configmap> envConfigmaps;
 
     /**
-     * collector use - timestamp when the task was scheduled by the time wheel
+     * collector use - timestamp when the task was scheduled by the time wheel.
      */
     @JsonIgnore
     private transient long dispatchTime;
@@ -179,13 +175,13 @@ public class Job {
     private transient LinkedList<Set<Metrics>> priorMetrics;
 
     /**
-     * collector use - Temporarily store one-time task metrics response data
+     * collector use - Temporarily store one-time task metrics response data.
      */
     @JsonIgnore
     private transient List<CollectRep.MetricsData> responseDataTemp;
 
     /**
-     * collector use - construct to initialize metrics execution view
+     * collector use - construct to initialize metrics execution view.
      */
     public synchronized void constructPriorMetrics() {
         long now = System.currentTimeMillis();
@@ -232,7 +228,7 @@ public class Job {
     }
 
     /**
-     * collector use - to get the next set of priority metric group tasks
+     * collector use - to get the next set of priority metric group tasks.
      *
      * @param metrics Current Metrics
      * @param first   Is it the first time to get
@@ -314,7 +310,7 @@ public class Job {
     }
 
     /**
-     * The greatest common divisor
+     * The greatest common divisor.
      */
     public static long gcd(long a, long b) {
         while (b != 0) {
@@ -326,7 +322,7 @@ public class Job {
     }
 
     /**
-     * The least common multiple
+     * The least common multiple.
      */
     public static long lcm(List<Long> array) {
         if (array != null && !array.isEmpty()) {
@@ -340,9 +336,8 @@ public class Job {
     }
 
     /**
-     *
      * @param metricsIntervals A unique list composed of intervals for all metrics
-     * Generate a list of refresh intervals for metric collection
+     * Generate a list of refresh intervals for metric collection.
      */
     public synchronized void generateMetricsIntervals(List<Long> metricsIntervals) {
         // 1. To find the least common multiple (LCM) of all metric refresh intervals
@@ -368,7 +363,7 @@ public class Job {
     }
 
     public synchronized long getInterval() {
-        if (!CollectionUtils.isEmpty(this.intervals)) {
+        if (this.intervals != null && !this.intervals.isEmpty()) {
             Long interval = this.intervals.removeFirst();
             if (interval != null) {
                 this.intervals.addLast(interval);

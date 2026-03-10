@@ -18,17 +18,12 @@
 package org.apache.hertzbeat.common.config;
 
 import org.apache.hertzbeat.common.concurrent.AdmissionMode;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.bind.ConstructorBinding;
-import org.springframework.boot.context.properties.bind.DefaultValue;
-import org.springframework.boot.context.properties.bind.Name;
 
 /**
- * Virtual-thread related configuration.
+ * Framework-agnostic virtual-thread runtime configuration.
  */
-@ConfigurationProperties(prefix = "hertzbeat.vthreads")
 public record VirtualThreadProperties(
-        @DefaultValue("true") boolean enabled,
+        boolean enabled,
         PoolProperties collector,
         PoolProperties common,
         PoolProperties manager,
@@ -42,7 +37,6 @@ public record VirtualThreadProperties(
     private static final int DEFAULT_PERIODIC_MAX_CONCURRENT_JOBS = 10;
     private static final int DEFAULT_NOTIFY_MAX_CONCURRENT_PER_CHANNEL = 4;
 
-    @ConstructorBinding
     public VirtualThreadProperties {
         collector = normalizePool(collector, PoolProperties.collectorDefaults());
         common = common == null ? PoolProperties.commonDefaults() : common;
@@ -71,10 +65,9 @@ public record VirtualThreadProperties(
      * Pool-level configuration.
      */
     public record PoolProperties(
-            @DefaultValue("UNBOUNDED_VT") AdmissionMode mode,
-            @DefaultValue("0") int maxConcurrentJobs) {
+            AdmissionMode mode,
+            int maxConcurrentJobs) {
 
-        @ConstructorBinding
         public PoolProperties {
             mode = mode == null ? AdmissionMode.UNBOUNDED_VT : mode;
         }
@@ -112,14 +105,13 @@ public record VirtualThreadProperties(
      * Alerter-specific executor configuration.
      */
     public record AlerterProperties(
-            @Name("notify") PoolProperties notifyPool,
-            @DefaultValue("10") int periodicMaxConcurrentJobs,
+            PoolProperties notifyPool,
+            int periodicMaxConcurrentJobs,
             QueueProperties logWorker,
             QueueProperties reduce,
             QueueProperties windowEvaluator,
-            @DefaultValue("4") int notifyMaxConcurrentPerChannel) {
+            int notifyMaxConcurrentPerChannel) {
 
-        @ConstructorBinding
         public AlerterProperties {
             notifyPool = normalizePool(notifyPool, PoolProperties.alerterNotifyDefaults());
             periodicMaxConcurrentJobs = periodicMaxConcurrentJobs <= 0
@@ -146,12 +138,8 @@ public record VirtualThreadProperties(
      * Queue-preserving executor configuration.
      */
     public record QueueProperties(
-            @DefaultValue("0") int maxConcurrentJobs,
-            @DefaultValue("0") int queueCapacity) {
-
-        @ConstructorBinding
-        public QueueProperties {
-        }
+            int maxConcurrentJobs,
+            int queueCapacity) {
 
         public QueueProperties() {
             this(0, 0);
@@ -174,14 +162,10 @@ public record VirtualThreadProperties(
      * Async executor configuration.
      */
     public record AsyncProperties(
-            @DefaultValue("true") boolean enabled,
-            @DefaultValue("256") int concurrencyLimit,
-            @DefaultValue("true") boolean rejectWhenLimitReached,
-            @DefaultValue("5000") long taskTerminationTimeout) {
-
-        @ConstructorBinding
-        public AsyncProperties {
-        }
+            boolean enabled,
+            int concurrencyLimit,
+            boolean rejectWhenLimitReached,
+            long taskTerminationTimeout) {
 
         public AsyncProperties() {
             this(true, 256, true, 5000L);

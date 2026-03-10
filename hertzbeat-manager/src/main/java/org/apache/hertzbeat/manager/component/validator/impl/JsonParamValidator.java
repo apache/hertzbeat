@@ -18,10 +18,10 @@
 package org.apache.hertzbeat.manager.component.validator.impl;
 
 import tools.jackson.core.type.TypeReference;
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.component.validator.ParamValidator;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,7 +35,7 @@ public class JsonParamValidator implements ParamValidator {
     }
 
     @Override
-    public void validate(ParamDefine paramDefine, Param param) {
+    public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
         if (JsonUtil.fromJson(param.getParamValue(), new TypeReference<>() {
         }) == null) {
             throw new IllegalArgumentException("Params field " + paramDefine.getField() + " value "

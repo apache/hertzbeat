@@ -36,9 +36,9 @@ import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,7 +70,7 @@ class CollectServerTest {
     private DispatchProperties.EntranceProperties.NettyProperties nettyProperties;
 
     @Mock
-    private CommonThreadPool threadPool;
+    private BackgroundTaskExecutor threadPool;
 
     @Mock
     private CollectorInfoProperties infoProperties;
