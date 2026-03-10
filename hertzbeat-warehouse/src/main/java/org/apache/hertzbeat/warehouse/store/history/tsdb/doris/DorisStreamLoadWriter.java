@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb.doris;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;

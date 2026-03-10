@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -88,7 +88,7 @@ public class PrometheusExternAlertService implements ExternAlertService {
                     .triggerTimes(1)
                     .build();
 
-            alarmCommonReduce.reduceAndSendAlarm(singleAlert);   
+            alarmCommonReduce.reduceAndSendAlarm(singleAlert);
         }
     }
 

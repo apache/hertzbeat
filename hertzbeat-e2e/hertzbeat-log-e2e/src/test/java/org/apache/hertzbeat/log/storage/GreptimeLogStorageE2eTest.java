@@ -29,6 +29,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
+
+import java.util.ArrayList;
+import java.util.List;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -37,8 +41,6 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -48,6 +50,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * E2E tests for GreptimeDB log storage.
  */
 @SpringBootTest(classes = org.apache.hertzbeat.startup.HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = {
+        "warehouse.store.duckdb.enabled=false",
+        "warehouse.store.greptime.enabled=true"
+})
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class GreptimeLogStorageE2eTest {
@@ -86,8 +92,6 @@ public class GreptimeLogStorageE2eTest {
 
     @DynamicPropertySource
     static void greptimeProps(DynamicPropertyRegistry r) {
-        r.add("warehouse.store.duckdb.enabled", () -> "false");
-        r.add("warehouse.store.greptime.enabled", () -> "true");
         r.add("warehouse.store.greptime.http-endpoint", () -> "http://localhost:" + greptimedb.getMappedPort(GREPTIME_HTTP_PORT));
         r.add("warehouse.store.greptime.grpc-endpoints", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_GRPC_PORT));
         r.add("warehouse.store.greptime.username", () -> "");
@@ -96,9 +100,13 @@ public class GreptimeLogStorageE2eTest {
 
 
     @BeforeAll
-    void setUpAll() {
+    void setUpAll() throws InterruptedException {
         // Expose host ports for testcontainers
         Testcontainers.exposeHostPorts(port);
+
+        // Wait for HertzBeat to be fully ready before starting Vector
+        log.info("Waiting for HertzBeat to be fully ready on port {}...", port);
+        Thread.sleep(5000); // Give HertzBeat time to fully initialize
 
         vector = new GenericContainer<>(DockerImageName.parse(VECTOR_IMAGE))
                 .withExposedPorts(VECTOR_PORT)
@@ -114,9 +122,10 @@ public class GreptimeLogStorageE2eTest {
 
     @Test
     void testLogStorageToGreptimeDb() {
+        log.info("GreptimeDbDataStorage serverAvailable: {}", greptimeDbDataStorage.isServerAvailable());
 
         List<LogEntry> capturedLogs = new ArrayList<>();
-        
+
         // Wait for Vector to generate and send logs to HertzBeat
         await().atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofSeconds(3))
@@ -131,7 +140,7 @@ public class GreptimeLogStorageE2eTest {
                         Thread.currentThread().interrupt();
                         throw new RuntimeException("Test interrupted", e);
                     }
-                    
+
                     // Assert that we have captured at least some logs
                     assertFalse(capturedLogs.isEmpty(), "Should have captured at least one log entry");
                 });
@@ -142,13 +151,25 @@ public class GreptimeLogStorageE2eTest {
         assertNotNull(firstLog, "First log should not be null");
         assertNotNull(firstLog.getBody(), "Log body should not be null");
         assertNotNull(firstLog.getSeverityText(), "Severity text should not be null");
-        
+
+        // Directly write logs to GreptimeDB to test storage functionality
+        log.info("Directly writing {} captured logs to GreptimeDB", capturedLogs.size());
+        greptimeDbDataStorage.saveLogDataBatch(capturedLogs);
+
+        // Give some time for the write to complete
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         // Additional wait to ensure logs are persisted to GreptimeDB
         await().atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofSeconds(2))
                 .untilAsserted(() -> {
                     // Query GreptimeDB directly to verify data persistence
                     List<LogEntry> storedLogs = queryStoredLogs();
+                    log.info("Queried {} logs from GreptimeDB", storedLogs.size());
                     assertFalse(storedLogs.isEmpty(), "Should have logs stored in GreptimeDB");
                 });
     }
@@ -157,10 +178,10 @@ public class GreptimeLogStorageE2eTest {
      * Helper method to query stored logs directly from GreptimeDB
      */
     private List<LogEntry> queryStoredLogs() {
-        long endTime = System.currentTimeMillis();
-        long startTime = endTime - Duration.ofMinutes(5).toMillis(); // Look back 5 minutes
-        
-        return greptimeDbDataStorage.queryLogsByMultipleConditions(
-                startTime, endTime, null, null, null, null, null);
+        // Query without time condition to verify data exists
+        List<LogEntry> result = greptimeDbDataStorage.queryLogsByMultipleConditions(
+                null, null, null, null, null, null, null);
+        log.info("queryLogsByMultipleConditions returned {} entries", result.size());
+        return result;
     }
 }

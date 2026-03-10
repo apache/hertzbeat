@@ -67,12 +67,13 @@ spring:
 
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: h2
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
 ```
 
 Specific replacement parameters are as follows and you need to configure account, ip, port according to the postgresql environment:
@@ -88,12 +89,13 @@ spring:
       max-lifetime: 120000
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.PostgreSQLPlatform
     database: postgresql
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
 ```
 
 > Note: The above applies to the method of downloading and installing the package. For local data source switching, simply complete the [Database creation](./postgresql-change#database-creation) and modify the configuration in `hertzbeat-startup/src/main/resources/application.yml`.

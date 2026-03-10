@@ -12,7 +12,7 @@ sidebar_label: Development
 
 ### Backend start
 
-1. Requires `maven3+`, `java17` and `lombok` environments
+1. Requires `maven3+`, `java21` and `lombok` environments
 2. (Optional) Modify the configuration file: `hertzbeat-startup/src/main/resources/application.yml`
 3. Execute under the project root directory: `mvn clean install -DskipTests`
 4. Add VM Options: `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`
@@ -34,7 +34,7 @@ sidebar_label: Development
 
 ## Build HertzBeat binary package
 
-> Requires `maven3+`, `java17`, `node` and `pnpm` environments.
+> Requires `maven3+`, `java21`, `node` and `pnpm` environments.
 
 ### Frontend build
 
@@ -50,7 +50,7 @@ sidebar_label: Development
 
 ### Backend build
 
-1. Requires `maven3+`, `java17` environments
+1. Requires `maven3+`, `java21` environments
 
 2. Execute under the project root directory: `mvn clean package -Prelease`
 
@@ -58,7 +58,7 @@ The HertzBeat install package will at `dist/hertzbeat-{version}.tar.gz`
 
 ### Collector build
 
-1. Requires `maven3+`, `java17` environments
+1. Requires `maven3+`, `java21` environments
 
 2. Execute under the project root directory: `mvn clean install`
 

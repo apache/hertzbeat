@@ -17,11 +17,11 @@
 
 package org.apache.hertzbeat.common.serialize;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.codec.RedisCodec;
 import io.netty.buffer.Unpooled;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.util.JsonUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -31,12 +31,6 @@ import java.nio.charset.StandardCharsets;
  */
 @Slf4j
 public class RedisLogEntryCodec implements RedisCodec<String, LogEntry> {
-
-    private final ObjectMapper objectMapper;
-
-    public RedisLogEntryCodec() {
-        this.objectMapper = new ObjectMapper();
-    }
 
     @Override
     public String decodeKey(ByteBuffer byteBuffer) {
@@ -48,13 +42,12 @@ public class RedisLogEntryCodec implements RedisCodec<String, LogEntry> {
         if (byteBuffer == null || !byteBuffer.hasRemaining()) {
             return null;
         }
-        try {
-            String jsonString = Unpooled.wrappedBuffer(byteBuffer).toString(StandardCharsets.UTF_8);
-            return objectMapper.readValue(jsonString, LogEntry.class);
-        } catch (Exception e) {
-            log.error("Failed to decode LogEntry from JSON: {}", e.getMessage());
-            return null;
+        String jsonString = Unpooled.wrappedBuffer(byteBuffer).toString(StandardCharsets.UTF_8);
+        LogEntry logEntry = JsonUtil.fromJson(jsonString, LogEntry.class);
+        if (logEntry == null) {
+            log.error("Failed to decode LogEntry from JSON");
         }
+        return logEntry;
     }
 
     @Override
@@ -64,12 +57,11 @@ public class RedisLogEntryCodec implements RedisCodec<String, LogEntry> {
 
     @Override
     public ByteBuffer encodeValue(LogEntry logEntry) {
-        try {
-            String jsonString = objectMapper.writeValueAsString(logEntry);
-            return ByteBuffer.wrap(jsonString.getBytes(StandardCharsets.UTF_8));
-        } catch (Exception e) {
-            log.error("Failed to encode LogEntry to JSON: {}", e.getMessage());
+        String jsonString = JsonUtil.toJson(logEntry);
+        if (jsonString == null) {
+            log.error("Failed to encode LogEntry to JSON");
             return null;
         }
+        return ByteBuffer.wrap(jsonString.getBytes(StandardCharsets.UTF_8));
     }
-} 
+}

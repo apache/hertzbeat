@@ -17,8 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import java.lang.reflect.Type;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
@@ -33,23 +32,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class MailGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<MailServerConfig> {
 
-    /**
-     * MailGeneralConfigServiceImpl's constructor creates an instance of this class
-     * through the default constructor or deserialization construction (setBeanProps).
-     * The parameter generalConfigDao is used for dao layer operation data,
-     * and objectMapper is used for object mapping.
-     * @param generalConfigDao dao layer operation data, needed to create an instance of this class
-     * @param objectMapper     object mapping , needed to create an instance of this class
-     */
-    public MailGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
-        super(generalConfigDao, objectMapper);
+    public MailGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao) {
+        super(generalConfigDao);
     }
-    
+
     @Override
     public String type() {
         return GeneralConfigTypeEnum.email.name();
     }
-    
+
     /**
      * This method is used to get the TypeReference of NoticeSender type for subsequent processing.
      * a TypeReference of NoticeSender type

@@ -1,16 +1,16 @@
 ---
-id: package-deploy  
-title: 通过安装包安装 HertzBeat    
+id: package-deploy
+title: 通过安装包安装 HertzBeat
 sidebar_label: 安装包方式安装
 ---
 
 :::tip
 Apache HertzBeat™ 支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。
-由于1.6.0及以后版本使用 `Java 17` ，且安装包不再提供内置jdk的版本，参考以下情况使用新版Hertzbeat。
+由于1.6.0及以后版本使用 `Java 21` ，且安装包不再提供内置jdk的版本，参考以下情况使用新版Hertzbeat。
 
-- 当你的服务器中默认环境变量为 `Java 17` 时，这一步你无需任何操作。
-- 当你的服务器中默认环境变量不为 `Java 17`时，如 `Java 8` 、 `Java 11` ，若你服务器中**没有**其他应用需要低版本 `Java` ，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) 选择相应的发行版下载，并在搜索引擎搜索如何设置新的环境变量指向新的`Java 17`。
-- 当你的服务器中默认环境变量不为`Java 17`时，如 `Java 8` 、 `Java 11` ，若你服务器中**有**其他应用需要低版本 `Java` ，你不想更改环境变量，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) 选择相应的发行版下载，并将解压后的文件夹重命名为`java`，复制到Hertzbeat的解压目录下。
+- 当你的服务器中默认环境变量为 `Java 21` 时，这一步你无需任何操作。
+- 当你的服务器中默认环境变量不为 `Java 21`时，如 `Java 8` 、 `Java 11` ，若你服务器中**没有**其他应用需要低版本 `Java` ，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html) 选择相应的发行版下载，并在搜索引擎搜索如何设置新的环境变量指向新的`Java 21`。
+- 当你的服务器中默认环境变量不为`Java 21`时，如 `Java 8` 、 `Java 11` ，若你服务器中**有**其他应用需要低版本 `Java` ，你不想更改环境变量，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html) 选择相应的发行版下载，并将解压后的文件夹重命名为`java`，复制到Hertzbeat的解压目录下。
 
 :::
 
@@ -40,7 +40,7 @@ Apache HertzBeat™ 支持在Linux Windows Mac系统安装运行，CPU支持X86/
 
 3. 配置账户文件(可选)
 
-   HertzBeat 默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat  
+   HertzBeat 默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat
    若需要新增删除修改账户或密码，可以通过修改位于 `config/sureness.yml` 的配置文件实现，具体参考
 
    - [配置修改账户密码](account-modify)
@@ -50,7 +50,7 @@ Apache HertzBeat™ 支持在Linux Windows Mac系统安装运行，CPU支持X86/
    执行位于安装目录 bin 下的启动脚本 startup.sh, windows 环境下为 startup.bat
 
    ```shell
-   ./startup.sh 
+   ./startup.sh
    ```
 
 5. 开始探索HertzBeat
@@ -103,10 +103,10 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    执行位于安装目录 hertzbeat-collector/bin/ 下的启动脚本 startup.sh, windows 环境下为 startup.bat
 
    ```shell
-   ./startup.sh 
+   ./startup.sh
    ```
 
-4. 开始探索 HertzBeat Collector  
+4. 开始探索 HertzBeat Collector
    浏览器访问 [http://ip:1157/](http://ip:1157/) 即可开始探索使用，默认账户密码 admin/hertzbeat。
 
 **HAVE FUN**
@@ -119,21 +119,22 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 
 1. 启动失败，需您提前准备JAVA运行环境
 
-   安装JAVA运行环境-可参考[官方网站](https://www.oracle.com/java/technologies/downloads/)  
-   要求：JAVA17环境
-   下载JAVA安装包: [镜像站](https://mirrors.huaweicloud.com/openjdk/)  
+   安装JAVA运行环境-可参考[官方网站](https://www.oracle.com/java/technologies/downloads/)
+   要求：JAVA21环境
+   下载JAVA安装包: [镜像站](https://mirrors.huaweicloud.com/openjdk/)
    安装后命令行检查是否成功安装
 
    ```shell
    $ java -version
-   java version "17.0.9"
-   Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)
-   Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
+     openjdk version "21.0.9" 2025-10-21 LTS
+     OpenJDK Runtime Environment Corretto-21.0.9.10.1 (build 21.0.9+10-LTS)
+     OpenJDK 64-Bit Server VM Corretto-21.0.9.10.1 (build 21.0.9+10-LTS, mixed mode, sharing)
+
    ```
 
 2. 按照流程部署，访问 [http://ip:1157/](http://ip:1157/) 无界面
    请参考下面几点排查问题：
 
-   > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功  
-   > 二：HertzBeat的配置文件 `hertzbeat/config/application.yml` 里面的依赖服务IP账户密码等配置是否正确  
+   > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功
+   > 二：HertzBeat的配置文件 `hertzbeat/config/application.yml` 里面的依赖服务IP账户密码等配置是否正确
    > 三：若都无问题可以查看 `hertzbeat/logs/` 目录下面的运行日志是否有明显错误，提issue或交流群或社区反馈

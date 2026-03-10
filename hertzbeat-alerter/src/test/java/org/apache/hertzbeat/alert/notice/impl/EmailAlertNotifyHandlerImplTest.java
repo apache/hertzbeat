@@ -19,13 +19,10 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Properties;
 import org.apache.hertzbeat.common.entity.dto.MailServerConfig;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
@@ -35,6 +32,7 @@ import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,18 +55,15 @@ class EmailAlertNotifyHandlerImplTest {
 
     @Mock
     private JavaMailSenderImpl mailSender;
-    
-    @Mock
-    private ResourceBundle bundle;
-    
-    @Mock
-    private GeneralConfigDao generalConfigDao;
-    
-    @Mock
-    private MimeMessage mimeMessage;
 
     @Mock
-    private ObjectMapper objectMapper;
+    private ResourceBundle bundle;
+
+    @Mock
+    private GeneralConfigDao generalConfigDao;
+
+    @Mock
+    private MimeMessage mimeMessage;
 
     @InjectMocks
     private EmailAlertNotifyHandlerImpl emailAlertNotifyHandler;
@@ -78,27 +73,27 @@ class EmailAlertNotifyHandlerImplTest {
     private NoticeTemplate template;
 
     @BeforeEach
-    public void setUp() throws JsonProcessingException {
+    public void setUp() {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
         receiver.setEmail("test@example.com");
-        
+
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
         singleAlert.setLabels(new HashMap<>());
         singleAlert.getLabels().put("severity", "critical");
         singleAlert.getLabels().put("alertname", "Test Alert");
-        
+
         List<SingleAlert> alerts = new ArrayList<>();
         alerts.add(singleAlert);
         groupAlert.setAlerts(alerts);
-        
+
         template = new NoticeTemplate();
         template.setId(1L);
         template.setName("test-template");
         template.setContent("test content");
-        
+
         // Set up email server configuration
         MailServerConfig mailServerConfig = new MailServerConfig();
         mailServerConfig.setEmailHost("smtp.example.com");
@@ -106,17 +101,18 @@ class EmailAlertNotifyHandlerImplTest {
         mailServerConfig.setEmailUsername("sender@example.com");
         mailServerConfig.setEmailPassword("password");
         mailServerConfig.setEnable(true);
-        GeneralConfig generalConfig = GeneralConfig.builder().content("").build();
+
+        GeneralConfig generalConfig = GeneralConfig.builder()
+                .content(JsonUtil.toJson(mailServerConfig))
+                .build();
         when(generalConfigDao.findByType(any())).thenReturn(generalConfig);
-        when(objectMapper.readValue(any(String.class), eq(MailServerConfig.class)))
-            .thenReturn(mailServerConfig);
         when(mailSender.getJavaMailProperties()).thenReturn(new Properties());
     }
 
     @Test
     public void testNotifyAlertWithInvalidEmail() {
         receiver.setEmail(null);
-        assertThrows(AlertNoticeException.class, 
+        assertThrows(AlertNoticeException.class,
                 () -> emailAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
@@ -131,7 +127,7 @@ class EmailAlertNotifyHandlerImplTest {
     @Test
     public void testNotifyAlertFailure() {
         when(mailSender.createMimeMessage()).thenThrow(new RuntimeException("Test Error"));
-        assertThrows(AlertNoticeException.class, 
+        assertThrows(AlertNoticeException.class,
                 () -> emailAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 }

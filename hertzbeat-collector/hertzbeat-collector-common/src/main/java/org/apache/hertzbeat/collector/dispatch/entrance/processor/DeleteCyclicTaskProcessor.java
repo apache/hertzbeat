@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
@@ -47,7 +47,7 @@ public class DeleteCyclicTaskProcessor implements NettyRemotingProcessor {
             return null;
         }
         for (Long jobId : jobIds) {
-            collectServer.getCollectJobService().cancelAsyncCollectJob(jobId);   
+            collectServer.getCollectJobService().cancelAsyncCollectJob(jobId);
         }
         return null;
     }

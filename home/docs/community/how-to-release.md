@@ -10,7 +10,7 @@ This tutorial describes in detail how to release Apache HertzBeat™, take the r
 
 This release process is operated in the UbuntuOS(Windows,Mac), and the following tools are required:
 
-- JDK 17
+- JDK 21
 - Node18 pnpm
 - Apache Maven 3.x
 - GnuPG 2.x

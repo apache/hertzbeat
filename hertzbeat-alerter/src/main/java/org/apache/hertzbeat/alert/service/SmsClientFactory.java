@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
 import org.apache.hertzbeat.alert.service.impl.SmsLocalSmsClientImpl;
@@ -30,6 +29,7 @@ import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.support.event.SmsConfigChangeEvent;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -50,14 +50,12 @@ public class SmsClientFactory {
     private static final String TYPE = GeneralConfigTypeEnum.sms.name();
 
     private final GeneralConfigDao generalConfigDao;
-    private final ObjectMapper objectMapper;
     private final SmsConfig yamlSmsConfig;
 
     private volatile SmsClient currentSmsClient;
 
-    public SmsClientFactory(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper, SmsConfig yamlSmsConfig) {
+    public SmsClientFactory(GeneralConfigDao generalConfigDao, SmsConfig yamlSmsConfig) {
         this.generalConfigDao = generalConfigDao;
-        this.objectMapper = objectMapper;
         this.yamlSmsConfig = yamlSmsConfig;
     }
 
@@ -118,7 +116,7 @@ public class SmsClientFactory {
         try {
             GeneralConfig config = generalConfigDao.findByType(TYPE);
             if (config != null && config.getContent() != null) {
-                return objectMapper.readValue(config.getContent(), SmsConfig.class);
+                return JsonUtil.fromJson(config.getContent(), SmsConfig.class);
             }
         } catch (Exception e) {
             log.error("[SmsClientFactory] Failed to load database configuration", e);

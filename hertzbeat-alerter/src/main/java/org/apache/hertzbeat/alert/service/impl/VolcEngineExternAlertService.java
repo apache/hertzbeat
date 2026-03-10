@@ -17,10 +17,8 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.alert.dto.VolcEngineExternEventAlert;
@@ -56,10 +54,12 @@ public class VolcEngineExternAlertService implements ExternAlertService {
     );
 
     @Override
-    @SneakyThrows
     public void addExternAlert(String content) {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(content);
+        JsonNode root = JsonUtil.fromJson(content);
+        if (root == null) {
+            log.warn("parse extern alert content failed! content: {}", content);
+            return;
+        }
         String type = root.get("Type").asText();
         if (VolcEngineExternMetricAlert.ALERT_TYPE_EVENT.equals(type)) {
             VolcEngineExternEventAlert eventAlert = JsonUtil.fromJson(content, VolcEngineExternEventAlert.class);
