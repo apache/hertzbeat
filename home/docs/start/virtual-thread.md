@@ -70,7 +70,7 @@ hertzbeat:
 | `hertzbeat.vthreads.enabled` | `true` | Global switch for the HertzBeat virtual-thread executors |
 | `hertzbeat.vthreads.common.mode` | `UNBOUNDED_VT` | Common short-running tasks |
 | `hertzbeat.vthreads.collector.mode` | `LIMIT_AND_REJECT` | Keeps collector fast-fail admission |
-| `hertzbeat.vthreads.collector.max-concurrent-jobs` | `availableProcessors() * 16 - 1` | Computed at runtime; no YAML update required |
+| `hertzbeat.vthreads.collector.max-concurrent-jobs` | `512` | Default single-node collector concurrency target |
 | `hertzbeat.vthreads.manager.mode` | `LIMIT_AND_REJECT` | Keeps manager admission behavior |
 | `hertzbeat.vthreads.manager.max-concurrent-jobs` | `10` | Same as the legacy limit |
 | `hertzbeat.vthreads.alerter.notify.mode` | `LIMIT_AND_REJECT` | Notification executor admission |
@@ -92,7 +92,9 @@ hertzbeat:
 ## 5. Tuning Guidance
 
 - Start with the defaults unless you already know a downstream dependency is weak.
+- The collector default is intentionally higher than the legacy CPU-based pool size so a single HertzBeat node can carry more blocking collection work before you need extra collectors.
 - Lower `collector.max-concurrent-jobs` when the collector talks to a small database, a low-capacity HTTP endpoint, or fragile network devices.
+- Raise `collector.max-concurrent-jobs` above `512` on dedicated collector nodes when downstream services, network bandwidth, and timeouts are already understood and controlled.
 - Raise `alerter.notify.max-concurrent-jobs` or `notify-max-concurrent-per-channel` only if your notification providers and HTTP connection pools can absorb the increase.
 - Keep `warehouse.mode` unbounded unless you have a clear bottleneck model. Database and TSDB client pools should remain the main limiters.
 - `reduce.queue-capacity` and `window-evaluator.queue-capacity` are intentionally left unset by default so existing queueing semantics remain compatible.

@@ -32,7 +32,7 @@ class VirtualThreadPropertiesTest {
         assertTrue(properties.isEnabled());
 
         assertEquals(AdmissionMode.LIMIT_AND_REJECT, properties.getCollector().getMode());
-        assertTrue(properties.getCollector().getMaxConcurrentJobs() >= 1);
+        assertEquals(512, properties.getCollector().getMaxConcurrentJobs());
 
         assertEquals(AdmissionMode.UNBOUNDED_VT, properties.getCommon().getMode());
         assertEquals(AdmissionMode.LIMIT_AND_REJECT, properties.getManager().getMode());

@@ -30,6 +30,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "hertzbeat.vthreads")
 public class VirtualThreadProperties {
 
+    private static final int DEFAULT_COLLECTOR_MAX_CONCURRENT_JOBS = 512;
+
     private boolean enabled = true;
 
     private PoolProperties collector = PoolProperties.collectorDefaults();
@@ -94,8 +96,7 @@ public class VirtualThreadProperties {
         }
 
         private static int defaultCollectorConcurrency() {
-            int historicalMax = Runtime.getRuntime().availableProcessors() * 16;
-            return Math.max(1, historicalMax - 1);
+            return DEFAULT_COLLECTOR_MAX_CONCURRENT_JOBS;
         }
     }
 

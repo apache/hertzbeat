@@ -70,7 +70,7 @@ hertzbeat:
 | `hertzbeat.vthreads.enabled` | `true` | HertzBeat 虚拟线程执行器总开关 |
 | `hertzbeat.vthreads.common.mode` | `UNBOUNDED_VT` | 通用短任务执行器 |
 | `hertzbeat.vthreads.collector.mode` | `LIMIT_AND_REJECT` | 保持采集入口快速拒绝语义 |
-| `hertzbeat.vthreads.collector.max-concurrent-jobs` | `availableProcessors() * 16 - 1` | 运行时动态计算，不依赖 YAML |
+| `hertzbeat.vthreads.collector.max-concurrent-jobs` | `512` | 单机默认采集并发目标值 |
 | `hertzbeat.vthreads.manager.mode` | `LIMIT_AND_REJECT` | 保持 manager 入口语义 |
 | `hertzbeat.vthreads.manager.max-concurrent-jobs` | `10` | 与原来的限制一致 |
 | `hertzbeat.vthreads.alerter.notify.mode` | `LIMIT_AND_REJECT` | 通知执行器入口控制 |
@@ -92,7 +92,9 @@ hertzbeat:
 ## 5. 调优建议
 
 - 除非你已经明确知道某个下游资源比较脆弱，否则先使用默认值。
+- collector 默认值刻意高于旧版按 CPU 推导的线程池上限，这样单独部署 HertzBeat 主程序时可以承载更多阻塞型采集任务，减少对额外 collector 的依赖。
 - 当 collector 连接的是小规格数据库、低容量 HTTP 服务或脆弱网络设备时，再下调 `collector.max-concurrent-jobs`。
+- 对于专门部署的 collector 节点，如果你已经清楚下游容量、网络带宽和超时设置，也可以把 `collector.max-concurrent-jobs` 提高到 `512` 以上。
 - 只有当通知通道供应商和 HTTP 连接池都能承受更高吞吐时，才上调 `alerter.notify.max-concurrent-jobs` 或 `notify-max-concurrent-per-channel`。
 - `warehouse.mode` 建议保持 `UNBOUNDED_VT`，真正的资源限制仍应交给数据库/TSDB 客户端连接池。
 - `reduce.queue-capacity` 和 `window-evaluator.queue-capacity` 默认故意不写，这样才能兼容旧版队列语义。
