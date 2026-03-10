@@ -17,9 +17,17 @@
 
 package org.apache.hertzbeat.ai.tools.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.usthe.sureness.subject.SubjectSum;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.ai.config.McpContextHolder;
+import org.apache.hertzbeat.ai.dao.ChatConversationDao;
+import org.apache.hertzbeat.common.entity.ai.ChatConversation;
+import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.AppService;
@@ -44,76 +52,79 @@ import java.util.Map;
 @Slf4j
 @Service
 public class MonitorToolsImpl implements MonitorTools {
+
     @Autowired
     private MonitorService monitorService;
     @Autowired
     private AppService appService;
+    @Autowired
+    private ChatConversationDao conversationDao;
+
 
     /**
-     * Tool to query monitor information with flexible filtering and pagination.
-     * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
-     * pagination.
-     * Returns detailed monitor information including ID, name, type, host, and status.
+     * Tool to query monitor information with flexible filtering and pagination. Supports filtering by monitor IDs,
+     * type, status, host, labels, sorting, and pagination. Returns detailed monitor information including ID, name,
+     * type, host, and status.
      */
     @Override
     @Tool(name = "query_monitors", description = """
-            HertzBeat: Query Existing/configured monitors in HertzBeat.
-            This tool retrieves monitors based on various filters and parameters.
-            Comprehensive monitor querying with flexible filtering, pagination, and specialized views.
+        HertzBeat: Query Existing/configured monitors in HertzBeat.
+        This tool retrieves monitors based on various filters and parameters.
+        Comprehensive monitor querying with flexible filtering, pagination, and specialized views.
 
-            MONITOR STATUSES:
-            - status=1: Online/Active monitors (healthy, responding normally)
-            - status=2: Offline monitors (not responding, connection failed)
-            - status=3: Unreachable monitors (network/connectivity issues)
-            - status=0: Paused monitors (manually disabled/suspended)
-            - status=9 or null: All monitors regardless of status (default)
+        MONITOR STATUSES:
+        - status=1: Online/Active monitors (healthy, responding normally)
+        - status=2: Offline monitors (not responding, connection failed)
+        - status=3: Unreachable monitors (network/connectivity issues)
+        - status=0: Paused monitors (manually disabled/suspended)
+        - status=9 or null: All monitors regardless of status (default)
 
-            COMMON USE CASES & PARAMETER COMBINATIONS:
+        COMMON USE CASES & PARAMETER COMBINATIONS:
 
-            1. BASIC MONITOR LISTING:
-               - Default: No parameters (shows all monitors, 8 per page)
-               - By type: app='linux' (show only Linux monitors)
-               - Search: search='web' (find monitors with 'web' in name/host)
+        1. BASIC MONITOR LISTING:
+           - Default: No parameters (shows all monitors, 8 per page)
+           - By type: app='linux' (show only Linux monitors)
+           - Search: search='web' (find monitors with 'web' in name/host)
 
-            2. STATUS-BASED QUERIES:
-               - Healthy monitors: status=1, pageSize=50
-               - Problem monitors: status=2 or status=3, pageSize=50
-               - Offline monitors only: status=2
-               - Unreachable monitors only: status=3
-               - Paused monitors: status=0
+        2. STATUS-BASED QUERIES:
+           - Healthy monitors: status=1, pageSize=50
+           - Problem monitors: status=2 or status=3, pageSize=50
+           - Offline monitors only: status=2
+           - Unreachable monitors only: status=3
+           - Paused monitors: status=0
 
-            3. MONITORING HEALTH OVERVIEW:
-               - All statuses with statistics: status=9, includeStats=true, pageSize=100
-               - Unhealthy monitors: Pass both status=2 AND status=3 (make 2 separate calls)
+        3. MONITORING HEALTH OVERVIEW:
+           - All statuses with statistics: status=9, includeStats=true, pageSize=100
+           - Unhealthy monitors: Pass both status=2 AND status=3 (make 2 separate calls)
 
-            4. ADVANCED FILTERING:
-               - Specific monitor types: app='mysql', status=1 (healthy MySQL monitors)
-               - Label-based: labels='env:prod,critical:true'
-               - Host search: search='192.168' (find by IP pattern)
-               - Monitor IDs: ids=[1,2,3] (specific monitors by ID)
+        4. ADVANCED FILTERING:
+           - Specific monitor types: app='mysql', status=1 (healthy MySQL monitors)
+           - Label-based: labels='env:prod,critical:true'
+           - Host search: search='192.168' (find by IP pattern)
+           - Monitor IDs: ids=[1,2,3] (specific monitors by ID)
 
-            5. SORTING & PAGINATION:
-               - Recently updated: sort='gmtUpdate', order='desc'
-               - Alphabetical: sort='name', order='asc'
-               - By creation: sort='gmtCreate', order='desc' (newest first)
-               - Large datasets: pageSize=50-100 for bulk operations
+        5. SORTING & PAGINATION:
+           - Recently updated: sort='gmtUpdate', order='desc'
+           - Alphabetical: sort='name', order='asc'
+           - By creation: sort='gmtCreate', order='desc' (newest first)
+           - Large datasets: pageSize=50-100 for bulk operations
 
-            RESPONSE FORMAT:
-            - includeStats=true: Adds status distribution summary at top
-            - Default: Simple list with ID, name, type, host, status
-            - Shows total count and pagination info
-            """)
+        RESPONSE FORMAT:
+        - includeStats=true: Adds status distribution summary at top
+        - Default: Simple list with ID, name, type, host, status
+        - Shows total count and pagination info
+        """)
     public String queryMonitors(
-            @ToolParam(description = "Specific monitor IDs to retrieve (optional)", required = false) List<Long> ids,
-            @ToolParam(description = "Monitor type filter: 'linux', 'mysql', 'http', 'redis', etc. (optional)", required = false) String app,
-            @ToolParam(description = "Monitor status: 1=online, 2=offline, 3=unreachable, 0=paused, 9=all (default: 9)", required = false) Byte status,
-            @ToolParam(description = "Search in monitor names or hosts (partial matching)", required = false) String search,
-            @ToolParam(description = "Label filters, format: 'key1:value1,key2:value2'", required = false) String labels,
-            @ToolParam(description = "Sort field: 'name', 'gmtCreate', 'gmtUpdate', 'status', 'app' (default: gmtCreate)", required = false) String sort,
-            @ToolParam(description = "Sort order: 'asc' (ascending) or 'desc' (descending, default)", required = false) String order,
-            @ToolParam(description = "Page number starting from 0 (default: 0)", required = false) Integer pageIndex,
-            @ToolParam(description = "Items per page: 1-100 recommended (default: 20)", required = false) Integer pageSize,
-            @ToolParam(description = "Include status statistics summary (default: false)", required = false) Boolean includeStats) {
+        @ToolParam(description = "Specific monitor IDs to retrieve (optional)", required = false) List<Long> ids,
+        @ToolParam(description = "Monitor type filter: 'linux', 'mysql', 'http', 'redis', etc. (optional)", required = false) String app,
+        @ToolParam(description = "Monitor status: 1=online, 2=offline, 3=unreachable, 0=paused, 9=all (default: 9)", required = false) Byte status,
+        @ToolParam(description = "Search in monitor names or hosts (partial matching)", required = false) String search,
+        @ToolParam(description = "Label filters, format: 'key1:value1,key2:value2'", required = false) String labels,
+        @ToolParam(description = "Sort field: 'name', 'gmtCreate', 'gmtUpdate', 'status', 'app' (default: gmtCreate)", required = false) String sort,
+        @ToolParam(description = "Sort order: 'asc' (ascending) or 'desc' (descending, default)", required = false) String order,
+        @ToolParam(description = "Page number starting from 0 (default: 0)", required = false) Integer pageIndex,
+        @ToolParam(description = "Items per page: 1-100 recommended (default: 20)", required = false) Integer pageSize,
+        @ToolParam(description = "Include status statistics summary (default: false)", required = false) Boolean includeStats) {
         try {
             // Set defaults
             if (pageSize == null || pageSize <= 0) {
@@ -130,7 +141,7 @@ public class MonitorToolsImpl implements MonitorTools {
             log.debug("Current security subject: {}", subjectSum);
 
             Page<Monitor> result = monitorService.getMonitors(
-                    ids, app, search, status, sort, order, pageIndex, pageSize, labels);
+                ids, app, search, status, sort, order, pageIndex, pageSize, labels);
             log.debug("MonitorService.getMonitors result: {}", result);
 
             StringBuilder response = new StringBuilder();
@@ -160,19 +171,20 @@ public class MonitorToolsImpl implements MonitorTools {
             }
 
             response.append("Query Results: ").append(result.getContent().size())
-                   .append(" monitors (Total: ").append(result.getTotalElements()).append(")\n");
+                .append(" monitors (Total: ").append(result.getTotalElements()).append(")\n");
 
             if (result.getTotalPages() > 1) {
-                response.append("Page ").append(pageIndex + 1).append(" of ").append(result.getTotalPages()).append("\n");
+                response.append("Page ").append(pageIndex + 1).append(" of ").append(result.getTotalPages())
+                    .append("\n");
             }
             response.append("\n");
 
             for (Monitor monitor : result.getContent()) {
                 response.append("ID: ").append(monitor.getId())
-                       .append(" | Name: ").append(monitor.getName())
-                       .append(" | Type: ").append(monitor.getApp())
-                       .append(" | Instance: ").append(monitor.getInstance())
-                       .append(" | Status: ").append(UtilityClass.getStatusText(monitor.getStatus()));
+                    .append(" | Name: ").append(monitor.getName())
+                    .append(" | Type: ").append(monitor.getApp())
+                    .append(" | Instance: ").append(monitor.getInstance())
+                    .append(" | Status: ").append(UtilityClass.getStatusText(monitor.getStatus()));
 
                 // Add creation date for better context
                 if (monitor.getGmtCreate() != null) {
@@ -224,15 +236,59 @@ public class MonitorToolsImpl implements MonitorTools {
             - Redis: {"host":"redis.server.com", "port":"6379", "password":"xxx"}
             """)
     public String addMonitor(
-            @ToolParam(description = "Monitor name (required)", required = true) String name,
-            @ToolParam(description = "Monitor type: website, mysql, postgresql, redis, linux, windows, etc.", required = true) String app,
-            @ToolParam(description = "Collection interval in seconds (default: 600)", required = false) Integer intervals,
-            @ToolParam(description = "Monitor-specific parameters as JSON string. "
-                    + "Use get_monitor_additional_params to see required fields. "
-                    + "Example: {\"host\":\"192.168.1.1\", \"port\":\"22\", \"username\":\"root\"}",
-                    required = true) String params,
-            @ToolParam(description = "Monitor description (optional)", required = false) String description) {
+        @ToolParam(description = "Monitor name (required)", required = true) String name,
+        @ToolParam(description = "Monitor type: website, mysql, postgresql, redis, linux, windows, etc.", required = true) String app,
+        @ToolParam(description = "Collection interval in seconds (default: 600)", required = false) Integer intervals,
+        @ToolParam(description = "Monitor-specific parameters as JSON string. "
+            + "Use get_monitor_additional_params to see required fields. "
+            + "Example: {\"host\":\"192.168.1.1\", \"port\":\"22\", \"username\":\"root\"}",
+            required = true) String params,
+        @ToolParam(description = "Monitor description (optional)", required = false) String description) {
+        return addMonitorProtected(null, name, app, intervals, params, description);
+    }
 
+    @Override
+    @Tool(name = "add_monitor_protected", description = """
+        HertzBeat: Add a new monitoring target to HertzBeat with comprehensive configuration.
+        This tool dynamically handles different parameter requirements for each monitor type.
+
+        This tool creates monitors with proper app-specific parameters.
+
+        *********
+        VERY IMPORTANT:
+        ALWAYS use get_monitor_additional_params to check the additional required parameters for the chosen type before adding a monitor or even mentioning it.
+        Use list_monitor_types tool to see available monitor type names to use here in the app parameter.
+        Use the information obtained from this to query user for parameters.
+        If the User has not given any parameters, ask them to provide the necessary parameters, until all the necessary parameters are provided.
+        If the conversation ID is unknown, please call the `add_monitor` method.
+        **********
+
+        Examples of natural language requests this tool handles:
+        - "Monitor website example.com with HTTPS on port 443"
+        - "Add MySQL monitoring for database server at 192.168.1.10 with user admin"
+        - "Monitor Linux server health on host server.company.com via SSH"
+        - "Set up Redis monitoring on localhost port 6379 with password"
+
+        PARAMETER MAPPING: Use the 'params' parameter to pass all monitor-specific configuration.
+        The params should be a JSON string containing key-value pairs for the monitor type.
+        Use get_monitor_additional_params tool to see what parameters are required for each monitor type.
+
+        PARAMS EXAMPLES:
+        - Website: {"host":"example.com", "port":"443", "uri":"/api/health", "ssl":"true", "method":"GET"}
+        - Linux: {"host":"192.168.1.10", "port":"22", "username":"root", "password":"xxx"}
+        - MySQL: {"host":"db.server.com", "port":"3306", "username":"admin", "password":"xxx", "database":"mydb"}
+        - Redis: {"host":"redis.server.com", "port":"6379", "password":"xxx"}
+        """)
+    public String addMonitorProtected(
+        @ToolParam(description = "The id for current conversation (required)", required = true) Long conversationId,
+        @ToolParam(description = "Monitor name (required)", required = true) String name,
+        @ToolParam(description = "Monitor type: website, mysql, postgresql, redis, linux, windows, etc.", required = true) String app,
+        @ToolParam(description = "Collection interval in seconds (default: 600)", required = false) Integer intervals,
+        @ToolParam(description = "Monitor-specific parameters as JSON string. "
+            + "Use get_monitor_additional_params to see required fields. "
+            + "Example: {\"host\":\"192.168.1.1\", \"port\":\"22\", \"username\":\"root\"}",
+            required = true) String params,
+        @ToolParam(description = "Monitor description (optional)", required = false) String description) {
         try {
             log.info("Adding monitor: name={}, app={}", name, app);
 
@@ -251,9 +307,22 @@ public class MonitorToolsImpl implements MonitorTools {
             if (intervals == null || intervals < 10) {
                 intervals = 600;
             }
-
             // Parse params to extract host and port for instance
             List<Param> paramList = parseParams(params);
+
+            // Query and add sensitive parameters
+            if (conversationId != null) {
+                Optional<ChatConversation> chatConversation = conversationDao.findById(conversationId);
+                if (chatConversation.isPresent() && StringUtils.isNotEmpty(chatConversation.get().getSecurityData())) {
+                    List<Param> securityParams = JsonUtil.fromJson(
+                        AesUtil.aesDecode(chatConversation.get().getSecurityData()),
+                        new TypeReference<List<Param>>() {
+                        });
+                    if (CollectionUtils.isNotEmpty(securityParams)) {
+                        paramList.addAll(securityParams);
+                    }
+                }
+            }
             String host = paramList.stream()
                     .filter(p -> "host".equals(p.getField()))
                     .map(Param::getParamValue)
