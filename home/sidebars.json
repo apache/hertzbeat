@@ -294,7 +294,7 @@
         {
           "type": "category",
           "label": "llm",
-          "items": ["help/openai","help/deepseek"]
+          "items": ["help/openai","help/deepseek","help/lmstudio"]
         },
         {
           "type": "category",
