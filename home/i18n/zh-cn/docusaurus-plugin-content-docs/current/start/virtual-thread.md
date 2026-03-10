@@ -70,7 +70,7 @@ hertzbeat:
 | `hertzbeat.vthreads.enabled` | `true` | HertzBeat 虚拟线程执行器总开关 |
 | `hertzbeat.vthreads.common.mode` | `UNBOUNDED_VT` | 通用短任务执行器 |
 | `hertzbeat.vthreads.collector.mode` | `LIMIT_AND_REJECT` | 保持采集入口快速拒绝语义 |
-| `hertzbeat.vthreads.collector.max-concurrent-jobs` | `512` | 单机默认采集并发目标值 |
+| `hertzbeat.vthreads.collector.max-concurrent-jobs` | `512` | 面向单机混合 HTTP/JDBC 采集场景的折中默认值 |
 | `hertzbeat.vthreads.manager.mode` | `LIMIT_AND_REJECT` | 保持 manager 入口语义 |
 | `hertzbeat.vthreads.manager.max-concurrent-jobs` | `10` | 与原来的限制一致 |
 | `hertzbeat.vthreads.alerter.notify.mode` | `LIMIT_AND_REJECT` | 通知执行器入口控制 |
@@ -93,11 +93,16 @@ hertzbeat:
 
 - 除非你已经明确知道某个下游资源比较脆弱，否则先使用默认值。
 - collector 默认值刻意高于旧版按 CPU 推导的线程池上限，这样单独部署 HertzBeat 主程序时可以承载更多阻塞型采集任务，减少对额外 collector 的依赖。
+- 默认值之所以设为 `512`，是因为它更适合作为混合负载起点。我们本地验证时，HTTP 型采集在 `512` 以上还能继续扩展，而 JDBC 型采集在接近 `512` 时已经接近甜点，继续提高并发反而会掉总吞吐。
+- 虚拟线程解决的是平台线程成本问题，不会消除数据库连接上限、HTTP 连接上限、网络带宽、文件描述符或下游服务限流。并发调得过高，只是把瓶颈转移到这些资源上。
+- 如果你的采集任务大多是 HTTP，而且目标分散在很多不同主机上，可以先尝试把 `collector.max-concurrent-jobs` 提高到 `768`，稳定后再考虑 `1024`。
+- 如果你的采集任务大多是 JDBC 或其他数据库型采集，建议把 `collector.max-concurrent-jobs` 控制在 `256` 到 `512`。这类场景下，并发超过 `512` 后不一定更快。
+- 如果你暂时不确定负载结构，就先保持 `512`。对于混合场景，它通常比直接上 `768+` 更稳。
 - 当 collector 连接的是小规格数据库、低容量 HTTP 服务或脆弱网络设备时，再下调 `collector.max-concurrent-jobs`。
-- 对于专门部署的 collector 节点，如果你已经清楚下游容量、网络带宽和超时设置，也可以把 `collector.max-concurrent-jobs` 提高到 `512` 以上。
 - 只有当通知通道供应商和 HTTP 连接池都能承受更高吞吐时，才上调 `alerter.notify.max-concurrent-jobs` 或 `notify-max-concurrent-per-channel`。
 - `warehouse.mode` 建议保持 `UNBOUNDED_VT`，真正的资源限制仍应交给数据库/TSDB 客户端连接池。
 - `reduce.queue-capacity` 和 `window-evaluator.queue-capacity` 默认故意不写，这样才能兼容旧版队列语义。
+- 每次调高并发时都建议按小步递增，并同时观察超时率、下游 `429/5xx`、数据库连接池等待时间、内存和文件描述符使用情况。
 
 ## 6. 回滚方式
 

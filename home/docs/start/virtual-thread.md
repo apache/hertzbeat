@@ -70,7 +70,7 @@ hertzbeat:
 | `hertzbeat.vthreads.enabled` | `true` | Global switch for the HertzBeat virtual-thread executors |
 | `hertzbeat.vthreads.common.mode` | `UNBOUNDED_VT` | Common short-running tasks |
 | `hertzbeat.vthreads.collector.mode` | `LIMIT_AND_REJECT` | Keeps collector fast-fail admission |
-| `hertzbeat.vthreads.collector.max-concurrent-jobs` | `512` | Default single-node collector concurrency target |
+| `hertzbeat.vthreads.collector.max-concurrent-jobs` | `512` | Balanced default for mixed HTTP and JDBC collection workloads on a single node |
 | `hertzbeat.vthreads.manager.mode` | `LIMIT_AND_REJECT` | Keeps manager admission behavior |
 | `hertzbeat.vthreads.manager.max-concurrent-jobs` | `10` | Same as the legacy limit |
 | `hertzbeat.vthreads.alerter.notify.mode` | `LIMIT_AND_REJECT` | Notification executor admission |
@@ -93,11 +93,16 @@ hertzbeat:
 
 - Start with the defaults unless you already know a downstream dependency is weak.
 - The collector default is intentionally higher than the legacy CPU-based pool size so a single HertzBeat node can carry more blocking collection work before you need extra collectors.
+- `512` is the default because it is a good mixed-workload starting point. In local verification, HTTP-heavy collection continued scaling beyond `512`, while JDBC-style collection peaked around `512` and dropped when concurrency was pushed higher.
+- Virtual threads remove platform-thread pressure, but they do not remove database limits, HTTP connection limits, network bandwidth limits, file descriptor limits, or downstream rate limits. Raising concurrency too far just moves the bottleneck.
+- If most of your workload is HTTP collection across many different targets, try `768` first and then `1024` if timeouts, error rates, and connection usage remain stable.
+- If most of your workload is JDBC or other database-backed collection, keep `collector.max-concurrent-jobs` around `256` to `512`. In this type of workload, raising concurrency above `512` can reduce total throughput instead of improving it.
+- If you are not sure about the workload mix, keep `512` as the starting point. It is a safer default than `768+` for mixed environments.
 - Lower `collector.max-concurrent-jobs` when the collector talks to a small database, a low-capacity HTTP endpoint, or fragile network devices.
-- Raise `collector.max-concurrent-jobs` above `512` on dedicated collector nodes when downstream services, network bandwidth, and timeouts are already understood and controlled.
 - Raise `alerter.notify.max-concurrent-jobs` or `notify-max-concurrent-per-channel` only if your notification providers and HTTP connection pools can absorb the increase.
 - Keep `warehouse.mode` unbounded unless you have a clear bottleneck model. Database and TSDB client pools should remain the main limiters.
 - `reduce.queue-capacity` and `window-evaluator.queue-capacity` are intentionally left unset by default so existing queueing semantics remain compatible.
+- Change concurrency in steps and observe timeout rate, downstream `429` or `5xx`, database pool wait time, and memory or file descriptor usage before raising it again.
 
 ## 6. Rollback
 
