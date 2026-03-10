@@ -18,24 +18,27 @@
 package org.apache.hertzbeat.alert.reduce;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.dao.AlertInhibitDao;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.AllArgsConstructor;
@@ -46,7 +49,7 @@ import lombok.AllArgsConstructor;
  */
 @Component
 @Slf4j
-public class AlarmInhibitReduce {
+public class AlarmInhibitReduce implements DisposableBean {
     
     /**
      * Interval for checking and cleaning up expired source alerts
@@ -73,22 +76,69 @@ public class AlarmInhibitReduce {
     /**
      * Default TTL for source alerts (4 hours)
      */
-    private static long SOURCE_ALERT_TTL = 4 * 60 * 60 * 1000L;
+    private final long sourceAlertTtl;
+
+    private final ScheduledExecutorService cleanupScheduler;
+
+    private final ExecutorService cleanupExecutor;
+
+    private final ScheduledDispatchTask cleanupTask;
     
     public AlarmInhibitReduce(AlarmSilenceReduce alarmSilenceReduce, AlertInhibitDao alertInhibitDao
             , AlerterProperties alerterProperties) {
+        this(alarmSilenceReduce, alertInhibitDao, alerterProperties, VirtualThreadProperties.defaults(), true);
+    }
+
+    @Autowired
+    public AlarmInhibitReduce(AlarmSilenceReduce alarmSilenceReduce, AlertInhibitDao alertInhibitDao,
+                              AlerterProperties alerterProperties, VirtualThreadProperties virtualThreadProperties) {
+        this(alarmSilenceReduce, alertInhibitDao, alerterProperties, virtualThreadProperties, true);
+    }
+
+    AlarmInhibitReduce(AlarmSilenceReduce alarmSilenceReduce, AlertInhibitDao alertInhibitDao,
+                       AlerterProperties alerterProperties, VirtualThreadProperties virtualThreadProperties,
+                       boolean autoStart) {
         this.alarmSilenceReduce = alarmSilenceReduce;
+        VirtualThreadProperties properties =
+                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
         if (alerterProperties.getInhibit() != null && alerterProperties.getInhibit().getTtl() > 0) {
-            SOURCE_ALERT_TTL = alerterProperties.getInhibit().getTtl();   
+            this.sourceAlertTtl = alerterProperties.getInhibit().getTtl();
+        } else {
+            this.sourceAlertTtl = 4 * 60 * 60 * 1000L;
         }
         inhibitRules = new ConcurrentHashMap<>(8);
         sourceAlertCache = new ConcurrentHashMap<>(8);
+        this.cleanupScheduler = createCleanupScheduler();
+        this.cleanupExecutor = createCleanupExecutor(properties);
+        this.cleanupTask = new ScheduledDispatchTask(cleanupExecutor, this::runCleanupCache);
         List<AlertInhibit> inhibits = alertInhibitDao.findAlertInhibitsByEnableIsTrue();
         refreshInhibitRules(inhibits);
-        startScheduledCleanupCache();
+        if (autoStart) {
+            startScheduledCleanupCache();
+        }
     }
 
     private void startScheduledCleanupCache() {
+        cleanupScheduler.scheduleAtFixedRate(this::dispatchCleanupCache, CHECK_INTERVAL, CHECK_INTERVAL,
+                TimeUnit.MILLISECONDS);
+    }
+
+    void dispatchCleanupCache() {
+        cleanupTask.dispatch();
+    }
+
+    void beforeCleanupCacheRun() {
+    }
+
+    @Override
+    public void destroy() {
+        cleanupScheduler.shutdownNow();
+        if (cleanupExecutor != null) {
+            cleanupExecutor.shutdownNow();
+        }
+    }
+
+    private ScheduledExecutorService createCleanupScheduler() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
                     log.error("Scheduled clean up inhibit cache has uncaughtException.");
@@ -97,17 +147,30 @@ public class AlarmInhibitReduce {
                 .setDaemon(true)
                 .setNameFormat("inhibit-clean-up-%d")
                 .build();
-        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
-        // Scheduled cleanup of all expired source alerts
-        scheduledExecutor.scheduleAtFixedRate(() -> {
-            try {
-                sourceAlertCache.values().forEach(this::cleanupExpiredEntries);
-                // Remove empty rule caches
-                sourceAlertCache.entrySet().removeIf(entry -> entry.getValue().isEmpty());
-            } catch (Exception e) {
-                log.error("Error during scheduled cleanup", e);
-            }
-        }, CHECK_INTERVAL, CHECK_INTERVAL, TimeUnit.MILLISECONDS);
+        return Executors.newSingleThreadScheduledExecutor(threadFactory);
+    }
+
+    private ExecutorService createCleanupExecutor(VirtualThreadProperties properties) {
+        if (!properties.isEnabled()) {
+            return null;
+        }
+        return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+                .name("inhibit-clean-up-vt-", 0)
+                .uncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("Scheduled clean up inhibit cache worker has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .factory());
+    }
+
+    private void runCleanupCache() {
+        beforeCleanupCacheRun();
+        try {
+            sourceAlertCache.values().forEach(this::cleanupExpiredEntries);
+            sourceAlertCache.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+        } catch (Exception e) {
+            log.error("Error during scheduled cleanup", e);
+        }
     }
 
     /**
@@ -264,7 +327,7 @@ public class AlarmInhibitReduce {
         SourceAlertEntry entry = new SourceAlertEntry(
                 alert,
                 System.currentTimeMillis(),
-                System.currentTimeMillis() + SOURCE_ALERT_TTL
+                System.currentTimeMillis() + sourceAlertTtl
         );
         ruleCache.put(alert.getFingerprint(), entry);
         cleanupExpiredEntries(ruleCache);
@@ -314,5 +377,64 @@ public class AlarmInhibitReduce {
         private final SingleAlert alert;
         private final long createTime;
         private final long expiryTime;
+    }
+
+    private static final class ScheduledDispatchTask {
+
+        private final ExecutorService executor;
+
+        private final Runnable task;
+
+        private boolean running;
+
+        private int pendingRuns;
+
+        private ScheduledDispatchTask(ExecutorService executor, Runnable task) {
+            this.executor = executor;
+            this.task = task;
+        }
+
+        private void dispatch() {
+            boolean shouldSchedule;
+            synchronized (this) {
+                pendingRuns++;
+                shouldSchedule = !running;
+                if (shouldSchedule) {
+                    running = true;
+                }
+            }
+            if (shouldSchedule) {
+                scheduleRun();
+            }
+        }
+
+        private void scheduleRun() {
+            if (executor != null) {
+                executor.execute(this::runOnce);
+            } else {
+                runOnce();
+            }
+        }
+
+        private void runOnce() {
+            try {
+                task.run();
+            } finally {
+                scheduleNextIfNeeded();
+            }
+        }
+
+        private void scheduleNextIfNeeded() {
+            boolean shouldSchedule;
+            synchronized (this) {
+                pendingRuns = Math.max(0, pendingRuns - 1);
+                shouldSchedule = pendingRuns > 0;
+                if (!shouldSchedule) {
+                    running = false;
+                    return;
+                }
+            }
+            scheduleRun();
+        }
     }
 }

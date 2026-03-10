@@ -26,17 +26,22 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -45,7 +50,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class AlarmGroupReduce {
+public class AlarmGroupReduce implements DisposableBean {
 
     /**
      * Default initial group wait time 30s
@@ -88,16 +93,60 @@ public class AlarmGroupReduce {
      */
     private final Map<String, GroupAlertCache> groupCacheMap;
 
+    private final ScheduledExecutorService scheduledExecutor;
+
+    private final ExecutorService workerExecutor;
+
+    private final ScheduledDispatchTask checkTask;
+
     public AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao) {
+        this(alarmInhibitReduce, alertGroupConvergeDao, VirtualThreadProperties.defaults(), true);
+    }
+
+    @Autowired
+    public AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao,
+                            VirtualThreadProperties virtualThreadProperties) {
+        this(alarmInhibitReduce, alertGroupConvergeDao, virtualThreadProperties, true);
+    }
+
+    AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao,
+                     VirtualThreadProperties virtualThreadProperties, boolean autoStart) {
         this.alarmInhibitReduce = alarmInhibitReduce;
         this.groupDefines = new ConcurrentHashMap<>(8);
         this.groupCacheMap = new ConcurrentHashMap<>(8);
+        VirtualThreadProperties properties =
+                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+        this.scheduledExecutor = createScheduler();
+        this.workerExecutor = createVirtualExecutor(properties);
+        this.checkTask = new ScheduledDispatchTask(workerExecutor, this::runCheckAndSendGroups);
         List<AlertGroupConverge> groupConverges = alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue();
         refreshGroupDefines(groupConverges);
-        startCheckAndSendGroups();
+        if (autoStart) {
+            startCheckAndSendGroups();
+        }
     }
 
     private void startCheckAndSendGroups() {
+        scheduledExecutor.scheduleAtFixedRate(this::dispatchCheckAndSendGroups, 10000, CHECK_INTERVAL,
+                TimeUnit.MILLISECONDS);
+    }
+
+    void dispatchCheckAndSendGroups() {
+        checkTask.dispatch();
+    }
+
+    void beforeCheckAndSendGroupsRun() {
+    }
+
+    @Override
+    public void destroy() {
+        scheduledExecutor.shutdownNow();
+        if (workerExecutor != null) {
+            workerExecutor.shutdownNow();
+        }
+    }
+
+    private ScheduledExecutorService createScheduler() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
                     log.error("Check alarm groups calculate has uncaughtException.");
@@ -106,21 +155,36 @@ public class AlarmGroupReduce {
                 .setDaemon(true)
                 .setNameFormat("alarm-group-calculate-%d")
                 .build();
-        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
-        scheduledExecutor.scheduleAtFixedRate(() -> {
-            try {
-                long now = System.currentTimeMillis();
-                groupCacheMap.forEach((groupKey, cache) -> {
-                    if (shouldSendGroup(cache, now)) {
-                        sendGroupAlert(cache);
-                        cache.setLastSendTime(now);
-                        cache.getAlertFingerprints().clear();
-                    }
-                });
-            } catch (Exception e) {
-                log.error("Check alarm groups calculate has exception.: {}", e.getMessage(), e);
-            }
-        }, 10000, CHECK_INTERVAL, java.util.concurrent.TimeUnit.MILLISECONDS);
+        return Executors.newSingleThreadScheduledExecutor(threadFactory);
+    }
+
+    private ExecutorService createVirtualExecutor(VirtualThreadProperties properties) {
+        if (!properties.isEnabled()) {
+            return null;
+        }
+        return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+                .name("alarm-group-calculate-vt-", 0)
+                .uncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("Check alarm groups calculate worker has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .factory());
+    }
+
+    private void runCheckAndSendGroups() {
+        beforeCheckAndSendGroupsRun();
+        try {
+            long now = System.currentTimeMillis();
+            groupCacheMap.forEach((groupKey, cache) -> {
+                if (shouldSendGroup(cache, now)) {
+                    sendGroupAlert(cache);
+                    cache.setLastSendTime(now);
+                    cache.getAlertFingerprints().clear();
+                }
+            });
+        } catch (Exception e) {
+            log.error("Check alarm groups calculate has exception.: {}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -338,5 +402,64 @@ public class AlarmGroupReduce {
         private long createTime;
         private long lastSendTime;
         private long lastRepeatTime;
+    }
+
+    private static final class ScheduledDispatchTask {
+
+        private final ExecutorService executor;
+
+        private final Runnable task;
+
+        private boolean running;
+
+        private int pendingRuns;
+
+        private ScheduledDispatchTask(ExecutorService executor, Runnable task) {
+            this.executor = executor;
+            this.task = task;
+        }
+
+        private void dispatch() {
+            boolean shouldSchedule;
+            synchronized (this) {
+                pendingRuns++;
+                shouldSchedule = !running;
+                if (shouldSchedule) {
+                    running = true;
+                }
+            }
+            if (shouldSchedule) {
+                scheduleRun();
+            }
+        }
+
+        private void scheduleRun() {
+            if (executor != null) {
+                executor.execute(this::runOnce);
+            } else {
+                runOnce();
+            }
+        }
+
+        private void runOnce() {
+            try {
+                task.run();
+            } finally {
+                scheduleNextIfNeeded();
+            }
+        }
+
+        private void scheduleNextIfNeeded() {
+            boolean shouldSchedule;
+            synchronized (this) {
+                pendingRuns = Math.max(0, pendingRuns - 1);
+                shouldSchedule = pendingRuns > 0;
+                if (!shouldSchedule) {
+                    running = false;
+                    return;
+                }
+            }
+            scheduleRun();
+        }
     }
 }

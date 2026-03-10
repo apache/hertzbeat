@@ -31,6 +31,6 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
         + SignConstants.DOT
         + ConfigConstants.FunctionModuleConstants.COMMON)
-@EnableConfigurationProperties(CommonProperties.class)
+@EnableConfigurationProperties({CommonProperties.class, VirtualThreadProperties.class})
 public class CommonConfig {
 }

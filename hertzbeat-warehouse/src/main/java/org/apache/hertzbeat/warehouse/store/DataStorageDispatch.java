@@ -100,7 +100,7 @@ public class DataStorageDispatch {
                 }
             }
         };
-        workerPool.executeJob(runnable);
+        workerPool.executeLongRunning(runnable);
     }
 
     protected void startLogDataStorage() {
@@ -132,7 +132,7 @@ public class DataStorageDispatch {
                 }
             }
         };
-        workerPool.executeJob(runnable);
+        workerPool.executeLongRunning(runnable);
     }
     
     protected void calculateMonitorStatus(CollectRep.MetricsData metricsData) {

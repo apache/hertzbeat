@@ -75,3 +75,11 @@ push:
 common:
   queue:
     type: netty
+
+hertzbeat:
+  vthreads:
+    enabled: true
+    common:
+      mode: UNBOUNDED_VT
+    collector:
+      mode: LIMIT_AND_REJECT

@@ -19,7 +19,6 @@ package org.apache.hertzbeat.collector.collect.rocketmq;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,10 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +35,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.JsonPathParser;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutor;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutors;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
@@ -55,7 +52,6 @@ import org.apache.rocketmq.common.protocol.body.KVTable;
 import org.apache.rocketmq.common.protocol.body.SubscriptionGroupWrapper;
 import org.apache.rocketmq.common.protocol.body.TopicList;
 import org.apache.rocketmq.common.protocol.route.BrokerData;
-import org.apache.rocketmq.common.utils.ThreadUtils;
 import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.springframework.beans.factory.DisposableBean;
@@ -68,10 +64,11 @@ import org.springframework.util.Assert;
 public class RocketmqSingleCollectImpl extends AbstractCollect implements DisposableBean {
 
     private static final int WAIT_TIMEOUT = 10;
+    static final int QUEUE_CAPACITY = 5000;
 
     private static final Set<String> SYSTEM_GROUP_SET = new HashSet<>();
 
-    private final ExecutorService executorService;
+    private final ManagedExecutor executorService;
 
     static {
         // system consumer group
@@ -86,24 +83,28 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     public RocketmqSingleCollectImpl() {
+        this(createExecutor());
+    }
+
+    RocketmqSingleCollectImpl(ManagedExecutor executorService) {
+        this.executorService = executorService;
+    }
+
+    private static ManagedExecutor createExecutor() {
         Runtime runtime = Runtime.getRuntime();
         int corePoolSize = Math.max(8, runtime.availableProcessors());
         int maximumPoolSize = Math.max(16, runtime.availableProcessors());
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("RocketMQCollectGroup has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
-                .setDaemon(true)
-                .setNameFormat("rocketMQ-collector-%d")
-                .build();
-        this.executorService = new ThreadPoolExecutor(corePoolSize, maximumPoolSize, 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(5000), threadFactory, new ThreadPoolExecutor.DiscardOldestPolicy());
+        Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
+            log.error("RocketMQCollectGroup has uncaughtException.");
+            log.error(throwable.getMessage(), throwable);
+        };
+        return ManagedExecutors.newDiscardOldestVirtualExecutor("rocketmq-collector", "rocketmq-collector-",
+                corePoolSize, maximumPoolSize, QUEUE_CAPACITY, handler);
     }
 
     @Override
     public void destroy() {
-        ThreadUtils.shutdownGracefully(this.executorService, 10L, TimeUnit.SECONDS);
+        this.executorService.close();
     }
 
     /**
@@ -270,7 +271,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
                 if (SYSTEM_GROUP_SET.contains(consumerGroup)) {
                     continue;
                 }
-                executorService.submit(() -> {
+                executeConsumerTask(() -> {
                     RocketmqCollectData.ConsumerInfo consumerInfo = new RocketmqCollectData.ConsumerInfo();
                     consumerInfoList.add(consumerInfo);
                     consumerInfo.setConsumerGroup(consumerGroup);
@@ -368,5 +369,9 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
             }
             builder.addValueRow(valueRowBuilder.build());
         }
+    }
+
+    void executeConsumerTask(Runnable runnable) {
+        executorService.execute(runnable);
     }
 }

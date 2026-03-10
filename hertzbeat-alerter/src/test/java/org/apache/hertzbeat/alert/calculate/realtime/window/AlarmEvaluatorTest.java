@@ -19,9 +19,11 @@ package org.apache.hertzbeat.alert.calculate.realtime.window;
 
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,14 +34,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -96,6 +104,13 @@ class AlarmEvaluatorTest {
             System.currentTimeMillis() - 60000, System.currentTimeMillis());
         windowData = new WindowAggregator.WindowData(windowKey, alertDefine);
         windowData.addMatchingLog(matchingEvent);
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (alarmEvaluator != null) {
+            alarmEvaluator.destroy();
+        }
     }
 
     @Test
@@ -342,5 +357,95 @@ class AlarmEvaluatorTest {
         List<SingleAlert> alerts = alertsCaptor.getValue();
         assertEquals(2, alerts.size());
         assertEquals(2, alerts.get(0).getTriggerTimes()); // Each alert should have trigger times = total count
+    }
+
+    @Test
+    void testSendAndProcessWindowDataRunsOnVirtualThread() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicBoolean virtualThread = new AtomicBoolean(false);
+        doAnswer(invocation -> {
+            virtualThread.set(Thread.currentThread().isVirtual());
+            latch.countDown();
+            return null;
+        }).when(alarmCommonReduce).reduceAndSendAlarm(any(SingleAlert.class));
+
+        alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL));
+        alarmEvaluator.sendAndProcessWindowData(windowData);
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(virtualThread.get());
+    }
+
+    @Test
+    void testSendAndProcessWindowDataQueuesWhenConcurrencyLimitReached() throws Exception {
+        VirtualThreadProperties properties = new VirtualThreadProperties();
+        VirtualThreadProperties.QueueProperties queueProperties = new VirtualThreadProperties.QueueProperties();
+        queueProperties.setMaxConcurrentJobs(1);
+        properties.getAlerter().setWindowEvaluator(queueProperties);
+        alarmEvaluator.destroy();
+        alarmEvaluator = new AlarmEvaluator(alarmCommonReduce, properties);
+
+        CountDownLatch firstStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        AtomicInteger invocationOrder = new AtomicInteger();
+        doAnswer(invocation -> {
+            int order = invocationOrder.incrementAndGet();
+            if (order == 1) {
+                firstStarted.countDown();
+                try {
+                    releaseFirst.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            } else if (order == 2) {
+                secondStarted.countDown();
+            }
+            return null;
+        }).when(alarmCommonReduce).reduceAndSendAlarm(any(SingleAlert.class));
+
+        WindowAggregator.WindowData firstWindow = cloneWindowDataWithBody("first");
+        WindowAggregator.WindowData secondWindow = cloneWindowDataWithBody("second");
+        firstWindow.getAlertDefine().setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL));
+        secondWindow.getAlertDefine().setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL));
+
+        alarmEvaluator.sendAndProcessWindowData(firstWindow);
+        assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
+
+        alarmEvaluator.sendAndProcessWindowData(secondWindow);
+        assertFalse(secondStarted.await(200, TimeUnit.MILLISECONDS));
+
+        releaseFirst.countDown();
+        assertTrue(secondStarted.await(5, TimeUnit.SECONDS));
+    }
+
+    private WindowAggregator.WindowData cloneWindowDataWithBody(String body) {
+        LogEntry logEntry = LogEntry.builder()
+                .timeUnixNano(System.currentTimeMillis() * 1_000_000L)
+                .severityText("ERROR")
+                .body(body)
+                .build();
+        AlertDefine define = AlertDefine.builder()
+                .id(alertDefine.getId())
+                .name(alertDefine.getName())
+                .type(alertDefine.getType())
+                .expr(alertDefine.getExpr())
+                .times(alertDefine.getTimes())
+                .template(alertDefine.getTemplate())
+                .labels(alertDefine.getLabels())
+                .annotations(alertDefine.getAnnotations())
+                .enable(alertDefine.isEnable())
+                .build();
+        MatchingLogEvent event = MatchingLogEvent.builder()
+                .logEntry(logEntry)
+                .alertDefine(define)
+                .eventTimestamp(System.currentTimeMillis())
+                .workerTimestamp(System.currentTimeMillis())
+                .build();
+        WindowAggregator.WindowData clonedWindowData = new WindowAggregator.WindowData(
+                new WindowAggregator.WindowKey(define.getId(), System.currentTimeMillis() - 60000, System.currentTimeMillis()),
+                define);
+        clonedWindowData.addMatchingLog(event);
+        return clonedWindowData;
     }
 }

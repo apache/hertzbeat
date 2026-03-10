@@ -18,9 +18,16 @@
 package org.apache.hertzbeat.warehouse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.hertzbeat.common.concurrent.AdmissionMode;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -30,18 +37,19 @@ class WarehouseWorkerPoolTest {
 
     private static final int NUMBER_OF_THREADS = 10;
     private WarehouseWorkerPool pool;
-    private AtomicInteger counter;
-    private CountDownLatch latch;
 
-    @BeforeEach
-    void setUp() {
-        pool = new WarehouseWorkerPool();
-        counter = new AtomicInteger();
-        latch = new CountDownLatch(NUMBER_OF_THREADS);
+    @AfterEach
+    void tearDown() throws Exception {
+        if (pool != null) {
+            pool.destroy();
+        }
     }
 
     @Test
     void executeJob() throws InterruptedException {
+        pool = new WarehouseWorkerPool();
+        AtomicInteger counter = new AtomicInteger();
+        CountDownLatch latch = new CountDownLatch(NUMBER_OF_THREADS);
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             pool.executeJob(() -> {
                 counter.incrementAndGet();
@@ -53,4 +61,47 @@ class WarehouseWorkerPoolTest {
         assertEquals(NUMBER_OF_THREADS, counter.get());
     }
 
+    @Test
+    void executeJobRunsOnVirtualThread() throws InterruptedException {
+        pool = new WarehouseWorkerPool();
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicBoolean virtualThread = new AtomicBoolean(false);
+
+        pool.executeJob(() -> {
+            virtualThread.set(Thread.currentThread().isVirtual());
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(virtualThread.get());
+    }
+
+    @Test
+    void executeJobRejectsWhenConcurrencyLimitReached() throws InterruptedException {
+        VirtualThreadProperties properties = new VirtualThreadProperties();
+        VirtualThreadProperties.PoolProperties warehouseProperties = new VirtualThreadProperties.PoolProperties();
+        warehouseProperties.setMode(AdmissionMode.LIMIT_AND_REJECT);
+        warehouseProperties.setMaxConcurrentJobs(1);
+        properties.setWarehouse(warehouseProperties);
+        pool = new WarehouseWorkerPool(properties);
+
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        pool.executeJob(() -> {
+            started.countDown();
+            try {
+                release.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+
+        try {
+            assertThrows(RejectedExecutionException.class, () -> pool.executeJob(() -> {
+            }));
+        } finally {
+            release.countDown();
+        }
+    }
 }

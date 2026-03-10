@@ -17,92 +17,89 @@
 
 package org.apache.hertzbeat.common.support;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import java.lang.reflect.Field;
+
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.hertzbeat.common.concurrent.AdmissionMode;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * test for {@link CommonThreadPool}
+ * Test for {@link CommonThreadPool}.
  */
-
 class CommonThreadPoolTest {
 
     private CommonThreadPool commonThreadPool;
 
-    private ThreadPoolExecutor executorMock;
+    @AfterEach
+    void tearDown() throws Exception {
+        if (commonThreadPool != null) {
+            commonThreadPool.destroy();
+        }
+    }
 
-    @BeforeEach
-    public void setUp() throws Exception {
-
+    @Test
+    void testExecuteRunsOnVirtualThread() throws Exception {
         commonThreadPool = new CommonThreadPool();
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicBoolean virtualThread = new AtomicBoolean(false);
 
-        Field workerExecutorField = CommonThreadPool.class.getDeclaredField("workerExecutor");
-        workerExecutorField.setAccessible(true);
-        executorMock = mock(ThreadPoolExecutor.class);
-        workerExecutorField.set(commonThreadPool, executorMock);
+        commonThreadPool.execute(() -> {
+            virtualThread.set(Thread.currentThread().isVirtual());
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(virtualThread.get());
     }
 
     @Test
-    public void testExecuteTask() {
+    void testExecuteLongRunningRunsOnPlatformThread() throws Exception {
+        commonThreadPool = new CommonThreadPool();
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicBoolean virtualThread = new AtomicBoolean(true);
 
-        Runnable task = mock(Runnable.class);
-        commonThreadPool.execute(task);
-        verify(executorMock).execute(task);
+        commonThreadPool.executeLongRunning(() -> {
+            virtualThread.set(Thread.currentThread().isVirtual());
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertFalse(virtualThread.get());
     }
 
     @Test
-    public void testExecuteTaskThrowsEx() {
+    void testExecuteRejectsWhenConcurrencyLimitReached() throws Exception {
+        VirtualThreadProperties properties = new VirtualThreadProperties();
+        VirtualThreadProperties.PoolProperties commonProperties = new VirtualThreadProperties.PoolProperties();
+        commonProperties.setMode(AdmissionMode.LIMIT_AND_REJECT);
+        commonProperties.setMaxConcurrentJobs(1);
+        properties.setCommon(commonProperties);
+        commonThreadPool = new CommonThreadPool(properties);
 
-        Runnable task = mock(Runnable.class);
-        doThrow(RejectedExecutionException.class).when(executorMock).execute(task);
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        commonThreadPool.execute(() -> {
+            started.countDown();
+            try {
+                release.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        assertTrue(started.await(5, TimeUnit.SECONDS));
 
-        assertThrows(
-                RejectedExecutionException.class,
-                () -> commonThreadPool.execute(task)
-        );
+        try {
+            assertThrows(RejectedExecutionException.class, () -> commonThreadPool.execute(() -> {
+            }));
+        } finally {
+            release.countDown();
+        }
     }
-
-    @Test
-    public void testDestroy() throws Exception {
-
-        commonThreadPool.destroy();
-        verify(executorMock).shutdownNow();
-    }
-
-    @Test
-    public void testDestroyWithNull() throws Exception {
-
-        Field workerExecutorField = CommonThreadPool.class.getDeclaredField("workerExecutor");
-        workerExecutorField.setAccessible(true);
-        workerExecutorField.set(commonThreadPool, null);
-
-        commonThreadPool.destroy();
-    }
-
-    @Test
-    public void testInitialization() throws Exception {
-        CommonThreadPool pool = new CommonThreadPool();
-
-        Field workerExecutorField = CommonThreadPool.class.getDeclaredField("workerExecutor");
-        workerExecutorField.setAccessible(true);
-        ThreadPoolExecutor workerExecutor = (ThreadPoolExecutor) workerExecutorField.get(pool);
-
-        assertNotNull(workerExecutor);
-        assertEquals(1, workerExecutor.getCorePoolSize());
-        assertEquals(Integer.MAX_VALUE, workerExecutor.getMaximumPoolSize());
-        assertEquals(10, workerExecutor.getKeepAliveTime(TimeUnit.SECONDS));
-        assertTrue(workerExecutor.getQueue() instanceof SynchronousQueue);
-    }
-
 }

@@ -20,11 +20,13 @@ package org.apache.hertzbeat.manager.scheduler.netty;
 import io.netty.channel.Channel;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.calculate.CollectorAlertHandler;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
@@ -39,6 +41,7 @@ import org.apache.hertzbeat.remoting.RemotingServer;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.apache.hertzbeat.remoting.netty.NettyServerConfig;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
@@ -61,6 +64,14 @@ public class ManageServer implements CommandLineRunner {
 
     private ScheduledExecutorService channelSchedule;
 
+    private final ExecutorService channelCheckExecutor;
+
+    private final Object channelCheckLock = new Object();
+
+    private boolean channelCheckRunning;
+
+    private boolean channelCheckPending;
+
     private RemotingServer remotingServer;
 
     private final Map<String, Channel> clientChannelTable = new ConcurrentHashMap<>(16);
@@ -69,9 +80,20 @@ public class ManageServer implements CommandLineRunner {
                         final CollectorJobScheduler collectorJobScheduler,
                         final CommonThreadPool threadPool,
                         final CollectorAlertHandler collectorAlertHandler) {
+        this(schedulerProperties, collectorJobScheduler, threadPool, collectorAlertHandler,
+                VirtualThreadProperties.defaults());
+    }
+
+    @Autowired
+    public ManageServer(final SchedulerProperties schedulerProperties,
+                        final CollectorJobScheduler collectorJobScheduler,
+                        final CommonThreadPool threadPool,
+                        final CollectorAlertHandler collectorAlertHandler,
+                        final VirtualThreadProperties virtualThreadProperties) {
         this.collectorJobScheduler = collectorJobScheduler;
         this.collectorJobScheduler.setManageServer(this);
         this.collectorAlertHandler = collectorAlertHandler;
+        this.channelCheckExecutor = createChannelCheckExecutor(virtualThreadProperties);
         this.init(schedulerProperties, threadPool);
     }
 
@@ -96,26 +118,18 @@ public class ManageServer implements CommandLineRunner {
     public void start() {
         this.remotingServer.start();
 
-        this.channelSchedule.scheduleAtFixedRate(() -> {
-            try {
-                this.clientChannelTable.forEach((collector, channel) -> {
-                    if (!channel.isActive()) {
-                        channel.closeFuture();
-                        this.clientChannelTable.remove(collector);
-                        this.collectorJobScheduler.collectorGoOffline(collector);
-                        this.collectorAlertHandler.offline(collector);
-                    }
-                });   
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }, 10, 3, TimeUnit.SECONDS);
+        this.channelSchedule.scheduleAtFixedRate(this::dispatchChannelHealthCheck, 10, 3, TimeUnit.SECONDS);
     }
 
     public void shutdown() {
         this.remotingServer.shutdown();
 
-        this.channelSchedule.shutdownNow();
+        if (this.channelSchedule != null) {
+            this.channelSchedule.shutdownNow();
+        }
+        if (this.channelCheckExecutor != null) {
+            this.channelCheckExecutor.shutdownNow();
+        }
     }
 
     public CollectorJobScheduler getCollectorAndJobScheduler() {
@@ -173,6 +187,21 @@ public class ManageServer implements CommandLineRunner {
         return null;
     }
 
+    void dispatchChannelHealthCheck() {
+        if (channelCheckExecutor == null) {
+            runChannelHealthCheck();
+            return;
+        }
+        synchronized (channelCheckLock) {
+            if (channelCheckRunning) {
+                channelCheckPending = true;
+                return;
+            }
+            channelCheckRunning = true;
+        }
+        submitChannelHealthCheck();
+    }
+
     @Override
     public void run(String... args) throws Exception {
         this.start();
@@ -198,6 +227,70 @@ public class ManageServer implements CommandLineRunner {
                 channel.close();
                 log.info("handle idle event triggered. the client {} is going offline.", identity);
             }
+        }
+    }
+
+    private ExecutorService createChannelCheckExecutor(VirtualThreadProperties virtualThreadProperties) {
+        VirtualThreadProperties properties =
+                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+        if (!properties.isEnabled()) {
+            return null;
+        }
+        return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+                .name("manager-channel-check-vt-", 0)
+                .uncaughtExceptionHandler((thread, throwable) -> log.error("Channel checker has uncaughtException.", throwable))
+                .factory());
+    }
+
+    private void submitChannelHealthCheck() {
+        boolean submitted = false;
+        try {
+            channelCheckExecutor.execute(() -> {
+                try {
+                    runChannelHealthCheck();
+                } finally {
+                    onChannelHealthCheckComplete();
+                }
+            });
+            submitted = true;
+        } finally {
+            if (!submitted) {
+                synchronized (channelCheckLock) {
+                    channelCheckRunning = false;
+                    channelCheckPending = false;
+                }
+            }
+        }
+    }
+
+    private void onChannelHealthCheckComplete() {
+        boolean shouldRunAgain;
+        synchronized (channelCheckLock) {
+            if (channelCheckPending) {
+                channelCheckPending = false;
+                shouldRunAgain = true;
+            } else {
+                channelCheckRunning = false;
+                shouldRunAgain = false;
+            }
+        }
+        if (shouldRunAgain) {
+            submitChannelHealthCheck();
+        }
+    }
+
+    private void runChannelHealthCheck() {
+        try {
+            this.clientChannelTable.forEach((collector, channel) -> {
+                if (!channel.isActive()) {
+                    channel.closeFuture();
+                    this.clientChannelTable.remove(collector);
+                    this.collectorJobScheduler.collectorGoOffline(collector);
+                    this.collectorAlertHandler.offline(collector);
+                }
+            });
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 }

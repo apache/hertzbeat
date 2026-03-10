@@ -72,7 +72,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void start() {
-        this.threadPool.execute(() -> {
+        this.threadPool.executeLongRunning(() -> {
             ThreadFactory threadFactory = new ThreadFactoryBuilder()
                     .setUncaughtExceptionHandler((thread, throwable) -> {
                         log.error("NettyClientWorker has uncaughtException.");
