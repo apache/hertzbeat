@@ -19,6 +19,7 @@ package org.apache.hertzbeat.common.config;
 
 import org.apache.hertzbeat.common.concurrent.AdmissionMode;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.ConstructorBinding;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.boot.context.properties.bind.Name;
 
@@ -28,19 +29,24 @@ import org.springframework.boot.context.properties.bind.Name;
 @ConfigurationProperties(prefix = "hertzbeat.vthreads")
 public record VirtualThreadProperties(
         @DefaultValue("true") boolean enabled,
-        @DefaultValue PoolProperties collector,
-        @DefaultValue PoolProperties common,
-        @DefaultValue PoolProperties manager,
-        @DefaultValue AlerterProperties alerter,
-        @DefaultValue PoolProperties warehouse,
-        @DefaultValue AsyncProperties async) {
+        PoolProperties collector,
+        PoolProperties common,
+        PoolProperties manager,
+        AlerterProperties alerter,
+        PoolProperties warehouse,
+        AsyncProperties async) {
 
     private static final int DEFAULT_COLLECTOR_MAX_CONCURRENT_JOBS = 512;
+    private static final int DEFAULT_MANAGER_MAX_CONCURRENT_JOBS = 10;
+    private static final int DEFAULT_NOTIFY_MAX_CONCURRENT_JOBS = 64;
+    private static final int DEFAULT_PERIODIC_MAX_CONCURRENT_JOBS = 10;
+    private static final int DEFAULT_NOTIFY_MAX_CONCURRENT_PER_CHANNEL = 4;
 
+    @ConstructorBinding
     public VirtualThreadProperties {
-        collector = collector == null ? PoolProperties.collectorDefaults() : collector;
+        collector = normalizePool(collector, PoolProperties.collectorDefaults());
         common = common == null ? PoolProperties.commonDefaults() : common;
-        manager = manager == null ? PoolProperties.managerDefaults() : manager;
+        manager = normalizePool(manager, PoolProperties.managerDefaults());
         alerter = alerter == null ? AlerterProperties.defaults() : alerter;
         warehouse = warehouse == null ? PoolProperties.warehouseDefaults() : warehouse;
         async = async == null ? AsyncProperties.defaults() : async;
@@ -68,6 +74,7 @@ public record VirtualThreadProperties(
             @DefaultValue("UNBOUNDED_VT") AdmissionMode mode,
             @DefaultValue("0") int maxConcurrentJobs) {
 
+        @ConstructorBinding
         public PoolProperties {
             mode = mode == null ? AdmissionMode.UNBOUNDED_VT : mode;
         }
@@ -89,11 +96,11 @@ public record VirtualThreadProperties(
         }
 
         public static PoolProperties managerDefaults() {
-            return new PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 10);
+            return new PoolProperties(AdmissionMode.LIMIT_AND_REJECT, DEFAULT_MANAGER_MAX_CONCURRENT_JOBS);
         }
 
         public static PoolProperties alerterNotifyDefaults() {
-            return new PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 64);
+            return new PoolProperties(AdmissionMode.LIMIT_AND_REJECT, DEFAULT_NOTIFY_MAX_CONCURRENT_JOBS);
         }
 
         private static int defaultCollectorConcurrency() {
@@ -105,24 +112,29 @@ public record VirtualThreadProperties(
      * Alerter-specific executor configuration.
      */
     public record AlerterProperties(
-            @Name("notify") @DefaultValue PoolProperties notifyPool,
+            @Name("notify") PoolProperties notifyPool,
             @DefaultValue("10") int periodicMaxConcurrentJobs,
-            @DefaultValue QueueProperties logWorker,
-            @DefaultValue QueueProperties reduce,
-            @DefaultValue QueueProperties windowEvaluator,
+            QueueProperties logWorker,
+            QueueProperties reduce,
+            QueueProperties windowEvaluator,
             @DefaultValue("4") int notifyMaxConcurrentPerChannel) {
 
+        @ConstructorBinding
         public AlerterProperties {
-            notifyPool = notifyPool == null ? PoolProperties.alerterNotifyDefaults() : notifyPool;
-            logWorker = logWorker == null ? QueueProperties.logWorkerDefaults() : logWorker;
-            reduce = reduce == null ? QueueProperties.reduceDefaults() : reduce;
-            windowEvaluator = windowEvaluator == null ? QueueProperties.windowEvaluatorDefaults() : windowEvaluator;
+            notifyPool = normalizePool(notifyPool, PoolProperties.alerterNotifyDefaults());
+            periodicMaxConcurrentJobs = periodicMaxConcurrentJobs <= 0
+                    ? DEFAULT_PERIODIC_MAX_CONCURRENT_JOBS : periodicMaxConcurrentJobs;
+            logWorker = normalizeQueue(logWorker, QueueProperties.logWorkerDefaults());
+            reduce = normalizeQueue(reduce, QueueProperties.reduceDefaults());
+            windowEvaluator = normalizeQueue(windowEvaluator, QueueProperties.windowEvaluatorDefaults());
+            notifyMaxConcurrentPerChannel = notifyMaxConcurrentPerChannel <= 0
+                    ? DEFAULT_NOTIFY_MAX_CONCURRENT_PER_CHANNEL : notifyMaxConcurrentPerChannel;
         }
 
         public AlerterProperties() {
-            this(PoolProperties.alerterNotifyDefaults(), 10,
+            this(PoolProperties.alerterNotifyDefaults(), DEFAULT_PERIODIC_MAX_CONCURRENT_JOBS,
                     QueueProperties.logWorkerDefaults(), QueueProperties.reduceDefaults(),
-                    QueueProperties.windowEvaluatorDefaults(), 4);
+                    QueueProperties.windowEvaluatorDefaults(), DEFAULT_NOTIFY_MAX_CONCURRENT_PER_CHANNEL);
         }
 
         public static AlerterProperties defaults() {
@@ -136,6 +148,10 @@ public record VirtualThreadProperties(
     public record QueueProperties(
             @DefaultValue("0") int maxConcurrentJobs,
             @DefaultValue("0") int queueCapacity) {
+
+        @ConstructorBinding
+        public QueueProperties {
+        }
 
         public QueueProperties() {
             this(0, 0);
@@ -163,6 +179,10 @@ public record VirtualThreadProperties(
             @DefaultValue("true") boolean rejectWhenLimitReached,
             @DefaultValue("5000") long taskTerminationTimeout) {
 
+        @ConstructorBinding
+        public AsyncProperties {
+        }
+
         public AsyncProperties() {
             this(true, 256, true, 5000L);
         }
@@ -170,5 +190,28 @@ public record VirtualThreadProperties(
         public static AsyncProperties defaults() {
             return new AsyncProperties();
         }
+    }
+
+    private static PoolProperties normalizePool(PoolProperties configured, PoolProperties defaults) {
+        if (configured == null) {
+            return defaults;
+        }
+        if (configured.mode() != AdmissionMode.UNBOUNDED_VT && configured.maxConcurrentJobs() <= 0) {
+            return new PoolProperties(configured.mode(), defaults.maxConcurrentJobs());
+        }
+        return configured;
+    }
+
+    private static QueueProperties normalizeQueue(QueueProperties configured, QueueProperties defaults) {
+        if (configured == null) {
+            return defaults;
+        }
+        int maxConcurrentJobs = configured.maxConcurrentJobs() <= 0
+                ? defaults.maxConcurrentJobs() : configured.maxConcurrentJobs();
+        int queueCapacity = configured.queueCapacity();
+        if (queueCapacity <= 0 && defaults.queueCapacity() > 0) {
+            queueCapacity = defaults.queueCapacity();
+        }
+        return new QueueProperties(maxConcurrentJobs, queueCapacity);
     }
 }

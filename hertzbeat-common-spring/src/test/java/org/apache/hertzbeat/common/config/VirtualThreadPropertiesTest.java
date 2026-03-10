@@ -22,8 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.hertzbeat.common.concurrent.AdmissionMode;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 class VirtualThreadPropertiesTest {
+
+    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+            .withUserConfiguration(BindingConfig.class);
 
     @Test
     void defaultsRemainSafeWithoutExternalConfiguration() {
@@ -55,5 +60,49 @@ class VirtualThreadPropertiesTest {
         assertEquals(256, properties.async().concurrencyLimit());
         assertTrue(properties.async().rejectWhenLimitReached());
         assertEquals(5000L, properties.async().taskTerminationTimeout());
+    }
+
+    @Test
+    void collectorModeOnlyBindingRetainsDefaultConcurrency() {
+        contextRunner.withPropertyValues("hertzbeat.vthreads.collector.mode=LIMIT_AND_REJECT")
+                .run(context -> {
+                    VirtualThreadProperties properties = context.getBean(VirtualThreadProperties.class);
+                    assertEquals(AdmissionMode.LIMIT_AND_REJECT, properties.collector().mode());
+                    assertEquals(512, properties.collector().maxConcurrentJobs());
+                });
+    }
+
+    @Test
+    void collectorModeOverrideUsesConfiguredMode() {
+        contextRunner.withPropertyValues("hertzbeat.vthreads.collector.mode=LIMIT_AND_BLOCK")
+                .run(context -> {
+                    VirtualThreadProperties properties = context.getBean(VirtualThreadProperties.class);
+                    assertEquals(AdmissionMode.LIMIT_AND_BLOCK, properties.collector().mode());
+                    assertEquals(512, properties.collector().maxConcurrentJobs());
+                });
+    }
+
+    @Test
+    void notifyModeOnlyBindingRetainsDefaultConcurrency() {
+        contextRunner.withPropertyValues("hertzbeat.vthreads.alerter.notify.mode=LIMIT_AND_BLOCK")
+                .run(context -> {
+                    VirtualThreadProperties properties = context.getBean(VirtualThreadProperties.class);
+                    assertEquals(AdmissionMode.LIMIT_AND_BLOCK, properties.alerter().notifyPool().mode());
+                    assertEquals(64, properties.alerter().notifyPool().maxConcurrentJobs());
+                });
+    }
+
+    @Test
+    void logWorkerQueueOnlyBindingRetainsDefaultConcurrency() {
+        contextRunner.withPropertyValues("hertzbeat.vthreads.alerter.log-worker.queue-capacity=32")
+                .run(context -> {
+                    VirtualThreadProperties properties = context.getBean(VirtualThreadProperties.class);
+                    assertEquals(10, properties.alerter().logWorker().maxConcurrentJobs());
+                    assertEquals(32, properties.alerter().logWorker().queueCapacity());
+                });
+    }
+
+    @EnableConfigurationProperties(VirtualThreadProperties.class)
+    static class BindingConfig {
     }
 }
