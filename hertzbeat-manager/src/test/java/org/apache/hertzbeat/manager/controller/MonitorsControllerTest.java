@@ -39,13 +39,13 @@ import org.springframework.data.domain.PageImpl;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
-import org.springframework.data.web.config.SpringDataJacksonConfiguration;
+import org.springframework.data.web.config.SpringDataJackson3Configuration;
 import org.springframework.data.web.config.SpringDataWebSettings;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Test case for {@link MonitorsController}
@@ -63,9 +63,9 @@ class MonitorsControllerTest {
 
     @BeforeEach
     void setUp() {
-        MappingJackson2HttpMessageConverter messageConverter = new MappingJackson2HttpMessageConverter(
-                Jackson2ObjectMapperBuilder.json()
-                        .modules(new SpringDataJacksonConfiguration.PageModule(
+        JacksonJsonHttpMessageConverter messageConverter = new JacksonJsonHttpMessageConverter(
+                JsonMapper.builder()
+                        .addModule(new SpringDataJackson3Configuration.PageModule(
                                 new SpringDataWebSettings(EnableSpringDataWebSupport.PageSerializationMode.DIRECT)))
                         .build());
         this.mockMvc = MockMvcBuilders.standaloneSetup(monitorsController)
