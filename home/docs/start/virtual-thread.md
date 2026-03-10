@@ -111,5 +111,5 @@ This rolls the affected executors back to their legacy platform-thread implement
 
 ## 7. Notes
 
-- You do not need to add `spring.threads.virtual.enabled` for this feature set. HertzBeat uses a dedicated `@Async` executor configuration.
-- Shipping YAML files now include the optional `hertzbeat.vthreads` block as an example, but the block is still optional.
+- If your current deployment is stable, you can keep your existing `application.yml` unchanged.
+- Add the `hertzbeat.vthreads` block only when you want to tune concurrency limits or explicitly disable the feature.

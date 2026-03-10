@@ -111,5 +111,5 @@ hertzbeat:
 
 ## 7. 补充说明
 
-- 这套改造不要求额外配置 `spring.threads.virtual.enabled`。HertzBeat 当前使用的是单独的 `@Async` 执行器配置。
-- 交付给用户的 YAML 示例文件现在已经带上了可选的 `hertzbeat.vthreads` 配置块，但这段配置依然可以整体删除。
+- 如果你当前的部署运行稳定，可以继续保持现有 `application.yml` 不变。
+- 只有在你希望调节并发阈值，或者显式关闭该能力时，才需要增加 `hertzbeat.vthreads` 配置块。
