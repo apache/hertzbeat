@@ -83,13 +83,13 @@ public class AlerterWorkerPool implements DisposableBean {
             log.error("Alerter notifyExecutor has uncaughtException.");
             log.error(throwable.getMessage(), throwable);
         };
-        if (properties.isEnabled()) {
-            VirtualThreadProperties.AlerterProperties alerterProperties = properties.getAlerter();
-            VirtualThreadProperties.PoolProperties notifyProperties = alerterProperties.getNotify();
-            notifyMaxConcurrentPerChannel = Math.max(1, alerterProperties.getNotifyMaxConcurrentPerChannel());
+        if (properties.enabled()) {
+            VirtualThreadProperties.AlerterProperties alerterProperties = properties.alerter();
+            VirtualThreadProperties.PoolProperties notifyProperties = alerterProperties.notifyPool();
+            notifyMaxConcurrentPerChannel = Math.max(1, alerterProperties.notifyMaxConcurrentPerChannel());
             notifyChannelPermits = new ConcurrentHashMap<>(8);
             notifyExecutor = ManagedExecutors.newVirtualExecutor("notify-worker", "notify-worker-",
-                    notifyProperties.getMode(), notifyProperties.getMaxConcurrentJobs(), handler);
+                    notifyProperties.mode(), notifyProperties.maxConcurrentJobs(), handler);
             return;
         }
         notifyMaxConcurrentPerChannel = 0;
@@ -117,10 +117,10 @@ public class AlerterWorkerPool implements DisposableBean {
             log.error("Alerter logWorkerExecutor has uncaughtException.");
             log.error(throwable.getMessage(), throwable);
         };
-        if (properties.isEnabled()) {
-            VirtualThreadProperties.QueueProperties logWorkerProperties = properties.getAlerter().getLogWorker();
+        if (properties.enabled()) {
+            VirtualThreadProperties.QueueProperties logWorkerProperties = properties.alerter().logWorker();
             logWorkerExecutor = ManagedExecutors.newQueuedVirtualExecutor("alerter-log-worker", "log-worker-",
-                    logWorkerProperties.getMaxConcurrentJobs(), logWorkerProperties.getQueueCapacity(), handler);
+                    logWorkerProperties.maxConcurrentJobs(), logWorkerProperties.queueCapacity(), handler);
             return;
         }
         logWorkerExecutor = ManagedExecutors.wrap("alerter-log-worker", createLegacyLogWorkerExecutor(handler));

@@ -82,14 +82,20 @@ class AlerterWorkerPoolTest {
 
     @Test
     void executeNotifyRejectsWhenGlobalConcurrencyLimitReached() throws Exception {
-        VirtualThreadProperties properties = new VirtualThreadProperties();
-        VirtualThreadProperties.AlerterProperties alerterProperties = new VirtualThreadProperties.AlerterProperties();
-        VirtualThreadProperties.PoolProperties notifyProperties = new VirtualThreadProperties.PoolProperties();
-        notifyProperties.setMode(AdmissionMode.LIMIT_AND_REJECT);
-        notifyProperties.setMaxConcurrentJobs(1);
-        alerterProperties.setNotify(notifyProperties);
-        alerterProperties.setNotifyMaxConcurrentPerChannel(8);
-        properties.setAlerter(alerterProperties);
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        new VirtualThreadProperties.PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 1),
+                        10,
+                        VirtualThreadProperties.QueueProperties.logWorkerDefaults(),
+                        VirtualThreadProperties.QueueProperties.reduceDefaults(),
+                        VirtualThreadProperties.QueueProperties.windowEvaluatorDefaults(),
+                        8),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
         pool = new AlerterWorkerPool(properties);
 
         CountDownLatch started = new CountDownLatch(1);
@@ -114,14 +120,20 @@ class AlerterWorkerPoolTest {
 
     @Test
     void executeNotifyRejectsWhenChannelLimitReached() throws Exception {
-        VirtualThreadProperties properties = new VirtualThreadProperties();
-        VirtualThreadProperties.AlerterProperties alerterProperties = new VirtualThreadProperties.AlerterProperties();
-        VirtualThreadProperties.PoolProperties notifyProperties = new VirtualThreadProperties.PoolProperties();
-        notifyProperties.setMode(AdmissionMode.LIMIT_AND_REJECT);
-        notifyProperties.setMaxConcurrentJobs(8);
-        alerterProperties.setNotify(notifyProperties);
-        alerterProperties.setNotifyMaxConcurrentPerChannel(1);
-        properties.setAlerter(alerterProperties);
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        new VirtualThreadProperties.PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 8),
+                        10,
+                        VirtualThreadProperties.QueueProperties.logWorkerDefaults(),
+                        VirtualThreadProperties.QueueProperties.reduceDefaults(),
+                        VirtualThreadProperties.QueueProperties.windowEvaluatorDefaults(),
+                        1),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
         pool = new AlerterWorkerPool(properties);
 
         CountDownLatch started = new CountDownLatch(1);
@@ -160,13 +172,20 @@ class AlerterWorkerPoolTest {
 
     @Test
     void executeLogJobRejectsWhenQueueCapacityReached() throws InterruptedException {
-        VirtualThreadProperties properties = new VirtualThreadProperties();
-        VirtualThreadProperties.AlerterProperties alerterProperties = new VirtualThreadProperties.AlerterProperties();
-        VirtualThreadProperties.QueueProperties logWorkerProperties = new VirtualThreadProperties.QueueProperties();
-        logWorkerProperties.setMaxConcurrentJobs(1);
-        logWorkerProperties.setQueueCapacity(1);
-        alerterProperties.setLogWorker(logWorkerProperties);
-        properties.setAlerter(alerterProperties);
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        VirtualThreadProperties.PoolProperties.alerterNotifyDefaults(),
+                        10,
+                        new VirtualThreadProperties.QueueProperties(1, 1),
+                        VirtualThreadProperties.QueueProperties.reduceDefaults(),
+                        VirtualThreadProperties.QueueProperties.windowEvaluatorDefaults(),
+                        4),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
         pool = new AlerterWorkerPool(properties);
 
         CountDownLatch firstStarted = new CountDownLatch(1);

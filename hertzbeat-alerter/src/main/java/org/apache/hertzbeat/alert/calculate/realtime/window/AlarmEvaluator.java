@@ -74,10 +74,10 @@ public class AlarmEvaluator implements DisposableBean {
             log.error("alerter-reduce-worker has uncaughtException.");
             log.error(throwable.getMessage(), throwable);
         };
-        if (properties.isEnabled()) {
-            VirtualThreadProperties.QueueProperties queueProperties = properties.getAlerter().getWindowEvaluator();
+        if (properties.enabled()) {
+            VirtualThreadProperties.QueueProperties queueProperties = properties.alerter().windowEvaluator();
             return ManagedExecutors.newQueuedVirtualExecutor("alerter-window-evaluator", "alerter-window-evaluator-",
-                    queueProperties.getMaxConcurrentJobs(), queueProperties.getQueueCapacity(), handler);
+                    queueProperties.maxConcurrentJobs(), queueProperties.queueCapacity(), handler);
         }
         return ManagedExecutors.wrap("alerter-window-evaluator", new java.util.concurrent.ThreadPoolExecutor(2,
                 10,

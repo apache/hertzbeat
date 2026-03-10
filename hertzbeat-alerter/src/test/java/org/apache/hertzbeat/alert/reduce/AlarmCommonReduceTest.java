@@ -87,10 +87,20 @@ class AlarmCommonReduceTest {
 
     @Test
     void testReduceAndSendAlarmQueuesWhenConcurrencyLimitReached() throws Exception {
-        VirtualThreadProperties properties = new VirtualThreadProperties();
-        VirtualThreadProperties.QueueProperties queueProperties = new VirtualThreadProperties.QueueProperties();
-        queueProperties.setMaxConcurrentJobs(1);
-        properties.getAlerter().setReduce(queueProperties);
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        VirtualThreadProperties.PoolProperties.alerterNotifyDefaults(),
+                        10,
+                        VirtualThreadProperties.QueueProperties.logWorkerDefaults(),
+                        new VirtualThreadProperties.QueueProperties(1, 0),
+                        VirtualThreadProperties.QueueProperties.windowEvaluatorDefaults(),
+                        4),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
         alarmCommonReduce.destroy();
         alarmCommonReduce = new AlarmCommonReduce(alarmGroupReduce, properties);
 

@@ -159,7 +159,7 @@ public class AlarmGroupReduce implements DisposableBean {
     }
 
     private ExecutorService createVirtualExecutor(VirtualThreadProperties properties) {
-        if (!properties.isEnabled()) {
+        if (!properties.enabled()) {
             return null;
         }
         return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()

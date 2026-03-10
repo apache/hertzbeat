@@ -195,8 +195,19 @@ class PeriodicAlertRuleSchedulerTest {
     }
 
     private VirtualThreadProperties periodicProperties(int maxConcurrentJobs) {
-        VirtualThreadProperties properties = VirtualThreadProperties.defaults();
-        properties.getAlerter().setPeriodicMaxConcurrentJobs(maxConcurrentJobs);
-        return properties;
+        return new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        VirtualThreadProperties.PoolProperties.alerterNotifyDefaults(),
+                        maxConcurrentJobs,
+                        VirtualThreadProperties.QueueProperties.logWorkerDefaults(),
+                        VirtualThreadProperties.QueueProperties.reduceDefaults(),
+                        VirtualThreadProperties.QueueProperties.windowEvaluatorDefaults(),
+                        4),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
     }
 }

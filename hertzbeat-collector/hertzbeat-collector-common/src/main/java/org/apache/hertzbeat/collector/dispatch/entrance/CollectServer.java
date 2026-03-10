@@ -217,7 +217,7 @@ public class CollectServer implements CommandLineRunner {
     private ExecutorService createHeartbeatExecutor(VirtualThreadProperties virtualThreadProperties) {
         VirtualThreadProperties properties =
                 virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
-        if (!properties.isEnabled()) {
+        if (!properties.enabled()) {
             return null;
         }
         return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()

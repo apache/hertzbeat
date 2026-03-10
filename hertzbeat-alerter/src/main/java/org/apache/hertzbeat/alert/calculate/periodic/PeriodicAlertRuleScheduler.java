@@ -85,8 +85,8 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner, Disposable
         this.scheduledExecutor = Executors.newScheduledThreadPool(10, threadFactory);
         VirtualThreadProperties properties =
                 virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
-        this.virtualThreadsEnabled = properties.isEnabled();
-        int maxConcurrentPeriodicTasks = Math.max(1, properties.getAlerter().getPeriodicMaxConcurrentJobs());
+        this.virtualThreadsEnabled = properties.enabled();
+        int maxConcurrentPeriodicTasks = Math.max(1, properties.alerter().periodicMaxConcurrentJobs());
         this.periodicExecutor = virtualThreadsEnabled
                 ? Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
                 .name("periodic-alert-task-", 0)

@@ -437,7 +437,7 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
     private ExecutorService createCleanerExecutor(VirtualThreadProperties virtualThreadProperties) {
         VirtualThreadProperties properties =
                 virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
-        if (!properties.isEnabled()) {
+        if (!properties.enabled()) {
             return null;
         }
         return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()

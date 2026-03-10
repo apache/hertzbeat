@@ -60,16 +60,16 @@ public class WarehouseWorkerPool implements DisposableBean {
             log.error("Warehouse workerExecutor has uncaughtException.");
             log.error(throwable.getMessage(), throwable);
         };
-        if (properties.isEnabled()) {
-            VirtualThreadProperties.PoolProperties poolProperties = properties.getWarehouse();
+        if (properties.enabled()) {
+            VirtualThreadProperties.PoolProperties poolProperties = properties.warehouse();
             return ManagedExecutors.newVirtualExecutor("warehouse-worker", "warehouse-worker-",
-                    poolProperties.getMode(), poolProperties.getMaxConcurrentJobs(), handler);
+                    poolProperties.mode(), poolProperties.maxConcurrentJobs(), handler);
         }
         return ManagedExecutors.wrap("warehouse-worker", createLegacyExecutor(handler));
     }
 
     private ManagedExecutor createLongRunningExecutor(VirtualThreadProperties properties, ManagedExecutor fallback) {
-        if (!properties.isEnabled()) {
+        if (!properties.enabled()) {
             return fallback;
         }
         return ManagedExecutors.newPlatformExecutor("warehouse-long-running", "warehouse-long-running-",

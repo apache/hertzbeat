@@ -60,16 +60,16 @@ public class CommonThreadPool implements DisposableBean {
             log.error("common executor has uncaughtException.");
             log.error(throwable.getMessage(), throwable);
         };
-        if (properties.isEnabled()) {
-            VirtualThreadProperties.PoolProperties poolProperties = properties.getCommon();
+        if (properties.enabled()) {
+            VirtualThreadProperties.PoolProperties poolProperties = properties.common();
             return ManagedExecutors.newVirtualExecutor("common-worker", "common-worker-",
-                    poolProperties.getMode(), poolProperties.getMaxConcurrentJobs(), handler);
+                    poolProperties.mode(), poolProperties.maxConcurrentJobs(), handler);
         }
         return ManagedExecutors.wrap("common-worker", createLegacyExecutor(handler));
     }
 
     private ManagedExecutor createLongRunningExecutor(VirtualThreadProperties properties, ManagedExecutor fallback) {
-        if (!properties.isEnabled()) {
+        if (!properties.enabled()) {
             return fallback;
         }
         return ManagedExecutors.newPlatformExecutor("common-long-running", "common-long-running-",

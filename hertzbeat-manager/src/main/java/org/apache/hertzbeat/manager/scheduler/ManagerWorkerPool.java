@@ -59,16 +59,16 @@ public class ManagerWorkerPool implements DisposableBean {
             log.error("workerExecutor has uncaughtException.");
             log.error(throwable.getMessage(), throwable);
         };
-        if (properties.isEnabled()) {
-            VirtualThreadProperties.PoolProperties poolProperties = properties.getManager();
+        if (properties.enabled()) {
+            VirtualThreadProperties.PoolProperties poolProperties = properties.manager();
             return ManagedExecutors.newVirtualExecutor("manager-worker", "manager-worker-",
-                    poolProperties.getMode(), poolProperties.getMaxConcurrentJobs(), handler);
+                    poolProperties.mode(), poolProperties.maxConcurrentJobs(), handler);
         }
         return ManagedExecutors.wrap("manager-worker", createLegacyExecutor(handler));
     }
 
     private ManagedExecutor createLongRunningExecutor(VirtualThreadProperties properties, ManagedExecutor fallback) {
-        if (!properties.isEnabled()) {
+        if (!properties.enabled()) {
             return fallback;
         }
         return ManagedExecutors.newPlatformExecutor("manager-long-running", "manager-long-running-",

@@ -78,11 +78,14 @@ class WarehouseWorkerPoolTest {
 
     @Test
     void executeJobRejectsWhenConcurrencyLimitReached() throws InterruptedException {
-        VirtualThreadProperties properties = new VirtualThreadProperties();
-        VirtualThreadProperties.PoolProperties warehouseProperties = new VirtualThreadProperties.PoolProperties();
-        warehouseProperties.setMode(AdmissionMode.LIMIT_AND_REJECT);
-        warehouseProperties.setMaxConcurrentJobs(1);
-        properties.setWarehouse(warehouseProperties);
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                VirtualThreadProperties.AlerterProperties.defaults(),
+                new VirtualThreadProperties.PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 1),
+                VirtualThreadProperties.AsyncProperties.defaults());
         pool = new WarehouseWorkerPool(properties);
 
         CountDownLatch started = new CountDownLatch(1);

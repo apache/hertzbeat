@@ -76,11 +76,14 @@ class CommonThreadPoolTest {
 
     @Test
     void testExecuteRejectsWhenConcurrencyLimitReached() throws Exception {
-        VirtualThreadProperties properties = new VirtualThreadProperties();
-        VirtualThreadProperties.PoolProperties commonProperties = new VirtualThreadProperties.PoolProperties();
-        commonProperties.setMode(AdmissionMode.LIMIT_AND_REJECT);
-        commonProperties.setMaxConcurrentJobs(1);
-        properties.setCommon(commonProperties);
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                new VirtualThreadProperties.PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 1),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                VirtualThreadProperties.AlerterProperties.defaults(),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
         commonThreadPool = new CommonThreadPool(properties);
 
         CountDownLatch started = new CountDownLatch(1);

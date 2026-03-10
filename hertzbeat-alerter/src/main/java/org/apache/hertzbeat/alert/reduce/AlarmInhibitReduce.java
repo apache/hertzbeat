@@ -151,7 +151,7 @@ public class AlarmInhibitReduce implements DisposableBean {
     }
 
     private ExecutorService createCleanupExecutor(VirtualThreadProperties properties) {
-        if (!properties.isEnabled()) {
+        if (!properties.enabled()) {
             return null;
         }
         return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()

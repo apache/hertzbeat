@@ -378,10 +378,20 @@ class AlarmEvaluatorTest {
 
     @Test
     void testSendAndProcessWindowDataQueuesWhenConcurrencyLimitReached() throws Exception {
-        VirtualThreadProperties properties = new VirtualThreadProperties();
-        VirtualThreadProperties.QueueProperties queueProperties = new VirtualThreadProperties.QueueProperties();
-        queueProperties.setMaxConcurrentJobs(1);
-        properties.getAlerter().setWindowEvaluator(queueProperties);
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        VirtualThreadProperties.PoolProperties.alerterNotifyDefaults(),
+                        10,
+                        VirtualThreadProperties.QueueProperties.logWorkerDefaults(),
+                        VirtualThreadProperties.QueueProperties.reduceDefaults(),
+                        new VirtualThreadProperties.QueueProperties(1, 0),
+                        4),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
         alarmEvaluator.destroy();
         alarmEvaluator = new AlarmEvaluator(alarmCommonReduce, properties);
 

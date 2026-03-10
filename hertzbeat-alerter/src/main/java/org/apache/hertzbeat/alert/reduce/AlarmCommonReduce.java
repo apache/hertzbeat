@@ -58,10 +58,10 @@ public class AlarmCommonReduce implements DisposableBean {
             log.error("alerter-reduce-worker has uncaughtException.");
             log.error(throwable.getMessage(), throwable);
         };
-        if (properties.isEnabled()) {
-            VirtualThreadProperties.QueueProperties queueProperties = properties.getAlerter().getReduce();
+        if (properties.enabled()) {
+            VirtualThreadProperties.QueueProperties queueProperties = properties.alerter().reduce();
             return ManagedExecutors.newQueuedVirtualExecutor("alerter-reduce-worker", "alerter-reduce-worker-",
-                    queueProperties.getMaxConcurrentJobs(), queueProperties.getQueueCapacity(), handler);
+                    queueProperties.maxConcurrentJobs(), queueProperties.queueCapacity(), handler);
         }
         return ManagedExecutors.wrap("alerter-reduce-worker", new java.util.concurrent.ThreadPoolExecutor(2,
                 2,

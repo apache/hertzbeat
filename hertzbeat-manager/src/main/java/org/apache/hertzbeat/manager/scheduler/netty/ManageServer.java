@@ -233,7 +233,7 @@ public class ManageServer implements CommandLineRunner {
     private ExecutorService createChannelCheckExecutor(VirtualThreadProperties virtualThreadProperties) {
         VirtualThreadProperties properties =
                 virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
-        if (!properties.isEnabled()) {
+        if (!properties.enabled()) {
             return null;
         }
         return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()

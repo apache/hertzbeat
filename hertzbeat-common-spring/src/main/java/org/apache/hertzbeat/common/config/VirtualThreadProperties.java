@@ -17,34 +17,40 @@
 
 package org.apache.hertzbeat.common.config;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.hertzbeat.common.concurrent.AdmissionMode;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
+import org.springframework.boot.context.properties.bind.Name;
 
 /**
  * Virtual-thread related configuration.
  */
-@Getter
-@Setter
 @ConfigurationProperties(prefix = "hertzbeat.vthreads")
-public class VirtualThreadProperties {
+public record VirtualThreadProperties(
+        @DefaultValue("true") boolean enabled,
+        @DefaultValue PoolProperties collector,
+        @DefaultValue PoolProperties common,
+        @DefaultValue PoolProperties manager,
+        @DefaultValue AlerterProperties alerter,
+        @DefaultValue PoolProperties warehouse,
+        @DefaultValue AsyncProperties async) {
 
     private static final int DEFAULT_COLLECTOR_MAX_CONCURRENT_JOBS = 512;
 
-    private boolean enabled = true;
+    public VirtualThreadProperties {
+        collector = collector == null ? PoolProperties.collectorDefaults() : collector;
+        common = common == null ? PoolProperties.commonDefaults() : common;
+        manager = manager == null ? PoolProperties.managerDefaults() : manager;
+        alerter = alerter == null ? AlerterProperties.defaults() : alerter;
+        warehouse = warehouse == null ? PoolProperties.warehouseDefaults() : warehouse;
+        async = async == null ? AsyncProperties.defaults() : async;
+    }
 
-    private PoolProperties collector = PoolProperties.collectorDefaults();
-
-    private PoolProperties common = PoolProperties.commonDefaults();
-
-    private PoolProperties manager = PoolProperties.managerDefaults();
-
-    private AlerterProperties alerter = new AlerterProperties();
-
-    private PoolProperties warehouse = PoolProperties.warehouseDefaults();
-
-    private AsyncProperties async = new AsyncProperties();
+    public VirtualThreadProperties() {
+        this(true, PoolProperties.collectorDefaults(), PoolProperties.commonDefaults(),
+                PoolProperties.managerDefaults(), AlerterProperties.defaults(),
+                PoolProperties.warehouseDefaults(), AsyncProperties.defaults());
+    }
 
     /**
      * Create a detached properties instance with runtime defaults.
@@ -58,41 +64,36 @@ public class VirtualThreadProperties {
     /**
      * Pool-level configuration.
      */
-    @Getter
-    @Setter
-    public static class PoolProperties {
+    public record PoolProperties(
+            @DefaultValue("UNBOUNDED_VT") AdmissionMode mode,
+            @DefaultValue("0") int maxConcurrentJobs) {
 
-        private AdmissionMode mode = AdmissionMode.UNBOUNDED_VT;
-
-        private int maxConcurrentJobs;
-
-        private static PoolProperties collectorDefaults() {
-            PoolProperties properties = new PoolProperties();
-            properties.setMode(AdmissionMode.LIMIT_AND_REJECT);
-            properties.setMaxConcurrentJobs(defaultCollectorConcurrency());
-            return properties;
+        public PoolProperties {
+            mode = mode == null ? AdmissionMode.UNBOUNDED_VT : mode;
         }
 
-        private static PoolProperties warehouseDefaults() {
+        public PoolProperties() {
+            this(AdmissionMode.UNBOUNDED_VT, 0);
+        }
+
+        public static PoolProperties collectorDefaults() {
+            return new PoolProperties(AdmissionMode.LIMIT_AND_REJECT, defaultCollectorConcurrency());
+        }
+
+        public static PoolProperties warehouseDefaults() {
             return new PoolProperties();
         }
 
-        private static PoolProperties commonDefaults() {
+        public static PoolProperties commonDefaults() {
             return new PoolProperties();
         }
 
-        private static PoolProperties managerDefaults() {
-            PoolProperties properties = new PoolProperties();
-            properties.setMode(AdmissionMode.LIMIT_AND_REJECT);
-            properties.setMaxConcurrentJobs(10);
-            return properties;
+        public static PoolProperties managerDefaults() {
+            return new PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 10);
         }
 
-        private static PoolProperties alerterNotifyDefaults() {
-            PoolProperties properties = new PoolProperties();
-            properties.setMode(AdmissionMode.LIMIT_AND_REJECT);
-            properties.setMaxConcurrentJobs(64);
-            return properties;
+        public static PoolProperties alerterNotifyDefaults() {
+            return new PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 64);
         }
 
         private static int defaultCollectorConcurrency() {
@@ -103,67 +104,71 @@ public class VirtualThreadProperties {
     /**
      * Alerter-specific executor configuration.
      */
-    @Getter
-    @Setter
-    public static class AlerterProperties {
+    public record AlerterProperties(
+            @Name("notify") @DefaultValue PoolProperties notifyPool,
+            @DefaultValue("10") int periodicMaxConcurrentJobs,
+            @DefaultValue QueueProperties logWorker,
+            @DefaultValue QueueProperties reduce,
+            @DefaultValue QueueProperties windowEvaluator,
+            @DefaultValue("4") int notifyMaxConcurrentPerChannel) {
 
-        private PoolProperties notify = PoolProperties.alerterNotifyDefaults();
+        public AlerterProperties {
+            notifyPool = notifyPool == null ? PoolProperties.alerterNotifyDefaults() : notifyPool;
+            logWorker = logWorker == null ? QueueProperties.logWorkerDefaults() : logWorker;
+            reduce = reduce == null ? QueueProperties.reduceDefaults() : reduce;
+            windowEvaluator = windowEvaluator == null ? QueueProperties.windowEvaluatorDefaults() : windowEvaluator;
+        }
 
-        private int periodicMaxConcurrentJobs = 10;
+        public AlerterProperties() {
+            this(PoolProperties.alerterNotifyDefaults(), 10,
+                    QueueProperties.logWorkerDefaults(), QueueProperties.reduceDefaults(),
+                    QueueProperties.windowEvaluatorDefaults(), 4);
+        }
 
-        private QueueProperties logWorker = QueueProperties.logWorkerDefaults();
-
-        private QueueProperties reduce = QueueProperties.reduceDefaults();
-
-        private QueueProperties windowEvaluator = QueueProperties.windowEvaluatorDefaults();
-
-        private int notifyMaxConcurrentPerChannel = 4;
+        public static AlerterProperties defaults() {
+            return new AlerterProperties();
+        }
     }
 
     /**
      * Queue-preserving executor configuration.
      */
-    @Getter
-    @Setter
-    public static class QueueProperties {
+    public record QueueProperties(
+            @DefaultValue("0") int maxConcurrentJobs,
+            @DefaultValue("0") int queueCapacity) {
 
-        private int maxConcurrentJobs;
-
-        private int queueCapacity;
-
-        private static QueueProperties reduceDefaults() {
-            QueueProperties properties = new QueueProperties();
-            properties.setMaxConcurrentJobs(2);
-            return properties;
+        public QueueProperties() {
+            this(0, 0);
         }
 
-        private static QueueProperties logWorkerDefaults() {
-            QueueProperties properties = new QueueProperties();
-            properties.setMaxConcurrentJobs(10);
-            properties.setQueueCapacity(1000);
-            return properties;
+        public static QueueProperties reduceDefaults() {
+            return new QueueProperties(2, 0);
         }
 
-        private static QueueProperties windowEvaluatorDefaults() {
-            QueueProperties properties = new QueueProperties();
-            properties.setMaxConcurrentJobs(2);
-            return properties;
+        public static QueueProperties logWorkerDefaults() {
+            return new QueueProperties(10, 1000);
+        }
+
+        public static QueueProperties windowEvaluatorDefaults() {
+            return new QueueProperties(2, 0);
         }
     }
 
     /**
      * Async executor configuration.
      */
-    @Getter
-    @Setter
-    public static class AsyncProperties {
+    public record AsyncProperties(
+            @DefaultValue("true") boolean enabled,
+            @DefaultValue("256") int concurrencyLimit,
+            @DefaultValue("true") boolean rejectWhenLimitReached,
+            @DefaultValue("5000") long taskTerminationTimeout) {
 
-        private boolean enabled = true;
+        public AsyncProperties() {
+            this(true, 256, true, 5000L);
+        }
 
-        private int concurrencyLimit = 256;
-
-        private boolean rejectWhenLimitReached = true;
-
-        private long taskTerminationTimeout = 5000L;
+        public static AsyncProperties defaults() {
+            return new AsyncProperties();
+        }
     }
 }

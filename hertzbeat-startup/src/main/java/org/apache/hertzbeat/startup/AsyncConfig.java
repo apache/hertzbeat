@@ -30,12 +30,12 @@ public class AsyncConfig {
 
     @Bean(name = "taskExecutor", destroyMethod = "close")
     public SimpleAsyncTaskExecutor taskExecutor(VirtualThreadProperties virtualThreadProperties) {
-        VirtualThreadProperties.AsyncProperties asyncProperties = virtualThreadProperties.getAsync();
+        VirtualThreadProperties.AsyncProperties asyncProperties = virtualThreadProperties.async();
         SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("async-worker-");
-        executor.setVirtualThreads(virtualThreadProperties.isEnabled() && asyncProperties.isEnabled());
-        executor.setConcurrencyLimit(asyncProperties.getConcurrencyLimit());
-        executor.setRejectTasksWhenLimitReached(asyncProperties.isRejectWhenLimitReached());
-        executor.setTaskTerminationTimeout(asyncProperties.getTaskTerminationTimeout());
+        executor.setVirtualThreads(virtualThreadProperties.enabled() && asyncProperties.enabled());
+        executor.setConcurrencyLimit(asyncProperties.concurrencyLimit());
+        executor.setRejectTasksWhenLimitReached(asyncProperties.rejectWhenLimitReached());
+        executor.setTaskTerminationTimeout(asyncProperties.taskTerminationTimeout());
         return executor;
     }
 }

@@ -29,31 +29,31 @@ class VirtualThreadPropertiesTest {
     void defaultsRemainSafeWithoutExternalConfiguration() {
         VirtualThreadProperties properties = VirtualThreadProperties.defaults();
 
-        assertTrue(properties.isEnabled());
+        assertTrue(properties.enabled());
 
-        assertEquals(AdmissionMode.LIMIT_AND_REJECT, properties.getCollector().getMode());
-        assertEquals(512, properties.getCollector().getMaxConcurrentJobs());
+        assertEquals(AdmissionMode.LIMIT_AND_REJECT, properties.collector().mode());
+        assertEquals(512, properties.collector().maxConcurrentJobs());
 
-        assertEquals(AdmissionMode.UNBOUNDED_VT, properties.getCommon().getMode());
-        assertEquals(AdmissionMode.LIMIT_AND_REJECT, properties.getManager().getMode());
-        assertEquals(10, properties.getManager().getMaxConcurrentJobs());
+        assertEquals(AdmissionMode.UNBOUNDED_VT, properties.common().mode());
+        assertEquals(AdmissionMode.LIMIT_AND_REJECT, properties.manager().mode());
+        assertEquals(10, properties.manager().maxConcurrentJobs());
 
-        assertEquals(AdmissionMode.LIMIT_AND_REJECT, properties.getAlerter().getNotify().getMode());
-        assertEquals(64, properties.getAlerter().getNotify().getMaxConcurrentJobs());
-        assertEquals(10, properties.getAlerter().getPeriodicMaxConcurrentJobs());
-        assertEquals(10, properties.getAlerter().getLogWorker().getMaxConcurrentJobs());
-        assertEquals(1000, properties.getAlerter().getLogWorker().getQueueCapacity());
-        assertEquals(2, properties.getAlerter().getReduce().getMaxConcurrentJobs());
-        assertEquals(0, properties.getAlerter().getReduce().getQueueCapacity());
-        assertEquals(2, properties.getAlerter().getWindowEvaluator().getMaxConcurrentJobs());
-        assertEquals(0, properties.getAlerter().getWindowEvaluator().getQueueCapacity());
-        assertEquals(4, properties.getAlerter().getNotifyMaxConcurrentPerChannel());
+        assertEquals(AdmissionMode.LIMIT_AND_REJECT, properties.alerter().notifyPool().mode());
+        assertEquals(64, properties.alerter().notifyPool().maxConcurrentJobs());
+        assertEquals(10, properties.alerter().periodicMaxConcurrentJobs());
+        assertEquals(10, properties.alerter().logWorker().maxConcurrentJobs());
+        assertEquals(1000, properties.alerter().logWorker().queueCapacity());
+        assertEquals(2, properties.alerter().reduce().maxConcurrentJobs());
+        assertEquals(0, properties.alerter().reduce().queueCapacity());
+        assertEquals(2, properties.alerter().windowEvaluator().maxConcurrentJobs());
+        assertEquals(0, properties.alerter().windowEvaluator().queueCapacity());
+        assertEquals(4, properties.alerter().notifyMaxConcurrentPerChannel());
 
-        assertEquals(AdmissionMode.UNBOUNDED_VT, properties.getWarehouse().getMode());
+        assertEquals(AdmissionMode.UNBOUNDED_VT, properties.warehouse().mode());
 
-        assertTrue(properties.getAsync().isEnabled());
-        assertEquals(256, properties.getAsync().getConcurrencyLimit());
-        assertTrue(properties.getAsync().isRejectWhenLimitReached());
-        assertEquals(5000L, properties.getAsync().getTaskTerminationTimeout());
+        assertTrue(properties.async().enabled());
+        assertEquals(256, properties.async().concurrencyLimit());
+        assertTrue(properties.async().rejectWhenLimitReached());
+        assertEquals(5000L, properties.async().taskTerminationTimeout());
     }
 }

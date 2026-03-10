@@ -54,9 +54,14 @@ class AsyncConfigTest {
 
     @Test
     void taskExecutorRejectsWhenConcurrencyLimitReached() throws Exception {
-        VirtualThreadProperties properties = new VirtualThreadProperties();
-        properties.getAsync().setConcurrencyLimit(1);
-        properties.getAsync().setRejectWhenLimitReached(true);
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                VirtualThreadProperties.AlerterProperties.defaults(),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                new VirtualThreadProperties.AsyncProperties(true, 1, true, 5000L));
 
         try (SimpleAsyncTaskExecutor executor = asyncConfig.taskExecutor(properties)) {
             CountDownLatch started = new CountDownLatch(1);
