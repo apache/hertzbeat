@@ -15,31 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.dto;
+package org.apache.hertzbeat.common.config;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.manager.Collector;
+import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * collector summary
+ * Spring Boot binding adapter for {@link SmsConfig}.
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "collector summary")
-public class CollectorSummary {
-    
-    @Schema(description = "the collector info")
-    private Collector collector;
-    
-    @Schema(description = "the number of monitors pinned in this collector")
-    private int pinMonitorNum;
-    
-    @Schema(description = "the number of monitors dispatched in this collector")
-    private int dispatchMonitorNum;
+@ConfigurationProperties(prefix = "alerter.sms")
+public class SmsConfigBinding extends SmsConfig {
 }

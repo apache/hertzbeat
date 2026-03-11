@@ -46,7 +46,6 @@ import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.TopicPartitionInfo;
-import org.springframework.util.Assert;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -223,14 +222,14 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
-        Assert.isTrue(metrics != null, "Metrics cannot be null");
+        require(metrics != null, "Metrics cannot be null");
         KafkaProtocol kafkaProtocol = metrics.getKclient();
 
         // Ensure that metrics and kafkaProtocol are not null
-        Assert.isTrue(metrics != null && kafkaProtocol != null, "Kafka collect must have kafkaProtocol params");
+        require(kafkaProtocol != null, "Kafka collect must have kafkaProtocol params");
         // Ensure that host and port are not empty
-        Assert.hasText(kafkaProtocol.getHost(), "Kafka Protocol host is required.");
-        Assert.hasText(kafkaProtocol.getPort(), "Kafka Protocol port is required.");
+        requireHasText(kafkaProtocol.getHost(), "Kafka Protocol host is required.");
+        requireHasText(kafkaProtocol.getPort(), "Kafka Protocol port is required.");
     }
 
     @Override
@@ -383,5 +382,15 @@ public class KafkaCollectImpl extends AbstractCollect {
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_KAFKA;
+    }
+
+    private static void require(boolean expression, String message) {
+        if (!expression) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    private static void requireHasText(String value, String message) {
+        require(value != null && !value.trim().isEmpty(), message);
     }
 }

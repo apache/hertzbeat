@@ -15,29 +15,30 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.dto;
+package org.apache.hertzbeat.manager.pojo.dto;
 
-
-import jakarta.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
- * data transfer class for uploading plugins
+ * Collector summary view.
  */
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PluginUpload {
+@Schema(description = "collector summary")
+public class CollectorSummary {
 
-    @NotNull
-    private MultipartFile jarFile;
+    @Schema(description = "the collector info")
+    private CollectorInfo collector;
 
-    @NotNull(message = "Plugin name is required")
-    private String name;
+    @Schema(description = "the number of monitors pinned in this collector")
+    private int pinMonitorNum;
 
-    @NotNull(message = "Enable status is required")
-    private Boolean enableStatus;
+    @Schema(description = "the number of monitors dispatched in this collector")
+    private int dispatchMonitorNum;
 }

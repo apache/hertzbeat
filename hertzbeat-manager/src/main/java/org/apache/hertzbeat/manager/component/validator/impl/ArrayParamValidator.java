@@ -17,9 +17,9 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.manager.component.validator.ParamValidator;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,7 +33,7 @@ public class ArrayParamValidator implements ParamValidator {
     }
 
     @Override
-    public void validate(ParamDefine paramDefine, Param param) {
+    public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
         String[] arrays = param.getParamValue().split(",");
         if (arrays.length == 0) {
             throw new IllegalArgumentException("Param field " + paramDefine.getField() + " value "

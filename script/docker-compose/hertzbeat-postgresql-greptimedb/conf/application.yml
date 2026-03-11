@@ -231,3 +231,35 @@ grafana:
   url: http://127.0.0.1:3000
   username: admin
   password: admin
+
+hertzbeat:
+  # Optional virtual-thread overrides. Remove this whole block to use built-in defaults.
+  vthreads:
+    enabled: true
+    common:
+      mode: UNBOUNDED_VT
+    collector:
+      mode: LIMIT_AND_REJECT
+    manager:
+      mode: LIMIT_AND_REJECT
+      max-concurrent-jobs: 10
+    alerter:
+      notify:
+        mode: LIMIT_AND_REJECT
+        max-concurrent-jobs: 64
+      periodic-max-concurrent-jobs: 10
+      log-worker:
+        max-concurrent-jobs: 10
+        queue-capacity: 1000
+      reduce:
+        max-concurrent-jobs: 2
+      window-evaluator:
+        max-concurrent-jobs: 2
+      notify-max-concurrent-per-channel: 4
+    warehouse:
+      mode: UNBOUNDED_VT
+    async:
+      enabled: true
+      concurrency-limit: 256
+      reject-when-limit-reached: true
+      task-termination-timeout: 5000

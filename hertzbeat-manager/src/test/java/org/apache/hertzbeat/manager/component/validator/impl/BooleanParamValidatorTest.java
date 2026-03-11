@@ -19,8 +19,8 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,9 +44,9 @@ class BooleanParamValidatorTest {
 
     @Test
     void validate_True() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("boolean");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("true");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
@@ -54,9 +54,9 @@ class BooleanParamValidatorTest {
 
     @Test
     void validate_False() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("boolean");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("false");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
@@ -64,9 +64,9 @@ class BooleanParamValidatorTest {
 
     @Test
     void validate_CaseInsensitive() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("boolean");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("True");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
@@ -74,10 +74,10 @@ class BooleanParamValidatorTest {
 
     @Test
     void validate_Invalid() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("boolean");
         paramDefine.setField("ssl");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("yes");
 
         assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));

@@ -36,9 +36,9 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import java.util.concurrent.ThreadFactory;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 
@@ -51,10 +51,10 @@ import org.apache.hertzbeat.remoting.event.NettyEventListener;
 public class NettyRemotingClient extends NettyRemotingAbstract implements RemotingClient {
 
     private static final int DEFAULT_WORKER_THREAD_NUM = Math.min(4, Runtime.getRuntime().availableProcessors());
-    
+
     private final NettyClientConfig nettyClientConfig;
 
-    private final CommonThreadPool threadPool;
+    private final BackgroundTaskExecutor threadPool;
 
     private final Bootstrap bootstrap = new Bootstrap();
 
@@ -64,7 +64,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
     public NettyRemotingClient(final NettyClientConfig nettyClientConfig,
                                final NettyEventListener nettyEventListener,
-                               final CommonThreadPool threadPool) {
+                               final BackgroundTaskExecutor threadPool) {
         super(nettyEventListener);
         this.nettyClientConfig = nettyClientConfig;
         this.threadPool = threadPool;
@@ -72,7 +72,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void start() {
-        this.threadPool.execute(() -> {
+        this.threadPool.executeLongRunning(() -> {
             ThreadFactory threadFactory = new ThreadFactoryBuilder()
                     .setUncaughtExceptionHandler((thread, throwable) -> {
                         log.error("NettyClientWorker has uncaughtException.");
