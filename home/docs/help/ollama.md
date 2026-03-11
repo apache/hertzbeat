@@ -22,6 +22,7 @@ allow external access.
 | Task Name           | The name that identifies this monitoring task, which must be unique.                                               |
 | Port                | The port Ollama service is listening on, default is 11434.                                                         |
 | SSL                 | Whether to use HTTPS to connect to the Ollama service.                                                             |
+| API Key             | To directly access the API key of ollama.com.                                                                      |
 | Collector           | Configure which collector is used to schedule data collection for this monitoring.                                 |
 | Monitoring Interval | The interval for periodically collecting data, in seconds. The minimum interval that can be set is 30 seconds.     |
 | Bound Tags          | Tags for categorizing and managing monitoring resources.                                                           |

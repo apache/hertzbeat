@@ -33,12 +33,16 @@ helpLink:
   en-US: https://hertzbeat.apache.org/docs/help/ollama
 # Input params define for monitoring(render web ui by the definition)
 params:
+  # field-param field key
   - field: host
+    # name-param field display i18n name
     name:
       zh-CN: 目标Host
       en-US: Target Host
       ja-JP: 目標ホスト
+    # type-param field type(most mapping the html input type)
     type: host
+    # required-true or false
     required: true
   - field: port
     name:
@@ -55,6 +59,13 @@ params:
       en-US: SSL
       ja-JP: SSL利用
     type: boolean
+    required: false
+  - field: apiKey
+    name:
+      zh-CN: API Key
+      en-US: API Key
+      ja-JP: API キー
+    type: text
     required: false
 # collect metrics config list
 metrics:
@@ -78,6 +89,10 @@ metrics:
       url: /api/version
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: Bearer Token
+        bearerTokenToken: ^_^apiKey^_^
       parseType: jsonPath
       parseScript: '$'
 
@@ -157,6 +172,9 @@ metrics:
       url: /api/tags
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Bearer Token
+        bearerTokenToken: ^_^apiKey^_^
       parseType: jsonPath
       parseScript: '$.models.*'
 
@@ -214,5 +232,8 @@ metrics:
       url: /api/ps
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Bearer Token
+        bearerTokenToken: ^_^apiKey^_^
       parseType: jsonPath
       parseScript: '$.models.*'
