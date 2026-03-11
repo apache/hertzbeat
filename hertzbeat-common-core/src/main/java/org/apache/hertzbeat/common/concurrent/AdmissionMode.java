@@ -15,15 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.support.exception;
+package org.apache.hertzbeat.common.concurrent;
 
 /**
- * Expression visitor exception
+ * Task admission mode for managed executors.
  */
-public class ExpressionVisitorException extends RuntimeException {
+public enum AdmissionMode {
 
+    /**
+     * Start each task on its own virtual thread without an executor-level concurrency cap.
+     */
+    UNBOUNDED_VT,
 
-    public ExpressionVisitorException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    /**
+     * Reject immediately when the configured concurrency cap has been reached.
+     */
+    LIMIT_AND_REJECT,
+
+    /**
+     * Block the submitter until a permit is available.
+     */
+    LIMIT_AND_BLOCK
 }

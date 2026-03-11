@@ -19,7 +19,10 @@ package org.apache.hertzbeat.alert.notice;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -148,5 +151,33 @@ class AlertNoticeDispatchTest {
         alert.setStatus("firing");
 
         assertFalse(alertNoticeDispatch.sendNoticeMsg(receiver, null, alert));
+    }
+
+    @Test
+    void testDispatchAlarmUsesTypedNotifyExecution() {
+        NoticeTemplate template = new NoticeTemplate();
+        template.setId(1L);
+        template.setName("default-template");
+
+        when(alertStoreHandler.store(alert)).thenReturn(alert);
+        when(noticeConfigService.getReceiverFilterRule(alert)).thenReturn(Collections.singletonList(
+                org.apache.hertzbeat.common.entity.alerter.NoticeRule.builder()
+                        .receiverId(Collections.singletonList(1L))
+                        .templateId(1L)
+                        .build()));
+        when(noticeConfigService.getReceiverById(1L)).thenReturn(receiver);
+        when(noticeConfigService.getOneTemplateById(1L)).thenReturn(template);
+        doNothing().when(alertNotifyHandler).send(eq(receiver), eq(template), eq(alert));
+        doAnswer(invocation -> {
+            Runnable task = invocation.getArgument(1);
+            task.run();
+            return null;
+        }).when(workerPool).executeNotify(anyByte(), any(Runnable.class));
+
+        alertNoticeDispatch.dispatchAlarm(alert);
+
+        verify(workerPool).executeNotify(eq((byte) 1), any(Runnable.class));
+        verify(alertNotifyHandler).send(eq(receiver), eq(template), eq(alert));
+        verify(emitterManager).broadcast(any(String.class));
     }
 }

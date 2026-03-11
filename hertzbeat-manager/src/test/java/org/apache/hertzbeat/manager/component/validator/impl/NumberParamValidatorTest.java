@@ -20,8 +20,8 @@
 package org.apache.hertzbeat.manager.component.validator.impl;
 
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -45,9 +45,9 @@ class NumberParamValidatorTest {
 
     @Test
     void validate_ValidNumber() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("number");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("123");
 
         validator.validate(paramDefine, param);
@@ -56,10 +56,10 @@ class NumberParamValidatorTest {
 
     @Test
     void validate_InvalidNumber() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("number");
         paramDefine.setField("port");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("abc");
 
         assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));
@@ -67,10 +67,10 @@ class NumberParamValidatorTest {
 
     @Test
     void validate_NumberInRange() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("number");
         paramDefine.setRange("[0,100]");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("50");
 
         validator.validate(paramDefine, param);
@@ -78,11 +78,11 @@ class NumberParamValidatorTest {
 
     @Test
     void validate_NumberOutOfRange() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("number");
         paramDefine.setField("port");
         paramDefine.setRange("[0,100]");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("150");
 
         assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));

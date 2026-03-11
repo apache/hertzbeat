@@ -17,71 +17,60 @@
 
 package org.apache.hertzbeat.common.entity.job;
 
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.job.protocol.CommonRequestProtocol;
-import org.apache.hertzbeat.common.entity.job.protocol.Protocol;
 
 /**
- * ssh tunnel
+ * Framework-agnostic parameter definition used by runtime templates and jobs.
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SshTunnel implements CommonRequestProtocol, Protocol {
+public class RuntimeParamDefine {
+
+    private String app;
+
+    private Map<String, String> name;
+
+    private String field;
+
+    private String type;
+
+    private boolean required = false;
+
+    private String defaultValue;
+
+    private String placeholder;
+
+    private String range;
+
+    private Short limit;
+
+    private List<Option> options;
+
+    private String keyAlias;
+
+    private String valueAlias;
+
+    private boolean hide = false;
+
+    private Map<String, List<Object>> depend;
 
     /**
-     * enable ssh tunnel
+     * Runtime option definition.
      */
-    private String enable = "false";
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static final class Option {
 
-    /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
-     */
-    private String host;
+        private String label;
 
-    /**
-     * Peer host port
-     */
-    private String port = "22";
-
-    /**
-     * TIME OUT PERIOD
-     */
-    private String timeout = "6000";
-
-    /**
-     * UserName
-     */
-    private String username;
-
-    /**
-     * Password (optional)
-     */
-    private String password;
-
-    /**
-     * Private key (optional)
-     */
-    private String privateKey;
-
-    /**
-     * private key passphrase (optional)
-     */
-    private String privateKeyPassphrase;
-
-    /**
-     * share connection session
-     */
-    private String shareConnection = "true";
-
-    @Override
-    public boolean isInvalid() {
-
-        // todo add
-        return false;
+        private String value;
     }
 }

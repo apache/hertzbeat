@@ -43,9 +43,9 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.RemotingServer;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 
@@ -59,7 +59,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     private final NettyServerConfig nettyServerConfig;
 
-    private final CommonThreadPool threadPool;
+    private final BackgroundTaskExecutor threadPool;
 
     private EventLoopGroup bossGroup;
 
@@ -69,7 +69,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     public NettyRemotingServer(final NettyServerConfig nettyServerConfig,
                                final NettyEventListener nettyEventListener,
-                               final CommonThreadPool threadPool) {
+                               final BackgroundTaskExecutor threadPool) {
         super(nettyEventListener);
         this.nettyServerConfig = nettyServerConfig;
         this.threadPool = threadPool;
@@ -77,7 +77,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void start() {
-        this.threadPool.execute(() -> {
+        this.threadPool.executeLongRunning(() -> {
             int port = this.nettyServerConfig.getPort();
             ThreadFactory bossThreadFactory = new ThreadFactoryBuilder()
                     .setUncaughtExceptionHandler((thread, throwable) -> {

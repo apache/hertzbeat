@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.common.util.ArrowUtil;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
@@ -32,9 +31,15 @@ import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
  */
 @Slf4j
 public class CollectCyclicServiceDiscoveryDataResponseProcessor implements NettyRemotingProcessor {
+
+    private final CommonDataQueue dataQueue;
+
+    public CollectCyclicServiceDiscoveryDataResponseProcessor(CommonDataQueue dataQueue) {
+        this.dataQueue = dataQueue;
+    }
+
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-        CommonDataQueue dataQueue = SpringContextHolder.getBean(CommonDataQueue.class);
         List<CollectRep.MetricsData> metricsDataList = ArrowUtil.deserializeMetricsData(message.getMsg().toByteArray());
         for (CollectRep.MetricsData metricsData : metricsDataList) {
             if (metricsData != null) {

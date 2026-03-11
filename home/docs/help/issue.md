@@ -32,12 +32,11 @@ sidebar_label: Common issues
 
 6. What is the task limit for a single collector?
 
-   > Specific limit parameters:  
-   Core thread count: Math.max(2, Runtime.getRuntime().availableProcessors()) – at least 2 threads, or equal to the number of CPU cores.  
-   Maximum thread count: Runtime.getRuntime().availableProcessors() * 16 – 16 times the number of CPU cores.  
-   > The limit depends entirely on the server's CPU core count. For example, on an 8-core CPU server, a maximum of 8 × 16 = 128 collection tasks can be processed simultaneously. Exceeding this number triggers the error message. This is a dynamic configuration that adjusts automatically based on the hardware specifications of the runtime environment.  
-   > If the runtime exceeds the maximum thread count, an error will appear: "the worker pool is full, reject this metrics task, put in queue again".  
-   > In such cases, it is recommended to configure a new collector in public mode. HertzBeat will automatically distribute tasks to other collectors, avoiding errors due to the task limit of a single collector.
+   > In current versions, the default collector concurrency limit is `512` concurrent collection tasks when virtual threads are enabled.  
+   > This default is intentionally higher than the legacy CPU-based pool size so a single HertzBeat node can carry more blocking collection work before you need extra collectors.  
+   > If the runtime exceeds the configured collector limit, an error will appear: "the worker pool is full, reject this metrics task, put in queue again".  
+   > You can tune this limit through `hertzbeat.vthreads.collector.max-concurrent-jobs` in `application.yml`.  
+   > If a single node still cannot absorb the workload, configure additional collectors in public mode so HertzBeat can distribute tasks across them.
 
 ### Docker Deployment common issues
 
