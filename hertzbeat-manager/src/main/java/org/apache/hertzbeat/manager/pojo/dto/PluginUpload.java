@@ -15,40 +15,28 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job;
+package org.apache.hertzbeat.manager.pojo.dto;
 
-import java.io.Serializable;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Monitoring configuration parameter properties and values
- * During the process, you need to replace the content with the identifier ^_^key^_^
- * in the protocol configuration parameter with the real value in the configuration parameter
+ * Manager-side plugin upload request.
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class Configmap implements Serializable {
+public class PluginUpload {
 
-    /**
-     * Parameter key, replace the content with the identifier ^^_key_^^ in the protocol
-     * configuration parameter with the real value in the configuration parameter
-     */
-    private String key;
+    @NotNull
+    private MultipartFile jarFile;
 
-    /**
-     * parameter value
-     */
-    private Object value;
+    @NotNull(message = "Plugin name is required")
+    private String name;
 
-    /**
-     * Parameter type
-     * 0: number 1: string 2: encrypted string 3: json string mapped by map
-     * number,string,secret
-     */
-    private byte type = 1;
+    @NotNull(message = "Enable status is required")
+    private Boolean enableStatus;
 }

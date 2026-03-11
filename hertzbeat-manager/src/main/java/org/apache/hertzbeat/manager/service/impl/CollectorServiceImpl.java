@@ -24,13 +24,14 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorInfo;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorSummary;
 import org.apache.hertzbeat.manager.scheduler.AssignJobs;
 import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
@@ -80,7 +81,8 @@ public class CollectorServiceImpl implements CollectorService {
         Page<Collector> collectors = collectorDao.findAll(specification, pageRequest);
         List<CollectorSummary> collectorSummaryList = new LinkedList<>();
         for (Collector collector : collectors.getContent()) {
-            CollectorSummary.CollectorSummaryBuilder summaryBuilder = CollectorSummary.builder().collector(collector);
+            CollectorSummary.CollectorSummaryBuilder summaryBuilder =
+                    CollectorSummary.builder().collector(CollectorInfo.fromEntity(collector));
             ConsistentHash.Node node = consistentHash.getNode(collector.getName());
             if (node != null && node.getAssignJobs() != null) {
                 AssignJobs assignJobs = node.getAssignJobs();

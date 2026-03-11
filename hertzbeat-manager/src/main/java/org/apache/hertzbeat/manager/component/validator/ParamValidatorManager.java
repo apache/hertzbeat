@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.manager.component.validator;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -35,7 +35,7 @@ public class ParamValidatorManager {
         this.validators = validators;
     }
 
-    public void validate(ParamDefine paramDefine, Param param) {
+    public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
         for (ParamValidator validator : validators) {
             if (validator.support(paramDefine.getType())) {
                 validator.validate(paramDefine, param);

@@ -32,12 +32,11 @@ sidebar_label: 常见问题
 
 6. 单个采集器的任务上限是多少?
 
-   > 具体上限参数
-   核心线程数: Math.max(2, Runtime.getRuntime().availableProcessors()) - 至少2个线程，或等于CPU核心数。
-   最大线程数: Runtime.getRuntime().availableProcessors() * 16 - CPU核心数的16倍。
-   > 上限完全取决于服务器的CPU核心数。例如，在8核CPU的服务器上，最大可同时处理 8 × 16 = 128 个采集任务。当超过这个数量时就会触发该错误消息。这是一个动态配置，会根据运行环境的硬件规格自动调整。
-   > 当运行时超出最大线程数会报错提示"the worker pool is full, reject this metrics task，put in queue again"。
-   > 此时建议配置新的采集器,并设置为public模式，hertzbeat会自动将任务分配给其他采集器，不会因为单个采集器任务上限而报错。
+   > 在当前版本中，启用虚拟线程后，单个 collector 默认可并发执行 `512` 个采集任务。
+   > 这个默认值刻意高于旧版按 CPU 推导出来的线程池上限，目的是让单独部署的 HertzBeat 节点先尽量承载更多阻塞型采集任务，再决定是否扩容额外 collector。
+   > 当运行时超出已配置的 collector 并发上限时，会报错提示 "the worker pool is full, reject this metrics task，put in queue again"。
+   > 你可以在 `application.yml` 里通过 `hertzbeat.vthreads.collector.max-concurrent-jobs` 调整这个限制。
+   > 如果单机仍然无法承载当前任务量，再建议增加新的 collector，并设置为 public 模式，让 HertzBeat 自动做任务分发。
 
 ### Docker部署常见问题
 
