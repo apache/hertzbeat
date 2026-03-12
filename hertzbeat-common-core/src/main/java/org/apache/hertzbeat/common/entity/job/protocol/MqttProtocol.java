@@ -17,11 +17,15 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * mqtt protocol
@@ -111,9 +115,36 @@ public class MqttProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(timeout) && !CommonUtil.isNumeric(timeout)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(keepalive) && !CommonUtil.isNumeric(keepalive)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(protocol)
+                && !"MQTT".equalsIgnoreCase(protocol)
+                && !"MQTTS".equalsIgnoreCase(protocol)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(tlsVersion)
+                && !"TLSv1.2".equalsIgnoreCase(tlsVersion)
+                && !"TLSv1.3".equalsIgnoreCase(tlsVersion)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(insecureSkipVerify)
+                && !"true".equalsIgnoreCase(insecureSkipVerify)
+                && !"false".equalsIgnoreCase(insecureSkipVerify)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(enableMutualAuth)
+                && !"true".equalsIgnoreCase(enableMutualAuth)
+                && !"false".equalsIgnoreCase(enableMutualAuth)) {
+            return true;
+        }
+        return false;
     }
 
 }
