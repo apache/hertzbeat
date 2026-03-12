@@ -211,13 +211,15 @@ mvn clean install
 mvn clean package -Pcluster
 ```
 
-> Build the native collector binaries with GraalVM JDK 25 and `native-image` on matching GitHub-hosted runners or equivalent local hosts
+> Build the native collector binary for the current host with GraalVM JDK 25 and `native-image`
 
 ```shell
 mvn clean package -pl hertzbeat-collector-collector -am -Pnative
 ```
 
-> The repository workflow `.github/workflows/collector-native-build.yml` can build and upload all supported native collector packages on GitHub-hosted runners. Release signing and final publishing remain a release manager responsibility.
+> The repository workflow `.github/workflows/collector-native-build.yml` is a release helper, not a regular PR or push CI workflow.
+>
+> It is intentionally manual-only because multi-platform native builds are relatively slow and consume scarce Linux ARM, macOS, and Windows runners. During release preparation, open the Actions page, select `Collector Native Release`, run it from the release branch or tag, and then download the uploaded artifacts for signing and publishing.
 
 The release package are here:
 

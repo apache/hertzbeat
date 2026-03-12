@@ -211,13 +211,15 @@ mvn clean install
 mvn clean package -Pcluster
 ```
 
-> 在匹配的平台 GitHub Hosted Runner 或对应本地主机上，使用带 `native-image` 的 GraalVM JDK 25 构建 Native 采集器安装包
+> 使用带 `native-image` 的 GraalVM JDK 25，为当前宿主机构建 Native 采集器安装包
 
 ```shell
 mvn clean package -pl hertzbeat-collector-collector -am -Pnative
 ```
 
-> 仓库中的 `.github/workflows/collector-native-build.yml` 可以在 GitHub Hosted Runner 上构建并上传全部受支持平台的 Native 采集器安装包。正式发布时的签名与最终上传仍由 release manager 负责。
+> 仓库中的 `.github/workflows/collector-native-build.yml` 是 release 辅助工作流，不参与日常 PR 或 push 的常规 CI。
+>
+> 之所以只保留手动触发，是因为跨平台 Native 构建耗时更长，也会占用相对稀缺的 Linux ARM、macOS 和 Windows Runner。准备发版时，请在 GitHub Actions 页面选择 `Collector Native Release`，基于 release 分支或 tag 手动触发，然后下载上传的产物用于签名和发布。
 
 生成的二进制包在:
 

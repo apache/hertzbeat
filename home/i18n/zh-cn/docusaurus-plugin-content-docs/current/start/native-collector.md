@@ -72,4 +72,9 @@ Native 采集器安装包和 JVM 采集器安装包使用同一套 `config/appli
 - 想要更低内存、更快启动，并且监控类型不依赖 JDBC 驱动时，优先选择 Native 采集器安装包。
 - 需要 `ext-lib`、外置 JDBC 驱动，或者依赖 JVM 风格运行时扩展能力时，使用 JVM 采集器安装包。
 
+## 官方多平台安装包是怎么构建的？
+
+- `mvn clean package -pl hertzbeat-collector-collector -am -Pnative` 只会为当前宿主机构建一个 Native 采集器安装包。
+- 官方发布使用的 Linux、macOS、Windows Native 安装包，会在发布准备阶段手动触发 `Collector Native Release` GitHub Actions 工作流来生成，而不是在每次 push 或 pull request 时自动构建。
+
 具体安装步骤可参考 [通过安装包安装 HertzBeat](package-deploy)。

@@ -72,4 +72,9 @@ That means:
 - Choose the native collector package when you want lower memory usage and faster startup for non-JDBC monitoring.
 - Choose the JVM collector package when you need `ext-lib`, external JDBC drivers, or JVM-style runtime extensibility.
 
+## How are the official multi-platform packages built?
+
+- `mvn clean package -pl hertzbeat-collector-collector -am -Pnative` builds a native collector package for the current host only.
+- The official Linux, macOS, and Windows native release packages are produced by manually running the `Collector Native Release` GitHub Actions workflow during release preparation, not on every push or pull request.
+
 For package deployment steps, refer to [Install HertzBeat via Package](package-deploy).

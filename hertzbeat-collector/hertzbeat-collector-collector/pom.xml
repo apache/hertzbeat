@@ -412,6 +412,15 @@
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
                         <version>0.11.4</version>
+                        <executions>
+                            <execution>
+                                <id>build-native-image</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                         <configuration>
                             <imageName>${native.image.name}</imageName>
                             <buildArgs>
