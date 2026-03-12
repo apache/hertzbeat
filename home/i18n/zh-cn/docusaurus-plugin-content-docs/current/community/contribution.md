@@ -52,7 +52,7 @@ limitations under the License.
 
 #### 后端启动
 
-1. 需要 `maven3+`, `java21` 和 `lombok` 环境
+1. 需要 `maven3+`, `java25` 和 `lombok` 环境
 
 2. (可选)修改配置文件配置信息-`hertzbeat-startup/src/main/resources/application.yml`
 

@@ -18,10 +18,13 @@
 package org.apache.hertzbeat.collector;
 
 import jakarta.annotation.PostConstruct;
+import org.apache.hertzbeat.collector.nativex.CollectorRuntimeHintsRegistrar;
+import org.apache.hertzbeat.collector.nativex.NativeCollectorDefaults;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.ImportRuntimeHints;
 
 /**
  * collector startup
@@ -29,13 +32,20 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(basePackages = {"org.apache.hertzbeat"})
 @ConfigurationPropertiesScan(basePackages = {"org.apache.hertzbeat"})
 @SpringBootApplication
+@ImportRuntimeHints(CollectorRuntimeHintsRegistrar.class)
 public class Collector {
     public static void main(String[] args) {
-        SpringApplication.run(Collector.class, args);
+        SpringApplication application = new SpringApplication(Collector.class);
+        NativeCollectorDefaults.applyTo(application);
+        application.run(args);
     }
 
     @PostConstruct
     public void init() {
         System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
+        if (System.getProperty("arrow.allocation.manager.type") == null
+                && System.getenv("ARROW_ALLOCATION_MANAGER_TYPE") == null) {
+            System.setProperty("arrow.allocation.manager.type", "Netty");
+        }
     }
 }

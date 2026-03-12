@@ -108,7 +108,7 @@
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
    ```
 
-2. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
+2. スタート：`http://localhost:1157`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
 3. コレクタークラスタのデプロイメント（オプション）
 
@@ -126,13 +126,13 @@
 
 ##### 方式２：インストールパッケージ
 
-1. リリースパッケージをダウンロード `hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
-2. HertzBeatのymlファイルを設定 `hertzbeat/config/application.yml` （オプション）
-3. コマンド`$ ./bin/startup.sh`または`bin/startup.bat`を実行
-4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`
+1. リリースパッケージ `apache-hertzbeat-xx-bin.tar.gz` をダウンロードします [Download](https://hertzbeat.apache.org/docs/download)
+2. HertzBeat の設定ファイル `hertzbeat/config/application.yml` を編集します（任意）
+3. コマンド `$ ./bin/startup.sh` または `bin/startup.bat` を実行します
+4. ブラウザで `http://localhost:1157` にアクセスします。デフォルトのアカウントとパスワードは `admin/hertzbeat` です
 5. コレクタークラスタのデプロイメント（オプション）
-   - コレクターパッケージを別のホストにダウンロード `hertzbeat-collector-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
-   - コレクターのymlファイルを設定 `hertzbeat-collector/config/application.yml`
+   - 別ホストにコレクターのインストールパッケージ `apache-hertzbeat-collector-xx-bin.tar.gz`（JVM コレクター）または対象プラットフォーム向けの Native コレクターパッケージ（例: `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz`、`apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`）をダウンロードします [Download](https://hertzbeat.apache.org/docs/download)
+   - コレクターの設定ファイル `hertzbeat-collector/config/application.yml` を編集します
      ```yaml
      collector:
        dispatch:
@@ -148,15 +148,16 @@
      - `mode: ${MODE:public}`：実行モード(パブリッククラスタまたはプライベートクラウドエッジ)。
      - `manager-host: ${MANAGER_HOST:127.0.0.1}`：メインhertzbeatサーバーのIP。
      - `manager-port: ${MANAGER_PORT:1158}`：メインhertzbeatサーバポート。
-   - コマンド`$ ./bin/startup.sh`または`bin/startup.bat`を実行。
-   - `http://localhost:1157`にアクセスし、登録された新しいコレクターを見ることがでます。
+   - `ext-lib` で MySQL、OceanBase、Oracle、DB2 などの外部 JDBC ドライバーを読み込む必要がある場合は、JVM コレクターのインストールパッケージを使用してください。
+   - JVM コレクターのインストールパッケージは `$ ./bin/startup.sh` または `bin/startup.bat`、Linux/macOS の Native コレクターパッケージは `$ ./bin/startup.sh`、Windows の Native コレクターパッケージは `bin\\startup.bat` で起動します。
+   - メインの HertzBeat サービス `http://localhost:1157` にアクセスすると、登録された新しいコレクターを確認できます。
 
 詳細ステップ [通过安装包安装HertzBeat](https://hertzbeat.apache.org/docs/start/package-deploy)
 
 ##### 方式３：ローカルの実行
 
 1. ローカルの実行には、バックエンドのプロジェクト`hertzbeat-startup`とフロントエンドのプロジェクト`web-app`を起動する必要があります。
-2. バックエンド：`maven3+`、`Java21`と`lombok`の環境は必要です。`YML` 設定を修正し、Java仮想マシンパラメータに`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加し、`hertzbeat-startup` を起動します。
+2. バックエンド：`maven3+`、`Java25`、`lombok` の環境が必要です。`YML` 設定を修正し、Java 仮想マシンパラメータに `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加して `hertzbeat-startup` を起動します。
 3. フロントエンド：`nodejs npm angular-cli`の環境は必要です。ローカルのバックエンドが立ち上がったら、`web-app` ディレクトリで `ng serve --open` というコマンドを実行します。
 4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 

@@ -57,7 +57,7 @@ cd apache-hertzbeat-1.8.0
 - 2 CPU cores minimum
 - 4GB RAM minimum (8GB recommended)
 - 10GB disk space
-- Docker 20.10+ or Java 21+
+- Docker 20.10+ or Java 25+
 - Platforms: Linux, macOS, Windows
 
 ## Supported Monitoring Types

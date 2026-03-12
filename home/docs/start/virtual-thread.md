@@ -5,7 +5,7 @@ sidebar_label: Virtual Threads
 description: Configure HertzBeat virtual-thread executors, defaults, rollback switches, and tuning guidance.
 ---
 
-HertzBeat runs on JDK 21 and uses virtual threads for the blocking execution paths that benefit from them. All `hertzbeat.vthreads` keys are optional. If you upgrade HertzBeat but do not merge the new YAML block into your existing `application.yml`, HertzBeat still starts with built-in defaults.
+HertzBeat runs on JDK 25 and uses virtual threads for the blocking execution paths that benefit from them. All `hertzbeat.vthreads` keys are optional. If you upgrade HertzBeat but do not merge the new YAML block into your existing `application.yml`, HertzBeat still starts with built-in defaults.
 
 ## 1. Where to Configure It
 
