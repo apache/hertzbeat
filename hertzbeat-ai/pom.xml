@@ -27,7 +27,7 @@
 	<version>${hertzbeat.version}</version>
 	<properties>
 		<spring-ai.version>1.1.1</spring-ai.version>
-		<java.version>21</java.version>
+		<java.version>25</java.version>
 	</properties>
 
 	<dependencies>

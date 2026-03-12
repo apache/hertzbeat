@@ -10,7 +10,7 @@ sidebar_position: 4
 
 此发布过程在 UbuntuOS(可在 Windows Mac) 中进行操作，并需要以下环境：
 
-- JDK 21
+- JDK 25
 - Node18 pnpm
 - Apache Maven 3.x
 - GnuPG 2.x
@@ -211,10 +211,23 @@ mvn clean install
 mvn clean package -Pcluster
 ```
 
+> 在匹配的平台 GitHub Hosted Runner 或对应本地主机上，使用带 `native-image` 的 GraalVM JDK 25 构建 Native 采集器安装包
+
+```shell
+mvn clean package -pl hertzbeat-collector-collector -am -Pnative
+```
+
+> 仓库中的 `.github/workflows/collector-native-build.yml` 可以在 GitHub Hosted Runner 上构建并上传全部受支持平台的 Native 采集器安装包。正式发布时的签名与最终上传仍由 release manager 负责。
+
 生成的二进制包在:
 
 - `dist/apache-hertzbeat-{version}-bin.tar.gz`
 - `dist/apache-hertzbeat-collector-{version}-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-native-{version}-linux-amd64-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-native-{version}-linux-arm64-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-native-{version}-macos-amd64-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-native-{version}-macos-arm64-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-native-{version}-windows-amd64-bin.zip`
 - `dist/apache-hertzbeat-{version}-docker-compose.tar.gz`
 
 #### 3.4 打包项目源代码

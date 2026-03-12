@@ -6,11 +6,11 @@ sidebar_label: Install via Package
 
 :::tip
 You can install and run Apache HertzBeat™ on Linux Windows Mac system, and CPU supports X86/ARM64.
-Since version 1.6.0 uses `Java 21` and the installation package no longer provides a built-in JDK version, use the new Hertzbeat according to the following situations:
+The current branch uses `Java 25`, and the standard installation package no longer provides a built-in JDK. Use HertzBeat according to the following situations:
 
-- When the default environment variable on your server is `Java 21`, you do not need to take any action for this step.
-- When the default environment variable on your server is not `Java 21`, such as `Java 8` or `Java 11`, and if there are no other applications on your server that require a lower version of Java, download the appropriate version from [https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html) according to your system, and search the engine for how to set a new environment variable pointing to the new `Java 21`.
-- When the default environment variable on your server is not `Java 21`, such as `Java 8` or `Java 11`,and you don't want to change the environment variable because if there are other applications on your server that require a lower version of Java, download the appropriate version from [https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html) according to your system, and rename the extracted folder to `java`, then copy it to the Hertzbeat extraction directory.
+- When the default environment variable on your server is `Java 25`, you do not need to take any action for this step.
+- When the default environment variable on your server is not `Java 25`, such as `Java 8`, `Java 11`, or `Java 21`, and if there are no other applications on your server that require a lower version of Java, download `Java 25` from [https://www.oracle.com/java/technologies/downloads/](https://www.oracle.com/java/technologies/downloads/) according to your system, and set a new environment variable pointing to `Java 25`.
+- When the default environment variable on your server is not `Java 25`, such as `Java 8`, `Java 11`, or `Java 21`, and you do not want to change the environment variable because there are other applications on your server that require a lower version of Java, download `Java 25` from [https://www.oracle.com/java/technologies/downloads/](https://www.oracle.com/java/technologies/downloads/) according to your system, rename the extracted folder to `java`, and then copy it to the HertzBeat extraction directory.
 
 :::
 
@@ -64,11 +64,20 @@ HertzBeat Collector is a lightweight data collector used to collect and send dat
 Deploying multiple HertzBeat Collectors can achieve high availability, load balancing, and cloud-edge collaboration of data.
 :::
 
+:::tip Native Collector Recommendation
+If your monitoring workload does not depend on external JDBC drivers from `ext-lib`, prefer the native collector package for faster startup and lower memory usage.
+
+Before choosing it, review the trade-offs in [Native Collector Guide](native-collector).
+:::
+
 ![HertzBeat](/img/docs/cluster-arch.png)
 
 1. Download installation package
 
-   Download installation package `apache-hertzbeat-collector-xxx-bin.tar.gz` corresponding to your system environment
+   Download the collector package that matches your deployment mode:
+   - JVM collector package: `apache-hertzbeat-collector-xxx-bin.tar.gz`
+   - Native collector package for Linux or macOS: `apache-hertzbeat-collector-native-xxx-{platform}-bin.tar.gz`
+   - Native collector package for Windows: `apache-hertzbeat-collector-native-xxx-windows-amd64-bin.zip`
    - [Download Page](/docs/download)
 
 2. Configure the collector configuration file
@@ -77,6 +86,10 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 
    ```shell
    tar zxvf apache-hertzbeat-collector-xxx-bin.tar.gz
+   # or
+   tar zxvf apache-hertzbeat-collector-native-xxx-linux-amd64-bin.tar.gz
+   # or
+   unzip apache-hertzbeat-collector-native-xxx-windows-amd64-bin.zip
    ```
 
    Configure the collector configuration yml file `config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
@@ -102,11 +115,31 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 
 3. Start the service
 
-   Run command `$ ./bin/startup.sh` or `bin/startup.bat`
+   Run `$ ./bin/startup.sh` or `bin/startup.bat` for the JVM collector package. Run `$ ./bin/startup.sh` for Linux or macOS native collector packages, and `bin\\startup.bat` for the Windows native collector package.
 
 4. Begin to explore HertzBeat Collector
 
-   Access `http://ip:1157` and you will see the registered new collector in dashboard
+   Open the HertzBeat server dashboard at `http://<manager-host>:1157` and confirm the new collector is registered.
+
+:::important Native Collector Limitations
+The native collector package is suitable for monitoring types that do not rely on external JVM classpath extension.
+
+See [Native Collector Guide](native-collector) for package selection, package naming, and platform-specific trade-offs.
+
+`ext-lib`-based JDBC driver loading is a JVM collector capability. The native collector package does not support loading external JDBC driver JARs from `ext-lib` at runtime.
+
+If your monitoring depends on external JDBC drivers, use the JVM collector package instead of the native collector package. This currently includes:
+
+- MySQL, which requires `mysql-connector-j`
+- OceanBase, which also relies on the MySQL JDBC driver
+- Oracle, which requires `ojdbc8` and often `orai18n`
+- DB2, which requires `jcc`
+
+Recommended deployment:
+
+- Use the native collector package for HTTP, website, port, ping, and similar non-JDBC monitoring types
+- Use the JVM collector package when you need `ext-lib` driver extension
+:::
 
 **HAVE FUN**
 
@@ -117,15 +150,15 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 1. you need to prepare the JAVA environment in advance
 
    Install JAVA runtime environment-refer to [official website](https://www.oracle.com/java/technologies/downloads/)
-   requirement：JDK21 ENV
+   requirement：JDK25 ENV
    download JAVA installation package: [mirror website](https://mirrors.huaweicloud.com/openjdk/)
    After installation use command line to check whether you install it successfully.
 
    ```shell
    $ java -version
-     openjdk version "21.0.9" 2025-10-21 LTS
-     OpenJDK Runtime Environment Corretto-21.0.9.10.1 (build 21.0.9+10-LTS)
-     OpenJDK 64-Bit Server VM Corretto-21.0.9.10.1 (build 21.0.9+10-LTS, mixed mode, sharing)
+     openjdk version "25.0.2" 2026-01-20
+     OpenJDK Runtime Environment (build 25.0.2+8)
+     OpenJDK 64-Bit Server VM (build 25.0.2+8, mixed mode, sharing)
 
    ```
 

@@ -55,7 +55,7 @@ export default function StructuredData() {
       "Cloud-edge collaboration for isolated networks",
       "Status page builder for service communication"
     ],
-    "softwareRequirements": "Docker 20.10+ or Java 21+",
+    "softwareRequirements": "Docker 20.10+ or Java 25+",
     "memoryRequirements": "4GB minimum, 8GB recommended",
     "processorRequirements": "2 CPU cores minimum",
     "storageRequirements": "10GB minimum"

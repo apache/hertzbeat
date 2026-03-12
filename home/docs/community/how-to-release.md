@@ -10,7 +10,7 @@ This tutorial describes in detail how to release Apache HertzBeat™, take the r
 
 This release process is operated in the UbuntuOS(Windows,Mac), and the following tools are required:
 
-- JDK 21
+- JDK 25
 - Node18 pnpm
 - Apache Maven 3.x
 - GnuPG 2.x
@@ -211,10 +211,23 @@ mvn clean install
 mvn clean package -Pcluster
 ```
 
+> Build the native collector binaries with GraalVM JDK 25 and `native-image` on matching GitHub-hosted runners or equivalent local hosts
+
+```shell
+mvn clean package -pl hertzbeat-collector-collector -am -Pnative
+```
+
+> The repository workflow `.github/workflows/collector-native-build.yml` can build and upload all supported native collector packages on GitHub-hosted runners. Release signing and final publishing remain a release manager responsibility.
+
 The release package are here:
 
 - `dist/apache-hertzbeat-{version}-bin.tar.gz`
 - `dist/apache-hertzbeat-collector-{version}-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-native-{version}-linux-amd64-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-native-{version}-linux-arm64-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-native-{version}-macos-amd64-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-native-{version}-macos-arm64-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-native-{version}-windows-amd64-bin.zip`
 - `dist/apache-hertzbeat-{version}-docker-compose.tar.gz`
 
 #### 3.4 Package the source code

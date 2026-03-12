@@ -11,7 +11,7 @@ sidebar_label: 运行编译
 
 ### 后端启动
 
-1. 需要 `maven3+`, `java21` 和 `lombok` 环境
+1. 需要 `maven3+`, `java25` 和 `lombok` 环境
 
 2. (可选)修改配置文件配置信息-`hertzbeat-startup/src/main/resources/application.yml`
 
@@ -37,7 +37,7 @@ sidebar_label: 运行编译
 
 ## 生成二进制包
 
-> 需要 `maven3+`, `java21`, `node` 和 `pnpm` 环境.
+> 需要 `maven3+`, `java25`, `node` 和 `pnpm` 环境.
 
 ### 前端打包
 
@@ -53,20 +53,23 @@ sidebar_label: 运行编译
 
 ### 后端打包
 
-1. 需要 `maven3+`, `java21` 环境
+1. 需要 `maven3+`, `java25` 环境
 
 2. 在项目根目录运行: `mvn clean package -Prelease`
 
-HertzBeat 包将生成为 `dist/hertzbeat-{version}.tar.gz`
+HertzBeat 包将生成为 `dist/apache-hertzbeat-{version}-bin.tar.gz`
 
 ### 采样器打包
 
-1. 需要 `maven3+`, `java21` 环境
+1. 需要 `maven3+`, `java25` 环境
 
 2. 在项目根目录运行: `mvn clean install`
 
 3. 切换到 `hertzbeat-collector` 目录: `cd hertzbeat-collector`
 
-4. 在 `hertzbeat-collector` 目录下执行: `mvn clean package -Pcluster`
+4. 在 `hertzbeat-collector` 目录下打 JVM 采集器安装包: `mvn clean package -Pcluster`
+5. 在 `hertzbeat-collector` 目录下打 Native 采集器安装包: `mvn clean package -pl hertzbeat-collector-collector -am -Pnative`
 
-HertzBeat 采样器包将生成为 `dist/hertzbeat-collector-{version}.tar.gz`
+> Native 采集器打包需要带有 `native-image` 命令的 GraalVM JDK 25 环境。
+
+HertzBeat 采集器安装包将生成为 `dist/apache-hertzbeat-collector-{version}-bin.tar.gz`，以及类似 `dist/apache-hertzbeat-collector-native-{version}-linux-amd64-bin.tar.gz` 这样的 Native 平台安装包
