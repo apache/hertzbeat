@@ -232,6 +232,40 @@ class MqttProtocolTest {
                 .host("192.168.1.1")
                 .port("8883")
                 .enableMutualAuth("true")
+                .clientCert("/path/to/cert")
+                .clientKey("/path/to/key")
+                .build();
+        assertFalse(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidEnableMutualAuthWithoutClientCert() {
+        MqttProtocol protocol = MqttProtocol.builder()
+                .host("192.168.1.1")
+                .port("8883")
+                .enableMutualAuth("true")
+                .clientKey("/path/to/key")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidEnableMutualAuthWithoutClientKey() {
+        MqttProtocol protocol = MqttProtocol.builder()
+                .host("192.168.1.1")
+                .port("8883")
+                .enableMutualAuth("true")
+                .clientCert("/path/to/cert")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidEnableMutualAuthFalseWithoutCert() {
+        MqttProtocol protocol = MqttProtocol.builder()
+                .host("192.168.1.1")
+                .port("8883")
+                .enableMutualAuth("false")
                 .build();
         assertFalse(protocol.isInvalid());
     }
@@ -244,5 +278,45 @@ class MqttProtocolTest {
                 .enableMutualAuth("invalid")
                 .build();
         assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidValidAuth() {
+        MqttProtocol protocol = MqttProtocol.builder()
+                .host("192.168.1.1")
+                .port("1883")
+                .username("user")
+                .password("pass")
+                .build();
+        assertFalse(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidOnlyUsername() {
+        MqttProtocol protocol = MqttProtocol.builder()
+                .host("192.168.1.1")
+                .port("1883")
+                .username("user")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidOnlyPassword() {
+        MqttProtocol protocol = MqttProtocol.builder()
+                .host("192.168.1.1")
+                .port("1883")
+                .password("pass")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidNoAuth() {
+        MqttProtocol protocol = MqttProtocol.builder()
+                .host("192.168.1.1")
+                .port("1883")
+                .build();
+        assertFalse(protocol.isInvalid());
     }
 }

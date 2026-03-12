@@ -144,6 +144,17 @@ public class MqttProtocol implements CommonRequestProtocol, Protocol {
                 && !"false".equalsIgnoreCase(enableMutualAuth)) {
             return true;
         }
+        if (StringUtils.isNotBlank(username) && StringUtils.isBlank(password)) {
+            return true;
+        }
+        if (StringUtils.isBlank(username) && StringUtils.isNotBlank(password)) {
+            return true;
+        }
+        if ("true".equalsIgnoreCase(enableMutualAuth)) {
+            if (StringUtils.isBlank(clientCert) || StringUtils.isBlank(clientKey)) {
+                return true;
+            }
+        }
         return false;
     }
 

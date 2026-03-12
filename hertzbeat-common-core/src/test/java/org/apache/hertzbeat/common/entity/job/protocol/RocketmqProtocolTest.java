@@ -108,6 +108,35 @@ class RocketmqProtocolTest {
     }
 
     @Test
+    void isInvalidOnlyAccessKey() {
+        RocketmqProtocol protocol = RocketmqProtocol.builder()
+                .namesrvHost("192.168.1.1")
+                .namesrvPort("9876")
+                .accessKey("testAccessKey")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidOnlySecretKey() {
+        RocketmqProtocol protocol = RocketmqProtocol.builder()
+                .namesrvHost("192.168.1.1")
+                .namesrvPort("9876")
+                .secretKey("testSecretKey")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidNoAuth() {
+        RocketmqProtocol protocol = RocketmqProtocol.builder()
+                .namesrvHost("192.168.1.1")
+                .namesrvPort("9876")
+                .build();
+        assertFalse(protocol.isInvalid());
+    }
+
+    @Test
     void isInvalidValidWithParseScript() {
         RocketmqProtocol protocol = RocketmqProtocol.builder()
                 .namesrvHost("192.168.1.1")
