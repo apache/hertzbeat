@@ -53,3 +53,12 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 | Metric name | Metric unit |       Metric help description        |
 |-------------|-------------|--------------------------------------|
 | running     | connections | Number of current client connections |
+
+#### Metric set：account_expiry
+
+| Metric name        | Metric unit | Metric help description                        |
+|--------------------|-------------|------------------------------------------------|
+| rolname            | none        | Role (user) name                               |
+| rolvaliduntil      | none        | Account expiration timestamp                   |
+| seconds_until_expiry | s         | Seconds remaining until account expires        |
+| rolcanlogin        | none        | Whether the role is permitted to log in        |

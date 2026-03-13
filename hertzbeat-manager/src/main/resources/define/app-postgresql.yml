@@ -1076,3 +1076,58 @@ metrics:
         privateKey: ^_^sshPrivateKey^_^
         privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
         shareConnection: ^_^sshShareConnection^_^
+
+  - name: account_expiry
+    i18n:
+      zh-CN: 账号有效期
+      en-US: Account Expiry
+      ja-JP: アカウント有効期限
+    priority: 16
+    fields:
+      - field: rolname
+        type: 1
+        i18n:
+          zh-CN: 用户名
+          en-US: User Name
+          ja-JP: ユーザー名
+      - field: rolvaliduntil
+        type: 1
+        i18n:
+          zh-CN: 账号有效期
+          en-US: Account Valid Until
+          ja-JP: アカウントの有効期限
+      - field: seconds_until_expiry
+        type: 0
+        i18n:
+          zh-CN: 距过期时间
+          en-US: Seconds Until Expiry
+          ja-JP: 有効期限までの秒数
+        unit: s
+      - field: rolcanlogin
+        type: 1
+        i18n:
+          zh-CN: 是否允许登录
+          en-US: Can Login
+          ja-JP: ログイン可能
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: "SELECT rolname, rolvaliduntil::text as rolvaliduntil, EXTRACT(EPOCH FROM (rolvaliduntil - now()))::bigint AS seconds_until_expiry, rolcanlogin::text as rolcanlogin FROM pg_roles WHERE rolvaliduntil IS NOT NULL ORDER BY rolvaliduntil ASC"
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
