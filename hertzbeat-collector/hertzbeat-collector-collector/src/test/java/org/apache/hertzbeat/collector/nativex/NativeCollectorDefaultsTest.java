@@ -33,7 +33,15 @@ class NativeCollectorDefaultsTest {
     }
 
     @Test
-    void shouldNotProvideNativeSpecificPropertiesForJvmCollector() {
-        assertTrue(NativeCollectorDefaults.defaultProperties(false).isEmpty());
+    void shouldProvideJvmAutoconfigureExcludesForJvmCollector() {
+        Map<String, Object> properties = NativeCollectorDefaults.defaultProperties(false);
+        assertEquals(NativeCollectorDefaults.JVM_AUTOCONFIGURE_EXCLUDES,
+                properties.get(NativeCollectorDefaults.AUTOCONFIGURE_EXCLUDE_PROPERTY));
+    }
+
+    @Test
+    void nativeAutoconfigureExcludesShouldExtendJvmExcludes() {
+        assertTrue(NativeCollectorDefaults.NATIVE_AUTOCONFIGURE_EXCLUDES
+                .startsWith(NativeCollectorDefaults.JVM_AUTOCONFIGURE_EXCLUDES));
     }
 }
