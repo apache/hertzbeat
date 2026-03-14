@@ -22,16 +22,18 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.core.NativeDetector;
 
 /**
- * Applies the native-only collector defaults without forking {@code application.yml}.
+ * Applies collector defaults without forking {@code application.yml}.
  */
 public final class NativeCollectorDefaults {
 
     static final String AUTOCONFIGURE_EXCLUDE_PROPERTY = "spring.autoconfigure.exclude";
-    static final String NATIVE_AUTOCONFIGURE_EXCLUDES = String.join(",",
+    static final String JVM_AUTOCONFIGURE_EXCLUDES = String.join(",",
             "org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration",
             "org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration",
             "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration",
-            "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration",
+            "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration");
+    static final String NATIVE_AUTOCONFIGURE_EXCLUDES = String.join(",",
+            JVM_AUTOCONFIGURE_EXCLUDES,
             "org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration",
             "org.springframework.boot.jdbc.autoconfigure.DataSourceInitializationAutoConfiguration",
             "org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration",
@@ -43,16 +45,12 @@ public final class NativeCollectorDefaults {
     }
 
     public static void applyTo(SpringApplication application) {
-        Map<String, Object> defaultProperties = defaultProperties(NativeDetector.inNativeImage());
-        if (!defaultProperties.isEmpty()) {
-            application.setDefaultProperties(defaultProperties);
-        }
+        application.setDefaultProperties(defaultProperties(NativeDetector.inNativeImage()));
     }
 
     static Map<String, Object> defaultProperties(boolean nativeImage) {
-        if (!nativeImage) {
-            return Map.of();
-        }
-        return Map.of(AUTOCONFIGURE_EXCLUDE_PROPERTY, NATIVE_AUTOCONFIGURE_EXCLUDES);
+        return Map.of(
+                AUTOCONFIGURE_EXCLUDE_PROPERTY,
+                nativeImage ? NATIVE_AUTOCONFIGURE_EXCLUDES : JVM_AUTOCONFIGURE_EXCLUDES);
     }
 }
