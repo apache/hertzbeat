@@ -64,7 +64,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 :::
 
 :::tip Native 采集器推荐
-如果你的监控任务不依赖从 `ext-lib` 动态加载外部 JDBC 驱动，优先选择 Native 采集器安装包，通常启动更快、常驻内存更低。
+如果你的监控任务不依赖从 `ext-lib` 动态加载外部 JDBC 驱动，优先选择 Native 采集器安装包，通常启动更快、常驻内存更低。MySQL、MariaDB、OceanBase 在没有提供 `mysql-connector-j` 时，也可以直接使用 Native 采集器安装包；TiDB 的 SQL 查询指标也遵循同样规则。
 
 在选择前，建议先阅读 [Native 采集器指南](native-collector) 了解它的限制和取舍。
 :::
@@ -128,14 +128,13 @@ Native 采集器适合不依赖外部 JVM classpath 扩展的监控类型。
 
 因此，凡是依赖外置 JDBC 驱动的监控类型，请使用 JVM 采集器，不要使用 Native 采集器。当前至少包括：
 
-- MySQL，需要 `mysql-connector-j`
-- OceanBase，同样依赖 MySQL JDBC 驱动
 - Oracle，需要 `ojdbc8`，部分场景还需要 `orai18n`
 - DB2，需要 `jcc`
+- 任何明确把 `mysql-connector-j` 放进 `ext-lib` 并希望继续走 JDBC 的 MySQL、MariaDB、OceanBase 场景
 
 建议部署方式：
 
-- `API`、`网站`、`端口可用性`、`Ping` 等非 JDBC 类型优先使用 Native 采集器
+- `API`、`网站`、`端口可用性`、`Ping` 等非 JDBC 类型，以及不依赖 `ext-lib` 的 MySQL、MariaDB、OceanBase，优先使用 Native 采集器
 - 需要 `ext-lib` 扩展驱动时使用 JVM 采集器
 :::
 

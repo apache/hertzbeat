@@ -20,7 +20,6 @@ package org.apache.hertzbeat.collector.collect.database;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
@@ -34,6 +33,9 @@ import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JdbcConnect;
+import org.apache.hertzbeat.collector.collect.database.query.JdbcQueryExecutor;
+import org.apache.hertzbeat.collector.collect.database.query.JdbcQueryExecutorRegistry;
+import org.apache.hertzbeat.collector.collect.database.query.JdbcQueryRowSet;
 import org.apache.hertzbeat.collector.collect.common.ssh.SshTunnelHelper;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -205,31 +207,26 @@ public class JdbcCommonCollect extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
-        SshTunnel sshTunnel = jdbcProtocol.getSshTunnel();
-
         int timeout = CollectUtil.getTimeout(jdbcProtocol.getTimeout());
         boolean reuseConnection = Boolean.parseBoolean(jdbcProtocol.getReuseConnection());
-        Statement statement = null;
-        String databaseUrl;
         try {
-            if (sshTunnel != null && Boolean.parseBoolean(sshTunnel.getEnable())) {
-                int localPort = SshTunnelHelper.localPortForward(sshTunnel, jdbcProtocol.getHost(), jdbcProtocol.getPort());
-                databaseUrl = constructDatabaseUrl(jdbcProtocol, "localhost", String.valueOf(localPort));
-            } else {
-                databaseUrl = constructDatabaseUrl(jdbcProtocol, jdbcProtocol.getHost(), jdbcProtocol.getPort());
-            }
-
-            statement = getConnection(jdbcProtocol.getUsername(),
-                    jdbcProtocol.getPassword(), databaseUrl, timeout, reuseConnection);
             switch (jdbcProtocol.getQueryType()) {
-                case QUERY_TYPE_ONE_ROW -> queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                case QUERY_TYPE_MULTI_ROW -> queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                case QUERY_TYPE_COLUMNS -> queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                case RUN_SCRIPT -> {
-                    Connection connection = statement.getConnection();
-                    FileSystemResource rc = new FileSystemResource(jdbcProtocol.getSql());
-                    ScriptUtils.executeSqlScript(connection, rc);
+                case QUERY_TYPE_ONE_ROW -> {
+                    try (JdbcQueryRowSet rowSet = executeQuery(metrics, timeout, reuseConnection, 1)) {
+                        queryOneRow(rowSet, metrics.getAliasFields(), builder, startTime);
+                    }
                 }
+                case QUERY_TYPE_MULTI_ROW -> {
+                    try (JdbcQueryRowSet rowSet = executeQuery(metrics, timeout, reuseConnection, 1000)) {
+                        queryMultiRow(rowSet, metrics.getAliasFields(), builder, startTime);
+                    }
+                }
+                case QUERY_TYPE_COLUMNS -> {
+                    try (JdbcQueryRowSet rowSet = executeQuery(metrics, timeout, reuseConnection, 1000)) {
+                        queryOneRowByMatchTwoColumns(rowSet, metrics.getAliasFields(), builder, startTime);
+                    }
+                }
+                case RUN_SCRIPT -> runScript(metrics, timeout, reuseConnection);
                 default -> {
                     builder.setCode(CollectRep.Code.FAIL);
                     builder.setMsg("Not support database query type: " + jdbcProtocol.getQueryType());
@@ -261,23 +258,6 @@ public class JdbcCommonCollect extends AbstractCollect {
             log.error("Jdbc error: {}.", errorMessage, e);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Query Error: " + errorMessage);
-        } finally {
-            if (statement != null) {
-                Connection connection = null;
-                try {
-                    connection = statement.getConnection();
-                    statement.close();
-                } catch (Exception e) {
-                    log.error("Jdbc close statement error: {}", e.getMessage());
-                }
-                try {
-                    if (!reuseConnection && connection != null) {
-                        connection.close();
-                    }
-                } catch (Exception e) {
-                    log.error("Jdbc close connection error: {}", e.getMessage());
-                }
-            }
         }
     }
 
@@ -286,6 +266,52 @@ public class JdbcCommonCollect extends AbstractCollect {
         return DispatchConstants.PROTOCOL_JDBC;
     }
 
+    private JdbcQueryRowSet executeQuery(Metrics metrics, int timeout, boolean reuseConnection, int maxRows) throws Exception {
+        Optional<JdbcQueryExecutor> executor = JdbcQueryExecutorRegistry.resolve(metrics);
+        if (executor.isPresent()) {
+            return executor.get().executeQuery(metrics, timeout, maxRows);
+        }
+        return executeJdbcQuery(metrics.getJdbc(), timeout, reuseConnection, maxRows);
+    }
+
+    private JdbcQueryRowSet executeJdbcQuery(JdbcProtocol jdbcProtocol, int timeout, boolean reuseConnection,
+                                             int maxRows) throws Exception {
+        Statement statement = null;
+        try {
+            String databaseUrl = resolveDatabaseUrl(jdbcProtocol);
+            statement = getConnection(jdbcProtocol.getUsername(),
+                    jdbcProtocol.getPassword(), databaseUrl, timeout, reuseConnection);
+            statement.setMaxRows(maxRows);
+            return new ResultSetJdbcQueryRowSet(statement, statement.executeQuery(jdbcProtocol.getSql()), reuseConnection);
+        } catch (Exception exception) {
+            closeStatementAndConnection(statement, reuseConnection);
+            throw exception;
+        }
+    }
+
+    private void runScript(Metrics metrics, int timeout, boolean reuseConnection) throws Exception {
+        JdbcProtocol jdbcProtocol = metrics.getJdbc();
+        Statement statement = null;
+        try {
+            String databaseUrl = resolveDatabaseUrl(jdbcProtocol);
+            statement = getConnection(jdbcProtocol.getUsername(),
+                    jdbcProtocol.getPassword(), databaseUrl, timeout, reuseConnection);
+            Connection connection = statement.getConnection();
+            FileSystemResource rc = new FileSystemResource(jdbcProtocol.getSql());
+            ScriptUtils.executeSqlScript(connection, rc);
+        } finally {
+            closeStatementAndConnection(statement, reuseConnection);
+        }
+    }
+
+    private String resolveDatabaseUrl(JdbcProtocol jdbcProtocol) throws Exception {
+        SshTunnel sshTunnel = jdbcProtocol.getSshTunnel();
+        if (sshTunnel != null && Boolean.parseBoolean(sshTunnel.getEnable())) {
+            int localPort = SshTunnelHelper.localPortForward(sshTunnel, jdbcProtocol.getHost(), jdbcProtocol.getPort());
+            return constructDatabaseUrl(jdbcProtocol, "localhost", String.valueOf(localPort));
+        }
+        return constructDatabaseUrl(jdbcProtocol, jdbcProtocol.getHost(), jdbcProtocol.getPort());
+    }
 
     private Statement getConnection(String username, String password, String url, Integer timeout, boolean reuseConnection) throws Exception {
         CacheIdentifier identifier = CacheIdentifier.builder()
@@ -343,29 +369,25 @@ public class JdbcCommonCollect extends AbstractCollect {
      * query metrics：one tow three four
      * query sql：select one, tow, three, four from book limit 1;
      *
-     * @param statement statement
-     * @param sql       sql
+     * @param rowSet    row set
      * @param columns   query metrics field list
      * @throws Exception when error happen
      */
-    private void queryOneRow(Statement statement, String sql, List<String> columns,
+    private void queryOneRow(JdbcQueryRowSet rowSet, List<String> columns,
                              CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
-        statement.setMaxRows(1);
-        try (ResultSet resultSet = statement.executeQuery(sql)) {
-            if (resultSet.next()) {
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                for (String column : columns) {
-                    if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                        long time = System.currentTimeMillis() - startTime;
-                        valueRowBuilder.addColumn(String.valueOf(time));
-                    } else {
-                        String value = resultSet.getString(column);
-                        value = value == null ? CommonConstants.NULL_VALUE : value;
-                        valueRowBuilder.addColumn(value);
-                    }
+        if (rowSet.next()) {
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            for (String column : columns) {
+                if (CollectorConstants.RESPONSE_TIME.equals(column)) {
+                    long time = System.currentTimeMillis() - startTime;
+                    valueRowBuilder.addColumn(String.valueOf(time));
+                } else {
+                    String value = rowSet.getString(column);
+                    value = value == null ? CommonConstants.NULL_VALUE : value;
+                    valueRowBuilder.addColumn(value);
                 }
-                builder.addValueRow(valueRowBuilder.build());
             }
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 
@@ -380,33 +402,30 @@ public class JdbcCommonCollect extends AbstractCollect {
      * three  -  value3
      * four   -  value4
      *
-     * @param statement statement
-     * @param sql       sql
+     * @param rowSet    row set
      * @param columns   query metrics field list
      * @throws Exception when error happen
      */
-    private void queryOneRowByMatchTwoColumns(Statement statement, String sql, List<String> columns,
+    private void queryOneRowByMatchTwoColumns(JdbcQueryRowSet rowSet, List<String> columns,
                                               CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
-        try (ResultSet resultSet = statement.executeQuery(sql)) {
-            HashMap<String, String> values = new HashMap<>(columns.size());
-            while (resultSet.next()) {
-                if (resultSet.getString(1) != null) {
-                    values.put(resultSet.getString(1).toLowerCase().trim(), resultSet.getString(2));
-                }
+        HashMap<String, String> values = new HashMap<>(columns.size());
+        while (rowSet.next()) {
+            if (rowSet.getString(1) != null) {
+                values.put(rowSet.getString(1).toLowerCase().trim(), rowSet.getString(2));
             }
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-            for (String column : columns) {
-                if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                    long time = System.currentTimeMillis() - startTime;
-                    valueRowBuilder.addColumn(String.valueOf(time));
-                } else {
-                    String value = values.get(column.toLowerCase());
-                    value = value == null ? CommonConstants.NULL_VALUE : value;
-                    valueRowBuilder.addColumn(value);
-                }
-            }
-            builder.addValueRow(valueRowBuilder.build());
         }
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+        for (String column : columns) {
+            if (CollectorConstants.RESPONSE_TIME.equals(column)) {
+                long time = System.currentTimeMillis() - startTime;
+                valueRowBuilder.addColumn(String.valueOf(time));
+            } else {
+                String value = values.get(column.toLowerCase());
+                value = value == null ? CommonConstants.NULL_VALUE : value;
+                valueRowBuilder.addColumn(value);
+            }
+        }
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     /**
@@ -416,28 +435,45 @@ public class JdbcCommonCollect extends AbstractCollect {
      * query sql：select one, tow, three, four from book;
      * and return multi row record mapping with the metrics
      *
-     * @param statement statement
-     * @param sql       sql
+     * @param rowSet    row set
      * @param columns   query metrics field list
      * @throws Exception when error happen
      */
-    private void queryMultiRow(Statement statement, String sql, List<String> columns,
+    private void queryMultiRow(JdbcQueryRowSet rowSet, List<String> columns,
                                CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
-        try (ResultSet resultSet = statement.executeQuery(sql)) {
-            while (resultSet.next()) {
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                for (String column : columns) {
-                    if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                        long time = System.currentTimeMillis() - startTime;
-                        valueRowBuilder.addColumn(String.valueOf(time));
-                    } else {
-                        String value = resultSet.getString(column);
-                        value = value == null ? CommonConstants.NULL_VALUE : value;
-                        valueRowBuilder.addColumn(value);
-                    }
+        while (rowSet.next()) {
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            for (String column : columns) {
+                if (CollectorConstants.RESPONSE_TIME.equals(column)) {
+                    long time = System.currentTimeMillis() - startTime;
+                    valueRowBuilder.addColumn(String.valueOf(time));
+                } else {
+                    String value = rowSet.getString(column);
+                    value = value == null ? CommonConstants.NULL_VALUE : value;
+                    valueRowBuilder.addColumn(value);
                 }
-                builder.addValueRow(valueRowBuilder.build());
             }
+            builder.addValueRow(valueRowBuilder.build());
+        }
+    }
+
+    private void closeStatementAndConnection(Statement statement, boolean reuseConnection) {
+        if (statement == null) {
+            return;
+        }
+        Connection connection = null;
+        try {
+            connection = statement.getConnection();
+            statement.close();
+        } catch (Exception exception) {
+            log.error("Jdbc close statement error: {}", exception.getMessage());
+        }
+        try {
+            if (!reuseConnection && connection != null) {
+                connection.close();
+            }
+        } catch (Exception exception) {
+            log.error("Jdbc close connection error: {}", exception.getMessage());
         }
     }
 
@@ -547,5 +583,54 @@ public class JdbcCommonCollect extends AbstractCollect {
                     + ":///" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase()) + "?user=root&password=root";
             default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
         };
+    }
+
+    private static final class ResultSetJdbcQueryRowSet implements JdbcQueryRowSet {
+
+        private final Statement statement;
+        private final java.sql.ResultSet resultSet;
+        private final boolean reuseConnection;
+
+        private ResultSetJdbcQueryRowSet(Statement statement, java.sql.ResultSet resultSet, boolean reuseConnection) {
+            this.statement = statement;
+            this.resultSet = resultSet;
+            this.reuseConnection = reuseConnection;
+        }
+
+        @Override
+        public boolean next() throws Exception {
+            return resultSet.next();
+        }
+
+        @Override
+        public String getString(String column) throws Exception {
+            return resultSet.getString(column);
+        }
+
+        @Override
+        public String getString(int index) throws Exception {
+            return resultSet.getString(index);
+        }
+
+        @Override
+        public void close() throws Exception {
+            Connection connection = null;
+            try {
+                connection = statement.getConnection();
+            } catch (Exception ignored) {
+                // ignore
+            }
+            try {
+                resultSet.close();
+            } finally {
+                try {
+                    statement.close();
+                } finally {
+                    if (!reuseConnection && connection != null) {
+                        connection.close();
+                    }
+                }
+            }
+        }
     }
 }

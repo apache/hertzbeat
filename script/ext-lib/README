@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Please move external libs to this folder for JVM-based server / collector packages, for example:
+Please move external libs to this folder only when you need JVM runtime extension, for example:
 
 ojdbc8-21.5.0.0.jar
 orai18n-21.5.0.0.jar
@@ -23,5 +23,7 @@ jcc-11.5.9.0.jar
 Note:
 
 - `ext-lib` is loaded by the JVM server package and the JVM collector package.
+- MySQL, MariaDB, OceanBase, and TiDB SQL query metrics can use the built-in MySQL-compatible query engine without `mysql-connector-j`.
+- If `mysql-connector-j` is present here, the JVM server package or JVM collector package prefers JDBC after restart.
 - The native collector package does not support loading external JDBC driver jars from `ext-lib` at runtime.
-- If you need MySQL, OceanBase, Oracle, or DB2 monitoring with external JDBC drivers, use the JVM collector package.
+- If you need Oracle or DB2 monitoring, or you explicitly want the JDBC path for MySQL-compatible monitoring, use the JVM collector package.

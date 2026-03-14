@@ -7,17 +7,20 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of OceanBase database. Support OceanBase 4.0+.
 
-### Attention, Need Add MYSQL jdbc driver jar
+### Driver selection
 
-- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.1.0.jar. [https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0](https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0)
-- Copy the jar package to the `hertzbeat/ext-lib` directory.
-- Restart the HertzBeat service.
+OceanBase now follows the same automatic routing as the MySQL-compatible query path:
+
+- If `mysql-connector-j` is present in `ext-lib`, the JVM collector or built-in server collector automatically prefers JDBC.
+- If `mysql-connector-j` is absent, HertzBeat automatically uses the built-in MySQL-compatible query engine. No extra JAR is required.
+- Restart HertzBeat or the standalone JVM collector after adding or removing a JAR in `ext-lib`.
 
 :::important Collector package selection
-OceanBase monitoring depends on the external MySQL JDBC driver in `ext-lib`.
+OceanBase monitoring now supports both JVM and native deployment.
 
-- Use HertzBeat server built-in collector or the JVM collector package for OceanBase monitoring
-- Do not use the native collector package for OceanBase monitoring
+- Built-in server collector or JVM collector package: automatically prefers JDBC when `mysql-connector-j` exists in `ext-lib`
+- Native collector package: supported when you do not rely on `ext-lib` and want the built-in MySQL-compatible query engine
+- If you explicitly need runtime `ext-lib` JDBC loading, choose the JVM collector package
 :::
 
 ### Configuration parameter

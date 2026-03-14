@@ -116,6 +116,18 @@
             <artifactId>netty-all</artifactId>
         </dependency>
 
+        <!-- Keep the startup runtime aligned with the collector MySQL R2DBC stack. -->
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty-core</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty-http</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+
         <!-- Database Migration - Flyway -->
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -148,6 +160,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -7,17 +7,20 @@ keywords: [开源监控系统, 开源数据库监控, OceanBase 数据库监控]
 
 > 对 OceanBase 数据库的通用性能指标进行采集监控。支持 OceanBase 4.0+。
 
-### 注意，必须添加 MYSQL jdbc 驱动 jar
+### 驱动选择
 
-- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.1.0.jar. [https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0](https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0)
-- 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
-- 重启 HertzBeat 服务。
+OceanBase 现在和 MySQL 兼容查询路径一样会自动分流：
+
+- 如果 `ext-lib` 中放入了 `mysql-connector-j`，JVM 采集器或主程序内置采集器会自动优先走 JDBC。
+- 如果没有放入 `mysql-connector-j`，HertzBeat 会自动切换到内置的 MySQL 兼容查询引擎，不需要额外复制 JAR。
+- 在 `ext-lib` 中新增或删除 JAR 后，请重启 HertzBeat 或独立 JVM 采集器。
 
 :::important 采集器包选择
-OceanBase 监控同样依赖 `ext-lib` 目录下的 MySQL JDBC 驱动。
+OceanBase 监控现在同样支持 JVM 和 Native 两种部署方式。
 
-- OceanBase 监控请使用 HertzBeat 主程序内置采集器，或 JVM 采集器安装包
-- 不要使用 Native 采集器安装包执行 OceanBase 监控
+- 主程序内置采集器或 JVM 采集器安装包：当 `ext-lib` 中存在 `mysql-connector-j` 时会自动优先走 JDBC
+- Native 采集器安装包：在不依赖 `ext-lib` 时可直接使用内置的 MySQL 兼容查询引擎
+- 如果你明确需要运行时 `ext-lib` JDBC 加载能力，仍然请选择 JVM 采集器安装包
 :::
 
 ### 配置参数

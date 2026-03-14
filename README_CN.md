@@ -145,7 +145,8 @@
              manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
-   - 如果需要通过 `ext-lib` 加载 MySQL、OceanBase、Oracle、DB2 等外置 JDBC 驱动，请使用 JVM 采集器安装包。
+   - 如果没有在 `ext-lib` 中提供 JDBC 驱动，MySQL、MariaDB、OceanBase 可以直接使用内置查询引擎，也可以使用 Native 采集器安装包；TiDB 的 SQL 查询指标也遵循同样规则。
+   - 如果在 `ext-lib` 中放入了 `mysql-connector-j`，主程序内置采集器或 JVM 采集器会在重启后自动优先走 JDBC；这一点现在适用于 MySQL、MariaDB、OceanBase，TiDB 的 SQL 查询指标也遵循同样规则，而它的 HTTP 指标不受影响。Oracle、DB2 仍然必须使用 JVM 采集器安装包，因为它们依赖外置 JDBC 驱动。
    - JVM 采集器安装包使用 `$ ./bin/startup.sh ` 或 `bin/startup.bat` 启动。Linux 或 macOS 的 Native 采集器安装包使用 `$ ./bin/startup.sh ` 启动，Windows 的 Native 采集器安装包使用 `bin\\startup.bat` 启动
    - 浏览器访问主 HertzBeat 服务 `http://localhost:1157` 查看概览页面即可看到注册上来的新采集器
 
