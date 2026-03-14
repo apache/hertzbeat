@@ -65,7 +65,7 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 :::
 
 :::tip Native Collector Recommendation
-If your monitoring workload does not depend on external JDBC drivers from `ext-lib`, prefer the native collector package for faster startup and lower memory usage.
+If your monitoring workload does not depend on external JDBC drivers from `ext-lib`, prefer the native collector package for faster startup and lower memory usage. MySQL, MariaDB, and OceanBase can also use the native collector package directly when `mysql-connector-j` is not provided. TiDB follows the same rule for its SQL query metric set.
 
 Before choosing it, review the trade-offs in [Native Collector Guide](native-collector).
 :::
@@ -130,14 +130,13 @@ See [Native Collector Guide](native-collector) for package selection, package na
 
 If your monitoring depends on external JDBC drivers, use the JVM collector package instead of the native collector package. This currently includes:
 
-- MySQL, which requires `mysql-connector-j`
-- OceanBase, which also relies on the MySQL JDBC driver
 - Oracle, which requires `ojdbc8` and often `orai18n`
 - DB2, which requires `jcc`
+- Any MySQL, MariaDB, or OceanBase deployment where you explicitly place `mysql-connector-j` in `ext-lib` and want the JDBC path
 
 Recommended deployment:
 
-- Use the native collector package for HTTP, website, port, ping, and similar non-JDBC monitoring types
+- Use the native collector package for HTTP, website, port, ping, similar non-JDBC monitoring types, and for MySQL, MariaDB, or OceanBase without `ext-lib`
 - Use the JVM collector package when you need `ext-lib` driver extension
 :::
 

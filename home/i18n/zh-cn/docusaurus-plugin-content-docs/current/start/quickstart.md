@@ -63,7 +63,7 @@ HertzBeat 提供多种安装选项：
 3. 部署启动 `$ ./bin/startup.sh` 或 `bin/startup.bat`
 4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 5. 部署采集器集群(可选)
-   - 如果你不需要 MySQL、OceanBase、Oracle、DB2 这类依赖 `ext-lib` JDBC 驱动的监控，优先选择 Native 采集器安装包，通常启动更快、内存更省。详见 [Native 采集器指南](native-collector)。
+   - 如果你不需要 `ext-lib` 外置 JDBC 驱动，优先选择 Native 采集器安装包，通常启动更快、内存更省。MySQL、MariaDB、OceanBase 在没有提供 `mysql-connector-j` 时可以直接使用内置查询引擎；TiDB 的 SQL 查询指标也遵循同样规则。详见 [Native 采集器指南](native-collector)。
    - 下载您系统环境对应采集器安装包 `apache-hertzbeat-collector-xx-bin.tar.gz`（JVM 采集器）或匹配目标平台的 Native 采集器安装包，例如 `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz`、`apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`，到规划的另一台部署主机上 [Download Page](https://hertzbeat.apache.org/docs/download)
    - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
 
@@ -80,7 +80,7 @@ HertzBeat 提供多种安装选项：
      ```
 
    - Native 采集器的代价是安装包按平台区分、不支持运行时 `ext-lib` JDBC 加载，也不适合依赖 JVM 风格运行时 classpath 扩展的场景。详见 [Native 采集器指南](native-collector)。
-   - 如果需要通过 `ext-lib` 加载 MySQL、OceanBase、Oracle、DB2 等外置 JDBC 驱动，请使用 JVM 采集器安装包
+   - 如果在 `ext-lib` 中放入了 `mysql-connector-j`，主程序内置采集器或 JVM 采集器会在重启后自动优先走 JDBC；这一点现在适用于 MySQL、MariaDB、OceanBase，TiDB 的 SQL 查询指标也遵循同样规则，而它的 HTTP 指标不受影响。Oracle、DB2 仍然必须使用 JVM 采集器安装包，因为它们依赖外置 JDBC 驱动
    - JVM 采集器安装包使用 `$ ./bin/startup.sh` 或 `bin/startup.bat` 启动。Linux 或 macOS 的 Native 采集器安装包使用 `$ ./bin/startup.sh` 启动，Windows 的 Native 采集器安装包使用 `bin\\startup.bat` 启动
    - 浏览器访问主 HertzBeat 服务 `http://localhost:1157` 查看概览页面即可看到注册上来的新采集器
 

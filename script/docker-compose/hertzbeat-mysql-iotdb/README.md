@@ -17,10 +17,11 @@
 1. Download the hertzbeat-docker-compose installation deployment script file
    The script file is located in `script/docker-compose/hertzbeat-mysql-iotdb` link [script/docker-compose](https://github.com/apache/hertzbeat/tree/master/script/docker-compose/ hertzbeat-mysql-iotdb)
 
-2. Add MYSQL jdbc driver jar
+2. Optional: add external JDBC driver jars to `ext-lib`
 
-   Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.25.jar. https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
-   Copy the jar package to the ext-lib directory.
+   MySQL-compatible monitoring can use the built-in query engine directly, so `mysql-connector-j` is optional.
+   If you want HertzBeat to prefer JDBC after restart, place `mysql-connector-j` in `ext-lib`.
+   Oracle and DB2 still require external JDBC jars in `ext-lib`.
    
 3. Enter the deployment script docker-compose directory, execute
 

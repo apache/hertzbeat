@@ -7,17 +7,21 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 
 > 对MYSQL数据库的通用性能指标进行采集监控。支持MYSQL5+。
 
-### 注意，必须添加 MYSQL jdbc 驱动 jar
+### 驱动选择说明
 
-- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.1.0.jar. [https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0](https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0)
-- 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
-- 重启 HertzBeat 服务。
+HertzBeat 现在支持两条 MySQL 查询链路：
+
+- 如果在 `ext-lib` 中放入了 `mysql-connector-j`，JVM 采集器或主程序内置采集器会自动优先走 JDBC。
+- 如果没有放入 `mysql-connector-j`，HertzBeat 会自动切换到内置 MySQL 查询引擎，不需要额外复制 JAR。
+- 每次增删 `ext-lib` 里的驱动后，都需要重启 HertzBeat 或独立 JVM 采集器。
+- 自动分流只检查 `ext-lib`。如果你想显式指定链路，可以配置 `hertzbeat.collector.mysql.query-engine=jdbc`、`r2dbc` 或 `auto`。
 
 :::important 采集器包选择
-MySQL 监控依赖 `ext-lib` 目录下的外置 JDBC 驱动加载能力。
+MySQL 监控现在既支持 JVM 部署，也支持 Native 部署。
 
-- MySQL 监控请使用 HertzBeat 主程序内置采集器，或 JVM 采集器安装包
-- 不要使用 Native 采集器安装包执行 MySQL 监控
+- 主程序内置采集器或 JVM 采集器安装包：当 `ext-lib` 中存在 `mysql-connector-j` 时会自动优先走 JDBC
+- Native 采集器安装包：在不依赖 `ext-lib` 时可直接使用内置 MySQL 查询引擎
+- 如果你明确需要运行时 `ext-lib` JDBC 加载能力，请选择 JVM 采集器安装包
 :::
 
 ### 配置参数

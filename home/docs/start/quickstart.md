@@ -59,7 +59,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 3. Run command `$ ./bin/startup.sh` or `bin/startup.bat`
 4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 5. Deploy collector clusters(Optional)
-   - If you do not need MySQL, OceanBase, Oracle, DB2, or other `ext-lib` JDBC drivers, prefer the native collector package for faster startup and lower memory usage. See [Native Collector Guide](native-collector).
+   - If you do not need external JDBC drivers from `ext-lib`, prefer the native collector package for faster startup and lower memory usage. MySQL, MariaDB, and OceanBase can use the built-in query engine directly when `mysql-connector-j` is not provided. TiDB follows the same rule for its SQL query metric set. See [Native Collector Guide](native-collector).
    - Download the release package `apache-hertzbeat-collector-xx-bin.tar.gz` (JVM collector) or the native collector package for your target platform, such as `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz` or `apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`, to the new machine [Download Page](https://hertzbeat.apache.org/docs/download)
    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
 
@@ -76,7 +76,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
      ```
 
    - Native collector trade-offs: platform-specific packages, no runtime `ext-lib` JDBC loading, and less suitable for JVM-style runtime classpath extension. See [Native Collector Guide](native-collector).
-   - If you need MySQL, OceanBase, Oracle, or DB2 monitoring with external JDBC drivers from `ext-lib`, use the JVM collector package.
+   - If `mysql-connector-j` is present in `ext-lib`, the built-in server collector or JVM collector automatically prefers JDBC for MySQL, MariaDB, and OceanBase after restart. TiDB follows the same rule for its SQL query metric set, while its HTTP metrics stay unchanged. Oracle and DB2 still require the JVM collector package because they depend on external JDBC drivers.
    - Run command `$ ./bin/startup.sh` or `bin/startup.bat` for the JVM collector package. Run `$ ./bin/startup.sh` for Linux or macOS native collector packages, and `bin\\startup.bat` for the Windows native collector package.
    - Access the HertzBeat server dashboard at `http://localhost:1157` and confirm the new collector is registered.
 

@@ -265,6 +265,7 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api/0.11.2 Apache-2.0
     https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl/0.11.2 Apache-2.0
     https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson/0.11.2 Apache-2.0
+    https://mvnrepository.com/artifact/io.asyncer/r2dbc-mysql/1.4.1 Apache-2.0
     https://mvnrepository.com/artifact/io.lettuce/lettuce-core/6.3.1.RELEASE Apache-2.0
     https://mvnrepository.com/artifact/io.micrometer/micrometer-commons/1.12.3 Apache-2.0
     https://mvnrepository.com/artifact/io.micrometer/micrometer-core/1.12.3 Apache-2.0
@@ -305,6 +306,8 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/io.netty/netty-transport-udt/4.1.100.Final Apache-2.0
     https://mvnrepository.com/artifact/io.perfmark/perfmark-api/0.26.0 Apache-2.0
     https://mvnrepository.com/artifact/io.projectreactor/reactor-core/3.6.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.projectreactor.netty/reactor-netty-core/1.3.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.r2dbc/r2dbc-spi/1.0.0.RELEASE Apache-2.0
     https://mvnrepository.com/artifact/io.prometheus/simpleclient/0.16.0 Apache-2.0
     https://mvnrepository.com/artifact/io.prometheus/simpleclient_tracer_common/0.16.0 Apache-2.0
     https://mvnrepository.com/artifact/io.prometheus/simpleclient_tracer_otel/0.16.0 Apache-2.0
