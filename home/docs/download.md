@@ -22,8 +22,14 @@ Download the latest Apache HertzBeat™ release (v1.8.0) as server binary, colle
 |-------------|------|---------|----------|
 | **Server Binary** | ~200MB | Main monitoring server | Linux, macOS, Windows |
 | **Collector Binary** | ~50MB | Distributed collectors | Linux, macOS, Windows |
-| **Source Code** | ~30MB | Build from source | Any with Java 21+ |
+| **Source Code** | ~30MB | Build from source | Any with Java 25+ |
 | **Docker Compose** | ~5MB | Full stack deployment | Docker environments |
+
+:::tip Native Collector Recommendation
+If you do not need MySQL, OceanBase, Oracle, DB2, or other monitoring types that rely on external JDBC drivers from `ext-lib`, you can choose the native collector package for faster startup and lower memory usage.
+
+Trade-offs: native packages are platform-specific and do not support runtime `ext-lib` JDBC loading. See [Native Collector Guide](start/native-collector).
+:::
 
 :::tip Security Verification
 Verify downloads using GPG signatures and SHA512 checksums. See [Apache Verification Guide](https://www.apache.org/dyn/closer.cgi#verify) and [HertzBeat KEYS](https://downloads.apache.org/hertzbeat/KEYS).
@@ -57,6 +63,9 @@ For older releases, please check the [archive](https://archive.apache.org/dist/i
 **Server Binary** - For most users. Includes the main HertzBeat monitoring server with web UI.
 
 **Collector Binary** - For distributed deployments. Deploy collectors in remote networks to report to the main server.
+Native collector downloads are platform-specific, for example `apache-hertzbeat-collector-native-{version}-linux-amd64-bin.tar.gz` or `apache-hertzbeat-collector-native-{version}-windows-amd64-bin.zip`.
+
+If you are deciding between JVM and native collector packages, start with [Native Collector Guide](start/native-collector).
 
 **Source Code** - For developers who want to build, modify, or contribute to HertzBeat.
 
@@ -73,16 +82,18 @@ Import Apache HertzBeat KEYS first: `wget https://downloads.apache.org/hertzbeat
 ### What are the system requirements?
 
 **Server Binary Requirements:**
-- Java 21 or higher
+- Java 25 or higher
 - 4GB RAM minimum (8GB recommended)
 - 2 CPU cores minimum
 - 20GB disk space
 
 **Collector Binary Requirements:**
-- Java 21 or higher
+- Java 25 or higher
 - 2GB RAM minimum
 - 1 CPU core minimum
 - 5GB disk space
+
+Native collector packages are published per target platform, while the JVM collector package remains cross-platform.
 
 ### Can I use Docker instead of binary packages?
 

@@ -13,6 +13,13 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 - Copy the jar package to the `hertzbeat/ext-lib` directory.
 - Restart the HertzBeat service.
 
+:::important Collector package selection
+Oracle monitoring requires external JDBC driver loading from `ext-lib`.
+
+- Use HertzBeat server built-in collector or the JVM collector package for Oracle monitoring
+- Do not use the native collector package for Oracle monitoring
+:::
+
 ### Configuration parameter
 
 |   Parameter name    | Parameter help description                                                                                                                                                |

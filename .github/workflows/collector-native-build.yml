@@ -1,0 +1,89 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Collector Native Release
+
+run-name: Native collector release build (${{ github.ref_name }})
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-native-collector:
+    name: Native collector (${{ matrix.platform }})
+    permissions:
+      contents: read
+    timeout-minutes: 120
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-24.04
+            archive_ext: tar.gz
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            archive_ext: tar.gz
+          - platform: macos-amd64
+            runner: macos-13
+            archive_ext: tar.gz
+          - platform: macos-arm64
+            runner: macos-14
+            archive_ext: tar.gz
+          - platform: windows-amd64
+            runner: windows-latest
+            archive_ext: zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up GraalVM JDK 25
+        uses: graalvm/setup-graalvm@v1
+        with:
+          distribution: graalvm-community
+          java-version: '25'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: maven
+          native-image-job-reports: 'true'
+
+      - name: Verify toolchain
+        shell: pwsh
+        run: |
+          java -version
+          native-image --version
+          mvn -version
+
+      - name: Build native collector package
+        run: mvn -B -pl hertzbeat-collector/hertzbeat-collector-collector -am -Pnative -DskipTests package
+
+      - name: Locate native collector package
+        id: package
+        shell: pwsh
+        run: |
+          $package = Get-ChildItem -Path "dist/apache-hertzbeat-collector-native-*-${{ matrix.platform }}-bin.${{ matrix.archive_ext }}" | Select-Object -First 1
+          if (-not $package) {
+            throw "Native collector package not found for ${{ matrix.platform }}"
+          }
+          "archive=$($package.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload native collector package
+        uses: actions/upload-artifact@v4
+        with:
+          name: apache-hertzbeat-collector-native-${{ matrix.platform }}
+          path: ${{ steps.package.outputs.archive }}
+          retention-days: 14

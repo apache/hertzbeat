@@ -490,6 +490,10 @@ public class PluginServiceImpl implements PluginService {
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 File file = new File(libDir, entry.getName());
+                String canonicalLibDir = libDir.getCanonicalPath() + File.separator;
+                if (!file.getCanonicalPath().startsWith(canonicalLibDir)) {
+                    throw new IOException("Zip Slip detected: " + entry.getName());
+                }
                 if (entry.isDirectory()) {
                     continue;
                 }

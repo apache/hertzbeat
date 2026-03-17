@@ -21,11 +21,18 @@ cd `dirname $0`
 CURRENT_DIR=`pwd`
 # cd dist dir
 cd ../../../dist
-# auto detect hertzbeat version
-VERSION=`ls apache-hertzbeat-collector-*-bin.tar.gz| awk -F"-" '{print $4}'`
+# auto detect the JVM collector package version
+PACKAGE_FILE=$(find . -maxdepth 1 -name 'apache-hertzbeat-collector-*-bin.tar.gz' \
+    ! -name 'apache-hertzbeat-collector-native-*-bin.tar.gz' | head -n 1)
+VERSION=$(basename "$PACKAGE_FILE" | sed -e 's/^apache-hertzbeat-collector-//' -e 's/-bin\.tar\.gz$//')
 # use the version param
 if [ -n "$1" ]; then
     VERSION="$1";
+fi
+
+if [ -z "$VERSION" ]; then
+    echo "Can not find the JVM collector package under dist/. Build apache-hertzbeat-collector-{version}-bin.tar.gz first."
+    exit 1
 fi
 
 # docker compile context

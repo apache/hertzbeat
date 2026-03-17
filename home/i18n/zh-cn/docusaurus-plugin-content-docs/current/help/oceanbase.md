@@ -13,6 +13,13 @@ keywords: [开源监控系统, 开源数据库监控, OceanBase 数据库监控]
 - 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
 - 重启 HertzBeat 服务。
 
+:::important 采集器包选择
+OceanBase 监控同样依赖 `ext-lib` 目录下的 MySQL JDBC 驱动。
+
+- OceanBase 监控请使用 HertzBeat 主程序内置采集器，或 JVM 采集器安装包
+- 不要使用 Native 采集器安装包执行 OceanBase 监控
+:::
+
 ### 配置参数
 
 |  参数名称  |                        参数帮助描述                        |
