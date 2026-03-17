@@ -19,7 +19,9 @@ package org.apache.hertzbeat.manager.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -30,12 +32,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import org.apache.hertzbeat.common.constants.PluginType;
 import org.apache.hertzbeat.common.entity.manager.PluginItem;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
@@ -48,6 +56,7 @@ import org.apache.hertzbeat.manager.service.impl.PluginServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -157,6 +166,31 @@ class PluginServiceTest {
         Page<PluginMetadata> result = pluginService.getPlugins(null, 0, 10);
         assertFalse(result.isEmpty());
         verify(metadataDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
+    }
+
+    @Test
+    void testZipSlipDetected(@TempDir File tempDir) throws Exception {
+        File maliciousJar = new File(tempDir, "malicious.jar");
+        try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(maliciousJar))) {
+            JarEntry evilEntry = new JarEntry("../../evil.jar");
+            jos.putNextEntry(evilEntry);
+            jos.write("malicious-content".getBytes(StandardCharsets.UTF_8));
+            jos.closeEntry();
+        }
+        Method method = PluginServiceImpl.class.getDeclaredMethod(
+            "loadLibInPlugin", String.class, Long.class);
+        method.setAccessible(true);
+
+        Exception exception = assertThrows(Exception.class, () -> {
+            try {
+                method.invoke(pluginService, maliciousJar.getAbsolutePath(), 1L);
+            } catch (java.lang.reflect.InvocationTargetException e) {
+                throw e.getCause();
+            }
+        });
+
+        assertInstanceOf(IOException.class, exception);
+        assertTrue(exception.getMessage().contains("Zip Slip detected"));
     }
 
 }
