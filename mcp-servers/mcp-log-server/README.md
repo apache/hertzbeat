@@ -1,6 +1,6 @@
-# Hertzbeat-MCP
+# HertzBeat MCP
 
-## Hertzbeat-Log-MCP
+## HertzBeat Log MCP
 
 Log MCP Service Based on GreptimeDB.
 

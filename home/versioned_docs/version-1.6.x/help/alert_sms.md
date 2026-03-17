@@ -269,7 +269,7 @@ alerter:
 
       > The message follows the format: "Instance: {}, Priority: {}, Content: {}"
 
-      This information can be configured in the Hertzbeat application.
+      This information can be configured in the HertzBeat application.
 
 ## Operation steps
 

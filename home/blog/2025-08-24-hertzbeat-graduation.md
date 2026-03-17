@@ -50,7 +50,7 @@ Under the guidance of the Apache Foundation Incubator, three major transformatio
 
 #### **II. Technical Milestones**
 
-During the incubation period, Hertzbeat maintained an active pace of research, development, and iteration, releasing multiple versions to bring users richer features, more stable performance, and a better experience.
+During the incubation period, HertzBeat maintained an active pace of research, development, and iteration, releasing multiple versions to bring users richer features, more stable performance, and a better experience.
 
 - Released 5 ASF-compliant versions (1.6.0 - 1.7.2)
 - Key feature enhancements include:
@@ -63,11 +63,11 @@ During the incubation period, Hertzbeat maintained an active pace of research, d
   - **Internationalization support** - Added multi-language interfaces, including Japanese/Traditional Chinese.
   - **Data processing enhancement** - Supported SQL/PromQL expression syntax analysis, refactoring data flow with Apache Arrow.
 
-The continuous iteration of these versions fully demonstrates Hertzbeat's dedication to technology and its high regard for user needs. Each version release is a solid step in Hertzbeat's growth, bringing users a more powerful and user-friendly monitoring experience.
+The continuous iteration of these versions fully demonstrates HertzBeat's dedication to technology and its high regard for user needs. Each version release is a solid step in HertzBeat's growth, bringing users a more powerful and user-friendly monitoring experience.
 
 #### **3. Community Development**
 
-During the Apache incubation period, Hertzbeat strictly adhered to the Apache Way:
+During the Apache incubation period, HertzBeat strictly adhered to the Apache Way:
 
 - **Equal contribution and authority accumulation**: All developers participate equally, gradually building a reputation and gaining access, such as code repository submission rights, through code contributions, documentation improvements, and issue resolution.
 - **Open and transparent communication**: Technical selections, version planning, and other discussions are conducted openly via mailing lists, with communication records archived and searchable. Members can participate anytime, anywhere, and new members can quickly integrate by reviewing these records.

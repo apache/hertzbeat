@@ -165,7 +165,7 @@
 
 ##### 方式４：Docker-Compose
 
-[Docker-Compose 部署脚本](script/docker-compose)でpostgresql/mysqlデータベース、victoria-metrics、iotdb、またはtdengine時系列データベースとHertzbeat一括デプロイ。
+[Docker-Compose 部署脚本](script/docker-compose)でpostgresql/mysqlデータベース、victoria-metrics、iotdb、またはtdengine時系列データベースとHertzBeat一括デプロイ。
 
 詳細ステップ [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)
 

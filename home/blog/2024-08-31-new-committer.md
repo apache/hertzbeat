@@ -4,7 +4,7 @@ author: aias00
 author_title: Hongyu Liu
 author_url: https://github.com/Aias00
 tags: [opensource, practice]
-keywords: [open source monitoring system, alerting system, Apache, Apache Committer, Hertzbeat]
+keywords: [open source monitoring system, alerting system, Apache, Apache Committer, HertzBeat]
 ---
 
 ## Self-Introduction

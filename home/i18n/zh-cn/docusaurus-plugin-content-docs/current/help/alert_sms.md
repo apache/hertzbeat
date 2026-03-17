@@ -193,7 +193,7 @@ alerter:
 
    > 短信模板格式固定如下：“Instance: {}, Priority: {}, Content: {}”
 
-   现在，您可以在您的 Hertzbeat 应用程序中配置这些信息.
+   现在，您可以在您的 HertzBeat 应用程序中配置这些信息.
 
 现在您可以把这些信息配置到您的hertzbeat应用中。
 
@@ -222,7 +222,7 @@ alerter:
    - 复制显示的访问密钥
    - 然后你就可以配置 `application.yml` 文件了
 
-现在你可以在你的 Hertzbeat 应用程序中配置这些信息。
+现在你可以在你的 HertzBeat 应用程序中配置这些信息。
 
 ## 操作步骤
 

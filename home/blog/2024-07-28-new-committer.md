@@ -9,25 +9,25 @@ keywords: [open source monitoring system, alerting system]
 
 ![HertzBeat](/img/blog/new-committer.png)
 
-> It's an honor for me to become a Committer of Apache Hertzbeat
+> It's an honor for me to become a Committer of Apache HertzBeat
 >
 ## Personal introduction
 
 I graduated in 2023 and am currently working as a Java developer in an Internet company.
 
-## First met Apache Hertzbeat
+## First met Apache HertzBeat
 
 After graduation and working for half a year, I had the idea of getting involved in open source. However, when searching for open source projects on GitHub, I found that many communities were not very active, and the official documentation was not complete, making it quite difficult to start with the projects. Therefore, I put the matter of open source on hold for the time being.
 
-One day, I saw a post by Senior Xiaobao on a certain platform and was immediately intrigued. I then privately messaged Xiaobao to consult about open source matters. Senior Xiaobao was extremely enthusiastic and meticulous in explaining many aspects of open source to me and recommended the Hertzbeat project.
+One day, I saw a post by Senior Xiaobao on a certain platform and was immediately intrigued. I then privately messaged Xiaobao to consult about open source matters. Senior Xiaobao was extremely enthusiastic and meticulous in explaining many aspects of open source to me and recommended the HertzBeat project.
 
 ## My first PR
 
-I downloaded the source code of Hertzbeat and compiled and tested it according to the documentation. Then, when clicking on the functions on the page, I discovered a bug in the front-end pop-up window. So, I submitted my first issue and successfully claimed this issue, thus starting my first PR.
+I downloaded the source code of HertzBeat and compiled and tested it according to the documentation. Then, when clicking on the functions on the page, I discovered a bug in the front-end pop-up window. So, I submitted my first issue and successfully claimed this issue, thus starting my first PR.
 
 ## Keep active in community
 
-After submitting the first PR, I continuously followed the issues in the Hertzbeat community and attempted to solve the existing problems. I have successively completed tasks such as specifying @people on WeChat, integrating AI, adding a PrestoDB monitor, modifying bugs, and contributing to the official website documentation.
+After submitting the first PR, I continuously followed the issues in the HertzBeat community and attempted to solve the existing problems. I have successively completed tasks such as specifying @people on WeChat, integrating AI, adding a PrestoDB monitor, modifying bugs, and contributing to the official website documentation.
 
 ## Reward
 
