@@ -19,14 +19,18 @@ package org.apache.hertzbeat.manager.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import com.usthe.sureness.provider.DefaultAccount;
 import com.usthe.sureness.provider.SurenessAccount;
 import com.usthe.sureness.provider.SurenessAccountProvider;
-import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
+import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.Md5Util;
+import com.usthe.sureness.util.SurenessContextHolder;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.MalformedJwtException;
 import java.util.Collections;
 import java.util.List;
@@ -65,8 +69,8 @@ class AccountServiceTest {
     @BeforeEach
     void setUp() {
 
-        accountProvider = mock(DocumentAccountProvider.class);
-        accountService = new AccountServiceImpl();
+        accountProvider = mock(SurenessAccountProvider.class);
+        accountService = new AccountServiceImpl(accountProvider);
 
         JsonWebTokenUtil.setDefaultSecretKey(jwt);
     }
@@ -136,6 +140,47 @@ class AccountServiceTest {
         assertNotNull(response);
         assertNotNull(response.getToken());
         assertNotNull(response.getRefreshToken());
+        Claims accessClaims = JsonWebTokenUtil.parseJwt(response.getToken());
+        Claims refreshClaims = JsonWebTokenUtil.parseJwt(response.getRefreshToken());
+        assertNull(accessClaims.get("refresh", Boolean.class));
+        assertEquals(Boolean.TRUE, refreshClaims.get("refresh", Boolean.class));
+    }
+
+    @Test
+    void testRefreshTokenRejectsAccessToken() {
+        String userId = "admin";
+        String accessToken = JsonWebTokenUtil.issueJwt(userId, 3600L, roles);
+
+        Assertions.assertThrows(
+                AuthenticationException.class,
+                () -> accountService.refreshToken(accessToken)
+        );
+    }
+
+    @Test
+    void testGenerateTokenCannotRefresh() throws Exception {
+        SurenessAccount account = DefaultAccount.builder("app1")
+                .setPassword(Md5Util.md5(password + salt))
+                .setSalt(salt)
+                .setOwnRoles(roles)
+                .setDisabledAccount(Boolean.FALSE)
+                .setExcessiveAttempts(Boolean.FALSE)
+                .build();
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        SubjectSum subjectSum = mock(SubjectSum.class);
+        when(subjectSum.getPrincipal()).thenReturn(identifier);
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            String token = accountService.generateToken();
+
+            assertNull(JsonWebTokenUtil.parseJwt(token).get("refresh", Boolean.class));
+            Assertions.assertThrows(
+                    AuthenticationException.class,
+                    () -> accountService.refreshToken(token)
+            );
+        }
     }
 
     @Test
