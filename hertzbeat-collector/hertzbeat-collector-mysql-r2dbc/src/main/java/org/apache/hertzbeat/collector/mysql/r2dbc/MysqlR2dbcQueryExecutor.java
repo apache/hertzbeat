@@ -95,7 +95,7 @@ public class MysqlR2dbcQueryExecutor implements MysqlQueryExecutor {
         try {
             Mono.from(connection.close())
                     .timeout(Duration.ofSeconds(1), Mono.empty())
-                    .onErrorResume(_ -> Mono.empty())
+                    .onErrorResume(error -> Mono.empty())
                     .block(Duration.ofSeconds(2));
         } catch (Exception ignored) {
             // Best-effort close only. Query completion must not be turned into a failure by cleanup.
