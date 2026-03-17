@@ -196,7 +196,7 @@ CRITICAL WORKFLOW Do all of this iteratively with user interaction at each step:
 - Provide clear explanations of monitoring data and actionable insights
 
 ## Avoid these common errors:
-- Using Label name instead of the value from the heirarchy JSON while creating alert rules.
+- Using Label name instead of the value from the hierarchy JSON while creating alert rules.
 - Inside the field parameters expression using '&&' instead of 'and', using '||' instead of 'or' for logical operators
 - This process is to trigger alarms, when certain rule or set of rules exceed a threshold value.
 So when a user says that the threshold should be less than 1000. the operator used should be '>' not '<',

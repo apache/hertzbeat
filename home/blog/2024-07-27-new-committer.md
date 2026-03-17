@@ -17,11 +17,11 @@ I have been working as a Java back-end developer for three years. At present, I 
 
 ## First met Apache Hertzbeat
 
-Reading code and design in open-source framework is one way for me to improve myself. One day a thought came to my mind, which is to contribute to open-source community. Then I met Hertzbeat in an article on the internel, which is completely different from Prometheus and Skywalking that I had known before. Hertzbeat fascinate me with its feature, agentless and anyone can custom monitoring by monifying yaml. I forked Hertzbeat on GitHub and tried to run it locally for further study.
+Reading code and design in open-source framework is one way for me to improve myself. One day a thought came to my mind, which is to contribute to open-source community. Then I met Hertzbeat in an article on the internet, which is completely different from Prometheus and Skywalking that I had known before. Hertzbeat fascinated me with its feature, agentless and anyone can custom monitoring by modifying yaml. I forked Hertzbeat on GitHub and tried to run it locally for further study.
 
 ## My first PR
 
-I failed to start Hertzbeat when I followed instructions in CONTRIBUTING. The exception shows that Node.js version at lease 18 is required. Therefor I modified CONTRIBUTING and opened my first PR in Hertzbeat community.
+I failed to start Hertzbeat when I followed instructions in CONTRIBUTING. The exception shows that Node.js version at least 18 is required. Therefore I modified CONTRIBUTING and opened my first PR in Hertzbeat community.
 
 ## Keep active in community
 
