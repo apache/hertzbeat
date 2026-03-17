@@ -130,12 +130,12 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 
 ##### 2：Install via package  
 
-1. Download the release package `hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
+1. Download the release package `apache-hertzbeat-xx-bin.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
 2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)  
 3. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`   
 4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`  
 5. Deploy collector clusters (Optional)
-    - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [Download](https://hertzbeat.apache.org/docs/download)
+    - Download the release package `apache-hertzbeat-collector-xx-bin.tar.gz` (JVM collector) or the native collector package for your platform, such as `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz` or `apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`, to the new machine [Download](https://hertzbeat.apache.org/docs/download)
     - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
       ```yaml
       collector:
@@ -148,7 +148,8 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
               manager-host: ${MANAGER_HOST:127.0.0.1}
               manager-port: ${MANAGER_PORT:1158}
       ```
-    - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+    - If you need MySQL, OceanBase, Oracle, or DB2 monitoring with external JDBC drivers from `ext-lib`, use the JVM collector package.
+    - Run `$ ./bin/startup.sh ` or `bin/startup.bat` for the JVM collector package. Run `$ ./bin/startup.sh ` for Linux or macOS native collector packages, and `bin\\startup.bat` for the Windows native collector package.
     - Access `http://localhost:1157` and you will see the registered new collector in dashboard 
 
 Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apache.org/docs/start/package-deploy)   
@@ -156,7 +157,7 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apach
 ##### 3：Start via source code        
 
 1. Local source code debugging needs to start the back-end project `hertzbeat-startup` and the front-end project `web-app`.  
-2. Backend：need `maven3+`, `java21`, `lombok`, add VM options in IDE: ` --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED `, then start the `hertzbeat-startup` service. 
+2. Backend：need `maven3+`, `java25`, `lombok`, add VM options in IDE: ` --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED `, then start the `hertzbeat-startup` service.
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.  
 4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`  
 

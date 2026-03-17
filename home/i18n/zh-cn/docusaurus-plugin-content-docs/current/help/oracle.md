@@ -13,6 +13,13 @@ keywords: [开源监控系统, 开源数据库监控, Oracle数据库监控]
 - 将 jar 包复制到 `hertzbeat/ext-lib` 目录下。
 - 重启 HertzBeat 服务。
 
+:::important 采集器包选择
+Oracle 监控依赖 `ext-lib` 目录下的外置 JDBC 驱动加载能力。
+
+- Oracle 监控请使用 HertzBeat 主程序内置采集器，或 JVM 采集器安装包
+- 不要使用 Native 采集器安装包执行 Oracle 监控
+:::
+
 ### 配置参数
 
 | 参数名称   | 参数帮助描述                                               |

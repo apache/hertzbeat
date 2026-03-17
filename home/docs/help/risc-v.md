@@ -48,7 +48,7 @@ Reference: [Ubuntu Official Documentation](https://canonical-ubuntu-boards.readt
 
 ## Install and Configure RISC-V-Compatible JDK
 
-> Configure a JDK that supports RISC-V architecture. Here we use Temurin JDK 21.
+> Configure a JDK that supports RISC-V architecture. Here we use Temurin JDK 25.
 
 **1. Download Temurin JDK**
 Download link: [https://adoptium.net/temurin/releases](https://adoptium.net/temurin/releases)
@@ -66,11 +66,11 @@ sudo apt install -y tar wget
 sudo mkdir -p /usr/lib/jvm
 
 # Extract to system directory
-sudo tar -xzf OpenJDK21U-jdk_riscv64_linux_hotspot_21.0.2_13.tar.gz -C /usr/lib/jvm
+sudo tar -xzf OpenJDK25U-jdk_riscv64_linux_hotspot_<version>.tar.gz -C /usr/lib/jvm
 
 # Edit environment variables
 sudo nano /etc/profile.d/java.sh
-export JAVA_HOME=/usr/lib/jvm/jdk-21.0.2+13
+export JAVA_HOME=$(find /usr/lib/jvm -maxdepth 1 -type d -name 'jdk-25*' | head -n 1)
 export PATH=$JAVA_HOME/bin:$PATH
 
 # Apply configuration
@@ -91,6 +91,6 @@ cd apache-hertzbeat-1.7.2-incubating-bin/bin/
 
 > Notes:
 >
-> 1. Replace `OpenJDK21U-jdk_riscv64_linux_hotspot_21.0.2_13.tar.gz` with your actual JDK filename.
+> 1. Replace `OpenJDK25U-jdk_riscv64_linux_hotspot_<version>.tar.gz` with your actual JDK filename.
 > 2. Ensure the emulator has internet access to download HertzBeat.
 > 3. If issues arise, verify disk permissions and Java environment paths.

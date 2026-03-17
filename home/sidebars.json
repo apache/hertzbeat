@@ -15,6 +15,7 @@
             "start/docker-deploy",
             "start/docker-compose-deploy",
             "start/package-deploy",
+            "start/native-collector",
             {
               "type": "link",
               "label": "Install via Helm",

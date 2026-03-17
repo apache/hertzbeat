@@ -5,7 +5,7 @@ sidebar_label: 虚拟线程
 description: 说明 HertzBeat 虚拟线程执行器的默认值、回滚开关和调优方式。
 ---
 
-HertzBeat 基于 JDK 21 运行，并把适合虚拟线程的阻塞型执行路径切到了虚拟线程模型。所有 `hertzbeat.vthreads` 配置项都是可选的。也就是说，即使升级 HertzBeat 后你没有把新的 YAML 配置块合并到原有 `application.yml`，系统也会使用内置默认值正常启动。
+HertzBeat 基于 JDK 25 运行，并把适合虚拟线程的阻塞型执行路径切到了虚拟线程模型。所有 `hertzbeat.vthreads` 配置项都是可选的。也就是说，即使升级 HertzBeat 后你没有把新的 YAML 配置块合并到原有 `application.yml`，系统也会使用内置默认值正常启动。
 
 ## 1. 到哪里配置
 

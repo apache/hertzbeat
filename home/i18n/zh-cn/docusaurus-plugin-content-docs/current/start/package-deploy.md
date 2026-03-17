@@ -6,11 +6,11 @@ sidebar_label: 安装包方式安装
 
 :::tip
 Apache HertzBeat™ 支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。
-由于1.6.0及以后版本使用 `Java 21` ，且安装包不再提供内置jdk的版本，参考以下情况使用新版Hertzbeat。
+当前分支默认使用 `Java 25`，且标准安装包不再提供内置 JDK。可参考以下情况使用 HertzBeat：
 
-- 当你的服务器中默认环境变量为 `Java 21` 时，这一步你无需任何操作。
-- 当你的服务器中默认环境变量不为 `Java 21`时，如 `Java 8` 、 `Java 11` ，若你服务器中**没有**其他应用需要低版本 `Java` ，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html) 选择相应的发行版下载，并在搜索引擎搜索如何设置新的环境变量指向新的`Java 21`。
-- 当你的服务器中默认环境变量不为`Java 21`时，如 `Java 8` 、 `Java 11` ，若你服务器中**有**其他应用需要低版本 `Java` ，你不想更改环境变量，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html) 选择相应的发行版下载，并将解压后的文件夹重命名为`java`，复制到Hertzbeat的解压目录下。
+- 当你的服务器中默认环境变量为 `Java 25` 时，这一步无需任何操作。
+- 当你的服务器中默认环境变量不为 `Java 25` 时，如 `Java 8`、`Java 11`、`Java 21`，若你服务器中**没有**其他应用需要低版本 `Java`，根据你的系统到 [https://www.oracle.com/java/technologies/downloads/](https://www.oracle.com/java/technologies/downloads/) 下载 `Java 25`，并将环境变量指向新的 `Java 25`。
+- 当你的服务器中默认环境变量不为 `Java 25` 时，如 `Java 8`、`Java 11`、`Java 21`，若你服务器中**有**其他应用需要低版本 `Java`，不希望修改全局环境变量，可根据你的系统到 [https://www.oracle.com/java/technologies/downloads/](https://www.oracle.com/java/technologies/downloads/) 下载 `Java 25`，并将解压后的文件夹重命名为 `java`，复制到 HertzBeat 的解压目录下。
 
 :::
 
@@ -63,11 +63,21 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 通过部署多个 HertzBeat Collector 可以实现数据的高可用，负载均衡和云边协同。
 :::
 
+:::tip Native 采集器推荐
+如果你的监控任务不依赖从 `ext-lib` 动态加载外部 JDBC 驱动，优先选择 Native 采集器安装包，通常启动更快、常驻内存更低。
+
+在选择前，建议先阅读 [Native 采集器指南](native-collector) 了解它的限制和取舍。
+:::
+
 ![HertzBeat](/img/docs/cluster-arch.png)
 
 1. 下载安装包
 
-   从 [下载页面](/docs/download) 下载您系统环境对应的安装包版本 `apache-hertzbeat-collector-xxx-bin.tar.gz`
+   按部署形态选择对应的采集器安装包：
+   - JVM 采集器安装包：`apache-hertzbeat-collector-xxx-bin.tar.gz`
+   - Linux 或 macOS 的 Native 采集器安装包：`apache-hertzbeat-collector-native-xxx-{platform}-bin.tar.gz`
+   - Windows 的 Native 采集器安装包：`apache-hertzbeat-collector-native-xxx-windows-amd64-bin.zip`
+   - 从 [下载页面](/docs/download) 下载
 
 2. 设置配置文件
 
@@ -75,6 +85,10 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 
    ```shell
    tar zxvf apache-hertzbeat-collector-xxx-bin.tar.gz
+   # 或
+   tar zxvf apache-hertzbeat-collector-native-xxx-linux-amd64-bin.tar.gz
+   # 或
+   unzip apache-hertzbeat-collector-native-xxx-windows-amd64-bin.zip
    ```
 
    配置采集器的配置文件 `config/application.yml` 里面的 HertzBeat Server 连接 IP, 端口, 采集器名称(需保证唯一性)等参数。
@@ -100,14 +114,30 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 
 3. 启动
 
-   执行位于安装目录 hertzbeat-collector/bin/ 下的启动脚本 startup.sh, windows 环境下为 startup.bat
-
-   ```shell
-   ./startup.sh
-   ```
+   JVM 采集器安装包执行位于安装目录 `hertzbeat-collector/bin/` 下的启动脚本 `startup.sh`，Windows 环境下为 `startup.bat`；Linux 或 macOS 的 Native 采集器安装包执行 `./startup.sh`，Windows 的 Native 采集器安装包执行 `bin\\startup.bat`
 
 4. 开始探索 HertzBeat Collector
-   浏览器访问 [http://ip:1157/](http://ip:1157/) 即可开始探索使用，默认账户密码 admin/hertzbeat。
+   浏览器访问主 HertzBeat 服务 [http://manager-host:1157/](http://manager-host:1157/) 的概览页面，即可确认新采集器已注册。
+
+:::important Native 采集器限制说明
+Native 采集器适合不依赖外部 JVM classpath 扩展的监控类型。
+
+关于包选择、安装包命名和平台相关限制，详见 [Native 采集器指南](native-collector)。
+
+基于 `ext-lib` 的 JDBC 驱动加载能力是 JVM 采集器的能力。Native 采集器当前不支持在运行时从 `ext-lib` 目录动态加载外部 JDBC 驱动 JAR。
+
+因此，凡是依赖外置 JDBC 驱动的监控类型，请使用 JVM 采集器，不要使用 Native 采集器。当前至少包括：
+
+- MySQL，需要 `mysql-connector-j`
+- OceanBase，同样依赖 MySQL JDBC 驱动
+- Oracle，需要 `ojdbc8`，部分场景还需要 `orai18n`
+- DB2，需要 `jcc`
+
+建议部署方式：
+
+- `API`、`网站`、`端口可用性`、`Ping` 等非 JDBC 类型优先使用 Native 采集器
+- 需要 `ext-lib` 扩展驱动时使用 JVM 采集器
+:::
 
 **HAVE FUN**
 
@@ -120,15 +150,15 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 1. 启动失败，需您提前准备JAVA运行环境
 
    安装JAVA运行环境-可参考[官方网站](https://www.oracle.com/java/technologies/downloads/)
-   要求：JAVA21环境
+   要求：JAVA25环境
    下载JAVA安装包: [镜像站](https://mirrors.huaweicloud.com/openjdk/)
    安装后命令行检查是否成功安装
 
    ```shell
    $ java -version
-     openjdk version "21.0.9" 2025-10-21 LTS
-     OpenJDK Runtime Environment Corretto-21.0.9.10.1 (build 21.0.9+10-LTS)
-     OpenJDK 64-Bit Server VM Corretto-21.0.9.10.1 (build 21.0.9+10-LTS, mixed mode, sharing)
+     openjdk version "25.0.2" 2026-01-20
+     OpenJDK Runtime Environment (build 25.0.2+8)
+     OpenJDK 64-Bit Server VM (build 25.0.2+8, mixed mode, sharing)
 
    ```
 
