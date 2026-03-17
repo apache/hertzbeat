@@ -158,6 +158,25 @@ class AccountServiceTest {
     }
 
     @Test
+    void testRefreshTokenRejectsDisabledAccount() {
+        String userId = "admin";
+        String refreshToken = JsonWebTokenUtil.issueJwt(userId, 3600L, Collections.singletonMap("refresh", true));
+        SurenessAccount account = DefaultAccount.builder("app1")
+                .setPassword(Md5Util.md5(password + salt))
+                .setSalt(salt)
+                .setOwnRoles(roles)
+                .setDisabledAccount(Boolean.TRUE)
+                .setExcessiveAttempts(Boolean.FALSE)
+                .build();
+        when(accountProvider.loadAccount(userId)).thenReturn(account);
+
+        Assertions.assertThrows(
+                AuthenticationException.class,
+                () -> accountService.refreshToken(refreshToken)
+        );
+    }
+
+    @Test
     void testGenerateTokenCannotRefresh() throws Exception {
         SurenessAccount account = DefaultAccount.builder("app1")
                 .setPassword(Md5Util.md5(password + salt))
@@ -179,6 +198,29 @@ class AccountServiceTest {
             Assertions.assertThrows(
                     AuthenticationException.class,
                     () -> accountService.refreshToken(token)
+            );
+        }
+    }
+
+    @Test
+    void testGenerateTokenRejectsDisabledAccount() {
+        SurenessAccount account = DefaultAccount.builder("app1")
+                .setPassword(Md5Util.md5(password + salt))
+                .setSalt(salt)
+                .setOwnRoles(roles)
+                .setDisabledAccount(Boolean.TRUE)
+                .setExcessiveAttempts(Boolean.FALSE)
+                .build();
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        SubjectSum subjectSum = mock(SubjectSum.class);
+        when(subjectSum.getPrincipal()).thenReturn(identifier);
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            Assertions.assertThrows(
+                    AuthenticationException.class,
+                    () -> accountService.generateToken()
             );
         }
     }

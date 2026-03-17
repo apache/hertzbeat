@@ -111,6 +111,9 @@ public class AccountServiceImpl implements AccountService {
         if (account == null) {
             throw new AuthenticationException("Not Exists This Token Mapping Account");
         }
+        if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
+            throw new AuthenticationException("Expired or Illegal Account");
+        }
         List<String> roles = account.getOwnRoles();
         String issueToken = issueAccessToken(userId, roles, PERIOD_TIME);
         String issueRefresh = issueRefreshToken(userId, PERIOD_TIME << 5);
@@ -124,6 +127,9 @@ public class AccountServiceImpl implements AccountService {
         SurenessAccount account = accountProvider.loadAccount(userId);
         if (account == null) {
             throw new AuthenticationException("Not Exists This Token Mapping Account");
+        }
+        if (account.isDisabledAccount() || account.isExcessiveAttempts()) {
+            throw new AuthenticationException("Expired or Illegal Account");
         }
         List<String> roles = account.getOwnRoles();
         return issueApiToken(userId, roles);
