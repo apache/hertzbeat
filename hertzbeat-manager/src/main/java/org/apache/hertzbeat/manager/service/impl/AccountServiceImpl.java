@@ -25,10 +25,12 @@ import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.Md5Util;
 import com.usthe.sureness.util.SurenessContextHolder;
 import io.jsonwebtoken.Claims;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.naming.AuthenticationException;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -46,14 +48,26 @@ import org.springframework.stereotype.Service;
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 public class AccountServiceImpl implements AccountService {
+
+    private static final String REFRESH_CLAIM = "refresh";
+
     /**
      * Token validity time in seconds
      */
     private static final long PERIOD_TIME = 3600L;
+
     /**
      * account data provider
      */
-    private final SurenessAccountProvider accountProvider = new DocumentAccountProvider();
+    private final SurenessAccountProvider accountProvider;
+
+    public AccountServiceImpl() {
+        this(new DocumentAccountProvider());
+    }
+
+    public AccountServiceImpl(SurenessAccountProvider accountProvider) {
+        this.accountProvider = accountProvider;
+    }
 
     @Override
     public Map<String, String> authGetToken(LoginDto loginDto) throws AuthenticationException {
@@ -75,10 +89,8 @@ public class AccountServiceImpl implements AccountService {
         // Get the roles the user has - rbac
         List<String> roles = account.getOwnRoles();
         // Issue TOKEN
-        String issueToken = JsonWebTokenUtil.issueJwt(loginDto.getIdentifier(), PERIOD_TIME, roles);
-        Map<String, Object> customClaimMap = new HashMap<>(1);
-        customClaimMap.put("refresh", true);
-        String issueRefresh = JsonWebTokenUtil.issueJwt(loginDto.getIdentifier(), PERIOD_TIME << 5, customClaimMap);
+        String issueToken = issueAccessToken(loginDto.getIdentifier(), roles, PERIOD_TIME);
+        String issueRefresh = issueRefreshToken(loginDto.getIdentifier(), PERIOD_TIME << 5);
         Map<String, String> resp = new HashMap<>(2);
         resp.put("token", issueToken);
         resp.put("refreshToken", issueRefresh);
@@ -90,9 +102,9 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public RefreshTokenResponse refreshToken(String refreshToken) throws Exception {
         Claims claims = JsonWebTokenUtil.parseJwt(refreshToken);
-        String userId = String.valueOf(claims.getSubject());
-        boolean isRefresh = claims.get("refresh", Boolean.class);
-        if (StringUtils.isBlank(userId) || !isRefresh) {
+        String userId = claims.getSubject();
+        Boolean isRefresh = claims.get(REFRESH_CLAIM, Boolean.class);
+        if (StringUtils.isBlank(userId) || !Boolean.TRUE.equals(isRefresh)) {
             throw new AuthenticationException("Illegal Refresh Token");
         }
         SurenessAccount account = accountProvider.loadAccount(userId);
@@ -100,8 +112,8 @@ public class AccountServiceImpl implements AccountService {
             throw new AuthenticationException("Not Exists This Token Mapping Account");
         }
         List<String> roles = account.getOwnRoles();
-        String issueToken = issueToken(userId, roles, PERIOD_TIME);
-        String issueRefresh = issueToken(userId, roles, PERIOD_TIME << 5);
+        String issueToken = issueAccessToken(userId, roles, PERIOD_TIME);
+        String issueRefresh = issueRefreshToken(userId, PERIOD_TIME << 5);
         return new RefreshTokenResponse(issueToken, issueRefresh);
     }
 
@@ -114,12 +126,20 @@ public class AccountServiceImpl implements AccountService {
             throw new AuthenticationException("Not Exists This Token Mapping Account");
         }
         List<String> roles = account.getOwnRoles();
-        return issueToken(userId, roles, null);
+        return issueApiToken(userId, roles);
     }
 
-    private String issueToken(String userId, List<String> roles, Long expirationMillis) {
+    private String issueAccessToken(String userId, List<String> roles, Long expirationMillis) {
+        return JsonWebTokenUtil.issueJwt(userId, expirationMillis, roles, new HashMap<>(0));
+    }
+
+    private String issueRefreshToken(String userId, Long expirationMillis) {
         Map<String, Object> customClaimMap = new HashMap<>(1);
-        customClaimMap.put("refresh", true);
-        return JsonWebTokenUtil.issueJwt(userId, expirationMillis, roles, customClaimMap);
+        customClaimMap.put(REFRESH_CLAIM, true);
+        return JsonWebTokenUtil.issueJwt(userId, expirationMillis, customClaimMap);
+    }
+
+    private String issueApiToken(String userId, List<String> roles) {
+        return issueAccessToken(userId, roles, null);
     }
 }
