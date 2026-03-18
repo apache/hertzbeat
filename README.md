@@ -48,7 +48,7 @@
 
 ## 🥐 Architecture   
 
-![hertzBeat](home/static/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 ## ⛄ Supported   
 

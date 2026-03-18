@@ -2,7 +2,7 @@
 
 - 如果想自己本地快速部署的话，可以参考下面进行操作。
 
-> docker-compose 部署方案使用了 Mysql + IoTDB 作为 Hertzbeat 依赖存储服务。   
+> docker-compose 部署方案使用了 Mysql + IoTDB 作为 HertzBeat 依赖存储服务。   
 > 此方案会启动三个容器服务 Mysql, IoTDB, HertzBeat   
 
 ##### 安装Docker & Docker-compose

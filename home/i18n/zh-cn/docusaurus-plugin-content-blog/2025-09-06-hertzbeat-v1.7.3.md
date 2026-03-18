@@ -4,7 +4,7 @@ author: LiuTianyou
 author_title: LiuTianyou
 author_url: https://github.com/LiuTianyou
 tags: [opensource, release]
-keywords: [open source monitoring system, alerting system, Hertzbeat, release]
+keywords: [open source monitoring system, alerting system, HertzBeat, release]
 ---
 
 亲爱的社区小伙伴们，
@@ -227,7 +227,7 @@ keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 - @tuzuy made their first contribution in [https://github.com/apache/hertzbeat/pull/3668](https://github.com/apache/hertzbeat/pull/3668)
 - @carlpinto25 made their first contribution in [https://github.com/apache/hertzbeat/pull/3726](https://github.com/apache/hertzbeat/pull/3726)
 
-## Apache Hertzbeat
+## Apache HertzBeat
 
 **仓库地址：**
 

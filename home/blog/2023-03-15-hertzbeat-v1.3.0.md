@@ -29,7 +29,7 @@ Website: hertzbeat.com | tancloud.cn
 
 After a month of iterations, HertzBeat v1.3.0 was officially released last weekend, **Recommended upgrade**!
 
-- Hertzbeat has powerful custom monitoring capabilities, all our supported monitoring types are mapped to a YML. This time we bring custom monitoring pagination, welcome to use and share your own monitoring type definition.
+- HertzBeat has powerful custom monitoring capabilities, all our supported monitoring types are mapped to a YML. This time we bring custom monitoring pagination, welcome to use and share your own monitoring type definition.
 
 - **support for monitoring network switches**.
   hertzbeat supported snmp protocol long time ago, windows monitoring is monitored by snmp protocol, this version we not only support more windows performance metrics, but also support snmp walk, adapt several common network switches monitoring, welcome to contribute more types and metrics to the community.

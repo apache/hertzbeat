@@ -1,6 +1,6 @@
 ## Docker-Compose deployment HertzBeat+Mysql+VictoriaMetrics Solution
 
-> The docker-compose deployment scheme uses Mysql + VictoriaMetrics as the dependent storage service of Hertzbeat.
+> The docker-compose deployment scheme uses Mysql + VictoriaMetrics as the dependent storage service of HertzBeat.
 > This solution will start three container services Mysql, VictoriaMetrics, HertzBeat
 
 ##### Install Docker & Docker-compose

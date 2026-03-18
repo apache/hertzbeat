@@ -1,6 +1,6 @@
 ## docker-compose deployment HertzBeat+PostgreSQL+IoTDB solution
 
-> The docker-compose deployment scheme uses PostgreSQL + VictoriaMetrics as the dependent storage service of Hertzbeat.  
+> The docker-compose deployment scheme uses PostgreSQL + VictoriaMetrics as the dependent storage service of HertzBeat.  
 > This solution will start three container services PostgreSQL, VictoriaMetrics, HertzBeat
 
 ##### Install Docker & Docker-compose
