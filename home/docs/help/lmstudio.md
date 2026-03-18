@@ -13,6 +13,8 @@ keywords: [ open source monitoring system, open source network monitoring, LM St
 ### Notes
 
 > 1. HertzBeat needs network access to the LM Studio server. Ensure the target host and port are reachable.
+> 2. By default, LM Studio does not require authentication for API requests. To enable authentication so that only
+     requests with a valid API Token are accepted, toggle the switch in the Developers Page > Server Settings.
 
 ### Configuration Parameters
 
