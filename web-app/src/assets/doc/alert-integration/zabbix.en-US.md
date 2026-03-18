@@ -29,24 +29,24 @@ Send Zabbix alerts to the HertzBeat alert platform via Webhook.
 
 5. Add the following JavaScript code in the **Script** section
 ```javascript
-var Hertzbeat = {
+var HertzBeat = {
   sendMessage: function(url, alert) {
     request = new HttpRequest();
     request.addHeader('Content-Type: application/json');
     data = JSON.stringify(alert);
 
-    Zabbix.Log(4, '[Hertzbeat Webhook] params: ' + data);
+    Zabbix.Log(4, '[HertzBeat Webhook] params: ' + data);
     // Push alert message
     response = request.post(url, data);
-    Zabbix.Log(4, '[Hertzbeat Webhook] HTTP code: ' + request.Status());
-    Zabbix.Log(4, '[Hertzbeat Webhook] response: ' + response);
+    Zabbix.Log(4, '[HertzBeat Webhook] HTTP code: ' + request.Status());
+    Zabbix.Log(4, '[HertzBeat Webhook] response: ' + response);
 
     // Format the returned result and make a judgment, throw an exception if there is an exception.
     try {
       response = JSON.parse(response);
     } catch (error) {
       response = null;
-      Zabbix.Log(4, '[Hertzbeat Webhook] response parse error');
+      Zabbix.Log(4, '[HertzBeat Webhook] response parse error');
     }
 
     if (request.Status() !== 200 ||  response.errcode !== 0 || response.errmsg !== 'ok') {
@@ -159,11 +159,11 @@ try {
   Zabbix.Log(4, "HertzBeat webhook payload: " + JSON.stringify(hertzbeatAlert));
 
   // Execute message push function
-  Hertzbeat.sendMessage(params.URL, hertzbeatAlert);
+  HertzBeat.sendMessage(params.URL, hertzbeatAlert);
   // Return to Zabbix, 'OK' will be used to identify successful execution in Zabbix actions.
   return 'OK';
 } catch (error) {
-  Zabbix.Log(4, '[Hertzbeat Webhook] notification failed: ' + error);
+  Zabbix.Log(4, '[HertzBeat Webhook] notification failed: ' + error);
   throw 'Sending failed: ' + error + '.';
 }
 ```

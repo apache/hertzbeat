@@ -35,3 +35,4 @@ org.apache.hertzbeat.collector.collect.sd.EurekaSdCollectImpl
 org.apache.hertzbeat.collector.collect.sd.ConsulSdCollectImpl
 org.apache.hertzbeat.collector.collect.modbus.ModbusCollectImpl
 org.apache.hertzbeat.collector.collect.s7.S7CollectImpl
+org.apache.hertzbeat.collector.collect.sd.ZookeeperSdCollectImpl

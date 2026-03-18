@@ -86,7 +86,7 @@ module.exports = {
     navbar: {
       title: 'HertzBeat',
       logo: {
-        alt: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
+        alt: 'An open source, real-time monitoring tool with custom-monitor and agentless.',
         src: '/img/hertzbeat-brand.svg',
       },
       items: [

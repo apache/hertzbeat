@@ -17,13 +17,13 @@ keywords: [open source monitoring system, alerting system]
 
 **Github ID: leo-934**
 
-### Getting to know Hertzbeat for the first time
+### Getting to know HertzBeat for the first time
 
-In March 2023, I noticed Hertzbeat's project, so I directly sent an email to Tom in the community to ask if I could join, and he replied very quickly. It just so happened that I was in my senior year of college when I had more time, so I decisively picked an issue to resolve and had my first pull request at Hertzbeat.
+In March 2023, I noticed HertzBeat's project, so I directly sent an email to Tom in the community to ask if I could join, and he replied very quickly. It just so happened that I was in my senior year of college when I had more time, so I decisively picked an issue to resolve and had my first pull request at HertzBeat.
 
 ### Start submitting PR
 
-In the following period, I spent some time reading Hertzbeat's code, and submitted a few PRs off and on until April, when I learned about the Summer of Open Source event, and it just so happened that Hertzbeat was participating as well, so I submitted my application information and was selected. My task is mainly responsible for the implementation of a push collector, in the process of writing the code, I got a lot of community mentor Zheng Chenxin and Tom to help, and finally was able to successfully complete the code, the whole process is still relatively smooth.
+In the following period, I spent some time reading HertzBeat's code, and submitted a few PRs off and on until April, when I learned about the Summer of Open Source event, and it just so happened that HertzBeat was participating as well, so I submitted my application information and was selected. My task is mainly responsible for the implementation of a push collector, in the process of writing the code, I got a lot of community mentor Zheng Chenxin and Tom to help, and finally was able to successfully complete the code, the whole process is still relatively smooth.
 
 ### Open source contributions
 
@@ -35,7 +35,7 @@ In the following period, I spent some time reading Hertzbeat's code, and submitt
 
 - Exposed to a great open source community and improved my skills in related areas.
 
-Thanks to Tom and my ospp mentor, Zheng Chenxin, who gave me a lot of help and advice during my exposure to the open source community. Currently I am still in charge of some of the code development in the community, I hope Hertzbeat can be better and better in the future!
+Thanks to Tom and my ospp mentor, Zheng Chenxin, who gave me a lot of help and advice during my exposure to the open source community. Currently I am still in charge of some of the code development in the community, I hope HertzBeat can be better and better in the future!
 
 ---
 
@@ -45,13 +45,13 @@ Thanks to Tom and my ospp mentor, Zheng Chenxin, who gave me a lot of help and a
 
 **Junior student at Henan Normal University**
 
-### Getting to know Hertzbeat for the first time
+### Getting to know HertzBeat for the first time
 
 In March this year, under the influence of Xiaobao's seniors, I had some concepts about open source projects and laid the foundation for learning open source projects later, but I didn't go further because I only learned some Java basics at that time.
 
 ### Start submitting PR
 
-In July this year, after basically completing the study of Java framework development, with the encouragement of Xiaobao, I started to try to pull issues, and submitted my first PR on July 20, during this period, I also consulted with the author of Hertzbeat and Dongfeng for some related issues, thank you very much.
+In July this year, after basically completing the study of Java framework development, with the encouragement of Xiaobao, I started to try to pull issues, and submitted my first PR on July 20, during this period, I also consulted with the author of HertzBeat and Dongfeng for some related issues, thank you very much.
 
 ### Open source contributions
 

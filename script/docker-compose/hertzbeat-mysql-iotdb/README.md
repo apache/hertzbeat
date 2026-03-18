@@ -1,6 +1,6 @@
 ## docker-compose deployment HertzBeat+Mysql+IoTDB solution
 
-> The docker-compose deployment scheme uses Mysql + IoTDB as the dependent storage service of Hertzbeat.  
+> The docker-compose deployment scheme uses Mysql + IoTDB as the dependent storage service of HertzBeat.  
 > This solution will start three container services Mysql, IoTDB, HertzBeat
 
 ##### Install Docker & Docker-compose

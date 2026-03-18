@@ -1,4 +1,4 @@
-## Hertzbeat Web-App        
+## HertzBeat Web-App        
 
 > [!NOTE]
 >

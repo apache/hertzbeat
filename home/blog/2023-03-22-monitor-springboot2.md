@@ -11,7 +11,7 @@ keywords: [opensource monitoring, SpringBoot monitoring, alert]
 
 ### HertzBeat Intro
 
-> HertzBeat is an open source, real-time monitoring tool with custom-monitor and agentLess. | 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力.
+> HertzBeat is an open source, real-time monitoring tool with custom-monitor and agentless. | 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力.
 >
 > **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
