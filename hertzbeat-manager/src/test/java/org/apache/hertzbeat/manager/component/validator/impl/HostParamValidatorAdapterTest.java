@@ -19,8 +19,8 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,9 +44,9 @@ class HostParamValidatorAdapterTest {
 
     @Test
     void validate_ValidHost() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("host");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("127.0.0.1");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
@@ -54,9 +54,9 @@ class HostParamValidatorAdapterTest {
 
     @Test
     void validate_ValidDomain() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("host");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("localhost");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
@@ -64,9 +64,9 @@ class HostParamValidatorAdapterTest {
 
     @Test
     void validate_HttpPrefix() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("host");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("http://127.0.0.1");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
@@ -74,10 +74,10 @@ class HostParamValidatorAdapterTest {
 
     @Test
     void validate_InvalidHost() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("host");
         paramDefine.setField("host");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("invalid host");
 
         assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));
@@ -85,9 +85,9 @@ class HostParamValidatorAdapterTest {
 
     @Test
     void validate_HostWithPort() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("host");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("127.0.0.1:8080");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));

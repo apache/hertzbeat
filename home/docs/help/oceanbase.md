@@ -13,6 +13,13 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 - Copy the jar package to the `hertzbeat/ext-lib` directory.
 - Restart the HertzBeat service.
 
+:::important Collector package selection
+OceanBase monitoring depends on the external MySQL JDBC driver in `ext-lib`.
+
+- Use HertzBeat server built-in collector or the JVM collector package for OceanBase monitoring
+- Do not use the native collector package for OceanBase monitoring
+:::
+
 ### Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |

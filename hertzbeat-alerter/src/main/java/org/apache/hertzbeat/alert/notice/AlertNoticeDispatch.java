@@ -21,6 +21,7 @@ import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.RejectedExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.config.AlertSseManager;
@@ -121,14 +122,27 @@ public class AlertNoticeDispatch {
     }
 
     private void sendNotify(GroupAlert alert) {
-        matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> workerPool.executeNotify(() -> rule.getReceiverId()
-                .forEach(receiverId -> {
-                    try {
-                        sendNoticeMsg(getOneReceiverById(receiverId),
-                                getOneTemplateById(rule.getTemplateId()), alert);
-                    } catch (AlertNoticeException e) {
-                        log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
-                    }
-                }))));
+        matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> {
+            NoticeTemplate noticeTemplate = getOneTemplateById(rule.getTemplateId());
+            rule.getReceiverId().forEach(receiverId -> {
+                NoticeReceiver receiver = getOneReceiverById(receiverId);
+                if (receiver == null || receiver.getType() == null) {
+                    log.warn("DispatchTask skip invalid receiver, receiverId: {}, alertId: {}", receiverId, alert.getId());
+                    return;
+                }
+                try {
+                    workerPool.executeNotify(receiver.getType(), () -> {
+                        try {
+                            sendNoticeMsg(receiver, noticeTemplate, alert);
+                        } catch (AlertNoticeException e) {
+                            log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                        }
+                    });
+                } catch (RejectedExecutionException e) {
+                    log.warn("DispatchTask rejected notify task, receiverId: {}, type: {}, message: {}",
+                            receiverId, receiver.getType(), e.getMessage());
+                }
+            });
+        }));
     }
 }

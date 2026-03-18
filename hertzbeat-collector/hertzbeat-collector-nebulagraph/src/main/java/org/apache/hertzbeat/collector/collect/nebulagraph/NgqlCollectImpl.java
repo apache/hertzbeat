@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -33,8 +34,6 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
-import org.springframework.util.Assert;
-import org.springframework.util.StopWatch;
 
 /**
  * connect nebulaGraph and collect metrics use NGQL
@@ -53,18 +52,17 @@ public class NgqlCollectImpl extends AbstractCollect {
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         NgqlProtocol ngql = metrics.getNgql();
-        Assert.hasText(ngql.getHost(), "NGQL protocol host is required");
-        Assert.hasText(ngql.getPort(), "Port protocol host is required");
-        Assert.hasText(ngql.getParseType(), "NGQL protocol parseType is required");
-        Assert.hasText(ngql.getUsername(), "NGQL protocol username is required");
-        Assert.hasText(ngql.getPassword(), "NGQL protocol password is required");
+        requireHasText(ngql.getHost(), "NGQL protocol host is required");
+        requireHasText(ngql.getPort(), "Port protocol host is required");
+        requireHasText(ngql.getParseType(), "NGQL protocol parseType is required");
+        requireHasText(ngql.getUsername(), "NGQL protocol username is required");
+        requireHasText(ngql.getPassword(), "NGQL protocol password is required");
     }
 
     @Override
     public void collect(Builder builder, Metrics metrics) {
         NgqlProtocol ngql = metrics.getNgql();
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
+        long startTimeNanos = System.nanoTime();
         NebulaTemplate nebulaTemplate = new NebulaTemplate();
         try {
             boolean initSuccess = nebulaTemplate.initSession(ngql);
@@ -79,8 +77,7 @@ public class NgqlCollectImpl extends AbstractCollect {
             return;
         }
 
-        stopWatch.stop();
-        long responseTime = stopWatch.getTotalTimeMillis();
+        long responseTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNanos);
         try {
             switch (ngql.getParseType()) {
                 case PARSE_TYPE_FILTER_COUNT -> filterCount(nebulaTemplate, ngql, metrics.getAliasFields(), builder, responseTime);
@@ -246,5 +243,11 @@ public class NgqlCollectImpl extends AbstractCollect {
         result.put("queue_jobs", String.valueOf(jobs.stream().filter(job -> Objects.equals(job.get("Status"), STATUS_QUEUE)).count()));
         result.put("running_jobs", String.valueOf(jobs.stream().filter(job -> Objects.equals(job.get("Status"), STATUS_RUNNING)).count()));
         return result;
+    }
+
+    private static void requireHasText(String value, String message) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(message);
+        }
     }
 }

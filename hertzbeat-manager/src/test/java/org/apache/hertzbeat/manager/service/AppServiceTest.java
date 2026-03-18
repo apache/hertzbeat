@@ -19,13 +19,14 @@ package org.apache.hertzbeat.manager.service;
 
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
 import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
@@ -114,14 +115,14 @@ class AppServiceTest {
         job.setCategory("service");
         job.setName(Map.of("k", "v"));
 
-        List<ParamDefine> params = new ArrayList<>();
-        ParamDefine hostParam = new ParamDefine();
+        List<RuntimeParamDefine> params = new ArrayList<>();
+        RuntimeParamDefine hostParam = new RuntimeParamDefine();
         hostParam.setField("host");
         hostParam.setType("host");
         hostParam.setRequired(true);
         params.add(hostParam);
 
-        ParamDefine portParam = new ParamDefine();
+        RuntimeParamDefine portParam = new RuntimeParamDefine();
         portParam.setField("port");
         portParam.setType("number");
         portParam.setRequired(true);
@@ -184,7 +185,7 @@ class AppServiceTest {
         ObjectStoreConfigChangeEvent objectStoreConfigChangeEvent = new ObjectStoreConfigChangeEvent(objectStoreDTO);
         appService.onObjectStoreConfigChange(objectStoreConfigChangeEvent);
 
-        List<ParamDefine> appParamDefines = appService.getAppParamDefines(define.getApp());
+        List<ParamDefineInfo> appParamDefines = appService.getAppParamDefines(define.getApp());
         assertNotNull(appParamDefines);
         assertTrue(appParamDefines.stream().anyMatch(t -> t.getField().equals("host_test")));
     }

@@ -15,6 +15,7 @@
             "start/docker-deploy",
             "start/docker-compose-deploy",
             "start/package-deploy",
+            "start/native-collector",
             {
               "type": "link",
               "label": "Install via Helm",
@@ -294,7 +295,12 @@
         {
           "type": "category",
           "label": "llm",
-          "items": ["help/openai","help/deepseek","help/lmstudio"]
+          "items": [
+            "help/openai",
+            "help/deepseek",
+            "help/ollama",
+            "help/lmstudio"
+          ]
         },
         {
           "type": "category",

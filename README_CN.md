@@ -127,12 +127,12 @@
 
 ##### 方式二：通过安装包安装
 
-1. 下载您系统环境对应的安装包 `hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
+1. 下载您系统环境对应的安装包 `apache-hertzbeat-xx-bin.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
 2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml` (可选)
 3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
 4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 5. 部署采集器集群（可选）
-   - 下载采集器安装包 `hertzbeat-collector-xx.tar.gz` 到规划的另一台部署主机上 [Download](https://hertzbeat.apache.org/docs/download)
+   - 下载采集器安装包 `apache-hertzbeat-collector-xx-bin.tar.gz`（JVM 采集器）或与你目标平台匹配的 Native 采集器安装包，例如 `apache-hertzbeat-collector-native-xx-linux-amd64-bin.tar.gz`、`apache-hertzbeat-collector-native-xx-windows-amd64-bin.zip`，到规划的另一台部署主机上 [Download](https://hertzbeat.apache.org/docs/download)
    - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主 HertzBeat 服务的对外 IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
      collector:
@@ -145,7 +145,8 @@
              manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
-   - 启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
+   - 如果需要通过 `ext-lib` 加载 MySQL、OceanBase、Oracle、DB2 等外置 JDBC 驱动，请使用 JVM 采集器安装包。
+   - JVM 采集器安装包使用 `$ ./bin/startup.sh ` 或 `bin/startup.bat` 启动。Linux 或 macOS 的 Native 采集器安装包使用 `$ ./bin/startup.sh ` 启动，Windows 的 Native 采集器安装包使用 `bin\\startup.bat` 启动
    - 浏览器访问主 HertzBeat 服务 `http://localhost:1157` 查看概览页面即可看到注册上来的新采集器
 
 更多配置详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.apache.org/docs/start/package-deploy)
@@ -153,7 +154,7 @@
 ##### 方式三：本地代码启动
 
 1. 此为前后端分离项目，本地代码调试需要分别启动后端工程 `hertzbeat-startup` 和前端工程 `web-app`
-2. 后端：需要 `maven3+`, `java21` 和 `lombok` 环境，修改 `YML` 配置信息，添加JVM参数`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`后启动 `hertzbeat-startup` 服务即可。
+2. 后端：需要 `maven3+`, `java25` 和 `lombok` 环境，修改 `YML` 配置信息，添加JVM参数`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`后启动 `hertzbeat-startup` 服务即可。
 3. 前端：需要 `nodejs npm angular-cli`环境，待本地后端启动后，在 `web-app` 目录下启动 `ng serve --open`
 4. 浏览器访问 `http://localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
