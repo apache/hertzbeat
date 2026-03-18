@@ -17,11 +17,15 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * nginx protocol
@@ -62,6 +66,17 @@ public class NginxProtocol implements CommonRequestProtocol, Protocol {
      */
     @Override
     public boolean isInvalid() {
-        return StringUtils.isAnyBlank(host, port, timeout);
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(timeout) && !CommonUtil.isNumeric(timeout)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(ssl)
+                && !"true".equalsIgnoreCase(ssl)
+                && !"false".equalsIgnoreCase(ssl)) {
+            return true;
+        }
+        return false;
     }
 }
