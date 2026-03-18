@@ -4,7 +4,7 @@ author: Apache HertzBeat Community
 author_title: Apache HertzBeat Community
 author_url: https://github.com/apache/hertzbeat
 tags: [opensource, release, v1.8.0]
-keywords: [open source monitoring system, alerting system, Hertzbeat, release, v1.8.0, Apache]
+keywords: [open source monitoring system, alerting system, HertzBeat, release, v1.8.0, Apache]
 ---
 
 Dear Community Members,

@@ -10,7 +10,7 @@ keywords:
     alerting system,
     Apache,
     Apache Committer,
-    Hertzbeat,
+    HertzBeat,
   ]
 ---
 
