@@ -1,6 +1,6 @@
 ## Docker-Compose deployment HertzBeat+Mysql+Tdengine Solution
 
-> The docker-compose deployment scheme uses Mysql + Tdengine as the dependent storage service of Hertzbeat.
+> The docker-compose deployment scheme uses Mysql + Tdengine as the dependent storage service of HertzBeat.
 > This solution will start three container services Mysql, Tdengine, HertzBeat
 
 ##### Install Docker & Docker-compose
