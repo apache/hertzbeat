@@ -70,8 +70,13 @@ items:
 - name: missing-auth-header
   request:
     api: /api/monitors
+    header:
+      Accept: application/json
   expect:
     statusCode: 401
+    bodyFieldsExpect:
+      code: 401
+      msg: Missing Authorization in header
 - name: createSitemapMonitor
   request:
     api: /api/monitor
