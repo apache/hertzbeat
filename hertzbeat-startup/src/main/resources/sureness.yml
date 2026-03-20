@@ -71,6 +71,9 @@ resourceRole:
   - /api/chat/**===get===[admin,user]
   - /api/chat/**===post===[admin]
   - /api/logs/ingest/**===post===[admin,user]
+  - /api/account/token===get===[admin]
+  - /api/account/token/**===post===[admin]
+  - /api/account/token/**===delete===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
