@@ -385,6 +385,49 @@ items:
     header:
       Authorization: Bearer {{.login.data.token}}
 
+## API Token Management
+- name: generateApiToken
+  request:
+    api: /api/account/token/generate?name=e2e-test-token
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: listApiTokens
+  request:
+    api: /api/account/token
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: useGeneratedTokenToCallApi
+  request:
+    api: /api/monitors?pageIndex=0&pageSize=8
+    header:
+      Authorization: Bearer {{.generateApiToken.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: deleteApiToken
+  request:
+    api: /api/account/token/{{(index .listApiTokens.data 0).id | int64}}
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: useRevokedTokenToCallApi
+  request:
+    api: /api/monitors?pageIndex=0&pageSize=8
+    header:
+      Authorization: Bearer {{.generateApiToken.data.token}}
+  expect:
+    statusCode: 401
+
 ## Config
 - name: getConfigEmail
   request:
