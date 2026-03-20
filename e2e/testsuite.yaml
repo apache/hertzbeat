@@ -29,6 +29,7 @@ param:
   monitorUDP: "{{randAlpha 6}}"
   monitorWebsite: "{{randAlpha 6}}"
   monitorFTP: "{{randAlpha 6}}"
+  apiTokenName: "e2e-token-{{randAlpha 6}}"
   labelName: "{{randAlpha 3}}"
 items:
 - name: login
@@ -388,7 +389,7 @@ items:
 ## API Token Management
 - name: generateApiToken
   request:
-    api: /api/account/token/generate?name=e2e-test-token
+    api: /api/account/token/generate?name={{.apiTokenName}}&expireSeconds=-1
     method: POST
     header:
       Authorization: Bearer {{.login.data.token}}
@@ -403,6 +404,17 @@ items:
   expect:
     bodyFieldsExpect:
       code: "0"
+      data.0.name: "{{.apiTokenName}}"
+      data.0.creator: "admin"
+- name: listApiTokensByGeneratedToken
+  request:
+    api: /api/account/token
+    header:
+      Authorization: Bearer {{.generateApiToken.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+      data.0.name: "{{.apiTokenName}}"
 - name: useGeneratedTokenToCallApi
   request:
     api: /api/monitors?pageIndex=0&pageSize=8
