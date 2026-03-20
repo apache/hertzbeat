@@ -1,0 +1,132 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<nz-spin [nzSpinning]="loading">
+  <div class="token-management">
+    <div class="token-header">
+      <p class="token-desc">{{ 'settings.token.desc' | i18n }}</p>
+      <button nz-button nzType="primary" [nzLoading]="generateLoading" (click)="showGenerateModal()">
+        <span nz-icon nzType="plus" nzTheme="outline"></span>
+        {{ 'settings.token.generate' | i18n }}
+      </button>
+    </div>
+
+    <nz-table #tokenTable [nzData]="tokens" [nzShowPagination]="false" [nzBordered]="true" nzSize="middle">
+      <thead>
+        <tr>
+          <th>{{ 'settings.token.name' | i18n }}</th>
+          <th>{{ 'settings.token.value' | i18n }}</th>
+          <th>{{ 'settings.token.creator' | i18n }}</th>
+          <th>{{ 'settings.token.create-time' | i18n }}</th>
+          <th>{{ 'settings.token.expire-time' | i18n }}</th>
+          <th>{{ 'settings.token.last-used' | i18n }}</th>
+          <th nzWidth="120px">{{ 'common.edit' | i18n }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let token of tokenTable.data">
+          <td>{{ token.name }}</td>
+          <td>
+            <code>{{ token.tokenMask }}</code>
+          </td>
+          <td>{{ token.creator }}</td>
+          <td>{{ token.gmtCreate | date : 'yyyy-MM-dd HH:mm:ss' }}</td>
+          <td>
+            <ng-container *ngIf="token.expireTime; else neverExpire">
+              <span [class.token-expired-text]="isExpired(token)">
+                {{ token.expireTime | date : 'yyyy-MM-dd HH:mm:ss' }}
+              </span>
+              <nz-tag *ngIf="isExpired(token)" nzColor="error" style="margin-left: 4px">{{ 'settings.token.expired' | i18n }}</nz-tag>
+            </ng-container>
+            <ng-template #neverExpire>
+              <nz-tag nzColor="success">{{ 'settings.token.expire.never' | i18n }}</nz-tag>
+            </ng-template>
+          </td>
+          <td>{{ token.lastUsedTime ? (token.lastUsedTime | date : 'yyyy-MM-dd HH:mm:ss') : '-' }}</td>
+          <td>
+            <button nz-button nzType="link" nzDanger (click)="confirmDelete(token)">
+              <span nz-icon nzType="delete" nzTheme="outline"></span>
+              {{ 'common.button.delete' | i18n }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+
+    <div *ngIf="tokens.length === 0 && !loading" class="empty-state">
+      <nz-empty [nzNotFoundContent]="'settings.token.empty' | i18n"></nz-empty>
+    </div>
+  </div>
+</nz-spin>
+
+<!-- Generate Token Name Modal -->
+<nz-modal
+  [(nzVisible)]="isGenerateModalVisible"
+  [nzTitle]="'settings.token.generate-title' | i18n"
+  (nzOnCancel)="handleGenerateCancel()"
+  (nzOnOk)="doGenerateToken()"
+  [nzOkText]="'settings.token.generate' | i18n"
+  [nzCancelText]="'common.button.cancel' | i18n"
+>
+  <div *nzModalContent>
+    <form nz-form nzLayout="vertical">
+      <nz-form-item>
+        <nz-form-label nzRequired>{{ 'settings.token.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n">
+          <input nz-input [(ngModel)]="newTokenName" name="tokenName" required [placeholder]="'settings.token.name-placeholder' | i18n" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label>{{ 'settings.token.expire-time' | i18n }}</nz-form-label>
+        <nz-form-control>
+          <nz-select [(ngModel)]="selectedExpire" name="expireTime">
+            <nz-option *ngFor="let opt of expireOptions" [nzValue]="opt.seconds" [nzLabel]="opt.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>
+
+<!-- Token Display Modal -->
+<nz-modal
+  [(nzVisible)]="isTokenModalVisible"
+  [nzMaskClosable]="false"
+  nzWidth="50%"
+  [nzTitle]="'settings.token.generated-title' | i18n"
+  (nzOnCancel)="handleTokenModalClose()"
+  (nzOnOk)="handleTokenModalClose()"
+  [nzOkText]="'common.button.confirm' | i18n"
+  [nzCancelText]="null"
+>
+  <div *nzModalContent>
+    <nz-alert nzType="warning" [nzMessage]="'settings.token.notice' | i18n" nzShowIcon></nz-alert>
+    <div style="margin-top: 16px">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 8px">
+        <button nz-button nzType="primary" nzSize="small" (click)="copyToken()">
+          <span nz-icon nzType="copy" nzTheme="outline"></span>
+          {{ 'common.button.copy' | i18n }}
+        </button>
+      </div>
+      <div style="padding: 12px; border: 1px solid #d9d9d9; border-radius: 4px; word-wrap: break-word; word-break: break-all; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; background: #fafafa">
+        {{ generatedToken }}
+      </div>
+    </div>
+  </div>
+</nz-modal>

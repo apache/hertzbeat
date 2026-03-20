@@ -17,10 +17,6 @@
 
 package org.apache.hertzbeat.manager.dao;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -28,6 +24,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * AuthToken DAO
@@ -40,9 +39,9 @@ public interface AuthTokenDao extends JpaRepository<AuthToken, Long>, JpaSpecifi
     List<AuthToken> findByStatus(Byte status);
 
     /**
-     * Find token by hash value
+     * Find active tokens created by the given user
      */
-    Optional<AuthToken> findByTokenHash(String tokenHash);
+    List<AuthToken> findByStatusAndCreator(Byte status, String creator);
 
     /**
      * Check if an active token exists with the given hash
