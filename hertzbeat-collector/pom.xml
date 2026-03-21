@@ -31,12 +31,14 @@
         <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <mysql.r2dbc.reactor.bom.version>2024.0.3</mysql.r2dbc.reactor.bom.version>
     </properties>
 
     <modules>
         <module>hertzbeat-collector-basic</module>
         <module>hertzbeat-collector-common</module>
         <module>hertzbeat-collector-collector</module>
+        <module>hertzbeat-collector-mysql-r2dbc</module>
         <module>hertzbeat-collector-mongodb</module>
         <module>hertzbeat-collector-nebulagraph</module>
         <module>hertzbeat-collector-rocketmq</module>
@@ -46,6 +48,13 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-bom</artifactId>
+                <version>${mysql.r2dbc.reactor.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-collector-common</artifactId>
                 <version>${hertzbeat.version}</version>
@@ -53,6 +62,11 @@
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-collector-basic</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-collector-mysql-r2dbc</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <dependency>

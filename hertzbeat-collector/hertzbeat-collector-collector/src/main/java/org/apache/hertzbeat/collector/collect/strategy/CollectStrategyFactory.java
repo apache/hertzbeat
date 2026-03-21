@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.collect.strategy;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +30,7 @@ import org.springframework.core.annotation.Order;
 /**
  * Specific metrics collection factory
  */
+@Slf4j
 @Configuration
 @Order(value = Ordered.HIGHEST_PRECEDENCE + 1)
 public class CollectStrategyFactory implements CommandLineRunner {
@@ -49,10 +51,18 @@ public class CollectStrategyFactory implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        COLLECT_STRATEGY.clear();
         // spi load and registry protocol and collect instance
         ServiceLoader<AbstractCollect> loader = ServiceLoader.load(AbstractCollect.class, AbstractCollect.class.getClassLoader());
         for (AbstractCollect collect : loader) {
             COLLECT_STRATEGY.put(collect.supportProtocol(), collect);
         }
+        if (COLLECT_STRATEGY.isEmpty()) {
+            throw new IllegalStateException(
+                    "No collect strategies were registered. "
+                            + "Verify META-INF/services/org.apache.hertzbeat.collector.collect.AbstractCollect "
+                            + "is present on the runtime classpath.");
+        }
+        log.info("Registered {} collect strategies: {}", COLLECT_STRATEGY.size(), COLLECT_STRATEGY.keySet());
     }
 }

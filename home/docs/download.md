@@ -26,7 +26,7 @@ Download the latest Apache HertzBeat™ release (v1.8.0) as server binary, colle
 | **Docker Compose** | ~5MB | Full stack deployment | Docker environments |
 
 :::tip Native Collector Recommendation
-If you do not need MySQL, OceanBase, Oracle, DB2, or other monitoring types that rely on external JDBC drivers from `ext-lib`, you can choose the native collector package for faster startup and lower memory usage.
+If you do not need external JDBC drivers from `ext-lib`, you can choose the native collector package for faster startup and lower memory usage. MySQL, MariaDB, and OceanBase are included in this native-friendly path when `mysql-connector-j` is not provided. TiDB follows the same rule for its SQL query metric set.
 
 Trade-offs: native packages are platform-specific and do not support runtime `ext-lib` JDBC loading. See [Native Collector Guide](start/native-collector).
 :::

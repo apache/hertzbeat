@@ -13,6 +13,8 @@ Typical native-friendly workloads include:
 
 - HTTP, HTTPS, website availability, and API checks
 - Port, ping, SSL certificate, and other network probes
+- MySQL, MariaDB, and OceanBase when you do not rely on runtime `ext-lib` JDBC loading
+- TiDB when you do not rely on runtime `ext-lib` JDBC loading for its SQL query metric set
 - Redis, Zookeeper, Kafka, and other non-JDBC monitoring types
 
 ## Why use it?
@@ -35,10 +37,9 @@ The native collector package is not a drop-in replacement for every JVM collecto
 
 Use the JVM collector package if your monitoring depends on external JDBC drivers, especially:
 
-- MySQL, which requires `mysql-connector-j`
-- OceanBase, which also depends on the MySQL JDBC driver
 - Oracle, which requires `ojdbc8` and sometimes `orai18n`
 - DB2, which requires `jcc`
+- Any MySQL, MariaDB, or OceanBase deployment where you explicitly place `mysql-connector-j` in `ext-lib` and want the JDBC path
 
 ## Package naming
 
@@ -69,8 +70,9 @@ That means:
 
 ## Recommended decision
 
-- Choose the native collector package when you want lower memory usage and faster startup for non-JDBC monitoring.
+- Choose the native collector package when you want lower memory usage and faster startup for non-JDBC monitoring, for MySQL, MariaDB, and OceanBase without `ext-lib`, or for TiDB when its SQL query metric set can use the built-in MySQL-compatible query engine.
 - Choose the JVM collector package when you need `ext-lib`, external JDBC drivers, or JVM-style runtime extensibility.
+- For MySQL-compatible monitoring on the JVM collector, `auto` only checks `ext-lib`. If you need to force a path, set `hertzbeat.collector.mysql.query-engine=jdbc`, `r2dbc`, or `auto`.
 
 ## How are the official multi-platform packages built?
 

@@ -7,6 +7,22 @@ keywords: [开源监控系统, 开源数据库监控, TiDB数据库监控]
 
 > 使用 HTTP 和 JDBC 协议对 TiDB 的通用性能指标进行采集监控。
 
+### 驱动选择
+
+TiDB 监控里的 HTTP 部分保持不变，SQL 查询部分现在和 MySQL 一样会自动分流：
+
+- 如果 `ext-lib` 中放入了 `mysql-connector-j`，JVM 采集器或主程序内置采集器会对 SQL 查询指标自动优先走 JDBC。
+- 如果没有放入 `mysql-connector-j`，HertzBeat 会对 SQL 查询指标自动切换到内置的 MySQL 兼容查询引擎，不需要额外复制 JAR。
+- 在 `ext-lib` 中新增或删除 JAR 后，请重启 HertzBeat 或独立 JVM 采集器。
+
+:::important 采集器包选择
+TiDB 默认模板同时包含 HTTP 指标和 MySQL 兼容 SQL 查询。
+
+- HTTP 指标集合不受 JDBC 驱动选择影响
+- 内置 SQL 查询引擎已经可以在不放 `mysql-connector-j` 的情况下采集默认 TiDB `basic` 指标集合
+- 如果你明确把 `mysql-connector-j` 放进 `ext-lib`，JVM 采集器或主程序内置采集器仍会对 SQL 查询路径优先走 JDBC
+:::
+
 ### 配置参数
 
 |   参数名称    |                                                               参数帮助描述                                                               |

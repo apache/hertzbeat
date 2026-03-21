@@ -148,7 +148,8 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
               manager-host: ${MANAGER_HOST:127.0.0.1}
               manager-port: ${MANAGER_PORT:1158}
       ```
-    - If you need MySQL, OceanBase, Oracle, or DB2 monitoring with external JDBC drivers from `ext-lib`, use the JVM collector package.
+    - If you do not provide JDBC drivers in `ext-lib`, MySQL, MariaDB, and OceanBase can use the built-in query engine and run on the native collector package as well. TiDB follows the same rule for its SQL query metric set.
+    - If `mysql-connector-j` is present in `ext-lib`, the built-in server collector or JVM collector automatically prefers JDBC after restart for MySQL, MariaDB, and OceanBase. TiDB follows the same rule for its SQL query metric set, while its HTTP metrics are unchanged. Oracle and DB2 still require the JVM collector package because they depend on external JDBC drivers.
     - Run `$ ./bin/startup.sh ` or `bin/startup.bat` for the JVM collector package. Run `$ ./bin/startup.sh ` for Linux or macOS native collector packages, and `bin\\startup.bat` for the Windows native collector package.
     - Access `http://localhost:1157` and you will see the registered new collector in dashboard 
 
