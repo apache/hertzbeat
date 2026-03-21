@@ -32,7 +32,7 @@ It is necessary to have Docker environment in your environment. If not installed
 
    - `docker run -d` : Run a container in the background via Docker
    - `-p 1157:1157 -p 1158:1158`  : Mapping container ports to the host, 1157 is web-ui port, 1158 is cluster port.
-   - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important, Mount the H2 database file to the local host, to ensure that the data is not lost due creating or deleting container.
+   - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important, Mount the H2 database file to the local host, to ensure that the data is not lost due to creating or deleting container.
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (optional) Mount the log file to the local host to facilitate viewing.
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (optional) Mount the configuration file to the container (please ensure that the file exists locally). [Download](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
    - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional) Mount the account configuration file to the container (please ensure that the file exists locally). [Download](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)
