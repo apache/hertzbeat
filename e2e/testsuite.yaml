@@ -29,6 +29,7 @@ param:
   monitorUDP: "{{randAlpha 6}}"
   monitorWebsite: "{{randAlpha 6}}"
   monitorFTP: "{{randAlpha 6}}"
+  apiTokenName: "e2e-token-{{randAlpha 6}}"
   labelName: "{{randAlpha 3}}"
 items:
 - name: login
@@ -69,8 +70,13 @@ items:
 - name: missing-auth-header
   request:
     api: /api/monitors
+    header:
+      Accept: application/json
   expect:
     statusCode: 401
+    bodyFieldsExpect:
+      code: 401
+      msg: Missing Authorization in header
 - name: createSitemapMonitor
   request:
     api: /api/monitor
@@ -384,6 +390,60 @@ items:
     method: DELETE
     header:
       Authorization: Bearer {{.login.data.token}}
+
+## API Token Management
+- name: generateApiToken
+  request:
+    api: /api/account/token/generate?name={{.apiTokenName}}&expireSeconds=-1
+    method: POST
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: listApiTokens
+  request:
+    api: /api/account/token
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+      data.0.name: "{{.apiTokenName}}"
+      data.0.creator: "admin"
+- name: listApiTokensByGeneratedToken
+  request:
+    api: /api/account/token
+    header:
+      Authorization: Bearer {{.generateApiToken.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+      data.0.name: "{{.apiTokenName}}"
+- name: useGeneratedTokenToCallApi
+  request:
+    api: /api/monitors?pageIndex=0&pageSize=8
+    header:
+      Authorization: Bearer {{.generateApiToken.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: deleteApiToken
+  request:
+    api: /api/account/token/{{(index .listApiTokens.data 0).id | int64}}
+    method: DELETE
+    header:
+      Authorization: Bearer {{.login.data.token}}
+  expect:
+    bodyFieldsExpect:
+      code: "0"
+- name: useRevokedTokenToCallApi
+  request:
+    api: /api/monitors?pageIndex=0&pageSize=8
+    header:
+      Authorization: Bearer {{.generateApiToken.data.token}}
+  expect:
+    statusCode: 401
 
 ## Config
 - name: getConfigEmail
