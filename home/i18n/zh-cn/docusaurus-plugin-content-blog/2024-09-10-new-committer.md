@@ -10,7 +10,7 @@ keywords:
     alerting system,
     Apache,
     Apache Committer,
-    Hertzbeat,
+    HertzBeat,
   ]
 ---
 
@@ -18,9 +18,9 @@ keywords:
 
 大家好，我是张宇轩，是来自北京工业大学的一名研究生，非常荣幸能够成为 Apache HertzBeat™ 项目的 Committer。
 
-## 我与 Apache Hertzbeat
+## 我与 Apache HertzBeat
 
-我是通过今年夏天的[开源之夏](https://summer-ospp.ac.cn/)活动了解到了 Hertzbeat 这个项目，项目介绍中的“无需 Agent”、“全 web 页面操作”让我很惊喜，我心想这么轻轻松松就能实现监控了？当时我们实验室刚好新配了一台服务器，正好可以用这个项目进行监控。
+我是通过今年夏天的[开源之夏](https://summer-ospp.ac.cn/)活动了解到了 HertzBeat 这个项目，项目介绍中的“无需 Agent”、“全 web 页面操作”让我很惊喜，我心想这么轻轻松松就能实现监控了？当时我们实验室刚好新配了一台服务器，正好可以用这个项目进行监控。
 
 项目还支持 Docker 一键部署，简直是无痛上手。清新的界面也是让我眼前一亮。在使用后，我深深的被项目简单易用、监控类型全面的特点吸引，并且项目中的 Issue 和 PR 都会被快速响应，这让我想要进一步参与到项目的开发。
 

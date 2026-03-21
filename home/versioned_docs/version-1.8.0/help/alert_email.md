@@ -26,8 +26,8 @@ keywords: [open source monitoring tool, open source alerter, open source email n
 
 ### Email notification common issues
 
-1. Hertzbeat deployed on its own intranet cannot receive email notifications
+1. HertzBeat deployed on its own intranet cannot receive email notifications
 
-   > Hertzbeat needs to configure its own mail server. Please confirm whether you have configured its own mail server in application.yml
+   > HertzBeat needs to configure its own mail server. Please confirm whether you have configured its own mail server in application.yml
 
 Other issues can be fed back through the communication group ISSUE!

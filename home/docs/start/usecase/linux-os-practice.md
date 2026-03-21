@@ -4,7 +4,7 @@ title: Linux Operating System Monitoring Practice
 sidebar_label: Linux Operating System Monitoring Practice
 ---
 
-This article describes how to use the Hertzbeat monitoring system to collect and monitor general performance metrics for Linux operating systems, and send us alert messages when file system usage is too high.
+This article describes how to use the HertzBeat monitoring system to collect and monitor general performance metrics for Linux operating systems, and send us alert messages when file system usage is too high.
 
 ## What's HertzBeat
 
@@ -89,6 +89,6 @@ When the threshold is triggered, we can receive the corresponding alarm message.
 
 ## Summary
 
-The practice of monitoring linux operating system is here. Of course, for Hertzbeat, this function is just the tip of the iceberg. If you think Hertzbeat is a good open source project, please give us a Star on GitHub, thanks for your support.
+The practice of monitoring linux operating system is here. Of course, for HertzBeat, this function is just the tip of the iceberg. If you think HertzBeat is a good open source project, please give us a Star on GitHub, thanks for your support.
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**

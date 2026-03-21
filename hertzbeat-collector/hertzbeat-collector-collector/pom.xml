@@ -48,6 +48,12 @@
             <version>${hertzbeat.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-collector-mysql-r2dbc</artifactId>
+            <version>${hertzbeat.version}</version>
+        </dependency>
+
         <!-- collector-kafka -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
@@ -98,6 +104,23 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -365,14 +388,6 @@
             </properties>
             <build>
                 <finalName>apache-hertzbeat-collector-native-${hzb.version}</finalName>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                        <excludes>
-                            <exclude>META-INF/services/org.apache.hertzbeat.collector.collect.AbstractCollect</exclude>
-                        </excludes>
-                    </resource>
-                </resources>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>

@@ -9,7 +9,7 @@ keywords: [open source monitoring system, alerting system]
 
 ![hertzBeat](/img/blog/new-committer.png)
 
-> 非常荣幸能成为Apache Hertzbeat的Committer
+> 非常荣幸能成为Apache HertzBeat的Committer
 
 ## 成为更强大团队的一份子：我的贡献与成长
 

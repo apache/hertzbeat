@@ -17,11 +17,11 @@ Follow the [HertzBeat New Version Upgrade](upgrade)
 
 ### Upgrade Java Environment
 
-Since version 1.6.0 uses Java 17 and the installation package no longer provides a built-in JDK version, use the new Hertzbeat according to the following situations:
+Since version 1.6.0 uses Java 17 and the installation package no longer provides a built-in JDK version, use the new HertzBeat according to the following situations:
 
 - When the default environment variable on your server is Java 17, you do not need to take any action for this step.
 - When the default environment variable on your server is not Java 17, such as Java 8 or Java 11, and if there are no other applications on your server that require a lower version of Java, download the appropriate version from [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) according to your system, and search the engine for how to set a new environment variable pointing to the new Java 17.
-- When the default environment variable on your server is not Java 17, such as Java 8 or Java 11, and if there are other applications on your server that require a lower version of Java, download the appropriate version from [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) according to your system, and rename the extracted folder to `java`, then copy it to the Hertzbeat extraction directory.
+- When the default environment variable on your server is not Java 17, such as Java 8 or Java 11, and if there are other applications on your server that require a lower version of Java, download the appropriate version from [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) according to your system, and rename the extracted folder to `java`, then copy it to the HertzBeat extraction directory.
 
 ### Upgrade Database
 

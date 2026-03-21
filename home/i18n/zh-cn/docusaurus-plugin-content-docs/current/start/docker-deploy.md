@@ -19,6 +19,7 @@ sidebar_label: Docker方式安装
 
    ```shell
    $ docker run -d -p 1157:1157 -p 1158:1158 \
+       -e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto \
        -v $(pwd)/data:/opt/hertzbeat/data \
        -v $(pwd)/logs:/opt/hertzbeat/logs \
        -v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml \
@@ -35,7 +36,8 @@ sidebar_label: Docker方式安装
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (可选) 挂载日志文件到本地主机方便查看
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (可选) 挂载配置文件到容器中(请确保本地已有此文件)。[下载源](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
    - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选) 挂载账户配置文件到容器中(请确保本地已有此文件)。[下载源](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)
-   - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib`  : (可选) 挂载外部的第三方 JAR 包 [mysql-jdbc](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip) [oracle-jdbc](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
+   - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib`  : (可选) 在你需要运行时 JDBC 扩展时挂载外部第三方 JAR 包。`mysql-jdbc` 只在你明确希望 MySQL 兼容监控继续走 JDBC 时才需要；Oracle 监控仍然需要 [oracle-jdbc](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar) 和 [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)。
+   - `-e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto` : (可选) 覆盖主程序内置采集器的 MySQL 兼容监控查询链路。可选值：`auto`、`jdbc`、`r2dbc`。
    - `--name hertzbeat` : (可选) 命名容器名称为 hertzbeat
    - `--restart=always` : (可选) 配置容器自动重启。
    - `apache/hertzbeat` : 使用[官方应用镜像](https://hub.docker.com/r/apache/hertzbeat)来启动容器, 若网络超时可用`quay.io/tancloud/hertzbeat`代替。
@@ -69,6 +71,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
        -e MODE=public \
        -e MANAGER_HOST=127.0.0.1 \
        -e MANAGER_PORT=1158 \
+       -e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto \
        --name hertzbeat-collector apache/hertzbeat-collector
    ```
 
@@ -79,6 +82,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
    - `-e MANAGER_HOST=127.0.0.1` : 重要, 配置连接的 HertzBeat Server 地址，127.0.0.1 需替换为 HertzBeat Server 对外 IP 地址。
    - `-e MANAGER_PORT=1158` :  (可选) 配置连接的 HertzBeat Server 端口，默认 1158.
+   - `-e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto` : (可选) 覆盖 MySQL 兼容监控查询链路。可选值：`auto`、`jdbc`、`r2dbc`。
    - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs` : (可选)挂载日志文件到本地主机方便查看
    - `--name hertzbeat-collector` : 命名容器名称为 hertzbeat-collector
    - `apache/hertzbeat-collector` : 使用[官方应用镜像](https://hub.docker.com/r/apache/hertzbeat-collector)来启动容器, 若网络超时可用`quay.io/tancloud/hertzbeat-collector`代替。

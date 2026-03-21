@@ -15,6 +15,22 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 **Protocol Use: HTTP and JDBC**
 
+### Driver selection
+
+TiDB monitoring keeps the HTTP part unchanged, and the SQL query part now follows the same automatic routing as MySQL:
+
+- If `mysql-connector-j` is present in `ext-lib`, the JVM collector or built-in server collector automatically prefers JDBC for the SQL query metric set.
+- If `mysql-connector-j` is absent, HertzBeat automatically uses the built-in MySQL-compatible query engine for the SQL query metric set. No extra JAR is required.
+- Restart HertzBeat or the standalone JVM collector after adding or removing a JAR in `ext-lib`.
+
+:::important Collector package selection
+The TiDB template mixes HTTP metrics and MySQL-compatible SQL queries.
+
+- HTTP metric sets are unaffected by JDBC driver selection
+- The built-in SQL query engine can collect the default TiDB `basic` metric set without `mysql-connector-j`
+- If you explicitly place `mysql-connector-j` in `ext-lib`, the JVM collector or built-in server collector will still prefer JDBC for the SQL query path
+:::
+
 ### Configuration parameter
 
 |   Parameter name    |                                                                                                               Parameter help description                                                                                                                |

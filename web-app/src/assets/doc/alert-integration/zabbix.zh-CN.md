@@ -29,25 +29,25 @@
 
 5. 在 **脚本** 部分添加以下 JavaScript 代码
 ```javascript
-var Hertzbeat = {
+var HertzBeat = {
 
   sendMessage: function(url, alert) {
     request = new HttpRequest();
     request.addHeader('Content-Type: application/json');
     data = JSON.stringify(alert);
 
-    Zabbix.Log(4, '[Hertzbeat Webhook] params: ' + data);
+    Zabbix.Log(4, '[HertzBeat Webhook] params: ' + data);
     // 推送告警消息
     response = request.post(url, data);
-    Zabbix.Log(4, '[Hertzbeat Webhook] HTTP code: ' + request.Status());
-    Zabbix.Log(4, '[Hertzbeat Webhook] response: ' + response);
+    Zabbix.Log(4, '[HertzBeat Webhook] HTTP code: ' + request.Status());
+    Zabbix.Log(4, '[HertzBeat Webhook] response: ' + response);
 
     // 格式化返回的结果并做出判断，有异常则抛出异常。
     try {
       response = JSON.parse(response);
     } catch (error) {
       response = null;
-      Zabbix.Log(4, '[Hertzbeat Webhook] response parse error');
+      Zabbix.Log(4, '[HertzBeat Webhook] response parse error');
     }
 
     if (request.Status() !== 200 ||  response.errcode !== 0 || response.errmsg !== 'ok') {
@@ -160,11 +160,11 @@ try {
   Zabbix.Log(4, "HertzBeat webhook payload: " + JSON.stringify(hertzbeatAlert));
 
   // 执行消息推送函数
-  Hertzbeat.sendMessage(params.URL, hertzbeatAlert);
+  HertzBeat.sendMessage(params.URL, hertzbeatAlert);
   // 返回给zabbix，ok 在 Zabbix 动作中会被用来标识成功执行。
   return 'OK';
 } catch (error) {
-  Zabbix.Log(4, '[Hertzbeat Webhook] notification failed: ' + error);
+  Zabbix.Log(4, '[HertzBeat Webhook] notification failed: ' + error);
   throw 'Sending failed: ' + error + '.';
 }  
 ```

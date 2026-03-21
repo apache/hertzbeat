@@ -1,6 +1,6 @@
 ## docker-compose deployment HertzBeat+PostgreSQL+GreptimeDB solution
 
-> The docker-compose deployment scheme uses PostgreSQL + GreptimeDB as the dependent storage service of Hertzbeat.  
+> The docker-compose deployment scheme uses PostgreSQL + GreptimeDB as the dependent storage service of HertzBeat.  
 > This solution will start three container services PostgreSQL, GreptimeDB, HertzBeat
 
 ##### Install Docker & Docker-compose
@@ -18,7 +18,13 @@
    The script file is located in `script/docker-compose/hertzbeat-postgresql-greptimedb` link [script/docker-compose](https://github.com/apache/hertzbeat/tree/master/script/docker-compose/hertzbeat-postgresql-greptimedb)
 
 
-2. Enter the deployment script docker-compose directory, execute
+2. Optional: add external JDBC driver jars to `ext-lib`
+
+   MySQL-compatible monitoring can use the built-in query engine directly, so `mysql-connector-j` is optional.
+   If you want HertzBeat to prefer JDBC after restart, place `mysql-connector-j` in `ext-lib`.
+   Oracle and DB2 still require external JDBC jars in `ext-lib`.
+
+3. Enter the deployment script docker-compose directory, execute
 
    `docker compose up -d`
 
