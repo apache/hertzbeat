@@ -17,10 +17,14 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * IPMI2 Protocol
@@ -72,8 +76,20 @@ public class IpmiProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
+            return true;
+        }
+        if (StringUtils.isBlank(type)) {
+            return true;
+        }
+        if (!"Chassis".equalsIgnoreCase(type)
+                && !"Sensor".equalsIgnoreCase(type)
+                && !"Raw".equalsIgnoreCase(type)) {
+            return true;
+        }
+        return "Raw".equalsIgnoreCase(type) && field == null;
     }
 }

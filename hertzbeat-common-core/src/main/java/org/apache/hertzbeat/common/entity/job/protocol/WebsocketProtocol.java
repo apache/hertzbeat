@@ -17,10 +17,14 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Websocket Protocol
@@ -47,8 +51,15 @@ public class WebsocketProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        if (Integer.parseInt(port) <= 0) {
+            return true;
+        }
+        if (StringUtils.isBlank(path)) {
+            return false;
+        }
+        return !path.startsWith("/") || StringUtils.containsWhitespace(path);
     }
 }
