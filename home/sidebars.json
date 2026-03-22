@@ -295,7 +295,12 @@
         {
           "type": "category",
           "label": "llm",
-          "items": ["help/openai","help/deepseek","help/ollama"]
+          "items": [
+            "help/openai",
+            "help/deepseek",
+            "help/ollama",
+            "help/lmstudio"
+          ]
         },
         {
           "type": "category",
