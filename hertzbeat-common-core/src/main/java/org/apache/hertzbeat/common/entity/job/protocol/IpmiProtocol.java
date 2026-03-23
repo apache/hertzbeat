@@ -76,7 +76,7 @@ public class IpmiProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-        if (!validateIpDomain(host) || !validPort(port)) {
+        if (!validateIpDomain(host) || !validPort(port) || Integer.parseInt(port) <= 0) {
             return true;
         }
         if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
