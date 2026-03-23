@@ -57,7 +57,7 @@ public class WebsocketProtocol implements CommonRequestProtocol, Protocol {
         if (Integer.parseInt(port) <= 0) {
             return true;
         }
-        if (StringUtils.isBlank(path)) {
+        if (StringUtils.isEmpty(path)) {
             return false;
         }
         return !path.startsWith("/") || StringUtils.containsWhitespace(path);
