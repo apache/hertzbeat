@@ -23,7 +23,7 @@ import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_SERVIC
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_SERVICE_TOKEN_API;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.GET_SERVICE_ACCOUNTS_API;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.GRAFANA_CONFIG;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import jakarta.annotation.PostConstruct;
 
 import java.nio.charset.StandardCharsets;

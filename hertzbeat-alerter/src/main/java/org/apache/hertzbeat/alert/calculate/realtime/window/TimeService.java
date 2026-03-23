@@ -19,14 +19,14 @@ package org.apache.hertzbeat.alert.calculate.realtime.window;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
@@ -44,23 +44,23 @@ import java.util.concurrent.atomic.AtomicLong;
 @Component
 @Slf4j
 public class TimeService {
-    
+
     static final long DEFAULT_WATERMARK_DELAY_MS = 30_000; // 30 seconds
     private static final long WATERMARK_BROADCAST_INTERVAL_MS = 5_000; // 5 seconds
-    
+
     // Define acceptable timestamp range to filter abnormal timestamps
     private static final long MAX_FUTURE_TIME_MS = 60_000; // Allow 1 minute future time
     private static final long MAX_PAST_TIME_MS = 24 * 60 * 60 * 1000; // Allow 24 hours past time
-    
+
     private final AtomicLong maxTimestamp = new AtomicLong(0);
     private final AtomicLong currentWatermark = new AtomicLong(0);
     private final CopyOnWriteArrayList<WatermarkListener> listeners = new CopyOnWriteArrayList<>();
     private ScheduledExecutorService scheduler;
-    
+
     public TimeService(List<WatermarkListener> initialListeners) {
         listeners.addAll(initialListeners);
     }
-    
+
     @PostConstruct
     public void start() {
         // Create internal scheduled executor
@@ -72,9 +72,9 @@ public class TimeService {
                 .setDaemon(true)
                 .setNameFormat("timeservice-scheduler-%d")
                 .build();
-        
+
         this.scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
-        
+
         // Start watermark broadcast scheduler
         scheduler.scheduleAtFixedRate(
                 this::broadcastWatermark,
@@ -82,10 +82,10 @@ public class TimeService {
                 WATERMARK_BROADCAST_INTERVAL_MS,
                 TimeUnit.MILLISECONDS
         );
-        
+
         log.info("TimeService started with watermark delay: {}ms", DEFAULT_WATERMARK_DELAY_MS);
     }
-    
+
     @PreDestroy
     public void stop() {
         if (scheduler != null && !scheduler.isShutdown()) {
@@ -105,10 +105,10 @@ public class TimeService {
                 Thread.currentThread().interrupt();
             }
         }
-        
+
         log.info("TimeService stopped");
     }
-    
+
     /**
      * Check if timestamp is within acceptable range
      */
@@ -116,35 +116,35 @@ public class TimeService {
         long currentTime = System.currentTimeMillis();
         return timestamp >= (currentTime - MAX_PAST_TIME_MS) && timestamp <= (currentTime + MAX_FUTURE_TIME_MS);
     }
-    
+
     /**
      * Check if data is late based on current watermark
      */
     public boolean isLateData(long timestamp) {
         return timestamp < getCurrentWatermark();
     }
-    
+
     /**
      * Update max timestamp from WindowedLogRealTimeAlertCalculator
      */
     public void updateMaxTimestamp(long timestamp) {
         maxTimestamp.getAndUpdate(current -> Math.max(current, timestamp));
     }
-    
+
     /**
      * Add watermark listener
      */
     public void addWatermarkListener(WatermarkListener listener) {
         listeners.add(listener);
     }
-    
+
     /**
      * Remove watermark listener
      */
     public void removeWatermarkListener(WatermarkListener listener) {
         listeners.remove(listener);
     }
-    
+
     /**
      * Get current watermark
      */
@@ -158,12 +158,12 @@ public class TimeService {
     public long getMaxTimestamp() {
         return maxTimestamp.get();
     }
-    
+
     /**
      * Calculate and broadcast watermark
      */
     private void broadcastWatermark() {
-        
+
         try {
             long maxTs = maxTimestamp.get();
             if (maxTs <= 0) {
@@ -172,7 +172,7 @@ public class TimeService {
             // Calculate watermark: maxTimestamp - delay
             long newWatermark = maxTs - DEFAULT_WATERMARK_DELAY_MS;
             long currentWm = currentWatermark.get();
-            
+
             // Only advance watermark (monotonic property)
             if (newWatermark <= currentWm) {
                 return;
@@ -193,7 +193,7 @@ public class TimeService {
             log.error("Error in watermark broadcast: {}", e.getMessage(), e);
         }
     }
-    
+
     /**
      * Watermark data class
      */
@@ -203,7 +203,7 @@ public class TimeService {
     public static class Watermark {
         private final long timestamp;
     }
-    
+
     /**
      * Interface for watermark listeners
      */

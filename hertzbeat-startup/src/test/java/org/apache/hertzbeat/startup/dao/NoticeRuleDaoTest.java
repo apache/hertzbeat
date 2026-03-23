@@ -60,8 +60,7 @@ class NoticeRuleDaoTest extends AbstractSpringIntegrationTest {
 
         // insert notice rule with enable = false
         NoticeRule disabled = NoticeRule.builder()
-                .id(2L)
-                .name("mock notice rule")
+                .name("mock notice rule disabled")
                 .enable(false)
                 .filterAll(true)
                 .gmtCreate(LocalDateTime.now())

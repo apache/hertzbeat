@@ -24,18 +24,18 @@ Name：QingraZhao
 
 Work：iFLYTEK technical support & operation and maintenance
 
-Hertzbeat Committer
+HertzBeat Committer
 
 github:zqr10159
 
-## Getting to know Hertzbeat
+## Getting to know HertzBeat
 
-In March 2023, I started to contact Hertzbeat, due to the need for a complete monitoring->alerting platform for the project, due to the deployment of the project on the intranet, the company's internal closed-source monitoring platform can not be developed to meet the needs of cross-network segment alerts.  
-Later in the github looking for open source monitoring platform, found Hertzbeat, easy to deploy and full-featured. The most important thing is that the author tom replies to issues and updates very quickly, very much in line with my imagination of the open source community, I'm very happy to be able to participate in open source and can see their own results for everyone to use.
+In March 2023, I started to contact HertzBeat, due to the need for a complete monitoring->alerting platform for the project, due to the deployment of the project on the intranet, the company's internal closed-source monitoring platform can not be developed to meet the needs of cross-network segment alerts.  
+Later in the github looking for open source monitoring platform, found HertzBeat, easy to deploy and full-featured. The most important thing is that the author tom replies to issues and updates very quickly, very much in line with my imagination of the open source community, I'm very happy to be able to participate in open source and can see their own results for everyone to use.
 
 ## Ongoing open source contributions and gains
 
-So far, to participate in the Hertzbeat open source project has been more than five months, from the first time to submit issues to the first time to submit pr, are the process of growth and progress, full count or a lot of pr, specific as follows:
+So far, to participate in the HertzBeat open source project has been more than five months, from the first time to submit issues to the first time to submit pr, are the process of growth and progress, full count or a lot of pr, specific as follows:
 
 **contribution**:
 
@@ -51,14 +51,14 @@ So far, to participate in the Hertzbeat open source project has been more than f
 
 * Implement Server Chan (Server Chan) alarm push notification.
 
-* Access to third-party alarms (Tencent Cloud) to realize unified push notification of third-party alarms and Hertzbeat alarms.
+* Access to third-party alarms (Tencent Cloud) to realize unified push notification of third-party alarms and HertzBeat alarms.
 
 * Fix bugs such as not including collector information when importing and exporting monitoring.
 
 * Several document updates
 
 * * Harvesting **:
-* Hertzbeat is really an excellent project, in terms of project deployment, scripts and configuration are very standardized, I write a lot of my own projects have to draw on
+* HertzBeat is really an excellent project, in terms of project deployment, scripts and configuration are very standardized, I write a lot of my own projects have to draw on
 * The most important thing is to harvest the spirit of open source, we are in a community to communicate together, progress
 
 ## Thanks to the community partners

@@ -1,4 +1,4 @@
-> Envie alarmes de caminhada para a plataforma de alarme Hertzbeat através do Webhook.
+> Envie alarmes de caminhada para a plataforma de alarme HertzBeat através do Webhook.
 
 Configuração do Serviço de Skywalking
 
@@ -24,7 +24,7 @@ hooks:
 
 ### Perguntas frequentes
 
-- Verifique se o URL do Hertzbeat está acessível pelo Skywalking Server
+- Verifique se o URL do HertzBeat está acessível pelo Skywalking Server
 - Verifique o registro do Skywalking para obter mensagens de erro que falharam em enviar alarmes
 - Verifique a correção da expressão da regra do alarme
 

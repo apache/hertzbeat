@@ -18,12 +18,20 @@
 package org.apache.hertzbeat.alert;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutor;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutors;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -31,16 +39,25 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class AlerterWorkerPool {
+public class AlerterWorkerPool implements DisposableBean {
 
     private ThreadPoolExecutor workerExecutor;
-    private ThreadPoolExecutor notifyExecutor;
-    private ThreadPoolExecutor logWorkerExecutor;
+    private ManagedExecutor notifyExecutor;
+    private ManagedExecutor logWorkerExecutor;
+    private Map<Byte, Semaphore> notifyChannelPermits;
+    private int notifyMaxConcurrentPerChannel;
 
     public AlerterWorkerPool() {
+        this(VirtualThreadProperties.defaults());
+    }
+
+    @Autowired
+    public AlerterWorkerPool(VirtualThreadProperties virtualThreadProperties) {
+        VirtualThreadProperties properties =
+                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
         initWorkExecutor();
-        initNotifyExecutor();
-        initLogWorkerExecutor();
+        initNotifyExecutor(properties);
+        initLogWorkerExecutor(properties);
     }
 
     private void initWorkExecutor() {
@@ -61,16 +78,32 @@ public class AlerterWorkerPool {
                 new ThreadPoolExecutor.AbortPolicy());
     }
 
-    private void initNotifyExecutor() {
+    private void initNotifyExecutor(VirtualThreadProperties properties) {
+        Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
+            log.error("Alerter notifyExecutor has uncaughtException.");
+            log.error(throwable.getMessage(), throwable);
+        };
+        if (properties.enabled()) {
+            VirtualThreadProperties.AlerterProperties alerterProperties = properties.alerter();
+            VirtualThreadProperties.PoolProperties notifyProperties = alerterProperties.notifyPool();
+            notifyMaxConcurrentPerChannel = Math.max(1, alerterProperties.notifyMaxConcurrentPerChannel());
+            notifyChannelPermits = new ConcurrentHashMap<>(8);
+            notifyExecutor = ManagedExecutors.newVirtualExecutor("notify-worker", "notify-worker-",
+                    notifyProperties.mode(), notifyProperties.maxConcurrentJobs(), handler);
+            return;
+        }
+        notifyMaxConcurrentPerChannel = 0;
+        notifyChannelPermits = null;
+        notifyExecutor = ManagedExecutors.wrap("notify-worker", createLegacyNotifyExecutor(handler));
+    }
+
+    private ThreadPoolExecutor createLegacyNotifyExecutor(Thread.UncaughtExceptionHandler handler) {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("Alerter notifyExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
+                .setUncaughtExceptionHandler(handler)
                 .setDaemon(true)
                 .setNameFormat("notify-worker-%d")
                 .build();
-        notifyExecutor = new ThreadPoolExecutor(6,
+        return new ThreadPoolExecutor(6,
                 6,
                 10,
                 TimeUnit.SECONDS,
@@ -79,16 +112,27 @@ public class AlerterWorkerPool {
                 new ThreadPoolExecutor.AbortPolicy());
     }
 
-    private void initLogWorkerExecutor() {
+    private void initLogWorkerExecutor(VirtualThreadProperties properties) {
+        Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
+            log.error("Alerter logWorkerExecutor has uncaughtException.");
+            log.error(throwable.getMessage(), throwable);
+        };
+        if (properties.enabled()) {
+            VirtualThreadProperties.QueueProperties logWorkerProperties = properties.alerter().logWorker();
+            logWorkerExecutor = ManagedExecutors.newQueuedVirtualExecutor("alerter-log-worker", "log-worker-",
+                    logWorkerProperties.maxConcurrentJobs(), logWorkerProperties.queueCapacity(), handler);
+            return;
+        }
+        logWorkerExecutor = ManagedExecutors.wrap("alerter-log-worker", createLegacyLogWorkerExecutor(handler));
+    }
+
+    private ThreadPoolExecutor createLegacyLogWorkerExecutor(Thread.UncaughtExceptionHandler handler) {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("Alerter logWorkerExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
+                .setUncaughtExceptionHandler(handler)
                 .setDaemon(true)
                 .setNameFormat("log-worker-%d")
                 .build();
-        logWorkerExecutor = new ThreadPoolExecutor(10, 10, 10, TimeUnit.SECONDS,
+        return new ThreadPoolExecutor(10, 10, 10, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(1000),
                 threadFactory,
                 new ThreadPoolExecutor.AbortPolicy());
@@ -114,6 +158,41 @@ public class AlerterWorkerPool {
     }
 
     /**
+     * Executes the given runnable task using the notify executor with per-channel concurrency control.
+     *
+     * @param channelType notification channel type
+     * @param runnable the task to be executed
+     * @throws RejectedExecutionException if the task cannot be accepted for execution
+     */
+    public void executeNotify(byte channelType, Runnable runnable) throws RejectedExecutionException {
+        if (notifyChannelPermits == null) {
+            notifyExecutor.execute(runnable);
+            return;
+        }
+        Semaphore semaphore = notifyChannelPermits.computeIfAbsent(channelType,
+                key -> new Semaphore(notifyMaxConcurrentPerChannel));
+        if (!semaphore.tryAcquire()) {
+            throw new RejectedExecutionException(
+                    "notify-worker rejected task because channel concurrency limit was reached for type " + channelType);
+        }
+        boolean submitted = false;
+        try {
+            notifyExecutor.execute(() -> {
+                try {
+                    runnable.run();
+                } finally {
+                    semaphore.release();
+                }
+            });
+            submitted = true;
+        } finally {
+            if (!submitted) {
+                semaphore.release();
+            }
+        }
+    }
+
+    /**
      * Executes the given runnable task using the logWorkerExecutor.
      *
      * @param runnable the task to be executed
@@ -121,5 +200,12 @@ public class AlerterWorkerPool {
      */
     public void executeLogJob(Runnable runnable) throws RejectedExecutionException {
         logWorkerExecutor.execute(runnable);
+    }
+
+    @Override
+    public void destroy() {
+        workerExecutor.shutdownNow();
+        notifyExecutor.close();
+        logWorkerExecutor.close();
     }
 }

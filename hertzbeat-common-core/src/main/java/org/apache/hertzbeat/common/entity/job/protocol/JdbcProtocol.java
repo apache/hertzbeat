@@ -17,11 +17,16 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.job.SshTunnel;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * Database configuration information implemented by the common jdbc specification
@@ -82,8 +87,19 @@ public class JdbcProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (StringUtils.isBlank(url)) {
+            if (!validateIpDomain(host) || !validPort(port)) {
+                return true;
+            }
+        }
+        if (StringUtils.isNotBlank(timeout) && !CommonUtil.isNumeric(timeout)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(reuseConnection)
+                && !"true".equalsIgnoreCase(reuseConnection)
+                && !"false".equalsIgnoreCase(reuseConnection)) {
+            return true;
+        }
+        return false;
     }
 }

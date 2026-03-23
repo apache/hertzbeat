@@ -61,11 +61,11 @@ public class LogSseManager {
         t.setDaemon(true);
         return t;
     });
-    private final ExecutorService senderPool = Executors.newCachedThreadPool(r -> {
-        Thread t = new Thread(r, "sse-sender");
-        t.setDaemon(true);
-        return t;
-    });
+    private final ExecutorService senderPool = Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+            .name("sse-sender-", 0)
+            .uncaughtExceptionHandler((thread, throwable) ->
+                    log.error("SSE sender has uncaughtException.", throwable))
+            .factory());
     private final AtomicLong queueSize = new AtomicLong(0);
 
     public LogSseManager() {

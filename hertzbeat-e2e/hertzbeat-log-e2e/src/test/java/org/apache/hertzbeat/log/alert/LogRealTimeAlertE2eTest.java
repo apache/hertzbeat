@@ -27,8 +27,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -64,7 +64,8 @@ public class LogRealTimeAlertE2eTest {
     private static final int VECTOR_PORT = 8686;
     private static final String VECTOR_CONFIG_PATH = "/etc/vector/vector.yml";
     private static final String ENV_HERTZBEAT_PORT = "HERTZBEAT_PORT";
-    private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(120);
+    private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(180);
+    private static final Duration TEST_WAIT_TIMEOUT = Duration.ofSeconds(120);
 
     @LocalServerPort
     private int port;
@@ -72,18 +73,23 @@ public class LogRealTimeAlertE2eTest {
     private final List<SingleAlert> capturedAlerts = new ArrayList<>();
     private final ArrayList<List<SingleAlert>> capturedGroupAlerts = new ArrayList<>();
 
-    @SpyBean
+    @MockitoSpyBean
     private AlarmCommonReduce alarmCommonReduce;
 
     static GenericContainer<?> vector;
 
     @BeforeAll
-    void setUpAll() {
+    void setUpAll() throws InterruptedException {
         // Setup test alert definitions
         setupTestAlertDefines();
-        
+
         // Expose host ports for testcontainers
         Testcontainers.exposeHostPorts(port);
+
+        // Wait for HertzBeat to be fully ready before starting Vector
+        log.info("Waiting for HertzBeat to be fully ready on port {}...", port);
+        Thread.sleep(5000); // Give HertzBeat time to fully initialize
+
         vector = new GenericContainer<>(DockerImageName.parse(VECTOR_IMAGE))
                 .withExposedPorts(VECTOR_PORT)
                 .withCopyFileToContainer(MountableFile.forClasspathResource("vector.yml"), VECTOR_CONFIG_PATH)
@@ -107,8 +113,8 @@ public class LogRealTimeAlertE2eTest {
         capturedAlerts.clear();
 
         // Wait for real alert to be generated through AlarmCommonReduce
-        await().atMost(Duration.ofSeconds(60))
-                .pollInterval(Duration.ofSeconds(2))
+        await().atMost(TEST_WAIT_TIMEOUT)
+                .pollInterval(Duration.ofSeconds(3))
                 .untilAsserted(() -> assertFalse(capturedAlerts.isEmpty(),
                         "Should have generated at least one alert for error logs"));
 

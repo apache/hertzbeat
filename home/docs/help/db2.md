@@ -16,6 +16,13 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 - Copy the JAR package to the `hertzbeat/ext-lib` directory.
 - Restart the HertzBeat service.
 
+:::important Collector package selection
+DB2 monitoring requires external JDBC driver loading from `ext-lib`.
+
+- Use HertzBeat server built-in collector or the JVM collector package for DB2 monitoring
+- Do not use the native collector package for DB2 monitoring
+:::
+
 ### Configuration Parameters
 
 The following are the required configuration parameters for DB2 monitoring:

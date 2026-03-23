@@ -28,10 +28,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -59,6 +61,10 @@ import static org.mockito.Mockito.doAnswer;
  * E2E tests for periodic log alert processing.
  */
 @SpringBootTest(classes = org.apache.hertzbeat.startup.HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = {
+        "warehouse.store.duckdb.enabled=false",
+        "warehouse.store.greptime.enabled=true"
+})
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class LogPeriodicAlertE2eTest {
@@ -81,7 +87,7 @@ public class LogPeriodicAlertE2eTest {
     AlertDefine errorCountAlertByGroup;
     AlertDefine errorCountAlertByIndividual;
 
-    @SpyBean
+    @MockitoSpyBean
     private AlarmCommonReduce alarmCommonReduce;
 
     static GenericContainer<?> vector;
@@ -101,9 +107,7 @@ public class LogPeriodicAlertE2eTest {
 
     @DynamicPropertySource
     static void greptimeProps(DynamicPropertyRegistry r) {
-        // Configure GreptimeDB storage
-        r.add("warehouse.store.duckdb.enabled", () -> "false");
-        r.add("warehouse.store.greptime.enabled", () -> "true");
+        // Configure GreptimeDB storage endpoints (dynamic ports)
         r.add("warehouse.store.greptime.http-endpoint", () -> "http://localhost:" + greptimedb.getMappedPort(GREPTIME_HTTP_PORT));
         r.add("warehouse.store.greptime.grpc-endpoints", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_GRPC_PORT));
         r.add("warehouse.store.greptime.username", () -> "");
@@ -111,10 +115,15 @@ public class LogPeriodicAlertE2eTest {
     }
 
     @BeforeAll
-    void setUpAll() {
+    void setUpAll() throws InterruptedException {
         // Setup test alert definitions
         setupTestAlertDefines();
         Testcontainers.exposeHostPorts(port);
+
+        // Wait for HertzBeat to be fully ready before starting Vector
+        log.info("Waiting for HertzBeat to be fully ready on port {}...", port);
+        Thread.sleep(5000); // Give HertzBeat time to fully initialize
+
         vector = new GenericContainer<>(DockerImageName.parse(VECTOR_IMAGE))
                 .withExposedPorts(VECTOR_PORT)
                 .withCopyFileToContainer(MountableFile.forClasspathResource("vector.yml"), VECTOR_CONFIG_PATH)
@@ -171,19 +180,22 @@ public class LogPeriodicAlertE2eTest {
 
         await().atMost(Duration.ofSeconds(60))
                 .pollInterval(Duration.ofSeconds(3))
-                .untilAsserted(() -> assertFalse(capturedGroupAlerts.isEmpty(),
-                        "Should have generated periodic error count group alert"));
+                .untilAsserted(() -> {
+                    Optional<SingleAlert> matchedAlert = capturedGroupAlerts.stream()
+                            .flatMap(List::stream)
+                            .filter(alert -> alert.getLabels() != null)
+                            .filter(alert -> String.valueOf(errorCountAlertByGroup.getId())
+                                    .equals(alert.getLabels().get(CommonConstants.LABEL_DEFINE_ID)))
+                            .findFirst();
 
-        List<SingleAlert> groupAlerts = capturedGroupAlerts.get(0);
-
-        assertNotNull(groupAlerts, "Group alerts should not be null");
-        assertFalse(groupAlerts.isEmpty(), "Group alerts should not be empty");
-
-        SingleAlert anyAlert = groupAlerts.get(0);
-        assertEquals(CommonConstants.ALERT_STATUS_FIRING, anyAlert.getStatus(), "Alert should be in firing status");
-        assertNotNull(anyAlert.getLabels(), "Alert should have labels");
-        assertEquals(CommonConstants.ALERT_SEVERITY_CRITICAL, anyAlert.getLabels().get(CommonConstants.LABEL_ALERT_SEVERITY), "Alert should have critical severity");
-        assertTrue(anyAlert.getTriggerTimes() >= 1, "Alert should indicate aggregated trigger times");
+                    assertTrue(matchedAlert.isPresent(), "Should have captured group alert from target alert define");
+                    SingleAlert anyAlert = matchedAlert.get();
+                    assertEquals(CommonConstants.ALERT_STATUS_FIRING, anyAlert.getStatus(), "Alert should be in firing status");
+                    assertEquals(CommonConstants.ALERT_SEVERITY_CRITICAL,
+                            anyAlert.getLabels().get(CommonConstants.LABEL_ALERT_SEVERITY),
+                            "Alert should have critical severity");
+                    assertTrue(anyAlert.getTriggerTimes() >= 1, "Alert should indicate aggregated trigger times");
+                });
     }
 
     /**

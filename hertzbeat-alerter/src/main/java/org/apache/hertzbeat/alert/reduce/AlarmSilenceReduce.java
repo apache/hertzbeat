@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.reduce;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -95,10 +96,35 @@ public class AlarmSilenceReduce {
      * @return true if alert should not be silenced, false if alert should be silenced
      */
     private boolean checkAndSave(LocalDateTime now, AlertSilence alertSilence) {
-        boolean startMatch = alertSilence.getPeriodStart() == null 
-                || now.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
-        boolean endMatch = alertSilence.getPeriodEnd() == null 
-                || now.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+        boolean startMatch;
+        boolean endMatch;
+        if (alertSilence.getType() == 1) {
+            LocalTime nowTime = now.toLocalTime();
+            LocalTime startTime = alertSilence.getPeriodStart() == null ? null : alertSilence.getPeriodStart().toLocalTime();
+            LocalTime endTime = alertSilence.getPeriodEnd() == null ? null : alertSilence.getPeriodEnd().toLocalTime();
+            if (startTime == null && endTime == null) {
+                startMatch = true;
+                endMatch = true;
+            } else if (startTime == null) {
+                startMatch = true;
+                endMatch = !nowTime.isAfter(endTime);
+            } else if (endTime == null) {
+                startMatch = !nowTime.isBefore(startTime);
+                endMatch = true;
+            } else if (!startTime.isAfter(endTime)) {
+                startMatch = !nowTime.isBefore(startTime);
+                endMatch = !nowTime.isAfter(endTime);
+            } else {
+                // Cross-midnight window, e.g. 23:00-02:00.
+                startMatch = !nowTime.isBefore(startTime) || !nowTime.isAfter(endTime);
+                endMatch = true;
+            }
+        } else {
+            startMatch = alertSilence.getPeriodStart() == null
+                    || now.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
+            endMatch = alertSilence.getPeriodEnd() == null
+                    || now.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+        }
 
         if (startMatch && endMatch) {
             int time = Optional.ofNullable(alertSilence.getTimes()).orElse(0);

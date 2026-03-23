@@ -19,6 +19,7 @@ It is necessary to have Docker environment in your environment. If not installed
 
    ```shell
    $ docker run -d -p 1157:1157 -p 1158:1158 \
+       -e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto \
        -v $(pwd)/data:/opt/hertzbeat/data \
        -v $(pwd)/logs:/opt/hertzbeat/logs \
        -v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml \
@@ -31,11 +32,12 @@ It is necessary to have Docker environment in your environment. If not installed
 
    - `docker run -d` : Run a container in the background via Docker
    - `-p 1157:1157 -p 1158:1158`  : Mapping container ports to the host, 1157 is web-ui port, 1158 is cluster port.
-   - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important, Mount the H2 database file to the local host, to ensure that the data is not lost due creating or deleting container.
+   - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important, Mount the H2 database file to the local host, to ensure that the data is not lost due to creating or deleting container.
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (optional) Mount the log file to the local host to facilitate viewing.
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (optional) Mount the configuration file to the container (please ensure that the file exists locally). [Download](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
    - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional) Mount the account configuration file to the container (please ensure that the file exists locally). [Download](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)
-   - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib` : (optional) Mount external third-party JAR package [mysql-jdbc](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip) [oracle-jdbc](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
+   - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib` : (optional) Mount external third-party JAR packages when you need runtime JDBC extension. `mysql-jdbc` is only needed if you explicitly want the JDBC path for MySQL-compatible monitoring; [oracle-jdbc](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar) and [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar) are still required for Oracle monitoring.
+   - `-e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto` : (optional) Override the MySQL-compatible monitoring query path used by the built-in collector. Supported values: `auto`, `jdbc`, `r2dbc`.
    - `--name hertzbeat` : (optional) Naming container name hertzbeat
    - `--restart=always` : (optional) Configure the container to restart automatically.
    - `apache/hertzbeat` : Use the [official application mirror](https://hub.docker.com/r/apache/hertzbeat) to start the container, if the network times out, use `quay.io/tancloud/hertzbeat` instead.
@@ -71,6 +73,7 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
        -e MODE=public \
        -e MANAGER_HOST=127.0.0.1 \
        -e MANAGER_PORT=1158 \
+       -e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto \
        --name hertzbeat-collector apache/hertzbeat-collector
    ```
 
@@ -81,6 +84,7 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
    - `-e MODE=public` : set the running mode(public or private), public cluster or private
    - `-e MANAGER_HOST=127.0.0.1` : Important, Set the main hertzbeat server ip host, must use the server host instead of 127.0.0.1.
    - `-e MANAGER_PORT=1158` :  (optional) Set the main hertzbeat server port, default 1158.
+   - `-e HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE=auto` : (optional) Override the MySQL-compatible monitoring query path. Supported values: `auto`, `jdbc`, `r2dbc`.
    - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs` : (optional) Mount the log file to the local host to facilitate viewing.
    - `--name hertzbeat-collector` : Naming container name hertzbeat-collector
    - `apache/hertzbeat-collector` : Use the [official application mirror](https://hub.docker.com/r/apache/hertzbeat-collector) to start the container, if the network times out, use `quay.io/tancloud/hertzbeat-collector` instead.

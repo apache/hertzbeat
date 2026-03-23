@@ -80,12 +80,13 @@ spring:
 
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: h2
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
 ```
 
 具体替换参数如下,需根据mysql环境配置账户密码IP:
@@ -101,12 +102,13 @@ spring:
       max-lifetime: 120000
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: mysql
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
 ```
 
 - 通过docker启动时，建议修改host为宿主机的外网IP地址，包括mysql连接字符串。

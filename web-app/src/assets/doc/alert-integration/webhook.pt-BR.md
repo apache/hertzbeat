@@ -1,4 +1,4 @@
-> Hertzbeat fornece uma interface de API para o mundo exterior. Os sistemas externos podem chamar essa interface através do webhook para empurrar dados de alarme para a plataforma de alarme Hertzbeat.
+> HertzBeat fornece uma interface de API para o mundo exterior. Os sistemas externos podem chamar essa interface através do webhook para empurrar dados de alarme para a plataforma de alarme HertzBeat.
 
 ### Interface endpoint
 
@@ -48,7 +48,7 @@ Descrição do campo
 
 ### Verificação de configuração
 
-- Depois que o sistema de terceiros aciona um alarme, os dados de alarme são empurrados para a plataforma de alarme Hertzbeat através da interface `/API/Alerts/Relatório 'do Webhook.
+- Depois que o sistema de terceiros aciona um alarme, os dados de alarme são empurrados para a plataforma de alarme HertzBeat através da interface `/API/Alerts/Relatório 'do Webhook.
 - Verifique o processamento de dados de alarme na plataforma de alarme HertzBeat para verificar se os dados do alarme estão corretos.
 
 ### Fluxo de dados:
@@ -56,7 +56,7 @@ Descrição do campo
 ```mermaid
 graph LR
     A [Alarme do sistema externo] -> B [webhook]
-    B -> C [Plataforma de alarme Hertzbeat]
+    B -> C [Plataforma de alarme HertzBeat]
     C -> D [Convergência do grupo]
     D -> e [supressão de alarme]
     E -> f [alarme silencioso]

@@ -57,7 +57,7 @@ cd apache-hertzbeat-1.8.0
 - 2 CPU 核心 最低
 - 4GB RAM 最低（推荐 8GB）
 - 10GB 磁盘空间
-- Docker 20.10+ 或 Java 17+
+- Docker 20.10+ 或 Java 25+
 - 平台：Linux、macOS、Windows
 
 ## 支持的监控类型

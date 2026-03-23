@@ -17,12 +17,12 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import com.obs.services.ObsClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.springframework.beans.factory.InitializingBean;
@@ -33,7 +33,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.lang.reflect.Type;
 import java.net.URL;
 
@@ -52,14 +52,8 @@ public class ObjectStoreConfigServiceImpl extends
     @Resource
     private ApplicationContext ctx;
 
-    /**
-     * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
-     *
-     * @param generalConfigDao configDao object
-     * @param objectMapper     JSON tool object
-     */
-    public ObjectStoreConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
-        super(generalConfigDao, objectMapper);
+    public ObjectStoreConfigServiceImpl(GeneralConfigDao generalConfigDao) {
+        super(generalConfigDao);
     }
 
     @Override
@@ -94,7 +88,7 @@ public class ObjectStoreConfigServiceImpl extends
      * init Huawei Cloud OBS
      */
     private void initObs(ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config) {
-        var obsConfig = objectMapper.convertValue(config.getConfig(), ObjectStoreDTO.ObsConfig.class);
+        var obsConfig = JsonUtil.convertValue(config.getConfig(), ObjectStoreDTO.ObsConfig.class);
         Assert.hasText(obsConfig.getAccessKey(), "cannot find obs accessKey");
         Assert.hasText(obsConfig.getSecretKey(), "cannot find obs secretKey");
         Assert.hasText(obsConfig.getEndpoint(), "cannot find obs endpoint");
@@ -114,7 +108,7 @@ public class ObjectStoreConfigServiceImpl extends
     /**
      * Verify Huawei Cloud OBS endpoint domain name
      * Only myhuaweicloud.com domain name is allowed
-     * Refer: https://console-intl.huaweicloud.com/apiexplorer/#/endpoint
+     * Refer: <a href="https://console-intl.huaweicloud.com/apiexplorer/#/endpoint">...</a>
      */
     public void validateObsEndpoint(String endpoint) {
         try {

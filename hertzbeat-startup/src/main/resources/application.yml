@@ -40,11 +40,6 @@ spring:
       static-locations:
         - classpath:/dist/
         - classpath:../dist/
-  # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed.
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
-  freemarker:
-    enabled: false
   servlet:
     multipart:
       max-file-size: 100MB
@@ -62,7 +57,8 @@ management:
           - 'metrics'
           - 'health'
           - 'prometheus'
-    enabled-by-default: on
+    access:
+      default: read_only
   endpoint:
     prometheus:
       access: read_only
@@ -103,12 +99,13 @@ spring:
 
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: h2
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
 
   flyway:
     enabled: true
@@ -337,3 +334,42 @@ grafana:
   expose-url: http://127.0.0.1:3000
   username: admin
   password: admin
+
+hertzbeat:
+  collector:
+    mysql:
+      # MySQL-compatible query engine routing for MySQL, MariaDB, OceanBase, and TiDB SQL metrics.
+      # auto  : prefer JDBC only when mysql-connector-j is available from ext-lib, otherwise use the built-in query engine
+      # jdbc  : always use JDBC
+      # r2dbc : always use the built-in query engine
+      query-engine: ${HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE:auto}
+  # Optional virtual-thread overrides. Remove this whole block to use built-in defaults.
+  vthreads:
+    enabled: true
+    common:
+      mode: UNBOUNDED_VT
+    collector:
+      mode: LIMIT_AND_REJECT
+    manager:
+      mode: LIMIT_AND_REJECT
+      max-concurrent-jobs: 10
+    alerter:
+      notify:
+        mode: LIMIT_AND_REJECT
+        max-concurrent-jobs: 64
+      periodic-max-concurrent-jobs: 10
+      log-worker:
+        max-concurrent-jobs: 10
+        queue-capacity: 1000
+      reduce:
+        max-concurrent-jobs: 2
+      window-evaluator:
+        max-concurrent-jobs: 2
+      notify-max-concurrent-per-channel: 4
+    warehouse:
+      mode: UNBOUNDED_VT
+    async:
+      enabled: true
+      concurrency-limit: 256
+      reject-when-limit-reached: true
+      task-termination-timeout: 5000

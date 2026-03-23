@@ -18,8 +18,7 @@
 package org.apache.hertzbeat.manager.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.dto.MailServerConfig;
@@ -40,28 +39,21 @@ class MailGeneralConfigServiceTest {
     @Mock
     private GeneralConfigDao generalConfigDao;
 
-    @Mock
-    private ObjectMapper objectMapper;
-
     private MailGeneralConfigServiceImpl mailGeneralConfigService;
 
     @BeforeEach
     void setUp() {
-
-        mailGeneralConfigService = new MailGeneralConfigServiceImpl(generalConfigDao, objectMapper);
+        mailGeneralConfigService = new MailGeneralConfigServiceImpl(generalConfigDao);
     }
 
     @Test
     void testType() {
-
         assertEquals(GeneralConfigTypeEnum.email.name(), mailGeneralConfigService.type());
     }
 
     @Test
     void testGetTypeReference() {
-
         TypeReference<MailServerConfig> typeReference = mailGeneralConfigService.getTypeReference();
-
         assertEquals(MailServerConfig.class, typeReference.getType());
     }
 

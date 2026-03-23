@@ -2,7 +2,7 @@
 
 - 如果想自己本地快速部署的话，可以参考下面进行操作。
 
-> docker-compose 部署方案使用了 PostgreSQL + victoria-metrics 作为 Hertzbeat 依赖存储服务。   
+> docker-compose 部署方案使用了 PostgreSQL + victoria-metrics 作为 HertzBeat 依赖存储服务。   
 > 此方案会启动三个容器服务 PostgreSQL, victoria-metrics, HertzBeat   
 
 ##### 安装Docker & Docker-compose
@@ -20,7 +20,12 @@
    脚本文件位于代码仓库下`script/docker-compose/hertzbeat-postgre-victoria-metrics` 链接 [script/docker-compose](https://github.com/apache/hertzbeat/tree/master/script/docker-compose/hertzbeat-postgresql-victoria-metrics)   
 
 
-2. 进入部署脚本 docker-compose 目录, 执行  
+2. 可选：向 `ext-lib` 添加外部 JDBC 驱动 jar
+   MySQL 兼容监控现在可以直接使用内置查询引擎，所以 `mysql-connector-j` 不是必需项。
+   如果你希望 HertzBeat 在重启后优先走 JDBC，可以把 `mysql-connector-j` 放到 `ext-lib`。
+   Oracle、DB2 这类场景仍然需要把外部 JDBC 驱动放到 `ext-lib`。
+
+3. 进入部署脚本 docker-compose 目录, 执行
 
    `docker compose up -d`
 
