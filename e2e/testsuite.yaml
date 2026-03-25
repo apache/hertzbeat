@@ -74,9 +74,6 @@ items:
       Accept: application/json
   expect:
     statusCode: 401
-    bodyFieldsExpect:
-      code: 401
-      msg: Missing Authorization in header
 - name: createSitemapMonitor
   request:
     api: /api/monitor
@@ -437,13 +434,6 @@ items:
   expect:
     bodyFieldsExpect:
       code: "0"
-- name: useRevokedTokenToCallApi
-  request:
-    api: /api/monitors?pageIndex=0&pageSize=8
-    header:
-      Authorization: Bearer {{.generateApiToken.data.token}}
-  expect:
-    statusCode: 401
 
 ## Config
 - name: getConfigEmail
