@@ -10,7 +10,6 @@
 </p>
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
-[![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![codecov](https://codecov.io/gh/apache/HertzBeat/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/hertzbeat)
@@ -573,11 +572,7 @@ WeChat Group : Add friend `ahertzbeat` and invite to the group.
 
 WeChat Public : Search ID `usthecom`.
 
-[QQ Group](https://qm.qq.com/q/xxqecSC2cw) : Group num `1035688434`
-
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
-
-[Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
 [Follow Us Twitter](https://x.com/hertzbeat1024)
 
