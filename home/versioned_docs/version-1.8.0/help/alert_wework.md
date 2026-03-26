@@ -15,8 +15,8 @@ keywords: [open source monitoring tool, open source alerter, open source WeWork 
 
 2. **【Save the key value of the WebHook address of the robot】**
 
-    > eg： webHook address：`<enterprise-wechat-webhook-address>`
-    > Its robot KEY value is `<your-key>`
+    > eg： webHook address：`https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=3adafc96-23d0-4cd5-8feb-17f6e0b5fcs4`
+    > Its robot KEY value is `3adafc96-23d0-4cd5-8feb-17f6e0b5fcs4`
 
 3. **【Alarm notification】->【Add new recipient】 ->【Select enterprise Wechat robot notification method】->【Set enterprise Wechat robot KEY】-> 【Confirm】**
 
