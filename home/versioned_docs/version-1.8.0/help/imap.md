@@ -6,13 +6,13 @@ keywords: [Open Source Monitoring System, Open Source Network Monitoring, mailbo
 ---
 
 > IMAP, or Internet Message Access Protocol, allows you to retrieve detailed information from your email server.
-> You can click on `Create New QQ Email Monitoring` or `Create New Netease Email Monitoring` to configure, or select `More Actions` to import existing configurations.
+> You can click on the corresponding email monitoring type to configure it, or select `More Actions` to import existing configurations.
 
 ### Enable IMAP Service
 
 If you want to use this monitoring type to monitor your email information, please first enable the IMAP service in your email:
 
-For example, in QQ Mail (other emails are similar):
+For example, in a common mail service (other emails are similar):
 
 1. Go to `Mail Settings`
 2. Find and enable the `IMAP/SMTP option` in `General`
