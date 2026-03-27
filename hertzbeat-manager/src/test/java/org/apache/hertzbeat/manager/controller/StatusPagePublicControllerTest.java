@@ -27,8 +27,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.apache.hertzbeat.manager.pojo.dto.ComponentStatus;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageOrgInfo;
 import org.apache.hertzbeat.manager.service.StatusPageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,7 +63,7 @@ class StatusPagePublicControllerTest {
     @Test
     public void testQueryStatusPageOrg() throws Exception {
 
-        StatusPageOrg statusPageOrg = StatusPageOrg.builder().build();
+        StatusPageOrgInfo statusPageOrg = new StatusPageOrgInfo();
         when(statusPageService.queryStatusPageOrg()).thenReturn(statusPageOrg);
 
         mockMvc.perform(get("/api/status/page/public/org")

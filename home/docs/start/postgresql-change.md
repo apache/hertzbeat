@@ -4,9 +4,9 @@ title: Use PostgreSQL Replace H2 Database to Store Metadata(Recommended)
 sidebar_label: Meta Store PostgreSQL (Recommended)
 ---
 
-PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition to default built-in H2 database, Apache HertzBeat™ allow you to use PostgreSQL to store structured relational data such as monitoring information, alarm information and configuration information.
+PostgreSQL is an RDBMS emphasizing extensibility and SQL compliance. In addition to default built-in H2 database, Apache HertzBeat™ allows you to use PostgreSQL to store structured relational data such as monitoring information, alarm information and configuration information.
 
-> If you have the PostgreSQL environment, can be directly to database creation step.
+> If you have a PostgreSQL environment, you can skip directly to the database creation step.
 
 ### Install PostgreSQL via Docker
 
@@ -67,12 +67,13 @@ spring:
 
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: h2
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
 ```
 
 Specific replacement parameters are as follows and you need to configure account, ip, port according to the postgresql environment:
@@ -88,12 +89,13 @@ spring:
       max-lifetime: 120000
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.PostgreSQLPlatform
     database: postgresql
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
 ```
 
 > Note: The above applies to the method of downloading and installing the package. For local data source switching, simply complete the [Database creation](./postgresql-change#database-creation) and modify the configuration in `hertzbeat-startup/src/main/resources/application.yml`.

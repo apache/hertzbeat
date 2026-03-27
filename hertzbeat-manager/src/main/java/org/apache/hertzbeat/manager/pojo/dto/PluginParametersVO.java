@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
-import java.util.List;
 
 /**
  * Popup rendering and parameter values
@@ -34,7 +33,7 @@ public class PluginParametersVO {
     /**
      * Stencil rendering
      */
-    private List<ParamDefine> paramDefines;
+    private List<ParamDefineInfo> paramDefines;
 
     /**
      * specific parameter

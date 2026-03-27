@@ -47,7 +47,7 @@ keywords: [open source, monitoring, alerting]
 - HertzBeat is donated to the Apache Incubator.
 - migrate repo, clean up code, license, add more help doc and more
 - add dependency license doc
-- [feature]Hertzbeat custom plugin. by @zqr10159 in #1973
+- [feature]HertzBeat custom plugin. by @zqr10159 in #1973
 - [feature] add apache hugegraph monitor by @zhangshenghang in #1972
 - [improve]\[HIP\] HIP-01: Implement refactoring AbstractCollect by @crossoverJie in #1966
 - [feature] Support monitoring of OpenAI accounts by @zuobiao-zhou in #1947
@@ -281,10 +281,10 @@ keywords: [open source, monitoring, alerting]
 - [feature] add apache hugegraph monitor by @zhangshenghang in [https://github.com/apache/hertzbeat/pull/1972](https://github.com/apache/hertzbeat/pull/1972)
 - [improve] Implement cascading parameter list for SNMP protocol by @zuobiao-zhou in [https://github.com/apache/hertzbeat/pull/1976](https://github.com/apache/hertzbeat/pull/1976)
 - [improve] optimize DateUtil and add test case by @yuluo-yx in [https://github.com/apache/hertzbeat/pull/1974](https://github.com/apache/hertzbeat/pull/1974)
-- [feature]Hertzbeat custom plugin. by @zqr10159 in [https://github.com/apache/hertzbeat/pull/1973](https://github.com/apache/hertzbeat/pull/1973)
+- [feature]HertzBeat custom plugin. by @zqr10159 in [https://github.com/apache/hertzbeat/pull/1973](https://github.com/apache/hertzbeat/pull/1973)
 - update login page and status page color by @lwjxy in [https://github.com/apache/hertzbeat/pull/1977](https://github.com/apache/hertzbeat/pull/1977)
 - [chore] update code style and add some comment by @yuluo-yx in [https://github.com/apache/hertzbeat/pull/1975](https://github.com/apache/hertzbeat/pull/1975)
-- [doc]Hertzbeat plugin doc. by @zqr10159 in [https://github.com/apache/hertzbeat/pull/1980](https://github.com/apache/hertzbeat/pull/1980)
+- [doc]HertzBeat plugin doc. by @zqr10159 in [https://github.com/apache/hertzbeat/pull/1980](https://github.com/apache/hertzbeat/pull/1980)
 - [doc] update contributors and update status page style by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1981](https://github.com/apache/hertzbeat/pull/1981)
 - [feature] Implement cascading parameter list by @zuobiao-zhou in [https://github.com/apache/hertzbeat/pull/1978](https://github.com/apache/hertzbeat/pull/1978)
 - [doc]update threshold alarm doc by @zhangshenghang in [https://github.com/apache/hertzbeat/pull/1983](https://github.com/apache/hertzbeat/pull/1983)

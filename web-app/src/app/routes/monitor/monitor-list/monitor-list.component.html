@@ -54,7 +54,7 @@
     <nz-dropdown-menu #more_menu="nzDropdownMenu">
       <ul nz-menu>
         <li nz-menu-item>
-          <button nz-button (click)="onEnableManageMonitors()" class="mobile-hide">
+          <button nz-button nzType="primary" (click)="onEnableManageMonitors()" class="mobile-hide">
             <i nz-icon nzType="play-circle" nzTheme="outline"></i>
             {{ 'monitor.enable' | i18n }}
           </button>

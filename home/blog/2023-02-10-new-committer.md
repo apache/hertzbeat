@@ -18,15 +18,15 @@ Name: Gao Chen
 
 Now engaged in: Fanruan software Java research and development
 
-Hertzbeat Committer
+HertzBeat Committer
 
 github: gcdd1993 (A Chen who attacked)
 
-### Getting to know Hertzbeat
+### Getting to know HertzBeat
 
-I started to contact Hertzbeat in April 2022. At that time, the company had a downtime accident, and the website could not be accessed.
+I started to contact HertzBeat in April 2022. At that time, the company had a downtime accident, and the website could not be accessed.
 I didn’t know until the user feedback. I urgently need a monitoring platform that can monitor the online rate of the website and give timely alarms.
-After browsing several monitoring platforms, I finally settled on Hertzbeat, because it has powerful functions, meets the needs and has some surprises.
+After browsing several monitoring platforms, I finally settled on HertzBeat, because it has powerful functions, meets the needs and has some surprises.
 The most important thing is the code specification, clear comments, and consistent technology stack, which is convenient for the secondary development of enterprises.
 Combined with powerful custom notifications, we have monitored databases, middleware, and websites, which have played a vital role in the stable operation of the company's platform.
 

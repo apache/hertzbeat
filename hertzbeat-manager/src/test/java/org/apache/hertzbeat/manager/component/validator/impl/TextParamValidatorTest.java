@@ -19,8 +19,8 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -45,10 +45,10 @@ class TextParamValidatorTest {
 
     @Test
     void validate_ValidLength() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("text");
         paramDefine.setLimit((short) 10);
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("12345");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
@@ -56,11 +56,11 @@ class TextParamValidatorTest {
 
     @Test
     void validate_OverLimit() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("text");
         paramDefine.setField("name");
         paramDefine.setLimit((short) 3);
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("12345");
 
         assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));

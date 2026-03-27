@@ -27,6 +27,7 @@ import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzPaginationComponent } from 'ng-zorro-antd/pagination';
@@ -45,6 +46,7 @@ import { MessageServerComponent } from './settings/message-server/message-server
 import { ObjectStoreComponent } from './settings/object-store/object-store.component';
 import { SettingsComponent } from './settings/settings.component';
 import { SystemConfigComponent } from './settings/system-config/system-config.component';
+import { TokenManagementComponent } from './settings/token-management/token-management.component';
 import { StatusComponent } from './status/status.component';
 
 const COMPONENTS: Array<Type<void>> = [
@@ -54,6 +56,7 @@ const COMPONENTS: Array<Type<void>> = [
   MessageServerComponent,
   SystemConfigComponent,
   ObjectStoreComponent,
+  TokenManagementComponent,
   CollectorComponent,
   StatusComponent,
   SettingPluginsComponent
@@ -78,7 +81,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzRadioModule,
     NzUploadComponent,
     NzPaginationComponent,
-    NzDropDownModule
+    NzDropDownModule,
+    NzEmptyModule
   ],
   declarations: COMPONENTS
 })

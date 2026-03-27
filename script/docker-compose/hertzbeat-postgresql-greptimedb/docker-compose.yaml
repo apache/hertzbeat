@@ -87,6 +87,7 @@ services:
     hostname: hertzbeat
     restart: always
     environment:
+      HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE: auto
       TZ: Asia/Shanghai
       LANG: zh_CN.UTF-8
     depends_on:

@@ -25,7 +25,6 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import org.springframework.data.annotation.CreatedBy;
@@ -79,8 +78,7 @@ public class ChatConversation {
     /**
      * List of messages in this conversation (one-to-many relationship)
      */
-    @OneToMany
-    @JoinColumn(name = "conversation_id")
+    @OneToMany(mappedBy = "conversation")
     private List<ChatMessage> messages;
 
     private String securityData;

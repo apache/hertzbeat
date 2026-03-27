@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.job.Job;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 
 /**
@@ -35,7 +35,7 @@ public interface AppService {
      * @param app Monitoring type
      * @return list of parameter structures
      */
-    List<ParamDefine> getAppParamDefines(String app);
+    List<ParamDefineInfo> getAppParamDefines(String app);
 
     Job getPushDefine(Long monitorId);
 

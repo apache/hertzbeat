@@ -7,12 +7,22 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of MySQL database. Support MYSQL5+.
 
-### Attention, Need Add MYSQL jdbc driver jar
+### Driver selection
 
-- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.4.0.jar. [https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.4.0](https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.4.0)
-- It is recommended that you use the latest available mysql-connector-java version as there are regular security fixes to JDBC drivers.
-- Copy the jar package to the `hertzbeat/ext-lib` directory.
-- Restart the HertzBeat service.
+HertzBeat now supports two MySQL query paths:
+
+- If `mysql-connector-j` is present in `ext-lib`, the JVM collector or built-in server collector automatically prefers JDBC.
+- If `mysql-connector-j` is absent, HertzBeat automatically uses the built-in MySQL query engine. No extra JAR is required.
+- Restart HertzBeat or the standalone JVM collector after adding or removing a JAR in `ext-lib`.
+- The automatic decision only checks `ext-lib`. If you want to force one path, set `hertzbeat.collector.mysql.query-engine=jdbc`, `r2dbc`, or `auto`.
+
+:::important Collector package selection
+MySQL monitoring supports both JVM and native deployment now.
+
+- Built-in server collector or JVM collector package: automatically prefers JDBC when `mysql-connector-j` exists in `ext-lib`
+- Native collector package: supported when you do not rely on `ext-lib` and want the built-in MySQL query engine
+- If you explicitly need runtime `ext-lib` JDBC loading, choose the JVM collector package
+:::
 
 ### Configuration parameter
 

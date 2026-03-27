@@ -20,14 +20,15 @@ package org.apache.hertzbeat.collector.collect.common.cache;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Singleton LRU global resource cache for client-server connections
@@ -56,10 +57,20 @@ public class GlobalConnectionCache {
      */
     private final ConcurrentLinkedHashMap<Object, AbstractConnection<?>> cacheMap;
 
+    private final ScheduledExecutorService scheduledExecutor;
+
+    private final ExecutorService cleanupExecutor;
+
+    private final ScheduledDispatchTask cleanupTask;
+
     /**
      * Private constructor to prevent instantiation
      */
     private GlobalConnectionCache() {
+        this(true);
+    }
+
+    GlobalConnectionCache(boolean autoStart) {
         cacheMap = new ConcurrentLinkedHashMap.Builder<Object, AbstractConnection<?>>()
                 .maximumWeightedCapacity(Integer.MAX_VALUE)
                 .listener((key, value) -> {
@@ -72,7 +83,13 @@ public class GlobalConnectionCache {
                     log.info("GlobalConnectionCache discarded key: {}, value: {}.", key, value);
                 })
                 .build();
-        initCacheMonitor();
+        this.scheduledExecutor = createCacheMonitorScheduler();
+        this.cleanupExecutor = createCleanupExecutor();
+        this.cleanupTask = new ScheduledDispatchTask(cleanupExecutor, this::runCleanTimeoutOrUnHealthyCache);
+        if (autoStart) {
+            initCacheMonitor();
+            Runtime.getRuntime().addShutdownHook(new Thread(this::destroy));
+        }
     }
 
     /**
@@ -95,18 +112,42 @@ public class GlobalConnectionCache {
      * Initialize the cache monitor for cleaning up expired connections
      */
     private void initCacheMonitor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat("connection-cache-timeout-detector-%d")
-                .setDaemon(true)
-                .build();
-        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(1, threadFactory);
-        scheduledExecutor.scheduleWithFixedDelay(this::cleanTimeoutOrUnHealthyCache, 2, 100, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleWithFixedDelay(this::dispatchCleanupCache, 2, 100, TimeUnit.SECONDS);
     }
 
     /**
      * Clean and remove timeout or unhealthy cache entries
      */
-    private void cleanTimeoutOrUnHealthyCache() {
+    void dispatchCleanupCache() {
+        cleanupTask.dispatch();
+    }
+
+    void beforeCleanTimeoutOrUnHealthyCacheRun() {
+    }
+
+    void destroy() {
+        scheduledExecutor.shutdownNow();
+        cleanupExecutor.shutdownNow();
+    }
+
+    private ScheduledExecutorService createCacheMonitorScheduler() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("connection-cache-timeout-detector-%d")
+                .setDaemon(true)
+                .build();
+        return Executors.newSingleThreadScheduledExecutor(threadFactory);
+    }
+
+    private ExecutorService createCleanupExecutor() {
+        return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+                .name("connection-cache-cleaner-vt-", 0)
+                .uncaughtExceptionHandler((thread, throwable) ->
+                        log.error("Connection cache cleanup has uncaughtException.", throwable))
+                .factory());
+    }
+
+    private void runCleanTimeoutOrUnHealthyCache() {
+        beforeCleanTimeoutOrUnHealthyCacheRun();
         try {
             cacheMap.forEach((key, value) -> {
                 Long[] cacheTime = timeoutMap.get(key);
@@ -202,6 +243,61 @@ public class GlobalConnectionCache {
             }
         } catch (Exception e) {
             log.error("Connection close error for key {}: {}", key, e.getMessage(), e);
+        }
+    }
+
+    private static final class ScheduledDispatchTask {
+
+        private final ExecutorService executor;
+
+        private final Runnable task;
+
+        private boolean running;
+
+        private int pendingRuns;
+
+        private ScheduledDispatchTask(ExecutorService executor, Runnable task) {
+            this.executor = executor;
+            this.task = task;
+        }
+
+        private void dispatch() {
+            boolean shouldSchedule;
+            synchronized (this) {
+                pendingRuns++;
+                shouldSchedule = !running;
+                if (shouldSchedule) {
+                    running = true;
+                }
+            }
+            if (shouldSchedule) {
+                scheduleRun();
+            }
+        }
+
+        private void scheduleRun() {
+            executor.execute(this::runOnce);
+        }
+
+        private void runOnce() {
+            try {
+                task.run();
+            } finally {
+                scheduleNextIfNeeded();
+            }
+        }
+
+        private void scheduleNextIfNeeded() {
+            boolean shouldSchedule;
+            synchronized (this) {
+                pendingRuns = Math.max(0, pendingRuns - 1);
+                shouldSchedule = pendingRuns > 0;
+                if (!shouldSchedule) {
+                    running = false;
+                    return;
+                }
+            }
+            scheduleRun();
         }
     }
 }

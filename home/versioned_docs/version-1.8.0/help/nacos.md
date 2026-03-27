@@ -5,7 +5,7 @@ sidebar_label: Nacos Server
 keywords: [open source monitoring tool, open source middleware monitoring tool, monitoring Nacos Server metrics]
 ---
 
-> Hertzbeat monitors metrics of the Nacos Server by calling the Nacos Metrics Api.
+> HertzBeat monitors metrics of the Nacos Server by calling the Nacos Metrics Api.
 
 ### PreRequisites
 

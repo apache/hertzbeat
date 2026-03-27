@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import jakarta.annotation.Resource;
 import java.security.SecureRandom;
@@ -29,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimeZoneUtil;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.MuteConfig;
@@ -56,9 +56,9 @@ public class ConfigInitializer implements SmartLifecycle {
     private boolean running = false;
 
     private static final String DEFAULT_JWT_SECRET = "CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R "
-            + "LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9 "
-            + "8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5 "
-            + "dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp";
+        + "LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9 "
+        + "8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5 "
+        + "dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp";
 
     @Value("${sureness.jwt.secret:" + DEFAULT_JWT_SECRET + "}")
     private String currentJwtSecret;
@@ -84,9 +84,6 @@ public class ConfigInitializer implements SmartLifecycle {
     @Resource
     protected GeneralConfigDao generalConfigDao;
 
-    @Resource
-    protected ObjectMapper objectMapper;
-
     @SneakyThrows
     public void initConfig() {
         // for system config
@@ -96,19 +93,17 @@ public class ConfigInitializer implements SmartLifecycle {
 
             final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
             simpleDateFormat.setTimeZone(TimeZone.getDefault());
-            objectMapper.setTimeZone(TimeZone.getDefault())
-                    .setDateFormat(simpleDateFormat);
         } else {
             // init system config data
             systemConfig = SystemConfig.builder().timeZoneId(TimeZone.getDefault().getID()).theme("default")
-                                   .locale(Locale.getDefault().getLanguage() + CommonConstants.LOCALE_SEPARATOR
-                                                   + Locale.getDefault().getCountry())
-                                   .build();
-            String contentJson = objectMapper.writeValueAsString(systemConfig);
+                .locale(Locale.getDefault().getLanguage() + CommonConstants.LOCALE_SEPARATOR
+                    + Locale.getDefault().getCountry())
+                .build();
+            String contentJson = JsonUtil.toJson(systemConfig);
             GeneralConfig generalConfig2Save = GeneralConfig.builder()
-                                                       .type(systemGeneralConfigService.type())
-                                                       .content(contentJson)
-                                                       .build();
+                .type(systemGeneralConfigService.type())
+                .content(contentJson)
+                .build();
             generalConfigDao.save(generalConfig2Save);
         }
         // for template config, flush the template config in db to memory

@@ -4,7 +4,7 @@ title: Use MYSQL Replace H2 Database to Store Metadata(Optional)
 sidebar_label: Meta Store MYSQL
 ---
 
-MYSQL is a reliable relational database. In addition to default built-in H2 database, Apache HertzBeat™ allow you to use MYSQL to store structured relational data such as monitoring information, alarm information and configuration information.
+MySQL is a reliable relational database. In addition to default built-in H2 database, Apache HertzBeat™ allows you to use MySQL to store structured relational data such as monitoring information, alarm information and configuration information.
 
 > If you already have a MySQL environment and the MySQL version meets the requirements, you can skip directly to the database creation step.
 
@@ -77,12 +77,13 @@ spring:
 
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: h2
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
 ```
 
 Specific replacement parameters are as follows and you need to configure account according to the mysql environment:
@@ -98,15 +99,16 @@ spring:
       max-lifetime: 120000
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: mysql
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
 ```
 
-- It is recommended to set the host field in the MySQL URL to the public IP address when using Hertzbeat in docker.
+- It is recommended to set the host field in the MySQL URL to the public IP address when using HertzBeat in docker.
 
 > Note: The above applies to the method of downloading and installing the package. For local data source switching, simply complete the [Database creation](./mysql-change#database-creation) and modify the configuration in `hertzbeat-startup/src/main/resources/application.yml`.
 

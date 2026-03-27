@@ -1,0 +1,202 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: llm
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: lmstudio
+# The monitoring i18n name
+name:
+  zh-CN: LM Studio 监控
+  en-US: LM Studio
+  ja-JP: LM Studio
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 将调用 LM Studio REST API 接口，监测本地模型列表数据。<br>您可以先点击"新增 LM Studio"按钮并进行配置，或在"更多操作"中导入已有配置。
+  en-US: HertzBeat will call the LM Studio REST API to monitor local models.<br>You can click the "Add LM Studio" button to configure it first, or import existing configurations in the "More Actions" section.
+  zh-TW: HertzBeat 將調用 LM Studio REST API 接口，監測本地模型列表數據。<br>您可以先點擊"新增 LM Studio"按鈕並進行配置，或在"更多操作"中導入已有配置。
+  ja-JP: HertzBeatは、LM Studio REST APIを呼び出してメトリクスを監視します。<br>「<i>新規 LM Studio</i>」をクリックして設定した後、新規することができます。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/lmstudio
+  en-US: https://hertzbeat.apache.org/docs/help/lmstudio
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+      ja-JP: ターゲットホスト
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+      ja-JP: ポート
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    required: true
+    defaultValue: 1234
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
+      ja-JP: HTTPS
+    type: boolean
+    required: false
+    defaultValue: false
+  - field: token
+    name:
+      zh-CN: API Token
+      en-US: API Token
+      ja-JP: APIトークン
+    type: text
+    required: false
+# collect metrics config list
+metrics:
+  # metrics - models
+  - name: models
+    # metrics name i18n label
+    i18n:
+      zh-CN: 模型列表
+      en-US: Models
+      ja-JP: モデル一覧
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, i18n-metric name i18n label, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: key
+        type: 1
+        i18n:
+          zh-CN: 模型标识
+          en-US: Model Key
+          ja-JP: モデルキー
+        label: true
+      - field: display_name
+        type: 1
+        i18n:
+          zh-CN: 模型名称
+          en-US: Display Name
+          ja-JP: 表示名
+      - field: type
+        type: 1
+        i18n:
+          zh-CN: 模型类型
+          en-US: Model Type
+          ja-JP: モデルタイプ
+      - field: publisher
+        type: 1
+        i18n:
+          zh-CN: 发布者
+          en-US: Publisher
+          ja-JP: パブリッシャー
+      - field: architecture
+        type: 1
+        i18n:
+          zh-CN: 架构
+          en-US: Architecture
+          ja-JP: アーキテクチャ
+      - field: quantization_name
+        type: 1
+        i18n:
+          zh-CN: 量化方式
+          en-US: Quantization
+          ja-JP: 量子化
+      - field: quantization_bits
+        type: 0
+        i18n:
+          zh-CN: 量化位数
+          en-US: Quantization Bits
+          ja-JP: 量子化ビット数
+      - field: size_bytes
+        type: 0
+        i18n:
+          zh-CN: 模型大小
+          en-US: Model Size
+          ja-JP: モデルサイズ
+        unit: MB
+      - field: params_string
+        type: 1
+        i18n:
+          zh-CN: 参数量
+          en-US: Parameters
+          ja-JP: パラメータ数
+      - field: max_context_length
+        type: 0
+        i18n:
+          zh-CN: 最大上下文长度
+          en-US: Max Context Length
+          ja-JP: 最大コンテキスト長
+      - field: format
+        type: 1
+        i18n:
+          zh-CN: 模型格式
+          en-US: Format
+          ja-JP: フォーマット
+    aliasFields:
+      - $.key
+      - $.display_name
+      - $.type
+      - $.publisher
+      - $.architecture
+      - $.quantization.name
+      - $.quantization.bits_per_weight
+      - $.size_bytes
+      - $.params_string
+      - $.max_context_length
+      - $.format
+    calculates:
+      - key=$.key
+      - display_name=$.display_name
+      - type=$.type
+      - publisher=$.publisher
+      - architecture=$.architecture
+      - quantization_name=$.quantization.name
+      - quantization_bits=$.quantization.bits_per_weight
+      - size_bytes=$.size_bytes
+      - params_string=$.params_string
+      - max_context_length=$.max_context_length
+      - format=$.format
+    units:
+      - size_bytes=B->MB
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: /api/v1/models
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: ^_^ssl^_^
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: Bearer Token
+        bearerTokenToken: ^_^token^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: jsonPath
+      parseScript: '$.models[*]'

@@ -29,6 +29,7 @@ import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.ai.utils.UtilityClass;
@@ -40,7 +41,6 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -349,7 +349,9 @@ public class MonitorToolsImpl implements MonitorTools {
 
             // Validate that all required parameters for this monitor type are provided
             try {
-                MonitorDto monitorDto = MonitorDto.builder().monitor(monitor).params(paramList).build();
+                MonitorDto monitorDto = new MonitorDto();
+                monitorDto.setMonitor(monitor);
+                monitorDto.setParams(paramList);
                 monitorService.validate(monitorDto, false);
             } catch (IllegalArgumentException argumentException) {
                 if (argumentException.getMessage().contains("required")) {
@@ -525,7 +527,7 @@ public class MonitorToolsImpl implements MonitorTools {
             }
 
             // Get parameter definitions from app service
-            List<ParamDefine> paramDefines = appService.getAppParamDefines(app.toLowerCase().trim());
+            List<ParamDefineInfo> paramDefines = appService.getAppParamDefines(app.toLowerCase().trim());
 
             if (paramDefines == null || paramDefines.isEmpty()) {
                 return String.format("No parameter definitions found for monitor type '%s'. "
@@ -537,7 +539,7 @@ public class MonitorToolsImpl implements MonitorTools {
             response.append(String.format("Parameter Definitions for Monitor Type '%s' (Total: %d):\n\n",
                 app, paramDefines.size()));
 
-            for (ParamDefine paramDefine : paramDefines) {
+            for (ParamDefineInfo paramDefine : paramDefines) {
                 response.append("• Field: ").append(paramDefine.getField()).append("\n");
 
                 // Add display name if available

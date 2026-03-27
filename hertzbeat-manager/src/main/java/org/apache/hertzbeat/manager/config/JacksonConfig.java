@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,39 +17,32 @@
 
 package org.apache.hertzbeat.manager.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.text.SimpleDateFormat;
-import java.util.TimeZone;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import tools.jackson.databind.DeserializationFeature;
+
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 /**
- * jackson config
+ * Jackson config.
  */
-@Slf4j
 @Configuration
 public class JacksonConfig {
 
     @Bean
-    public Jackson2ObjectMapperBuilderCustomizer jacksonCustomizer() {
+    public JsonMapperBuilderCustomizer jsonMapperBuilderCustomizer() {
         return builder -> {
-            JavaTimeModule javaTimeModule = new JavaTimeModule();
-            final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+            final String dateTimeFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
+            final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateTimeFormat);
             simpleDateFormat.setTimeZone(TimeZone.getDefault());
 
-            builder.modules(javaTimeModule)
-                    .timeZone(TimeZone.getDefault())
-                    .dateFormat(simpleDateFormat);
+            builder.defaultTimeZone(TimeZone.getDefault());
+            builder.defaultDateFormat(simpleDateFormat);
+
+            builder.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
+            builder.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         };
     }
-
-    @Bean
-    public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
-        return builder.build();
-    }
-
 }

@@ -1,4 +1,4 @@
-> Envie alarmes do Prometheus AlertManager para a plataforma de alarme HertzBeat。 
+> Envie alarmes do Prometheus AlertManager para a plataforma de alarme HertzBeat. 
 
 ### Webhook de configuração do Alertmanager
 
