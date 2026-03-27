@@ -22,6 +22,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DelonFormModule } from '@delon/form';
 import { AlainThemeModule } from '@delon/theme';
+import { SharedModule } from '@shared';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzFormModule } from 'ng-zorro-antd/form';
@@ -58,7 +59,8 @@ import { ChatComponent } from './chat.component';
     NzSwitchModule,
     NzTableModule,
     MarkdownComponent,
-    NzTooltipDirective
+    NzTooltipDirective,
+    SharedModule
   ],
   exports: [ChatComponent]
 })
