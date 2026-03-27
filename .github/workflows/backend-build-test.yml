@@ -56,7 +56,7 @@ jobs:
           verbose: true
 
       - name: Build Image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
         with:
           context: ./dist
           file: ./script/docker/server/Dockerfile
