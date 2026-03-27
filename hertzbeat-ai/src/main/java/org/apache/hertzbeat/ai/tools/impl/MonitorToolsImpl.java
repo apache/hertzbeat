@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.ai.tools.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.usthe.sureness.subject.SubjectSum;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +40,7 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
+import tools.jackson.core.type.TypeReference;
 
 import java.util.ArrayList;
 import java.util.List;
