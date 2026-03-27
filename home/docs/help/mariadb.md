@@ -7,11 +7,21 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of MariaDB database. Support MariaDB5+.
 
-### Attention, Need Add MYSQL jdbc driver jar
+### Driver selection
 
-- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.1.0.jar. [https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0](https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0)
-- Copy the jar package to the `hertzbeat/ext-lib` directory.
-- Restart the HertzBeat service.
+MariaDB follows the same automatic routing as MySQL:
+
+- If `mysql-connector-j` is present in `ext-lib`, the JVM collector or built-in server collector automatically prefers JDBC.
+- If `mysql-connector-j` is absent, HertzBeat automatically uses the built-in MySQL-compatible query engine. No extra JAR is required.
+- Restart HertzBeat or the standalone JVM collector after adding or removing a JAR in `ext-lib`.
+
+:::important Collector package selection
+MariaDB monitoring supports both JVM and native deployment now.
+
+- Built-in server collector or JVM collector package: automatically prefers JDBC when `mysql-connector-j` exists in `ext-lib`
+- Native collector package: supported when you do not rely on `ext-lib` and want the built-in query engine
+- If you explicitly need runtime `ext-lib` JDBC loading, choose the JVM collector package
+:::
 
 ### Configuration parameter
 

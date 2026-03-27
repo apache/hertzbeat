@@ -4,7 +4,7 @@ author: Apache HertzBeat Community
 author_title: Apache HertzBeat 社区
 author_url: https://github.com/apache/hertzbeat
 tags: [开源, 发布, v1.8.0]
-keywords: [开源监控系统, 告警系统, Hertzbeat, 发布, v1.8.0, Apache]
+keywords: [开源监控系统, 告警系统, HertzBeat, 发布, v1.8.0, Apache]
 ---
 
 亲爱的社区成员们，

@@ -58,13 +58,13 @@ github：[wang1027-wqh](https://github.com/wang1027-wqh)
 
 email：[1758619238@qq.com](mailto:1758619238@qq.com)
 
-Hertzbeat Committer
+HertzBeat Committer
 
 github：[Ceilzcx (zcx) (github.com)](https://github.com/Ceilzcx)
 
-### 初识Hertzbeat
+### 初识HertzBeat
 
-2022年8月开始接触Hertzbeat，由于公司监控elasticsearch使用的cerebro，虽然有非常强大的数据监控，但缺少告警通知的功能；就去github上浏览监控类的项目，刚好看到Hertzbeat，对此非常感兴趣，在了解完整个项目结构和实现后，刚好elasticsearch的监控部分做的不够完善，我就根据cerebro完善了这部分监控数据并提交了pull request。后面在tom老哥的帮助下也开始其他部分的实现。
+2022年8月开始接触HertzBeat，由于公司监控elasticsearch使用的cerebro，虽然有非常强大的数据监控，但缺少告警通知的功能；就去github上浏览监控类的项目，刚好看到HertzBeat，对此非常感兴趣，在了解完整个项目结构和实现后，刚好elasticsearch的监控部分做的不够完善，我就根据cerebro完善了这部分监控数据并提交了pull request。后面在tom老哥的帮助下也开始其他部分的实现。
 
 ### 开始提交PR
 
@@ -79,7 +79,7 @@ github：[Ceilzcx (zcx) (github.com)](https://github.com/Ceilzcx)
 
 ### 持续的开源贡献与收获
 
-到目前为止，参与Hertzbeat社区开源已有半年多时间，贡献了许多，也成长收获了许多。
+到目前为止，参与HertzBeat社区开源已有半年多时间，贡献了许多，也成长收获了许多。
 
 在参与开源的时候会比平常自己做项目想的更多，包括使用第三方软件各个版本如何兼容；实现某个功能也要考虑是否方便以后扩展；要有完善的test模块，减少项目的bug。
 
@@ -95,7 +95,7 @@ github：[Ceilzcx (zcx) (github.com)](https://github.com/Ceilzcx)
 + 可以尝试阅读源码，大部分源码都是包含注释的，并不难；不懂的地方也可以通过运行test，debug看一下整个流程
 + 有想法或者bug，可以前往gitee或者github提交issues，也可以在群里询问，不要怕，都是从菜逼过来的
 
-### 如何参与Hertzbeat
+### 如何参与HertzBeat
 
 + 官网有非常完善的贡献者指南：[贡献者指南 | HertzBeat](https://hertzbeat.apache.org/docs/community/contribution)
 

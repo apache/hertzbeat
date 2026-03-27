@@ -1,0 +1,239 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: llm
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: ollama
+# The monitoring i18n name
+name:
+  zh-CN: Ollama
+  en-US: Ollama
+  ja-JP: Ollama
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 对 Ollama 本地大模型服务的版本信息、已安装模型列表和运行中模型进行采集监控。<br>您可以点击"<i>新增 Ollama</i>"并进行配置，或者选择"<i>更多操作</i>"，导入已有配置。
+  en-US: HertzBeat monitors Ollama local LLM service including version info, installed models and running models.<br>You can click the "<i>New Ollama</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat 對 Ollama 本地大模型服務的版本資訊、已安裝模型列表和運行中模型進行採集監控。<br>您可以點擊"<i>新增 Ollama</i>"並進行配置，或者選擇"<i>更多操作</i>"，導入已有配置。
+  ja-JP: HertzBeat は Ollama ローカル LLM サービスのバージョン情報、インストール済みモデル一覧、実行中モデルを監視します。<br>「<i>新規 Ollama</i>」をクリックして設定できます。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/ollama
+  en-US: https://hertzbeat.apache.org/docs/help/ollama
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+      ja-JP: 目標ホスト
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+      ja-JP: ポート
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 11434
+  - field: ssl
+    name:
+      zh-CN: SSL连接
+      en-US: SSL
+      ja-JP: SSL利用
+    type: boolean
+    required: false
+  - field: apiKey
+    name:
+      zh-CN: API Key
+      en-US: API Key
+      ja-JP: API キー
+    type: text
+    required: false
+# collect metrics config list
+metrics:
+  - name: version_info
+    i18n:
+      zh-CN: 版本信息
+      en-US: Version Info
+      ja-JP: バージョン情報
+    priority: 0
+    fields:
+      - field: version
+        type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+          ja-JP: バージョン
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/version
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: Bearer Token
+        bearerTokenToken: ^_^apiKey^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: models
+    i18n:
+      zh-CN: 已安装模型
+      en-US: Installed Models
+      ja-JP: インストール済みモデル
+    priority: 1
+    fields:
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 模型名称
+          en-US: Model Name
+          ja-JP: モデル名
+      - field: model_size
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 模型大小
+          en-US: Model Size
+          ja-JP: モデルサイズ
+      - field: parameter_size
+        type: 1
+        i18n:
+          zh-CN: 参数规模
+          en-US: Parameter Size
+          ja-JP: パラメータサイズ
+      - field: quantization_level
+        type: 1
+        i18n:
+          zh-CN: 量化级别
+          en-US: Quantization Level
+          ja-JP: 量子化レベル
+      - field: family
+        type: 1
+        i18n:
+          zh-CN: 模型家族
+          en-US: Model Family
+          ja-JP: モデルファミリー
+      - field: format
+        type: 1
+        i18n:
+          zh-CN: 格式
+          en-US: Format
+          ja-JP: フォーマット
+      - field: modified_at
+        type: 1
+        i18n:
+          zh-CN: 修改时间
+          en-US: Modified At
+          ja-JP: 更新日時
+    aliasFields:
+      - name
+      - $.size
+      - $.details.parameter_size
+      - $.details.quantization_level
+      - $.details.family
+      - $.details.format
+      - modified_at
+    calculates:
+      - name = name
+      - model_size = $.size
+      - parameter_size = $.details.parameter_size
+      - quantization_level = $.details.quantization_level
+      - family = $.details.family
+      - format = $.details.format
+      - modified_at = modified_at
+    units:
+      - model_size=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/tags
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: Bearer Token
+        bearerTokenToken: ^_^apiKey^_^
+      parseType: jsonPath
+      parseScript: '$.models.*'
+
+  - name: running_models
+    i18n:
+      zh-CN: 运行中模型
+      en-US: Running Models
+      ja-JP: 実行中モデル
+    priority: 2
+    fields:
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 模型名称
+          en-US: Model Name
+          ja-JP: モデル名
+      - field: model_size
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 模型大小
+          en-US: Model Size
+          ja-JP: モデルサイズ
+      - field: size_vram
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: VRAM占用
+          en-US: VRAM Size
+          ja-JP: VRAMサイズ
+      - field: expires_at
+        type: 1
+        i18n:
+          zh-CN: 过期时间
+          en-US: Expires At
+          ja-JP: 有効期限
+    aliasFields:
+      - name
+      - $.size
+      - size_vram
+      - expires_at
+    calculates:
+      - name = name
+      - model_size = $.size
+      - size_vram = size_vram
+      - expires_at = expires_at
+    units:
+      - model_size=B->MB
+      - size_vram=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /api/ps
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: Bearer Token
+        bearerTokenToken: ^_^apiKey^_^
+      parseType: jsonPath
+      parseScript: '$.models.*'

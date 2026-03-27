@@ -17,8 +17,11 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import java.util.List;
 import java.util.Map;
 import javax.naming.AuthenticationException;
+
+import org.apache.hertzbeat.common.entity.manager.AuthToken;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
 import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
 
@@ -28,6 +31,7 @@ import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
 public interface AccountService {
     /**
      * Account password login to obtain associated user information
+     *
      * @param loginDto loginDto
      * @return token info
      * @throws AuthenticationException when authentication is failed
@@ -36,6 +40,7 @@ public interface AccountService {
 
     /**
      * Use refresh TOKEN to re-acquire TOKEN
+     *
      * @param refreshToken refreshToken
      * @return token and refresh token
      * @throws Exception failed to refresh
@@ -43,8 +48,50 @@ public interface AccountService {
     RefreshTokenResponse refreshToken(String refreshToken) throws Exception;
 
     /**
-     * Generate no expired token
-     * @return token
+     * Generate a managed API token and persist it for lifecycle management
+     *
+     * @param tokenName     optional name/description for the token
+     * @param expireSeconds optional expiration time in seconds, null means never expire
+     * @return token string
      */
-    String generateToken() throws AuthenticationException;
+    String generateToken(String tokenName, Long expireSeconds) throws AuthenticationException;
+
+    /**
+     * List all API tokens
+     *
+     * @return list of auth tokens
+     */
+    List<AuthToken> listTokens();
+
+    /**
+     * Delete/revoke an API token by id
+     *
+     * @param id token id
+     */
+    void deleteToken(Long id) throws AuthenticationException;
+
+    /**
+     * Check the status of a managed token (revocation + expiration)
+     *
+     * @param tokenValue the raw token string
+     * @return null if the token is valid, otherwise a rejection reason string
+     */
+    String checkTokenStatus(String tokenValue);
+
+    /**
+     * Check whether the current account behind a managed token is still valid
+     * and still owns the roles claimed in that token.
+     *
+     * @param userId        token subject
+     * @param claimedRoles  roles embedded in the token claims
+     * @return null if the token owner is still valid, otherwise a rejection reason string
+     */
+    String checkManagedTokenAccess(String userId, List<String> claimedRoles);
+
+    /**
+     * Update the last used time of a managed token
+     *
+     * @param tokenValue the raw token string
+     */
+    void touchTokenLastUsedTime(String tokenValue);
 }

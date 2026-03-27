@@ -30,10 +30,10 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
-import org.apache.hertzbeat.common.entity.manager.StatusPageIncident;
-import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageComponentInfo;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageIncidentInfo;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageOrgInfo;
 import org.apache.hertzbeat.manager.service.StatusPageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,7 +68,7 @@ class StatusPageControllerTest {
     @Test
     public void testQueryStatusPageOrg() throws Exception {
 
-        StatusPageOrg statusPageOrg = StatusPageOrg.builder().build();
+        StatusPageOrgInfo statusPageOrg = new StatusPageOrgInfo();
         when(statusPageService.queryStatusPageOrg()).thenReturn(statusPageOrg);
 
         mockMvc.perform(get("/api/status/page/org")
@@ -92,12 +92,11 @@ class StatusPageControllerTest {
     @Test
     public void testSaveStatusPageOrg() throws Exception {
 
-        StatusPageOrg statusPageOrg = StatusPageOrg.builder()
-                .name("Test name")
-                .home("Test home")
-                .description("Test description")
-                .logo("Test logo")
-                .build();
+        StatusPageOrgInfo statusPageOrg = new StatusPageOrgInfo();
+        statusPageOrg.setName("Test name");
+        statusPageOrg.setHome("Test home");
+        statusPageOrg.setDescription("Test description");
+        statusPageOrg.setLogo("Test logo");
         when(statusPageService.saveStatusPageOrg(statusPageOrg)).thenReturn(statusPageOrg);
 
         mockMvc.perform(post("/api/status/page/org")
@@ -111,13 +110,16 @@ class StatusPageControllerTest {
     @Test
     public void testQueryStatusPageComponent() throws Exception {
 
-        List<StatusPageComponent> components = Collections.singletonList(new StatusPageComponent());
+        List<StatusPageComponentInfo> components = Collections.singletonList(new StatusPageComponentInfo());
+        components.get(0).setId(1L);
+        components.get(0).setName("Gateway");
         when(statusPageService.queryStatusPageComponents()).thenReturn(components);
 
         mockMvc.perform(get("/api/status/page/component")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data[0].name").value("Gateway"));
     }
 
     @Test
@@ -125,7 +127,7 @@ class StatusPageControllerTest {
 
         mockMvc.perform(post("/api/status/page/component")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"New Component\"}")
+                        .content("{\"name\":\"New Component\",\"method\":0,\"configState\":0,\"state\":0}")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
@@ -137,7 +139,7 @@ class StatusPageControllerTest {
 
         mockMvc.perform(put("/api/status/page/component")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Updated Component\"}")
+                        .content("{\"name\":\"Updated Component\",\"method\":0,\"configState\":0,\"state\":0}")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
@@ -157,21 +159,23 @@ class StatusPageControllerTest {
     @Test
     public void testQueryStatusPageComponentById() throws Exception {
 
-        StatusPageComponent component = new StatusPageComponent();
+        StatusPageComponentInfo component = new StatusPageComponentInfo();
+        component.setId(1L);
+        component.setName("API Gateway");
         when(statusPageService.queryStatusPageComponent(1L)).thenReturn(component);
 
         mockMvc.perform(get("/api/status/page/component/1")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.name").value("API Gateway"));
     }
 
     @Test
     public void testNewStatusPageIncident() throws Exception {
 
-        StatusPageIncident statusPageIncident = StatusPageIncident.builder()
-                .name("New Incident")
-                .build();
+        StatusPageIncidentInfo statusPageIncident = new StatusPageIncidentInfo();
+        statusPageIncident.setName("New Incident");
 
         mockMvc.perform(post("/api/status/page/incident")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -185,9 +189,8 @@ class StatusPageControllerTest {
     @Test
     public void testUpdateStatusPageIncident() throws Exception {
 
-        StatusPageIncident statusPageIncident = StatusPageIncident.builder()
-                .name("Update Incident")
-                .build();
+        StatusPageIncidentInfo statusPageIncident = new StatusPageIncidentInfo();
+        statusPageIncident.setName("Update Incident");
 
         mockMvc.perform(put("/api/status/page/incident")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -210,7 +213,7 @@ class StatusPageControllerTest {
     @Test
     public void testQueryStatusPageIncidentById() throws Exception {
 
-        StatusPageIncident incident = new StatusPageIncident();
+        StatusPageIncidentInfo incident = new StatusPageIncidentInfo();
         when(statusPageService.queryStatusPageIncident(1L)).thenReturn(incident);
 
         mockMvc.perform(get("/api/status/page/incident/1")

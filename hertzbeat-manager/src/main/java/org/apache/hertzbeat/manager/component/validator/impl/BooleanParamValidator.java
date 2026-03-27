@@ -17,9 +17,9 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.manager.component.validator.ParamValidator;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,7 +33,7 @@ public class BooleanParamValidator implements ParamValidator {
     }
 
     @Override
-    public void validate(ParamDefine paramDefine, Param param) {
+    public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
         String booleanValue = param.getParamValue();
         if (!"true".equalsIgnoreCase(booleanValue) && !"false".equalsIgnoreCase(booleanValue)) {
             throw new IllegalArgumentException("Params field " + paramDefine.getField() + " value "

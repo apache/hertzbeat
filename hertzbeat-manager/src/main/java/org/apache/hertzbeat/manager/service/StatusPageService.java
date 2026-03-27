@@ -19,10 +19,10 @@ package org.apache.hertzbeat.manager.service;
 
 import java.util.List;
 
-import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
-import org.apache.hertzbeat.common.entity.manager.StatusPageIncident;
-import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.apache.hertzbeat.manager.pojo.dto.ComponentStatus;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageComponentInfo;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageIncidentInfo;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageOrgInfo;
 import org.springframework.data.domain.Page;
 
 /**
@@ -35,35 +35,35 @@ public interface StatusPageService {
      *
      * @return status page organization
      */
-    StatusPageOrg queryStatusPageOrg();
+    StatusPageOrgInfo queryStatusPageOrg();
 
     /**
      * save status page organization.
      *
      * @return status page organization
      */
-    StatusPageOrg saveStatusPageOrg(StatusPageOrg statusPageOrg);
+    StatusPageOrgInfo saveStatusPageOrg(StatusPageOrgInfo statusPageOrg);
 
     /**
      * query status page components.
      *
      * @return status page components
      */
-    List<StatusPageComponent> queryStatusPageComponents();
+    List<StatusPageComponentInfo> queryStatusPageComponents();
 
     /**
      * save status page component.
      *
      * @param statusPageComponent status page component
      */
-    void newStatusPageComponent(StatusPageComponent statusPageComponent);
+    void newStatusPageComponent(StatusPageComponentInfo statusPageComponent);
 
     /**
      * update status page component.
      *
      * @param statusPageComponent status page component
      */
-    void updateStatusPageComponent(StatusPageComponent statusPageComponent);
+    void updateStatusPageComponent(StatusPageComponentInfo statusPageComponent);
 
     /**
      * delete status page component.
@@ -78,7 +78,7 @@ public interface StatusPageService {
      * @param id status page component id
      * @return status page component
      */
-    StatusPageComponent queryStatusPageComponent(long id);
+    StatusPageComponentInfo queryStatusPageComponent(long id);
 
     /**
      * query status page components status.
@@ -105,7 +105,7 @@ public interface StatusPageService {
      * @param pageSize  Number of list pages
      * @return The query results
      */
-    Page<StatusPageIncident> queryStatusPageIncidents(String search, Long startTime, Long endTime, int pageIndex, int pageSize);
+    Page<StatusPageIncidentInfo> queryStatusPageIncidents(String search, Long startTime, Long endTime, int pageIndex, int pageSize);
 
     /**
      * query status page incident.
@@ -113,21 +113,21 @@ public interface StatusPageService {
      * @param id status page incident id
      * @return status page incident
      */
-    StatusPageIncident queryStatusPageIncident(long id);
+    StatusPageIncidentInfo queryStatusPageIncident(long id);
 
     /**
      * save status page incident.
      *
      * @param statusPageIncident status page incident
      */
-    void newStatusPageIncident(StatusPageIncident statusPageIncident);
+    void newStatusPageIncident(StatusPageIncidentInfo statusPageIncident);
 
     /**
      * update status page incident.
      *
      * @param statusPageIncident status page incident
      */
-    void updateStatusPageIncident(StatusPageIncident statusPageIncident);
+    void updateStatusPageIncident(StatusPageIncidentInfo statusPageIncident);
 
     /**
      * delete status page incident.

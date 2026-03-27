@@ -17,8 +17,7 @@
 
 package org.apache.hertzbeat.grafana.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
@@ -76,8 +75,6 @@ public class DashboardService {
 
     @Autowired
     private GeneralConfigDao generalConfigDao;
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
      * Creates or updates a dashboard in Grafana.
@@ -275,7 +272,10 @@ public class DashboardService {
         try {
             GeneralConfig config = generalConfigDao.findByType(GeneralConfigTypeEnum.system.name());
             if (config != null && config.getContent() != null) {
-                JsonNode root = OBJECT_MAPPER.readTree(config.getContent());
+                JsonNode root = JsonUtil.fromJson(config.getContent());
+                if (root == null) {
+                    return ThemeEnum.LIGHT.getValue();
+                }
                 JsonNode node = root.get("theme");
                 if (node != null && !node.isNull()) {
                     return ThemeEnum.convert(node.asText());

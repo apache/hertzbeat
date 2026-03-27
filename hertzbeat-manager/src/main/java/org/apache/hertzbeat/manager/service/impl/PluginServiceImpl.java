@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.criteria.Predicate;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,14 +46,12 @@ import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.hertzbeat.common.constants.PluginType;
-import org.apache.hertzbeat.common.entity.dto.PluginUpload;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.manager.PluginItem;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
@@ -62,6 +61,8 @@ import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.PluginItemDao;
 import org.apache.hertzbeat.manager.dao.PluginMetadataDao;
 import org.apache.hertzbeat.manager.dao.PluginParamDao;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
+import org.apache.hertzbeat.manager.pojo.dto.PluginUpload;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.apache.hertzbeat.manager.service.PluginService;
@@ -180,7 +181,8 @@ public class PluginServiceImpl implements PluginService {
         if (PARAMS_CONFIG_MAP.containsKey(pluginMetadataId)) {
             PluginConfig config = PARAMS_CONFIG_MAP.get(pluginMetadataId);
             List<PluginParam> paramsByPluginMetadataId = pluginParamDao.findParamsByPluginMetadataId(pluginMetadataId);
-            pluginParametersVO.setParamDefines(Optional.ofNullable(config).map(PluginConfig::getParams).orElse(new ArrayList<>()));
+            pluginParametersVO.setParamDefines(Optional.ofNullable(config).map(PluginConfig::getParams)
+                    .orElse(new ArrayList<>()).stream().map(ParamDefineInfo::fromRuntime).toList());
             pluginParametersVO.setPluginParams(paramsByPluginMetadataId);
             return pluginParametersVO;
         }
@@ -488,6 +490,10 @@ public class PluginServiceImpl implements PluginService {
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 File file = new File(libDir, entry.getName());
+                String canonicalLibDir = libDir.getCanonicalPath() + File.separator;
+                if (!file.getCanonicalPath().startsWith(canonicalLibDir)) {
+                    throw new IOException("Zip Slip detected: " + entry.getName());
+                }
                 if (entry.isDirectory()) {
                     continue;
                 }

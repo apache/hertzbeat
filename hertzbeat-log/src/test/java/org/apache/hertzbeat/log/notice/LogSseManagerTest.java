@@ -26,7 +26,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -86,6 +89,24 @@ class LogSseManagerTest {
         await().atMost(500, TimeUnit.MILLISECONDS).untilAsserted(() -> 
             verify(mockEmitter, atLeastOnce()).send(any(SseEmitter.SseEventBuilder.class))
         );
+    }
+
+    @Test
+    void shouldSendBatchOnVirtualThread() throws IOException, InterruptedException {
+        SseEmitter mockEmitter = mock(SseEmitter.class);
+        AtomicBoolean virtualThread = new AtomicBoolean(false);
+        CountDownLatch latch = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            virtualThread.set(Thread.currentThread().isVirtual());
+            latch.countDown();
+            return null;
+        }).when(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
+        subscribeClient(CLIENT_ID, null, mockEmitter);
+
+        logSseManager.broadcast(createLogEntry("INFO", "virtual-thread-send"));
+
+        assertTrue(latch.await(1, TimeUnit.SECONDS));
+        assertTrue(virtualThread.get());
     }
 
     @Test
@@ -170,6 +191,16 @@ class LogSseManagerTest {
             verify(mockEmitter).complete();
             assertFalse(logSseManager.getEmitters().containsKey(CLIENT_ID));
         });
+    }
+
+    @Test
+    void shouldDropLogsWhenQueueSizeLimitReached() {
+        for (int i = 0; i < 10_001; i++) {
+            logSseManager.broadcast(createLogEntry("INFO", "log-" + i));
+        }
+
+        assertEquals(10_000, logSseManager.getQueueSize());
+        assertEquals(10_000, logSseManager.getLogQueue().size());
     }
 
     /**

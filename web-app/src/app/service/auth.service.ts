@@ -39,7 +39,22 @@ export class AuthService {
     return this.http.post<Message<any>>(`${account_auth_refresh_uri}`, body);
   }
 
-  public generateToken(): Observable<Message<any>> {
-    return this.http.post<Message<any>>(`${account_token}` + '/generate', {});
+  public generateToken(name?: string, expireSeconds?: number): Observable<Message<any>> {
+    let params: any = {};
+    if (name) {
+      params.name = name;
+    }
+    if (expireSeconds != null) {
+      params.expireSeconds = expireSeconds;
+    }
+    return this.http.post<Message<any>>(`${account_token}/generate`, {}, { params });
+  }
+
+  public listTokens(): Observable<Message<any>> {
+    return this.http.get<Message<any>>(`${account_token}`);
+  }
+
+  public deleteToken(id: number): Observable<Message<any>> {
+    return this.http.delete<Message<any>>(`${account_token}/${id}`);
   }
 }
