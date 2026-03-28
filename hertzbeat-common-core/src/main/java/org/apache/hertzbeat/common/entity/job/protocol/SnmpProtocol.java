@@ -17,11 +17,16 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * snmp Protocol configuration
@@ -31,6 +36,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SnmpProtocol implements CommonRequestProtocol, Protocol {
+    private static final String OPERATION_GET = "get";
+    private static final String OPERATION_WALK = "walk";
+
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
@@ -94,8 +102,50 @@ public class SnmpProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
+        if (!validateIpDomain(host) || !validPort(port) || StringUtils.isBlank(version)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(timeout) && !CommonUtil.isNumeric(timeout)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(operation)
+                && !OPERATION_GET.equalsIgnoreCase(operation)
+                && !OPERATION_WALK.equalsIgnoreCase(operation)) {
+            return true;
+        }
+        if (oids == null || oids.isEmpty()) {
+            return true;
+        }
+        for (Map.Entry<String, String> entry : oids.entrySet()) {
+            if (StringUtils.isAnyBlank(entry.getKey(), entry.getValue())) {
+                return true;
+            }
+        }
+        if (isVersion3()) {
+            return StringUtils.isAnyBlank(username, authPassphrase, privPassphrase);
+        }
+        if (!isVersion1Or2c()) {
+            return true;
+        }
+        return StringUtils.isBlank(community);
+    }
 
-        // todo: add
-        return true;
+    private boolean isVersion1Or2c() {
+        return isVersion1() || isVersion2c();
+    }
+
+    private boolean isVersion1() {
+        return "0".equalsIgnoreCase(version) || "v1".equalsIgnoreCase(version);
+    }
+
+    private boolean isVersion2c() {
+        return "1".equalsIgnoreCase(version)
+                || "2".equalsIgnoreCase(version)
+                || "2c".equalsIgnoreCase(version)
+                || "v2c".equalsIgnoreCase(version);
+    }
+
+    private boolean isVersion3() {
+        return "3".equalsIgnoreCase(version) || "v3".equalsIgnoreCase(version);
     }
 }
