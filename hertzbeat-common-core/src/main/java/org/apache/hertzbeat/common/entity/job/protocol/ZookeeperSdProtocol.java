@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Zookeeper service discovery protocol
@@ -37,8 +38,11 @@ public class ZookeeperSdProtocol implements Protocol{
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (StringUtils.isAnyBlank(url, pathPrefix)) {
+            return true;
+        }
+        return StringUtils.containsWhitespace(url)
+                || StringUtils.containsWhitespace(pathPrefix)
+                || !pathPrefix.startsWith("/");
     }
 }
