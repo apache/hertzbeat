@@ -24,6 +24,7 @@ export class ModelProviderConfig {
   baseUrl: string = '';
   model: string = '';
   apiKey!: string;
+  participationModel: string = 'PROTECTED';
 }
 
 export interface ProviderOption {
