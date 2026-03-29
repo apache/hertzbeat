@@ -24,6 +24,7 @@ import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.google.common.collect.Lists;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -49,14 +50,14 @@ public class NacosDiscoveryClient implements DiscoveryClient {
     @Override
     public ConnectConfig buildConnectConfig(RegistryProtocol registryProtocol) {
         return ConnectConfig.builder()
-                .host(registryProtocol.getHost())
-                .port(Integer.parseInt(registryProtocol.getPort()))
-                .username(registryProtocol.getUsername())
-                .password(registryProtocol.getPassword())
-                .namespace(registryProtocol.getNamespace())
-                .serviceName(registryProtocol.getServiceName())
-                .groupName(registryProtocol.getGroupName())
-                .build();
+            .host(registryProtocol.getHost())
+            .port(Integer.parseInt(registryProtocol.getPort()))
+            .username(registryProtocol.getUsername())
+            .password(registryProtocol.getPassword())
+            .namespace(registryProtocol.getNamespace())
+            .serviceName(registryProtocol.getServiceName())
+            .groupName(registryProtocol.getGroupName())
+            .build();
     }
 
     @Override
@@ -97,9 +98,9 @@ public class NacosDiscoveryClient implements DiscoveryClient {
         ServerInfo serverInfo;
         if (healthCheck()) {
             serverInfo = ServerInfo.builder()
-                    .address(localConnectConfig.getHost())
-                    .port(String.valueOf(localConnectConfig.getPort()))
-                    .build();
+                .address(localConnectConfig.getHost())
+                .port(String.valueOf(localConnectConfig.getPort()))
+                .build();
         } else {
             throw new RuntimeException("NamingService is not healthy");
         }
@@ -119,36 +120,36 @@ public class NacosDiscoveryClient implements DiscoveryClient {
         }
         List<ServiceInstance> serviceInstanceList = Lists.newArrayList();
         try {
-            List<String> services ;
-            if(StringUtils.hasText(localConnectConfig.getGroupName())) {
-              services = namingService.getServicesOfServer(0, 9999, localConnectConfig.getGroupName()).getData();
+            List<String> services;
+
+            if (StringUtils.hasText(localConnectConfig.getServiceName())) {
+                services = List.of(localConnectConfig.getServiceName());
+            } else if (StringUtils.hasText(localConnectConfig.getGroupName())) {
+                services = namingService.getServicesOfServer(0, 9999, localConnectConfig.getGroupName()).getData();
             } else {
-              services = namingService.getServicesOfServer(0, 9999).getData();
+                services = namingService.getServicesOfServer(0, 9999).getData();
             }
 
             for (String serviceName : services) {
-                if(StringUtils.hasText(localConnectConfig.getServiceName())&&!serviceName.equals(localConnectConfig.getServiceName())){
-                    continue;
-                }
                 List<Instance> instances;
-                if(StringUtils.hasText(localConnectConfig.getGroupName())){
+                if (StringUtils.hasText(localConnectConfig.getGroupName())) {
                     instances = namingService.getAllInstances(serviceName, localConnectConfig.getGroupName());
-                }else{
+                } else {
                     instances = namingService.getAllInstances(serviceName);
                 }
 
                 instances.forEach(instance ->
-                        serviceInstanceList.add(ServiceInstance.builder()
-                                .serviceId(instance.getInstanceId())
-                                .serviceName(instance.getServiceName())
-                                .address(instance.getIp())
-                                .weight(instance.getWeight())
-                                .metadata(instance.getMetadata())
-                                .port(instance.getPort())
-                                .healthStatus(instance.isHealthy()
-                                        ? DiscoveryClientHealthStatus.UP
-                                        : DiscoveryClientHealthStatus.DOWN)
-                                .build()));
+                    serviceInstanceList.add(ServiceInstance.builder()
+                        .serviceId(instance.getInstanceId())
+                        .serviceName(instance.getServiceName())
+                        .address(instance.getIp())
+                        .weight(instance.getWeight())
+                        .metadata(instance.getMetadata())
+                        .port(instance.getPort())
+                        .healthStatus(instance.isHealthy()
+                            ? DiscoveryClientHealthStatus.UP
+                            : DiscoveryClientHealthStatus.DOWN)
+                        .build()));
             }
         } catch (NacosException e) {
             throw new RuntimeException("Failed to fetch instance info");
