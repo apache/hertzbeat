@@ -22,10 +22,13 @@ package org.apache.hertzbeat.collector.collect.registry.discovery.impl;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
+import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.google.common.collect.Lists;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.registry.constant.DiscoveryClientHealthStatus;
 import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClient;
@@ -33,6 +36,7 @@ import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ConnectC
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServerInfo;
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServiceInstance;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
+import org.springframework.util.StringUtils;
 
 /**
  * DiscoveryClient impl of Nacos
@@ -47,6 +51,11 @@ public class NacosDiscoveryClient implements DiscoveryClient {
         return ConnectConfig.builder()
                 .host(registryProtocol.getHost())
                 .port(Integer.parseInt(registryProtocol.getPort()))
+                .username(registryProtocol.getUsername())
+                .password(registryProtocol.getPassword())
+                .namespace(registryProtocol.getNamespace())
+                .serviceName(registryProtocol.getServiceName())
+                .groupName(registryProtocol.getGroupName())
                 .build();
     }
 
@@ -55,7 +64,20 @@ public class NacosDiscoveryClient implements DiscoveryClient {
         try {
 
             localConnectConfig = connectConfig;
-            namingService = NamingFactory.createNamingService(connectConfig.getHost() + ":" + connectConfig.getPort());
+            Properties properties = new Properties();
+            properties.put("serverAddr", connectConfig.getHost() + ":" + connectConfig.getPort());
+
+            if (StringUtils.hasText(connectConfig.getUsername())) {
+                properties.put("username", connectConfig.getUsername());
+            }
+            if (StringUtils.hasText(connectConfig.getPassword())) {
+                properties.put("password", connectConfig.getPassword());
+            }
+            if (StringUtils.hasText(connectConfig.getNamespace())) {
+                properties.put("namespace", connectConfig.getNamespace());
+            }
+
+            namingService = NamingFactory.createNamingService(properties);
 
             // Perform a synchronous probe to verify connectivity eagerly,
             // because NamingFactory.createNamingService() establishes the TCP
@@ -97,8 +119,25 @@ public class NacosDiscoveryClient implements DiscoveryClient {
         }
         List<ServiceInstance> serviceInstanceList = Lists.newArrayList();
         try {
-            for (String serviceName : namingService.getServicesOfServer(0, 9999).getData()) {
-                namingService.getAllInstances(serviceName).forEach(instance ->
+            List<String> services ;
+            if(StringUtils.hasText(localConnectConfig.getGroupName())) {
+              services = namingService.getServicesOfServer(0, 9999, localConnectConfig.getGroupName()).getData();
+            } else {
+              services = namingService.getServicesOfServer(0, 9999).getData();
+            }
+
+            for (String serviceName : services) {
+                if(StringUtils.hasText(localConnectConfig.getServiceName())&&!serviceName.equals(localConnectConfig.getServiceName())){
+                    continue;
+                }
+                List<Instance> instances;
+                if(StringUtils.hasText(localConnectConfig.getGroupName())){
+                    instances = namingService.getAllInstances(serviceName, localConnectConfig.getGroupName());
+                }else{
+                    instances = namingService.getAllInstances(serviceName);
+                }
+
+                instances.forEach(instance ->
                         serviceInstanceList.add(ServiceInstance.builder()
                                 .serviceId(instance.getInstanceId())
                                 .serviceName(instance.getServiceName())

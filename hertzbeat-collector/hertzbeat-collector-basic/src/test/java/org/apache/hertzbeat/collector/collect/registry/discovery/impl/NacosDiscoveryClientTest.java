@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import org.apache.hertzbeat.collector.collect.registry.constant.DiscoveryClientHealthStatus;
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ConnectConfig;
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServerInfo;
@@ -77,6 +78,11 @@ class NacosDiscoveryClientTest {
         RegistryProtocol protocol = RegistryProtocol.builder()
                 .host(HOST)
                 .port(String.valueOf(PORT))
+                .username("test-user")
+                .password("test-pass")
+                .namespace("test-namespace")
+                .serviceName("test-service")
+                .groupName("test-group")
                 .build();
 
         ConnectConfig config = nacosDiscoveryClient.buildConnectConfig(protocol);
@@ -84,6 +90,11 @@ class NacosDiscoveryClientTest {
         assertNotNull(config);
         assertEquals(HOST, config.getHost());
         assertEquals(PORT, config.getPort());
+        assertEquals("test-user", config.getUsername());
+        assertEquals("test-pass", config.getPassword());
+        assertEquals("test-namespace", config.getNamespace());
+        assertEquals("test-service", config.getServiceName());
+        assertEquals("test-group", config.getGroupName());
     }
 
     @Test
@@ -91,7 +102,7 @@ class NacosDiscoveryClientTest {
         ConnectConfig config = ConnectConfig.builder().host(HOST).port(PORT).build();
 
         try (MockedStatic<NamingFactory> mockedFactory = Mockito.mockStatic(NamingFactory.class)) {
-            mockedFactory.when(() -> NamingFactory.createNamingService(HOST + ":" + PORT))
+            mockedFactory.when(() -> NamingFactory.createNamingService(any(Properties.class)))
                     .thenReturn(namingService);
             ListView<String> emptyView = new ListView<>();
             emptyView.setData(Collections.emptyList());
@@ -99,17 +110,17 @@ class NacosDiscoveryClientTest {
 
             nacosDiscoveryClient.initClient(config);
 
-            mockedFactory.verify(() -> NamingFactory.createNamingService(HOST + ":" + PORT));
+            mockedFactory.verify(() -> NamingFactory.createNamingService(any(Properties.class)));
             verify(namingService).getServicesOfServer(0, 1);
         }
     }
 
     @Test
-    void testInitClientFailedOnCreate() throws NacosException {
+    void testInitClientFailedOnCreate() {
         ConnectConfig config = ConnectConfig.builder().host(HOST).port(PORT).build();
 
         try (MockedStatic<NamingFactory> mockedFactory = Mockito.mockStatic(NamingFactory.class)) {
-            mockedFactory.when(() -> NamingFactory.createNamingService(anyString()))
+            mockedFactory.when(() -> NamingFactory.createNamingService(any(Properties.class)))
                     .thenThrow(new NacosException(500, "connection refused"));
 
             assertThrows(RuntimeException.class, () -> nacosDiscoveryClient.initClient(config));
@@ -121,7 +132,7 @@ class NacosDiscoveryClientTest {
         ConnectConfig config = ConnectConfig.builder().host(HOST).port(PORT).build();
 
         try (MockedStatic<NamingFactory> mockedFactory = Mockito.mockStatic(NamingFactory.class)) {
-            mockedFactory.when(() -> NamingFactory.createNamingService(anyString()))
+            mockedFactory.when(() -> NamingFactory.createNamingService(any(Properties.class)))
                     .thenReturn(namingService);
             when(namingService.getServicesOfServer(0, 1))
                     .thenThrow(new NacosException(500, "host unreachable"));
