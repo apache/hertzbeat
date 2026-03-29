@@ -39,7 +39,7 @@ jobs:
           python-version: '3.8'
 
       - name: Check Markdown
-        uses: DavidAnson/markdownlint-cli2-action@992badcdf24e3b8eb7e87ff9287fe931bcb00c6e
+        uses: DavidAnson/markdownlint-cli2-action@07035fd053f7be764496c0f8d8f9f41f98305101
         with:
           globs: './home/**/*.md'
 
