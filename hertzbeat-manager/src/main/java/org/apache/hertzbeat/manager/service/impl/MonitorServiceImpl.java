@@ -382,13 +382,6 @@ public class MonitorServiceImpl implements MonitorService {
             labelDao.saveAll(addLabels);
         }
 
-        // Construct the collection task Job entity
-        boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
-            || !StringUtils.hasText(monitor.getScrape());
-        if (!isStatic) {
-            monitor.setInstance("unknow");
-        }
-
         String instance = monitor.getInstance();
         // The port field may be null
         Param portParam = params.stream()
@@ -403,6 +396,8 @@ public class MonitorServiceImpl implements MonitorService {
         }
         monitor.setInstance(instance);
 
+        boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
+                || !StringUtils.hasText(monitor.getScrape());
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
             String app = isStatic ? monitor.getApp() : monitor.getScrape();
