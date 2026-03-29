@@ -52,7 +52,18 @@ public class NacosSdProtocol implements Protocol {
      * Nacos password for authentication
      */
     private String password;
-    
+
+    /**
+     * Nacos Service Name;
+     */
+    private String serviceName;
+
+    /**
+     * Nacos Group Name;
+     */
+
+    private String groupName;
+
     /**
      * Check if the essential protocol parameters are invalid
      * @return true if essential parameters are missing
