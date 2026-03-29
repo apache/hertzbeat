@@ -59,6 +59,42 @@ params:
   - field: __nacos_sd_namespace__
     name:
       zh-CN: Nacos 服务发现 Namespace
+      en-US: Nacos Service Discovery Name Space
+      ja-JP: 名前空間
+    type: text
+    required: false
+  - field: __nacos_sd_groupName__
+    name:
+      zh-CN: Nacos 服务发现 Group Name
+      en-US: Nacos Service Discovery Group Name
+      ja-JP: グループ名
+    type: text
+    required: false
+  - field: __nacos_sd_serviceName__
+    name:
+      zh-CN: Nacos 服务发现 Service Name
+      en-US: Nacos Service Discovery Service Name
+      ja-JP: サービス名
+    type: text
+    required: false
+
+  - field: __nacos_sd_username__
+    name:
+      zh-CN: Nacos 服务发现 Username
+      en-US: Nacos Service Discovery User Name
+      ja-JP: ユーザー名
+    type: text
+    required: false
+  - field: __nacos_sd_password__
+    name:
+      zh-CN: Nacos 服务发现 Password
+      en-US: Nacos Service Discovery Password
+      ja-JP: パスワード
+    type: password
+    required: false
+  - field: __nacos_sd_namespace__
+    name:
+      zh-CN: Nacos 服务发现 Namespace
       en-US: Nacos Service Discovery Namespace
       ja-JP: 名前空間
     type: text
