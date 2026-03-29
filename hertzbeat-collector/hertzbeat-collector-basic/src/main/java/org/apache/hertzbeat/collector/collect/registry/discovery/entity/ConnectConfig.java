@@ -32,4 +32,9 @@ import lombok.Data;
 public class ConnectConfig {
     private String host;
     private int port;
+    private String username;
+    private String password;
+    private String namespace;
+    private String serviceName;
+    private String groupName;
 }
