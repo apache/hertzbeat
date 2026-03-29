@@ -59,7 +59,7 @@ params:
   - field: __nacos_sd_namespace__
     name:
       zh-CN: Nacos 服务发现 Namespace
-      en-US: Nacos Service Discovery Name Space
+      en-US: Nacos Service Discovery Namespace
       ja-JP: 名前空間
     type: text
     required: false
