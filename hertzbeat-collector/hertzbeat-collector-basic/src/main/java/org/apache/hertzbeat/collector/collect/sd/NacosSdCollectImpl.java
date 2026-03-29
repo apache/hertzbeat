@@ -62,6 +62,11 @@ public class NacosSdCollectImpl extends AbstractCollect {
         RegistryProtocol registryProtocol = RegistryProtocol.builder()
                 .host(metrics.getNacos_sd().getHost())
                 .port(metrics.getNacos_sd().getPort())
+                .username(metrics.getNacos_sd().getUsername())
+                .password(metrics.getNacos_sd().getPassword())
+                .namespace(metrics.getNacos_sd().getNamespace())
+                .groupName(metrics.getNacos_sd().getGroupName())
+                .serviceName(metrics.getNacos_sd().getServiceName())
                 .discoveryClientTypeName(DiscoveryClientInstance.NACOS.name())
                 .build();
 
