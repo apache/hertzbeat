@@ -172,7 +172,7 @@ public class MonitorServiceImpl implements MonitorService {
         Job appDefine = appService.getAppDefine(app);
         if (!isStatic) {
             appDefine.setSd(true);
-            monitor.setInstance("unknow");
+            monitor.setInstance("unknown");
         }
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
             appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
@@ -384,8 +384,8 @@ public class MonitorServiceImpl implements MonitorService {
 
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
             || !StringUtils.hasText(monitor.getScrape());
-        if (!isStatic) {
-            monitor.setInstance("unknow");
+        if (!isStatic && !StringUtils.hasText(monitor.getInstance())) {
+            monitor.setInstance("unknown");
         }
 
         String instance = monitor.getInstance();
@@ -397,9 +397,11 @@ public class MonitorServiceImpl implements MonitorService {
         String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
                 ? ""
                 : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-        if (Objects.nonNull(instance)) {
+        if (Objects.nonNull(instance)&&!IpDomainUtil.isHasPortWithMark(instance)) {
             instance = instance + portWithMark;
         }
+
+
         monitor.setInstance(instance);
 
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
