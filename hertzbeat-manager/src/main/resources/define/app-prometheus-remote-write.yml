@@ -1,0 +1,206 @@
+# HertzBeat monitoring template: Prometheus Remote Write / Remote Read endpoint
+#
+# Contribution for apache/hertzbeat Issue #1945:
+# "Historical data storage supports Prometheus remote write and remote read protocols"
+# https://github.com/apache/hertzbeat/issues/1945
+#
+# This template monitors the health, throughput, and error rate of a Prometheus
+# Remote Write receiver endpoint (e.g. Thanos Receive, Cortex, Mimir, VictoriaMetrics).
+# Uses HTTP collection with parseType: prometheus, consistent with HertzBeat architecture.
+#
+# Usage: place in hertzbeat-manager/src/main/resources/define/app-prometheus-remote-write.yml
+
+category: mid
+app: prometheus_remote_write
+name:
+  zh-CN: Prometheus Remote Write Receiver
+  en-US: Prometheus Remote Write Receiver
+params:
+  - field: host
+    name:
+      zh-CN: Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: Port
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9090
+  - field: metricsPath
+    name:
+      zh-CN: Metrics Path
+      en-US: Metrics Path
+    type: text
+    required: false
+    defaultValue: /metrics
+  - field: ssl
+    name:
+      zh-CN: Enable HTTPS
+      en-US: Enable HTTPS
+    type: boolean
+    required: false
+
+metrics:
+  - name: availability
+    i18n:
+      zh-CN: Availability
+      en-US: Availability
+    priority: 0
+    fields:
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: Response Time
+          en-US: Response Time
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: Status
+          en-US: Status
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^metricsPath^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: default
+
+  - name: remote_write_throughput
+    i18n:
+      zh-CN: Remote Write Throughput
+      en-US: Remote Write Throughput
+    priority: 1
+    fields:
+      - field: samples_total
+        type: 0
+        unit: samples
+        i18n:
+          zh-CN: Samples Written Total
+          en-US: Samples Written Total
+      - field: requests_total
+        type: 0
+        unit: requests
+        i18n:
+          zh-CN: Requests Total
+          en-US: Requests Total
+      - field: failed_requests_total
+        type: 0
+        unit: requests
+        i18n:
+          zh-CN: Failed Requests
+          en-US: Failed Requests
+      - field: error_rate
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: Error Rate
+          en-US: Error Rate
+    aliasFields:
+      - prometheus_remote_storage_samples_total
+      - prometheus_remote_storage_sent_batch_duration_seconds_count
+      - prometheus_remote_storage_failed_samples_total
+    calculates:
+      - samples_total=prometheus_remote_storage_samples_total
+      - requests_total=prometheus_remote_storage_sent_batch_duration_seconds_count
+      - failed_requests_total=prometheus_remote_storage_failed_samples_total
+      - error_rate=(prometheus_remote_storage_failed_samples_total / prometheus_remote_storage_samples_total) * 100
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^metricsPath^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: prometheus
+
+  - name: remote_write_latency
+    i18n:
+      zh-CN: Remote Write Latency
+      en-US: Remote Write Latency
+    priority: 2
+    fields:
+      - field: send_duration_p50_ms
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: P50 Send Duration
+          en-US: P50 Send Duration
+      - field: send_duration_p95_ms
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: P95 Send Duration
+          en-US: P95 Send Duration
+      - field: send_duration_p99_ms
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: P99 Send Duration
+          en-US: P99 Send Duration
+    aliasFields:
+      - prometheus_remote_storage_sent_batch_duration_seconds{quantile="0.5"}
+      - prometheus_remote_storage_sent_batch_duration_seconds{quantile="0.95"}
+      - prometheus_remote_storage_sent_batch_duration_seconds{quantile="0.99"}
+    calculates:
+      - send_duration_p50_ms=prometheus_remote_storage_sent_batch_duration_seconds{quantile="0.5"} * 1000
+      - send_duration_p95_ms=prometheus_remote_storage_sent_batch_duration_seconds{quantile="0.95"} * 1000
+      - send_duration_p99_ms=prometheus_remote_storage_sent_batch_duration_seconds{quantile="0.99"} * 1000
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^metricsPath^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: prometheus
+
+  - name: wal_health
+    i18n:
+      zh-CN: WAL Health
+      en-US: WAL Health
+    priority: 3
+    fields:
+      - field: wal_segment_current
+        type: 0
+        i18n:
+          zh-CN: Current WAL Segment
+          en-US: Current WAL Segment
+      - field: wal_corruptions_total
+        type: 0
+        i18n:
+          zh-CN: WAL Corruptions Total
+          en-US: WAL Corruptions Total
+      - field: queue_length
+        type: 0
+        i18n:
+          zh-CN: Queue Length
+          en-US: Queue Length
+      - field: queue_capacity
+        type: 0
+        i18n:
+          zh-CN: Queue Capacity
+          en-US: Queue Capacity
+    aliasFields:
+      - prometheus_tsdb_wal_segment_current
+      - prometheus_tsdb_wal_corruptions_total
+      - prometheus_remote_storage_queue_highest_sent_timestamp_seconds
+      - prometheus_remote_storage_shard_capacity
+    calculates:
+      - wal_segment_current=prometheus_tsdb_wal_segment_current
+      - wal_corruptions_total=prometheus_tsdb_wal_corruptions_total
+      - queue_length=prometheus_remote_storage_queue_highest_sent_timestamp_seconds
+      - queue_capacity=prometheus_remote_storage_shard_capacity
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^metricsPath^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: prometheus
