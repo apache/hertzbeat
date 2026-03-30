@@ -15,17 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.ai.pojo.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 /**
- * Base class for all protocols
+ * security data
  */
-public interface Protocol {
+@Data
+public class SecurityData {
 
-    /**
-     * Check Protocol params valid.
-     * @return True or False.
-     */
-    boolean isInvalid();
+    @NotNull
+    @Schema(description = "Conversation ID", example = "123")
+    private Long conversationId;
+
+    @NotNull
+    @Schema(description = "security data", example = "{\"password\":\"xxxxx\"}")
+    private String securityData;
 
 }
