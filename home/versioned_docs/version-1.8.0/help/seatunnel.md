@@ -7,7 +7,7 @@ keywords: [ Open Source Monitoring System, Monitor SeaTunnel ]
 
 > Collect monitoring metrics for SeaTunnel.
 
-### Configuration Parameters
+## Configuration Parameters
 
 | Parameter Name    | Parameter Help Description                                                                                      |
 |-------------------|-----------------------------------------------------------------------------------------------------------------|

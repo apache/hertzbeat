@@ -15,7 +15,7 @@ VictoriaMetrics is a fast, cost-effective and scalable monitoring solution and t
 
 > If you already have a VictoriaMetrics environment, you can skip directly to the YML configuration step.
 
-### Install VictoriaMetrics via Docker
+## Install VictoriaMetrics via Docker
 
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).

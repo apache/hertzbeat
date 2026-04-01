@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool, open source alerter, open source Huawei
 
 > Send an alarm message after the threshold is triggered, and notify the recipient through the Huawei Cloud SMN.
 
-### 操作步骤
+## 操作步骤
 
 1. **According to [Huawei Cloud SMN Official Document](https://support.huaweicloud.com/qs-smn/smn_json.html) activate the SMN service and configure SMN**
 

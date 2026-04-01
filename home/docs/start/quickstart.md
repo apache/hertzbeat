@@ -31,7 +31,7 @@ HertzBeat provides multiple installation options:
 
 ## Installation Instructions
 
-##### 1：Install quickly via docker
+### 1：Install quickly via docker
 
 1. Just one command to get started:
 
@@ -52,7 +52,7 @@ HertzBeat provides multiple installation options:
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
-##### 2：Install via package
+#### 2：Install via package
 
 1. Download the release package `apache-hertzbeat-xx-bin.tar.gz` [Download Page](https://hertzbeat.apache.org/docs/download)
 2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
@@ -108,6 +108,7 @@ Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hert
 ### What are HertzBeat's system requirements?
 
 **Minimum Requirements:**
+
 - 2 CPU cores
 - 4GB RAM
 - 10GB disk space
@@ -123,7 +124,7 @@ Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hert
 ### How do I verify HertzBeat is running?
 
 1. Check container status: `docker ps | grep hertzbeat`
-2. Access web UI: http://localhost:1157
+2. Access web UI: <http://localhost:1157>
 3. Login with: admin/hertzbeat
 
 ### Can I change the default password?
@@ -133,6 +134,7 @@ Yes. After first login, navigate to Settings → Account Management to change th
 ### How do I upgrade HertzBeat?
 
 **Docker upgrade:**
+
 ```bash
 docker stop hertzbeat
 docker rm hertzbeat
@@ -143,6 +145,7 @@ docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
 ### What database does HertzBeat use?
 
 HertzBeat uses H2 embedded database by default. For production, configure external databases:
+
 - **Metadata:** MySQL, PostgreSQL
 - **Time-series data:** VictoriaMetrics, IoTDB, TDengine, InfluxDB
 
@@ -156,8 +159,8 @@ HertzBeat uses H2 embedded database by default. For production, configure extern
 
 ### Where can I get help?
 
-- **Documentation:** https://hertzbeat.apache.org/docs/
-- **GitHub Issues:** https://github.com/apache/hertzbeat/issues
-- **Community:** https://hertzbeat.apache.org/docs/community/contact
+- **Documentation:** <https://hertzbeat.apache.org/docs/>
+- **GitHub Issues:** <https://github.com/apache/hertzbeat/issues>
+- **Community:** <https://hertzbeat.apache.org/docs/community/contact>
 
 **HAVE FUN**

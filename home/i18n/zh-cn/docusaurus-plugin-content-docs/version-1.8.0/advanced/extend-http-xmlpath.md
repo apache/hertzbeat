@@ -10,7 +10,7 @@ sidebar_label: XmlPath 解析方法
 
 **使用 XPath 脚本将响应数据解析为符合 HertzBeat 指定的数据结构规则的数据。**
 
-### XmlPath 解析逻辑
+## XmlPath 解析逻辑
 
 HertzBeat 中的 XmlPath 解析方法使用两步 XPath 处理：
 

@@ -5,10 +5,10 @@ sidebar_label: OpenAI Account Status
 keywords: [open source monitoring system, open source network monitoring, OpenAI account monitoring]
 ---
 
-### Preparation
+## Preparation
 
-#### Obtain Session Key
-
+### Obtain Session Key
+>
 > 1. Open Chrome browser's network request interface
 >    `Mac: cmd + option + i`
 >    `Windows: ctrl + shift + i`

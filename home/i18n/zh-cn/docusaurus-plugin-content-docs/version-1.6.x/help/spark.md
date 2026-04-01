@@ -9,7 +9,7 @@ keywords: [开源监控工具，开源Java spark监控工具，监控spark指标
 
 **使用协议：JMX**
 
-### Spark App启用JMX协议步骤
+## Spark App启用JMX协议步骤
 
 1. 应用启动时添加Spark参数 ⚠️注意可自定义暴露端口,对外IP
 

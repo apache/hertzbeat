@@ -10,7 +10,7 @@ import TabItem from '@theme/TabItem';
 
 This page explains how connect to the HertzBeat MCP server. The MCP server auto starts on the default port 1157 when you start the HertzBeat server.
 
-### Overview
+## Overview
 
 - Provides Streamable-Http protocol MCP server.
 - Intended for MCP integrations and clients that consume streaming events.

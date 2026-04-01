@@ -5,8 +5,8 @@ sidebar_label: LM Studio
 keywords: [ 开源监控系统, 开源网络监控, LM Studio监控, 本地大模型监控 ]
 ---
 
-### 准备工作
-
+## 准备工作
+>
 > 确保 LM Studio 服务已启动并开启了 REST API。
 > 默认情况下，LM Studio 监听 `localhost:1234`。
 

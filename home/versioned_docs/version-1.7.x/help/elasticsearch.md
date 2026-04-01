@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool, monitoring ElasticSearch metrics ]
 
 > Collect and monitor the general performance Metrics of ElasticSearch
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|

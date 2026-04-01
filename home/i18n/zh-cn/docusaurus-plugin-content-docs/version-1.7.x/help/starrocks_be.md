@@ -9,7 +9,7 @@ keywords: [开源监控系统, 开源数据库监控, StarRocks数据库BE监控
 
 **使用协议：HTTP**
 
-### 监控前操作
+## 监控前操作
 
 查看 `be/conf/be.conf` 文件，获取 `http_port` 配置项的值，该值用作监控使用。
 

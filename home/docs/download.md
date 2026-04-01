@@ -12,6 +12,7 @@ Download the latest Apache HertzBeat™ release (v1.8.0) as server binary, colle
 **Latest Version:** v1.8.0 (Released: February 5, 2026)
 
 **Quick Download:**
+
 - [Server Binary](https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-bin.tar.gz)
 - [Collector Binary](https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-collector-1.8.0-bin.tar.gz)
 - [Source Code](https://www.apache.org/dyn/closer.lua/hertzbeat/1.8.0/apache-hertzbeat-1.8.0-src.tar.gz)
@@ -82,12 +83,14 @@ Import Apache HertzBeat KEYS first: `wget https://downloads.apache.org/hertzbeat
 ### What are the system requirements?
 
 **Server Binary Requirements:**
+
 - Java 25 or higher
 - 4GB RAM minimum (8GB recommended)
 - 2 CPU cores minimum
 - 20GB disk space
 
 **Collector Binary Requirements:**
+
 - Java 25 or higher
 - 2GB RAM minimum
 - 1 CPU core minimum
@@ -98,6 +101,7 @@ Native collector packages are published per target platform, while the JVM colle
 ### Can I use Docker instead of binary packages?
 
 Yes. Docker is the recommended installation method:
+
 ```bash
 docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
 ```
@@ -110,7 +114,7 @@ cd apache-hertzbeat-1.8.0
 ./bin/startup.sh
 ```
 
-Access web UI at http://localhost:1157 with credentials admin/hertzbeat
+Access web UI at `http://localhost:1157` with credentials admin/hertzbeat
 
 ### What's the difference between releases?
 
@@ -120,7 +124,7 @@ Each release includes bug fixes, security patches, and new features. The release
 
 ### Where can I find old versions?
 
-Previous versions are archived at https://archive.apache.org/dist/incubator/hertzbeat/
+Previous versions are archived at [https://archive.apache.org/dist/incubator/hertzbeat/](https://archive.apache.org/dist/incubator/hertzbeat/)
 
 ### How often are new versions released?
 

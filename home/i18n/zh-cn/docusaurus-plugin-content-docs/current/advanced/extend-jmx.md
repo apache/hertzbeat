@@ -7,7 +7,7 @@ sidebar_label: JMX协议自定义监控
 > 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用JMX协议自定义指标监控。
 > JMX协议自定义监控可以让我们很方便的通过配置 JMX Mbean Object 就能监控采集到我们想监控的 Mbean 指标
 
-### JMX协议采集流程
+## JMX协议采集流程
 
 【**对端JAVA应用暴露JMX服务**】->【**HertzBeat直连对端JMX服务**】->【**获取配置的 Mbean Object 数据**】->【**指标数据提取**】
 

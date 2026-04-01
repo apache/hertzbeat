@@ -16,8 +16,8 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
 
 > If you already have an IoTDB environment, you can skip directly to the YML configuration step.
 
-### Install IoTDB via Docker
-
+## Install IoTDB via Docker
+>
 > Refer to the official website [installation tutorial](https://iotdb.apache.org/UserGuide/V0.13.x/QuickStart/WayToGetIoTDB.html)
 
 1. Download and install Docker environment

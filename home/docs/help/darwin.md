@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source os monitoring tool, monitori
 
 > Collect and monitor the general performance Metrics of darwin operating system.
 
-### Configuration parameter
+## Configuration parameter
 
 | Parameter Name        | Parameter Help Description                                                                                                                                                            |
 |-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

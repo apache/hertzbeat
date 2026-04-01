@@ -15,7 +15,7 @@ message to a topic (if the test message parameter is empty, this check will not 
 Please ensure that these operations will not affect your system.
 :::
 
-### Configuration Parameters
+## Configuration Parameters
 
 | Parameter Name         | Parameter Description                                                                                                              |
 |------------------------|------------------------------------------------------------------------------------------------------------------------------------|

@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 
 > Collect and monitor the general performance Metrics of MongoDB database.
 
-### Configuration parameter
+## Configuration parameter
 
 |     Parameter name     |                                               Parameter help description                                                |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------|

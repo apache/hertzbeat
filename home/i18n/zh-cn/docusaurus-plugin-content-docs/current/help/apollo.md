@@ -7,7 +7,7 @@ keywords: [ 开源监控系统, 开源中间件监控, Apollo配置中心监控 
 
 > 通过调用 Apollo配置中心 Prometheus 接口对 Apollo配置中心服务的通用指标进行采集监控。
 
-### 前置条件
+## 前置条件
 
 1. 按照[部署文档](https://www.apolloconfig.com/#/en/deployment/quick-start)搭建好Apollo配置中心。
 2. 访问```http://${someIp:somePort}/prometheus```，查看是否能访问到metrics数据。

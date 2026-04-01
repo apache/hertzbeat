@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool, monitoring Apache RocketMQ metrics ]
 
 > Monitor the broker, consumer and other related metrics of RocketMQ.
 
-### Configuration parameters
+## Configuration parameters
 
 |   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|

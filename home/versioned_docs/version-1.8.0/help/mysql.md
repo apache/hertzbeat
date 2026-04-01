@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of MySQL database. Support MYSQL5+.
 
-### Attention, Need Add MYSQL jdbc driver jar
+## Attention, Need Add MYSQL jdbc driver jar
 
 - Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.4.0.jar. [https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.4.0](https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.4.0)
 - It is recommended that you use the latest available mysql-connector-java version as there are regular security fixes to JDBC drivers.

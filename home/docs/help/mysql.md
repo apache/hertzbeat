@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of MySQL database. Support MYSQL5+.
 
-### Driver selection
+## Driver selection
 
 HertzBeat now supports two MySQL query paths:
 

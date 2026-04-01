@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance metrics of the DM database. DM8+ is supported.
 
-### Configuration parameters
+## Configuration parameters
 
 |   Parameter name    |                                                                     Parameter help description                                                                     |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|

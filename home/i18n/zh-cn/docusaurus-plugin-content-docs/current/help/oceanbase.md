@@ -7,7 +7,7 @@ keywords: [开源监控系统, 开源数据库监控, OceanBase 数据库监控]
 
 > 对 OceanBase 数据库的通用性能指标进行采集监控。支持 OceanBase 4.0+。
 
-### 驱动选择
+## 驱动选择
 
 OceanBase 现在和 MySQL 兼容查询路径一样会自动分流：
 

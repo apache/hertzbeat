@@ -5,7 +5,7 @@ sidebar_label: InfluxDB Database
 keywords: [open source monitoring system, open source database monitoring, InfluxDB database monitoring]
 ---
 
-### Configuration Parameters
+## Configuration Parameters
 
 |   Parameter Name    |                                                        Parameter Description                                                        |
 |---------------------|-------------------------------------------------------------------------------------------------------------------------------------|

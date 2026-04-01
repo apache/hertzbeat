@@ -7,9 +7,9 @@ keywords: [开源监控系统, 中间件监控, Nacos分布式监控]
 
 > 通过调用 Nacos Metrics 接口对 Nacos 注册配置中心服务的通用指标进行采集监控。
 
-### 监控前操作
+## 监控前操作
 
-#### 搭建Nacos集群暴露metrics数据
+### 搭建Nacos集群暴露metrics数据
 
 1. 按照[部署文档](https://nacos.io/zh-cn/docs/deployment.html)搭建好Nacos集群。
 2. 配置application.properties文件，暴露metrics数据。

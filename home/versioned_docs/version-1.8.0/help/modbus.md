@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool, Modbus monitoring ]
 
 > The response of Modbus service and other related indicators are monitored.
 
-### Configuration Parameters
+## Configuration Parameters
 
 | Parameter Name           | Parameter Help Description                                                                                                                 |
 |--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|

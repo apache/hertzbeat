@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source linux ubuntu monitoring tool
 
 > Collect and monitor the general performance Metrics of Ubuntu operating system.
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
