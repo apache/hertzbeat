@@ -21,7 +21,7 @@ HertzBeat notification templates are based on FreeMarker syntax, supporting vari
 
 ### GroupAlert Structure Fields
 
-[GroupAlert Definition](https://github.com/apache/hertzbeat/blob/master/hertzbeat-common/src/main/java/org/apache/hertzbeat/common/entity/alerter/GroupAlert.java)
+[GroupAlert Definition](https://github.com/apache/hertzbeat/blob/master/hertzbeat-common-spring/src/main/java/org/apache/hertzbeat/common/entity/alerter/GroupAlert.java)
 
 - `id`：Primary key of the alert group
 - `groupKey`： Unique identifier for the group
@@ -35,7 +35,7 @@ HertzBeat notification templates are based on FreeMarker syntax, supporting vari
 
 ### SingleAlert Structure Fields
 
-[SingleAlert Definition](https://github.com/apache/hertzbeat/blob/master/hertzbeat-common/src/main/java/org/apache/hertzbeat/common/entity/alerter/SingleAlert.java)
+[SingleAlert Definition](https://github.com/apache/hertzbeat/blob/master/hertzbeat-common-spring/src/main/java/org/apache/hertzbeat/common/entity/alerter/SingleAlert.java)
 
 - `id`：Primary key of the detail
 - `fingerprint`：Unique fingerprint
