@@ -38,7 +38,8 @@
     "MD045": true,
     "MD046": true,
     "MD047": true,
-    "MD052": true
+    "MD052": true,
+    "MD060": false
   },
   "ignores": [
     "**/node_modules/**",
