@@ -1,5 +1,5 @@
 ---
-id: quickstart  
+id: quickstart
 title: HertzBeat Quick Start - Install in 5 Minutes
 sidebar_label: Quick Start
 description: Install Apache HertzBeat monitoring system in minutes using Docker, package, or source code. Step-by-step guide for X86 and ARM64 systems.
@@ -124,7 +124,7 @@ Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hert
 ### How do I verify HertzBeat is running?
 
 1. Check container status: `docker ps | grep hertzbeat`
-2. Access web UI: <http://localhost:1157>
+2. Access web UI: `http://localhost:1157`
 3. Login with: admin/hertzbeat
 
 ### Can I change the default password?
@@ -159,8 +159,8 @@ HertzBeat uses H2 embedded database by default. For production, configure extern
 
 ### Where can I get help?
 
-- **Documentation:** <https://hertzbeat.apache.org/docs/>
-- **GitHub Issues:** <https://github.com/apache/hertzbeat/issues>
-- **Community:** <https://hertzbeat.apache.org/docs/community/contact>
+- **Documentation:** [https://hertzbeat.apache.org/docs/](https://hertzbeat.apache.org/docs/)
+- **GitHub Issues:** [https://github.com/apache/hertzbeat/issues](https://github.com/apache/hertzbeat/issues)
+- **Community:** [https://hertzbeat.apache.org/docs/community/contact](https://hertzbeat.apache.org/docs/community/contact)
 
 **HAVE FUN**
