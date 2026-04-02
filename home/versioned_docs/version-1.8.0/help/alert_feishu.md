@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source alerter, open source feishu 
 
 > After the threshold is triggered send alarm information and notify the recipient by FeiShu robot.
 
-### Operation steps
+## Operation steps
 
 1. **【FeiShu client】-> 【Group settings】-> 【Bots】-> 【Add Bot】-> 【Custom  Bot】 -> 【Set robot name and avatar】-> 【Copy its webhook URL after adding successfully】**
 

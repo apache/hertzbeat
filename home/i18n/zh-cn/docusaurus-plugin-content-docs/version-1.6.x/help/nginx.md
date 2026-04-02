@@ -9,7 +9,7 @@ keywords: [开源监控工具, 开源Java监控工具, 监控Nginx指标]
 
 **使用的协议：Nginx**
 
-### 需要启用 Nginx 的 `ngx_http_stub_status_module` 和 `ngx_http_reqstat_module` 监控模块
+## 需要启用 Nginx 的 `ngx_http_stub_status_module` 和 `ngx_http_reqstat_module` 监控模块
 
 如果你想使用这种监控方式监控 'Nginx' 的信息，你需要修改你的 Nginx 配置文件以启用监控模块。
 

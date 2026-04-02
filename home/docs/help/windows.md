@@ -14,7 +14,7 @@ References:
 [Win configure SNMP in English](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/configure-snmp-service)
 [Win configure SNMP in Chinese](https://docs.microsoft.com/zh-cn/troubleshoot/windows-server/networking/configure-snmp-service)
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                                          Parameter help description                                                                                          |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

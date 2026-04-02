@@ -12,8 +12,8 @@ Apache HertzBeat's historical data storage relies on the time series database, y
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 Note⚠️ Need InfluxDB 1.x Version.
 
-### 1. Use HuaweiCloud GaussDB For Influx
-
+## 1. Use HuaweiCloud GaussDB For Influx
+>
 > Use [HuaweiCloud GaussDB For Influx](https://www.huaweicloud.com/intl/en-us/product/gaussdb.html)
 >
 > Get the `GaussDB For Influx` service url, username and password config.

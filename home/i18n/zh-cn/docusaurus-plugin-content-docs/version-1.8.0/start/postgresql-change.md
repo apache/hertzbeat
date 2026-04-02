@@ -10,7 +10,7 @@ PostgreSQL 是一个功能强大，开源的关系型数据库管理系统（RDB
 
 > 如果您已有 PostgreSQL 环境，可直接跳到数据库创建那一步。
 
-### 通过 Docker 方式安装 PostgreSQL
+## 通过 Docker 方式安装 PostgreSQL
 
 1. 下载安装 Docker 环境
    Docker 的安装请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。安装完毕后请于终端检查 Docker 版本输出是否正常。

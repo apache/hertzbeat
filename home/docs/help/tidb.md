@@ -15,7 +15,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 **Protocol Use: HTTP and JDBC**
 
-### Driver selection
+## Driver selection
 
 TiDB monitoring keeps the HTTP part unchanged, and the SQL query part now follows the same automatic routing as MySQL:
 

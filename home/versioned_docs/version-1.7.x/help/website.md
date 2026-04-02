@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source website monitoring tool, mon
 
 > Monitor whether the website is available, response time and other Metrics.
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

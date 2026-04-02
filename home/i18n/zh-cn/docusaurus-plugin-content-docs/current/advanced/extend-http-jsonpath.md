@@ -10,7 +10,7 @@ sidebar_label: JsonPath解析方式
 
 **使用JsonPath脚本将响应数据解析成符合 Apache HertzBeat™ 指定的数据结构规则的数据**
 
-#### JsonPath操作符
+## JsonPath操作符
 
 [JSONPath在线验证](https://www.jsonpath.cn)
 
@@ -27,7 +27,7 @@ sidebar_label: JsonPath解析方式
 | ?()              | 过滤器（脚本）表达式.                       |
 | ()               | 脚本表达式.                            |
 
-#### HertzBeat数据格式规范
+### HertzBeat数据格式规范
 
 单层格式：key-value
 

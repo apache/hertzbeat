@@ -8,7 +8,7 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, Ka
 > Monitor Kafka by querying generic metrics data from Prometheus server using Prometheus PromQL. This approach is suitable when Prometheus is already monitoring Kafka and you need to fetch Kafka's
 > monitoring data from Prometheus server.
 
-### Prerequisites
+## Prerequisites
 
 1. Deploy Kafka.
 2. Deploy kafka_exporter.

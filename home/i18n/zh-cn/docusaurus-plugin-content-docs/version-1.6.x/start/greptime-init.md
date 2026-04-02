@@ -13,7 +13,7 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 
 **⚠️ 若不配置时序数据库，则只会留最近一小时历史数据**
 
-### 通过Docker方式安装GreptimeDB
+## 通过Docker方式安装GreptimeDB
 
 1. 下载安装Docker环境
 Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。

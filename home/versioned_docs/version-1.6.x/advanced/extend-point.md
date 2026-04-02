@@ -7,7 +7,7 @@ sidebar_label: Custom Monitoring
 > HertzBeat has custom monitoring ability. You only need to configure monitoring template yml to fit a custom monitoring type.  
 > Custom monitoring currently supports [HTTP protocol](extend-http)，[JDBC protocol](extend-jdbc), [SSH protocol](extend-ssh), [JMX protocol](extend-jmx), [SNMP protocol](extend-snmp). And it will support more general protocols in the future.
 
-### Custom Monitoring Steps
+## Custom Monitoring Steps
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 

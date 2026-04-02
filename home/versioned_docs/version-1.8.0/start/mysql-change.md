@@ -8,7 +8,7 @@ MySQL is a reliable relational database. In addition to default built-in H2 data
 
 > If you already have a MySQL environment and the MySQL version meets the requirements, you can skip directly to the database creation step.
 
-### Supported MySQL Versions
+## Supported MySQL Versions
 
 Please ensure you are using a supported MySQL version. HertzBeat only supports MySQL 5.7+ or 8 versions. You can check the MySQL version with the following command:
 

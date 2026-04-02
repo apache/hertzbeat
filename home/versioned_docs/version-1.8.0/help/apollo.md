@@ -8,7 +8,7 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, Ap
 > Monitoring of general metrics for the Apollo Configuration Center service is performed by calling the Prometheus
 > interface of the Apollo Configuration Center.
 
-### Prerequisites
+## Prerequisites
 
 1. Set up the Apollo configuration center according to
    the [deployment documentation](https://www.apolloconfig.com/#/en/deployment/quick-start).

@@ -19,7 +19,7 @@ sidebar_label: 监控模板
 
 **欢迎大家一起贡献你使用过程中自定义的通用监控类型YML模板，可用的模板如下:**
 
-### 应用服务监控模板
+## 应用服务监控模板
 
 &emsp;&#x1F449;&emsp;[Website monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml) <br />
 &emsp;&#x1F449;&emsp;[HTTP API](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml) <br />

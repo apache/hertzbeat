@@ -7,7 +7,7 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-### 什么是 HertzBeat?
+## 什么是 HertzBeat?
 
 [HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，兼容 Prometheus，无需 Agent 的开源实时监控告警系统。
 

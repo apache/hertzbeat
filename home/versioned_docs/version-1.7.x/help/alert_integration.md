@@ -13,7 +13,7 @@ keywords:
 
 > The alert integration module of HertzBeat is designed to achieve unified reception, standardized processing, and intelligent dispatching of alerts from various third-party monitoring and observability platforms. As a centralized "Alert Center," HertzBeat efficiently ingests external alert information and applies flexible alert management strategies.
 
-### Core Capabilities
+## Core Capabilities
 
 - **Multi-Source Alert Ingestion**: Supports receiving alert messages from major platforms such as Webhook, Prometheus, Alertmanager, SkyWalking, and Tencent Cloud.
 - **Alert Format Standardization**: Converts alerts from different platforms into a unified internal format within HertzBeat for easier processing.

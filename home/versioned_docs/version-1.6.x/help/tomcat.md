@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source tomcat monitoring tool, moni
 
 **Protocol Use：JMX**
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -7,7 +7,7 @@ keywords: [AI]
 
 > The dialogue with artificial intelligence is achieved by configuring aiConfig in the application.yml file
 
-### Configuration parameter description
+## Configuration parameter description
 
 | Name of the parameter |                      Parameter help description                       |
 |-----------------------|-----------------------------------------------------------------------|

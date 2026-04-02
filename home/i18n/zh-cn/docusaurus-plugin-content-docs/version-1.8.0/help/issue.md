@@ -4,7 +4,7 @@ title: 常见问题
 sidebar_label: 常见问题
 ---
 
-### 监控常见问题
+## 监控常见问题
 
 1. **页面反馈：monitor.host:监控Host必须是ipv4,ipv6或域名**
 
