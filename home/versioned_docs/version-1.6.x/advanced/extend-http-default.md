@@ -8,7 +8,7 @@ sidebar_label: Default Parsing Method
 
 **The interface response data structure must be consistent with the data structure rules specified by hertzbeat**
 
-### HertzBeat data format specification
+## HertzBeat data format specification
 
 Note⚠️ The response data is JSON format.
 

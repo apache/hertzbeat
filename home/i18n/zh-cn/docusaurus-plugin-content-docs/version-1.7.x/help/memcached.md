@@ -32,7 +32,7 @@ STAT version 1.4.15
 
 **帮助文档: [https://www.runoob.com/memcached/memcached-stats.html](https://www.runoob.com/memcached/memcached-stats.html)**
 
-### 配置参数
+## 配置参数
 
 | 参数名称 |                      参数帮助描述                       |
 |------|---------------------------------------------------|

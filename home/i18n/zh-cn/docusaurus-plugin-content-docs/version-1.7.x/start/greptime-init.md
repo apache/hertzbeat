@@ -12,7 +12,7 @@ Apache HertzBeat 的历史数据存储依赖时序数据库，任选其一安装
 
 **⚠️ 若不配置时序数据库，则只会留最近一小时历史数据**
 
-### 通过Docker方式安装Greptime
+## 通过Docker方式安装Greptime
 
 1. 下载安装Docker环境
 Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。

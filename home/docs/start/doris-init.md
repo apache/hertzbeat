@@ -17,7 +17,7 @@ Apache Doris is an MPP-based real-time analytics database. In HertzBeat, Doris c
 
 > If you already have a Doris cluster, skip directly to the YML configuration section.
 
-### Install Doris (Optional)
+## Install Doris (Optional)
 
 You can deploy Doris by package or Docker. For production, follow the official deployment guide:
 
@@ -105,7 +105,7 @@ For production deployments, **strongly recommend using Stream Load mode** to ens
    - If direct connection is not possible, configure BE endpoint labels in Doris
 
 2. **Special Configuration for Complex Network Scenarios**
-   
+
    In K8s, cross-domain, or load-balanced environments, Stream Load's redirect mechanism requires special attention:
    - FE redirects requests to an available BE, which must be reachable from HertzBeat
    - Control returned BE address type via `redirect-policy`:
@@ -113,14 +113,15 @@ For production deployments, **strongly recommend using Stream Load mode** to ens
      - `public`: Use public IP (cloud environments)
      - `private`: Use private IP (private networks)
      - Leave empty to use Doris default policy
-   
+
    Reference: [Doris Stream Load in Complex Networks](https://doris.apache.org/zh-CN/docs/4.x/data-operate/import/load-internals/stream-load-in-complex-network)
 
 #### Switching Steps
 
 1. **Modify Configuration File**
-   
+
    Edit `hertzbeat/config/application.yml` and change `write-mode` to `stream`:
+
    ```yaml
    warehouse:
      store:
@@ -157,6 +158,7 @@ A: If the stream processing fails, it will automatically try to use the jdbc mod
 **Q: Still getting timeouts in cross-network setup with redirect-policy configured?**
 
 A: Possible causes:
+
 - Returned BE address under current `redirect-policy` setting is unreachable
 - Try different `redirect-policy` values (`direct` / `public` / `private`)
 - Contact Doris admin to verify BE endpoint label configuration
@@ -195,7 +197,7 @@ SHOW CREATE TABLE hertzbeat.hzb_history;
 SHOW CREATE TABLE hertzbeat.hzb_log;
 ```
 
-3. If partition is enabled, check dynamic partition state:
+1. If partition is enabled, check dynamic partition state:
 
 ```sql
 SHOW DYNAMIC PARTITION TABLES FROM hertzbeat;

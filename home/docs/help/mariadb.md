@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of MariaDB database. Support MariaDB5+.
 
-### Driver selection
+## Driver selection
 
 MariaDB follows the same automatic routing as MySQL:
 

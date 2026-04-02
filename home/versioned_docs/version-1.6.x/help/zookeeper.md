@@ -7,10 +7,10 @@ keywords: [open source monitoring tool, open source zookeeper monitoring tool, m
 
 > Collect and monitor the general performance Metrics of Zookeeper.
 
-### PreRequisites
+## PreRequisites
 
-#### Zookeeper four word command
-
+### Zookeeper four word command
+>
 > The current implementation scheme uses the four word command provided by zookeeper to collect Metrics.
 > Users need to add the four word command of zookeeper to the white list by themselves.
 

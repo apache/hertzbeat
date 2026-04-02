@@ -22,8 +22,8 @@ QuestDB is an open-source time-series database that stands out in the field of t
 
 > If you already have an existing QuestDB environment, you can skip directly to the YML configuration step.
 
-### Install QuestDB
-<!-- markdownlint-disable MD029 -->
+## Install QuestDB<!-- markdownlint-disable MD029 -->
+
 1. Download the installation package
 
 ​ Download the latest version for your operating system from the official GitHub repository:

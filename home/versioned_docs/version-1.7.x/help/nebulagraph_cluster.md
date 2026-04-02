@@ -9,7 +9,7 @@ keywords: [ Open Source Monitoring System, Open Source Database Monitoring, Open
 
 **Protocol Use：ngql**
 
-### Configuration parameters
+## Configuration parameters
 
 |   Parameter Name    |                                             Parameter help description                                             |
 |---------------------|--------------------------------------------------------------------------------------------------------------------|

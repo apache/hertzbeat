@@ -10,7 +10,7 @@ Note⚠️ The response data must be in XML format.
 
 **Use XPath scripts to parse the response data into data that conforms to the data structure rules specified by HertzBeat.**
 
-### XmlPath Parsing Logic
+## XmlPath Parsing Logic
 
 The XmlPath parsing method in HertzBeat uses a two-step XPath process:
 

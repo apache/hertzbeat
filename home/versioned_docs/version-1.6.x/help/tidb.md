@@ -15,7 +15,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 **Protocol Use: HTTP and JDBC**
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                                                               Parameter help description                                                                                                                |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

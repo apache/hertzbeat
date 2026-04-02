@@ -5,7 +5,7 @@ sidebar_label: Redis Cluster Monitor
 keywords: [ open source monitoring tool, open source Redis Cluster monitoring tool, monitoring Redis Cluster metrics ]
 ---
 
-### Pre-monitoring operations
+## Pre-monitoring operations
 
 1. create a empty folder and add two files.
 

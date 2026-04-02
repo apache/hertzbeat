@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool,  Websocket监控 ]
 
 > Monitor metrics such as the response of the WebSocket service's first handshake.
 
-### Configuration parameter
+## Configuration parameter
 
 |      Parameter name       |                                                Parameter help description                                                |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------|

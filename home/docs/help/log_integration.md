@@ -11,7 +11,7 @@ keywords: [open source monitoring, log integration, log management, multi-source
 The log integration feature is currently in Beta (experimental) stage. There may be potential defects and limitations. The feature is under active development and iteration.
 :::
 
-### Core Capabilities
+## Core Capabilities
 
 - **Multi-source Log Integration**: Support receiving log data from mainstream platforms such as OpenTelemetry, Filebeat, Vector, Loki
 - **Log Format Standardization**: Convert log data from different platforms to HertzBeat's internal unified format for subsequent processing and analysis

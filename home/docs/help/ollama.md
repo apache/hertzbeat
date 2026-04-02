@@ -7,7 +7,7 @@ keywords: [ Open Source Monitoring System, Open Source LLM Monitoring, Ollama Mo
 
 > HertzBeat monitors Ollama local LLM service including version info, installed models and running models.
 
-### Preparation
+## Preparation
 
 Ensure that Ollama is running and the API is accessible. By default, Ollama listens on port `11434`.
 

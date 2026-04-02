@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of OceanBase database. Support OceanBase 4.0+.
 
-### Driver selection
+## Driver selection
 
 OceanBase now follows the same automatic routing as the MySQL-compatible query path:
 

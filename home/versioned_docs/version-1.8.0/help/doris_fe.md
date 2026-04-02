@@ -9,7 +9,7 @@ keywords: [Open Source Monitoring System, Open Source Database Monitoring, DORIS
 
 **Protocol: HTTP**
 
-### Pre-monitoring operations
+## Pre-monitoring operations
 
 Check the `fe/conf/fe.conf` file to obtain the value of the `http_port` configuration item, which is used for monitoring.
 

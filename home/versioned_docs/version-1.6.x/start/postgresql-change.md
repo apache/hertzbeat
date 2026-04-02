@@ -8,7 +8,7 @@ PostgreSQL is an RDBMS emphasizing extensibility and SQL compliance. In addition
 
 > If you have a PostgreSQL environment, you can skip directly to the database creation step.
 
-### Install PostgreSQL via Docker
+## Install PostgreSQL via Docker
 
 1. Download and install the Docker environment
    Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。

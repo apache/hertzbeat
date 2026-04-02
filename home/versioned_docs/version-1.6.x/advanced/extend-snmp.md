@@ -7,7 +7,7 @@ sidebar_label: SNMP Protocol Custom Monitoring
 > From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use SNMP to customize Metric monitoring.
 > JMX protocol custom monitoring allows us to easily monitor Metrics we want by config SNMP MIB OIDs.
 
-### SNMP protocol collection process
+## SNMP protocol collection process
 
 【**Peer Server Enable SNMP Service**】->【**HertzBeat Connect Peer Server SNMP**】->【**Query Oids Data**】->【**Metric data extraction**】
 
