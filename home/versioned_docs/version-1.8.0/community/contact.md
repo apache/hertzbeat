@@ -1,6 +1,6 @@
 ---
-id: contact  
-title: Join discussion    
+id: contact
+title: Join discussion
 sidebar_label: Discussion
 ---
 
@@ -12,7 +12,7 @@ sidebar_label: Discussion
 
 WeChat Group : Add friend `ahertzbeat` and invite to the group.
 
-WeChat Public : Search  ID `usthecom`.
+WeChat Official Account : Search ID `usthecom`.
 
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
 

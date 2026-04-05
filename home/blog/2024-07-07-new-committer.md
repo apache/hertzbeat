@@ -17,7 +17,7 @@ I have always been passionate about the open-source community, and I am also a C
 
 ## My Connection with HertzBeat
 
-In April of this year, when HertzBeat entered the Apache Incubator, I happened to see a recommendation on a WeChat public account in my social circle.
+In April of this year, when HertzBeat entered the Apache Incubator, I happened to see a recommendation on a WeChat Official  Account in my social circle.
 
 My first reaction was that the name was really well chosen 😄. Then, after looking closely at the features it provides and the problems it solves, I realized its powerful functionalities 💪.
 
