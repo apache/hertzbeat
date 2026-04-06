@@ -82,14 +82,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -151,7 +144,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard grafanaDashboard)
-            throws RuntimeException {
+        throws RuntimeException {
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
         Map<String, String> labels = monitor.getLabels();
@@ -167,12 +160,12 @@ public class MonitorServiceImpl implements MonitorService {
 
         // Construct the collection task Job entity
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
-                || !StringUtils.hasText(monitor.getScrape());
+            || !StringUtils.hasText(monitor.getScrape());
         String app = isStatic ? monitor.getApp() : monitor.getScrape();
         Job appDefine = appService.getAppDefine(app);
         if (!isStatic) {
             appDefine.setSd(true);
-            monitor.setInstance("unknow");
+            monitor.setInstance("unknown");
         }
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
             appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
@@ -185,19 +178,19 @@ public class MonitorServiceImpl implements MonitorService {
         String instance = monitor.getInstance();
         // The port field may be null
         Param portParam = params.stream()
-                .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
-                .findFirst()
-                .orElse(null);
+            .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
+            .findFirst()
+            .orElse(null);
         String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
-                ? ""
-                : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+            ? ""
+            : SignConstants.DOUBLE_MARK + portParam.getParamValue();
         if (!IpDomainUtil.isHasPortWithMark(instance)) {
             instance = instance + portWithMark;
         }
         monitor.setInstance(instance);
 
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                CommonConstants.LABEL_INSTANCE, instance);
+            CommonConstants.LABEL_INSTANCE, instance);
         appDefine.setMetadata(metadata);
         appDefine.setLabels(monitor.getLabels());
         appDefine.setAnnotations(monitor.getAnnotations());
@@ -207,7 +200,7 @@ public class MonitorServiceImpl implements MonitorService {
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null)
-                : collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+            : collectJobScheduling.addAsyncCollectJob(appDefine, collector);
         try {
             detectMonitor(monitor, params, collector);
         } catch (Exception ignored) {
@@ -216,16 +209,16 @@ public class MonitorServiceImpl implements MonitorService {
         try {
             if (collector != null) {
                 CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
-                        .collector(collector)
-                        .monitorId(monitorId)
-                        .build();
+                    .collector(collector)
+                    .monitorId(monitorId)
+                    .build();
                 collectorMonitorBindDao.save(collectorMonitorBind);
             }
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
             // create grafana dashboard
             if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null
-                    && grafanaDashboard.isEnabled()) {
+                && grafanaDashboard.isEnabled()) {
                 dashboardService.createOrUpdateDashboard(grafanaDashboard.getTemplate(), monitorId);
             }
             monitorDao.save(monitor);
@@ -246,9 +239,9 @@ public class MonitorServiceImpl implements MonitorService {
     public void exportAll(String type, HttpServletResponse res) throws Exception {
         // Get all monitor IDs from the database
         List<Long> allMonitorIds = monitorDao.findAll()
-                .stream()
-                .map(Monitor::getId)
-                .collect(Collectors.toList());
+            .stream()
+            .map(Monitor::getId)
+            .collect(Collectors.toList());
 
         // Use the existing export method to export all monitors
         export(allMonitorIds, type, res);
@@ -269,13 +262,13 @@ public class MonitorServiceImpl implements MonitorService {
         monitorInfo.setName(monitorInfo.getName().trim());
         Monitor monitor = monitorInfo.toEntity();
         Map<String, MonitorParam> paramMap = monitorDto.getParamInfos()
-                .stream()
-                .peek(param -> {
-                    param.setMonitorId(monitor.getId());
-                    String value = param.getParamValue() == null ? null : param.getParamValue().trim();
-                    param.setParamValue(value);
-                })
-                .collect(Collectors.toMap(MonitorParam::getField, param -> param));
+            .stream()
+            .peek(param -> {
+                param.setMonitorId(monitor.getId());
+                String value = param.getParamValue() == null ? null : param.getParamValue().trim();
+                param.setParamValue(value);
+            })
+            .collect(Collectors.toMap(MonitorParam::getField, param -> param));
         // Check name uniqueness and can not equal app type
         if (isModify != null) {
             Optional<Job> defineOptional = appService.getAppDefineOption(monitor.getName());
@@ -307,7 +300,7 @@ public class MonitorServiceImpl implements MonitorService {
         List<ParamDefineInfo> paramDefines = appService.getAppParamDefines(monitor.getApp());
         if (!CollectionUtils.isEmpty(paramDefines)) {
             boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
-                    || !StringUtils.hasText(monitor.getScrape());
+                || !StringUtils.hasText(monitor.getScrape());
             for (ParamDefineInfo paramDefine : paramDefines) {
                 String field = paramDefine.getField();
                 MonitorParam param = paramMap.get(field);
@@ -339,16 +332,16 @@ public class MonitorServiceImpl implements MonitorService {
                 for (Metrics.Field field : metrics.getFields()) {
                     if (JexlCheckerUtil.verifyKeywords(field.getField())) {
                         throw new IllegalArgumentException(job.getApp() + " " + metrics.getName() + " "
-                                + field.getField() + " prohibited keywords, please modify the template information.");
+                            + field.getField() + " prohibited keywords, please modify the template information.");
                     }
                     if (JexlCheckerUtil.verifyStartCharacter(field.getField())) {
                         throw new IllegalArgumentException(job.getApp() + " " + metrics.getName() + " "
-                                + field.getField()
-                                + " illegal start character, please modify the template information.");
+                            + field.getField()
+                            + " illegal start character, please modify the template information.");
                     }
                     if (JexlCheckerUtil.verifySpaces(field.getField())) {
                         throw new IllegalArgumentException(job.getApp() + " " + metrics.getName() + " "
-                                + field.getField() + " no spaces allowed, please modify the template information.");
+                            + field.getField() + " no spaces allowed, please modify the template information.");
                     }
                 }
             }
@@ -358,7 +351,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void modifyMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard grafanaDashboard)
-            throws RuntimeException {
+        throws RuntimeException {
         long monitorId = monitor.getId();
         // Check to determine whether the monitor corresponding to the monitor id exists
         Optional<Monitor> queryOption = monitorDao.findById(monitorId);
@@ -382,22 +375,31 @@ public class MonitorServiceImpl implements MonitorService {
             labelDao.saveAll(addLabels);
         }
 
+        boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
+            || !StringUtils.hasText(monitor.getScrape());
+        if (!isStatic && !StringUtils.hasText(monitor.getInstance())) {
+            monitor.setInstance("unknown");
+        }
+
         String instance = monitor.getInstance();
         // The port field may be null
         Param portParam = params.stream()
-                .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
-                .findFirst()
-                .orElse(null);
+            .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
+            .findFirst()
+            .orElse(null);
         String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
-                ? ""
-                : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+            ? ""
+            : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+        if (IpDomainUtil.isHasPortWithMark(instance)){
+            instance = Arrays.stream(instance.split(":")).findFirst().orElse("");
+        }
         if (Objects.nonNull(instance)) {
             instance = instance + portWithMark;
         }
+
+
         monitor.setInstance(instance);
 
-        boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
-                || !StringUtils.hasText(monitor.getScrape());
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
             String app = isStatic ? monitor.getApp() : monitor.getScrape();
@@ -416,13 +418,13 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setScheduleType(monitor.getScheduleType());
             appDefine.setCronExpression(monitor.getCronExpression());
             Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                    CommonConstants.LABEL_INSTANCE, monitor.getInstance());
+                CommonConstants.LABEL_INSTANCE, monitor.getInstance());
             appDefine.setMetadata(metadata);
             appDefine.setLabels(monitor.getLabels());
             appDefine.setAnnotations(monitor.getAnnotations());
             List<Configmap> configmaps = params.stream()
-                    .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
-                    .collect(Collectors.toList());
+                .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
+                .collect(Collectors.toList());
             appDefine.setConfigmap(configmaps);
             long newJobId;
             if (collector == null) {
@@ -444,8 +446,8 @@ public class MonitorServiceImpl implements MonitorService {
             collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitorId);
             if (collector != null) {
                 CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
-                        .collector(collector).monitorId(monitorId)
-                        .build();
+                    .collector(collector).monitorId(monitorId)
+                    .build();
                 collectorMonitorBindDao.save(collectorMonitorBind);
             }
             // force update gmtUpdate time, due the case: monitor not change, param change.
@@ -482,7 +484,7 @@ public class MonitorServiceImpl implements MonitorService {
             return;
         }
         Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId)
-                .collect(Collectors.toSet());
+            .collect(Collectors.toSet());
         Set<Long> allMonitorIds = new HashSet<>(ids);
         allMonitorIds.addAll(subMonitorIds);
         List<Monitor> monitors = monitorDao.findMonitorsByIdIn(allMonitorIds);
@@ -523,28 +525,28 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDto.setParams(params);
             List<MetricsInfo> metricsInfos;
             if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp())
-                    || monitor.getType() == CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE) {
+                || monitor.getType() == CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE) {
                 List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(id);
                 metricsInfos = metricsDataList.stream()
-                        .map(t -> MetricsInfo.builder().name(t.getMetrics())
-                                .favorited(favoritedMetrics.contains(t.getMetrics())).build())
-                        .collect(Collectors.toList());
+                    .map(t -> MetricsInfo.builder().name(t.getMetrics())
+                        .favorited(favoritedMetrics.contains(t.getMetrics())).build())
+                    .collect(Collectors.toList());
                 monitorDto.setGrafanaDashboard(dashboardService.getDashboardByMonitorId(id));
             } else {
                 boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
-                        || !StringUtils.hasText(monitor.getScrape());
+                    || !StringUtils.hasText(monitor.getScrape());
                 String type = isStatic ? monitor.getApp() : monitor.getScrape();
                 Job job = appService.getAppDefine(type);
                 metricsInfos = job.getMetrics().stream()
-                        .filter(Metrics::isVisible)
-                        .map(t -> MetricsInfo.builder().name(t.getName())
-                                .favorited(favoritedMetrics.contains(t.getName())).build())
-                        .collect(Collectors.toList());
+                    .filter(Metrics::isVisible)
+                    .map(t -> MetricsInfo.builder().name(t.getName())
+                        .favorited(favoritedMetrics.contains(t.getName())).build())
+                    .collect(Collectors.toList());
             }
             monitorDto.setMetrics(metricsInfos);
             monitorDto.setMonitor(monitor);
             Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao
-                    .findCollectorMonitorBindByMonitorId(monitor.getId());
+                .findCollectorMonitorBindByMonitorId(monitor.getId());
             bindOptional.ifPresent(bind -> monitorDto.setCollector(bind.getCollector()));
             return monitorDto;
         } else {
@@ -554,7 +556,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public Page<Monitor> getMonitors(List<Long> monitorIds, String app, String search, Byte status, String sort,
-            String order, int pageIndex, int pageSize, String labels) {
+                                     String order, int pageIndex, int pageSize, String labels) {
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (!CollectionUtils.isEmpty(monitorIds)) {
@@ -579,7 +581,7 @@ public class MonitorServiceImpl implements MonitorService {
             if (StringUtils.hasText(search)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("instance"), "%" + search + "%");
                 Predicate predicateName = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")),
-                        "%" + search.toLowerCase() + "%");
+                    "%" + search.toLowerCase() + "%");
                 Long id = Longs.tryParse(search);
                 if (id != null) {
                     orList.add(criteriaBuilder.equal(root.get("id"), id));
@@ -633,12 +635,12 @@ public class MonitorServiceImpl implements MonitorService {
         // The jobId is not deleted, and the jobId is reused again after the management
         // is started.
         Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId)
-                .collect(Collectors.toSet());
+            .collect(Collectors.toSet());
         ids.addAll(subMonitorIds);
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
-                .stream().filter(monitor -> monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
-                .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE))
-                .collect(Collectors.toList());
+            .stream().filter(monitor -> monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
+            .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE))
+            .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(managedMonitors)) {
             for (Monitor monitor : managedMonitors) {
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
@@ -651,12 +653,12 @@ public class MonitorServiceImpl implements MonitorService {
     public void enableManageMonitors(Set<Long> ids) {
         // Update monitoring status Add corresponding monitoring periodic task
         Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId)
-                .collect(Collectors.toSet());
+            .collect(Collectors.toSet());
         ids.addAll(subMonitorIds);
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
-                .stream().filter(monitor -> monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
-                .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_UP_CODE))
-                .collect(Collectors.toList());
+            .stream().filter(monitor -> monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
+            .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_UP_CODE))
+            .collect(Collectors.toList());
         if (unManagedMonitors.isEmpty()) {
             return;
         }
@@ -665,7 +667,7 @@ public class MonitorServiceImpl implements MonitorService {
             // Construct the collection task Job entity
             List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
             boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
-                    || !StringUtils.hasText(monitor.getScrape());
+                || !StringUtils.hasText(monitor.getScrape());
             String app = isStatic ? monitor.getApp() : monitor.getScrape();
             Job appDefine = appService.getAppDefine(app);
             if (!isStatic) {
@@ -681,20 +683,20 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setScheduleType(monitor.getScheduleType());
             appDefine.setCronExpression(monitor.getCronExpression());
             Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                    CommonConstants.LABEL_INSTANCE, monitor.getInstance());
+                CommonConstants.LABEL_INSTANCE, monitor.getInstance());
             appDefine.setMetadata(metadata);
             appDefine.setLabels(monitor.getLabels());
             appDefine.setAnnotations(monitor.getAnnotations());
             List<Configmap> configmaps = params.stream()
-                    .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
-                    .collect(Collectors.toList());
+                .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
+                .collect(Collectors.toList());
             List<RuntimeParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                    .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                    .toList();
+                .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                .toList();
             paramDefaultValue.forEach(defaultVar -> {
                 if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                     Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(),
-                            CommonConstants.TYPE_STRING);
+                        CommonConstants.TYPE_STRING);
                     configmaps.add(configmap);
                 }
             });
@@ -702,7 +704,7 @@ public class MonitorServiceImpl implements MonitorService {
 
             // Issue collection tasks
             Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao
-                    .findCollectorMonitorBindByMonitorId(monitor.getId());
+                .findCollectorMonitorBindByMonitorId(monitor.getId());
             String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElse(null);
             long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
             monitor.setJobId(newJobId);
@@ -756,15 +758,15 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void updateAppCollectJob(Job job) {
         List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp())
-                .stream().filter(monitor -> monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
-                .toList();
+            .stream().filter(monitor -> monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
+            .toList();
         if (monitors.isEmpty()) {
             return;
         }
         List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findCollectorMonitorBindsByMonitorIdIn(
-                monitors.stream().map(Monitor::getId).collect(Collectors.toSet()));
+            monitors.stream().map(Monitor::getId).collect(Collectors.toSet()));
         Map<Long, String> monitorIdCollectorMap = monitorBinds.stream().collect(
-                Collectors.toMap(CollectorMonitorBind::getMonitorId, CollectorMonitorBind::getCollector));
+            Collectors.toMap(CollectorMonitorBind::getMonitorId, CollectorMonitorBind::getCollector));
         for (Monitor monitor : monitors) {
             try {
                 Job appDefine = job.clone();
@@ -781,20 +783,20 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
                 Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                        CommonConstants.LABEL_INSTANCE, monitor.getInstance());
+                    CommonConstants.LABEL_INSTANCE, monitor.getInstance());
                 appDefine.setMetadata(metadata);
                 appDefine.setLabels(monitor.getLabels());
                 appDefine.setAnnotations(monitor.getAnnotations());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(),
-                        param.getParamValue(), param.getType())).collect(Collectors.toList());
+                    param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<RuntimeParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                        .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                        .toList();
+                    .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                    .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                         Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(),
-                                (byte) 1);
+                            (byte) 1);
                         configmaps.add(configmap);
                     }
                 });
@@ -878,8 +880,8 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setLabels(monitor.getLabels());
         appDefine.setAnnotations(monitor.getAnnotations());
         List<Configmap> configmaps = params.stream()
-                .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
-                .collect(Collectors.toList());
+            .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
+            .collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         appDefine.setSd(true);
         List<CollectRep.MetricsData> collectRep;
@@ -914,18 +916,18 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setCyclic(false);
         appDefine.setTimestamp(System.currentTimeMillis());
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                CommonConstants.LABEL_INSTANCE, monitor.getInstance());
+            CommonConstants.LABEL_INSTANCE, monitor.getInstance());
         appDefine.setMetadata(metadata);
         appDefine.setLabels(monitor.getLabels());
         appDefine.setAnnotations(monitor.getAnnotations());
         List<Configmap> configmaps = params.stream()
-                .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
-                .collect(Collectors.toList());
+            .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
+            .collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         // To detect availability, you only need to collect the set of availability
         // metrics with a priority of 0.
         List<Metrics> availableMetrics = appDefine.getMetrics().stream()
-                .filter(item -> item.getPriority() == 0).collect(Collectors.toList());
+            .filter(item -> item.getPriority() == 0).collect(Collectors.toList());
         appDefine.setMetrics(availableMetrics);
         List<CollectRep.MetricsData> collectRep;
         if (collector != null) {
