@@ -624,7 +624,7 @@ class MonitorServiceTest {
         } catch (IllegalArgumentException e) {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
-        reset();
+        reset(monitorDao);
         Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
                 .id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOkMonitor));
@@ -632,6 +632,110 @@ class MonitorServiceTest {
 
         assertThrows(MonitorDatabaseException.class,
                 () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
+
+        // 测试逻辑：当 scrape 不等于 static（且不为空），并且 instance 为空时，instance 应被设置为 "unknown"
+        reset(monitorDao); // 重置前面代码中对 monitorDao 的 mock
+
+        long testSdMonitorId = 2L;
+        Monitor sdMonitor = Monitor.builder()
+                .id(testSdMonitorId)
+                .app("app")
+                .name("memory")
+                .scrape("custom_sd") // 非 static
+                .instance("")        // instance 为空
+                .intervals(1)
+                .build();
+
+        Monitor preSdMonitor = Monitor.builder()
+                .id(testSdMonitorId)
+                .app("app")
+                .name("memory")
+                .jobId(2L)
+                .status(CommonConstants.MONITOR_UP_CODE) // 保证非暂停状态，走到后续逻辑
+                .build();
+
+        List<Param> emptyParams = new ArrayList<>();
+        Job mockJob = new Job();
+        mockJob.setMetrics(new ArrayList<>());
+        mockJob.setParams(new ArrayList<>());
+
+        when(monitorDao.findById(testSdMonitorId)).thenReturn(Optional.of(preSdMonitor));
+        when(appService.getAppDefine("custom_sd")).thenReturn(mockJob); // 根据 scrape 查询 job
+        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(2L);
+        when(monitorDao.save(any(Monitor.class))).thenReturn(sdMonitor);
+
+        assertDoesNotThrow(() -> monitorService.modifyMonitor(sdMonitor, emptyParams, null, null));
+
+        // 断言 instance 被赋值为 unknown
+        assertEquals("unknown", sdMonitor.getInstance());
+
+        // 测试逻辑：端口验证（有变无，无变有）
+        // 场景一：原来没带 port mark（或者带有），现在 params 里面 port 有值
+        reset(monitorDao);
+
+        long testPortMonitorId = 3L;
+        Monitor portMonitor = Monitor.builder()
+                .id(testPortMonitorId)
+                .app("app")
+                .name("memory3")
+                .scrape(CommonConstants.SCRAPE_STATIC)
+                .instance("127.0.0.1")
+                .intervals(1)
+                .build();
+
+        Monitor prePortMonitor = Monitor.builder()
+                .id(testPortMonitorId)
+                .app("app")
+                .name("memory3")
+                .jobId(3L)
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+
+        List<Param> portParams = new ArrayList<>();
+        portParams.add(Param.builder().field(MonitorServiceImpl.PARAM_FIELD_PORT).paramValue("8080").build());
+
+        when(monitorDao.findById(testPortMonitorId)).thenReturn(Optional.of(prePortMonitor));
+        when(appService.getAppDefine("app")).thenReturn(mockJob);
+        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(3L);
+        when(monitorDao.save(any(Monitor.class))).thenReturn(portMonitor);
+
+        assertDoesNotThrow(() -> monitorService.modifyMonitor(portMonitor, portParams, null, null));
+
+        // 断言 instance 追加了 port
+        assertEquals("127.0.0.1:8080", portMonitor.getInstance());
+
+        // 场景二：原来 instance 带有 port mark，现在 params 里面 port 没值
+        reset(monitorDao);
+
+        long testNoPortMonitorId = 4L;
+        Monitor noPortMonitor = Monitor.builder()
+                .id(testNoPortMonitorId)
+                .app("app")
+                .name("memory")
+                .scrape(CommonConstants.SCRAPE_STATIC)
+                .instance("127.0.0.1:8080") // 这里原始 instance 带了 port
+                .intervals(1)
+                .build();
+
+        Monitor preNoPortMonitor = Monitor.builder()
+                .id(testNoPortMonitorId)
+                .app("app")
+                .name("memory")
+                .jobId(4L)
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+
+        List<Param> noPortParams = new ArrayList<>(); // empty
+
+        when(monitorDao.findById(testNoPortMonitorId)).thenReturn(Optional.of(preNoPortMonitor));
+        when(appService.getAppDefine("app")).thenReturn(mockJob);
+        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(4L);
+        when(monitorDao.save(any(Monitor.class))).thenReturn(noPortMonitor);
+
+        assertDoesNotThrow(() -> monitorService.modifyMonitor(noPortMonitor, noPortParams, null, null));
+
+        // 断言 instance 的 port mark 被移除
+        assertEquals("127.0.0.1", noPortMonitor.getInstance());
     }
 
     @Test
