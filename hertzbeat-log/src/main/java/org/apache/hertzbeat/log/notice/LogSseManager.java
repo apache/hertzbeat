@@ -96,6 +96,16 @@ public class LogSseManager {
         emitter.onError((ex) -> removeEmitter(clientId));
 
         emitters.put(clientId, new SseSubscriber(emitter, filters));
+        try {
+            String initEventId = "init-" + System.currentTimeMillis();
+            emitter.send(SseEmitter.event()
+                .id(initEventId)
+                .name("CONNECTED")
+                .data("Connection established successfully"));
+        } catch (IOException e) {
+            log.warn("Failed to send initial event to client {}: {}", clientId, e.getMessage());
+            removeEmitter(clientId);
+        }
         return emitter;
     }
 
