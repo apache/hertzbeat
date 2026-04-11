@@ -4,7 +4,7 @@ id: questdb-init
 
 title: Installation and Initialization of Time-Series Database Service QuestDB (Optional)
 
-sidebar_label: Metric Data Storage - QuestDB
+sidebar_label: Metrics Store QuestDB
 
 ---
 

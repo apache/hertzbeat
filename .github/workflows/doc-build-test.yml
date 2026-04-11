@@ -34,6 +34,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-python@v4
         with:
           python-version: '3.8'
@@ -53,10 +56,10 @@ jobs:
           grep -vFf ./script/ci/exclude_files.txt all_md_files.txt > to_check.txt
           xargs -P 8 -a to_check.txt -I{} markdown-link-check -c ./script/ci/link_check.json -q "{}"
 
-      - name: NPM INSTALL
+      - name: PNPM INSTALL
         working-directory: home
-        run: npm install
+        run: pnpm install
 
-      - name: NPM BUILD
+      - name: PNPM BUILD
         working-directory: home
-        run: npm run build
+        run: pnpm run build
