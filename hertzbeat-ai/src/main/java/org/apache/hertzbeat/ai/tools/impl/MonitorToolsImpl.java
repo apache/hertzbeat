@@ -201,7 +201,7 @@ public class MonitorToolsImpl implements MonitorTools {
 
             *********
             VERY IMPORTANT:
-            ALWAYS use get_monitor_additional_params to check the additional required parameters for the chosen type before adding a monitor or even mentioning it.
+            ALWAYS use get_monitor_params to check the additional required parameters for the chosen type before adding a monitor or even mentioning it.
             Use list_monitor_types tool to see available monitor type names to use here in the app parameter.
             Use the information obtained from this to query user for parameters.
             If the User has not given any parameters, ask them to provide the necessary parameters, until all the necessary parameters are provided.
@@ -215,7 +215,7 @@ public class MonitorToolsImpl implements MonitorTools {
 
             PARAMETER MAPPING: Use the 'params' parameter to pass all monitor-specific configuration.
             The params should be a JSON string containing key-value pairs for the monitor type.
-            Use get_monitor_additional_params tool to see what parameters are required for each monitor type.
+            Use get_monitor_params tool to see what parameters are required for each monitor type.
 
             PARAMS EXAMPLES:
             - Website: {"host":"example.com", "port":"443", "uri":"/api/health", "ssl":"true", "method":"GET"}
@@ -228,7 +228,7 @@ public class MonitorToolsImpl implements MonitorTools {
             @ToolParam(description = "Monitor type: website, mysql, postgresql, redis, linux, windows, etc.", required = true) String app,
             @ToolParam(description = "Collection interval in seconds (default: 600)", required = false) Integer intervals,
             @ToolParam(description = "Monitor-specific parameters as JSON string. "
-                    + "Use get_monitor_additional_params to see required fields. "
+                    + "Use get_monitor_params to see required fields. "
                     + "Example: {\"host\":\"192.168.1.1\", \"port\":\"22\", \"username\":\"root\"}",
                     required = true) String params,
             @ToolParam(description = "Monitor description (optional)", required = false) String description) {
@@ -244,7 +244,7 @@ public class MonitorToolsImpl implements MonitorTools {
                 return "Error: Monitor type/application is required";
             }
             if (params == null || params.trim().isEmpty()) {
-                return "Error: Monitor params is required. Use get_monitor_additional_params to see required fields for this monitor type.";
+                return "Error: Monitor params is required. Use get_monitor_params to see required fields for this monitor type.";
             }
 
             // Set defaults
@@ -285,7 +285,7 @@ public class MonitorToolsImpl implements MonitorTools {
             } catch (IllegalArgumentException argumentException) {
                 if (argumentException.getMessage().contains("required")) {
                     return String.format("Error: %s. "
-                            + "Or use get_monitor_additional_params tool to see all required parameters.",
+                            + "Or use get_monitor_params tool to see all required parameters.",
                         argumentException.getMessage());
                 } else {
                     return String.format("Error: %s. ", argumentException.getMessage());

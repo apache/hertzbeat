@@ -55,11 +55,6 @@ public class ScheduleToolsImpl implements ScheduleTools {
     }
 
     @Override
-    @Tool(name = "createScheduleForConversation",
-          description = "Create a scheduled task to automatically execute a skill at specified times. "
-                  + "IMPORTANT: You must pass the conversationId from the system context (shown as 'Current Conversation ID' in the prompt). "
-                  + "The cron expression should be in 6-digit Spring format: 'seconds minutes hours dayOfMonth month dayOfWeek'. "
-                  + "Common examples: '0 0 9 * * ?' (daily at 9:00), '0 30 8 * * MON-FRI' (weekdays at 8:30).")
     public String createSchedule(
             @ToolParam(description = "Name of the skill to schedule (e.g., 'daily_inspection', 'mysql_slow_query_diagnosis')", 
                        required = true) String skillName,
@@ -151,9 +146,6 @@ public class ScheduleToolsImpl implements ScheduleTools {
     }
 
     @Override
-    @Tool(name = "listSchedulesForConversation",
-          description = "List all scheduled tasks for a specific conversation. "
-                  + "Use the conversationId from the system context.")
     public String listSchedules() {
         // This method signature is kept for interface compatibility
         return SopMessageUtil.getMessage("schedule.error.use.with.conversation");
@@ -212,7 +204,7 @@ public class ScheduleToolsImpl implements ScheduleTools {
 
     @Override
     @Tool(name = "deleteSchedule",
-          description = "Delete a scheduled task by its ID. Use listSchedulesForConversation first to find the task ID.")
+          description = "Delete a scheduled task by its ID. Use listSchedulesWithConversation first to find the task ID.")
     public String deleteSchedule(
             @ToolParam(description = "ID of the schedule to delete", required = true) Long scheduleId) {
 
@@ -237,7 +229,7 @@ public class ScheduleToolsImpl implements ScheduleTools {
 
     @Override
     @Tool(name = "toggleSchedule",
-          description = "Enable or disable a scheduled task. Use listSchedulesForConversation first to find the task ID.")
+          description = "Enable or disable a scheduled task. Use listSchedulesWithConversation first to find the task ID.")
     public String toggleSchedule(
             @ToolParam(description = "ID of the schedule to toggle", required = true) Long scheduleId,
             @ToolParam(description = "true to enable, false to disable", required = true) boolean enabled) {
