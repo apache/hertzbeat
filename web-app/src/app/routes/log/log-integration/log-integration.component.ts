@@ -25,11 +25,8 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, I18nPipe } from '@delon/theme';
 import { SharedModule } from '@shared';
 import { NzDividerComponent } from 'ng-zorro-antd/divider';
-import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { MarkdownModule } from 'ngx-markdown';
-
-import { AuthService } from '../../../service/auth.service';
 
 interface DataSource {
   id: string;
@@ -57,16 +54,11 @@ export class LogIntegrationComponent implements OnInit {
 
   selectedSource: DataSource | null = null;
   markdownContent: string = '';
-  token: string = '';
-  isModalVisible: boolean = false;
-  generateLoading: boolean = false;
 
   constructor(
     private http: HttpClient,
-    private authSvc: AuthService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private notifySvc: NzNotificationService,
-    private modal: NzModalService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -102,27 +94,8 @@ export class LogIntegrationComponent implements OnInit {
     this.router.navigate(['/log/integration', source.id]);
   }
 
-  public generateToken() {
-    this.generateLoading = true;
-    this.authSvc.generateToken().subscribe(message => {
-      if (message.code === 0) {
-        this.token = message.data?.token;
-        this.isModalVisible = true;
-      } else {
-        this.notifySvc.warning('Failed to generate token', message.msg);
-      }
-      this.generateLoading = false;
-    });
-  }
-
-  handleCancel(): void {
-    this.isModalVisible = false;
-    this.token = '';
-  }
-
-  handleOk(): void {
-    this.isModalVisible = false;
-    this.token = '';
+  goToTokenManagement(): void {
+    this.router.navigateByUrl('/setting/settings/token');
   }
 
   private loadMarkdownContent(source: DataSource) {
@@ -138,15 +111,5 @@ export class LogIntegrationComponent implements OnInit {
         this.http.get(enPath, { responseType: 'text' }).subscribe(content => (this.markdownContent = content));
       }
     });
-  }
-
-  copyToken() {
-    const el = document.createElement('textarea');
-    el.value = this.token;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), this.i18nSvc.fanyi('log.integration.token.notice'));
   }
 }

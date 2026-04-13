@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool,  Prometheus protocol monitoring ]
 
 > Collect metric data of applications that support the Prometheus protocol.
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|

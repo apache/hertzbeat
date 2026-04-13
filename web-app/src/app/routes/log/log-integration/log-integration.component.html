@@ -43,43 +43,14 @@
   </div>
   <div class="doc-content">
     <ng-container *ngIf="selectedSource">
-      <div style="display: flex; justify-content: space-between">
+      <div style="display: flex; justify-content: space-between; align-items: center">
         <h2>{{ selectedSource.name }}</h2>
-        <button [nzLoading]="generateLoading" nz-button nzType="primary" (click)="generateToken()" style="margin-right: 16px">{{
-          'log.integration.token.new' | i18n
-        }}</button>
+        <button nz-button nzType="default" (click)="goToTokenManagement()" style="margin-right: 16px">
+          <span nz-icon nzType="setting" nzTheme="outline"></span>
+          {{ 'log.integration.token.manage' | i18n }}
+        </button>
       </div>
       <markdown [data]="markdownContent"></markdown>
     </ng-container>
   </div>
 </div>
-
-<nz-modal
-  [(nzVisible)]="isModalVisible"
-  nzMaskClosable="false"
-  nzWidth="40%"
-  [nzTitle]="'log.integration.token.title' | i18n"
-  (nzOnCancel)="handleCancel()"
-  (nzOnOk)="handleOk()"
-  [nzOkText]="'common.button.confirm' | i18n"
-  [nzCancelText]="null"
->
-  <div *nzModalContent class="-inner-content">
-    <div>
-      <p>{{ 'log.integration.token.desc' | i18n }}</p>
-    </div>
-    <div style="width: 100%">
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 8px">
-        <button nz-button nzType="primary" (click)="copyToken()">
-          {{ 'common.button.copy' | i18n }}
-        </button>
-      </div>
-      <div style="padding: 12px; border: 1px solid; border-radius: 4px; word-wrap: break-word">
-        {{ token }}
-      </div>
-    </div>
-    <div style="text-align: center; font-weight: lighter; margin-top: 16px">
-      <p>{{ 'log.integration.token.notice' | i18n }}</p>
-    </div>
-  </div>
-</nz-modal>

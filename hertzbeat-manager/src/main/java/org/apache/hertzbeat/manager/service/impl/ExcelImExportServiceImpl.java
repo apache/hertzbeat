@@ -19,7 +19,6 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.FILE_SUFFIX;
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.TYPE;
-import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,6 +44,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Configure the import and export EXCEL format
@@ -169,7 +169,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             default -> null;
         };
     }
-    
+
     private boolean getCellValueAsBoolean(Cell cell) {
         if (cell == null) {
             return false;

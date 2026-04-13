@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool, open source Redis monitoring tool, moni
 
 > Collect and monitor the general performance Metrics of Redis database. Support REDIS1.0+.
 
-### Configuration parameter
+## Configuration parameter
 
 |  Parameter name  |                        Parameter help description                        |
 |--------|------------------------------------------------------|

@@ -19,45 +19,108 @@ package org.apache.hertzbeat.manager.pojo.dto;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
+import java.util.Objects;
 
 /**
  * Monitoring Information External Interaction Entities
  */
-@Data
 @Schema(description = "Monitoring information entities")
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 public class MonitorDto {
 
-    @Schema(description = "monitor content", accessMode = READ_WRITE)
     @NotNull
     @Valid
-    private Monitor monitor;
+    private MonitorInfo monitorInfo;
 
-    @Schema(description = "monitor params", accessMode = READ_WRITE)
     @NotEmpty
     @Valid
-    private List<Param> params;
+    private List<MonitorParam> paramInfos;
 
-    @Schema(description = "Monitor Metrics", accessMode = READ_ONLY)
     private List<MetricsInfo> metrics;
 
-    @Schema(description = "pinned collector, default null if system dispatch", accessMode = READ_WRITE)
     private String collector;
 
-    @Schema(description = "grafana dashboard")
     private GrafanaDashboard grafanaDashboard;
+
+    @Schema(description = "monitor content", accessMode = READ_WRITE)
+    @JsonProperty("monitor")
+    public MonitorInfo getMonitorInfo() {
+        return monitorInfo;
+    }
+
+    @JsonProperty("monitor")
+    public void setMonitorInfo(MonitorInfo monitorInfo) {
+        this.monitorInfo = monitorInfo;
+    }
+
+    @Schema(description = "monitor params", accessMode = READ_WRITE)
+    @JsonProperty("params")
+    public List<MonitorParam> getParamInfos() {
+        return paramInfos;
+    }
+
+    @JsonProperty("params")
+    public void setParamInfos(List<MonitorParam> paramInfos) {
+        this.paramInfos = paramInfos;
+    }
+
+    @JsonIgnore
+    public Monitor getMonitor() {
+        return monitorInfo == null ? null : monitorInfo.toEntity();
+    }
+
+    public void setMonitor(Monitor monitor) {
+        this.monitorInfo = MonitorInfo.fromEntity(monitor);
+    }
+
+    @JsonIgnore
+    public List<Param> getParams() {
+        return paramInfos == null ? null : paramInfos.stream()
+                .filter(Objects::nonNull)
+                .map(MonitorParam::toEntity)
+                .toList();
+    }
+
+    public void setParams(List<Param> params) {
+        this.paramInfos = params == null ? null : params.stream()
+                .filter(Objects::nonNull)
+                .map(MonitorParam::fromEntity)
+                .toList();
+    }
+
+    @Schema(description = "Monitor Metrics", accessMode = READ_ONLY)
+    public List<MetricsInfo> getMetrics() {
+        return metrics;
+    }
+
+    public void setMetrics(List<MetricsInfo> metrics) {
+        this.metrics = metrics;
+    }
+
+    @Schema(description = "pinned collector, default null if system dispatch", accessMode = READ_WRITE)
+    public String getCollector() {
+        return collector;
+    }
+
+    public void setCollector(String collector) {
+        this.collector = collector;
+    }
+
+    @Schema(description = "grafana dashboard")
+    public GrafanaDashboard getGrafanaDashboard() {
+        return grafanaDashboard;
+    }
+
+    public void setGrafanaDashboard(GrafanaDashboard grafanaDashboard) {
+        this.grafanaDashboard = grafanaDashboard;
+    }
 }

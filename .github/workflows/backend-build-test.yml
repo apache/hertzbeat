@@ -52,10 +52,11 @@ jobs:
         uses: codecov/codecov-action@v4.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
           verbose: true
 
       - name: Build Image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         with:
           context: ./dist
           file: ./script/docker/server/Dockerfile

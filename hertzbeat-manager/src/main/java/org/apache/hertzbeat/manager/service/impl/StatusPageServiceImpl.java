@@ -31,7 +31,6 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.apache.hertzbeat.common.entity.manager.StatusPageHistory;
 import org.apache.hertzbeat.common.entity.manager.StatusPageIncident;
-import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.component.status.CalculateStatus;
 import org.apache.hertzbeat.manager.dao.StatusPageComponentDao;
@@ -40,6 +39,9 @@ import org.apache.hertzbeat.manager.dao.StatusPageIncidentComponentBindDao;
 import org.apache.hertzbeat.manager.dao.StatusPageIncidentDao;
 import org.apache.hertzbeat.manager.dao.StatusPageOrgDao;
 import org.apache.hertzbeat.manager.pojo.dto.ComponentStatus;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageComponentInfo;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageIncidentInfo;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageOrgInfo;
 import org.apache.hertzbeat.manager.service.StatusPageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -77,34 +79,36 @@ public class StatusPageServiceImpl implements StatusPageService {
 
 
     @Override
-    public StatusPageOrg queryStatusPageOrg() {
-        return statusPageOrgDao.findAll().stream().findFirst().orElse(null);
+    public StatusPageOrgInfo queryStatusPageOrg() {
+        return StatusPageOrgInfo.fromEntity(statusPageOrgDao.findAll().stream().findFirst().orElse(null));
     }
 
     @Override
-    public StatusPageOrg saveStatusPageOrg(StatusPageOrg statusPageOrg) {
-        return statusPageOrgDao.save(statusPageOrg);
+    public StatusPageOrgInfo saveStatusPageOrg(StatusPageOrgInfo statusPageOrg) {
+        return StatusPageOrgInfo.fromEntity(statusPageOrgDao.save(statusPageOrg.toEntity()));
     }
 
     @Override
-    public List<StatusPageComponent> queryStatusPageComponents() {
-        return statusPageComponentDao.findAll();
+    public List<StatusPageComponentInfo> queryStatusPageComponents() {
+        return statusPageComponentDao.findAll().stream().map(StatusPageComponentInfo::fromEntity).toList();
     }
 
     @Override
-    public void newStatusPageComponent(StatusPageComponent statusPageComponent) {
-        if (statusPageComponent.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
-            statusPageComponent.setState(statusPageComponent.getConfigState());
+    public void newStatusPageComponent(StatusPageComponentInfo statusPageComponent) {
+        StatusPageComponent component = statusPageComponent.toEntity();
+        if (component.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
+            component.setState(component.getConfigState());
         }
-        statusPageComponentDao.save(statusPageComponent);
+        statusPageComponentDao.save(component);
     }
 
     @Override
-    public void updateStatusPageComponent(StatusPageComponent statusPageComponent) {
-        if (statusPageComponent.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
-            statusPageComponent.setState(statusPageComponent.getConfigState());
+    public void updateStatusPageComponent(StatusPageComponentInfo statusPageComponent) {
+        StatusPageComponent component = statusPageComponent.toEntity();
+        if (component.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
+            component.setState(component.getConfigState());
         }
-        statusPageComponentDao.save(statusPageComponent);
+        statusPageComponentDao.save(component);
     }
 
     @Override
@@ -117,8 +121,8 @@ public class StatusPageServiceImpl implements StatusPageService {
     }
 
     @Override
-    public StatusPageComponent queryStatusPageComponent(long id) {
-        return statusPageComponentDao.findById(id).orElse(null);
+    public StatusPageComponentInfo queryStatusPageComponent(long id) {
+        return StatusPageComponentInfo.fromEntity(statusPageComponentDao.findById(id).orElse(null));
     }
 
     @Override
@@ -324,7 +328,7 @@ public class StatusPageServiceImpl implements StatusPageService {
     }
 
     @Override
-    public Page<StatusPageIncident> queryStatusPageIncidents(String search, Long startTime, Long endTime, int pageIndex, int pageSize) {
+    public Page<StatusPageIncidentInfo> queryStatusPageIncidents(String search, Long startTime, Long endTime, int pageIndex, int pageSize) {
         // build search condition
         Specification<StatusPageIncident> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
@@ -345,29 +349,31 @@ public class StatusPageServiceImpl implements StatusPageService {
 
         Sort sort = Sort.by(Sort.Direction.DESC, "startTime");
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sort);
-        return statusPageIncidentDao.findAll(specification, pageRequest);
+        return statusPageIncidentDao.findAll(specification, pageRequest).map(StatusPageIncidentInfo::fromEntity);
     }
 
     @Override
-    public StatusPageIncident queryStatusPageIncident(long id) {
-        return statusPageIncidentDao.findById(id).orElse(null);
+    public StatusPageIncidentInfo queryStatusPageIncident(long id) {
+        return StatusPageIncidentInfo.fromEntity(statusPageIncidentDao.findById(id).orElse(null));
     }
 
     @Override
-    public void newStatusPageIncident(StatusPageIncident statusPageIncident) {
-        statusPageIncident.setStartTime(System.currentTimeMillis());
-        if (statusPageIncident.getState() == CommonConstants.STATUS_PAGE_INCIDENT_STATE_RESOLVED) {
-            statusPageIncident.setEndTime(System.currentTimeMillis());
+    public void newStatusPageIncident(StatusPageIncidentInfo statusPageIncident) {
+        StatusPageIncident incident = statusPageIncident.toEntity();
+        incident.setStartTime(System.currentTimeMillis());
+        if (incident.getState() == CommonConstants.STATUS_PAGE_INCIDENT_STATE_RESOLVED) {
+            incident.setEndTime(System.currentTimeMillis());
         }
-        statusPageIncidentDao.save(statusPageIncident);
+        statusPageIncidentDao.save(incident);
     }
 
     @Override
-    public void updateStatusPageIncident(StatusPageIncident statusPageIncident) {
-        if (statusPageIncident.getState() == CommonConstants.STATUS_PAGE_INCIDENT_STATE_RESOLVED) {
-            statusPageIncident.setEndTime(System.currentTimeMillis());
+    public void updateStatusPageIncident(StatusPageIncidentInfo statusPageIncident) {
+        StatusPageIncident incident = statusPageIncident.toEntity();
+        if (incident.getState() == CommonConstants.STATUS_PAGE_INCIDENT_STATE_RESOLVED) {
+            incident.setEndTime(System.currentTimeMillis());
         }
-        statusPageIncidentDao.save(statusPageIncident);
+        statusPageIncidentDao.save(incident);
     }
 
     @Override

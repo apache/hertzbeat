@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:25-jdk
 
 MAINTAINER Apache HertzBeat "dev@hertzbeat.apache.org"
 
@@ -26,7 +26,7 @@ RUN  sed -i 's#http://#https://#g' /etc/apt/sources.list.d/ubuntu.sources && \
     apt-get update && apt-get install -y openssh-server
 RUN mkdir /var/run/sshd
 
-ADD apache-hertzbeat-collector-*-bin.tar.gz /opt/
+ADD apache-hertzbeat-collector-${VERSION}-bin.tar.gz /opt/
 
 ENV JAVA_OPTS ""
 ENV TZ=Asia/Shanghai

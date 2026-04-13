@@ -17,11 +17,16 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.job.SshTunnel;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * Redis Protocol
@@ -69,9 +74,20 @@ public class RedisProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(timeout) && !CommonUtil.isNumeric(timeout)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(pattern) && !isValidPattern(pattern)) {
+            return true;
+        }
+        return false;
+    }
 
-        // todo: add
-        return true;
+    private boolean isValidPattern(String pattern) {
+        return "1".equals(pattern) || "2".equals(pattern) || "3".equals(pattern);
     }
 
 }

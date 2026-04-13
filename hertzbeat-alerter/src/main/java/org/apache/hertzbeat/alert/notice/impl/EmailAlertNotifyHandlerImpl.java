@@ -17,12 +17,10 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Date;
 import java.util.Properties;
 import java.util.ResourceBundle;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.MailServerConfig;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
@@ -31,6 +29,7 @@ import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,7 +43,6 @@ import org.springframework.stereotype.Component;
  * Send alarm information through email
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
@@ -70,11 +68,14 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
 
     private final GeneralConfigDao generalConfigDao;
 
-    private final ObjectMapper objectMapper;
-
     private static final String TYPE = "email";
 
     private ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
+
+    public EmailAlertNotifyHandlerImpl(JavaMailSender javaMailSender, GeneralConfigDao generalConfigDao) {
+        this.javaMailSender = javaMailSender;
+        this.generalConfigDao = generalConfigDao;
+    }
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) throws AlertNoticeException {
@@ -88,8 +89,8 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
                 if (emailConfig != null && emailConfig.getContent() != null) {
                     // enable database configuration
                     String content = emailConfig.getContent();
-                    MailServerConfig emailNoticeSenderConfig = objectMapper.readValue(content, MailServerConfig.class);
-                    if (emailNoticeSenderConfig.isEnable()) {
+                    MailServerConfig emailNoticeSenderConfig = JsonUtil.fromJson(content, MailServerConfig.class);
+                    if (emailNoticeSenderConfig != null && emailNoticeSenderConfig.isEnable()) {
                         sender.setHost(emailNoticeSenderConfig.getEmailHost());
                         sender.setPort(emailNoticeSenderConfig.getEmailPort());
                         sender.setUsername(emailNoticeSenderConfig.getEmailUsername());

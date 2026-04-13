@@ -32,19 +32,24 @@ import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoOfflineProce
 import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoOnlineProcessor;
 import org.apache.hertzbeat.collector.dispatch.entrance.processor.HeartbeatProcessor;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 import org.apache.hertzbeat.remoting.netty.NettyClientConfig;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingClient;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -70,11 +75,42 @@ public class CollectServer implements CommandLineRunner {
 
     private ScheduledExecutorService scheduledExecutor;
 
+    private final ExecutorService heartbeatExecutor;
+
+    private final Object heartbeatLock = new Object();
+
+    private boolean heartbeatRunning;
+
+    private boolean heartbeatPending;
+
+    private final Runnable closeApplicationAction;
+
     public CollectServer(final CollectJobService collectJobService,
                          final TimerDispatch timerDispatch,
                          final DispatchProperties properties,
-                         final CommonThreadPool threadPool,
+                         final BackgroundTaskExecutor threadPool,
                          final CollectorInfoProperties infoProperties) {
+        this(collectJobService, timerDispatch, properties, threadPool, infoProperties, null,
+                VirtualThreadProperties.defaults());
+    }
+
+    public CollectServer(final CollectJobService collectJobService,
+                         final TimerDispatch timerDispatch,
+                         final DispatchProperties properties,
+                         final BackgroundTaskExecutor threadPool,
+                         final CollectorInfoProperties infoProperties,
+                         final VirtualThreadProperties virtualThreadProperties) {
+        this(collectJobService, timerDispatch, properties, threadPool, infoProperties, null, virtualThreadProperties);
+    }
+
+    @Autowired
+    public CollectServer(final CollectJobService collectJobService,
+                         final TimerDispatch timerDispatch,
+                         final DispatchProperties properties,
+                         final BackgroundTaskExecutor threadPool,
+                         final CollectorInfoProperties infoProperties,
+                         final ConfigurableApplicationContext applicationContext,
+                         final VirtualThreadProperties virtualThreadProperties) {
         if (properties == null || properties.getEntrance() == null || properties.getEntrance().getNetty() == null) {
             log.error("init error, please config dispatch entrance netty props in application.yml");
             throw new IllegalArgumentException("please config dispatch entrance netty props");
@@ -87,10 +123,12 @@ public class CollectServer implements CommandLineRunner {
         this.timerDispatch = timerDispatch;
         this.collectJobService.setCollectServer(this);
         this.infoProperties = infoProperties;
+        this.heartbeatExecutor = createHeartbeatExecutor(virtualThreadProperties);
+        this.closeApplicationAction = createCloseApplicationAction(applicationContext);
         this.init(properties, threadPool);
     }
 
-    private void init(final DispatchProperties properties, final CommonThreadPool threadPool) {
+    private void init(final DispatchProperties properties, final BackgroundTaskExecutor threadPool) {
         NettyClientConfig nettyClientConfig = new NettyClientConfig();
         DispatchProperties.EntranceProperties.NettyProperties nettyProperties = properties.getEntrance().getNetty();
         nettyClientConfig.setServerHost(nettyProperties.getManagerHost());
@@ -101,13 +139,19 @@ public class CollectServer implements CommandLineRunner {
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK, new CollectCyclicDataProcessor(this));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.DELETE_CYCLIC_TASK, new DeleteCyclicTaskProcessor(this));
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK, new CollectOneTimeDataProcessor(this));
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_OFFLINE, new GoOfflineProcessor());
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_ONLINE, new GoOnlineProcessor());
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_CLOSE, new GoCloseProcessor(this));
+        this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_OFFLINE, new GoOfflineProcessor(timerDispatch));
+        this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_ONLINE, new GoOnlineProcessor(timerDispatch));
+        this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_CLOSE,
+                new GoCloseProcessor(this, timerDispatch, closeApplicationAction));
     }
 
     public void shutdown() {
-        this.scheduledExecutor.shutdownNow();
+        if (this.scheduledExecutor != null) {
+            this.scheduledExecutor.shutdownNow();
+        }
+        if (this.heartbeatExecutor != null) {
+            this.heartbeatExecutor.shutdownNow();
+        }
 
         this.remotingClient.shutdown();
     }
@@ -118,6 +162,21 @@ public class CollectServer implements CommandLineRunner {
 
     public void sendMsg(final ClusterMsg.Message message) {
         this.remotingClient.sendMsg(message);
+    }
+
+    void dispatchHeartbeat(String identity) {
+        if (heartbeatExecutor == null) {
+            sendHeartbeat(identity);
+            return;
+        }
+        synchronized (heartbeatLock) {
+            if (heartbeatRunning) {
+                heartbeatPending = true;
+                return;
+            }
+            heartbeatRunning = true;
+        }
+        submitHeartbeat(identity);
     }
 
     @Override
@@ -161,19 +220,8 @@ public class CollectServer implements CommandLineRunner {
                         .build();
                 scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
                 // schedule send heartbeat message
-                scheduledExecutor.scheduleAtFixedRate(() -> {
-                    try {
-                        ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                                .setIdentity(identity)
-                                .setDirection(ClusterMsg.Direction.REQUEST)
-                                .setType(ClusterMsg.MessageType.HEARTBEAT)
-                                .build();
-                        CollectServer.this.sendMsg(heartbeat);
-                        log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());   
-                    } catch (Exception e) {
-                        log.error("schedule send heartbeat to server error.{}", e.getMessage());
-                    }
-                }, 5, 5, TimeUnit.SECONDS);
+                scheduledExecutor.scheduleAtFixedRate(() -> CollectServer.this.dispatchHeartbeat(identity),
+                        5, 5, TimeUnit.SECONDS);
             }
         }
 
@@ -181,5 +229,83 @@ public class CollectServer implements CommandLineRunner {
         public void onChannelIdle(Channel channel) {
             log.info("handle idle event triggered. collector is going offline.");
         }
+    }
+
+    private ExecutorService createHeartbeatExecutor(VirtualThreadProperties virtualThreadProperties) {
+        VirtualThreadProperties properties =
+                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+        if (!properties.enabled()) {
+            return null;
+        }
+        return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+                .name("heartbeat-worker-vt-", 0)
+                .uncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("HeartBeat worker has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .factory());
+    }
+
+    private void submitHeartbeat(String identity) {
+        boolean submitted = false;
+        try {
+            heartbeatExecutor.execute(() -> {
+                try {
+                    sendHeartbeat(identity);
+                } finally {
+                    onHeartbeatComplete(identity);
+                }
+            });
+            submitted = true;
+        } finally {
+            if (!submitted) {
+                synchronized (heartbeatLock) {
+                    heartbeatRunning = false;
+                    heartbeatPending = false;
+                }
+            }
+        }
+    }
+
+    private void onHeartbeatComplete(String identity) {
+        boolean shouldRunAgain;
+        synchronized (heartbeatLock) {
+            if (heartbeatPending) {
+                heartbeatPending = false;
+                shouldRunAgain = true;
+            } else {
+                heartbeatRunning = false;
+                shouldRunAgain = false;
+            }
+        }
+        if (shouldRunAgain) {
+            submitHeartbeat(identity);
+        }
+    }
+
+    private void sendHeartbeat(String identity) {
+        try {
+            ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
+                    .setIdentity(identity)
+                    .setDirection(ClusterMsg.Direction.REQUEST)
+                    .setType(ClusterMsg.MessageType.HEARTBEAT)
+                    .build();
+            CollectServer.this.sendMsg(heartbeat);
+            log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
+        } catch (Exception e) {
+            log.error("schedule send heartbeat to server error.{}", e.getMessage());
+        }
+    }
+
+    private Runnable createCloseApplicationAction(ConfigurableApplicationContext applicationContext) {
+        if (applicationContext == null) {
+            return () -> {};
+        }
+        return () -> {
+            SpringApplication.exit(applicationContext, () -> 0);
+            if (applicationContext.isActive()) {
+                applicationContext.close();
+            }
+        };
     }
 }

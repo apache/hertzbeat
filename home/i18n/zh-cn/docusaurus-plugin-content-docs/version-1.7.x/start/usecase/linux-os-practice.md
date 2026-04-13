@@ -4,7 +4,7 @@ title: Linux 操作系统监控案例
 sidebar_label: Linux 操作系统监控案例
 ---
 
-这篇文章介绍如何使用 Hertzbeat 监控系统对Linux操作系统的通用性能指标进行采集监控，并在文件系统使用率过高时给我们发告警消息。
+这篇文章介绍如何使用 HertzBeat 监控系统对Linux操作系统的通用性能指标进行采集监控，并在文件系统使用率过高时给我们发告警消息。
 
 ## HertzBeat 是什么
 
@@ -89,6 +89,6 @@ github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbea
 
 ## 总结
 
-监控 Linux 操作系统的实践就到这里，当然对 Hertzbeat 来说这个功能只是冰山一角，如果您觉得 Hertzbeat 这个开源项目不错的话欢迎给我们 Star 哦，非常感谢各位的支持！
+监控 Linux 操作系统的实践就到这里，当然对 HertzBeat 来说这个功能只是冰山一角，如果您觉得 HertzBeat 这个开源项目不错的话欢迎给我们 Star 哦，非常感谢各位的支持！
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**

@@ -7,7 +7,7 @@ keywords: [bulletin, custom]
 
 > Customize a bulletin to show a table of self-selected metrics for some kind of monitoring.
 
-### Add Bulletin Item
+## Add Bulletin Item
 
 1. Click `Add New Bulletin Item`, enter the `Bulletin Name`, scroll down to select the `Monitoring Type`, select the associated `Monitoring Task Name`, You can filter `Monitor Task Name` by `Label`, and then select the `Monitoring Metrics` you want to show in the shuttle box.
 

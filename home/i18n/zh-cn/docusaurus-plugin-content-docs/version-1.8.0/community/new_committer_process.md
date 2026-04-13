@@ -405,7 +405,7 @@ hi, i accept. Thanks for invitaion.
 
   **发送模板**
 
-  主题：`Accept to become a Hertzbeat committer`
+  主题：`Accept to become a HertzBeat committer`
 
   正文:
 

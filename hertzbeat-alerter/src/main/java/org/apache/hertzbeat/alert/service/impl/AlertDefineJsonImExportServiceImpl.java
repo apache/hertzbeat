@@ -19,26 +19,21 @@ package org.apache.hertzbeat.alert.service.impl;
 
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.JsonFile.FILE_SUFFIX;
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.JsonFile.TYPE;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * Configure the import and export JSON format
  */
 @Slf4j
-@RequiredArgsConstructor
 @Service
 public class AlertDefineJsonImExportServiceImpl extends AlertDefineAbstractImExportServiceImpl {
-
-    private final ObjectMapper objectMapper;
 
     @Override
     public String type() {
@@ -52,22 +47,12 @@ public class AlertDefineJsonImExportServiceImpl extends AlertDefineAbstractImExp
 
     @Override
     public List<ExportAlertDefineDTO> parseImport(InputStream is) {
-        try {
-            return objectMapper.readValue(is, new TypeReference<>() {
-            });
-        } catch (IOException ex) {
-            log.error("import alertDefine failed.", ex);
-            throw new RuntimeException("import alertDefine failed");
-        }
+        return JsonUtil.fromJson(is, new TypeReference<>() {
+        });
     }
 
     @Override
     public void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
-        try {
-            objectMapper.writeValue(os, exportAlertDefineList);
-        } catch (IOException ex) {
-            log.error("export alertDefine failed.", ex);
-            throw new RuntimeException("export alertDefine failed");
-        }
+        JsonUtil.toJson(exportAlertDefineList, os);
     }
 }

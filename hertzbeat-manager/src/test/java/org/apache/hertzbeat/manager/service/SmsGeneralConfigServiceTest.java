@@ -19,17 +19,14 @@ package org.apache.hertzbeat.manager.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
 import org.apache.hertzbeat.manager.service.impl.SmsGeneralConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * test case for {@link SmsGeneralConfigServiceImpl}
@@ -40,21 +37,11 @@ class SmsGeneralConfigServiceTest {
     @Mock
     private GeneralConfigDao generalConfigDao;
 
-    @Mock
-    private ObjectMapper objectMapper;
-
-    @InjectMocks
     private SmsGeneralConfigServiceImpl service;
 
     @BeforeEach
     void setUp() {
-
-        MockitoAnnotations.openMocks(this);
-
-        service = new SmsGeneralConfigServiceImpl(
-                generalConfigDao,
-                objectMapper
-        );
+        service = new SmsGeneralConfigServiceImpl(generalConfigDao);
     }
 
     @Test
@@ -65,7 +52,6 @@ class SmsGeneralConfigServiceTest {
 
     @Test
     void testGetTypeReference() {
-
         TypeReference<SmsConfig> typeReference = service.getTypeReference();
         assertNotNull(typeReference);
         assertEquals(SmsConfig.class, typeReference.getType());

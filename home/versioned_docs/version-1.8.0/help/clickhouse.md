@@ -7,7 +7,7 @@ keywords: [open source monitoring system, open source database monitoring, Click
 
 > Collect and monitor general performance metrics for the ClickHouse database.
 
-### Configuration Parameters
+## Configuration Parameters
 
 |   Parameter Name    |                                                     Parameter Description                                                      |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------------|

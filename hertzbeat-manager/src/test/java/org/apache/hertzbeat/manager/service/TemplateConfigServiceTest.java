@@ -22,7 +22,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
@@ -30,7 +29,6 @@ import org.apache.hertzbeat.manager.service.impl.TemplateConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -46,24 +44,18 @@ class TemplateConfigServiceTest {
     private GeneralConfigDao generalConfigDao;
 
     @Mock
-    private ObjectMapper objectMapper;
-
-    @Mock
     private AppService appService;
 
-    @InjectMocks
     private TemplateConfigServiceImpl templateConfigServiceImpl;
 
     @BeforeEach
     void setUp() {
-
-        templateConfigServiceImpl = new TemplateConfigServiceImpl(generalConfigDao, objectMapper);
+        templateConfigServiceImpl = new TemplateConfigServiceImpl(generalConfigDao);
         ReflectionTestUtils.setField(templateConfigServiceImpl, "appService", appService);
     }
 
     @Test
     void testHandlerValidTemplateConfig() {
-
         TemplateConfig templateConfig = mock(TemplateConfig.class);
         templateConfigServiceImpl.handler(templateConfig);
 
@@ -75,7 +67,6 @@ class TemplateConfigServiceTest {
 
     @Test
     void testHandlerNullTemplateConfig() {
-
         templateConfigServiceImpl.handler(null);
 
         verify(
@@ -86,7 +77,6 @@ class TemplateConfigServiceTest {
 
     @Test
     void testType() {
-
         String type = templateConfigServiceImpl.type();
         assertEquals(GeneralConfigTypeEnum.template.name(), type);
     }

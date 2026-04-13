@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,24 +17,25 @@
 
 package org.apache.hertzbeat.manager.config;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import okhttp3.ConnectionPool;
-import okhttp3.OkHttpClient;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * restTemplate config
- * todo thread pool
+ * RestTemplate configuration using JDK native HttpClient for Spring 7.0.
  */
 @Configuration
 public class RestTemplateConfig {
 
+    /**
+     * Create RestTemplate with JDK native request factory and custom interceptors.
+     */
     @Bean
     public RestTemplate restTemplate(ClientHttpRequestFactory factory) {
         RestTemplate restTemplate = new RestTemplate(factory);
@@ -43,19 +44,17 @@ public class RestTemplateConfig {
     }
 
     @Bean
-    public ClientHttpRequestFactory simpleClientHttpRequestFactory() {
+    public ClientHttpRequestFactory clientHttpRequestFactory() {
+        HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(NetworkConstants.HttpClientConstants.CONNECT_TIME_OUT))
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build();
 
-        return new OkHttp3ClientHttpRequestFactory(
-               new OkHttpClient.Builder()
-                       .readTimeout(NetworkConstants.HttpClientConstants.READ_TIME_OUT, TimeUnit.SECONDS)
-                        .writeTimeout(NetworkConstants.HttpClientConstants.WRITE_TIME_OUT, TimeUnit.SECONDS)
-                        .connectTimeout(NetworkConstants.HttpClientConstants.CONNECT_TIME_OUT, TimeUnit.SECONDS)
-                        .connectionPool(new ConnectionPool(
-                                NetworkConstants.HttpClientConstants.MAX_IDLE_CONNECTIONS,
-                                NetworkConstants.HttpClientConstants.KEEP_ALIVE_TIMEOUT,
-                                TimeUnit.SECONDS)
-                        ).build()
-        );
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+
+        factory.setReadTimeout(Duration.ofSeconds(NetworkConstants.HttpClientConstants.READ_TIME_OUT));
+
+        return factory;
     }
 
 }

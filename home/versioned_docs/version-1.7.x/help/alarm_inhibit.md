@@ -29,7 +29,7 @@ keywords: [ Open Source Monitoring System, Alarm Convergence, Alarm Inhibition ]
 
 ## Example
 
-Scenario: Use Hertzbeat to monitor two Centos servers 192.168.1.1, 192.168.1.2, and Redis services Redis-1 and Redis-2 deployed on the two servers.
+Scenario: Use HertzBeat to monitor two Centos servers 192.168.1.1, 192.168.1.2, and Redis services Redis-1 and Redis-2 deployed on the two servers.
 And configure the following threshold rules:
 
 - Monitor Centos Linux / Monitor availability. Bind label `server-status:down`

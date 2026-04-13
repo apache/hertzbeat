@@ -102,12 +102,13 @@ spring:
       max-lifetime: 120000
   jpa:
     show-sql: false
-    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: mysql
+    hibernate:
+      ddl-auto: update
     properties:
-      eclipselink:
-        logging:
-          level: SEVERE
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
   
   flyway:
     enabled: true
@@ -231,3 +232,41 @@ grafana:
   username: admin
   password: admin
 
+hertzbeat:
+  collector:
+    mysql:
+      # MySQL-compatible query engine routing for MySQL, MariaDB, OceanBase, and TiDB SQL metrics.
+      # auto  : prefer JDBC only when mysql-connector-j is available from ext-lib, otherwise use the built-in query engine
+      # jdbc  : always use JDBC
+      # r2dbc : always use the built-in query engine
+      query-engine: ${HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE:auto}
+  # Optional virtual-thread overrides. Remove this whole block to use built-in defaults.
+  vthreads:
+    enabled: true
+    common:
+      mode: UNBOUNDED_VT
+    collector:
+      mode: LIMIT_AND_REJECT
+    manager:
+      mode: LIMIT_AND_REJECT
+      max-concurrent-jobs: 10
+    alerter:
+      notify:
+        mode: LIMIT_AND_REJECT
+        max-concurrent-jobs: 64
+      periodic-max-concurrent-jobs: 10
+      log-worker:
+        max-concurrent-jobs: 10
+        queue-capacity: 1000
+      reduce:
+        max-concurrent-jobs: 2
+      window-evaluator:
+        max-concurrent-jobs: 2
+      notify-max-concurrent-per-channel: 4
+    warehouse:
+      mode: UNBOUNDED_VT
+    async:
+      enabled: true
+      concurrency-limit: 256
+      reject-when-limit-reached: true
+      task-termination-timeout: 5000

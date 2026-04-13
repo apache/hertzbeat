@@ -4,7 +4,7 @@ author: tomsun28
 author_title: tomsun28
 author_url: https://github.com/zhangshenghang
 tags: [opensource, release]
-keywords: [open source monitoring system, alerting system, Hertzbeat, release]
+keywords: [open source monitoring system, alerting system, HertzBeat, release]
 ---
 
 Dear Community Members,
@@ -165,7 +165,7 @@ Special thanks to the following community members for their collaborative effort
 - [Doc] Add English doc for springboot auto practice usecase by @Cyanty in #3298
 - [bugfix] enables support for VictoriaMetrics in cluster mode within HertzBeat by @bigcyy in #3297
 - [improve] Optimize the way of Dead Link Check by @Cyanty in #3302
-- [docs] Add Chinese and English versions of the Hertzbeat upgrade guide by @markguo123 in #3294
+- [docs] Add Chinese and English versions of the HertzBeat upgrade guide by @markguo123 in #3294
 - [refactor] Remove the possible CVE-2025-30066 security vulnerability action and ignore the 500 code for link check by @Cyanty in #3303
 - [Improve] Add unit test for PeriodicAlertCalculator by @MasamiYui in #3304
 - [docs] Correct Markdown formatting and update lint config to enable local checking by @bigcyy in #3310
@@ -199,7 +199,7 @@ Special thanks to the following community members for their collaborative effort
 - @KevinLLF made their first contribution in #3248
 - @markguo123 made their first contribution in #3294
 
-## Apache Hertzbeat
+## Apache HertzBeat
 
 **Repository URL:**
 

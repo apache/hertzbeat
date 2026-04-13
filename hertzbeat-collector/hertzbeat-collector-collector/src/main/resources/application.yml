@@ -27,9 +27,6 @@ spring:
     timeout-per-shutdown-phase: 10s
   jackson:
     default-property-inclusion: ALWAYS
-  # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed...
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration, org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration, org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
 management:
   endpoints:
     web:
@@ -75,3 +72,19 @@ push:
 common:
   queue:
     type: netty
+
+hertzbeat:
+  collector:
+    mysql:
+      # MySQL-compatible query engine routing for MySQL, MariaDB, OceanBase, and TiDB SQL metrics.
+      # auto  : prefer JDBC only when mysql-connector-j is available from ext-lib, otherwise use the built-in query engine
+      # jdbc  : always use JDBC
+      # r2dbc : always use the built-in query engine
+      query-engine: ${HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE:auto}
+  # Optional virtual-thread overrides. Remove this whole block to use built-in defaults.
+  vthreads:
+    enabled: true
+    common:
+      mode: UNBOUNDED_VT
+    collector:
+      mode: LIMIT_AND_REJECT

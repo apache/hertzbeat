@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.alert.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
 import org.apache.hertzbeat.common.entity.dto.sms.SmslocalSmsProperties;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
@@ -47,9 +45,6 @@ public class SmsClientFactoryTest {
     private GeneralConfigDao generalConfigDao;
 
     @Mock
-    private ObjectMapper objectMapper;
-
-    @Mock
     private SmsConfig yamlSmsConfig;
 
     @InjectMocks
@@ -57,7 +52,7 @@ public class SmsClientFactoryTest {
 
 
     @Test
-    void testloadDbConfig() throws JsonProcessingException {
+    void testloadDbConfig() {
         GeneralConfig generalConfig = new GeneralConfig();
 
         SmsConfig smsConfig = new SmsConfig();
@@ -66,7 +61,6 @@ public class SmsClientFactoryTest {
         smsConfig.setSmslocal(new SmslocalSmsProperties("11"));
 
         generalConfig.setContent(JsonUtil.toJson(smsConfig));
-        when(objectMapper.readValue(generalConfig.getContent(), SmsConfig.class)).thenReturn(smsConfig);
         when(generalConfigDao.findByType(GeneralConfigTypeEnum.sms.name())).thenReturn(generalConfig);
 
         assertNotNull(smsClientFactory.getSmsClient());

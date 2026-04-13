@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.startup.dao;
 
 import jakarta.annotation.Resource;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.apache.hertzbeat.common.entity.manager.MetricsFavorite;
 import org.apache.hertzbeat.manager.dao.MetricsFavoriteDao;
 import org.apache.hertzbeat.startup.AbstractSpringIntegrationTest;
@@ -47,6 +49,9 @@ class MetricsFavoriteDaoTest extends AbstractSpringIntegrationTest {
 
     @Resource
     private MetricsFavoriteDao metricsFavoriteDao;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private MetricsFavorite testFavorite1;
     private MetricsFavorite testFavorite2;
@@ -142,6 +147,8 @@ class MetricsFavoriteDaoTest extends AbstractSpringIntegrationTest {
         assertTrue(metricsFavoriteDao.findById(saved.getId()).isPresent());
 
         metricsFavoriteDao.deleteByUserIdAndMonitorIdAndMetricsName(testCreator1, testMonitorId1, testMetricsName1);
+        entityManager.flush();
+        entityManager.clear();
         assertFalse(metricsFavoriteDao.findById(saved.getId()).isPresent());
     }
 
@@ -163,6 +170,8 @@ class MetricsFavoriteDaoTest extends AbstractSpringIntegrationTest {
 
         Set<Long> monitorIds = Set.of(testMonitorId1, testMonitorId2);
         metricsFavoriteDao.deleteFavoritesByMonitorIdIn(monitorIds);
+        entityManager.flush();
+        entityManager.clear();
 
         assertEquals(0, metricsFavoriteDao.findAll().size());
         assertFalse(metricsFavoriteDao.findById(saved1.getId()).isPresent());
@@ -177,6 +186,8 @@ class MetricsFavoriteDaoTest extends AbstractSpringIntegrationTest {
 
         Set<Long> monitorIds = Set.of(testMonitorId1);
         metricsFavoriteDao.deleteFavoritesByMonitorIdIn(monitorIds);
+        entityManager.flush();
+        entityManager.clear();
 
         assertEquals(1, metricsFavoriteDao.findAll().size());
         assertFalse(metricsFavoriteDao.findById(saved1.getId()).isPresent());

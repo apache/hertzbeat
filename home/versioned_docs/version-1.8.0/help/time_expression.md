@@ -5,7 +5,7 @@ sidebar_label: Time Expression
 keywords: [ dynamic time, time expressions ]
 ---
 
-### Introduction
+## Introduction
 
 HertzBeat supports using expressions to calculate relative time during monitoring collection, allowing for more flexible time definitions in monitoring templates.
 

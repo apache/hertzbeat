@@ -11,8 +11,8 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/home/0.png)
 
-### HertzBeat 介绍
-
+## HertzBeat 介绍
+>
 > HertzBeat赫兹跳动 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。
 > 致力于**易用友好**，全 WEB 页面操作，鼠标点一点就能监控告警，无需学习成本。
 > 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等指标监控，阈值告警通知一步到位。

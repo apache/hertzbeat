@@ -7,8 +7,8 @@ keywords: [open source monitoring tool, open source rabbitmq monitoring tool, mo
 
 > Monitoring the running status of RabbitMQ message middleware, nodes, topics and other related metrics.
 
-### Pre-monitoring Operations
-
+## Pre-monitoring Operations
+>
 > HertzBeat uses RabbitMQ Management's Rest Api to collect RabbitMQ metric data.
 > Therefore, you need to enable the Management plug-in in your RabbitMQ environment
 

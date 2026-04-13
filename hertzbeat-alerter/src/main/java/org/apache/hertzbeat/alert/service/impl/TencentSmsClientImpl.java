@@ -33,7 +33,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -59,7 +59,7 @@ public class TencentSmsClientImpl implements SmsClient {
     private static final String ACTION = "SendSms";
     private static final String HOST = "sms.tencentcloudapi.com";
     private static final Charset UTF8 = StandardCharsets.UTF_8;
-    
+
     private String appId;
     private String signName;
     private String templateId;
@@ -107,7 +107,7 @@ public class TencentSmsClientImpl implements SmsClient {
                      String[] templateValues, String[] phones) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             String timestamp = String.valueOf(System.currentTimeMillis() / 1000);
-            
+
             // build request payload
             Map<String, Object> params = new HashMap<>();
             params.put("SmsSdkAppId", appId);
@@ -115,14 +115,14 @@ public class TencentSmsClientImpl implements SmsClient {
             params.put("TemplateId", templateId);
             params.put("TemplateParamSet", templateValues);
             params.put("PhoneNumberSet", phones);
-            
+
             String payload = JsonUtil.toJson(params);
-            
+
             // calculate request signature
             String authorization = calculateAuthorization(
                     secretId, secretKey, "sms", HOST, REGION,
                     ACTION, API_VERSION, payload);
-            
+
             // build http request
             HttpPost httpPost = new HttpPost("https://" + HOST);
             httpPost.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -142,11 +142,11 @@ public class TencentSmsClientImpl implements SmsClient {
                 String responseBody = EntityUtils.toString(response.getEntity());
 
                 log.debug("SMS response status: {}, body: {}", statusCode, responseBody);
-                
+
                 if (statusCode != 200) {
                     throw new SendMessageException("HTTP request failed with status code: " + statusCode);
                 }
-                
+
                 JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
                 JsonNode responseNode = jsonResponse.get("Response");
                 JsonNode error = responseNode.get("Error");

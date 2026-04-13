@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.push;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +47,7 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.springframework.http.MediaType;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * push style collect

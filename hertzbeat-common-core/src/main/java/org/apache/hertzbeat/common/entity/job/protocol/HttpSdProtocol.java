@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Dns protocol
@@ -35,8 +36,9 @@ public class HttpSdProtocol implements Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (StringUtils.isBlank(url)) {
+            return true;
+        }
+        return !url.matches("^(?i)https?://.+");
     }
 }

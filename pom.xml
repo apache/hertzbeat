@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.2</version>
+        <version>4.0.3</version>
     </parent>
 
     <groupId>org.apache.hertzbeat</groupId>
@@ -99,16 +99,15 @@
     <properties>
         <hzb.version>1.8.0</hzb.version>
 
-        <java.version>17</java.version>
+        <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
 
-
         <p3c-pmd.version>2.1.1</p3c-pmd.version>
-        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
         <maven-pmd-plugin.version>3.21.0</maven-pmd-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- hertzbeat related modules -->
@@ -126,14 +125,16 @@
         <caffeine.version>2.9.3</caffeine.version>
         <httpclient.version>4.5.14</httpclient.version>
 
-        <lombok.version>1.18.32</lombok.version>
+        <lombok.version>1.18.42</lombok.version>
         <slf4j.version>2.0.9</slf4j.version>
+        <jackson.version>3.1.0</jackson.version>
         <xml.bind.version>2.3.0</xml.bind.version>
         <snake.yaml.version>2.2</snake.yaml.version>
-        <okhttp.version>4.12.0</okhttp.version>
+        <okhttp.version>5.3.2</okhttp.version>
         <kafka-clients.version>3.7.1</kafka-clients.version>
         <netty.version>4.1.117.Final</netty.version>
         <mysql.version>8.4.0</mysql.version>
+        <r2dbc-mysql.version>1.4.1</r2dbc-mysql.version>
         <mssql-jdbc.version>12.10.2.jre11</mssql-jdbc.version>
         <ojdbc8.version>21.5.0.0</ojdbc8.version>
         <mongodb-driver.version>4.6.1</mongodb-driver.version>
@@ -162,28 +163,25 @@
         <rocketmq-tools.version>4.9.4</rocketmq-tools.version>
         <dnsjava.version>3.6.2</dnsjava.version>
         <consul-api.version>1.4.5</consul-api.version>
-        <nacos-client.version>2.2.1</nacos-client.version>
+        <nacos-client.version>3.1.1</nacos-client.version>
         <vesoft-client.version>3.6.0</vesoft-client.version>
-        <eclipse-jpa.version>4.0.2</eclipse-jpa.version>
         <jutf7.version>1.0.0</jutf7.version>
-        <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
         <huawei.sdk.version>3.1.37</huawei.sdk.version>
         <huawei.obs.version>3.23.5</huawei.obs.version>
-        <commons-net>3.8.0</commons-net>
         <zookeeper.version>3.9.3</zookeeper.version>
 
         <duckdb.version>1.4.2.0</duckdb.version>
-        <iotdb-session.version>0.13.3</iotdb-session.version>
         <influxdb.version>2.23</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
-        <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <greptimedb.version>0.11.0</greptimedb.version>
         <arrow.version>18.1.0</arrow.version>
         <snappy-java.version>1.1.10.7</snappy-java.version>
         <sshd-sftp.version>2.13.1</sshd-sftp.version>
-        <opentelemetry-starter.version>2.15.0</opentelemetry-starter.version>
-        <opentelemetry-logback.version>2.14.0-alpha</opentelemetry-logback.version>
+        <opentelemetry-starter.version>2.25.0</opentelemetry-starter.version>
+        <opentelemetry-logback.version>2.25.0-alpha</opentelemetry-logback.version>
         <opentelemetry-proto.version>1.3.1-alpha</opentelemetry-proto.version>
+        <testcontainers.version>2.0.3</testcontainers.version>
+        <argLine></argLine>
     </properties>
 
     <dependencyManagement>
@@ -321,6 +319,41 @@
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
             </dependency>
+          <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.21</version>
+          </dependency>
+          <dependency>
+            <groupId>tools.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+            <version>${jackson.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>tools.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>${jackson.version}</version>
+          </dependency>
+<!--          <dependency>-->
+<!--            <groupId>tools.jackson.datatype</groupId>-->
+<!--            <artifactId>jackson-datatype-jsr310</artifactId>-->
+<!--            <version>3.0.0-rc1</version>-->
+<!--          </dependency>-->
             <!-- commons-net -->
             <dependency>
                 <groupId>commons-net</groupId>
@@ -476,6 +509,11 @@
                 <artifactId>okhttp</artifactId>
                 <version>${okhttp.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>logging-interceptor</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
             <!-- caffeine-->
             <dependency>
                 <groupId>com.github.ben-manes.caffeine</groupId>
@@ -570,6 +608,10 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <!-- JDK 23+ no longer auto-runs classpath annotation processors. -->
+                    <proc>full</proc>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -580,6 +622,28 @@
                         ${argLine} --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED
                     </argLine>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>require-java-25</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[25,)</version>
+                                    <message>Apache HertzBeat now requires JDK 25 or newer. Please switch JAVA_HOME before building or testing.</message>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <!-- java code style check -->
             <plugin>

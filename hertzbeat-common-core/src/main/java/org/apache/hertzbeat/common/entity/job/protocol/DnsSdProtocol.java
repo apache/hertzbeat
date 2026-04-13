@@ -21,6 +21,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
 
 /**
  * Dns protocol
@@ -41,8 +45,16 @@ public class DnsSdProtocol implements Protocol {
 
     @Override
     public boolean isInvalid() {
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        if (StringUtils.isAnyBlank(recordType, recordName)) {
+            return true;
+        }
+        return !isValidRecordType(recordType);
+    }
 
-        // todo: add
-        return true;
+    private boolean isValidRecordType(String type) {
+        return type.matches("^(?i)(A|AAAA|CNAME|MX|TXT|NS|SRV|PTR|SOA|CAA)$");
     }
 }

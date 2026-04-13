@@ -19,12 +19,20 @@ package org.apache.hertzbeat.collector.collect.rocketmq;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutor;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutors;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -37,6 +45,13 @@ public class RocketmqSingleCollectTest {
     @BeforeEach
     public void setUp() throws Exception {
         collect = new RocketmqSingleCollectImpl();
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (collect != null) {
+            collect.destroy();
+        }
     }
 
     @Test
@@ -96,5 +111,52 @@ public class RocketmqSingleCollectTest {
     @Test
     void supportProtocol() {
         assertEquals(DispatchConstants.PROTOCOL_ROCKETMQ, collect.supportProtocol());
+    }
+
+    @Test
+    void executeConsumerTaskRunsOnVirtualThread() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicBoolean virtualThread = new AtomicBoolean(false);
+
+        collect.executeConsumerTask(() -> {
+            virtualThread.set(Thread.currentThread().isVirtual());
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(virtualThread.get());
+    }
+
+    @Test
+    void executeConsumerTaskDiscardsOldestWhenQueueIsFull() throws InterruptedException {
+        ManagedExecutor executor = ManagedExecutors.newDiscardOldestVirtualExecutor("rocketmq-test",
+                "rocketmq-test-", 1, 1, 1, (thread, throwable) -> {
+                });
+        RocketmqSingleCollectImpl testCollect = new RocketmqSingleCollectImpl(executor);
+        CountDownLatch firstStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch thirdStarted = new CountDownLatch(1);
+        AtomicBoolean secondExecuted = new AtomicBoolean(false);
+        try {
+            testCollect.executeConsumerTask(() -> {
+                firstStarted.countDown();
+                try {
+                    releaseFirst.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+            assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
+
+            testCollect.executeConsumerTask(() -> secondExecuted.set(true));
+            testCollect.executeConsumerTask(thirdStarted::countDown);
+
+            releaseFirst.countDown();
+            assertTrue(thirdStarted.await(5, TimeUnit.SECONDS));
+            assertFalse(secondExecuted.get());
+        } finally {
+            releaseFirst.countDown();
+            testCollect.destroy();
+        }
     }
 }

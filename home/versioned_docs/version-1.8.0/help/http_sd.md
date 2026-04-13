@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source service discovery monitoring
 
 > HertzBeat integrates with custom HTTP APIs to automatically discover service instances and create monitoring tasks for them.
 
-### Overview
+## Overview
 
 HTTP Service Discovery allows HertzBeat to discover service instances by calling your custom HTTP API. This is the most flexible service discovery method, suitable for any system that can expose service instance information via HTTP API. You only need to provide an HTTP endpoint that returns a list of target addresses in the specified format.
 

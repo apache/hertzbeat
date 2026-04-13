@@ -1,5 +1,5 @@
 {
-    "name": "Hertzbeat DevContainer",
+    "name": "HertzBeat DevContainer",
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "features": {
         "ghcr.io/devcontainers/features/java:1": {
@@ -29,7 +29,7 @@
     },
     "portsAttributes": {
         "4200": {
-            "label": "Hertzbeat Web",
+            "label": "HertzBeat Web",
             "onAutoForward": "notify"
         }
     },

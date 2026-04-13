@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.manager.component.validator;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 
 /**
  * Parameter validator interface
@@ -40,5 +40,5 @@ public interface ParamValidator {
      * @param param       parameter actual value
      * @throws IllegalArgumentException if validation fails
      */
-    void validate(ParamDefine paramDefine, Param param) throws IllegalArgumentException;
+    void validate(ParamDefineInfo paramDefine, MonitorParam param) throws IllegalArgumentException;
 }

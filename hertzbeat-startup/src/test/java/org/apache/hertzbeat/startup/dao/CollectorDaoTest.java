@@ -20,7 +20,7 @@ package org.apache.hertzbeat.startup.dao;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.startup.AbstractSpringIntegrationTest;

@@ -12,6 +12,7 @@ import 'swiper/css'
 import 'swiper/css/pagination'
 
 import Feature from './components/Feature'
+import StructuredData from '../components/StructuredData'
 
 import styles from './styles.module.css'
 import { features } from '../constants'
@@ -22,6 +23,7 @@ function Home() {
   const { siteConfig = {} } = context
   return (
       <>
+        <StructuredData />
         <Layout
             title={`${siteConfig.title} · ${siteConfig.tagline}`}
             description={`${siteConfig.tagline}`}

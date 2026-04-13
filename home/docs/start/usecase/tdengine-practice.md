@@ -8,7 +8,7 @@ sidebar_label: TDengine Monitoring Practice
 TDengine TSDB is an open-source, high-performance, cloud-native time series database (TSDB) optimized for IoT, vehicle networking, industrial Internet, finance, IT operations, and other scenarios. It also comes with built-in caching, streaming computing, data subscription, and other system functions that greatly reduce system design complexity and lower R&D and operational costs, making it an extremely simple time series data processing platform.
 :::
 
-This article introduces how to use the Hertzbeat monitoring system to collect and monitor TDengine general performance indicators.
+This article introduces how to use the HertzBeat monitoring system to collect and monitor TDengine general performance indicators.
 
 ## What is HertzBeat?
 

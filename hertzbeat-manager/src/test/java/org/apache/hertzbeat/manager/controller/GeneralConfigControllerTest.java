@@ -91,7 +91,7 @@ class GeneralConfigControllerTest {
 
         mockMvc.perform(put("/api/config/template/appName")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"templateKey\":\"templateValue\"}"))
+                        .content("{\"templateKey\":\"templateValue\",\"hide\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
     }

@@ -1,0 +1,54 @@
+[
+  {
+    "name": "org.apache.hertzbeat.collector.Collector__ApplicationContextInitializer",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.hertzbeat.collector.Collector__BeanFactoryRegistrations",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.hertzbeat.common.entity.dto.ServerInfo",
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "io.netty.channel.kqueue.KQueueDatagramChannel",
+    "allPublicConstructors": true
+  },
+  {
+    "name": "io.netty.channel.kqueue.KQueueSocketChannel",
+    "allPublicConstructors": true
+  },
+  {
+    "name": "io.netty.channel.kqueue.KQueueEventLoopGroup",
+    "allPublicConstructors": true
+  },
+  {
+    "name": "io.netty.channel.epoll.EpollDatagramChannel",
+    "allPublicConstructors": true
+  },
+  {
+    "name": "io.netty.channel.epoll.EpollSocketChannel",
+    "allPublicConstructors": true
+  },
+  {
+    "name": "io.netty.channel.epoll.EpollEventLoopGroup",
+    "allPublicConstructors": true
+  },
+  {
+    "name": "io.netty.channel.socket.nio.NioDatagramChannel",
+    "allPublicConstructors": true
+  },
+  {
+    "name": "io.netty.channel.socket.nio.NioSocketChannel",
+    "allPublicConstructors": true
+  },
+  {
+    "name": "io.netty.channel.nio.NioEventLoopGroup",
+    "allPublicConstructors": true
+  }
+]

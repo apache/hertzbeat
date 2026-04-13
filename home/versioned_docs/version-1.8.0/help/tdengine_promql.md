@@ -9,7 +9,7 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, TD
 > suitable for situations where Prometheus is already monitoring TDengine and you need to retrieve TDengine monitoring
 > data from the Prometheus server.
 
-### Prerequisites
+## Prerequisites
 
 1. Deploy TDengine;
 2. Deploy taosKeeper; note that installing the official TDengine installation package will automatically install

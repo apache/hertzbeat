@@ -9,8 +9,8 @@ keywords: [开源监控系统, 开源中间件监控, ActiveMQ消息中间件监
 
 **使用协议：JMX**
 
-### 监控前操作
-
+## 监控前操作
+>
 > 您需要在 ActiveMQ 开启 `JMX` 服务，HertzBeat 使用 JMX 协议对 ActiveMQ 进行指标采集。
 
 1. 修改安装目录下的 `conf/activemq.xml` 文件，开启JMX

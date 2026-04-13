@@ -22,7 +22,7 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_CONFLICT_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.PARAM_INVALID_CODE;
 import java.util.Objects;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.support.exception.CommonException;
@@ -86,7 +86,7 @@ public class GlobalExceptionHandler {
         Message<Void> message = Message.fail(FAIL_CODE, exception.getMessage());
         return ResponseEntity.ok(message);
     }
-    
+
     /**
      * processing parameter error
      * @param exception parameter exception

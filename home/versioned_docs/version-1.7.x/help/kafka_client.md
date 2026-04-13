@@ -7,7 +7,7 @@ keywords: [open-source monitoring system, open-source message middleware monitor
 
 > Collect and monitor general metrics for Kafka.
 
-### Configuration Parameters
+## Configuration Parameters
 
 | Parameter Name   | Help Description                                              |
 |------------------|---------------------------------------------------------------|

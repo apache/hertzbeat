@@ -17,10 +17,14 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * rocketmq protocol
@@ -68,8 +72,15 @@ public class RocketmqProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (!validateIpDomain(namesrvHost) || !validPort(namesrvPort)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(accessKey) && StringUtils.isBlank(secretKey)) {
+            return true;
+        }
+        if (StringUtils.isBlank(accessKey) && StringUtils.isNotBlank(secretKey)) {
+            return true;
+        }
+        return false;
     }
 }

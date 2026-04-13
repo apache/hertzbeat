@@ -7,8 +7,8 @@ keywords: [开源监控系统, Zookeeper监控监控]
 
 > 对Zookeeper的通用性能指标进行采集监控
 
-### 监控前操作
-
+## 监控前操作
+>
 > 监控 zookeeper 目前的实现方案使用的是 zookeeper 提供的四字命令 + netcat 来收集指标数据  
 > 需要用户自己将zookeeper的四字命令加入白名单
 

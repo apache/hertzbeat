@@ -23,8 +23,8 @@ limitations under the License.
 
 > 非常欢迎参与项目贡献，我们致力于维护一个互相帮助的快乐社区。
 
-### 贡献方式
-
+## 贡献方式
+>
 > 在 Apache HertzBeat™ 社区，贡献方式有很多:
 
 - 💻**代码**：可以帮助社区完成一些任务、编写新的 feature 或者是修复一些 bug；
@@ -52,7 +52,7 @@ limitations under the License.
 
 #### 后端启动
 
-1. 需要 `maven3+`, `java17` 和 `lombok` 环境
+1. 需要 `maven3+`, `java25` 和 `lombok` 环境
 
 2. (可选)修改配置文件配置信息-`hertzbeat-startup/src/main/resources/application.yml`
 

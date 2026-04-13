@@ -73,8 +73,7 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     NzInputModule,
     NzIconModule.forChild(icons),
     NzSpinModule,
-    NzCodeEditorModule,
-    AiChatModule
+    NzCodeEditorModule
   ],
   declarations: [...COMPONENTS, ...DIRECTIVES, HelpMessageShowComponent],
   exports: [
@@ -89,8 +88,7 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     ...SHARED_ZORRO_MODULES,
     ...ThirdModules,
     ...COMPONENTS,
-    ...DIRECTIVES,
-    AiChatModule
+    ...DIRECTIVES
   ]
 })
 export class SharedModule {}

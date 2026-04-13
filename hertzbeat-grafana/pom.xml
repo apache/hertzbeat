@@ -42,6 +42,11 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-warehouse</artifactId>
         </dependency>
+      <!-- hertzbeat common-core -->
+      <dependency>
+        <groupId>org.apache.hertzbeat</groupId>
+        <artifactId>hertzbeat-common-core</artifactId>
+      </dependency>
         <!-- jpa -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dto.SkyWalkingExternAlert;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
@@ -32,6 +31,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * SkyWalking external alarm service impl
@@ -62,7 +62,7 @@ public class SkyWalkingExternAlertService implements ExternAlertService {
                     .annotations(acquireAlertAnnotations(alert))
                     .triggerTimes(1)
                     .build();
-            alarmCommonReduce.reduceAndSendAlarm(singleAlert);   
+            alarmCommonReduce.reduceAndSendAlarm(singleAlert);
         }
     }
 

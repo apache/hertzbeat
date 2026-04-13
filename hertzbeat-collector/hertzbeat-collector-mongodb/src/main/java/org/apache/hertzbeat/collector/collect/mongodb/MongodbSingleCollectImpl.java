@@ -43,7 +43,6 @@ import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.bson.Document;
-import org.springframework.util.Assert;
 
 /**
  * Mongodb single collect
@@ -87,11 +86,11 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
      */
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException{
-        Assert.isTrue(metrics != null && metrics.getMongodb() != null, "Mongodb collect must has mongodb params");
+        require(metrics != null && metrics.getMongodb() != null, "Mongodb collect must has mongodb params");
         MongodbProtocol mongodbProtocol = metrics.getMongodb();
-        Assert.hasText(mongodbProtocol.getCommand(), "Mongodb Protocol command is required.");
-        Assert.hasText(mongodbProtocol.getHost(), "Mongodb Protocol host is required.");
-        Assert.hasText(mongodbProtocol.getPort(), "Mongodb Protocol port is required.");
+        requireHasText(mongodbProtocol.getCommand(), "Mongodb Protocol command is required.");
+        requireHasText(mongodbProtocol.getHost(), "Mongodb Protocol host is required.");
+        requireHasText(mongodbProtocol.getPort(), "Mongodb Protocol port is required.");
     }
 
     @Override
@@ -225,5 +224,15 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         MongodbConnect mongodbConnect = new MongodbConnect(mongoClient);
         connectionCommonCache.addCache(identifier, mongodbConnect, 3600 * 1000L);
         return mongoClient;
+    }
+
+    private static void require(boolean expression, String message) {
+        if (!expression) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    private static void requireHasText(String value, String message) {
+        require(value != null && !value.trim().isEmpty(), message);
     }
 }

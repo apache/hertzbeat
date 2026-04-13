@@ -18,8 +18,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 import java.lang.reflect.Type;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
@@ -37,14 +36,8 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class MuteGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<MuteConfig> {
 
-    /**
-     * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
-     *
-     * @param generalConfigDao Dao object
-     * @param objectMapper     JSON tool object
-     */
-    protected MuteGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
-        super(generalConfigDao, objectMapper);
+    protected MuteGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao) {
+        super(generalConfigDao);
     }
 
     /**

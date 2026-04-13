@@ -46,7 +46,7 @@ This website is compiled using node, using Docusaurus framework components
 
 ## Document Format Inspection
 
-In Apache Hertzbeat, all MD articles have to pass MD's [CI](https://github.com/apache/hertzbeat/blob/master/.github/workflows/doc-build-test.yml) inspection before they can be merged. The purpose is to keep the website looking nice and the formatting of the articles consistent.
+In Apache HertzBeat, all MD articles have to pass MD's [CI](https://github.com/apache/hertzbeat/blob/master/.github/workflows/doc-build-test.yml) inspection before they can be merged. The purpose is to keep the website looking nice and the formatting of the articles consistent.
 
 After you have written an MD article, you can execute the following command locally to check whether the content of the MD article meets the requirements, so as to reduce the workload of review and save your time:
 

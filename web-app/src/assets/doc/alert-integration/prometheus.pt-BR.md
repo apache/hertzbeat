@@ -35,7 +35,7 @@ alerting:
 
 ## Perguntas frequentes
 
-- Verifique se o URL do Hertzbeat está acessível pelo servidor Prometheus
+- Verifique se o URL do HertzBeat está acessível pelo servidor Prometheus
 - Verifique o log do Prometheus para mensagens de erro que falharam em enviar alarmes
 - Verifique a correção da expressão da regra do alarme
 

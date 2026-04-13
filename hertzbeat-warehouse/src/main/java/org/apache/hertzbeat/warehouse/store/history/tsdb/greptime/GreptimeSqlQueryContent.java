@@ -34,12 +34,12 @@ import java.util.List;
 @NoArgsConstructor
 public class GreptimeSqlQueryContent {
 
-    private int code;
-    
+    private Integer code;
+
     private List<Output> output;
-    
+
     @JsonProperty("execution_time_ms")
-    private long executionTimeMs;
+    private Long executionTimeMs;
 
     /**
      * Represents the output of a GreptimeDB SQL query.

@@ -45,7 +45,7 @@ qemu-system-riscv64 \
 
 ## 安装并配置支持 RISC-V 架构的 JDK
 
-> 在启动的镜像中配置支持 RISC-V 架构的 JDK，这里选用 Temurin JDK 17。
+> 在启动的镜像中配置支持 RISC-V 架构的 JDK，这里选用 Temurin JDK 25。
 
 **1. 下载 Temurin JDK**
 
@@ -63,11 +63,11 @@ sudo apt install -y tar wget
 # 创建安装目录
 sudo mkdir -p /usr/lib/jvm
 # 解压到系统目录
-sudo tar -xzf OpenJDK17U-jdk_riscv64_linux_hotspot_17.0.15_6.tar.gz -C /usr/lib/jvm
+sudo tar -xzf OpenJDK25U-jdk_riscv64_linux_hotspot_<version>.tar.gz -C /usr/lib/jvm
 
 # 编辑环境变量，添加以下内容
 sudo nano /etc/profile.d/java.sh
-export JAVA_HOME=/usr/lib/jvm/jdk-17.0.15+6
+export JAVA_HOME=$(find /usr/lib/jvm -maxdepth 1 -type d -name 'jdk-25*' | head -n 1)
 export PATH=$JAVA_HOME/bin:$PATH
 
 # 使配置生效
@@ -79,7 +79,7 @@ java -version
 
 ## 运行 HertzBeat
 
-> 在 [Hertzbeat官网](https://hertzbeat.apache.org/zh-cn/docs/download/) 下载安装包，并按照官网部署教程运行即可，以 1.7.2 版本为例。
+> 在 [HertzBeat官网](https://hertzbeat.apache.org/zh-cn/docs/download/) 下载安装包，并按照官网部署教程运行即可，以 1.7.2 版本为例。
 
 ```shell
 cd apache-hertzbeat-1.7.2-incubating-bin/bin/
@@ -88,6 +88,6 @@ cd apache-hertzbeat-1.7.2-incubating-bin/bin/
 
 > 注意事项：
 >
-> 1. 请将 `OpenJDK17U-jdk_riscv64_linux_hotspot_17.0.15_6.tar.gz` 替换为您实际下载的 JDK 文件名。
+> 1. 请将 `OpenJDK25U-jdk_riscv64_linux_hotspot_<version>.tar.gz` 替换为您实际下载的 JDK 文件名。
 > 2. 确保模拟器具备网络访问能力，以下载 HertzBeat。
 > 3. 若遇到问题，请检查磁盘权限和 Java 环境路径配置。

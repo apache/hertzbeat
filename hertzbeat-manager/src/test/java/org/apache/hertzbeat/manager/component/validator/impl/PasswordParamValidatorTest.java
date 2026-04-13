@@ -20,9 +20,9 @@
 package org.apache.hertzbeat.manager.component.validator.impl;
 
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -46,9 +46,9 @@ class PasswordParamValidatorTest {
 
     @Test
     void validate_EncryptsPlaintext() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("password");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         String plaintext = "password123";
         param.setParamValue(plaintext);
 
@@ -61,9 +61,9 @@ class PasswordParamValidatorTest {
 
     @Test
     void validate_IgnoresCiphertext() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("password");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         String ciphertext = AesUtil.aesEncode("password123");
         param.setParamValue(ciphertext);
 

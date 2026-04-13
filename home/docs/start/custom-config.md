@@ -14,6 +14,12 @@ Configuring the HertzBeat configuration file:
 - **Docker Deployment:** ⚠️ When using a Docker container, the `application.yml` file must be mounted to the host machine
 - **Installation Package Deployment:** Extract the package and modify the configuration file located at `hertzbeat/config/application.yml`
 
+## 0. Virtual Thread Configuration
+
+Virtual-thread related defaults, tuning guidance, rollback switches, and Docker/package config locations are documented on a dedicated page:
+
+- [Virtual Thread Configuration](./virtual-thread)
+
 ## 1. Configuring Custom Alert Parameters
 
 ```yaml

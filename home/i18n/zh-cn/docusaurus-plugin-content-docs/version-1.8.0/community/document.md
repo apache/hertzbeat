@@ -46,7 +46,7 @@ git clone git@github.com:<your-github-user-name>/hertzbeat.git
 
 ## 文档格式检验
 
-在 Apache Hertzbeat 中，所有的 MD 文章都要通过 MD 的 [CI](https://github.com/apache/hertzbeat/blob/master/.github/workflows/doc-build-test.yml) 检测才能够合并，目的是为了保持文档官网的美观和文章格式的一致性。
+在 Apache HertzBeat 中，所有的 MD 文章都要通过 MD 的 [CI](https://github.com/apache/hertzbeat/blob/master/.github/workflows/doc-build-test.yml) 检测才能够合并，目的是为了保持文档官网的美观和文章格式的一致性。
 
 在您编写了相关 MD 文章之后，您可以在本地执行以下命令，预先检查 MD 的文章内容是否符合要求，减少 review 的工作量，节省您的时间：
 

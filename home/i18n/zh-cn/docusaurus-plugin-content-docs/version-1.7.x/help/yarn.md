@@ -5,7 +5,7 @@ sidebar_label: Apache Yarn
 keywords: [大数据监控系统, Apache Yarn监控, 资源管理器监控]
 ---
 
-> Hertzbeat 对 Apache Yarn 节点监控指标进行监控。
+> HertzBeat 对 Apache Yarn 节点监控指标进行监控。
 
 **使用协议：HTTP**
 

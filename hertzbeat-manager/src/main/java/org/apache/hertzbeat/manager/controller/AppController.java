@@ -27,10 +27,10 @@ import java.util.Locale;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.job.Job;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.util.ResponseUtil;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDefineDto;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -64,7 +64,7 @@ public class AppController {
     @GetMapping(path = "/{app}/params")
     @Operation(summary = "The structure of the input parameters required to specify the monitoring type according to the app query",
             description = "The structure of the input parameters required to specify the monitoring type according to the app query")
-    public ResponseEntity<Message<List<ParamDefine>>> queryAppParamDefines(
+    public ResponseEntity<Message<List<ParamDefineInfo>>> queryAppParamDefines(
             @Parameter(description = "en: Monitoring type name", example = "api") @PathVariable("app") final String app) {
         return ResponseUtil.handle(() -> appService.getAppParamDefines(app.toLowerCase()));
     }

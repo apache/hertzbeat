@@ -8,12 +8,19 @@ keywords: [ 开源监控系统, 开源数据库监控, DB2数据库监控 ]
 
 > 对 DB2 数据库的通用性能指标（表空间、会话状态、进程数、锁、慢查询等）进行采集监控
 
-### 注意, 必须添加 DB2 jdbc 驱动 jar
+## 注意, 必须添加 DB2 jdbc 驱动 jar
 
 - 下载 DB2 jdbc 驱动 jar
   包，例如 [jcc.jar](https://repo1.maven.org/maven2/com/ibm/db2/jcc/11.5.9.0/jcc-11.5.9.0.jar)
 - 将 jar 包复制到 `hertzbeat/ext-lib` 目录下
 - 重启 HertzBeat 服务
+
+:::important 采集器包选择
+DB2 监控依赖 `ext-lib` 目录下的外置 JDBC 驱动加载能力。
+
+- DB2 监控请使用 HertzBeat 主程序内置采集器，或 JVM 采集器安装包
+- 不要使用 Native 采集器安装包执行 DB2 监控
+:::
 
 ### 配置参数
 

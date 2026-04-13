@@ -120,6 +120,88 @@ class AlarmSilenceReduceTest {
     }
 
     @Test
+    void whenCyclicSilenceRuleTimeMatchesButDateDifferent_shouldNotForwardAlert() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime yesterday = now.minusDays(1);
+        LocalDateTime start = yesterday.withHour(now.getHour())
+                .withMinute(Math.max(0, now.getMinute() - 10))
+                .withSecond(0)
+                .withNano(0);
+        LocalDateTime end = yesterday.withHour(now.getHour())
+                .withMinute(Math.min(59, now.getMinute() + 10))
+                .withSecond(59)
+                .withNano(0);
+
+        AlertSilence silenceRule = AlertSilence.builder()
+                .enable(true)
+                .matchAll(false)
+                .type((byte) 1)
+                .labels(createLabels("service", "web"))
+                .periodStart(start.atZone(ZoneId.systemDefault()))
+                .periodEnd(end.atZone(ZoneId.systemDefault()))
+                .days(Collections.singletonList((byte) now.getDayOfWeek().getValue()))
+                .times(0)
+                .build();
+
+        when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(Collections.singletonList(silenceRule));
+        when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(silenceRule);
+
+        GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
+        alarmSilenceReduce.silenceAlarm(alert);
+
+        verify(alertNoticeDispatch, never()).dispatchAlarm(alert);
+        verify(alertSilenceDao).save(silenceRule);
+    }
+
+    @Test
+    void whenMatchingCrossMidnightCyclicSilenceRule_shouldNotForwardAlert() {
+        LocalDateTime now = LocalDateTime.now();
+        AlertSilence silenceRule = AlertSilence.builder()
+                .enable(true)
+                .matchAll(false)
+                .type((byte) 1)
+                .labels(createLabels("service", "web"))
+                .periodStart(now.minusHours(1).atZone(ZoneId.systemDefault()))
+                .periodEnd(now.minusHours(2).atZone(ZoneId.systemDefault()))
+                .days(Collections.singletonList((byte) now.getDayOfWeek().getValue()))
+                .times(0)
+                .build();
+
+        when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(Collections.singletonList(silenceRule));
+        when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(silenceRule);
+
+        GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
+        alarmSilenceReduce.silenceAlarm(alert);
+
+        verify(alertNoticeDispatch, never()).dispatchAlarm(alert);
+        verify(alertSilenceDao).save(silenceRule);
+    }
+
+    @Test
+    void whenCrossMidnightCyclicSilenceRuleDoesNotIncludeCurrentDay_shouldForwardAlert() {
+        LocalDateTime now = LocalDateTime.now();
+        byte previousDay = (byte) now.minusDays(1).getDayOfWeek().getValue();
+        AlertSilence silenceRule = AlertSilence.builder()
+                .enable(true)
+                .matchAll(false)
+                .type((byte) 1)
+                .labels(createLabels("service", "web"))
+                .periodStart(now.minusHours(1).atZone(ZoneId.systemDefault()))
+                .periodEnd(now.minusHours(2).atZone(ZoneId.systemDefault()))
+                .days(Collections.singletonList(previousDay))
+                .times(0)
+                .build();
+
+        when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(Collections.singletonList(silenceRule));
+
+        GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
+        alarmSilenceReduce.silenceAlarm(alert);
+
+        verify(alertNoticeDispatch).dispatchAlarm(alert);
+        verify(alertSilenceDao, never()).save(any());
+    }
+
+    @Test
     void whenSilenceRuleExpired_shouldForwardAlert() {
         AlertSilence silenceRule = AlertSilence.builder()
                 .enable(true)

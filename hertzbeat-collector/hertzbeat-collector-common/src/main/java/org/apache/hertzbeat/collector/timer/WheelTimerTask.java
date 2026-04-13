@@ -27,7 +27,6 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.common.timer.TimerTask;
 import org.apache.hertzbeat.common.util.AesUtil;
@@ -35,6 +34,7 @@ import org.apache.hertzbeat.common.util.AesUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -44,11 +44,15 @@ import java.util.stream.Collectors;
 public class WheelTimerTask implements TimerTask {
 
     private final Job job;
-    private final MetricsTaskDispatch metricsTaskDispatch;
+    private final Supplier<MetricsTaskDispatch> metricsTaskDispatchSupplier;
     private static final Gson GSON = new Gson();
 
-    public WheelTimerTask(Job job) {
-        this.metricsTaskDispatch = SpringContextHolder.getBean(MetricsTaskDispatch.class);
+    public WheelTimerTask(Job job, MetricsTaskDispatch metricsTaskDispatch) {
+        this(job, () -> metricsTaskDispatch);
+    }
+
+    public WheelTimerTask(Job job, Supplier<MetricsTaskDispatch> metricsTaskDispatchSupplier) {
+        this.metricsTaskDispatchSupplier = metricsTaskDispatchSupplier;
         this.job = job;
         // The initialization job will monitor the actual parameter value and replace the collection field
         initJobMetrics(job);
@@ -93,7 +97,7 @@ public class WheelTimerTask implements TimerTask {
     @Override
     public void run(Timeout timeout) throws Exception {
         job.setDispatchTime(System.currentTimeMillis());
-        metricsTaskDispatch.dispatchMetricsTask(timeout);
+        metricsTaskDispatchSupplier.get().dispatchMetricsTask(timeout);
     }
 
     public Job getJob() {

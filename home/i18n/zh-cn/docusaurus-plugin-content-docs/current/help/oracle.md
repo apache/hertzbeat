@@ -7,11 +7,18 @@ keywords: [开源监控系统, 开源数据库监控, Oracle数据库监控]
 
 > 对ORACLE数据库的通用性能指标进行采集监控。
 
-### 注意, 必须添加 ORACLE jdbc 驱动 jar
+## 注意, 必须添加 ORACLE jdbc 驱动 jar
 
 - 下载 ORACLE jdbc 驱动 jar 包，例如 [ojdbc8.jar](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
 - 将 jar 包复制到 `hertzbeat/ext-lib` 目录下。
 - 重启 HertzBeat 服务。
+
+:::important 采集器包选择
+Oracle 监控依赖 `ext-lib` 目录下的外置 JDBC 驱动加载能力。
+
+- Oracle 监控请使用 HertzBeat 主程序内置采集器，或 JVM 采集器安装包
+- 不要使用 Native 采集器安装包执行 Oracle 监控
+:::
 
 ### 配置参数
 

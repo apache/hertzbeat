@@ -17,14 +17,13 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.base.service.GeneralConfigService;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
 
 /**
  * <p>Abstract implementation of GeneralConfigService, providing CRUD operations for configurations.</p>
@@ -34,61 +33,35 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
 
     protected final GeneralConfigDao generalConfigDao;
 
-    protected final ObjectMapper objectMapper;
-
-    /**
-     * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
-     * @param generalConfigDao Dao object
-     * @param objectMapper     JSON tool object
-     */
-    protected AbstractGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
+    protected AbstractGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao) {
         this.generalConfigDao = generalConfigDao;
-        this.objectMapper = objectMapper;
     }
 
-    /**
-     * <p>Save a configuration.</p>
-     * @param config need to save configuration object
-     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void saveConfig(T config) {
-        try {
-            String contentJson = objectMapper.writeValueAsString(config);
-
-            GeneralConfig generalConfig2Save = GeneralConfig.builder()
-                    .type(type())
-                    .content(contentJson)
-                    .build();
-            generalConfigDao.save(generalConfig2Save);
-            log.info("Configuration saved successfully");
-            handler(getConfig());
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Configuration saved failed: " + e.getMessage());
+        String contentJson = JsonUtil.toJson(config);
+        if (contentJson == null) {
+            log.error("Failed to serialize configuration for type {}", type());
+            throw new RuntimeException("Save config failed: serialization error");
         }
+        GeneralConfig generalConfig2Save = GeneralConfig.builder()
+            .type(type())
+            .content(contentJson)
+            .build();
+        generalConfigDao.save(generalConfig2Save);
+        log.info("Configuration of type {} saved successfully", type());
+        handler(getConfig());
     }
 
-    /**
-     * <p>Get a configuration.</p>
-     * @return query configuration object
-     */
     @Override
     public T getConfig() {
         GeneralConfig generalConfig = generalConfigDao.findByType(type());
         if (generalConfig == null) {
             return null;
         }
-        try {
-            return objectMapper.readValue(generalConfig.getContent(), getTypeReference());
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Get configuration failed: " + e.getMessage());
-        }
+        return JsonUtil.fromJson(generalConfig.getContent(), getTypeReference());
     }
 
-    /**
-     * <p>Get TypeReference object of configuration type.</p>
-     * @return TypeReference object
-     */
     protected abstract TypeReference<T> getTypeReference();
-
 }

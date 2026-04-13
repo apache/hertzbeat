@@ -334,7 +334,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
      */
     private void startFlushThread() {
         try {
-            warehouseWorkerPool.executeJob(() -> {
+            warehouseWorkerPool.executeLongRunning(() -> {
                 flushTaskStarted = true;
                 try {
                     while (flushThreadRunning || !metricsBufferQueue.isEmpty()) {

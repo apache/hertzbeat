@@ -19,8 +19,8 @@
 
 package org.apache.hertzbeat.manager.component.validator;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,9 +49,9 @@ class ParamValidatorManagerTest {
 
     @Test
     void validate_Success() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("text");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
 
         when(paramValidator.support("text")).thenReturn(true);
 
@@ -61,9 +61,9 @@ class ParamValidatorManagerTest {
 
     @Test
     void validate_NoValidatorFound() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("unknown");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
 
         when(paramValidator.support("unknown")).thenReturn(false);
 

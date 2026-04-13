@@ -12,7 +12,7 @@ sidebar_label: Development
 
 ### Backend start
 
-1. Requires `maven3+`, `java17` and `lombok` environments
+1. Requires `maven3+`, `java25` and `lombok` environments
 2. (Optional) Modify the configuration file: `hertzbeat-startup/src/main/resources/application.yml`
 3. Execute under the project root directory: `mvn clean install -DskipTests`
 4. Add VM Options: `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`
@@ -34,7 +34,7 @@ sidebar_label: Development
 
 ## Build HertzBeat binary package
 
-> Requires `maven3+`, `java17`, `node` and `pnpm` environments.
+> Requires `maven3+`, `java25`, `node` and `pnpm` environments.
 
 ### Frontend build
 
@@ -50,20 +50,23 @@ sidebar_label: Development
 
 ### Backend build
 
-1. Requires `maven3+`, `java17` environments
+1. Requires `maven3+`, `java25` environments
 
 2. Execute under the project root directory: `mvn clean package -Prelease`
 
-The HertzBeat install package will at `dist/hertzbeat-{version}.tar.gz`
+The HertzBeat install package will be generated at `dist/apache-hertzbeat-{version}-bin.tar.gz`
 
 ### Collector build
 
-1. Requires `maven3+`, `java17` environments
+1. Requires `maven3+`, `java25` environments
 
 2. Execute under the project root directory: `mvn clean install`
 
 3. Cd to the `hertzbeat-collector` directory: `cd hertzbeat-collector`
 
-4. Execute under `hertzbeat-collector` directory: `mvn clean package -Pcluster`
+4. Build the JVM collector package under `hertzbeat-collector` directory: `mvn clean package -Pcluster`
+5. Build the native collector package under `hertzbeat-collector` directory: `mvn clean package -pl hertzbeat-collector-collector -am -Pnative`
 
-The HertzBeat collector package will at `dist/hertzbeat-collector-{version}.tar.gz`
+> Native collector packaging requires GraalVM for JDK 25 with the `native-image` tool available in `PATH`.
+
+The HertzBeat collector packages will be generated at `dist/apache-hertzbeat-collector-{version}-bin.tar.gz` and a platform-specific native package such as `dist/apache-hertzbeat-collector-native-{version}-linux-amd64-bin.tar.gz`

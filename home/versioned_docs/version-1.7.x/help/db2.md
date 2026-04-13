@@ -9,7 +9,7 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 > Collect and monitor general performance metrics (tablespace, session status, process count, locks, slow queries, etc.)
 > for DB2 databases.
 
-### Note: DB2 JDBC Driver JAR Must be Added
+## Note: DB2 JDBC Driver JAR Must be Added
 
 - Download the DB2 JDBC driver JAR package, for
   example, [jcc.jar](https://repo1.maven.org/maven2/com/ibm/db2/jcc/11.5.9.0/jcc-11.5.9.0.jar).

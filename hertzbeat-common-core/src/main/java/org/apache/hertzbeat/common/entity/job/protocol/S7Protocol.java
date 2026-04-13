@@ -21,8 +21,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 import java.util.List;
+
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
 
 
 /**
@@ -59,8 +64,18 @@ public class S7Protocol implements Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        if (StringUtils.isAnyBlank(driverName, addressSyntax, controllerType)) {
+            return true;
+        }
+        if (!CommonUtil.isNumeric(rackId) || !CommonUtil.isNumeric(slotId)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(timeout) && !CommonUtil.isNumeric(timeout)) {
+            return true;
+        }
+        return registerAddresses == null || registerAddresses.isEmpty();
     }
 }

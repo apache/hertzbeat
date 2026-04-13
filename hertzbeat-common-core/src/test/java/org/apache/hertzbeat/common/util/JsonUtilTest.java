@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +36,7 @@ class JsonUtilTest {
     @Test
     void toJson() {
         Map<String, String> map = Map.of("test", "pro");
-        
+
         assertEquals("{\"test\":\"pro\"}",
                 JsonUtil.toJson(map));
 
@@ -47,7 +47,7 @@ class JsonUtilTest {
     void testFromJson() {
         assertNull(JsonUtil.fromJson("", new TypeReference<>() {
         }));
-        assertNull(JsonUtil.fromJson(null, new TypeReference<>() {
+        assertNull(JsonUtil.fromJson((String) null, new TypeReference<>() {
         }));
         assertNull(JsonUtil.fromJson(" ", new TypeReference<>() {
         }));

@@ -31,7 +31,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.hertzbeat.alert.util.CryptoUtils;
 
 import java.io.IOException;
@@ -41,6 +40,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import tools.jackson.databind.JsonNode;
 
 import static org.apache.hertzbeat.common.constants.SmsConstants.UNISMS;
 
@@ -55,7 +55,7 @@ public class UniSmsClientImpl implements SmsClient {
     private static final String ACTION = "sms.message.send";
     private static final String SUCCESS_CODE = "0";
     private static final String HMAC_ALGORITHM = "hmac-sha256";
-    
+
     private final UniSmsProperties config;
 
     public UniSmsClientImpl(UniSmsProperties config) {
@@ -80,7 +80,7 @@ public class UniSmsClientImpl implements SmsClient {
             if (content == null) {
                 content = alert.getCommonAnnotations().values().stream().findFirst().orElse(null);
             }
-            
+
             templateData.put("instance", instance);
             templateData.put("priority", priority);
             templateData.put("content", content);
@@ -98,7 +98,7 @@ public class UniSmsClientImpl implements SmsClient {
             HttpPost httpPost = new HttpPost(url);
             httpPost.setHeader("Content-Type", "application/json");
             httpPost.setHeader("Accept", "application/json");
-            
+
             String payload = JsonUtil.toJson(params);
             httpPost.setEntity(new StringEntity(payload, StandardCharsets.UTF_8));
 
@@ -114,14 +114,14 @@ public class UniSmsClientImpl implements SmsClient {
     }
 
     private String buildSimpleUrl() {
-        return String.format("%s/?action=%s&accessKeyId=%s", 
+        return String.format("%s/?action=%s&accessKeyId=%s",
                 API_URL, ACTION, config.getAccessKeyId());
     }
 
     private String buildHmacUrl() {
         long timestamp = System.currentTimeMillis();
         String nonce = generateNonce();
-        
+
         // build query parameters
         Map<String, String> params = new TreeMap<>();
         params.put("accessKeyId", config.getAccessKeyId());
@@ -134,7 +134,7 @@ public class UniSmsClientImpl implements SmsClient {
         String signText = params.entrySet().stream()
                 .map(entry -> entry.getKey() + "=" + entry.getValue())
                 .collect(Collectors.joining("&"));
-        
+
         // calculate signature
         String signature = CryptoUtils.hmacSha256Base64(config.getAccessKeySecret(), signText);
         return String.format("%s/?action=%s&accessKeyId=%s&algorithm=%s&timestamp=%d&nonce=%s&signature=%s",
@@ -148,20 +148,20 @@ public class UniSmsClientImpl implements SmsClient {
     private void handleResponse(CloseableHttpResponse response, String phone) throws IOException {
         int statusCode = response.getStatusLine().getStatusCode();
         String responseBody = EntityUtils.toString(response.getEntity());
-        
+
         log.info("UniSMS response status: {}, body: {}", statusCode, responseBody);
-        
+
         if (statusCode != 200) {
             throw new SendMessageException("HTTP request failed with status code: " + statusCode + ", response: " + responseBody);
         }
-        
+
         JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
         String code = jsonResponse.get("code").asText();
         if (!SUCCESS_CODE.equals(code)) {
             String message = jsonResponse.get("message").asText();
             throw new SendMessageException(code + ":" + message);
         }
-        
+
         log.info("Successfully sent SMS to phone: {}", phone);
     }
 
@@ -172,22 +172,22 @@ public class UniSmsClientImpl implements SmsClient {
 
     @Override
     public boolean checkConfig() {
-        if (config == null 
-                || config.getAccessKeyId() == null 
+        if (config == null
+                || config.getAccessKeyId() == null
                 || config.getAccessKeyId().isBlank()
-                || config.getSignature() == null 
+                || config.getSignature() == null
                 || config.getSignature().isBlank()
-                || config.getTemplateId() == null 
+                || config.getTemplateId() == null
                 || config.getTemplateId().isBlank()) {
             return false;
         }
 
         // HMAC mode requires additional check for accessKeySecret
-        if ("hmac".equalsIgnoreCase(config.getAuthMode()) 
+        if ("hmac".equalsIgnoreCase(config.getAuthMode())
                 && (config.getAccessKeySecret() == null || config.getAccessKeySecret().isBlank())) {
             return false;
         }
 
         return true;
     }
-} 
+}

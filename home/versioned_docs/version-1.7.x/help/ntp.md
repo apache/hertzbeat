@@ -9,7 +9,7 @@ keywords: [ open source monitoring tool, open source NTP monitoring tool, monito
 
 **Protocol Use：NTP**
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

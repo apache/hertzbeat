@@ -32,7 +32,7 @@ query your data.
 
 The default port is 19779 and the access address is:[http://ip:19779/rocksdb_stats](http://ip:19779/rocksdb_stats)
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

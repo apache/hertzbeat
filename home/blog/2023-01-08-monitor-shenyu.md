@@ -6,7 +6,7 @@ author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 ---
 
-### Monitoring practice for API gateway Apache ShenYu using HertzBeat, 5 minutes
+## Monitoring practice for API gateway Apache ShenYu using HertzBeat, 5 minutes
 
 ### Introduction to Apache ShenYu
 

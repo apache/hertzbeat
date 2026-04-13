@@ -18,9 +18,18 @@
 package org.apache.hertzbeat.alert;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.jupiter.api.BeforeEach;
+import org.apache.hertzbeat.common.concurrent.AdmissionMode;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -28,60 +37,178 @@ import org.junit.jupiter.api.Test;
  */
 class AlerterWorkerPoolTest {
 
-    private static final int NUMBER_OF_THREADS = 10;
-    private AlerterWorkerPool pool;
-    private AtomicInteger counter;
-    private CountDownLatch latch;
+    private static final int NUMBER_OF_TASKS = 10;
 
-    @BeforeEach
-    void setUp() {
-        pool = new AlerterWorkerPool();
-        counter = new AtomicInteger();
-        latch = new CountDownLatch(NUMBER_OF_THREADS);
+    private AlerterWorkerPool pool;
+
+    @AfterEach
+    void tearDown() {
+        if (pool != null) {
+            pool.destroy();
+        }
     }
 
     @Test
     void executeJob() throws InterruptedException {
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+        pool = new AlerterWorkerPool();
+        AtomicInteger counter = new AtomicInteger();
+        CountDownLatch latch = new CountDownLatch(NUMBER_OF_TASKS);
+
+        for (int i = 0; i < NUMBER_OF_TASKS; i++) {
             pool.executeJob(() -> {
                 counter.incrementAndGet();
                 latch.countDown();
             });
         }
-        latch.await();
 
-        assertEquals(NUMBER_OF_THREADS, counter.get());
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertEquals(NUMBER_OF_TASKS, counter.get());
     }
 
     @Test
-    void executeNotify() throws InterruptedException {
-        counter = new AtomicInteger();
-        latch = new CountDownLatch(NUMBER_OF_THREADS);
-        
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            pool.executeNotify(() -> {
-                counter.incrementAndGet();
-                latch.countDown();
-            });
-        }
-        latch.await();
+    void executeNotifyRunsOnVirtualThread() throws Exception {
+        pool = new AlerterWorkerPool();
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicBoolean virtualThread = new AtomicBoolean(false);
 
-        assertEquals(NUMBER_OF_THREADS, counter.get());
+        pool.executeNotify((byte) 1, () -> {
+            virtualThread.set(Thread.currentThread().isVirtual());
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(virtualThread.get());
+    }
+
+    @Test
+    void executeNotifyRejectsWhenGlobalConcurrencyLimitReached() throws Exception {
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        new VirtualThreadProperties.PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 1),
+                        10,
+                        VirtualThreadProperties.QueueProperties.logWorkerDefaults(),
+                        VirtualThreadProperties.QueueProperties.reduceDefaults(),
+                        VirtualThreadProperties.QueueProperties.windowEvaluatorDefaults(),
+                        8),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
+        pool = new AlerterWorkerPool(properties);
+
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        pool.executeNotify((byte) 1, () -> {
+            started.countDown();
+            try {
+                release.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+
+        try {
+            assertThrows(RejectedExecutionException.class, () -> pool.executeNotify((byte) 2, () -> {
+            }));
+        } finally {
+            release.countDown();
+        }
+    }
+
+    @Test
+    void executeNotifyRejectsWhenChannelLimitReached() throws Exception {
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        new VirtualThreadProperties.PoolProperties(AdmissionMode.LIMIT_AND_REJECT, 8),
+                        10,
+                        VirtualThreadProperties.QueueProperties.logWorkerDefaults(),
+                        VirtualThreadProperties.QueueProperties.reduceDefaults(),
+                        VirtualThreadProperties.QueueProperties.windowEvaluatorDefaults(),
+                        1),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
+        pool = new AlerterWorkerPool(properties);
+
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        pool.executeNotify((byte) 1, () -> {
+            started.countDown();
+            try {
+                release.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+
+        try {
+            assertThrows(RejectedExecutionException.class, () -> pool.executeNotify((byte) 1, () -> {
+            }));
+        } finally {
+            release.countDown();
+        }
     }
 
     @Test
     void executeLogJob() throws InterruptedException {
-        counter = new AtomicInteger();
-        latch = new CountDownLatch(NUMBER_OF_THREADS);
-        
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            pool.executeLogJob(() -> {
-                counter.incrementAndGet();
-                latch.countDown();
-            });
-        }
-        latch.await();
+        pool = new AlerterWorkerPool();
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicBoolean virtualThread = new AtomicBoolean(false);
 
-        assertEquals(NUMBER_OF_THREADS, counter.get());
+        pool.executeLogJob(() -> {
+            virtualThread.set(Thread.currentThread().isVirtual());
+            latch.countDown();
+        });
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(virtualThread.get());
+    }
+
+    @Test
+    void executeLogJobRejectsWhenQueueCapacityReached() throws InterruptedException {
+        VirtualThreadProperties properties = new VirtualThreadProperties(
+                true,
+                VirtualThreadProperties.PoolProperties.collectorDefaults(),
+                VirtualThreadProperties.PoolProperties.commonDefaults(),
+                VirtualThreadProperties.PoolProperties.managerDefaults(),
+                new VirtualThreadProperties.AlerterProperties(
+                        VirtualThreadProperties.PoolProperties.alerterNotifyDefaults(),
+                        10,
+                        new VirtualThreadProperties.QueueProperties(1, 1),
+                        VirtualThreadProperties.QueueProperties.reduceDefaults(),
+                        VirtualThreadProperties.QueueProperties.windowEvaluatorDefaults(),
+                        4),
+                VirtualThreadProperties.PoolProperties.warehouseDefaults(),
+                VirtualThreadProperties.AsyncProperties.defaults());
+        pool = new AlerterWorkerPool(properties);
+
+        CountDownLatch firstStarted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        pool.executeLogJob(() -> {
+            firstStarted.countDown();
+            try {
+                releaseFirst.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
+
+        pool.executeLogJob(secondStarted::countDown);
+        assertFalse(secondStarted.await(200, TimeUnit.MILLISECONDS));
+        try {
+            assertThrows(RejectedExecutionException.class, () -> pool.executeLogJob(() -> {
+            }));
+        } finally {
+            releaseFirst.countDown();
+        }
+        assertTrue(secondStarted.await(5, TimeUnit.SECONDS));
     }
 }

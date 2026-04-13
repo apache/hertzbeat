@@ -8,7 +8,7 @@ sidebar_label: TDengine 监控案例
 TDengine TSDB 是一款 开源、高性能、云原生 的时序数据库（Time Series Database, TSDB, 它专为物联网、车联网、工业互联网、金融、IT 运维等场景优化设计。同时它还带有内建的缓存、流式计算、数据订阅等系统功能，能大幅减少系统设计的复杂度，降低研发和运营成本，是一款极简的时序数据处理平台。
 :::
 
-这篇文章介绍如何使用 Hertzbeat 监控系统对 TDengine 通用性能指标进行采集监控
+这篇文章介绍如何使用 HertzBeat 监控系统对 TDengine 通用性能指标进行采集监控
 
 ## HertzBeat 是什么
 

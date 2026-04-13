@@ -17,10 +17,14 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * ICMP (PING) PROTOCOL CONFIGURATION
@@ -47,8 +51,9 @@ public class IcmpProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (!validateIpDomain(host)) {
+            return true;
+        }
+        return StringUtils.isNotBlank(timeout) && !CommonUtil.isNumeric(timeout);
     }
 }

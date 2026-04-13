@@ -119,16 +119,16 @@ public class AccountController {
 
         if (accountService.registerAccount(account)) {
             Long authUser = roleService.getRoleIdByCode("role_user");
-            if(authUser == null) throw new HertzbeatTemplateHubException("Role query error");
+            if (authUser == null) throw new HertzbeatTemplateHubException("Role query error");
             boolean b = accountService.authorityUserRole(account.getEmail(), authUser);
-            if(!b) throw new HertzbeatTemplateHubException("Role authority error");
-            Message<String> message=Message.success("Sign up success, login after");
+            if (!b) throw new HertzbeatTemplateHubException("Role authority error");
+            Message<String> message = Message.success("Sign up success, login after");
             if (log.isDebugEnabled()) {
                 log.debug("account: {}, sign up success", account);
             }
             return ResponseEntity.ok(message);
         } else {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE,"Email already exist"));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Email already exists"));
         }
     }
 }

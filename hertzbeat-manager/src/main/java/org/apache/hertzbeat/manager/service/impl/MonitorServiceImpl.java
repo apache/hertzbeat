@@ -33,13 +33,13 @@ import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Label;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 
@@ -57,6 +57,8 @@ import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MetricsInfo;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.base.service.LabelService;
@@ -262,18 +264,18 @@ public class MonitorServiceImpl implements MonitorService {
     public void validate(MonitorDto monitorDto, Boolean isModify) throws IllegalArgumentException {
         // The request monitoring parameter matches the monitoring parameter definition
         // mapping check
-        Monitor monitor = monitorDto.getMonitor();
-        // The Service Discovery host field may be null
-        monitor.setInstance(StringUtils.hasText(monitor.getInstance()) ? monitor.getInstance().trim() : null);
-        monitor.setName(monitor.getName().trim());
-        Map<String, Param> paramMap = monitorDto.getParams()
+        var monitorInfo = monitorDto.getMonitorInfo();
+        monitorInfo.setInstance(StringUtils.hasText(monitorInfo.getInstance()) ? monitorInfo.getInstance().trim() : null);
+        monitorInfo.setName(monitorInfo.getName().trim());
+        Monitor monitor = monitorInfo.toEntity();
+        Map<String, MonitorParam> paramMap = monitorDto.getParamInfos()
                 .stream()
                 .peek(param -> {
                     param.setMonitorId(monitor.getId());
                     String value = param.getParamValue() == null ? null : param.getParamValue().trim();
                     param.setParamValue(value);
                 })
-                .collect(Collectors.toMap(Param::getField, param -> param));
+                .collect(Collectors.toMap(MonitorParam::getField, param -> param));
         // Check name uniqueness and can not equal app type
         if (isModify != null) {
             Optional<Job> defineOptional = appService.getAppDefineOption(monitor.getName());
@@ -302,13 +304,13 @@ public class MonitorServiceImpl implements MonitorService {
             monitorDto.setCollector(null);
         }
         // Parameter definition structure verification
-        List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
+        List<ParamDefineInfo> paramDefines = appService.getAppParamDefines(monitor.getApp());
         if (!CollectionUtils.isEmpty(paramDefines)) {
             boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
                     || !StringUtils.hasText(monitor.getScrape());
-            for (ParamDefine paramDefine : paramDefines) {
+            for (ParamDefineInfo paramDefine : paramDefines) {
                 String field = paramDefine.getField();
-                Param param = paramMap.get(field);
+                MonitorParam param = paramMap.get(field);
                 // Get the host from service discovery
                 if (!isStatic && "host".equals(field)) {
                     continue;
@@ -686,7 +688,7 @@ public class MonitorServiceImpl implements MonitorService {
             List<Configmap> configmaps = params.stream()
                     .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
                     .collect(Collectors.toList());
-            List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+            List<RuntimeParamDefine> paramDefaultValue = appDefine.getParams().stream()
                     .filter(item -> StringUtils.hasText(item.getDefaultValue()))
                     .toList();
             paramDefaultValue.forEach(defaultVar -> {
@@ -786,7 +788,7 @@ public class MonitorServiceImpl implements MonitorService {
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(),
                         param.getParamValue(), param.getType())).collect(Collectors.toList());
-                List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+                List<RuntimeParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
                         .toList();
                 paramDefaultValue.forEach(defaultVar -> {

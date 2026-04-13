@@ -17,8 +17,7 @@
 
 package org.apache.hertzbeat.ai.sop.registry;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.sop.model.SopDefinition;
 import org.springframework.core.io.Resource;
@@ -28,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import tools.jackson.dataformat.yaml.YAMLFactory;
 
 /**
  * Loader for AI SOP definitions from YAML files.
@@ -50,11 +50,11 @@ public class SopYamlLoader {
     public List<SopDefinition> loadAllSkills() {
         List<SopDefinition> skills = new ArrayList<>();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        
+
         try {
             Resource[] resources = resolver.getResources(SKILLS_PATH_PATTERN);
             log.info("Found {} SOP definition files", resources.length);
-            
+
             for (Resource resource : resources) {
                 try {
                     SopDefinition definition = yamlMapper.readValue(resource.getInputStream(), SopDefinition.class);
@@ -69,7 +69,7 @@ public class SopYamlLoader {
         } catch (IOException e) {
             log.error("Failed to scan for SOP definition files: {}", e.getMessage());
         }
-        
+
         return skills;
     }
 }

@@ -31,20 +31,24 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "LLM Model Provider configuration")
 public class ModelProviderConfig {
-    
+
     @Schema(title = "Model type, text-generate, vision")
     private String type;
-    
+
     @Schema(title = "Model Provider code, like openai, zai, bigmodel")
     private String code;
-    
+
     @Schema(title = "custom the provider server base url")
     private String baseUrl;
-    
+
     @Schema(title = "use the model id name, eg: gpt-5, glm-4.6")
     private String model;
-    
+
     @Schema(title = "API Key", description = "API key", example = "sk-...")
     @NotBlank(message = "API Key cannot be empty when enabled")
     private String apiKey;
+
+    @Schema(title = "Participation Model", description = "model for participation", example = "PROTECTED")
+    @NotBlank(message = "API Key cannot be empty when enabled")
+    private String participationModel;
 }

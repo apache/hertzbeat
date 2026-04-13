@@ -20,6 +20,11 @@ package org.apache.hertzbeat.alert.calculate.realtime.window;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutor;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutors;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
@@ -32,10 +37,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Alarm Evaluator - Final alarm logic trigger
@@ -47,36 +48,48 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 @Slf4j
-public class AlarmEvaluator {
+public class AlarmEvaluator implements DisposableBean {
 
     private static final String WINDOW_START_TIME = "window_start_time";
     private static final String WINDOW_END_TIME = "window_end_time";
     private static final String MATCHING_LOGS_COUNT = "matching_logs_count";
     
     private final AlarmCommonReduce alarmCommonReduce;
-    private ThreadPoolExecutor workerExecutor;
+    private final ManagedExecutor workerExecutor;
     
     public AlarmEvaluator(AlarmCommonReduce alarmCommonReduce) {
-        this.alarmCommonReduce = alarmCommonReduce;
-        initAlarmEvaluator();
+        this(alarmCommonReduce, VirtualThreadProperties.defaults());
     }
 
-    public void initAlarmEvaluator() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("alerter-reduce-worker has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
-                .setDaemon(true)
-                .setNameFormat("alerter-reduce-worker-%d")
-                .build();
-        workerExecutor = new ThreadPoolExecutor(2,
+    @Autowired
+    public AlarmEvaluator(AlarmCommonReduce alarmCommonReduce, VirtualThreadProperties virtualThreadProperties) {
+        this.alarmCommonReduce = alarmCommonReduce;
+        VirtualThreadProperties properties =
+                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+        this.workerExecutor = initAlarmEvaluator(properties);
+    }
+
+    public ManagedExecutor initAlarmEvaluator(VirtualThreadProperties properties) {
+        Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
+            log.error("alerter-reduce-worker has uncaughtException.");
+            log.error(throwable.getMessage(), throwable);
+        };
+        if (properties.enabled()) {
+            VirtualThreadProperties.QueueProperties queueProperties = properties.alerter().windowEvaluator();
+            return ManagedExecutors.newQueuedVirtualExecutor("alerter-window-evaluator", "alerter-window-evaluator-",
+                    queueProperties.maxConcurrentJobs(), queueProperties.queueCapacity(), handler);
+        }
+        return ManagedExecutors.wrap("alerter-window-evaluator", new java.util.concurrent.ThreadPoolExecutor(2,
                 10,
                 10,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(),
-                threadFactory,
-                new ThreadPoolExecutor.AbortPolicy());
+                java.util.concurrent.TimeUnit.SECONDS,
+                new java.util.concurrent.LinkedBlockingQueue<>(),
+                new ThreadFactoryBuilder()
+                        .setUncaughtExceptionHandler(handler)
+                        .setDaemon(true)
+                        .setNameFormat("alerter-reduce-worker-%d")
+                        .build(),
+                new java.util.concurrent.ThreadPoolExecutor.AbortPolicy()));
     }
 
     public void sendAndProcessWindowData(WindowAggregator.WindowData windowData) {
@@ -313,5 +326,10 @@ public class AlarmEvaluator {
                 }
             }
         }
+    }
+
+    @Override
+    public void destroy() {
+        workerExecutor.close();
     }
 }

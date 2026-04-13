@@ -25,11 +25,11 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.manager.config.PrometheusProxyConfig;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
@@ -129,7 +129,7 @@ public class SchedulerInit implements CommandLineRunner {
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getParamValue(),
                                 param.getType())).collect(Collectors.toList());
-                List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+                List<RuntimeParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
                         .toList();
                 paramDefaultValue.forEach(defaultVar -> {

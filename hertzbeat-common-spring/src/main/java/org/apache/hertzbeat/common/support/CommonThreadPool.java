@@ -18,13 +18,19 @@
 package org.apache.hertzbeat.common.support;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutor;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutors;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,24 +38,55 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class CommonThreadPool implements DisposableBean {
+public class CommonThreadPool implements BackgroundTaskExecutor, DisposableBean {
 
-    private ThreadPoolExecutor workerExecutor;
+    private final ManagedExecutor workerExecutor;
+
+    private final ManagedExecutor longRunningExecutor;
 
     public CommonThreadPool() {
-        initWorkExecutor();
+        this(VirtualThreadProperties.defaults());
     }
 
-    private void initWorkExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("common executor has uncaughtException.");
+    @Autowired
+    public CommonThreadPool(VirtualThreadProperties virtualThreadProperties) {
+        VirtualThreadProperties properties =
+                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+        this.workerExecutor = createWorkerExecutor(properties);
+        this.longRunningExecutor = createLongRunningExecutor(properties, workerExecutor);
+    }
+
+    private ManagedExecutor createWorkerExecutor(VirtualThreadProperties properties) {
+        Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
+            log.error("common executor has uncaughtException.");
+            log.error(throwable.getMessage(), throwable);
+        };
+        if (properties.enabled()) {
+            VirtualThreadProperties.PoolProperties poolProperties = properties.common();
+            return ManagedExecutors.newVirtualExecutor("common-worker", "common-worker-",
+                    poolProperties.mode(), poolProperties.maxConcurrentJobs(), handler);
+        }
+        return ManagedExecutors.wrap("common-worker", createLegacyExecutor(handler));
+    }
+
+    private ManagedExecutor createLongRunningExecutor(VirtualThreadProperties properties, ManagedExecutor fallback) {
+        if (!properties.enabled()) {
+            return fallback;
+        }
+        return ManagedExecutors.newPlatformExecutor("common-long-running", "common-long-running-",
+                (thread, throwable) -> {
+                    log.error("common longRunningExecutor has uncaughtException.");
                     log.error(throwable.getMessage(), throwable);
-                })
+                });
+    }
+
+    private ExecutorService createLegacyExecutor(Thread.UncaughtExceptionHandler handler) {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setUncaughtExceptionHandler(handler)
                 .setDaemon(true)
                 .setNameFormat("common-worker-%d")
                 .build();
-        workerExecutor = new ThreadPoolExecutor(1,
+        return new ThreadPoolExecutor(1,
                 Integer.MAX_VALUE,
                 10,
                 TimeUnit.SECONDS,
@@ -67,10 +104,20 @@ public class CommonThreadPool implements DisposableBean {
         workerExecutor.execute(runnable);
     }
 
+    /**
+     * Run a long-lived task outside of the short-task execution lane.
+     *
+     * @param runnable task
+     */
+    public void executeLongRunning(Runnable runnable) {
+        longRunningExecutor.execute(runnable);
+    }
+
     @Override
     public void destroy() throws Exception {
-        if (workerExecutor != null) {
-            workerExecutor.shutdownNow();
+        workerExecutor.close();
+        if (longRunningExecutor != workerExecutor) {
+            longRunningExecutor.close();
         }
     }
 }

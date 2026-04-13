@@ -4,15 +4,15 @@ title: Quick Start
 sidebar_label: Quick Start
 ---
 
-### 🐕 Quick Start
+## 🐕 Quick Start
 
 - If you wish to deploy Apache HertzBeat™ locally, please refer to the following Deployment Documentation for instructions.
 
-#### 🍞 Install HertzBeat
-
+### 🍞 Install HertzBeat
+>
 > Apache HertzBeat™ supports installation through source code, docker or package, cpu support X86/ARM64.
 
-##### 1：Install quickly via docker
+#### 1：Install quickly via docker
 
 1. Just one command to get started:
 

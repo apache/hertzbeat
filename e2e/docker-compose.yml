@@ -18,7 +18,7 @@
 version: '3.8'
 services:
   testing:
-    image: ghcr.io/linuxsuren/api-testing:v0.0.17
+    image: ghcr.io/linuxsuren/api-testing:v0.0.19
     environment:
       SERVER: http://hertzbeat:1157
     container_name: e2e-testing

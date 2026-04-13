@@ -17,10 +17,14 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Jmx protocol
@@ -67,8 +71,26 @@ public class JmxProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (StringUtils.isBlank(objectName)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(ssl)
+                && !"true".equalsIgnoreCase(ssl)
+                && !"false".equalsIgnoreCase(ssl)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(username) && StringUtils.isBlank(password)) {
+            return true;
+        }
+        if (StringUtils.isBlank(username) && StringUtils.isNotBlank(password)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(url)) {
+            return !url.startsWith("service:jmx:rmi:") || url.contains("/stub/");
+        }
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        return Integer.parseInt(port) <= 0;
     }
 }

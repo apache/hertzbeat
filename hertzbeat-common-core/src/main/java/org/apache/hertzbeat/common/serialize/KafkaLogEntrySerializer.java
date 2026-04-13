@@ -17,12 +17,11 @@
 
 package org.apache.hertzbeat.common.serialize;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -31,12 +30,6 @@ import org.apache.kafka.common.serialization.Serializer;
  */
 @Slf4j
 public class KafkaLogEntrySerializer implements Serializer<LogEntry> {
-
-    private final ObjectMapper objectMapper;
-
-    public KafkaLogEntrySerializer() {
-        this.objectMapper = new ObjectMapper();
-    }
 
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
@@ -49,13 +42,12 @@ public class KafkaLogEntrySerializer implements Serializer<LogEntry> {
             log.warn("LogEntry is null for topic: {}", topic);
             return null;
         }
-        try {
-            String jsonString = objectMapper.writeValueAsString(logEntry);
-            return jsonString.getBytes(StandardCharsets.UTF_8);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize LogEntry to JSON for topic: {}", topic, e);
+        String jsonString = JsonUtil.toJson(logEntry);
+        if (jsonString == null) {
+            log.error("Failed to serialize LogEntry for topic: {}", topic);
             return null;
         }
+        return jsonString.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -67,4 +59,4 @@ public class KafkaLogEntrySerializer implements Serializer<LogEntry> {
     public void close() {
         Serializer.super.close();
     }
-} 
+}

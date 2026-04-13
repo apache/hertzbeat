@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source linux monitoring tool, monit
 
 > Collect and monitor the general performance Metrics of Linux operating system.
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

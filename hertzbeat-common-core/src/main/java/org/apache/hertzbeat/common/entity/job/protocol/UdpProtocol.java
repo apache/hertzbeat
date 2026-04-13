@@ -17,10 +17,15 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * Use udp implemented by socket for service port availability detection
@@ -52,8 +57,19 @@ public class UdpProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(timeout) && !CommonUtil.isNumeric(timeout)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(content) && !isValidHexString(content)) {
+            return true;
+        }
+        return false;
+    }
 
-        // todo: add
-        return true;
+    private boolean isValidHexString(String hex) {
+        return hex.matches("^[0-9a-fA-F]+$");
     }
 }

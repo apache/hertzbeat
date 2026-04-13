@@ -18,16 +18,16 @@
 package org.apache.hertzbeat.alert.reduce;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutor;
+import org.apache.hertzbeat.common.concurrent.ManagedExecutors;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -35,33 +35,45 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
-public class AlarmCommonReduce {
+public class AlarmCommonReduce implements DisposableBean {
     
     private final AlarmGroupReduce alarmGroupReduce;
-    
-    private ThreadPoolExecutor workerExecutor;
+
+    private final ManagedExecutor workerExecutor;
 
     public AlarmCommonReduce(AlarmGroupReduce alarmGroupReduce) {
-        initWorkExecutor();
-        this.alarmGroupReduce = alarmGroupReduce;
+        this(alarmGroupReduce, VirtualThreadProperties.defaults());
     }
 
-    private void initWorkExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("alerter-reduce-worker has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
-                .setDaemon(true)
-                .setNameFormat("alerter-reduce-worker-%d")
-                .build();
-        workerExecutor = new ThreadPoolExecutor(2,
+    @Autowired
+    public AlarmCommonReduce(AlarmGroupReduce alarmGroupReduce, VirtualThreadProperties virtualThreadProperties) {
+        this.alarmGroupReduce = alarmGroupReduce;
+        VirtualThreadProperties properties =
+                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+        this.workerExecutor = initWorkExecutor(properties);
+    }
+
+    private ManagedExecutor initWorkExecutor(VirtualThreadProperties properties) {
+        Thread.UncaughtExceptionHandler handler = (thread, throwable) -> {
+            log.error("alerter-reduce-worker has uncaughtException.");
+            log.error(throwable.getMessage(), throwable);
+        };
+        if (properties.enabled()) {
+            VirtualThreadProperties.QueueProperties queueProperties = properties.alerter().reduce();
+            return ManagedExecutors.newQueuedVirtualExecutor("alerter-reduce-worker", "alerter-reduce-worker-",
+                    queueProperties.maxConcurrentJobs(), queueProperties.queueCapacity(), handler);
+        }
+        return ManagedExecutors.wrap("alerter-reduce-worker", new java.util.concurrent.ThreadPoolExecutor(2,
                 2,
                 10,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(),
-                threadFactory,
-                new ThreadPoolExecutor.AbortPolicy());
+                java.util.concurrent.TimeUnit.SECONDS,
+                new java.util.concurrent.LinkedBlockingQueue<>(),
+                new ThreadFactoryBuilder()
+                        .setUncaughtExceptionHandler(handler)
+                        .setDaemon(true)
+                        .setNameFormat("alerter-reduce-worker-%d")
+                        .build(),
+                new java.util.concurrent.ThreadPoolExecutor.AbortPolicy()));
     }
 
 
@@ -103,10 +115,6 @@ public class AlarmCommonReduce {
      * Fingerprint is based on labels excluding timestamp related fields
      */
     private String generateAlertFingerprint(Map<String, String> labels) {
-        // Remove timestamp related fields
-        labels.remove("timestamp");
-        labels.remove("start_at");
-        labels.remove("active_at");
         return labels.entrySet().stream()
                 .filter(e -> !"timestamp".equals(e.getKey())
                         && !"starts_at".equals(e.getKey()) && !"actives_at".equals(e.getKey())
@@ -115,5 +123,10 @@ public class AlarmCommonReduce {
                 .sorted(Map.Entry.comparingByKey())
                 .map(e -> e.getKey() + ":" + e.getValue())
                 .collect(Collectors.joining(","));
+    }
+
+    @Override
+    public void destroy() {
+        workerExecutor.close();
     }
 }

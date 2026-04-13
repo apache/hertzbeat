@@ -1,0 +1,26 @@
+@import '@delon/theme/index';
+
+.token-management {
+  width: 100%;
+
+  .token-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .token-desc {
+      margin: 0;
+      color: @text-color-secondary;
+      font-size: 14px;
+    }
+  }
+
+  .empty-state {
+    padding: 48px 0;
+  }
+
+  .token-expired-text {
+    color: @error-color;
+  }
+}

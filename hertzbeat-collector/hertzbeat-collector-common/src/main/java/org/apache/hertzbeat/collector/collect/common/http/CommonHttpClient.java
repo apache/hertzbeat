@@ -22,6 +22,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -51,6 +52,14 @@ public class CommonHttpClient {
     private static CloseableHttpClient httpClient;
 
     private static PoolingHttpClientConnectionManager connectionManager;
+
+    private static ScheduledExecutorService scheduledExecutor;
+
+    private static ExecutorService cleanupExecutor;
+
+    private static ScheduledDispatchTask cleanupTask;
+
+    private static volatile Runnable beforeCleanupHook;
 
     /**
      * all max total connection
@@ -137,15 +146,9 @@ public class CommonHttpClient {
                     // clean up available but idle connections
                     .evictIdleConnections(100, TimeUnit.SECONDS)
                     .build();
-            ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                    .setNameFormat("http-connection-pool-cleaner-%d")
-                    .setDaemon(true)
-                    .build();
-            ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1, threadFactory);
-            scheduledExecutor.scheduleWithFixedDelay(() -> {
-                connectionManager.closeExpiredConnections();
-                connectionManager.closeIdleConnections(40, TimeUnit.SECONDS);
-            }, 40L, 40L, TimeUnit.SECONDS);
+            initializeCleanupExecutors();
+            scheduledExecutor.scheduleWithFixedDelay(CommonHttpClient::dispatchConnectionPoolCleanup,
+                    40L, 40L, TimeUnit.SECONDS);
 
             // shutdown hook
             Runtime.getRuntime().addShutdownHook(new Thread(CommonHttpClient::close));
@@ -156,13 +159,119 @@ public class CommonHttpClient {
     public static CloseableHttpClient getHttpClient() {
         return httpClient;
     }
+
+    public static PoolingHttpClientConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
+
+    static void dispatchConnectionPoolCleanup() {
+        if (cleanupTask != null) {
+            cleanupTask.dispatch();
+        }
+    }
+
+    static void setConnectionManagerForTest(PoolingHttpClientConnectionManager manager) {
+        connectionManager = manager;
+    }
+
+    static void setBeforeCleanupHookForTest(Runnable hook) {
+        beforeCleanupHook = hook;
+    }
     
     public static void close() {
         try {
-            httpClient.close();
+            if (httpClient != null) {
+                httpClient.close();
+            }
         } catch (Exception e) {
             log.error("close http client error", e);
         }
+        if (scheduledExecutor != null) {
+            scheduledExecutor.shutdownNow();
+        }
+        if (cleanupExecutor != null) {
+            cleanupExecutor.shutdownNow();
+        }
     }
-    
+
+    private static void initializeCleanupExecutors() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("http-connection-pool-cleaner-%d")
+                .setDaemon(true)
+                .build();
+        scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        cleanupExecutor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+                .name("http-connection-pool-cleaner-vt-", 0)
+                .uncaughtExceptionHandler((thread, throwable) ->
+                        log.error("HTTP connection pool cleanup has uncaughtException.", throwable))
+                .factory());
+        cleanupTask = new ScheduledDispatchTask(cleanupExecutor, CommonHttpClient::runConnectionPoolCleanup);
+    }
+
+    private static void runConnectionPoolCleanup() {
+        Runnable hook = beforeCleanupHook;
+        if (hook != null) {
+            hook.run();
+        }
+        if (connectionManager == null) {
+            return;
+        }
+        connectionManager.closeExpiredConnections();
+        connectionManager.closeIdleConnections(40, TimeUnit.SECONDS);
+    }
+
+    private static final class ScheduledDispatchTask {
+
+        private final ExecutorService executor;
+
+        private final Runnable task;
+
+        private boolean running;
+
+        private int pendingRuns;
+
+        private ScheduledDispatchTask(ExecutorService executor, Runnable task) {
+            this.executor = executor;
+            this.task = task;
+        }
+
+        private void dispatch() {
+            boolean shouldSchedule;
+            synchronized (this) {
+                pendingRuns++;
+                shouldSchedule = !running;
+                if (shouldSchedule) {
+                    running = true;
+                }
+            }
+            if (shouldSchedule) {
+                scheduleRun();
+            }
+        }
+
+        private void scheduleRun() {
+            executor.execute(this::runOnce);
+        }
+
+        private void runOnce() {
+            try {
+                task.run();
+            } finally {
+                scheduleNextIfNeeded();
+            }
+        }
+
+        private void scheduleNextIfNeeded() {
+            boolean shouldSchedule;
+            synchronized (this) {
+                pendingRuns = Math.max(0, pendingRuns - 1);
+                shouldSchedule = pendingRuns > 0;
+                if (!shouldSchedule) {
+                    running = false;
+                    return;
+                }
+            }
+            scheduleRun();
+        }
+    }
 }

@@ -1820,7 +1820,7 @@ export class AlertSettingComponent implements OnInit {
    * Get the edit tooltip title i18n key based on the data type.
    */
   getEditTooltipTitle(data: any): string {
-    if (data.type === 'realtime') {
+    if (data.type === 'realtime_metric' || data.type === 'realtime_log') {
       return 'alert.setting.edit.realtime';
     } else {
       return 'alert.setting.edit.periodic';

@@ -4,7 +4,7 @@ author: tomsun28
 author_title: tomsun28
 author_url: https://github.com/zhangshenghang
 tags: [opensource, release]
-keywords: [open source monitoring system, alerting system, Hertzbeat, release]
+keywords: [open source monitoring system, alerting system, HertzBeat, release]
 ---
 
 Dear Community Members,
@@ -171,7 +171,7 @@ Special thanks to the following community members for their collaborative effort
 - @lx1229 made their first contribution in [https://github.com/apache/hertzbeat/pull/3431](https://github.com/apache/hertzbeat/pull/3431)
 - @RainBondsongyg made their first contribution in [https://github.com/apache/hertzbeat/pull/3440](https://github.com/apache/hertzbeat/pull/3440)
 
-## Apache Hertzbeat
+## Apache HertzBeat
 
 **Repository URL:**
 

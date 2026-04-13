@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.sms.AlibabaSmsProperties;
 import org.apache.hertzbeat.alert.service.SmsClient;
@@ -45,6 +44,7 @@ import java.util.Map;
 import java.util.SimpleTimeZone;
 import java.util.TreeMap;
 import java.util.UUID;
+import tools.jackson.databind.JsonNode;
 
 import static org.apache.hertzbeat.common.constants.SmsConstants.ALIBABA;
 
@@ -60,7 +60,7 @@ public class AlibabaSmsClientImpl implements SmsClient {
     private static final String ACTION = "SendSms";
     private static final String HOST = "dysmsapi.aliyuncs.com";
     private static final String ALGORITHM = "ACS3-HMAC-SHA256";
-    
+
     private final String accessKeyId;
     private final String accessKeySecret;
     private final String signName;
@@ -151,7 +151,7 @@ public class AlibabaSmsClientImpl implements SmsClient {
             httpPost.setHeader("x-acs-version", API_VERSION);
             httpPost.setHeader("x-acs-date", timestamp);
             httpPost.setHeader("x-acs-signature-nonce", nonce);
-            httpPost.setHeader("x-acs-content-sha256", 
+            httpPost.setHeader("x-acs-content-sha256",
                     CryptoUtils.sha256Hex(""));
 
             log.info("Sending Alibaba SMS request to {}", url + ", params: " + templateParam + "headers: " + Arrays.toString(httpPost.getAllHeaders()));
@@ -236,4 +236,4 @@ public class AlibabaSmsClientImpl implements SmsClient {
     public boolean checkConfig() {
         return !(accessKeyId.isBlank() || accessKeySecret.isBlank() || signName.isBlank() || templateCode.isBlank());
     }
-} 
+}

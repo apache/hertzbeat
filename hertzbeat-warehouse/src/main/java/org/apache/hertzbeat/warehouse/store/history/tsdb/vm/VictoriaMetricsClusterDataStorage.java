@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb.vm;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

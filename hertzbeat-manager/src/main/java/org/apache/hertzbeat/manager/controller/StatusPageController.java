@@ -28,9 +28,9 @@ import java.util.List;
 import jakarta.validation.Valid;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
-import org.apache.hertzbeat.common.entity.manager.StatusPageIncident;
-import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageComponentInfo;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageIncidentInfo;
+import org.apache.hertzbeat.manager.pojo.dto.StatusPageOrgInfo;
 import org.apache.hertzbeat.manager.service.StatusPageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -57,8 +57,8 @@ public class StatusPageController {
 
     @GetMapping("/org")
     @Operation(summary = "Query Status Page Organization")
-    public ResponseEntity<Message<StatusPageOrg>> queryStatusPageOrg() {
-        StatusPageOrg statusPageOrg = statusPageService.queryStatusPageOrg();
+    public ResponseEntity<Message<StatusPageOrgInfo>> queryStatusPageOrg() {
+        StatusPageOrgInfo statusPageOrg = statusPageService.queryStatusPageOrg();
         if (statusPageOrg == null) {
             return ResponseEntity.ok(Message.fail(CommonConstants.FAIL_CODE, "Status Page Organization Not Found"));
         }
@@ -67,28 +67,27 @@ public class StatusPageController {
 
     @PostMapping("/org")
     @Operation(summary = "Save and Update Query Status Page Organization")
-    public ResponseEntity<Message<StatusPageOrg>> saveStatusPageOrg(@Valid @RequestBody StatusPageOrg statusPageOrg) {
-        StatusPageOrg org = statusPageService.saveStatusPageOrg(statusPageOrg);
+    public ResponseEntity<Message<StatusPageOrgInfo>> saveStatusPageOrg(@Valid @RequestBody StatusPageOrgInfo statusPageOrg) {
+        StatusPageOrgInfo org = statusPageService.saveStatusPageOrg(statusPageOrg);
         return ResponseEntity.ok(Message.success(org));
     }
 
     @GetMapping("/component")
     @Operation(summary = "Query Status Page Components")
-    public ResponseEntity<Message<List<StatusPageComponent>>> queryStatusPageComponent() {
-        List<StatusPageComponent> statusPageComponents = statusPageService.queryStatusPageComponents();
-        return ResponseEntity.ok(Message.success(statusPageComponents));
+    public ResponseEntity<Message<List<StatusPageComponentInfo>>> queryStatusPageComponent() {
+        return ResponseEntity.ok(Message.success(statusPageService.queryStatusPageComponents()));
     }
 
     @PostMapping("/component")
     @Operation(summary = "Save Status Page Component")
-    public ResponseEntity<Message<Void>> newStatusPageComponent(@Valid @RequestBody StatusPageComponent statusPageComponent) {
+    public ResponseEntity<Message<Void>> newStatusPageComponent(@Valid @RequestBody StatusPageComponentInfo statusPageComponent) {
         statusPageService.newStatusPageComponent(statusPageComponent);
         return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping("/component")
     @Operation(summary = "Update Status Page Component")
-    public ResponseEntity<Message<Void>> updateStatusPageComponent(@Valid @RequestBody StatusPageComponent statusPageComponent) {
+    public ResponseEntity<Message<Void>> updateStatusPageComponent(@Valid @RequestBody StatusPageComponentInfo statusPageComponent) {
         statusPageService.updateStatusPageComponent(statusPageComponent);
         return ResponseEntity.ok(Message.success("Update success"));
     }
@@ -102,21 +101,20 @@ public class StatusPageController {
 
     @GetMapping("/component/{id}")
     @Operation(summary = "Query Status Page Component")
-    public ResponseEntity<Message<StatusPageComponent>> queryStatusPageComponent(@PathVariable("id") final long id) {
-        StatusPageComponent statusPageComponent = statusPageService.queryStatusPageComponent(id);
-        return ResponseEntity.ok(Message.success(statusPageComponent));
+    public ResponseEntity<Message<StatusPageComponentInfo>> queryStatusPageComponent(@PathVariable("id") final long id) {
+        return ResponseEntity.ok(Message.success(statusPageService.queryStatusPageComponent(id)));
     }
 
     @PostMapping("/incident")
     @Operation(summary = "Save Status Page Incident")
-    public ResponseEntity<Message<Void>> newStatusPageIncident(@Valid @RequestBody StatusPageIncident incident) {
+    public ResponseEntity<Message<Void>> newStatusPageIncident(@Valid @RequestBody StatusPageIncidentInfo incident) {
         statusPageService.newStatusPageIncident(incident);
         return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping("/incident")
     @Operation(summary = "Update Status Page Incident")
-    public ResponseEntity<Message<Void>> updateStatusPageIncident(@Valid @RequestBody StatusPageIncident incident) {
+    public ResponseEntity<Message<Void>> updateStatusPageIncident(@Valid @RequestBody StatusPageIncidentInfo incident) {
         statusPageService.updateStatusPageIncident(incident);
         return ResponseEntity.ok(Message.success("Update success"));
     }
@@ -130,20 +128,19 @@ public class StatusPageController {
 
     @GetMapping("/incident/{id}")
     @Operation(summary = "Get Status Page Incident")
-    public ResponseEntity<Message<StatusPageIncident>> queryStatusPageIncident(@PathVariable("id") final long id) {
-        StatusPageIncident incident = statusPageService.queryStatusPageIncident(id);
-        return ResponseEntity.ok(Message.success(incident));
+    public ResponseEntity<Message<StatusPageIncidentInfo>> queryStatusPageIncident(@PathVariable("id") final long id) {
+        return ResponseEntity.ok(Message.success(statusPageService.queryStatusPageIncident(id)));
     }
 
     @GetMapping("/incident")
     @Operation(summary = "Query Status Page Incidents")
-    public ResponseEntity<Message<Page<StatusPageIncident>>> queryStatusPageIncident(
+    public ResponseEntity<Message<Page<StatusPageIncidentInfo>>> queryStatusPageIncident(
             @Parameter(description = "Search-Target", example = "x") @RequestParam(required = false) String search,
             @Parameter(description = "Start Time", example = "1756384301907") @RequestParam(required = false) Long startTime,
             @Parameter(description = "End Time", example = "1756384301907") @RequestParam(required = false) Long endTime,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        Page<StatusPageIncident> incidents = statusPageService.queryStatusPageIncidents(search, startTime, endTime, pageIndex, pageSize);
+        Page<StatusPageIncidentInfo> incidents = statusPageService.queryStatusPageIncidents(search, startTime, endTime, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(incidents));
     }
 }

@@ -25,9 +25,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.constants.ScheduleTypeEnum;
+import org.apache.hertzbeat.collector.dispatch.MetricsTaskDispatch;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -35,6 +37,8 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.timer.HashedWheelTimer;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.common.timer.Timer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Component;
@@ -69,7 +73,19 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
      */
     private final AtomicBoolean started;
 
+    private final Supplier<MetricsTaskDispatch> metricsTaskDispatchSupplier;
+
     public TimerDispatcher() {
+        this(() -> timeout -> {
+        });
+    }
+
+    @Autowired
+    public TimerDispatcher(ObjectProvider<MetricsTaskDispatch> metricsTaskDispatchProvider) {
+        this(resolveMetricsTaskDispatchSupplier(metricsTaskDispatchProvider));
+    }
+
+    private TimerDispatcher(Supplier<MetricsTaskDispatch> metricsTaskDispatchSupplier) {
         this.wheelTimer = new HashedWheelTimer(r -> {
             Thread ret = new Thread(r, "wheelTimer");
             ret.setDaemon(true);
@@ -79,6 +95,16 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         this.currentTempTaskMap = new ConcurrentHashMap<>(8);
         this.eventListeners = new ConcurrentHashMap<>(8);
         this.started = new AtomicBoolean(true);
+        this.metricsTaskDispatchSupplier = metricsTaskDispatchSupplier;
+    }
+
+    private static Supplier<MetricsTaskDispatch> resolveMetricsTaskDispatchSupplier(
+            ObjectProvider<MetricsTaskDispatch> metricsTaskDispatchProvider) {
+        if (metricsTaskDispatchProvider == null) {
+            return () -> timeout -> {
+            };
+        }
+        return metricsTaskDispatchProvider::getObject;
     }
 
     @Override
@@ -87,7 +113,8 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             log.warn("Collector is offline, can not dispatch collect jobs.");
             return;
         }
-        WheelTimerTask timerJob = new WheelTimerTask(addJob);
+        // Delay dispatcher lookup to avoid a startup cycle with CommonDispatcher.
+        WheelTimerTask timerJob = new WheelTimerTask(addJob, metricsTaskDispatchSupplier);
         if (addJob.isCyclic()) {
             Long nextExecutionTime = getNextExecutionInterval(addJob);
             Timeout timeout = wheelTimer.newTimeout(timerJob, nextExecutionTime, TimeUnit.SECONDS);

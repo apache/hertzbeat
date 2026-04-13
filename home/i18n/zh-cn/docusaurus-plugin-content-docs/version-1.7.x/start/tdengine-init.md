@@ -15,7 +15,7 @@ TDengine是一款开源物联网时序型数据库，我们用其存储采集到
 
 > 如果您已有TDengine环境，可直接跳到创建数据库实例那一步。
 
-### 通过Docker方式安装TDengine
+## 通过Docker方式安装TDengine
 
 1. 下载安装Docker环境
 Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。

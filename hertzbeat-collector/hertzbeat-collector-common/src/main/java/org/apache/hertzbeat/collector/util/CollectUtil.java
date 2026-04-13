@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.collector.util;
 
 import com.beetstra.jutf7.CharsetProvider;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

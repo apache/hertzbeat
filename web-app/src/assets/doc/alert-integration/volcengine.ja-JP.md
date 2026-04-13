@@ -1,4 +1,4 @@
-> Volcano Engine Cloudの監視のアラームをWebhookを介してHertzbeatアラートプラットフォームに送信します。
+> Volcano Engine Cloudの監視のアラームをWebhookを介してHertzBeatアラートプラットフォームに送信します。
 
 ### Volcanoエンジンアラームコールバックを構成します
 

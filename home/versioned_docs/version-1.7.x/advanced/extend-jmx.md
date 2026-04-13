@@ -7,7 +7,7 @@ sidebar_label: JMX Protocol Custom Monitoring
 > From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use JMX to customize Metric monitoring.
 > JMX protocol custom monitoring allows us to easily monitor Metrics we want by config JMX Mbeans Object.
 
-### JMX protocol collection process
+## JMX protocol collection process
 
 【**Peer Server Enable Jmx Service**】->【**HertzBeat Connect Peer Server Jmx**】->【**Query Jmx Mbean Object Data**】->【**Metric data extraction**】
 

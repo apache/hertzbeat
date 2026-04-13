@@ -7,7 +7,7 @@ keywords: [ Open Source Monitoring System, InfluxDB Monitoring, InfluxDB-PromQL 
 
 > Monitor InfluxDB by querying generic metrics data from Prometheus server using Prometheus PromQL. This approach is suitable when Prometheus is already monitoring InfluxDB and you need to fetch InfluxDB's monitoring data from Prometheus server.
 
-### Configuration Parameters
+## Configuration Parameters
 
 |   Parameter Name    |                                                 Parameter help description                                                 |
 |---------------------|----------------------------------------------------------------------------------------------------------------------------|

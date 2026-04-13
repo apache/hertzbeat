@@ -4,7 +4,7 @@ author: yuluo-yx
 author_title: Shown Ji
 author_url: https://github.com/yuluo-yx
 tags: [opensource, practice]
-keywords: [open source monitoring system, alerting system, Apache, Apache Committer, Hertzbeat]
+keywords: [open source monitoring system, alerting system, Apache, Apache Committer, HertzBeat]
 ---
 
 ## My open source journey
@@ -31,11 +31,11 @@ The Apache Software Foundation was originally composed of developers who develop
 
 ### First contribution
 
-The first contribution in the Apache community should be to delete a `{@link}` code link to the Dubbo project. I'm ashamed to say that [Dubbo](https://github.com/apache/dubbo) is the first open source project I participated in Apache, and there are only 6 submissions so far. In May, I came into contact with the [Apache Hertzbeat](https://github.com/apache/hertzbeat) project through [Rick](https://github.com/LinuxSuRen), and started my Apache contribution from unit testing. road.
+The first contribution in the Apache community should be to delete a `{@link}` code link to the Dubbo project. I'm ashamed to say that [Dubbo](https://github.com/apache/dubbo) is the first open source project I participated in Apache, and there are only 6 submissions so far. In May, I came into contact with the [Apache HertzBeat](https://github.com/apache/hertzbeat) project through [Rick](https://github.com/LinuxSuRen), and started my Apache contribution from unit testing. road.
 
 ### Get nominated and become a Committer
 
-This nomination was recommended by PPMC Member [Logic](https://github.com/zqr10159) of Apache Hertzbeat. Thanks to the Apache HertzBeat™ Team. I was successfully nominated to become a Hertzbeat Committer and got my own Apache mailbox.
+This nomination was recommended by PPMC Member [Logic](https://github.com/zqr10159) of Apache HertzBeat. Thanks to the Apache HertzBeat™ Team. I was successfully nominated to become a HertzBeat Committer and got my own Apache mailbox.
 
 ![Apache ID Email](/img/blog/committer/yuluo-yx/3.jpg)
 
@@ -96,4 +96,4 @@ Project communities tend to welcome contributions in all ways: be it code, docum
 ## Random Thoughts
 
 I'm writing this post to commemorate the special occasion of becoming an Apache HertzBeat™ Committer, and to motivate me to get involved in open source in the future.
-Keep up the enthusiasm, keep up the coding, and thank you for all the people who have helped me while I've been involved in open source. I wish Hertzbeat the best of luck in its incubation and graduation to become a top Apache project! 🎉
+Keep up the enthusiasm, keep up the coding, and thank you for all the people who have helped me while I've been involved in open source. I wish HertzBeat the best of luck in its incubation and graduation to become a top Apache project! 🎉

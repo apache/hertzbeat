@@ -23,7 +23,7 @@ package org.apache.hertzbeat.common.entity.job.protocol;
 public interface Protocol {
 
     /**
-     * Check Protocol params vaild.
+     * Check Protocol params valid.
      * @return True or False.
      */
     boolean isInvalid();

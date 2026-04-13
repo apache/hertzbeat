@@ -17,11 +17,16 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.isHasSchema;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Redfish Protocol
@@ -65,8 +70,30 @@ public class RedfishProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if ((!validateIpDomain(host) && !isHasSchema(host)) || !validPort(port)) {
+            return true;
+        }
+        if (Integer.parseInt(port) <= 0) {
+            return true;
+        }
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
+            return true;
+        }
+        if (!StringUtils.isNumeric(timeout)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(schema)
+                && (!schema.startsWith("/") || StringUtils.containsWhitespace(schema))) {
+            return true;
+        }
+        if (jsonPath == null || jsonPath.isEmpty()) {
+            return true;
+        }
+        for (String path : jsonPath) {
+            if (StringUtils.isBlank(path)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

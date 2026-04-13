@@ -10,7 +10,7 @@ keywords:
     alerting system,
     Apache,
     Apache Committer,
-    Hertzbeat,
+    HertzBeat,
   ]
 ---
 🎉 大家好，很高兴收到 Apache HertzBeat™ 社区的邀请，正式成为项目的 Committer！

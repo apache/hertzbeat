@@ -26,10 +26,11 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -93,37 +94,6 @@ class JdbcCommonCollectTest {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             jdbcCommonCollect.collect(builder, metrics);
         });
-
-        String[] platforms = new String[]{
-            "mysql", "mariadb",
-            "postgresql",
-            "clickhouse",
-            "sqlserver",
-            "oracle",
-            "dm"
-        };
-        for (String platform : platforms) {
-            JdbcProtocol jdbc = new JdbcProtocol();
-            jdbc.setPlatform(platform);
-
-            Metrics metrics = new Metrics();
-            metrics.setJdbc(jdbc);
-
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            jdbcCommonCollect.collect(builder, metrics);
-            assertNotEquals(builder.getMsg(), "Query Error: Not support database platform: " + platform);
-        }
-        // invalid platform
-        JdbcProtocol jdbc = new JdbcProtocol();
-        jdbc.setPlatform("invalid");
-
-        Metrics metrics = new Metrics();
-        metrics.setJdbc(jdbc);
-
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        jdbcCommonCollect.collect(builder, metrics);
-        assertEquals(builder.getCode(), CollectRep.Code.FAIL);
-        assertEquals(builder.getMsg(), "Query Error: Not support database platform: invalid");
     }
 
     @Test
@@ -151,18 +121,48 @@ class JdbcCommonCollectTest {
                         .database("test")
                         .url(originalUrl)
                         .build();
-                
-                // Use reflection to call constructDatabaseUrl method
-                Method constructMethod = JdbcCommonCollect.class.getDeclaredMethod("constructDatabaseUrl", JdbcProtocol.class, String.class, String.class);
-                constructMethod.setAccessible(true);
-                String processedUrl = (String) constructMethod.invoke(jdbcCollect, jdbcProtocol, "localhost", "3306");
+
+                String processedUrl = constructDatabaseUrl(jdbcCollect, jdbcProtocol, "localhost", "3306");
                 // Verify that the processed URL is the same as the original URL
-                assertEquals(originalUrl, processedUrl, 
+                assertEquals(originalUrl, processedUrl,
                     "URL should be passed through without modification: " + originalUrl);
             } catch (Exception e) {
                 System.out.println("URL rejected by security validation: " + originalUrl + ", reason: " + e.getMessage());
             }
         }
+    }
+
+    @Test
+    void testConstructDatabaseUrlByPlatform() throws Exception {
+        Map<String, String> expectedUrls = new LinkedHashMap<>();
+        expectedUrls.put("mysql", "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=false");
+        expectedUrls.put("mariadb", "jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=false");
+        expectedUrls.put("postgresql", "jdbc:postgresql://localhost:3306/test");
+        expectedUrls.put("clickhouse", "jdbc:clickhouse://localhost:3306/test");
+        expectedUrls.put("sqlserver", "jdbc:sqlserver://localhost:3306;DatabaseName=test;trustServerCertificate=true;");
+        expectedUrls.put("oracle", "jdbc:oracle:thin:@localhost:3306/test");
+        expectedUrls.put("dm", "jdbc:dm://localhost:3306");
+
+        for (Map.Entry<String, String> entry : expectedUrls.entrySet()) {
+            JdbcProtocol jdbcProtocol = JdbcProtocol.builder()
+                    .platform(entry.getKey())
+                    .database("test")
+                    .build();
+
+            assertEquals(entry.getValue(), constructDatabaseUrl(jdbcCommonCollect, jdbcProtocol, "localhost", "3306"));
+        }
+    }
+
+    @Test
+    void testConstructDatabaseUrlRejectsUnsupportedPlatform() {
+        JdbcProtocol jdbcProtocol = JdbcProtocol.builder()
+                .platform("invalid")
+                .database("test")
+                .build();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> constructDatabaseUrl(jdbcCommonCollect, jdbcProtocol, "localhost", "3306"));
+        assertEquals("Not support database platform: invalid", exception.getMessage());
     }
 
     @Test
@@ -197,14 +197,27 @@ class JdbcCommonCollectTest {
                     .build();
 
             assertThrows(Exception.class, () -> {
-                try {
-                    Method constructMethod = JdbcCommonCollect.class.getDeclaredMethod("constructDatabaseUrl", JdbcProtocol.class, String.class, String.class);
-                    constructMethod.setAccessible(true);
-                    constructMethod.invoke(jdbcCollect, jdbcProtocol, "localhost", "3306");
-                } catch (InvocationTargetException e) {
-                    throw e.getCause();
-                }
+                constructDatabaseUrl(jdbcCollect, jdbcProtocol, "localhost", "3306");
             }, "Malicious URL should be blocked: " + maliciousUrl);
+        }
+    }
+
+    private String constructDatabaseUrl(JdbcCommonCollect jdbcCollect, JdbcProtocol jdbcProtocol,
+                                        String host, String port) throws Exception {
+        try {
+            Method constructMethod = JdbcCommonCollect.class
+                    .getDeclaredMethod("constructDatabaseUrl", JdbcProtocol.class, String.class, String.class);
+            constructMethod.setAccessible(true);
+            return (String) constructMethod.invoke(jdbcCollect, jdbcProtocol, host, port);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof Exception exception) {
+                throw exception;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new RuntimeException(cause);
         }
     }
 

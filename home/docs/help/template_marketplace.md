@@ -4,7 +4,7 @@ title: Template Marketplace
 sidebar_label: Template Marketplace
 ---
 
-> Hertzbeat official template marketplace: users can freely upload, download, view, search and share monitoring template files.
+> HertzBeat official template marketplace: users can freely upload, download, view, search and share monitoring template files.
 
 ## Basic Functions
 

@@ -1,4 +1,4 @@
-# [Open Source Summer] Hertzbeat project introduction
+# [Open Source Summer] HertzBeat project introduction
 
 ## What is HertzBeat?
 

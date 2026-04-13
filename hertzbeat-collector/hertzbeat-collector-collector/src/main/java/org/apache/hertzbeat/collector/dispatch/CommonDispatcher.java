@@ -114,7 +114,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     public void start() {
         try {
             // Pull the collection task from the task queue and put it into the thread pool for execution
-            workerPool.executeJob(() -> {
+            workerPool.executeLongRunning(() -> {
                 Thread.currentThread().setName("metrics-task-dispatcher");
                 while (!Thread.currentThread().isInterrupted()) {
                     MetricsCollect metricsCollect = null;

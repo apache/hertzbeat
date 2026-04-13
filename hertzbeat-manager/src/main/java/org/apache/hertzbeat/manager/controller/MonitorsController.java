@@ -22,10 +22,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorInfo;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -53,7 +55,7 @@ public class MonitorsController {
     @GetMapping
     @Operation(summary = "Obtain a list of monitoring information based on query filter items",
             description = "Obtain a list of monitoring information based on query filter items")
-    public ResponseEntity<Message<Page<Monitor>>> getMonitors(
+    public ResponseEntity<Message<Page<MonitorInfo>>> getMonitors(
             @Parameter(description = "Monitor ID", example = "6565463543") @RequestParam(required = false) final List<Long> ids,
             @Parameter(description = "Monitor Type", example = "linux") @RequestParam(required = false) final String app,
             @Parameter(description = "Monitor Status 0:no monitor,1:usable,2:disabled,9:all status", example = "1") @RequestParam(required = false) final Byte status,
@@ -64,15 +66,19 @@ public class MonitorsController {
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination ", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
         Page<Monitor> monitorPage = monitorService.getMonitors(ids, app, search, status, sort, order, pageIndex, pageSize, labels);
-        return ResponseEntity.ok(Message.success(monitorPage));
+        Page<MonitorInfo> responsePage = monitorPage == null ? Page.empty() : monitorPage.map(MonitorInfo::fromEntity);
+        return ResponseEntity.ok(Message.success(responsePage));
     }
 
     @GetMapping(path = "/{app}")
     @Operation(summary = "Filter all acquired monitoring information lists of the specified monitoring type according to the query",
             description = "Filter all acquired monitoring information lists of the specified monitoring type according to the query")
-    public ResponseEntity<Message<List<Monitor>>> getAppMonitors(
+    public ResponseEntity<Message<List<MonitorInfo>>> getAppMonitors(
             @Parameter(description = "en: Monitoring type", example = "linux") @PathVariable(required = false) final String app) {
-        return ResponseEntity.ok(Message.success(monitorService.getAppMonitors(app)));
+        List<Monitor> monitors = monitorService.getAppMonitors(app);
+        List<MonitorInfo> response = monitors == null ? Collections.emptyList()
+                : monitors.stream().map(MonitorInfo::fromEntity).toList();
+        return ResponseEntity.ok(Message.success(response));
     }
 
 

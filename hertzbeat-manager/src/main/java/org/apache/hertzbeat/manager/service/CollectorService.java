@@ -19,7 +19,7 @@ package org.apache.hertzbeat.manager.service;
 
 import java.util.List;
 import java.util.Map;
-import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorSummary;
 import org.springframework.data.domain.Page;
 
 /**

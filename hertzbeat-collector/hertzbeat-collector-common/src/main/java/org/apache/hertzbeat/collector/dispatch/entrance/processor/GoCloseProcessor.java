@@ -23,9 +23,7 @@ import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
-import org.springframework.boot.SpringApplication;
 
 /**
  * handle collector close message
@@ -34,24 +32,25 @@ import org.springframework.boot.SpringApplication;
 @Slf4j
 public class GoCloseProcessor implements NettyRemotingProcessor {
     private final CollectServer collectServer;
-    private TimerDispatch timerDispatch;
+    private final TimerDispatch timerDispatch;
+    private final Runnable closeApplicationAction;
 
-    public GoCloseProcessor(final CollectServer collectServer) {
+    public GoCloseProcessor(final CollectServer collectServer,
+                            final TimerDispatch timerDispatch,
+                            final Runnable closeApplicationAction) {
         this.collectServer = collectServer;
+        this.timerDispatch = timerDispatch;
+        this.closeApplicationAction = closeApplicationAction;
     }
 
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-        if (this.timerDispatch == null) {
-            this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
-        }
         if (message.getMsg().toStringUtf8().contains(CommonConstants.COLLECTOR_AUTH_FAILED)) {
             log.error("[Auth Failed]receive client auth failed message and go close. {}", message.getMsg());
         }
         this.timerDispatch.goOffline();
         this.collectServer.shutdown();
-        SpringApplication.exit(SpringContextHolder.getApplicationContext(), () -> 0);
-        SpringContextHolder.shutdown();
+        closeApplicationAction.run();
         log.info("receive offline message and close success");
         return null;
     }

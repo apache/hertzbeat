@@ -18,8 +18,10 @@
 package org.apache.hertzbeat.remoting;
 
 import com.google.protobuf.ByteString;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.support.CommonThreadPool;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.remoting.netty.NettyClientConfig;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingClient;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingServer;
@@ -35,7 +37,24 @@ import org.junit.jupiter.api.Test;
  */
 public class RemotingServiceTest {
 
-    private final CommonThreadPool threadPool = new CommonThreadPool();
+    private final BackgroundTaskExecutor threadPool = new BackgroundTaskExecutor() {
+        private final ExecutorService executor = Executors.newCachedThreadPool();
+
+        @Override
+        public void execute(Runnable runnable) {
+            executor.execute(runnable);
+        }
+
+        @Override
+        public void executeLongRunning(Runnable runnable) {
+            executor.execute(runnable);
+        }
+
+        @Override
+        public void destroy() {
+            executor.shutdownNow();
+        }
+    };
 
     private RemotingServer remotingServer;
 

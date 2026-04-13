@@ -8,7 +8,7 @@ Through this tutorial, we will describe step by step how to modify on the basis 
 
 Before reading this tutorial, we hope that you are familiar with how to customize types, metrics, protocols, etc. from [Custom Monitoring](extend-point) and [http Protocol Customization](extend-http).
 
-### Request process
+## Request process
 
 【**Authentication information metrics (highest priority)**】【**HTTP interface carries account password call**】->【**Response data analysis**】->【**Analysis and issuance of TOKEN-accessToken as an metric**] -> [**Assign accessToken as a variable parameter to other collection index groups**]
 
@@ -60,9 +60,9 @@ name:
   en-US: HertzBeat(Token)
 # The description and help of this monitoring type
 help:
-  zh-CN: Hertzbeat 对 HertzBeat监控(Token)进行测量监控。`<br>`您可以点击 “`<i>`新建 HertzBeat监控(Token)`</i>`” 并进行配置，或者选择“`<i>`更多操作`</i>`”，导入已有配置。
-  en-US: Hertzbeat monitors HertzBeat Monitor(Token). You could click the "`<i>`New HertzBeat Monitor(Token)`</i>`" button and proceed with the configuration or import an existing setup through the "`<i>`More Actions`</i>`" menu.
-  zh-TW: Hertzbeat對HertzBeat監控（Token）進行量測監控。`<br>`您可以點擊“`<i>`新建HertzBeat監控（Token）`</i>`”並進行配寘，或者選擇“`<i>`更多操作`</i>`”，導入已有配寘。
+  zh-CN: HertzBeat 对 HertzBeat监控(Token)进行测量监控。`<br>`您可以点击 “`<i>`新建 HertzBeat监控(Token)`</i>`” 并进行配置，或者选择“`<i>`更多操作`</i>`”，导入已有配置。
+  en-US: HertzBeat monitors HertzBeat Monitor(Token). You could click the "`<i>`New HertzBeat Monitor(Token)`</i>`" button and proceed with the configuration or import an existing setup through the "`<i>`More Actions`</i>`" menu.
+  zh-TW: HertzBeat對HertzBeat監控（Token）進行量測監控。`<br>`您可以點擊“`<i>`新建HertzBeat監控（Token）`</i>`”並進行配寘，或者選擇“`<i>`更多操作`</i>`”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat_token
   en-US: https://hertzbeat.apache.org/docs/help/hertzbeat_token
@@ -128,9 +128,9 @@ name:
   en-US: HertzBeat(Token)
 # The description and help of this monitoring type
 help:
-  zh-CN: Hertzbeat 对 HertzBeat监控(Token)进行测量监控。`<br>`您可以点击 “`<i>`新建 HertzBeat监控(Token)`</i>`” 并进行配置，或者选择“`<i>`更多操作`</i>`”，导入已有配置。
-  en-US: Hertzbeat monitors HertzBeat Monitor(Token). You could click the "`<i>`New HertzBeat Monitor(Token)`</i>`" button and proceed with the configuration or import an existing setup through the "`<i>`More Actions`</i>`" menu.
-  zh-TW: Hertzbeat對HertzBeat監控（Token）進行量測監控。`<br>`您可以點擊“`<i>`新建HertzBeat監控（Token）`</i>`”並進行配寘，或者選擇“`<i>`更多操作`</i>`”，導入已有配寘。
+  zh-CN: HertzBeat 对 HertzBeat监控(Token)进行测量监控。`<br>`您可以点击 “`<i>`新建 HertzBeat监控(Token)`</i>`” 并进行配置，或者选择“`<i>`更多操作`</i>`”，导入已有配置。
+  en-US: HertzBeat monitors HertzBeat Monitor(Token). You could click the "`<i>`New HertzBeat Monitor(Token)`</i>`" button and proceed with the configuration or import an existing setup through the "`<i>`More Actions`</i>`" menu.
+  zh-TW: HertzBeat對HertzBeat監控（Token）進行量測監控。`<br>`您可以點擊“`<i>`新建HertzBeat監控（Token）`</i>`”並進行配寘，或者選擇“`<i>`更多操作`</i>`”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat_token
   en-US: https://hertzbeat.apache.org/docs/help/hertzbeat_token
@@ -267,9 +267,9 @@ name:
   en-US: HertzBeat(Token)
 # The description and help of this monitoring type
 help:
-  zh-CN: Hertzbeat 对 HertzBeat监控(Token)进行测量监控。`<br>`您可以点击 “`<i>`新建 HertzBeat监控(Token)`</i>`” 并进行配置，或者选择“`<i>`更多操作`</i>`”，导入已有配置。
-  en-US: Hertzbeat monitors HertzBeat Monitor(Token). You could click the "`<i>`New HertzBeat Monitor(Token)`</i>`" button and proceed with the configuration or import an existing setup through the "`<i>`More Actions`</i>`" menu.
-  zh-TW: Hertzbeat對HertzBeat監控（Token）進行量測監控。`<br>`您可以點擊“`<i>`新建HertzBeat監控（Token）`</i>`”並進行配寘，或者選擇“`<i>`更多操作`</i>`”，導入已有配寘。
+  zh-CN: HertzBeat 对 HertzBeat监控(Token)进行测量监控。`<br>`您可以点击 “`<i>`新建 HertzBeat监控(Token)`</i>`” 并进行配置，或者选择“`<i>`更多操作`</i>`”，导入已有配置。
+  en-US: HertzBeat monitors HertzBeat Monitor(Token). You could click the "`<i>`New HertzBeat Monitor(Token)`</i>`" button and proceed with the configuration or import an existing setup through the "`<i>`More Actions`</i>`" menu.
+  zh-TW: HertzBeat對HertzBeat監控（Token）進行量測監控。`<br>`您可以點擊“`<i>`新建HertzBeat監控（Token）`</i>`”並進行配寘，或者選擇“`<i>`更多操作`</i>`”，導入已有配寘。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat_token
   en-US: https://hertzbeat.apache.org/docs/help/hertzbeat_token

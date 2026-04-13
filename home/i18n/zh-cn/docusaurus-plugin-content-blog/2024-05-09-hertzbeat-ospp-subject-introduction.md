@@ -1,4 +1,4 @@
-# 【开源之夏】Hertzbeat 课题介绍
+# 【开源之夏】HertzBeat 课题介绍
 
 ## 什么是 HertzBeat ？
 
