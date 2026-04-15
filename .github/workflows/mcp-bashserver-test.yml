@@ -27,10 +27,6 @@ on:
       - 'mcp-servers/mcp-bash-server/**'
       - '.github/workflows/mcp-bashserver-test.yml'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 env:
   CARGO_TERM_COLOR: always
   RUST_VERSION: 1.88.0
