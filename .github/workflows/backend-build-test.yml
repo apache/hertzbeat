@@ -38,6 +38,10 @@ on:
       - 'script/**'
       - 'material/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend-build:
     runs-on: ubuntu-latest
@@ -81,4 +85,3 @@ jobs:
           path: |
             e2e/logs/
             e2e/report/
-

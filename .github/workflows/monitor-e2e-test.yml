@@ -27,6 +27,11 @@ on:
     - cron: '0 1 * * *'
   push:
     branches: [ action* ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check-license-header:
     name: Monitor E2E Test

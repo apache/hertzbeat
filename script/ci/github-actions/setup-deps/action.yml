@@ -26,8 +26,17 @@ runs:
       with:
         distribution: "zulu"
         java-version: 25
+        cache: maven
+
+    - name: Cache mvnd
+      id: mvnd-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.local/mvnd
+        key: ${{ runner.os }}-${{ runner.arch }}-mvnd-2.0.0-rc-3
 
     - name: Install mvnd
+      if: steps.mvnd-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
         MVND_VERSION=2.0.0-rc-3
@@ -35,6 +44,10 @@ runs:
         unzip -q mvnd.zip
         mkdir -p $HOME/.local
         mv maven-mvnd-${MVND_VERSION}-linux-amd64 $HOME/.local/mvnd
+
+    - name: Export mvnd environment
+      shell: bash
+      run: |
         echo "$HOME/.local/mvnd/bin" >> $GITHUB_PATH
         echo "MVND_HOME=$HOME/.local/mvnd" >> $GITHUB_ENV
 

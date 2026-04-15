@@ -27,6 +27,10 @@ on:
   # Allow manual workflow trigger
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # Set permissions for deployment
 permissions:
   contents: write
@@ -48,6 +52,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: pnpm
+          cache-dependency-path: home/pnpm-lock.yaml
 
       # Setup pnpm
       - name: Setup pnpm
