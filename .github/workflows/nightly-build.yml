@@ -52,7 +52,8 @@ jobs:
 
     - name: Build the Backend
       run: |
-        mvnd -B clean install -Prelease -DskipTests
+        mvnd -B clean install
+        mvnd -B -f hertzbeat-startup/pom.xml package -Prelease -DskipTests
         mvnd -B -f hertzbeat-collector/hertzbeat-collector-collector/pom.xml package -Pcluster -DskipTests
 
     - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
