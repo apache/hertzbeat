@@ -24,6 +24,10 @@ on:
   push:
     branches: [ action* ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,6 +38,11 @@ jobs:
     - uses: pnpm/action-setup@v4
       with:
         version: 10
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: pnpm
+        cache-dependency-path: web-app/pnpm-lock.yaml
 
     - name: Build the Frontend
       run: |
@@ -43,10 +52,7 @@ jobs:
 
     - name: Build the Backend
       run: |
-        mvn clean install
-        mvn clean package -Prelease -DskipTests
-        cd hertzbeat-collector
-        mvn clean package -Pcluster -DskipTests
+        mvnd -B clean package -Prelease,Pcluster -Dmaven.test.skip=false --file pom.xml
 
     - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
     - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd

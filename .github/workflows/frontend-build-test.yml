@@ -30,6 +30,10 @@ on:
     paths:
       - 'web-app/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -38,6 +42,11 @@ jobs:
     - uses: pnpm/action-setup@v4
       with:
         version: 10
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: pnpm
+        cache-dependency-path: web-app/pnpm-lock.yaml
     - name: Install
       working-directory: web-app
       run: pnpm install
