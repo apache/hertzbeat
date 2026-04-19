@@ -7,9 +7,9 @@ keywords: [open source monitoring tool, open source middleware monitoring tool, 
 
 > HertzBeat monitors metrics of the Nacos Server by calling the Nacos Metrics Api.
 
-### PreRequisites
+## PreRequisites
 
-#### Deploy Nacos cluster to expose metrics data
+### Deploy Nacos cluster to expose metrics data
 
 1. Deploy the Nacos cluster according to [deployment document](https://nacos.io/en-us/docs/deployment.html).
 2. Configure the application. properties file to expose metrics data.

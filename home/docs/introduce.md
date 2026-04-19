@@ -365,11 +365,12 @@ No. HertzBeat uses agentless monitoring via native protocols (HTTP, SNMP, JMX, S
 
 Run this single Docker command: `docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat`
 
-Access http://localhost:1157 with default credentials admin/hertzbeat.
+Access `http://localhost:1157` with default credentials admin/hertzbeat.
 
 ### What systems can HertzBeat monitor?
 
 HertzBeat monitors 200+ services including:
+
 - Databases: MySQL, PostgreSQL, MongoDB, Redis, Oracle, SQL Server
 - Operating Systems: Linux, Windows, Unix variants
 - Middleware: Tomcat, Kafka, Zookeeper, RabbitMQ, Nginx
@@ -403,7 +404,7 @@ Apache License 2.0. HertzBeat is completely open source with no monitoring limit
 ## Quick Start Summary
 
 1. **Install:** `docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat`
-2. **Access:** http://localhost:1157 (admin/hertzbeat)
+2. **Access:** `http://localhost:1157` (admin/hertzbeat)
 3. **Monitor:** Add services via web UI by providing IP, port, credentials
 4. **Alert:** Configure threshold rules and notification channels
 5. **Scale:** Deploy collector clusters as needed

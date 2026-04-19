@@ -5,10 +5,10 @@ sidebar_label: OpenAI 账户情况
 keywords: [开源监控系统, 开源网络监控, OpenAI账户监控]
 ---
 
-### 准备工作
+## 准备工作
 
-#### 获取会话密钥
-
+### 获取会话密钥
+>
 > 1. 打开 Chrome 浏览器的网络请求界面
 >    `Mac: cmd + option + i`
 >    `Windows: ctrl + shift + i`

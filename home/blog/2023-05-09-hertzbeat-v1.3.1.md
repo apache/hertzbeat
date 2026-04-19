@@ -11,8 +11,8 @@ Website: hertzbeat.com | tancloud.cn
 
 ![HertzBeat](/img/home/0.png)
 
-### What is HertzBeat?
-
+## What is HertzBeat?
+>
 > [HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring system with custom-monitoring and agentless.
 > **Monitoring+Alarm+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.
 > Easy to use, full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.

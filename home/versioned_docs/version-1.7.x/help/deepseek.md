@@ -5,9 +5,9 @@ sidebar_label: Deepseek Account Status
 keywords: [Open Source Monitoring System, Open Source Network Monitoring, Deepseek Account Monitoring]
 ---
 
-### Preparation
+## Preparation
 
-#### Obtain Session Key
+### Obtain Session Key
 
 Log in to the Deepseek backend and visit the `https://platform.deepseek.com/api_keys` page to obtain the session key.
 

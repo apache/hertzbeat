@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source java jvm monitoring tool, mo
 
 **Protocol Use：JMX**
 
-### JVM App Enable JMX Protocol
+## JVM App Enable JMX Protocol
 
 1. Add JVM `VM options` When Start Server ⚠️ customIP
 

@@ -5,9 +5,9 @@ sidebar_label: Deepseek 账户情况
 keywords: [开源监控系统, 开源网络监控, Deepseek账户监控]
 ---
 
-### 准备工作
+## 准备工作
 
-#### 获取会话密钥
+### 获取会话密钥
 
 登录 Deepseek 后台，访问 `https://platform.deepseek.com/api_keys` 页面，获取会话密钥。
 

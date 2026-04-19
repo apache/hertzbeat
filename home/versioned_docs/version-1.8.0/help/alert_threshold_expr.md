@@ -6,7 +6,7 @@ sidebar_label: Threshold Trigger Expression
 
 > When configuring threshold alerts, it is necessary to set up threshold trigger expressions. The system calculates whether to trigger an alert based on the expression and the monitored metric values. Here, we provide a detailed explanation of expression usage.
 
-#### Supported Operators in Expressions
+## Supported Operators in Expressions
 
 | Operator (Visual Configuration) | Operator (Expression Configuration) |    Supported Types    |                Description                 |
 |---------------------------------|-------------------------------------|-----------------------|--------------------------------------------|
@@ -25,7 +25,7 @@ sidebar_label: Threshold Trigger Expression
 | Not Equal to                    | obj1 != obj2                        | Numeric, Time         | Check if values are not equal              |
 | Equal to                        | obj1 == obj2                        | Numeric, Time         | Check if values are equal                  |
 
-#### Expression Function Library List
+### Expression Function Library List
 
 | Supported Function Library                 |                                        Description                                       |
 |--------------------------------------------|------------------------------------------------------------------------------------------|

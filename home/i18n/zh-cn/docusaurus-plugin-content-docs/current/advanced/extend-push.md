@@ -7,7 +7,7 @@ sidebar_label: Push Style Custom Monitoring
 > 推送方式监控是一种特殊的监控，允许用户配置数据格式并编写代码将指标推送到 HertzBeat。
 > 下面我们将介绍如何使用这一功能。
 
-### 推送方式监控的采集流程
+## 推送方式监控的采集流程
 
 【用户开始推送数据】->【HertzBeat推送模块暂存数据】->【HertzBeat采集模块定期采集数据】
 

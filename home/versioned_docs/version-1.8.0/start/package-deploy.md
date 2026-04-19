@@ -14,7 +14,7 @@ Since version 1.6.0 uses `Java 17` and the installation package no longer provid
 
 :::
 
-### Deploy HertzBeat Server
+## Deploy HertzBeat Server
 
 1. Download installation package
 

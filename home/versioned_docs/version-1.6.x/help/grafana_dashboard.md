@@ -7,7 +7,7 @@ keywords: [Grafana, Historical Dashboard]
 
 > `Grafana` is an open source visualization and analytics platform that helps you easily create, share and monitor dashboards. In this article, we will cover how to use `Grafana` to display historical data in `HertzBeat`.
 
-### Prerequisites
+## Prerequisites
 
 - The `Grafana` version 8.1.0 or later is installed and running.
 - The `Grafana` service is started and the account password is configured.

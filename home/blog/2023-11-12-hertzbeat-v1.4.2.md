@@ -7,7 +7,7 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
-### What is HertzBeat?
+## What is HertzBeat?
 
 [HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities.
 

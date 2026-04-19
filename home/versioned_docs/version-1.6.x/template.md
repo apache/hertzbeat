@@ -19,7 +19,7 @@ Here is the architecture.
 
 **Welcome everyone to contribute your customized general monitoring type YML template during use. The available templates are as follows:**
 
-### Application service monitoring
+## Application service monitoring
 
 &emsp;&#x1F449;&emsp;[Website monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml) <br />
 &emsp;&#x1F449;&emsp;[HTTP API](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml) <br />

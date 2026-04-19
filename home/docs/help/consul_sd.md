@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source service discovery monitoring
 
 > HertzBeat integrates with Consul registry to automatically discover service instances and create monitoring tasks for them.
 
-### Overview
+## Overview
 
 Consul Service Discovery allows HertzBeat to connect to your Consul server and automatically discover all registered service instances. When a new service instance is registered or an existing instance goes offline, HertzBeat will automatically create or delete corresponding monitoring tasks, achieving automated monitoring in microservice environments.
 

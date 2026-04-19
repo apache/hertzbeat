@@ -11,7 +11,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/home/0.png)
 
-### 总结起来如下
+## 总结起来如下
 
 - **消息通知模板特性，开源之夏课题**
 - **支持华为云OBS存储监控模板文件**

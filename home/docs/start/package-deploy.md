@@ -14,7 +14,7 @@ The current branch uses `Java 25`, and the standard installation package no long
 
 :::
 
-### Deploy HertzBeat Server
+## Deploy HertzBeat Server
 
 1. Download installation package
 

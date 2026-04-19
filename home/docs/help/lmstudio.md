@@ -5,8 +5,8 @@ sidebar_label: LM Studio
 keywords: [ open source monitoring system, open source network monitoring, LM Studio monitoring, local LLM monitoring ]
 ---
 
-### Prerequisites
-
+## Prerequisites
+>
 > Ensure that the LM Studio server is running and the REST API is enabled.
 > By default, LM Studio listens on `localhost:1234`.
 

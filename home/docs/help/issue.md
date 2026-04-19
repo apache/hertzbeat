@@ -4,7 +4,7 @@ title: Common issues
 sidebar_label: Common issues
 ---
 
-### Monitoring common issues
+## Monitoring common issues
 
 1. **Page feedback：monitor.host: Monitoring Host must be ipv4, ipv6 or domain name**
 

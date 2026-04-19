@@ -14,7 +14,7 @@ Apache HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL rel
 
 **You need to save and back up the data files of the database and monitoring templates yml files before upgrading**
 
-### Upgrade For Docker Deploy
+## Upgrade For Docker Deploy
 
 1. If using custom monitoring templates
    - Need to back up docker templates directory `docker cp hertzbeat:/opt/hertzbeat/define ./define` in the container `/opt/hertzbeat/define`

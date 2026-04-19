@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source alerter, open source email n
 
 > After the threshold is triggered send alarm information and notify the recipient by email.
 
-### Operation steps
+## Operation steps
 
 1. **【Alarm notification】->【Add new recipient】 ->【Select email notification method】**
 

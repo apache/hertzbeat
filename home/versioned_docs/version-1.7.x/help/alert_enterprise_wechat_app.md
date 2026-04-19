@@ -7,7 +7,7 @@ keywords: [open source monitoring tool, open source alerter, open source Enterpr
 
 > After the threshold is triggered send alarm information and notify the recipient by enterprise WeChat App.
 
-### Operation steps
+## Operation steps
 
 1. **【Enterprise Wechat backstage】-> 【App Management】-> 【Create an app】-> 【Set App message】->【Copy AgentId and Secret adding successfully】**
 

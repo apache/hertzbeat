@@ -7,7 +7,7 @@ keywords: [open-source monitoring system, open-source database monitoring, Mongo
 
 > Collect and monitor general performance metrics of MongoDB Atlas databases.
 
-### Configuration Parameters
+## Configuration Parameters
 
 |     Parameter Name      |                                                             Parameter Description                                                             |
 |-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|

@@ -1,5 +1,5 @@
 ---
-id: quickstart  
+id: quickstart
 title: HertzBeat 快速开始 - 5分钟安装
 sidebar_label: 快速开始
 description: Apache HertzBeat 监控系统快速安装指南 - Docker、安装包、源码安装，支持 X86 和 ARM64 系统。
@@ -31,7 +31,7 @@ HertzBeat 提供多种安装选项：
 
 ## 安装说明
 
-#### 方式一：Docker方式快速安装
+### 方式一：Docker方式快速安装
 
 1. `docker` 环境仅需一条命令即可开始
 
@@ -112,6 +112,7 @@ HertzBeat 提供多种安装选项：
 ### HertzBeat 的系统要求是什么？
 
 **最低要求：**
+
 - 2 CPU 核心
 - 4GB RAM
 - 10GB 磁盘空间
@@ -127,7 +128,7 @@ HertzBeat 提供多种安装选项：
 ### 如何验证 HertzBeat 是否运行？
 
 1. 检查容器状态：`docker ps | grep hertzbeat`
-2. 访问 Web UI：http://localhost:1157
+2. 访问 Web UI：`http://localhost:1157`
 3. 使用账号：admin/hertzbeat 登录
 
 ### 可以修改默认密码吗？
@@ -137,6 +138,7 @@ HertzBeat 提供多种安装选项：
 ### 如何升级 HertzBeat？
 
 **Docker 升级：**
+
 ```bash
 docker stop hertzbeat
 docker rm hertzbeat
@@ -147,6 +149,7 @@ docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
 ### HertzBeat 使用什么数据库？
 
 HertzBeat 默认使用 H2 嵌入式数据库。生产环境可配置外部数据库：
+
 - **元数据：** MySQL、PostgreSQL
 - **时序数据：** VictoriaMetrics、IoTDB、TDengine、InfluxDB
 
@@ -160,8 +163,8 @@ HertzBeat 默认使用 H2 嵌入式数据库。生产环境可配置外部数据
 
 ### 在哪里可以获得帮助？
 
-- **文档：** https://hertzbeat.apache.org/docs/
-- **GitHub Issues：** https://github.com/apache/hertzbeat/issues
-- **社区：** https://hertzbeat.apache.org/docs/community/contact
+- **文档：** [https://hertzbeat.apache.org/docs/](https://hertzbeat.apache.org/docs/)
+- **GitHub Issues：** [https://github.com/apache/hertzbeat/issues](https://github.com/apache/hertzbeat/issues)
+- **社区：** [https://hertzbeat.apache.org/docs/community/contact](https://hertzbeat.apache.org/docs/community/contact)
 
 **祝你使用愉快！**

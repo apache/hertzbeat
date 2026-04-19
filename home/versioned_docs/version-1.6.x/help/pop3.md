@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source java monitoring tool, monito
 
 **Protocol Use：POP3**
 
-### Enable POP3 Service
+## Enable POP3 Service
 
 If you want to monitor information in 'POP3' with this monitoring type, you just need to open `POP3` service in your mail server.
 

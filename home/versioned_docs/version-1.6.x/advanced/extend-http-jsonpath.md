@@ -10,7 +10,7 @@ Note⚠️ The response data is JSON format.
 
 **Use the JsonPath script to parse the response data into data that conforms to the data structure rules specified by HertzBeat**
 
-#### JsonPath Operator
+## JsonPath Operator
 
 [JSONPath online verification](https://www.jsonpath.cn)
 
@@ -27,7 +27,7 @@ Note⚠️ The response data is JSON format.
 | ?()              | Filter (script) expression                                                             |
 | ()               | Script Expression                                                                      |
 
-#### HertzBeat data format specification
+### HertzBeat data format specification
 
 Single layer format ：key-value
 

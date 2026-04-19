@@ -23,7 +23,6 @@ Reading code and design in open-source framework is one way for me to improve my
 
 I failed to start HertzBeat when I followed instructions in CONTRIBUTING. The exception shows that Node.js version at least 18 is required. Therefore I modified CONTRIBUTING and opened my first PR in HertzBeat community.
 
-
 ## Keep active in community
 
 I'm getting familiar with HertzBeat as I read documents and code. In addition to perfecting documentation and fixing bugs, I completed DNS monitoring and Registry monitoring. After that, I started to develop new feature named http_sd in V1.6.1, which is supported to manage monitor automatically.

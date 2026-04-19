@@ -13,7 +13,7 @@ sidebar_label: Docker方式安装
 需您的环境中已经拥有 Docker 环境，若未安装请参考 [Docker官网文档](https://docs.docker.com/get-docker/)
 :::
 
-### 部署 HertzBeat Server
+## 部署 HertzBeat Server
 
 1. 执行以下命令
 

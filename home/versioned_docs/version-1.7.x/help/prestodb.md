@@ -7,7 +7,7 @@ keywords: [ open source monitoring system, open source database monitoring, pres
 
 > Collect and monitor general performance metrics of PrestoDB Atlas databases.
 
-### Configuration Parameters
+## Configuration Parameters
 
 |   Parameter Name    |                                                             Parameter Description                                                             |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|

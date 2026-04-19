@@ -14,7 +14,7 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 
-### Install GreptimeDvia Docker
+## Install GreptimeDvia Docker
 
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).

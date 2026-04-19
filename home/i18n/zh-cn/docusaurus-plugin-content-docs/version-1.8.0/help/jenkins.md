@@ -7,7 +7,7 @@ keywords: [ 开源监控系统, CI/CD, DevOps, Jenkins监控 ]
 
 > 通过调用 Jenkins Prometheus Plugin 对 Jenkins 的通用指标进行采集监控。
 
-### 前置条件
+## 前置条件
 
 1. 按照[部署文档](https://www.jenkins.io/doc/book/installing/)搭建好Jenkins相关服务。
 2. 需要安装[插件](https://www.jenkins.io/doc/book/managing/plugins/)

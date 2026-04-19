@@ -14,7 +14,7 @@ Apache HertzBeat™ 支持在Linux Windows Mac系统安装运行，CPU支持X86/
 
 :::
 
-### 部署 HertzBeat Server
+## 部署 HertzBeat Server
 
 1. 下载安装包
 

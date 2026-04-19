@@ -12,7 +12,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/home/0.png)
 
-### 总结起来如下
+## 总结起来如下
 
 - **重构netty client server, 采集器集群调度** @Ceilzcx @tomsun28
 - **采集器集群的UI界面管理** @Ceilzcx @tomsun28

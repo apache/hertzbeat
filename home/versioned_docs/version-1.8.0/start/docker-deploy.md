@@ -13,7 +13,7 @@ But it is not recommended to use in production environment, it is recommended to
 It is necessary to have Docker environment in your environment. If not installed, please refer to [Docker official document](https://docs.docker.com/get-docker/)
 :::
 
-### Deploy HertzBeat Server
+## Deploy HertzBeat Server
 
 1. Execute the following command
 

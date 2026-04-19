@@ -17,10 +17,12 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import java.net.URI;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * eureka sd protocol
@@ -35,8 +37,15 @@ public class EurekaSdProtocol implements Protocol{
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (StringUtils.isBlank(url)) {
+            return true;
+        }
+        try {
+            URI uri = URI.create(url.trim());
+            return StringUtils.isBlank(uri.getHost())
+                    || (!"http".equalsIgnoreCase(uri.getScheme()) && !"https".equalsIgnoreCase(uri.getScheme()));
+        } catch (Exception e) {
+            return true;
+        }
     }
 }

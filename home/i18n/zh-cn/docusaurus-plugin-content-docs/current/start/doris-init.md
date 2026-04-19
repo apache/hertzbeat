@@ -17,7 +17,7 @@ Apache Doris 是一款面向实时分析场景的 MPP 数据库。在 HertzBeat 
 
 > 如果您已有 Doris 环境，可直接跳到 YML 配置步骤。
 
-### 安装 Doris（可选）
+## 安装 Doris（可选）
 
 你可以通过安装包或 Docker 部署 Doris。生产环境建议参考官方部署文档：
 
@@ -104,7 +104,7 @@ warehouse:
    - 若无法直连，需在 Doris 侧配置 BE 公网/内网地址标签
 
 2. **复杂网络场景的特殊配置**
-   
+
    在 K8s、跨域、负载均衡等环境下，Stream Load 的重定向机制需要特别注意：
    - FE 会将请求重定向到某个可用的 BE，该 BE 地址必须对 HertzBeat 可达
    - 通过配置 `redirect-policy` 来控制 FE 返回的 BE 地址类型：
@@ -112,14 +112,15 @@ warehouse:
      - `public`：使用公网地址（云环境）
      - `private`：使用内网地址（私有网络）
      - 留空则使用 Doris 默认策略
-   
+
    参考官方文档：[Doris Stream Load 复杂网络原理](https://doris.apache.org/zh-CN/docs/4.x/data-operate/import/load-internals/stream-load-in-complex-network)
 
 #### 切换步骤
 
 1. **修改配置文件**
-   
+
    编辑 `hertzbeat/config/application.yml`，将 `write-mode` 改为 `stream`：
+
    ```yaml
    warehouse:
      store:
@@ -156,6 +157,7 @@ A: 如果流处理失败了会自动尝试使用jdbc模式进行回退写入
 **Q: 跨网络环境配置了 redirect-policy 仍然超时？**
 
 A: 可能原因：
+
 - 在当前 `redirect-policy` 设置下，返回的 BE 地址仍不可达
 - 尝试其他 `redirect-policy` 值（`direct` / `public` / `private`）
 - 联系 Doris 管理员确认 BE 节点的地址标签配置是否正确
@@ -189,10 +191,10 @@ A: 可能原因：
 1. 查看 HertzBeat 日志，确认出现 Stream Load 成功日志。
 2. 在 Doris 中检查建表是否完成：
 
-```sql
-SHOW CREATE TABLE hertzbeat.hzb_history;
-SHOW CREATE TABLE hertzbeat.hzb_log;
-```
+    ```sql
+    SHOW CREATE TABLE hertzbeat.hzb_history;
+    SHOW CREATE TABLE hertzbeat.hzb_log;
+    ```
 
 3. 若启用了动态分区，检查分区调度状态：
 

@@ -7,7 +7,7 @@ keywords: [ 开源监控系统, 开源LLM监控, Ollama监控 ]
 
 > HertzBeat 对 Ollama 本地大模型服务的版本信息、已安装模型列表和运行中模型进行采集监控。
 
-### 准备工作
+## 准备工作
 
 确保 Ollama 已运行且 API 可访问。默认情况下，Ollama 监听端口为 `11434`。
 

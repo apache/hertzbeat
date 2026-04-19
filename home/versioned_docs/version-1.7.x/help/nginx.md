@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source java monitoring tool, monito
 
 **Protocol Use：Nginx**
 
-### Need Enable `ngx_http_stub_status_module` And `ngx_http_reqstat_module` Module
+## Need Enable `ngx_http_stub_status_module` And `ngx_http_reqstat_module` Module
 
 If you want to monitor information in 'Nginx' with this monitoring type, you need to modify your nginx configure file for enable the module monitor.
 

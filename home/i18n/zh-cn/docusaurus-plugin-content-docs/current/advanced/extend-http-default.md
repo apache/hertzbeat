@@ -8,7 +8,7 @@ sidebar_label: 系统默认解析方式
 
 **此需接口响应数据结构符合HertzBeat指定的数据结构规则**
 
-### HertzBeat数据格式规范
+## HertzBeat数据格式规范
 
 注意⚠️ 响应数据为JSON
 
