@@ -208,77 +208,6 @@ params:
     required: false
     # hide param-true or false
     hide: true
-  # field-param field key
-  - field: proxyHost
-    # name-param field display i18n name
-    name:
-      zh-CN: 代理主机
-      en-US: Proxy Host
-      ja-JP: プロキシホスト
-    # type-param field type(most mapping the html input type)
-    type: text
-    # required-true or false
-    required: false
-    # hide param-true or false
-    hide: true
-  - field: proxyPort
-    # name-param field display i18n name
-    name:
-      zh-CN: 代理端口
-      en-US: Proxy Port
-      ja-JP: プロキシポート
-    # type-param field type(most mapping the html input type)
-    type: number
-    # when type is number, range is required
-    range: '[0,65535]'
-    # required-true or false
-    required: false
-    # hide param-true or false
-    hide: true
-    # default value
-    defaultValue: 22
-  # field-param field key
-  - field: proxyUsername
-    # name-param field display i18n name
-    name:
-      zh-CN: 代理用户名
-      en-US: Proxy Username
-      ja-JP: プロキシユーザー名
-    # type-param field type(most mapping the html input type)
-    type: text
-    # when type is text, use limit to limit string length
-    limit: 50
-    # required-true or false
-    required: false
-    # hide param-true or false
-    hide: true
-  # field-param field key
-  - field: proxyPassword
-    # name-param field display i18n name
-    name:
-      zh-CN: 代理密码
-      en-US: Proxy Password
-      ja-JP: プロキシパスワード
-    # type-param field type(most mapping the html input tag)
-    type: password
-    # required-true or false
-    required: false
-    # hide param-true or false
-    hide: true
-  # field-param field key
-  - field: proxyPrivateKey
-    # name-param field display i18n name
-    name:
-      zh-CN: 代理主机私钥
-      en-US: proxyPrivateKey
-      ja-JP: プロキシ秘密鍵
-    # type-param field type(most mapping the html input type)
-    type: textarea
-    placeholder: -----BEGIN RSA PRIVATE KEY-----
-    # required-true or false
-    required: false
-    # hide param-true or false
-    hide: true
 # collect metrics config list
 metrics:
   # metrics - basic, inner monitoring metrics (responseTime - response time)
@@ -306,48 +235,66 @@ metrics:
           zh-CN: 显卡名称
           en-US: System Version
           ja-JP: 名前
-      - field: utilization.gpu [%]
+      - field: utilization_gpu
         type: 0
         unit: '%'
         i18n:
           zh-CN: GPU利用率
           en-US: GPU Utilization
           ja-JP: GPU使用率
-      - field: utilization.memory [%]
+      - field: utilization_memory
         type: 0
         unit: '%'
         i18n:
           zh-CN: 显存利用率
           en-US: Memory Utilization
           ja-JP: メモリ使用率
-      - field: memory.total [MiB]
+      - field: memory_total
         type: 1
         unit: 'MiB'
         i18n:
           zh-CN: 总显存
           en-US: Total Memory
           ja-JP: メモリ容量
-      - field: memory.used [MiB]
+      - field: memory_used
         type: 0
         unit: 'MiB'
         i18n:
           zh-CN: 已用显存
           en-US: Used Memory
           ja-JP: 使用したメモリ
-      - field: memory.free [MiB]
+      - field: memory_free
         type: 0
         unit: 'MiB'
         i18n:
           zh-CN: 空闲显存
           en-US: Free Memory
           ja-JP: 利用可能メモリ
-      - field: temperature.gpu
+      - field: temperature_gpu
         type: 1
         unit: '°C'
         i18n:
           zh-CN: 显卡温度
           en-US: GPU Temperature
           ja-JP: GPU温度
+    aliasFields:
+      - index
+      - name
+      - utilization.gpu [%]
+      - utilization.memory [%]
+      - memory.total [MiB]
+      - memory.used [MiB]
+      - memory.free [MiB]
+      - temperature_gpu
+    calculates:
+      - index
+      - name
+      - utilization_gpu = utilization.gpu [%]
+      - utilization_memory = utilization.memory [%]
+      - memory_total = memory.total [MiB]
+      - memory_used = memory.used [MiB]
+      - memory_free = memory.free [MiB]
+      - temperature_gpu = temperature.gpu
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
     # the config content when protocol is ssh
