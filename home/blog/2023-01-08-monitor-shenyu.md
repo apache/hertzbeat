@@ -55,7 +55,7 @@ tags: [opensource, practice]
     shenyu:
       metrics:
         enabled: true #Set to true to enable
-        name: prometheus 
+        name: prometheus
         host: 127.0.0.1 #exposed ip
         port: 8090 #Exposed port
         jmxConfig: #jmx configuration
@@ -71,28 +71,28 @@ tags: [opensource, practice]
 
     Path: Menu -> Middleware Monitor -> ShenYu Monitor -> Add ShenYu Monitor
 
-    ![HertzBeat](/img/blog/monitor-shenyu-1.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-1.png)
 
 2. Configure the parameters required for monitoring ShenYu
 
     On the monitor page, fill in ShenYu **service IP**, **monitor port** (default 8090), and click OK to add.
     For other parameters such as **collection interval**, **timeout**, etc., you can refer to the [help file](https://hertzbeat.apache.org/docs/help/shenyu/) [https://hertzbeat.apache.org/docs/help/shenyu/](https://hertzbeat.apache.org/docs/help/shenyu/)
 
-    ![HertzBeat](/img/blog/monitor-shenyu-1.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-1.png)
 
 3. Done ✅, now we have added monitoring for ShenYu, check the monitor list to see our additions.
 
-    ![HertzBeat](/img/blog/monitor-shenyu-3.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-3.png)
 
 4. Click **Options**->**Monitoring Details icon** in the monitor list to view ShenYu's real-time monitoring metrics.
 
-    ![HertzBeat](/img/blog/monitor-shenyu-4.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-4.png)
 
 5. Click the **Monitor History TAB** to view ShenYu's historical monitoring metrics graphs 📈.
 
-    ![HertzBeat](/img/blog/monitor-shenyu-5.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-5.png)
 
-    ![HertzBeat](/img/blog/monitor-shenyu-6.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-6.png)
 
 **DONE! With the above steps, it's really only two steps**
 
@@ -115,7 +115,7 @@ Of course, just looking at it is not perfect, monitoring is often accompanied by
    - There are a lot of metrics in ShenYu monitoring, for example, we will set the threshold for the `number of open file descriptors` `process_open_fds` -> `value` metric, which will alert you when the number of open file descriptors on the server side is greater than 3,000.
    - Here we configure an alert to be issued when the `value' of`process_open_fds` exceeds 3000, with an alert level of **Warning alert**, which is triggered three times, as shown in the following figure.
 
-   ![HertzBeat](/img/blog/monitor-shenyu-7.png)
+   ![HertzBeat](home/static/img/blog/monitor-shenyu-7.png)
 
 2. Add message notification recipients
 
@@ -130,13 +130,13 @@ Of course, just looking at it is not perfect, monitoring is often accompanied by
 
     [Alert Notification] -> [Add Recipient] -> [Select Nailed Bot Notification Method] -> [Set Nailed Bot ACCESS_TOKEN] -> [OK]
 
-    ![HertzBeat](/img/blog/alert-notice-1.png)
+    ![HertzBeat](home/static/img/blog/alert-notice-1.png)
 
 3. Configure the associated alert notification policy ⚠️ [Add Notification Policy] -> [Associate the recipient you just set] -> [OK] !
 
     > Configure the alert notification policy to bind alert messages to recipients so that you can decide which alerts go to which person.
 
-    ![HertzBeat](/img/blog/alert-notice-2.png)
+    ![HertzBeat](home/static/img/blog/alert-notice-2.png)
 
 ### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding
 
@@ -153,7 +153,7 @@ Details : Please note that the number of file descriptors opened by ⚠️ ShenY
 ## Summary
 
 :::tip
-This hands-on article takes us through how to use HertzBeat to monitor Apache ShenYu metrics data, and we can find that HertzBeat, which combines ``Monitoring-Alert-Notification``, is much more convenient to operate and use, and you can include ShenYu in the monitoring by simply clicking on a page. There is no need to deploy multiple components and write multiple YML configuration files.  
+This hands-on article takes us through how to use HertzBeat to monitor Apache ShenYu metrics data, and we can find that HertzBeat, which combines ``Monitoring-Alert-Notification``, is much more convenient to operate and use, and you can include ShenYu in the monitoring by simply clicking on a page. There is no need to deploy multiple components and write multiple YML configuration files.
 :::
 
 Apache ShenYu Github: [https://github.com/apache/shenyu](https://github.com/apache/shenyu)

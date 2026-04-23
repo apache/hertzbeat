@@ -1,11 +1,11 @@
 ---
-id: docker-deploy  
-title: 通过 Docker 方式安装 HertzBeat    
+id: docker-deploy
+title: 通过 Docker 方式安装 HertzBeat
 sidebar_label: Docker方式安装
 ---
 
 :::tip
-使用 Docker 方式一键启动 HertzBeat 最小可用环境，无外部服务依赖，方便快速体验。  
+使用 Docker 方式一键启动 HertzBeat 最小可用环境，无外部服务依赖，方便快速体验。
 但不建议在生产环境中使用，生产环境建议使用 Docker Compose 方式部署, 安装包方式部署, Kubernetes 方式部署。
 :::
 
@@ -49,17 +49,17 @@ sidebar_label: Docker方式安装
 
    :::
 
-2. 开始探索 HertzBeat  
+2. 开始探索 HertzBeat
    浏览器访问 [http://ip:1157/](http://ip:1157/) 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。
 
 ### 部署 HertzBeat Collector 集群(可选)
 
 :::note
-HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数据发送到 HertzBeat Server。  
+HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数据发送到 HertzBeat Server。
 通过部署多个 HertzBeat Collector 可以实现数据的高可用，负载均衡和云边协同。
 :::
 
-![HertzBeat](/img/docs/cluster-arch.png)
+![HertzBeat](home/static/img/docs/cluster-arch.png)
 
 1. 执行以下命令
 
@@ -92,7 +92,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 
    :::
 
-2. 开始探索 HertzBeat Collector  
+2. 开始探索 HertzBeat Collector
    浏览器访问 [http://ip:1157/](http://ip:1157/) 即可开始探索使用，默认账户密码 admin/hertzbeat。
 
 **HAVE FUN**
@@ -106,33 +106,33 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 1. MYSQL,TDENGINE或IotDB和HertzBeat都Docker部署在同一主机上，HertzBeat使用localhost或127.0.0.1连接数据库失败
    此问题本质为Docker容器访问宿主机端口连接失败，由于docker默认网络模式为Bridge模式，其通过localhost访问不到宿主机。
 
-   > 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP  
+   > 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP
    > 解决办法二：使用Host网络模式启动Docker，即使Docker容器和宿主机共享网络 `docker run -d --network host .....`
 
 2. 按照流程部署，访问 [http://ip:1157/](http://ip:1157/) 无界面
    请参考下面几点排查问题：
 
-   > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功  
-   > 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确  
+   > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功
+   > 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确
    > 三：若都无问题可以 `docker logs hertzbeat` 查看容器日志是否有明显错误，提issue或交流群或社区反馈
 
 3. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖时序数据库]
 
-   > 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 -  
+   > 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 -
    > 安装初始化此时序数据库
 
 4. 安装配置了时序数据库，但页面依旧显示弹出 [无法提供历史图表数据，请配置依赖时序数据库]
 
-   > 请检查配置的时许数据库参数是否正确  
-   > 时序数据库对应的 enable 是否设置为true  
-   > 注意⚠️若hertzbeat和外置数据库都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP  
+   > 请检查配置的时许数据库参数是否正确
+   > 时序数据库对应的 enable 是否设置为true
+   > 注意⚠️若hertzbeat和外置数据库都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP
    > 可根据logs目录下启动日志排查
 
 5. application.yml 是干什么用的
 
    > 此文件是HertzBeat的配置文件，用于配置HertzBeat的各种参数，如数据库连接信息，时序数据库配置等。
 
-   下载 `application.yml` 文件到主机目录下，例如: $(pwd)/application.yml  
+   下载 `application.yml` 文件到主机目录下，例如: $(pwd)/application.yml
    下载源 [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
 
    - 若需使用邮件发送告警，需替换 `application.yml` 里面的邮件服务器参数
@@ -143,8 +143,8 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 
    > 此文件是HertzBeat的用户配置文件，用于配置HertzBeat的用户信息，如账户密码等。
 
-   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat  
-   若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤  
-   下载 `sureness.yml` 文件到主机目录下，例如: $(pwd)/sureness.yml  
-   下载源 [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)  
+   HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat
+   若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤
+   下载 `sureness.yml` 文件到主机目录下，例如: $(pwd)/sureness.yml
+   下载源 [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)
    具体修改步骤参考 [配置修改账户密码](account-modify)

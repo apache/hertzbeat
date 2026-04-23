@@ -1,6 +1,6 @@
 ---
-id: ssl-cert-practice  
-title: SSL Certificate Monitoring Practice      
+id: ssl-cert-practice
+title: SSL Certificate Monitoring Practice
 sidebar_label: SSL Certificate Monitoring Practice
 ---
 
@@ -32,29 +32,29 @@ The production environment recommends a complete deployment method, refer [https
 
    > HertzBeat Page -> Monitors -> New Monitor -> Service Monitor -> Add SSL Certificate
 
-   ![HertzBeat](/img/docs/start/ssl_1.png)
+   ![HertzBeat](home/static/img/docs/start/ssl_1.png)
 
 2. Configure the monitoring website
 
    > Here we take the example of monitoring Baidu website, configure monitoring host domain name, name, collection interval, etc.
    > Click OK Note
 
-   ![HertzBeat](/img/docs/start/ssl_2.png)
+   ![HertzBeat](home/static/img/docs/start/ssl_2.png)
 
 3. View the detection index data
 
    > In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the metric data chart, etc.
 
-   ![HertzBeat](/img/docs/start/ssl_3.png)
+   ![HertzBeat](home/static/img/docs/start/ssl_3.png)
 
-   ![HertzBeat](/img/docs/start/ssl_4.png)
+   ![HertzBeat](home/static/img/docs/start/ssl_4.png)
 
 4. Set the threshold (triggered when the certificate expires)
 
-   > HertzBeat Page -> Alerting -> Threshold -> New Threshold -> ReadTime Threshold Rule  
+   > HertzBeat Page -> Alerting -> Threshold -> New Threshold -> ReadTime Threshold Rule
    > Configure the threshold, select the SSL certificate metric object, configure the alarm expression-triggered when the metric `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
 
-   ![HertzBeat](/img/docs/start/ssl_5.png)
+   ![HertzBeat](home/static/img/docs/start/ssl_5.png)
 
    > Threshold rule has others function you can try eg: associating thresholds with monitoring, trigger times so on.
 
@@ -62,17 +62,17 @@ The production environment recommends a complete deployment method, refer [https
 
    > In the same way, switch coding threshold, add a new configuration threshold and configure an alarm expression - when the metric expires timestamp `end_timestamp`, the `now()` function is the current timestamp, if the configuration triggers an alarm one week in advance: `end_timestamp <= (now() + 604800000)` , where `604800000` is the 7-day total time difference in milliseconds.
 
-   ![HertzBeat](/img/docs/start/ssl_6.png)
+   ![HertzBeat](home/static/img/docs/start/ssl_6.png)
 
    > Finally, you can see the triggered alarm in the alarm center.
 
-   ![HertzBeat](/img/docs/start/ssl_7.png)
+   ![HertzBeat](home/static/img/docs/start/ssl_7.png)
 
 6. Alarm notification (in time notification via Dingding WeChat Feishu, etc.)
 
    > HertzBeat Page -> Notification -> Notice Receiver -> New Receiver -> Config the Feishu Receiver
 
-   ![HertzBeat](/img/docs/start/notice_receiver_1.png)
+   ![HertzBeat](home/static/img/docs/start/notice_receiver_1.png)
 
    For token configuration such as Feishu, please refer to the help document
 
@@ -80,7 +80,7 @@ The production environment recommends a complete deployment method, refer [https
 
    > Notification -> Notice Policy -> New Notice Policy -> Enable Notification for the Recipient Just Configured
 
-   ![HertzBeat](/img/docs/start/notice_policy_1.png)
+   ![HertzBeat](home/static/img/docs/start/notice_policy_1.png)
 
 7. OK When the threshold is triggered, we can receive the corresponding alarm message. If there is no notification, you can also view the alarm information in the alarm center.
 

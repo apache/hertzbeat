@@ -17,7 +17,7 @@ tags: [opensource, apache]
 
 [Apache HertzBeat](https://github.com/apache/hertzbeat)  是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 ### 特点
 

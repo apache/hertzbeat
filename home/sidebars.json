@@ -178,6 +178,7 @@
           "label": "database",
           "items": [
             "help/mysql",
+            "help/mysql_account_expiry",
             "help/mariadb",
             "help/postgresql",
             "help/greenplum",
@@ -320,6 +321,8 @@
         "help/time_expression",
         "help/grafana_dashboard",
         "help/collector",
+        "help/registry",
+        "help/template_marketplace",
         "help/risc-v",
         "help/issue"
       ]

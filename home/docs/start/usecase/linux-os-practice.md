@@ -32,7 +32,7 @@ The production environment recommends a complete deployment method, refer [Insta
 
 > HertzBeat Page -> Monitors -> New Monitor -> OS Monitor -> Add OS Linux
 
-![HertzBeat](/img/docs/start/linux-os-practice-1.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-1.png)
 
 ### 2. Configure the monitoring parameters
 
@@ -47,15 +47,15 @@ The production environment recommends a complete deployment method, refer [Insta
 
 Tasks can be managed using label classification, such as adding bind labels like `OS=Linux`.
 
-![HertzBeat](/img/docs/start/linux-os-practice-2.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-2.png)
 
 ### 3. View the detection index data
 
 In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the metric data chart, etc.
 
-![HertzBeat](/img/docs/start/linux-os-practice-3.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-3.png)
 
-![HertzBeat](/img/docs/start/linux-os-practice-4.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-4.png)
 
 ### 4. Set the threshold
 
@@ -65,23 +65,23 @@ Here, we set a threshold rule to trigger an alert when **the usage rate of a cer
 >
 > Configure the threshold, configure the alarm expression-triggered when the metric`Disk Usage` greater than or equal to `50%`，set the alarm level notification template information, etc.
 
-![HertzBeat](/img/docs/start/linux-os-practice-5.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-5.png)
 
 > Threshold rule has others function you can try e.g., associating thresholds with monitoring, trigger times so on.
 
 Finally, you can see the triggered alarm in the alarm center.
 
-![HertzBeat](/img/docs/start/linux-os-practice-6.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-6.png)
 
 ### 5. Alarm notification
 
 > HertzBeat Page -> Notification -> Notice Receiver -> New Receiver -> Configure the Email Receiver
 
-![HertzBeat](/img/docs/start/linux-os-practice-7.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-7.png)
 
 > HertzBeat Page -> Notification -> Notice Policy -> New Notice Policy -> Enable Notification for the Recipient Just Configured
 
-![HertzBeat](/img/docs/start/linux-os-practice-8.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-8.png)
 
 When the threshold is triggered, we can receive the corresponding alarm message. If there is no notification, you can also view the alarm information in the alarm center.
 

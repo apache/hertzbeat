@@ -1,6 +1,6 @@
 ---
-id: extend-push 
-title: Push Style Custom Monitoring  
+id: extend-push
+title: Push Style Custom Monitoring
 sidebar_label: Push Style Custom Monitoring
 ---
 
@@ -23,4 +23,4 @@ HertzBeat页面 -> 应用服务监控 -> 推送方式监控 -> 新建推送方�
 
 ### 监控配置示例
 
-![HertzBeat](/img/docs/advanced/extend-push-example-1.png)
+![HertzBeat](home/static/img/docs/advanced/extend-push-example-1.png)

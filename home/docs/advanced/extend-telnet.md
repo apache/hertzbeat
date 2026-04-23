@@ -1,5 +1,5 @@
 ---
-id: extend-telnet  
+id: extend-telnet
 title: Telnet Protocol Custom Monitoring
 sidebar_label: Telnet Protocol Custom Monitoring
 ---
@@ -21,7 +21,7 @@ By configuring the metrics `field`, `aliasFields` the `Telnet` protocol of the m
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-![HertzBeat](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](home/static/img/docs/advanced/extend-point-1.png)
 
 -------
 
@@ -295,5 +295,5 @@ metrics:
       timeout: ^_^timeout^_^
       cmd: mntr
 
-  
+
 ```

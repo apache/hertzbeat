@@ -1,15 +1,15 @@
 ---
 title: Open source real-time monitoring tool HertzBeat v1.3.1 released
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
 Website: hertzbeat.com | tancloud.cn
 
-![HertzBeat](/img/home/0.png)
+![HertzBeat](home/static/img/home/0.png)
 
 ## What is HertzBeat?
 >

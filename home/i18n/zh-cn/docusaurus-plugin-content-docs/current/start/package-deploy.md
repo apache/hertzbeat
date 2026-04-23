@@ -69,7 +69,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 在选择前，建议先阅读 [Native 采集器指南](native-collector) 了解它的限制和取舍。
 :::
 
-![HertzBeat](/img/docs/cluster-arch.png)
+![HertzBeat](home/static/img/docs/cluster-arch.png)
 
 1. 下载安装包
 

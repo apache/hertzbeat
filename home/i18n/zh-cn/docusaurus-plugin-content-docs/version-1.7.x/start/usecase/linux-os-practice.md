@@ -32,7 +32,7 @@ github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbea
 
 > 系统页面 -> 监控中心 -> 新增监控 -> 操作系统监控 -> Linux 操作系统 -> 新增 Linux 操作系统监控
 
-![HertzBeat](/img/docs/start/linux-os-practice-1.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-1.png)
 
 ### 2. 配置参数
 
@@ -47,15 +47,15 @@ github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbea
 
 可以使用标签分类来管理任务，如添加`OS=Linux`等相关标签。
 
-![HertzBeat](/img/docs/start/linux-os-practice-2.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-2.png)
 
 ### 3. 查看监控数据
 
 在监控列表可以查看任务状态，点击这个监控详情可以查看指标数据图表等。
 
-![HertzBeat](/img/docs/start/linux-os-practice-3.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-3.png)
 
-![HertzBeat](/img/docs/start/linux-os-practice-4.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-4.png)
 
 ### 4. 设置阈值规则
 
@@ -65,27 +65,27 @@ github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbea
 >
 > 配置阈值，配置告警表达式-当指标`文件系统使用率`大于等于 `50%` 触发，也支持设置告警级别和通知模板信息等。
 
-![HertzBeat](/img/docs/start/linux-os-practice-5.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-5.png)
 
 > 阈值规则还有其它功能可以配置, 比如阈值关联指定监控, 触发次数, 关联标签等等。
 
 最终可以在告警中心看到已触发的告警。
 
-![HertzBeat](/img/docs/start/linux-os-practice-6.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-6.png)
 
 ### 5. 消息通知
 
 > 系统页面 -> 消息通知 -> 通知媒介 -> 新增接收对象
 
-![HertzBeat](/img/docs/start/linux-os-practice-7.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-7.png)
 
 > 系统页面 -> 消息通知 -> 通知策略 -> 新增通知策略 -> 选择接收对象并启用通知
 
-![HertzBeat](/img/docs/start/linux-os-practice-8.png)
+![HertzBeat](home/static/img/docs/start/linux-os-practice-8.png)
 
 当阈值触发后就可以收到对应告警消息，如果没有配置消息通知，也可以在**告警中心**查看告警信息。
 
-----  
+----
 
 ## 总结
 

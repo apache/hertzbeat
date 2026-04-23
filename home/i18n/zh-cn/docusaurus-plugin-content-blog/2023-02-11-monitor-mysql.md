@@ -1,8 +1,8 @@
 ---
-title: 使用开源实时监控工具 HertzBeat 对 Mysql 数据库监控告警实践    
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: 使用开源实时监控工具 HertzBeat 对 Mysql 数据库监控告警实践
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 ---
@@ -34,33 +34,33 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 
     路径：菜单 -> 数据库监控 -> Mysql数据库 -> 新增Mysql数据库监控
 
-    ![HertzBeat](/img/blog/monitor-mysql-1.png)
+    ![HertzBeat](home/static/img/blog/monitor-mysql-1.png)
 
 2. 配置新增监控 Mysql 数据库所需参数
 
     在监控页面填写 Mysql **服务IP**，**监控端口**(默认3306)，**账户密码等**，最后点击确定添加即可。
     其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.apache.org/docs/help/mysql/) [https://hertzbeat.apache.org/docs/help/mysql/](https://hertzbeat.apache.org/docs/help/mysql/)
 
-    ![HertzBeat](/img/blog/monitor-mysql-2.png)
+    ![HertzBeat](home/static/img/blog/monitor-mysql-2.png)
 
 3. 完成✅,现在我们已经添加好对 Mysql数据库 的监控了，查看监控列表即可看到我们的添加项。
 
-    ![HertzBeat](/img/blog/monitor-mysql-1.png)
+    ![HertzBeat](home/static/img/blog/monitor-mysql-1.png)
 
 4. 点击监控列表项的**操作**->**监控详情图标** 即可浏览 Mysql数据库 的实时监控指标数据。
 
-    ![HertzBeat](/img/blog/monitor-mysql-3.png)
+    ![HertzBeat](home/static/img/blog/monitor-mysql-3.png)
 
 5. 点击**监控历史详情TAB** 即可浏览 Mysql数据库 的历史监控指标数据图表📈。
 
-    ![HertzBeat](/img/blog/monitor-mysql-4.png)
+    ![HertzBeat](home/static/img/blog/monitor-mysql-4.png)
 
 **DONE！完成啦！通过上面几步，总结起来其实也就只用一步即可**
 
 - **在 HertzBeat 监控页面配置IP端口账户密码添加 Mysql 监控即可**
 
 :::tip
-通过上面的两步我们就完成了对 Mysql数据库 的监控，我们可以在 HertzBeat 随时查看监控详情指标信息来观测其服务状态。  
+通过上面的两步我们就完成了对 Mysql数据库 的监控，我们可以在 HertzBeat 随时查看监控详情指标信息来观测其服务状态。
 当然只是看肯定是不完美的，监控往往伴随着告警阈值，当 Mysql 数据库的指标超出我们的期望值或异常时，能及时的通知到我们对应的负责人，负责人收到通知处理问题，这样才是一个完整的监控告警流程。
 :::
 
@@ -75,9 +75,9 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
    - 选择配置的指标对象，Mysql 数据库监控主要是数据库性能等相关指标，我们举例对 `查询缓存命中率` `cache` -> `query_cache_hit_rate` 这个指标进行阈值设置， 当Mysql的查询缓存命中率很低小于30%时发出告警。
    - 这里我们就配置当此指标`cache` 的 `query_cache_hit_rate<30` 时发出告警，告警级别为**严重告警**，三次即触发，具体如下图。
 
-    ![HertzBeat](/img/blog/monitor-mysql-5.png)
+    ![HertzBeat](home/static/img/blog/monitor-mysql-5.png)
 
-    ![HertzBeat](/img/blog/monitor-mysql-6.png)
+    ![HertzBeat](home/static/img/blog/monitor-mysql-6.png)
 
 2. 新增消息通知接收人
 
@@ -92,13 +92,13 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 
     【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
 
-    ![HertzBeat](/img/blog/alert-notice-1.png)
+    ![HertzBeat](home/static/img/blog/alert-notice-1.png)
 
 3. 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】
 
     > 配置告警通知策略，让告警消息与接收人绑定，这样就能决定哪些告警发给哪个人。
 
-    ![HertzBeat](/img/blog/alert-notice-2.png)
+    ![HertzBeat](home/static/img/blog/alert-notice-2.png)
 
 ### 完毕，现在坐等告警消息过来啦。叮叮叮叮
 
@@ -115,7 +115,7 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 ## 小结
 
 :::tip
-这篇实践文章带我们体验了如何使用开源实时监控工具 HertzBeat 来监控 Mysql 数据库指标数据，可以发现集 `监控-告警-通知` 的 HertzBeat 在操作与使用方面更加的便捷，只需页面上简单点一点就能把 Mysql 数据库纳入监控并告警通知，再也不需要部署多个组件编写配置文件那些繁琐操作了。  
+这篇实践文章带我们体验了如何使用开源实时监控工具 HertzBeat 来监控 Mysql 数据库指标数据，可以发现集 `监控-告警-通知` 的 HertzBeat 在操作与使用方面更加的便捷，只需页面上简单点一点就能把 Mysql 数据库纳入监控并告警通知，再也不需要部署多个组件编写配置文件那些繁琐操作了。
 :::
 
 Mysql Github: [https://github.com/mysql/mysql-server](https://github.com/mysql/mysql-server)

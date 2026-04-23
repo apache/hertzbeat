@@ -1,15 +1,15 @@
 ---
-title: Open source monitoring HertzBeat v1.3.2 released, Easier to use 
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: Open source monitoring HertzBeat v1.3.2 released, Easier to use
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
 Website: hertzbeat.com | tancloud.cn
 
-![HertzBeat](/img/home/0.png)
+![HertzBeat](home/static/img/home/0.png)
 
 ## What is HertzBeat?
 >

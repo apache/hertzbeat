@@ -1,6 +1,6 @@
 ---
-id: tdengine-practice  
-title: TDengine Monitoring Practice      
+id: tdengine-practice
+title: TDengine Monitoring Practice
 sidebar_label: TDengine Monitoring Practice
 ---
 
@@ -40,7 +40,7 @@ TDengine TSDB integrates multiple monitoring metric collection mechanisms and ag
 
     > System Page -> Monitoring Center -> Add Monitoring -> Custom Monitoring -> TDengine-PromQL Task
 
-    ![HertzBeat](/img/docs/start/tdengine_1.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_1.png)
 
 2. Fill in key parameters
 
@@ -52,15 +52,15 @@ TDengine TSDB integrates multiple monitoring metric collection mechanisms and ag
     >
     > You can use tags to categorize tasks, such as adding business-related tags like `env=test`.
 
-    ![HertzBeat](/img/docs/start/tdengine_2.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_2.png)
 
 3. View inspection indicator data
 
     > You can view task statuses in the monitoring list and view metric data charts and other information in the monitoring details.
 
-    ![HertzBeat](/img/docs/start/tdengine_3.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_3.png)
 
-    ![HertzBeat](/img/docs/start/tdengine_4.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_4.png)
 
 ## Monitor TDengine(Prometheus)
 
@@ -68,7 +68,7 @@ TDengine TSDB integrates multiple monitoring metric collection mechanisms and ag
 
     > System Page -> Monitoring Center -> Add Monitoring -> AUTO -> Prometheus Task
 
-    ![HertzBeat](/img/docs/start/tdengine_1_1.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_1_1.png)
 
 2. Fill in key parameters
 
@@ -80,15 +80,15 @@ TDengine TSDB integrates multiple monitoring metric collection mechanisms and ag
     >
     > You can use tags to categorize tasks, such as adding business-related tags like `env=test`.
 
-    ![HertzBeat](/img/docs/start/tdengine_1_2.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_1_2.png)
 
 3. View inspection indicator data
 
     > You can view task statuses in the monitoring list and view metric data charts and other information in the monitoring details.
 
-    ![HertzBeat](/img/docs/start/tdengine_1_3.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_1_3.png)
 
-    ![HertzBeat](/img/docs/start/tdengine_1_4.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_1_4.png)
 
 ### Grafana visualization integration (optional)
 
@@ -106,13 +106,13 @@ TDengine TSDB integrates multiple monitoring metric collection mechanisms and ag
     >
     > For example: Select the Grafana data source `hertzbeat-victoria-metrics`, then click "Share" → "Export" → "Save to file" on the dashboard to download the template and upload it to HertzBeat monitoring. For reference, see: [taoskeeper-prometheus-dashboard](https://grafana.com/grafana/dashboards/15164-taoskeeper-prometheus-dashboard/)
 
-    ![HertzBeat](/img/docs/start/tdengine_1_5.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_1_5.png)
 
 3. View Grafana charts
 
     > Go to the new AUTO monitoring page, click the Grafana icon button to view the Grafana chart.
 
-    ![HertzBeat](/img/docs/start/tdengine_1_6.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_1_6.png)
 
 ## Alarm and notification linkage
 
@@ -120,7 +120,7 @@ TDengine TSDB integrates multiple monitoring metric collection mechanisms and ag
 
     > System Page -> Alerts -> Threshold Rules -> Add -> Add Threshold
 
-    ![HertzBeat](/img/docs/start/tdengine_5.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_5.png)
 
     > HertzBeat provides two types of threshold rule settings: **real-time calculation** and **scheduled cycle**. Here, we will use the **scheduled cycle** threshold rule as an example.
     >
@@ -137,21 +137,21 @@ TDengine TSDB integrates multiple monitoring metric collection mechanisms and ag
     >
     > There are many combinations of threshold rules that can be set, and users can set more detailed alert rules according to their needs.
 
-    ![HertzBeat](/img/docs/start/tdengine_6.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_6.png)
 
     > Finally, you can see the triggered alerts in the Alert Center.
 
-    ![HertzBeat](/img/docs/start/tdengine_7.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_7.png)
 
 3. Alert notification
 
     > System Page -> Message Notifications -> Notification Media -> Add New Recipient
 
-    ![HertzBeat](/img/docs/start/tdengine_8.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_8.png)
 
     > System Page -> Message Notifications -> Notification Policies -> Add Notification Policy -> Select recipients and enable notifications
 
-    ![HertzBeat](/img/docs/start/tdengine_9.png)
+    ![HertzBeat](home/static/img/docs/start/tdengine_9.png)
 
 4. OK! When the threshold rule is triggered, we will receive the corresponding alert message. If no notification is configured, you can also view the alert information in the alert center.
 

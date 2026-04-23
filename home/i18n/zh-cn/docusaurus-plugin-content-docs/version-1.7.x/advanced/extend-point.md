@@ -1,17 +1,17 @@
 ---
-id: extend-point  
-title: 自定义监控  
+id: extend-point
+title: 自定义监控
 sidebar_label: 自定义监控
 ---
 
-> HertzBeat拥有自定义监控能力，您只需配置监控模板YML就能适配一款自定义的监控类型。  
+> HertzBeat拥有自定义监控能力，您只需配置监控模板YML就能适配一款自定义的监控类型。
 > 目前自定义监控支持[HTTP协议](extend-http)，[JDBC协议](extend-jdbc)，[SSH协议](extend-ssh)，[JMX协议](extend-jmx)，[SNMP协议](extend-snmp)，后续会支持更多通用协议。
 
 ## 自定义流程
 
 **HertzBeat页面** -> **监控模板菜单** -> **新增监控类型** -> **配置自定义监控模板YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
-![HertzBeat](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](home/static/img/docs/advanced/extend-point-1.png)
 
 ### 自定义监控指标刷新时间
 
@@ -139,7 +139,7 @@ params:
     # hide param-true or false
     # 是否隐藏字段 true or false
     hide: true
-    
+
 metrics:
   # metrics - summary, inner monitoring metrics (responseTime - response time, keyword - number of keywords)
   # 监控指标 - summary, 内置监控指标有 (responseTime - 响应时间, keyword - 关键字数量)

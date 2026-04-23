@@ -1,15 +1,15 @@
 ---
-title: HertzBeat v1.4.2 版本发布，自定义消息通知模板 
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: HertzBeat v1.4.2 版本发布，自定义消息通知模板
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
 哈喽大家好，开源实时监控 HertzBeat 新版本 v1.4.2 发布，欢迎了解使用。
 
-![hertzBeat](/img/home/0.png)
+![HertzBeat](home/static/img/home/0.png)
 
 ## 总结起来如下
 
@@ -36,7 +36,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 

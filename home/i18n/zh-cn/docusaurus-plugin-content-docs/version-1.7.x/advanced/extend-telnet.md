@@ -1,6 +1,6 @@
 ---
-id: extend-telnet  
-title: Telnet协议自定义监控  
+id: extend-telnet
+title: Telnet协议自定义监控
 sidebar_label: Telnet协议自定义监控
 ---
 
@@ -21,7 +21,7 @@ sidebar_label: Telnet协议自定义监控
 
 **HertzBeat页面** -> **监控模板菜单** -> **新增监控类型** -> **配置自定义监控模板YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
-![HertzBeat](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](home/static/img/docs/advanced/extend-point-1.png)
 
 -------
 
@@ -295,5 +295,5 @@ metrics:
       timeout: ^_^timeout^_^
       cmd: mntr
 
-  
+
 ```

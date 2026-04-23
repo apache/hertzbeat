@@ -1,13 +1,13 @@
 ---
-title: 重磅更新，HertzBeat 集群版发布，易用友好的开源实时监控系统! 
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: 重磅更新，HertzBeat 集群版发布，易用友好的开源实时监控系统!
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
-![hertzBeat](/img/home/0.png)
+![HertzBeat](home/static/img/home/0.png)
 
 ## 什么是 HertzBeat?
 
@@ -23,7 +23,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
@@ -42,17 +42,17 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 - 监控任务在采集器集群中自调度，单采集器挂掉无感知故障迁移采集任务，新加入采集器节点自动调度分担采集压力。
 - 单机模式与集群模式相互切换部署非常方便，无需额外组件部署。
 
-![HertzBeat](/img/docs/cluster-arch.png)
+![HertzBeat](home/static/img/docs/cluster-arch.png)
 
 #### 云边协同
 
 > 支持部署边缘采集器集群，与主 HertzBeat 服务云边协同提升采集能力。
 
-在多个网络不相通的隔离网络中，在以往的方案中我们需要在每个网络都部署一套监控系统，这导致数据不互通，管理部署维护都不方便。  
-HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采集器，添加监控时指定采集器，采集器在隔离网络内部进行监控任务采集，采集数据上报，由主 HertzBeat 服务统一调度管理展示。  
+在多个网络不相通的隔离网络中，在以往的方案中我们需要在每个网络都部署一套监控系统，这导致数据不互通，管理部署维护都不方便。
+HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采集器，添加监控时指定采集器，采集器在隔离网络内部进行监控任务采集，采集数据上报，由主 HertzBeat 服务统一调度管理展示。
 这多用于多个隔离数据中心或不同厂商云资源和云下资源的统一监控场景。
 
-![HertzBeat](/img/docs/cluster-arch.png)
+![HertzBeat](home/static/img/docs/cluster-arch.png)
 
 ### 为什么要开源集群版?
 

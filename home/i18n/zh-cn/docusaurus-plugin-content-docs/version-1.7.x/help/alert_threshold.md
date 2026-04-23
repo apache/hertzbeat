@@ -1,12 +1,12 @@
 ---
-id: alert_threshold  
-title: 告警阈值规则配置  
+id: alert_threshold
+title: 告警阈值规则配置
 sidebar_label: 阈值规则
 ---
 
 :::tip
-告警阈值规则是 `HertzBeat` 的核心功能，用户可以通过阈值规则来配置告警的触发条件。  
-阈值规则支持实时阈值和计划阈值，实时阈值可以在监控数据采集时直接触发告警，计划阈值支持 PromQL 等表达式在指定时间段内计算触发告警。  
+告警阈值规则是 `HertzBeat` 的核心功能，用户可以通过阈值规则来配置告警的触发条件。
+阈值规则支持实时阈值和计划阈值，实时阈值可以在监控数据采集时直接触发告警，计划阈值支持 PromQL 等表达式在指定时间段内计算触发告警。
 支持可视化页面配置或更高灵活性的表达式规则配置，支持配置触发次数，告警级别，通知模板，关联指定监控等。
 :::
 
@@ -22,7 +22,7 @@ sidebar_label: 阈值规则
 
 配置阈值，例如: 选择SSL证书指标对象，配置告警表达式-当指标`expired`为`true`触发，即`equals(expired,"true")` , 设置告警级别通知模板信息等。
 
-![HertzBeat](/img/docs/start/ssl_5.png)
+![HertzBeat](home/static/img/docs/start/ssl_5.png)
 
 配置项说明：
 

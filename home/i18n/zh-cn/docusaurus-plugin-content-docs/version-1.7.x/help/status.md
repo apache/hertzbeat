@@ -1,7 +1,7 @@
 ---
-id: status  
-title: 状态页面  
-sidebar_label: 状态页面  
+id: status
+title: 状态页面
+sidebar_label: 状态页面
 keywords: [开源监控系统, 开源网站监控, 状态页面]
 ---
 
@@ -24,7 +24,7 @@ keywords: [开源监控系统, 开源网站监控, 状态页面]
 
 填写完组织信息后，点击 `确定`。
 
-![HertzBeat](/img/docs/help/status-3.png)
+![HertzBeat](home/static/img/docs/help/status-3.png)
 
 ## 2. 新增组件
 
@@ -51,7 +51,7 @@ status:
     interval: 60
 ```
 
-![HertzBeat](/img/docs/help/status-4.png)
+![HertzBeat](home/static/img/docs/help/status-4.png)
 
 ## 3. 维护事件
 
@@ -59,7 +59,7 @@ status:
 
 点击 `发布事件`
 
-![HertzBeat](/img/docs/help/status-1.png)
+![HertzBeat](home/static/img/docs/help/status-1.png)
 
 | 字段名称 |                    字段说明                     |                                  举例                                  |
 |------|---------------------------------------------|----------------------------------------------------------------------|
@@ -70,4 +70,4 @@ status:
 
 > 提示：可以多次发布消息，及时向团队汇报当前状态。
 
-![HertzBeat](/img/docs/help/status-2.png)
+![HertzBeat](home/static/img/docs/help/status-2.png)

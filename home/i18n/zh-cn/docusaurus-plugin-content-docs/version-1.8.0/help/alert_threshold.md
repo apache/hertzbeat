@@ -24,7 +24,7 @@ sidebar_label: 阈值规则
 
 配置阈值，例如: 选择SSL证书指标对象，配置告警表达式-当指标`expired`为`true`触发，即`equals(expired,"true")` , 设置告警级别通知模板信息等。
 
-![HertzBeat](/img/docs/start/ssl_5.png)
+![HertzBeat](home/static/img/docs/start/ssl_5.png)
 
 配置项说明：
 

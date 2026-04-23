@@ -1,6 +1,6 @@
 ---
-id: package-deploy  
-title: Install HertzBeat via Package 
+id: package-deploy
+title: Install HertzBeat via Package
 sidebar_label: Install via Package
 ---
 
@@ -50,7 +50,7 @@ Since version 1.6.0 uses `Java 17` and the installation package no longer provid
    Execute the startup script in the installation directory `bin/`, or `startup.bat` in windows.
 
    ```shell
-   ./startup.sh 
+   ./startup.sh
    ```
 
 5. Begin to explore HertzBeat
@@ -64,7 +64,7 @@ HertzBeat Collector is a lightweight data collector used to collect and send dat
 Deploying multiple HertzBeat Collectors can achieve high availability, load balancing, and cloud-edge collaboration of data.
 :::
 
-![HertzBeat](/img/docs/cluster-arch.png)
+![HertzBeat](home/static/img/docs/cluster-arch.png)
 
 1. Download installation package
 
@@ -132,6 +132,6 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 2. According to the process deploy，visit [http://ip:1157/](http://ip:1157/) no interface
    Please refer to the following points to troubleshoot issues:
 
-   > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.  
-   > 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.  
+   > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
+   > 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.
    > 3：Check whether the running log has errors in `hertzbeat/logs/` directory. If you haven't solved the issue, report it to the communication group or community.

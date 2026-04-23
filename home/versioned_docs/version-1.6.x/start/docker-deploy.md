@@ -1,6 +1,6 @@
 ---
-id: docker-deploy  
-title: Install HertzBeat via Docker   
+id: docker-deploy
+title: Install HertzBeat via Docker
 sidebar_label: Install via Docker
 ---
 
@@ -51,7 +51,7 @@ It is necessary to have Docker environment in your environment. If not installed
 
    :::
 
-2. Start to explore HertzBeat  
+2. Start to explore HertzBeat
    Access [http://ip:1157/](http://ip:1157/) using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!
 
 ### Deploy HertzBeat Collector Cluster(Optional)
@@ -61,7 +61,7 @@ HertzBeat Collector is a lightweight data collector used to collect and send dat
 By deploying multiple HertzBeat Collectors, high availability, load balancing, and cloud-edge collaboration of data can be achieved.
 :::
 
-![HertzBeat](/img/docs/cluster-arch.png)
+![HertzBeat](home/static/img/docs/cluster-arch.png)
 
 1. Execute the following command
 
@@ -109,31 +109,31 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
 1. MYSQL, TDENGINE, IoTDB and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail
    The problems lies in Docker container failed to visit and connect localhost port. Because the docker default network mode is Bridge mode which can't access local machine through localhost.
 
-   > Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.  
+   > Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.
    > Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`
 
 2. According to the process deploy，visit [http://ip:1157/](http://ip:1157/) no interface
    Please refer to the following points to troubleshoot issues：
 
-   > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.  
-   > 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.  
-   > 3：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.  
+   > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
+   > 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
+   > 3：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.
 
 3. Historical monitoring charts have been missing data for a long time
 
-   > 1：Check whether you configure victoria-metrics or Tdengine or IoTDB. No configuration means no historical chart data.  
+   > 1：Check whether you configure victoria-metrics or Tdengine or IoTDB. No configuration means no historical chart data.
    > 2: Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
 
 4. If the history chart on the monitoring page is not displayed，popup [please configure time series database]
 
-   > As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service database.  
+   > As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service database.
    > Installation and initialization this database, please refer to [Using victoria-metrics to store metrics data](victoria-metrics-init)
 
 5. The time series database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure dependent time series database]
 
-   > Please check if the configuration parameters are correct  
-   > Is time-series database enable set to true  
-   > Note⚠️If both hertzbeat and time-series database are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed  
+   > Please check if the configuration parameters are correct
+   > Is time-series database enable set to true
+   > Note⚠️If both hertzbeat and time-series database are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed
    > You can check the startup logs according to the logs directory
 
 6. What is the purpose of application.yml
@@ -149,9 +149,9 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
 
 7. What is the purpose of sureness.yml
 
-   > This file is the user configuration file of HertzBeat, used to configure user information of HertzBeat, such as account password, etc.  
-   > HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`  
-   > If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.  
-   > Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`  
-   > Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)  
+   > This file is the user configuration file of HertzBeat, used to configure user information of HertzBeat, such as account password, etc.
+   > HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`
+   > If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.
+   > Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`
+   > Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)
    > For detail steps, please refer to [Configure Account Password](account-modify)

@@ -1,6 +1,6 @@
 ---
-id: tdengine-practice    
-title: TDengine 监控案例    
+id: tdengine-practice
+title: TDengine 监控案例
 sidebar_label: TDengine 监控案例
 ---
 
@@ -40,7 +40,7 @@ TDengine TSDB 集成了多种监控指标收集机制，并通过 taosKeeper 进
 
    > 系统页面 -> 监控中心 -> 新增监控 -> 自定义监控 -> TDengine-PromQL任务
 
-   ![HertzBeat](/img/docs/start/tdengine_1.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_1.png)
 
 2. 填写关键参数
 
@@ -52,15 +52,15 @@ TDengine TSDB 集成了多种监控指标收集机制，并通过 taosKeeper 进
    >
    > 可以使用标签分类来管理任务，如添加`env=test`等业务相关标签。
 
-   ![HertzBeat](/img/docs/start/tdengine_2.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_2.png)
 
 3. 查看检测指标数据
 
    > 在监控列表可以查看任务状态，进监控详情可以查看指标数据图表等。
 
-   ![HertzBeat](/img/docs/start/tdengine_3.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_3.png)
 
-   ![HertzBeat](/img/docs/start/tdengine_4.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_4.png)
 
 ## 监控 TDengine(Prometheus)
 
@@ -68,7 +68,7 @@ TDengine TSDB 集成了多种监控指标收集机制，并通过 taosKeeper 进
 
    > 系统页面 -> 监控中心 -> 新增监控 -> AUTO -> Prometheus任务
 
-   ![HertzBeat](/img/docs/start/tdengine_1_1.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_1_1.png)
 
 2. 填写关键参数
 
@@ -80,15 +80,15 @@ TDengine TSDB 集成了多种监控指标收集机制，并通过 taosKeeper 进
    >
    > 可以使用标签分类来管理任务，如添加`env=test`等业务相关标签。
 
-   ![HertzBeat](/img/docs/start/tdengine_1_2.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_1_2.png)
 
 3. 查看检测指标数据
 
    > 在监控列表可以查看任务状态，进监控详情可以查看指标数据图表等。
 
-   ![HertzBeat](/img/docs/start/tdengine_1_3.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_1_3.png)
 
-   ![HertzBeat](/img/docs/start/tdengine_1_4.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_1_4.png)
 
 ### Grafana可视化集成 (可选)
 
@@ -107,13 +107,13 @@ TDengine TSDB 集成了多种监控指标收集机制，并通过 taosKeeper 进
    >
    > 比如：Grafana 数据源选择`hertzbeat-victoria-metrics`，然后在仪表盘点击:「Share」→「Export」→「Save to file」下载模板并上传至 HertzBeat 监控中，可参考：[taoskeeper-prometheus-dashboard](https://grafana.com/grafana/dashboards/15164-taoskeeper-prometheus-dashboard/)
 
-   ![HertzBeat](/img/docs/start/tdengine_1_5.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_1_5.png)
 
 3. 查看 Grafana 图表
 
    > 进入新增 AUTO 监控页面，点击 Grafana 图标按钮，即可查看 Grafana 图表。
 
-   ![HertzBeat](/img/docs/start/tdengine_1_6.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_1_6.png)
 
 ## 告警与通知联动
 
@@ -122,7 +122,7 @@ TDengine TSDB 集成了多种监控指标收集机制，并通过 taosKeeper 进
    > 系统页面 -> 告警 -> 阈值规则 -> 新增 -> 新增阈值
    >
 
-   ![HertzBeat](/img/docs/start/tdengine_5.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_5.png)
 
    > HertzBeat 提供了 **实时计算** 和 **计划周期** 两种类型的阈值规则设置，这里我们以 **计划周期** 阈值规则为例。
    >
@@ -139,24 +139,24 @@ TDengine TSDB 集成了多种监控指标收集机制，并通过 taosKeeper 进
    >
    > 可以设置的阈值规则组合有很多，用户可以根据自身需要设置更丰富的告警规则。
 
-   ![HertzBeat](/img/docs/start/tdengine_6.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_6.png)
 
    > 最后可以在 告警中心 看到已触发的告警。
    >
 
-   ![HertzBeat](/img/docs/start/tdengine_7.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_7.png)
 
 3. 告警通知
 
    > 系统页面 -> 消息通知 -> 通知媒介 -> 新增接收对象
    >
 
-   ![HertzBeat](/img/docs/start/tdengine_8.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_8.png)
 
    > 系统页面 -> 消息通知 -> 通知策略 -> 新增通知策略 -> 选择接收对象并启用通知
    >
 
-   ![HertzBeat](/img/docs/start/tdengine_9.png)
+   ![HertzBeat](home/static/img/docs/start/tdengine_9.png)
 
 4. OK！当阈值规则触发后我们就可以收到对应告警消息啦，如果没有配置通知，也可以在告警中心查看告警信息。
 

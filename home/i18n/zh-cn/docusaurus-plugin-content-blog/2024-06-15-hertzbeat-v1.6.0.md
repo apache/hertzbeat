@@ -1,8 +1,8 @@
 ---
-title: HertzBeat 的第一个 Apache 版本 v1.6.0 发布！ 
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: HertzBeat 的第一个 Apache 版本 v1.6.0 发布！
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source, monitoring, alerting]
 ---
@@ -36,7 +36,7 @@ keywords: [open source, monitoring, alerting]
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助用户快速搭建自有监控系统。
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 

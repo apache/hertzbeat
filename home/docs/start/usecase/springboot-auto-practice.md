@@ -1,7 +1,7 @@
 ---
-id: springboot-auto-practice  
-title: SpringBoot Web Application Monitoring Practice  
-sidebar_label: SpringBoot Web Application Monitoring Practice 
+id: springboot-auto-practice
+title: SpringBoot Web Application Monitoring Practice
+sidebar_label: SpringBoot Web Application Monitoring Practice
 ---
 
 :::tip
@@ -136,7 +136,7 @@ Apache HertzBeat is a real-time monitoring tool with powerful custom monitoring 
 
    > HertzBeat Page -> Monitors -> New Monitor -> AUTO -> Prometheus Task
 
-   ![HertzBeat](/img/docs/start/springboot-auto-practice-1.png)
+   ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-1.png)
 
 2. Fill in Key Parameters
 
@@ -148,15 +148,15 @@ Apache HertzBeat is a real-time monitoring tool with powerful custom monitoring 
    >
    > Tasks can be managed using label classification, such as adding Bind Labels like `env=test`.
 
-   ![HertzBeat](/img/docs/start/springboot-auto-practice-2.png)
+   ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-2.png)
 
 3. View Detected Metric Data
 
     > Click on the newly created monitor to view detailed metric data, historical charts, etc.
 
-    ![HertzBeat](/img/docs/start/springboot-auto-practice-3.png)
+    ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-3.png)
 
-    ![HertzBeat](/img/docs/start/springboot-auto-practice-4.png)
+    ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-4.png)
 
 ## Grafana Visualization Integration (Optional)
 
@@ -174,13 +174,13 @@ Apache HertzBeat is a real-time monitoring tool with powerful custom monitoring 
     >
     > For example: In Grafana, select `hertzbeat-victoria-metrics` as the data source. Then click on the dashboard:「Share」→「Export」→「Save to file」to download the template and upload this file to the HertzBeat monitor.
 
-    ![HertzBeat](/img/docs/start/springboot-auto-practice-5.png)
+    ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-5.png)
 
 3. View Grafana Dashboard
 
     > Go to the AUTO monitor page, click the Grafana icon button, and view the integrated Grafana dashboard.
 
-    ![HertzBeat](/img/docs/start/springboot-auto-practice-6.png)
+    ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-6.png)
 
 ## Alarm and Notification Interlinkage
 
@@ -188,7 +188,7 @@ Apache HertzBeat is a real-time monitoring tool with powerful custom monitoring 
 
     > HertzBeat Page -> Alerting -> Threshold -> New -> New Threshold Rule
 
-    ![HertzBeat](/img/docs/start/springboot-auto-practice-7.png)
+    ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-7.png)
 
     > HertzBeat provides two types of threshold rule settings: **RealTime Calculation** and **Periodically execute**. Here, we use the **Periodically execute** threshold rule as an example.
     >
@@ -205,21 +205,21 @@ Apache HertzBeat is a real-time monitoring tool with powerful custom monitoring 
     >
     >You can create many combinations of threshold rules. Users can set up richer alarm rules based on their specific needs.
 
-    ![HertzBeat](/img/docs/start/springboot-auto-practice-8.png)
+    ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-8.png)
 
     > Finally, you can see the triggered alarm in the alarm center.
 
-    ![HertzBeat](/img/docs/start/springboot-auto-practice-9.png)
+    ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-9.png)
 
 3. Alarm Notification
 
     > HertzBeat Page -> Notification -> Notice Receiver -> New Receiver
 
-    ![HertzBeat](/img/docs/start/springboot-auto-practice-10.png)
+    ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-10.png)
 
     > HertzBeat Page -> Notification -> Notice Policy -> New Notice Policy -> Select Recipient(s) and Enable Notification
 
-    ![HertzBeat](/img/docs/start/springboot-auto-practice-11.png)
+    ![HertzBeat](home/static/img/docs/start/springboot-auto-practice-11.png)
 
 4. OK! When the threshold is triggered, we will receive the corresponding alarm message. If no notification is configured, you can also view the alarm information in the alarm center.
 
