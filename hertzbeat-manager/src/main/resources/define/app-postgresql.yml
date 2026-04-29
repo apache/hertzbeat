@@ -1076,3 +1076,94 @@ metrics:
         privateKey: ^_^sshPrivateKey^_^
         privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
         shareConnection: ^_^sshShareConnection^_^
+
+  - name: users
+    i18n:
+      zh-CN: 用户信息
+      en-US: Users
+      ja-JP: ユーザー情報
+    priority: 16
+    fields:
+      - field: usename
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 用户名
+          en-US: User Name
+          ja-JP: ユーザー名
+      - field: usesysid
+        type: 0
+        i18n:
+          zh-CN: 用户ID
+          en-US: User ID
+          ja-JP: ユーザーID
+      - field: usecreatedb
+        type: 1
+        i18n:
+          zh-CN: 创建数据库权限
+          en-US: Create DB Privilege
+          ja-JP: データベース作成権限
+      - field: usesuper
+        type: 1
+        i18n:
+          zh-CN: 超级用户权限
+          en-US: Superuser Privilege
+          ja-JP: スーパーユーザー権限
+      - field: valuntil
+        type: 1
+        i18n:
+          zh-CN: 密码有效期
+          en-US: Password Valid Until
+          ja-JP: パスワード有効期限
+      - field: days_left
+        type: 0
+        i18n:
+          zh-CN: 剩余天数
+          en-US: Days Left
+          ja-JP: 残り日数
+      - field: account_status
+        type: 1
+        i18n:
+          zh-CN: 账号状态
+          en-US: Account Status
+          ja-JP: アカウントのステータス
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: |
+        SELECT
+          usename,
+          usesysid,
+          CASE WHEN usecreatedb THEN 'Y' ELSE 'N' END as usecreatedb,
+          CASE WHEN usesuper THEN 'Y' ELSE 'N' END as usesuper,
+          valuntil,
+          CASE
+            WHEN valuntil IS NULL THEN NULL
+            ELSE EXTRACT(DAY FROM (valuntil - NOW()))::INTEGER
+          END as days_left,
+          CASE
+            WHEN valuntil IS NULL THEN 'OPEN'
+            WHEN valuntil < NOW() THEN 'EXPIRED'
+            ELSE 'OPEN'
+          END as account_status
+        FROM pg_user
+        ORDER BY days_left ASC NULLS LAST;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
