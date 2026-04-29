@@ -69,12 +69,12 @@ public class NoticeReceiver {
 
     @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot "
             + "5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message "
-            + "11-Slack 12-Discord 13-Gotify 14-FeiShu app message",
+            + "11-Huawei Cloud SMN 12-ServerChan 13-Gotify 14-FeiShu app message 15-Ntfy",
             description = "Notification information method: "
                     + "0-SMS 1-Email 2-webhook 3-WeChat Official Account "
                     + "4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot "
                     + "7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise "
-                    + "WeChat app message 11-Slack 12-Discord 13-Gotify 14-FeiShu app message",
+                    + "WeChat app message 11-Huawei Cloud SMN 12-ServerChan 13-Gotify 14-FeiShu app message 15-Ntfy",
             accessMode = READ_WRITE)
     @Min(0)
     @NotNull(message = "type can not null")
@@ -257,6 +257,27 @@ public class NoticeReceiver {
     @Size(max = 300)
     @Column(length = 300)
     private String gotifyToken;
+
+    @Schema(title = "Ntfy server URL : The notification method is valid for Ntfy",
+            description = "Ntfy server URL : The notification method is valid for Ntfy, default is https://ntfy.sh",
+            example = "https://ntfy.sh", accessMode = READ_WRITE)
+    @Size(max = 300)
+    @Column(length = 300)
+    private String ntfyServerUrl;
+
+    @Schema(title = "Ntfy topic : The notification method is valid for Ntfy",
+            description = "Ntfy topic : The notification method is valid for Ntfy",
+            example = "hertzbeat-alerts", accessMode = READ_WRITE)
+    @Size(max = 300)
+    @Column(length = 300)
+    private String ntfyTopic;
+
+    @Schema(title = "Ntfy access token : Bearer token for self-hosted ntfy servers with authentication",
+            description = "Ntfy access token : Bearer token for self-hosted ntfy servers with authentication",
+            example = "tk_AgQdq7mVBoFD37zQVN29RhuMzNIz2", accessMode = READ_WRITE)
+    @Size(max = 300)
+    @Column(length = 300)
+    private String ntfyToken;
 
     @Schema(title = "The creator of this record", example = "tom",
             accessMode = READ_ONLY)
