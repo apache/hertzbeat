@@ -82,14 +82,15 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 /**
@@ -387,7 +388,11 @@ public class MonitorServiceImpl implements MonitorService {
         if (!isStatic && !StringUtils.hasText(monitor.getInstance())) {
             monitor.setInstance("unknown");
         }
+
         String instance = monitor.getInstance();
+        if (IpDomainUtil.isHasPortWithMark(instance)){
+            instance = instance.substring(0, monitor.getInstance().lastIndexOf(":"));
+        }
         // The port field may be null
         Param portParam = params.stream()
             .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
