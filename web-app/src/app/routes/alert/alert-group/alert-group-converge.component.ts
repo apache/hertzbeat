@@ -30,7 +30,7 @@ import { AlertGroupConverge } from '../../../pojo/AlertGroupConverge';
 import { AlertGroupService } from '../../../service/alert-group.service';
 
 @Component({
-  selector: 'app-alert-converge',
+  standalone: false,  selector: 'app-alert-converge',
   templateUrl: './alert-group-converge.component.html',
   styleUrls: ['./alert-group-converge.component.less']
 })

@@ -26,12 +26,11 @@ import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
 import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.HertzBeatKeywordsUtil;
 import org.apache.hertzbeat.common.util.JexlCheckerUtil;
@@ -41,12 +40,14 @@ import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.ObjectStoreService;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
@@ -93,6 +94,8 @@ public class AppServiceImpl implements AppService, InitializingBean {
     private final ParamDao paramDao;
     private final DefineDao defineDao;
     private final WarehouseService warehouseService;
+    private final ObjectProvider<MonitorService> monitorServiceProvider;
+    private final ObjectProvider<ObjectStoreService> objectStoreServiceProvider;
 
     private final Map<String, Job> appDefines = new ConcurrentHashMap<>();
     private AppDefineStore appDefineStore;
@@ -105,20 +108,24 @@ public class AppServiceImpl implements AppService, InitializingBean {
                           ObjectStoreConfigServiceImpl objectStoreConfigService,
                           ParamDao paramDao,
                           DefineDao defineDao,
-                          @Lazy WarehouseService warehouseService) {
+                          @Lazy WarehouseService warehouseService,
+                          ObjectProvider<MonitorService> monitorServiceProvider,
+                          ObjectProvider<ObjectStoreService> objectStoreServiceProvider) {
         this.monitorDao = monitorDao;
         this.objectStoreConfigService = objectStoreConfigService;
         this.paramDao = paramDao;
         this.defineDao = defineDao;
         this.warehouseService = warehouseService;
+        this.monitorServiceProvider = monitorServiceProvider;
+        this.objectStoreServiceProvider = objectStoreServiceProvider;
     }
 
     @Override
-    public List<ParamDefine> getAppParamDefines(String app) {
+    public List<ParamDefineInfo> getAppParamDefines(String app) {
         if (StringUtils.isNotBlank(app)){
             var appDefine = appDefines.get(app.toLowerCase());
             if (appDefine != null && appDefine.getParams() != null) {
-                return appDefine.getParams();
+                return appDefine.getParams().stream().map(ParamDefineInfo::fromRuntime).toList();
             }
         }
         return Collections.emptyList();
@@ -416,7 +423,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
             app.setHide(hide);
         }
         appDefines.put(app.getApp().toLowerCase(), app);
-        SpringContextHolder.getBean(MonitorService.class).updateAppCollectJob(app);
+        getMonitorService().updateAppCollectJob(app);
     }
 
     private void verifyDefineAppContent(Job app, boolean isModify) {
@@ -433,7 +440,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
         CommonUtil.validDefineI18n(app.getName(), "name");
         CommonUtil.validDefineI18n(app.getHelp(), "help");
         CommonUtil.validDefineI18n(app.getHelpLink(), "helpLink");
-        for (ParamDefine param : app.getParams()) {
+        for (RuntimeParamDefine param : app.getParams()) {
             CommonUtil.validDefineI18n(param.getName(),  param.getField() + " param");
         }
         if (!isModify) {
@@ -467,6 +474,28 @@ public class AppServiceImpl implements AppService, InitializingBean {
                 fieldsSet.add(field.getField());
             }
         }
+    }
+
+    private MonitorService getMonitorService() {
+        if (monitorServiceProvider == null) {
+            throw new IllegalStateException("MonitorService provider is not available.");
+        }
+        MonitorService monitorService = monitorServiceProvider.getIfAvailable();
+        if (monitorService == null) {
+            throw new IllegalStateException("MonitorService bean is not available.");
+        }
+        return monitorService;
+    }
+
+    private ObjectStoreService getObjectStoreService() {
+        if (objectStoreServiceProvider == null) {
+            throw new IllegalStateException("ObjectStoreService provider is not available.");
+        }
+        ObjectStoreService objectStoreService = objectStoreServiceProvider.getIfAvailable();
+        if (objectStoreService == null) {
+            throw new IllegalStateException("ObjectStoreService bean is not available.");
+        }
+        return objectStoreService;
     }
 
     @Override
@@ -685,10 +714,6 @@ public class AppServiceImpl implements AppService, InitializingBean {
         public void delete(String app) {
             getObjectStoreService().remove("define/app-" + app + ".yml");
             appDefines.remove(app.toLowerCase());
-        }
-
-        private ObjectStoreService getObjectStoreService() {
-            return SpringContextHolder.getBean(ObsObjectStoreServiceImpl.class);
         }
     }
 

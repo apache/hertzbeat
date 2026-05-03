@@ -17,10 +17,15 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validPort;
+import static org.apache.hertzbeat.common.util.IpDomainUtil.validateIpDomain;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * ssh Protocol parameter configuration
@@ -113,8 +118,27 @@ public class SshProtocol implements CommonRequestProtocol, Protocol {
 
     @Override
     public boolean isInvalid() {
-
-        // todo: add
-        return true;
+        if (!validateIpDomain(host) || !validPort(port)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(timeout) && !CommonUtil.isNumeric(timeout)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(reuseConnection)
+                && !"true".equalsIgnoreCase(reuseConnection)
+                && !"false".equalsIgnoreCase(reuseConnection)) {
+            return true;
+        }
+        if (StringUtils.isNotBlank(useProxy)
+                && !"true".equalsIgnoreCase(useProxy)
+                && !"false".equalsIgnoreCase(useProxy)) {
+            return true;
+        }
+        if ("true".equalsIgnoreCase(useProxy)) {
+            if (!validateIpDomain(proxyHost) || !validPort(proxyPort)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -1,7 +1,6 @@
 /* eslint-disable import/order */
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { GlobalFooterModule } from '@delon/abc/global-footer';
 import { AlainThemeModule, I18nPipe } from '@delon/theme';
@@ -24,8 +23,13 @@ import { HeaderI18nComponent } from './basic/widgets/i18n.component';
 import { HeaderAiChatComponent } from './basic/widgets/chat-input.component';
 import { HeaderUserComponent } from './basic/widgets/user.component';
 import { HeaderNotifyComponent } from './basic/widgets/notify.component';
+import { MainNavComponent } from './basic/widgets/main-nav.component';
+import { HeaderSetupGuideComponent } from './basic/widgets/setup-guide.component';
 import { LayoutBlankComponent } from './blank/blank.component';
 import { SettingDrawerI18nDirective } from './basic/directives/setting-drawer-i18n.directive';
+import { OpsContextBarComponent } from '../shared/components/ops-context-bar/ops-context-bar.component';
+import { PlatformCopyrightFooterComponent } from '../shared/components/platform-copyright-footer/platform-copyright-footer.component';
+import { RightDrawerComponent } from '../shared/components/right-drawer/right-drawer.component';
 
 const COMPONENTS = [LayoutBasicComponent, LayoutBlankComponent, HeaderI18nComponent];
 const DIRECTIVES = [SettingDrawerI18nDirective];
@@ -35,7 +39,9 @@ const HEADER_COMPONENTS = [
   HeaderFullScreenComponent,
   HeaderI18nComponent,
   HeaderUserComponent,
-  HeaderNotifyComponent
+  HeaderNotifyComponent,
+  MainNavComponent,
+  HeaderSetupGuideComponent
 ];
 
 import { LayoutPassportComponent } from './passport/passport.component';
@@ -52,7 +58,6 @@ const PASSPORT = [LayoutPassportComponent];
 @NgModule({
   imports: [
     CommonModule,
-    FormsModule,
     RouterModule,
     AlainThemeModule.forChild(),
     ThemeBtnModule,
@@ -79,9 +84,12 @@ const PASSPORT = [LayoutPassportComponent];
     NzListItemActionComponent,
     NzTooltipDirective,
     NzCheckboxComponent,
-    I18nPipe
+    I18nPipe,
+    OpsContextBarComponent,
+    PlatformCopyrightFooterComponent,
+    RightDrawerComponent
   ],
   declarations: [...COMPONENTS, ...HEADER_COMPONENTS, ...PASSPORT, ...DIRECTIVES],
-  exports: [...COMPONENTS, ...PASSPORT]
+  exports: [...COMPONENTS, ...PASSPORT, HeaderSetupGuideComponent]
 })
 export class LayoutModule {}

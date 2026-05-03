@@ -1,0 +1,102 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.platform-stage-meta-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+
+.platform-stage-meta-header--compact {
+  gap: 12px;
+}
+
+.platform-stage-meta-header-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.platform-stage-meta-header-title {
+  color: var(--ops-text-primary);
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.platform-stage-meta-header-description {
+  color: var(--ops-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.platform-stage-meta-header-trailing {
+  display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  align-items: center;
+}
+
+.platform-stage-meta-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.platform-stage-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--ops-border-color) 82%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ops-card-background) 86%, transparent);
+  color: var(--ops-text-secondary);
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.platform-stage-meta-chip--monospace {
+  font-family: var(--ops-font-mono, 'SFMono-Regular', ui-monospace, 'Menlo', 'Monaco', 'Cascadia Mono', 'Segoe UI Mono', monospace);
+}
+
+.platform-stage-meta-chip--accent {
+  color: var(--ops-primary);
+  border-color: color-mix(in srgb, var(--ops-primary) 32%, var(--ops-border-color));
+}
+
+.platform-stage-meta-chip--critical {
+  color: var(--ops-critical);
+  border-color: color-mix(in srgb, var(--ops-critical) 32%, var(--ops-border-color));
+}
+
+.platform-stage-meta-chip--success {
+  color: var(--ops-success);
+  border-color: color-mix(in srgb, var(--ops-success) 32%, var(--ops-border-color));
+}
+
+.platform-stage-meta-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .platform-stage-meta-header {
+    flex-direction: column;
+  }
+
+  .platform-stage-meta-header-trailing,
+  .platform-stage-meta-chip-list {
+    justify-content: flex-start;
+  }
+}

@@ -39,11 +39,11 @@ import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.dto.ServerInfo;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.AesUtil;
@@ -158,7 +158,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                                         .key(param.getField())
                                         .value(param.getParamValue())
                                         .type(param.getType()).build()).collect(Collectors.toList());
-                List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+                List<RuntimeParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.isNotBlank(item.getDefaultValue()))
                         .toList();
                 paramDefaultValue.forEach(defaultVar -> {

@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.reduce;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,7 +52,7 @@ public class AlarmSilenceReduce {
             alertSilenceList = alertSilenceDao.findAlertSilencesByEnableTrue();
             CacheFactory.setAlertSilenceCache(alertSilenceList);
         }
-        
+
         // Check each silence rule
         for (AlertSilence alertSilence : alertSilenceList) {
             // Check if alert matches silence rule
@@ -59,10 +60,10 @@ public class AlarmSilenceReduce {
             if (!match && groupAlert.getGroupLabels() != null) {
                 Map<String, String> labels = alertSilence.getLabels();
                 Map<String, String> alertLabels = groupAlert.getGroupLabels();
-                match = labels.entrySet().stream().anyMatch(item -> 
+                match = labels.entrySet().stream().anyMatch(item ->
                     alertLabels.containsKey(item.getKey()) && item.getValue().equals(alertLabels.get(item.getKey())));
             }
-            
+
             if (match) {
                 LocalDateTime now = LocalDateTime.now();
                 if (alertSilence.getType() == 0) {
@@ -75,7 +76,7 @@ public class AlarmSilenceReduce {
                 } else if (alertSilence.getType() == 1) {
                     // Cyclic silence rule
                     int currentDayOfWeek = now.getDayOfWeek().getValue();
-                    if (alertSilence.getDays() != null && alertSilence.getDays().contains((byte) currentDayOfWeek) 
+                    if (alertSilence.getDays() != null && alertSilence.getDays().contains((byte) currentDayOfWeek)
                             && !checkAndSave(now, alertSilence)) {
                         // Alert is silenced
                         return;
@@ -83,7 +84,7 @@ public class AlarmSilenceReduce {
                 }
             }
         }
-        
+
         // No matching silence rule, forward the alert
         dispatcherAlarm.dispatchAlarm(groupAlert);
     }
@@ -95,10 +96,35 @@ public class AlarmSilenceReduce {
      * @return true if alert should not be silenced, false if alert should be silenced
      */
     private boolean checkAndSave(LocalDateTime now, AlertSilence alertSilence) {
-        boolean startMatch = alertSilence.getPeriodStart() == null 
-                || now.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
-        boolean endMatch = alertSilence.getPeriodEnd() == null 
-                || now.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+        boolean startMatch;
+        boolean endMatch;
+        if (alertSilence.getType() == 1) {
+            LocalTime nowTime = now.toLocalTime();
+            LocalTime startTime = alertSilence.getPeriodStart() == null ? null : alertSilence.getPeriodStart().toLocalTime();
+            LocalTime endTime = alertSilence.getPeriodEnd() == null ? null : alertSilence.getPeriodEnd().toLocalTime();
+            if (startTime == null && endTime == null) {
+                startMatch = true;
+                endMatch = true;
+            } else if (startTime == null) {
+                startMatch = true;
+                endMatch = !nowTime.isAfter(endTime);
+            } else if (endTime == null) {
+                startMatch = !nowTime.isBefore(startTime);
+                endMatch = true;
+            } else if (!startTime.isAfter(endTime)) {
+                startMatch = !nowTime.isBefore(startTime);
+                endMatch = !nowTime.isAfter(endTime);
+            } else {
+                // Cross-midnight window, e.g. 23:00-02:00.
+                startMatch = !nowTime.isBefore(startTime) || !nowTime.isAfter(endTime);
+                endMatch = true;
+            }
+        } else {
+            startMatch = alertSilence.getPeriodStart() == null
+                    || now.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
+            endMatch = alertSilence.getPeriodEnd() == null
+                    || now.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+        }
 
         if (startMatch && endMatch) {
             int time = Optional.ofNullable(alertSilence.getTimes()).orElse(0);

@@ -1,0 +1,546 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ops-background: #0b0c0e;
+  --ops-surface-panel: #121317;
+  --ops-surface-raised: #16181d;
+  --ops-surface-elevated: #1a1c21;
+  --ops-border-color: #1f232b;
+  --ops-text-primary: #eef2f6;
+  --ops-text-secondary: #99a1b3;
+  --ops-text-tertiary: #727b8c;
+  --ops-primary: #4e74f8;
+  --ops-success: #4cb782;
+  --ops-warning: #c59857;
+  --ops-critical: #d86f5b;
+  --ops-radius-panel: 10px;
+  --ops-radius-compact: 6px;
+  --ops-panel-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  --ops-panel-shadow-strong: 0 8px 18px rgba(0, 0, 0, 0.16);
+
+  --background: 220 11% 5%;
+  --foreground: 210 25% 95%;
+  --card: 225 9% 7%;
+  --card-foreground: 210 25% 95%;
+  --popover: 220 11% 5%;
+  --popover-foreground: 210 25% 95%;
+  --primary: 226 92% 64%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 225 8% 10%;
+  --secondary-foreground: 210 25% 95%;
+  --muted: 223 11% 12%;
+  --muted-foreground: 218 13% 62%;
+  --accent: 225 8% 10%;
+  --accent-foreground: 210 25% 95%;
+  --destructive: 10 60% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 220 12% 14%;
+  --input: 220 12% 14%;
+  --ring: 226 92% 64%;
+  --radius: 10px;
+  --success: 148 43% 51%;
+  --warning: 36 46% 56%;
+
+  --hb-bg: hsl(var(--background));
+  --hb-canvas: hsl(var(--popover));
+  --hb-surface: hsl(var(--card));
+  --hb-surface-2: hsl(var(--secondary));
+  --hb-surface-3: hsl(var(--accent));
+  --hb-border: var(--ops-border-color);
+  --hb-border-strong: rgba(78, 116, 248, 0.32);
+  --hb-text: var(--ops-text-primary);
+  --hb-text-2: var(--ops-text-secondary);
+  --hb-text-3: hsl(var(--muted-foreground) / 0.68);
+  --hb-accent: var(--ops-primary);
+  --hb-accent-soft: rgba(78, 116, 248, 0.12);
+  --hb-success: var(--ops-success);
+  --hb-warning: var(--ops-warning);
+  --hb-danger: var(--ops-critical);
+  --hb-shadow: var(--ops-panel-shadow);
+  --hb-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --hb-mono: 'SFMono-Regular', ui-monospace, Menlo, Monaco, Consolas, monospace;
+}
+
+html[data-theme='light-ops'],
+body[data-theme='light-ops'],
+html[data-theme='compact'],
+body[data-theme='compact'] {
+  --background: 210 20% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 210 20% 99%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 221 70% 52%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 30% 96%;
+  --secondary-foreground: 222 47% 12%;
+  --muted: 210 24% 95%;
+  --muted-foreground: 215 16% 40%;
+  --accent: 214 32% 92%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 72% 54%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 21% 87%;
+  --input: 214 21% 87%;
+  --ring: 221 70% 52%;
+  --success: 154 60% 36%;
+  --warning: 35 88% 46%;
+  --hb-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme='compact'],
+body[data-theme='compact'] {
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: hsl(var(--border));
+  }
+
+  html,
+  body {
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    background: var(--ops-background);
+    color: var(--ops-text-primary);
+    font-family: var(--hb-font);
+  }
+
+  body {
+    @apply antialiased;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  textarea {
+    resize: none;
+  }
+
+  select:not([multiple]) {
+    -webkit-appearance: none;
+    appearance: none;
+    color-scheme: dark;
+    padding-right: 2rem;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #8f99ab 50%),
+      linear-gradient(135deg, #8f99ab 50%, transparent 50%);
+    background-position:
+      calc(100% - 14px) calc(50% - 2px),
+      calc(100% - 9px) calc(50% - 2px);
+    background-size:
+      5px 5px,
+      5px 5px;
+    background-repeat: no-repeat;
+  }
+
+  select option {
+    background: #101217;
+    color: #dbe4f0;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.3);
+    color: white;
+  }
+}
+
+@layer components {
+  .hb-shell {
+    @apply min-h-screen bg-transparent;
+  }
+
+  .hb-main {
+    @apply min-h-screen;
+  }
+
+  .hb-page {
+    @apply px-3 pb-3 pt-2.5;
+  }
+
+  .hb-layout {
+    @apply grid gap-3;
+  }
+
+  .hb-layout.two-col {
+    grid-template-columns: minmax(0, 1fr) minmax(288px, 320px);
+  }
+
+  .hb-side {
+    @apply grid content-start gap-3;
+  }
+
+  .hb-toolbar {
+    @apply flex flex-wrap items-end gap-2 border px-3 py-2;
+    border-radius: var(--ops-radius-compact);
+    background: var(--ops-surface-panel);
+    border-color: var(--ops-border-color);
+    box-shadow: none;
+  }
+
+  .hb-inline-actions {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .hb-kicker {
+    @apply text-[10px] font-medium uppercase tracking-[0.18em];
+    color: hsl(var(--muted-foreground) / 0.8);
+  }
+
+  .hb-select,
+  .hb-input {
+    @apply flex h-8 w-full border px-3 py-1.5 text-[12px] outline-none transition-colors;
+    border-radius: 3px;
+    border-color: #2b3039;
+    background-color: #101217;
+    color: #dbe4f0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .hb-select::placeholder,
+  .hb-input::placeholder {
+    color: var(--ops-text-tertiary);
+  }
+
+  .hb-select:focus,
+  .hb-input:focus {
+    background: var(--ops-surface-panel);
+    border-color: var(--ops-primary);
+    box-shadow: 0 0 0 2px rgba(78, 116, 248, 0.14);
+  }
+
+  .hb-btn {
+    @apply inline-flex h-8 items-center justify-center gap-1.5 border px-3 py-1.5 text-[12px] font-semibold transition;
+    border-radius: 2px;
+    border-color: var(--ops-border-color);
+    background: var(--ops-surface-raised);
+    color: var(--ops-text-primary);
+  }
+
+  .hb-btn:hover {
+    background: var(--ops-surface-elevated);
+  }
+
+  .hb-btn-primary {
+    border-color: var(--ops-primary);
+    background: var(--ops-primary);
+    color: white;
+    box-shadow: none;
+  }
+
+  .hb-btn-primary:hover {
+    filter: brightness(1.04);
+  }
+
+  .hertzbeat-date-picker-wrapper,
+  .hertzbeat-date-picker-wrapper .react-datepicker__input-container {
+    display: contents;
+  }
+
+  #hertzbeat-date-picker-portal,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) {
+    z-index: 80;
+  }
+
+  .hertzbeat-date-picker-panel *,
+  .hertzbeat-date-picker-panel *::before,
+  .hertzbeat-date-picker-panel *::after {
+    box-sizing: border-box;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker {
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: #101217;
+    color: #dbe4f0;
+    font-family: var(--hb-font);
+    box-shadow: none;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__month-container {
+    width: 258px;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__triangle {
+    display: none;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__header {
+    border-color: #252b34;
+    background: #101217;
+  }
+
+  .hertzbeat-date-picker-panel .react-datepicker__month {
+    margin: 0;
+    padding: 4px 8px 8px;
+    overflow-x: hidden;
+  }
+
+  .hertzbeat-date-picker-panel .react-datepicker__day-names,
+  .hertzbeat-date-picker-panel .react-datepicker__week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__current-month,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker-time__header,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker-year-header {
+    color: #dbe4f0;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__day-name,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__day,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__time-name {
+    color: #a9b0bb;
+    font-size: 11px;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__day {
+    border-radius: 3px;
+  }
+
+  .hertzbeat-date-picker-panel .react-datepicker__day-name,
+  .hertzbeat-date-picker-panel .react-datepicker__day {
+    display: grid;
+    width: 100%;
+    height: 28px;
+    margin: 0;
+    place-items: center;
+    line-height: 1;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__day:hover,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__month-text:hover,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__quarter-text:hover,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__year-text:hover {
+    background: #151b28;
+    color: #eef3ff;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__day--selected,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__day--keyboard-selected,
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected {
+    background: #182238;
+    color: #eef3ff;
+    outline: 1px solid #4e74f8;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__day--outside-month {
+    color: #555f70;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__navigation-icon::before {
+    border-color: #8f99ab;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__time-container {
+    border-color: #252b34;
+    background: #101217;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__time-container .react-datepicker__time {
+    background: #101217;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list {
+    scrollbar-color: #2b3039 #0d1015;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item {
+    height: 28px;
+    color: #a9b0bb;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item:hover {
+    background: #151b28;
+    color: #eef3ff;
+  }
+
+  :where(.hertzbeat-date-picker-popper, .hertzbeat-date-picker-panel) .react-datepicker__children-container {
+    width: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  .hertzbeat-time-column-scroll {
+    scrollbar-width: none;
+  }
+
+  .hertzbeat-time-column-scroll::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .hb-code {
+    @apply w-full rounded-2xl border p-4 font-mono text-xs leading-6 shadow-[inset_0_1px_0_rgba(255,255,255,.02)];
+    background: hsl(var(--popover) / 0.92);
+    border-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .hb-row-title {
+    @apply text-sm font-medium text-white;
+  }
+
+  .hb-row-copy {
+    @apply text-sm leading-6;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .hb-row-meta {
+    @apply text-xs leading-5;
+    color: hsl(var(--muted-foreground) / 0.76);
+  }
+
+  .hb-empty {
+    @apply rounded-[22px] border border-dashed px-5 py-8;
+    background: hsl(var(--card) / 0.52);
+    border-color: hsl(var(--border));
+  }
+
+  .hb-empty-title {
+    @apply text-base font-semibold text-white;
+  }
+
+  .hb-empty-copy {
+    @apply mt-2 max-w-2xl text-sm leading-6;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .hb-waterfall {
+    @apply overflow-hidden rounded-[22px] border;
+    background: hsl(var(--card) / 0.9);
+    border-color: hsl(var(--border));
+  }
+
+  .hb-waterfall-head,
+  .hb-waterfall-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.2fr) 90px minmax(0, 2fr);
+    gap: 14px;
+    align-items: center;
+  }
+
+  .hb-waterfall-head {
+    @apply border-b px-4 py-3 text-[10px] uppercase tracking-[0.16em];
+    border-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground) / 0.76);
+  }
+
+  .hb-waterfall-ruler {
+    @apply relative h-9 border-b;
+    background: hsl(var(--card) / 0.6);
+    border-color: hsl(var(--border));
+  }
+
+  .hb-waterfall-ruler::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(to right, transparent 0, transparent 52px, rgba(255, 255, 255, 0.06) 52px, rgba(255, 255, 255, 0.06) 53px);
+  }
+
+  .hb-waterfall-row {
+    @apply border-b px-4 py-3 transition;
+    border-color: hsl(var(--border));
+  }
+
+  .hb-waterfall-row:hover {
+    background: hsl(var(--accent) / 0.48);
+  }
+
+  .hb-waterfall-row:last-child {
+    @apply border-b-0;
+  }
+
+  .hb-waterfall-bar {
+    @apply relative h-3.5 overflow-hidden rounded-full;
+    background: hsl(var(--secondary));
+  }
+
+  .hb-waterfall-bar > span {
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, hsl(var(--primary) / 0.84), hsl(var(--primary)));
+  }
+
+  .hb-waterfall-bar.tone-danger > span {
+    background: linear-gradient(90deg, hsl(var(--destructive) / 0.78), hsl(var(--destructive)));
+  }
+}
+
+@layer utilities {
+  html,
+  body,
+  .hb-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+    scrollbar-gutter: stable;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  .hb-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track,
+  .hb-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb,
+  .hb-scrollbar::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: linear-gradient(180deg, hsl(var(--accent)), hsl(var(--secondary)));
+    background-clip: padding-box;
+  }
+
+  html::-webkit-scrollbar-thumb:hover,
+  body::-webkit-scrollbar-thumb:hover,
+  .hb-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(var(--ring) / 0.5), hsl(var(--accent)));
+    background-clip: padding-box;
+  }
+
+  html::-webkit-scrollbar-corner,
+  body::-webkit-scrollbar-corner,
+  .hb-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+@media (max-width: 1279px) {
+  .hb-layout.two-col {
+    grid-template-columns: 1fr;
+  }
+}

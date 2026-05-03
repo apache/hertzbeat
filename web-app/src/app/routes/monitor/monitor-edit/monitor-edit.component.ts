@@ -24,7 +24,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzUploadFile } from 'ng-zorro-antd/upload';
-import { of, throwError } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
@@ -37,11 +37,57 @@ import { AppDefineService } from '../../../service/app-define.service';
 import { CollectorService } from '../../../service/collector.service';
 import { LabelService } from '../../../service/label.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { MonitorRouteState } from '../shared/monitor-route-state.type';
 
 @Component({
-  selector: 'app-monitor-modify',
+  standalone: false,  selector: 'app-monitor-modify',
   templateUrl: './monitor-edit.component.html',
-  styles: []
+  styles: [
+    `
+      :host {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+      }
+
+      app-page-shell {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        width: 100%;
+        min-height: 0;
+        height: 100%;
+      }
+
+      .monitor-page-shell__content {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+        padding-right: 6px;
+      }
+
+      .monitor-page-shell__content-inner {
+        width: 100%;
+        max-width: 1320px;
+        margin: 0 auto;
+        padding-bottom: 32px;
+      }
+
+      @media (max-width: 768px) {
+        .monitor-page-shell__content {
+          padding-right: 0;
+        }
+      }
+    `
+  ]
 })
 export class MonitorEditComponent implements OnInit {
   constructor(
@@ -70,11 +116,29 @@ export class MonitorEditComponent implements OnInit {
   collector: string = '';
   isSpinning: boolean = false;
   spinningTip: string = 'Loading...';
+  routeState: MonitorRouteState = 'loading';
+  routeStateTitle: string = '';
+  routeStateDescription: string = '';
   labelKeys: string[] = [];
   labelMap: { [key: string]: string[] } = {};
   labelIsCustom: boolean = true;
 
+  get pageShellKicker(): string {
+    return this.i18nSvc.fanyi('monitor.form.shell.kicker');
+  }
+
+  get pageShellTitle(): string {
+    return this.monitor?.name || this.i18nSvc.fanyi('monitor.edit-monitor');
+  }
+
+  get pageShellCopy(): string {
+    return this.i18nSvc
+      .fanyi('monitor.form.shell.edit.copy')
+      .replace('{{instance}}', this.monitor?.instance || '-');
+  }
+
   ngOnInit(): void {
+    this.setLoadingState();
     this.route.paramMap
       .pipe(
         switchMap((paramMap: ParamMap) => {
@@ -107,13 +171,11 @@ export class MonitorEditComponent implements OnInit {
             if (message.code === 3) {
               // MONITOR_NOT_EXIST_CODE = 0x03
               this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable'), '');
-              setTimeout(() => {
-                this.router.navigateByUrl('/monitors');
-              }, 1500);
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('monitor.not-found'), message.msg);
             }
-            return throwError(this.i18nSvc.fanyi('monitor.not-found'));
+            this.setErrorState();
+            return EMPTY;
           }
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
         })
@@ -149,6 +211,8 @@ export class MonitorEditComponent implements OnInit {
                   } else {
                     param.paramValue = define.defaultValue;
                   }
+                } else if (define.type === 'number') {
+                  param.paramValue = null;
                 }
               } else {
                 if (define.type === 'boolean') {
@@ -157,6 +221,8 @@ export class MonitorEditComponent implements OnInit {
                   } else {
                     param.paramValue = false;
                   }
+                } else if (define.type === 'number') {
+                  param.paramValue = param.paramValue != null && param.paramValue !== '' ? Number(param.paramValue) : null;
                 }
               }
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
@@ -184,6 +250,7 @@ export class MonitorEditComponent implements OnInit {
             this.advancedParamDefines = [...advancedParamDefines];
           } else {
             console.warn(message.msg);
+            this.setErrorState();
           }
           return this.collectorSvc.getCollectors();
         })
@@ -194,6 +261,7 @@ export class MonitorEditComponent implements OnInit {
             this.collectors = message.data.content?.map((item: { collector: any }) => item.collector);
           } else {
             console.warn(message.msg);
+            this.setErrorState();
           }
           if (this.monitor.scrape == 'static') {
             return of({ code: 0, data: [], msg: '' });
@@ -234,6 +302,8 @@ export class MonitorEditComponent implements OnInit {
                     } else {
                       param.paramValue = define.defaultValue;
                     }
+                  } else if (define.type === 'number') {
+                    param.paramValue = null;
                   }
                 } else {
                   if (define.type === 'boolean') {
@@ -242,6 +312,8 @@ export class MonitorEditComponent implements OnInit {
                     } else {
                       param.paramValue = false;
                     }
+                  } else if (define.type === 'number') {
+                    param.paramValue = param.paramValue != null && param.paramValue !== '' ? Number(param.paramValue) : null;
                   }
                 }
                 define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.scrape}.param.${define.field}`);
@@ -259,14 +331,23 @@ export class MonitorEditComponent implements OnInit {
             }
           } else {
             console.warn(message.msg);
+            this.setErrorState();
           }
           this.isSpinning = false;
+          if (this.routeState !== 'error') {
+            this.setReadyState();
+          }
         },
         error => {
           this.isSpinning = false;
+          this.setErrorState();
         }
       );
     this.loadLabels();
+  }
+
+  retryInit(): void {
+    this.ngOnInit();
   }
 
   onScrapeChange(scrapeValue: string) {
@@ -308,6 +389,8 @@ export class MonitorEditComponent implements OnInit {
                 } else {
                   param.paramValue = define.defaultValue;
                 }
+              } else if (define.type === 'number') {
+                param.paramValue = null;
               }
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.scrape}.param.${define.field}`);
               if (define.placeholder == null && this.i18nSvc.fanyi(`monitor.${define.field}.tip`) != `monitor.${define.field}.tip`) {
@@ -381,7 +464,7 @@ export class MonitorEditComponent implements OnInit {
   }
 
   loadLabels() {
-    let labelsInit$ = this.labelSvc.loadLabels(undefined, undefined, 0, 9999).subscribe(
+    this.labelSvc.loadLabels(undefined, undefined, 0, 9999).subscribe(
       message => {
         if (message.code === 0) {
           let page = message.data;
@@ -401,12 +484,28 @@ export class MonitorEditComponent implements OnInit {
         } else {
           console.warn(message.msg);
         }
-        labelsInit$.unsubscribe();
       },
       error => {
-        labelsInit$.unsubscribe();
         console.error(error.msg);
       }
     );
+  }
+
+  private setLoadingState(): void {
+    this.routeState = 'loading';
+    this.routeStateTitle = this.i18nSvc.fanyi('monitor.route-state.loading.title');
+    this.routeStateDescription = this.i18nSvc.fanyi('monitor.route-state.loading.copy');
+  }
+
+  private setReadyState(): void {
+    this.routeState = 'ready';
+    this.routeStateTitle = '';
+    this.routeStateDescription = '';
+  }
+
+  private setErrorState(): void {
+    this.routeState = 'error';
+    this.routeStateTitle = this.i18nSvc.fanyi('monitor.route-state.error.title');
+    this.routeStateDescription = this.i18nSvc.fanyi('monitor.route-state.error.copy');
   }
 }

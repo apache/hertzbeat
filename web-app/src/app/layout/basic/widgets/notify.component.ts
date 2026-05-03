@@ -13,7 +13,7 @@ import { AlertService } from '../../../service/alert.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
 
 @Component({
-  selector: 'header-notify',
+  standalone: false,  selector: 'header-notify',
   template: `
     <div style="display: flex; align-items: center;">
       <ng-template #badgeTpl>

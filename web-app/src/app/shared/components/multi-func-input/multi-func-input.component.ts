@@ -22,7 +22,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { NzSizeLDSType } from 'ng-zorro-antd/core/types';
 
 @Component({
-  selector: 'app-multi-func-input',
+  standalone: false,  selector: 'app-multi-func-input',
   templateUrl: './multi-func-input.component.html',
   styleUrls: ['./multi-func-input.component.less'],
   providers: [
@@ -34,6 +34,8 @@ import { NzSizeLDSType } from 'ng-zorro-antd/core/types';
   ]
 })
 export class MultiFuncInputComponent implements ControlValueAccessor {
+  private static nextSuggestionId = 0;
+
   constructor() {}
 
   @ContentChild('prefix', { static: true }) prefix: TemplateRef<any> | undefined;
@@ -48,6 +50,7 @@ export class MultiFuncInputComponent implements ControlValueAccessor {
   @Input() groupStyle!: string;
   @Input() inputStyle!: string;
   @Input() placeholder!: string;
+  @Input() suggestions: string[] = [];
   @Input() allowClear: boolean = true;
   @Input() type: string = 'text';
   @Input() size: NzSizeLDSType = 'default';
@@ -56,6 +59,7 @@ export class MultiFuncInputComponent implements ControlValueAccessor {
 
   disabled: boolean = false;
   passwordVisible: boolean = false;
+  readonly suggestionListId = `multi-func-input-suggestions-${MultiFuncInputComponent.nextSuggestionId++}`;
 
   _onChange = (_: any) => {};
   _onTouched = () => {};
@@ -85,5 +89,9 @@ export class MultiFuncInputComponent implements ControlValueAccessor {
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+  }
+
+  get hasSuggestions(): boolean {
+    return (this.suggestions || []).length > 0;
   }
 }

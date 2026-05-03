@@ -17,142 +17,205 @@
   ~ under the License.
 -->
 
-<ng-container *ngTemplateOutlet="main; context: { hoverable: true, height: height, card: true }"></ng-container>
-
-<ng-template #main let-card="card" let-hoverable="hoverable" let-height="height">
+<ng-container *ngIf="card; else plainSurface">
   <nz-card
-    [nzHoverable]="hoverable"
+    class="monitor-workbench-card"
+    [nzHoverable]="true"
     [style]="{ height: height || '100%', display: 'flex', flexDirection: 'column' }"
     [nzBordered]="true"
     [nzBodyStyle]="{ overflow: !monitor ? 'hidden' : 'auto' }"
-    [nzTitle]="card ? card_title : ''"
+    [nzTitle]="card_title"
     [nzLoading]="!app || loading"
-    [nzExtra]="card ? (!monitor ? metrics_card_extra : monitor_card_extra) : ''"
+    [nzExtra]="!monitor ? metrics_card_extra : monitor_card_extra"
   >
-    <div *ngIf="!!monitor" class="monitor-detail-container">
-      <div class="monitor-basic-info">
-        <div class="monitor-info-header">
-          <div class="monitor-name">{{ monitor.name }}</div>
-          <nz-tag *ngIf="monitor.status == 0" [nzColor]="'#b2b2b2'" class="status-tag">
-            <i nz-icon nzType="meh" nzTheme="outline"></i>
-            <span>{{ 'monitor.status.paused' | i18n }}</span>
-          </nz-tag>
-          <nz-tag *ngIf="monitor.status == 1" [nzColor]="'#498765'" class="status-tag">
-            <i nz-icon nzType="smile" nzTheme="outline"></i>
-            <span>{{ 'monitor.status.up' | i18n }}</span>
-          </nz-tag>
-          <nz-tag *ngIf="monitor.status == 2" [nzColor]="'#fd4357'" class="status-tag">
-            <i nz-icon nzType="frown" nzTheme="outline"></i>
-            <span>{{ 'monitor.status.down' | i18n }}</span>
-          </nz-tag>
-        </div>
+    <ng-container *ngTemplateOutlet="cardContent"></ng-container>
+  </nz-card>
+</ng-container>
 
-        <div nz-row [nzGutter]="16">
-          <div nz-col [nzSpan]="24">
-            <nz-descriptions nzBordered [nzColumn]="{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }">
-              <nz-descriptions-item [nzTitle]="'ID'">{{ monitorId }}</nz-descriptions-item>
-              <nz-descriptions-item [nzTitle]="'monitor.period' | i18n">
-                <ng-container *ngIf="monitor.scheduleType === 'cron' && monitor.cronExpression; else showInterval">
-                  {{ monitor.cronExpression }}
-                </ng-container>
-                <ng-template #showInterval> {{ monitor.intervals }}s </ng-template>
-              </nz-descriptions-item>
-              <nz-descriptions-item [nzTitle]="'Instance'" [nzSpan]="2">{{ monitor.instance }}</nz-descriptions-item>
-              <nz-descriptions-item [nzTitle]="'label' | i18n" [nzSpan]="2">
-                <div class="tags-container">
-                  <ng-container *ngFor="let label of getObjectEntries(monitor.labels)">
-                    <nz-tag>{{ label[0] }}: {{ label[1] }}</nz-tag>
-                  </ng-container>
-                </div>
-              </nz-descriptions-item>
-              <nz-descriptions-item [nzTitle]="'monitor.detail.description' | i18n" [nzSpan]="2">
-                {{ monitor.description }}
-              </nz-descriptions-item>
-              <nz-descriptions-item [nzTitle]="'common.new-time' | i18n">
-                {{ monitor.gmtCreate | date : 'YYYY-MM-dd HH:mm:ss' }}
-              </nz-descriptions-item>
-              <nz-descriptions-item [nzTitle]="'common.edit-time' | i18n">
-                {{ monitor.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
-              </nz-descriptions-item>
-            </nz-descriptions>
+<ng-template #plainSurface>
+  <section class="monitor-workbench-surface monitor-workbench-surface--plain" [style.height]="height || '100%'">
+    <header class="monitor-workbench-surface__header">
+      <div class="monitor-workbench-card-title__copy">
+        <div class="monitor-workbench-card-title__kicker">{{ workbenchKicker }}</div>
+        <div class="monitor-workbench-card-title__title">{{ workbenchTitle }}</div>
+        <div class="monitor-workbench-card-title__summary">{{ workbenchCopy }}</div>
+      </div>
+      <div class="monitor-workbench-surface__meta">
+        <nz-tag class="monitor-workbench-card-title__badge">{{ sourceBadge }}</nz-tag>
+        <a
+          *ngIf="!!monitor"
+          class="monitor-workbench-surface__edit"
+          nz-icon
+          nzType="edit"
+          nzTheme="outline"
+          [routerLink]="['/monitors/' + monitorId + '/edit']"
+        ></a>
+      </div>
+    </header>
+    <ng-container *ngTemplateOutlet="cardContent"></ng-container>
+  </section>
+</ng-template>
+
+<ng-template #cardContent>
+  <app-platform-facts-strip
+    class="monitor-workbench-summary-strip"
+    *ngIf="!monitor && workbenchSummaryFactItems.length > 0"
+    [items]="workbenchSummaryFactItems"
+    [dense]="true"
+  ></app-platform-facts-strip>
+  <app-platform-summary-metric-grid
+    class="monitor-metric-snapshot-strip"
+    *ngIf="!monitor && metricSnapshotMetricItems.length > 0"
+    [items]="metricSnapshotMetricItems"
+  ></app-platform-summary-metric-grid>
+  <div *ngIf="!!monitor" class="monitor-detail-container">
+    <div class="monitor-basic-info">
+      <div class="monitor-info-header">
+        <div class="monitor-name">{{ monitor.name }}</div>
+        <nz-tag *ngIf="monitor.status == 0" class="status-tag status-tag--paused">
+          <i nz-icon nzType="meh" nzTheme="outline"></i>
+          <span>{{ 'monitor.status.paused' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="monitor.status == 1" class="status-tag status-tag--up">
+          <i nz-icon nzType="smile" nzTheme="outline"></i>
+          <span>{{ 'monitor.status.up' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="monitor.status == 2" class="status-tag status-tag--down">
+          <i nz-icon nzType="frown" nzTheme="outline"></i>
+          <span>{{ 'monitor.status.down' | i18n }}</span>
+        </nz-tag>
+      </div>
+
+      <div class="monitor-basic-facts">
+        <article class="monitor-basic-facts__item">
+          <span>ID</span>
+          <strong>{{ monitorId }}</strong>
+        </article>
+        <article class="monitor-basic-facts__item">
+          <span>{{ 'monitor.period' | i18n }}</span>
+          <strong>
+            <ng-container *ngIf="monitor.scheduleType === 'cron' && monitor.cronExpression; else showInterval">
+              {{ monitor.cronExpression }}
+            </ng-container>
+            <ng-template #showInterval> {{ monitor.intervals }}s </ng-template>
+          </strong>
+        </article>
+        <article class="monitor-basic-facts__item">
+          <span>{{ 'label' | i18n }}</span>
+          <strong>{{ getObjectLength(monitor.labels) }}</strong>
+        </article>
+        <article class="monitor-basic-facts__item">
+          <span>{{ 'annotation' | i18n }}</span>
+          <strong>{{ getObjectLength(monitor.annotations) }}</strong>
+        </article>
+      </div>
+
+      <div class="monitor-basic-meta">
+        <div class="monitor-basic-meta__row">
+          <span>{{ 'Instance' }}</span>
+          <strong>{{ monitor.instance }}</strong>
+        </div>
+        <div class="monitor-basic-meta__row" *ngIf="monitor.description">
+          <span>{{ 'monitor.detail.description' | i18n }}</span>
+          <strong>{{ monitor.description }}</strong>
+        </div>
+        <div class="monitor-basic-meta__row">
+          <span>{{ 'common.new-time' | i18n }}</span>
+          <strong>{{ monitor.gmtCreate | date : 'YYYY-MM-dd HH:mm:ss' }}</strong>
+        </div>
+        <div class="monitor-basic-meta__row">
+          <span>{{ 'common.edit-time' | i18n }}</span>
+          <strong>{{ monitor.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</strong>
+        </div>
+        <div class="monitor-basic-meta__row monitor-basic-meta__row--stacked" *ngIf="getObjectLength(monitor.labels) > 0">
+          <span>{{ 'label' | i18n }}</span>
+          <div class="tags-container">
+            <ng-container *ngFor="let label of getObjectEntries(monitor.labels)">
+              <nz-tag>{{ label[0] }}: {{ label[1] }}</nz-tag>
+            </ng-container>
           </div>
         </div>
       </div>
-
-      <div class="monitor-annotations" *ngIf="monitor.annotations && getObjectLength(monitor.annotations) > 0">
-        <h3 class="section-title">{{ 'annotation' | i18n }}</h3>
-        <nz-descriptions nzBordered [nzColumn]="1" [nzSize]="'small'">
-          <nz-descriptions-item *ngFor="let annotation of getObjectEntries(monitor.annotations)" [nzTitle]="annotation[0]">
-            {{ annotation[1] }}
-          </nz-descriptions-item>
-        </nz-descriptions>
-      </div>
     </div>
-    <nz-table
-      *ngIf="!monitor && isTable"
-      nzSize="small"
-      [nzNoResult]="'monitor.detail.chart.no-data' | i18n"
-      [nzFrontPagination]="false"
-      [nzShowPagination]="false"
-      [nzData]="valueRows"
-      [nzScroll]="height ? { y: scrollY } : { x: '100%' }"
-      #smallTable
-    >
-      <thead>
-        <tr>
-          <th style="text-align: center" *ngFor="let field of fields" nzWidth="100px">
-            {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
-            <nz-tag *ngIf="field.unit" [nzBordered]="false">{{ field.unit }}</nz-tag>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let valueRow of smallTable.data">
-          <td *ngFor="let value of valueRow.values; let i = index" nzEllipsis nz-tooltip [nzTooltipTitle]="contentTemplate">
-            <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
-            <ng-template #contentTemplate>
-              {{ value.origin }}
-              <nz-tag *ngIf="value.origin == null">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
-            </ng-template>
-          </td>
-        </tr>
-      </tbody>
-    </nz-table>
-    <nz-table
-      *ngIf="!monitor && !isTable"
-      nzSize="small"
-      [nzNoResult]="'monitor.detail.chart.no-data' | i18n"
-      [nzFrontPagination]="false"
-      [nzShowPagination]="false"
-      [nzData]="valueRows"
-      [nzScroll]="height ? { y: scrollY } : { x: '100%' }"
-    >
-      <thead>
-        <tr>
-          <th style="text-align: center">{{ 'common.name' | i18n }}</th>
-          <th style="text-align: center">{{ 'common.value' | i18n }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let field of fields; let i = index">
-          <td>
-            {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
-            <nz-tag *ngIf="field.unit" [nzBordered]="false">{{ field.unit }}</nz-tag>
-          </td>
-          <td
-            >{{ rowValues[i].origin }}
-            <nz-tag *ngIf="rowValues[i].origin == null">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
-          </td>
-        </tr>
-      </tbody>
-    </nz-table>
-  </nz-card>
+
+    <div class="monitor-annotations" *ngIf="monitor.annotations && getObjectLength(monitor.annotations) > 0">
+      <h3 class="section-title">{{ 'annotation' | i18n }}</h3>
+      <nz-descriptions nzBordered [nzColumn]="1" [nzSize]="'small'">
+        <nz-descriptions-item *ngFor="let annotation of getObjectEntries(monitor.annotations)" [nzTitle]="annotation[0]">
+          {{ annotation[1] }}
+        </nz-descriptions-item>
+      </nz-descriptions>
+    </div>
+  </div>
+  <nz-table
+    *ngIf="!monitor && isTable"
+    nzSize="small"
+    [nzNoResult]="'monitor.detail.chart.no-data' | i18n"
+    [nzFrontPagination]="false"
+    [nzShowPagination]="false"
+    [nzData]="valueRows"
+    [nzScroll]="height ? { y: scrollY } : { x: '100%' }"
+    #smallTable
+  >
+    <thead>
+      <tr>
+        <th style="text-align: center" *ngFor="let field of fields" nzWidth="100px">
+          {{ translateMetricLabel(field.name) }}
+          <nz-tag *ngIf="field.unit" [nzBordered]="false">{{ field.unit }}</nz-tag>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let valueRow of smallTable.data">
+        <td *ngFor="let value of valueRow.values; let i = index" nzEllipsis nz-tooltip [nzTooltipTitle]="contentTemplate">
+          <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+          <ng-template #contentTemplate>
+            {{ value.origin }}
+            <nz-tag *ngIf="value.origin == null">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
+          </ng-template>
+        </td>
+      </tr>
+    </tbody>
+  </nz-table>
+  <nz-table
+    *ngIf="!monitor && !isTable"
+    nzSize="small"
+    [nzNoResult]="'monitor.detail.chart.no-data' | i18n"
+    [nzFrontPagination]="false"
+    [nzShowPagination]="false"
+    [nzData]="valueRows"
+    [nzScroll]="height ? { y: scrollY } : { x: '100%' }"
+  >
+    <thead>
+      <tr>
+        <th style="text-align: center">{{ 'common.name' | i18n }}</th>
+        <th style="text-align: center">{{ 'common.value' | i18n }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let field of fields; let i = index">
+        <td>
+          {{ translateMetricLabel(field.name) }}
+          <nz-tag *ngIf="field.unit" [nzBordered]="false">{{ field.unit }}</nz-tag>
+        </td>
+        <td
+          >{{ rowValues[i].origin }}
+          <nz-tag *ngIf="rowValues[i].origin == null">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
+        </td>
+      </tr>
+    </tbody>
+  </nz-table>
 </ng-template>
 
 <ng-template #card_title>
-  <p style="font-size: small; text-align: left">
-    {{ !monitor ? ('monitor.app.' + app + '.metrics.' + metrics | i18nElse : metrics) : ('monitor.detail.basic' | i18n) }}
-  </p>
+  <div class="monitor-workbench-card-title">
+    <div class="monitor-workbench-card-title__copy">
+      <div class="monitor-workbench-card-title__kicker">{{ workbenchKicker }}</div>
+      <div class="monitor-workbench-card-title__title">{{ workbenchTitle }}</div>
+      <div class="monitor-workbench-card-title__summary">{{ workbenchCopy }}</div>
+    </div>
+    <nz-tag class="monitor-workbench-card-title__badge">{{ sourceBadge }}</nz-tag>
+  </div>
 </ng-template>
 
 <ng-template #monitor_card_extra>
@@ -203,7 +266,7 @@
   [nzClosable]="false"
   [nzStyle]="{ width: '90%', height: '90%' }"
   [nzFooter]="null"
-  [nzContent]="main"
+  [nzContent]="cardContent"
   [(nzVisible)]="showModal"
   (nzOnCancel)="showModal = false"
 >

@@ -1,9 +1,317 @@
 :host {
+  display: block;
+
   ::ng-deep {
     .ant-collapse-content-box {
       .ant-form-item:last-child {
-        margin-bottom: 0!important;
+        margin-bottom: 0 !important;
       }
     }
+
+    .monitor-form-layout {
+      .ant-form-item-label > label {
+        color: var(--ops-text-secondary);
+      }
+
+      .ant-input,
+      .ant-input-affix-wrapper,
+      .ant-input-number,
+      .ant-input-number-input,
+      .ant-select-selector,
+      .ant-picker {
+        background: var(--ops-surface-soft) !important;
+        border-color: var(--ops-border-color) !important;
+        color: var(--ops-text-primary) !important;
+      }
+
+      .ant-select-arrow,
+      .ant-picker-suffix,
+      .anticon {
+        color: var(--ops-text-tertiary);
+      }
+    }
+  }
+}
+
+.monitor-form-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.monitor-form-shell--embedded {
+  gap: 0;
+}
+
+.monitor-form-shell__header {
+  display: grid;
+  gap: 4px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--ops-border-color);
+}
+
+.monitor-form-shell__copy {
+  display: grid;
+  gap: 8px;
+}
+
+.monitor-form-shell__kicker {
+  color: var(--ops-text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.monitor-form-shell__title {
+  color: var(--ops-text-primary);
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.14;
+  font-weight: 700;
+}
+
+.monitor-form-shell__description {
+  max-width: 820px;
+  color: var(--ops-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.monitor-form-shell__stage {
+  padding: 12px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.monitor-form-shell--embedded .monitor-form-shell__stage {
+  padding: 12px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.monitor-form-layout {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.monitor-form-layout--wide {
+  max-width: 1280px;
+}
+
+.monitor-form-layout__body {
+  display: grid;
+  gap: 16px;
+}
+
+:host {
+  ::ng-deep {
+    .monitor-form-layout .ant-form-item-label.ant-col-4 {
+      flex: 0 0 132px;
+      max-width: 132px;
+    }
+
+    .monitor-form-layout .ant-form-item-control.ant-col-18 {
+      flex: 1 1 0;
+      max-width: calc(100% - 132px);
+    }
+
+    .monitor-form-layout__mode-row .ant-form-item-control.ant-col-18.ant-col-offset-3 {
+      margin-left: 132px;
+      max-width: calc(100% - 132px);
+    }
+  }
+}
+
+.monitor-form-layout__advanced {
+  margin-bottom: 4px;
+  padding: 0;
+  border-top: 1px solid var(--ops-border-color);
+  background: transparent;
+}
+
+.monitor-form-layout__actions {
+  margin-top: 18px;
+}
+
+.monitor-form-layout__actions-shell {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.monitor-form-layout__actions-shell--control-zone {
+  width: calc(100% - 132px);
+  margin-left: 132px;
+}
+
+.monitor-form-layout__actions-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+:host {
+  ::ng-deep {
+    .monitor-form-layout__advanced > .ant-collapse {
+      background: transparent;
+      border: 0;
+    }
+
+    .monitor-form-layout__advanced .ant-collapse-item {
+      border: 0;
+    }
+
+    .monitor-form-layout__advanced .ant-collapse-header {
+      padding: 12px 0 10px !important;
+    }
+
+    .monitor-form-layout__advanced .ant-collapse-content {
+      background: transparent;
+      border-top: 0;
+    }
+
+    .monitor-form-layout__advanced .ant-collapse-content-box {
+      padding: 12px 0 0 !important;
+    }
+
+    .monitor-form-layout__advanced .ant-btn-dashed,
+    .monitor-form-layout__actions .ant-btn-default,
+    .monitor-form-layout__actions .ant-btn-primary,
+    .monitor-form-layout .ant-upload .ant-btn {
+      border-radius: var(--ops-radius-compact, 6px);
+    }
+
+    .monitor-form-layout__actions .ant-btn {
+      min-width: 112px;
+    }
+
+    .monitor-form-layout__advanced .ant-btn-dashed {
+      border-color: var(--ops-border-color);
+      background: transparent;
+      color: var(--ops-text-secondary);
+    }
+
+    .monitor-form-layout__actions .ant-btn-default,
+    .monitor-form-layout .ant-upload .ant-btn {
+      border-color: var(--ops-border-color);
+      background: var(--ops-surface-raised);
+      color: var(--ops-text-primary);
+    }
+
+    .monitor-form-layout__actions .ant-btn-primary {
+      border-color: var(--ops-primary);
+      background: var(--ops-primary);
+      box-shadow: none;
+    }
+  }
+}
+
+.monitor-form-skeleton {
+  display: grid;
+  gap: 18px;
+  max-width: 1120px;
+  padding: 8px 0 12px;
+  margin: 0 auto;
+}
+
+.monitor-form-skeleton__hero,
+.monitor-form-skeleton__label,
+.monitor-form-skeleton__control,
+.monitor-form-skeleton__button {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--ops-surface-soft, #f4f7fb);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.14) 50%, transparent 100%);
+    transform: translateX(-100%);
+    animation: monitorFormSkeletonShimmer 1.6s ease-in-out infinite;
+  }
+}
+
+.monitor-form-skeleton__hero {
+  width: 42%;
+  height: 20px;
+}
+
+.monitor-form-skeleton__row {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.monitor-form-skeleton__label {
+  height: 16px;
+}
+
+.monitor-form-skeleton__control {
+  min-height: 46px;
+}
+
+.monitor-form-skeleton__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.monitor-form-skeleton__button {
+  width: 120px;
+  min-height: 40px;
+}
+
+.monitor-form-skeleton__button--ghost {
+  width: 96px;
+  opacity: 0.72;
+}
+
+@keyframes monitorFormSkeletonShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 768px) {
+  .monitor-form-shell__stage {
+    padding: 10px 0 0;
+  }
+
+  .monitor-form-shell--embedded .monitor-form-shell__stage {
+    padding: 10px 0 0;
+  }
+
+  .monitor-form-layout {
+    max-width: none;
+  }
+
+  .monitor-form-layout__actions-shell--control-zone {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  :host {
+    ::ng-deep {
+      .monitor-form-layout .ant-form-item-label.ant-col-4,
+      .monitor-form-layout .ant-form-item-control.ant-col-18,
+      .monitor-form-layout__mode-row .ant-form-item-control.ant-col-18.ant-col-offset-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-left: 0;
+      }
+    }
+  }
+
+  .monitor-form-skeleton__row {
+    grid-template-columns: 1fr;
   }
 }

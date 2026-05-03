@@ -17,8 +17,14 @@
  * under the License.
  */
 
+import { FormsModule } from '@angular/forms';
+import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ALAIN_I18N_TOKEN, SettingsService } from '@delon/theme';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 
+import { GeneralConfigService } from '../../../../service/general-config.service';
+import { ThemeService } from '../../../../service/theme.service';
 import { SystemConfigComponent } from './system-config.component';
 
 describe('SystemConfigComponent', () => {
@@ -27,12 +33,40 @@ describe('SystemConfigComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SystemConfigComponent]
+      imports: [FormsModule],
+      declarations: [SystemConfigComponent],
+      providers: [
+        {
+          provide: ALAIN_I18N_TOKEN,
+          useValue: {
+            fanyi: (key: string) => key,
+            loadLangData: () => of({}),
+            use: () => undefined
+          }
+        },
+        { provide: SettingsService, useValue: { setLayout: () => undefined } },
+        {
+          provide: GeneralConfigService,
+          useValue: {
+            getGeneralConfig: () => of({ code: 0, data: { locale: 'en_US', theme: 'default' } }),
+            getTimezones: () => of({ code: 0, data: [] }),
+            saveGeneralConfig: () => of({ code: 0, data: null })
+          }
+        },
+        {
+          provide: ThemeService,
+          useValue: {
+            getTheme: () => 'default',
+            resolveWorkbenchTheme: (theme: string) => theme,
+            setTheme: () => undefined
+          }
+        },
+        { provide: NzNotificationService, useValue: { success: () => undefined, error: () => undefined } }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SystemConfigComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   it('should create', () => {

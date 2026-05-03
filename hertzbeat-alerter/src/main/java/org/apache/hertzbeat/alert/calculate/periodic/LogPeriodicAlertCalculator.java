@@ -40,7 +40,7 @@ import java.util.Map;
 @Slf4j
 @Component
 public class LogPeriodicAlertCalculator {
-    
+
     private static final String ROWS = "__rows__";
 
     private final DataSourceService dataSourceService;
@@ -67,7 +67,8 @@ public class LogPeriodicAlertCalculator {
     private void doCalculate(AlertDefine define) {
         try {
             // Log-based queries are SQL queries with log-specific expressions
-            List<Map<String, Object>> results = dataSourceService.query(define.getDatasource(), define.getExpr());
+            List<Map<String, Object>> results = dataSourceService.query(define.getDatasource(), define.getExpr(),
+                    CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC);
             if (CollectionUtils.isEmpty(results)) {
                 return;
             }

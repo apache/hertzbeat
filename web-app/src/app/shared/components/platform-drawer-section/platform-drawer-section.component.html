@@ -1,0 +1,12 @@
+<section class="platform-drawer-section">
+  <header class="platform-drawer-section-header">
+    <div class="platform-drawer-section-title">{{ title }}</div>
+    <div class="platform-drawer-section-actions">
+      <ng-content select="[drawerSectionActions]"></ng-content>
+    </div>
+  </header>
+
+  <div class="platform-drawer-section-body">
+    <ng-content></ng-content>
+  </div>
+</section>

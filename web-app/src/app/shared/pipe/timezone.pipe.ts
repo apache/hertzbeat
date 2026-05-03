@@ -21,7 +21,7 @@ import { formatDate } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'timezone'
+  standalone: false,  name: 'timezone'
 })
 export class TimezonePipe implements PipeTransform {
   timeZone: string = 'Asia/Shanghai';

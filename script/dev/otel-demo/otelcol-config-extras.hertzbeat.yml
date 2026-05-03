@@ -1,0 +1,20 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Merge this file into the official OpenTelemetry Demo collector config
+# to forward all three signals into a local HertzBeat instance.
+
+exporters:
+  otlphttp/hertzbeat:
+    endpoint: ${env:HB_OTLP_ENDPOINT}
+    headers:
+      Authorization: Bearer ${env:HB_API_TOKEN}
+
+service:
+  pipelines:
+    traces:
+      exporters: [otlp, debug, spanmetrics, otlphttp/hertzbeat]
+    metrics:
+      exporters: [otlphttp/prometheus, debug, otlphttp/hertzbeat]
+    logs:
+      exporters: [opensearch, debug, otlphttp/hertzbeat]

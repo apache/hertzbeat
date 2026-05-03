@@ -21,6 +21,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
@@ -29,6 +30,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +47,9 @@ import java.time.temporal.TemporalAmount;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -71,13 +75,35 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     private final String expireTimeStr;
     private final String dbPath;
+    private final ScheduledExecutorService cleanerScheduler;
+    private final ExecutorService cleanerExecutor;
+    private final ScheduledDispatchTask cleanerTask;
     private HikariDataSource dataSource;
 
     public DuckdbDatabaseDataStorage(DuckdbProperties duckdbProperties) {
+        this(duckdbProperties, VirtualThreadProperties.defaults(), true);
+    }
+
+    @Autowired
+    public DuckdbDatabaseDataStorage(DuckdbProperties duckdbProperties,
+                                     VirtualThreadProperties virtualThreadProperties) {
+        this(duckdbProperties, virtualThreadProperties, true);
+    }
+
+    DuckdbDatabaseDataStorage(DuckdbProperties duckdbProperties,
+                              VirtualThreadProperties virtualThreadProperties,
+                              boolean autoStartCleaner) {
         this.dbPath = duckdbProperties.storePath();
         this.expireTimeStr = duckdbProperties.expireTime();
+        this.cleanerScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread thread = new Thread(r, "duckdb-cleaner");
+            thread.setDaemon(true);
+            return thread;
+        });
+        this.cleanerExecutor = createCleanerExecutor(virtualThreadProperties);
+        this.cleanerTask = new ScheduledDispatchTask(cleanerExecutor, this::runExpiredDataCleaner);
         this.serverAvailable = initDuckDb();
-        if (this.serverAvailable) {
+        if (this.serverAvailable && autoStartCleaner) {
             startExpiredDataCleaner();
         }
     }
@@ -131,60 +157,8 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
     }
 
     private void startExpiredDataCleaner() {
-        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread thread = new Thread(r, "duckdb-cleaner");
-            thread.setDaemon(true);
-            return thread;
-        });
         // Run every 1 hour
-        scheduledExecutor.scheduleAtFixedRate(() -> {
-            log.info("[duckdb] start data cleaner and checkpoint...");
-            long expireTime;
-            try {
-                // Ensure no whitespace issues
-                String cleanExpireStr = expireTimeStr == null ? "" : expireTimeStr.trim();
-                Matcher dayMatcher = DAY_PATTERN.matcher(cleanExpireStr);
-
-                if (NumberUtils.isParsable(cleanExpireStr)) {
-                    expireTime = NumberUtils.toLong(cleanExpireStr);
-                    expireTime = (ZonedDateTime.now().toEpochSecond() - expireTime) * 1000L;
-                } else if (dayMatcher.matches()) {
-                    // Strictly matched "90d" or "90D" format
-                    long days = Long.parseLong(dayMatcher.group(1));
-                    ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofDays(days));
-                    expireTime = dateTime.toEpochSecond() * 1000L;
-                } else {
-                    // Fallback to existing utility for other units (h, m, s, etc.)
-                    TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(cleanExpireStr);
-                    ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-                    expireTime = dateTime.toEpochSecond() * 1000L;
-                }
-            } catch (Exception e) {
-                log.error("expiredDataCleaner time error: {}. use default expire time to clean: 30d", e.getMessage());
-                ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofDays(30));
-                expireTime = dateTime.toEpochSecond() * 1000L;
-            }
-
-            try (Connection connection = this.dataSource.getConnection()) {
-                // 1. Delete expired data
-                try (PreparedStatement statement = connection.prepareStatement("DELETE FROM hzb_history WHERE record_time < ?")) {
-                    statement.setLong(1, expireTime);
-                    int rows = statement.executeUpdate();
-                    if (rows > 0) {
-                        log.info("[duckdb] delete {} expired records.", rows);
-                    }
-                }
-
-                // 2. Force Checkpoint to compress data and flush WAL
-                // This is crucial for keeping file size small and moving data from WAL to column store
-                try (Statement statement = connection.createStatement()) {
-                    statement.execute("CHECKPOINT");
-                }
-
-            } catch (Exception e) {
-                log.error("[duckdb] clean expired data error: {}", e.getMessage(), e);
-            }
-        }, 5, 60, TimeUnit.MINUTES);
+        cleanerScheduler.scheduleAtFixedRate(this::dispatchExpiredDataCleaner, 5, 60, TimeUnit.MINUTES);
     }
 
     @Override
@@ -272,6 +246,12 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+        return getHistoryMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+                                                         String history, Long start, Long end, String step) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             return instanceValuesMap;
@@ -290,16 +270,12 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
             AND metric = ?
             """);
 
-        long timeBefore = 0;
-        if (history != null) {
-            try {
-                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-                timeBefore = dateTime.toEpochSecond() * 1000L;
-                sqlBuilder.append(" AND record_time >= ?");
-            } catch (Exception e) {
-                log.error("parse history time error: {}", e.getMessage());
-            }
+        QueryWindow queryWindow = resolveQueryWindow(history, start, end);
+        if (queryWindow.startMillis() > 0) {
+            sqlBuilder.append(" AND record_time >= ?");
+        }
+        if (queryWindow.hasEnd()) {
+            sqlBuilder.append(" AND record_time <= ?");
         }
         sqlBuilder.append(" ORDER BY record_time DESC LIMIT 20000"); // Add safety limit for raw data
 
@@ -310,8 +286,12 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
             preparedStatement.setString(2, app);
             preparedStatement.setString(3, metrics);
             preparedStatement.setString(4, metric);
-            if (timeBefore > 0) {
-                preparedStatement.setLong(5, timeBefore);
+            int parameterIndex = 5;
+            if (queryWindow.startMillis() > 0) {
+                preparedStatement.setLong(parameterIndex++, queryWindow.startMillis());
+            }
+            if (queryWindow.hasEnd()) {
+                preparedStatement.setLong(parameterIndex, queryWindow.endMillis());
             }
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -333,33 +313,20 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history) {
+        return getHistoryIntervalMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+                                                                 String metric, String history, Long start, Long end,
+                                                                 String step) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             return instanceValuesMap;
         }
 
-        long timeBefore = 0;
-        long endTime = System.currentTimeMillis();
-        long interval = 0;
-
-        if (history != null) {
-            try {
-                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-                timeBefore = dateTime.toEpochSecond() * 1000L;
-                // Calculate bucket interval based on desired target points (e.g. 800 points on chart)
-                interval = (endTime - timeBefore) / TARGET_CHART_POINTS;
-                // Minimum interval 1 minute
-                if (interval < 60000) {
-                    interval = 60000;
-                }
-            } catch (Exception e) {
-                log.error("parse history time error: {}", e.getMessage());
-                // Fallback defaults
-                timeBefore = System.currentTimeMillis() - 24 * 60 * 60 * 1000L;
-                interval = 60 * 1000L;
-            }
-        }
+        QueryWindow queryWindow = resolveQueryWindow(history, start, end);
+        long interval = resolveIntervalMillis(queryWindow, step);
 
         // DuckDB Aggregation Query: Group by time bucket
         // We use casting to integer division for bucketing: (time / interval) * interval
@@ -372,7 +339,7 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
                 FIRST(str_value) AS str_val,
                 metric_type, labels
                 FROM hzb_history
-                WHERE instance = ? AND app = ? AND metrics = ? AND metric = ? AND record_time >= ?
+                WHERE instance = ? AND app = ? AND metrics = ? AND metric = ? AND record_time >= ? AND record_time <= ?
                 GROUP BY ts_bucket, metric_type, labels
                 ORDER BY ts_bucket""";
 
@@ -385,7 +352,8 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
             preparedStatement.setString(4, app);
             preparedStatement.setString(5, metrics);
             preparedStatement.setString(6, metric);
-            preparedStatement.setLong(7, timeBefore);
+            preparedStatement.setLong(7, queryWindow.startMillis());
+            preparedStatement.setLong(8, queryWindow.endMillis());
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
@@ -425,6 +393,65 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
         return instanceValuesMap;
     }
 
+    private QueryWindow resolveQueryWindow(String history, Long start, Long end) {
+        if (start != null && end != null && start > 0 && end > 0 && start < end) {
+            return new QueryWindow(start, end);
+        }
+        long endMillis = System.currentTimeMillis();
+        long startMillis;
+        try {
+            if (NumberUtils.isParsable(history)) {
+                startMillis = (ZonedDateTime.now().toEpochSecond() - NumberUtils.toLong(history)) * 1000L;
+            } else {
+                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
+                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
+                startMillis = dateTime.toEpochSecond() * 1000L;
+            }
+        } catch (Exception e) {
+            log.error("history time error: {}. use default: 6h", e.getMessage());
+            startMillis = endMillis - Duration.ofHours(6).toMillis();
+        }
+        return new QueryWindow(startMillis, endMillis);
+    }
+
+    private long resolveIntervalMillis(QueryWindow queryWindow, String step) {
+        Long parsedStep = parseStepMillis(step);
+        if (parsedStep != null && parsedStep > 0) {
+            return parsedStep;
+        }
+        long interval = (queryWindow.endMillis() - queryWindow.startMillis()) / TARGET_CHART_POINTS;
+        return Math.max(interval, Duration.ofMinutes(1).toMillis());
+    }
+
+    private Long parseStepMillis(String step) {
+        if (step == null || step.isBlank()) {
+            return null;
+        }
+        try {
+            String normalized = step.trim().toLowerCase(Locale.ROOT);
+            if (normalized.endsWith("ms")) {
+                return Long.parseLong(normalized.substring(0, normalized.length() - 2));
+            }
+            long value = Long.parseLong(normalized.substring(0, normalized.length() - 1));
+            String unit = normalized.substring(normalized.length() - 1);
+            return switch (unit) {
+                case "s" -> Duration.ofSeconds(value).toMillis();
+                case "m" -> Duration.ofMinutes(value).toMillis();
+                case "h" -> Duration.ofHours(value).toMillis();
+                case "d" -> Duration.ofDays(value).toMillis();
+                default -> null;
+            };
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private record QueryWindow(long startMillis, long endMillis) {
+        boolean hasEnd() {
+            return endMillis > 0;
+        }
+    }
+
     private String formatValue(int type, ResultSet resultSet) throws SQLException {
         if (type == CommonConstants.TYPE_NUMBER) {
             double v = resultSet.getDouble("double_value");
@@ -444,8 +471,151 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public void destroy() throws Exception {
+        cleanerScheduler.shutdownNow();
+        if (cleanerExecutor != null) {
+            cleanerExecutor.shutdownNow();
+        }
         if (this.dataSource != null) {
             this.dataSource.close();
+        }
+    }
+
+    void dispatchExpiredDataCleaner() {
+        cleanerTask.dispatch();
+    }
+
+    void beforeExpiredDataCleanerRun() {
+        // Test hook.
+    }
+
+    private ExecutorService createCleanerExecutor(VirtualThreadProperties virtualThreadProperties) {
+        VirtualThreadProperties properties =
+                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+        if (!properties.enabled()) {
+            return null;
+        }
+        return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+                .name("duckdb-cleaner-vt-", 0)
+                .uncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("[duckdb] cleaner worker has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .factory());
+    }
+
+    private void runExpiredDataCleaner() {
+        log.info("[duckdb] start data cleaner and checkpoint...");
+        beforeExpiredDataCleanerRun();
+        long expireTime;
+        try {
+            // Ensure no whitespace issues
+            String cleanExpireStr = expireTimeStr == null ? "" : expireTimeStr.trim();
+            Matcher dayMatcher = DAY_PATTERN.matcher(cleanExpireStr);
+
+            if (NumberUtils.isParsable(cleanExpireStr)) {
+                expireTime = NumberUtils.toLong(cleanExpireStr);
+                expireTime = (ZonedDateTime.now().toEpochSecond() - expireTime) * 1000L;
+            } else if (dayMatcher.matches()) {
+                // Strictly matched "90d" or "90D" format
+                long days = Long.parseLong(dayMatcher.group(1));
+                ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofDays(days));
+                expireTime = dateTime.toEpochSecond() * 1000L;
+            } else {
+                // Fallback to existing utility for other units (h, m, s, etc.)
+                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(cleanExpireStr);
+                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
+                expireTime = dateTime.toEpochSecond() * 1000L;
+            }
+        } catch (Exception e) {
+            log.error("expiredDataCleaner time error: {}. use default expire time to clean: 30d", e.getMessage());
+            ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofDays(30));
+            expireTime = dateTime.toEpochSecond() * 1000L;
+        }
+
+        try (Connection connection = this.dataSource.getConnection()) {
+            // 1. Delete expired data
+            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM hzb_history WHERE record_time < ?")) {
+                statement.setLong(1, expireTime);
+                int rows = statement.executeUpdate();
+                if (rows > 0) {
+                    log.info("[duckdb] delete {} expired records.", rows);
+                }
+            }
+
+            // 2. Force Checkpoint to compress data and flush WAL
+            // This is crucial for keeping file size small and moving data from WAL to column store
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("CHECKPOINT");
+            }
+
+        } catch (Exception e) {
+            log.error("[duckdb] clean expired data error: {}", e.getMessage(), e);
+        }
+    }
+
+    private static final class ScheduledDispatchTask {
+
+        private final ExecutorService executorService;
+        private final Runnable task;
+        private final Object lock = new Object();
+        private boolean running;
+        private int pendingRuns;
+
+        private ScheduledDispatchTask(ExecutorService executorService, Runnable task) {
+            this.executorService = executorService;
+            this.task = task;
+        }
+
+        private void dispatch() {
+            if (executorService == null) {
+                task.run();
+                return;
+            }
+            synchronized (lock) {
+                if (running) {
+                    pendingRuns++;
+                    return;
+                }
+                running = true;
+            }
+            submit();
+        }
+
+        private void submit() {
+            boolean submitted = false;
+            try {
+                executorService.execute(() -> {
+                    try {
+                        task.run();
+                    } finally {
+                        onComplete();
+                    }
+                });
+                submitted = true;
+            } finally {
+                if (!submitted) {
+                    synchronized (lock) {
+                        running = false;
+                        pendingRuns = 0;
+                    }
+                }
+            }
+        }
+
+        private void onComplete() {
+            boolean shouldRunAgain;
+            synchronized (lock) {
+                if (pendingRuns > 0) {
+                    pendingRuns--;
+                    shouldRunAgain = true;
+                } else {
+                    running = false;
+                    shouldRunAgain = false;
+                }
+            }
+            if (shouldRunAgain) {
+                submit();
+            }
         }
     }
 }

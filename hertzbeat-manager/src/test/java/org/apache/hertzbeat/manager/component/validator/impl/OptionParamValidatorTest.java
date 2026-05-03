@@ -19,8 +19,8 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -47,10 +47,10 @@ class OptionParamValidatorTest {
 
     @Test
     void validate_ValidOption() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("radio");
-        paramDefine.setOptions(List.of(new ParamDefine.Option("opt1", "val1"), new ParamDefine.Option("opt2", "val2")));
-        Param param = new Param();
+        paramDefine.setOptions(List.of(new ParamDefineInfo.OptionInfo("opt1", "val1"), new ParamDefineInfo.OptionInfo("opt2", "val2")));
+        MonitorParam param = new MonitorParam();
         param.setParamValue("val1");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
@@ -58,11 +58,11 @@ class OptionParamValidatorTest {
 
     @Test
     void validate_InvalidOption() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("radio");
         paramDefine.setField("method");
-        paramDefine.setOptions(List.of(new ParamDefine.Option("opt1", "val1")));
-        Param param = new Param();
+        paramDefine.setOptions(List.of(new ParamDefineInfo.OptionInfo("opt1", "val1")));
+        MonitorParam param = new MonitorParam();
         param.setParamValue("val2");
 
         assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));
@@ -70,10 +70,10 @@ class OptionParamValidatorTest {
 
     @Test
     void validate_NullOptions() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("radio");
         paramDefine.setField("method");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("val1");
 
         assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));

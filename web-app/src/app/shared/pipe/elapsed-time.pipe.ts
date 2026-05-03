@@ -17,18 +17,22 @@
  * under the License.
  */
 
-import { Pipe, PipeTransform } from '@angular/core';
-import { interval } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Inject, Pipe, PipeTransform } from '@angular/core';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 
 @Pipe({
-  name: 'elapsedTime'
+  standalone: false,  name: 'elapsedTime'
 })
 export class ElapsedTimePipe implements PipeTransform {
+  constructor(@Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
+
   transform(value: any, ...args: unknown[]): any {
     let timestamp = 0;
     if (value instanceof Date) {
       timestamp = value.getTime();
+    } else if (typeof value === 'number') {
+      timestamp = value;
     } else if (typeof value === 'string') {
       timestamp = new Date(value).getTime();
     }
@@ -39,13 +43,13 @@ export class ElapsedTimePipe implements PipeTransform {
     const hours = Math.floor(minutes / 60); // Extract hours
     const days = Math.floor(hours / 24); // Extract days
     if (days > 0) {
-      return `${days} day${days > 1 ? 's' : ''} ago`;
+      return this.i18nSvc.fanyi(days > 1 ? 'common.time.days-ago' : 'common.time.day-ago', { count: days });
     } else if (hours > 0) {
-      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+      return this.i18nSvc.fanyi(hours > 1 ? 'common.time.hours-ago' : 'common.time.hour-ago', { count: hours });
     } else if (minutes > 0) {
-      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+      return this.i18nSvc.fanyi(minutes > 1 ? 'common.time.minutes-ago' : 'common.time.minute-ago', { count: minutes });
     } else {
-      return 'just now';
+      return this.i18nSvc.fanyi('common.time.just-now');
     }
   }
 }

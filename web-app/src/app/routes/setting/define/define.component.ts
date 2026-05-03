@@ -31,7 +31,7 @@ import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
 
 @Component({
-  selector: 'app-define',
+  standalone: false,  selector: 'app-define',
   templateUrl: './define.component.html',
   styleUrls: ['./define.component.less']
 })
@@ -70,7 +70,9 @@ export class DefineComponent implements OnInit {
         this.loadAppDefineContent(this.currentApp);
       }
     });
-    this.theme = this.themeSvc.getTheme() || 'default';
+    this.theme = this.themeSvc.resolveWorkbenchTheme(this.themeSvc.getTheme());
+    this.dark = this.themeSvc.isDarkTheme(this.theme);
+    this.onDarkModeChange(this.dark);
     this.loadMenus();
     this.code = `${this.i18nSvc.fanyi('define.new.code')}\n\n\n\n\n`;
     this.originalCode = this.i18nSvc.fanyi('define.new.code');

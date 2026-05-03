@@ -1,0 +1,16 @@
+<div class="platform-drawer-toolbar">
+  <div class="platform-drawer-toolbar-leading">
+    <ng-content select="[drawerToolbarLeading]"></ng-content>
+
+    <div class="platform-drawer-toolbar-meta-group" *ngIf="badges.length > 0 || meta.length > 0">
+      <span class="platform-drawer-toolbar-badge" *ngFor="let badge of badges">{{ badge }}</span>
+      <span class="platform-drawer-toolbar-meta" *ngFor="let item of meta" [class.is-monospace]="item.monospace">
+        {{ item.text }}
+      </span>
+    </div>
+  </div>
+
+  <div class="platform-drawer-toolbar-actions">
+    <ng-content select="[drawerToolbarActions]"></ng-content>
+  </div>
+</div>

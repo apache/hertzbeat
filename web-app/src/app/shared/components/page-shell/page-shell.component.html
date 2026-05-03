@@ -1,0 +1,48 @@
+<section class="app-page-shell" [class.app-page-shell-with-aside]="showAside">
+  <header class="app-page-shell-header" *ngIf="!hideHeader">
+    <div class="app-page-shell-heading">
+      <div class="app-page-shell-kicker" *ngIf="kicker">{{ kicker }}</div>
+      <div class="app-page-shell-title">{{ title }}</div>
+      <div class="app-page-shell-subtitle" *ngIf="subtitle">{{ subtitle }}</div>
+      <ng-content select="[pageHero]"></ng-content>
+    </div>
+
+    <div class="app-page-shell-header-meta">
+      <ng-content select="[pageHeaderMeta]"></ng-content>
+    </div>
+
+    <div class="app-page-shell-actions">
+      <ng-content select="[pageHeaderActions]"></ng-content>
+      <button
+        *ngFor="let action of actions"
+        nz-button
+        type="button"
+        [nzType]="action.tone === 'primary' ? 'primary' : 'default'"
+        [nzDanger]="action.tone === 'danger'"
+        (click)="onActionSelect(action.key)"
+      >
+        {{ action.label }}
+      </button>
+    </div>
+  </header>
+
+  <div class="app-page-shell-body">
+    <main class="app-page-shell-content">
+      <ng-content select="[pageContent]"></ng-content>
+
+      <footer class="app-page-shell-footer app-page-shell-footer--content" *ngIf="useContentFooter">
+        <app-platform-copyright-footer></app-platform-copyright-footer>
+      </footer>
+    </main>
+
+    <aside class="app-page-shell-aside" *ngIf="showAside">
+      <ng-content select="[pageAside]"></ng-content>
+    </aside>
+  </div>
+
+  <footer class="app-page-shell-footer" *ngIf="useShellFooter">
+    <ng-content select="[pageFooter]">
+      <app-platform-copyright-footer></app-platform-copyright-footer>
+    </ng-content>
+  </footer>
+</section>

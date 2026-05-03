@@ -35,8 +35,9 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzTransferModule } from 'ng-zorro-antd/transfer';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
-import { MarkdownComponent } from 'ngx-markdown';
+import { MarkdownComponent, provideMarkdown } from 'ngx-markdown';
 
+import { SqlEditorModule } from '../../shared/components/sql-editor/sql-editor.module';
 import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertGroupConvergeComponent } from './alert-group/alert-group-converge.component';
 import { AlertInhibitComponent } from './alert-inhibit/alert-inhibit.component';
@@ -80,8 +81,10 @@ const COMPONENTS: Array<Type<void>> = [
     QueryBuilderModule,
     NzPaginationModule,
     NzEmptyModule,
-    MarkdownComponent
+    MarkdownComponent,
+    SqlEditorModule
   ],
+  providers: [provideMarkdown()],
   declarations: COMPONENTS
 })
 export class AlertModule {}

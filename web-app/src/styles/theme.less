@@ -2,32 +2,93 @@
 // - `default` Default theme
 // - `dark` Import the official dark less style file
 // - `compact` Import the official compact less style file
-@import '@delon/theme/theme-default.less';
-@import "ng-zorro-antd/code-editor/style/entry.less";
+@import './theme-vars.less';
 
-// ==========The following is the custom theme variable area==========
-// The theme parameters can be generated at https://ng-alain.github.io/ng-alain/
-// @primary-color: #f50;
-@primary-color: #3f51b5;
-@secondary-color: #8c8c8c;
-@highlight-blue: #d6e4ff;
-@success-green: #52c41a;
-@error-red: #f5222d;
-@font-size-base: 14px;
-@nz-table-rep-padding-vertical: 3px;
-@nz-table-rep-padding-horizontal: 3px;
-@alain-default-header-hg: 52px;
-@alain-default-header-bg: #3f51b5;
-@alain-default-header-padding: 8px;
-@alain-default-aside-nav-text-hover-color: #3f51b5;
-@alain-default-aside-nav-selected-text-color: #3f51b5;
-//@scrollbar-table-enabled: true;
-@router-animation-enabled: true;
-@common-background-color: #fff;
-@common-background-color-dark: #141414;
-@common-tint-gray: #f2f2f2;
-@common-tint-gray-dark: #333;
-@common-tint-border: #eee;
+:root,
+body[data-theme='dark-ops'],
+body[data-theme='dark'] {
+  --ops-background: #0a0c0f;
+  --ops-surface-canvas: #0d1014;
+  --ops-surface-panel: #12161c;
+  --ops-surface-raised: #161b22;
+  --ops-surface-elevated: #1b212a;
+  --ops-surface-soft: rgba(20, 24, 31, 0.94);
+  --ops-surface-spotlight: #12161c;
+  --ops-border-color: rgba(121, 130, 145, 0.18);
+  --ops-border-strong: rgba(138, 147, 163, 0.16);
+  --ops-text-primary: #e8edf5;
+  --ops-text-secondary: #a3acbc;
+  --ops-text-tertiary: #747f92;
+  --ops-primary: #6f7ea1;
+  --ops-success: #64866f;
+  --ops-warning: #9e865c;
+  --ops-critical: #b7776b;
+  --ops-panel-shadow: 0 1px 1px rgba(3, 6, 12, 0.16);
+  --ops-panel-shadow-strong: 0 6px 18px rgba(2, 6, 12, 0.14);
+  --ops-chart-axis: #8992a4;
+  --ops-chart-grid: rgba(128, 138, 155, 0.12);
+  --ops-chart-tooltip-bg: rgba(17, 21, 28, 0.98);
+  --ops-chart-tooltip-border: rgba(129, 139, 155, 0.22);
+  --ops-chart-tooltip-text: #e8edf5;
+  --ops-series-1: #6d86c5;
+  --ops-series-2: #5f9b8f;
+  --ops-series-3: #b7925e;
+  --ops-series-4: #c36f66;
+  --ops-series-5: #8a7bb6;
+  --ops-series-6: #6f94b9;
+  --ops-series-7: #7f9d67;
+  --ops-series-8: #b27d93;
+  --ops-radius-panel: 10px;
+  --ops-radius-compact: 6px;
+}
+
+body[data-theme='light-ops'],
+body[data-theme='default'],
+body[data-theme='compact'] {
+  --ops-background: #f4f6f8;
+  --ops-surface-canvas: #eef1f4;
+  --ops-surface-panel: #ffffff;
+  --ops-surface-raised: #f6f7f9;
+  --ops-surface-elevated: #eef1f4;
+  --ops-surface-soft: rgba(246, 247, 249, 0.94);
+  --ops-surface-spotlight: #ffffff;
+  --ops-border-color: rgba(96, 107, 126, 0.18);
+  --ops-border-strong: rgba(108, 118, 136, 0.16);
+  --ops-text-primary: #171c24;
+  --ops-text-secondary: #596375;
+  --ops-text-tertiary: #778091;
+  --ops-primary: #5f7195;
+  --ops-success: #587d64;
+  --ops-warning: #9f7a46;
+  --ops-critical: #b46b5f;
+  --ops-panel-shadow: 0 1px 1px rgba(18, 24, 33, 0.04);
+  --ops-panel-shadow-strong: 0 8px 20px rgba(18, 24, 33, 0.06);
+  --ops-chart-axis: #6e788a;
+  --ops-chart-grid: rgba(121, 131, 146, 0.15);
+  --ops-chart-tooltip-bg: rgba(255, 255, 255, 0.98);
+  --ops-chart-tooltip-border: rgba(118, 127, 143, 0.2);
+  --ops-chart-tooltip-text: #171c24;
+  --ops-series-1: #5874b2;
+  --ops-series-2: #4d8a73;
+  --ops-series-3: #b07f3f;
+  --ops-series-4: #bf6458;
+  --ops-series-5: #8477ad;
+  --ops-series-6: #6688a9;
+  --ops-series-7: #7d9861;
+  --ops-series-8: #ae778e;
+  --ops-radius-panel: 10px;
+  --ops-radius-compact: 6px;
+}
+
+html,
+body {
+  background: var(--ops-background);
+  color: var(--ops-text-primary);
+}
+
+body {
+  font-family: Inter, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
 
 .br-4,
 .ant-btn,
@@ -38,45 +99,227 @@
 .ant-select-selector,
 .ant-pagination-item,
 .ant-pagination-item-link,
-.ant-input, .ant-input-number, .ant-input-affix-wrapper {
-    border-radius: 4px!important;
-}
-.ant-radio-button-wrapper:first-child {
-    border-radius: 4px 0 0 4px!important;
-}
-.ant-radio-button-wrapper:last-child {
-    border-radius: 0 4px 4px 0!important;
+.ant-input,
+.ant-input-number,
+.ant-input-affix-wrapper {
+  border-radius: 2px !important;
 }
 
-.br-8, .ant-modal-header, .ant-modal-content {
-  border-radius: 6px;
+.br-8,
+.ant-modal-header,
+.ant-modal-content,
+.ant-drawer-content {
+  border-radius: 4px;
 }
 
-// bugfix https://github.com/apache/hertzbeat/issues/133
-.ant-form-item-has-error :not(.ant-input-disabled):not(.ant-input-borderless).ant-input, .ant-form-item-has-error :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper, .ant-form-item-has-error :not(.ant-input-disabled):not(.ant-input-borderless).ant-input:hover, .ant-form-item-has-error :not(.ant-input-affix-wrapper-disabled):not(.ant-input-affix-wrapper-borderless).ant-input-affix-wrapper:hover {
-  background: inherit;
+.ant-modal-content,
+.ant-modal-header,
+.ant-drawer-content,
+.ant-card,
+.ant-table,
+.ant-table-container,
+.ant-collapse,
+.ant-list-item,
+.ant-empty-normal {
+  background: var(--ops-surface-panel);
+  color: var(--ops-text-primary);
+  border-color: var(--ops-border-color);
 }
 
-.ant-radio-wrapper:hover .ant-radio,
-.ant-radio:hover .ant-radio-inner,
-.ant-radio-input:focus + .ant-radio-inner {
-  background: #ff4081;
-  border-color: #ff4081;
+.ant-input,
+.ant-input-number,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker,
+.ant-btn-default {
+  background: var(--ops-surface-raised);
+  border-color: var(--ops-border-color);
+  color: var(--ops-text-primary);
+}
+
+.ant-input::placeholder,
+.ant-select-selection-placeholder {
+  color: var(--ops-text-tertiary);
+}
+
+.ant-btn-primary {
+  background: var(--ops-primary);
+  border-color: var(--ops-primary);
+  box-shadow: none;
+}
+
+.ant-btn:not(.ant-btn-circle):not(.ant-btn-icon-only) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  height: 32px;
+  padding-inline: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 30px;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.ant-btn .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.ant-btn-default:hover,
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-select-selector:hover {
+  border-color: var(--ops-border-strong);
+  background: var(--ops-surface-elevated);
 }
 
 .ant-btn-dangerous.ant-btn-primary {
-  background: #ff4081;
-  border-color: #ff4081;
+  background: var(--ops-critical);
+  border-color: var(--ops-critical);
 }
 
-.ant-modal-footer {
-  text-align: center;
+.ant-table-thead > tr > th,
+.ant-table-tbody > tr > td {
+  background: transparent;
+  color: var(--ops-text-primary);
+  border-bottom-color: var(--ops-border-color);
 }
 
-.ant-modal-confirm .ant-modal-confirm-btns {
-  display: flex;
-  justify-content: center;
-  float: none;
+.ant-table-tbody > tr.ant-table-row:hover > td {
+  background: var(--ops-surface-elevated);
+}
+
+.ant-table-empty .ant-table-tbody > tr.ant-table-placeholder > td,
+.ant-table-tbody > tr.ant-table-placeholder > td,
+.ant-table-tbody > tr.ant-table-placeholder:hover > td {
+  background: var(--ops-surface-panel) !important;
+  color: var(--ops-text-secondary) !important;
+  border-bottom-color: var(--ops-border-color) !important;
+}
+
+.ant-table-cell-fix-left,
+.ant-table-cell-fix-right,
+.ant-table-sticky-scroll {
+  background: var(--ops-surface-panel) !important;
+}
+
+.ant-empty,
+.ant-empty-normal,
+.ant-empty-small {
+  color: var(--ops-text-secondary);
+}
+
+.ant-empty-description,
+.ant-empty-footer,
+.ant-empty-footer p {
+  color: var(--ops-text-secondary) !important;
+}
+
+.ant-empty-image,
+.ant-empty-image svg,
+.ant-empty-image img {
+  background: transparent;
+}
+
+.ant-empty-img-default-ellipse,
+.ant-empty-img-simple-ellipse {
+  fill: color-mix(in srgb, var(--ops-border-color) 88%, transparent 12%);
+}
+
+.ant-empty-img-default-path-1,
+.ant-empty-img-default-path-2,
+.ant-empty-img-default-path-3,
+.ant-empty-img-default-path-4,
+.ant-empty-img-default-path-5,
+.ant-empty-img-simple-path,
+.ant-empty-img-default-g,
+.ant-empty-img-simple-g {
+  fill: color-mix(in srgb, var(--ops-text-tertiary) 72%, transparent 28%);
+}
+
+.ant-tabs-tab {
+  color: var(--ops-text-secondary);
+}
+
+.ant-tabs > .ant-tabs-nav::before,
+.ant-tabs > div > .ant-tabs-nav::before {
+  border-bottom-color: var(--ops-border-color) !important;
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
+.ant-tabs-ink-bar {
+  color: var(--ops-text-primary);
+}
+
+.ant-tabs-ink-bar {
+  color: var(--ops-text-primary);
+  background: var(--ops-primary);
+}
+
+.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab,
+.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab {
+  background: transparent;
+  border-color: var(--ops-border-color);
+}
+
+.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active,
+.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab-active {
+  background: var(--ops-surface-panel) !important;
+  border-color: var(--ops-border-color);
+}
+
+.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn,
+.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--ops-text-primary);
+}
+
+.ant-tag {
+  border-color: var(--ops-border-color);
+  background: var(--ops-surface-elevated);
+  color: var(--ops-text-secondary);
+}
+
+.ant-dropdown-menu,
+.ant-dropdown-menu-submenu,
+.ant-menu,
+.ant-select-dropdown,
+.ant-popover-inner,
+.ant-tooltip-inner {
+  background: var(--ops-surface-panel);
+  color: var(--ops-text-primary);
+  border: 1px solid var(--ops-border-color);
+  box-shadow: var(--ops-panel-shadow);
+}
+
+.ant-dropdown-menu-item,
+.ant-dropdown-menu-submenu-title,
+.ant-menu-item,
+.ant-select-item {
+  color: var(--ops-text-secondary);
+}
+
+.ant-dropdown-menu-item:hover,
+.ant-dropdown-menu-submenu-title:hover,
+.ant-menu-item:hover,
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background: var(--ops-surface-elevated);
+  color: var(--ops-text-primary);
+}
+
+.ant-menu-item-selected,
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: color-mix(in srgb, var(--ops-primary) 12%, transparent);
+  color: var(--ops-text-primary);
+}
+
+.ant-divider-horizontal {
+  margin: 12px 0;
+  border-top-color: var(--ops-border-color);
 }
 
 .ant-tabs-content-holder {
@@ -86,32 +329,111 @@
   overflow: hidden;
 }
 
-.hoverClass {
-  &:hover {
-    transform: scale(114%);
-    transition: 0.2s;
-  }
+markdown,
+markdown * {
+  color: inherit;
 }
 
-.ant-divider-horizontal {
-  margin: 12px 0;
+markdown h1,
+markdown h2,
+markdown h3,
+markdown h4,
+markdown h5,
+markdown h6 {
+  color: var(--ops-text-primary);
 }
 
-.sidebar-nav__sub-arrow::before, .sidebar-nav__sub-arrow::after {
-  height: 2.5px
+markdown p,
+markdown li,
+markdown ul,
+markdown ol,
+markdown strong,
+markdown em,
+markdown blockquote {
+  color: var(--ops-text-secondary);
 }
 
-.content_bg_color {
-  background-color: white;
+markdown a {
+  color: var(--ops-primary);
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+markdown code {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--ops-surface-raised) 92%, transparent 8%);
+  color: var(--ops-text-primary);
+  border: 1px solid var(--ops-border-color);
 }
 
-.alain-default__header-logo-expanded, .alain-default__header-logo-collapsed {
+markdown pre {
+  margin: 12px 0 16px;
+  padding: 14px 16px;
+  overflow: auto;
+  border-radius: 8px;
+  background: var(--ops-surface-raised);
+  border: 1px solid var(--ops-border-color);
+}
+
+markdown pre code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ops-text-primary);
+}
+
+markdown blockquote {
+  margin: 16px 0;
+  padding: 10px 14px;
+  border-left: 2px solid var(--ops-border-strong);
+  background: color-mix(in srgb, var(--ops-surface-raised) 85%, transparent 15%);
+}
+
+markdown table {
+  width: 100%;
+  margin: 16px 0;
+  border-collapse: collapse;
+  background: var(--ops-surface-panel);
+}
+
+markdown .markdown-mermaid-diagram {
+  display: block;
+  margin: 12px 0 16px;
+  padding: 16px;
+  overflow: auto;
+  border: 1px solid var(--ops-border-color);
+  border-radius: 8px;
+  background: var(--ops-surface-raised);
+}
+
+markdown .markdown-mermaid-diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+markdown .markdown-mermaid-diagram--error {
+  border-color: color-mix(in srgb, var(--ops-critical) 40%, var(--ops-border-color) 60%);
+}
+
+markdown .markdown-mermaid-diagram--error pre {
+  margin: 0;
+}
+
+markdown th,
+markdown td {
+  padding: 10px 12px;
+  border: 1px solid var(--ops-border-color);
+  color: var(--ops-text-secondary);
+}
+
+markdown th {
+  background: var(--ops-surface-raised);
+  color: var(--ops-text-primary);
+}
+
+.alain-default__header-logo-expanded,
+.alain-default__header-logo-collapsed {
   max-width: 90%;
   max-height: 46px;
 }

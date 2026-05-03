@@ -17,6 +17,7 @@
   -->
 <configuration scan="true">
     <springProperty scope="context" name="application_name" source="spring.application.name" defaultValue="server"/>
+    <turboFilter class="org.apache.hertzbeat.startup.logging.HertzBeatLogCorrelationTurboFilter"/>
     <!-- Output logs to ConsoleAppender -->
     <appender name="CONSOLE_RAW" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -87,9 +88,7 @@
         <captureCodeAttributes>true</captureCodeAttributes>
 
         <!-- Capture MDC context values -->
-        <captureMdcAttributes>
-            <pattern>.*</pattern>
-        </captureMdcAttributes>
+        <captureMdcAttributes>*</captureMdcAttributes>
 
         <!-- Capture experimental attributes like exception details -->
         <captureExperimentalAttributes>true</captureExperimentalAttributes>
@@ -118,7 +117,7 @@
     <logger name="io.opentelemetry" level="info"/>
 
     <!-- Production environment configuration -->
-    <springProfile name="prod">
+    <springProfile name="prod | local">
         <root level="INFO">
             <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>

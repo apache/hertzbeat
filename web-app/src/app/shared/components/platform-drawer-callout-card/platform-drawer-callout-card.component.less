@@ -1,0 +1,74 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.platform-drawer-callout-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--ops-border-color) 78%, transparent);
+  background: transparent;
+}
+
+.platform-drawer-callout-card.is-empty {
+  justify-content: flex-start;
+}
+
+.platform-drawer-callout-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.platform-drawer-callout-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.platform-drawer-callout-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ops-text-primary);
+}
+
+.platform-drawer-callout-subtitle {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ops-text-secondary);
+}
+
+.platform-drawer-callout-body {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ops-text-secondary);
+}
+
+.platform-drawer-callout-detail {
+  font-size: 12px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ops-primary) 68%, var(--ops-text-secondary));
+  word-break: break-all;
+}
+
+.platform-drawer-callout-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.platform-drawer-callout-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ops-surface-elevated) 86%, transparent);
+  color: var(--ops-text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+}

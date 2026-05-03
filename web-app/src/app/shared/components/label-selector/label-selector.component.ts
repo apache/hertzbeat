@@ -23,7 +23,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LabelService } from '../../../service/label.service';
 
 @Component({
-  selector: 'app-label-selector',
+  standalone: false,  selector: 'app-label-selector',
   templateUrl: './label-selector.component.html',
   styleUrls: ['./label-selector.component.less'],
   providers: [

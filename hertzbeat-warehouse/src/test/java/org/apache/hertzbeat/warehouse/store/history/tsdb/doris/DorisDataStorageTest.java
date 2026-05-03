@@ -96,7 +96,7 @@ class DorisDataStorageTest {
         assertThat(sql).contains("span_id = ?");
         assertThat(sql).contains("severity_number = ?");
         assertThat(sql).contains("severity_text = ?");
-        assertThat(sql).contains("body LIKE ?");
+        assertThat(sql).contains("(body LIKE ? OR attributes LIKE ? OR resource LIKE ?)");
         assertThat(sql).contains("ORDER BY time_unix_nano DESC");
 
         verify(context.queryPreparedStatement()).setObject(1, 1000L * NANOS_PER_MILLISECOND);
@@ -106,6 +106,8 @@ class DorisDataStorageTest {
         verify(context.queryPreparedStatement()).setObject(5, 9);
         verify(context.queryPreparedStatement()).setObject(6, "INFO");
         verify(context.queryPreparedStatement()).setObject(7, "%error%");
+        verify(context.queryPreparedStatement()).setObject(8, "%error%");
+        verify(context.queryPreparedStatement()).setObject(9, "%error%");
     }
 
     @Test

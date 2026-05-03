@@ -41,15 +41,16 @@ import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.EntityMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.component.validator.ParamValidatorManager;
 import org.apache.hertzbeat.manager.service.helper.MonitorImExportHelper;
@@ -140,6 +141,9 @@ class MonitorServiceTest {
     private CollectorMonitorBindDao collectorMonitorBindDao;
 
     @Mock
+    private EntityMonitorBindDao entityMonitorBindDao;
+
+    @Mock
     private ApplicationContext applicationContext;
 
     @Mock
@@ -150,6 +154,14 @@ class MonitorServiceTest {
      */
     @BeforeEach
     public void setUp() {
+    }
+
+    private ParamDefineInfo newParamDefine(String field, String type, boolean required) {
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
+        paramDefine.setField(field);
+        paramDefine.setType(type);
+        paramDefine.setRequired(required);
+        return paramDefine;
     }
 
     @Test
@@ -271,11 +283,8 @@ class MonitorServiceTest {
         Boolean isModify = true;
         Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
-        List<ParamDefine> paramDefines = new ArrayList<>();
-        ParamDefine pd = ParamDefine.builder()
-                .required(true)
-                .field(field)
-                .build();
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
+        ParamDefineInfo pd = newParamDefine(field, null, true);
         paramDefines.add(pd);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         try {
@@ -304,13 +313,9 @@ class MonitorServiceTest {
         Boolean isModify = true;
         Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
-        List<ParamDefine> paramDefines = new ArrayList<>();
-        ParamDefine paramDefine = ParamDefine.builder()
-                .required(true)
-                .type("number")
-                .range("[0,233]")
-                .field(field)
-                .build();
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
+        ParamDefineInfo paramDefine = newParamDefine(field, "number", true);
+        paramDefine.setRange("[0,233]");
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         doThrow(new IllegalArgumentException("Params field " + field + " type "
@@ -343,13 +348,9 @@ class MonitorServiceTest {
         Boolean isModify = true;
         Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
-        List<ParamDefine> paramDefines = new ArrayList<>();
-        ParamDefine paramDefine = ParamDefine.builder()
-                .required(true)
-                .type("number")
-                .range("[0,233]")
-                .field(field)
-                .build();
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
+        ParamDefineInfo paramDefine = newParamDefine(field, "number", true);
+        paramDefine.setRange("[0,233]");
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         doThrow(new IllegalArgumentException("Params field " + field + " type "
@@ -382,14 +383,10 @@ class MonitorServiceTest {
         Boolean isModify = true;
         Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
-        List<ParamDefine> paramDefines = new ArrayList<>();
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
         Short limit = 3;
-        ParamDefine paramDefine = ParamDefine.builder()
-                .required(true)
-                .type("text")
-                .limit(limit)
-                .field(field)
-                .build();
+        ParamDefineInfo paramDefine = newParamDefine(field, "text", true);
+        paramDefine.setLimit(limit);
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         doThrow(new IllegalArgumentException("Params field " + field + " type "
@@ -428,14 +425,10 @@ class MonitorServiceTest {
         Boolean isModify = true;
         Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
-        List<ParamDefine> paramDefines = new ArrayList<>();
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
         Short limit = 3;
-        ParamDefine paramDefine = ParamDefine.builder()
-                .required(true)
-                .type("host")
-                .limit(limit)
-                .field(field)
-                .build();
+        ParamDefineInfo paramDefine = newParamDefine(field, "host", true);
+        paramDefine.setLimit(limit);
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         if (checkException) {
@@ -478,15 +471,11 @@ class MonitorServiceTest {
         Boolean isModify = true;
         Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
-        List<ParamDefine> paramDefines = new ArrayList<>();
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
         Short limit = 3;
         String type = "boolean";
-        ParamDefine paramDefine = ParamDefine.builder()
-                .required(true)
-                .type(type)
-                .limit(limit)
-                .field(field)
-                .build();
+        ParamDefineInfo paramDefine = newParamDefine(field, type, true);
+        paramDefine.setLimit(limit);
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         if (checkException) {
@@ -529,19 +518,15 @@ class MonitorServiceTest {
         Boolean isModify = true;
         Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
-        List<ParamDefine> paramDefines = new ArrayList<>();
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
         Short limit = 3;
         String type = "radio";
 
-        List<ParamDefine.Option> options = new ArrayList<>();
-        options.add(new ParamDefine.Option("language", "zh"));
-        ParamDefine paramDefine = ParamDefine.builder()
-                .required(true)
-                .type(type)
-                .limit(limit)
-                .field(field)
-                .options(options)
-                .build();
+        List<ParamDefineInfo.OptionInfo> options = new ArrayList<>();
+        options.add(new ParamDefineInfo.OptionInfo("language", "zh"));
+        ParamDefineInfo paramDefine = newParamDefine(field, type, true);
+        paramDefine.setLimit(limit);
+        paramDefine.setOptions(options);
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         if (checkException) {
@@ -585,19 +570,15 @@ class MonitorServiceTest {
         Boolean isModify = true;
         Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
-        List<ParamDefine> paramDefines = new ArrayList<>();
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
         Short limit = 3;
         String type = "none";
 
-        List<ParamDefine.Option> options = new ArrayList<>();
-        options.add(new ParamDefine.Option("language", "zh"));
-        ParamDefine paramDefine = ParamDefine.builder()
-                .required(true)
-                .type(type)
-                .limit(limit)
-                .field(field)
-                .options(options)
-                .build();
+        List<ParamDefineInfo.OptionInfo> options = new ArrayList<>();
+        options.add(new ParamDefineInfo.OptionInfo("language", "zh"));
+        ParamDefineInfo paramDefine = newParamDefine(field, type, true);
+        paramDefine.setLimit(limit);
+        paramDefine.setOptions(options);
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         if (checkException) {
@@ -651,7 +632,7 @@ class MonitorServiceTest {
         Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
                 .id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOkMonitor));
-        when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
+        when(monitorDao.save(any(Monitor.class))).thenThrow(RuntimeException.class);
 
         assertThrows(MonitorDatabaseException.class,
                 () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
@@ -686,6 +667,7 @@ class MonitorServiceTest {
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
         assertDoesNotThrow(() -> monitorService.deleteMonitors(ids));
+        verify(entityMonitorBindDao).deleteAllByMonitorIdIn(ids);
     }
 
     @Test

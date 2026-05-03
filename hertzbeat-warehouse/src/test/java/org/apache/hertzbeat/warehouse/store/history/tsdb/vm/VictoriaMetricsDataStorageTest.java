@@ -21,6 +21,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +42,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -50,7 +53,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -184,6 +191,44 @@ class VictoriaMetricsDataStorageTest {
                                 .isGreaterThanOrEqualTo(threadCount * writeSize / bufferSize));
     }
 
+    @Test
+    void testGetHistoryMetricDataUsesAbsoluteRange() {
+        ResponseEntity<String> exportResponse = new ResponseEntity<>(createVictoriaMetricsExportBody(), HttpStatus.OK);
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(exportResponse);
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.getHistoryMetricData("127.0.0.1:8080", "linux", "summary", "responseTime",
+                "6h", 1712730000000L, 1712733600000L, "120s");
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate).exchange(uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        String uri = uriCaptor.getValue().toString();
+        assertThat(uri).contains("start=1712730000");
+        assertThat(uri).contains("end=1712733600");
+        assertThat(uri).doesNotContain("now-6h");
+    }
+
+    @Test
+    void testGetHistoryIntervalMetricDataUsesAbsoluteRangeAndStep() {
+        ResponseEntity<PromQlQueryContent> rangeResponse = new ResponseEntity<>(createPromQlQueryContent(), HttpStatus.OK);
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(PromQlQueryContent.class))).thenReturn(rangeResponse);
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        victoriaMetricsDataStorage.getHistoryIntervalMetricData("127.0.0.1:8080", "linux", "summary",
+                "responseTime", "6h", 1712730000000L, 1712733600000L, "120s");
+
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate, times(4)).exchange(uriCaptor.capture(), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(PromQlQueryContent.class));
+        for (URI uri : uriCaptor.getAllValues()) {
+            assertThat(uri.toString()).contains("start=1712730000");
+            assertThat(uri.toString()).contains("end=1712733600");
+            assertThat(uri.toString()).contains("step=120s");
+        }
+    }
+
     @AfterEach
     void stop() {
         if (victoriaMetricsDataStorage != null) {
@@ -242,4 +287,25 @@ class VictoriaMetricsDataStorageTest {
         return mockMetricsData;
     }
 
+    private static String createVictoriaMetricsExportBody() {
+        return """
+                {"metric":{"__name__":"summary_responseTime","instance":"127.0.0.1:8080","__metric__":"responseTime"},"values":[85.5],"timestamps":[1712730000000]}
+                """;
+    }
+
+    private static PromQlQueryContent createPromQlQueryContent() {
+        PromQlQueryContent content = new PromQlQueryContent();
+        PromQlQueryContent.ContentData data = new PromQlQueryContent.ContentData();
+        PromQlQueryContent.ContentData.Content result = new PromQlQueryContent.ContentData.Content();
+        Map<String, String> metric = new HashMap<>();
+        metric.put("__name__", "summary_responseTime");
+        metric.put("instance", "127.0.0.1:8080");
+        result.setMetric(metric);
+        List<Object[]> values = new ArrayList<>();
+        values.add(new Object[]{1712730000L, "85.5"});
+        result.setValues(values);
+        data.setResult(List.of(result));
+        content.setData(data);
+        return content;
+    }
 }

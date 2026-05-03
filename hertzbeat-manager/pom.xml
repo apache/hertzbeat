@@ -86,15 +86,11 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-grafana</artifactId>
         </dependency>
-        <!-- log otel -->
-        <dependency>
-            <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-otel</artifactId>
-        </dependency>
         <!-- log -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-log</artifactId>
+            <artifactId>hertzbeat-observability</artifactId>
+            <scope>test</scope>
         </dependency>
         <!-- spring -->
         <dependency>
@@ -215,6 +211,21 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>1.65.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>1.65.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>1.65.1</version>
         </dependency>
     </dependencies>
 

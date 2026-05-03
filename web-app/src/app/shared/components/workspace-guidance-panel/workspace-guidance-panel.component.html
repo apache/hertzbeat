@@ -1,0 +1,40 @@
+<app-platform-support-panel class="workspace-guidance-panel" [title]="headline" [subtitle]="description" [actionLabel]="startLabel" [expanded]="true">
+  <div class="workspace-guidance-start" *ngIf="primaryAction || secondaryAction">
+    <div class="workspace-guidance-actions">
+      <button
+        *ngIf="primaryAction"
+        nz-button
+        [nzType]="primaryAction.tone === 'default' ? 'default' : 'primary'"
+        type="button"
+        [disabled]="primaryAction.disabled"
+        (click)="runAction(primaryAction)"
+      >
+        {{ primaryAction.label }}
+      </button>
+      <button
+        *ngIf="secondaryAction"
+        nz-button
+        [nzType]="secondaryAction.tone === 'primary' ? 'primary' : 'default'"
+        type="button"
+        [disabled]="secondaryAction.disabled"
+        (click)="runAction(secondaryAction)"
+      >
+        {{ secondaryAction.label }}
+      </button>
+    </div>
+  </div>
+
+  <div class="workspace-guidance-section" *ngIf="reasons.length > 0">
+    <div class="workspace-guidance-section-title">{{ reasonsLabel }}</div>
+    <app-platform-facts-strip class="workspace-guidance-reasons" [items]="reasonFacts" [dense]="true"></app-platform-facts-strip>
+  </div>
+
+  <div class="workspace-guidance-section" *ngIf="nextLinks.length > 0">
+    <div class="workspace-guidance-section-title">{{ nextLabel }}</div>
+    <app-platform-support-link-list
+      class="workspace-guidance-next-links"
+      [items]="nextLinkItems"
+      (itemSelected)="nextSelected.emit($event)"
+    ></app-platform-support-link-list>
+  </div>
+</app-platform-support-panel>

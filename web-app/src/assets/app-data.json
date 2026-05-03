@@ -10,8 +10,111 @@
   },
   "menu": [
     {
-      "text": "Guide",
-      "i18n": "menu.main",
+      "text": "Home",
+      "i18n": "menu.home",
+      "group": true,
+      "hideInBreadcrumb": true,
+      "children": [
+        {
+          "text": "Home",
+          "i18n": "menu.home",
+          "icon": "anticon-home",
+          "link": "/overview"
+        }
+      ]
+    },
+    {
+      "key": "objects",
+      "text": "Objects",
+      "i18n": "menu.entity",
+      "group": true,
+      "hideInBreadcrumb": true,
+      "children": [
+        {
+          "text": "Object-directory",
+          "i18n": "menu.entity.center",
+          "icon": "anticon-partition",
+          "link": "/entities"
+        },
+        {
+          "text": "Discovery",
+          "i18n": "menu.entity.discovery",
+          "icon": "anticon-cluster",
+          "link": "/entities/discovery"
+        },
+        {
+          "text": "Definitions",
+          "i18n": "menu.entity.definition",
+          "icon": "anticon-file-text",
+          "link": "/entities/import"
+        }
+      ]
+    },
+    {
+      "text": "Alerting",
+      "i18n": "menu.alert",
+      "group": true,
+      "hideInBreadcrumb": true,
+      "children": [
+        {
+          "text": "Center",
+          "i18n": "menu.alert.center",
+          "icon": "anticon-alert",
+          "link": "/alert/center"
+        },
+        {
+          "text": "Threshold",
+          "i18n": "menu.alert.setting",
+          "icon": "anticon-calculator",
+          "link": "/alert/setting"
+        },
+        {
+          "text": "Integration",
+          "i18n": "menu.alert.integration",
+          "icon": "anticon-api",
+          "link": "/alert/integration/webhook"
+        },
+        {
+          "text": "Group",
+          "i18n": "menu.alert.group",
+          "icon": "anticon-filter",
+          "link": "/alert/group"
+        },
+        {
+          "text": "Inhibition",
+          "i18n": "menu.alert.inhibit",
+          "icon": "anticon-delete-column",
+          "link": "/alert/inhibit"
+        },
+        {
+          "text": "Silence",
+          "i18n": "menu.alert.silence",
+          "icon": "anticon-audio-muted",
+          "link": "/alert/silence"
+        },
+        {
+          "text": "Incidents",
+          "i18n": "menu.incidents",
+          "icon": "anticon-thunderbolt",
+          "link": "/incidents"
+        },
+        {
+          "text": "Actions",
+          "i18n": "menu.actions",
+          "icon": "anticon-play-circle",
+          "link": "/actions"
+        },
+        {
+          "text": "Notice",
+          "i18n": "menu.alert.dispatch",
+          "icon": "anticon-notification",
+          "link": "/alert/notice"
+        }
+      ]
+    },
+    {
+      "text": "Dashboards",
+      "i18n": "menu.dashboard",
       "group": true,
       "hideInBreadcrumb": true,
       "children": [
@@ -20,6 +123,51 @@
           "i18n": "menu.dashboard",
           "icon": "anticon-dashboard",
           "link": "/dashboard"
+        }
+      ]
+    },
+    {
+      "key": "observability",
+      "text": "Observability",
+      "i18n": "menu.observability",
+      "group": true,
+      "hideInBreadcrumb": true,
+      "children": [
+        {
+          "text": "Otlp-center",
+          "i18n": "menu.ingestion.center",
+          "icon": "anticon-api",
+          "link": "/ingestion/otlp"
+        },
+        {
+          "text": "Otlp-metrics",
+          "i18n": "menu.ingestion.metrics",
+          "icon": "anticon-area-chart",
+          "link": "/ingestion/otlp/metrics"
+        },
+        {
+          "text": "Logs-workbench",
+          "i18n": "menu.log.manage",
+          "icon": "anticon-database",
+          "link": "/log/manage"
+        },
+        {
+          "text": "Traces-workbench",
+          "i18n": "menu.trace.manage",
+          "icon": "anticon-fork",
+          "link": "/trace/manage"
+        },
+        {
+          "text": "Topology",
+          "i18n": "menu.topology",
+          "icon": "anticon-apartment",
+          "link": "/topology"
+        },
+        {
+          "text": "Exceptions",
+          "i18n": "menu.exceptions",
+          "icon": "anticon-bug",
+          "link": "/exception"
         }
       ]
     },
@@ -37,16 +185,22 @@
           "link": "/monitors"
         },
         {
+          "text": "collector",
+          "i18n": "menu.monitor.collector",
+          "icon": "anticon-cluster",
+          "link": "/setting/collector"
+        },
+        {
+          "text": "Define",
+          "i18n": "menu.monitor.template",
+          "icon": "anticon-code",
+          "link": "/setting/define"
+        },
+        {
           "text": "Bulletin",
           "i18n": "menu.monitor.bulletin",
           "icon": "anticon-book",
           "link": "/bulletin"
-        },
-        {
-          "text": "Define",
-          "i18n": "menu.advanced.define",
-          "icon": "anticon-code",
-          "link": "/setting/define"
         },
         {
           "key": "service",
@@ -137,87 +291,17 @@
       ]
     },
     {
-      "text": "Log",
-      "i18n": "menu.log",
+      "text": "Settings",
+      "i18n": "menu.settings",
       "group": true,
       "hideInBreadcrumb": true,
       "children": [
         {
-          "text": "Integration",
-          "i18n": "menu.log.integration",
-          "icon": "anticon-api",
-          "link": "/log/integration/otlp"
+          "text": "settings",
+          "i18n": "menu.settings",
+          "icon": "anticon-setting",
+          "link": "/setting/settings"
         },
-        {
-          "text": "Stream",
-          "i18n": "menu.log.stream",
-          "icon": "anticon-file-text",
-          "link": "/log/stream"
-        },
-        {
-          "text": "Manage",
-          "i18n": "menu.log.manage",
-          "icon": "anticon-database",
-          "link": "/log/manage"
-        }
-      ]
-    },
-    {
-      "text": "Alarm",
-      "i18n": "menu.alert",
-      "group": true,
-      "hideInBreadcrumb": true,
-      "children": [
-        {
-          "text": "Threshold",
-          "i18n": "menu.alert.setting",
-          "icon": "anticon-calculator",
-          "link": "/alert/setting"
-        },
-        {
-          "text": "Integration",
-          "i18n": "menu.alert.integration",
-          "icon": "anticon-api",
-          "link": "/alert/integration/webhook"
-        },
-        {
-          "text": "Group",
-          "i18n": "menu.alert.group",
-          "icon": "anticon-filter",
-          "link": "/alert/group"
-        },
-        {
-          "text": "Inhibition",
-          "i18n": "menu.alert.inhibit",
-          "icon": "anticon-delete-column",
-          "link": "/alert/inhibit"
-        },
-        {
-          "text": "Silence",
-          "i18n": "menu.alert.silence",
-          "icon": "anticon-audio-muted",
-          "link": "/alert/silence"
-        },
-        {
-          "text": "Center",
-          "i18n": "menu.alert.center",
-          "icon": "anticon-alert",
-          "link": "/alert/center"
-        },
-        {
-          "text": "Notice",
-          "i18n": "menu.alert.dispatch",
-          "icon": "anticon-notification",
-          "link": "/alert/notice"
-        }
-      ]
-    },
-    {
-      "text": "Advanced",
-      "i18n": "menu.advanced",
-      "group": true,
-      "hideInBreadcrumb": true,
-      "children": [
         {
           "text": "mcp-server",
           "i18n": "menu.advanced.mcp-server",
@@ -232,12 +316,6 @@
           "link": "/setting/status"
         },
         {
-          "text": "collector",
-          "i18n": "menu.advanced.collector",
-          "icon": "anticon-cluster",
-          "link": "/setting/collector"
-        },
-        {
           "text": "labels",
           "i18n": "menu.advanced.labels",
           "icon": "anticon-tags",
@@ -248,20 +326,6 @@
           "i18n": "menu.advanced.plugins",
           "icon": "anticon-usb",
           "link": "/setting/plugins"
-        }
-      ]
-    },
-    {
-      "text": "More",
-      "i18n": "menu.extras",
-      "group": true,
-      "hideInBreadcrumb": true,
-      "children": [
-        {
-          "text": "settings",
-          "i18n": "menu.extras.settings",
-          "icon": "anticon-setting",
-          "link": "/setting/settings"
         },
         {
           "text": "helpCenter",

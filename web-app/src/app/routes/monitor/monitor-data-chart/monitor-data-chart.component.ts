@@ -25,14 +25,23 @@ import { InViewportAction } from 'ng-in-viewport';
 import { finalize } from 'rxjs/operators';
 
 import { MonitorService } from '../../../service/monitor.service';
+import { ThemeService } from '../../../service/theme.service';
+import {
+  buildObservabilitySeriesPalette,
+  createObservabilityChartOption,
+  getObservabilityThemeTokens,
+  resolveObservabilityThemeMode
+} from '../../../shared/observability/observability-theme';
 import { createWorker, WorkerResult } from './monitor-data-chart.worker';
 
 @Component({
+  standalone: false,
   selector: 'app-monitor-data-chart',
   templateUrl: './monitor-data-chart.component.html',
-  styles: []
+  styleUrls: ['./monitor-data-chart.component.less']
 })
 export class MonitorDataChartComponent implements OnInit, OnDestroy {
+  @Input() card: boolean = true;
   @Input()
   get monitorId(): number {
     return this._monitorId;
@@ -55,6 +64,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   metric!: string;
   @Input()
   unit!: string;
+  metricTitle: string = '';
   eChartOption!: EChartsOption;
   lineHistoryTheme!: EChartsOption;
   loading: string | null = null;
@@ -65,7 +75,11 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   private debounceTimer: any = undefined;
   private worker$: any = null;
 
-  constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
+  constructor(
+    private monitorSvc: MonitorService,
+    private themeSvc: ThemeService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
+  ) {}
 
   handleViewportAction(event: InViewportAction) {
     if (this.debounceTimer) {
@@ -88,15 +102,16 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
     let title = `${metricsI18n == `monitor.app.${this.app}.metrics.${this.metrics}` ? this.metrics : metricsI18n}/${
       metricI18n == `monitor.app.${this.app}.metrics.${this.metrics}.metric.${this.metric}` ? this.metric : metricI18n
     }`;
+    this.metricTitle = title;
+    const themeMode = resolveObservabilityThemeMode(this.themeSvc.getTheme());
+    const themeTokens = getObservabilityThemeTokens(themeMode);
     this.lineHistoryTheme = {
-      title: {
-        text: title,
-        textStyle: {
-          fontSize: 16,
-          fontFamily: 'monospace',
-          textShadowOffsetX: 10
-        }
-      },
+      ...createObservabilityChartOption(themeMode, 'monitor-mini-trend', {
+        kind: 'timeseries',
+        legend: [],
+        series: []
+      }),
+      title: {},
       toolbox: {
         show: true,
         orient: 'vertical',
@@ -203,7 +218,11 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
         }
       },
       tooltip: {
-        trigger: 'axis',
+        ...(createObservabilityChartOption(themeMode, 'monitor-mini-trend', {
+          kind: 'timeseries',
+          legend: [],
+          series: []
+        }).tooltip || {}),
         extraCssText: 'max-width: 580px; max-height: 400px; overflow-y: auto;',
         enterable: true,
         renderMode: 'html',
@@ -211,35 +230,48 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
         confine: false
       },
       grid: {
-        left: '2',
+        left: 12,
+        right: 24,
+        top: 72,
+        bottom: 52,
         containLabel: true
       },
       xAxis: {
         type: 'time',
         splitLine: {
-          show: false
+          show: true,
+          lineStyle: {
+            color: themeTokens.chart.gridLine
+          }
         },
         axisTick: {
           show: true
         },
         axisLine: {
-          onZero: false
+          onZero: false,
+          lineStyle: {
+            color: themeTokens.chart.axisLine
+          }
+        },
+        axisLabel: {
+          color: themeTokens.chart.axisLabel
         }
       },
       yAxis: {
         type: 'value',
         boundaryGap: [0, '100%'],
         scale: true,
+        axisLabel: {
+          color: themeTokens.chart.axisLabel
+        },
         splitLine: {
-          show: true
+          show: true,
+          lineStyle: {
+            color: themeTokens.chart.gridLine
+          }
         }
       },
       dataZoom: [
-        {
-          type: 'slider',
-          start: 0,
-          end: 100
-        },
         {
           type: 'inside',
           start: 0,
@@ -250,10 +282,11 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
         }
       ]
     };
-    if (this.unit != undefined || this.unit != null) {
-      // @ts-ignore
-      this.lineHistoryTheme.title.subtext = `${this.i18nSvc.fanyi('monitor.detail.chart.unit')}  ${this.unit}`;
-    }
+  }
+
+  get monitorSourceSummary(): string {
+    const sourceName = this.monitorName || this.instance || `${this.monitorId}`;
+    return this.i18nSvc.fanyi('monitor.detail.chart.source.copy').replace('{{source}}', sourceName);
   }
 
   loadData(timePeriod?: string, isInterval?: boolean) {
@@ -288,10 +321,21 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
           if (message.code === 0 && message.data.values != undefined) {
             this.worker$ = createWorker({
               values: message.data.values,
-              isInterval
+              isInterval,
+              palette: buildObservabilitySeriesPalette(resolveObservabilityThemeMode(this.themeSvc.getTheme()))
             }).subscribe((rsp: WorkerResult) => {
               if (rsp.progress === 100 && rsp.data) {
-                this.lineHistoryTheme = { ...this.lineHistoryTheme, ...rsp.data };
+                const nextLegend = (rsp.data.legend as Record<string, unknown> | undefined) || undefined;
+                this.lineHistoryTheme = {
+                  ...this.lineHistoryTheme,
+                  ...rsp.data,
+                  legend: nextLegend
+                    ? {
+                        ...(this.lineHistoryTheme.legend as Record<string, unknown> | undefined),
+                        ...nextLegend
+                      }
+                    : this.lineHistoryTheme.legend
+                };
                 this.eChartOption = this.lineHistoryTheme;
                 if (this.echartsInstance != undefined) {
                   this.echartsInstance.setOption(this.eChartOption, {
@@ -306,13 +350,16 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
               }
             });
           } else {
+            const themeMode = resolveObservabilityThemeMode(this.themeSvc.getTheme());
+            const themeTokens = getObservabilityThemeTokens(themeMode);
             this.eChartOption = this.lineHistoryTheme;
             this.eChartOption.title = {
               text: `${`${this.metrics}.${this.metric}` + '\n\n\n'}${this.i18nSvc.fanyi('monitor.detail.chart.no-data')}`,
               textStyle: {
                 fontSize: 16,
                 fontFamily: 'monospace',
-                textShadowOffsetX: 10
+                textShadowOffsetX: 10,
+                color: themeTokens.surface.textSecondary
               },
               left: 'center',
               top: 'center'

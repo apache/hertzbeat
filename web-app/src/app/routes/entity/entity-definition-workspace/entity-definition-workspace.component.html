@@ -1,0 +1,783 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<app-page-shell
+  [kicker]="'entity.list.console.kicker' | i18nElse : '实体优先调查'"
+  [title]="workspaceTitle"
+  [subtitle]="workspaceDescription"
+  footerMode="content"
+>
+  <div pageContent class="catalog-page-shell catalog-page-shell--console">
+  <div class="catalog-layout catalog-layout--console definition-layout definition-layout--console">
+    <app-platform-rail-nav
+      class="catalog-rail catalog-rail--console definition-rail definition-rail--console"
+      [groups]="definitionRailGroups"
+      (itemSelected)="onDefinitionRailItemSelected($event)"
+    ></app-platform-rail-nav>
+
+    <section class="catalog-main definition-main">
+      <app-platform-stage-section
+        class="catalog-controls-card catalog-controls-card--console definition-controls definition-controls--console"
+        tone="subtle"
+      >
+        <div class="definition-import-toolbar">
+          <label class="definition-import-format">
+            <span>{{ 'entity.definition.import.format' | i18nElse : '导入格式' }}</span>
+            <nz-select nzSize="small" [ngModel]="importFormat" (ngModelChange)="onFormatChange($event)">
+              <nz-option nzValue="yaml" nzLabel="YAML"></nz-option>
+              <nz-option nzValue="json" nzLabel="JSON"></nz-option>
+              <nz-option nzValue="curl" nzLabel="cURL"></nz-option>
+            </nz-select>
+          </label>
+
+          <div class="catalog-search-actions">
+            <button
+              nz-button
+              nzType="default"
+              nzSize="small"
+              type="button"
+              [disabled]="!canClearImportDraft"
+              (click)="clearImportDraft()"
+            >
+              {{ 'entity.definition.import.clear' | i18nElse : '清空草稿' }}
+            </button>
+            <button nz-button nzType="default" nzSize="small" [disabled]="importParsing || importSubmitting" (click)="parseDefinitionImport()">
+              {{ 'entity.definition.import.preview' | i18nElse : '预览定义' }}
+            </button>
+            <button
+              nz-button
+              nzType="primary"
+              nzSize="small"
+              [disabled]="importParsing || importSubmitting || !canSubmitCurrentDraft"
+              [nzLoading]="importSubmitting"
+              (click)="submitDefinitionImport()"
+            >
+              {{ submitActionLabel }}
+            </button>
+          </div>
+        </div>
+
+        <p class="definition-import-copy subtle" *ngIf="!(importPreviewRows.length > 0 || resumeNextActionCard)">
+          {{ workspaceDescription }}
+        </p>
+
+        <app-workspace-guidance-panel
+          *ngIf="importPreviewRows.length > 0 || resumeNextActionCard"
+          [headline]="workspaceGuidanceHeadline"
+          [description]="workspaceGuidanceDescription"
+          [primaryAction]="workspaceGuidancePrimaryAction"
+          [secondaryAction]="workspaceGuidanceSecondaryAction"
+          [reasons]="workspaceGuidanceReasons"
+          [nextLinks]="workspaceGuidanceNextLinks"
+          (actionSelected)="onWorkspaceGuidanceAction($event)"
+          (nextSelected)="onWorkspaceGuidanceNext($event)"
+        ></app-workspace-guidance-panel>
+      </app-platform-stage-section>
+
+      <div class="definition-workspace-grid">
+        <app-platform-stage-section class="definition-editor-card" tone="subtle">
+          <textarea
+            class="definition-import-textarea"
+            [(ngModel)]="importDraft"
+            (ngModelChange)="onImportDraftChanged($event)"
+            [disabled]="importParsing || importSubmitting"
+            [placeholder]="
+              importFormat === 'curl'
+                ? ('entity.definition.import.placeholder.curl' | i18nElse : '粘贴右侧生成的 cURL 请求，或自动化流程中的请求内容。')
+                : importFormat === 'json'
+                ? ('entity.definition.import.placeholder.json' | i18nElse : '粘贴 JSON 格式的实体定义，页面会解析目录信息、遥测关联和依赖关系。')
+                : ('entity.definition.import.placeholder.yaml' | i18nElse : '粘贴 YAML 格式的实体定义，页面会解析目录信息、遥测关联和依赖关系。')
+            "
+          ></textarea>
+        </app-platform-stage-section>
+
+        <app-platform-stage-section class="definition-side-card" tone="subtle">
+          <nz-spin [nzSpinning]="importParsing">
+            <nz-alert *ngIf="importError" nzType="error" [nzMessage]="importError"></nz-alert>
+
+            <ng-container *ngIf="importPreviewRows.length === 0">
+              <ng-container [ngTemplateOutlet]="definitionSideSupportTemplate"></ng-container>
+            </ng-container>
+
+            <div id="definition-import-preview" class="definition-import-preview" *ngIf="importPreviewRows.length > 0">
+              <div class="definition-import-preview-title">
+                {{ isEditMode ? ('entity.definition.workspace.preview-count' | i18nElse : '当前定义会按单实体模式保存回目录。') : ('entity.definition.import.preview-count' | i18nElse : '已识别目录定义包，导入后会整包创建实体。') }}
+              </div>
+
+              <div class="definition-governance-hints" *ngIf="importGovernanceHints.length > 0">
+                <div class="definition-governance-hint" *ngFor="let hint of importGovernanceHints; trackBy: trackByGovernanceHint">
+                  <nz-tag [nzColor]="hint.tone">{{ hint.title }}</nz-tag>
+                  <span class="definition-governance-hint-copy">{{ hint.copy }}</span>
+                  <span *ngIf="hint.metric" class="definition-governance-hint-metric">{{ hint.metric }}</span>
+                </div>
+              </div>
+
+              <app-platform-facts-strip
+                class="definition-import-summary"
+                [items]="importSummaryFacts"
+                [dense]="true"
+              ></app-platform-facts-strip>
+
+              <app-platform-support-panel
+                class="workspace-support-details definition-preview-support"
+                *ngIf="definitionImportQueueGroups.length > 0"
+                [title]="'entity.definition.import.queue.title' | i18nElse : '导入队列'"
+                [subtitle]="'entity.definition.import.queue.copy' | i18nElse : '需要时再展开查看可直接导入、需要补齐和缺少遥测绑定的分组。'"
+                [actionLabel]="'entity.list.support.action' | i18nElse : '展开查看'"
+              >
+                <div class="definition-import-queue">
+                  <div class="definition-import-queue-list">
+                    <div class="definition-import-queue-item" *ngFor="let group of definitionImportQueueGroups; trackBy: trackByDefinitionImportQueueGroup">
+                      <div class="definition-import-queue-main">
+                        <div class="definition-import-queue-title-row">
+                          <div class="definition-import-queue-title">{{ group.title }}</div>
+                          <div class="definition-import-queue-count">{{ group.rows.length }}</div>
+                        </div>
+                        <div class="definition-import-queue-copy">{{ group.summary }}</div>
+                        <div class="definition-import-queue-samples">
+                          <nz-tag *ngFor="let row of group.rows | slice:0:3; trackBy: trackByImportPreviewRow">
+                            {{ row.title }}
+                          </nz-tag>
+                          <nz-tag *ngIf="group.rows.length > 3">+{{ group.rows.length - 3 }}</nz-tag>
+                        </div>
+                      </div>
+                      <button nz-button nzType="default" nzSize="small" type="button" (click)="runDefinitionImportQueueAction(group)">
+                        {{ group.actionLabel }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </app-platform-support-panel>
+
+              <div class="definition-import-preview-list">
+                <div class="definition-import-preview-card" *ngFor="let row of visibleImportPreviewRows; trackBy: trackByImportPreviewRow">
+                  <div class="definition-import-preview-main">
+                    <div class="definition-import-preview-name">
+                      {{ row.title }}
+                      <span *ngIf="row.subtitle" class="definition-import-preview-subtitle">{{ row.subtitle }}</span>
+                    </div>
+                    <div class="definition-import-preview-meta">
+                      <span>{{ row.kindLabel }}</span>
+                      <span *ngIf="row.dto.entity.namespace">{{ row.dto.entity.namespace }}</span>
+                      <span *ngIf="row.dto.entity.environment">{{ row.dto.entity.environment }}</span>
+                      <span>{{ row.sourceLabel }}</span>
+                    </div>
+                  </div>
+
+                  <div class="definition-import-preview-right">
+                    <nz-tag [nzColor]="row.validationColor">{{ row.validationLabel }}</nz-tag>
+                    <nz-tag nzColor="blue">{{ row.readinessScore }}%</nz-tag>
+                    <nz-tag [nzColor]="(row.dto.monitorBinds?.length || 0) > 0 || (row.dto.identities?.length || 0) > 0 ? 'blue' : 'default'">
+                      {{ row.telemetryLabel }}
+                    </nz-tag>
+                    <div class="definition-import-preview-gaps" *ngIf="row.gaps.length > 0">
+                      <span>{{ 'entity.definition.import.gaps' | i18nElse : '待补齐' }}:</span>
+                      <nz-tag *ngFor="let gap of row.gaps; trackBy: trackByValue">{{ gap }}</nz-tag>
+                    </div>
+                    <div class="definition-import-preview-actions">
+                      <button nz-button nzType="default" nzSize="small" type="button" (click)="runImportPreviewRowAction(row)">
+                        {{ getImportPreviewRowActionLabel(row) }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <ng-container *ngIf="importPreviewRows.length > 0">
+              <ng-container [ngTemplateOutlet]="definitionSideSupportTemplate"></ng-container>
+            </ng-container>
+
+            <ng-template #definitionSideSupportTemplate>
+              <app-platform-support-panel
+                class="workspace-support-details definition-side-support"
+                *ngIf="showDefinitionSupportPanel"
+                [title]="'entity.definition.support.title' | i18nElse : '更多起草与补齐'"
+                [subtitle]="
+                  importPreviewRows.length > 0
+                    ? ('entity.definition.support.preview-copy' | i18nElse : '需要时再展开批量补齐、模板和草稿来源。')
+                    : ('entity.definition.support.starter-copy' | i18nElse : '需要时再展开 starter、模板和来源说明。')
+                "
+                [actionLabel]="'entity.list.support.action' | i18nElse : '展开查看'"
+              >
+                <div class="definition-side-tools" *ngIf="showDefinitionDraftSupport">
+                <div class="definition-import-summary" *ngIf="canUseStarterDefinitions && importPreviewRows.length === 0">
+                  <nz-tag nzColor="processing">{{ 'entity.definition.workspace.starter.title' | i18nElse : '快速起草' }}</nz-tag>
+                  <button
+                    nz-button
+                    nzType="default"
+                    nzSize="small"
+                    type="button"
+                    *ngFor="let kind of starterDefinitionKinds; trackBy: trackByValue"
+                    (click)="applyStarterDefinition(kind)"
+                  >
+                    {{ translateOrFallback('entity.type.' + kind, humanize(kind)) }}
+                  </button>
+                </div>
+
+                <div class="definition-import-summary" *ngIf="hasSeedSummary">
+                  <nz-tag nzColor="processing">
+                    {{
+                      (seedSource === 'telemetry'
+                        ? ('entity.entry-source.telemetry' | i18nElse : '遥测发现')
+                        : ('entity.definition.import.seed.default' | i18nElse : '外部定义'))
+                        + ' · '
+                        + ('entity.definition.import.seed.count' | i18nElse : '草稿条目')
+                        + ' '
+                        + seedEntityCount
+                    }}
+                  </nz-tag>
+                  <span class="definition-import-copy subtle">
+                    {{
+                      'entity.definition.import.seed.copy'
+                        | i18nElse : '这些草稿已经按当前治理建议回填到定义工作台，你可以先审阅定义，再统一导入目录。'
+                    }}
+                  </span>
+                </div>
+
+                <div id="definition-template-registry" class="definition-template-section" *ngIf="canUseStarterDefinitions && importPreviewRows.length === 0">
+                <div class="definition-template-toolbar">
+                  <div class="definition-template-name">
+                    <span>{{ 'entity.definition.workspace.preset.title' | i18nElse : '预置模板注册表' }}</span>
+                    <p class="definition-import-copy subtle">
+                      {{
+                        'entity.definition.workspace.preset.copy'
+                          | i18nElse : '按常见实体场景预置一组可直接起草的定义模板，减少从空白 YAML 或零散 starter 自行拼装。'
+                      }}
+                    </p>
+                    <p class="definition-import-copy subtle">
+                      {{ 'entity.governance.registry.label' | i18nElse : '当前来源' }}：
+                      {{ translateOrFallback('entity.governance.registry.' + workspaceTemplateRegistrySource, workspaceTemplateRegistrySource) }}
+                    </p>
+                    <div class="definition-registry-actions" *ngIf="workspaceTemplateRegistrySource !== 'empty'">
+                      <button
+                        nz-button
+                        nzSize="small"
+                        nzType="default"
+                        type="button"
+                        *ngIf="canSyncWorkspaceTemplateRegistry"
+                        (click)="syncWorkspaceTemplateRegistry()"
+                      >
+                        {{ 'entity.governance.registry.sync' | i18nElse : '同步到共享目录' }}
+                      </button>
+                      <button nz-button nzSize="small" nzType="default" type="button" (click)="refreshWorkspaceTemplateRegistry()">
+                        {{ 'entity.governance.registry.refresh' | i18nElse : '刷新共享目录' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="definition-preset-grid">
+                  <button
+                    type="button"
+                    class="definition-preset-card"
+                    *ngFor="let preset of starterTemplatePresets; trackBy: trackByStarterTemplatePreset"
+                    (click)="applyStarterTemplatePreset(preset)"
+                  >
+                    <span class="definition-preset-kind">{{ translateOrFallback('entity.type.' + preset.kind, humanize(preset.kind)) }}</span>
+                    <span class="definition-preset-title">{{ preset.title }}</span>
+                    <span class="definition-preset-copy">{{ preset.copy }}</span>
+                    <span *ngIf="preset.emphasis" class="definition-preset-emphasis">{{ preset.emphasis }}</span>
+                  </button>
+                </div>
+                </div>
+
+                <div class="definition-template-section" *ngIf="canUseStarterDefinitions && importPreviewRows.length === 0">
+                <div class="definition-template-toolbar">
+                  <label class="definition-template-name">
+                    <span>{{ 'entity.definition.workspace.template.name' | i18nElse : '模板名称' }}</span>
+                    <input
+                      type="text"
+                      [value]="templateNameDraft"
+                      (input)="templateNameDraft = $any($event.target).value"
+                      [placeholder]="'entity.definition.workspace.template.placeholder' | i18nElse : '例如 payments-api baseline'"
+                    />
+                  </label>
+                  <button nz-button nzType="default" nzSize="small" type="button" [disabled]="!canSaveWorkspaceTemplate" (click)="saveWorkspaceTemplate()">
+                    {{ 'entity.definition.workspace.template.save' | i18nElse : '保存为模板' }}
+                  </button>
+                </div>
+                <p class="definition-import-copy subtle">
+                  {{
+                    'entity.definition.workspace.template.copy'
+                      | i18nElse : '把当前 starter 或导入草稿保存成可复用模板，下次进入定义工作台时可以直接起草。'
+                  }}
+                </p>
+                <div class="definition-template-list" *ngIf="workspaceTemplates.length > 0; else definitionTemplateEmpty">
+                  <button
+                    type="button"
+                    class="definition-template-chip"
+                    *ngFor="let template of workspaceTemplates; trackBy: trackByWorkspaceTemplate"
+                    (click)="applyWorkspaceTemplate(template)"
+                  >
+                    <span class="definition-template-chip-main">
+                      <span class="definition-template-chip-name">{{ template.name }}</span>
+                      <span class="definition-template-chip-meta">{{ getWorkspaceTemplateSummary(template) }}</span>
+                    </span>
+                    <span
+                      class="definition-template-chip-remove"
+                      role="button"
+                      tabindex="0"
+                      (click)="removeWorkspaceTemplateFromEvent($event, template.id)"
+                    >
+                      ×
+                    </span>
+                  </button>
+                </div>
+                <ng-template #definitionTemplateEmpty>
+                  <p class="definition-import-copy subtle">
+                    {{ 'entity.definition.workspace.template.empty' | i18nElse : '还没有可复用模板。可以先从 starter 起草，再把常用定义保存下来。' }}
+                  </p>
+                </ng-template>
+                </div>
+
+                <div id="definition-governance-bulk" class="definition-template-section" *ngIf="!isEditMode && importPreviewRows.length > 0">
+                <div class="definition-template-toolbar">
+                  <label class="definition-template-name">
+                    <span>{{ 'entity.definition.workspace.governance.owner' | i18nElse : '批量补齐负责人' }}</span>
+                    <app-multi-func-input
+                      [(value)]="importOwnerDraft"
+                      (valueChange)="refreshImportPreviewRows()"
+                      [suggestions]="governanceOwnerSuggestions"
+                      [placeholder]="'entity.definition.workspace.governance.owner.placeholder' | i18nElse : '例如 catalog-oncall'"
+                      groupStyle="width: 100%;"
+                    />
+                  </label>
+                  <label class="definition-template-name">
+                    <span>{{ 'entity.definition.workspace.governance.system' | i18nElse : '批量补齐系统' }}</span>
+                    <app-multi-func-input
+                      [(value)]="importSystemDraft"
+                      (valueChange)="refreshImportPreviewRows()"
+                      [suggestions]="governanceSystemSuggestions"
+                      [placeholder]="'entity.definition.workspace.governance.system.placeholder' | i18nElse : '例如 commerce-platform'"
+                      groupStyle="width: 100%;"
+                    />
+                  </label>
+                  <label class="definition-template-name">
+                    <span>{{ 'entity.definition.workspace.governance.runbook' | i18nElse : '批量补齐处置手册' }}</span>
+                    <input
+                      type="text"
+                      [value]="importRunbookDraft"
+                      (input)="importRunbookDraft = $any($event.target).value; refreshImportPreviewRows()"
+                      [placeholder]="'entity.definition.workspace.governance.runbook.placeholder' | i18nElse : '例如 https://runbook.example.com/payments'"
+                    />
+                    <div class="definition-input-actions">
+                      <button
+                        nz-button
+                        nzType="default"
+                        nzSize="small"
+                        type="button"
+                        [disabled]="!importRunbookDraft || importRunbookValidationMessage != null"
+                        (click)="openImportRunbookDraft()"
+                      >
+                        {{ 'entity.detail.runbook.open' | i18nElse : '打开链接' }}
+                      </button>
+                      <button nz-button nzType="link" nzSize="small" type="button" [disabled]="!importRunbookDraft" (click)="clearImportRunbookDraft()">
+                        {{ 'entity.definition.workspace.governance.clear' | i18nElse : '清空批量补齐' }}
+                      </button>
+                    </div>
+                    <div class="definition-validation-hint error" *ngIf="importRunbookValidationMessage as message">
+                      {{ message }}
+                    </div>
+                  </label>
+                  <button
+                    nz-button
+                    nzType="link"
+                    nzSize="small"
+                    type="button"
+                    [disabled]="!hasImportGovernanceOverrides"
+                    (click)="clearImportGovernanceOverrides()"
+                  >
+                    {{ 'entity.definition.workspace.governance.clear' | i18nElse : '清空批量补齐' }}
+                  </button>
+                </div>
+                <p class="definition-import-copy subtle">
+                  {{
+                    'entity.definition.workspace.governance.copy'
+                      | i18nElse : '只会补齐当前定义里缺失的 owner、system 和 runbook，不会覆盖原始定义中已经存在的值。'
+                  }}
+                </p>
+                <div class="definition-governance-active" *ngIf="importGovernanceOverrideSummary.length > 0">
+                  <span class="definition-governance-active-copy">
+                    {{
+                      'entity.definition.workspace.governance.active'
+                        | i18nElse : '当前预览已经带着这些批量补齐值，导入时只会回填缺失字段。'
+                    }}
+                  </span>
+                  <div class="definition-governance-active-tags">
+                    <nz-tag *ngFor="let item of importGovernanceOverrideSummary; trackBy: trackByIndex" nzColor="processing">
+                      {{ item.label }} · {{ item.value }}
+                    </nz-tag>
+                  </div>
+                </div>
+                <div class="definition-import-summary" *ngIf="governanceOwnerSuggestions.length > 0">
+                  <nz-tag nzColor="default">{{ 'entity.field.owner' | i18nElse : '负责人' }}</nz-tag>
+                  <button
+                    nz-button
+                    nzType="default"
+                    nzSize="small"
+                    type="button"
+                    *ngFor="let owner of governanceOwnerSuggestions; trackBy: trackByValue"
+                    (click)="applyImportOwnerSuggestion(owner)"
+                  >
+                    {{ owner }}
+                  </button>
+                </div>
+                <div class="definition-import-summary" *ngIf="governanceSystemSuggestions.length > 0">
+                  <nz-tag nzColor="default">{{ 'entity.field.system' | i18nElse : '所属系统' }}</nz-tag>
+                  <button
+                    nz-button
+                    nzType="default"
+                    nzSize="small"
+                    type="button"
+                    *ngFor="let system of governanceSystemSuggestions; trackBy: trackByValue"
+                    (click)="applyImportSystemSuggestion(system)"
+                  >
+                    {{ system }}
+                  </button>
+                </div>
+                </div>
+
+                <div class="definition-import-summary" *ngIf="canUseStarterDefinitions && starterOwnerSuggestions.length > 0">
+                  <nz-tag nzColor="default">{{ 'entity.field.owner' | i18nElse : '负责人' }}</nz-tag>
+                  <nz-tag *ngFor="let owner of starterOwnerSuggestions; trackBy: trackByValue">{{ owner }}</nz-tag>
+                </div>
+
+                <div class="definition-import-summary" *ngIf="canUseStarterDefinitions && starterSystemSuggestions.length > 0">
+                  <nz-tag nzColor="default">{{ 'entity.field.system' | i18nElse : '所属系统' }}</nz-tag>
+                  <nz-tag *ngFor="let system of starterSystemSuggestions; trackBy: trackByValue">{{ system }}</nz-tag>
+                </div>
+
+                <div class="definition-import-summary" *ngIf="canUseStarterDefinitions && (starterNamespaceSuggestions.length > 0 || starterEnvironmentSuggestions.length > 0)">
+                  <nz-tag nzColor="default">{{ 'entity.field.namespace' | i18nElse : '命名空间' }}</nz-tag>
+                  <nz-tag *ngFor="let namespace of starterNamespaceSuggestions; trackBy: trackByValue">{{ namespace }}</nz-tag>
+                  <nz-tag nzColor="default">{{ 'entity.field.environment' | i18nElse : '环境' }}</nz-tag>
+                  <nz-tag *ngFor="let environment of starterEnvironmentSuggestions; trackBy: trackByValue">{{ environment }}</nz-tag>
+                </div>
+              </div>
+
+                <div class="definition-template-section definition-template-section--support" *ngIf="showDefinitionGovernanceSupport">
+                  <div class="definition-support-section-header">
+                    <div class="definition-support-section-title">
+                      {{ 'entity.definition.workspace.support.title' | i18nElse : '共享规则与来源' }}
+                    </div>
+                    <div class="definition-support-section-copy">
+                      {{
+                        'entity.definition.workspace.support.copy'
+                          | i18nElse : '需要时再展开查看共享规则、推荐处理项和最近来源状态。'
+                      }}
+                    </div>
+                  </div>
+
+                  <div class="definition-governance-seed" *ngIf="governancePresetSeed as preset">
+                    <div class="definition-governance-seed-main">
+                      <div class="definition-governance-seed-title">
+                        {{ 'entity.definition.workspace.governance.seed.title' | i18nElse : '已套用共享治理预设' }}
+                      </div>
+                      <div class="definition-governance-seed-copy">
+                        {{
+                          'entity.definition.workspace.governance.seed.copy'
+                            | i18nElse : 'Starter、示例定义和批量补齐会优先使用这组 owner、system、environment 和 source，帮助你把目录治理策略直接落进定义工作台。'
+                        }}
+                      </div>
+                    </div>
+                    <div class="definition-governance-seed-meta">
+                      <nz-tag *ngFor="let item of governancePresetSeedSummary; trackBy: trackByValue">{{ item }}</nz-tag>
+                    </div>
+                    <button nz-button nzType="default" nzSize="small" type="button" (click)="openDiscovery()">
+                      {{ 'entity.definition.workspace.governance.seed.action' | i18nElse : '回到发现工作台' }}
+                    </button>
+                  </div>
+
+                  <div class="definition-governance-policy" *ngIf="hasGovernancePresetConflictSummary && governancePresetSeed as preset">
+                    <div class="definition-governance-policy-title">
+                      {{ 'entity.definition.workspace.governance.policy.title' | i18nElse : '共享预设偏差汇总' }}
+                    </div>
+                    <div class="definition-governance-policy-copy" *ngIf="governancePresetConflictCount > 0; else definitionPresetAligned">
+                      {{
+                        'entity.definition.workspace.governance.policy.copy'
+                          | i18nElse : (governancePresetConflictCount + ' 条定义与共享治理预设 ' + preset.name + ' 还有偏差。当前批量补齐只会补缺失值，不会覆盖这些冲突字段。')
+                      }}
+                    </div>
+                    <ng-template #definitionPresetAligned>
+                      <div class="definition-governance-policy-copy">
+                        {{
+                          'entity.definition.workspace.governance.policy.aligned'
+                            | i18nElse : ('当前预览定义已经与共享治理预设 ' + preset.name + ' 保持一致。')
+                        }}
+                      </div>
+                    </ng-template>
+                    <div class="definition-governance-policy-rollups" *ngIf="governancePresetConflictRollups.length > 0">
+                      <nz-tag *ngFor="let item of governancePresetConflictRollups; trackBy: trackByGovernanceConflictRollup">
+                        {{ item.label }} · {{ item.count }}
+                      </nz-tag>
+                    </div>
+                    <div class="definition-governance-policy-actions">
+                      <button nz-button nzType="default" nzSize="small" type="button" (click)="openDiscovery()">
+                        {{ 'entity.detail.policy.preset.action' | i18nElse : '按预设继续治理' }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="catalog-governance-panel" *ngIf="definitionGovernanceHookCards.length > 0">
+                    <div class="catalog-governance-panel-header" *ngIf="definitionGovernancePolicyCards.length > 0">
+                      <div>
+                        <div class="catalog-governance-panel-title">
+                          {{ 'entity.governance.policy.title' | i18nElse : '治理优先项' }}
+                        </div>
+                        <div class="catalog-governance-panel-copy">
+                          {{
+                            'entity.definition.workspace.policy.copy'
+                              | i18nElse : '先处理共享目录漂移和定义治理缺口，再继续做批量导入、模板复用和证据回补。'
+                          }}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="governance-policy-list" *ngIf="definitionGovernancePolicyCards.length > 0">
+                      <div class="governance-policy-item" *ngFor="let card of definitionGovernancePolicyCards; trackBy: trackByDefinitionGovernancePolicyCard">
+                        <div class="governance-policy-title">{{ card.title }}</div>
+                        <div class="governance-policy-copy">{{ card.summary }}</div>
+                        <div class="governance-policy-actions">
+                          <button nz-button nzType="default" nzSize="small" type="button" (click)="runDefinitionGovernancePolicy(card)">
+                            {{ card.actionLabel }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="catalog-governance-panel-header">
+                      <div>
+                        <div class="catalog-governance-panel-title">
+                          {{ 'entity.list.hooks.title' | i18nElse : '治理评分钩子' }}
+                        </div>
+                        <div class="catalog-governance-panel-copy">
+                          {{
+                            'entity.definition.workspace.hooks.copy'
+                              | i18nElse : '先把定义工作台里的治理状态收成统一钩子，后续评分卡和目录策略才能共用同一套信号。'
+                          }}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="governance-hook-list">
+                      <div class="governance-hook-item" *ngFor="let card of definitionGovernanceHookCards; trackBy: trackByDefinitionGovernanceHookCard">
+                        <div class="governance-hook-header">
+                          <div class="governance-hook-title">{{ card.title }}</div>
+                          <div class="governance-hook-metric">{{ card.metric }}</div>
+                        </div>
+                        <div class="governance-hook-copy">{{ card.summary }}</div>
+                        <div class="governance-hook-recipe">
+                          <span class="governance-hook-priority" [ngClass]="'priority-' + card.priority">{{ card.priorityLabel }}</span>
+                          <span class="governance-hook-note">{{ 'entity.governance.recipe.next' | i18nElse : '下一步' }}：{{ card.nextStep }}</span>
+                        </div>
+                        <button nz-button nzType="default" nzSize="small" type="button" (click)="runDefinitionGovernanceHook(card)">
+                          {{ card.actionLabel }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="definition-import-activity" *ngIf="definitionSharedGovernanceSnapshots.length > 0">
+                    <div class="definition-import-activity-title">
+                      {{ 'entity.list.snapshot.title' | i18nElse : '共享目录状态' }}
+                    </div>
+                    <p class="definition-import-copy subtle">
+                      {{
+                        'entity.list.snapshot.copy'
+                          | i18nElse : '这里直接复用 discovery 和 definition 已持久化的治理快照，方便确认共享策略是否真的沉成了目录状态。'
+                      }}
+                    </p>
+                    <div class="definition-import-activity-list">
+                      <div
+                        class="definition-import-activity-item"
+                        *ngFor="let item of definitionSharedGovernanceSnapshots; trackBy: trackByDefinitionSharedGovernanceSnapshot"
+                      >
+                        <div class="definition-import-activity-main">
+                          <div class="definition-import-activity-summary">
+                            <nz-tag [nzColor]="item.status === 'success' ? 'success' : item.status === 'warning' ? 'warning' : item.status === 'error' ? 'error' : 'processing'">
+                              {{ item.title }}
+                            </nz-tag>
+                            <span>{{ item.summary }}</span>
+                          </div>
+                          <div class="definition-import-activity-meta">
+                            <span *ngIf="item.happenedAt">{{ item.happenedAt }}</span>
+                            <span *ngIf="getDefinitionSharedGovernanceSnapshotMeta(item) as meta">{{ meta }}</span>
+                            <span>{{ getDefinitionSharedGovernanceSnapshotStatusLabel(item.status) }}</span>
+                          </div>
+                          <div class="definition-import-activity-detail" *ngIf="item.detail">{{ item.detail }}</div>
+                        </div>
+                        <div class="definition-import-preview-right">
+                          <button nz-button nzType="default" nzSize="small" type="button" (click)="runDefinitionSharedGovernanceSnapshot(item)">
+                            {{ item.actionLabel }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="definition-template-section definition-template-section--support" *ngIf="definitionLifecycleRecords.length > 0 || showDefinitionActivityPanel">
+                  <div class="definition-support-section-header">
+                    <div class="definition-support-section-title">
+                      {{ 'entity.definition.activity.support.title' | i18nElse : '最近操作' }}
+                    </div>
+                    <div class="definition-support-section-copy">
+                      {{ 'entity.definition.activity.support.copy' | i18nElse : '需要时再展开查看最近的保存、导入和来源记录。' }}
+                    </div>
+                  </div>
+
+                  <div class="definition-import-activity" *ngIf="definitionLifecycleRecords.length > 0">
+                    <div class="definition-import-activity-title">
+                      {{ 'entity.detail.lifecycle.title' | i18nElse : '来源与生命周期' }}
+                    </div>
+                    <p class="definition-import-copy subtle">
+                      {{
+                        'entity.detail.lifecycle.copy'
+                          | i18nElse : '统一回看来源、定义和归并动作，方便判断这个实体最近是如何被更新出来的。'
+                      }}
+                    </p>
+                    <div class="definition-import-activity-list">
+                      <div class="definition-import-activity-item" *ngFor="let item of definitionLifecycleRecords; trackBy: trackByDefinitionLifecycleRecord">
+                        <div class="definition-import-activity-main">
+                          <div class="definition-import-activity-summary">
+                            <nz-tag>{{ item.title }}</nz-tag>
+                            <span>{{ item.summary }}</span>
+                          </div>
+                          <div class="definition-import-activity-meta" *ngIf="item.happenedAt">
+                            <span>{{ item.happenedAt }}</span>
+                          </div>
+                        </div>
+                        <div class="definition-import-activity-detail" *ngIf="item.detail">{{ item.detail }}</div>
+                        <div class="definition-import-activity-detail" *ngIf="item.actionLabel">
+                          <button nz-button nzType="link" nzSize="small" type="button" (click)="openDefinitionLifecycleRecord(item)">
+                            {{ item.actionLabel }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="definition-import-activity" *ngIf="showDefinitionActivityPanel">
+                    <div class="definition-import-results" *ngIf="importResultRows.length > 0">
+                      <div class="definition-import-activity-title">
+                        {{ isEditMode ? ('entity.definition.workspace.results.title' | i18nElse : '本次保存结果') : ('entity.definition.import.results.title' | i18nElse : '本次导入结果') }}
+                      </div>
+                      <div class="definition-import-preview-list">
+                        <div class="definition-import-preview-card result" *ngFor="let row of importResultRows; trackBy: trackByImportResult">
+                          <div class="definition-import-preview-main">
+                            <div class="definition-import-preview-name">
+                              {{ row.title }}
+                              <span *ngIf="row.subtitle" class="definition-import-preview-subtitle">{{ row.subtitle }}</span>
+                            </div>
+                            <div class="definition-import-preview-meta">
+                              <span>{{ row.kindLabel }}</span>
+                              <span>{{ row.sourceLabel }}</span>
+                              <span>#{{ row.entityId }}</span>
+                            </div>
+                          </div>
+
+                          <div class="definition-import-preview-right">
+                            <button nz-button nzType="link" nzSize="small" type="button" (click)="viewImportedEntity(row.entityId)">
+                              {{ isEditMode ? ('entity.definition.workspace.open-detail' | i18nElse : '打开实体详情') : ('entity.definition.import.results.view' | i18nElse : '查看实体') }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="definition-import-activity-title" *ngIf="serverImportActivities.length > 0">
+                      {{ isEditMode ? ('entity.definition.workspace.activity.title' | i18nElse : '实体定义活动') : ('entity.definition.import.activity.catalog-title' | i18nElse : '目录定义活动') }}
+                    </div>
+                    <div class="definition-import-activity-list" *ngIf="serverImportActivities.length > 0">
+                      <div class="definition-import-activity-item" *ngFor="let item of serverImportActivities; trackBy: trackByImportActivity">
+                        <div class="definition-import-activity-main">
+                          <div class="definition-import-activity-summary">
+                            <nz-tag [nzColor]="item.status">{{ getImportActivityStatusLabel(item.status) }}</nz-tag>
+                            <span>{{ getServerImportActivitySummary(item) }}</span>
+                          </div>
+                          <div class="definition-import-activity-meta">
+                            <span>{{ item.happenedAt }}</span>
+                            <span>{{ item.format | uppercase }}</span>
+                          </div>
+                        </div>
+                        <div class="definition-import-activity-detail" *ngIf="item.detail">{{ item.detail }}</div>
+                        <div class="definition-import-activity-detail" *ngIf="item.entityId">
+                          <button nz-button nzType="link" nzSize="small" type="button" (click)="viewImportedEntity(item.entityId)">
+                            {{ isEditMode ? ('entity.definition.workspace.open-detail' | i18nElse : '打开实体详情') : ('entity.definition.import.results.view' | i18nElse : '查看实体') }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="definition-import-activity-title" *ngIf="serverGovernanceActivities.length > 0">
+                      {{ 'entity.detail.history.server' | i18nElse : '目录治理历史' }}
+                    </div>
+                    <div class="definition-import-activity-list" *ngIf="serverGovernanceActivities.length > 0">
+                      <div class="definition-import-activity-item" *ngFor="let activity of serverGovernanceActivities; trackBy: trackByServerGovernanceActivity">
+                        <div class="definition-import-activity-main">
+                          <div class="definition-import-activity-summary">
+                            <nz-tag nzColor="processing">{{ getServerGovernanceActivityTitle(activity) }}</nz-tag>
+                            <span>{{ activity.summary }}</span>
+                          </div>
+                          <div class="definition-import-activity-meta">
+                            <span>{{ formatImportActivityTimestamp(activity.gmtCreate) }}</span>
+                            <span>{{ activity.activityType }}</span>
+                          </div>
+                        </div>
+                        <div class="definition-import-activity-detail" *ngIf="activity.detail">{{ activity.detail }}</div>
+                        <div class="definition-import-activity-detail">
+                          <button nz-button nzType="link" nzSize="small" type="button" (click)="openServerGovernanceActivity(activity)">
+                            {{ activity.entityId != null ? ('entity.definition.workspace.open-detail' | i18nElse : '打开实体详情') : ('entity.list.kicker' | i18nElse : '实体目录') }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="definition-import-activity-title" *ngIf="serverWorkspaceActivities.length > 0">
+                      {{ 'entity.definition.import.activity.shared-title' | i18nElse : '共享工作台记录' }}
+                    </div>
+                    <div class="definition-import-activity-list" *ngIf="serverWorkspaceActivities.length > 0">
+                      <div class="definition-import-activity-item" *ngFor="let item of serverWorkspaceActivities; trackBy: trackByImportActivity">
+                        <div class="definition-import-activity-main">
+                          <div class="definition-import-activity-summary">
+                            <nz-tag [nzColor]="item.status">{{ getImportActivityStatusLabel(item.status) }}</nz-tag>
+                            <span>{{ item.summary }}</span>
+                          </div>
+                          <div class="definition-import-activity-meta">
+                            <span>{{ item.happenedAt }}</span>
+                            <span>{{ item.format | uppercase }}</span>
+                          </div>
+                        </div>
+                        <div class="definition-import-activity-detail" *ngIf="item.detail">{{ item.detail }}</div>
+                        <div class="definition-import-activity-detail" *ngIf="item.entityId">
+                          <button nz-button nzType="link" nzSize="small" type="button" (click)="viewImportedEntity(item.entityId)">
+                            {{ 'entity.definition.import.results.view' | i18nElse : '查看实体' }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </app-platform-support-panel>
+            </ng-template>
+
+          </nz-spin>
+        </app-platform-stage-section>
+      </div>
+
+    </section>
+  </div>
+  </div>
+</app-page-shell>

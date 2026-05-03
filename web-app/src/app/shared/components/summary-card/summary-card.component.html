@@ -1,0 +1,11 @@
+<button type="button" class="ops-summary-card" [class]="'tone-' + tone" (click)="selected.emit()">
+  <div class="ops-summary-card-label">{{ label }}</div>
+  <div class="ops-summary-card-value">{{ value }}</div>
+  <div class="ops-summary-card-footer">
+    <span class="ops-summary-card-hint" *ngIf="hint">{{ hint }}</span>
+    <span class="ops-summary-card-delta" *ngIf="delta">
+      <span aria-hidden="true">↑</span>
+      {{ delta }}
+    </span>
+  </div>
+</button>

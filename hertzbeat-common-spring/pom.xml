@@ -28,6 +28,7 @@
 
     <artifactId>hertzbeat-common-spring</artifactId>
     <name>${project.artifactId}</name>
+    <description>Spring Boot, configuration, validation, and JPA integration built on common-core.</description>
 
     <dependencies>
         <!-- hertzbeat-common-core dependency -->

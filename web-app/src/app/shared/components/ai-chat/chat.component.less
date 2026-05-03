@@ -17,7 +17,7 @@
  * under the License.
  */
 
-@import '@delon/theme/index';
+@import '~src/styles/theme-vars';
 
 .chat-container {
   display: flex;
@@ -502,8 +502,11 @@
 
 // Dark theme overrides with maximum specificity
 :host-context([data-theme='dark']) .chat-container,
+:host-context([data-theme='dark-ops']) .chat-container,
 [data-theme='dark'] .chat-container,
-body[data-theme='dark'] .chat-container {
+[data-theme='dark-ops'] .chat-container,
+body[data-theme='dark'] .chat-container,
+body[data-theme='dark-ops'] .chat-container {
   background: #000;
 
   .chat-sidebar {
@@ -658,7 +661,8 @@ body[data-theme='dark'] .chat-container {
 
 
 // Force input styling for dark theme
-[data-theme='dark'] {
+[data-theme='dark'],
+[data-theme='dark-ops'] {
   .chat-container .input-area {
     .ant-input {
       background: fade(@white, 8%) !important;
@@ -724,21 +728,25 @@ body[data-theme='dark'] .chat-container {
 }
 
 // Additional high-specificity overrides for dark theme
-[data-theme="dark"] .chat-container .chat-sidebar {
+[data-theme="dark"] .chat-container .chat-sidebar,
+[data-theme="dark-ops"] .chat-container .chat-sidebar {
   background: #000 !important;
 }
 
-[data-theme="dark"] .chat-container .chat-sidebar .sidebar-header {
+[data-theme="dark"] .chat-container .chat-sidebar .sidebar-header,
+[data-theme="dark-ops"] .chat-container .chat-sidebar .sidebar-header {
   background: #000 !important;
 }
 
-[data-theme="dark"] .chat-container .chat-main .messages-container .message .message-content {
+[data-theme="dark"] .chat-container .chat-main .messages-container .message .message-content,
+[data-theme="dark-ops"] .chat-container .chat-main .messages-container .message .message-content {
   background: #141414 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   border: none !important;
 }
 
-[data-theme="dark"] .chat-container .chat-main .input-area {
+[data-theme="dark"] .chat-container .chat-main .input-area,
+[data-theme="dark-ops"] .chat-container .chat-main .input-area {
   background: #000 !important;
 }
 

@@ -46,7 +46,7 @@ services:
       - hertzbeat
 
   greptime:
-    image: greptime/greptimedb:v0.14.3
+    image: greptime/greptimedb:latest
     container_name: compose-greptimedb
     hostname: greptime
     restart: always
@@ -87,6 +87,7 @@ services:
     hostname: hertzbeat
     restart: always
     environment:
+      HERTZBEAT_COLLECTOR_MYSQL_QUERY_ENGINE: auto
       TZ: Asia/Shanghai
       LANG: zh_CN.UTF-8
     depends_on:
@@ -101,6 +102,7 @@ services:
       - ./ext-lib:/opt/hertzbeat/ext-lib
     ports:
       - "1157:1157"
+      - "4317:4317"
       - "1158:1158"
     networks:
       - hertzbeat

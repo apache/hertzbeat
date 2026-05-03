@@ -1,0 +1,84 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<section class="workspace-shell" [class.workspace-shell-with-rail]="showRail" [class.workspace-shell-rail-collapsed]="railCollapsed">
+  <header class="workspace-shell-header">
+    <div class="workspace-shell-heading">
+      <div class="workspace-shell-kicker" *ngIf="kicker">{{ kicker }}</div>
+      <div class="workspace-shell-title">{{ title }}</div>
+      <div class="workspace-shell-subtitle" *ngIf="subtitle">{{ subtitle }}</div>
+
+      <nav class="workspace-shell-tabs" *ngIf="tabs.length > 0" aria-label="Workspace navigation">
+        <button
+          nz-button
+          nzType="text"
+          type="button"
+          class="workspace-shell-tab"
+          *ngFor="let tab of tabs; trackBy: trackByKey"
+          [class.active]="tab.active"
+          [disabled]="tab.disabled"
+          (click)="selectTab(tab)"
+        >
+          <span>{{ tab.label }}</span>
+          <span class="workspace-shell-tab-badge" *ngIf="tab.badge">{{ tab.badge }}</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="workspace-shell-header-actions">
+      <ng-content select="[workspaceActions]"></ng-content>
+      <button
+        *ngFor="let action of actions; trackBy: trackByKey"
+        nz-button
+        type="button"
+        class="workspace-shell-action"
+        [nzType]="action.tone === 'primary' ? 'primary' : action.tone === 'link' ? 'link' : 'default'"
+        [nzDanger]="action.tone === 'danger'"
+        [disabled]="action.disabled"
+        (click)="selectAction(action)"
+      >
+        {{ action.label }}
+      </button>
+      <button
+        *ngIf="showRail && allowRailCollapse"
+        nz-button
+        nzType="default"
+        type="button"
+        class="workspace-shell-rail-toggle"
+        (click)="toggleRail()"
+      >
+        {{ getRailToggleLabel() }}
+      </button>
+    </div>
+  </header>
+
+  <div class="workspace-shell-body">
+    <main class="workspace-shell-main">
+      <ng-content select="[workspaceMain]"></ng-content>
+    </main>
+
+    <aside class="workspace-shell-rail" *ngIf="showExpandedRail">
+      <ng-content select="[workspaceRail]"></ng-content>
+    </aside>
+  </div>
+
+  <footer class="workspace-shell-footer" *ngIf="showFooter">
+    <ng-content select="[workspaceFooter]">
+      <app-platform-copyright-footer></app-platform-copyright-footer>
+    </ng-content>
+  </footer>
+</section>

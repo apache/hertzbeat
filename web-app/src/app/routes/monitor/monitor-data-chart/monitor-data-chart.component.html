@@ -17,18 +17,47 @@
   ~ under the License.
 -->
 
-<nz-card style="height: 100%" nzHoverable [nzBordered]="true" inViewport (inViewportAction)="handleViewportAction($event)">
+<ng-container *ngIf="card; else plainSurface">
+  <nz-card
+    class="monitor-history-workbench"
+    style="height: 100%"
+    nzHoverable
+    [nzBordered]="true"
+    [nzBodyStyle]="{ padding: '0' }"
+    inViewport
+    (inViewportAction)="handleViewportAction($event)"
+  >
+    <ng-container *ngTemplateOutlet="chartContent"></ng-container>
+  </nz-card>
+</ng-container>
+
+<ng-template #plainSurface>
+  <section class="monitor-history-workbench monitor-history-workbench--plain" inViewport (inViewportAction)="handleViewportAction($event)">
+    <ng-container *ngTemplateOutlet="chartContent"></ng-container>
+  </section>
+</ng-template>
+
+<ng-template #chartContent>
+  <div class="monitor-history-workbench__header">
+    <div class="monitor-history-workbench__identity">
+      <div class="monitor-history-workbench__title">{{ metricTitle }}</div>
+      <div *ngIf="unit" class="monitor-history-workbench__unit">{{ 'monitor.detail.chart.unit' | i18n }} {{ unit }}</div>
+    </div>
+    <nz-tag class="monitor-history-workbench__badge">{{ 'monitor.detail.chart.source.badge' | i18n }}</nz-tag>
+  </div>
   <nz-spin [nzSpinning]="!isInViewport || !!loading" [nzTip]="loading">
-    <div
-      *ngIf="isInViewport && !loading"
-      echarts
-      [options]="eChartOption"
-      theme="default"
-      [autoResize]="true"
-      [loading]="!!loading"
-      (chartInit)="onChartInit($event)"
-      style="width: 100%; height: 500px"
-    ></div>
-    <div *ngIf="!isInViewport || !!loading" style="width: 100%; height: 500px"></div>
+    <div class="monitor-history-workbench__body">
+      <div
+        *ngIf="isInViewport && !loading"
+        echarts
+        class="monitor-history-workbench__chart"
+        [options]="eChartOption"
+        theme="default"
+        [autoResize]="true"
+        [loading]="!!loading"
+        (chartInit)="onChartInit($event)"
+      ></div>
+      <div *ngIf="!isInViewport || !!loading" class="monitor-history-workbench__placeholder"></div>
+    </div>
   </nz-spin>
-</nz-card>
+</ng-template>

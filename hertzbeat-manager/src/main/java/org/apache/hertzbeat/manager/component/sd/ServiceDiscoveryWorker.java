@@ -78,7 +78,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
-        workerPool.executeJob(new SdUpdateTask());
+        workerPool.executeLongRunning(new SdUpdateTask());
     }
 
     private class SdUpdateTask implements Runnable {

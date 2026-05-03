@@ -17,9 +17,9 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.manager.component.validator.ParamValidator;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -35,11 +35,11 @@ public class OptionParamValidator implements ParamValidator {
     }
 
     @Override
-    public void validate(ParamDefine paramDefine, Param param) {
-        List<ParamDefine.Option> options = paramDefine.getOptions();
+    public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
+        List<ParamDefineInfo.OptionInfo> options = paramDefine.getOptions();
         boolean invalid = true;
         if (options != null) {
-            for (ParamDefine.Option option : options) {
+            for (ParamDefineInfo.OptionInfo option : options) {
                 if (param.getParamValue().equalsIgnoreCase(option.getValue())) {
                     invalid = false;
                     break;

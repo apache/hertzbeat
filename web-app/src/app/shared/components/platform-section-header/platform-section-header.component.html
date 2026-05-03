@@ -1,0 +1,12 @@
+<div class="platform-section-header" [class.platform-section-header--compact]="compact">
+  <div class="platform-section-header-copy">
+    <div class="platform-section-header-kicker" *ngIf="kicker">{{ kicker }}</div>
+    <div class="platform-section-header-title">{{ title }}</div>
+    <div class="platform-section-header-description" *ngIf="description">{{ description }}</div>
+    <ng-content select="[sectionHeaderMeta]"></ng-content>
+  </div>
+
+  <div class="platform-section-header-actions">
+    <ng-content select="[sectionHeaderActions]"></ng-content>
+  </div>
+</div>

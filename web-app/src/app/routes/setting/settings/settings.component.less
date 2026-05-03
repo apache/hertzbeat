@@ -1,25 +1,39 @@
-@import '@delon/theme/index';
+@import '~src/styles/theme-vars';
 
 :host {
   display: block;
   padding-top: 24px;
   ::ng-deep {
+    .settings-console {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
     .main {
       display: flex;
       width: 100%;
-      padding-top: 16px;
       padding-bottom: 16px;
       overflow: auto;
+      border: 1px solid #20232b;
+      border-radius: 4px;
+      background: #121317;
     }
 
     .menu {
       width: 224px;
-      border-right: @border-width-base @border-style-base @border-color-split;
+      border-right: 1px solid #20232b;
+      background: #121317;
       .ant-menu-inline {
         border: none;
       }
+      .ant-menu {
+        background: transparent;
+      }
       .ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
-        font-weight: bold;
+        font-weight: 600;
+        color: #eef2f6;
+        background: rgba(78, 116, 248, 0.12);
       }
     }
 
@@ -29,15 +43,16 @@
       padding-right: 40px;
       padding-bottom: 8px;
       padding-left: 40px;
+      background: #0b0c0e;
       .title {
         margin-bottom: 12px;
-        color: @heading-color;
-        font-weight: 500;
-        font-size: 20px;
-        line-height: 28px;
+        color: #eef2f6;
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 24px;
       }
       .ant-list-split .ant-list-item:last-child {
-        border-bottom: 1px solid #e8e8e8;
+        border-bottom: 1px solid #20232b;
       }
       .ant-list-item {
         padding-top: 14px;
@@ -53,7 +68,7 @@
           border: none;
         }
         .content {
-          padding: 40px;
+          padding: 24px;
         }
       }
     }
@@ -62,19 +77,16 @@
 
 [data-theme='dark'] {
   :host ::ng-deep {
-    .main {
-      background-color: #141414;
-    }
     .content {
       .title {
-        color: rgba(255, 255, 255, 0.65);
+        color: #eef2f6;
       }
     }
     .menu {
-      border-right-color: #303030;
+      border-right-color: #20232b;
     }
     .content .ant-list-split .ant-list-item:last-child {
-      border-bottom-color: #303030;
+      border-bottom-color: #20232b;
     }
   }
 }

@@ -1,0 +1,36 @@
+import { describe, expect, it } from 'vitest';
+import {
+  buildExpectedQueryEntries,
+  findMismatchedQueryEntries,
+  resolveNextRedirectDigestUrl
+} from './release-shell-smoke.mjs';
+
+describe('release-shell smoke helpers', () => {
+  it('normalizes expected query entries into string pairs', () => {
+    expect(buildExpectedQueryEntries({ redirect: '/monitors?app=website', source: 'guard', empty: null })).toEqual([
+      ['redirect', '/monitors?app=website'],
+      ['source', 'guard']
+    ]);
+  });
+
+  it('finds only query entries that do not match the resolved final URL', () => {
+    const actualUrl = new URL(
+      'http://127.0.0.1:1157/passport/login?redirect=%2Fmonitors%3Fapp%3Dwebsite&source=guard'
+    );
+
+    expect(findMismatchedQueryEntries(actualUrl, { redirect: '/monitors?app=website', source: 'guard' })).toEqual([]);
+    expect(findMismatchedQueryEntries(actualUrl, { redirect: '/overview', source: 'guard' })).toEqual([
+      ['redirect', '/overview']
+    ]);
+  });
+
+  it('extracts next redirect digests into canonical urls for dev-mode smoke checks', () => {
+    expect(
+      resolveNextRedirectDigestUrl(
+        '<script>self.__next_f.push([1,"35:E{\\"digest\\":\\"NEXT_REDIRECT;replace;/log/manage?search=checkout+timeout\\\\u0026view=stream;307;\\"}"])</script>',
+        'http://127.0.0.1:4200'
+      )
+    ).toBe('http://127.0.0.1:4200/log/manage?search=checkout+timeout&view=stream');
+    expect(resolveNextRedirectDigestUrl('<html><body>no redirect digest</body></html>', 'http://127.0.0.1:4200')).toBeNull();
+  });
+});

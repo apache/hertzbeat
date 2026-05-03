@@ -68,11 +68,12 @@ public class AlertsController {
     public ResponseEntity<Message<Page<GroupAlert>>> getGroupAlerts(
             @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
             @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,
+            @Parameter(description = "Alarm severity", example = "critical") @RequestParam(required = false) String severity,
             @Parameter(description = "Sort field, default id", example = "name") @RequestParam(defaultValue = "gmtUpdate") String sort,
             @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        Page<GroupAlert> alertPage = alertService.getGroupAlerts(status, search, sort, order, pageIndex, pageSize);
+        Page<GroupAlert> alertPage = alertService.getGroupAlerts(status, search, severity, sort, order, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(alertPage));
     }
 
@@ -88,12 +89,26 @@ public class AlertsController {
     }
 
     @PutMapping(path = "/group/status/{status}")
-    @Operation(summary = "Batch modify alarm status, set firing or resolved", description = "Batch modify alarm status, set firing or resolved")
+    @Operation(summary = "Batch modify alarm status, set firing, acknowledged or resolved",
+            description = "Batch modify alarm status, set firing, acknowledged or resolved")
     public ResponseEntity<Message<Void>> applyAlertDefinesStatus(
-            @Parameter(description = "Alarm status value", example = "resolved") @PathVariable String status,
+            @Parameter(description = "Alarm status value", example = "acknowledged") @PathVariable String status,
             @Parameter(description = "Alarm List IDS", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
         if (ids != null && status != null && !ids.isEmpty()) {
             alertService.editGroupAlertStatus(status, ids);
+        }
+        Message<Void> message = Message.success();
+        return ResponseEntity.ok(message);
+    }
+
+    @PutMapping(path = "/status/{status}")
+    @Operation(summary = "Batch modify single alert status, set firing, acknowledged or resolved",
+            description = "Batch modify single alert status, set firing, acknowledged or resolved")
+    public ResponseEntity<Message<Void>> applySingleAlertStatus(
+            @Parameter(description = "Alarm status value", example = "acknowledged") @PathVariable String status,
+            @Parameter(description = "Alarm List IDS", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
+        if (ids != null && status != null && !ids.isEmpty()) {
+            alertService.editSingleAlertStatus(status, ids);
         }
         Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
@@ -106,5 +121,5 @@ public class AlertsController {
         Message<AlertSummary> message = Message.success(alertSummary);
         return ResponseEntity.ok(message);
     }
-    
+
 }

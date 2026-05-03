@@ -1,0 +1,11 @@
+.next
+.next-build
+.next-dev
+.next-dev-*
+.next-review
+node_modules
+out
+.env.local
+npm-debug.log*
+next-env.d.ts
+tsconfig.tsbuildinfo

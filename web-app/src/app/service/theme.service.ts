@@ -33,12 +33,30 @@ export class ThemeService {
   }
 
   getTheme(): string | null {
-    return localStorage.getItem(this.themeKey);
+    return localStorage.getItem(this.themeKey) || 'dark-ops';
+  }
+
+  resolveWorkbenchTheme(theme: string | null | undefined = this.getTheme()): 'dark-ops' | 'light-ops' {
+    return theme === 'light-ops' || theme === 'default' || theme === 'compact' ? 'light-ops' : 'dark-ops';
+  }
+
+  isDarkTheme(theme: string | null | undefined = this.getTheme()): boolean {
+    return this.resolveWorkbenchTheme(theme) === 'dark-ops';
   }
 
   changeTheme(theme: string | null): void {
     if (theme == null) {
       theme = this.getTheme();
+    }
+    if (theme === 'dark-ops' || theme === 'light-ops') {
+      const darkDom = this.doc.getElementById('dark-theme');
+      if (darkDom) darkDom.remove();
+
+      const compactDom = this.doc.getElementById('compact-theme');
+      if (compactDom) compactDom.remove();
+      this.doc.body.setAttribute('data-theme', theme);
+      this.setTheme(theme);
+      return;
     }
     const style = this.doc.createElement('link');
     style.type = 'text/css';
@@ -56,6 +74,8 @@ export class ThemeService {
 
       const compactDom = this.doc.getElementById('compact-theme');
       if (compactDom) compactDom.remove();
+      this.doc.body.setAttribute('data-theme', 'dark-ops');
+      this.setTheme('dark-ops');
       return;
     }
 

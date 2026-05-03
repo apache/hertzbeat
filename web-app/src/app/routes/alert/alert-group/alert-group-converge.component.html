@@ -17,51 +17,44 @@
   ~ under the License.
 -->
 
-<app-help-message-show
-  [help_message_content]="'alert.help.group' | i18n"
-  [guild_link]="'alert.help.group.link' | i18n"
-  [module_name]="'menu.alert.group'"
-  [icon_name]="'filter'"
-></app-help-message-show>
-
-<nz-divider></nz-divider>
-
-<app-toolbar>
-  <ng-template #left>
-    <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
-      <i nz-icon nzType="sync" nzTheme="outline"></i>
-    </button>
-    <button nz-button nzType="primary" (click)="onNewGroupConverge()">
-      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      {{ 'common.button.new' | i18n }}
-    </button>
-    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
-      <span nz-icon nzType="ellipsis"></span>
-    </button>
-    <nz-dropdown-menu #more_menu="nzDropdownMenu">
-      <ul nz-menu>
-        <li nz-menu-item>
-          <button nzDanger nz-button (click)="onDeleteGroupConverges()">
-            <i nz-icon nzType="delete" nzTheme="outline"></i>
-            {{ 'common.button.delete' | i18n }}
-          </button>
-        </li>
-      </ul>
-    </nz-dropdown-menu>
-  </ng-template>
-  <ng-template #right>
-    <app-multi-func-input
-      groupStyle="width: 250px;"
-      [placeholder]="'alert.group-converge.name' | i18n"
-      [(value)]="search"
-      (keydown.enter)="onFilterChange()"
-      (cleared)="onFilterChange()"
-    />
-    <button nz-button nzType="primary" (click)="onFilterChange()" class="mobile-hide">
-      {{ 'common.search' | i18n }}
-    </button>
-  </ng-template>
-</app-toolbar>
+<app-page-shell [title]="'menu.alert.group' | i18n">
+  <div pageContent>
+    <app-toolbar>
+      <ng-template #left>
+        <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+          <i nz-icon nzType="sync" nzTheme="outline"></i>
+        </button>
+        <button nz-button nzType="primary" (click)="onNewGroupConverge()">
+          <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+          {{ 'common.button.new' | i18n }}
+        </button>
+        <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+          <span nz-icon nzType="ellipsis"></span>
+        </button>
+        <nz-dropdown-menu #more_menu="nzDropdownMenu">
+          <ul nz-menu>
+            <li nz-menu-item>
+              <button nzDanger nz-button (click)="onDeleteGroupConverges()">
+                <i nz-icon nzType="delete" nzTheme="outline"></i>
+                {{ 'common.button.delete' | i18n }}
+              </button>
+            </li>
+          </ul>
+        </nz-dropdown-menu>
+      </ng-template>
+      <ng-template #right>
+        <app-multi-func-input
+          groupStyle="width: 250px;"
+          [placeholder]="'alert.group-converge.name' | i18n"
+          [(value)]="search"
+          (keydown.enter)="onFilterChange()"
+          (cleared)="onFilterChange()"
+        />
+        <button nz-button nzType="primary" (click)="onFilterChange()" class="mobile-hide">
+          {{ 'common.search' | i18n }}
+        </button>
+      </ng-template>
+    </app-toolbar>
 
 <nz-table
   #fixedTable
@@ -144,10 +137,10 @@
   </tbody>
 </nz-table>
 
-<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+    <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
 
 <!-- new or update alert-converge pop-up box -->
-<nz-modal
+    <nz-modal
   [(nzVisible)]="isManageModalVisible"
   [nzTitle]="isManageModalAdd ? ('alert.group-converge.new' | i18n) : ('alert.group-converge.edit' | i18n)"
   (nzOnCancel)="onManageModalCancel()"
@@ -262,4 +255,6 @@
       </nz-form-item>
     </form>
   </div>
-</nz-modal>
+    </nz-modal>
+  </div>
+</app-page-shell>

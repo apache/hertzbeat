@@ -1,0 +1,242 @@
+import React from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
+import { AlertSettingSurface } from './alert-setting-surface';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
+
+vi.mock('../workbench/primitives', () => ({
+  SurfaceSection: ({ title, children }: any) => (
+    <section data-panel="true">
+      <h2>{title}</h2>
+      {children}
+    </section>
+  ),
+  StatusState: ({ title, copy }: any) => <div data-status-state="true">{title}{copy}</div>,
+  WorkbenchTableFrame: ({ children, ...props }: any) => <div data-table-frame="true" {...props}>{children}</div>,
+  WorkbenchToolbarAction: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  WorkbenchValuePill: ({ children }: any) => <span data-value-pill="true">{children}</span>
+}));
+
+vi.mock('../workbench/toolbar', () => ({
+  ToolbarField: ({ label, children }: any) => (
+    <label>
+      <span>{label}</span>
+      {children}
+    </label>
+  ),
+  ToolbarInput: (props: any) => <input {...props} />,
+  ToolbarRow: ({ children, ...props }: any) => <div data-toolbar-row="true" {...props}>{children}</div>
+}));
+
+vi.mock('../workbench/workbench-page', () => ({
+  WorkbenchPage: ({ title, subtitle, facts, actions, main, side }: any) => (
+    <main
+      data-workbench-page="true"
+      data-facts-count={facts?.length ?? 0}
+      data-has-actions={actions ? 'true' : 'false'}
+      data-has-side={side ? 'true' : 'false'}
+    >
+      <h1>{title}</h1>
+      <p>{subtitle}</p>
+      <div data-actions="true">{actions}</div>
+      <div data-main="true">{main}</div>
+      <div data-side="true">{side}</div>
+    </main>
+  )
+}));
+
+vi.mock('../ui/button', () => ({
+  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>
+}));
+
+describe('AlertSettingSurface', () => {
+  const t = createTranslatorMock({ locale: 'zh-CN' });
+  const data = {
+    list: {
+      content: [
+        {
+          id: 7,
+          name: 'cpu threshold',
+          type: 'realtime_metric',
+          datasource: 'promql',
+          expr: 'cpu_usage > 80',
+          template: 'OpsTemplate',
+          labels: { severity: 'warning', team: 'core' },
+          enable: true,
+          gmtUpdate: 1713200000000
+        }
+      ],
+      totalElements: 1,
+      pageIndex: 0,
+      pageSize: 8
+    },
+    datasourceStatus: {
+      code: 0,
+      data: { promql: true }
+    }
+  };
+
+  it('renders the OTLP cold-matte alert-setting console and define table posture', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-setting-surface.tsx'), 'utf8');
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search="cpu"
+        checkedIds={[7]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-surface="otlp-cold-setting-console"');
+    expect(html).toContain('data-alert-setting-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-alert-setting-header="cold-compact-header"');
+    expect(html).toContain('data-alert-setting-command-row="standard-equal-buttons"');
+    expect(html).toContain('data-alert-setting-admin-layout="full-width-admin-list"');
+    expect(html).toContain('data-alert-setting-toolbar="cold-query-toolbar"');
+    expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
+    expect(html).toContain('data-cold-search-layout="compact-detached-button"');
+    expect(html).toContain('data-cold-search-input="fixed-width-direct"');
+    expect(html).toContain('data-cold-search-control="direct-input"');
+    expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
+    expect(html).not.toContain('data-cold-search-input-shell');
+    expect(html).toContain('data-cold-search-action="submit"');
+    expect(html).toContain('data-alert-setting-table-shell="cold-dense-table"');
+    expect(html).toContain('data-alert-setting-select-all="cold-checkbox"');
+    expect(html).toContain('data-alert-setting-row-checkbox="cold-checkbox"');
+    expect(html).toContain('data-alert-setting-enable-checkbox="cold-checkbox"');
+    expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(html).toContain('阈值规则');
+    expect(html).toContain('刷新');
+    expect(html).toContain('新增阈值');
+    expect(html).toContain('批量删除');
+    expect(html).toContain('搜索');
+    expect(html).not.toContain('当前阈值');
+    expect(html).toContain('阈值名称');
+    expect(html).toContain('阈值类型');
+    expect(html).toContain('阈值表达式');
+    expect(html).toContain('告警内容');
+    expect(html).toContain('绑定标签');
+    expect(html).toContain('cpu threshold');
+    expect(html).toContain('指标实时');
+    expect(html).toContain('severity:warning');
+    expect(html).toContain('team:core');
+    expect(html).not.toContain('data-workbench-page="true"');
+    expect(html).not.toContain('angular-table');
+    expect(html).not.toContain('angular-table-panel');
+    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain("from '../ui/search-row'");
+    expect(source).toContain("from '../ui/checkbox'");
+    expect(source).toContain('data-alert-setting-admin-layout="full-width-admin-list"');
+    expect(source).not.toContain('className={coldSettingVisual.search.input}');
+    expect(source).not.toContain('className={coldSettingVisual.search.row}');
+    expect(source).not.toContain('accent-[#4e74f8]');
+    expect(source).not.toContain('type="checkbox"');
+    expect(source).not.toContain('coldSettingVisual.layout.heroGrid');
+    expect(source).not.toContain('coldSettingVisual.layout.railGrid');
+    expect(source).not.toContain('coldSettingVisual.signal.band');
+    expect(source).not.toContain('coldSettingVisual.panel.rail');
+    expect(source).not.toContain('WorkbenchPage');
+    expect(source).not.toContain("from './alert-surface-primitives'");
+    expect(source).not.toContain('AlertSurfaceTableShell');
+    expect(source).not.toContain('AlertSurfaceTable');
+    expect(source).not.toContain('AlertSurfaceCheckboxLabel');
+    expect(source).not.toContain('facts={[]}');
+    expect(source).not.toContain('className="min-h-[680px] overflow-hidden p-0"');
+    expect(source).not.toContain('SurfaceSection');
+    expect(source).not.toContain('StatusState');
+    expect(source).not.toContain('ToolbarField');
+    expect(source).not.toContain('buildAlertSettingFacts');
+  });
+
+  it('keeps the empty state inside the cold dense setting table body', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={{
+          list: { content: [], totalElements: 0, pageIndex: 0, pageSize: 8 },
+          datasourceStatus: { code: 0, data: {} }
+        } as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-table-shell="cold-dense-table"');
+    expect(html).toContain('data-alert-setting-empty-state="cold-table-empty"');
+    expect(html).toContain('data-alert-setting-empty-icon="cold-empty-box"');
+    expect(html).toContain('还没有阈值规则');
+  });
+
+  it('shows three-signal evidence context before alert-rule authoring', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        evidenceContext={{
+          signal: 'traces',
+          title: '来自链路的阈值上下文',
+          copy: '新建阈值时会预填当前实体、服务、环境和链路标签，返回链接仍指向原排障上下文。',
+          labelsText: 'hertzbeat.signal:traces, service.name:checkout',
+          returnHref: '/trace/manage?traceId=trace-123',
+          rows: [
+            { label: '当前实体', value: 'Checkout API', meta: 'entityId 7' },
+            { label: '链路上下文', value: 'trace-123', meta: 'spanId span-456' }
+          ]
+        }}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-setting-evidence-signal="traces"');
+    expect(html).toContain('data-alert-setting-prefill-labels="hertzbeat.signal:traces, service.name:checkout"');
+    expect(html).toContain('来自链路的阈值上下文');
+    expect(html).toContain('新建阈值时会预填当前实体、服务、环境和链路标签，返回链接仍指向原排障上下文。');
+    expect(html).toContain('data-alert-setting-evidence-return="true"');
+    expect(html).toContain('href="/trace/manage?traceId=trace-123"');
+    expect(html).toContain('当前实体');
+    expect(html).toContain('链路上下文');
+  });
+});

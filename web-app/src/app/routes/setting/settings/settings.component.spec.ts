@@ -18,8 +18,18 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA, Pipe, PipeTransform } from '@angular/core';
+import { Router } from '@angular/router';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 
 import { SettingsComponent } from './settings.component';
+
+@Pipe({ name: 'i18n' })
+class MockI18nPipe implements PipeTransform {
+  transform(value: string): string {
+    return value;
+  }
+}
 
 describe('SettingsComponent', () => {
   let component: SettingsComponent;
@@ -27,7 +37,23 @@ describe('SettingsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SettingsComponent]
+      declarations: [SettingsComponent],
+      imports: [MockI18nPipe],
+      providers: [
+        {
+          provide: Router,
+          useValue: {
+            url: '/setting/settings/token',
+            events: { pipe: () => ({ subscribe() { return { unsubscribe() {} }; } }) },
+            navigateByUrl() {}
+          }
+        },
+        {
+          provide: ALAIN_I18N_TOKEN,
+          useValue: { fanyi: (key: string) => key }
+        }
+      ],
+      schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SettingsComponent);
@@ -37,5 +63,18 @@ describe('SettingsComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should expose the source-first settings shell copy', () => {
+    expect(component.settingsShellTitle).toBe('settings.console.title');
+    expect(component.settingsShellCopy).toBe('settings.console.copy');
+  });
+
+  it('should render inside the shared page shell instead of a bespoke header block', () => {
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('app-page-shell')).not.toBeNull();
+    expect(root.querySelector('.settings-console-header')).toBeNull();
+    expect(root.querySelector('.settings-console')).not.toBeNull();
   });
 });

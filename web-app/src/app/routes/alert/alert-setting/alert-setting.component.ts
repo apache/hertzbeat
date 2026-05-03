@@ -37,9 +37,62 @@ import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
 
 const AVAILABILITY = 'availability';
+const PERIODIC_LOG_DEFAULT_SQL = `SELECT count(*) AS __value__ FROM hertzbeat_logs WHERE timestamp >= now() - INTERVAL '5 minutes' AND severity_text = 'ERROR' HAVING count(*) > 2`;
+const TRACE_ERROR_RATE_SQL = `SELECT
+  service_name,
+  operation,
+  span_kind,
+  CASE
+    WHEN SUM(calls_total) = 0 THEN 0
+    ELSE SUM(error_total) * 1.0 / SUM(calls_total)
+  END AS __value__,
+  SUM(error_total) AS error_total,
+  SUM(calls_total) AS calls_total
+FROM hertzbeat_apm_red_1m
+WHERE time_window >= now() - INTERVAL '5 minutes'
+  AND span_kind IN ('SPAN_KIND_SERVER', 'SERVER', 'SPAN_KIND_CONSUMER', 'CONSUMER')
+GROUP BY service_name, operation, span_kind
+HAVING SUM(calls_total) > 0
+   AND SUM(error_total) * 1.0 / SUM(calls_total) > 0.05`;
+const TRACE_REQUEST_RATE_SQL = `SELECT
+  service_name,
+  operation,
+  span_kind,
+  SUM(calls_total) / 300.0 AS __value__,
+  SUM(calls_total) AS calls_total
+FROM hertzbeat_apm_red_1m
+WHERE time_window >= now() - INTERVAL '5 minutes'
+GROUP BY service_name, operation, span_kind
+HAVING SUM(calls_total) / 300.0 > 100`;
+const TRACE_LATENCY_P95_SQL = `SELECT
+  service_name,
+  operation,
+  span_kind,
+  uddsketch_calc(0.95, uddsketch_merge(128, 0.01, duration_sketch)) / 1000000.0 AS __value__
+FROM hertzbeat_apm_red_1m
+WHERE time_window >= now() - INTERVAL '5 minutes'
+GROUP BY service_name, operation, span_kind
+HAVING uddsketch_calc(0.95, uddsketch_merge(128, 0.01, duration_sketch)) > 1000000000`;
+const TRACE_RAW_ERROR_SQL = `SELECT
+  service_name,
+  span_name AS operation,
+  span_kind,
+  COUNT(*) AS __value__
+FROM hzb_traces
+WHERE timestamp >= now() - INTERVAL '5 minutes'
+  AND span_status_code = 'STATUS_CODE_ERROR'
+GROUP BY service_name, span_name, span_kind
+HAVING COUNT(*) > 10`;
+
+interface TraceSqlTemplate {
+  key: string;
+  labelKey: string;
+  sql: string;
+  requiresTraceLatencyPercentile?: boolean;
+}
 
 @Component({
-  selector: 'app-alert-setting',
+  standalone: false,  selector: 'app-alert-setting',
   templateUrl: './alert-setting.component.html',
   styleUrls: ['./alert-setting.component.less']
 })
@@ -137,6 +190,7 @@ export class AlertSettingComponent implements OnInit {
   datasourceStatus = {
     hasPromqlExecutor: false,
     hasSqlExecutor: false,
+    hasTraceLatencyPercentile: false,
     loaded: false
   };
   isPeriodicAlertEnabled = true;
@@ -144,7 +198,19 @@ export class AlertSettingComponent implements OnInit {
   previewData: any[] = [];
   previewColumns: Array<{ title: string; key: string; width?: string }> = [];
   previewTableLoading = false;
-  private defaultSql = `SELECT count(*) AS errorCount FROM hertzbeat_logs WHERE time_unix_nano >= NOW() - INTERVAL '30 second' AND severity_text = 'ERROR' HAVING count(*) > 2`;
+  private defaultSql = PERIODIC_LOG_DEFAULT_SQL;
+  selectedTraceSqlTemplate = 'error_rate';
+  traceSqlTemplates: TraceSqlTemplate[] = [
+    { key: 'error_rate', labelKey: 'alert.setting.trace.sql.template.error-rate', sql: TRACE_ERROR_RATE_SQL },
+    { key: 'request_rate', labelKey: 'alert.setting.trace.sql.template.request-rate', sql: TRACE_REQUEST_RATE_SQL },
+    {
+      key: 'latency_p95',
+      labelKey: 'alert.setting.trace.sql.template.latency-p95',
+      sql: TRACE_LATENCY_P95_SQL,
+      requiresTraceLatencyPercentile: true
+    },
+    { key: 'raw_trace_advanced', labelKey: 'alert.setting.trace.sql.template.raw-trace-advanced', sql: TRACE_RAW_ERROR_SQL }
+  ];
   /**
    * Initialize log fields(todo: from backend api)
    */
@@ -337,6 +403,7 @@ export class AlertSettingComponent implements OnInit {
           this.datasourceStatus = {
             hasPromqlExecutor: res.data.hasPromqlExecutor || false,
             hasSqlExecutor: res.data.hasSqlExecutor || false,
+            hasTraceLatencyPercentile: res.data.traceLatencyPercentile || false,
             loaded: true
           };
           // Check if periodic alert is enabled (requires at least one executor)
@@ -350,6 +417,7 @@ export class AlertSettingComponent implements OnInit {
         this.datasourceStatus = {
           hasPromqlExecutor: false,
           hasSqlExecutor: false,
+          hasTraceLatencyPercentile: false,
           loaded: true
         };
         this.notifySvc.warning('Failed to load datasource status. Periodic alerts are disabled.', '');
@@ -371,6 +439,9 @@ export class AlertSettingComponent implements OnInit {
 
     this.isSelectTypeModalVisible = false;
     this.alertType = type;
+    if (this.alertType === 'realtime' && this.dataType === 'trace') {
+      this.dataType = 'metric';
+    }
     this.define = new AlertDefine();
     this.severity = '';
     this.alertMode = '';
@@ -393,6 +464,9 @@ export class AlertSettingComponent implements OnInit {
   }
 
   private updateAlertDefineType() {
+    if (this.alertType === 'realtime' && this.dataType === 'trace') {
+      this.dataType = 'metric';
+    }
     // First: Reset form state when switching data source type
     this.userExpr = '';
     this.cascadeValues = [];
@@ -414,7 +488,27 @@ export class AlertSettingComponent implements OnInit {
       this.define.datasource = 'sql';
       this.define.expr = this.defaultSql;
       this.updateLogQbConfig();
+    } else if (this.alertType === 'periodic' && this.dataType === 'trace') {
+      this.define.type = 'periodic_trace';
+      this.define.datasource = 'sql';
+      const traceSqlTemplate = this.traceSqlTemplates.find(template => template.key === this.selectedTraceSqlTemplate) || this.traceSqlTemplates[0];
+      this.selectedTraceSqlTemplate = traceSqlTemplate.key;
+      this.define.expr = traceSqlTemplate.sql;
     }
+  }
+
+  get visibleTraceSqlTemplates(): TraceSqlTemplate[] {
+    return this.traceSqlTemplates.filter(template => !template.requiresTraceLatencyPercentile || this.datasourceStatus.hasTraceLatencyPercentile);
+  }
+
+  onTraceSqlTemplateChange(templateKey: string): void {
+    const template = this.traceSqlTemplates.find(item => item.key === templateKey);
+    if (!template) {
+      return;
+    }
+    this.selectedTraceSqlTemplate = template.key;
+    this.define.expr = template.sql;
+    this.clearPreview();
   }
 
   onSelectTypeModalCancel() {
@@ -654,8 +748,8 @@ export class AlertSettingComponent implements OnInit {
             if (this.define.labels && this.define.labels['alert_mode']) {
               this.alertMode = this.define.labels['alert_mode'];
             }
-            // Set default period for periodic_metric alert if not set
-            if (this.define.type === 'periodic_metric' && !this.define.period) {
+            // Set default period for periodic alert if not set
+            if ((this.define.type === 'periodic_metric' || this.define.type === 'periodic_trace') && !this.define.period) {
               this.define.period = 300;
             }
             // Set default type as realtime_metric if not set

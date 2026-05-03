@@ -32,7 +32,7 @@ import { Plugin } from '../../../pojo/Plugin';
 import { PluginService } from '../../../service/plugin.service';
 
 @Component({
-  selector: 'app-setting-plugins',
+  standalone: false,  selector: 'app-setting-plugins',
   templateUrl: './plugin.component.html'
 })
 export class SettingPluginsComponent implements OnInit {

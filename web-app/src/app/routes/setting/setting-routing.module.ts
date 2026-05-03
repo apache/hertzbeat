@@ -28,9 +28,11 @@ import { MessageServerComponent } from './settings/message-server/message-server
 import { ObjectStoreComponent } from './settings/object-store/object-store.component';
 import { SettingsComponent } from './settings/settings.component';
 import { SystemConfigComponent } from './settings/system-config/system-config.component';
+import { TokenManagementComponent } from './settings/token-management/token-management.component';
 import { StatusComponent } from './status/status.component';
 
 const routes: Routes = [
+  { path: '', redirectTo: 'settings', pathMatch: 'full' },
   { path: 'labels', component: SettingLabelComponent },
   { path: 'plugins', component: SettingPluginsComponent },
   { path: 'collector', component: CollectorComponent },
@@ -55,6 +57,11 @@ const routes: Routes = [
         path: 'object-store',
         component: ObjectStoreComponent,
         data: { titleI18n: 'settings.object-store' }
+      },
+      {
+        path: 'token',
+        component: TokenManagementComponent,
+        data: { titleI18n: 'settings.token' }
       }
     ]
   }

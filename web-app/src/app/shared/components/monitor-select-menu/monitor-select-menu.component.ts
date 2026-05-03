@@ -20,7 +20,7 @@
 import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 
 @Component({
-  selector: 'app-monitor-select-menu',
+  standalone: false,  selector: 'app-monitor-select-menu',
   templateUrl: './monitor-select-menu.component.html',
   styleUrls: ['./monitor-select-menu.component.less']
 })

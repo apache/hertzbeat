@@ -31,7 +31,7 @@ import { NoticeTemplate } from '../../../../pojo/NoticeTemplate';
 import { NoticeTemplateService } from '../../../../service/notice-template.service';
 
 @Component({
-  selector: 'app-alert-notice-template',
+  standalone: false,  selector: 'app-alert-notice-template',
   templateUrl: './alert-notice-template.component.html',
   styleUrl: './alert-notice-template.component.less'
 })

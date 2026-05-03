@@ -37,7 +37,7 @@ export interface LogTableColumn {
 }
 
 @Component({
-  selector: 'app-sql-editor',
+  standalone: false,  selector: 'app-sql-editor',
   templateUrl: './sql-editor.component.html',
   styleUrls: ['./sql-editor.component.less'],
   providers: [

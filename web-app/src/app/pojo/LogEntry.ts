@@ -29,9 +29,11 @@ export class LogEntry {
   spanId?: string;
   traceFlags?: number;
   resource?: { [key: string]: any };
+  resourceSchemaUrl?: string;
   instrumentationScope?: {
     name?: string;
     version?: string;
     attributes?: { [key: string]: any };
   };
+  scopeSchemaUrl?: string;
 }

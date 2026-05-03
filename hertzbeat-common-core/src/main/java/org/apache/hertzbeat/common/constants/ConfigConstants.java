@@ -43,7 +43,7 @@ public interface ConfigConstants {
     interface FunctionModuleConstants {
 
         String MANAGER = "manager";
-        
+
         String ALERT = "alert";
 
         String ALERTER = "alerter";
@@ -69,6 +69,8 @@ public interface ConfigConstants {
         String GRAFANA = "grafana";
 
         String LOG = "log";
+
+        String OBSERVABILITY = "observability";
     }
 
 }

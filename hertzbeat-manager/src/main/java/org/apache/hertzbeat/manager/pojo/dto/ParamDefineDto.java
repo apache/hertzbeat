@@ -21,7 +21,6 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 
 /**
  * Parameters define transfer entities
@@ -33,5 +32,5 @@ public class ParamDefineDto {
 
     private String app;
 
-    private List<ParamDefine> param;
+    private List<ParamDefineInfo> param;
 }

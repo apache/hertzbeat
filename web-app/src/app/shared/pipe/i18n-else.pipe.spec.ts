@@ -20,10 +20,18 @@
 import { I18NService } from '@core';
 
 import { I18nElsePipe } from './i18n-else.pipe';
+
 describe('I18nValuePipe', () => {
-  let srv: I18NService;
+  let srv: Pick<I18NService, 'fanyi'>;
+
+  beforeEach(() => {
+    srv = {
+      fanyi: (key: string) => `i18n:${key}`
+    };
+  });
+
   it('create an instance', () => {
-    const pipe = new I18nElsePipe(srv);
+    const pipe = new I18nElsePipe(srv as I18NService);
     expect(pipe).toBeTruthy();
   });
 });

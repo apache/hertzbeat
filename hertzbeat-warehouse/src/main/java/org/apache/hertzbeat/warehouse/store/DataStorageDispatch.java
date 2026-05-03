@@ -17,10 +17,10 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import java.util.List;
-import java.util.Optional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
@@ -49,7 +49,7 @@ public class DataStorageDispatch {
     private final WarehouseWorkerPool workerPool;
     private final JdbcTemplate jdbcTemplate;
     private final RealTimeDataWriter realTimeDataWriter;
-    private final Optional<HistoryDataWriter> historyDataWriter;
+    private final List<HistoryDataWriter> historyDataWriters;
     private final PluginRunner pluginRunner;
     private static final int LOG_BATCH_SIZE = 1000;
     @PersistenceContext
@@ -58,14 +58,15 @@ public class DataStorageDispatch {
     public DataStorageDispatch(CommonDataQueue commonDataQueue,
                                WarehouseWorkerPool workerPool,
                                JdbcTemplate jdbcTemplate,
-                               Optional<HistoryDataWriter> historyDataWriter,
+                               List<HistoryDataWriter> historyDataWriters,
                                RealTimeDataWriter realTimeDataWriter,
                                PluginRunner pluginRunner) {
         this.commonDataQueue = commonDataQueue;
         this.workerPool = workerPool;
         this.jdbcTemplate = jdbcTemplate;
         this.realTimeDataWriter = realTimeDataWriter;
-        this.historyDataWriter = historyDataWriter;
+        this.historyDataWriters = historyDataWriters == null ? List.of()
+                : historyDataWriters.stream().filter(Objects::nonNull).toList();
         this.pluginRunner = pluginRunner;
         startPersistentDataStorage();
         startLogDataStorage();
@@ -84,7 +85,10 @@ public class DataStorageDispatch {
                     backoff.reset();
                     try {
                         calculateMonitorStatus(metricsData);
-                        historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
+                        HistoryDataWriter historyDataWriter = resolveMetricsHistoryWriter();
+                        if (historyDataWriter != null) {
+                            historyDataWriter.saveData(metricsData);
+                        }
                         pluginRunner.pluginExecute(PostCollectPlugin.class, ((postCollectPlugin, pluginContext) -> postCollectPlugin.execute(metricsData, pluginContext)));
                     } finally {
                         realTimeDataWriter.saveData(metricsData);
@@ -100,7 +104,7 @@ public class DataStorageDispatch {
                 }
             }
         };
-        workerPool.executeJob(runnable);
+        workerPool.executeLongRunning(runnable);
     }
 
     protected void startLogDataStorage() {
@@ -114,13 +118,7 @@ public class DataStorageDispatch {
                         continue;
                     }
                     backoff.reset();
-                    historyDataWriter.ifPresent(dataWriter -> {
-                        try {
-                            dataWriter.saveLogDataBatch(logEntries);
-                        } catch (Exception e) {
-                            log.error("Failed to save log entries batch: {}", e.getMessage(), e);
-                        }
-                    });
+                    persistLogs(logEntries);
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
                 } catch (CommonDataQueueUnknownException ue) {
@@ -132,9 +130,30 @@ public class DataStorageDispatch {
                 }
             }
         };
-        workerPool.executeJob(runnable);
+        workerPool.executeLongRunning(runnable);
     }
-    
+
+    private HistoryDataWriter resolveMetricsHistoryWriter() {
+        return historyDataWriters.stream()
+                .filter(HistoryDataWriter::isServerAvailable)
+                .findFirst()
+                .or(() -> historyDataWriters.stream().findFirst())
+                .orElse(null);
+    }
+
+    private void persistLogs(List<LogEntry> logEntries) {
+        for (HistoryDataWriter historyDataWriter : historyDataWriters) {
+            try {
+                historyDataWriter.saveLogDataBatch(logEntries);
+                return;
+            } catch (UnsupportedOperationException ex) {
+                // Try the next writer. Not every metrics backend supports log persistence.
+            } catch (Exception e) {
+                log.error("Failed to save log entries batch: {}", e.getMessage(), e);
+            }
+        }
+    }
+
     protected void calculateMonitorStatus(CollectRep.MetricsData metricsData) {
         if (metricsData.getPriority() == 0) {
             long id = metricsData.getId();

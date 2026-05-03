@@ -5,7 +5,7 @@ import { ALAIN_I18N_TOKEN, SettingsService } from '@delon/theme';
 import { BooleanInput, InputBoolean } from '@delon/util/decorator';
 
 @Component({
-  selector: 'header-i18n',
+  standalone: false,  selector: 'header-i18n',
   template: `
     <div *ngIf="showLangText" nz-dropdown [nzDropdownMenu]="langMenu" nzPlacement="bottomRight">
       <i nz-icon class="mr-sm" nzType="global"></i>

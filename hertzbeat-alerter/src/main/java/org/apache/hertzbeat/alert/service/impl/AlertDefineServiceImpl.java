@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.manager.Label;
+import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
 import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -279,10 +280,25 @@ public class AlertDefineServiceImpl implements AlertDefineService {
                 return dataSourceService.calculate(datasource, expr);
             case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC:
                 // todo support alert expr preview
-                return dataSourceService.query(datasource, expr);
+                return dataSourceService.query(datasource, expr, type);
+            case CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC:
+                List<Map<String, Object>> tracePreview = dataSourceService.query(datasource, expr, type);
+                validateTracePreview(tracePreview);
+                return tracePreview;
             default:
                 log.error("Get define preview unsupported type: {}", type);
                 return Collections.emptyList();
+        }
+    }
+
+    private void validateTracePreview(List<Map<String, Object>> tracePreview) {
+        if (tracePreview == null || tracePreview.isEmpty()) {
+            return;
+        }
+        boolean hasMissingValueColumn = tracePreview.stream()
+                .anyMatch(row -> !row.containsKey("__value__"));
+        if (hasMissingValueColumn) {
+            throw new AlertExpressionException("Trace alert preview SQL must return __value__ column");
         }
     }
 
@@ -297,6 +313,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC:
             case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME:
             case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC:
+            case CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC:
                 // Valid type, proceed with query
                 break;
             default:

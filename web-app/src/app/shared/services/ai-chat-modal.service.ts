@@ -20,8 +20,6 @@
 import { Injectable, ComponentRef } from '@angular/core';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
-import { ChatComponent } from '../components/ai-chat/chat.component';
-
 @Injectable({
   providedIn: 'root'
 })
@@ -30,7 +28,9 @@ export class AiChatModalService {
 
   constructor(private modalService: NzModalService) {}
 
-  openChatModal(initialMessage?: string): void {
+  async openChatModal(initialMessage?: string): Promise<void> {
+    const ChatComponent = await this.loadChatComponent();
+
     if (this.currentModal) {
       this.currentModal.destroy();
     }
@@ -62,6 +62,12 @@ export class AiChatModalService {
     if (initialMessage && this.currentModal.componentInstance) {
       this.currentModal.componentInstance.initialMessage = initialMessage;
     }
+  }
+
+  private async loadChatComponent() {
+    await import('../components/ai-chat/ai-chat.module');
+    const { ChatComponent } = await import('../components/ai-chat/chat.component');
+    return ChatComponent;
   }
 
   closeChatModal(): void {

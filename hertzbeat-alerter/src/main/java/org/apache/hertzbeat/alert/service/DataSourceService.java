@@ -24,7 +24,7 @@ import java.util.Map;
  * datasource service
  */
 public interface DataSourceService {
-    
+
     /**
      * execute query expr calculate
      * @param datasource datasource
@@ -42,8 +42,17 @@ public interface DataSourceService {
     List<Map<String, Object>> query(String datasource, String expr);
 
     /**
+     * query result set from db under an alert-type-specific SQL scope
+     * @param datasource sql or promql
+     * @param expr query expr
+     * @param alertType alert rule type
+     * @return result
+     */
+    List<Map<String, Object>> query(String datasource, String expr, String alertType);
+
+    /**
      * Get available datasource executors status
      * @return map containing available executors by type (promql, sql)
      */
     Map<String, Object> getAvailableExecutors();
-} 
+}

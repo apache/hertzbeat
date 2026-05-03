@@ -21,7 +21,27 @@ import { ElapsedTimePipe } from './elapsed-time.pipe';
 
 describe('ElapsedTimePipe', () => {
   it('create an instance', () => {
-    const pipe = new ElapsedTimePipe();
+    const pipe = new ElapsedTimePipe({ fanyi: (key: string) => key } as any);
     expect(pipe).toBeTruthy();
+  });
+
+  it('should render localized chinese elapsed time copy', () => {
+    const map: Record<string, string> = {
+      'common.time.just-now': '刚刚',
+      'common.time.minute-ago': '{{count}} 分钟前',
+      'common.time.minutes-ago': '{{count}} 分钟前',
+      'common.time.hour-ago': '{{count}} 小时前',
+      'common.time.hours-ago': '{{count}} 小时前',
+      'common.time.day-ago': '{{count}} 天前',
+      'common.time.days-ago': '{{count}} 天前'
+    };
+    const pipe = new ElapsedTimePipe({
+      fanyi: (key: string, params?: Record<string, string | number>) =>
+        (map[key] ?? key).replace(/\{\{(\w+)}}/g, (_match, token) => String(params?.[token] ?? ''))
+    } as any);
+
+    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+
+    expect(pipe.transform(twoHoursAgo)).toBe('2 小时前');
   });
 });

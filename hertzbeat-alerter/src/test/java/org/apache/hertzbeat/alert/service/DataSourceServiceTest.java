@@ -35,6 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.apache.hertzbeat.common.constants.CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -753,7 +755,7 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         String complexSql = "SELECT count(*) AS errorCount FROM hertzbeat_logs "
-                + "WHERE time_unix_nano >= NOW() AND severity_text = 'ERROR' "
+                + "WHERE `timestamp` >= NOW() AND severity_text = 'ERROR' "
                 + "GROUP BY severity_text HAVING count(*) > 2 ORDER BY errorCount LIMIT 10";
 
         List<Map<String, Object>> result = dataSourceService.query("sql", complexSql);
@@ -785,6 +787,69 @@ class DataSourceServiceTest {
 
         assertThrows(AlertExpressionException.class,
                 () -> dataSourceService.query("sql", "SELEC * FORM hertzbeat_logs"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void queryTraceScopeAllowsApmRollupAndRawTraceTables() {
+        List<Map<String, Object>> sqlData = List.of(new HashMap<>(Map.of("__value__", 5)));
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        when(mockExecutor.execute(anyString())).thenReturn(sqlData);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> rollupResult = dataSourceService.query("sql",
+                "SELECT service_name, SUM(calls_total) AS __value__ FROM hertzbeat_apm_red_1m "
+                        + "WHERE time_window >= NOW() - INTERVAL '5 minutes' GROUP BY service_name",
+                TRACE_ALERT_THRESHOLD_TYPE_PERIODIC);
+        List<Map<String, Object>> rawTraceResult = dataSourceService.query("sql",
+                "SELECT service_name, COUNT(*) AS __value__ FROM hzb_traces "
+                        + "WHERE `timestamp` >= NOW() - INTERVAL '5 minutes' GROUP BY service_name",
+                TRACE_ALERT_THRESHOLD_TYPE_PERIODIC);
+
+        assertEquals(1, rollupResult.size());
+        assertEquals(1, rawTraceResult.size());
+        verify(mockExecutor, Mockito.times(2)).execute(anyString());
+    }
+
+    @Test
+    void queryLogScopeRejectsTraceTables() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "SELECT * FROM hertzbeat_apm_red_1m",
+                        LOG_ALERT_THRESHOLD_TYPE_PERIODIC));
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "SELECT * FROM hzb_traces",
+                        LOG_ALERT_THRESHOLD_TYPE_PERIODIC));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void queryDefaultScopeStillRejectsTraceTables() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "SELECT * FROM hertzbeat_apm_red_1m"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void queryTraceScopeRejectsUnsafeSql() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "DROP TABLE hertzbeat_apm_red_1m",
+                        TRACE_ALERT_THRESHOLD_TYPE_PERIODIC));
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "SELECT * FROM users",
+                        TRACE_ALERT_THRESHOLD_TYPE_PERIODIC));
         verify(mockExecutor, never()).execute(anyString());
     }
 }

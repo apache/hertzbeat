@@ -29,7 +29,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { MonitorService } from '../../../service/monitor.service';
 
 @Component({
-  selector: 'app-help-message-show',
+  standalone: false,  selector: 'app-help-message-show',
   templateUrl: './help-message-show.component.html',
   styleUrls: ['./help-message-show.component.less']
 })

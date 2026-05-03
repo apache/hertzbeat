@@ -22,7 +22,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 
 @Pipe({
-  name: 'i18nElse'
+  standalone: false,  name: 'i18nElse'
 })
 export class I18nElsePipe implements PipeTransform {
   constructor(@Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}

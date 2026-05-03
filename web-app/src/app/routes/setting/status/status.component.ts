@@ -34,7 +34,7 @@ import { StatusPageOrg } from '../../../pojo/StatusPageOrg';
 import { StatusPageService } from '../../../service/status-page.service';
 
 @Component({
-  selector: 'app-status',
+  standalone: false,  selector: 'app-status',
   templateUrl: './status.component.html',
   styleUrls: ['./status.component.less']
 })

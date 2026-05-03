@@ -36,10 +36,15 @@
     [readonly]="readonly || false"
     [disabled]="disabled || false"
     [placeholder]="placeholder || ''"
+    [attr.list]="hasSuggestions ? suggestionListId : null"
     [(ngModel)]="value"
     (ngModelChange)="onChange($event)"
   />
 </nz-input-group>
+
+<datalist *ngIf="hasSuggestions" [id]="suggestionListId">
+  <option *ngFor="let item of suggestions" [value]="item"></option>
+</datalist>
 
 <ng-template #prefixTpl>
   <ng-container *ngIf="prefix; else noPrefixContent">

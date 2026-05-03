@@ -30,7 +30,7 @@ import { GeneralConfigService } from '../../../../service/general-config.service
 const key = 'oss';
 
 @Component({
-  selector: 'app-object-store',
+  standalone: false,  selector: 'app-object-store',
   templateUrl: './object-store.component.html',
   styleUrls: ['./object-store.component.less']
 })

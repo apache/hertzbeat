@@ -29,6 +29,7 @@ import { SingleAlert } from '../pojo/SingleAlert';
 const alerts_summary_uri = '/alerts/summary';
 const alerts_group_uri = '/alerts/group';
 const alerts_group_status_uri = '/alerts/group/status';
+const alerts_status_uri = '/alerts/status';
 const alerts_uri = '/alerts';
 
 @Injectable({
@@ -66,6 +67,7 @@ export class AlertService {
   public loadGroupAlerts(
     status: string | undefined,
     search: string | undefined,
+    severity: string | undefined,
     pageIndex: number,
     pageSize: number
   ): Observable<Message<Page<GroupAlert>>> {
@@ -84,6 +86,9 @@ export class AlertService {
     }
     if (search != undefined && search != '' && search.trim() != '') {
       httpParams = httpParams.append('search', search.trim());
+    }
+    if (severity != undefined && severity != '' && severity.trim() != '') {
+      httpParams = httpParams.append('severity', severity.trim());
     }
     const options = { params: httpParams };
     return this.http.get<Message<Page<GroupAlert>>>(alerts_group_uri, options);
@@ -109,6 +114,15 @@ export class AlertService {
     });
     const options = { params: httpParams };
     return this.http.put<Message<any>>(`${alerts_group_status_uri}/${status}`, null, options);
+  }
+
+  public applyAlertsStatus(alertIds: Set<number>, status: string): Observable<Message<any>> {
+    let httpParams = new HttpParams();
+    alertIds.forEach(alertId => {
+      httpParams = httpParams.append('ids', alertId);
+    });
+    const options = { params: httpParams };
+    return this.http.put<Message<any>>(`${alerts_status_uri}/${status}`, null, options);
   }
 
   public getAlertsSummary(): Observable<Message<any>> {

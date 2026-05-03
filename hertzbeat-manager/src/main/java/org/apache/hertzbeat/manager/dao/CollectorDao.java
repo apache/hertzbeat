@@ -28,7 +28,14 @@ import org.springframework.data.jpa.repository.Modifying;
  * Collector repository
  */
 public interface CollectorDao extends JpaRepository<Collector, Long>, JpaSpecificationExecutor<Collector> {
-    
+
+    /**
+     * count collectors by runtime status
+     * @param status collector status
+     * @return collector count
+     */
+    long countByStatus(byte status);
+
     /**
      * find collector by name
      * @param name name

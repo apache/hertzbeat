@@ -31,7 +31,7 @@ import { CollectorSummary } from '../../../pojo/CollectorSummary';
 import { CollectorService } from '../../../service/collector.service';
 
 @Component({
-  selector: 'app-setting-collector',
+  standalone: false,  selector: 'app-setting-collector',
   templateUrl: './collector.component.html'
 })
 export class CollectorComponent implements OnInit {

@@ -1,0 +1,184 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.observability.ingestion.controller;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
+import org.apache.hertzbeat.common.observability.dto.binding.OtlpEntityBindingSummaryDto;
+import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuideDto;
+import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+@ExtendWith(MockitoExtension.class)
+class OtlpIngestionControllerTest {
+
+    private MockMvc mockMvc;
+
+    @Mock
+    private OtlpIngestionWorkspaceService otlpIngestionWorkspaceService;
+
+    @BeforeEach
+    void setUp() {
+        OtlpIngestionController controller = new OtlpIngestionController(otlpIngestionWorkspaceService);
+        this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    }
+
+    @Test
+    void shouldReturnWrappedOverviewPayload() throws Exception {
+        OtlpIngestionOverviewDto overview = new OtlpIngestionOverviewDto(
+                new OtlpIngestionOverviewDto.SignalOverview("metrics", true, 3, 1_710_000_000_000L, "OTLP", "metrics ready"),
+                new OtlpIngestionOverviewDto.SignalOverview("logs", true, 5, 1_710_000_000_100L, "OTLP", "logs ready"),
+                new OtlpIngestionOverviewDto.SignalOverview("traces", false, 0, null, "OTLP", "traces empty"),
+                2,
+                1_710_000_000_100L,
+                1,
+                4L,
+                List.of(new OtlpIngestionOverviewDto.RecentSignalEvent("logs", "ERROR", "checkout failed", 1_710_000_000_100L))
+        );
+        overview.setReadinessChecks(List.of(
+                new OtlpIngestionOverviewDto.ReadinessCheck(
+                        "collector", "Collector 集群", "success", "1 / 1 在线", "采集节点可接收任务", 1_710_000_000_100L)
+        ));
+        when(otlpIngestionWorkspaceService.getOverview()).thenReturn(overview);
+
+        mockMvc.perform(get("/api/ingestion/otlp/overview"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.activeSignalCount").value(2))
+                .andExpect(jsonPath("$.data.boundEntityCount").value(4))
+                .andExpect(jsonPath("$.data.logs.totalCount").value(5))
+                .andExpect(jsonPath("$.data.readinessChecks[0].key").value("collector"))
+                .andExpect(jsonPath("$.data.readinessChecks[0].summary").value("1 / 1 在线"));
+
+        verify(otlpIngestionWorkspaceService).getOverview();
+    }
+
+    @Test
+    void shouldForwardServletRequestWhenBuildingGuide() throws Exception {
+        OtlpIngestionGuideDto guide = new OtlpIngestionGuideDto(
+                "OTLP HTTP",
+                "OTLP gRPC",
+                "Authorization",
+                "Bearer <api-token>",
+                "demo.hertzbeat.apache.org:4317",
+                List.of(new OtlpIngestionGuideDto.SignalGuide("logs", "http", "direct", "https://demo.hertzbeat.apache.org/api/otlp/v1/logs", "logs", null)),
+                List.of(new OtlpIngestionGuideDto.Snippet("java-http", "http", "Java", "bash", "export OTEL_EXPORTER_OTLP_ENDPOINT=https://demo.hertzbeat.apache.org/api/otlp"))
+        );
+        when(otlpIngestionWorkspaceService.getGuide(argThat((HttpServletRequest request) ->
+                "demo.hertzbeat.apache.org".equals(request.getHeader("X-Forwarded-Host"))))).thenReturn(guide);
+
+        mockMvc.perform(get("/api/ingestion/otlp/guide")
+                        .header("X-Forwarded-Host", "demo.hertzbeat.apache.org")
+                        .header("X-Forwarded-Proto", "https"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.authHeaderExample").value("Bearer <api-token>"))
+                .andExpect(jsonPath("$.data.grpcAuthorityExample").value("demo.hertzbeat.apache.org:4317"))
+                .andExpect(jsonPath("$.data.signals[0].endpoint").value("https://demo.hertzbeat.apache.org/api/otlp/v1/logs"));
+
+        verify(otlpIngestionWorkspaceService).getGuide(argThat((HttpServletRequest request) ->
+                "demo.hertzbeat.apache.org".equals(request.getHeader("X-Forwarded-Host"))));
+    }
+
+    @Test
+    void shouldReturnWrappedBindingSummaryPayload() throws Exception {
+        OtlpEntityBindingSummaryDto summary = new OtlpEntityBindingSummaryDto(
+                List.of("service.name"),
+                List.of("checkout"),
+                List.of(new OtlpEntityBindingSummaryDto.CanonicalIdentitySample("service.name", "checkout", "logs")),
+                List.of(new OtlpEntityBindingSummaryDto.BoundEntity(1L, "service", "checkout", "Checkout", "commerce", "service.name", "checkout", 2L))
+        );
+        when(otlpIngestionWorkspaceService.getBindingSummary()).thenReturn(summary);
+
+        mockMvc.perform(get("/api/ingestion/otlp/bindings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.canonicalIdentityKeys[0]").value("service.name"))
+                .andExpect(jsonPath("$.data.recentBoundEntities[0].entityId").value(1))
+                .andExpect(jsonPath("$.data.recentBoundEntities[0].primaryIdentityValue").value("checkout"));
+
+        verify(otlpIngestionWorkspaceService).getBindingSummary();
+    }
+
+    @Test
+    void shouldReturnWrappedMetricsConsolePayload() throws Exception {
+        OtlpMetricsConsoleDto console = new OtlpMetricsConsoleDto(
+                new OtlpMetricsConsoleDto.Context(42L, "Checkout API", "checkout", "commerce", "prod", 1000L, 2000L),
+                "sum by (__name__) ({service_name=\"checkout\"})",
+                "Greptime-promql",
+                "promql",
+                new DatasourceQueryData(
+                        "otlp-metrics-console",
+                        200,
+                        null,
+                        List.of(
+                                new DatasourceQueryData.SchemaData(
+                                        new DatasourceQueryData.MetricSchema(
+                                                List.of(
+                                                        new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                        new DatasourceQueryData.MetricField("__value__", "number", null)
+                                                ),
+                                                java.util.Map.of("__name__", "http_server_requests_seconds_count"),
+                                                java.util.Map.of()
+                                        ),
+                                        List.of(new Object[] {1000L, 12.0}, new Object[] {2000L, 14.0})
+                                )
+                        )
+                ),
+                new OtlpMetricsConsoleDto.Stats(1, 1, 2000L),
+                null,
+                null
+        );
+        when(otlpIngestionWorkspaceService.getMetricsConsole(42L, 1000L, 2000L, "checkout", "commerce", "prod", null, null, null))
+                .thenReturn(console);
+
+        mockMvc.perform(get("/api/ingestion/otlp/metrics/console")
+                        .param("entityId", "42")
+                        .param("start", "1000")
+                        .param("end", "2000")
+                        .param("serviceName", "checkout")
+                        .param("serviceNamespace", "commerce")
+                        .param("environment", "prod"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.context.entityId").value(42))
+                .andExpect(jsonPath("$.data.query").value("sum by (__name__) ({service_name=\"checkout\"})"))
+                .andExpect(jsonPath("$.data.datasource").value("Greptime-promql"))
+                .andExpect(jsonPath("$.data.stats.totalSeries").value(1))
+                .andExpect(jsonPath("$.data.results.frames[0].schema.labels.__name__").value("http_server_requests_seconds_count"));
+
+        verify(otlpIngestionWorkspaceService)
+                .getMetricsConsole(42L, 1000L, 2000L, "checkout", "commerce", "prod", null, null, null);
+    }
+}

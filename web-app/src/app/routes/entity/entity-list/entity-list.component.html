@@ -1,0 +1,688 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<app-page-shell
+  [kicker]="'entity.list.console.kicker' | i18n"
+  [title]="catalogWorkbenchTitle"
+  [subtitle]="catalogWorkbenchCopy"
+  footerMode="content"
+>
+  <div pageHeaderActions class="catalog-console-header-actions">
+    <button nz-button nzType="default" nzSize="small" class="catalog-toolbar-button" (click)="loadEntities()">
+      <i nz-icon nzType="sync"></i>
+      {{ 'entity.list.console.action.refresh' | i18n }}
+    </button>
+  </div>
+
+  <app-platform-facts-strip
+    pageHero
+    class="catalog-console-status-strip"
+    [items]="catalogConsoleFacts"
+  ></app-platform-facts-strip>
+
+  <div pageContent class="catalog-page-shell catalog-page-shell--console">
+  <div class="catalog-layout catalog-layout--console">
+    <app-platform-rail-nav
+      class="catalog-rail catalog-rail--console"
+      [groups]="catalogRailGroups"
+      (itemSelected)="onCatalogRailItemSelected($event)"
+    ></app-platform-rail-nav>
+
+    <section class="catalog-main">
+      <app-platform-stage-section class="catalog-controls-card catalog-controls-card--console" tone="subtle">
+        <div class="catalog-search-row">
+          <app-multi-func-input
+            class="catalog-search-input"
+            groupStyle="width: 100%;"
+            [placeholder]="'entity.search.placeholder' | i18n"
+            [(value)]="searchDraft"
+            (keydown.enter)="applySearchFilter()"
+            (cleared)="clearSearchFilter()"
+          />
+
+          <div class="catalog-search-actions">
+            <button nz-button nzType="default" nzSize="small" class="catalog-toolbar-button" (click)="applySearchFilter()">
+              <i nz-icon nzType="search"></i>
+              {{ 'entity.list.search.action' | i18n }}
+            </button>
+            <button nz-button nzType="default" nzSize="small" class="catalog-toolbar-button" (click)="loadEntities()">
+              <i nz-icon nzType="sync"></i>
+              {{ 'common.refresh' | i18n }}
+            </button>
+          </div>
+        </div>
+
+        <div class="catalog-toolbar-row">
+          <button
+            type="button"
+            class="catalog-context-chip"
+            [class.active]="scopeMode === 'mine'"
+            [disabled]="currentUserName == null"
+            (click)="toggleMyScope()"
+          >
+            <i nz-icon nzType="usergroup-add"></i>
+            <span>{{ 'entity.list.context.my' | i18n }}</span>
+          </button>
+
+          <nz-select
+            class="catalog-toolbar-select catalog-toolbar-select-chip"
+            nzSize="small"
+            [ngModel]="environment || null"
+            [nzAllowClear]="true"
+            [nzPlaceHolder]="('entity.field.environment' | i18n) + ' · ' + ('entity.list.scope.all' | i18n)"
+            (ngModelChange)="selectEnvironment($event)"
+          >
+            <nz-option *ngFor="let option of environmentOptions; trackBy: trackByValue" [nzValue]="option" [nzLabel]="option"></nz-option>
+          </nz-select>
+
+          <button type="button" class="catalog-filter-link" (click)="toggleAdvancedFilters()">
+            <i nz-icon nzType="filter"></i>
+            <span>{{
+              showAdvancedFilters
+                ? ('entity.list.filter.hide' | i18n)
+                : ('entity.list.filter.show' | i18n)
+            }}</span>
+          </button>
+        </div>
+
+        <div class="catalog-filter-row" *ngIf="showAdvancedFilters">
+          <nz-select
+            class="catalog-toolbar-select catalog-toolbar-select-compact"
+            nzSize="small"
+            [ngModel]="statusDraft"
+            [nzAllowClear]="true"
+            [nzPlaceHolder]="'entity.list.status.all' | i18n"
+            (ngModelChange)="onStatusDraftChange($event)"
+          >
+            <nz-option
+              *ngFor="let option of statusOptions; trackBy: trackByValue"
+              [nzValue]="option"
+              [nzLabel]="translateOrFallback('entity.status.' + option, humanize(option))"
+            ></nz-option>
+          </nz-select>
+
+          <nz-select
+            class="catalog-toolbar-select catalog-toolbar-select-compact"
+            nzSize="small"
+            [ngModel]="sourceDraft"
+            [nzAllowClear]="true"
+            [nzPlaceHolder]="('entity.field.source' | i18n) + ' · ' + ('entity.list.scope.all' | i18n)"
+            (ngModelChange)="onSourceDraftChange($event)"
+          >
+            <nz-option
+              *ngFor="let option of sourceOptions; trackBy: trackByValue"
+              [nzValue]="option"
+              [nzLabel]="translateOrFallback('entity.source.' + option, humanize(option))"
+            ></nz-option>
+          </nz-select>
+
+          <nz-select
+            class="catalog-toolbar-select catalog-toolbar-select-compact"
+            nzSize="small"
+            [ngModel]="lifecycleDraft"
+            [nzAllowClear]="true"
+            [nzPlaceHolder]="('entity.field.lifecycle' | i18n) + ' · ' + ('entity.list.scope.all' | i18n)"
+            (ngModelChange)="onLifecycleDraftChange($event)"
+          >
+            <nz-option
+              *ngFor="let option of lifecycleOptions; trackBy: trackByValue"
+              [nzValue]="option"
+              [nzLabel]="translateOrFallback('entity.lifecycle.' + option, humanize(option))"
+            ></nz-option>
+          </nz-select>
+
+          <nz-select
+            class="catalog-toolbar-select catalog-toolbar-select-compact"
+            nzSize="small"
+            [ngModel]="tierDraft"
+            [nzAllowClear]="true"
+            [nzPlaceHolder]="('entity.field.tier' | i18n) + ' · ' + ('entity.list.scope.all' | i18n)"
+            (ngModelChange)="onTierDraftChange($event)"
+          >
+            <nz-option *ngFor="let option of tierOptions; trackBy: trackByValue" [nzValue]="option" [nzLabel]="option | uppercase"></nz-option>
+          </nz-select>
+
+          <app-multi-func-input
+            class="catalog-owner-input"
+            groupStyle="width: 100%;"
+            [placeholder]="'entity.filter.owner' | i18n"
+            [suggestions]="catalogSuggestions.owners"
+            [(value)]="ownerDraft"
+            (valueChange)="onOwnerDraftChange($event)"
+            (keydown.enter)="applyCatalogFilters()"
+            (cleared)="clearOwnerFilter()"
+          />
+
+          <app-multi-func-input
+            class="catalog-owner-input"
+            groupStyle="width: 100%;"
+            [placeholder]="'entity.field.system' | i18n"
+            [suggestions]="catalogSuggestions.systems"
+            [(value)]="systemDraft"
+            (valueChange)="onSystemDraftChange($event)"
+            (keydown.enter)="applyCatalogFilters()"
+            (cleared)="clearSystemFilter()"
+          />
+
+          <div class="catalog-filter-draft-hint">
+            {{ 'entity.list.filter.apply-hint' | i18n }}
+          </div>
+
+          <button nz-button nzType="default" nzSize="small" type="button" (click)="clearFilters()">
+            {{ 'entity.list.clear-filters' | i18n }}
+          </button>
+          <button nz-button nzType="default" nzSize="small" type="button" (click)="applyCatalogFilters()">
+            {{ 'entity.list.apply-filter' | i18n }}
+          </button>
+        </div>
+
+        <div class="catalog-active-filter-row" *ngIf="activeFilterChips.length > 0">
+          <span class="catalog-active-filter-label">{{ 'entity.list.filter.active' | i18n }}</span>
+          <button
+            type="button"
+            class="catalog-active-filter-chip"
+            *ngFor="let chip of activeFilterChips; trackBy: trackByCatalogActiveFilter"
+            (click)="clearActiveFilter(chip.key)"
+          >
+            <span class="catalog-active-filter-chip-key">{{ chip.label }}</span>
+            <span class="catalog-active-filter-chip-value">{{ chip.value }}</span>
+            <i nz-icon nzType="close"></i>
+          </button>
+          <button type="button" class="catalog-active-filter-clear" (click)="clearFilters()">
+            {{ 'entity.list.filter.clear-all' | i18n }}
+          </button>
+        </div>
+
+        <div class="catalog-lens-row">
+          <div class="catalog-lens-meta">
+            <span class="catalog-lens-label">{{ 'entity.list.view.label' | i18n }}</span>
+            <span class="catalog-lens-summary">{{
+              'entity.list.view.sorting-hint' | i18n
+            }}</span>
+          </div>
+          <div class="catalog-lens-tabs">
+            <button
+              type="button"
+              class="catalog-lens-tab"
+              *ngFor="let lens of lensOptions; trackBy: trackByLensOption"
+              [class.active]="activeLens === lens.value"
+              (click)="setActiveLens(lens.value)"
+            >
+              <i nz-icon [nzType]="lens.icon"></i>
+              <span>{{ translateOrFallback('entity.list.lens.' + lens.value, humanize(lens.value)) }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="catalog-summary-row">
+          <app-platform-section-header
+            class="catalog-summary-header"
+            [title]="resultSummary"
+            [description]="resultRangeSummary + ' · ' + activeLensSummary"
+            [compact]="true"
+          >
+            <div sectionHeaderActions class="catalog-selection-chip">
+              <i nz-icon nzType="appstore"></i>
+              <span>{{ selectedCatalogLabel }}</span>
+            </div>
+          </app-platform-section-header>
+        </div>
+
+      </app-platform-stage-section>
+
+      <div class="catalog-console-split">
+      <div class="catalog-main-scroll">
+        <ng-container *ngIf="showCatalogWelcomeState; else catalogResults">
+          <div class="catalog-empty-shell">
+            <div class="catalog-empty-title">{{ catalogWelcomeTitle }}</div>
+            <p class="catalog-empty-copy">{{ catalogWelcomeCopy }}</p>
+            <div class="catalog-empty-hint">
+              <i nz-icon [nzType]="activeLensIcon"></i>
+              <span>{{ activeLensTitle }}</span>
+            </div>
+            <ul class="catalog-empty-list">
+              <li *ngFor="let item of activeLensBullets | slice:0:3; trackBy: trackByValue">{{ item }}</li>
+            </ul>
+          </div>
+        </ng-container>
+
+        <ng-template #catalogResults>
+          <div class="catalog-table-card catalog-table-card--console">
+            <nz-spin [nzSpinning]="tableLoading">
+              <ng-container *ngIf="tableLoading || entities.length > 0; else catalogFilteredEmpty">
+                <nz-table
+                  #entityTable
+                  [nzData]="entityRows"
+                  [nzFrontPagination]="false"
+                  [nzShowPagination]="false"
+                  nzSize="middle"
+                  class="entity-catalog-table"
+                >
+                <thead>
+                  <tr>
+                    <th class="entity-col-name">{{ 'entity.field.name' | i18n }}</th>
+                    <th class="entity-col-owner">{{ 'entity.field.owner' | i18n }}</th>
+                    <th class="entity-col-runbook">{{ 'entity.detail.workspace.readiness' | i18n }}</th>
+                    <th class="entity-col-evidence">{{ 'entity.guide.evidence' | i18n }}</th>
+                    <th class="entity-col-definition">{{ 'entity.detail.next.title' | i18n }}</th>
+                    <th class="entity-col-status">{{ 'entity.field.status' | i18n }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of entityTable.data; trackBy: trackByEntityRow">
+                    <td>
+                      <div class="entity-row-main">
+                        <div class="entity-type-avatar">
+                          <i nz-icon [nzType]="getEntityTypeIcon(row.summary.entity.type)"></i>
+                        </div>
+
+                        <div class="entity-name-cell">
+                          <button nz-button nzType="link" class="entity-name-link" (click)="viewEntity(row.summary.entity.id)">
+                            {{ row.title }}
+                          </button>
+                          <div class="entity-name-meta entity-name-facts" *ngIf="row.kicker || row.metadataSummary">
+                            <span class="entity-name-fact" *ngIf="row.kicker">{{ row.kicker }}</span>
+                            <span class="entity-name-fact" *ngIf="row.metadataSummary">
+                              {{ row.metadataSummary }}
+                            </span>
+                          </div>
+                          <div class="entity-name-subtitle" *ngIf="row.subtitle">
+                            {{ row.subtitle }}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="owner-cell compact">
+                        <div class="owner-primary">{{ row.ownerDisplay }}</div>
+                        <div class="owner-secondary owner-facts-line">
+                          <span *ngIf="row.summary.entity.system">{{ row.summary.entity.system }}</span>
+                          <span *ngIf="row.summary.entity.environment">{{ row.summary.entity.environment }}</span>
+                          <span *ngIf="!row.summary.entity.system && !row.summary.entity.environment">
+                            {{ 'entity.owner.unassigned' | i18n }}
+                          </span>
+                        </div>
+                        <div class="owner-secondary" *ngIf="row.ownershipContextSummary">{{ row.ownershipContextSummary }}</div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="definition-cell compact">
+                        <div class="definition-primary">{{ row.readinessLabel }}</div>
+                        <div class="definition-secondary">{{ row.readinessSummary }}</div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="evidence-cell">
+                        <div class="evidence-counts compact">
+                          <span class="evidence-count-chip">{{ row.monitorCount }} {{ 'entity.field.monitor-count' | i18n }}</span>
+                          <span class="evidence-count-chip">{{ row.activeAlertCount }} {{ 'entity.field.alert-count' | i18n }}</span>
+                          <span class="evidence-count-chip">{{ row.identityCount }} {{ 'entity.field.identity-count' | i18n }}</span>
+                        </div>
+                        <div class="evidence-copy">{{ 'entity.detail.evidence-updated' | i18n }} · {{ row.lastEvidenceAtLabel }}</div>
+                        <div class="evidence-copy" *ngIf="row.telemetryContextSummary">{{ row.telemetryContextSummary }}</div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="definition-cell">
+                        <div class="definition-primary">{{ row.nextActionTitle }}</div>
+                        <div class="definition-secondary">{{ row.nextActionSummary }}</div>
+                        <div class="definition-action-row">
+                          <button
+                            nz-button
+                            nzType="link"
+                            class="definition-action-link"
+                            type="button"
+                            (click)="runEntityNextAction(row.summary)"
+                          >
+                            {{ row.nextActionLabel }}
+                          </button>
+                        </div>
+                        <div class="definition-action-row definition-action-row--signals">
+                          <button nz-button nzType="link" class="definition-action-link" type="button" (click)="openEntityLogs(row.summary)">
+                            {{ 'entity.section.logs' | i18n }}
+                          </button>
+                          <button nz-button nzType="link" class="definition-action-link" type="button" (click)="openEntityTraces(row.summary)">
+                            {{ 'entity.section.traces' | i18n }}
+                          </button>
+                          <button nz-button nzType="link" class="definition-action-link" type="button" (click)="openEntityMetrics(row.summary)">
+                            {{ 'ingestion.otlp.signal.metrics' | i18n }}
+                          </button>
+                          <button nz-button nzType="link" class="definition-action-link" type="button" (click)="openEntityAlerts(row.summary)">
+                            {{ 'entity.section.alerts' | i18n }}
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="status-cell">
+                        <div class="status-head">
+                          <nz-tag [nzColor]="row.statusColor">
+                            <i nz-icon [nzType]="row.statusIcon"></i>
+                            {{ row.statusLabel }}
+                          </nz-tag>
+                          <div class="status-actions">
+                            <button
+                              nz-button
+                              nzType="text"
+                              nzSize="small"
+                              class="status-icon-button"
+                              type="button"
+                              [attr.aria-label]="'entity.definition.workspace.edit-title' | i18n"
+                              (click)="editEntityDefinition(row.summary.entity.id)"
+                            >
+                              <i nz-icon nzType="code"></i>
+                            </button>
+                            <button
+                              nz-button
+                              nzType="text"
+                              nzSize="small"
+                              class="status-icon-button"
+                              type="button"
+                              [attr.aria-label]="'common.edit' | i18n"
+                              (click)="editEntity(row.summary.entity.id)"
+                            >
+                              <i nz-icon nzType="edit"></i>
+                            </button>
+                            <button
+                              nz-button
+                              nzType="text"
+                              nzSize="small"
+                              class="status-icon-button danger"
+                              type="button"
+                              [attr.aria-label]="'common.delete' | i18n"
+                              (click)="deleteEntity(row.summary)"
+                            >
+                              <i nz-icon nzType="delete"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="status-copy">{{ row.statusNarrative }}</div>
+                        <div class="status-copy">{{ 'entity.field.updated-at' | i18n }} · {{ row.summary.entity.gmtUpdate || row.summary.entity.gmtCreate | date : 'yyyy-MM-dd HH:mm' }}</div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+                </nz-table>
+              </ng-container>
+
+              <ng-template #catalogFilteredEmpty>
+                <div class="entity-empty">
+                  <nz-empty [nzNotFoundContent]="'entity.empty.list' | i18n"></nz-empty>
+                  <div class="empty-copy">
+                    {{ 'entity.empty.list.desc' | i18n }}
+                  </div>
+                  <button nz-button nzType="primary" (click)="createEntity()">
+                    <i nz-icon nzType="plus"></i>
+                    {{ 'entity.action.create' | i18n }}
+                  </button>
+                </div>
+              </ng-template>
+            </nz-spin>
+          </div>
+
+          <div class="entity-pagination" *ngIf="total > 0">
+            <nz-pagination
+              [(nzPageIndex)]="pageIndex"
+              [nzPageSize]="pageSize"
+              [nzTotal]="total"
+              [nzShowSizeChanger]="true"
+              [nzPageSizeOptions]="[12, 24, 48, 96]"
+              (nzPageIndexChange)="onPageIndexChange($event)"
+              (nzPageSizeChange)="onPageSizeChange($event)"
+            ></nz-pagination>
+          </div>
+
+          <app-platform-support-panel
+            class="catalog-support-details catalog-support-details-secondary"
+            *ngIf="catalogGovernanceSnapshots.length > 0 || catalogGovernanceHookCards.length > 0 || sharedGovernancePresets.length > 0 || catalogGovernancePolicyCards.length > 0"
+            [title]="'entity.list.support.title' | i18n"
+            [subtitle]="'entity.list.support.copy' | i18n"
+            [actionLabel]="'entity.list.support.action' | i18n"
+          >
+            <div class="catalog-governance-row">
+              <section class="catalog-governance-panel" *ngIf="catalogGovernanceSnapshots.length > 0">
+                <div class="catalog-governance-panel-header">
+                  <div>
+                    <div class="catalog-governance-panel-title">
+                      {{ 'entity.list.snapshot.title' | i18n }}
+                    </div>
+                    <div class="catalog-governance-panel-copy">
+                      {{
+                        'entity.list.snapshot.copy'
+                          | i18n
+                      }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="catalog-governance-snapshot-list">
+                  <div class="catalog-governance-activity-card" *ngFor="let card of catalogGovernanceSnapshots; trackBy: trackByGovernanceSnapshotCard">
+                    <div class="catalog-governance-activity-header">
+                      <div class="catalog-governance-activity-title">{{ card.title }}</div>
+                      <nz-tag [nzColor]="card.status === 'success' ? 'green' : card.status === 'warning' ? 'orange' : card.status === 'error' ? 'red' : 'blue'">
+                        {{ getCatalogGovernanceSnapshotStatusLabel(card.status) }}
+                      </nz-tag>
+                    </div>
+                    <div class="catalog-governance-activity-copy">{{ card.summary }}</div>
+                    <div class="catalog-governance-activity-detail" *ngIf="card.detail">{{ card.detail }}</div>
+                    <div class="catalog-governance-activity-meta" *ngIf="getCatalogGovernanceSnapshotMeta(card) as activityMeta">
+                      {{ activityMeta }}
+                    </div>
+                    <div class="catalog-governance-activity-actions">
+                      <button nz-button nzSize="small" type="button" (click)="runCatalogGovernanceSnapshot(card)">
+                        {{ card.actionLabel }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="catalog-governance-panel" *ngIf="catalogGovernanceHookCards.length > 0">
+                <div class="catalog-governance-panel-header">
+                  <div>
+                    <div class="catalog-governance-panel-title">
+                      {{ 'entity.list.hooks.title' | i18n }}
+                    </div>
+                    <div class="catalog-governance-panel-copy">
+                      {{
+                        'entity.list.hooks.copy'
+                          | i18n
+                      }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="catalog-hook-card-list">
+                  <div class="catalog-hook-card" *ngFor="let card of catalogGovernanceHookCards; trackBy: trackByGovernanceHookCard">
+                    <div class="catalog-policy-card-header">
+                      <div class="catalog-policy-card-title">{{ card.title }}</div>
+                      <span class="catalog-policy-card-metric">{{ card.metric }}</span>
+                    </div>
+                    <div class="catalog-policy-card-copy">{{ card.summary }}</div>
+                    <div class="catalog-policy-card-recipe">
+                    <span class="governance-hook-priority" [ngClass]="'priority-' + card.priority">{{ card.priorityLabel }}</span>
+                    <span class="catalog-policy-card-recipe-copy"
+                      >{{ 'entity.governance.recipe.next' | i18n }}：{{ card.nextStep }}</span
+                    >
+                  </div>
+                  <button nz-button nzType="default" nzSize="small" type="button" (click)="runCatalogGovernanceHook(card)">
+                    {{ card.actionLabel }}
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="catalog-governance-panel" *ngIf="sharedGovernancePresets.length > 0">
+              <div class="catalog-governance-panel-header">
+                <div>
+                  <div class="catalog-governance-panel-title">
+                    {{ 'entity.discovery.preset.shared-title' | i18n }}
+                  </div>
+                  <div class="catalog-governance-panel-copy">
+                    {{
+                      'entity.discovery.preset.shared-copy'
+                        | i18n
+                    }}
+                  </div>
+                  <div class="catalog-governance-panel-copy">
+                    {{ 'entity.governance.registry.label' | i18n }}：
+                    {{ translateOrFallback('entity.governance.registry.' + governancePresetRegistrySource, governancePresetRegistrySource) }}
+                  </div>
+                  <div class="catalog-governance-panel-registry-actions" *ngIf="governancePresetRegistrySource !== 'empty'">
+                    <button
+                      nz-button
+                      nzSize="small"
+                      nzType="default"
+                      type="button"
+                      *ngIf="canSyncGovernancePresetRegistry"
+                      (click)="syncGovernancePresetRegistry()"
+                    >
+                      {{ 'entity.governance.registry.sync' | i18n }}
+                    </button>
+                    <button nz-button nzSize="small" nzType="default" type="button" (click)="refreshGovernancePresetRegistry()">
+                      {{ 'entity.governance.registry.refresh' | i18n }}
+                    </button>
+                  </div>
+                </div>
+                <span class="catalog-governance-panel-count">{{ sharedGovernancePresets.length }}</span>
+              </div>
+
+              <div class="catalog-governance-preset-list">
+                <div
+                  class="catalog-governance-preset-card"
+                  *ngFor="let preset of sharedGovernancePresets; trackBy: trackByGovernancePreset"
+                  [class.active]="isGovernancePresetActive(preset)"
+                >
+                  <div class="catalog-governance-preset-main">
+                    <div class="catalog-governance-preset-name">{{ preset.name }}</div>
+                    <div class="catalog-governance-preset-meta" *ngIf="getGovernanceRegistrySummary()">{{ getGovernanceRegistrySummary() }}</div>
+                    <div class="catalog-governance-preset-meta">{{ getGovernancePresetSummary(preset) }}</div>
+                  </div>
+                  <div class="catalog-governance-preset-actions">
+                    <button nz-button nzSize="small" type="button" (click)="applyGovernancePresetToCatalog(preset)">
+                      {{ 'entity.discovery.preset.apply.catalog' | i18n }}
+                    </button>
+                    <button nz-button nzType="default" nzSize="small" type="button" (click)="openGovernancePresetDiscovery(preset)">
+                      {{ 'entity.discovery.preset.apply.discovery' | i18n }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="catalog-governance-activity-card" *ngIf="latestPresetWorkspaceActivity as activity">
+                <div class="catalog-governance-activity-header">
+                  <div class="catalog-governance-activity-title">
+                    {{ 'entity.list.preset.activity.title' | i18n }}
+                  </div>
+                  <nz-tag nzColor="blue">
+                    {{ latestPresetWorkspacePreset?.name || ('entity.discovery.preset.shared-title' | i18n) }}
+                  </nz-tag>
+                </div>
+                <div class="catalog-governance-activity-copy">
+                  {{
+                    getLatestPresetWorkspaceActivitySummary(activity)
+                      || ('entity.list.lifecycle.context.preset-applied' | i18n)
+                  }}
+                </div>
+                <div class="catalog-governance-activity-meta" *ngIf="getLatestPresetWorkspaceActivityMeta(activity) as activityMeta">
+                  {{ activityMeta }}
+                </div>
+                <div class="catalog-governance-activity-actions">
+                  <button
+                    nz-button
+                    nzSize="small"
+                    nzType="default"
+                    type="button"
+                    *ngIf="activity.entityId != null"
+                    (click)="viewLatestPresetWorkspaceEntity()"
+                  >
+                    {{ 'entity.list.preset.activity.action.view' | i18n }}
+                  </button>
+                  <button nz-button nzSize="small" type="button" (click)="continueLatestPresetWorkspaceActivity()">
+                    {{ 'entity.list.preset.activity.action.govern' | i18n }}
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="catalog-governance-panel" *ngIf="catalogGovernancePolicyCards.length > 0">
+              <div class="catalog-governance-panel-header">
+                <div>
+                  <div class="catalog-governance-panel-title">
+                    {{ 'entity.list.policy.title' | i18n }}
+                  </div>
+                  <div class="catalog-governance-panel-copy">
+                    {{
+                      'entity.list.policy.copy'
+                        | i18n
+                    }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="catalog-policy-card-list">
+                <div class="catalog-policy-card" *ngFor="let card of catalogGovernancePolicyCards; trackBy: trackByGovernancePolicyCard">
+                  <div class="catalog-policy-card-header">
+                    <div class="catalog-policy-card-title">{{ card.title }}</div>
+                    <span class="catalog-policy-card-metric">{{ card.metric }}</span>
+                  </div>
+                  <div class="catalog-policy-card-copy">{{ card.summary }}</div>
+                  <button nz-button nzType="default" nzSize="small" type="button" (click)="runCatalogGovernancePolicy(card)">
+                    {{ card.actionLabel }}
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+          </app-platform-support-panel>
+      </ng-template>
+
+      </div>
+      <aside class="catalog-side-column">
+        <section class="catalog-side-panel">
+          <div class="catalog-side-panel-title">{{ 'entity.list.portal.actions' | i18n }}</div>
+          <div class="catalog-side-panel-copy">{{ 'entity.list.console.copy' | i18n }}</div>
+          <div class="catalog-side-panel-actions">
+            <button nz-button nzType="primary" nzSize="small" (click)="createEntity()">
+              <i nz-icon nzType="plus"></i>
+              {{ 'entity.action.create' | i18n }}
+            </button>
+            <button nz-button nzType="default" nzSize="small" (click)="openTelemetryDiscovery()">
+              <i nz-icon nzType="deployment-unit"></i>
+              {{ 'entity.action.create-telemetry' | i18n }}
+            </button>
+            <button nz-button nzType="default" nzSize="small" (click)="openDefinitionImport()">
+              <i nz-icon nzType="upload"></i>
+              {{ 'entity.action.import-definition' | i18n }}
+            </button>
+          </div>
+          <div class="catalog-side-panel-hint" *ngIf="showCatalogWelcomeState">
+            <div class="catalog-side-panel-hint-title">{{ 'entity.list.welcome.section.setup' | i18n }}</div>
+            <div class="catalog-side-panel-hint-copy">{{ 'entity.list.welcome.setup.copy' | i18n }}</div>
+          </div>
+        </section>
+      </aside>
+      </div>
+    </section>
+  </div>
+  </div>
+</app-page-shell>

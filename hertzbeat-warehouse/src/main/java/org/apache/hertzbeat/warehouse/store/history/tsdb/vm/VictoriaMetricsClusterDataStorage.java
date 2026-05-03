@@ -286,6 +286,12 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
                                                          String history) {
+        return getHistoryMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+                                                         String history, Long start, Long end, String step) {
         String labelName = metrics + SPILT + metric;
         if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
@@ -295,6 +301,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 LABEL_KEY_INSTANCE + "=\"" + instance + "\"",
                 app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX) ? null : MONITOR_METRIC_KEY + "=\"" + metric + "\""
         ).filter(Objects::nonNull).collect(Collectors.joining(","));
+        QueryWindow queryWindow = resolveQueryWindow(history, start, end);
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -310,8 +317,8 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             String exportUrl = vmClusterProps.select().url() + VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), EXPORT_PATH);
             URI uri = UriComponentsBuilder.fromUriString(exportUrl)
                 .queryParam("match[]", "{" + timeSeriesSelector + "}")
-                .queryParam("start", "now-" + history)
-                .queryParam("end", "now")
+                .queryParam("start", queryWindow.exportStart())
+                .queryParam("end", queryWindow.exportEnd())
                 .build()
                 .encode()
                 .toUri();
@@ -362,6 +369,13 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
                                                                  String metric, String history) {
+        return getHistoryIntervalMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+                                                                 String metric, String history, Long start, Long end,
+                                                                 String step) {
         if (!serverAvailable) {
             log.error("""
 
@@ -371,22 +385,10 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                     """);
             return Collections.emptyMap();
         }
-        long endTime = ZonedDateTime.now().toEpochSecond();
-        long startTime;
-        try {
-            if (NumberUtils.isParsable(history)) {
-                startTime = NumberUtils.toLong(history);
-                startTime = (ZonedDateTime.now().toEpochSecond() - startTime);
-            } else {
-                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-                startTime = dateTime.toEpochSecond();
-            }
-        } catch (Exception e) {
-            log.error("history time error: {}. use default: 6h", e.getMessage());
-            ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(6));
-            startTime = dateTime.toEpochSecond();
-        }
+        QueryWindow queryWindow = resolveQueryWindow(history, start, end);
+        long startTime = queryWindow.startSeconds();
+        long endTime = queryWindow.endSeconds();
+        String queryStep = StringUtils.hasText(step) ? step : getTimeStep(startTime, endTime);
         String labelName = metrics + SPILT + metric;
         if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
@@ -411,7 +413,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             String rangeUrl = vmClusterProps.select().url() + VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), QUERY_RANGE_PATH);
             URI uri = UriComponentsBuilder.fromUriString(rangeUrl)
                 .queryParam("query", "{" + timeSeriesSelector + "}")
-                .queryParam("step", "4h")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -452,8 +454,8 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             }
             // max
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
-                .queryParam("query", "max_over_time({" + timeSeriesSelector + "})")
-                .queryParam("step", "4h")
+                .queryParam("query", "max_over_time({" + timeSeriesSelector + "}[" + queryStep + "])")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -492,8 +494,8 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             }
             // min
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
-                .queryParam("query", "min_over_time({" + timeSeriesSelector + "})")
-                .queryParam("step", "4h")
+                .queryParam("query", "min_over_time({" + timeSeriesSelector + "}[" + queryStep + "])")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -532,8 +534,8 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             }
             // avg
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
-                .queryParam("query", "avg_over_time({" + timeSeriesSelector + "})")
-                .queryParam("step", "4h")
+                .queryParam("query", "avg_over_time({" + timeSeriesSelector + "}[" + queryStep + "])")
+                .queryParam("step", queryStep)
                 .queryParam("start", startTime)
                 .queryParam("end", endTime)
                 .build()
@@ -574,6 +576,45 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             log.error("query metrics data from victoria-metrics error. {}.", e.getMessage(), e);
         }
         return instanceValuesMap;
+    }
+
+    private QueryWindow resolveQueryWindow(String history, Long start, Long end) {
+        if (start != null && end != null && start > 0 && end > 0 && start < end) {
+            long startSeconds = start / 1000L;
+            long endSeconds = end / 1000L;
+            return new QueryWindow(startSeconds, endSeconds, String.valueOf(startSeconds), String.valueOf(endSeconds));
+        }
+        long endSeconds = ZonedDateTime.now().toEpochSecond();
+        long startSeconds;
+        String queryHistory = StringUtils.hasText(history) ? history : "6h";
+        try {
+            if (NumberUtils.isParsable(queryHistory)) {
+                startSeconds = endSeconds - NumberUtils.toLong(queryHistory);
+            } else {
+                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(queryHistory);
+                ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
+                startSeconds = dateTime.toEpochSecond();
+            }
+        } catch (Exception e) {
+            log.error("history time error: {}. use default: 6h", e.getMessage());
+            startSeconds = endSeconds - Duration.ofHours(6).getSeconds();
+            queryHistory = "6h";
+        }
+        return new QueryWindow(startSeconds, endSeconds, "now-" + queryHistory, "now");
+    }
+
+    private String getTimeStep(long start, long end) {
+        long seconds = end - start;
+        if (seconds < Duration.ofDays(7).getSeconds() && seconds > Duration.ofDays(1).getSeconds()) {
+            return "1h";
+        }
+        if (seconds >= Duration.ofDays(7).getSeconds()) {
+            return "4h";
+        }
+        return "60s";
+    }
+
+    private record QueryWindow(long startSeconds, long endSeconds, String exportStart, String exportEnd) {
     }
 
     /**

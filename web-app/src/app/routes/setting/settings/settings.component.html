@@ -17,16 +17,24 @@
   ~ under the License.
 -->
 
-<div class="main">
-  <div class="menu">
-    <ul nz-menu [nzMode]="mode">
-      <li *ngFor="let m of menus" nz-menu-item [nzSelected]="m.selected" (click)="to(m)">{{ m.title }}</li>
-    </ul>
-  </div>
-  <div class="content">
-    <div class="title">
-      <span>{{ title }}</span>
+<app-page-shell
+  [kicker]="'settings.console.kicker' | i18n"
+  [title]="settingsShellTitle"
+  [subtitle]="settingsShellCopy"
+>
+  <div pageContent class="settings-console">
+    <div class="main">
+      <div class="menu">
+        <ul nz-menu [nzMode]="mode">
+          <li *ngFor="let m of menus" nz-menu-item [nzSelected]="m.selected" (click)="to(m)">{{ m.title }}</li>
+        </ul>
+      </div>
+      <div class="content">
+        <div class="title">
+          <span>{{ title }}</span>
+        </div>
+        <router-outlet></router-outlet>
+      </div>
     </div>
-    <router-outlet></router-outlet>
   </div>
-</div>
+</app-page-shell>

@@ -19,8 +19,8 @@
 
 package org.apache.hertzbeat.manager.component.validator.impl;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -45,9 +45,9 @@ class JsonParamValidatorTest {
 
     @Test
     void validate_ValidJson() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("key-value");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("{\"key\":\"value\"}");
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
@@ -55,10 +55,10 @@ class JsonParamValidatorTest {
 
     @Test
     void validate_InvalidJson() {
-        ParamDefine paramDefine = new ParamDefine();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("key-value");
         paramDefine.setField("headers");
-        Param param = new Param();
+        MonitorParam param = new MonitorParam();
         param.setParamValue("{key:value}"); // Invalid JSON
 
         assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));

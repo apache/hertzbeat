@@ -1,0 +1,69 @@
+<div class="platform-trace-preview-content-shell">
+  <div class="platform-trace-preview-stage-band">
+    <div class="platform-trace-preview-stage-focus">
+      <div class="platform-trace-preview-stage-kicker">{{ timelineLabel }}</div>
+      <div class="platform-trace-preview-stage-title">{{ stageTitle }}</div>
+      <div class="platform-trace-preview-stage-meta">
+        <span *ngFor="let item of stageMeta">{{ item }}</span>
+      </div>
+    </div>
+    <div class="platform-trace-preview-stage-facts">
+      <article
+        class="platform-trace-preview-stage-fact"
+        *ngFor="let item of facts"
+        [class.platform-trace-preview-stage-fact--accent]="item.tone === 'accent'"
+        [class.platform-trace-preview-stage-fact--error]="item.tone === 'error'"
+      >
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+      </article>
+    </div>
+  </div>
+
+  <div class="platform-trace-preview-content">
+    <div class="platform-trace-preview-ruler-row">
+      <span>{{ spanLabel }}</span>
+      <span>{{ durationLabel }}</span>
+      <div class="platform-trace-preview-ruler">
+        <div class="platform-trace-preview-ruler-track"></div>
+        <div class="platform-trace-preview-ruler-tick" *ngFor="let tick of timelineTicks" [style.left.%]="tick.percent">
+          <span>{{ tick.label }}</span>
+        </div>
+      </div>
+    </div>
+
+    <button
+      *ngFor="let span of orderedSpans"
+      type="button"
+      class="platform-trace-preview-span-row"
+      [class.is-active]="selectedSpan?.spanId === span.spanId"
+      [class.is-root]="isRootSpan(span)"
+      [class.is-error]="isErrorSpan(span)"
+      (click)="selectSpan(span)"
+    >
+      <div class="platform-trace-preview-span-cell platform-trace-preview-span-main">
+        <div class="platform-trace-preview-span-indent" [style.width.px]="getSpanDepth(span) * 16"></div>
+        <span class="platform-trace-preview-span-tree-dot"></span>
+        <div class="platform-trace-preview-span-name-shell">
+          <div class="platform-trace-preview-span-title">{{ span.spanName || span.spanId }}</div>
+          <div class="platform-trace-preview-span-meta">
+            <span>{{ span.serviceName || traceDetail.serviceName || '-' }}</span>
+            <span *ngIf="span.status">{{ span.status }}</span>
+            <span *ngIf="span.spanKind">{{ span.spanKind }}</span>
+          </div>
+          <div class="platform-trace-preview-span-id" *ngIf="span.spanId">{{ span.spanId }}</div>
+        </div>
+      </div>
+      <div class="platform-trace-preview-span-cell platform-trace-preview-span-duration">
+        <span>{{ formatTraceDuration(span.durationNanos) }}</span>
+        <small>{{ getSpanOffset(span) }}</small>
+      </div>
+      <div class="platform-trace-preview-span-cell platform-trace-preview-span-timeline">
+        <div class="platform-trace-preview-span-bar-shell">
+          <span class="platform-trace-preview-span-bar-start" [ngStyle]="getSpanStartMarkerStyle(span)"></span>
+          <span class="platform-trace-preview-span-bar" [ngStyle]="getSpanBarStyle(span)"></span>
+        </div>
+      </div>
+    </button>
+  </div>
+</div>

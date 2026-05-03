@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ControlWidget } from '@delon/form';
 
 @Component({
-  selector: 'test',
+  standalone: false,  selector: 'test',
   template: `
     <sf-item-wrap [id]="id" [schema]="schema" [ui]="ui" [showError]="showError" [error]="error" [showTitle]="schema.title">
       test widget

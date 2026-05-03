@@ -1,0 +1,12 @@
+<div
+  class="platform-context-chip-bar"
+  [class.platform-context-chip-bar--header]="variant === 'header'"
+  [class.platform-context-chip-bar--inline]="variant === 'inline'"
+  [class.platform-context-chip-bar--dense]="dense"
+  *ngIf="items.length > 0"
+>
+  <div class="platform-context-chip" *ngFor="let item of items" [attr.title]="item.label + ' · ' + item.value">
+    <span class="platform-context-chip-label">{{ item.label }}</span>
+    <strong class="platform-context-chip-value">{{ item.value }}</strong>
+  </div>
+</div>

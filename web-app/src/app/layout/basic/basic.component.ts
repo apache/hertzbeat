@@ -1,23 +1,37 @@
-import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener, Inject, OnDestroy, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, SettingsService, User } from '@delon/theme';
 import { LayoutDefaultOptions } from '@delon/theme/layout-default';
 import { environment } from '@env/environment';
-import { Subject } from 'rxjs';
+import { NavigationEnd, Router } from '@angular/router';
+import { Subject, filter, takeUntil } from 'rxjs';
 
 import { CONSTANTS } from '../../shared/constants';
 import { AiChatModalService } from '../../shared/services/ai-chat-modal.service';
+import { OpsWorkspaceFacade } from '../../core/ops-workspace/ops-workspace.facade';
+import { resolveSettingDrawerVisibility } from './basic-layout.util';
 
 @Component({
-  selector: 'layout-basic',
+  standalone: false,  selector: 'layout-basic',
   template: `
-    <layout-default [options]="options" [nav]="navTpl" [content]="contentTpl" [customError]="null">
+    <layout-default
+      class="layout-basic-shell"
+      [class.ops-workspace-mode]="isOpsWorkspace"
+      [options]="options"
+      [nav]="navTpl"
+      [content]="contentTpl"
+      [customError]="null"
+    >
       <layout-default-header-item direction="left">
         <a layout-default-header-item-trigger href="//github.com/apache/hertzbeat" target="_blank">
           <i nz-icon nzType="github"></i>
         </a>
       </layout-default-header-item>
-
+      @if (showHeaderSetupGuide) {
+        <layout-default-header-item direction="left" hidden="mobile">
+          <header-setup-guide></header-setup-guide>
+        </layout-default-header-item>
+      }
       <layout-default-header-item direction="middle">
         <header-ai-chat class="alain-default__ai-chat"></header-ai-chat>
       </layout-default-header-item>
@@ -52,21 +66,31 @@ import { AiChatModalService } from '../../shared/services/ai-chat-modal.service'
         <header-user></header-user>
       </layout-default-header-item>
       <ng-template #navTpl>
-        <layout-default-nav class="d-block py-lg" openStrictly="true"></layout-default-nav>
+        <layout-default-nav [class.py-lg]="!usesDefaultTreeNav" class="d-block" openStrictly="true"></layout-default-nav>
       </ng-template>
       <ng-template #contentTpl>
-        <router-outlet></router-outlet>
+        @if (isOpsWorkspace) {
+          <div class="workspace-content-stack workspace-content-stack--ops">
+            <div class="workspace-content-router workspace-content-router--ops">
+              <router-outlet></router-outlet>
+              <global-footer class="workspace-content-footer workspace-content-footer--ops">
+                <app-platform-copyright-footer [version]="version"></app-platform-copyright-footer>
+              </global-footer>
+            </div>
+          </div>
+        } @else {
+          <div class="workspace-content-stack">
+            <div class="workspace-content-router workspace-content-router--page">
+              <router-outlet></router-outlet>
+              <global-footer class="workspace-content-footer">
+                <app-platform-copyright-footer [version]="version"></app-platform-copyright-footer>
+              </global-footer>
+            </div>
+          </div>
+        }
       </ng-template>
     </layout-default>
-    <global-footer>
-      <div style="margin-top: 30px">
-        Apache HertzBeat™ {{ version }}<br />
-        Copyright &copy; {{ currentYear }}
-        <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat™</a>
-        <br />
-        Licensed under the Apache License, Version 2.0
-      </div>
-    </global-footer>
+    <app-right-drawer [payload]="drawerPayload" [visible]="drawerVisible" (closed)="closeDrawer()"></app-right-drawer>
     <setting-drawer *ngIf="showSettingDrawer" appSettingDrawerI18n></setting-drawer>
 
     <!-- AI Chat Button -->
@@ -89,7 +113,7 @@ import { AiChatModalService } from '../../shared/services/ai-chat-modal.service'
   `,
   styleUrls: ['./basic.component.less']
 })
-export class LayoutBasicComponent implements OnDestroy {
+export class LayoutBasicComponent implements OnInit, OnDestroy {
   options: LayoutDefaultOptions = {
     logoExpanded: `./assets/brand_white.svg`,
     logoCollapsed: `./assets/logo.svg`
@@ -97,9 +121,19 @@ export class LayoutBasicComponent implements OnDestroy {
   avatar: string = `./assets/img/avatar.svg`;
   searchToggleStatus = false;
   aiChatToggleStatus = false;
-  showSettingDrawer = !environment.production;
+  showSettingDrawer = resolveSettingDrawerVisibility(environment.production);
   version = CONSTANTS.VERSION;
-  currentYear = new Date().getFullYear();
+  isMobileNav = false;
+  isOpsWorkspace = false;
+  private hasInitializedDesktopNav = false;
+
+  get usesDefaultTreeNav(): boolean {
+    return !this.isMobileNav;
+  }
+
+  get showHeaderSetupGuide(): boolean {
+    return this.usesDefaultTreeNav;
+  }
 
   get user(): User {
     return this.settings.user;
@@ -120,15 +154,62 @@ export class LayoutBasicComponent implements OnDestroy {
   constructor(
     private settings: SettingsService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
-    private aiChatModalService: AiChatModalService
+    private aiChatModalService: AiChatModalService,
+    private router: Router,
+    private opsFacade: OpsWorkspaceFacade
   ) {}
+
+  get drawerPayload() {
+    return this.opsFacade.drawer();
+  }
+
+  get drawerVisible(): boolean {
+    return !!this.drawerPayload;
+  }
+
+  ngOnInit(): void {
+    this.syncViewportMode();
+    this.syncWorkspaceMode(this.router.url);
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(event => {
+        this.syncWorkspaceMode(event.urlAfterRedirects);
+      });
+  }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.syncViewportMode();
+  }
+
   openChatModal(): void {
     this.aiChatModalService.openChatModal();
+  }
+
+  closeDrawer(): void {
+    this.opsFacade.closeDrawer();
+  }
+
+  private syncViewportMode(): void {
+    this.isMobileNav = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (!this.isMobileNav && !this.hasInitializedDesktopNav) {
+      this.settings.setLayout('collapsed', false);
+      this.hasInitializedDesktopNav = true;
+    }
+  }
+
+  private syncWorkspaceMode(url: string): void {
+    this.isOpsWorkspace =
+      /^(\/overview|\/dashboard|\/entities|\/monitors|\/alert|\/alerts|\/log|\/events|\/trace|\/ingestion|\/incidents|\/actions|\/topology|\/explorer)(?:\/|$|\?)/.test(
+        url || ''
+      );
   }
 }

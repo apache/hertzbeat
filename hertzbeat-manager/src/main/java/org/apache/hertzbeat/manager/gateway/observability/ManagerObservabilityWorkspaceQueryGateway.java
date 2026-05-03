@@ -1,0 +1,109 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.manager.gateway.observability;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
+import org.apache.hertzbeat.manager.dao.CollectorDao;
+import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
+import org.apache.hertzbeat.manager.dao.EntityMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.MonitorDao;
+import org.apache.hertzbeat.manager.dao.ObserveEntityDao;
+import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+
+/**
+ * Manager-backed observability workspace read gateway.
+ *
+ * <p>This bridge intentionally remains in the manager module because it is backed by
+ * manager-owned DAOs. Moving it into the observability module would invert the dependency
+ * direction and force observability to depend on manager internals.
+ */
+@Component
+@RequiredArgsConstructor
+public class ManagerObservabilityWorkspaceQueryGateway implements ObservabilityWorkspaceQueryGateway {
+
+    private final EntityIdentityDao entityIdentityDao;
+    private final ObserveEntityDao observeEntityDao;
+    private final EntityMonitorBindDao entityMonitorBindDao;
+    private final MonitorDao monitorDao;
+    private final CollectorDao collectorDao;
+
+    @Override
+    public long countMonitors() {
+        return monitorDao.count();
+    }
+
+    @Override
+    public long countCollectors() {
+        return collectorDao.count();
+    }
+
+    @Override
+    public long countCollectorsByStatus(byte status) {
+        return collectorDao.countByStatus(status);
+    }
+
+    @Override
+    public Optional<Monitor> findLatestMonitor() {
+        return monitorDao.findFirstByOrderByGmtUpdateDesc();
+    }
+
+    @Override
+    public long countDistinctBoundEntityIdsByIdentityKeys(Set<String> identityKeys) {
+        return entityIdentityDao.countDistinctEntityIdsByIdentityKeyIn(identityKeys);
+    }
+
+    @Override
+    public List<EntityIdentity> findIdentitiesByKeysAndNormalizedValues(Set<String> identityKeys, Set<String> normalizedValues) {
+        return entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(identityKeys, normalizedValues);
+    }
+
+    @Override
+    public Map<Long, ObserveEntity> findEntitiesByIds(Set<Long> entityIds) {
+        if (CollectionUtils.isEmpty(entityIds)) {
+            return Collections.emptyMap();
+        }
+        return observeEntityDao.findAllById(entityIds).stream()
+                .collect(LinkedHashMap::new, (map, entity) -> map.put(entity.getId(), entity), Map::putAll);
+    }
+
+    @Override
+    public long countMonitorBindsByEntityId(Long entityId) {
+        return entityMonitorBindDao.countByEntityId(entityId);
+    }
+
+    @Override
+    public Optional<ObserveEntity> findEntityById(Long entityId) {
+        return observeEntityDao.findById(entityId);
+    }
+
+    @Override
+    public List<EntityIdentity> findIdentitiesByEntityId(Long entityId) {
+        return entityIdentityDao.findAllByEntityIdOrderByPriorityDescIdAsc(entityId);
+    }
+}

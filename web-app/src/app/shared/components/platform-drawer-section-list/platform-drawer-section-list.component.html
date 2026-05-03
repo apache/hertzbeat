@@ -1,0 +1,33 @@
+<ng-container *ngIf="items.length > 0; else emptyState">
+  <div class="platform-drawer-section-list">
+    <article class="platform-drawer-section-list-item" *ngFor="let item of items">
+      <div class="platform-drawer-section-list-head">
+        <div class="platform-drawer-section-list-head-main">
+          <div class="platform-drawer-section-list-title">{{ item.title }}</div>
+          <div class="platform-drawer-section-list-meta" *ngIf="item.meta">{{ item.meta }}</div>
+        </div>
+        <button
+          *ngIf="item.actionLabel && item.actionKey"
+          class="platform-drawer-section-list-action"
+          nz-button
+          nzType="link"
+          nzSize="small"
+          type="button"
+          (click)="onActionSelected(item)"
+        >
+          {{ item.actionLabel }}
+        </button>
+      </div>
+      <div class="platform-drawer-section-list-meta" *ngFor="let meta of item.secondaryMeta || []">{{ meta }}</div>
+      <app-platform-drawer-attribute-list
+        class="platform-drawer-section-list-attributes"
+        *ngIf="(item.attributeItems || []).length > 0"
+        [items]="item.attributeItems || []"
+      ></app-platform-drawer-attribute-list>
+    </article>
+  </div>
+</ng-container>
+
+<ng-template #emptyState>
+  <div class="platform-drawer-section-list-empty">{{ emptyCopy }}</div>
+</ng-template>

@@ -6,7 +6,7 @@ import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { CONSTANTS } from '../../shared/constants';
 
 @Component({
-  selector: 'layout-passport',
+  standalone: false,  selector: 'layout-passport',
   templateUrl: './passport.component.html',
   styleUrls: ['./passport.component.less']
 })

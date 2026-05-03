@@ -23,7 +23,7 @@ import { AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR
 import { ConfigurableFieldComponent } from '../configurable-field/configurable-field.component';
 
 @Component({
-  selector: 'app-form-field',
+  standalone: false,  selector: 'app-form-field',
   templateUrl: './form-field.component.html',
   styleUrls: ['./form-field.component.less'],
   providers: [
@@ -79,6 +79,8 @@ export class FormFieldComponent implements ControlValueAccessor, Validator {
         value: String(value)
       }));
       this.value = newValue;
+    } else if ((this.item.type === 'number' || this.item.type === 'intervals') && (value === undefined || value === '')) {
+      this.value = null;
     } else {
       this.value = value;
     }

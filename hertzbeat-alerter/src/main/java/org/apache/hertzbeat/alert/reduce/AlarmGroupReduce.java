@@ -26,17 +26,22 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
+import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -45,18 +50,18 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class AlarmGroupReduce {
+public class AlarmGroupReduce implements DisposableBean {
 
     /**
      * Default initial group wait time 30s
      */
     private static final long DEFAULT_GROUP_WAIT = 30 * 1000L;
-    
+
     /**
      * Default group send interval 5min
      */
-    private static final long DEFAULT_GROUP_INTERVAL = 5 * 60 * 1000L;  
-    
+    private static final long DEFAULT_GROUP_INTERVAL = 5 * 60 * 1000L;
+
     /**
      * Default repeat interval 4h
      */
@@ -71,16 +76,16 @@ public class AlarmGroupReduce {
      * Check interval for group send ms
      */
     private static final long CHECK_INTERVAL = 1000L;
-    
+
     private final AlarmInhibitReduce alarmInhibitReduce;
-    
+
     /**
      * Group define rules
      * key: rule name
      * value: group rule configuration
      */
     private final Map<String, AlertGroupConverge> groupDefines;
-    
+
     /**
      * Alert cache grouped by labels
      * key: groupDefineKey:groupKey
@@ -88,16 +93,60 @@ public class AlarmGroupReduce {
      */
     private final Map<String, GroupAlertCache> groupCacheMap;
 
+    private final ScheduledExecutorService scheduledExecutor;
+
+    private final ExecutorService workerExecutor;
+
+    private final ScheduledDispatchTask checkTask;
+
     public AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao) {
+        this(alarmInhibitReduce, alertGroupConvergeDao, VirtualThreadProperties.defaults(), true);
+    }
+
+    @Autowired
+    public AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao,
+                            VirtualThreadProperties virtualThreadProperties) {
+        this(alarmInhibitReduce, alertGroupConvergeDao, virtualThreadProperties, true);
+    }
+
+    AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao,
+                     VirtualThreadProperties virtualThreadProperties, boolean autoStart) {
         this.alarmInhibitReduce = alarmInhibitReduce;
         this.groupDefines = new ConcurrentHashMap<>(8);
         this.groupCacheMap = new ConcurrentHashMap<>(8);
+        VirtualThreadProperties properties =
+                virtualThreadProperties == null ? VirtualThreadProperties.defaults() : virtualThreadProperties;
+        this.scheduledExecutor = createScheduler();
+        this.workerExecutor = createVirtualExecutor(properties);
+        this.checkTask = new ScheduledDispatchTask(workerExecutor, this::runCheckAndSendGroups);
         List<AlertGroupConverge> groupConverges = alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue();
         refreshGroupDefines(groupConverges);
-        startCheckAndSendGroups();
+        if (autoStart) {
+            startCheckAndSendGroups();
+        }
     }
 
     private void startCheckAndSendGroups() {
+        scheduledExecutor.scheduleAtFixedRate(this::dispatchCheckAndSendGroups, 10000, CHECK_INTERVAL,
+                TimeUnit.MILLISECONDS);
+    }
+
+    void dispatchCheckAndSendGroups() {
+        checkTask.dispatch();
+    }
+
+    void beforeCheckAndSendGroupsRun() {
+    }
+
+    @Override
+    public void destroy() {
+        scheduledExecutor.shutdownNow();
+        if (workerExecutor != null) {
+            workerExecutor.shutdownNow();
+        }
+    }
+
+    private ScheduledExecutorService createScheduler() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
                     log.error("Check alarm groups calculate has uncaughtException.");
@@ -106,21 +155,36 @@ public class AlarmGroupReduce {
                 .setDaemon(true)
                 .setNameFormat("alarm-group-calculate-%d")
                 .build();
-        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
-        scheduledExecutor.scheduleAtFixedRate(() -> {
-            try {
-                long now = System.currentTimeMillis();
-                groupCacheMap.forEach((groupKey, cache) -> {
-                    if (shouldSendGroup(cache, now)) {
-                        sendGroupAlert(cache);
-                        cache.setLastSendTime(now);
-                        cache.getAlertFingerprints().clear();
-                    }
-                });
-            } catch (Exception e) {
-                log.error("Check alarm groups calculate has exception.: {}", e.getMessage(), e);
-            }
-        }, 10000, CHECK_INTERVAL, java.util.concurrent.TimeUnit.MILLISECONDS);
+        return Executors.newSingleThreadScheduledExecutor(threadFactory);
+    }
+
+    private ExecutorService createVirtualExecutor(VirtualThreadProperties properties) {
+        if (!properties.enabled()) {
+            return null;
+        }
+        return Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
+                .name("alarm-group-calculate-vt-", 0)
+                .uncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("Check alarm groups calculate worker has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .factory());
+    }
+
+    private void runCheckAndSendGroups() {
+        beforeCheckAndSendGroupsRun();
+        try {
+            long now = System.currentTimeMillis();
+            groupCacheMap.forEach((groupKey, cache) -> {
+                if (shouldSendGroup(cache, now)) {
+                    sendGroupAlert(cache);
+                    cache.setLastSendTime(now);
+                    cache.getAlertFingerprints().clear();
+                }
+            });
+        } catch (Exception e) {
+            log.error("Check alarm groups calculate has exception.: {}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -131,7 +195,7 @@ public class AlarmGroupReduce {
         this.groupDefines.clear();
         groupDefines.forEach(define -> this.groupDefines.put(define.getName(), define));
     }
-    
+
     /**
      * Process single alert and group by defined rules
      */
@@ -141,20 +205,20 @@ public class AlarmGroupReduce {
             sendSingleAlert(alert);
             return;
         }
-        
+
         // Process each group define rule
         boolean matched = false;
         for (Map.Entry<String, AlertGroupConverge> define : groupDefines.entrySet()) {
             String defineName = define.getKey();
             AlertGroupConverge ruleConfig = define.getValue();
-            
+
             // Check if alert has all required group labels
             if (hasRequiredLabels(labels, ruleConfig.getGroupLabels())) {
                 matched = true;
                 processAlertByGroupDefine(alert, defineName, ruleConfig);
             }
         }
-        
+
         if (!matched) {
             sendSingleAlert(alert);
         }
@@ -176,17 +240,17 @@ public class AlarmGroupReduce {
     private boolean hasRequiredLabels(Map<String, String> labels, List<String> requiredLabels) {
         return requiredLabels.stream().allMatch(labels::containsKey);
     }
-    
+
     private void processAlertByGroupDefine(SingleAlert alert, String defineName, AlertGroupConverge ruleConfig) {
         // Extract group labels based on define
         Map<String, String> extractedLabels = new HashMap<>();
         for (String labelKey : ruleConfig.getGroupLabels()) {
             extractedLabels.put(labelKey, alert.getLabels().get(labelKey));
         }
-        
-        // Generate group key 
+
+        // Generate group key
         String groupKey = generateGroupKey(extractedLabels);
-        
+
         // Get or create group cache
         GroupAlertCache cache = groupCacheMap.computeIfAbsent(groupKey, k -> {
             GroupAlertCache newCache = new GroupAlertCache();
@@ -206,39 +270,39 @@ public class AlarmGroupReduce {
             cache.getAlertFingerprints().put(fingerprint, alert);
             return;
         }
-        
+
         // Add new alert
         cache.getAlertFingerprints().put(fingerprint, alert);
-        
+
         if (shouldSendGroupImmediately(cache)) {
             sendGroupAlert(cache);
             cache.setLastSendTime(System.currentTimeMillis());
             cache.getAlertFingerprints().clear();
         }
     }
-    
+
     private void sendGroupAlert(GroupAlertCache cache) {
         if (cache.getAlertFingerprints().isEmpty()) {
             return;
         }
-        
+
         long now = System.currentTimeMillis();
         String status = determineGroupStatus(cache.getAlertFingerprints().values());
-        
+
         // For firing alerts, check repeat interval
         if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
             AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
             long repeatInterval = ruleConfig.getRepeatInterval() != null
                     ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
-            
+
             // Skip if within repeat interval
-            if (cache.getLastRepeatTime() > 0 
+            if (cache.getLastRepeatTime() > 0
                 && now - cache.getLastRepeatTime() < repeatInterval) {
                 return;
             }
             cache.setLastRepeatTime(now);
         }
-        
+
         GroupAlert groupAlert = GroupAlert.builder()
                 .groupKey(cache.getGroupKey())
                 .groupLabels(cache.getGroupLabels())
@@ -250,28 +314,28 @@ public class AlarmGroupReduce {
 
         alarmInhibitReduce.inhibitAlarm(groupAlert);
     }
-    
+
     private boolean shouldSendGroup(GroupAlertCache cache, long now) {
         AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
         long groupWait = ruleConfig != null ? ruleConfig.getGroupWait() * MS_PER_SECOND : DEFAULT_GROUP_WAIT;
         long groupInterval = ruleConfig != null ? ruleConfig.getGroupInterval() * MS_PER_SECOND : DEFAULT_GROUP_INTERVAL;
-        
+
         // First wait time reached
-        if (cache.getLastSendTime() == 0 
+        if (cache.getLastSendTime() == 0
             && now - cache.getCreateTime() >= groupWait) {
             return true;
         }
         // Group interval time reached
-        return cache.getLastSendTime() > 0 
+        return cache.getLastSendTime() > 0
             && now - cache.getLastSendTime() >= groupInterval;
     }
-    
+
     private boolean shouldSendGroupImmediately(GroupAlertCache cache) {
         // Check if all alerts are resolved
         return cache.getAlertFingerprints().values().stream()
                 .allMatch(alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
     }
-    
+
     private void sendSingleAlert(SingleAlert alert) {
         // Wrap single alert as group alert
         String groupKey = generateGroupKey(alert.getLabels());
@@ -286,14 +350,14 @@ public class AlarmGroupReduce {
 
         alarmInhibitReduce.inhibitAlarm(groupAlert);
     }
-    
+
     private String generateGroupKey(Map<String, String> labels) {
         return labels.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .map(e -> e.getKey() + ":" + e.getValue())
                 .collect(Collectors.joining(","));
     }
-    
+
     private Map<String, String> extractCommonLabels(Collection<SingleAlert> alerts) {
         // Extract common labels from all alerts
         if (alerts.isEmpty()) {
@@ -301,13 +365,13 @@ public class AlarmGroupReduce {
         }
         Map<String, String> common = new HashMap<>(alerts.stream().findFirst().get().getLabels());
         alerts.forEach(alert -> {
-            common.keySet().removeIf(key -> 
-                !alert.getLabels().containsKey(key) 
+            common.keySet().removeIf(key ->
+                !alert.getLabels().containsKey(key)
                 || !common.get(key).equals(alert.getLabels().get(key)));
         });
         return common;
     }
-    
+
     private Map<String, String> extractCommonAnnotations(Collection<SingleAlert> alerts) {
         // Extract common annotations from all alerts
         if (alerts.isEmpty()) {
@@ -315,20 +379,20 @@ public class AlarmGroupReduce {
         }
         Map<String, String> common = new HashMap<>(alerts.stream().findFirst().get().getAnnotations());
         alerts.forEach(alert -> {
-            common.keySet().removeIf(key -> 
-                !alert.getAnnotations().containsKey(key) 
+            common.keySet().removeIf(key ->
+                !alert.getAnnotations().containsKey(key)
                 || !common.get(key).equals(alert.getAnnotations().get(key)));
         });
         return common;
     }
-    
+
     private String determineGroupStatus(Collection<SingleAlert> alerts) {
         // If any alert is firing, group is firing
         return alerts.stream()
-                .anyMatch(alert -> CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())) 
+                .anyMatch(alert -> CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus()))
                 ? CommonConstants.ALERT_STATUS_FIRING : CommonConstants.ALERT_STATUS_RESOLVED;
     }
-    
+
     @Data
     private static class GroupAlertCache {
         private String groupDefineName;
@@ -338,5 +402,64 @@ public class AlarmGroupReduce {
         private long createTime;
         private long lastSendTime;
         private long lastRepeatTime;
+    }
+
+    private static final class ScheduledDispatchTask {
+
+        private final ExecutorService executor;
+
+        private final Runnable task;
+
+        private boolean running;
+
+        private int pendingRuns;
+
+        private ScheduledDispatchTask(ExecutorService executor, Runnable task) {
+            this.executor = executor;
+            this.task = task;
+        }
+
+        private void dispatch() {
+            boolean shouldSchedule;
+            synchronized (this) {
+                pendingRuns++;
+                shouldSchedule = !running;
+                if (shouldSchedule) {
+                    running = true;
+                }
+            }
+            if (shouldSchedule) {
+                scheduleRun();
+            }
+        }
+
+        private void scheduleRun() {
+            if (executor != null) {
+                executor.execute(this::runOnce);
+            } else {
+                runOnce();
+            }
+        }
+
+        private void runOnce() {
+            try {
+                task.run();
+            } finally {
+                scheduleNextIfNeeded();
+            }
+        }
+
+        private void scheduleNextIfNeeded() {
+            boolean shouldSchedule;
+            synchronized (this) {
+                pendingRuns = Math.max(0, pendingRuns - 1);
+                shouldSchedule = pendingRuns > 0;
+                if (!shouldSchedule) {
+                    running = false;
+                    return;
+                }
+            }
+            scheduleRun();
+        }
     }
 }

@@ -112,4 +112,30 @@ public class MetricsDataServiceTest {
         assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, intervalTrue));
         verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history));
     }
+
+    @Test
+    public void testGetMetricHistoryDataWithAbsoluteRangeAndStep() {
+        String instance = "127.0.0.1:8080";
+        String app = "linux";
+        String metrics = "disk";
+        String metric = "used";
+        String history = "6h";
+        Long start = 1712730000000L;
+        Long end = 1712733600000L;
+        String step = "60s";
+
+        when(historyDataReader.getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history),
+                eq(start), eq(end), eq(step))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, false,
+                start, end, step));
+        verify(historyDataReader, times(1)).getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric),
+                eq(history), eq(start), eq(end), eq(step));
+
+        when(historyDataReader.getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric),
+                eq(history), eq(start), eq(end), eq(step))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, true,
+                start, end, step));
+        verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics),
+                eq(metric), eq(history), eq(start), eq(end), eq(step));
+    }
 }

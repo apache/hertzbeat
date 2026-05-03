@@ -29,8 +29,8 @@ import { AlertSettingComponent } from './alert-setting/alert-setting.component';
 import { AlertSilenceComponent } from './alert-silence/alert-silence.component';
 
 const routes: Routes = [
-  { path: '', component: AlertCenterComponent },
-  { path: 'center', component: AlertCenterComponent },
+  { path: '', component: AlertCenterComponent, data: { titleI18n: 'menu.alert.center' } },
+  { path: 'center', component: AlertCenterComponent, data: { titleI18n: 'menu.alert.center' } },
   { path: 'setting', component: AlertSettingComponent },
   { path: 'notice', component: AlertNoticeComponent },
   { path: 'silence', component: AlertSilenceComponent },

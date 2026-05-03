@@ -17,22 +17,24 @@
   ~ under the License.
 -->
 
-<div class="ant-card width-lg br-8" style="margin: 0 auto">
-  <div class="ant-card-body">
-    <div class="avatar">
-      <nz-avatar [nzSrc]="user.avatar" nzIcon="user" nzSize="large"></nz-avatar>
+<app-page-shell [title]="'app.lock' | i18n" [hideHeader]="true" [showFooter]="false">
+  <div pageContent class="ant-card width-lg br-8" style="margin: 0 auto">
+    <div class="ant-card-body">
+      <div class="avatar">
+        <nz-avatar [nzSrc]="user.avatar" nzIcon="user" nzSize="large"></nz-avatar>
+      </div>
+      <form nz-form [formGroup]="f" (ngSubmit)="submit()" role="form" class="mt-md">
+        <nz-form-item>
+          <nz-form-control [nzErrorTip]="'validation.password.required' | i18n">
+            <app-multi-func-input prefixIcon="lock" formControlName="password" [placeholder]="'app.lock.placeholder' | i18n" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-row nzAlign="middle">
+          <nz-col [nzOffset]="12" [nzSpan]="12" style="text-align: right">
+            <button nz-button [disabled]="!f.valid" nzType="primary">{{ 'app.lock' | i18n }}</button>
+          </nz-col>
+        </nz-row>
+      </form>
     </div>
-    <form nz-form [formGroup]="f" (ngSubmit)="submit()" role="form" class="mt-md">
-      <nz-form-item>
-        <nz-form-control [nzErrorTip]="'validation.password.required' | i18n">
-          <app-multi-func-input prefixIcon="lock" formControlName="password" [placeholder]="'app.lock.placeholder' | i18n" />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-row nzAlign="middle">
-        <nz-col [nzOffset]="12" [nzSpan]="12" style="text-align: right">
-          <button nz-button [disabled]="!f.valid" nzType="primary">{{ 'app.lock' | i18n }}</button>
-        </nz-col>
-      </nz-row>
-    </form>
   </div>
-</div>
+</app-page-shell>

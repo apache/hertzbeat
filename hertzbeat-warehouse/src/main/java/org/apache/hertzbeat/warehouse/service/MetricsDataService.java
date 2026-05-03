@@ -50,5 +50,25 @@ public interface MetricsDataService {
      * @param interval aggregate data calc
      * @return metrics history data
      */
-    MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric, String history, Boolean interval);
+    default MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric,
+                                                    String history, Boolean interval) {
+        return getMetricHistoryData(instance, app, metrics, metric, history, interval, null, null, null);
+    }
+
+    /**
+     * Queries historical data for a specified metric for monitoring with an absolute time window.
+     *
+     * @param instance Instance e.g. ip:port or ip or domain
+     * @param app      Monitor Type
+     * @param metrics  Metrics Name
+     * @param metric   Metrics Field Name
+     * @param history  Query Historical Time Period
+     * @param interval aggregate data calc
+     * @param start    Query start time in milliseconds
+     * @param end      Query end time in milliseconds
+     * @param step     Query step, for example 60s or 5m
+     * @return metrics history data
+     */
+    MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric,
+                                            String history, Boolean interval, Long start, Long end, String step);
 }

@@ -17,21 +17,64 @@
   ~ under the License.
 -->
 
-<app-help-message-show
-  [help_message_content]="'alert.help.silence' | i18n"
-  [guild_link]="'alert.help.silence.link' | i18n"
-  [module_name]="'menu.alert.silence'"
-  [icon_name]="'audio-muted'"
-></app-help-message-show>
+<app-page-shell [title]="'menu.alert.silence' | i18n">
+  <div pageContent>
+    <div class="entity-context-bar" *ngIf="hasEntityContext()">
+      <div class="entity-context-main">
+        <div class="entity-context-label">{{ 'entity.response.context.title' | i18n }}</div>
+        <div class="entity-context-entity">{{ entityNameContext || returnLabel || entityIdContext }}</div>
+        <div class="entity-context-summary" *ngIf="getEntityContextSummary() as summary">{{ summary }}</div>
+      </div>
+      <button nz-button nzSize="small" type="button" (click)="returnToEntity()">
+        {{ 'entity.response.context.return' | i18n }}
+      </button>
+    </div>
 
-<nz-divider></nz-divider>
+    <div class="entity-match-mode-bar" *ngIf="hasMatchingRuleContext()">
+      <div class="entity-match-mode-main">
+        <div class="entity-match-mode-label">{{ 'entity.noise-controls.management.label' | i18n }}</div>
+        <div class="entity-match-mode-title">
+          {{
+            shouldUseMatchedView()
+              ? ('entity.noise-controls.management.title.matched' | i18n)
+              : ('entity.noise-controls.management.title.global' | i18n)
+          }}
+        </div>
+        <div class="entity-match-mode-copy" *ngIf="showEmptyMatchedRuleHint()">
+          {{ 'entity.noise-controls.management.empty' | i18n }}
+        </div>
+        <div class="entity-match-mode-copy" *ngIf="showMissingMatchedRuleHint()">
+          {{ 'entity.noise-controls.management.missing' | i18n: { count: missingMatchedRuleCount } }}
+        </div>
+      </div>
+      <div class="entity-match-mode-actions">
+        <button nz-button nzSize="small" type="button" *ngIf="canViewAllRules()" (click)="viewAllRules()">
+          {{ 'entity.noise-controls.management.view-all' | i18n }}
+        </button>
+        <button nz-button nzSize="small" type="button" *ngIf="canRestoreMatchedRules()" (click)="viewMatchedRules()">
+          {{ 'entity.noise-controls.management.view-matched' | i18n }}
+        </button>
+      </div>
+    </div>
+
+    <div class="entity-authoring-notice" *ngIf="hasCreatedOutsideMatchedViewNotice()">
+      <div class="entity-authoring-notice-main">
+        <div class="entity-authoring-notice-title">{{ 'entity.noise-controls.authoring.created-outside-matched.title' | i18n }}</div>
+        <div class="entity-authoring-notice-copy">{{ 'entity.noise-controls.authoring.created-outside-matched.copy' | i18n }}</div>
+      </div>
+      <button nz-button nzType="default" nzSize="small" type="button" (click)="viewAllRules()">
+        {{ 'entity.noise-controls.management.view-all' | i18n }}
+      </button>
+    </div>
+
+    <nz-divider></nz-divider>
 
 <app-toolbar>
   <ng-template #left>
     <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
-    <button nz-button nzType="primary" (click)="onNewAlertSilence()">
+    <button nz-button nzType="primary" (click)="onNewAlertSilence()" [nzLoading]="authoringLoading">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'common.button.new' | i18n }}
     </button>
@@ -150,10 +193,10 @@
   </tbody>
 </nz-table>
 
-<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+    <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
 
 <!-- new or update alert silence pop-up box -->
-<nz-modal
+    <nz-modal
   [(nzVisible)]="isManageModalVisible"
   [nzTitle]="isManageModalAdd ? ('alert.silence.new' | i18n) : ('alert.silence.edit' | i18n)"
   (nzOnCancel)="onManageModalCancel()"
@@ -164,6 +207,16 @@
 >
   <div *nzModalContent class="-inner-content">
     <form nz-form #ruleForm="ngForm">
+      <div class="entity-authoring-mode" *ngIf="hasEntityAuthoringMode()">
+        <div class="entity-authoring-mode-kicker">{{ 'entity.noise-controls.authoring.label' | i18n }}</div>
+        <div class="entity-authoring-mode-title">{{ 'entity.noise-controls.authoring.silence.title' | i18n }}</div>
+        <div class="entity-authoring-mode-copy" *ngIf="prefillSource === 'alerts-common-labels'">
+          {{ 'entity.noise-controls.authoring.silence.prefill-success' | i18n }}
+        </div>
+        <div class="entity-authoring-mode-copy warning" *ngIf="hasPrefillWarning()">
+          {{ prefillWarning }}
+        </div>
+      </div>
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="rule_name" nzRequired="true">{{ 'alert.silence.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
@@ -233,4 +286,6 @@
       </nz-form-item>
     </form>
   </div>
-</nz-modal>
+    </nz-modal>
+  </div>
+</app-page-shell>

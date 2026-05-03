@@ -25,7 +25,7 @@ import { Subject, forkJoin } from 'rxjs';
 import { takeUntil, map } from 'rxjs/operators';
 
 @Directive({
-  selector: 'setting-drawer[appSettingDrawerI18n]'
+  standalone: false,  selector: 'setting-drawer[appSettingDrawerI18n]'
 })
 export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDestroy {
   private destroy$ = new Subject<void>();

@@ -1,0 +1,62 @@
+@import '~src/styles/platform-drawer.less';
+
+:host {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.platform-drawer-shell {
+  .platform-drawer-shell();
+}
+
+.platform-drawer-shell-header {
+  .platform-drawer-header();
+}
+
+.platform-drawer-shell-heading {
+  .platform-drawer-heading();
+}
+
+.platform-drawer-shell-kicker {
+  .platform-drawer-kicker();
+}
+
+.platform-drawer-shell-title {
+  .platform-drawer-title();
+}
+
+.platform-drawer-shell-subtitle {
+  .platform-drawer-subtitle();
+}
+
+.platform-drawer-shell-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.platform-drawer-shell-close {
+  .platform-drawer-close();
+}
+
+.platform-drawer-shell-summary {
+  .platform-drawer-section();
+}
+
+.platform-drawer-shell-toolbar {
+  .platform-drawer-section();
+  .platform-drawer-toolbar();
+}
+
+.platform-drawer-shell-content {
+  .platform-drawer-content();
+}
+
+.platform-drawer-shell-content--flush {
+  padding: 0;
+}
+
+.platform-drawer-shell--fullscreen {
+  min-height: 100%;
+}

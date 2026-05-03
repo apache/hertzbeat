@@ -40,7 +40,7 @@ public interface AlertService {
      * @return single alerts
      */
     Page<SingleAlert> getSingleAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize);
-    
+
     /**
      * Dynamic conditional query
      * @param status        Alarm Status
@@ -48,9 +48,9 @@ public interface AlertService {
      * @param order         Sort Type
      * @param pageIndex     List current page
      * @param pageSize      Number of list pagination
-     * @return search result    
+     * @return search result
      */
-    Page<GroupAlert> getGroupAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize);
+    Page<GroupAlert> getGroupAlerts(String status, String search, String severity, String sort, String order, int pageIndex, int pageSize);
 
     /**
      * delete the group alarm according to the alarm ID
@@ -77,10 +77,10 @@ public interface AlertService {
      * @param ids  Alarm ID List to be modified
      */
     void editSingleAlertStatus(String status, List<Long> ids);
-    
+
     /**
      * Get alarm statistics information
-     * @return Alarm statistics information 
+     * @return Alarm statistics information
      */
     AlertSummary getAlertsSummary();
 }

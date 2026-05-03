@@ -99,7 +99,7 @@
       <!-- Welcome message -->
       <div *ngIf="messages.length === 0 && !isLoadingConversations" class="welcome-message">
         <div class="welcome-content">
-          <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon" />
+          <img [src]="theme === 'dark-ops' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon" />
           <h3 class="welcome-title">{{ 'ai.chat.welcome.title' | i18n }}</h3>
           <p class="welcome-description">
             {{ 'ai.chat.welcome.description' | i18n }}
@@ -145,7 +145,8 @@
           </div>
           <div class="message-text">
             <div *ngIf="message.role === 'user'" [innerHTML]="message.content"></div>
-            <markdown *ngIf="message.role === 'assistant' || message.role === 'system_push'" [data]="message.content"> </markdown>
+            <markdown appMarkdownMermaid *ngIf="message.role === 'assistant' || message.role === 'system_push'" [data]="message.content">
+            </markdown>
           </div>
           <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage" class="typing-indicator">
             <span>{{ 'ai.chat.typing' | i18n }}</span>

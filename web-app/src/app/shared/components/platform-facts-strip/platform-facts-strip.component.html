@@ -1,0 +1,13 @@
+<div class="platform-facts-strip" [class.platform-facts-strip--dense]="dense">
+  <article
+    class="platform-facts-strip-item"
+    *ngFor="let item of items"
+    [class.platform-facts-strip-item--critical]="item.tone === 'critical'"
+    [class.platform-facts-strip-item--warning]="item.tone === 'warning'"
+    [class.platform-facts-strip-item--success]="item.tone === 'success'"
+    [class.platform-facts-strip-item--accent]="item.tone === 'accent'"
+  >
+    <span class="platform-facts-strip-label">{{ item.label }}</span>
+    <strong class="platform-facts-strip-value">{{ item.value }}</strong>
+  </article>
+</div>

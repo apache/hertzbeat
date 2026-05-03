@@ -24,16 +24,20 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
@@ -102,6 +106,35 @@ class GreptimeSqlQueryExecutorTest {
 
         // Execute
         assertThrows(RuntimeException.class, () -> greptimeSqlQueryExecutor.execute("SELECT * FROM metrics"));
+    }
+
+    @Test
+    void testExecuteEncodesSqlInFormBody() {
+        GreptimeSqlQueryContent mockResponse = createMockResponse();
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity =
+            new ResponseEntity<>(mockResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+            any(String.class),
+            eq(HttpMethod.POST),
+            any(HttpEntity.class),
+            eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(responseEntity);
+
+        String sql = "SELECT COUNT(*) as count FROM hertzbeat_logs WHERE body LIKE '%Exporting failed%'";
+        greptimeSqlQueryExecutor.execute(sql);
+
+        ArgumentCaptor<HttpEntity> httpEntityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).exchange(
+            any(String.class),
+            eq(HttpMethod.POST),
+            httpEntityCaptor.capture(),
+            eq(GreptimeSqlQueryContent.class)
+        );
+        assertEquals(
+            "sql=" + URLEncoder.encode(sql, StandardCharsets.UTF_8),
+            httpEntityCaptor.getValue().getBody()
+        );
     }
 
     private GreptimeSqlQueryContent createMockResponse() {

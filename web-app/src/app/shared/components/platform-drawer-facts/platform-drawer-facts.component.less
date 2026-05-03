@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.platform-drawer-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.platform-drawer-fact-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--ops-border-color) 84%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ops-surface-panel) 82%, transparent);
+}
+
+.platform-drawer-fact-label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  color: var(--ops-text-tertiary);
+  text-transform: uppercase;
+}
+
+.platform-drawer-fact-value {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ops-text-primary);
+  word-break: break-word;
+}
+
+.platform-drawer-fact-value.is-monospace {
+  font-family: var(--font-family-code, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace);
+  font-size: 13px;
+}

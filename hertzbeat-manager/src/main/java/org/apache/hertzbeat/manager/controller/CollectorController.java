@@ -23,9 +23,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Map;
-import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.util.ResponseUtil;
+import org.apache.hertzbeat.manager.pojo.dto.CollectorSummary;
 import org.apache.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -72,7 +72,7 @@ public class CollectorController {
     @PutMapping("/offline")
     @Operation(summary = "Offline collectors")
     public ResponseEntity<Message<Void>> offlineCollector(
-            @Parameter(description = "collector name", example = "demo-collector") 
+            @Parameter(description = "collector name", example = "demo-collector")
             @RequestParam(required = false) List<String> collectors) {
         collectorService.makeCollectorsOffline(collectors);
         return ResponseEntity.ok(Message.success("Offline success"));

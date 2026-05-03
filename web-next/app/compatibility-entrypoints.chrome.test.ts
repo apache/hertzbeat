@@ -1,0 +1,52 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+describe('compatibility entrypoint posture', () => {
+  it('keeps compatibility routes on their shared owners', () => {
+    const dashboardSource = readFileSync(resolve(process.cwd(), 'app/dashboard/page.tsx'), 'utf8');
+    const alertsSource = readFileSync(resolve(process.cwd(), 'app/alerts/page.tsx'), 'utf8');
+    const alertCenterSource = readFileSync(resolve(process.cwd(), 'app/alert/center/page.tsx'), 'utf8');
+    const eventsSource = readFileSync(resolve(process.cwd(), 'app/events/page.tsx'), 'utf8');
+    const loginSource = readFileSync(resolve(process.cwd(), 'app/login/page.tsx'), 'utf8');
+    const statusPublicSource = readFileSync(resolve(process.cwd(), 'app/status/public/page.tsx'), 'utf8');
+    const settingSource = readFileSync(resolve(process.cwd(), 'app/setting/page.tsx'), 'utf8');
+    const settingSettingsSource = readFileSync(resolve(process.cwd(), 'app/setting/settings/page.tsx'), 'utf8');
+    const logStreamSource = readFileSync(resolve(process.cwd(), 'app/log/stream/page.tsx'), 'utf8');
+    const logIntegrationSource = readFileSync(resolve(process.cwd(), 'app/log/integration/page.tsx'), 'utf8');
+    const logIntegrationSourceAlias = readFileSync(resolve(process.cwd(), 'app/log/integration/[source]/page.tsx'), 'utf8');
+
+    expect(dashboardSource).toContain("from '../overview/page'");
+    expect(dashboardSource).not.toContain('buildDashboardCompatRouteUrl');
+    expect(dashboardSource).not.toContain('redirect(');
+    expect(alertsSource).toContain('AlertCenterPage');
+    expect(alertCenterSource).toContain("from '../../../lib/compat/search-params'");
+    expect(eventsSource).toContain("from '../log/manage/log-manage-page'");
+    expect(eventsSource).toContain('forcedView="explorer"');
+    expect(loginSource).toContain("from '../../lib/compat/search-params'");
+    expect(statusPublicSource).toContain("from '../../../lib/compat/search-params'");
+    expect(settingSource).toContain("from '../../lib/compat/search-params'");
+    expect(settingSettingsSource).toContain("from '../../../lib/compat/search-params'");
+    expect(alertsSource).not.toContain('function createSearchParamReader');
+    expect(alertsSource).not.toContain('redirect(');
+    expect(eventsSource).not.toContain('function createSearchParamReader');
+    expect(eventsSource).not.toContain('redirect(');
+    expect(loginSource).not.toContain('function buildSearchParams');
+    expect(alertCenterSource).not.toContain("redirect('/alert')");
+    expect(statusPublicSource).not.toContain("redirect('/status')");
+    expect(settingSource).not.toContain("redirect('/setting/settings')");
+    expect(settingSettingsSource).not.toContain("redirect('/setting/settings/config')");
+    expect(logStreamSource).toContain('data-log-stream-surface="angular-log-stream"');
+    expect(logStreamSource).toContain('data-log-stream-toolbar="angular-actions"');
+    expect(logStreamSource).not.toContain('buildLogCompatRouteUrl');
+    expect(logStreamSource).not.toContain('redirect(');
+    expect(logStreamSource).not.toContain('LogManagePage');
+    expect(logIntegrationSource).toContain('buildLogIntegrationIngestionHref');
+    expect(logIntegrationSource).toContain('createSearchParamReader');
+    expect(logIntegrationSource).toContain('redirect(');
+    expect(logIntegrationSource).not.toContain('LogIntegrationRedirectShell');
+    expect(logIntegrationSourceAlias).toContain('buildLogIntegrationIngestionHref');
+    expect(logIntegrationSourceAlias).toContain('createSearchParamReader(resolvedSearchParams, resolved.source)');
+    expect(logIntegrationSourceAlias).toContain('redirect(');
+  });
+});

@@ -1,0 +1,33 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.platform-copyright-footer {
+  display: flex;
+  min-height: 60px;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 16px 8px;
+  border-top: 1px solid var(--ops-border-color);
+  color: var(--ops-text-tertiary);
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.platform-copyright-footer__headline {
+  color: var(--ops-text-secondary);
+  font-weight: 600;
+}
+
+.platform-copyright-footer__line a {
+  color: var(--ops-primary);
+}
+
+.platform-copyright-footer__line a:hover {
+  color: color-mix(in srgb, var(--ops-primary) 80%, white 20%);
+}

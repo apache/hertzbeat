@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -125,6 +126,9 @@ class MetricsDataControllerTest {
         final String label = "disk2";
         final String history = "6h";
         final Boolean interval = false;
+        final Long start = 1712730000000L;
+        final Long end = 1712733600000L;
+        final String step = "60s";
         final String getUrl = "/api/monitor/" + instance + "/metric/" + metricFull;
         final String getUrlFail = "/api/monitor/" + instance + "/metric/" + metricFullFail;
 
@@ -133,6 +137,9 @@ class MetricsDataControllerTest {
         params.add("label", label);
         params.add("history", history);
         params.add("interval", String.valueOf(interval));
+        params.add("start", String.valueOf(start));
+        params.add("end", String.valueOf(end));
+        params.add("step", step);
 
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(false);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
@@ -156,7 +163,8 @@ class MetricsDataControllerTest {
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(true);
-        lenient().when(metricsDataService.getMetricHistoryData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history), eq(interval)))
+        lenient().when(metricsDataService.getMetricHistoryData(eq(instance), eq(app), eq(metrics), eq(metric),
+                        eq(history), eq(interval), eq(start), eq(end), eq(step)))
                 .thenReturn(metricsHistoryData);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
                 .andExpect(status().isOk())
@@ -167,5 +175,7 @@ class MetricsDataControllerTest {
                 .andExpect(jsonPath("$.data.field.type").value(String.valueOf(CommonConstants.TYPE_NUMBER)))
                 .andExpect(jsonPath("$.msg").isEmpty())
                 .andReturn();
+        verify(metricsDataService).getMetricHistoryData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history),
+                eq(interval), eq(start), eq(end), eq(step));
     }
 }

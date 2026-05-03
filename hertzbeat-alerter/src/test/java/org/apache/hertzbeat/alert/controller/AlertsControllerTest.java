@@ -73,6 +73,7 @@ class AlertsControllerTest {
         String orderType = "desc";
         String status = "firing";
         String content = "test";
+        String severity = "critical";
         int pageIndex = 0;
         int pageSize = 10;
 
@@ -81,13 +82,14 @@ class AlertsControllerTest {
                 PageRequest.of(pageIndex, pageSize, Sort.by(sortField).descending()),
                 ids.size()
         );
-        Mockito.when(alertService.getGroupAlerts(status, content, sortField, orderType, pageIndex, pageSize))
+        Mockito.when(alertService.getGroupAlerts(status, content, severity, sortField, orderType, pageIndex, pageSize))
                 .thenReturn(alertPage);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/alerts/group")
                         .param("status", status)
                         .param("search", content)
+                        .param("severity", severity)
                         .param("sort", sortField)
                         .param("order", orderType)
                         .param("pageIndex", String.valueOf(pageIndex))
@@ -117,6 +119,32 @@ class AlertsControllerTest {
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .put("/api/alerts/group/status/resolved")
+                                .param("ids", ids.stream().map(String::valueOf).collect(Collectors.joining(",")))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(content().json("{\"data\":null,\"msg\":null,\"code\":0}"))
+                .andReturn();
+    }
+
+    @Test
+    void applyGroupAlertAcknowledgedStatus() throws Exception {
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .put("/api/alerts/group/status/acknowledged")
+                                .param("ids", ids.stream().map(String::valueOf).collect(Collectors.joining(",")))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(content().json("{\"data\":null,\"msg\":null,\"code\":0}"))
+                .andReturn();
+    }
+
+    @Test
+    void applySingleAlertAcknowledgedStatus() throws Exception {
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .put("/api/alerts/status/acknowledged")
                                 .param("ids", ids.stream().map(String::valueOf).collect(Collectors.joining(",")))
                 )
                 .andExpect(status().isOk())

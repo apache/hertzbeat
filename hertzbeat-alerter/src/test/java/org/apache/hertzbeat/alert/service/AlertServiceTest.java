@@ -18,8 +18,9 @@
 package org.apache.hertzbeat.alert.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +33,7 @@ import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.impl.AlertServiceImpl;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +49,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AlertServiceTest {
     @Mock
     private GroupAlertDao groupAlertDao;
-    
+
     @Mock
     private SingleAlertDao singleAlertDao;
 
@@ -69,14 +71,85 @@ class AlertServiceTest {
         assertDoesNotThrow(() -> alertService.deleteGroupAlerts(ids));
         verify(groupAlertDao, times(1)).deleteGroupAlertsByIdIn(ids);
     }
-    
+
 
     @Test
     void editGroupAlertStatus() {
         String status = "firing";
         List<Long> ids = List.of(1L, 2L, 3L);
+        GroupAlert groupAlert = GroupAlert.builder()
+                .id(1L)
+                .status(CommonConstants.ALERT_STATUS_RESOLVED)
+                .alertFingerprints(List.of("fingerprint-1"))
+                .build();
+        SingleAlert singleAlert = SingleAlert.builder()
+                .id(1L)
+                .fingerprint("fingerprint-1")
+                .status(CommonConstants.ALERT_STATUS_RESOLVED)
+                .endAt(1L)
+                .build();
+        when(groupAlertDao.findAllById(ids)).thenReturn(List.of(groupAlert));
+        when(singleAlertDao.findSingleAlertsByFingerprintIn(List.of("fingerprint-1"))).thenReturn(List.of(singleAlert));
+
         assertDoesNotThrow(() -> alertService.editGroupAlertStatus(status, ids));
-        verify(groupAlertDao, times(1)).updateGroupAlertsStatus(status, ids);
+        assertEquals(CommonConstants.ALERT_STATUS_FIRING, groupAlert.getStatus());
+        assertEquals(CommonConstants.ALERT_STATUS_FIRING, singleAlert.getStatus());
+        assertNull(singleAlert.getEndAt());
+        verify(groupAlertDao, times(1)).saveAll(List.of(groupAlert));
+        verify(singleAlertDao, times(1)).saveAll(List.of(singleAlert));
+    }
+
+    @Test
+    void editGroupAlertStatusToResolved() {
+        List<Long> ids = List.of(1L);
+        GroupAlert groupAlert = GroupAlert.builder()
+                .id(1L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .alertFingerprints(List.of("fingerprint-2"))
+                .build();
+        SingleAlert singleAlert = SingleAlert.builder()
+                .id(2L)
+                .fingerprint("fingerprint-2")
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .activeAt(123L)
+                .build();
+        when(groupAlertDao.findAllById(ids)).thenReturn(List.of(groupAlert));
+        when(singleAlertDao.findSingleAlertsByFingerprintIn(List.of("fingerprint-2"))).thenReturn(List.of(singleAlert));
+
+        assertDoesNotThrow(() -> alertService.editGroupAlertStatus(CommonConstants.ALERT_STATUS_RESOLVED, ids));
+
+        assertEquals(CommonConstants.ALERT_STATUS_RESOLVED, groupAlert.getStatus());
+        assertEquals(CommonConstants.ALERT_STATUS_RESOLVED, singleAlert.getStatus());
+        assertNull(singleAlert.getActiveAt());
+        verify(groupAlertDao, times(1)).saveAll(List.of(groupAlert));
+        verify(singleAlertDao, times(1)).saveAll(List.of(singleAlert));
+    }
+
+    @Test
+    void editGroupAlertStatusToAcknowledged() {
+        List<Long> ids = List.of(1L);
+        GroupAlert groupAlert = GroupAlert.builder()
+                .id(1L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .alertFingerprints(List.of("fingerprint-3"))
+                .build();
+        SingleAlert singleAlert = SingleAlert.builder()
+                .id(3L)
+                .fingerprint("fingerprint-3")
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .activeAt(456L)
+                .build();
+        when(groupAlertDao.findAllById(ids)).thenReturn(List.of(groupAlert));
+        when(singleAlertDao.findSingleAlertsByFingerprintIn(List.of("fingerprint-3"))).thenReturn(List.of(singleAlert));
+
+        assertDoesNotThrow(() -> alertService.editGroupAlertStatus("acknowledged", ids));
+
+        assertEquals("acknowledged", groupAlert.getStatus());
+        assertEquals("acknowledged", singleAlert.getStatus());
+        assertEquals(456L, singleAlert.getActiveAt());
+        assertNull(singleAlert.getEndAt());
+        verify(groupAlertDao, times(1)).saveAll(List.of(groupAlert));
+        verify(singleAlertDao, times(1)).saveAll(List.of(singleAlert));
     }
 
     @Test

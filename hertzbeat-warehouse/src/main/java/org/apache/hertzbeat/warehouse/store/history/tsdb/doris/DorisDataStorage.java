@@ -334,7 +334,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
      */
     private void startFlushThread() {
         try {
-            warehouseWorkerPool.executeJob(() -> {
+            warehouseWorkerPool.executeLongRunning(() -> {
                 flushTaskStarted = true;
                 try {
                     while (flushThreadRunning || !metricsBufferQueue.isEmpty()) {
@@ -1103,7 +1103,9 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             params.add(severityText);
         }
         if (StringUtils.hasText(searchContent)) {
-            conditions.add("body LIKE ?");
+            conditions.add("(body LIKE ? OR attributes LIKE ? OR resource LIKE ?)");
+            params.add("%" + searchContent + "%");
+            params.add("%" + searchContent + "%");
             params.add("%" + searchContent + "%");
         }
         if (!conditions.isEmpty()) {

@@ -1,0 +1,15 @@
+<div class="platform-drawer-action-links" *ngIf="items.length > 0">
+  <button
+    class="platform-drawer-action-link"
+    *ngFor="let item of items"
+    nz-button
+    nzType="link"
+    nzSize="small"
+    type="button"
+    [disabled]="item.disabled"
+    (click)="onSelect(item.key)"
+  >
+    <i nz-icon *ngIf="item.icon" [nzType]="item.icon"></i>
+    <span>{{ item.label }}</span>
+  </button>
+</div>

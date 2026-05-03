@@ -29,7 +29,7 @@ import { GeneralConfigService } from '../../../../service/general-config.service
 import { ThemeService } from '../../../../service/theme.service';
 
 @Component({
-  selector: 'app-system-config',
+  standalone: false,  selector: 'app-system-config',
   templateUrl: './system-config.component.html',
   styleUrls: ['./system-config.component.less']
 })
@@ -60,7 +60,7 @@ export class SystemConfigComponent implements OnInit {
         if (message.code === 0) {
           if (message.data) {
             this.config = message.data;
-            this.config.theme = this.themeService.getTheme() || 'default';
+            this.config.theme = this.themeService.resolveWorkbenchTheme(this.themeService.getTheme());
           } else {
             this.config = new SystemConfig();
           }

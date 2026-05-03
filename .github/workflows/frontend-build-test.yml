@@ -18,19 +18,42 @@
 # This workflow will build a Java project with Maven
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
 
-name: Frontend CI 
+name: Frontend CI
 
 on:
   push:
     branches: [ master, dev, action* ]
     paths:
       - 'web-app/**'
+      - 'web-next/**'
+      - 'web-app/src/assets/i18n/**'
+      - '.github/workflows/frontend-build-test.yml'
   pull_request:
     branches: [ master, dev ]
     paths:
       - 'web-app/**'
+      - 'web-next/**'
+      - 'web-app/src/assets/i18n/**'
+      - '.github/workflows/frontend-build-test.yml'
 
 jobs:
+  web-next-scope:
+    runs-on: ubuntu-latest
+    outputs:
+      web_next: ${{ steps.web_next_scope.outputs.web_next }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - id: web_next_scope
+      uses: dorny/paths-filter@v3
+      with:
+        filters: |
+          web_next:
+            - 'web-next/**'
+            - 'web-app/src/assets/i18n/**'
+            - '.github/workflows/frontend-build-test.yml'
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -44,3 +67,43 @@ jobs:
     - name: EsLint Test
       working-directory: web-app
       run: pnpm lint:ts
+
+  web-next-contract:
+    needs: web-next-scope
+    if: ${{ needs.web-next-scope.outputs.web_next == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+        cache-dependency-path: web-next/package-lock.json
+    - name: Install
+      working-directory: web-next
+      run: npm ci
+    - name: Contract Test
+      working-directory: web-next
+      run: npm test
+
+  web-next-standards:
+    needs:
+    - web-next-scope
+    - web-next-contract
+    if: ${{ needs.web-next-scope.outputs.web_next == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+        cache-dependency-path: web-next/package-lock.json
+    - name: Install
+      working-directory: web-next
+      run: npm ci
+    - name: verify:full (blocking)
+      working-directory: web-next
+      run: npm run verify:full

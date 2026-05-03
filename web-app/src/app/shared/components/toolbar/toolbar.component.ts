@@ -20,7 +20,7 @@
 import { Component, ContentChild, TemplateRef, AfterContentInit, Input } from '@angular/core';
 
 @Component({
-  selector: 'app-toolbar',
+  standalone: false,  selector: 'app-toolbar',
   templateUrl: './toolbar.component.html',
   styleUrls: ['./toolbar.component.less']
 })

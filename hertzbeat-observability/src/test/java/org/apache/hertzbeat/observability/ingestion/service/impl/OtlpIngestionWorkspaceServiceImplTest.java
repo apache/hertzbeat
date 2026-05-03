@@ -1,0 +1,1405 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.observability.ingestion.service.impl;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.common.observability.dto.binding.TelemetryIdentitySnapshot;
+import org.apache.hertzbeat.common.observability.dto.binding.OtlpEntityBindingSummaryDto;
+import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuideDto;
+import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilitySignalIntakeGateway;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
+import org.apache.hertzbeat.common.observability.model.EntityCanonicalIdentityRegistry;
+import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
+import org.apache.hertzbeat.warehouse.repository.LogQueryRepository;
+import org.apache.hertzbeat.warehouse.repository.MetricQueryRepository;
+import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.mock.web.MockHttpServletRequest;
+
+@ExtendWith(MockitoExtension.class)
+class OtlpIngestionWorkspaceServiceImplTest {
+
+    private OtlpIngestionWorkspaceServiceImpl otlpIngestionWorkspaceService;
+
+    @Mock
+    private EntityTraceQueryService entityTraceQueryService;
+
+    @Mock
+    private ObservabilityWorkspaceQueryGateway workspaceQueryGateway;
+
+    @Mock
+    private MetricQueryRepository metricQueryRepository;
+
+    @Mock
+    private LogQueryRepository logQueryRepository;
+
+    private ObservabilitySignalIntakeGateway observabilitySignalIntakeGateway;
+
+    @BeforeEach
+    void setUp() {
+        observabilitySignalIntakeGateway = new InMemoryObservabilitySignalIntakeGateway();
+        otlpIngestionWorkspaceService = new OtlpIngestionWorkspaceServiceImpl(
+                entityTraceQueryService,
+                workspaceQueryGateway,
+                observabilitySignalIntakeGateway,
+                logQueryRepository,
+                metricQueryRepository,
+                List.of(),
+                List.of(),
+                List.of()
+        );
+    }
+
+    private void stubRecentLogs(LogEntry... logs) {
+        when(logQueryRepository.queryRecentLogs(anyLong(), anyLong(), eq(20))).thenReturn(List.of(logs));
+    }
+
+    private MetricQueryRepository.PromqlRangeQueryResult promqlSuccess(DatasourceQueryData queryData) {
+        return new MetricQueryRepository.PromqlRangeQueryResult("Greptime-promql", queryData, null);
+    }
+
+    private void stubPromqlQuery(String expr, DatasourceQueryData queryData) {
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                argThat(actualExpr -> expr.equals(actualExpr)),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenReturn(promqlSuccess(queryData));
+    }
+
+    @Test
+    void overviewAggregatesSignalStatusAndServiceCount() {
+        LogEntry logEntry = LogEntry.builder()
+                .timeUnixNano(1_710_000_000_000_000_000L)
+                .severityText("ERROR")
+                .body("checkout failed")
+                .traceId("trace-log-1")
+                .resource(Map.of("service.name", "checkout", "service.namespace", "commerce"))
+                .build();
+        TraceListItemDto traceItem = new TraceListItemDto();
+        traceItem.setTraceId("trace-1");
+        traceItem.setRootSpanName("GET /checkout");
+        traceItem.setServiceName("checkout");
+        traceItem.setStartTime(1_710_000_000_000L);
+        Monitor latestMonitor = Monitor.builder()
+                .id(1L)
+                .name("checkout-api")
+                .app("api")
+                .instance("checkout:8080")
+                .gmtUpdate(LocalDateTime.now())
+                .build();
+
+        stubRecentLogs(logEntry);
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(traceItem), PageRequest.of(0, 20), 1));
+        when(workspaceQueryGateway.countMonitors()).thenReturn(5L);
+        when(workspaceQueryGateway.findLatestMonitor()).thenReturn(java.util.Optional.of(latestMonitor));
+        when(workspaceQueryGateway.countDistinctBoundEntityIdsByIdentityKeys(org.mockito.ArgumentMatchers.anySet())).thenReturn(4L);
+
+        OtlpIngestionOverviewDto overview = otlpIngestionWorkspaceService.getOverview();
+
+        assertTrue(overview.getLogs().isActive());
+        assertTrue(overview.getTraces().isActive());
+        assertTrue(overview.getMetrics().isActive());
+        assertEquals(3, overview.getActiveSignalCount());
+        assertEquals(1, overview.getRecentServiceCount());
+        assertEquals(4L, overview.getBoundEntityCount());
+        assertFalse(overview.getRecentEvents().isEmpty());
+        assertTrue(overview.getLatestObservedAt() != null && overview.getLatestObservedAt() > 0);
+    }
+
+    @Test
+    void overviewReportsRealReadinessChecksForCollectorStorageQueryAndGreptime() {
+        HistoryDataReader historyDataReader = org.mockito.Mockito.mock(HistoryDataReader.class);
+        GreptimeSqlQueryExecutor greptimeSqlQueryExecutor = org.mockito.Mockito.mock(GreptimeSqlQueryExecutor.class);
+        OtlpIngestionWorkspaceServiceImpl service = new OtlpIngestionWorkspaceServiceImpl(
+                entityTraceQueryService,
+                workspaceQueryGateway,
+                observabilitySignalIntakeGateway,
+                logQueryRepository,
+                metricQueryRepository,
+                List.of(historyDataReader),
+                List.of(greptimeSqlQueryExecutor),
+                List.of(new GreptimeProperties(true, "127.0.0.1:4001", "http://127.0.0.1:4000", "public", null, null, null))
+        );
+
+        stubRecentLogs();
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+        when(workspaceQueryGateway.countMonitors()).thenReturn(2L);
+        when(workspaceQueryGateway.findLatestMonitor()).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.countDistinctBoundEntityIdsByIdentityKeys(org.mockito.ArgumentMatchers.anySet())).thenReturn(0L);
+        when(workspaceQueryGateway.countCollectors()).thenReturn(3L);
+        when(workspaceQueryGateway.countCollectorsByStatus(org.apache.hertzbeat.common.constants.CommonConstants.COLLECTOR_STATUS_ONLINE))
+                .thenReturn(2L);
+        when(historyDataReader.isServerAvailable()).thenReturn(true);
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(greptimeSqlQueryExecutor.execute("SELECT 1")).thenReturn(List.of(Map.of("col_0", 1)));
+
+        OtlpIngestionOverviewDto overview = service.getOverview();
+
+        assertEquals(List.of("collector", "storage", "query", "greptime"),
+                overview.getReadinessChecks().stream().map(OtlpIngestionOverviewDto.ReadinessCheck::getKey).toList());
+        assertTrue(overview.getReadinessChecks().stream().anyMatch(check -> "collector".equals(check.getKey())
+                && "warning".equals(check.getStatus())
+                && check.getSummary().contains("2 / 3 在线")));
+        assertTrue(overview.getReadinessChecks().stream().anyMatch(check -> "storage".equals(check.getKey())
+                && "success".equals(check.getStatus())
+                && check.getSummary().contains("1 / 1 可用")));
+        assertTrue(overview.getReadinessChecks().stream().anyMatch(check -> "query".equals(check.getKey())
+                && "success".equals(check.getStatus())
+                && check.getSummary().contains("指标、日志和链路查询可用")));
+        assertTrue(overview.getReadinessChecks().stream().anyMatch(check -> "greptime".equals(check.getKey())
+                && "success".equals(check.getStatus())
+                && check.getSummary().contains("SQL 自检通过")));
+    }
+
+    @Test
+    void overviewUsesLogQueryRepositoryForRecentLogs() {
+        LogEntry logEntry = LogEntry.builder()
+                .timeUnixNano(1_710_000_000_000_000_000L)
+                .severityText("ERROR")
+                .body("checkout failed")
+                .traceId("trace-log-1")
+                .resource(Map.of("service.name", "checkout", "service.namespace", "commerce"))
+                .build();
+
+        stubRecentLogs(logEntry);
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+        when(workspaceQueryGateway.countMonitors()).thenReturn(0L);
+        when(workspaceQueryGateway.findLatestMonitor()).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.countDistinctBoundEntityIdsByIdentityKeys(org.mockito.ArgumentMatchers.anySet())).thenReturn(1L);
+
+        OtlpIngestionOverviewDto overview = otlpIngestionWorkspaceService.getOverview();
+
+        assertTrue(overview.getLogs().isActive());
+        assertEquals(1, overview.getRecentServiceCount());
+        assertEquals("logs", overview.getRecentEvents().getFirst().getSignal());
+        verify(logQueryRepository).queryRecentLogs(anyLong(), anyLong(), eq(20));
+    }
+
+    @Test
+    void guideUsesGreptimeCompatibleEndpointsWhenAvailable() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setScheme("https");
+        request.setServerPort(443);
+        request.addHeader("X-Forwarded-Host", "demo.hertzbeat.apache.org");
+        request.addHeader("X-Forwarded-Proto", "https");
+        OtlpIngestionGuideDto guide = otlpIngestionWorkspaceService.getGuide(request);
+
+        assertEquals("OTLP HTTP", guide.getHttpProtocolLabel());
+        assertEquals("Authorization", guide.getAuthHeaderName());
+        assertEquals("Bearer <api-token>", guide.getAuthHeaderExample());
+        assertEquals("demo.hertzbeat.apache.org:4317", guide.getGrpcAuthorityExample());
+        assertTrue(guide.getSignals().stream().anyMatch(signal -> "logs".equals(signal.getSignal())
+                && "http".equals(signal.getProtocol())
+                && "https://demo.hertzbeat.apache.org/api/otlp/v1/logs".equals(signal.getEndpoint())));
+        assertTrue(guide.getSignals().stream().anyMatch(signal -> "traces".equals(signal.getSignal())
+                && "http".equals(signal.getProtocol())
+                && "https://demo.hertzbeat.apache.org/api/otlp/v1/traces".equals(signal.getEndpoint())));
+        assertTrue(guide.getSignals().stream().anyMatch(signal -> "metrics".equals(signal.getSignal())
+                && "http".equals(signal.getProtocol())
+                && "https://demo.hertzbeat.apache.org/api/otlp/v1/metrics".equals(signal.getEndpoint())));
+        assertTrue(guide.getSignals().stream().anyMatch(signal -> "logs".equals(signal.getSignal())
+                && "grpc".equals(signal.getProtocol())
+                && "demo.hertzbeat.apache.org:4317".equals(signal.getEndpoint())));
+        assertTrue(guide.getSnippets().stream().anyMatch(snippet -> "java-http".equals(snippet.getKey())
+                && snippet.getContent().contains("OTEL_EXPORTER_OTLP_ENDPOINT=https://demo.hertzbeat.apache.org/api/otlp")
+                && snippet.getContent().contains("Authorization=Bearer <api-token>")));
+        assertTrue(guide.getSnippets().stream().anyMatch(snippet -> "collector-grpc".equals(snippet.getKey())
+                && snippet.getContent().contains("endpoint: demo.hertzbeat.apache.org:4317")
+                && snippet.getContent().contains("Authorization: \"Bearer <api-token>\"")));
+        assertTrue(guide.getSignals().stream().filter(signal -> "grpc".equals(signal.getProtocol()))
+                .allMatch(signal -> signal.getNote() == null || !signal.getNote().contains("登录 token")));
+        assertFalse(guide.getSnippets().isEmpty());
+    }
+
+    @Test
+    void bindingSummaryCombinesRecentSamplesAndBoundEntities() {
+        LogEntry logEntry = LogEntry.builder()
+                .resource(Map.of("service.name", "checkout", "service.namespace", "commerce"))
+                .build();
+        TraceListItemDto traceItem = new TraceListItemDto();
+        traceItem.setTraceId("trace-1");
+        traceItem.setServiceName("checkout");
+        traceItem.setResourceAttributes(Map.of("service.name", "checkout", "deployment.environment.name", "prod"));
+        EntityIdentity identity = EntityIdentity.builder()
+                .id(10L)
+                .entityId(1L)
+                .identityKey("service.name")
+                .identityValue("checkout")
+                .normalizedValue("checkout")
+                .priority(90)
+                .primaryIdentity(true)
+                .build();
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(1L)
+                .type("service")
+                .name("checkout")
+                .displayName("Checkout Service")
+                .namespace("commerce")
+                .build();
+
+        stubRecentLogs(logEntry);
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(traceItem), PageRequest.of(0, 20), 1));
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                org.mockito.ArgumentMatchers.anySet(), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(List.of(identity));
+        when(workspaceQueryGateway.findEntitiesByIds(org.mockito.ArgumentMatchers.anySet())).thenReturn(Map.of(1L, entity));
+        when(workspaceQueryGateway.countMonitorBindsByEntityId(1L)).thenReturn(2L);
+
+        OtlpEntityBindingSummaryDto summary = otlpIngestionWorkspaceService.getBindingSummary();
+
+        assertTrue(summary.getCanonicalIdentityKeys().contains("service.name"));
+        assertEquals(List.of("checkout"), summary.getRecentServices());
+        assertFalse(summary.getRecentIdentitySamples().isEmpty());
+        assertEquals(1, summary.getRecentBoundEntities().size());
+        assertEquals("checkout", summary.getRecentBoundEntities().getFirst().getPrimaryIdentityValue());
+    }
+
+    @Test
+    void overviewMarksMetricsActiveWhenRecentOtlpMetricWasRecorded() {
+        long now = System.currentTimeMillis();
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of("service.name", "checkout", "service.namespace", "commerce"),
+                now,
+                "checkout_request_latency",
+                "gauge",
+                "ms",
+                42.5,
+                Map.of("instance", "e2e")
+        );
+        stubRecentLogs();
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+        when(workspaceQueryGateway.countMonitors()).thenReturn(0L);
+        when(workspaceQueryGateway.findLatestMonitor()).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.countDistinctBoundEntityIdsByIdentityKeys(org.mockito.ArgumentMatchers.anySet())).thenReturn(1L);
+
+        OtlpIngestionOverviewDto overview = otlpIngestionWorkspaceService.getOverview();
+
+        assertTrue(overview.getMetrics().isActive());
+        assertEquals(1, overview.getActiveSignalCount());
+        assertEquals("OTLP", overview.getMetrics().getIntakeMode());
+        assertEquals(1, overview.getRecentServiceCount());
+        assertEquals("metrics", overview.getRecentEvents().getFirst().getSignal());
+    }
+
+    @Test
+    void overviewDoesNotMarkMetricsActiveForStaleMonitorOnly() {
+        Monitor staleMonitor = Monitor.builder()
+                .id(1L)
+                .name("stale-checkout")
+                .app("api")
+                .instance("checkout:8080")
+                .gmtUpdate(LocalDateTime.now().minusDays(3))
+                .build();
+        stubRecentLogs();
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+        when(workspaceQueryGateway.countMonitors()).thenReturn(1L);
+        when(workspaceQueryGateway.findLatestMonitor()).thenReturn(java.util.Optional.of(staleMonitor));
+        when(workspaceQueryGateway.countDistinctBoundEntityIdsByIdentityKeys(org.mockito.ArgumentMatchers.anySet())).thenReturn(0L);
+
+        OtlpIngestionOverviewDto overview = otlpIngestionWorkspaceService.getOverview();
+
+        assertFalse(overview.getMetrics().isActive());
+        assertEquals(0, overview.getActiveSignalCount());
+    }
+
+    @Test
+    void overviewIgnoresSelfTelemetrySignals() {
+        LogEntry selfLog = LogEntry.builder()
+                .timeUnixNano(1_710_000_000_000_000_000L)
+                .severityText("INFO")
+                .body("internal request")
+                .traceId("self-trace")
+                .resource(Map.of("service.name", "hertzbeat", "service.namespace", "platform"))
+                .build();
+        TraceListItemDto selfTrace = new TraceListItemDto();
+        selfTrace.setTraceId("self-trace");
+        selfTrace.setServiceName("hertzbeat");
+        selfTrace.setStartTime(1_710_000_000_000L);
+        selfTrace.setResourceAttributes(Map.of("service.name", "hertzbeat"));
+
+        stubRecentLogs(selfLog);
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(selfTrace), PageRequest.of(0, 20), 1));
+        when(workspaceQueryGateway.countMonitors()).thenReturn(0L);
+        when(workspaceQueryGateway.findLatestMonitor()).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.countDistinctBoundEntityIdsByIdentityKeys(org.mockito.ArgumentMatchers.anySet())).thenReturn(0L);
+
+        OtlpIngestionOverviewDto overview = otlpIngestionWorkspaceService.getOverview();
+
+        assertFalse(overview.getLogs().isActive());
+        assertFalse(overview.getTraces().isActive());
+        assertFalse(overview.getMetrics().isActive());
+        assertEquals(0, overview.getActiveSignalCount());
+        assertEquals(0, overview.getRecentServiceCount());
+        assertTrue(overview.getRecentEvents().isEmpty());
+    }
+
+    @Test
+    void bindingSummaryIgnoresCollectorNoiseWhenCollectingRecentServices() {
+        LogEntry collectorLog = LogEntry.builder()
+                .resource(Map.of("service.name", "otelcol-contrib", "service.namespace", "observability"))
+                .build();
+        LogEntry businessLog = LogEntry.builder()
+                .resource(Map.of("service.name", "checkout", "service.namespace", "opentelemetry-demo"))
+                .build();
+
+        stubRecentLogs(collectorLog, businessLog);
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                org.mockito.ArgumentMatchers.anySet(), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(List.of());
+        when(workspaceQueryGateway.findEntitiesByIds(org.mockito.ArgumentMatchers.anySet())).thenReturn(Map.of());
+
+        OtlpEntityBindingSummaryDto summary = otlpIngestionWorkspaceService.getBindingSummary();
+
+        assertEquals(List.of("checkout"), summary.getRecentServices());
+    }
+
+    @Test
+    void metricsConsoleBuildsDefaultPromqlFromResolvedServiceContext() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                2_000L,
+                "http_server_request_duration_count",
+                "sum",
+                "1",
+                14.0,
+                Map.of()
+        );
+        EntityIdentity serviceName = EntityIdentity.builder()
+                .entityId(42L)
+                .identityKey("service.name")
+                .identityValue("checkout")
+                .build();
+        EntityIdentity serviceNamespace = EntityIdentity.builder()
+                .entityId(42L)
+                .identityKey("service.namespace")
+                .identityValue("commerce")
+                .build();
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(42L)
+                .name("checkout-api")
+                .displayName("Checkout API")
+                .build();
+
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of(serviceName, serviceNamespace));
+        stubPromqlQuery("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\"})",
+                new DatasourceQueryData(
+                        "otlp-metrics-console",
+                        200,
+                        null,
+                        List.of(
+                                new DatasourceQueryData.SchemaData(
+                                        new DatasourceQueryData.MetricSchema(
+                                                List.of(
+                                                        new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                        new DatasourceQueryData.MetricField("__value__", "number", null)
+                                                ),
+                                                Map.of("__name__", "http_server_requests_seconds_count"),
+                                                Map.of()
+                                        ),
+                                        List.of(new Object[] {1000L, 12.0}, new Object[] {2000L, 14.0})
+                                )
+                        )
+                ));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                42L,
+                1000L,
+                2000L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertEquals("checkout", console.getContext().getServiceName());
+        assertEquals("commerce", console.getContext().getServiceNamespace());
+        assertEquals("Greptime-promql", console.getDatasource());
+        assertEquals("promql", console.getQueryMode());
+        assertEquals("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\"})",
+                console.getQuery());
+        assertEquals(1, console.getStats().getTotalSeries());
+        assertEquals(2000L, console.getStats().getLatestObservedAt());
+        assertNotNull(console.getResults());
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-metrics-console"),
+                argThat(expr -> console.getQuery().equals(expr)),
+                anyLong(),
+                anyLong(),
+                anyString()
+        );
+    }
+
+    @Test
+    void metricsConsoleFallsBackToRecentOtlpMetricContextWhenExplicitContextMissing() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "flagd",
+                        "service.namespace", "opentelemetry-demo",
+                        "deployment.environment.name", "demo"
+                ),
+                1_710_000_000_000L,
+                "http_server_request_duration_count",
+                "sum",
+                "1",
+                42.0,
+                Map.of("http.route", "/flagd.evaluation.v1.Service/ResolveBoolean")
+        );
+
+        stubPromqlQuery("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"flagd\", service_namespace=\"opentelemetry-demo\", deployment_environment_name=\"demo\"})",
+                new DatasourceQueryData(
+                        "otlp-metrics-console",
+                        200,
+                        null,
+                        List.of(
+                                new DatasourceQueryData.SchemaData(
+                                        new DatasourceQueryData.MetricSchema(
+                                                List.of(
+                                                        new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                        new DatasourceQueryData.MetricField("__value__", "number", null)
+                                                ),
+                                                Map.of("__name__", "http_server_request_duration_count"),
+                                                Map.of()
+                                        ),
+                                        List.of(new Object[] {1000L, 12.0}, new Object[] {2000L, 14.0})
+                                )
+                        )
+                ));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1000L,
+                2000L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertNotNull(console.getContext());
+        assertEquals("flagd", console.getContext().getServiceName());
+        assertEquals("opentelemetry-demo", console.getContext().getServiceNamespace());
+        assertEquals("demo", console.getContext().getEnvironment());
+        assertEquals("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"flagd\", service_namespace=\"opentelemetry-demo\", deployment_environment_name=\"demo\"})",
+                console.getQuery());
+        assertEquals(1, console.getStats().getTotalSeries());
+    }
+
+    @Test
+    void metricsConsoleFallsBackToQueryableRecentContextAndNormalizesMetricName() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of("service.name", "quote", "service.namespace", "opentelemetry-demo"),
+                2_100L,
+                "otel.logs.log_processor.logs",
+                "gauge",
+                "1",
+                1.0,
+                Map.of()
+        );
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of("service.name", "flagd", "service.namespace", "opentelemetry-demo"),
+                2_000L,
+                "http.server.request.duration.count",
+                "sum",
+                "1",
+                42.0,
+                Map.of("http.route", "/flagd.evaluation.v1.Service/ResolveBoolean")
+        );
+
+        stubPromqlQuery("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"otel_logs_log_processor_logs\", service_name=\"quote\", service_namespace=\"opentelemetry-demo\"})",
+                new DatasourceQueryData(
+                        "otlp-metrics-console",
+                        200,
+                        null,
+                        List.of()
+                ));
+        stubPromqlQuery("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"flagd\", service_namespace=\"opentelemetry-demo\"})",
+                new DatasourceQueryData(
+                        "otlp-metrics-console",
+                        200,
+                        null,
+                        List.of(
+                                new DatasourceQueryData.SchemaData(
+                                        new DatasourceQueryData.MetricSchema(
+                                                List.of(
+                                                        new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                        new DatasourceQueryData.MetricField("__value__", "number", null)
+                                                ),
+                                                Map.of("__name__", "http_server_request_duration_count"),
+                                                Map.of()
+                                        ),
+                                        List.of(new Object[] {1000L, 12.0}, new Object[] {2000L, 14.0})
+                                )
+                        )
+                ));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1000L,
+                2000L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertNotNull(console.getContext());
+        assertEquals("flagd", console.getContext().getServiceName());
+        assertEquals("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"flagd\", service_namespace=\"opentelemetry-demo\"})",
+                console.getQuery());
+        assertEquals(1, console.getStats().getTotalSeries());
+    }
+
+    @Test
+    void metricsConsoleFallsBackToRecentExternalTraceContextWhenMetricContextIsOnlyCollectorNoise() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of("service.name", "otelcol-contrib", "service.namespace", "observability"),
+                2_100L,
+                "http.server.request.duration.count",
+                "sum",
+                "1",
+                1.0,
+                Map.of()
+        );
+        TraceListItemDto traceItem = new TraceListItemDto();
+        traceItem.setTraceId("trace-demo-1");
+        traceItem.setServiceName("frontend");
+        traceItem.setStartTime(2_200L);
+        traceItem.setResourceAttributes(Map.of(
+                "service.name", "frontend",
+                "service.namespace", "opentelemetry-demo",
+                "deployment.environment.name", "demo"
+        ));
+
+        stubRecentLogs();
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(traceItem), PageRequest.of(0, 20), 1));
+        String frontendQuery = "sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"frontend\", service_namespace=\"opentelemetry-demo\", "
+                + "deployment_environment_name=\"demo\"})";
+        stubPromqlQuery(frontendQuery,
+                new DatasourceQueryData(
+                        "otlp-metrics-console",
+                        200,
+                        null,
+                        List.of(
+                                new DatasourceQueryData.SchemaData(
+                                        new DatasourceQueryData.MetricSchema(
+                                                List.of(
+                                                        new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                        new DatasourceQueryData.MetricField("__value__", "number", null)
+                                                ),
+                                                Map.of("__name__", "http_server_request_duration_count"),
+                                                Map.of()
+                                        ),
+                                        List.of(new Object[] {1000L, 12.0}, new Object[] {2000L, 14.0})
+                                )
+                        )
+                ));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1000L,
+                2000L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertNotNull(console.getContext());
+        assertEquals("frontend", console.getContext().getServiceName());
+        assertEquals("opentelemetry-demo", console.getContext().getServiceNamespace());
+        assertEquals("demo", console.getContext().getEnvironment());
+        assertEquals(frontendQuery, console.getQuery());
+        assertEquals(1, console.getStats().getTotalSeries());
+    }
+
+    @Test
+    void metricsConsoleSkipsWorkspaceInfraServicesAndExporterFailureMetrics() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of("service.name", "jaeger", "service.namespace", "observability"),
+                2_300L,
+                "otelcol_exporter_send_failed_spans",
+                "sum",
+                "1",
+                3.0,
+                Map.of()
+        );
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "flagd",
+                        "service.namespace", "opentelemetry-demo",
+                        "deployment.environment.name", "demo"
+                ),
+                2_200L,
+                "http_server_request_duration_count",
+                "sum",
+                "1",
+                7.0,
+                Map.of()
+        );
+
+        String expectedFlagdQuery = "sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"flagd\", service_namespace=\"opentelemetry-demo\", "
+                + "deployment_environment_name=\"demo\"})";
+        stubPromqlQuery(expectedFlagdQuery,
+                new DatasourceQueryData(
+                        "otlp-metrics-console",
+                        200,
+                        null,
+                        List.of(
+                                new DatasourceQueryData.SchemaData(
+                                        new DatasourceQueryData.MetricSchema(
+                                                List.of(
+                                                        new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                        new DatasourceQueryData.MetricField("__value__", "number", null)
+                                                ),
+                                                Map.of("__name__", "http_server_request_duration_count"),
+                                                Map.of()
+                                        ),
+                                        List.of(new Object[] {1000L, 6.0}, new Object[] {2000L, 7.0})
+                                )
+                        )
+                ));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1000L,
+                2000L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertNotNull(console.getContext());
+        assertEquals("flagd", console.getContext().getServiceName());
+        assertEquals(expectedFlagdQuery, console.getQuery());
+        assertEquals(1, console.getStats().getTotalSeries());
+    }
+
+    @Test
+    void metricsConsoleFallsBackToContextWideQueryWhenRecentMetricNamesAreEmpty() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "storefront",
+                        "deployment.environment.name", "demo"
+                ),
+                2_000L,
+                "rpc_server_duration_milliseconds",
+                "histogram",
+                "ms",
+                0.0,
+                Map.of()
+        );
+
+        String contextQuery = "sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({service_name=\"checkout\", "
+                + "service_namespace=\"storefront\", deployment_environment_name=\"demo\"})";
+        DatasourceQueryData emptyQueryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                List.of()
+        );
+        DatasourceQueryData contextQueryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                List.of(
+                        new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of("__name__", "hertzbeat_demo_checkout_latency_ms_milliseconds"),
+                                        Map.of("service_name", "checkout")
+                                ),
+                                List.of(new Object[] {1_000L, 92.0}, new Object[] {2_000L, 118.0})
+                        )
+                )
+        );
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> {
+            String actualQuery = invocation.getArgument(1, String.class);
+            DatasourceQueryData queryData = contextQuery.equals(actualQuery) ? contextQueryData : emptyQueryData;
+            return promqlSuccess(queryData);
+        });
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "storefront",
+                "demo",
+                null,
+                null,
+                null
+        );
+
+        assertEquals(contextQuery, console.getQuery());
+        assertEquals(1, console.getStats().getTotalSeries());
+    }
+
+    @Test
+    void metricsConsoleTriesCommonServiceMetricBeforeNoisyRecentNames() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "hertzbeat-demo",
+                        "deployment.environment.name", "demo"
+                ),
+                2_000L,
+                "postgresql_backends",
+                "gauge",
+                "1",
+                1.0,
+                Map.of()
+        );
+
+        String rpcQuery = "sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"rpc_server_duration_milliseconds\", "
+                + "service_name=\"checkout\", service_namespace=\"hertzbeat-demo\", "
+                + "deployment_environment_name=\"demo\"})";
+        DatasourceQueryData emptyQueryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                List.of()
+        );
+        DatasourceQueryData rpcQueryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                List.of(
+                        new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of("__name__", "rpc_server_duration_milliseconds"),
+                                        Map.of("service_name", "checkout")
+                                ),
+                                List.of(new Object[] {1_000L, 92.0}, new Object[] {2_000L, 118.0})
+                        )
+                )
+        );
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> {
+            String actualQuery = invocation.getArgument(1, String.class);
+            DatasourceQueryData queryData = rpcQuery.equals(actualQuery) ? rpcQueryData : emptyQueryData;
+            return promqlSuccess(queryData);
+        });
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "hertzbeat-demo",
+                "demo",
+                null,
+                null,
+                null
+        );
+
+        assertEquals(rpcQuery, console.getQuery());
+        assertEquals(1, console.getStats().getTotalSeries());
+    }
+
+    @Test
+    void metricsConsoleKeepsDemoEntityLabelsInDefaultQuery() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "hertzbeat-demo",
+                        "deployment.environment.name", "demo",
+                        "hertzbeat.entity_id", "4200",
+                        "hertzbeat.entity_name", "Checkout API"
+                ),
+                2_000L,
+                "rpc_server_duration",
+                "histogram",
+                "ms",
+                118.0,
+                Map.of()
+        );
+
+        String rpcQuery = "sum by (__name__, service_name, service_namespace, deployment_environment_name, "
+                + "hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"rpc_server_duration_milliseconds\", "
+                + "service_name=\"checkout\", service_namespace=\"hertzbeat-demo\", "
+                + "deployment_environment_name=\"demo\"})";
+        DatasourceQueryData emptyQueryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                List.of()
+        );
+        DatasourceQueryData rpcQueryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                List.of(
+                        new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of(
+                                                "__name__", "rpc_server_duration_milliseconds",
+                                                "service_name", "checkout",
+                                                "hertzbeat_entity_id", "4200",
+                                                "hertzbeat_entity_name", "Checkout API"
+                                        ),
+                                        Map.of()
+                                ),
+                                List.of(new Object[] {1_000L, 92.0}, new Object[] {2_000L, 118.0})
+                        )
+                )
+        );
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> {
+            String actualQuery = invocation.getArgument(1, String.class);
+            DatasourceQueryData queryData = rpcQuery.equals(actualQuery) ? rpcQueryData : emptyQueryData;
+            return promqlSuccess(queryData);
+        });
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "hertzbeat-demo",
+                "demo",
+                null,
+                null,
+                null
+        );
+
+        assertEquals(rpcQuery, console.getQuery());
+        assertEquals("4200", console.getResults().getFrames().getFirst().getSchema().getLabels().get("hertzbeat_entity_id"));
+        assertEquals("Checkout API", console.getResults().getFrames().getFirst().getSchema().getLabels().get("hertzbeat_entity_name"));
+    }
+
+    @Test
+    void metricsConsoleFindsRecentNonEmptyMetricAcrossBurstOfEmptyMetrics() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "storefront",
+                        "deployment.environment.name", "demo"
+                ),
+                2_000L,
+                "hertzbeat_demo_checkout_latency_ms_milliseconds",
+                "gauge",
+                "1",
+                92.0,
+                Map.of("http.route", "/checkout")
+        );
+        for (int i = 0; i < 20; i++) {
+            observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                    Map.of(
+                            "service.name", "checkout",
+                            "service.namespace", "storefront",
+                            "deployment.environment.name", "demo"
+                    ),
+                    2_001L + i,
+                    "legacy_empty_" + i + "_count",
+                    "sum",
+                    "1",
+                    0.0,
+                    Map.of()
+            );
+        }
+
+        String demoQuery = "sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"hertzbeat_demo_checkout_latency_ms_milliseconds\", "
+                + "service_name=\"checkout\", service_namespace=\"storefront\", "
+                + "deployment_environment_name=\"demo\"})";
+        DatasourceQueryData emptyQueryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                List.of()
+        );
+        DatasourceQueryData demoQueryData = new DatasourceQueryData(
+                        "otlp-metrics-console",
+                        200,
+                        null,
+                        List.of(
+                                new DatasourceQueryData.SchemaData(
+                                        new DatasourceQueryData.MetricSchema(
+                                                List.of(
+                                                        new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                        new DatasourceQueryData.MetricField("__value__", "number", null)
+                                                ),
+                                                Map.of("__name__", "hertzbeat_demo_checkout_latency_ms_milliseconds"),
+                                                Map.of("service_name", "checkout")
+                                        ),
+                                                List.of(new Object[] {1_000L, 92.0}, new Object[] {2_000L, 118.0})
+                                )
+                        )
+        );
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> {
+            String actualQuery = invocation.getArgument(1, String.class);
+            DatasourceQueryData queryData = demoQuery.equals(actualQuery) ? demoQueryData : emptyQueryData;
+            return promqlSuccess(queryData);
+        });
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "storefront",
+                "demo",
+                null,
+                null,
+                null
+        );
+
+        assertEquals(demoQuery, console.getQuery());
+        assertEquals(1, console.getStats().getTotalSeries());
+    }
+
+    private static final class InMemoryObservabilitySignalIntakeGateway implements ObservabilitySignalIntakeGateway {
+
+        private static final Set<String> WORKSPACE_INFRA_SERVICE_NAMES = Set.of(
+                "otelcol-contrib",
+                "otel-collector",
+                "opentelemetry-collector",
+                "jaeger",
+                "prometheus",
+                "grafana",
+                "opensearch",
+                "frontend-proxy"
+        );
+
+        private final List<RecentMetricSignal> recentMetricSignals = new ArrayList<>();
+
+        @Override
+        public void recordOtlpMetricIntake(Map<String, String> resourceAttributes, Long observedAt, String metricName,
+                                           String metricType, String unit, Double value, Map<String, String> attributes) {
+            Map<String, String> canonicalIdentities = extractCanonicalStringMap(resourceAttributes);
+            if (canonicalIdentities.isEmpty()) {
+                return;
+            }
+            recentMetricSignals.add(0, new RecentMetricSignal(canonicalIdentities, observedAt, trimToNull(metricName)));
+            while (recentMetricSignals.size() > 256) {
+                recentMetricSignals.remove(recentMetricSignals.size() - 1);
+            }
+        }
+
+        @Override
+        public void recordOtlpLogIntake(Map<String, String> resourceAttributes, Long observedAt, String body,
+                                        String severityText, String traceId, String spanId,
+                                        Map<String, String> attributes) {
+        }
+
+        @Override
+        public void recordOtlpTraceIntake(Map<String, String> resourceAttributes, Long observedAt, String traceId,
+                                          String spanId, String spanName, String errorState,
+                                          Map<String, String> spanAttributes) {
+        }
+
+        @Override
+        public List<TelemetryIdentitySnapshot> collectRecentIdentitySnapshots(List<LogEntry> logs,
+                                                                              List<TraceListItemDto> traces,
+                                                                              List<Monitor> monitors) {
+            List<TelemetryIdentitySnapshot> snapshots = new ArrayList<>();
+            if (logs != null) {
+                for (LogEntry log : logs) {
+                    Map<String, String> canonical = extractCanonicalStringMap(log == null ? null : log.getResource());
+                    if (canonical.isEmpty()) {
+                        continue;
+                    }
+                    snapshots.add(new TelemetryIdentitySnapshot(
+                            "otlp",
+                            "logs",
+                            canonical,
+                            canonical.get("service.name"),
+                            canonical.get("service.namespace"),
+                            canonical.get("deployment.environment.name"),
+                            canonical.get("service.instance.id"),
+                            canonical.get("host.name"),
+                            log == null || log.getTimeUnixNano() == null ? null : log.getTimeUnixNano() / 1_000_000L
+                    ));
+                }
+            }
+            if (traces != null) {
+                for (TraceListItemDto trace : traces) {
+                    Map<String, String> canonical = extractCanonicalStringMap(trace == null ? null : trace.getResourceAttributes());
+                    if (canonical.isEmpty()) {
+                        continue;
+                    }
+                    snapshots.add(new TelemetryIdentitySnapshot(
+                            "otlp",
+                            "traces",
+                            canonical,
+                            canonical.get("service.name"),
+                            canonical.get("service.namespace"),
+                            canonical.get("deployment.environment.name"),
+                            canonical.get("service.instance.id"),
+                            canonical.get("host.name"),
+                            toLong(trace == null ? null : trace.getStartTime())
+                    ));
+                }
+            }
+            if (monitors != null) {
+                for (Monitor monitor : monitors) {
+                    Map<String, String> canonical = extractCanonicalStringMap(monitor == null ? null : monitor.getLabels());
+                    if (canonical.isEmpty()) {
+                        continue;
+                    }
+                    snapshots.add(new TelemetryIdentitySnapshot(
+                            "monitor",
+                            "metrics",
+                            canonical,
+                            canonical.get("service.name"),
+                            canonical.get("service.namespace"),
+                            canonical.get("deployment.environment.name"),
+                            canonical.get("service.instance.id"),
+                            canonical.get("host.name"),
+                            toEpochMillis(monitor == null ? null : monitor.getGmtUpdate())
+                    ));
+                }
+            }
+            for (RecentMetricSignal signal : recentMetricSignals) {
+                snapshots.add(buildMetricIdentitySnapshot(signal));
+            }
+            return snapshots;
+        }
+
+        @Override
+        public List<TelemetryIdentitySnapshot> collectRecentExternalIdentitySnapshots(List<LogEntry> logs,
+                                                                                      List<TraceListItemDto> traces,
+                                                                                      List<Monitor> monitors) {
+            return collectRecentIdentitySnapshots(logs, traces, monitors).stream()
+                    .filter(snapshot -> !isSelfTelemetrySnapshot(snapshot))
+                    .filter(snapshot -> !isWorkspaceNoiseSnapshot(snapshot))
+                    .toList();
+        }
+
+        @Override
+        public TelemetryIdentitySnapshot resolveRecentOtlpMetricContext(String serviceName, String serviceNamespace,
+                                                                        String environment) {
+            String requiredServiceName = normalizeValue(serviceName);
+            String requiredServiceNamespace = normalizeValue(serviceNamespace);
+            String requiredEnvironment = normalizeValue(environment);
+            for (RecentMetricSignal signal : orderedMetricSignals()) {
+                if (!matchesMetricContext(signal.canonicalIdentities(),
+                        requiredServiceName, requiredServiceNamespace, requiredEnvironment)) {
+                    continue;
+                }
+                TelemetryIdentitySnapshot snapshot = buildMetricIdentitySnapshot(signal);
+                if (!hasText(requiredServiceName) && isWorkspaceNoiseSnapshot(snapshot)) {
+                    continue;
+                }
+                if (!hasText(snapshot.getServiceName()) && !hasText(requiredServiceName)) {
+                    continue;
+                }
+                return snapshot;
+            }
+            return null;
+        }
+
+        @Override
+        public List<TelemetryIdentitySnapshot> collectRecentOtlpMetricContexts(int limit) {
+            int resolvedLimit = limit <= 0 ? 1 : limit;
+            LinkedHashMap<String, TelemetryIdentitySnapshot> contexts = new LinkedHashMap<>();
+            for (RecentMetricSignal signal : orderedMetricSignals()) {
+                TelemetryIdentitySnapshot snapshot = buildMetricIdentitySnapshot(signal);
+                if (!hasText(snapshot.getServiceName())
+                        || isSelfTelemetrySnapshot(snapshot)
+                        || isWorkspaceNoiseSnapshot(snapshot)) {
+                    continue;
+                }
+                String contextKey = String.join("|",
+                        defaultText(normalizeValue(snapshot.getServiceName()), ""),
+                        defaultText(normalizeValue(snapshot.getServiceNamespace()), ""),
+                        defaultText(normalizeValue(snapshot.getEnvironmentName()), ""));
+                if (contexts.containsKey(contextKey)) {
+                    continue;
+                }
+                contexts.put(contextKey, snapshot);
+                if (contexts.size() >= resolvedLimit) {
+                    break;
+                }
+            }
+            return List.copyOf(contexts.values());
+        }
+
+        @Override
+        public List<String> collectRecentOtlpMetricNames(String serviceName, String serviceNamespace,
+                                                         String environment, int limit) {
+            String requiredServiceName = normalizeValue(serviceName);
+            String requiredServiceNamespace = normalizeValue(serviceNamespace);
+            String requiredEnvironment = normalizeValue(environment);
+            int resolvedLimit = limit <= 0 ? 1 : limit;
+            LinkedHashSet<String> metricNames = new LinkedHashSet<>();
+            for (RecentMetricSignal signal : orderedMetricSignals()) {
+                if (!matchesMetricContext(signal.canonicalIdentities(),
+                        requiredServiceName, requiredServiceNamespace, requiredEnvironment)) {
+                    continue;
+                }
+                String metricName = trimToNull(signal.metricName());
+                if (!hasText(metricName) || !metricNames.add(metricName)) {
+                    continue;
+                }
+                if (metricNames.size() >= resolvedLimit) {
+                    break;
+                }
+            }
+            return List.copyOf(metricNames);
+        }
+
+        private List<RecentMetricSignal> orderedMetricSignals() {
+            return recentMetricSignals.stream()
+                    .sorted(Comparator.comparing(RecentMetricSignal::observedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                    .toList();
+        }
+
+        private TelemetryIdentitySnapshot buildMetricIdentitySnapshot(RecentMetricSignal signal) {
+            return new TelemetryIdentitySnapshot(
+                    "otlp",
+                    "metrics",
+                    signal.canonicalIdentities(),
+                    signal.canonicalIdentities().get("service.name"),
+                    signal.canonicalIdentities().get("service.namespace"),
+                    signal.canonicalIdentities().get("deployment.environment.name"),
+                    signal.canonicalIdentities().get("service.instance.id"),
+                    signal.canonicalIdentities().get("host.name"),
+                    signal.observedAt()
+            );
+        }
+
+        private boolean matchesMetricContext(Map<String, String> canonicalIdentities, String requiredServiceName,
+                                             String requiredServiceNamespace, String requiredEnvironment) {
+            if (canonicalIdentities == null || canonicalIdentities.isEmpty() || isSelfTelemetryResource(canonicalIdentities)) {
+                return false;
+            }
+            if (hasText(requiredServiceName)
+                    && !requiredServiceName.equals(normalizeValue(canonicalIdentities.get("service.name")))) {
+                return false;
+            }
+            if (hasText(requiredServiceNamespace)
+                    && !requiredServiceNamespace.equals(normalizeValue(canonicalIdentities.get("service.namespace")))) {
+                return false;
+            }
+            if (hasText(requiredEnvironment)
+                    && !requiredEnvironment.equals(normalizeValue(canonicalIdentities.get("deployment.environment.name")))) {
+                return false;
+            }
+            return true;
+        }
+
+        private boolean isSelfTelemetrySnapshot(TelemetryIdentitySnapshot snapshot) {
+            return snapshot != null
+                    && snapshot.getCanonicalIdentities() != null
+                    && isSelfTelemetryResource(snapshot.getCanonicalIdentities());
+        }
+
+        private boolean isWorkspaceNoiseSnapshot(TelemetryIdentitySnapshot snapshot) {
+            return snapshot != null
+                    && snapshot.getCanonicalIdentities() != null
+                    && isWorkspaceNoiseResource(snapshot.getCanonicalIdentities());
+        }
+
+        private boolean isSelfTelemetryResource(Map<String, String> resourceAttributes) {
+            String serviceName = normalizeValue(resourceAttributes.get("service.name"));
+            String serviceNamespace = normalizeValue(resourceAttributes.get("service.namespace"));
+            return "hertzbeat".equals(serviceName)
+                    || "apache-hertzbeat".equals(serviceName)
+                    || "hertzbeat".equals(serviceNamespace)
+                    || "apache-hertzbeat".equals(serviceNamespace);
+        }
+
+        private boolean isWorkspaceNoiseResource(Map<String, String> resourceAttributes) {
+            String serviceName = normalizeValue(resourceAttributes.get("service.name"));
+            return hasText(serviceName) && WORKSPACE_INFRA_SERVICE_NAMES.contains(serviceName);
+        }
+
+        private Map<String, String> extractCanonicalStringMap(Map<?, ?> values) {
+            if (values == null || values.isEmpty()) {
+                return Collections.emptyMap();
+            }
+            Map<String, String> canonical = new LinkedHashMap<>();
+            for (String key : EntityCanonicalIdentityRegistry.CANONICAL_OTEL_RESOURCE_KEYS) {
+                Object value = values.get(key);
+                if (value == null) {
+                    continue;
+                }
+                String normalized = trimToNull(String.valueOf(value));
+                if (normalized != null) {
+                    canonical.put(key, normalized);
+                }
+            }
+            return canonical;
+        }
+
+        private Long toEpochMillis(LocalDateTime dateTime) {
+            return dateTime == null ? null : dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        }
+
+        private Long toLong(Object value) {
+            return value instanceof Number number ? number.longValue() : null;
+        }
+
+        private String defaultText(String preferred, String fallback) {
+            String normalized = trimToNull(preferred);
+            return normalized != null ? normalized : trimToNull(fallback);
+        }
+
+        private String normalizeValue(String value) {
+            String normalized = trimToNull(value);
+            return normalized == null ? null : normalized.toLowerCase(java.util.Locale.ROOT);
+        }
+
+        private boolean hasText(String value) {
+            return trimToNull(value) != null;
+        }
+
+        private String trimToNull(String value) {
+            if (value == null) {
+                return null;
+            }
+            String trimmed = value.trim();
+            return trimmed.isEmpty() ? null : trimmed;
+        }
+
+        private record RecentMetricSignal(Map<String, String> canonicalIdentities, Long observedAt, String metricName) {
+        }
+    }
+}

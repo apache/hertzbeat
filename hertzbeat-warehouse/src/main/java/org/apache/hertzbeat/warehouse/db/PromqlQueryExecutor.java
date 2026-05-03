@@ -152,8 +152,8 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             if (datasourceQuery.getTimeType().equals(RANGE)) {
                 uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + QUERY_RANGE_PATH)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
-                        .queryParam(HTTP_START_PARAM, datasourceQuery.getStart())
-                        .queryParam(HTTP_END_PARAM, datasourceQuery.getEnd())
+                        .queryParam(HTTP_START_PARAM, TimePeriodUtil.normalizeToSeconds(datasourceQuery.getStart()))
+                        .queryParam(HTTP_END_PARAM, TimePeriodUtil.normalizeToSeconds(datasourceQuery.getEnd()))
                         .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep())
                         .build().toUri();
             } else if (datasourceQuery.getTimeType().equals(INSTANT)) {
@@ -208,7 +208,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         }
         return queryDataBuilder.build();
     }
-    
+
     @Override
     public boolean support(String queryLanguage) {
         return StringUtils.hasText(queryLanguage) && queryLanguage.equalsIgnoreCase(supportQueryLanguage);

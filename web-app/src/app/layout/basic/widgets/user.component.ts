@@ -6,7 +6,7 @@ import { LocalStorageService } from '../../../service/local-storage.service';
 import { CONSTANTS } from '../../../shared/constants';
 
 @Component({
-  selector: 'header-user',
+  standalone: false,  selector: 'header-user',
   template: `
     <div class="alain-default__nav-item d-flex align-items-center px-sm" nz-dropdown nzPlacement="bottomRight" [nzDropdownMenu]="userMenu">
       <nz-avatar [nzSrc]="user.avatar" nzSize="small" class="mr-sm"></nz-avatar>
@@ -70,9 +70,9 @@ import { CONSTANTS } from '../../../shared/constants';
         </div>
         <label
           style="margin-top: 16px;color:gray;font-size:13px"
-          (ngModelChange)="onNotShowAgainChange($event)"
           nz-checkbox
-          [(ngModel)]="notShowAgain"
+          [nzChecked]="notShowAgain"
+          (nzCheckedChange)="onNotShowAgainChange($event)"
           >{{ 'about.not-show-next-login' | i18n }}
         </label>
         <nz-divider></nz-divider>

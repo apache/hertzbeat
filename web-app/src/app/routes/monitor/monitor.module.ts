@@ -36,6 +36,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NgxEchartsModule } from 'ngx-echarts';
 
+import { WorkspaceShellComponent } from '../../shared/components/workspace-shell/workspace-shell.component';
 import { SafePipe } from '../SafePipe';
 import { MonitorDataChartComponent } from './monitor-data-chart/monitor-data-chart.component';
 import { MonitorDataTableComponent } from './monitor-data-table/monitor-data-table.component';
@@ -45,6 +46,7 @@ import { MonitorFormComponent } from './monitor-form/monitor-form.component';
 import { MonitorListComponent } from './monitor-list/monitor-list.component';
 import { MonitorNewComponent } from './monitor-new/monitor-new.component';
 import { MonitorRoutingModule } from './monitor-routing.module';
+import { MonitorRouteStatePanelComponent } from './shared/monitor-route-state-panel/monitor-route-state-panel.component';
 
 const COMPONENTS: Array<Type<void>> = [
   MonitorNewComponent,
@@ -53,7 +55,8 @@ const COMPONENTS: Array<Type<void>> = [
   MonitorListComponent,
   MonitorDetailComponent,
   MonitorDataTableComponent,
-  MonitorDataChartComponent
+  MonitorDataChartComponent,
+  MonitorRouteStatePanelComponent
 ];
 
 @NgModule({
@@ -76,7 +79,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzListModule,
     NzDescriptionsModule,
     NzPaginationModule,
-    InViewportModule
+    InViewportModule,
+    WorkspaceShellComponent
   ],
   declarations: COMPONENTS
 })

@@ -27,6 +27,8 @@ import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -78,8 +80,16 @@ public class AlarmCacheManager {
         this.pendingAlertMap.remove(String.valueOf(defineId), fingerPrint);
     }
 
+    public Map<String, SingleAlert> getPendingAlerts(Long defineId) {
+        return new HashMap<>(this.pendingAlertMap.row(String.valueOf(defineId)));
+    }
+
     public void putFiring(Long defineId, String fingerPrint, SingleAlert alert) {
         this.firingAlertMap.put(String.valueOf(defineId), fingerPrint, alert);
+    }
+
+    public Map<String, SingleAlert> getFiringAlerts(Long defineId) {
+        return new HashMap<>(this.firingAlertMap.row(String.valueOf(defineId)));
     }
 
     public void putFiring(String fingerPrint, SingleAlert alert) {

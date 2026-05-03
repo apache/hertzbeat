@@ -41,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.apache.hertzbeat.common.constants.CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -71,7 +72,8 @@ class LogPeriodicAlertCalculatorTest {
                 .id(1L)
                 .name("log_error_alert")
                 .type("periodic_log")
-                .expr("SELECT * FROM hertzbeat_logs WHERE severity_text = 'ERROR' AND time_unix_nano >= ? AND time_unix_nano <= ?")
+                .expr("SELECT * FROM hertzbeat_logs WHERE severity_text = 'ERROR' "
+                        + "AND `timestamp` >= NOW() - INTERVAL '5 minutes'")
                 .labels(Map.of(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_WARNING, "team", "backend", CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP))
                 .annotations(Map.of("summary", "Error logs detected", "description", "Multiple error logs found"))
                 .template("Found ${severity_text} log: ${body} from ${service_name}")
@@ -84,7 +86,8 @@ class LogPeriodicAlertCalculatorTest {
                 .id(1L)
                 .name("log_error_alert")
                 .type("periodic_log")
-                .expr("SELECT * FROM hertzbeat_logs WHERE severity_text = 'ERROR' AND time_unix_nano >= ? AND time_unix_nano <= ?")
+                .expr("SELECT * FROM hertzbeat_logs WHERE severity_text = 'ERROR' "
+                        + "AND `timestamp` >= NOW() - INTERVAL '5 minutes'")
                 .labels(Map.of(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_WARNING, "team", "backend",
                         CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL))
                 .annotations(Map.of("summary", "Error logs detected", "description", "Multiple error logs found"))
@@ -99,52 +102,54 @@ class LogPeriodicAlertCalculatorTest {
     void testCalculateWithEnabledRuleAndValidExpression() {
         // Given
         List<Map<String, Object>> queryResults = createSampleLogResults(3);
-        when(dataSourceService.query(anyString(), anyString())).thenReturn(queryResults);
+        when(dataSourceService.query(anyString(), anyString(), anyString())).thenReturn(queryResults);
 
         // When
         calculator.calculate(groupAlertDefine);
 
         // Then
-        verify(dataSourceService).query("sql", "SELECT * FROM hertzbeat_logs WHERE severity_text = 'ERROR' AND time_unix_nano >= ? AND time_unix_nano <= ?");
+        verify(dataSourceService).query("sql", "SELECT * FROM hertzbeat_logs WHERE severity_text = 'ERROR' "
+                + "AND `timestamp` >= NOW() - INTERVAL '5 minutes'", LOG_ALERT_THRESHOLD_TYPE_PERIODIC);
         verify(alarmCommonReduce).reduceAndSendAlarmGroup(any(), any());
     }
 
     @Test
     void testCalculateWithEmptyQueryResults() {
         // Given
-        when(dataSourceService.query(anyString(), anyString())).thenReturn(new ArrayList<>());
+        when(dataSourceService.query(anyString(), anyString(), anyString())).thenReturn(new ArrayList<>());
 
         // When
         calculator.calculate(groupAlertDefine);
 
         // Then
-        verify(dataSourceService).query(anyString(), anyString());
+        verify(dataSourceService).query(anyString(), anyString(), anyString());
         verifyNoInteractions(alarmCommonReduce);
     }
 
     @Test
     void testCalculateWithNullQueryResults() {
         // Given
-        when(dataSourceService.query(anyString(), anyString())).thenReturn(null);
+        when(dataSourceService.query(anyString(), anyString(), anyString())).thenReturn(null);
 
         // When
         calculator.calculate(groupAlertDefine);
 
         // Then
-        verify(dataSourceService).query(anyString(), anyString());
+        verify(dataSourceService).query(anyString(), anyString(), anyString());
         verifyNoInteractions(alarmCommonReduce);
     }
 
     @Test
     void testCalculateWithQueryException() {
         // Given
-        when(dataSourceService.query(anyString(), anyString())).thenThrow(new RuntimeException("Database connection failed"));
+        when(dataSourceService.query(anyString(), anyString(), anyString()))
+                .thenThrow(new RuntimeException("Database connection failed"));
 
         // When
         calculator.calculate(groupAlertDefine);
 
         // Then
-        verify(dataSourceService).query(anyString(), anyString());
+        verify(dataSourceService).query(anyString(), anyString(), anyString());
         verifyNoInteractions(alarmCommonReduce);
     }
 
@@ -153,7 +158,7 @@ class LogPeriodicAlertCalculatorTest {
         // Given
         Map<String, Object> logContext = createSingleLogResult("Error in payment service", "ERROR");
         List<Map<String, Object>> queryResults = List.of(logContext);
-        when(dataSourceService.query(anyString(), anyString())).thenReturn(queryResults);
+        when(dataSourceService.query(anyString(), anyString(), anyString())).thenReturn(queryResults);
 
         try (MockedStatic<org.apache.hertzbeat.alert.util.AlertTemplateUtil> mockedTemplateUtil =
              Mockito.mockStatic(org.apache.hertzbeat.alert.util.AlertTemplateUtil.class)) {
@@ -187,11 +192,11 @@ class LogPeriodicAlertCalculatorTest {
     void testGroupAlertGeneration() {
         // Given
         List<Map<String, Object>> queryResults = createSampleLogResults(2);
-        when(dataSourceService.query(anyString(), anyString())).thenReturn(queryResults);
+        when(dataSourceService.query(anyString(), anyString(), anyString())).thenReturn(queryResults);
 
-        try (MockedStatic<org.apache.hertzbeat.alert.util.AlertTemplateUtil> mockedTemplateUtil = 
+        try (MockedStatic<org.apache.hertzbeat.alert.util.AlertTemplateUtil> mockedTemplateUtil =
              Mockito.mockStatic(org.apache.hertzbeat.alert.util.AlertTemplateUtil.class)) {
-            
+
             mockedTemplateUtil.when(() -> org.apache.hertzbeat.alert.util.AlertTemplateUtil.render(anyString(), any()))
                              .thenReturn("Rendered alert content");
 
@@ -240,13 +245,13 @@ class LogPeriodicAlertCalculatorTest {
      */
     private Map<String, Object> createSingleLogResult(String message, String severityText) {
         Map<String, Object> logEntry = new HashMap<>();
-        
+
         // Only essential fields for testing
-        logEntry.put("time_unix_nano", System.nanoTime());
+        logEntry.put("timestamp", System.currentTimeMillis());
         logEntry.put("severity_text", severityText);
         logEntry.put("body", message);
         logEntry.put("service_name", "payment-service");
-        
+
         return logEntry;
     }
 }

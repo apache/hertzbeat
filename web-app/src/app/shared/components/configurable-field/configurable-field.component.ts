@@ -30,7 +30,7 @@ export interface FieldConfig {
 }
 
 @Component({
-  selector: 'app-configurable-field',
+  standalone: false,  selector: 'app-configurable-field',
   templateUrl: './configurable-field.component.html',
   styleUrls: ['./configurable-field.component.less'],
   providers: [

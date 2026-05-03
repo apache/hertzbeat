@@ -28,6 +28,7 @@
 
     <artifactId>hertzbeat-common-core</artifactId>
     <name>${project.artifactId}</name>
+    <description>Framework-agnostic shared runtime models, utilities, and protocol support.</description>
 
     <dependencies>
         <!-- Tool dependencies  -->

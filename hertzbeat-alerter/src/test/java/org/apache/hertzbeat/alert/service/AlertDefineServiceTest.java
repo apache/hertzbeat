@@ -25,6 +25,7 @@ import org.apache.hertzbeat.base.dao.LabelDao;
 import org.apache.hertzbeat.base.service.LabelService;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +49,7 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.LOG_ALERT_TH
 import static org.apache.hertzbeat.common.constants.CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME;
 import static org.apache.hertzbeat.common.constants.CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.apache.hertzbeat.common.constants.CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -188,6 +190,32 @@ class AlertDefineServiceTest {
 
         result = alertDefineService.getDefinePreview("promql", METRIC_ALERT_THRESHOLD_TYPE_REALTIME, null);
         assertEquals(0, result.size());
+    }
+
+    @Test
+    void getDefinePreviewSupportsPeriodicTraceSql() {
+        String expr = "SELECT service_name, 0.2 AS __value__ FROM hertzbeat_apm_red_1m";
+        Map<String, Object> row = Map.of("service_name", "checkout", "__value__", 0.2D);
+        when(dataSourceService.query(eq("sql"), eq(expr), eq(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC)))
+                .thenReturn(List.of(row));
+
+        List<Map<String, Object>> result =
+                alertDefineService.getDefinePreview("sql", TRACE_ALERT_THRESHOLD_TYPE_PERIODIC, expr);
+
+        assertEquals(1, result.size());
+        assertEquals(0.2D, result.get(0).get("__value__"));
+    }
+
+    @Test
+    void getDefinePreviewRejectsPeriodicTraceSqlWithoutValueColumn() {
+        String expr = "SELECT service_name FROM hertzbeat_apm_red_1m";
+        when(dataSourceService.query(eq("sql"), eq(expr), eq(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC)))
+                .thenReturn(List.of(Map.of("service_name", "checkout")));
+
+        AlertExpressionException exception = assertThrows(AlertExpressionException.class,
+                () -> alertDefineService.getDefinePreview("sql", TRACE_ALERT_THRESHOLD_TYPE_PERIODIC, expr));
+
+        assertEquals("Trace alert preview SQL must return __value__ column", exception.getMessage());
     }
 
     @Test
@@ -335,6 +363,17 @@ class AlertDefineServiceTest {
         assertNotNull(result);
         assertEquals(0, result.size());
         verify(alertDefineDao, times(1)).findAlertDefinesByTypeAndEnableTrue(LOG_ALERT_THRESHOLD_TYPE_PERIODIC);
+
+        // Test valid trace periodic alert type
+        reset(alertDefineDao);
+        when(alertDefineDao.findAlertDefinesByTypeAndEnableTrue(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC))
+                .thenReturn(Lists.newArrayList());
+
+        result = alertDefineService.getAlertDefinesByType(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC);
+
+        assertNotNull(result);
+        assertEquals(0, result.size());
+        verify(alertDefineDao, times(1)).findAlertDefinesByTypeAndEnableTrue(TRACE_ALERT_THRESHOLD_TYPE_PERIODIC);
 
         // Test empty string type
         assertThrows(IllegalArgumentException.class, () -> alertDefineService.getAlertDefinesByType(""));

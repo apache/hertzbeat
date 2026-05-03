@@ -74,6 +74,8 @@ public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificati
     @Query("select new org.apache.hertzbeat.manager.pojo.dto.AppCount(mo.app, mo.status, COUNT(mo.id)) from Monitor mo group by mo.app, mo.status")
     List<AppCount> findAppsStatusCount();
 
+    Optional<Monitor> findFirstByOrderByGmtUpdateDesc();
+
     /**
      * Update the status of the specified monitor
      * @param id     Monitor ID

@@ -20,9 +20,12 @@ package org.apache.hertzbeat.alert.service.impl;
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
@@ -34,11 +37,13 @@ import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * Realization of Alarm Information Service
@@ -47,13 +52,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class AlertServiceImpl implements AlertService {
-    
+
     @Autowired
     private GroupAlertDao groupAlertDao;
-    
+
     @Autowired
     private SingleAlertDao singleAlertDao;
-    
+
     @Autowired
     private AlarmCommonReduce alarmCommonReduce;
 
@@ -94,7 +99,7 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
-    public Page<GroupAlert> getGroupAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize) {
+    public Page<GroupAlert> getGroupAlerts(String status, String search, String severity, String sort, String order, int pageIndex, int pageSize) {
         Specification<GroupAlert> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (status != null) {
@@ -126,12 +131,19 @@ public class AlertServiceImpl implements AlertService {
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<GroupAlert> groupAlertPage = groupAlertDao.findAll(specification, pageRequest);
-        for (GroupAlert groupAlert : groupAlertPage.getContent()) {
-            List<String> firingAlerts = groupAlert.getAlertFingerprints();
-            List<SingleAlert> singleAlerts = singleAlertDao.findSingleAlertsByFingerprintIn(firingAlerts);
-            groupAlert.setAlerts(singleAlerts);
+        String normalizedSeverity = normalizeSeverity(severity);
+        if (normalizedSeverity != null) {
+            List<GroupAlert> groupAlerts = groupAlertDao.findAll(specification, sortExp);
+            List<GroupAlert> filteredAlerts = groupAlerts.stream()
+                    .peek(this::hydrateGroupAlerts)
+                    .filter(groupAlert -> groupAlert.getAlerts().stream().anyMatch(alert -> matchesSeverity(alert, normalizedSeverity)))
+                    .toList();
+            int start = Math.min((int) pageRequest.getOffset(), filteredAlerts.size());
+            int end = Math.min(start + pageRequest.getPageSize(), filteredAlerts.size());
+            return new PageImpl<>(filteredAlerts.subList(start, end), pageRequest, filteredAlerts.size());
         }
+        Page<GroupAlert> groupAlertPage = groupAlertDao.findAll(specification, pageRequest);
+        groupAlertPage.getContent().forEach(this::hydrateGroupAlerts);
         return groupAlertPage;
     }
 
@@ -152,14 +164,49 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public void editGroupAlertStatus(String status, List<Long> ids) {
-        groupAlertDao.updateGroupAlertsStatus(status, ids);
+        if (!StringUtils.hasText(status) || ids == null || ids.isEmpty()) {
+            return;
+        }
+        List<GroupAlert> groupAlerts = groupAlertDao.findAllById(ids);
+        if (groupAlerts.isEmpty()) {
+            return;
+        }
+        long now = Instant.now().toEpochMilli();
+        List<String> fingerprints = groupAlerts.stream()
+                .map(GroupAlert::getAlertFingerprints)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .distinct()
+                .toList();
+        List<SingleAlert> singleAlerts = fingerprints.isEmpty()
+                ? List.of()
+                : singleAlertDao.findSingleAlertsByFingerprintIn(fingerprints);
+        for (GroupAlert groupAlert : groupAlerts) {
+            groupAlert.setStatus(status);
+        }
+        for (SingleAlert singleAlert : singleAlerts) {
+            singleAlert.setStatus(status);
+            if (CommonConstants.ALERT_STATUS_RESOLVED.equals(status)) {
+                singleAlert.setActiveAt(null);
+                singleAlert.setEndAt(now);
+            } else {
+                singleAlert.setEndAt(null);
+                if (singleAlert.getActiveAt() == null) {
+                    singleAlert.setActiveAt(now);
+                }
+            }
+        }
+        groupAlertDao.saveAll(groupAlerts);
+        if (!singleAlerts.isEmpty()) {
+            singleAlertDao.saveAll(singleAlerts);
+        }
     }
 
     @Override
     public void editSingleAlertStatus(String status, List<Long> ids) {
         singleAlertDao.updateSingleAlertsStatus(status, ids);
     }
-    
+
 
     @Override
     public AlertSummary getAlertsSummary() {
@@ -184,7 +231,7 @@ public class AlertServiceImpl implements AlertService {
             alertSummary.setPriorityEmergencyNum(emergencyNum);
             alertSummary.setPriorityWarningNum(warningNum);
         }
-        
+
         long total = singleAlertDao.count();
         alertSummary.setTotal(total);
         long resolved = total - firingAlerts.size();
@@ -202,5 +249,32 @@ public class AlertServiceImpl implements AlertService {
             log.error(e.getMessage(), e);
         }
         return alertSummary;
+    }
+
+    private void hydrateGroupAlerts(GroupAlert groupAlert) {
+        List<String> firingAlerts = groupAlert.getAlertFingerprints();
+        List<SingleAlert> singleAlerts = singleAlertDao.findSingleAlertsByFingerprintIn(firingAlerts);
+        singleAlerts.sort(Comparator.comparing(SingleAlert::getGmtUpdate, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(SingleAlert::getId, Comparator.nullsLast(Comparator.reverseOrder())));
+        groupAlert.setAlerts(singleAlerts);
+    }
+
+    private String normalizeSeverity(String severity) {
+        if (!StringUtils.hasText(severity)) {
+            return null;
+        }
+        return severity.trim().toLowerCase();
+    }
+
+    private boolean matchesSeverity(SingleAlert alert, String severity) {
+        if (alert == null || severity == null) {
+            return false;
+        }
+        String labelSeverity = alert.getLabels() == null ? null : alert.getLabels().get("severity");
+        if (StringUtils.hasText(labelSeverity) && severity.equalsIgnoreCase(labelSeverity.trim())) {
+            return true;
+        }
+        String annotationSeverity = alert.getAnnotations() == null ? null : alert.getAnnotations().get("severity");
+        return StringUtils.hasText(annotationSeverity) && severity.equalsIgnoreCase(annotationSeverity.trim());
     }
 }

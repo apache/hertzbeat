@@ -1,0 +1,25 @@
+<div class="platform-stage-meta-header" [class.platform-stage-meta-header--compact]="compact">
+  <div class="platform-stage-meta-header-copy">
+    <div class="platform-stage-meta-header-title">{{ title }}</div>
+    <div class="platform-stage-meta-header-description" *ngIf="description">{{ description }}</div>
+  </div>
+
+  <div class="platform-stage-meta-header-trailing" *ngIf="metaItems.length > 0">
+    <div class="platform-stage-meta-chip-list">
+      <span
+        class="platform-stage-meta-chip"
+        *ngFor="let item of metaItems"
+        [class.platform-stage-meta-chip--accent]="item.tone === 'accent'"
+        [class.platform-stage-meta-chip--critical]="item.tone === 'critical'"
+        [class.platform-stage-meta-chip--success]="item.tone === 'success'"
+        [class.platform-stage-meta-chip--monospace]="item.monospace"
+      >
+        {{ item.text }}
+      </span>
+    </div>
+  </div>
+
+  <div class="platform-stage-meta-header-actions">
+    <ng-content select="[stageMetaHeaderActions]"></ng-content>
+  </div>
+</div>

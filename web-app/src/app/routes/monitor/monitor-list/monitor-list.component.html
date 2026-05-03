@@ -17,38 +17,42 @@
   ~ under the License.
 -->
 
-<app-help-message-show
-  *ngIf="app != undefined"
-  [help_message_content]="'monitor.app.' + app + '.help' | i18n"
-  [guild_link]="'monitor.app.' + app + '.helpLink' | i18n"
-  [icon_name]="getAppIconName(app)"
-></app-help-message-show>
-<app-help-message-show
-  *ngIf="app == undefined"
-  [help_message_content]="'monitor.center.help' | i18n"
-  [guild_link]="'monitor.center.help.link' | i18n"
-  [module_name]="'menu.monitor.center'"
-  [icon_name]="'laptop'"
-></app-help-message-show>
+<app-workspace-shell
+  [title]="'menu.monitor.center' | i18n"
+  [subtitle]="hasEntityContext() ? getEntityMonitorWorkbenchNarrative() : ('monitor.center.help' | i18n)"
+  [tabs]="workspaceTabs"
+  [showRail]="showWorkspaceRail"
+  [allowRailCollapse]="showWorkspaceRail"
+  [(railCollapsed)]="workspaceRailCollapsed"
+  (tabSelected)="onWorkspaceTabSelect($event)"
+>
+  <button workspaceActions nz-button nzType="default" *ngIf="hasEntityContext()" type="button" (click)="returnToEntity()">
+    {{ 'entity.response.context.return' | i18n }}
+  </button>
 
-<nz-divider></nz-divider>
+  <div workspaceMain>
+<app-platform-facts-strip
+  class="monitor-management-meta monitor-management-meta--flat"
+  [items]="monitorWorkbenchFacts"
+  [dense]="true"
+></app-platform-facts-strip>
 
 <app-toolbar>
   <ng-template #left>
     <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
-    <button *ngIf="isDefaultListMenu || app == undefined" nz-button nzType="primary" (click)="onAppSwitchModalOpen()">
+    <button *ngIf="!hasEntityContext() && (isDefaultListMenu || app == undefined)" nz-button nzType="primary" (click)="onAppSwitchModalOpen()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'monitor.new-monitor' | i18n }}
     </button>
-    <button *ngIf="app != undefined" nz-button nzType="primary">
+    <button *ngIf="!hasEntityContext() && app != undefined" nz-button nzType="primary">
       <a routerLink="/monitors/new" [queryParams]="{ app: app }">
         <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
         {{ 'monitor.new' | i18n }} {{ 'monitor.app.' + app | i18n }}
       </a>
     </button>
-    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+    <button *ngIf="!hasEntityContext()" nz-button nz-dropdown [nzDropdownMenu]="more_menu">
       <span nz-icon nzType="ellipsis"></span>
     </button>
     <nz-dropdown-menu #more_menu="nzDropdownMenu">
@@ -139,27 +143,48 @@
   </ng-template>
 </app-toolbar>
 
-<div class="monitor-card-list">
+<section class="monitor-results-shell monitor-results-shell--flat">
+  <app-platform-stage-meta-header
+    class="monitor-results-header"
+    [title]="'monitor.center.console.result.title' | i18n"
+    [metaItems]="monitorResultsMetaChips"
+    [compact]="true"
+  ></app-platform-stage-meta-header>
+
+<div class="monitor-card-list monitor-card-list--flat">
   <div class="monitor-list-header">
-    <div class="monitor-header-actions">
-      <label nz-checkbox [(ngModel)]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
-      <nz-pagination
-        [(nzPageIndex)]="pageIndex"
-        [nzPageSize]="pageSize"
-        [nzTotal]="total"
-        (nzPageIndexChange)="onPageIndexChange($event)"
-        nzSimple
-      ></nz-pagination>
-    </div>
+    <label nz-checkbox [(ngModel)]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
+    <nz-pagination
+      [(nzPageIndex)]="pageIndex"
+      [nzPageSize]="pageSize"
+      [nzTotal]="total"
+      (nzPageIndexChange)="onPageIndexChange($event)"
+      nzSimple
+    ></nz-pagination>
   </div>
 
   <nz-spin [nzSpinning]="tableLoading">
     <div class="monitor-card-list-content">
+      <app-platform-drawer-callout-card
+        *ngIf="!tableLoading && monitors.length === 0"
+        class="monitor-results-empty-state monitor-results-empty-state--flat"
+        [title]="monitorResultsEmptyTitle"
+        [body]="monitorResultsEmptyCopy"
+        [empty]="true"
+      >
+        <app-platform-support-action-bar
+          drawerCalloutActions
+          class="monitor-results-empty-actions"
+          [items]="monitorResultsEmptyActionItems"
+          (itemSelected)="onMonitorResultsEmptyAction($event)"
+        ></app-platform-support-action-bar>
+      </app-platform-drawer-callout-card>
       <div
-        class="monitor-card"
+        class="monitor-card monitor-card--flat"
         *ngFor="let data of monitors"
         [ngClass]="getMonitorDisplayClass(data)"
         [class.monitor-unavailable]="isMonitorDisabled(data)"
+        [class.entity-monitor-card]="hasEntityContext()"
       >
         <div class="monitor-card-checkbox">
           <label
@@ -196,6 +221,13 @@
             </div>
           </div>
 
+          <app-platform-support-action-bar
+            *ngIf="hasEntityContext()"
+            class="monitor-card-links"
+            [items]="getMonitorCardActionItems(data)"
+            (itemSelected)="onMonitorCardAction(data, $event)"
+          ></app-platform-support-action-bar>
+
           <div class="monitor-card-info">
             <div class="monitor-card-info-item host-item">
               <button
@@ -213,6 +245,29 @@
               <button nz-button nzType="text" *ngIf="data.scrape && data.scrape != 'static'">
                 <i nz-icon nzType="partition"></i>
                 {{ 'monitor.scrape.type.' + data.scrape | i18n }}
+              </button>
+
+              <button
+                *ngIf="hasEntityContext() && !isMonitorDisabled(data) && data.status == 0"
+                nz-button
+                nzSize="small"
+                nzType="default"
+                class="entity-workbench-action"
+                (click)="onEnableManageOneMonitor(data.id)"
+              >
+                <i nz-icon nzType="play-circle"></i>
+                {{ 'monitor.enable' | i18n }}
+              </button>
+              <button
+                *ngIf="hasEntityContext() && !isMonitorDisabled(data) && data.status != 0"
+                nz-button
+                nzSize="small"
+                nzType="default"
+                class="entity-workbench-action"
+                (click)="onCancelManageOneMonitor(data.id)"
+              >
+                <i nz-icon nzType="pause-circle"></i>
+                {{ 'monitor.cancel' | i18n }}
               </button>
 
               <button nz-button nz-dropdown [nzDropdownMenu]="actionMenu" class="action-button" [disabled]="isMonitorDisabled(data)">
@@ -245,6 +300,10 @@
                 {{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | elapsedTime }}
               </span>
             </div>
+
+            <div class="monitor-card-info-item triage-row" *ngIf="hasEntityContext()">
+              <span class="monitor-triage-reason">{{ getMonitorTriageReason(data) }}</span>
+            </div>
           </div>
 
           <nz-dropdown-menu #actionMenu="nzDropdownMenu">
@@ -267,21 +326,21 @@
                   {{ 'monitor.copy' | i18n }}
                 </button>
               </li>
-              <li nz-menu-divider></li>
-              <li nz-menu-item *ngIf="data.status == 0">
+              <li nz-menu-divider *ngIf="!hasEntityContext()"></li>
+              <li nz-menu-item *ngIf="!hasEntityContext() && data.status == 0">
                 <button nz-button (click)="onEnableManageOneMonitor(data.id)" [disabled]="isMonitorDisabled(data)">
                   <i nz-icon nzType="play-circle"></i>
                   {{ 'monitor.enable' | i18n }}
                 </button>
               </li>
-              <li nz-menu-item *ngIf="data.status != 0">
+              <li nz-menu-item *ngIf="!hasEntityContext() && data.status != 0">
                 <button nz-button (click)="onCancelManageOneMonitor(data.id)" [disabled]="isMonitorDisabled(data)">
                   <i nz-icon nzType="pause-circle"></i>
                   {{ 'monitor.cancel' | i18n }}
                 </button>
               </li>
-              <li nz-menu-divider></li>
-              <li nz-menu-item>
+              <li nz-menu-divider *ngIf="!hasEntityContext()"></li>
+              <li nz-menu-item *ngIf="!hasEntityContext()">
                 <button nz-button nzDanger (click)="onDeleteOneMonitor(data.id)" [disabled]="isMonitorDisabled(data)">
                   <i nz-icon nzType="delete"></i>
                   {{ 'monitor.delete-monitor' | i18n }}
@@ -294,6 +353,7 @@
     </div>
   </nz-spin>
 </div>
+</section>
 
 <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
 
@@ -391,3 +451,19 @@
     </app-monitor-select-menu>
   </div>
 </nz-modal>
+
+  </div>
+
+  <div workspaceRail class="workspace-context-rail" *ngIf="showWorkspaceRail">
+    <app-workspace-guidance-panel
+      [headline]="workspaceGuidanceHeadline"
+      [description]="workspaceGuidanceDescription"
+      [primaryAction]="workspaceGuidancePrimaryAction"
+      [secondaryAction]="workspaceGuidanceSecondaryAction"
+      [reasons]="workspaceGuidanceReasons"
+      [nextLinks]="workspaceGuidanceNextLinks"
+      (actionSelected)="onWorkspaceGuidanceAction($event)"
+      (nextSelected)="onWorkspaceGuidanceNext($event)"
+    ></app-workspace-guidance-panel>
+  </div>
+</app-workspace-shell>

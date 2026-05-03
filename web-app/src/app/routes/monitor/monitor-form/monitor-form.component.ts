@@ -29,7 +29,7 @@ import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
 
 @Component({
-  selector: 'app-monitor-form',
+  standalone: false,  selector: 'app-monitor-form',
   templateUrl: './monitor-form.component.html',
   styleUrls: ['./monitor-form.component.less']
 })
@@ -38,6 +38,7 @@ export class MonitorFormComponent implements OnChanges {
   @Input() grafanaDashboard!: any;
   @Input() loading!: boolean;
   @Input() loadingTip!: string;
+  @Input() embedded: boolean = false;
   @Input() hostName!: string;
   @Input() collector!: string;
   @Input() collectors!: Collector[];
@@ -64,15 +65,45 @@ export class MonitorFormComponent implements OnChanges {
 
   constructor(private notifySvc: NzNotificationService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
+  get formShellKicker(): string {
+    return this.monitor?.id ? this.i18nSvc.fanyi('monitor.edit') : this.i18nSvc.fanyi('monitor.new');
+  }
+
+  get formShellTitle(): string {
+    if (this.monitor?.name) {
+      return this.monitor.name;
+    }
+    if (this.monitor?.app) {
+      return this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}`);
+    }
+    return this.monitor?.id ? this.i18nSvc.fanyi('monitor.edit-monitor') : this.i18nSvc.fanyi('monitor.new-monitor');
+  }
+
+  get formShellCopy(): string {
+    return this.monitor?.id
+      ? this.i18nSvc.fanyi('monitor.form.shell.edit.copy')
+      : this.i18nSvc.fanyi('monitor.form.shell.new.copy');
+  }
+
   ngOnChanges(changes: SimpleChanges) {
     // Initialize scheduleType and cronExpression if not present
     if (this.monitor && !this.monitor.scheduleType) {
       this.monitor.scheduleType = 'interval';
       this.monitor.cronExpression = '';
     }
+    if (this.monitor?.scheduleType === 'interval' && (this.monitor.intervals === null || this.monitor.intervals === undefined)) {
+      this.monitor.intervals = 60;
+    }
 
     if (changes.params && this.params) {
+      this.normalizeNumberParams(this.params, this.paramDefines);
       this.hostParam = this.params.find(param => param.field === 'host');
+    }
+    if (changes.advancedParams && this.advancedParams) {
+      this.normalizeNumberParams(this.advancedParams, this.advancedParamDefines);
+    }
+    if (changes.sdParams && this.sdParams) {
+      this.normalizeNumberParams(this.sdParams, this.sdDefines);
     }
 
     if (changes.advancedParams && changes.advancedParams.currentValue !== changes.advancedParams.previousValue) {
@@ -189,6 +220,17 @@ export class MonitorFormComponent implements OnChanges {
 
   onCancel() {
     this.formCancel.emit();
+  }
+
+  private normalizeNumberParams(params: Param[] | undefined, defines: ParamDefine[] | undefined): void {
+    if (!params || !defines) {
+      return;
+    }
+    defines.forEach((define, index) => {
+      if (define?.type === 'number' && params[index] && (params[index].paramValue === undefined || params[index].paramValue === '')) {
+        params[index].paramValue = null;
+      }
+    });
   }
 
   onScrapeChange(scrape: string) {

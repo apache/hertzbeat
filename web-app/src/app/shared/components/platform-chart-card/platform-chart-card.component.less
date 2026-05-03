@@ -1,0 +1,27 @@
+.platform-chart-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 18px 0 0;
+}
+
+.platform-chart-card-body {
+  min-width: 0;
+}
+
+:host ::ng-deep .platform-chart-card-header .platform-stage-meta-header-title {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ops-text-secondary);
+}
+
+:host ::ng-deep .platform-chart-card-header .platform-stage-meta-header-meta {
+  display: none;
+}
+
+@media (max-width: 1440px) {
+  .platform-chart-card {
+    padding-right: 0;
+  }
+}

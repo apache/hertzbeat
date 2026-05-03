@@ -35,11 +35,57 @@ import { AppDefineService } from '../../../service/app-define.service';
 import { CollectorService } from '../../../service/collector.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { generateReadableRandomString } from '../../../shared/utils/common-util';
+import { MonitorRouteState } from '../shared/monitor-route-state.type';
 
 @Component({
-  selector: 'app-monitor-add',
+  standalone: false,  selector: 'app-monitor-add',
   templateUrl: './monitor-new.component.html',
-  styles: []
+  styles: [
+    `
+      :host {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+      }
+
+      app-page-shell {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        width: 100%;
+        min-height: 0;
+        height: 100%;
+      }
+
+      .monitor-page-shell__content {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+        padding-right: 6px;
+      }
+
+      .monitor-page-shell__content-inner {
+        width: 100%;
+        max-width: 1320px;
+        margin: 0 auto;
+        padding-bottom: 32px;
+      }
+
+      @media (max-width: 768px) {
+        .monitor-page-shell__content {
+          padding-right: 0;
+        }
+      }
+    `
+  ]
 })
 export class MonitorNewComponent implements OnInit {
   sdDefines: ParamDefine[] = [];
@@ -56,9 +102,25 @@ export class MonitorNewComponent implements OnInit {
   // whether it is loading
   isSpinning: boolean = false;
   spinningTip: string = 'Loading...';
+  routeState: MonitorRouteState = 'loading';
+  routeStateTitle: string = '';
+  routeStateDescription: string = '';
   labelKeys: string[] = [];
   labelMap: { [key: string]: string[] } = {};
   labelIsCustom: boolean = true;
+
+  get pageShellKicker(): string {
+    return this.i18nSvc.fanyi('monitor.form.shell.kicker');
+  }
+
+  get pageShellTitle(): string {
+    return this.i18nSvc.fanyi('monitor.new-monitor');
+  }
+
+  get pageShellCopy(): string {
+    return this.i18nSvc.fanyi('monitor.form.shell.new.copy');
+  }
+
   constructor(
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
@@ -74,6 +136,7 @@ export class MonitorNewComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.setLoadingState();
     this.route.queryParamMap
       .pipe(
         switchMap((paramMap: ParamMap) => {
@@ -117,6 +180,8 @@ export class MonitorNewComponent implements OnInit {
                 } else {
                   param.paramValue = define.defaultValue;
                 }
+              } else if (define.type === 'number') {
+                param.paramValue = null;
               }
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
               if (define.placeholder == null && this.i18nSvc.fanyi(`monitor.${define.field}.tip`) != `monitor.${define.field}.tip`) {
@@ -190,6 +255,8 @@ export class MonitorNewComponent implements OnInit {
                   } else {
                     param.paramValue = define.defaultValue;
                   }
+                } else if (define.type === 'number') {
+                  param.paramValue = null;
                 }
                 define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.scrape}.param.${define.field}`);
                 if (define.placeholder == null && this.i18nSvc.fanyi(`monitor.${define.field}.tip`) != `monitor.${define.field}.tip`) {
@@ -206,13 +273,22 @@ export class MonitorNewComponent implements OnInit {
             }
           } else {
             console.warn(message.msg);
+            this.setFormErrorState();
           }
           this.isSpinning = false;
+          if (this.routeState !== 'error') {
+            this.setReadyState();
+          }
         },
         error => {
           this.isSpinning = false;
+          this.setFormErrorState();
         }
       );
+  }
+
+  retryInit(): void {
+    this.ngOnInit();
   }
 
   onScrapeChange(scrapeValue: string) {
@@ -254,6 +330,8 @@ export class MonitorNewComponent implements OnInit {
                 } else {
                   param.paramValue = define.defaultValue;
                 }
+              } else if (define.type === 'number') {
+                param.paramValue = null;
               }
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.scrape}.param.${define.field}`);
               if (define.placeholder == null && this.i18nSvc.fanyi(`monitor.${define.field}.tip`) != `monitor.${define.field}.tip`) {
@@ -330,5 +408,23 @@ export class MonitorNewComponent implements OnInit {
 
   onCancel() {
     this.router.navigateByUrl(`/monitors`);
+  }
+
+  private setLoadingState(): void {
+    this.routeState = 'loading';
+    this.routeStateTitle = this.i18nSvc.fanyi('monitor.route-state.form.loading.title');
+    this.routeStateDescription = this.i18nSvc.fanyi('monitor.route-state.form.loading.copy');
+  }
+
+  private setReadyState(): void {
+    this.routeState = 'ready';
+    this.routeStateTitle = '';
+    this.routeStateDescription = '';
+  }
+
+  private setFormErrorState(): void {
+    this.routeState = 'error';
+    this.routeStateTitle = this.i18nSvc.fanyi('monitor.route-state.form.error.title');
+    this.routeStateDescription = this.i18nSvc.fanyi('monitor.route-state.form.error.copy');
   }
 }

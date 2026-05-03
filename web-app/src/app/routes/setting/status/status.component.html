@@ -17,17 +17,11 @@
   ~ under the License.
 -->
 
-<app-help-message-show
-  [help_message_content]="'status.help' | i18n"
-  [guild_link]="'status.help.link' | i18n"
-  [module_name]="'menu.advanced.status'"
-  [icon_name]="'mobile'"
-></app-help-message-show>
-<nz-divider></nz-divider>
-
-<nz-spin [nzSpinning]="orgLoading" [nzTip]="'Loading...'" nzSize="large">
-  <div class="-inner-content">
-    <form nz-form #newForm="ngForm">
+<app-page-shell [title]="'menu.advanced.status' | i18n">
+  <div pageContent>
+    <nz-spin [nzSpinning]="orgLoading" [nzTip]="'Loading...'" nzSize="large">
+      <div class="-inner-content">
+        <form nz-form #newForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">
           {{ 'status.org.name' | i18n }}
@@ -135,13 +129,13 @@
           </button>
         </div>
       </div>
-    </form>
-  </div>
-</nz-spin>
+        </form>
+      </div>
+    </nz-spin>
 
-<nz-divider></nz-divider>
+    <nz-divider></nz-divider>
 
-<nz-tabset nzSize="large" [nzTabBarGutter]="8">
+    <nz-tabset nzSize="large" [nzTabBarGutter]="8">
   <nz-tab [nzTitle]="'status.component' | i18n" (nzClick)="loadComponentInfo()">
     <app-toolbar>
       <ng-template #left>
@@ -352,8 +346,10 @@
       </tbody>
     </nz-table>
     <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
-  </nz-tab>
-</nz-tabset>
+    </nz-tab>
+    </nz-tabset>
+  </div>
+</app-page-shell>
 
 <!-- new or update component pop-up box -->
 <nz-modal

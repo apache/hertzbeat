@@ -26,7 +26,7 @@ import { fromEvent, Subscription } from 'rxjs';
 import { debounceTime, filter } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-settings',
+  standalone: false,  selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.less']
 })
@@ -47,6 +47,10 @@ export class SettingsComponent implements AfterViewInit, OnDestroy {
     {
       key: 'object-store',
       title: this.i18nSvc.fanyi('settings.object-store')
+    },
+    {
+      key: 'token',
+      title: this.i18nSvc.fanyi('settings.token')
     }
   ];
 
@@ -57,6 +61,15 @@ export class SettingsComponent implements AfterViewInit, OnDestroy {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {
     this.router$ = this.router.events.pipe(filter(e => e instanceof ActivationEnd)).subscribe(() => this.setActive());
+    this.setActive();
+  }
+
+  get settingsShellTitle(): string {
+    return this.i18nSvc.fanyi('settings.console.title');
+  }
+
+  get settingsShellCopy(): string {
+    return this.i18nSvc.fanyi('settings.console.copy');
   }
 
   private setActive(): void {

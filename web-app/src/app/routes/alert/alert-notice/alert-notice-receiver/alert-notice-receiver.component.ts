@@ -30,7 +30,7 @@ import { NoticeReceiver } from '../../../../pojo/NoticeReceiver';
 import { NoticeReceiverService } from '../../../../service/notice-receiver.service';
 
 @Component({
-  selector: 'app-alert-notice-receiver',
+  standalone: false,  selector: 'app-alert-notice-receiver',
   templateUrl: './alert-notice-receiver.component.html',
   styleUrl: './alert-notice-receiver.component.less'
 })

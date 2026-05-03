@@ -1,0 +1,9 @@
+services:
+  otel-collector:
+    environment:
+      HB_OTLP_ENDPOINT: ${HB_OTLP_ENDPOINT}
+      HB_API_TOKEN: ${HB_API_TOKEN}
+  recommendation:
+    environment:
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "true"

@@ -20,7 +20,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-alert-notice',
+  standalone: false,  selector: 'app-alert-notice',
   templateUrl: './alert-notice.component.html',
   styles: []
 })

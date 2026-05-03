@@ -1,0 +1,124 @@
+.platform-rail-nav-host {
+  display: block;
+  min-width: 0;
+}
+
+.platform-rail-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.platform-rail-nav .catalog-rail-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.platform-rail-nav .catalog-rail-group + .catalog-rail-group {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid #252932;
+}
+
+.platform-rail-nav .catalog-rail-title {
+  min-height: 18px;
+  padding: 0 10px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #7d8596;
+}
+
+.platform-rail-nav .catalog-rail-entity-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 4px 8px;
+}
+
+.platform-rail-nav .catalog-rail-entity-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #eef2f6;
+  word-break: break-word;
+}
+
+.platform-rail-nav .catalog-rail-entity-meta {
+  font-size: 11px;
+  color: #8d95a5;
+}
+
+.platform-rail-nav .catalog-rail-item {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #d7dce6;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.platform-rail-nav .catalog-rail-item:hover {
+  background: #16181d;
+}
+
+.platform-rail-nav .catalog-rail-item.static {
+  cursor: default;
+}
+
+.platform-rail-nav .catalog-rail-item.static:hover {
+  background: transparent;
+}
+
+.platform-rail-nav .catalog-rail-item.active {
+  background: rgba(78, 116, 248, 0.14);
+  border-color: rgba(78, 116, 248, 0.24);
+  color: #eef2f6;
+}
+
+.platform-rail-nav .catalog-rail-item.active .catalog-rail-item-count {
+  color: #eef2f6;
+}
+
+.platform-rail-nav .catalog-rail-item-main {
+  display: flex;
+  align-items: flex-start;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 10px;
+}
+
+.platform-rail-nav .catalog-rail-item-main i {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.platform-rail-nav .catalog-rail-item-main span:last-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.platform-rail-nav .catalog-rail-item-count {
+  flex: 0 0 24px;
+  min-width: 24px;
+  padding-top: 2px;
+  color: #8d95a5;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+}

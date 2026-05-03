@@ -30,7 +30,7 @@ import { LabelService } from '../../../service/label.service';
 import { formatLabelName, renderLabelColor } from '../../../shared/utils/common-util';
 
 @Component({
-  selector: 'app-setting-label',
+  standalone: false,  selector: 'app-setting-label',
   templateUrl: './label.component.html',
   styleUrls: ['./label.component.less']
 })

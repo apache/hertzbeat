@@ -17,6 +17,7 @@
  * under the License.
  */
 
+import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { StatusComponent } from './status.component';
@@ -27,6 +28,7 @@ describe('StatusComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      imports: [FormsModule],
       declarations: [StatusComponent]
     }).compileComponents();
 

@@ -34,6 +34,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
@@ -42,13 +46,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -93,9 +100,13 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_FIELD = "__field__";
     private static final String LABEL_KEY_INSTANCE = "instance";
     private static final String LOG_TABLE_NAME = WarehouseConstants.LOG_TABLE_NAME;
+    private static final String NATIVE_LOG_SELECT_COLUMNS = "timestamp, trace_id, span_id, severity_number, "
+            + "severity_text, body, log_attributes, resource_attributes, hertzbeat_event_id, log_record_uid, "
+            + "hertzbeat_ingest_id, hertzbeat_entity_id, hertzbeat_workspace_id, service_name";
     private static final String LABEL_KEY_START_TIME = "start";
     private static final String LABEL_KEY_END_TIME = "end";
     private static final int LOG_BATCH_SIZE = 500;
+    private static final Pattern DAY_PATTERN = Pattern.compile("^(\\d+)[dD]$");
 
     private GreptimeDB greptimeDb;
 
@@ -115,6 +126,9 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         this.greptimeProperties = greptimeProperties;
         this.greptimeSqlQueryExecutor = greptimeSqlQueryExecutor;
         serverAvailable = initGreptimeDbClient(greptimeProperties);
+        if (serverAvailable) {
+            applyDatabaseTtlIfConfigured(greptimeProperties);
+        }
     }
 
     private boolean initGreptimeDbClient(GreptimeProperties greptimeProperties) {
@@ -126,12 +140,49 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .routeTableRefreshPeriodSeconds(30)
                     .build();
             this.greptimeDb = GreptimeDB.create(opts);
-        } catch (Exception e) {
-            log.error("[warehouse greptime] Fail to start GreptimeDB client");
+        } catch (Throwable t) {
+            log.error("[warehouse greptime] Fail to start GreptimeDB client", t);
             return false;
         }
 
         return true;
+    }
+
+    private void applyDatabaseTtlIfConfigured(GreptimeProperties properties) {
+        String expireTime = normalizeExpireTime(properties.expireTime());
+        if (expireTime == null) {
+            return;
+        }
+        String database = properties.database();
+        if (!StringUtils.hasText(database)) {
+            log.warn("[warehouse greptime] skip ttl init because database is blank.");
+            return;
+        }
+        String sql = "ALTER DATABASE " + database.trim() + " SET 'ttl'='" + expireTime + "'";
+        try {
+            greptimeSqlQueryExecutor.execute(sql);
+            log.info("[warehouse greptime] applied database ttl {} for {}.", expireTime, database.trim());
+        } catch (Exception ex) {
+            log.warn("[warehouse greptime] failed to apply database ttl {} for {}: {}",
+                    expireTime, database.trim(), ex.getMessage());
+        }
+    }
+
+    private String normalizeExpireTime(String expireTime) {
+        if (!StringUtils.hasText(expireTime)) {
+            return null;
+        }
+        String normalized = expireTime.trim();
+        if (NumberUtils.isParsable(normalized) || DAY_PATTERN.matcher(normalized).matches()) {
+            return normalized;
+        }
+        try {
+            TemporalAmount ignored = TimePeriodUtil.parseTokenTime(normalized);
+            return normalized;
+        } catch (Exception ex) {
+            log.warn("[warehouse greptime] invalid expire-time {}, skip ttl init.", normalized);
+            return null;
+        }
     }
 
     @Override
@@ -213,13 +264,19 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
                                                          String history) {
-        Map<String, Long> timeRange = getTimeRange(history);
-        Long start = timeRange.get(LABEL_KEY_START_TIME);
-        Long end = timeRange.get(LABEL_KEY_END_TIME);
+        return getHistoryMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
 
-        String step = getTimeStep(start, end);
+    @Override
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+                                                         String history, Long start, Long end, String step) {
+        Map<String, Long> timeRange = getTimeRange(history, start, end);
+        Long startTime = timeRange.get(LABEL_KEY_START_TIME);
+        Long endTime = timeRange.get(LABEL_KEY_END_TIME);
 
-        return getHistoryData(start, end, step, instance, app, metrics, metric);
+        String queryStep = StringUtils.hasText(step) ? step : getTimeStep(startTime, endTime);
+
+        return getHistoryData(startTime, endTime, queryStep, instance, app, metrics, metric);
     }
 
     private String getTableName(String app, String metrics) {
@@ -229,24 +286,35 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
                                                                  String metric, String history) {
-        Map<String, Long> timeRange = getTimeRange(history);
-        Long start = timeRange.get(LABEL_KEY_START_TIME);
-        Long end = timeRange.get(LABEL_KEY_END_TIME);
+        return getHistoryIntervalMetricData(instance, app, metrics, metric, history, null, null, null);
+    }
 
-        String step = getTimeStep(start, end);
+    @Override
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+                                                                 String metric, String history, Long start, Long end,
+                                                                 String step) {
+        Map<String, Long> timeRange = getTimeRange(history, start, end);
+        Long startTime = timeRange.get(LABEL_KEY_START_TIME);
+        Long endTime = timeRange.get(LABEL_KEY_END_TIME);
 
-        Map<String, List<Value>> instanceValuesMap = getHistoryData(start, end, step, instance, app, metrics, metric);
+        String queryStep = StringUtils.hasText(step) ? step : getTimeStep(startTime, endTime);
+
+        Map<String, List<Value>> instanceValuesMap = getHistoryData(startTime, endTime, queryStep, instance, app,
+                metrics, metric);
 
         if (instanceValuesMap.isEmpty()) {
             return Collections.emptyMap();
         }
         // Queries below this point may yield inconsistent results due to exceeding the valid data range.
         // Therefore, we restrict the valid range by obtaining the post-query timeframe.
-        // Since `gretime`'s `end` excludes the specified time, we add 4 hours.
+        // Since Greptime's end excludes the specified time, add one query step.
         List<Value> values = instanceValuesMap.get(instanceValuesMap.keySet().iterator().next());
-        // effective time
-        long effectiveStart = values.get(0).getTime() / 1000;
-        long effectiveEnd = values.get(values.size() - 1).getTime() / 1000 + Duration.ofHours(4).getSeconds();
+        // Keep explicitly requested query windows stable across the base, max, min, and avg requests.
+        boolean hasAbsoluteWindow = start != null && end != null && start > 0 && end > 0 && start < end;
+        long effectiveStart = hasAbsoluteWindow ? startTime : values.get(0).getTime() / 1000;
+        long effectiveEnd = hasAbsoluteWindow
+                ? endTime
+                : values.get(values.size() - 1).getTime() / 1000 + parseStepSeconds(queryStep);
 
         String name = getTableName(app, metrics);
         String timeSeriesSelector = name + "{" + LABEL_KEY_INSTANCE + "=\"" + instance + "\"";
@@ -258,13 +326,16 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         try {
             // max
             String finalTimeSeriesSelector = timeSeriesSelector;
-            URI uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "max_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
+            URI uri = getUri(effectiveStart, effectiveEnd, queryStep,
+                    uriComponents -> "max_over_time(" + finalTimeSeriesSelector + "[" + queryStep + "])");
             requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMax);
             // min
-            uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "min_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
+            uri = getUri(effectiveStart, effectiveEnd, queryStep,
+                    uriComponents -> "min_over_time(" + finalTimeSeriesSelector + "[" + queryStep + "])");
             requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMin);
             // avg
-            uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "avg_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
+            uri = getUri(effectiveStart, effectiveEnd, queryStep,
+                    uriComponents -> "avg_over_time(" + finalTimeSeriesSelector + "[" + queryStep + "])");
             requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMean);
         } catch (Exception e) {
             log.error("query interval metrics data from greptime error. {}", e.getMessage(), e);
@@ -301,6 +372,13 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         return Map.of("start", start, "end", end);
     }
 
+    private Map<String, Long> getTimeRange(String history, Long start, Long end) {
+        if (start != null && end != null && start > 0 && end > 0 && start < end) {
+            return Map.of(LABEL_KEY_START_TIME, start / 1000, LABEL_KEY_END_TIME, end / 1000);
+        }
+        return getTimeRange(history);
+    }
+
     /**
      * Get time step
      *
@@ -317,6 +395,30 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             step = "4h";
         }
         return step;
+    }
+
+    private long parseStepSeconds(String step) {
+        if (!StringUtils.hasText(step)) {
+            return Duration.ofMinutes(1).getSeconds();
+        }
+        try {
+            String normalized = step.trim().toLowerCase(Locale.ROOT);
+            if (normalized.endsWith("ms")) {
+                long value = Long.parseLong(normalized.substring(0, normalized.length() - 2));
+                return Math.max(1L, value / 1000L);
+            }
+            long value = Long.parseLong(normalized.substring(0, normalized.length() - 1));
+            String unit = normalized.substring(normalized.length() - 1);
+            return switch (unit) {
+                case "s" -> value;
+                case "m" -> Duration.ofMinutes(value).getSeconds();
+                case "h" -> Duration.ofHours(value).getSeconds();
+                case "d" -> Duration.ofDays(value).getSeconds();
+                default -> Duration.ofMinutes(1).getSeconds();
+            };
+        } catch (Exception e) {
+            return Duration.ofMinutes(1).getSeconds();
+        }
     }
 
     /**
@@ -479,7 +581,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public void destroy() {
         if (this.greptimeDb != null) {
-            this.greptimeDb.shutdownGracefully();
+            try {
+                this.greptimeDb.shutdownGracefully();
+            } catch (Throwable t) {
+                log.warn("[warehouse greptime] Fail to shutdown GreptimeDB client gracefully", t);
+            }
             this.greptimeDb = null;
         }
     }
@@ -491,38 +597,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
 
         try {
-            // Create table schema
-            TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(LOG_TABLE_NAME);
-            tableSchemaBuilder.addTimestamp("time_unix_nano", DataType.TimestampNanosecond)
-                    .addField("observed_time_unix_nano", DataType.TimestampNanosecond)
-                    .addField("severity_number", DataType.Int32)
-                    .addField("severity_text", DataType.String)
-                    .addField("body", DataType.Json)
-                    .addField("trace_id", DataType.String)
-                    .addField("span_id", DataType.String)
-                    .addField("trace_flags", DataType.Int32)
-                    .addField("attributes", DataType.Json)
-                    .addField("resource", DataType.Json)
-                    .addField("instrumentation_scope", DataType.Json)
-                    .addField("dropped_attributes_count", DataType.Int32);
-
-            Table table = Table.from(tableSchemaBuilder.build());
-
-            // Convert LogEntry to table row
-            Object[] values = new Object[] {
-                    logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : System.nanoTime(),
-                    logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
-                    logEntry.getSeverityNumber(),
-                    logEntry.getSeverityText(),
-                    JsonUtil.toJson(logEntry.getBody()),
-                    logEntry.getTraceId(),
-                    logEntry.getSpanId(),
-                    logEntry.getTraceFlags(),
-                    JsonUtil.toJson(logEntry.getAttributes()),
-                    JsonUtil.toJson(logEntry.getResource()),
-                    JsonUtil.toJson(logEntry.getInstrumentationScope()),
-                    logEntry.getDroppedAttributesCount()
-            };
+            Table table = newLogTable();
+            Object[] values = logValues(logEntry);
 
             table.addRow(values);
 
@@ -544,10 +620,22 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                                         String spanId, Integer severityNumber,
                                                         String severityText, String searchContent) {
+        return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, Collections.emptySet(), false);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName) {
         try {
-            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
-            sql.append(" ORDER BY time_unix_nano DESC");
+            StringBuilder sql = new StringBuilder("SELECT ").append(NATIVE_LOG_SELECT_COLUMNS)
+                    .append(" FROM ").append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName);
+            sql.append(" ORDER BY timestamp DESC");
 
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             return mapRowsToLogEntries(rows);
@@ -562,10 +650,23 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                                                       String spanId, Integer severityNumber,
                                                                       String severityText, String searchContent,
                                                                       Integer offset, Integer limit) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, Collections.emptySet(), false);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName) {
         try {
-            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
-            sql.append(" ORDER BY time_unix_nano DESC");
+            StringBuilder sql = new StringBuilder("SELECT ").append(NATIVE_LOG_SELECT_COLUMNS)
+                    .append(" FROM ").append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName);
+            sql.append(" ORDER BY timestamp DESC");
 
             // Add pagination
             if (limit != null && limit > 0) {
@@ -587,9 +688,20 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                              String spanId, Integer severityNumber,
                                              String severityText, String searchContent) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, Collections.emptySet(), false);
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName) {
         try {
             StringBuilder sql = new StringBuilder("SELECT COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName);
 
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows != null && !rows.isEmpty()) {
@@ -605,8 +717,153 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
     }
 
+    @Override
+    public Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT ")
+                    .append("COUNT(*) as totalCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 21 AND severity_number <= 24 THEN 1 ELSE 0 END) as fatalCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 17 AND severity_number <= 20 THEN 1 ELSE 0 END) as errorCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 13 AND severity_number <= 16 THEN 1 ELSE 0 END) as warnCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 9 AND severity_number <= 12 THEN 1 ELSE 0 END) as infoCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 5 AND severity_number <= 8 THEN 1 ELSE 0 END) as debugCount, ")
+                    .append("SUM(CASE WHEN severity_number >= 1 AND severity_number <= 4 THEN 1 ELSE 0 END) as traceCount ")
+                    .append("FROM ").append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName);
+            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            if (rows == null || rows.isEmpty()) {
+                return Map.of();
+            }
+            Map<String, Object> row = rows.get(0);
+            Map<String, Long> result = new HashMap<>();
+            putLong(result, "totalCount", columnValue(row, "totalCount"));
+            putLong(result, "fatalCount", columnValue(row, "fatalCount"));
+            putLong(result, "errorCount", columnValue(row, "errorCount"));
+            putLong(result, "warnCount", columnValue(row, "warnCount"));
+            putLong(result, "infoCount", columnValue(row, "infoCount"));
+            putLong(result, "debugCount", columnValue(row, "debugCount"));
+            putLong(result, "traceCount", columnValue(row, "traceCount"));
+            return result;
+        } catch (Exception e) {
+            log.error("[warehouse greptime-log] countLogsBySeverityBuckets error: {}", e.getMessage(), e);
+            return Map.of();
+        }
+    }
+
+    @Override
+    public Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                   String spanId, Integer severityNumber,
+                                                   String severityText, String searchContent,
+                                                   Set<String> excludedServiceNames,
+                                                   boolean requireServiceName) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT ")
+                    .append("COUNT(*) as totalCount, ")
+                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id != '' THEN 1 ELSE 0 END) as withTrace, ")
+                    .append("SUM(CASE WHEN span_id IS NOT NULL AND span_id != '' THEN 1 ELSE 0 END) as withSpan, ")
+                    .append("SUM(CASE WHEN trace_id IS NOT NULL AND trace_id != '' ")
+                    .append("AND span_id IS NOT NULL AND span_id != '' THEN 1 ELSE 0 END) as withBothTraceAndSpan ")
+                    .append("FROM ").append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName);
+            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            if (rows == null || rows.isEmpty()) {
+                return Map.of();
+            }
+            Map<String, Object> row = rows.get(0);
+            long totalCount = normalizeLong(columnValue(row, "totalCount"));
+            long withTrace = normalizeLong(columnValue(row, "withTrace"));
+            Map<String, Long> result = new HashMap<>();
+            result.put("withTrace", withTrace);
+            result.put("withoutTrace", Math.max(totalCount - withTrace, 0));
+            result.put("withSpan", normalizeLong(columnValue(row, "withSpan")));
+            result.put("withBothTraceAndSpan", normalizeLong(columnValue(row, "withBothTraceAndSpan")));
+            return result;
+        } catch (Exception e) {
+            log.error("[warehouse greptime-log] countLogTraceCoverage error: {}", e.getMessage(), e);
+            return Map.of();
+        }
+    }
+
+    @Override
+    public Map<String, Long> countLogsByHour(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT date_bin('1 hour', timestamp) as hour, ")
+                    .append("COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName);
+            sql.append(" GROUP BY hour ORDER BY hour ASC");
+            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            if (rows == null || rows.isEmpty()) {
+                return Map.of();
+            }
+            Map<String, Long> result = new HashMap<>();
+            for (Map<String, Object> row : rows) {
+                String hour = formatHourBucket(row.get("hour"));
+                if (StringUtils.hasText(hour)) {
+                    result.put(hour, normalizeLong(row.get("count")));
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("[warehouse greptime-log] countLogsByHour error: {}", e.getMessage(), e);
+            return Map.of();
+        }
+    }
+
     private static long msToNs(Long ms) {
         return ms * 1_000_000L;
+    }
+
+    private static void putLong(Map<String, Long> target, String key, Object value) {
+        target.put(key, normalizeLong(value));
+    }
+
+    private static Object columnValue(Map<String, Object> row, String key) {
+        if (row == null || key == null) {
+            return null;
+        }
+        if (row.containsKey(key)) {
+            return row.get(key);
+        }
+        String lowercaseKey = key.toLowerCase(Locale.ROOT);
+        if (row.containsKey(lowercaseKey)) {
+            return row.get(lowercaseKey);
+        }
+        for (Map.Entry<String, Object> entry : row.entrySet()) {
+            if (entry.getKey() != null && entry.getKey().equalsIgnoreCase(key)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    private static long normalizeLong(Object value) {
+        Long normalized = castToLong(value);
+        return normalized == null ? 0L : normalized;
+    }
+
+    private static String formatHourBucket(Object value) {
+        Long nanos = castTimestampToNanos(value);
+        if (nanos == null) {
+            String fallback = value == null ? null : String.valueOf(value);
+            return StringUtils.hasText(fallback) ? fallback : null;
+        }
+        long epochSecond = Math.floorDiv(nanos, 1_000_000_000L);
+        long nanoAdjustment = Math.floorMod(nanos, 1_000_000_000L);
+        return LocalDateTime.ofInstant(
+                Instant.ofEpochSecond(epochSecond, nanoAdjustment),
+                ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00"));
     }
 
     private static String safeString(String input) {
@@ -627,11 +884,18 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
      */
     private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
                                      String spanId, Integer severityNumber, String severityText, String searchContent) {
+        buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, Collections.emptySet(), false);
+    }
+
+    private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String searchContent,
+                                     Set<String> excludedServiceNames, boolean requireServiceName) {
         List<String> conditions = new ArrayList<>();
 
-        // Time range condition
         if (startTime != null && endTime != null) {
-            conditions.add("time_unix_nano >= " + msToNs(startTime) + " AND time_unix_nano <= " + msToNs(endTime));
+            conditions.add("timestamp >= to_timestamp_millis(" + startTime + ")"
+                    + " AND timestamp <= to_timestamp_millis(" + endTime + ")");
         }
 
         // TraceId condition
@@ -654,9 +918,25 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             conditions.add("severity_text = '" + safeString(severityText) + "'");
         }
 
-        // Search content condition - search in body field
         if (StringUtils.hasText(searchContent)) {
-            conditions.add("body LIKE '%" + safeString(searchContent) + "%'");
+            String escaped = safeString(searchContent);
+            conditions.add("matches_term(body, '" + escaped + "')");
+        }
+
+        if (requireServiceName) {
+            conditions.add("service_name IS NOT NULL");
+            conditions.add("service_name != ''");
+        }
+
+        if (excludedServiceNames != null && !excludedServiceNames.isEmpty()) {
+            String excludedNames = excludedServiceNames.stream()
+                    .filter(StringUtils::hasText)
+                    .map(name -> "'" + safeString(name.trim().toLowerCase()) + "'")
+                    .sorted()
+                    .collect(Collectors.joining(", "));
+            if (StringUtils.hasText(excludedNames)) {
+                conditions.add("LOWER(service_name) NOT IN (" + excludedNames + ")");
+            }
         }
 
         // Add WHERE clause if there are conditions
@@ -682,13 +962,23 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     }
                 }
 
+                Long timeUnixNano = firstNonNull(
+                        castTimestampToNanos(row.get("timestamp")),
+                        castToLong(row.get("time_unix_nano"))
+                );
                 Object bodyObj = parseJsonMaybe(row.get("body"));
-                Map<String, Object> attributes = castToMap(parseJsonMaybe(row.get("attributes")));
-                Map<String, Object> resource = castToMap(parseJsonMaybe(row.get("resource")));
+                Map<String, Object> attributes = castToMap(parseJsonMaybe(firstNonNull(
+                        row.get("log_attributes"), row.get("attributes"))));
+                Map<String, Object> resource = castToMap(parseJsonMaybe(firstNonNull(
+                        row.get("resource_attributes"), row.get("resource"))));
+                attributes = enrichNativeLogAttributes(attributes, row);
+                resource = enrichNativeLogResource(resource, row);
 
                 LogEntry entry = LogEntry.builder()
-                        .timeUnixNano(castToLong(row.get("time_unix_nano")))
-                        .observedTimeUnixNano(castToLong(row.get("observed_time_unix_nano")))
+                        .timeUnixNano(timeUnixNano)
+                        .observedTimeUnixNano(firstNonNull(
+                                castTimestampToNanos(row.get("observed_timestamp")),
+                                firstNonNull(castToLong(row.get("observed_time_unix_nano")), timeUnixNano)))
                         .severityNumber(castToInteger(row.get("severity_number")))
                         .severityText(castToString(row.get("severity_text")))
                         .body(bodyObj)
@@ -725,6 +1015,31 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         return value;
     }
 
+    private static Map<String, Object> enrichNativeLogAttributes(Map<String, Object> attributes, Map<String, Object> row) {
+        Map<String, Object> normalized = attributes == null ? new HashMap<>() : new HashMap<>(attributes);
+        putIfPresent(normalized, "hertzbeat.event_id", row.get("hertzbeat_event_id"));
+        putIfPresent(normalized, "log.record.uid", row.get("log_record_uid"));
+        putIfPresent(normalized, "hertzbeat.ingest_id", row.get("hertzbeat_ingest_id"));
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static Map<String, Object> enrichNativeLogResource(Map<String, Object> resource, Map<String, Object> row) {
+        Map<String, Object> normalized = resource == null ? new HashMap<>() : new HashMap<>(resource);
+        Object serviceName = row.get("service_name");
+        putIfPresent(normalized, "service.name", serviceName);
+        putIfPresent(normalized, "service_name", serviceName);
+        putIfPresent(normalized, "hertzbeat.entity_id", row.get("hertzbeat_entity_id"));
+        putIfPresent(normalized, "hertzbeat.workspace_id", row.get("hertzbeat_workspace_id"));
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static void putIfPresent(Map<String, Object> target, String key, Object value) {
+        if (target == null || !StringUtils.hasText(key) || value == null) {
+            return;
+        }
+        target.putIfAbsent(key, value);
+    }
+
     @SuppressWarnings("unchecked")
     private static Map<String, Object> castToMap(Object obj) {
         if (obj instanceof Map) {
@@ -741,6 +1056,52 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static Long castTimestampToNanos(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+        if (obj instanceof Number n) {
+            return n.longValue();
+        }
+        if (obj instanceof Instant instant) {
+            return instantToNanos(instant);
+        }
+        String text = String.valueOf(obj).trim();
+        if (!StringUtils.hasText(text)) {
+            return null;
+        }
+        if (NumberUtils.isCreatable(text)) {
+            return castToLong(text);
+        }
+        Instant instant = parseTimestampInstant(text);
+        return instant == null ? null : instantToNanos(instant);
+    }
+
+    private static Instant parseTimestampInstant(String text) {
+        try {
+            return Instant.parse(text);
+        } catch (Exception ignore) {
+            // Try Greptime SQL's common local timestamp rendering next.
+        }
+        try {
+            String normalized = text.contains("T") ? text : text.replace(' ', 'T');
+            return LocalDateTime.parse(normalized).toInstant(ZoneOffset.UTC);
+        } catch (Exception ignore) {
+            return null;
+        }
+    }
+
+    private static Long instantToNanos(Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        return instant.getEpochSecond() * 1_000_000_000L + instant.getNano();
+    }
+
+    private static <T> T firstNonNull(T first, T second) {
+        return first != null ? first : second;
     }
 
     private static Integer castToInteger(Object obj) {
@@ -764,10 +1125,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
 
         try {
-            StringBuilder sql = new StringBuilder("DELETE FROM ").append(LOG_TABLE_NAME).append(" WHERE time_unix_nano IN (");
+            StringBuilder sql = new StringBuilder("DELETE FROM ").append(LOG_TABLE_NAME).append(" WHERE timestamp IN (");
             sql.append(timeUnixNanos.stream()
                     .filter(Objects::nonNull)
-                    .map(String::valueOf)
+                    .map(timeUnixNano -> "to_timestamp_nanos(" + timeUnixNano + ")")
                     .collect(Collectors.joining(", ")));
             sql.append(")");
 
@@ -797,38 +1158,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
     private void doSaveLogBatch(List<LogEntry> logEntries) {
         try {
-            TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(LOG_TABLE_NAME);
-            tableSchemaBuilder.addTimestamp("time_unix_nano", DataType.TimestampNanosecond)
-                    .addField("observed_time_unix_nano", DataType.TimestampNanosecond)
-                    .addField("severity_number", DataType.Int32)
-                    .addField("severity_text", DataType.String)
-                    .addField("body", DataType.Json)
-                    .addField("trace_id", DataType.String)
-                    .addField("span_id", DataType.String)
-                    .addField("trace_flags", DataType.Int32)
-                    .addField("attributes", DataType.Json)
-                    .addField("resource", DataType.Json)
-                    .addField("instrumentation_scope", DataType.Json)
-                    .addField("dropped_attributes_count", DataType.Int32);
-
-            Table table = Table.from(tableSchemaBuilder.build());
+            Table table = newLogTable();
 
             for (LogEntry logEntry : logEntries) {
-                Object[] values = new Object[] {
-                        logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : System.nanoTime(),
-                        logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
-                        logEntry.getSeverityNumber(),
-                        logEntry.getSeverityText(),
-                        JsonUtil.toJson(logEntry.getBody()),
-                        logEntry.getTraceId(),
-                        logEntry.getSpanId(),
-                        logEntry.getTraceFlags(),
-                        JsonUtil.toJson(logEntry.getAttributes()),
-                        JsonUtil.toJson(logEntry.getResource()),
-                        JsonUtil.toJson(logEntry.getInstrumentationScope()),
-                        logEntry.getDroppedAttributesCount()
-                };
-                table.addRow(values);
+                table.addRow(logValues(logEntry));
             }
 
             CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
@@ -842,6 +1175,64 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         } catch (Exception e) {
             log.error("[warehouse greptime-log] Error saving log entries batch", e);
         }
+    }
+
+    private static Table newLogTable() {
+        TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(LOG_TABLE_NAME);
+        tableSchemaBuilder.addTimestamp("timestamp", DataType.TimestampNanosecond)
+                .addField("trace_id", DataType.String)
+                .addField("span_id", DataType.String)
+                .addField("severity_number", DataType.Int32)
+                .addField("severity_text", DataType.String)
+                .addField("body", DataType.String)
+                .addField("log_attributes", DataType.Json)
+                .addField("resource_attributes", DataType.Json)
+                .addField("hertzbeat_event_id", DataType.String)
+                .addField("log_record_uid", DataType.String)
+                .addField("hertzbeat_ingest_id", DataType.String)
+                .addField("hertzbeat_entity_id", DataType.String)
+                .addField("hertzbeat_workspace_id", DataType.String)
+                .addField("service_name", DataType.String);
+        return Table.from(tableSchemaBuilder.build());
+    }
+
+    private static Object[] logValues(LogEntry logEntry) {
+        Map<String, Object> attributes = logEntry.getAttributes();
+        Map<String, Object> resource = logEntry.getResource();
+        return new Object[] {
+                logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : System.nanoTime(),
+                logEntry.getTraceId(),
+                logEntry.getSpanId(),
+                logEntry.getSeverityNumber(),
+                logEntry.getSeverityText(),
+                logBodyAsString(logEntry.getBody()),
+                JsonUtil.toJson(attributes),
+                JsonUtil.toJson(resource),
+                stringValue(attributes, "hertzbeat.event_id"),
+                stringValue(attributes, "log.record.uid"),
+                stringValue(attributes, "hertzbeat.ingest_id"),
+                stringValue(resource, "hertzbeat.entity_id"),
+                stringValue(resource, "hertzbeat.workspace_id"),
+                stringValue(resource, "service.name")
+        };
+    }
+
+    private static String logBodyAsString(Object body) {
+        if (body == null) {
+            return null;
+        }
+        if (body instanceof CharSequence) {
+            return body.toString();
+        }
+        return JsonUtil.toJson(body);
+    }
+
+    private static String stringValue(Map<String, Object> values, String key) {
+        if (values == null || !StringUtils.hasText(key)) {
+            return null;
+        }
+        Object value = values.get(key);
+        return value == null ? null : String.valueOf(value);
     }
 
 }

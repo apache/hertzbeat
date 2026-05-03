@@ -1,0 +1,37 @@
+.platform-support-link-list {
+  display: grid;
+  gap: 4px;
+}
+
+.platform-support-link-list-item {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  min-height: 0;
+  padding: 8px 0;
+  border-top: 1px solid color-mix(in srgb, var(--ops-border-color) 80%, transparent);
+  border-radius: 0;
+  text-align: left;
+}
+
+.platform-support-link-list-item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.platform-support-link-list-item:disabled {
+  opacity: 0.56;
+}
+
+.platform-support-link-list-title {
+  color: var(--ops-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.platform-support-link-list-description {
+  color: var(--ops-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+}

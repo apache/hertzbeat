@@ -37,6 +37,7 @@ import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { MarkdownComponent } from 'ngx-markdown';
 
 import { ChatComponent } from './chat.component';
+import { MarkdownMermaidDirective } from '../../directives/markdown-mermaid.directive';
 
 @NgModule({
   declarations: [ChatComponent],
@@ -58,6 +59,7 @@ import { ChatComponent } from './chat.component';
     NzSwitchModule,
     NzTableModule,
     MarkdownComponent,
+    MarkdownMermaidDirective,
     NzTooltipDirective
   ],
   exports: [ChatComponent]

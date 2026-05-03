@@ -1,0 +1,40 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 123456
+    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL;DB_CLOSE_ON_EXIT=FALSE
+    hikari:
+      max-lifetime: 120000
+  jpa:
+    show-sql: false
+    database: h2
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+  flyway:
+    enabled: true
+    clean-disabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations:
+      - classpath:db/migration/{vendor}
+
+warehouse:
+  store:
+    duckdb:
+      enabled: false
+    greptime:
+      enabled: true
+      grpc-endpoints: 127.0.0.1:4001
+      http-endpoint: http://127.0.0.1:4000
+      database: public
+      username: greptime
+      password: greptime
+      expire-time: 1d

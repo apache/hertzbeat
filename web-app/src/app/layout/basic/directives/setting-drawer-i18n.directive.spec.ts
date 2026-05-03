@@ -28,7 +28,7 @@ import { of } from 'rxjs';
 import { SettingDrawerI18nDirective } from './setting-drawer-i18n.directive';
 
 @Component({
-  template: `<setting-drawer appSettingDrawerI18n>
+  standalone: false,  template: `<setting-drawer appSettingDrawerI18n>
     <div class="setting-drawer__content">
       <div>主题色</div>
       <div>设置</div>
@@ -96,7 +96,10 @@ describe('SettingDrawerI18nDirective', () => {
     await TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       declarations: [TestComponent, SettingDrawerI18nDirective],
-      providers: [{ provide: ALAIN_I18N_TOKEN, useValue: i18nServiceSpy }, NgZone]
+      providers: [
+        { provide: ALAIN_I18N_TOKEN, useValue: i18nServiceSpy },
+        { provide: NgZone, useValue: new NgZone({ enableLongStackTrace: false }) }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestComponent);
@@ -111,7 +114,10 @@ describe('SettingDrawerI18nDirective', () => {
   });
 
   afterEach(() => {
-    httpMock.verify();
+    httpMock
+      ?.match(() => true)
+      .forEach(request => request.flush({}));
+    httpMock?.verify();
   });
 
   it('should create', () => {

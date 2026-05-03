@@ -1,0 +1,20 @@
+<div class="platform-drawer-pill-row" *ngIf="items.length > 0">
+  <ng-container *ngFor="let item of items">
+    <button
+      *ngIf="item.actionKey; else staticPill"
+      class="platform-drawer-pill"
+      [class.active]="item.active"
+      [class.error]="item.tone === 'error'"
+      [class.success]="item.tone === 'success'"
+      type="button"
+      (click)="onItemSelected(item)"
+    >
+      {{ item.text }}
+    </button>
+    <ng-template #staticPill>
+      <span class="platform-drawer-pill" [class.error]="item.tone === 'error'" [class.success]="item.tone === 'success'">
+        {{ item.text }}
+      </span>
+    </ng-template>
+  </ng-container>
+</div>

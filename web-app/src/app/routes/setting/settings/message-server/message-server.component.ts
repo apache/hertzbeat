@@ -37,7 +37,7 @@ import { TwilioSmsConfig } from '../../../../pojo/TwilioSmsConfig';
 import { GeneralConfigService } from '../../../../service/general-config.service';
 
 @Component({
-  selector: 'app-message-server',
+  standalone: false,  selector: 'app-message-server',
   templateUrl: './message-server.component.html',
   styleUrls: ['./message-server.component.less']
 })

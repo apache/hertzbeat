@@ -1,0 +1,62 @@
+.platform-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #edf1f7;
+}
+
+.platform-panel-header--compact {
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+}
+
+.platform-panel-header-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.platform-panel-header-title {
+  color: #eef2f6;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.platform-panel-header-description {
+  margin-top: 3px;
+  color: rgba(210, 218, 234, 0.78);
+  font-size: 12px;
+  line-height: 1.55;
+  max-width: 56ch;
+}
+
+.platform-panel-header-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: 8px;
+  width: auto;
+  max-width: none;
+}
+
+.platform-panel-header-actions:empty {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .platform-panel-header {
+    flex-direction: column;
+  }
+
+  .platform-panel-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}

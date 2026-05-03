@@ -1,0 +1,63 @@
+version: 2
+processors:
+  - vrl:
+      source: |
+        .timestamp = .Timestamp
+        .trace_id = .TraceId
+        .span_id = .SpanId
+        .severity_text = .SeverityText
+        .severity_number = .SeverityNumber
+        .body = .Body
+        .log_attributes = .LogAttributes
+        .resource_attributes = .ResourceAttributes
+        .hertzbeat_event_id = .LogAttributes."hertzbeat.event_id"
+        .log_record_uid = .LogAttributes."log.record.uid"
+        .hertzbeat_ingest_id = .LogAttributes."hertzbeat.ingest_id"
+        .hertzbeat_entity_id = .ResourceAttributes."hertzbeat.entity_id"
+        .hertzbeat_workspace_id = .ResourceAttributes."hertzbeat.workspace_id"
+        .service_name = .ResourceAttributes."service.name"
+        .
+  - select:
+      fields:
+        - timestamp
+        - trace_id
+        - span_id
+        - severity_text
+        - severity_number
+        - body
+        - log_attributes
+        - resource_attributes
+        - hertzbeat_event_id
+        - log_record_uid
+        - hertzbeat_ingest_id
+        - hertzbeat_entity_id
+        - hertzbeat_workspace_id
+        - service_name
+transform:
+  - field: timestamp
+    type: epoch, ns
+    index: timestamp
+  - fields:
+      - trace_id
+      - span_id
+      - hertzbeat_event_id
+      - log_record_uid
+      - hertzbeat_ingest_id
+      - hertzbeat_entity_id
+      - hertzbeat_workspace_id
+    type: string
+    index: skipping
+  - fields:
+      - log_attributes
+      - resource_attributes
+    type: json
+  - field: service_name
+    type: string
+    tag: true
+  - field: severity_text
+    type: string
+  - field: severity_number
+    type: int32
+  - field: body
+    type: string
+    index: fulltext

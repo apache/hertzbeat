@@ -17,8 +17,18 @@
  * under the License.
  */
 
+import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { NzConfigService } from 'ng-zorro-antd/core/config';
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { Router } from '@angular/router';
+import { StartupService } from '@core';
 
+import { AppDefineService } from '../../../service/app-define.service';
+import { GeneralConfigService } from '../../../service/general-config.service';
+import { ThemeService } from '../../../service/theme.service';
 import { DefineComponent } from './define.component';
 
 describe('DefineComponent', () => {
@@ -27,7 +37,39 @@ describe('DefineComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [DefineComponent]
+      declarations: [DefineComponent],
+      providers: [
+        {
+          provide: ALAIN_I18N_TOKEN,
+          useValue: {
+            defaultLang: 'en-US',
+            fanyi: (key: string) => key
+          }
+        },
+        {
+          provide: AppDefineService,
+          useValue: {
+            getAppHierarchy: () => of({ code: 0, data: [] }),
+            getAppDefineYmlContent: () => of({ code: 0, data: '' }),
+            newAppDefineYmlContent: () => of({ code: 0, data: null }),
+            deleteAppDefine: () => of({ code: 0, data: null })
+          }
+        },
+        { provide: GeneralConfigService, useValue: {} },
+        {
+          provide: ThemeService,
+          useValue: {
+            getTheme: () => 'default',
+            resolveWorkbenchTheme: (theme: string) => theme,
+            isDarkTheme: () => false
+          }
+        },
+        { provide: StartupService, useValue: { loadConfigResourceViaHttp: () => of(null) } },
+        { provide: Router, useValue: { navigateByUrl: () => Promise.resolve(true) } },
+        { provide: NzConfigService, useValue: { getConfigForComponent: () => ({}), set: () => undefined } },
+        { provide: NzNotificationService, useValue: { warning: () => undefined, success: () => undefined, error: () => undefined } },
+        { provide: NzModalService, useValue: { confirm: () => undefined } }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(DefineComponent);

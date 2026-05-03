@@ -31,9 +31,11 @@ import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { PlatformFactsStripItem } from '../../../shared/components/platform-facts-strip/platform-facts-strip.component';
+import { MonitorRouteState } from '../shared/monitor-route-state.type';
 
 @Component({
-  selector: 'app-monitor-detail',
+  standalone: false,  selector: 'app-monitor-detail',
   templateUrl: './monitor-detail.component.html',
   styleUrls: ['./monitor-detail.component.less']
 })
@@ -48,6 +50,9 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   ) {}
 
   isSpinning: boolean = false;
+  routeState: MonitorRouteState = 'loading';
+  routeStateTitle: string = '';
+  routeStateDescription: string = '';
   monitorId!: number;
   app!: string;
   monitor: Monitor = new Monitor();
@@ -97,6 +102,105 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   private chartIo?: IntersectionObserver;
   private favoriteIo: IntersectionObserver | undefined;
   private favoriteChartIo: IntersectionObserver | undefined;
+
+  get workbenchTitle(): string {
+    return this.monitor?.name || this.i18nSvc.fanyi('monitor.detail');
+  }
+
+  get workbenchCopy(): string {
+    const instance = this.monitor?.instance || '-';
+    return this.i18nSvc.fanyi('monitor.detail.workbench.copy').replace('{{instance}}', instance);
+  }
+
+  get workbenchContextChips(): Array<{ label: string; value: string }> {
+    const chips: Array<{ label: string; value: string }> = [];
+    if (this.app) {
+      chips.push({ label: this.i18nSvc.fanyi('monitor.detail.workbench.context.app'), value: this.i18nSvc.fanyi(`monitor.app.${this.app}`) });
+    }
+    if (this.monitor?.instance) {
+      chips.push({ label: this.i18nSvc.fanyi('monitor.detail.workbench.context.instance'), value: this.monitor.instance });
+    }
+    if (this.monitorId != null) {
+      chips.push({ label: 'ID', value: `${this.monitorId}` });
+    }
+    return chips;
+  }
+
+  get workbenchSummaryItems(): Array<{ label: string; value: string }> {
+    return [
+      {
+        label: this.i18nSvc.fanyi('monitor.detail.workbench.summary.realtime'),
+        value: String(this.metrics?.length || 0)
+      },
+      {
+        label: this.i18nSvc.fanyi('monitor.detail.workbench.summary.history'),
+        value: String(this.chartMetrics?.length || 0)
+      },
+      {
+        label: this.i18nSvc.fanyi('monitor.detail.workbench.summary.favorite'),
+        value: String(this.favoriteMetricsSet.size)
+      }
+    ];
+  }
+
+  get workbenchSummaryFacts(): PlatformFactsStripItem[] {
+    return this.workbenchSummaryItems;
+  }
+
+  get activePanelSummaryItems(): Array<{ label: string; value: string }> {
+    if (this.whichTabIndex === 1) {
+      return [
+        {
+          label: this.i18nSvc.fanyi('monitor.detail.panel.summary.total'),
+          value: String(this.chartMetrics?.length || 0)
+        },
+        {
+          label: this.i18nSvc.fanyi('monitor.detail.panel.summary.visible'),
+          value: String(this.displayedChartMetrics?.length || 0)
+        },
+        {
+          label: this.i18nSvc.fanyi('monitor.detail.panel.summary.source'),
+          value: this.i18nSvc.fanyi('monitor.detail.chart.source.badge')
+        }
+      ];
+    }
+
+    if (this.whichTabIndex === 2) {
+      return [
+        {
+          label: this.i18nSvc.fanyi('monitor.detail.panel.summary.total'),
+          value: String(this.favoriteTabIndex === 0 ? this.favoriteMetrics.length : this.favoriteChartMetrics.length)
+        },
+        {
+          label: this.i18nSvc.fanyi('monitor.detail.panel.summary.visible'),
+          value: String(this.favoriteTabIndex === 0 ? this.displayedFavoriteMetrics.length : this.displayedFavoriteChartMetrics.length)
+        },
+        {
+          label: this.i18nSvc.fanyi('monitor.detail.panel.summary.source'),
+          value: this.i18nSvc.fanyi('monitor.detail.chart.source.badge')
+        }
+      ];
+    }
+
+    return [
+      {
+        label: this.i18nSvc.fanyi('monitor.detail.panel.summary.total'),
+        value: String(this.metrics?.length || 0)
+      },
+      {
+        label: this.i18nSvc.fanyi('monitor.detail.panel.summary.visible'),
+        value: String(this.displayedMetrics?.length || 0)
+      },
+      {
+        label: this.i18nSvc.fanyi('monitor.detail.panel.summary.source'),
+        value: this.i18nSvc.fanyi('monitor.detail.chart.source.badge')
+      }
+    ];
+  }
+
+  get activePanelSummaryFacts(): PlatformFactsStripItem[] {
+    return this.activePanelSummaryItems;
+  }
 
   ngOnInit(): void {
     this.countDownTime = this.deadline;
@@ -170,6 +274,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   loadRealTimeMetric() {
     this.whichTabIndex = 0;
     this.isSpinning = true;
+    this.setLoadingState();
     this.route.paramMap
       .pipe(
         switchMap((paramMap: ParamMap) => {
@@ -213,8 +318,10 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
                 this.setupIntersectionObserver();
               }
             }, 0);
+            this.setReadyState();
           } else {
             console.warn(message.msg);
+            this.setErrorState();
           }
           if (this.interval$ === undefined) {
             this.interval$ = setInterval(this.countDown.bind(this), 1000);
@@ -223,9 +330,32 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
         },
         error => {
           this.isSpinning = false;
+          this.setErrorState();
           console.error(error.msg);
         }
       );
+  }
+
+  retryLoadDetail(): void {
+    this.loadRealTimeMetric();
+  }
+
+  private setLoadingState(): void {
+    this.routeState = 'loading';
+    this.routeStateTitle = this.i18nSvc.fanyi('monitor.route-state.loading.title');
+    this.routeStateDescription = this.i18nSvc.fanyi('monitor.route-state.loading.copy');
+  }
+
+  private setReadyState(): void {
+    this.routeState = 'ready';
+    this.routeStateTitle = '';
+    this.routeStateDescription = '';
+  }
+
+  private setErrorState(): void {
+    this.routeState = 'error';
+    this.routeStateTitle = this.i18nSvc.fanyi('monitor.route-state.error.title');
+    this.routeStateDescription = this.i18nSvc.fanyi('monitor.route-state.error.copy');
   }
 
   private loadInitialCharts(): void {

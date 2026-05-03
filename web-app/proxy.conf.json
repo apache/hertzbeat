@@ -1,6 +1,156 @@
 {
-  "/api/*": {
-    "target": "http://localhost:1157",
+  "/api": {
+    "target": "http://127.0.0.1:1157",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/overview": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/dashboard": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/entities": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/entities/**": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/bulletin": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/exception": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/exception/**": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/incidents": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/actions": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/alert": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/alert/**": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/topology": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/explorer": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/passport": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/passport/**": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/status": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/setting": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/setting/**": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/trace/manage": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/log/manage": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/monitors": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/monitors/**": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/ingestion/otlp": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/ingestion/otlp/metrics": {
+    "target": "http://127.0.0.1:4300",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/ingestion/otlp/**": {
+    "target": "http://127.0.0.1:4300",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"

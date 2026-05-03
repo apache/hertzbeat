@@ -1,0 +1,113 @@
+@import '~src/styles/entity-workspace';
+
+.obs-workbench-page() {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 12px 12px;
+}
+
+.obs-workbench-panel() {
+  border: 1px solid var(--ops-border-color);
+  border-radius: var(--ops-radius-panel, 10px);
+  background: var(--ops-surface-panel);
+  box-shadow: var(--ops-panel-shadow);
+}
+
+.obs-workbench-header() {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--ops-border-color);
+}
+
+.obs-workbench-header-copy() {
+  min-width: 0;
+}
+
+.obs-workbench-kicker() {
+  .ew-kicker();
+  color: var(--ops-text-tertiary);
+  letter-spacing: 0.12em;
+}
+
+.obs-workbench-title() {
+  margin-top: 4px;
+  font-size: 22px;
+  line-height: 1.18;
+  font-weight: 700;
+  color: var(--ops-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.obs-workbench-copy() {
+  margin-top: 6px;
+  .ew-panel-copy();
+  color: var(--ops-text-secondary);
+}
+
+.obs-workbench-strip() {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.obs-workbench-strip-item() {
+  border: 1px solid var(--ops-border-color);
+  border-radius: var(--ops-radius-compact, 6px);
+  background: var(--ops-surface-raised);
+  box-shadow: none;
+  padding: 8px 10px;
+
+  span {
+    display: block;
+    .ew-kicker();
+    color: var(--ops-text-tertiary);
+  }
+
+  strong {
+    display: block;
+    margin-top: 4px;
+    color: var(--ops-text-primary);
+    font-size: 15px;
+    line-height: 1.3;
+    font-weight: 700;
+  }
+}
+
+.obs-workbench-strip-flat() {
+  gap: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--ops-border-color);
+}
+
+.obs-workbench-strip-item-flat() {
+  padding: 0 12px;
+  border: 0;
+  border-left: 1px solid var(--ops-border-color);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.obs-workbench-card() {
+  border: 1px solid var(--ops-border-color);
+  border-radius: var(--ops-radius-panel, 10px);
+  background: var(--ops-surface-panel);
+  box-shadow: var(--ops-panel-shadow);
+}
+
+.obs-workbench-support-section() {
+  .obs-workbench-card();
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+}
+
+.obs-workbench-support-stack() {
+  display: grid;
+  gap: 10px;
+}

@@ -1,0 +1,26 @@
+<div
+  class="hb-code-block"
+  [class.hb-code-block--editor]="variant === 'editor-card'"
+  [class.hb-code-block--token]="variant === 'inline-token'"
+  [class.hb-code-block--copied]="copyState === 'done'"
+  [class.hb-code-block--error]="copyState === 'error'"
+>
+  <div class="hb-code-block__toolbar" *ngIf="shouldShowHeader">
+    <div class="hb-code-block__meta">
+      <span class="hb-code-block__title" *ngIf="title">{{ title }}</span>
+      <span class="hb-code-block__badge">{{ displayLanguageLabel }}</span>
+    </div>
+    <button type="button" class="hb-code-block__copy" [class.is-copied]="copyState === 'done'" (click)="copyCode()">
+      <span class="hb-code-block__copy-mark">{{ copyState === 'done' ? '✓' : '⧉' }}</span>
+      <span>{{ copyState === 'done' ? ('common.notify.copy-success' | i18n) : ('common.copy.button' | i18n) }}</span>
+    </button>
+  </div>
+
+  <div class="hb-code-block__content" [style.maxHeight]="contentMaxHeight" [class.hb-code-block__content--token]="variant === 'inline-token'">
+    <button type="button" class="hb-code-block__copy hb-code-block__copy--floating" *ngIf="!shouldShowHeader" [class.is-copied]="copyState === 'done'" (click)="copyCode()">
+      <span class="hb-code-block__copy-mark">{{ copyState === 'done' ? '✓' : '⧉' }}</span>
+      <span>{{ copyState === 'done' ? ('common.notify.copy-success' | i18n) : ('common.copy.button' | i18n) }}</span>
+    </button>
+    <pre><code class="hljs" [class]="'hljs language-' + normalizedLanguage" [innerHTML]="highlightedCode"></code></pre>
+  </div>
+</div>

@@ -5,7 +5,7 @@ import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { AiChatModalService } from '../../../shared/services/ai-chat-modal.service';
 
 @Component({
-  selector: 'header-ai-chat',
+  standalone: false,  selector: 'header-ai-chat',
   template: `
     <div class="ai-chat-input-container">
       <nz-input-group [nzSuffix]="iconTpl" nzCompact class="ai-chat-input-group">
@@ -17,8 +17,9 @@ import { AiChatModalService } from '../../../shared/services/ai-chat-modal.servi
           nz-input
           type="text"
           class="ai-chat-input"
-          [(ngModel)]="inputMessage"
+          [value]="inputMessage"
           [placeholder]="'ai.chat.input.placeholder' | i18n"
+          (input)="onInputChange($event)"
           (keydown.enter)="onSubmit()"
           (focus)="onFocus()"
           (blur)="onBlur()"
@@ -71,6 +72,10 @@ export class HeaderAiChatComponent {
   inputMessage = '';
 
   constructor(private aiChatModalService: AiChatModalService, @Inject(ALAIN_I18N_TOKEN) private i18n: I18NService) {}
+
+  onInputChange(event: Event): void {
+    this.inputMessage = (event.target as HTMLInputElement | null)?.value ?? '';
+  }
 
   onSubmit(): void {
     if (this.inputMessage.trim()) {

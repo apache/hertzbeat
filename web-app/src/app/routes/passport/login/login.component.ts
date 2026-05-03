@@ -32,7 +32,7 @@ import { Message } from '../../../pojo/Message';
 import { LocalStorageService } from '../../../service/local-storage.service';
 
 @Component({
-  selector: 'passport-login',
+  standalone: false,  selector: 'passport-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.less'],
   providers: [SocialService],
@@ -46,7 +46,7 @@ export class UserLoginComponent implements OnDestroy {
     private socialService: SocialService,
     @Optional()
     @Inject(ReuseTabService)
-    private reuseTabService: ReuseTabService,
+    private reuseTabService: ReuseTabService | null,
     @Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService,
     private startupSrv: StartupService,
     private http: _HttpClient,
@@ -142,7 +142,7 @@ export class UserLoginComponent implements OnDestroy {
           return;
         }
         // clear route multiplexing
-        this.reuseTabService.clear();
+        this.reuseTabService?.clear();
         // set up user Token
         this.storageSvc.storageAuthorizationToken(message.data.token);
         this.storageSvc.storageRefreshToken(message.data.refreshToken);

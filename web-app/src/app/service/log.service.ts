@@ -45,7 +45,9 @@ export class LogService {
     severityText?: string,
     search?: string,
     pageIndex: number = 0,
-    pageSize: number = 20
+    pageSize: number = 20,
+    hideInternal: boolean = false,
+    hideNoise: boolean = false
   ): Observable<Message<Page<LogEntry>>> {
     let params = new HttpParams();
     if (start != null) params = params.set('start', start);
@@ -57,6 +59,8 @@ export class LogService {
     if (search) params = params.set('search', search);
     params = params.set('pageIndex', pageIndex);
     params = params.set('pageSize', pageSize);
+    if (hideInternal) params = params.set('hideInternal', true);
+    if (hideNoise) params = params.set('hideNoise', true);
     return this.http.get<Message<any>>(logs_list_uri, { params });
   }
 
@@ -67,7 +71,9 @@ export class LogService {
     spanId?: string,
     severityNumber?: number,
     severityText?: string,
-    search?: string
+    search?: string,
+    hideInternal: boolean = false,
+    hideNoise: boolean = false
   ): Observable<Message<any>> {
     let params = new HttpParams();
     if (start != null) params = params.set('start', start);
@@ -77,6 +83,8 @@ export class LogService {
     if (severityNumber != null) params = params.set('severityNumber', severityNumber);
     if (severityText) params = params.set('severityText', severityText);
     if (search) params = params.set('search', search);
+    if (hideInternal) params = params.set('hideInternal', true);
+    if (hideNoise) params = params.set('hideNoise', true);
     return this.http.get<Message<any>>(logs_stats_overview_uri, { params });
   }
 
@@ -87,7 +95,9 @@ export class LogService {
     spanId?: string,
     severityNumber?: number,
     severityText?: string,
-    search?: string
+    search?: string,
+    hideInternal: boolean = false,
+    hideNoise: boolean = false
   ): Observable<Message<any>> {
     let params = new HttpParams();
     if (start != null) params = params.set('start', start);
@@ -97,6 +107,8 @@ export class LogService {
     if (severityNumber != null) params = params.set('severityNumber', severityNumber);
     if (severityText) params = params.set('severityText', severityText);
     if (search) params = params.set('search', search);
+    if (hideInternal) params = params.set('hideInternal', true);
+    if (hideNoise) params = params.set('hideNoise', true);
     return this.http.get<Message<any>>(logs_stats_trend_uri, { params });
   }
 
@@ -107,7 +119,9 @@ export class LogService {
     spanId?: string,
     severityNumber?: number,
     severityText?: string,
-    search?: string
+    search?: string,
+    hideInternal: boolean = false,
+    hideNoise: boolean = false
   ): Observable<Message<any>> {
     let params = new HttpParams();
     if (start != null) params = params.set('start', start);
@@ -117,6 +131,8 @@ export class LogService {
     if (severityNumber != null) params = params.set('severityNumber', severityNumber);
     if (severityText) params = params.set('severityText', severityText);
     if (search) params = params.set('search', search);
+    if (hideInternal) params = params.set('hideInternal', true);
+    if (hideNoise) params = params.set('hideNoise', true);
     return this.http.get<Message<any>>(logs_stats_trace_coverage_uri, { params });
   }
 

@@ -9,7 +9,7 @@ import { VERSION as VERSION_ZORRO } from 'ng-zorro-antd/version';
 import { ThemeService } from './service/theme.service';
 
 @Component({
-  selector: 'app-root',
+  standalone: false,  selector: 'app-root',
   template: ` <router-outlet></router-outlet> `
 })
 export class AppComponent implements OnInit {

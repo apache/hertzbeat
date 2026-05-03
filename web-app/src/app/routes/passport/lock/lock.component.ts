@@ -23,7 +23,7 @@ import { Router } from '@angular/router';
 import { SettingsService, User } from '@delon/theme';
 
 @Component({
-  selector: 'passport-lock',
+  standalone: false,  selector: 'passport-lock',
   templateUrl: './lock.component.html',
   styleUrls: ['./lock.component.less']
 })

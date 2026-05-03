@@ -22,6 +22,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { provideMarkdown } from 'ngx-markdown';
 
 import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
 import { AiChatService, ChatMessage, ChatConversation, SopSchedule, SkillInfo } from '../../../service/ai-chat.service';
@@ -29,9 +30,10 @@ import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
 
 @Component({
-  selector: 'app-chat',
+  standalone: false,  selector: 'app-chat',
   templateUrl: './chat.component.html',
-  styleUrls: ['./chat.component.less']
+  styleUrls: ['./chat.component.less'],
+  providers: [provideMarkdown()]
 })
 export class ChatComponent implements OnInit, OnDestroy {
   /**
@@ -50,7 +52,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   isLoadingConversations = false;
   isSendingMessage = false;
   sidebarCollapsed = false;
-  theme: string = 'default';
+  theme: string = 'dark-ops';
   private scrollTimeout: any;
 
   // Provider Configuration
@@ -83,7 +85,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.theme = this.themeSvc.getTheme() || 'default';
+    this.theme = this.themeSvc.resolveWorkbenchTheme(this.themeSvc.getTheme());
     // Always load conversations first, regardless of AI configuration status
     this.loadConversations();
     this.checkAiConfiguration();

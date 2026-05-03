@@ -17,23 +17,18 @@
   ~ under the License.
 -->
 
-<app-help-message-show
-  [guild_link]="'alert.help.notice.link' | i18n"
-  [help_message_content]="'alert.help.notice' | i18n"
-  [icon_name]="'notification'"
-  [module_name]="'menu.alert.dispatch'"
-></app-help-message-show>
-
-<nz-divider></nz-divider>
-
-<nz-tabset nzSize="large">
-  <nz-tab [nzTitle]="'alert.notice.receiver' | i18n">
-    <app-alert-notice-receiver></app-alert-notice-receiver>
-  </nz-tab>
-  <nz-tab [nzTitle]="'alert.notice.rule' | i18n">
-    <app-alert-notice-rule></app-alert-notice-rule>
-  </nz-tab>
-  <nz-tab [nzTitle]="'alert.notice.template' | i18n">
-    <app-alert-notice-template></app-alert-notice-template>
-  </nz-tab>
-</nz-tabset>
+<app-page-shell [title]="'menu.alert.dispatch' | i18n">
+  <div pageContent>
+    <nz-tabset nzSize="large">
+      <nz-tab [nzTitle]="'alert.notice.receiver' | i18n">
+        <app-alert-notice-receiver></app-alert-notice-receiver>
+      </nz-tab>
+      <nz-tab [nzTitle]="'alert.notice.rule' | i18n">
+        <app-alert-notice-rule></app-alert-notice-rule>
+      </nz-tab>
+      <nz-tab [nzTitle]="'alert.notice.template' | i18n">
+        <app-alert-notice-template></app-alert-notice-template>
+      </nz-tab>
+    </nz-tabset>
+  </div>
+</app-page-shell>

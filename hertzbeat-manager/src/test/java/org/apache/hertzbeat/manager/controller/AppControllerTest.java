@@ -25,9 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDefineDto;
+import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,8 +63,8 @@ class AppControllerTest {
     @Test
     void queryAppParamDefines() throws Exception {
         // Data to make
-        List<ParamDefine> paramDefines = new ArrayList<>();
-        ParamDefine paramDefine = new ParamDefine();
+        List<ParamDefineInfo> paramDefines = new ArrayList<>();
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setId(1L);
         paramDefine.setApp("tanCloud");
         paramDefine.setName(new HashMap<>());

@@ -30,6 +30,7 @@ import org.apache.hertzbeat.alert.expr.AlertExpressionEvalVisitor;
 import org.apache.hertzbeat.alert.expr.AlertExpressionLexer;
 import org.apache.hertzbeat.alert.expr.AlertExpressionParser;
 import org.apache.hertzbeat.alert.service.DataSourceService;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
 import org.apache.hertzbeat.common.support.valid.SqlSecurityException;
 import org.apache.hertzbeat.common.support.valid.SqlSecurityValidator;
@@ -54,16 +55,20 @@ import java.util.concurrent.TimeUnit;
 public class DataSourceServiceImpl implements DataSourceService {
 
     /**
-     * Default allowed tables for SQL queries
+     * Default allowed tables for SQL queries.
      */
-    private static final List<String> DEFAULT_ALLOWED_TABLES = List.of(WarehouseConstants.LOG_TABLE_NAME);
+    private static final List<String> LOG_ALLOWED_TABLES = List.of(WarehouseConstants.LOG_TABLE_NAME);
+
+    private static final List<String> TRACE_ALLOWED_TABLES = List.of("hertzbeat_apm_red_1m", "hzb_traces");
 
     protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Setter
     private List<QueryExecutor> executors;
 
-    private final SqlSecurityValidator sqlSecurityValidator;
+    private final SqlSecurityValidator logSqlSecurityValidator;
+
+    private final SqlSecurityValidator traceSqlSecurityValidator;
 
     @Getter
     private final Cache<String, ParseTree> expressionCache = Caffeine.newBuilder()
@@ -74,7 +79,8 @@ public class DataSourceServiceImpl implements DataSourceService {
 
     public DataSourceServiceImpl(@Autowired(required = false) List<QueryExecutor> executors) {
         this.executors = executors != null ? executors : Collections.emptyList();
-        this.sqlSecurityValidator = new SqlSecurityValidator(DEFAULT_ALLOWED_TABLES);
+        this.logSqlSecurityValidator = new SqlSecurityValidator(LOG_ALLOWED_TABLES);
+        this.traceSqlSecurityValidator = new SqlSecurityValidator(TRACE_ALLOWED_TABLES);
     }
 
     @Override
@@ -105,6 +111,11 @@ public class DataSourceServiceImpl implements DataSourceService {
 
     @Override
     public List<Map<String, Object>> query(String datasource, String expr) {
+        return query(datasource, expr, null);
+    }
+
+    @Override
+    public List<Map<String, Object>> query(String datasource, String expr, String alertType) {
         if (!StringUtils.hasText(expr)) {
             throw new IllegalArgumentException("Empty expression");
         }
@@ -121,7 +132,7 @@ public class DataSourceServiceImpl implements DataSourceService {
 
         // SQL security validation for SQL-based datasources
         if (isSqlDatasource(datasource)) {
-            validateSqlSecurity(expr);
+            validateSqlSecurity(expr, alertType);
         }
 
         try {
@@ -142,13 +153,20 @@ public class DataSourceServiceImpl implements DataSourceService {
     /**
      * Validate SQL statement for security
      */
-    private void validateSqlSecurity(String sql) {
+    private void validateSqlSecurity(String sql, String alertType) {
         try {
-            sqlSecurityValidator.validate(sql);
+            sqlSecurityValidator(alertType).validate(sql);
         } catch (SqlSecurityException e) {
             log.warn("SQL security validation failed: {}", e.getMessage());
             throw new AlertExpressionException("SQL security validation failed: " + e.getMessage());
         }
+    }
+
+    private SqlSecurityValidator sqlSecurityValidator(String alertType) {
+        if (CommonConstants.TRACE_ALERT_THRESHOLD_TYPE_PERIODIC.equals(alertType)) {
+            return traceSqlSecurityValidator;
+        }
+        return logSqlSecurityValidator;
     }
 
     private List<Map<String, Object>> evaluate(String expr, QueryExecutor executor) {

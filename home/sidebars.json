@@ -6,6 +6,36 @@
     },
     {
       "type": "category",
+      "label": "Roadmap",
+      "items": [
+        "roadmap/index",
+        "roadmap/datadog-directory-map",
+        {
+          "type": "category",
+          "label": "Future Capabilities",
+          "items": [
+            "roadmap/future-observability-pipelines",
+            "roadmap/future-collector-fleet-governance",
+            "roadmap/future-resource-catalog",
+            "roadmap/future-software-catalog",
+            "roadmap/future-application-performance",
+            "roadmap/future-incident-response",
+            "roadmap/future-topology-fault-analysis",
+            "roadmap/future-automation-action-catalog",
+            "roadmap/future-platform-governance",
+            "roadmap/future-security",
+            "roadmap/future-data-observability",
+            "roadmap/future-digital-experience",
+            "roadmap/future-software-delivery",
+            "roadmap/future-cloud-cost",
+            "roadmap/future-ai-observability",
+            "roadmap/future-developer-integrations"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "category",
       "label": "quickstart",
       "items": [
         {
@@ -15,6 +45,7 @@
             "start/docker-deploy",
             "start/docker-compose-deploy",
             "start/package-deploy",
+            "start/native-collector",
             {
               "type": "link",
               "label": "Install via Helm",
@@ -294,7 +325,12 @@
         {
           "type": "category",
           "label": "llm",
-          "items": ["help/openai","help/deepseek"]
+          "items": [
+            "help/openai",
+            "help/deepseek",
+            "help/ollama",
+            "help/lmstudio"
+          ]
         },
         {
           "type": "category",

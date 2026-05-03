@@ -1,0 +1,160 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<app-page-shell
+  [kicker]="'ingestion.otlp.metrics.console.kicker' | i18n"
+  [title]="'ingestion.otlp.metrics.title' | i18n"
+  [subtitle]="consoleShellSubtitle"
+>
+  <div pageHeaderActions>
+    <button nz-button nzType="default" *ngIf="hasEntityContext" type="button" (click)="returnToEntity()">
+      {{ 'entity.response.context.return' | i18n }}
+    </button>
+  </div>
+
+  <section pageHero class="metrics-console-page">
+    <section class="metrics-console-context-band">
+      <div class="metrics-console-context-inline">
+        <div class="metrics-context-meta">
+          <nz-tag *ngIf="consoleData.context.serviceName">{{ consoleData.context.serviceName }}</nz-tag>
+          <nz-tag *ngIf="consoleData.context.serviceNamespace">{{ consoleData.context.serviceNamespace }}</nz-tag>
+          <nz-tag *ngIf="consoleData.context.environment">{{ consoleData.context.environment }}</nz-tag>
+          <nz-tag *ngIf="latestObservedAt">{{ latestObservedAt | date : 'yyyy-MM-dd HH:mm:ss' }}</nz-tag>
+          <nz-tag *ngIf="consoleData.datasource">{{ consoleData.datasource }}</nz-tag>
+        </div>
+      </div>
+      <div class="metrics-console-context-actions">
+        <button nz-button nzType="link" class="metrics-context-link-action" type="button" (click)="openOtlpCenter()">
+          {{ 'ingestion.otlp.metrics.action.intake' | i18n }}
+        </button>
+        <button nz-button nzType="link" class="metrics-context-link-action" type="button" (click)="openLogConsole()">
+          {{ 'ingestion.otlp.cta.logs' | i18n }}
+        </button>
+        <button nz-button nzType="link" class="metrics-context-link-action" type="button" (click)="openTraceConsole()">
+          {{ 'ingestion.otlp.cta.traces' | i18n }}
+        </button>
+      </div>
+    </section>
+
+    <app-platform-facts-strip [items]="metricsConsoleFacts" [dense]="true"></app-platform-facts-strip>
+  </section>
+
+  <div pageContent class="metrics-console-page">
+    <section class="metrics-query-stage">
+      <app-platform-stage-meta-header
+        class="metrics-stage-header"
+        [title]="'ingestion.otlp.metrics.query.label' | i18n"
+        [metaItems]="metricsQueryStageMetaChips"
+      ></app-platform-stage-meta-header>
+      <div class="metrics-query-grid">
+        <div class="metrics-query-field metrics-query-field-range">
+          <label>{{ 'trace.center.filter.time-range' | i18n }}</label>
+          <nz-range-picker [(ngModel)]="timeRange" nzShowTime nzFormat="yyyy-MM-dd HH:mm:ss"></nz-range-picker>
+        </div>
+        <div class="metrics-query-field">
+          <label>{{ 'trace.center.filter.service-name' | i18n }}</label>
+          <input nz-input [(ngModel)]="serviceName" [placeholder]="'trace.center.filter.service-name' | i18n" />
+        </div>
+        <div class="metrics-query-field">
+          <label>{{ 'trace.center.filter.service-namespace' | i18n }}</label>
+          <input nz-input [(ngModel)]="serviceNamespace" [placeholder]="'trace.center.filter.service-namespace' | i18n" />
+        </div>
+        <div class="metrics-query-field">
+          <label>{{ 'trace.center.filter.environment' | i18n }}</label>
+          <input nz-input [(ngModel)]="environment" [placeholder]="'trace.center.filter.environment' | i18n" />
+        </div>
+        <div class="metrics-query-field">
+          <label>{{ 'ingestion.otlp.metrics.query.aggregation' | i18n }}</label>
+          <input nz-input [(ngModel)]="aggregation" [placeholder]="'ingestion.otlp.metrics.query.aggregation' | i18n" />
+        </div>
+        <div class="metrics-query-field">
+          <label>{{ 'ingestion.otlp.metrics.query.group-by' | i18n }}</label>
+          <input nz-input [(ngModel)]="groupBy" [placeholder]="'ingestion.otlp.metrics.query.group-by' | i18n" />
+        </div>
+      </div>
+
+      <div class="metrics-query-editor">
+        <label>{{ 'ingestion.otlp.metrics.query.label' | i18n }}</label>
+        <textarea nz-input rows="4" [(ngModel)]="query" [placeholder]="'ingestion.otlp.metrics.query.placeholder' | i18n"></textarea>
+      </div>
+
+      <div class="metrics-query-actions">
+        <button nz-button nzType="primary" type="button" (click)="runQuery()">
+          {{ 'log.manage.console.action.run' | i18n }}
+        </button>
+        <button nz-button nzType="default" type="button" (click)="resetQuery()">
+          {{ 'log.manage.console.action.clear' | i18n }}
+        </button>
+      </div>
+    </section>
+
+    <nz-spin [nzSpinning]="loading">
+      <div class="metrics-console-grid">
+        <section class="metrics-chart-stage">
+          <app-platform-chart-card
+            class="metrics-chart-card"
+            [title]="'ingestion.otlp.metrics.chart.title' | i18n"
+            [metaItems]="metricsChartStageMetaChips"
+          >
+            <ng-container *ngIf="hasData; else emptyMetricsState">
+              <div echarts [options]="chartOption" class="metrics-chart"></div>
+            </ng-container>
+          </app-platform-chart-card>
+        </section>
+
+        <aside class="metrics-side-panel">
+          <section class="metrics-inspector-section">
+            <div class="metrics-inspector-section-title">{{ 'ingestion.otlp.metrics.series.title' | i18n }}</div>
+            <ng-container *ngIf="metricSeries.length > 0; else emptySeriesState">
+              <button class="metrics-series-row" *ngFor="let series of metricSeries" type="button">
+                <div class="metrics-series-main">
+                  <strong>{{ series.name }}</strong>
+                  <span>{{ series.labels['service_name'] || serviceName || '-' }}</span>
+                </div>
+                <div class="metrics-series-value">{{ series.latestValue ?? '-' }}</div>
+              </button>
+            </ng-container>
+          </section>
+
+          <section class="metrics-inspector-section metrics-inspector-section-context">
+            <div class="metrics-inspector-section-title">{{ 'ingestion.otlp.metrics.context.title' | i18n }}</div>
+            <div class="metrics-context-meta">
+              <nz-tag *ngIf="consoleData.context.serviceName">{{ consoleData.context.serviceName }}</nz-tag>
+              <nz-tag *ngIf="consoleData.context.serviceNamespace">{{ consoleData.context.serviceNamespace }}</nz-tag>
+              <nz-tag *ngIf="consoleData.context.environment">{{ consoleData.context.environment }}</nz-tag>
+              <nz-tag *ngIf="latestObservedAt">{{ latestObservedAt | date : 'yyyy-MM-dd HH:mm:ss' }}</nz-tag>
+            </div>
+            <app-code-block
+              [code]="consoleData.query || query || ''"
+              language="promql"
+              variant="editor-card"
+              maxHeight="220px"
+            ></app-code-block>
+          </section>
+        </aside>
+      </div>
+    </nz-spin>
+  </div>
+</app-page-shell>
+
+<ng-template #emptyMetricsState>
+  <nz-empty [nzNotFoundContent]="loadFailed ? ('ingestion.otlp.loadFailed' | i18n) : ('ingestion.otlp.metrics.empty' | i18n)"></nz-empty>
+</ng-template>
+
+<ng-template #emptySeriesState>
+  <nz-empty [nzNotFoundContent]="'ingestion.otlp.metrics.series.empty' | i18n"></nz-empty>
+</ng-template>
