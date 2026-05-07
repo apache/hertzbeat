@@ -26,15 +26,37 @@ runs:
       with:
         distribution: "zulu"
         java-version: 25
+        cache: maven
+
+    - name: Validate mvnd runner support
+      shell: bash
+      run: |
+        if [ "${RUNNER_OS}" != "Linux" ] || [ "${RUNNER_ARCH}" != "X64" ]; then
+          echo "setup-deps currently supports mvnd only on Linux/X64 runners; got ${RUNNER_OS}/${RUNNER_ARCH}" >&2
+          exit 1
+        fi
+
+    - name: Cache mvnd
+      id: mvnd-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.local/mvnd
+        key: mvnd-2.0.0-rc-3-linux-amd64
 
     - name: Install mvnd
+      if: steps.mvnd-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
         MVND_VERSION=2.0.0-rc-3
-        curl -sL https://dlcdn.apache.org/maven/mvnd/${MVND_VERSION}/maven-mvnd-${MVND_VERSION}-linux-amd64.zip -o mvnd.zip
+        MVND_PLATFORM=linux-amd64
+        curl -sL https://dlcdn.apache.org/maven/mvnd/${MVND_VERSION}/maven-mvnd-${MVND_VERSION}-${MVND_PLATFORM}.zip -o mvnd.zip
         unzip -q mvnd.zip
         mkdir -p $HOME/.local
-        mv maven-mvnd-${MVND_VERSION}-linux-amd64 $HOME/.local/mvnd
+        mv maven-mvnd-${MVND_VERSION}-${MVND_PLATFORM} $HOME/.local/mvnd
+
+    - name: Export mvnd environment
+      shell: bash
+      run: |
         echo "$HOME/.local/mvnd/bin" >> $GITHUB_PATH
         echo "MVND_HOME=$HOME/.local/mvnd" >> $GITHUB_ENV
 
