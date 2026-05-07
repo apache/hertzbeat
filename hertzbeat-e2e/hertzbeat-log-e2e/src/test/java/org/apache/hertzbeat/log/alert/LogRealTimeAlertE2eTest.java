@@ -140,7 +140,7 @@ public class LogRealTimeAlertE2eTest {
         capturedGroupAlerts.clear();
 
         // Wait for group alert to be generated via AlarmCommonReduce
-        await().atMost(Duration.ofSeconds(60))
+        await().atMost(TEST_WAIT_TIMEOUT)
                 .pollInterval(Duration.ofSeconds(3))
                 .untilAsserted(() -> assertFalse(capturedGroupAlerts.isEmpty(),
                         "Should have generated high frequency warning group alert"));
