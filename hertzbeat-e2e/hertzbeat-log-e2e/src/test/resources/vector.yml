@@ -123,4 +123,4 @@ sinks:
       # Batch settings for better throughput
       batch:
         max_bytes: 524288
-        timeout_secs: 5
+        timeout_secs: 1
