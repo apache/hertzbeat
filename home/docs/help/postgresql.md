@@ -1,7 +1,7 @@
 ---
-id: postgresql  
-title: Monitoring：PostgreSQL database monitoring      
-sidebar_label: PostgreSQL database   
+id: postgresql
+title: Monitoring：PostgreSQL database monitoring
+sidebar_label: PostgreSQL database
 keywords: [open source monitoring tool, open source database monitoring tool, monitoring postgresql database metrics]
 ---
 
@@ -65,4 +65,3 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 | valuntil          | none        | Password expiration time (timestamp)                       |
 | days_left         | days        | Days remaining until password expires                      |
 | account_status    | none        | Account status (OPEN/EXPIRED)                              |
-

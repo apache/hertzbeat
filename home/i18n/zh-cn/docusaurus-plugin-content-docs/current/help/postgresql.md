@@ -1,7 +1,7 @@
 ---
-id: postgresql  
-title: 监控：PostgreSQL数据库监控      
-sidebar_label: PostgreSQL数据库   
+id: postgresql
+title: 监控：PostgreSQL数据库监控
+sidebar_label: PostgreSQL数据库
 keywords: [开源监控系统, 开源数据库监控, PostgreSQL数据库监控]
 ---
 
@@ -65,4 +65,3 @@ keywords: [开源监控系统, 开源数据库监控, PostgreSQL数据库监控]
 | valuntil       | 无    | 密码过期时间（时间戳）          |
 | days_left      | 天    | 密码剩余有效天数             |
 | account_status | 无    | 账号状态（OPEN/EXPIRED）   |
-
