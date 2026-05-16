@@ -102,13 +102,13 @@ questdb.exe start
 
 ​ ⚠️ Note: For Docker container deployment, you need to mount the application.yml file to the host machine. For the installation package deployment, simply extract the package and modify the file at hertzbeat/config/application.yml.
 
-​ **Set the** **warehouse.store.jpa.enabled** **parameter to** **false****, configure the** **warehouse.store.questdb** **data source parameters (HOST, username, password, etc.), and set** **enabled** **to** **true** **to enable QuestDB.**
+​ **Set the** **warehouse.store.duckdb.enabled** **parameter to** **false****, configure the** **warehouse.store.questdb** **data source parameters (HOST, username, password, etc.), and set** **enabled** **to** **true** **to enable QuestDB.**
 
 ```yaml
 warehouse:
   store:
-    # Disable the default JPA
-    jpa:
+    # Disable the default DuckDB
+    duckdb:
       enabled: false
     # Enable QuestDB
     questdb:
