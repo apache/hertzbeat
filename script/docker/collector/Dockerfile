@@ -24,7 +24,7 @@ ARG VERSION
 # Install SSH
 RUN  sed -i 's#http://#https://#g' /etc/apt/sources.list.d/ubuntu.sources && \
     apt-get update && apt-get install -y openssh-server
-RUN mkdir /var/run/sshd
+RUN mkdir -p /var/run/sshd
 
 ADD apache-hertzbeat-collector-${VERSION}-bin.tar.gz /opt/
 
