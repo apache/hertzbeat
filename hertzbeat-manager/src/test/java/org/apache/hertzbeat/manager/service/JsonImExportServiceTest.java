@@ -21,26 +21,47 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doNothing;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.Param;
+import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.JsonImExportServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test case for {@link JsonImExportServiceImpl}
  */
-
+@ExtendWith(MockitoExtension.class)
 class JsonImExportServiceTest {
 
     private JsonImExportServiceImpl jsonImExportService;
 
+    @Mock
+    private MonitorService monitorService;
+
+    @Mock
+    private ManagerSseManager managerSseManager;
+
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
         jsonImExportService = new JsonImExportServiceImpl();
+        Field monitorServiceField = jsonImExportService.getClass().getSuperclass().getDeclaredField("monitorService");
+        monitorServiceField.setAccessible(true);
+        monitorServiceField.set(jsonImExportService, monitorService);
+        Field sseField = jsonImExportService.getClass().getSuperclass().getDeclaredField("managerSseManager");
+        sseField.setAccessible(true);
+        sseField.set(jsonImExportService, managerSseManager);
     }
 
     @Test
@@ -89,4 +110,59 @@ class JsonImExportServiceTest {
         assertEquals("JSON", jsonImExportService.type());
     }
 
+    @Test
+    void testImportConfig_shouldSetInstanceFromHostAndPortParams() {
+        String json = "[{\"monitor\":{\"name\":\"test\",\"app\":\"windows\",\"intervals\":6000,\"status\":1},"
+                + "\"params\":[{\"field\":\"host\",\"type\":1,\"value\":\"localhost\"},"
+                + "{\"field\":\"port\",\"type\":0,\"value\":\"161\"}]}]";
+
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        ArgumentCaptor<List<Param>> paramsCaptor = ArgumentCaptor.forClass(List.class);
+        doNothing().when(monitorService).addMonitor(monitorCaptor.capture(), paramsCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        jsonImExportService.importConfig("test.json", bis);
+
+        Monitor captured = monitorCaptor.getValue();
+        assertEquals("localhost:161", captured.getInstance());
+        assertEquals("test", captured.getName());
+        assertEquals("windows", captured.getApp());
+
+        List<Param> capturedParams = paramsCaptor.getValue();
+        assertNotNull(capturedParams);
+        assertEquals(2, capturedParams.size());
+    }
+
+    @Test
+    void testImportConfig_shouldSetInstanceWithHostOnly() {
+        String json = "[{\"monitor\":{\"name\":\"test\",\"app\":\"linux\",\"intervals\":6000,\"status\":1},"
+                + "\"params\":[{\"field\":\"host\",\"type\":1,\"value\":\"192.168.1.1\"}]}]";
+
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        doNothing().when(monitorService).addMonitor(monitorCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        jsonImExportService.importConfig("test.json", bis);
+
+        Monitor captured = monitorCaptor.getValue();
+        assertEquals("192.168.1.1", captured.getInstance());
+    }
+
+    @Test
+    void testImportConfig_shouldHandleNoHostParam() {
+        String json = "[{\"monitor\":{\"name\":\"test\",\"app\":\"website\",\"intervals\":6000,\"status\":1},"
+                + "\"params\":[{\"field\":\"url\",\"type\":1,\"value\":\"http://example.com\"}]}]";
+
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        doNothing().when(monitorService).addMonitor(monitorCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        jsonImExportService.importConfig("test.json", bis);
+
+        Monitor captured = monitorCaptor.getValue();
+        assertEquals(null, captured.getInstance());
+    }
 }
