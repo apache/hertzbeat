@@ -1,6 +1,6 @@
 ---
-id: iotdb-init  
-title: Use Time Series Database IoTDB to Store Metrics Data (Optional)  
+id: iotdb-init
+title: Use Time Series Database IoTDB to Store Metrics Data (Optional)
 sidebar_label: Metrics Store IoTDB
 ---
 
@@ -33,7 +33,7 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
 
    ```shell
    $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
-       -v /opt/iotdb/data:/iotdb/data \ 
+       -v /opt/iotdb/data:/iotdb/data \
        --name iotdb \
        apache/iotdb:1.2.2-standalone
    ```
@@ -45,13 +45,13 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
 
    Modify `hertzbeat/config/application.yml` configuration file
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`
-   Config the `warehouse.store.jpa.enabled` `false`. Replace `warehouse.store.iot-db` data source parameters, HOST account and password.
+   Config the `warehouse.store.duckdb.enabled` `false`. Replace `warehouse.store.iot-db` data source parameters, HOST account and password.
 
    ```yml
    warehouse:
      store:
-       # disable JPA
-       jpa:
+       # disable DuckDB
+       duckdb:
          enabled: false
        # enable iot-db
        iot-db:
@@ -72,8 +72,8 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
    ```yaml
    warehouse:
      store:
-       # Disable default JPA
-       jpa:
+       # Disable default DuckDB
+       duckdb:
          enabled: false
        # Enable IoTDB
        iot-db:
@@ -117,7 +117,7 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
 
 3. The TDengine database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure the dependent time series database]
 
-   > Please check if the configuration parameters are correct  
-   > Is td-engine enable set to true  
-   > Note⚠️If both hertzbeat and TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed  
+   > Please check if the configuration parameters are correct
+   > Is td-engine enable set to true
+   > Note⚠️If both hertzbeat and TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed
    > You can check the startup logs according to the logs directory

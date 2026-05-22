@@ -1,6 +1,6 @@
 ---
-id: questdb-init  
-title: 依赖时序数据库服务QuestDB安装初始化(可选)  
+id: questdb-init
+title: 依赖时序数据库服务QuestDB安装初始化(可选)
 sidebar_label: 指标数据存储QuestDB
 ---
 
@@ -25,7 +25,7 @@ QuestDB 是一款开源的时序数据库，因其高性能和低延迟等特点
    ```shell
    # Linux/macOS（以v7.3.9为例，可替换为最新版本号）
    wget https://github.com/questdb/questdb/releases/download/7.3.9/questdb-7.3.9-no-jre-bin.tar.gz
-   
+
    # 解压
    tar -zxvf questdb-7.3.9-no-jre-bin.tar.gz
    mv questdb-7.3.9 /opt/questdb  # 移动到常用目录
@@ -40,7 +40,7 @@ QuestDB 是一款开源的时序数据库，因其高性能和低延迟等特点
    # Linux/macOS：进入安装目录，启动服务
    cd /opt/questdb/bin
    ./questdb start
-   
+
    # Windows（命令提示符）：
    cd C:\questdb\bin
    questdb.exe start
@@ -55,7 +55,7 @@ QuestDB 是一款开源的时序数据库，因其高性能和低延迟等特点
    ```shell
    # Linux/macOS
    vi /opt/questdb/conf/server.conf
-   
+
    # Windows
    notepad C:\questdb\conf\server.conf
    ```
@@ -66,11 +66,11 @@ QuestDB 是一款开源的时序数据库，因其高性能和低延迟等特点
    # 启用认证（默认关闭）
    http.security.enabled=true
    pg.security.enabled=true  # PostgreSQL协议认证
-   
+
    # 设置管理员账号密码（自定义）
    http.security.admin.username=admin
    http.security.admin.password=YourStrongPassword123!
-   
+
    # 可选：限制Web控制台访问IP（如只允许本地）
    http.bind.to=127.0.0.1:9000
    ```
@@ -81,7 +81,7 @@ QuestDB 是一款开源的时序数据库，因其高性能和低延迟等特点
    # Linux/macOS
    ./questdb stop
    ./questdb start
-   
+
    # Windows
    questdb.exe stop
    questdb.exe start
@@ -93,13 +93,13 @@ QuestDB 是一款开源的时序数据库，因其高性能和低延迟等特点
    修改位于 `hertzbeat/config/application.yml` 的配置文件
    注意⚠️docker容器方式需要将application.yml文件挂载到主机本地，安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
 
-   **修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置`warehouse.store.questdb`数据源参数，HOST账户密码等，并启用`enabled`为`true`**
+   **修改里面的`warehouse.store.duckdb.enabled`参数为`false`， 配置`warehouse.store.questdb`数据源参数，HOST账户密码等，并启用`enabled`为`true`**
 
    ```yaml
    warehouse:
      store:
-       # 关闭默认JPA
-       jpa:
+       # 关闭默认DuckDB
+       duckdb:
          enabled: false
        # 启用IotDB
        questdb:
