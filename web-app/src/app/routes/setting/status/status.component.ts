@@ -71,6 +71,7 @@ export class StatusComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
+  orgEditing: boolean = false;
 
   ngOnInit(): void {
     this.loadStatusPageConfig();
@@ -184,6 +185,8 @@ export class StatusComponent implements OnInit {
       (message: Message<StatusPageOrg>) => {
         if (message.code === 0) {
           this.statusOrg = message.data;
+          this.statusOrgForEdit = { ...this.statusOrg };
+          this.orgEditing = false;
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
         } else {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
@@ -195,6 +198,16 @@ export class StatusComponent implements OnInit {
         saveStatus$.unsubscribe();
       }
     );
+  }
+
+  startEditOrg() {
+    this.statusOrgForEdit = { ...this.statusOrg };
+    this.orgEditing = true;
+  }
+
+  cancelEditOrg() {
+    this.statusOrgForEdit = { ...this.statusOrg };
+    this.orgEditing = false;
   }
 
   onNewStatusComponent() {
