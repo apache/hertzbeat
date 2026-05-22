@@ -1139,21 +1139,22 @@ metrics:
       queryType: multiRow
       sql: |
         SELECT
-          usename,
-          usesysid,
-          CASE WHEN usecreatedb THEN 'Y' ELSE 'N' END as usecreatedb,
-          CASE WHEN usesuper THEN 'Y' ELSE 'N' END as usesuper,
-          valuntil,
+          rolname AS usename,
+          oid AS usesysid,
+          CASE WHEN rolcreatedb THEN 'Y' ELSE 'N' END as usecreatedb,
+          CASE WHEN rolsuper THEN 'Y' ELSE 'N' END as usesuper,
+          rolvaliduntil AS valuntil,
           CASE
-            WHEN valuntil IS NULL THEN NULL
-            ELSE EXTRACT(DAY FROM (valuntil - NOW()))::INTEGER
+            WHEN rolvaliduntil IS NULL THEN NULL
+            ELSE EXTRACT(DAY FROM (rolvaliduntil - NOW()))::INTEGER
           END as days_left,
           CASE
-            WHEN valuntil IS NULL THEN 'OPEN'
-            WHEN valuntil < NOW() THEN 'EXPIRED'
+            WHEN rolvaliduntil IS NULL THEN 'OPEN'
+            WHEN rolvaliduntil < NOW() THEN 'EXPIRED'
             ELSE 'OPEN'
           END as account_status
-        FROM pg_user
+        FROM pg_roles
+        WHERE rolcanlogin = true
         ORDER BY days_left ASC NULLS LAST;
       url: ^_^url^_^
       sshTunnel:
