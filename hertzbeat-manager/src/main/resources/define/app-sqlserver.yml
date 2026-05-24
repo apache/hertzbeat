@@ -300,3 +300,58 @@ metrics:
       queryType: oneRow
       sql: SELECT cntr_value as user_connection FROM sys.dm_os_performance_counters WHERE object_name = 'SQLServer:General Statistics' AND counter_name = 'User Connections';
       url: ^_^url^_^
+
+  - name: account_expiry
+    priority: 100
+    i18n:
+      zh-CN: 数据库账号有效期
+      en-US: Account Expiry
+      ja-JP: アカウント有効期限
+    fields:
+      - field: login_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 登录名
+          en-US: Login
+          ja-JP: ログイン
+      - field: days_left
+        type: 0
+        i18n:
+          zh-CN: 剩余天数
+          en-US: Days Left
+          ja-JP: 残り日数
+      - field: password_expired
+        type: 1
+        i18n:
+          zh-CN: 是否已过期
+          en-US: Password Expired
+          ja-JP: 期限切れ
+      - field: is_disabled
+        type: 1
+        i18n:
+          zh-CN: 是否禁用
+          en-US: Is Disabled
+          ja-JP: 無効
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: sqlserver
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: master
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: |
+        SELECT name AS login_name,
+          ISNULL(LOGINPROPERTY(name, 'DaysUntilExpiration'), -1) AS days_left,
+          CASE LOGINPROPERTY(name, 'IsExpired')
+            WHEN 1 THEN 'Y' ELSE 'N'
+          END AS password_expired,
+          CASE is_disabled
+            WHEN 1 THEN 'Y' ELSE 'N'
+          END AS is_disabled
+        FROM sys.sql_logins
+        WHERE type_desc = 'SQL_LOGIN';
+      url: ^_^url^_^
