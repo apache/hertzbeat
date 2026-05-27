@@ -1146,10 +1146,14 @@ metrics:
           rolvaliduntil AS valuntil,
           CASE
             WHEN rolvaliduntil IS NULL THEN NULL
+            WHEN rolvaliduntil = 'infinity'::timestamptz THEN NULL
+            WHEN rolvaliduntil = '-infinity'::timestamptz THEN NULL
             ELSE EXTRACT(DAY FROM (rolvaliduntil - NOW()))::INTEGER
           END as days_left,
           CASE
             WHEN rolvaliduntil IS NULL THEN 'OPEN'
+            WHEN rolvaliduntil = 'infinity'::timestamptz THEN 'OPEN'
+            WHEN rolvaliduntil = '-infinity'::timestamptz THEN 'EXPIRED'
             WHEN rolvaliduntil < NOW() THEN 'EXPIRED'
             ELSE 'OPEN'
           END as account_status
