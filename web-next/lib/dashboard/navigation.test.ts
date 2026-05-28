@@ -31,6 +31,10 @@ describe('dashboard navigation', () => {
     expect(source).not.toContain('sanitizeDashboardSearchParams');
     expect(source).not.toContain('delete next.returnLabel');
     expect(source).not.toContain('stripReturnLabelFromHref');
-    expect(source).toContain("buildCompatRedirectTarget('/overview', searchParams)");
+    expect(source).toContain("import { buildOverviewCompatRouteUrl, type SearchParamsRecord } from '../overview/navigation'");
+    expect(source).toContain('export type { SearchParamsRecord }');
+    expect(source).toContain('return buildOverviewCompatRouteUrl(searchParams)');
+    expect(source).not.toContain("buildCompatRedirectTarget('/overview'");
+    expect(source).not.toContain("'/overview'");
   });
 });

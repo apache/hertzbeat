@@ -36,7 +36,7 @@ describe('settings family cold-matte chrome', () => {
     const labelSource = readFileSync(resolve(process.cwd(), 'components/pages/label-manage-surface.tsx'), 'utf8');
     const defineSource = readFileSync(resolve(process.cwd(), 'components/pages/setting-define-surface.tsx'), 'utf8');
     const statusSource = readFileSync(resolve(process.cwd(), 'components/pages/status-setting-surface.tsx'), 'utf8');
-    const tokenSource = readFileSync(resolve(process.cwd(), 'app/setting/settings/token/page.tsx'), 'utf8');
+    const tokenSource = readFileSync(resolve(process.cwd(), 'app/setting/settings/token/setting-token-page.tsx'), 'utf8');
 
     expect(settingsSurfaceSource).toContain('variant="flat"');
 
@@ -53,11 +53,14 @@ describe('settings family cold-matte chrome', () => {
     expect(pluginSource).not.toContain('WorkbenchTableFrame');
 
     expect(labelSource).toContain('data-label-manage-style-baseline={coldLabelVisual.canvasName}');
-    expect(labelSource).toContain('data-label-table-shell="cold-dense-table"');
+    expect(labelSource).toContain('data-label-card-grid-contract="angular-card-grid"');
+    expect(labelSource).toContain('data-label-card-grid-owner="hertzbeat-ui-label-tag"');
+    expect(labelSource).not.toContain('data-label-table-shell="cold-dense-table"');
     expect(defineSource).toContain('data-setting-define-style-baseline={coldDefineVisual.canvasName}');
     expect(defineSource).toContain('data-setting-define-workspace="cold-define-workspace"');
-    expect(defineSource).toContain("from '../ui/search-row'");
-    expect(defineSource).toContain('data-setting-define-search-owner="shared-search-row"');
+    expect(defineSource).toContain('HzYamlWorkspace');
+    expect(defineSource).not.toContain("from '../ui/search-row'");
+    expect(defineSource).not.toContain('data-setting-define-search-owner="shared-search-row"');
     expect(defineSource).not.toContain('coldDefineVisual.search.row');
     expect(defineSource).not.toContain('coldDefineVisual.search.input');
     expect(statusSource).toContain('data-status-setting-style-baseline={coldStatusVisual.canvasName}');

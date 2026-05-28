@@ -38,42 +38,47 @@ function collectNonTestAppFiles(dir: string): string[] {
 
 describe('Milestone 5 shared route owners', () => {
   it('keeps representative route entrypoints pinned to shared observability owners', () => {
-    const overviewSource = readFileSync(resolve(process.cwd(), 'app/overview/page.tsx'), 'utf8');
-    const monitorsSource = readFileSync(resolve(process.cwd(), 'app/monitors/page.tsx'), 'utf8');
+    const overviewSource = readFileSync(resolve(process.cwd(), 'app/overview/overview-page.tsx'), 'utf8');
+    const monitorsSource = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
     const logSource = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
-    const traceSource = readFileSync(resolve(process.cwd(), 'app/trace/manage/page.tsx'), 'utf8');
+    const traceSource = readFileSync(resolve(process.cwd(), 'app/trace/manage/trace-manage-page.tsx'), 'utf8');
     const alertIntegrationSource = readFileSync(resolve(process.cwd(), 'app/alert/integration/[source]/page.tsx'), 'utf8');
-    const alertNoticeSource = readFileSync(resolve(process.cwd(), 'app/alert/notice/page.tsx'), 'utf8');
-    const statusSource = readFileSync(resolve(process.cwd(), 'app/status/page.tsx'), 'utf8');
+    const alertNoticeSource = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
+    const statusSource = readFileSync(resolve(process.cwd(), 'app/status/status-page.tsx'), 'utf8');
     const passportSource = readFileSync(resolve(process.cwd(), 'app/passport/login/page.tsx'), 'utf8');
 
     expect(overviewSource).toContain('StageSection');
     expect(overviewSource).toContain('SupportPanel');
     expect(overviewSource).not.toContain('components/workbench/primitives');
 
-    expect(monitorsSource).toContain('StageSection');
-    expect(monitorsSource).toContain('SummaryMetricGrid');
-    expect(monitorsSource).toContain('DrawerSection');
+    expect(monitorsSource).toContain('HzExplorerFrame');
+    expect(monitorsSource).toContain('HzDataTable');
+    expect(monitorsSource).toContain('data-monitor-manage-shell-owner="hertzbeat-ui-explorer-frame"');
+    expect(monitorsSource).not.toContain('StageSection');
+    expect(monitorsSource).not.toContain('SummaryMetricGrid');
+    expect(monitorsSource).not.toContain('DrawerSection');
     expect(monitorsSource).not.toContain('components/workbench/primitives');
 
-    expect(logSource).toContain('FactsStrip');
-    expect(logSource).toContain('StageSection');
-    expect(logSource).toContain('DrawerSection');
-    expect(logSource).toContain('DrawerCodePreview');
+    expect(logSource).toContain('ClientWorkbench');
+    expect(logSource).toContain('TimeRangeControl');
+    expect(logSource).toContain('data-log-manage-time-control="shared-time-context-control"');
     expect(logSource).not.toContain('components/workbench/primitives');
 
-    expect(traceSource).toContain('FactsStrip');
-    expect(traceSource).toContain('StageSection');
-    expect(traceSource).toContain('DrawerSection');
-    expect(traceSource).toContain('DrawerCodePreview');
+    expect(traceSource).toContain('ClientWorkbench');
+    expect(traceSource).toContain('TimeRangeControl');
+    expect(traceSource).toContain('ObservabilityWaterfall');
+    expect(traceSource).toContain('data-trace-manage-time-control="shared-time-context-control"');
     expect(traceSource).not.toContain('components/workbench/primitives');
 
-    expect(alertIntegrationSource).toContain('StageSection');
-    expect(alertIntegrationSource).toContain('DrawerSection');
-    expect(alertIntegrationSource).toContain('DrawerCodePreview');
+    expect(alertIntegrationSource).toContain('AlertIntegrationMarkdown');
+    expect(alertIntegrationSource).toContain('coldOpsCatalogVisual');
+    expect(alertIntegrationSource).toContain('data-alert-integration-surface="otlp-cold-source-doc"');
     expect(alertIntegrationSource).not.toContain('components/workbench/primitives');
 
-    expect(alertNoticeSource).toContain('StageSection');
+    expect(alertNoticeSource).toContain('AlertNoticeConsoleShell');
+    expect(alertNoticeSource).toContain('ClientWorkbench');
+    expect(alertNoticeSource).toContain('HzConfirmDialog');
+    expect(alertNoticeSource).toContain('data-alert-notice-surface="otlp-cold-notice-console"');
     expect(alertNoticeSource).not.toContain('components/workbench/primitives');
 
     expect(statusSource).toContain('PublicStatusShell');

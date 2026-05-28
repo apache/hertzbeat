@@ -1,6 +1,11 @@
-import React from 'react';
-import OverviewPage from '../overview/page';
+import { redirect } from 'next/navigation';
+import { buildDashboardCompatRouteUrl, type SearchParamsRecord } from '../../lib/dashboard/navigation';
 
-export default function DashboardAliasPage() {
-  return <OverviewPage />;
+export default async function DashboardAliasPage({
+  searchParams
+}: {
+  searchParams?: Promise<SearchParamsRecord>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  redirect(buildDashboardCompatRouteUrl(resolvedSearchParams));
 }

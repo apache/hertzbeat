@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 describe('milestone 4 auth/public and settings cold-workbench chrome', () => {
   it('removes the remaining bright-shell residue from the current auth/settings slice', () => {
-    const passportLockSource = readFileSync(resolve(process.cwd(), 'app/passport/lock/page.tsx'), 'utf8');
-    const settingTokenSource = readFileSync(resolve(process.cwd(), 'app/setting/settings/token/page.tsx'), 'utf8');
+    const passportLockSource = readFileSync(resolve(process.cwd(), 'app/passport/lock/passport-lock-page.tsx'), 'utf8');
+    const settingTokenSource = readFileSync(resolve(process.cwd(), 'app/setting/settings/token/setting-token-page.tsx'), 'utf8');
     const combinedSource = [passportLockSource, settingTokenSource].join('\n');
 
     expect(combinedSource).not.toContain('border-white/35');
@@ -23,24 +23,30 @@ describe('milestone 4 auth/public and settings cold-workbench chrome', () => {
   });
 
   it('adopts shared ops owners and danger states across the current auth/settings slice', () => {
-    const passportLockSource = readFileSync(resolve(process.cwd(), 'app/passport/lock/page.tsx'), 'utf8');
-    const settingTokenSource = readFileSync(resolve(process.cwd(), 'app/setting/settings/token/page.tsx'), 'utf8');
+    const passportLockRouteSource = readFileSync(resolve(process.cwd(), 'app/passport/lock/page.tsx'), 'utf8');
+    const passportLockSource = readFileSync(resolve(process.cwd(), 'app/passport/lock/passport-lock-page.tsx'), 'utf8');
+    const settingTokenSource = readFileSync(resolve(process.cwd(), 'app/setting/settings/token/setting-token-page.tsx'), 'utf8');
 
-    expect(passportLockSource).toContain('components/observability');
-    expect(passportLockSource).toContain('ObservabilityStatusState');
+    expect(passportLockRouteSource).not.toMatch(/^['"]use client['"]/);
+    expect(passportLockRouteSource).toContain("import PassportLockPage from './passport-lock-page'");
+    expect(passportLockSource).toContain('HzPassportLockSurface');
+    expect(passportLockSource).toContain('PassportPanel');
     expect(passportLockSource).not.toContain('components/workbench/primitives');
     expect(passportLockSource).toContain('border-[var(--ops-border-color)]');
-    expect(passportLockSource).toContain('bg-[var(--ops-surface-panel)]');
-    expect(passportLockSource).toContain('bg-[var(--ops-surface-raised)]');
-    expect(passportLockSource).toContain('text-[var(--ops-text-primary)]');
-    expect(passportLockSource).toContain('text-[var(--ops-text-tertiary)]');
-    expect(passportLockSource).toContain('text-[var(--ops-primary)]');
+    expect(passportLockSource).toContain('bg-[#101217]');
+    expect(passportLockSource).toContain('data-passport-lock-panel="angular-wide"');
+    expect(passportLockSource).toContain('data-passport-lock-panel-owner="hertzbeat-ui-passport-lock"');
 
-    expect(settingTokenSource).toContain('ObservabilityStatusState');
-    expect(settingTokenSource).toContain('StageSection');
-    expect(settingTokenSource).toContain('tone="danger"');
-    expect(settingTokenSource).toContain('DrawerCodePreview');
-    expect(settingTokenSource).toContain('SummaryMetricGrid');
+    expect(settingTokenSource).toContain('SettingsConsoleTitle');
+    expect(settingTokenSource).toContain('coldOpsCatalogVisual');
+    expect(settingTokenSource).toContain('data-setting-token-table-panel="cold-dense-table"');
+    expect(settingTokenSource).toContain('data-setting-token-strip-style="cold-inline-counts"');
+    expect(settingTokenSource).toContain('data-setting-token-row-action="cold-row-action"');
+    expect(settingTokenSource).toContain('text-[#fca5a5]');
+    expect(settingTokenSource).not.toContain('ObservabilityStatusState');
+    expect(settingTokenSource).not.toContain('StageSection');
+    expect(settingTokenSource).not.toContain('DrawerCodePreview');
+    expect(settingTokenSource).not.toContain('SummaryMetricGrid');
     expect(settingTokenSource).not.toContain('PayloadPreview density="compact" className="mt-3"');
   });
 });

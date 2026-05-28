@@ -7,7 +7,7 @@ describe('entity editor family cold-workbench chrome', () => {
     const editorRowsSource = readFileSync(resolve(process.cwd(), 'components/observability/editor-rows.tsx'), 'utf8');
     const monitorEditorSource = readFileSync(resolve(process.cwd(), 'components/pages/monitor-editor-surface.tsx'), 'utf8');
     const entityEditorSource = readFileSync(resolve(process.cwd(), 'components/pages/entity-editor-surface.tsx'), 'utf8');
-    const entitiesSource = readFileSync(resolve(process.cwd(), 'app/entities/page.tsx'), 'utf8');
+    const entitiesSource = readFileSync(resolve(process.cwd(), 'app/entities/entity-list-page.tsx'), 'utf8');
 
     expect(editorRowsSource).not.toContain('border-white/10');
     expect(editorRowsSource).not.toContain('bg-black/20');
@@ -56,9 +56,11 @@ describe('entity editor family cold-workbench chrome', () => {
 
   it('adopts shared ops tokens across the shared editor slice', () => {
     const editorRowsSource = readFileSync(resolve(process.cwd(), 'components/observability/editor-rows.tsx'), 'utf8');
+    const workbenchPrimitivesSource = readFileSync(resolve(process.cwd(), 'components/workbench/primitives.tsx'), 'utf8');
+    const workbenchPageSource = readFileSync(resolve(process.cwd(), 'components/workbench/workbench-page.tsx'), 'utf8');
     const monitorEditorSource = readFileSync(resolve(process.cwd(), 'components/pages/monitor-editor-surface.tsx'), 'utf8');
     const entityEditorSource = readFileSync(resolve(process.cwd(), 'components/pages/entity-editor-surface.tsx'), 'utf8');
-    const entitiesSource = readFileSync(resolve(process.cwd(), 'app/entities/page.tsx'), 'utf8');
+    const entitiesSource = readFileSync(resolve(process.cwd(), 'app/entities/entity-list-page.tsx'), 'utf8');
 
     expect(editorRowsSource).toContain('border-[var(--ops-border-color)]');
     expect(editorRowsSource).toContain('bg-[var(--ops-surface-panel)]');
@@ -66,11 +68,19 @@ describe('entity editor family cold-workbench chrome', () => {
     expect(editorRowsSource).toContain('text-[var(--ops-text-secondary)]');
     expect(editorRowsSource).toContain('hover:bg-[var(--ops-surface-hover)]');
 
-    expect(monitorEditorSource).toContain('border-[var(--ops-border-color)]');
-    expect(monitorEditorSource).toContain('bg-[var(--ops-surface-panel)]');
-    expect(monitorEditorSource).toContain('text-[var(--ops-text-primary)]');
-    expect(monitorEditorSource).toContain('text-[var(--ops-text-secondary)]');
-    expect(monitorEditorSource).toContain('text-[var(--ops-text-tertiary)]');
+    expect(monitorEditorSource).toContain('HzMonitorEditorForm');
+    expect(monitorEditorSource).toContain('HzMonitorEditorHeader');
+    expect(monitorEditorSource).toContain('HzMonitorEditorSection');
+    expect(monitorEditorSource).toContain('data-monitor-editor-form-owner="hertzbeat-ui-monitor-editor-form"');
+    expect(monitorEditorSource).not.toContain('WorkbenchPage');
+    expect(monitorEditorSource).not.toContain('SurfaceSection');
+    expect(workbenchPrimitivesSource).toContain('border-[var(--ops-border-color)]');
+    expect(workbenchPrimitivesSource).toContain('bg-[var(--ops-surface-panel)]');
+    expect(workbenchPrimitivesSource).toContain('text-[var(--ops-text-primary)]');
+    expect(workbenchPrimitivesSource).toContain('text-[var(--ops-text-secondary)]');
+    expect(workbenchPageSource).toContain('divide-[var(--ops-border-color)]');
+    expect(workbenchPageSource).toContain('text-[var(--ops-text-primary)]');
+    expect(workbenchPageSource).toContain('text-[var(--ops-text-secondary)]');
 
     expect(entityEditorSource).toContain('data-entity-editor-shell="otlp-cold-entity-composer"');
     expect(entityEditorSource).toContain('data-entity-editor-style-baseline="hertzbeat-cold-matte"');
@@ -87,12 +97,18 @@ describe('entity editor family cold-workbench chrome', () => {
   });
 
   it('keeps the active monitor/entity edit routes composed from the shared editor owners', () => {
-    const monitorEditSource = readFileSync(resolve(process.cwd(), 'app/monitors/[monitorId]/edit/page.tsx'), 'utf8');
-    const entityNewSource = readFileSync(resolve(process.cwd(), 'app/entities/new/page.tsx'), 'utf8');
-    const entityEditSource = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/edit/page.tsx'), 'utf8');
+    const monitorEditRouteSource = readFileSync(resolve(process.cwd(), 'app/monitors/[monitorId]/edit/page.tsx'), 'utf8');
+    const monitorEditSource = readFileSync(resolve(process.cwd(), 'app/monitors/[monitorId]/edit/monitor-edit-page.tsx'), 'utf8');
+    const entityNewRouteSource = readFileSync(resolve(process.cwd(), 'app/entities/new/page.tsx'), 'utf8');
+    const entityNewSource = readFileSync(resolve(process.cwd(), 'app/entities/new/entity-new-page.tsx'), 'utf8');
+    const entityEditRouteSource = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/edit/page.tsx'), 'utf8');
+    const entityEditSource = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/edit/entity-edit-page.tsx'), 'utf8');
 
+    expect(monitorEditRouteSource).toContain("import MonitorEditPage from './monitor-edit-page'");
     expect(monitorEditSource).toContain('MonitorEditorSurface');
+    expect(entityNewRouteSource).toContain("import EntityNewPage from './entity-new-page'");
     expect(entityNewSource).toContain('EntityEditorSurface');
+    expect(entityEditRouteSource).toContain("import EntityEditPage from './entity-edit-page'");
     expect(entityEditSource).toContain('EntityEditorSurface');
   });
 });

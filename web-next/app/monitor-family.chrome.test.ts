@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('monitor family cold-workbench chrome', () => {
   it('removes the remaining legacy white-on-black chrome from the current monitor slice', () => {
-    const monitorsSource = readFileSync(resolve(process.cwd(), 'app/monitors/page.tsx'), 'utf8');
+    const monitorsSource = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
     const consoleSource = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-detail-console.tsx'), 'utf8');
     const sectionsSource = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-detail-sections.tsx'), 'utf8');
     const realtimeSource = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-realtime-panel.tsx'), 'utf8');
@@ -40,24 +40,26 @@ describe('monitor family cold-workbench chrome', () => {
   });
 
   it('adopts shared ops tokens across the current monitor slice', () => {
-    const monitorsSource = readFileSync(resolve(process.cwd(), 'app/monitors/page.tsx'), 'utf8');
-    const detailRouteSource = readFileSync(resolve(process.cwd(), 'app/monitors/[monitorId]/page.tsx'), 'utf8');
+    const monitorsSource = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
+    const detailRouteSource = readFileSync(resolve(process.cwd(), 'app/monitors/[monitorId]/monitor-detail-page.tsx'), 'utf8');
     const consoleSource = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-detail-console.tsx'), 'utf8');
     const sectionsSource = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-detail-sections.tsx'), 'utf8');
     const realtimeSource = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-realtime-panel.tsx'), 'utf8');
     const historySource = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-history-panel.tsx'), 'utf8');
 
-    expect(monitorsSource).toContain('border-[var(--ops-border-color)]');
-    expect(monitorsSource).toContain('text-[var(--ops-text-secondary)]');
-    expect(monitorsSource).toContain('text-[var(--ops-text-tertiary)]');
-    expect(monitorsSource).toContain('SummaryMetricGrid');
-    expect(monitorsSource).toContain('StageSection');
-    expect(monitorsSource).toContain("title={t('monitors.section.list.title')}");
-    expect(monitorsSource).toContain("DrawerSection title={t('monitors.rail.selected')}");
-    expect(monitorsSource).toContain("DrawerSection title={t('monitors.rail.labels')}");
-    expect(monitorsSource).toContain("DrawerSection title={t('monitors.rail.controls')}");
-    expect(monitorsSource).toContain('DrawerCodePreview');
-    expect(monitorsSource).toContain('ObservabilityStatusState');
+    expect(monitorsSource).toContain('HzExplorerFrame');
+    expect(monitorsSource).toContain('HzDataTable');
+    expect(monitorsSource).toContain('HzBatchToolbar');
+    expect(monitorsSource).toContain('HzMonitorFilterBar');
+    expect(monitorsSource).toContain('data-monitor-manage-filter-owner="hertzbeat-ui-monitor-filter-bar"');
+    expect(monitorsSource).toContain('data-monitor-manage-shell-owner="hertzbeat-ui-explorer-frame"');
+    expect(monitorsSource).toContain('HzStatusBadge');
+    expect(monitorsSource).not.toContain('HzWorkbenchSurface');
+    expect(monitorsSource).not.toContain('data-monitor-manage-detail-rail');
+    expect(monitorsSource).not.toContain('SummaryMetricGrid');
+    expect(monitorsSource).not.toContain('StageSection');
+    expect(monitorsSource).not.toContain('DrawerSection');
+    expect(monitorsSource).not.toContain('DrawerCodePreview');
     expect(monitorsSource).not.toContain('PayloadPreview density="compact" className="mt-2"');
     expect(monitorsSource).not.toContain('components/workbench/primitives');
     expect(monitorsSource).not.toContain('components/workbench/toolbar');
@@ -65,29 +67,26 @@ describe('monitor family cold-workbench chrome', () => {
     expect(detailRouteSource).toContain('MonitorDetailConsole');
     expect(detailRouteSource).toContain('MonitorDetailSections');
 
-    expect(consoleSource).toContain('border-[var(--ops-border-color)]');
-    expect(consoleSource).toContain('text-[var(--ops-text-primary)]');
-    expect(consoleSource).toContain('text-[var(--ops-text-secondary)]');
-    expect(consoleSource).toContain('text-[var(--ops-text-tertiary)]');
-    expect(consoleSource).toContain('ObservabilityControlChip');
-    expect(consoleSource).toContain('ObservabilityPillButton');
-    expect(consoleSource).toContain('ObservabilityBadge');
+    expect(consoleSource).toContain('HzMonitorDetailConsoleShell');
+    expect(consoleSource).toContain('HzMonitorDetailWorkbenchFrame');
+    expect(consoleSource).toContain('data-monitor-detail-console-shell-owner="hertzbeat-ui-detail-console-shell"');
+    expect(consoleSource).toContain('data-monitor-workbench-stage-owner="hertzbeat-ui-detail-workbench-frame"');
     expect(consoleSource).not.toContain("from '../workbench/primitives'");
 
-    expect(sectionsSource).toContain('border-[var(--ops-border-color)]');
-    expect(sectionsSource).toContain('bg-[var(--ops-surface-panel)]');
-    expect(sectionsSource).toContain('text-[var(--ops-text-secondary)]');
-    expect(sectionsSource).toContain('ObservabilityControlChip');
-    expect(sectionsSource).toContain('ObservabilityBadge');
+    expect(sectionsSource).toContain('HzMonitorDetailStage');
+    expect(sectionsSource).toContain('HzMonitorDetailSignalList');
+    expect(sectionsSource).toContain('data-monitor-detail-stage-owner="hertzbeat-ui-detail-stage"');
+    expect(sectionsSource).toContain('data-monitor-detail-signal-list-owner="hertzbeat-ui-signal-list"');
     expect(sectionsSource).not.toContain('ObservabilityInsetPanel');
     expect(sectionsSource).not.toContain("from '../workbench/primitives'");
 
-    expect(realtimeSource).toContain('border-[var(--ops-border-color)]');
-    expect(realtimeSource).toContain('bg-[var(--ops-surface-panel)]');
-    expect(realtimeSource).toContain('text-[var(--ops-text-secondary)]');
+    expect(realtimeSource).toContain('HzMonitorDetailStage');
+    expect(realtimeSource).toContain('HzMonitorRealtimeToolbar');
+    expect(realtimeSource).toContain('data-monitor-realtime-toolbar-owner="hertzbeat-ui-realtime-toolbar"');
 
-    expect(historySource).toContain('border-[var(--ops-border-color)]');
-    expect(historySource).toContain('bg-[var(--ops-surface-panel)]');
-    expect(historySource).toContain('text-[var(--ops-text-secondary)]');
+    expect(historySource).toContain('HzMonitorDetailStage');
+    expect(historySource).toContain('HzMonitorEvidenceFrame');
+    expect(historySource).toContain('data-monitor-history-stage-owner="hertzbeat-ui-detail-stage"');
+    expect(historySource).toContain('data-monitor-history-chart-owner="hertzbeat-ui-echarts-panel"');
   });
 });

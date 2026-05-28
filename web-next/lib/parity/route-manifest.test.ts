@@ -139,7 +139,7 @@ describe('parity route manifest', () => {
         '[data-alert-center-empty-state="cold-table-empty"]',
         '[data-alert-center-empty-icon="cold-empty-box"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'input',
         'select',
@@ -187,8 +187,22 @@ describe('parity route manifest', () => {
       primarySelectors: expect.arrayContaining([
         '[data-actions-route="otlp-cold-ops-entry"]',
         '[data-actions-style-baseline="hertzbeat-cold-matte"]',
+        '[data-actions-shared-workbench="hertzbeat-ui"]',
+        '[data-hz-action-workbench-owner="hertzbeat-ui-action-workbench"]',
         '[data-actions-shell-panel="cold-ops-shell-panel"]',
         '[data-actions-launch-checklist="cold-ops-static-rail"]',
+        '[data-actions-catalog="manual-action-catalog-api"]',
+        '[data-actions-catalog-owner="next-actions-catalog-bff"]',
+        '[data-actions-catalog-execution-allowed="false"]',
+        '[data-actions-approval-draft="manual-approval-draft-api"]',
+        '[data-actions-approval-draft-owner="next-actions-approval-draft-bff"]',
+        '[data-actions-approval-draft-execution-allowed="false"]',
+        '[data-actions-approval-draft-queue="manual-approval-draft-read-api"]',
+        '[data-actions-approval-draft-queue-owner="next-actions-approval-draft-bff"]',
+        '[data-actions-approval-draft-queue-execution-allowed="false"]',
+        '[data-actions-approval-decision="manual-approval-decision-api"]',
+        '[data-actions-approval-decision-owner="next-actions-approval-decision-bff"]',
+        '[data-actions-approval-decision-execution-allowed="false"]',
         '[data-actions-empty-state="cold-ops-domain-adapter"]',
         'main',
         'section',
@@ -198,7 +212,7 @@ describe('parity route manifest', () => {
       textSnippets: expect.arrayContaining(['自动化处置', '按 OTLP 工作台的冷色基线', '冷色入口已接入', '等待接入执行适配器', '你已完成 83% 的平台配置']),
       actionLabels: ['打开概览', '查看对象'],
       minimumVerificationCommand:
-        'npm exec vitest run app/actions/page.test.tsx lib/actions-surface/view-model.test.ts lib/actions-surface/model.test.ts lib/parity/route-manifest.test.ts'
+        'npm exec vitest run app/actions/page.test.tsx app/api/actions/approval-drafts/route.test.ts app/api/actions/approval-drafts/[draftId]/decision/route.test.ts app/api/actions/catalog/route.test.ts lib/actions-surface/view-model.test.ts lib/actions-surface/model.test.ts lib/parity/route-manifest.test.ts'
     });
   });
 
@@ -223,15 +237,22 @@ describe('parity route manifest', () => {
     });
   });
 
-  it('tracks the OTLP cold unified explorer instead of the old external-product-first surface', () => {
-    expect(getParityRoutePair('compatibility-placeholder-family', 'explorer-placeholder')).toMatchObject({
+  it('tracks the OTLP cold unified explorer as an API/query-backed workbench instead of the old external-product-first surface', () => {
+    expect(getParityRoutePair('compatibility-placeholder-family', 'explorer-workbench')).toMatchObject({
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-explorer-route="otlp-cold-workbench"]',
         '[data-explorer-style-baseline="hertzbeat-cold-matte"]',
+        '[data-explorer-api-owner="trace-log-bff-query-api"]',
+        '[data-explorer-query-state]',
+        '[data-explorer-signal-filter]',
+        '[data-explorer-api-source]',
+        '[data-explorer-shared-frame="hertzbeat-ui"]',
+        '[data-hz-ui="explorer-frame"]',
         '[data-explorer-query-bar="cold-query-row"]',
         '[data-explorer-chart-band="cold-chart-band"]',
         '[data-explorer-result-table="cold-dense-table"]',
+        '[data-explorer-result-table-owner="hertzbeat-ui-data-table"]',
         '[data-explorer-detail-panel="cold-detail-panel"]',
         'main',
         'button',
@@ -241,9 +262,9 @@ describe('parity route manifest', () => {
       textSnippets: expect.arrayContaining(['查询工作台', '信号类型', '运行查询', 'checkout']),
       actionLabels: ['运行查询', '保存视图', '创建告警', '加入仪表盘'],
       minimumVerificationCommand:
-        'npm exec vitest run app/explorer/page.test.tsx lib/explorer-surface/view-model.test.ts lib/parity/route-manifest.test.ts'
+        'npm exec vitest run app/explorer/page.test.tsx lib/explorer-surface/controller.test.ts lib/explorer-surface/view-model.test.ts lib/otlp-metrics/controller.test.ts lib/otlp-metrics/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
-    expect(getParityRoutePair('compatibility-placeholder-family', 'explorer-placeholder').primarySelectors.join(' ')).not.toContain('signoz-');
+    expect(getParityRoutePair('compatibility-placeholder-family', 'explorer-workbench').primarySelectors.join(' ')).not.toContain('signoz-');
   });
 
   it('declares explicit parity owners for the milestone 2 families', () => {
@@ -290,9 +311,9 @@ describe('parity route manifest', () => {
     );
   });
 
-  it('declares a family-closeout verification command for the compatibility aliases and placeholder twins', () => {
+  it('declares a family-closeout verification command for compatibility aliases, placeholder twins, and Explorer', () => {
     expect((getParityFamily('compatibility-placeholder-family') as Record<string, unknown>).familyVerificationCommand).toBe(
-      'npm exec vitest run app/dashboard/page.test.ts app/overview/page.test.tsx lib/overview/navigation.test.ts lib/overview/view-model.test.ts app/events/page.test.ts app/log/manage/page.test.tsx lib/log-manage/query-state.test.ts lib/log-manage/view-model.test.ts app/alerts/page.test.ts app/alert/page.test.tsx components/pages/alert-center-surface.test.tsx lib/alert-manage/query-state.test.ts lib/alert-manage/controller.test.ts lib/alert-manage/view-model.test.ts app/incidents/page.test.tsx lib/incidents-surface/view-model.test.ts lib/incidents-surface/model.test.ts app/actions/page.test.tsx lib/actions-surface/view-model.test.ts lib/actions-surface/model.test.ts app/topology/page.test.tsx lib/topology-surface/view-model.test.ts app/explorer/page.test.tsx lib/explorer-surface/view-model.test.ts lib/parity/route-manifest.test.ts'
+      'npm exec vitest run app/dashboard/page.test.ts app/overview/page.test.tsx lib/overview/navigation.test.ts lib/overview/view-model.test.ts app/events/page.test.ts app/log/manage/page.test.tsx lib/log-manage/query-state.test.ts lib/log-manage/view-model.test.ts app/alerts/page.test.ts app/alert/page.test.tsx components/pages/alert-center-surface.test.tsx lib/alert-manage/query-state.test.ts lib/alert-manage/controller.test.ts lib/alert-manage/view-model.test.ts app/incidents/page.test.tsx lib/incidents-surface/view-model.test.ts lib/incidents-surface/model.test.ts app/actions/page.test.tsx app/api/actions/approval-drafts/route.test.ts app/api/actions/approval-drafts/[draftId]/decision/route.test.ts app/api/actions/catalog/route.test.ts lib/actions-surface/view-model.test.ts lib/actions-surface/model.test.ts app/topology/page.test.tsx lib/topology-surface/view-model.test.ts app/explorer/page.test.tsx lib/explorer-surface/controller.test.ts lib/explorer-surface/view-model.test.ts lib/otlp-metrics/controller.test.ts lib/otlp-metrics/view-model.test.ts lib/parity/route-manifest.test.ts'
     );
   });
 
@@ -741,7 +762,7 @@ describe('parity route manifest', () => {
         '[data-entity-list-table-shell="cold-dense-table"]',
         '[data-entity-list-table="cold-entity-table"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input',
@@ -788,7 +809,7 @@ describe('parity route manifest', () => {
         '[data-entity-type-icon="service"]',
         '[data-entity-type-icon="database"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]'
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]'
       ]),
       textSnippets: expect.arrayContaining(['新建实体', '全部实体', '实体元数据', '页面录入', '基本信息', '你已完成 83% 的平台配置']),
       actionLabels: ['创建实体']
@@ -826,7 +847,7 @@ describe('parity route manifest', () => {
         '[data-entity-type-icon="service"]',
         '[data-entity-type-icon="database"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]'
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]'
       ]),
       textSnippets: expect.arrayContaining(['编辑实体', '全部实体', '实体元数据', '基本信息', '你已完成 0% 的平台配置']),
       actionLabels: ['保存']
@@ -859,7 +880,7 @@ describe('parity route manifest', () => {
         '[data-entity-definition-template-panel="true"]',
         '[data-entity-definition-batch-panel="true"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'textarea',
         'button'
@@ -898,7 +919,7 @@ describe('parity route manifest', () => {
         '[data-entity-definition-load-error="cold-inline"]',
         '[data-entity-definition-error-placement="cold-context-panel"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'textarea',
         'button',
@@ -945,7 +966,7 @@ describe('parity route manifest', () => {
         '[data-entity-discovery-table="cold-discovery-table"]',
         '[data-entity-discovery-row-actions="cold-inline-actions"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input',
@@ -987,21 +1008,28 @@ describe('parity route manifest', () => {
         '[data-entity-detail-drilldown-panel="cold-drilldown-panel"]',
         '[data-entity-detail-error="cold-inline-error"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'a',
         'button'
       ]),
-      textSnippets: expect.arrayContaining(['实体详情', '对象优先调查', '上下文', '相关信号', '下一步', '高级入口']),
-      actionLabels: ['全部实体', '刷新', '编辑定义', '删除', '编辑'],
+      textSnippets: expect.arrayContaining([
+        'Entity detail',
+        'Entity-first investigation',
+        'Context',
+        'Related signals',
+        'Next step',
+        'Advanced entries'
+      ]),
+      actionLabels: ['All entities', 'Refresh', 'Edit definition', 'Delete', 'Edit'],
       minimumVerificationCommand:
         "npm exec vitest run 'app/entities/[entityId]/page.test.tsx' components/pages/entity-detail-surface.test.tsx app/entity-detail-family.chrome.test.ts lib/entity-detail/view-model.test.ts lib/parity/route-manifest.test.ts"
     });
     expect(getParityRoutePair('entity-family', 'entity-detail').primarySelectors).not.toContain('aside');
-    expect(getParityRoutePair('entity-family', 'entity-detail').textSnippets).not.toContain('Entity');
-    expect(getParityRoutePair('entity-family', 'entity-detail').textSnippets).not.toContain('Next steps');
-    expect(getParityRoutePair('entity-family', 'entity-detail').actionLabels).not.toContain('Refresh');
-    expect(getParityRoutePair('entity-family', 'entity-detail').actionLabels).not.toContain('Edit definition');
+    expect(getParityRoutePair('entity-family', 'entity-detail').textSnippets).not.toContain('实体详情');
+    expect(getParityRoutePair('entity-family', 'entity-detail').textSnippets).not.toContain('对象优先调查');
+    expect(getParityRoutePair('entity-family', 'entity-detail').actionLabels).not.toContain('刷新');
+    expect(getParityRoutePair('entity-family', 'entity-detail').actionLabels).not.toContain('编辑定义');
   });
 
   it('tracks the alert center through targeted route, shared-surface, and filter contracts', () => {
@@ -1019,7 +1047,7 @@ describe('parity route manifest', () => {
         '[data-alert-center-empty-state="cold-table-empty"]',
         '[data-alert-center-empty-icon="cold-empty-box"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'input',
         'select',
@@ -1053,7 +1081,7 @@ describe('parity route manifest', () => {
         '[data-alert-group-empty-state="cold-table-empty"]',
         '[data-alert-group-empty-icon="cold-empty-box"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input'
@@ -1115,7 +1143,7 @@ describe('parity route manifest', () => {
         '[data-alert-notice-receiver-toolbar="cold-query-toolbar"]',
         '[data-alert-notice-receiver-table-shell="cold-dense-table"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         '[data-tab="receiver"]',
         'main',
         'button',
@@ -1148,7 +1176,7 @@ describe('parity route manifest', () => {
         '[data-alert-notice-rule-toolbar="cold-query-toolbar"]',
         '[data-alert-notice-rule-table-shell="cold-dense-table"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input'
@@ -1179,7 +1207,7 @@ describe('parity route manifest', () => {
         '[data-alert-notice-template-table-shell="cold-dense-table"]',
         '[data-alert-notice-pagination="cold-dense-pagination"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input',
@@ -1217,7 +1245,7 @@ describe('parity route manifest', () => {
         '[data-alert-setting-empty-state="cold-table-empty"]',
         '[data-alert-setting-empty-icon="cold-empty-box"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input'
@@ -1252,7 +1280,7 @@ describe('parity route manifest', () => {
         '[data-alert-integration-code-block="json"]',
         '[data-alert-integration-mermaid]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button'
       ]),
@@ -1282,7 +1310,7 @@ describe('parity route manifest', () => {
         '[data-alert-silence-empty-state="cold-table-empty"]',
         '[data-alert-silence-empty-icon="cold-empty-box"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input'
@@ -1314,7 +1342,7 @@ describe('parity route manifest', () => {
         '[data-alert-inhibit-empty-state="cold-table-empty"]',
         '[data-alert-inhibit-empty-icon="cold-empty-box"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input'
@@ -1346,7 +1374,7 @@ describe('parity route manifest', () => {
         '[data-setting-config-form="cold-settings-form"]',
         '[data-setting-config-actions="standard-equal-buttons"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'form',
         'select',
         'button'
@@ -1378,7 +1406,7 @@ describe('parity route manifest', () => {
         '[data-setting-config-form="cold-settings-form"]',
         '[data-setting-config-actions="standard-equal-buttons"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'form',
         'select',
         'button'
@@ -1418,7 +1446,7 @@ describe('parity route manifest', () => {
         '[data-setting-object-store-provider="cold-provider-select"]',
         '[data-setting-object-store-actions="standard-equal-buttons"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'form',
         'select',
         'button'
@@ -1464,7 +1492,7 @@ describe('parity route manifest', () => {
         '[data-settings-summary-action="email"]',
         '[data-settings-summary-action="sms"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button'
       ]),
@@ -1510,7 +1538,7 @@ describe('parity route manifest', () => {
         '[data-setting-token-table-panel="cold-dense-table"]',
         '[data-setting-token-table="cold-token-table"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'table'
@@ -1586,14 +1614,14 @@ describe('parity route manifest', () => {
         '[data-setting-define-menu-shell="cold-dense-list"]',
         '[data-setting-define-editor="cold-settings-form"]',
         '[data-setting-define-editor-shell="cold-yaml-editor"]',
-        '[data-setting-define-editor-field="cold-code-textarea"]',
+        '[data-setting-define-editor-field="cold-code-editor"]',
+        '[data-setting-define-code-editor="monitor-template-yaml"]',
         'main',
         'button',
-        'input',
-        'textarea'
+        'input'
       ]),
-      textSnippets: expect.arrayContaining(['定义', '管理监控类型定义', '数据源状态']),
-      actionLabels: ['新增类型', '编辑', '取消', '保存并应用', '搜索', '预览查询'],
+      textSnippets: expect.arrayContaining(['定义', '管理监控模板 YAML']),
+      actionLabels: ['新增类型', '编辑', '取消', '保存并应用', '搜索', '隐藏', '显示'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/define/page.test.tsx components/pages/setting-define-surface.test.tsx lib/setting-define/controller.test.ts lib/setting-define/query-state.test.ts lib/setting-define/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1601,6 +1629,8 @@ describe('parity route manifest', () => {
     expect(getParityRoutePair('setting-family', 'setting-define').primarySelectors).not.toContain('[data-setting-define-summary-rail="cold-static-rail"]');
     expect(getParityRoutePair('setting-family', 'setting-define').textSnippets).not.toContain('Define');
     expect(getParityRoutePair('setting-family', 'setting-define').actionLabels).not.toContain('New Monitor Type');
+    expect(getParityRoutePair('setting-family', 'setting-define').textSnippets).not.toContain('数据源状态');
+    expect(getParityRoutePair('setting-family', 'setting-define').actionLabels).not.toContain('预览查询');
   });
 
   it('pins label management to the OTLP cold-matte dense admin/list contract', () => {
@@ -1618,7 +1648,7 @@ describe('parity route manifest', () => {
         '[data-label-table="cold-label-table"]',
         '[data-label-empty-state="cold-table-empty"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input',
@@ -1654,7 +1684,7 @@ describe('parity route manifest', () => {
         '[data-plugin-manage-table="cold-plugin-table"]',
         '[data-plugin-manage-empty-state="cold-table-empty"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input',
@@ -1689,7 +1719,7 @@ describe('parity route manifest', () => {
         '[data-status-component-table-shell="cold-dense-table"]',
         '[data-status-component-table="cold-component-table"]',
         '[data-platform-footer="angular-footer"]',
-        '[data-shell-help-launcher="angular-help"]',
+        '[data-shell-ai-chat-launcher="angular-ai-chat"]',
         'main',
         'button',
         'input',

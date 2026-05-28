@@ -6,10 +6,11 @@ const sourceFiles = [
   'components/pages/three-signal-desk-shell.tsx',
   'components/overview/overview-console.tsx',
   'components/workbench/primitives.tsx',
+  'app/overview/overview-page.tsx',
   'app/log/manage/log-manage-page.tsx',
-  'app/trace/manage/page.tsx',
-  'app/ingestion/otlp/page.tsx',
-  'app/ingestion/otlp/metrics/page.tsx'
+  'app/trace/manage/trace-manage-page.tsx',
+  'app/ingestion/otlp/otlp-page.tsx',
+  'app/ingestion/otlp/metrics/otlp-metrics-page.tsx'
 ];
 
 describe('three-signal family cold-workbench chrome', () => {
@@ -24,10 +25,10 @@ describe('three-signal family cold-workbench chrome', () => {
 
   it('adopts shared workbench owners across the exactness-sensitive three-signal family', () => {
     const shellSource = readFileSync(resolve(process.cwd(), 'components/pages/three-signal-desk-shell.tsx'), 'utf8');
-    const overviewSource = readFileSync(resolve(process.cwd(), 'app/overview/page.tsx'), 'utf8');
+    const overviewSource = readFileSync(resolve(process.cwd(), 'app/overview/overview-page.tsx'), 'utf8');
     const logSource = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
-    const traceSource = readFileSync(resolve(process.cwd(), 'app/trace/manage/page.tsx'), 'utf8');
-    const metricsSource = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/metrics/page.tsx'), 'utf8');
+    const traceSource = readFileSync(resolve(process.cwd(), 'app/trace/manage/trace-manage-page.tsx'), 'utf8');
+    const metricsSource = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/metrics/otlp-metrics-page.tsx'), 'utf8');
 
     expect(shellSource).toContain("../observability/workspace-shell");
     expect(shellSource).not.toContain("../workbench/workspace-shell");
@@ -74,11 +75,11 @@ describe('three-signal family cold-workbench chrome', () => {
   });
 
   it('removes the remaining legacy white-on-black chrome from the three-signal family', () => {
-    const overviewSource = readFileSync(resolve(process.cwd(), 'app/overview/page.tsx'), 'utf8');
+    const overviewSource = readFileSync(resolve(process.cwd(), 'app/overview/overview-page.tsx'), 'utf8');
     const logSource = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
-    const traceSource = readFileSync(resolve(process.cwd(), 'app/trace/manage/page.tsx'), 'utf8');
-    const otlpSource = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/page.tsx'), 'utf8');
-    const metricsSource = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/metrics/page.tsx'), 'utf8');
+    const traceSource = readFileSync(resolve(process.cwd(), 'app/trace/manage/trace-manage-page.tsx'), 'utf8');
+    const otlpSource = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/otlp-page.tsx'), 'utf8');
+    const metricsSource = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/metrics/otlp-metrics-page.tsx'), 'utf8');
 
     expect(overviewSource).not.toContain('text-white/44');
     expect(overviewSource).not.toContain('#f3eee6');

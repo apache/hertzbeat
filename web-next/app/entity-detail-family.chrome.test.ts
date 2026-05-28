@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('entity detail family cold-workbench chrome', () => {
   it('removes the remaining legacy white-on-black chrome from the current entity slice', () => {
-    const detailSource = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/page.tsx'), 'utf8');
+    const detailSource = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/entity-detail-page.tsx'), 'utf8');
     const definitionSource = readFileSync(resolve(process.cwd(), 'components/pages/entity-definition-workspace-surface.tsx'), 'utf8');
 
     expect(detailSource).not.toContain('text-white/55');
@@ -21,7 +21,7 @@ describe('entity detail family cold-workbench chrome', () => {
   });
 
   it('adopts shared ops tokens across the current entity slice', () => {
-    const detailSource = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/page.tsx'), 'utf8');
+    const detailSource = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/entity-detail-page.tsx'), 'utf8');
     const detailSurfaceSource = readFileSync(resolve(process.cwd(), 'components/pages/entity-detail-surface.tsx'), 'utf8');
     const definitionSource = readFileSync(resolve(process.cwd(), 'components/pages/entity-definition-workspace-surface.tsx'), 'utf8');
 

@@ -89,7 +89,9 @@ describe('navigation information architecture', () => {
     expect(cutoverCandidateRoutes.some(route => route.href === '/topology')).toBe(true);
     expect(cutoverHoldRoutes.some(route => route.href === '/log/manage')).toBe(true);
     expect(cutoverHoldRoutes.some(route => route.href === '/trace/manage')).toBe(true);
-    expect(placeholderRoutes.map(route => route.href)).toEqual(['/incidents', '/actions', '/explorer']);
+    expect(cutoverCandidateRoutes.some(route => route.href === '/incidents')).toBe(true);
+    expect(cutoverCandidateRoutes.some(route => route.href === '/explorer')).toBe(true);
+    expect(placeholderRoutes.map(route => route.href)).toEqual(['/actions']);
   });
 
   it('keeps legacy aliases and route-matrix targets in the route contract', () => {

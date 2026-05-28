@@ -1,5 +1,7 @@
-import { buildCompatRedirectTarget, type SearchParamsRecord } from '../compat/search-params';
+import { buildOverviewCompatRouteUrl, type SearchParamsRecord } from '../overview/navigation';
+
+export type { SearchParamsRecord };
 
 export function buildDashboardCompatRouteUrl(searchParams?: SearchParamsRecord) {
-  return buildCompatRedirectTarget('/overview', searchParams);
+  return buildOverviewCompatRouteUrl(searchParams);
 }

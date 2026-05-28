@@ -853,7 +853,7 @@
           "[data-entity-list-table-shell=\"cold-dense-table\"]",
           "[data-entity-list-table=\"cold-entity-table\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input",
@@ -897,25 +897,25 @@
           "[data-entity-detail-drilldown-panel=\"cold-drilldown-panel\"]",
           "[data-entity-detail-error=\"cold-inline-error\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "a",
           "button"
         ],
         "textSnippets": [
-          "实体详情",
-          "对象优先调查",
-          "上下文",
-          "相关信号",
-          "下一步",
-          "高级入口"
+          "Entity detail",
+          "Entity-first investigation",
+          "Context",
+          "Related signals",
+          "Next step",
+          "Advanced entries"
         ],
         "actionLabels": [
-          "全部实体",
-          "刷新",
-          "编辑定义",
-          "删除",
-          "编辑"
+          "All entities",
+          "Refresh",
+          "Edit definition",
+          "Delete",
+          "Edit"
         ],
         "minimumVerificationCommand": "npm exec vitest run 'app/entities/[entityId]/page.test.tsx' components/pages/entity-detail-surface.test.tsx app/entity-detail-family.chrome.test.ts lib/entity-detail/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -948,7 +948,7 @@
           "[data-entity-type-icon=\"service\"]",
           "[data-entity-type-icon=\"database\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "form",
           "input",
           "button"
@@ -1000,7 +1000,7 @@
           "[data-entity-type-icon=\"service\"]",
           "[data-entity-type-icon=\"database\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "form",
           "input",
           "button"
@@ -1042,7 +1042,7 @@
           "[data-entity-definition-template-panel=\"true\"]",
           "[data-entity-definition-batch-panel=\"true\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "textarea",
           "button"
@@ -1084,7 +1084,7 @@
           "[data-entity-discovery-table=\"cold-discovery-table\"]",
           "[data-entity-discovery-row-actions=\"cold-inline-actions\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input",
@@ -1133,7 +1133,7 @@
           "[data-entity-definition-load-error=\"cold-inline\"]",
           "[data-entity-definition-error-placement=\"cold-context-panel\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "textarea",
           "button",
@@ -1185,7 +1185,7 @@
           "[data-alert-center-empty-state=\"cold-table-empty\"]",
           "[data-alert-center-empty-icon=\"cold-empty-box\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "input",
           "select",
@@ -1287,7 +1287,7 @@
           "[data-alert-group-empty-state=\"cold-table-empty\"]",
           "[data-alert-group-empty-icon=\"cold-empty-box\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input"
@@ -1325,7 +1325,7 @@
           "[data-alert-silence-empty-state=\"cold-table-empty\"]",
           "[data-alert-silence-empty-icon=\"cold-empty-box\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input"
@@ -1364,7 +1364,7 @@
           "[data-alert-inhibit-empty-state=\"cold-table-empty\"]",
           "[data-alert-inhibit-empty-icon=\"cold-empty-box\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input"
@@ -1403,7 +1403,7 @@
           "[data-alert-notice-receiver-toolbar=\"cold-query-toolbar\"]",
           "[data-alert-notice-receiver-table-shell=\"cold-dense-table\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "[data-tab=\"receiver\"]",
           "main",
           "button",
@@ -1456,7 +1456,7 @@
           "[data-alert-notice-rule-toolbar=\"cold-query-toolbar\"]",
           "[data-alert-notice-rule-table-shell=\"cold-dense-table\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input"
@@ -1510,7 +1510,7 @@
           "[data-alert-notice-template-table-shell=\"cold-dense-table\"]",
           "[data-alert-notice-pagination=\"cold-dense-pagination\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input",
@@ -1553,7 +1553,7 @@
           "[data-alert-setting-empty-state=\"cold-table-empty\"]",
           "[data-alert-setting-empty-icon=\"cold-empty-box\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input"
@@ -1594,7 +1594,7 @@
           "[data-alert-integration-code-block=\"json\"]",
           "[data-alert-integration-mermaid]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button"
         ],
@@ -1642,7 +1642,7 @@
           "[data-setting-config-form=\"cold-settings-form\"]",
           "[data-setting-config-actions=\"standard-equal-buttons\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "form",
           "select",
           "button"
@@ -1748,7 +1748,7 @@
           "[data-setting-config-form=\"cold-settings-form\"]",
           "[data-setting-config-actions=\"standard-equal-buttons\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "form",
           "select",
           "button"
@@ -1787,7 +1787,7 @@
           "[data-setting-object-store-provider=\"cold-provider-select\"]",
           "[data-setting-object-store-actions=\"standard-equal-buttons\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "form",
           "select",
           "button"
@@ -1830,7 +1830,7 @@
           "[data-settings-summary-action=\"email\"]",
           "[data-settings-summary-action=\"sms\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button"
         ],
@@ -1874,7 +1874,7 @@
           "[data-setting-token-table-panel=\"cold-dense-table\"]",
           "[data-setting-token-table=\"cold-token-table\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "table"
@@ -1958,15 +1958,14 @@
           "[data-setting-define-menu-shell=\"cold-dense-list\"]",
           "[data-setting-define-editor=\"cold-settings-form\"]",
           "[data-setting-define-editor-shell=\"cold-yaml-editor\"]",
-          "[data-setting-define-editor-field=\"cold-code-textarea\"]",
+          "[data-setting-define-editor-field=\"cold-code-editor\"]",
+          "[data-setting-define-code-editor=\"monitor-template-yaml\"]",
           "button",
-          "input",
-          "textarea"
+          "input"
         ],
         "textSnippets": [
           "定义",
-          "管理监控类型定义",
-          "数据源状态"
+          "管理监控模板 YAML"
         ],
         "actionLabels": [
           "新增类型",
@@ -1974,7 +1973,8 @@
           "取消",
           "保存并应用",
           "搜索",
-          "预览查询"
+          "隐藏",
+          "显示"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/define/page.test.tsx components/pages/setting-define-surface.test.tsx lib/setting-define/controller.test.ts lib/setting-define/query-state.test.ts lib/setting-define/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1997,7 +1997,7 @@
           "[data-label-table=\"cold-label-table\"]",
           "[data-label-empty-state=\"cold-table-empty\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input",
@@ -2037,7 +2037,7 @@
           "[data-plugin-manage-table=\"cold-plugin-table\"]",
           "[data-plugin-manage-empty-state=\"cold-table-empty\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input",
@@ -2077,7 +2077,7 @@
           "[data-status-component-table-shell=\"cold-dense-table\"]",
           "[data-status-component-table=\"cold-component-table\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "button",
           "input",
@@ -2294,8 +2294,8 @@
     "key": "compatibility-placeholder-family",
     "milestone": 5,
     "legacyArea": "compatibility-and-placeholder",
-    "summary": "Close compatibility aliases plus placeholder twins in the final parity sweep.",
-    "familyVerificationCommand": "npm exec vitest run app/dashboard/page.test.ts app/overview/page.test.tsx lib/overview/navigation.test.ts lib/overview/view-model.test.ts app/events/page.test.ts app/log/manage/page.test.tsx lib/log-manage/query-state.test.ts lib/log-manage/view-model.test.ts app/alerts/page.test.ts app/alert/page.test.tsx components/pages/alert-center-surface.test.tsx lib/alert-manage/query-state.test.ts lib/alert-manage/controller.test.ts lib/alert-manage/view-model.test.ts app/incidents/page.test.tsx lib/incidents-surface/view-model.test.ts lib/incidents-surface/model.test.ts app/actions/page.test.tsx lib/actions-surface/view-model.test.ts lib/actions-surface/model.test.ts app/topology/page.test.tsx lib/topology-surface/view-model.test.ts app/explorer/page.test.tsx lib/explorer-surface/view-model.test.ts lib/parity/route-manifest.test.ts",
+    "summary": "Close compatibility aliases plus placeholder twins and the unified Explorer workbench in the final parity sweep.",
+    "familyVerificationCommand": "npm exec vitest run app/dashboard/page.test.ts app/overview/page.test.tsx lib/overview/navigation.test.ts lib/overview/view-model.test.ts app/events/page.test.ts app/log/manage/page.test.tsx lib/log-manage/query-state.test.ts lib/log-manage/view-model.test.ts app/alerts/page.test.ts app/alert/page.test.tsx components/pages/alert-center-surface.test.tsx lib/alert-manage/query-state.test.ts lib/alert-manage/controller.test.ts lib/alert-manage/view-model.test.ts app/incidents/page.test.tsx lib/incidents-surface/view-model.test.ts lib/incidents-surface/model.test.ts app/actions/page.test.tsx app/api/actions/approval-drafts/route.test.ts app/api/actions/approval-drafts/[draftId]/decision/route.test.ts app/api/actions/catalog/route.test.ts lib/actions-surface/view-model.test.ts lib/actions-surface/model.test.ts app/topology/page.test.tsx lib/topology-surface/view-model.test.ts app/explorer/page.test.tsx lib/explorer-surface/controller.test.ts lib/explorer-surface/view-model.test.ts lib/otlp-metrics/controller.test.ts lib/otlp-metrics/view-model.test.ts lib/parity/route-manifest.test.ts",
     "referenceBaseUrl": "http://127.0.0.1:4301",
     "nextBaseUrl": "http://127.0.0.1:4200",
     "routePairs": [
@@ -2383,7 +2383,7 @@
           "[data-alert-center-empty-state=\"cold-table-empty\"]",
           "[data-alert-center-empty-icon=\"cold-empty-box\"]",
           "[data-platform-footer=\"angular-footer\"]",
-          "[data-shell-help-launcher=\"angular-help\"]",
+          "[data-shell-ai-chat-launcher=\"angular-ai-chat\"]",
           "main",
           "input",
           "select",
@@ -2446,8 +2446,22 @@
         "primarySelectors": [
           "[data-actions-route=\"otlp-cold-ops-entry\"]",
           "[data-actions-style-baseline=\"hertzbeat-cold-matte\"]",
+          "[data-actions-shared-workbench=\"hertzbeat-ui\"]",
+          "[data-hz-action-workbench-owner=\"hertzbeat-ui-action-workbench\"]",
           "[data-actions-shell-panel=\"cold-ops-shell-panel\"]",
           "[data-actions-launch-checklist=\"cold-ops-static-rail\"]",
+          "[data-actions-catalog=\"manual-action-catalog-api\"]",
+          "[data-actions-catalog-owner=\"next-actions-catalog-bff\"]",
+          "[data-actions-catalog-execution-allowed=\"false\"]",
+          "[data-actions-approval-draft=\"manual-approval-draft-api\"]",
+          "[data-actions-approval-draft-owner=\"next-actions-approval-draft-bff\"]",
+          "[data-actions-approval-draft-execution-allowed=\"false\"]",
+          "[data-actions-approval-draft-queue=\"manual-approval-draft-read-api\"]",
+          "[data-actions-approval-draft-queue-owner=\"next-actions-approval-draft-bff\"]",
+          "[data-actions-approval-draft-queue-execution-allowed=\"false\"]",
+          "[data-actions-approval-decision=\"manual-approval-decision-api\"]",
+          "[data-actions-approval-decision-owner=\"next-actions-approval-decision-bff\"]",
+          "[data-actions-approval-decision-execution-allowed=\"false\"]",
           "[data-actions-empty-state=\"cold-ops-domain-adapter\"]",
           "main",
           "section",
@@ -2465,7 +2479,7 @@
           "打开概览",
           "查看对象"
         ],
-        "minimumVerificationCommand": "npm exec vitest run app/actions/page.test.tsx lib/actions-surface/view-model.test.ts lib/actions-surface/model.test.ts lib/parity/route-manifest.test.ts"
+        "minimumVerificationCommand": "npm exec vitest run app/actions/page.test.tsx app/api/actions/approval-drafts/route.test.ts app/api/actions/approval-drafts/[draftId]/decision/route.test.ts app/api/actions/catalog/route.test.ts lib/actions-surface/view-model.test.ts lib/actions-surface/model.test.ts lib/parity/route-manifest.test.ts"
       },
       {
         "key": "topology-placeholder",
@@ -2500,7 +2514,7 @@
         "minimumVerificationCommand": "npm exec vitest run app/topology/page.test.tsx lib/topology-surface/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
       {
-        "key": "explorer-placeholder",
+        "key": "explorer-workbench",
         "nextRoute": "/explorer",
         "referenceRoute": "/explorer",
         "nextPagePath": "web-next/app/explorer/page.tsx",
@@ -2511,9 +2525,16 @@
         "primarySelectors": [
           "[data-explorer-route=\"otlp-cold-workbench\"]",
           "[data-explorer-style-baseline=\"hertzbeat-cold-matte\"]",
+          "[data-explorer-api-owner=\"trace-log-bff-query-api\"]",
+          "[data-explorer-query-state]",
+          "[data-explorer-signal-filter]",
+          "[data-explorer-api-source]",
+          "[data-explorer-shared-frame=\"hertzbeat-ui\"]",
+          "[data-hz-ui=\"explorer-frame\"]",
           "[data-explorer-query-bar=\"cold-query-row\"]",
           "[data-explorer-chart-band=\"cold-chart-band\"]",
           "[data-explorer-result-table=\"cold-dense-table\"]",
+          "[data-explorer-result-table-owner=\"hertzbeat-ui-data-table\"]",
           "[data-explorer-detail-panel=\"cold-detail-panel\"]",
           "main",
           "button",
@@ -2532,7 +2553,7 @@
           "创建告警",
           "加入仪表盘"
         ],
-        "minimumVerificationCommand": "npm exec vitest run app/explorer/page.test.tsx lib/explorer-surface/view-model.test.ts lib/parity/route-manifest.test.ts"
+        "minimumVerificationCommand": "npm exec vitest run app/explorer/page.test.tsx lib/explorer-surface/controller.test.ts lib/explorer-surface/view-model.test.ts lib/otlp-metrics/controller.test.ts lib/otlp-metrics/view-model.test.ts lib/parity/route-manifest.test.ts"
       }
     ]
   }
