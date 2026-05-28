@@ -14,16 +14,19 @@ vi.mock('../ui/select', () => ({
   Select: ({ children, containerClassName: _containerClassName, ...props }: any) => <select {...props}>{children}</select>
 }));
 
-vi.mock('../ui/cold-code-editor', () => ({
-  ColdCodeEditor: ({ value, readOnly, language, onChange: _onChange, ...props }: any) => (
+vi.mock('@hertzbeat/ui', () => ({
+  HzCodeEditor: ({ value, readOnly, language, onChange: _onChange, name, ...props }: any) => (
     <div
       data-testid={props['data-testid']}
+      data-alert-notice-template-code-editor-owner={props['data-alert-notice-template-code-editor-owner']}
       data-alert-notice-template-code-editor={props['data-alert-notice-template-code-editor']}
       data-alert-notice-template-viewer-code-editor={props['data-alert-notice-template-viewer-code-editor']}
-      data-cold-code-editor="codemirror"
-      data-cold-code-editor-language={language}
-      data-cold-code-editor-readonly={readOnly ? 'true' : undefined}
+      data-hz-ui="code-editor-frame"
+      data-hz-code-editor-runtime="codemirror"
+      data-hz-code-editor-language={language}
+      data-hz-code-editor-readonly={readOnly ? 'true' : undefined}
     >
+      <input type="hidden" readOnly name={name} value={value} data-hz-code-editor-value="hidden" />
       {value}
     </div>
   )
@@ -56,10 +59,16 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).toContain('data-alert-notice-template-form-row="content"');
     expect(html).toContain('grid-cols-[132px_minmax(0,1fr)]');
     expect(html).toContain('data-alert-notice-template-type-selector="cold-select"');
+    expect(html).toContain('data-alert-notice-template-type-required="angular-required-select"');
+    expect(html).toContain('data-alert-notice-template-type-required-owner="route-validation-contract"');
     expect(html).toContain('data-alert-notice-template-preset-view="readonly-type-pill"');
+    expect(html).toContain('data-alert-notice-template-code-editor-owner="hertzbeat-ui-code-editor"');
     expect(html).toContain('data-alert-notice-template-code-editor="template-content"');
-    expect(html).toContain('data-cold-code-editor="codemirror"');
-    expect(html).toContain('data-cold-code-editor-language="html"');
+    expect(html).toContain('data-hz-ui="code-editor-frame"');
+    expect(html).toContain('data-hz-code-editor-runtime="codemirror"');
+    expect(html).toContain('data-hz-code-editor-language="html"');
+    expect(html).toContain('data-hz-code-editor-value="hidden"');
+    expect(html).toContain('name="template_content"');
     expect(html).not.toContain('data-alert-authoring-textarea="cold-textarea"');
     expect(html).toContain('alert.notice.template.name');
     expect(html).toContain('data-testid="notice-template-field-name"');
@@ -69,7 +78,9 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).toContain('模版类型');
     expect(html).toContain('用户自定义模版');
     expect(html).toContain('邮箱');
-    expect(html).toContain('WebHook');
+    expect(html).toContain('Webhook');
+    expect(html).toContain('Telegram');
+    expect(html).not.toContain('Telegram 机器人');
     expect(html).toContain('value="9"');
     expect(html.indexOf('value="9"')).toBeLessThan(html.indexOf('value="8"'));
     expect(html.indexOf('value="8"')).toBeLessThan(html.indexOf('value="4"'));
@@ -77,14 +88,23 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).not.toContain('md:grid-cols-2');
     expect(html).not.toContain('md:col-span-2');
     expect(source).toContain("from '../ui/select'");
-    expect(source).toContain("from '../ui/cold-code-editor'");
-    expect(source).toContain("['2', 'WebHook', 'WebHook']");
-    expect(source).toContain("['9', 'alert.notice.type.discord', 'Discord']");
-    expect(source).toContain("['8', 'alert.notice.type.slack', 'Slack']");
+    expect(source).toContain("from '@hertzbeat/ui'");
+    expect(source).toContain('HzCodeEditor');
+    expect(source).toContain('data-alert-notice-template-code-editor-owner="hertzbeat-ui-code-editor"');
+    expect(source).toContain("['2', 'alert.notice.type.url']");
+    expect(source).toContain("['9', 'alert.notice.type.discord']");
+    expect(source).toContain("['8', 'alert.notice.type.slack']");
+    expect(source).toContain("['7', 'alert.notice.type.telegram']");
+    expect(source).toContain('label: t(key)');
+    expect(source).toContain("const typeValue = draft.type || '';");
+    expect(source).toContain("t('alert.notice.receiver.type.placeholder')");
+    expect(source).toContain('data-alert-notice-template-type-required="angular-required-select"');
+    expect(source).toContain('data-alert-notice-template-type-required-owner="route-validation-contract"');
     expect(source).not.toContain("['3', 'alert.notice.type.wechat'");
+    expect(source).not.toContain("['0', 'alert.notice.type.sms', '短信']");
     expect(source).toContain('data-alert-notice-template-type-selector="cold-select"');
     expect(source).toContain('data-alert-notice-template-preset-view="readonly-type-pill"');
-    expect(source).toContain("draft.preset ? resolveCopy(t, 'alert.notice.template.preset.true', '系统内置模版') : resolveCopy(t, 'alert.notice.template.preset.false', '用户自定义模版')");
+    expect(source).toContain("draft.preset ? t('alert.notice.template.preset.true') : t('alert.notice.template.preset.false')");
     expect(source).toContain('data-alert-notice-template-code-editor="template-content"');
     expect(source).toContain('readOnly');
     expect(source).not.toContain("from '../workbench/primitives'");
@@ -92,6 +112,28 @@ describe('AlertNoticeTemplateFields', () => {
     expect(source).not.toContain('EditorRow');
     expect(source).not.toContain('md:grid-cols-2');
     expect(source).not.toContain('md:col-span-2');
+  });
+
+  it('keeps new notice templates on Angular required-select placeholder until type is chosen', () => {
+    const html = renderToStaticMarkup(
+      <AlertNoticeTemplateFields
+        t={t}
+        draft={{
+          name: 'Ops digest',
+          type: '',
+          preset: false,
+          content: 'Alert body'
+        }}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-notice-template-type-required="angular-required-select"');
+    expect(html).toContain('data-alert-notice-template-type-required-owner="route-validation-contract"');
+    expect(html).toContain('<select');
+    expect(html).toContain('value="" disabled=""');
+    expect(html).toContain('选择通知方式');
+    expect(html).toContain('value="1"');
   });
 
   it('renders a read-only template viewer without save-facing editable controls', () => {
@@ -111,7 +153,7 @@ describe('AlertNoticeTemplateFields', () => {
 
     expect(html).toContain('data-alert-notice-template-readonly="true"');
     expect(html).toContain('data-alert-notice-template-viewer-code-editor="readonly-code-editor"');
-    expect(html).toContain('data-cold-code-editor-readonly="true"');
+    expect(html).toContain('data-hz-code-editor-readonly="true"');
     expect(html).toContain('disabled=""');
     expect(html).toContain('data-alert-notice-template-form-row="preset"');
     expect(html).toContain('系统内置模版');

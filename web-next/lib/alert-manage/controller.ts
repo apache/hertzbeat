@@ -1,9 +1,26 @@
 import type { AlertSummary, EntityDetailDto, EntityNoiseControlSummary, GroupAlert, PageResult } from '@/lib/types';
-import { buildAlertListUrl, type AlertQueryState } from './query-state';
+import { SUPPLEMENTAL_MESSAGES } from '../i18n-runtime-messages';
+import { buildAlertListUrl, normalizeAlertPageIndex, normalizeAlertPageSize, type AlertQueryState } from './query-state';
 
 type ApiGetter = <T>(url: string) => Promise<T>;
 type ApiPutter = <T>(url: string, payload: unknown) => Promise<T>;
 type ApiDeleter = <T>(url: string) => Promise<T>;
+type AlertGroupStatusMutation = 'acknowledged' | 'resolved' | 'firing';
+type AlertClosureFacade = {
+  groupStatus: (status: AlertGroupStatusMutation, ids: number | number[]) => Promise<unknown>;
+  groupClose: (ids: number | number[]) => Promise<unknown>;
+};
+type AlertCenterDataFacade = {
+  alerts: {
+    summary: () => Promise<AlertSummary>;
+    groupAlerts: (query: AlertQueryState) => Promise<PageResult<GroupAlert>>;
+  };
+  entities: {
+    detail: (entityId: string | number) => Promise<EntityDetailDto>;
+  };
+};
+
+const ALERT_GROUP_ID_REQUIRED_FALLBACK = SUPPLEMENTAL_MESSAGES['en-US']?.['alert.group.id-required'] ?? 'alert.group.id-required';
 
 export type AlertClosureOperationAction =
   | 'acknowledge'
@@ -24,19 +41,26 @@ export function buildAlertQueryAfterClosureOperation(
   query: AlertQueryState,
   action: AlertClosureOperationAction
 ): AlertQueryState {
-  if (action === 'acknowledge') {
-    return { ...query, status: 'acknowledged' };
-  }
-  if (action === 'recover' || action === 'resolve') {
-    return { ...query, status: 'resolved' };
-  }
-  if (action === 'unacknowledge' || action === 'reopen') {
-    return { ...query, status: 'firing' };
-  }
-  if (action === 'close' || action === 'delete') {
-    return { ...query, status: '' };
-  }
+  void action;
   return { ...query };
+}
+
+export function clampAlertCenterPageIndexAfterDelete(
+  query: AlertQueryState,
+  totalElements: number,
+  deleteCount = 1
+): AlertQueryState {
+  const pageIndex = normalizeAlertPageIndex(query.pageIndex);
+  const pageSize = normalizeAlertPageSize(query.pageSize);
+  const removedCount = Number.isFinite(deleteCount) && deleteCount > 0 ? Math.floor(deleteCount) : 0;
+  const remainingTotal = Math.max(0, totalElements - removedCount);
+  const lastPageIndex = Math.max(0, Math.ceil(remainingTotal / pageSize) - 1);
+
+  return {
+    ...query,
+    pageIndex: Math.min(pageIndex, lastPageIndex),
+    pageSize
+  };
 }
 
 export async function loadAlertCenterData(apiGet: ApiGetter, query: AlertQueryState): Promise<AlertPageData> {
@@ -44,6 +68,23 @@ export async function loadAlertCenterData(apiGet: ApiGetter, query: AlertQuerySt
     apiGet<AlertSummary>('/alerts/summary'),
     apiGet<PageResult<GroupAlert>>(buildAlertListUrl(query)),
     loadEntityNoiseControlSummary(apiGet, query.entityId)
+  ]);
+
+  return {
+    summary,
+    groupAlerts: alerts,
+    noiseControlSummary: entityDetail?.noiseControlSummary
+  };
+}
+
+export async function loadAlertCenterDataFromFacade(
+  apiFacade: AlertCenterDataFacade,
+  query: AlertQueryState
+): Promise<AlertPageData> {
+  const [summary, alerts, entityDetail] = await Promise.all([
+    apiFacade.alerts.summary(),
+    apiFacade.alerts.groupAlerts(query),
+    loadEntityNoiseControlSummaryFromFacade(apiFacade, query.entityId)
   ]);
 
   return {
@@ -64,7 +105,7 @@ function normalizeAlertGroupIds(ids: number | number[]) {
   );
 
   if (normalized.length === 0) {
-    throw new Error('Alert group id is required');
+    throw new Error(ALERT_GROUP_ID_REQUIRED_FALLBACK);
   }
 
   return normalized;
@@ -76,7 +117,7 @@ function buildAlertGroupIdsQuery(ids: number | number[]) {
   return params.toString();
 }
 
-export function buildAlertGroupStatusMutationUrl(status: 'acknowledged' | 'resolved' | 'firing', ids: number | number[]) {
+export function buildAlertGroupStatusMutationUrl(status: AlertGroupStatusMutation, ids: number | number[]) {
   return `/alerts/group/status/${status}?${buildAlertGroupIdsQuery(ids)}`;
 }
 
@@ -102,6 +143,23 @@ export async function applyAlertClosureOperation(
   return apiDelete<void>(buildAlertGroupCloseMutationUrl(ids));
 }
 
+export async function applyAlertClosureOperationFromFacade(
+  apiAlerts: AlertClosureFacade,
+  action: AlertClosureOperationAction,
+  ids: number | number[]
+) {
+  if (action === 'acknowledge') {
+    return apiAlerts.groupStatus('acknowledged', ids);
+  }
+  if (action === 'recover' || action === 'resolve') {
+    return apiAlerts.groupStatus('resolved', ids);
+  }
+  if (action === 'unacknowledge' || action === 'reopen') {
+    return apiAlerts.groupStatus('firing', ids);
+  }
+  return apiAlerts.groupClose(ids);
+}
+
 async function loadEntityNoiseControlSummary(apiGet: ApiGetter, entityId: string): Promise<EntityDetailDto | undefined> {
   const numericEntityId = Number(entityId);
 
@@ -111,6 +169,23 @@ async function loadEntityNoiseControlSummary(apiGet: ApiGetter, entityId: string
 
   try {
     return await apiGet<EntityDetailDto>(`/entities/${numericEntityId}/detail`);
+  } catch {
+    return undefined;
+  }
+}
+
+async function loadEntityNoiseControlSummaryFromFacade(
+  apiFacade: AlertCenterDataFacade,
+  entityId: string
+): Promise<EntityDetailDto | undefined> {
+  const numericEntityId = Number(entityId);
+
+  if (!Number.isFinite(numericEntityId) || numericEntityId <= 0) {
+    return undefined;
+  }
+
+  try {
+    return await apiFacade.entities.detail(numericEntityId);
   } catch {
     return undefined;
   }

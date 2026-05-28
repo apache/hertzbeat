@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ColdCodeEditor, type ColdCodeEditorLanguage } from '../ui/cold-code-editor';
+import { HzCodeEditor, type HzCodeEditorLanguage } from '@hertzbeat/ui';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import type { NoticeTemplateDraft } from '../../lib/alert-notice/controller';
@@ -22,26 +22,21 @@ type AlertNoticeTemplateFieldsProps = {
 };
 
 const defaultTypeKeys = [
-  ['0', 'alert.notice.type.sms', '短信'],
-  ['1', 'alert.notice.type.email', '邮箱'],
-  ['2', 'WebHook', 'WebHook'],
-  ['9', 'alert.notice.type.discord', 'Discord'],
-  ['8', 'alert.notice.type.slack', 'Slack'],
-  ['4', 'alert.notice.type.WeCom-robot', '企业微信机器人'],
-  ['5', 'alert.notice.type.ding', '钉钉'],
-  ['6', 'alert.notice.type.fei-shu', '飞书机器人'],
-  ['7', 'alert.notice.type.telegram-bot', 'Telegram 机器人'],
-  ['10', 'alert.notice.type.WeComApp', '企业微信应用'],
-  ['11', 'alert.notice.type.smn', '华为云 SMN'],
-  ['12', 'alert.notice.type.serverchan', 'ServerChan'],
-  ['13', 'alert.notice.type.gotify', 'Gotify'],
-  ['14', 'alert.notice.type.lark-app', '飞书应用']
+  ['0', 'alert.notice.type.sms'],
+  ['1', 'alert.notice.type.email'],
+  ['2', 'alert.notice.type.url'],
+  ['9', 'alert.notice.type.discord'],
+  ['8', 'alert.notice.type.slack'],
+  ['4', 'alert.notice.type.WeCom-robot'],
+  ['5', 'alert.notice.type.ding'],
+  ['6', 'alert.notice.type.fei-shu'],
+  ['7', 'alert.notice.type.telegram'],
+  ['10', 'alert.notice.type.WeComApp'],
+  ['11', 'alert.notice.type.smn'],
+  ['12', 'alert.notice.type.serverchan'],
+  ['13', 'alert.notice.type.gotify'],
+  ['14', 'alert.notice.type.lark-app']
 ] as const;
-
-function resolveCopy(t: Translator, key: string, fallback: string) {
-  const value = t(key);
-  return value && value !== key ? value : fallback;
-}
 
 function FieldRow({
   label,
@@ -68,7 +63,7 @@ function FieldRow({
   );
 }
 
-function resolveTemplateEditorLanguage(typeValue: string): ColdCodeEditorLanguage {
+function resolveTemplateEditorLanguage(typeValue: string): HzCodeEditorLanguage {
   switch (typeValue) {
     case '2':
     case '8':
@@ -90,12 +85,13 @@ export function AlertNoticeTemplateFields({
   const resolvedTypeOptions =
     typeOptions?.length
       ? typeOptions
-      : defaultTypeKeys.map(([value, key, fallback]) => ({ value, label: resolveCopy(t, key, fallback) }));
-  const typeValue = draft.type || '1';
+      : defaultTypeKeys.map(([value, key]) => ({ value, label: t(key) }));
+  const typeValue = draft.type || '';
   const typeValueExists = resolvedTypeOptions.some(option => option.value === typeValue);
-  const effectiveTypeOptions = typeValueExists
-    ? resolvedTypeOptions
-    : [{ value: typeValue, label: typeValue }, ...resolvedTypeOptions];
+  const effectiveTypeOptions =
+    !typeValue || typeValueExists
+      ? resolvedTypeOptions
+      : [{ value: typeValue, label: typeValue }, ...resolvedTypeOptions];
 
   return (
     <div
@@ -115,8 +111,12 @@ export function AlertNoticeTemplateFields({
         />
       </FieldRow>
 
-      <FieldRow row="type" required label={resolveCopy(t, 'alert.notice.receiver.type', '通知方式')}>
-        <div data-alert-notice-template-type-selector="cold-select">
+      <FieldRow row="type" required label={t('alert.notice.template.type')}>
+        <div
+          data-alert-notice-template-type-selector="cold-select"
+          data-alert-notice-template-type-required="angular-required-select"
+          data-alert-notice-template-type-required-owner="route-validation-contract"
+        >
           <Select
             data-testid="notice-template-field-type"
             value={typeValue}
@@ -124,8 +124,13 @@ export function AlertNoticeTemplateFields({
             onChange={event => onDraftChange(prev => ({ ...prev, type: event.target.value }))}
             containerClassName="w-full"
             className="w-full"
-            aria-label={resolveCopy(t, 'alert.notice.receiver.type', '通知方式')}
+            aria-label={t('alert.notice.template.type')}
           >
+            {!typeValue ? (
+              <option value="" disabled>
+                {t('alert.notice.receiver.type.placeholder')}
+              </option>
+            ) : null}
             {effectiveTypeOptions.map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -135,24 +140,26 @@ export function AlertNoticeTemplateFields({
         </div>
       </FieldRow>
 
-      <FieldRow row="preset" label={<span data-l10n-key="alert.notice.template.preset">{resolveCopy(t, 'alert.notice.template.preset', '模版类型')}</span>}>
+      <FieldRow row="preset" label={<span data-l10n-key="alert.notice.template.preset">{t('alert.notice.template.preset')}</span>}>
         <div
           data-testid="notice-template-field-preset"
           data-alert-notice-template-preset-view="readonly-type-pill"
           className="inline-flex min-h-8 w-full items-center rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0]"
         >
-          {draft.preset ? resolveCopy(t, 'alert.notice.template.preset.true', '系统内置模版') : resolveCopy(t, 'alert.notice.template.preset.false', '用户自定义模版')}
+          {draft.preset ? t('alert.notice.template.preset.true') : t('alert.notice.template.preset.false')}
         </div>
       </FieldRow>
 
       <FieldRow row="content" required label={<span data-l10n-key="alert.notice.template.content">{t('alert.notice.template.content')}</span>}>
-        <ColdCodeEditor
+        <HzCodeEditor
           data-testid="notice-template-field-content"
+          data-alert-notice-template-code-editor-owner="hertzbeat-ui-code-editor"
           data-alert-notice-template-code-editor="template-content"
           data-alert-notice-template-viewer-code-editor={readOnly ? 'readonly-code-editor' : undefined}
           value={draft.content}
           language={resolveTemplateEditorLanguage(typeValue)}
           readOnly={readOnly}
+          name="template_content"
           minHeight="220px"
           ariaLabel={t('alert.notice.template.content')}
           onChange={nextValue => onDraftChange(prev => ({ ...prev, content: nextValue }))}

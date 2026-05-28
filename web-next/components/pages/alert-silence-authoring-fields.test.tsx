@@ -49,6 +49,7 @@ describe('AlertSilenceAuthoringFields', () => {
 
     expect(html).toContain('data-alert-silence-authoring-fields="dialog"');
     expect(html).toContain('data-alert-silence-authoring-layout="single-column-angular-function"');
+    expect(html).toContain('data-alert-silence-validation-contract="angular-name-labels-only"');
     expect(html).toContain('Create a silence rule for this entity');
     expect(html).toContain('策略名称');
     expect(html).toContain('匹配全部');

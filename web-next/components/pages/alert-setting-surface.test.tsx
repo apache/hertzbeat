@@ -113,9 +113,31 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('data-cold-search-input="fixed-width-direct"');
     expect(html).toContain('data-cold-search-control="direct-input"');
     expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
+    expect(html).toContain('data-alert-setting-search-translation-contract="angular-app-entry-search"');
+    expect(html).toContain('data-alert-setting-search-translation-owner="alert-setting-query-state"');
+    expect(html).toContain('data-alert-setting-search-translation-source="/apps/defines"');
     expect(html).not.toContain('data-cold-search-input-shell');
     expect(html).toContain('data-cold-search-action="submit"');
     expect(html).toContain('data-alert-setting-table-shell="cold-dense-table"');
+    expect(html).toContain('data-alert-setting-batch-owner="hertzbeat-ui-batch-toolbar"');
+    expect(html).toContain('data-alert-setting-import-export-contract="angular-import-export"');
+    expect(html).toContain('data-alert-setting-export-trigger-owner="hertzbeat-ui-batch-toolbar"');
+    expect(html).toContain('data-alert-setting-import-trigger-owner="hertzbeat-ui-batch-toolbar"');
+    expect(html).toContain('data-alert-setting-delete-trigger-owner="hertzbeat-ui-batch-toolbar"');
+    expect(html).toContain('data-hz-ui="batch-toolbar"');
+    expect(html).toContain('data-hz-batch-action="export-type"');
+    expect(html).toContain('data-hz-batch-action="import"');
+    expect(html).toContain('data-hz-batch-action="delete"');
+    expect(html).toContain('data-alert-setting-pagination="angular-nz-table-server"');
+    expect(html).toContain('data-alert-setting-pagination-owner="hertzbeat-ui-pagination-bar"');
+    expect(html).toContain('data-alert-setting-pagination-contract="angular-page-index-size"');
+    expect(html).toContain('data-alert-setting-pagination-page-size-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-alert-setting-pagination-page-jump-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-alert-setting-pagination-action="previous"');
+    expect(html).toContain('data-alert-setting-pagination-action="next"');
+    expect(html).toContain('data-hz-ui="pagination-bar"');
+    expect(html).toContain('导出');
+    expect(html).toContain('导入');
     expect(html).toContain('data-alert-setting-select-all="cold-checkbox"');
     expect(html).toContain('data-alert-setting-row-checkbox="cold-checkbox"');
     expect(html).toContain('data-alert-setting-enable-checkbox="cold-checkbox"');
@@ -139,6 +161,9 @@ describe('AlertSettingSurface', () => {
     expect(html).not.toContain('angular-table');
     expect(html).not.toContain('angular-table-panel');
     expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain("from '@hertzbeat/ui'");
+    expect(source).toContain('HzBatchToolbar');
+    expect(source).toContain('HzInlineFeedback');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain("from '../ui/checkbox'");
     expect(source).toContain('data-alert-setting-admin-layout="full-width-admin-list"');
@@ -161,6 +186,279 @@ describe('AlertSettingSurface', () => {
     expect(source).not.toContain('StatusState');
     expect(source).not.toContain('ToolbarField');
     expect(source).not.toContain('buildAlertSettingFacts');
+    expect(source).not.toContain('data-alert-setting-overflow-actions="true"');
+  });
+
+  it('renders shared inline feedback for alert setting import and export actions', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[7]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        pendingActionId="import"
+        actionFeedback={{ tone: 'info', title: '已提交导入 [rules.json]' }}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-action-feedback="info"');
+    expect(html).toContain('data-alert-setting-action-feedback-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-hz-ui="inline-feedback"');
+    expect(html).toContain('data-hz-feedback-tone="info"');
+    expect(html).toContain('已提交导入 [rules.json]');
+  });
+
+  it('renders Angular import success and failure notification markers', () => {
+    const successHtml = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        actionFeedback={{ tone: 'success', title: 'common.notify.import-success', contract: 'import-success' }}
+      />
+    );
+    const failureHtml = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        actionFeedback={{
+          tone: 'critical',
+          title: 'common.notify.import-fail',
+          description: 'backend-message',
+          contract: 'import-fail'
+        }}
+      />
+    );
+
+    expect(successHtml).toContain('data-alert-setting-import-success="angular-notify-title"');
+    expect(successHtml).toContain('data-alert-setting-import-success-owner="hertzbeat-ui-inline-feedback"');
+    expect(successHtml).toContain('data-alert-setting-import-feedback-title="common.notify.import-success"');
+    expect(failureHtml).toContain('data-alert-setting-import-failure="angular-notify-title-detail"');
+    expect(failureHtml).toContain('data-alert-setting-import-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(failureHtml).toContain('data-alert-setting-import-feedback-title="common.notify.import-fail"');
+    expect(failureHtml).toContain('data-alert-setting-import-feedback-detail="backend-message"');
+  });
+
+  it('renders Angular title/detail markers for alert setting delete failures', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[7]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        actionFeedback={{
+          tone: 'critical',
+          title: 'common.notify.delete-fail',
+          description: 'backend-message',
+          contract: 'delete'
+        }}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-action-feedback="critical"');
+    expect(html).toContain('data-alert-setting-delete-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-setting-delete-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-setting-delete-feedback-title="common.notify.delete-fail"');
+    expect(html).toContain('data-alert-setting-delete-feedback-detail="backend-message"');
+    expect(html).toContain('backend-message');
+  });
+
+  it('renders Angular title/detail markers for alert setting enable failures', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        actionFeedback={{
+          tone: 'critical',
+          title: 'common.notify.edit-fail',
+          description: 'backend-message',
+          contract: 'enable'
+        }}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-action-feedback="critical"');
+    expect(html).toContain('data-alert-setting-enable-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-setting-enable-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-setting-enable-feedback-title="common.notify.edit-fail"');
+    expect(html).toContain('data-alert-setting-enable-feedback-detail="backend-message"');
+    expect(html).toContain('backend-message');
+  });
+
+  it('renders Angular title/detail markers for alert setting export failures', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        actionFeedback={{
+          tone: 'critical',
+          title: 'common.notify.export-fail',
+          description: 'backend-message',
+          contract: 'export-fail'
+        }}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-action-feedback="critical"');
+    expect(html).toContain('data-alert-setting-export-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-setting-export-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-setting-export-feedback-title="common.notify.export-fail"');
+    expect(html).toContain('data-alert-setting-export-feedback-detail="backend-message"');
+    expect(html).toContain('backend-message');
+  });
+
+  it('keeps batch delete clickable for Angular no-select warning feedback', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        actionFeedback={{
+          tone: 'warning',
+          title: 'common.notify.no-select-delete',
+          contract: 'no-select-delete'
+        }}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-no-select-delete-trigger="angular-warning"');
+    expect(html).not.toContain('data-alert-setting-no-select-delete-trigger="angular-warning" disabled=""');
+    expect(html).toContain('data-alert-setting-no-select-delete="angular-warning"');
+    expect(html).toContain('data-alert-setting-no-select-delete-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('common.notify.no-select-delete');
+  });
+
+  it('renders Angular no-select export warning markers on the shared feedback surface', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={data as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        actionFeedback={{
+          tone: 'warning',
+          title: 'common.notify.no-select-export',
+          contract: 'no-select-export'
+        }}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-no-select-export-trigger="angular-warning"');
+    expect(html).toContain('data-alert-setting-no-select-export="angular-warning"');
+    expect(html).toContain('data-alert-setting-no-select-export-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('common.notify.no-select-export');
   });
 
   it('keeps the empty state inside the cold dense setting table body', () => {
@@ -238,5 +536,65 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('href="/trace/manage?traceId=trace-123"');
     expect(html).toContain('当前实体');
     expect(html).toContain('链路上下文');
+  });
+
+  it('renders alert setting evidence and row label gaps with the localized empty fallback', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingSurface
+        t={t}
+        data={{
+          list: {
+            content: [
+              {
+                id: 8,
+                name: 'empty threshold',
+                type: 'realtime_metric',
+                datasource: 'promql',
+                expr: '',
+                template: '',
+                labels: {},
+                enable: false
+              }
+            ],
+            totalElements: 1,
+            pageIndex: 0,
+            pageSize: 8
+          },
+          datasourceStatus: {
+            code: 0,
+            data: { promql: true }
+          }
+        } as any}
+        search=""
+        checkedIds={[]}
+        formatTime={() => '2026-04-20 00:20:00'}
+        evidenceContext={{
+          signal: 'metrics',
+          title: '来自指标的阈值上下文',
+          copy: '新建阈值时会预填当前实体、服务、环境和指标标签。',
+          labelsText: '',
+          rows: []
+        }}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onNew={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onExport={vi.fn()}
+        onImport={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-evidence-labels="localized-fallback"');
+    expect(html).toContain('data-alert-setting-empty-labels="localized-fallback"');
+    expect(html).toContain('>无</div>');
+    expect(html).toContain('>无</span>');
+    expect(html).not.toContain('>-</div>');
+    expect(html).not.toContain('>-</span>');
   });
 });

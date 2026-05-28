@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Inbox, RefreshCw } from 'lucide-react';
+import { HzBatchToolbar, HzCheckbox, HzConfirmDialog, HzPaginationBar, HzStatCell, HzStatStrip, HzStatusBadge } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
 import { Select } from '../ui/select';
 import { SearchRow } from '../ui/search-row';
@@ -27,8 +28,16 @@ import {
 import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
 import { formatTime } from '../../lib/format';
 import { buildEntitySignalRouteContext, buildEntityWorkspaceHref } from '../../lib/workspace-navigation';
+import type { GroupAlert, SingleAlert } from '../../lib/types';
+import type { AlertSilenceFormDraft } from '../../lib/alert-silence/controller';
+import type { AlertInhibitFormDraft } from '../../lib/alert-inhibit/controller';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+
+export type AlertEntityResponseResult = {
+  action: Exclude<AlertClosureOperationAction, 'recover'> | AlertRuleDialogMode;
+  count: number;
+} | null;
 
 type AlertCenterSurfaceProps = {
   t: Translator;
@@ -37,12 +46,29 @@ type AlertCenterSurfaceProps = {
   onDraftChange: (nextDraft: AlertQueryState) => void;
   onRefresh: () => void;
   onClearFilters: () => void;
-  onClosureAction?: (action: AlertClosureOperationAction, groupId: number) => void;
+  pageSizeOptions?: number[];
+  onPageIndexChange?: (nextPageIndex: number) => void;
+  onPageSizeChange?: (nextPageSize: number) => void;
+  selectedGroupIds?: number[];
+  onSelectedGroupIdsChange?: (nextIds: number[]) => void;
+  onClosureAction?: (action: AlertClosureOperationAction, groupId: number | number[]) => void;
+  onRuleQuickCreate?: (mode: AlertRuleDialogMode, draft: AlertSilenceFormDraft | AlertInhibitFormDraft, count: number) => Promise<void>;
   operationFeedback?: { tone: 'success' | 'danger'; copy: string } | null;
+  entityResponseResult?: AlertEntityResponseResult;
+  realtimeEventCount?: number;
+  realtimeGroupIds?: number[];
   initialDialogState?: { groupKey: string; mode: AlertRuleDialogMode } | null;
 };
 
+type PendingBatchStatusAction = {
+  action: Extract<AlertClosureOperationAction, 'acknowledge' | 'unacknowledge' | 'resolve' | 'reopen'>;
+  ids: number[];
+  title: string;
+  tone: 'info' | 'critical';
+};
+
 const coldCenterVisual = coldOpsCatalogVisual;
+const SELECTED_BATCH_DIALOG_GROUP_KEY = '__selected_batch__';
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
@@ -69,40 +95,56 @@ const operationFeedbackClassNames = {
 
 const SEVERITY_OPTIONS = ['critical', 'error', 'warning', 'info', 'unknown'] as const;
 
-const topologySourceLabels: Record<string, string> = {
-  'otlp-trace-call': 'OTLP 调用关系',
-  'monitor-ownership': '监控对象归属',
-  'template-dependency': '模板依赖',
-  'k8s-workload': 'K8s 工作负载',
-  'database-middleware-connection': '数据库 / 中间件连接',
-  'cmdb-manual-label': 'CMDB / 手工标签',
-  'alert-impact': '告警影响面'
-};
-
-function isChineseTranslator(t: Translator): boolean {
-  return t('common.refresh') === '刷新' || t('alert.status.firing') === '告警中';
-}
-
 function getSeverityLabel(severity: (typeof SEVERITY_OPTIONS)[number], t: Translator): string {
-  const chinese = isChineseTranslator(t);
   switch (severity) {
     case 'critical':
       return t('alert.center.metrics.critical');
     case 'warning':
       return t('alert.center.metrics.warning');
     case 'error':
-      return chinese ? '错误' : 'Error';
+      return t('alert.center.metrics.error');
     case 'info':
-      return chinese ? '信息' : 'Info';
+      return t('alert.center.metrics.info');
     case 'unknown':
     default:
-      return chinese ? '未知' : 'Unknown';
+      return t('alert.center.metrics.unknown');
   }
 }
 
-function formatTopologySourceKind(sourceKind?: string) {
-  if (!sourceKind) return '全部关系来源';
-  return topologySourceLabels[sourceKind] || sourceKind;
+function formatTopologySourceKind(sourceKind: string | undefined, t: Translator) {
+  if (!sourceKind) return t('alert.center.topology.source.all');
+  switch (sourceKind) {
+    case 'otlp-trace-call':
+      return t('alert.center.topology.source.otlp-trace-call');
+    case 'monitor-ownership':
+      return t('alert.center.topology.source.monitor-ownership');
+    case 'template-dependency':
+      return t('alert.center.topology.source.template-dependency');
+    case 'k8s-workload':
+      return t('alert.center.topology.source.k8s-workload');
+    case 'database-middleware-connection':
+      return t('alert.center.topology.source.database-middleware-connection');
+    case 'cmdb-manual-label':
+      return t('alert.center.topology.source.cmdb-manual-label');
+    case 'alert-impact':
+      return t('alert.center.topology.source.alert-impact');
+    default:
+      return t('alert.center.topology.source.unknown', { sourceKind });
+  }
+}
+
+function formatTopologyViewMode(viewMode: string | undefined, t: Translator) {
+  if (!viewMode || viewMode === 'alert-impact') return t('topology.view.alert-impact.label');
+  switch (viewMode) {
+    case 'application':
+      return t('topology.view.application.label');
+    case 'service-call':
+      return t('topology.view.service-call.label');
+    case 'resource-dependency':
+      return t('topology.view.resource-dependency.label');
+    default:
+      return t('alert.center.topology.view-mode.unknown', { viewMode });
+  }
 }
 
 function isDirectClosureAction(key: string): key is AlertClosureOperationAction {
@@ -118,9 +160,79 @@ function mapGroupActionToClosureOperation(key: string): AlertClosureOperationAct
   return null;
 }
 
+function resolveBatchStatusConfirmTitle(action: PendingBatchStatusAction['action'], t: Translator): string {
+  switch (action) {
+    case 'acknowledge':
+      return t('entity.alert.workbench.confirm.acknowledge-selected');
+    case 'unacknowledge':
+      return t('entity.alert.workbench.confirm.unacknowledge-selected');
+    case 'resolve':
+      return t('alert.center.confirm.mark-done-batch');
+    case 'reopen':
+      return t('alert.center.confirm.mark-no-batch');
+    default:
+      return t('common.confirm.operation');
+  }
+}
+
 function resolveNumericGroupId(groupKey: string) {
   const groupId = Number(groupKey);
   return Number.isFinite(groupId) && groupId > 0 ? groupId : null;
+}
+
+function buildSharedGroupLabels(groups: GroupAlert[]): Record<string, string> {
+  if (groups.length === 0) return {};
+  const initialLabels = groups[0].groupLabels || groups[0].commonLabels || {};
+  return groups.slice(1).reduce<Record<string, string>>((intersection, group) => {
+    const nextLabels = group.groupLabels || group.commonLabels || {};
+    return Object.entries(intersection).reduce<Record<string, string>>((acc, [key, value]) => {
+      if (nextLabels[key] === value) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+  }, { ...initialLabels });
+}
+
+function buildSelectedBatchRuleGroup(groups: GroupAlert[]): GroupAlert | null {
+  if (groups.length === 0) return null;
+  const sharedLabels = buildSharedGroupLabels(groups);
+  const representativeAlerts = groups.flatMap(group => group.alerts?.slice(0, 1) || []);
+  const alerts: SingleAlert[] = representativeAlerts.length > 0
+    ? representativeAlerts
+    : groups.map(group => ({
+      id: Number(group.id) || 0,
+      fingerprint: String(group.groupKey || group.id),
+      labels: group.groupLabels || group.commonLabels || {},
+      status: group.status
+    }));
+
+  return {
+    id: 0,
+    groupKey: SELECTED_BATCH_DIALOG_GROUP_KEY,
+    status: groups[0].status,
+    groupLabels: sharedLabels,
+    commonLabels: sharedLabels,
+    alerts,
+    gmtUpdate: groups
+      .map(group => group.gmtUpdate)
+      .filter((value): value is number => typeof value === 'number')
+      .sort((left, right) => right - left)[0] ?? groups[0].gmtUpdate
+  };
+}
+
+function buildEntityReturnHrefWithResponseResult(href: string, result: AlertEntityResponseResult): string {
+  if (!href || !result || result.count <= 0) {
+    return href;
+  }
+  const [pathAndQuery, hashFragment] = href.split('#', 2);
+  const [path, currentQuery] = pathAndQuery.split('?', 2);
+  const params = new URLSearchParams(currentQuery || '');
+  params.set('responseResultKind', 'alerts');
+  params.set('responseResultAction', result.action);
+  params.set('responseResultCount', String(result.count));
+  const queryString = params.toString();
+  return `${path}${queryString ? `?${queryString}` : ''}${hashFragment ? `#${hashFragment}` : ''}`;
 }
 
 export function AlertCenterSurface({
@@ -130,8 +242,17 @@ export function AlertCenterSurface({
   onDraftChange,
   onRefresh,
   onClearFilters,
+  pageSizeOptions = [8, 15, 25],
+  onPageIndexChange,
+  onPageSizeChange,
+  selectedGroupIds = [],
+  onSelectedGroupIdsChange,
   onClosureAction,
+  onRuleQuickCreate,
   operationFeedback = null,
+  entityResponseResult = null,
+  realtimeEventCount = 0,
+  realtimeGroupIds = [],
   initialDialogState = null
 }: AlertCenterSurfaceProps) {
   const activeFilters = hasActiveAlertFilters(draft);
@@ -141,14 +262,62 @@ export function AlertCenterSurface({
   const entityTitle = draft.entityName || draft.entityId;
   const returnTo = resolveAlertInternalReturnHref(draft.returnTo);
   const topologyReturnHref = returnTo || '/topology';
-  const entityReturnHref = buildEntityWorkspaceHref(
-    buildEntitySignalRouteContext({
-      entityId: draft.entityId,
-      entityName: draft.entityName,
-      returnTo
-    })
+  const entityReturnHref = buildEntityReturnHrefWithResponseResult(
+    buildEntityWorkspaceHref(
+      buildEntitySignalRouteContext({
+        entityId: draft.entityId,
+        entityName: draft.entityName,
+        returnTo
+      })
+    ),
+    entityResponseResult
   );
   const totalAlerts = data.groupAlerts.totalElements || 0;
+  const currentAlertGroups = data.groupAlerts.content || [];
+  const currentStatusCounts = currentAlertGroups.reduce<Record<string, number>>((counts, group) => {
+    const status = (group.status || 'firing').trim().toLowerCase();
+    counts[status] = (counts[status] || 0) + 1;
+    return counts;
+  }, {});
+  const alertFacts = [
+    {
+      id: 'total',
+      label: t('alert.workbench.total'),
+      value: totalAlerts,
+      tone: 'neutral' as const
+    },
+    {
+      id: 'firing',
+      label: t('alert.workbench.firing'),
+      value: currentStatusCounts.firing || 0,
+      tone: 'critical' as const
+    },
+    {
+      id: 'acknowledged',
+      label: t('alert.workbench.acknowledged'),
+      value: currentStatusCounts.acknowledged || 0,
+      tone: 'warning' as const
+    },
+    {
+      id: 'resolved',
+      label: t('alert.workbench.resolved'),
+      value: currentStatusCounts.resolved || 0,
+      tone: 'success' as const
+    }
+  ];
+  const currentPageIndex = Math.max(0, data.groupAlerts.pageIndex ?? draft.pageIndex ?? 0);
+  const currentPageSize = Math.max(1, data.groupAlerts.pageSize ?? draft.pageSize ?? pageSizeOptions[0] ?? 8);
+  const totalPages = Math.max(1, Math.ceil(totalAlerts / currentPageSize));
+  const currentPage = Math.min(currentPageIndex + 1, totalPages);
+  const pageStart = totalAlerts === 0 || data.groupAlerts.content.length === 0 ? 0 : currentPageIndex * currentPageSize + 1;
+  const pageEnd = totalAlerts === 0 ? 0 : Math.min(totalAlerts, currentPageIndex * currentPageSize + data.groupAlerts.content.length);
+  const paginationSummary = t('alert.center.pagination.summary', {
+    page: currentPage,
+    totalPages,
+    from: pageStart,
+    to: pageEnd,
+    total: totalAlerts
+  });
   const noiseControlCard = buildAlertNoiseControlSummary(data.noiseControlSummary, totalAlerts, t);
   const groupCards = buildAlertGroupCards(data.groupAlerts, entityContextActive, t, formatTime);
   const primaryGroup = data.groupAlerts.content[0] || null;
@@ -156,21 +325,133 @@ export function AlertCenterSurface({
   const evidenceClosureRows = buildAlertEvidenceClosureRows(draft, primaryGroup, t);
   const evidenceContextRows = buildAlertEvidenceContextRows(draft, t, primaryGroup);
   const closureOperationRows = buildAlertClosureOperationRows(draft, primaryGroup, t);
-  const chinese = isChineseTranslator(t);
   const evidenceSummary = evidenceClosureRows.map(row => row.title).join(' / ');
   const operationSummary = closureOperationRows.map(row => row.label).join(' / ');
   const disabledClosureActionTitle = t('alert.center.closure-action.disabled.no-group');
-  const [dialogState, setDialogState] = React.useState<{ groupKey: string; mode: AlertRuleDialogMode } | null>(initialDialogState);
-  const activeDialogGroup = React.useMemo(
-    () => (dialogState ? data.groupAlerts.content.find(group => String(group.id) === dialogState.groupKey) || null : null),
-    [data.groupAlerts.content, dialogState]
+  const selectedGroupIdSet = React.useMemo(() => new Set(selectedGroupIds), [selectedGroupIds]);
+  const realtimeGroupIdSet = React.useMemo(() => new Set(realtimeGroupIds), [realtimeGroupIds]);
+  const currentPageGroupIds = React.useMemo(
+    () => data.groupAlerts.content
+      .map(group => Number(group.id))
+      .filter(groupId => Number.isFinite(groupId) && groupId > 0),
+    [data.groupAlerts.content]
   );
+  const allCurrentPageSelected = currentPageGroupIds.length > 0 && currentPageGroupIds.every(groupId => selectedGroupIdSet.has(groupId));
+  const selectedFiringIds = data.groupAlerts.content
+    .filter(group => group.status === 'firing' && selectedGroupIdSet.has(Number(group.id)))
+    .map(group => Number(group.id));
+  const selectedAcknowledgedIds = data.groupAlerts.content
+    .filter(group => group.status === 'acknowledged' && selectedGroupIdSet.has(Number(group.id)))
+    .map(group => Number(group.id));
+  const selectedResolvedIds = data.groupAlerts.content
+    .filter(group => group.status === 'resolved' && selectedGroupIdSet.has(Number(group.id)))
+    .map(group => Number(group.id));
+  const selectedGroups = React.useMemo(
+    () => data.groupAlerts.content.filter(group => selectedGroupIdSet.has(Number(group.id))),
+    [data.groupAlerts.content, selectedGroupIdSet]
+  );
+  const selectedBatchRuleGroup = React.useMemo(() => buildSelectedBatchRuleGroup(selectedGroups), [selectedGroups]);
+  const [dialogState, setDialogState] = React.useState<{ groupKey: string; mode: AlertRuleDialogMode } | null>(initialDialogState);
+  const [pendingBatchStatusAction, setPendingBatchStatusAction] = React.useState<PendingBatchStatusAction | null>(null);
+  const [pendingDeleteGroupId, setPendingDeleteGroupId] = React.useState<number | null>(null);
+  const activeDialogGroup = React.useMemo(
+    () => {
+      if (!dialogState) return null;
+      if (dialogState.groupKey === SELECTED_BATCH_DIALOG_GROUP_KEY) {
+        return selectedBatchRuleGroup;
+      }
+      return data.groupAlerts.content.find(group => String(group.id) === dialogState.groupKey) || null;
+    },
+    [data.groupAlerts.content, dialogState, selectedBatchRuleGroup]
+  );
+  const activeDialogSelectionCount = dialogState?.groupKey === SELECTED_BATCH_DIALOG_GROUP_KEY
+    ? selectedGroups.length
+    : activeDialogGroup
+      ? 1
+      : 0;
+
+  function handlePageJumpChange(value: string) {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed)) return;
+    const nextPageIndex = Math.min(Math.max(parsed, 1), totalPages) - 1;
+    onPageIndexChange?.(nextPageIndex);
+  }
+
+  function updateSelectedGroupId(groupId: number, checked: boolean) {
+    if (!Number.isFinite(groupId) || groupId <= 0) return;
+    const next = new Set(selectedGroupIds);
+    if (checked) {
+      next.add(groupId);
+    } else {
+      next.delete(groupId);
+    }
+    onSelectedGroupIdsChange?.(Array.from(next));
+  }
+
+  function updateCurrentPageSelection(checked: boolean) {
+    if (!checked) {
+      onSelectedGroupIdsChange?.([]);
+      return;
+    }
+    onSelectedGroupIdsChange?.(Array.from(new Set([...selectedGroupIds, ...currentPageGroupIds])));
+  }
+
+  function requestBatchStatusAction(action: PendingBatchStatusAction['action'], ids: number[]) {
+    const normalizedIds = ids.filter(groupId => Number.isFinite(groupId) && groupId > 0);
+    if (normalizedIds.length > 0) {
+      setPendingBatchStatusAction({
+        action,
+        ids: normalizedIds,
+        title: resolveBatchStatusConfirmTitle(action, t),
+        tone: action === 'resolve' || action === 'reopen' ? 'critical' : 'info'
+      });
+    }
+  }
+
+  function confirmPendingBatchStatusAction() {
+    if (!pendingBatchStatusAction) return;
+    onClosureAction?.(pendingBatchStatusAction.action, pendingBatchStatusAction.ids);
+    setPendingBatchStatusAction(null);
+  }
+
+  function confirmPendingDeleteGroup() {
+    if (!pendingDeleteGroupId) return;
+    onClosureAction?.('delete', pendingDeleteGroupId);
+    setPendingDeleteGroupId(null);
+  }
+
+  function openSelectedRuleDialog(mode: AlertRuleDialogMode) {
+    if (selectedGroups.length === 0) return;
+    setDialogState({ groupKey: SELECTED_BATCH_DIALOG_GROUP_KEY, mode });
+  }
 
   return (
     <>
       <div
         data-alert-center-surface="otlp-cold-center-console"
         data-alert-center-style-baseline={coldCenterVisual.canvasName}
+        data-alert-center-sse-contract="angular-alert-event-refresh"
+        data-alert-center-sse-event-count={realtimeEventCount}
+        data-alert-center-sse-highlight="angular-new-alert"
+        data-alert-center-sse-highlight-ids={realtimeGroupIds.join(',')}
+        data-alert-center-delete-page-clamp="angular-update-page-index"
+        data-alert-center-delete-page-clamp-owner="route-state-contract"
+        data-alert-center-post-action-filter-contract="angular-retain-filter"
+        data-alert-center-post-action-filter-owner="route-state-contract"
+        data-alert-center-rule-create-feedback="angular-new-notify"
+        data-alert-center-rule-create-feedback-owner="route-state-contract"
+        data-alert-center-rule-selection-count="angular-group-count"
+        data-alert-center-rule-selection-count-owner="route-state-contract"
+        data-alert-center-inhibit-defaults="angular-drop-severity-equal-allowlist"
+        data-alert-center-inhibit-defaults-owner="route-state-contract"
+        data-alert-center-batch-confirm="angular-status-confirm"
+        data-alert-center-batch-confirm-owner="hertzbeat-ui-confirm-dialog"
+        data-alert-center-row-delete-confirm="angular-single-delete-confirm"
+        data-alert-center-row-delete-confirm-owner="hertzbeat-ui-confirm-dialog"
+        data-alert-noise-control-action-label-contract="angular-possible-suppression-counts"
+        data-alert-noise-control-action-label-owner="route-state-contract"
+        data-alert-center-acknowledged-actions-contract="angular-unacknowledge-resolve"
+        data-alert-center-acknowledged-actions-owner="route-alert-card"
         className={coldCenterVisual.canvas.root}
         style={coldCenterVisual.canvas.backgroundStyle}
       >
@@ -199,6 +480,28 @@ export function AlertCenterSurface({
                     ) : null}
                   </div>
                 </div>
+                <HzStatStrip
+                  columns={4}
+                  frame="panel-inset"
+                  spacing="compact"
+                  className="mt-5"
+                  data-alert-center-facts-strip="angular-platform-facts-strip"
+                  data-alert-center-facts-strip-owner="hertzbeat-ui-stat-strip"
+                >
+                  {alertFacts.map(fact => (
+                    <HzStatCell
+                      key={fact.id}
+                      label={fact.label}
+                      value={fact.value}
+                      tone={fact.tone}
+                      variant="tile"
+                      density="compact"
+                      frame="inset"
+                      data-alert-center-fact={fact.id}
+                      data-alert-center-fact-owner="hertzbeat-ui-stat-cell"
+                    />
+                  ))}
+                </HzStatStrip>
               </div>
             </div>
 
@@ -233,20 +536,22 @@ export function AlertCenterSurface({
                   >
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">拓扑影响面</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
+                          {t('alert.center.topology.context.kicker')}
+                        </div>
                         <div className="mt-1 text-[18px] font-semibold text-[#f5f7fb]">
-                          {draft.serviceName || draft.entityName || draft.entityId || '当前拓扑上下文'}
+                          {draft.serviceName || draft.entityName || draft.entityId || t('alert.center.topology.context.fallback')}
                         </div>
                         <div className="mt-2 flex flex-wrap gap-1.5">
-                          <span className={coldPillClassName}>{draft.viewMode || 'alert-impact'}</span>
-                          <span className={coldPillClassName}>{formatTopologySourceKind(draft.sourceKind)}</span>
+                          <span className={coldPillClassName}>{formatTopologyViewMode(draft.viewMode, t)}</span>
+                          <span className={coldPillClassName}>{formatTopologySourceKind(draft.sourceKind, t)}</span>
                           {draft.edgeId ? <span className={coldPillClassName}>{draft.edgeId}</span> : null}
                           {draft.environment ? <span className={coldPillClassName}>{draft.environment}</span> : null}
                           {draft.timeRange ? <span className={coldPillClassName}>{draft.timeRange}</span> : null}
                         </div>
                       </div>
                       <a data-alert-topology-return="true" className={coldLinkClassName} href={topologyReturnHref}>
-                        返回拓扑
+                        {t('alert.center.topology.context.return')}
                       </a>
                     </div>
                   </div>
@@ -263,10 +568,28 @@ export function AlertCenterSurface({
                         <div className="mt-2 max-w-[760px] text-[13px] leading-6 text-[#a9b0bb]">{noiseControlCard.copy}</div>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <a className={coldLinkClassName} href={buildAlertNoiseControlManageHref('silence', draft, data.noiseControlSummary)}>
+                        <a
+                          className={coldLinkClassName}
+                          href={buildAlertNoiseControlManageHref('silence', draft, data.noiseControlSummary)}
+                          data-alert-noise-control-action="silence"
+                          data-alert-noise-control-action-label={
+                            data.noiseControlSummary?.possibleAlertSuppression && data.noiseControlSummary.activeSilenceCount === 0
+                              ? 'angular-view-or-create'
+                              : 'angular-open-matching'
+                          }
+                        >
                           {noiseControlCard.silenceActionLabel}
                         </a>
-                        <a className={coldLinkClassName} href={buildAlertNoiseControlManageHref('inhibit', draft, data.noiseControlSummary)}>
+                        <a
+                          className={coldLinkClassName}
+                          href={buildAlertNoiseControlManageHref('inhibit', draft, data.noiseControlSummary)}
+                          data-alert-noise-control-action="inhibit"
+                          data-alert-noise-control-action-label={
+                            data.noiseControlSummary?.possibleAlertSuppression && data.noiseControlSummary.matchingInhibitCount === 0
+                              ? 'angular-view-or-create'
+                              : 'angular-open-matching'
+                          }
+                        >
                           {noiseControlCard.inhibitActionLabel}
                         </a>
                       </div>
@@ -284,13 +607,102 @@ export function AlertCenterSurface({
                   </div>
                 ) : null}
 
+                {entityContextActive ? (
+                  <div
+                    data-alert-center-entity-batch="angular-selected-groups"
+                    data-alert-center-entity-batch-owner="hertzbeat-ui-batch-toolbar"
+                    className={coldPanelClassName}
+                  >
+                    <div className="mb-2 flex flex-wrap items-center gap-3">
+                      <HzCheckbox
+                        checked={allCurrentPageSelected}
+                        onChange={event => updateCurrentPageSelection(event.currentTarget.checked)}
+                        label={t('alert.center.batch.select-page')}
+                        data-alert-center-batch-select-page="hertzbeat-ui-checkbox"
+                      />
+                    </div>
+                    <HzBatchToolbar
+                      selectionCount={selectedGroupIds.length}
+                      selectionLabel={t('alert.center.batch.selection-label')}
+                      variant="embedded"
+                      data-alert-center-batch-toolbar="selected-entity-alerts"
+                      actions={[
+                        {
+                          id: 'acknowledge-selected',
+                          label: t('alert.center.batch.acknowledge-selected', { count: selectedFiringIds.length }),
+                          disabled: selectedFiringIds.length === 0,
+                          onSelect: () => requestBatchStatusAction('acknowledge', selectedFiringIds),
+                          buttonProps: {
+                            'data-alert-center-batch-action': 'acknowledge-selected',
+                            'data-alert-center-batch-action-owner': 'hertzbeat-ui-batch-toolbar'
+                          } as React.ButtonHTMLAttributes<HTMLButtonElement>
+                        },
+                        {
+                          id: 'unacknowledge-selected',
+                          label: t('alert.center.batch.unacknowledge-selected', { count: selectedAcknowledgedIds.length }),
+                          disabled: selectedAcknowledgedIds.length === 0,
+                          onSelect: () => requestBatchStatusAction('unacknowledge', selectedAcknowledgedIds),
+                          buttonProps: {
+                            'data-alert-center-batch-action': 'unacknowledge-selected',
+                            'data-alert-center-batch-action-owner': 'hertzbeat-ui-batch-toolbar'
+                          } as React.ButtonHTMLAttributes<HTMLButtonElement>
+                        },
+                        {
+                          id: 'resolve-selected',
+                          label: t('alert.center.batch.resolve-selected', { count: selectedFiringIds.length }),
+                          disabled: selectedFiringIds.length === 0,
+                          onSelect: () => requestBatchStatusAction('resolve', selectedFiringIds),
+                          buttonProps: {
+                            'data-alert-center-batch-action': 'resolve-selected',
+                            'data-alert-center-batch-action-owner': 'hertzbeat-ui-batch-toolbar'
+                          } as React.ButtonHTMLAttributes<HTMLButtonElement>
+                        },
+                        {
+                          id: 'reopen-selected',
+                          label: t('alert.center.batch.reopen-selected', { count: selectedResolvedIds.length }),
+                          disabled: selectedResolvedIds.length === 0,
+                          onSelect: () => requestBatchStatusAction('reopen', selectedResolvedIds),
+                          buttonProps: {
+                            'data-alert-center-batch-action': 'reopen-selected',
+                            'data-alert-center-batch-action-owner': 'hertzbeat-ui-batch-toolbar'
+                          } as React.ButtonHTMLAttributes<HTMLButtonElement>
+                        },
+                        {
+                          id: 'silence-selected',
+                          label: t('alert.center.batch.silence-selected', { count: selectedGroups.length }),
+                          disabled: selectedGroups.length === 0,
+                          onSelect: () => openSelectedRuleDialog('silence'),
+                          buttonProps: {
+                            'data-alert-center-batch-action': 'silence-selected',
+                            'data-alert-center-batch-action-owner': 'hertzbeat-ui-batch-toolbar',
+                            'data-alert-center-batch-dialog-source': 'selected-groups'
+                          } as React.ButtonHTMLAttributes<HTMLButtonElement>
+                        },
+                        {
+                          id: 'inhibit-selected',
+                          label: t('alert.center.batch.inhibit-selected', { count: selectedGroups.length }),
+                          disabled: selectedGroups.length === 0,
+                          onSelect: () => openSelectedRuleDialog('inhibit'),
+                          buttonProps: {
+                            'data-alert-center-batch-action': 'inhibit-selected',
+                            'data-alert-center-batch-action-owner': 'hertzbeat-ui-batch-toolbar',
+                            'data-alert-center-batch-dialog-source': 'selected-groups'
+                          } as React.ButtonHTMLAttributes<HTMLButtonElement>
+                        }
+                      ]}
+                    />
+                  </div>
+                ) : null}
+
                 <div data-alert-evidence-closure="otlp-alert-evidence-workbench" className={coldPanelClassName}>
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">告警证据闭环</div>
-                      <div className="mt-1 text-[18px] font-semibold text-[#f5f7fb]">处理前先看证据</div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
+                        {t('alert.center.evidence.closure.kicker')}
+                      </div>
+                      <div className="mt-1 text-[18px] font-semibold text-[#f5f7fb]">{t('alert.center.evidence.closure.title')}</div>
                       <div className="mt-2 max-w-[760px] text-[13px] leading-6 text-[#a9b0bb]">
-                        把实体、指标、日志、链路和拓扑证据放在同一个处理入口。
+                        {t('alert.center.evidence.closure.copy')}
                       </div>
                       <div
                         data-alert-closure-summary="evidence-and-actions"
@@ -299,11 +711,11 @@ export function AlertCenterSurface({
                         className="mt-3 grid max-w-[860px] gap-2 text-[12px] md:grid-cols-2"
                       >
                         <div className="rounded-[3px] border border-[#252b34] bg-[#101217] px-3 py-2">
-                          <span className="font-semibold text-[#7e8494]">{chinese ? '证据范围' : 'Evidence scope'}</span>
+                          <span className="font-semibold text-[#7e8494]">{t('alert.center.evidence.closure.summary.evidence')}</span>
                           <span className="ml-2 text-[#dbe4f0]">{evidenceSummary}</span>
                         </div>
                         <div className="rounded-[3px] border border-[#252b34] bg-[#101217] px-3 py-2">
-                          <span className="font-semibold text-[#7e8494]">{chinese ? '处理动作' : 'Closure actions'}</span>
+                          <span className="font-semibold text-[#7e8494]">{t('alert.center.evidence.closure.summary.operations')}</span>
                           <span className="ml-2 text-[#dbe4f0]">{operationSummary}</span>
                         </div>
                       </div>
@@ -460,10 +872,38 @@ export function AlertCenterSurface({
                     </div>
                   ) : (
                     <div data-alert-group-card-stack="true" className="divide-y divide-[#252b34]">
-                      {groupCards.map(group => (
-                        <article key={group.key} data-alert-group-card={group.key} className="bg-[#0b0c0e] p-4 transition hover:bg-[#111721]">
+                      {groupCards.map(group => {
+                        const groupId = resolveNumericGroupId(group.key);
+                        const realtimeHighlighted = groupId != null && realtimeGroupIdSet.has(groupId);
+                        return (
+                        <article
+                          key={group.key}
+                          data-alert-group-card={group.key}
+                          data-alert-group-realtime-state={realtimeHighlighted ? 'new' : undefined}
+                          data-alert-group-realtime-owner={realtimeHighlighted ? 'angular-new-alert' : undefined}
+                          className={`bg-[#0b0c0e] p-4 transition hover:bg-[#111721] ${
+                            realtimeHighlighted
+                              ? 'border-l-[3px] border-l-[#4e74f8] bg-[#101827] shadow-[inset_3px_0_0_rgba(78,116,248,0.28)]'
+                              : ''
+                          }`}
+                        >
                           <div className="flex flex-wrap items-start justify-between gap-4">
                             <div className="min-w-0">
+                              {entityContextActive ? (
+                                <HzCheckbox
+                                  checked={selectedGroupIdSet.has(resolveNumericGroupId(group.key) ?? -1)}
+                                  onChange={event => {
+                                    const groupId = resolveNumericGroupId(group.key);
+                                    if (groupId) {
+                                      updateSelectedGroupId(groupId, event.currentTarget.checked);
+                                    }
+                                  }}
+                                  label={t('alert.center.batch.select-group')}
+                                  data-alert-center-group-select="hertzbeat-ui-checkbox"
+                                  data-alert-center-group-select-id={group.key}
+                                  containerClassName="mb-2"
+                                />
+                              ) : null}
                               <div className="flex flex-wrap gap-1.5">
                                 {group.labels.map(label => (
                                   <span key={label} className={coldPillClassName}>
@@ -505,7 +945,11 @@ export function AlertCenterSurface({
                                     const closureAction = mapGroupActionToClosureOperation(action.key);
                                     const groupId = resolveNumericGroupId(group.key);
                                     if (closureAction && groupId) {
-                                      onClosureAction?.(closureAction, groupId);
+                                      if (closureAction === 'delete') {
+                                        setPendingDeleteGroupId(groupId);
+                                      } else {
+                                        onClosureAction?.(closureAction, groupId);
+                                      }
                                     }
                                   }}
                                 >
@@ -544,19 +988,159 @@ export function AlertCenterSurface({
                                     ))}
                                   </div>
                                 ) : null}
+                                <div
+                                  data-alert-card-status-detail="angular-status-section"
+                                  data-alert-card-status-detail-owner="hertzbeat-ui-status-badge"
+                                  className="mt-3 grid gap-2 border-t border-[#252b34] pt-3"
+                                >
+                                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
+                                    {t('alert.center.status')}
+                                  </div>
+                                  <HzStatusBadge
+                                    tone={alert.statusTone}
+                                    label={t('alert.center.status')}
+                                    value={alert.status}
+                                    layout="context-pill"
+                                    data-alert-card-status-badge="angular-status-tag"
+                                    data-alert-card-status-value={alert.status}
+                                  />
+                                </div>
+                                {alert.annotations.length > 0 ? (
+                                  <div
+                                    data-alert-card-annotations="angular-detail-section"
+                                    data-alert-card-annotations-owner="route-alert-card"
+                                    className="mt-3 grid gap-2 border-t border-[#252b34] pt-3"
+                                  >
+                                    <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
+                                      {t('common.annotation')}
+                                    </div>
+                                    {alert.annotations.map(annotation => (
+                                      <div
+                                        key={`${alert.key}-${annotation.key}`}
+                                        data-alert-card-annotation={annotation.key}
+                                        className="grid gap-1 rounded-[3px] border border-[#252b34] bg-[#0b0c0e] px-2 py-2 text-[12px]"
+                                      >
+                                        <span className="font-semibold text-[#cbd5e1]">{annotation.key}:</span>
+                                        <span className="whitespace-pre-wrap break-words leading-5 text-[#a9b0bb]">{annotation.value}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null}
+                                {alert.timeRows.length > 0 ? (
+                                  <div
+                                    data-alert-card-time-detail="angular-first-last-end"
+                                    data-alert-card-time-detail-owner="route-alert-card"
+                                    className="mt-3 grid gap-2 border-t border-[#252b34] pt-3"
+                                  >
+                                    <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
+                                      {t('alert.center.time')}
+                                    </div>
+                                    <div className="grid gap-1 text-[12px] md:grid-cols-3">
+                                      {alert.timeRows.map(row => (
+                                        <div
+                                          key={`${alert.key}-${row.key}`}
+                                          data-alert-card-time-row={row.key}
+                                          className="rounded-[3px] border border-[#252b34] bg-[#0b0c0e] px-2 py-2"
+                                        >
+                                          <div className="text-[11px] font-semibold text-[#7e8494]">{row.label}</div>
+                                          <div className="mt-1 font-mono text-[#dbe4f0]">{row.value}</div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : null}
                               </div>
                             ))}
                           </div>
                         </article>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
+                </div>
+                <div
+                  data-alert-center-pagination="cold-dense-pagination"
+                  data-alert-center-pagination-owner="hertzbeat-ui-pagination-bar"
+                >
+                  <HzPaginationBar
+                    summary={paginationSummary}
+                    pageSizeLabel={t('alert.center.pagination.page-size')}
+                    pageSizeValue={String(currentPageSize)}
+                    pageSizeOptions={pageSizeOptions.map(value => ({ value: String(value), label: String(value) }))}
+                    pageJumpLabel={t('alert.center.pagination.page')}
+                    pageJumpValue={String(currentPage)}
+                    pageJumpMax={totalPages}
+                    previousLabel={t('common.previous-page')}
+                    nextLabel={t('common.next-page')}
+                    previousDisabled={currentPageIndex <= 0}
+                    nextDisabled={currentPage >= totalPages}
+                    onPrevious={() => onPageIndexChange?.(Math.max(currentPageIndex - 1, 0))}
+                    onNext={() => onPageIndexChange?.(Math.min(currentPageIndex + 1, totalPages - 1))}
+                    onPageSizeChange={value => onPageSizeChange?.(Number.parseInt(value, 10))}
+                    onPageJumpChange={handlePageJumpChange}
+                    pageJumpInputProps={
+                      {
+                        'data-alert-center-pagination-page-jump-owner': 'hertzbeat-ui-input'
+                      } as React.ComponentProps<typeof HzPaginationBar>['pageJumpInputProps']
+                    }
+                    pageSizeSelectProps={
+                      {
+                        'data-alert-center-pagination-page-size-owner': 'hertzbeat-ui-select'
+                      } as React.ComponentProps<typeof HzPaginationBar>['pageSizeSelectProps']
+                    }
+                    className="border-x-0"
+                  />
                 </div>
               </section>
             </div>
           </div>
         </section>
       </div>
+      <HzConfirmDialog
+        open={Boolean(pendingBatchStatusAction)}
+        tone={pendingBatchStatusAction?.tone || 'info'}
+        kicker={t('alert.workbench.kicker')}
+        title={pendingBatchStatusAction?.title || t('common.confirm.operation')}
+        cancelLabel={t('common.button.cancel')}
+        confirmLabel={t('common.button.ok')}
+        onClose={() => setPendingBatchStatusAction(null)}
+        onConfirm={confirmPendingBatchStatusAction}
+        data-alert-center-batch-status-confirm="angular-status-confirm"
+        data-alert-center-batch-status-confirm-action={pendingBatchStatusAction?.action}
+        data-alert-center-batch-status-confirm-count={pendingBatchStatusAction?.ids.length}
+        confirmButtonProps={
+          {
+            'data-alert-center-batch-status-confirm-ok': 'angular-status-confirm'
+          } as React.ComponentProps<typeof HzConfirmDialog>['confirmButtonProps']
+        }
+        cancelButtonProps={
+          {
+            'data-alert-center-batch-status-confirm-cancel': 'angular-status-confirm'
+          } as React.ComponentProps<typeof HzConfirmDialog>['cancelButtonProps']
+        }
+      />
+      <HzConfirmDialog
+        open={pendingDeleteGroupId != null}
+        tone="critical"
+        kicker={t('alert.workbench.kicker')}
+        title={t('common.confirm.delete')}
+        cancelLabel={t('common.button.cancel')}
+        confirmLabel={t('common.button.ok')}
+        onClose={() => setPendingDeleteGroupId(null)}
+        onConfirm={confirmPendingDeleteGroup}
+        data-alert-center-row-delete-confirm-dialog="angular-single-delete-confirm"
+        data-alert-center-row-delete-confirm-group-id={pendingDeleteGroupId ?? undefined}
+        confirmButtonProps={
+          {
+            'data-alert-center-row-delete-confirm-ok': 'angular-single-delete-confirm'
+          } as React.ComponentProps<typeof HzConfirmDialog>['confirmButtonProps']
+        }
+        cancelButtonProps={
+          {
+            'data-alert-center-row-delete-confirm-cancel': 'angular-single-delete-confirm'
+          } as React.ComponentProps<typeof HzConfirmDialog>['cancelButtonProps']
+        }
+      />
       {dialogState && activeDialogGroup ? (
         <AlertRuleQuickDialog
           t={t}
@@ -564,6 +1148,7 @@ export function AlertCenterSurface({
           group={activeDialogGroup}
           query={draft}
           onClose={() => setDialogState(null)}
+          onSubmit={onRuleQuickCreate ? (mode, nextDraft) => onRuleQuickCreate(mode, nextDraft, activeDialogSelectionCount) : undefined}
         />
       ) : null}
     </>

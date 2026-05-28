@@ -170,12 +170,24 @@ describe('AlertGroupSurface', () => {
     expect(html).not.toContain('data-cold-search-input-shell');
     expect(html).toContain('data-cold-search-action="submit"');
     expect(html).toContain('data-alert-group-table-shell="cold-dense-table"');
+    expect(html).toContain('data-alert-group-pagination="cold-dense-pagination"');
+    expect(html).toContain('data-alert-group-pagination-owner="hertzbeat-ui-pagination-bar"');
+    expect(html).toContain('data-hz-ui="pagination-bar"');
+    expect(html).toContain('data-hz-pagination-page-size="select-menu"');
+    expect(html).toContain('data-hz-pagination-page-jump="number-input"');
+    expect(html).toContain('data-alert-group-pagination-page-size-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-alert-group-pagination-page-jump-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-alert-group-select-current-page="table-header"');
+    expect(html).toContain('data-alert-group-select-current-page-owner="hertzbeat-ui-checkbox"');
+    expect(html).toContain('data-hz-ui="checkbox"');
     expect(html).toContain('data-alert-group-row-checkbox="cold-checkbox"');
     expect(html).toContain('data-alert-group-enable-checkbox="cold-checkbox"');
     expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(2);
     expect(html).toContain('刷新');
     expect(html).toContain('新增分组');
     expect(html).toContain('搜索');
+    expect(html).toContain('data-alert-group-delete-selected="toolbar"');
+    expect(html).toContain('data-alert-group-delete-selected-owner="route-no-select-warning"');
     expect(html).toContain('分组收敛');
     expect(html).toContain('管理 Alertmanager 分组收敛规则');
     expect(html).toContain('策略名称');
@@ -191,7 +203,19 @@ describe('AlertGroupSurface', () => {
     expect(source).toContain('coldOpsCatalogVisual');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain("from '../ui/checkbox'");
+    expect(source).toContain("from '@hertzbeat/ui'");
+    expect(source).toContain('HzCheckbox');
+    expect(source).toContain('HzInlineFeedback');
+    expect(source).toContain('HzPaginationBar');
+    expect(source).toContain('handleSelectCurrentPage');
+    expect(source).toContain('onCheckedIdsChange(Array.from(new Set([...checkedIds, ...currentPageIds])))');
+    expect(source).toContain('onCheckedIdsChange(checkedIds.filter(id => !currentPageIdSet.has(id)))');
+    expect(source).toContain('data-alert-group-action-feedback-owner="hertzbeat-ui-inline-feedback"');
+    expect(source).not.toContain('disabled={selectedCount === 0}');
     expect(source).toContain('labelOptions?: AlertLabelOptions');
+    expect(source).toContain('pageSizeOptions?: number[]');
+    expect(source).toContain('onPageIndexChange?: (nextPageIndex: number) => void');
+    expect(source).toContain('onPageSizeChange?: (nextPageSize: number) => void');
     expect(source).toContain('labelOptions={labelOptions}');
     expect(source).not.toContain('suggestedLabels');
     expect(source).toContain('data-alert-group-admin-layout="full-width-admin-list"');
@@ -261,6 +285,7 @@ describe('AlertGroupSurface', () => {
     );
 
     expect(html).toContain('data-alert-group-table-shell="cold-dense-table"');
+    expect(html).toContain('data-alert-group-pagination="cold-dense-pagination"');
     expect(html).toContain('data-alert-group-empty-state="cold-table-empty"');
     expect(html).toContain('data-alert-group-empty-icon="cold-empty-box"');
     expect(html).toContain('data-alert-group-empty-copy="true"');
@@ -333,6 +358,61 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('链路上下文');
   });
 
+  it('renders missing group evidence labels with the localized empty fallback', () => {
+    const html = renderToStaticMarkup(
+      <AlertGroupSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        evidenceContext={{
+          signal: 'logs',
+          title: '来自日志的分组上下文',
+          copy: '按当前实体创建分组规则。',
+          groupLabelsText: '',
+          returnHref: '/log/manage?entityId=service-1',
+          rows: [],
+          draftPatch: {
+            groupLabelsText: ''
+          }
+        }}
+        draft={{
+          name: '',
+          enable: true,
+          groupLabelsText: '',
+          groupWait: '30',
+          groupInterval: '300',
+          repeatInterval: '14400'
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-group-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-group-evidence-labels="localized-fallback"');
+    expect(html).toContain('无');
+  });
+
   it('renders validation errors visibly inside the group editor dialog', () => {
     const html = renderToStaticMarkup(
       <AlertGroupSurface
@@ -375,5 +455,197 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('data-alert-group-editor-error-inline="cold-validation"');
     expect(html).toContain('role="alert"');
     expect(html).toContain('请填写策略名称');
+  });
+
+  it('renders Angular alert group save failure title/detail through shared feedback', () => {
+    const html = renderToStaticMarkup(
+      <AlertGroupSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="common.notify.edit-fail"
+        editorErrorDetail="backend-message"
+        editorErrorContract="save"
+        draft={{
+          id: 7,
+          name: 'ops-group',
+          enable: true,
+          groupLabelsText: 'alertname',
+          groupWait: '30',
+          groupInterval: '300',
+          repeatInterval: '14400'
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-group-save-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-group-save-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-group-save-feedback-title="common.notify.edit-fail"');
+    expect(html).toContain('data-alert-group-save-feedback-detail="backend-message"');
+    expect(html).toContain('data-hz-ui="inline-feedback"');
+    expect(html).toContain('backend-message');
+  });
+
+  it('renders Angular no-selection batch delete feedback outside the editor', () => {
+    const html = renderToStaticMarkup(
+      <AlertGroupSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="请先选择要删除的监控"
+        draft={{
+          name: '',
+          enable: true,
+          groupLabelsText: '',
+          groupWait: '30',
+          groupInterval: '300',
+          repeatInterval: '14400'
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-group-action-feedback-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-group-action-feedback="warning"');
+    expect(html).toContain('data-hz-feedback-tone="warning"');
+    expect(html).toContain('role="alert"');
+    expect(html).toContain('请先选择要删除的监控');
+  });
+
+  it('renders Angular alert group enable failure title/detail outside the editor', () => {
+    const html = renderToStaticMarkup(
+      <AlertGroupSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="common.notify.edit-fail"
+        editorErrorDetail="backend-message"
+        editorErrorContract="enable"
+        draft={{
+          name: '',
+          enable: true,
+          groupLabelsText: '',
+          groupWait: '30',
+          groupInterval: '300',
+          repeatInterval: '14400'
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-group-enable-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-group-enable-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-group-enable-feedback-title="common.notify.edit-fail"');
+    expect(html).toContain('data-alert-group-enable-feedback-detail="backend-message"');
+    expect(html).toContain('backend-message');
+  });
+
+  it('renders Angular alert group delete failure title/detail outside the editor', () => {
+    const html = renderToStaticMarkup(
+      <AlertGroupSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="common.notify.delete-fail"
+        editorErrorDetail="backend-message"
+        editorErrorContract="delete"
+        draft={{
+          name: '',
+          enable: true,
+          groupLabelsText: '',
+          groupWait: '30',
+          groupInterval: '300',
+          repeatInterval: '14400'
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-group-delete-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-group-delete-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-group-delete-feedback-title="common.notify.delete-fail"');
+    expect(html).toContain('data-alert-group-delete-feedback-detail="backend-message"');
+    expect(html).toContain('backend-message');
   });
 });

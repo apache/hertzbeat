@@ -31,20 +31,7 @@ type AlertNoticeRuleFieldsProps = {
   onDraftChange: React.Dispatch<React.SetStateAction<NoticeRuleDraft>>;
 };
 
-const weekdayOptions = [
-  { value: '7', fallback: '周日', key: 'common.week.7' },
-  { value: '1', fallback: '周一', key: 'common.week.1' },
-  { value: '2', fallback: '周二', key: 'common.week.2' },
-  { value: '3', fallback: '周三', key: 'common.week.3' },
-  { value: '4', fallback: '周四', key: 'common.week.4' },
-  { value: '5', fallback: '周五', key: 'common.week.5' },
-  { value: '6', fallback: '周六', key: 'common.week.6' }
-];
-
-function resolveCopy(t: Translator, key: string, fallback: string) {
-  const value = t(key);
-  return value && value !== key ? value : fallback;
-}
+const weekdayValues = ['7', '1', '2', '3', '4', '5', '6'] as const;
 
 function parseCsvValues(value: string) {
   return value
@@ -76,8 +63,8 @@ function updateCsvSelection(
   return orderValues(next, options).join(', ');
 }
 
-function isAllDaysSelected(selectedDays: Set<string>) {
-  return weekdayOptions.every(option => selectedDays.has(option.value));
+function isAllDaysSelected(selectedDays: Set<string>, options: Array<{ value: string }>) {
+  return options.every(option => selectedDays.has(option.value));
 }
 
 function normalizeNoticeType(value?: string | number | null) {
@@ -92,19 +79,39 @@ function filterTemplateOptionsForReceivers(
   receiverOptions: NoticeRuleOption[],
   selectedReceivers: Set<string>
 ) {
-  const selectedReceiverTypes = new Set(
-    receiverOptions
-      .filter(option => selectedReceivers.has(option.value))
-      .map(option => normalizeNoticeType(option.type))
-      .filter(Boolean)
-  );
-  if (selectedReceiverTypes.size === 0) {
+  let activeReceiverType: string | null = null;
+  receiverOptions.forEach(option => {
+    if (selectedReceivers.has(option.value)) {
+      activeReceiverType = normalizeNoticeType(option.type);
+    }
+  });
+  if (activeReceiverType == null) {
     return templateOptions;
   }
   return templateOptions.filter(option => {
     const optionType = normalizeNoticeType(option.type);
-    return option.value === '-1' || !optionType || selectedReceiverTypes.has(optionType);
+    return option.value === '-1' || optionType === activeReceiverType;
   });
+}
+
+function mergeDetailReceiverOptions(draft: NoticeRuleDraft, receiverOptions: NoticeRuleOption[]) {
+  const existingValues = new Set(receiverOptions.map(option => option.value));
+  const receiverNames = Array.isArray(draft.receiverName) ? draft.receiverName : [];
+  const detailOptions = parseCsvValues(draft.receiverIdsText)
+    .map((value, index) => {
+      const label = String(receiverNames[index] || value).trim();
+      return existingValues.has(value) ? null : { value, label: label || value };
+    })
+    .filter((option): option is NoticeRuleOption => Boolean(option));
+  return detailOptions.length > 0 ? [...detailOptions, ...receiverOptions] : receiverOptions;
+}
+
+function buildDetailTemplateOption(draft: NoticeRuleDraft, templateValue: string) {
+  if (templateValue === '-1') {
+    return null;
+  }
+  const label = typeof draft.templateName === 'string' ? draft.templateName.trim() : '';
+  return label ? { value: templateValue, label } : null;
 }
 
 function FieldRow({
@@ -132,7 +139,7 @@ function FieldRow({
   );
 }
 
-function RuleSwitch({
+export function AlertNoticeRuleSwitch({
   checked,
   label,
   row,
@@ -146,18 +153,20 @@ function RuleSwitch({
   onCheckedChange: (checked: boolean) => void;
 }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      data-alert-notice-rule-switch={row}
-      data-testid={testId}
-      onClick={() => onCheckedChange(!checked)}
-      className="inline-flex h-8 items-center gap-2 rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 text-[12px] font-semibold text-[#dbe4f0] transition hover:border-[#4e74f8] hover:bg-[#151b28] focus-visible:border-[#4e74f8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(78,116,248,0.14)]"
+    <span
+      data-alert-notice-rule-single-switch-frame="none"
+      data-alert-notice-rule-single-switch-frame-owner="route-form-contract"
+      className="inline-flex min-h-8 items-center gap-2"
     >
-      <span
-        aria-hidden="true"
-        className={`relative inline-flex h-5 w-9 items-center rounded-[3px] border transition ${
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        data-alert-notice-rule-switch={row}
+        data-testid={testId}
+        onClick={() => onCheckedChange(!checked)}
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-[3px] border transition hover:border-[#5f7df6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(78,116,248,0.22)] ${
           checked ? 'border-[#4e74f8] bg-[#182238]' : 'border-[#394150] bg-[#0d0f14]'
         }`}
       >
@@ -166,9 +175,11 @@ function RuleSwitch({
             checked ? 'translate-x-[17px]' : 'translate-x-[3px]'
           }`}
         />
+      </button>
+      <span data-alert-notice-rule-switch-label={row} className="text-[12px] font-semibold text-[#dbe4f0]">
+        {label}
       </span>
-      <span data-alert-notice-rule-switch-label={row}>{label}</span>
-    </button>
+    </span>
   );
 }
 
@@ -182,22 +193,38 @@ export function AlertNoticeRuleFields({
   onDraftChange
 }: AlertNoticeRuleFieldsProps) {
   const selectedReceivers = new Set(parseCsvValues(draft.receiverIdsText));
+  const effectiveReceiverOptions = mergeDetailReceiverOptions(draft, receiverOptions);
   const selectedDays = new Set(parseCsvValues(draft.daysText));
-  const customPeriod = !isAllDaysSelected(selectedDays);
+  const weekdayOptions = React.useMemo(
+    () => [
+      { value: '7', label: t('common.week.7') },
+      { value: '1', label: t('common.week.1') },
+      { value: '2', label: t('common.week.2') },
+      { value: '3', label: t('common.week.3') },
+      { value: '4', label: t('common.week.4') },
+      { value: '5', label: t('common.week.5') },
+      { value: '6', label: t('common.week.6') }
+    ],
+    [t]
+  );
+  const customPeriod = draft.periodLimit ?? !isAllDaysSelected(selectedDays, weekdayOptions);
   const normalizedTemplateOptions =
     templateOptions.length > 0
       ? templateOptions
-      : [{ value: '-1', label: resolveCopy(t, 'alert.notice.template.preset.true', '系统内置模版') }];
+      : [{ value: '-1', label: t('alert.notice.template.preset.true') }];
   const templateValue = draft.templateId || '-1';
+  const detailTemplateOption = buildDetailTemplateOption(draft, templateValue);
   const filteredTemplateOptions = filterTemplateOptionsForReceivers(
     normalizedTemplateOptions,
     receiverOptions,
     selectedReceivers
   );
   const templateValueExists = filteredTemplateOptions.some(option => option.value === templateValue);
+  const currentTemplateOptions =
+    !templateValueExists && detailTemplateOption ? [detailTemplateOption, ...filteredTemplateOptions] : filteredTemplateOptions;
   const effectiveTemplateOptions =
-    templateValueExists || selectedReceivers.size > 0
-      ? filteredTemplateOptions
+    templateValueExists || selectedReceivers.size > 0 || detailTemplateOption
+      ? currentTemplateOptions
       : [{ value: templateValue, label: templateValue }, ...filteredTemplateOptions];
 
   return (
@@ -205,33 +232,43 @@ export function AlertNoticeRuleFields({
       data-alert-notice-rule-fields="true"
       data-alert-notice-rule-layout="angular-aligned-modal-form"
       data-alert-notice-rule-form="aligned-label-control"
+      data-alert-notice-rule-period-default-days="angular-all-days"
+      data-alert-notice-rule-period-default-days-owner="route-form-contract"
+      data-alert-notice-rule-period-limit-state="angular-independent-isLimit"
+      data-alert-notice-rule-period-limit-state-owner="route-form-contract"
+      data-alert-notice-rule-edit-option-seeding="angular-detail-options"
+      data-alert-notice-rule-edit-option-seeding-owner="route-form-contract"
+      data-alert-notice-rule-time-default="angular-empty-new-rule"
+      data-alert-notice-rule-time-default-owner="route-form-contract"
+      data-alert-notice-rule-optional-period-time="angular-form-validity"
+      data-alert-notice-rule-optional-period-time-owner="route-validation-contract"
       className="space-y-3"
     >
-      <FieldRow row="name" required label={resolveCopy(t, 'alert.notice.rule.name', '策略名称')}>
+      <FieldRow row="name" required label={t('alert.notice.rule.name')}>
         <Input
           data-testid="notice-rule-field-name"
           value={draft.name}
           onChange={event => onDraftChange(prev => ({ ...prev, name: event.target.value }))}
-          placeholder={resolveCopy(t, 'alert.notice.rule.name', '策略名称')}
+          placeholder={t('alert.notice.rule.name')}
         />
       </FieldRow>
 
-      <FieldRow row="receiver" required label={resolveCopy(t, 'alert.notice.receiver.people', '接收对象')}>
+      <FieldRow row="receiver" required label={t('alert.notice.receiver.people')}>
         <HiddenInput data-testid="notice-rule-field-receiverIdsText" value={draft.receiverIdsText} />
         <div
           data-alert-notice-rule-receiver-selector="cold-multi-select"
           className="grid min-h-8 gap-2 rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 py-1"
         >
-          {receiverOptions.length > 0 ? (
+          {effectiveReceiverOptions.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {receiverOptions.map(option => (
+              {effectiveReceiverOptions.map(option => (
                 <Checkbox
                   key={option.value}
                   checked={selectedReceivers.has(option.value)}
                   onChange={event =>
                     onDraftChange(prev => ({
                       ...prev,
-                      receiverIdsText: updateCsvSelection(prev.receiverIdsText, option, event.target.checked, receiverOptions),
+                      receiverIdsText: updateCsvSelection(prev.receiverIdsText, option, event.target.checked, effectiveReceiverOptions),
                       templateId: '-1'
                     }))
                   }
@@ -240,20 +277,28 @@ export function AlertNoticeRuleFields({
               ))}
             </div>
           ) : (
-            <div className="flex h-7 items-center text-[12px] font-semibold text-[#858d9a]">暂无接收对象，请先新增接收对象</div>
+            <div className="flex h-7 items-center text-[12px] font-semibold text-[#858d9a]">
+              {t('alert.notice.rule.receivers.empty')}
+            </div>
           )}
         </div>
       </FieldRow>
 
-      <FieldRow row="template" label={resolveCopy(t, 'alert.notice.template', '通知模板')}>
-        <div data-alert-notice-rule-template-selector="cold-select">
+      <FieldRow row="template" label={t('alert.notice.template')}>
+        <div
+          data-alert-notice-rule-template-selector="cold-select"
+          data-alert-notice-rule-template-type-filter="angular-selected-receiver-type"
+          data-alert-notice-rule-template-type-filter-owner="route-form-contract"
+          data-alert-notice-rule-template-active-type="angular-switch-receiver"
+          data-alert-notice-rule-template-active-type-owner="route-form-contract"
+        >
           <Select
             data-testid="notice-rule-field-templateId"
             value={templateValue}
             onChange={event => onDraftChange(prev => ({ ...prev, templateId: event.target.value }))}
             containerClassName="w-full"
             className="w-full"
-            aria-label={resolveCopy(t, 'alert.notice.template', '通知模板')}
+            aria-label={t('alert.notice.template')}
           >
             {effectiveTemplateOptions.map(option => (
               <option key={option.value} value={option.value}>
@@ -264,49 +309,50 @@ export function AlertNoticeRuleFields({
         </div>
       </FieldRow>
 
-      <FieldRow row="filter-all" required label={resolveCopy(t, 'alert.notice.rule.all', '转发所有')}>
-        <RuleSwitch
+      <FieldRow row="filter-all" required label={t('alert.notice.rule.all')}>
+        <AlertNoticeRuleSwitch
           row="filter-all"
           checked={draft.filterAll}
           onCheckedChange={checked => onDraftChange(prev => ({ ...prev, filterAll: checked }))}
-          label={resolveCopy(t, 'alert.notice.rule.all', '转发所有')}
+          label={t('alert.notice.rule.all')}
           testId="notice-rule-field-filterAll"
         />
       </FieldRow>
 
       {!draft.filterAll ? (
-        <FieldRow row="labels" required label={resolveCopy(t, 'alert.notice.rule.tag', '标签匹配')}>
+        <FieldRow row="labels" required label={t('alert.notice.rule.tag')}>
           <div data-alert-notice-rule-label-selector="searchable-label-record">
             <LabelRecordInput
               name="notice_rule_labels"
               value={draft.labelsText}
               labelOptions={labelOptions}
               keyPlaceholder={labelsPlaceholder}
-              valuePlaceholder="标签值"
+              valuePlaceholder={t('alert.notice.rule.label.value.placeholder')}
               onValueChange={value => onDraftChange(prev => ({ ...prev, labelsText: value }))}
             />
           </div>
         </FieldRow>
       ) : null}
 
-      <FieldRow row="period" label={resolveCopy(t, 'alert.notice.rule.period', '时间周期')}>
-        <RuleSwitch
+      <FieldRow row="period" label={t('alert.notice.rule.period')}>
+        <AlertNoticeRuleSwitch
           row="period-limit"
           checked={customPeriod}
           onCheckedChange={checked =>
             onDraftChange(prev => ({
               ...prev,
-              daysText: checked ? '1, 2, 3, 4, 5' : weekdayOptions.map(option => option.value).join(', ')
+              periodLimit: checked,
+              daysText: checked ? prev.daysText || weekdayValues.join(', ') : weekdayValues.join(', ')
             }))
           }
-          label={customPeriod ? resolveCopy(t, 'alert.notice.rule.period.custom', '自定义') : resolveCopy(t, 'alert.notice.rule.period.no-limit', '无限制')}
+          label={customPeriod ? t('alert.notice.rule.period.custom') : t('alert.notice.rule.period.no-limit')}
           testId="notice-rule-field-periodLimit"
         />
       </FieldRow>
 
       <HiddenInput data-testid="notice-rule-field-daysText" value={draft.daysText} />
       {customPeriod ? (
-        <FieldRow row="days" label={resolveCopy(t, 'alert.notice.rule.period-chose', '选择日期')}>
+        <FieldRow row="days" label={t('alert.notice.rule.period-chose')}>
           <div
             data-alert-notice-rule-days-selector="cold-weekday-checkboxes"
             className="flex flex-wrap gap-2 rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 py-1"
@@ -320,20 +366,20 @@ export function AlertNoticeRuleFields({
                     ...prev,
                     daysText: updateCsvSelection(
                       prev.daysText,
-                      { value: option.value, label: option.fallback },
+                      option,
                       event.target.checked,
-                      weekdayOptions.map(dayOption => ({ value: dayOption.value, label: dayOption.fallback }))
+                      weekdayOptions
                     )
                   }))
                 }
-                label={resolveCopy(t, option.key, option.fallback)}
+                label={option.label}
               />
             ))}
           </div>
         </FieldRow>
       ) : null}
 
-      <FieldRow row="time" label={resolveCopy(t, 'alert.notice.rule.time', '通知时段')}>
+      <FieldRow row="time" label={t('alert.notice.rule.time')}>
         <div data-alert-notice-rule-time-range="shared-cold-time-range">
           <DateTimeRange
             mode="time"
@@ -343,18 +389,25 @@ export function AlertNoticeRuleFields({
             endValue={draft.periodEnd}
             onStartChange={value => onDraftChange(prev => ({ ...prev, periodStart: value }))}
             onEndChange={value => onDraftChange(prev => ({ ...prev, periodEnd: value }))}
-            startLabel={resolveCopy(t, 'alert.notice.rule.time-start', '起始时间')}
-            endLabel={resolveCopy(t, 'alert.notice.rule.time-end', '结束时间')}
+            startLabel={t('alert.notice.rule.time-start')}
+            endLabel={t('alert.notice.rule.time-end')}
+            emptyLabel={t('time.range.unset')}
+            hourLabel={t('time.range.hour')}
+            minuteLabel={t('time.range.minute')}
+            previousMonthLabel={t('time.range.previous-month')}
+            nextMonthLabel={t('time.range.next-month')}
+            clearLabel={t('common.clear')}
+            confirmLabel={t('common.button.ok')}
           />
         </div>
       </FieldRow>
 
-      <FieldRow row="enable" required label={resolveCopy(t, 'common.enable', '启用状态')}>
-        <RuleSwitch
+      <FieldRow row="enable" required label={t('common.enable')}>
+        <AlertNoticeRuleSwitch
           row="enable"
           checked={draft.enable}
           onCheckedChange={checked => onDraftChange(prev => ({ ...prev, enable: checked }))}
-          label={resolveCopy(t, 'common.enable', '启用状态')}
+          label={t('common.enable')}
           testId="notice-rule-field-enable"
         />
       </FieldRow>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ArrowLeft, Clock, Inbox, Network, Pencil, Plus, RefreshCw, Trash2, VolumeX } from 'lucide-react';
+import { HzInlineFeedback, HzPaginationBar } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { SearchRow } from '../ui/search-row';
@@ -14,6 +15,7 @@ import {
 } from '../../lib/alert-manage/query-state';
 import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
 import type { AlertSilenceFormDraft } from '../../lib/alert-silence/controller';
+import type { AlertSilenceManagementContext } from '../../lib/alert-silence/query-state';
 import type { AlertSilenceEvidenceContext } from '../../lib/alert-silence/view-model';
 import type { AlertLabelOptions } from '../../lib/alert-label-options';
 import type { AlertSilence, PageResult } from '../../lib/types';
@@ -32,7 +34,15 @@ type AlertSilenceSurfaceProps = {
   editorSaving: boolean;
   editorMessage: string | null;
   editorError: string | null;
+  editorErrorDetail?: string | null;
+  editorErrorContract?: 'save' | 'enable' | 'delete' | null;
   returnContext?: AlertQueryState;
+  managementContext?: AlertSilenceManagementContext;
+  matchedViewEnabled?: boolean;
+  missingMatchedRuleCount?: number;
+  createdOutsideMatchedViewNotice?: boolean;
+  entityPrefillSource?: 'alerts-common-labels' | 'none';
+  entityPrefillWarning?: string | null;
   evidenceContext?: AlertSilenceEvidenceContext | null;
   draft: AlertSilenceFormDraft;
   labelOptions?: AlertLabelOptions;
@@ -43,6 +53,11 @@ type AlertSilenceSurfaceProps = {
   onRefresh: () => void;
   onSelect: (nextId: number | null) => void;
   onCheckedIdsChange: (nextIds: number[]) => void;
+  pageSizeOptions?: number[];
+  onPageIndexChange?: (nextPageIndex: number) => void;
+  onPageSizeChange?: (nextPageSize: number) => void;
+  onViewAllRules?: () => void;
+  onViewMatchedRules?: () => void;
   onNew: () => void;
   onEdit: (silenceId?: number) => void;
   onSave: () => void;
@@ -87,7 +102,15 @@ export function AlertSilenceSurface({
   editorSaving,
   editorMessage,
   editorError,
+  editorErrorDetail,
+  editorErrorContract,
   returnContext,
+  managementContext,
+  matchedViewEnabled = false,
+  missingMatchedRuleCount = 0,
+  createdOutsideMatchedViewNotice = false,
+  entityPrefillSource = 'none',
+  entityPrefillWarning = null,
   evidenceContext,
   draft,
   labelOptions,
@@ -98,6 +121,11 @@ export function AlertSilenceSurface({
   onRefresh,
   onSelect,
   onCheckedIdsChange,
+  pageSizeOptions = [8, 15, 25],
+  onPageIndexChange,
+  onPageSizeChange,
+  onViewAllRules,
+  onViewMatchedRules,
   onNew,
   onEdit,
   onSave,
@@ -113,6 +141,32 @@ export function AlertSilenceSurface({
   const allVisibleChecked = visibleIds.length > 0 && visibleIds.every(id => checkedIds.includes(id));
   const topologyReturnHref = resolveAlertInternalReturnHref(returnContext?.returnTo);
   const topologyReturnActive = hasAlertTopologyReturnContext(returnContext);
+  const entityContextActive = Boolean(managementContext?.entityId || managementContext?.entityName || managementContext?.returnTo);
+  const matchModeActive = managementContext?.matchMode === 'entity-noise-controls';
+  const managementEntityLabel = managementContext?.entityName || managementContext?.returnLabel || managementContext?.entityId || t('entity.response.context.title');
+  const managementReturnHref = resolveAlertInternalReturnHref(managementContext?.returnTo);
+  const emptyValue = t('common.none');
+  const currentPageIndex = Math.max(0, data.list.pageIndex ?? 0);
+  const currentPageSize = Math.max(1, data.list.pageSize ?? pageSizeOptions[0] ?? 8);
+  const totalElements = data.list.totalElements || 0;
+  const totalPages = Math.max(1, Math.ceil(totalElements / currentPageSize));
+  const currentPage = Math.min(currentPageIndex + 1, totalPages);
+  const pageStart = totalElements === 0 || data.list.content.length === 0 ? 0 : currentPageIndex * currentPageSize + 1;
+  const pageEnd = totalElements === 0 ? 0 : Math.min(totalElements, currentPageIndex * currentPageSize + data.list.content.length);
+  const paginationSummary = t('alert.silence.pagination.summary', {
+    page: currentPage,
+    totalPages,
+    from: pageStart,
+    to: pageEnd,
+    total: totalElements
+  });
+
+  function handlePageJumpChange(value: string) {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed)) return;
+    const nextPageIndex = Math.min(Math.max(parsed, 1), totalPages) - 1;
+    onPageIndexChange?.(nextPageIndex);
+  }
 
   return (
     <>
@@ -155,6 +209,108 @@ export function AlertSilenceSurface({
                       </a>
                     </div>
                   ) : null}
+                  {entityContextActive ? (
+                    <div
+                      data-alert-silence-entity-context="angular-entity-context-bar"
+                      data-alert-silence-entity-context-owner="hertzbeat-ui-inline-feedback"
+                      className="mt-4"
+                    >
+                      <HzInlineFeedback
+                        tone="info"
+                        title={managementEntityLabel}
+                        meta={t('entity.response.context.title')}
+                        variant="embedded"
+                      />
+                    </div>
+                  ) : null}
+                  {matchModeActive ? (
+                    <div
+                      data-alert-silence-match-mode="angular-entity-noise-controls"
+                      data-alert-silence-match-mode-owner="hertzbeat-ui-inline-feedback"
+                      data-alert-silence-match-view={matchedViewEnabled ? 'matched' : 'all'}
+                      data-alert-silence-matching-rule-count={managementContext?.matchingRuleIds.length ?? 0}
+                      data-alert-silence-missing-rule-count={missingMatchedRuleCount}
+                      className="mt-3 rounded-[3px] border border-[#303743] bg-[#101217] px-3 py-2"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
+                            {t('entity.noise-controls.management.label')}
+                          </div>
+                          <div className="mt-1 text-[13px] font-semibold text-[#eef2f7]">
+                            {matchedViewEnabled
+                              ? t('entity.noise-controls.management.title.matched')
+                              : t('entity.noise-controls.management.title.global')}
+                          </div>
+                          {matchedViewEnabled && (managementContext?.matchingRuleIds.length ?? 0) === 0 ? (
+                            <div className="mt-1 text-[12px] leading-5 text-[#a9b0bb]">{t('entity.noise-controls.management.empty')}</div>
+                          ) : null}
+                          {matchedViewEnabled && missingMatchedRuleCount > 0 ? (
+                            <div className="mt-1 text-[12px] leading-5 text-[#a9b0bb]">
+                              {t('entity.noise-controls.management.missing', { count: missingMatchedRuleCount })}
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {matchedViewEnabled ? (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className={coldButtonClassName}
+                              onClick={onViewAllRules}
+                              data-alert-silence-match-action="view-all"
+                            >
+                              {t('entity.noise-controls.management.view-all')}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className={coldButtonClassName}
+                              onClick={onViewMatchedRules}
+                              data-alert-silence-match-action="view-matched"
+                            >
+                              {t('entity.noise-controls.management.view-matched')}
+                            </Button>
+                          )}
+                          {managementReturnHref ? (
+                            <a
+                              href={managementReturnHref}
+                              data-alert-silence-entity-return="true"
+                              className="inline-flex h-8 items-center rounded-[3px] border border-[#394150] px-3 text-[12px] font-semibold text-[#d8e4ff] hover:border-[#4e74f8] hover:text-white"
+                            >
+                              {t('entity.response.context.return')}
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                  {createdOutsideMatchedViewNotice ? (
+                    <div
+                      data-alert-silence-created-outside-matched="angular-authoring-notice"
+                      data-alert-silence-created-outside-matched-owner="hertzbeat-ui-inline-feedback"
+                      className="mt-3 rounded-[3px] border border-[#303743] bg-[#101217] px-3 py-2"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <HzInlineFeedback
+                          tone="info"
+                          title={t('entity.noise-controls.authoring.created-outside-matched.title')}
+                          meta={t('entity.noise-controls.authoring.created-outside-matched.copy')}
+                          variant="embedded"
+                        />
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className={coldButtonClassName}
+                          onClick={onViewAllRules}
+                          data-alert-silence-created-outside-matched-action="view-all"
+                        >
+                          {t('entity.noise-controls.management.view-all')}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
                   <div data-alert-silence-command-row="standard-equal-buttons" className={coldSilenceVisual.button.row}>
                     <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
                       <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
@@ -169,7 +325,8 @@ export function AlertSilenceSurface({
                       variant="default"
                       className={coldButtonClassName}
                       onClick={onDeleteSelected}
-                      disabled={selectedCount === 0}
+                      data-alert-silence-delete-selected="toolbar"
+                      data-alert-silence-delete-selected-owner="route-no-select-warning"
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                       {t('common.button.delete-batch')}
@@ -180,6 +337,28 @@ export function AlertSilenceSurface({
             </div>
 
             <div data-alert-silence-admin-layout="full-width-admin-list" className="space-y-5">
+              {!editorOpen && (editorError || editorMessage) ? (
+                <HzInlineFeedback
+                  tone={editorError ? 'warning' : 'success'}
+                  title={editorError || editorMessage}
+                  description={
+                    editorErrorContract === 'enable' || editorErrorContract === 'delete'
+                      ? editorErrorDetail
+                      : undefined
+                  }
+                  variant="embedded"
+                  data-alert-silence-action-feedback={editorError ? 'warning' : 'success'}
+                  data-alert-silence-action-feedback-owner="hertzbeat-ui-inline-feedback"
+                  data-alert-silence-enable-failure={editorErrorContract === 'enable' ? 'angular-notify-title-detail' : undefined}
+                  data-alert-silence-enable-failure-owner={editorErrorContract === 'enable' ? 'hertzbeat-ui-inline-feedback' : undefined}
+                  data-alert-silence-enable-feedback-title={editorErrorContract === 'enable' ? 'common.notify.edit-fail' : undefined}
+                  data-alert-silence-enable-feedback-detail={editorErrorContract === 'enable' ? 'backend-message' : undefined}
+                  data-alert-silence-delete-failure={editorErrorContract === 'delete' ? 'angular-notify-title-detail' : undefined}
+                  data-alert-silence-delete-failure-owner={editorErrorContract === 'delete' ? 'hertzbeat-ui-inline-feedback' : undefined}
+                  data-alert-silence-delete-feedback-title={editorErrorContract === 'delete' ? 'common.notify.delete-fail' : undefined}
+                  data-alert-silence-delete-feedback-detail={editorErrorContract === 'delete' ? 'backend-message' : undefined}
+                />
+              ) : null}
               {evidenceContext ? (
                 <section
                   data-alert-silence-evidence-context="signal-route"
@@ -203,7 +382,9 @@ export function AlertSilenceSurface({
                     ) : null}
                   </div>
                   <div className="mt-3 rounded-[3px] border border-[#222a34] bg-[#080a0e] px-3 py-2 font-mono text-[11px] leading-5 text-[#9aa5b5]">
-                    {evidenceContext.labelsText || '-'}
+                    <span data-alert-silence-evidence-labels={evidenceContext.labelsText ? 'provided-labels' : 'localized-fallback'}>
+                      {evidenceContext.labelsText || emptyValue}
+                    </span>
                   </div>
                   <div className="mt-3 grid gap-2 md:grid-cols-3 xl:grid-cols-5">
                     {evidenceContext.rows.map(row => (
@@ -340,6 +521,39 @@ export function AlertSilenceSurface({
                       </tbody>
                     </table>
                   </div>
+                  <div
+                    data-alert-silence-pagination="cold-dense-pagination"
+                    data-alert-silence-pagination-owner="hertzbeat-ui-pagination-bar"
+                  >
+                    <HzPaginationBar
+                      summary={paginationSummary}
+                      pageSizeLabel={t('alert.silence.pagination.page-size')}
+                      pageSizeValue={String(currentPageSize)}
+                      pageSizeOptions={pageSizeOptions.map(value => ({ value: String(value), label: String(value) }))}
+                      pageJumpLabel={t('alert.silence.pagination.page')}
+                      pageJumpValue={String(currentPage)}
+                      pageJumpMax={totalPages}
+                      previousLabel={t('common.previous-page')}
+                      nextLabel={t('common.next-page')}
+                      previousDisabled={currentPageIndex <= 0}
+                      nextDisabled={currentPage >= totalPages}
+                      onPrevious={() => onPageIndexChange?.(Math.max(currentPageIndex - 1, 0))}
+                      onNext={() => onPageIndexChange?.(Math.min(currentPageIndex + 1, totalPages - 1))}
+                      onPageSizeChange={value => onPageSizeChange?.(Number.parseInt(value, 10))}
+                      onPageJumpChange={handlePageJumpChange}
+                      pageJumpInputProps={
+                        {
+                          'data-alert-silence-pagination-page-jump-owner': 'hertzbeat-ui-input'
+                        } as React.ComponentProps<typeof HzPaginationBar>['pageJumpInputProps']
+                      }
+                      pageSizeSelectProps={
+                        {
+                          'data-alert-silence-pagination-page-size-owner': 'hertzbeat-ui-select'
+                        } as React.ComponentProps<typeof HzPaginationBar>['pageSizeSelectProps']
+                      }
+                      className="border-x-0"
+                    />
+                  </div>
                 </div>
               </section>
             </div>
@@ -375,7 +589,20 @@ export function AlertSilenceSurface({
           </div>
         }
       >
-        {editorError ? (
+        {editorErrorContract === 'save' && editorErrorDetail && editorError ? (
+          <HzInlineFeedback
+            tone="critical"
+            title={editorError}
+            description={editorErrorDetail}
+            variant="embedded"
+            className="mb-3 rounded-[3px] border border-[#5d3037] bg-[#1a1013]"
+            data-alert-silence-editor-error-inline="cold-validation"
+            data-alert-silence-save-failure="angular-notify-title-detail"
+            data-alert-silence-save-failure-owner="hertzbeat-ui-inline-feedback"
+            data-alert-silence-save-feedback-title={draft.id ? 'common.notify.edit-fail' : 'common.notify.new-fail'}
+            data-alert-silence-save-feedback-detail="backend-message"
+          />
+        ) : editorError ? (
           <div
             role="alert"
             data-alert-silence-editor-error-inline="cold-validation"
@@ -384,7 +611,21 @@ export function AlertSilenceSurface({
             {editorError}
           </div>
         ) : null}
-        <AlertSilenceAuthoringFields t={t} draft={draft} onDraftChange={onDraftChange} mode="workspace" labelOptions={labelOptions} />
+        <div
+          data-alert-silence-entity-prefill={entityPrefillSource === 'alerts-common-labels' ? 'angular-alert-common-labels' : 'manual'}
+          data-alert-silence-entity-prefill-warning={entityPrefillWarning ? 'true' : undefined}
+        >
+          <AlertSilenceAuthoringFields
+            t={t}
+            draft={draft}
+            onDraftChange={onDraftChange}
+            mode="workspace"
+            labelOptions={labelOptions}
+            prefillTitle={managementContext?.entityId || managementContext?.entityName || managementContext?.returnTo ? t('entity.noise-controls.authoring.silence.title') : undefined}
+            prefillCopy={entityPrefillSource === 'alerts-common-labels' ? t('entity.noise-controls.authoring.silence.prefill-success') : undefined}
+            prefillWarning={entityPrefillWarning}
+          />
+        </div>
       </OverlayDialog>
     </>
   );

@@ -1,6 +1,7 @@
 import type { Label, PageResult } from './types';
 
 type ApiGetter = <T>(url: string) => Promise<T>;
+type AlertLabelListReader = () => Promise<PageResult<Label>>;
 
 export type AlertLabelOptions = {
   keys: string[];
@@ -39,5 +40,10 @@ export function buildAlertLabelOptions(labels: Label[] = []): AlertLabelOptions 
 
 export async function loadAlertLabelOptions(apiGet: ApiGetter): Promise<AlertLabelOptions> {
   const page = await apiGet<PageResult<Label>>('/label?pageIndex=0&pageSize=9999');
+  return buildAlertLabelOptions(page.content || []);
+}
+
+export async function loadAlertLabelOptionsFromFacade(readLabels: AlertLabelListReader): Promise<AlertLabelOptions> {
+  const page = await readLabels();
   return buildAlertLabelOptions(page.content || []);
 }

@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyAlertClosureOperation, buildAlertQueryAfterClosureOperation, loadAlertCenterData } from './controller';
+import {
+  applyAlertClosureOperation,
+  applyAlertClosureOperationFromFacade,
+  buildAlertGroupCloseMutationUrl,
+  buildAlertQueryAfterClosureOperation,
+  clampAlertCenterPageIndexAfterDelete,
+  loadAlertCenterData,
+  loadAlertCenterDataFromFacade
+} from './controller';
 
 describe('alert controller', () => {
   it('loads summary and alert list together', async () => {
@@ -62,6 +70,47 @@ describe('alert controller', () => {
     });
   });
 
+  it('loads alert center data through the alert and entity facade boundary', async () => {
+    const apiFacade = {
+      alerts: {
+        summary: vi.fn().mockResolvedValue({ total: 4 }),
+        groupAlerts: vi.fn().mockResolvedValue({ content: [{ id: 9 }], totalElements: 1, pageIndex: 0, pageSize: 8 })
+      },
+      entities: {
+        detail: vi.fn().mockResolvedValue({
+          noiseControlSummary: {
+            activeSilenceCount: 1,
+            matchingInhibitCount: 0,
+            possibleAlertSuppression: true
+          }
+        })
+      }
+    };
+    const query = {
+      search: 'checkout',
+      status: 'firing',
+      severity: 'critical',
+      entityId: '42',
+      entityName: 'Checkout API',
+      returnTo: '/entities/42'
+    };
+
+    const result = await loadAlertCenterDataFromFacade(apiFacade, query);
+
+    expect(apiFacade.alerts.summary).toHaveBeenCalledWith();
+    expect(apiFacade.alerts.groupAlerts).toHaveBeenCalledWith(query);
+    expect(apiFacade.entities.detail).toHaveBeenCalledWith(42);
+    expect(result).toEqual({
+      summary: { total: 4 },
+      groupAlerts: { content: [{ id: 9 }], totalElements: 1, pageIndex: 0, pageSize: 8 },
+      noiseControlSummary: {
+        activeSilenceCount: 1,
+        matchingInhibitCount: 0,
+        possibleAlertSuppression: true
+      }
+    });
+  });
+
   it('maps OTLP alert closure operations to the existing group-alert mutation endpoints', async () => {
     const apiPut = vi.fn().mockResolvedValue(undefined);
     const apiDelete = vi.fn().mockResolvedValue(undefined);
@@ -90,7 +139,28 @@ describe('alert controller', () => {
     expect(apiDelete).toHaveBeenCalledWith('/alerts/group?ids=9');
   });
 
-  it('builds a post-closure reload query that moves status while preserving evidence context', () => {
+  it('routes card-level alert closure operations through the alert facade', async () => {
+    const apiAlerts = {
+      groupStatus: vi.fn().mockResolvedValue(undefined),
+      groupClose: vi.fn().mockResolvedValue(undefined)
+    };
+
+    await applyAlertClosureOperationFromFacade(apiAlerts, 'acknowledge', 7);
+    await applyAlertClosureOperationFromFacade(apiAlerts, 'resolve', [7, 8]);
+    await applyAlertClosureOperationFromFacade(apiAlerts, 'reopen', 9);
+    await applyAlertClosureOperationFromFacade(apiAlerts, 'delete', 10);
+
+    expect(apiAlerts.groupStatus).toHaveBeenNthCalledWith(1, 'acknowledged', 7);
+    expect(apiAlerts.groupStatus).toHaveBeenNthCalledWith(2, 'resolved', [7, 8]);
+    expect(apiAlerts.groupStatus).toHaveBeenNthCalledWith(3, 'firing', 9);
+    expect(apiAlerts.groupClose).toHaveBeenCalledWith(10);
+  });
+
+  it('uses runtime fallback copy when alert group mutation ids are invalid', () => {
+    expect(() => buildAlertGroupCloseMutationUrl([])).toThrow('Alert group id is required');
+  });
+
+  it('builds a post-closure reload query that preserves filters and evidence context like Angular reloads', () => {
     const evidenceQuery = {
       search: 'checkout',
       status: 'firing',
@@ -113,21 +183,57 @@ describe('alert controller', () => {
       returnTo: '/log/manage?traceId=trace-123'
     };
 
-    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'acknowledge')).toEqual({
-      ...evidenceQuery,
-      status: 'acknowledged'
+    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'acknowledge')).toEqual(evidenceQuery);
+    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'recover')).toEqual(evidenceQuery);
+    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'resolve')).toEqual(evidenceQuery);
+    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'unacknowledge')).toEqual(evidenceQuery);
+    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'reopen')).toEqual(evidenceQuery);
+    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'close')).toEqual(evidenceQuery);
+    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'delete')).toEqual(evidenceQuery);
+  });
+
+  it('clamps the alert center page index after delete using Angular updatePageIndex semantics', () => {
+    expect(
+      clampAlertCenterPageIndexAfterDelete(
+        {
+          search: 'checkout',
+          status: '',
+          severity: '',
+          pageIndex: 3,
+          pageSize: 8,
+          entityId: '',
+          entityName: '',
+          returnTo: ''
+        },
+        25,
+        2
+      )
+    ).toEqual({
+      search: 'checkout',
+      status: '',
+      severity: '',
+      pageIndex: 2,
+      pageSize: 8,
+      entityId: '',
+      entityName: '',
+      returnTo: ''
     });
-    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'recover')).toEqual({
-      ...evidenceQuery,
-      status: 'resolved'
-    });
-    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'reopen')).toEqual({
-      ...evidenceQuery,
-      status: 'firing'
-    });
-    expect(buildAlertQueryAfterClosureOperation(evidenceQuery, 'close')).toEqual({
-      ...evidenceQuery,
-      status: ''
-    });
+
+    expect(
+      clampAlertCenterPageIndexAfterDelete(
+        {
+          search: '',
+          status: '',
+          severity: '',
+          pageIndex: 1,
+          pageSize: 15,
+          entityId: '',
+          entityName: '',
+          returnTo: ''
+        },
+        1,
+        1
+      ).pageIndex
+    ).toBe(0);
   });
 });

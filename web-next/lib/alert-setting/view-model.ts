@@ -29,6 +29,11 @@ function firstText(...values: Array<string | null | undefined>) {
   return values.map(value => value?.trim()).find((value): value is string => Boolean(value));
 }
 
+function formatAlertSettingFact(value: string | null | undefined, emptyValue: string) {
+  const text = value?.trim() ?? '';
+  return text || emptyValue;
+}
+
 function buildAlertSettingPrefillLabels(signal: string | undefined, context: SignalRouteContext) {
   return [
     ['hertzbeat.signal', signal],
@@ -109,12 +114,13 @@ export function buildAlertSettingRows(
   t: Translator,
   formatTime: (value?: number | string | null) => string
 ) {
+  const emptyValue = t('common.none');
   return items.map(item => ({
     key: String(item.id),
     name: item.name || t('setting.define.item.fallback'),
     type: formatAlertDefineType(item.type, t),
-    expr: item.expr || '-',
-    template: item.template || '-',
+    expr: formatAlertSettingFact(item.expr, emptyValue),
+    template: formatAlertSettingFact(item.template, emptyValue),
     labels: Object.entries(item.labels || {}).map(([key, value]) => `${key}:${value}`),
     enabledLabel: item.enable ? t('common.enabled') : t('common.disabled'),
     updatedAt: formatTime(item.gmtUpdate || item.gmtCreate || null)

@@ -10,7 +10,7 @@ import { getNoticeReceiverVisibleFieldKeys, isNoticeReceiverFieldRequired, getAl
 import type { NoticeReceiverDraft } from '../../lib/alert-notice/controller';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
-type ReceiverFieldKey = Exclude<keyof NoticeReceiverDraft, 'id' | 'name' | 'type'>;
+export type ReceiverFieldKey = Exclude<keyof NoticeReceiverDraft, 'id' | 'name' | 'type'>;
 
 const NOTICE_RECEIVER_TYPE_OPTIONS = [
   { value: '0', labelKey: 'alert.notice.type.sms' },
@@ -31,9 +31,9 @@ const NOTICE_RECEIVER_TYPE_OPTIONS = [
 ] as const;
 
 const NOTICE_RECEIVER_WEBHOOK_AUTH_OPTIONS = [
-  { value: 'None', label: 'None' },
-  { value: 'Basic', label: 'Basic' },
-  { value: 'Bearer', label: 'Bearer' }
+  { value: 'None', labelKey: 'alert.notice.type.webhook-auth-type.none' },
+  { value: 'Basic', labelKey: 'alert.notice.type.webhook-auth-type.basic' },
+  { value: 'Bearer', labelKey: 'alert.notice.type.webhook-auth-type.bearer' }
 ] as const;
 
 const NOTICE_RECEIVER_LARK_RECEIVE_TYPE_OPTIONS = [
@@ -160,20 +160,27 @@ function getReceiverFieldPlaceholderKey(field: ReceiverFieldKey, draft: NoticeRe
   }
 }
 
-function normalizeReceiverFieldValue(draft: NoticeReceiverDraft, field: ReceiverFieldKey, value: string) {
+export function normalizeReceiverFieldValue(draft: NoticeReceiverDraft, field: ReceiverFieldKey, value: string) {
   if (field === 'wechatId' && draft.type === '4') {
     const index = value.indexOf('key=');
-    return index >= 0 ? value.slice(index + 4) : value;
+    return index > 0 ? value.slice(index + 4) : value;
   }
   if (field === 'accessToken' && draft.type === '5') {
     const index = value.indexOf('access_token=');
-    return index >= 0 ? value.slice(index + 13) : value;
+    return index > 0 ? value.slice(index + 13) : value;
   }
   if (field === 'accessToken' && draft.type === '6') {
     const index = value.indexOf('hook');
-    return index >= 0 ? value.slice(index + 5) : value;
+    return index > 0 ? value.slice(index + 5) : value;
   }
   return value;
+}
+
+function getTokenNormalizerContract(draft: NoticeReceiverDraft, field: ReceiverFieldKey) {
+  if (field === 'wechatId' && draft.type === '4') return 'wecom-robot-key';
+  if (field === 'accessToken' && draft.type === '5') return 'ding-access-token';
+  if (field === 'accessToken' && draft.type === '6') return 'lark-robot-hook';
+  return undefined;
 }
 
 function ReceiverEditorField({
@@ -215,7 +222,7 @@ function ReceiverEditorField({
         >
           {NOTICE_RECEIVER_WEBHOOK_AUTH_OPTIONS.map(option => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {t(option.labelKey)}
             </option>
           ))}
         </Select>
@@ -253,12 +260,15 @@ function ReceiverEditorField({
           ? 'tel'
           : field === 'agentId'
             ? 'number'
-            : 'text';
+          : 'text';
+  const tokenNormalizer = getTokenNormalizerContract(draft, field);
 
   return (
     <ReceiverFieldRow row={field} label={label} required={required}>
       <Input
         data-testid={`notice-receiver-field-${field}`}
+        data-alert-notice-receiver-token-normalizer={tokenNormalizer}
+        data-alert-notice-receiver-token-normalizer-event={tokenNormalizer ? 'on-change' : undefined}
         value={String(draft[field] ?? '')}
         onChange={event => onChange(field, normalizeReceiverFieldValue(draft, field, event.target.value))}
         placeholder={placeholder}
@@ -305,6 +315,8 @@ export function AlertNoticeReceiverFields({
       <ReceiverFieldRow row="type" label={t('alert.notice.receiver.type')} required>
         <Select
           data-alert-notice-receiver-select="type"
+          data-alert-notice-receiver-default-type="angular-email"
+          data-alert-notice-receiver-default-type-owner="route-form-contract"
           data-testid="notice-receiver-field-type"
           value={draft.type}
           onChange={event => onDraftChange(prev => ({ ...prev, type: event.target.value }))}

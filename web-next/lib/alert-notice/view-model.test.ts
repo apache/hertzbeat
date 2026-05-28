@@ -9,7 +9,8 @@ const t = createTranslatorMock({
     'alert.notice.templates.title': 'Templates',
     'alert.notice.lanes.receivers.title': 'Receivers',
     'alert.notice.lanes.rules.title': 'Rules',
-    'alert.notice.lanes.templates.title': 'Templates'
+    'alert.notice.lanes.templates.title': 'Templates',
+    'alert.notice.template.validation.type': 'Notice type is required'
   }
 });
 const zhT = createTranslatorMock({
@@ -20,7 +21,8 @@ const zhT = createTranslatorMock({
     'alert.notice.templates.title': '模板',
     'alert.notice.lanes.receivers.title': '接收人',
     'alert.notice.lanes.rules.title': '规则',
-    'alert.notice.lanes.templates.title': '模板'
+    'alert.notice.lanes.templates.title': '模板',
+    'alert.notice.template.validation.type': '通知方式为必填项'
   }
 });
 
@@ -123,6 +125,49 @@ describe('alert notice view model', () => {
     ]);
   });
 
+  it('renders missing alert notice receiver targets with the localized empty fallback', () => {
+    expect(
+      buildNoticeReceiverRows(
+        [
+          {
+            id: 8,
+            name: 'empty receiver',
+            type: 7,
+            tgBotToken: ' ',
+            tgUserId: '',
+            gmtUpdate: 1712730000000
+          }
+        ] as any,
+        zhT,
+        () => '2026-04-10 18:00:00',
+        'zh-CN'
+      )
+    ).toEqual([
+      { key: '8', title: 'empty receiver', copy: '无', meta: 'Telegram 机器人 · 更新时间 2026-04-10 18:00:00' }
+    ]);
+  });
+
+  it('renders missing alert notice receiver types with the localized empty fallback', () => {
+    expect(
+      buildNoticeReceiverRows(
+        [
+          {
+            id: 9,
+            name: 'receiver without type',
+            type: ' ',
+            email: 'ops@example.com',
+            gmtUpdate: 1712730000000
+          }
+        ] as any,
+        zhT,
+        () => '2026-04-10 18:00:00',
+        'zh-CN'
+      )
+    ).toEqual([
+      { key: '9', title: 'receiver without type', copy: 'ops@example.com', meta: '无 · 更新时间 2026-04-10 18:00:00' }
+    ]);
+  });
+
   it('builds and validates receiver drafts', () => {
     expect(buildNoticeReceiverDraft({ id: 7, name: 'ops-email', type: 1, email: 'ops@example.com', hookAuthType: 'Basic', slackWebHookUrl: 'https://hooks.slack.example' } as any)).toMatchObject({
       id: 7,
@@ -159,11 +204,14 @@ describe('alert notice view model', () => {
       appId: ''
     });
 
+    expect(buildNoticeReceiverDraft(null).type).toBe('1');
+    expect(getNoticeReceiverVisibleFieldKeys(buildNoticeReceiverDraft(null))).toEqual(['email']);
     expect(getNoticeReceiverVisibleFieldKeys({ ...buildNoticeReceiverDraft(null), type: '2', hookAuthType: 'None' })).toEqual(['hookUrl', 'hookAuthType']);
     expect(getNoticeReceiverVisibleFieldKeys({ ...buildNoticeReceiverDraft(null), type: '2', hookAuthType: 'Basic' })).toEqual(['hookUrl', 'hookAuthType', 'hookAuthToken']);
     expect(getNoticeReceiverVisibleFieldKeys({ ...buildNoticeReceiverDraft(null), type: '14', larkReceiveType: '1' })).toEqual(['appId', 'appSecret', 'larkReceiveType', 'chatId']);
 
     expect(validateNoticeReceiverDraft(buildNoticeReceiverDraft(null), t)).toBe('Receiver name is required');
+    expect(validateNoticeReceiverDraft({ ...buildNoticeReceiverDraft(null), name: 'ops-email' }, t)).toBe('Email is required');
     expect(validateNoticeReceiverDraft({ ...buildNoticeReceiverDraft(null), name: 'ops-email', type: '2', hookAuthType: 'None', hookUrl: '' }, t)).toBe('Webhook URL is required');
     expect(
       validateNoticeReceiverDraft(
@@ -203,8 +251,10 @@ describe('alert notice view model', () => {
     });
 
     expect(validateNoticeTemplateDraft(buildNoticeTemplateDraft(null), t)).toBe('Template name is required');
-    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: 'Email default' }, t)).toBe('Template content is required');
-    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: 'Email default', content: 'hello' }, t)).toBeNull();
+    expect(buildNoticeTemplateDraft(null).type).toBe('');
+    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: 'Email default' }, t)).toBe('Notice type is required');
+    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: 'Email default', type: '1' }, t)).toBe('Template content is required');
+    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: 'Email default', type: '1', content: 'hello' }, t)).toBeNull();
   });
 
   it('keeps plain text template previews readable and bounded', () => {
@@ -224,6 +274,18 @@ describe('alert notice view model', () => {
     expect(row.copy.startsWith('This is a plain text template preview')).toBe(true);
     expect(row.copy.endsWith('...')).toBe(true);
     expect(row.copy.length).toBeLessThanOrEqual(140);
+  });
+
+  it('renders missing alert notice template previews with the localized empty fallback', () => {
+    expect(buildNoticeTemplateRows([{
+      id: 12,
+      name: 'Empty template',
+      preset: false,
+      content: '   ',
+      gmtUpdate: 1712730000000
+    }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')).toEqual([
+      { key: '12', title: 'Empty template', copy: '无', meta: '用户自定义模版 · 更新时间 2026-04-10 18:00:00' }
+    ]);
   });
 
   it('sanitizes html, freemarker, markdown, and json template source into plain text previews', () => {
@@ -249,7 +311,7 @@ describe('alert notice view model', () => {
   it('builds rule rows and validates rule drafts', () => {
     expect(
       buildNoticeRuleRows(
-        [{ id: 5, name: 'PagerDuty critical', enable: true, receiverName: ['ops-email'], templateName: 'Default', gmtUpdate: 1712730000000 }] as any,
+        [{ id: 5, name: 'PagerDuty critical', enable: true, receiverName: ['ops-email'], templateId: 9, templateName: 'Default', gmtUpdate: 1712730000000 }] as any,
         t,
         () => '2026-04-10 18:00:00',
         'en-US'
@@ -261,7 +323,34 @@ describe('alert notice view model', () => {
     expect(validateNoticeRuleDraft({ name: '', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, t)).toBe('Rule name is required');
     expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, t)).toBe('Receivers are required');
     expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: false, labelsText: '', daysText: '1,2,3,4,5', periodStart: '09:00', periodEnd: '18:00' }, t)).toBe('Labels are required');
-    expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '1,2,3,4,5', periodStart: '09:00', periodEnd: '18:00' }, t)).toBeNull();
+    expect(validateNoticeRuleDraft({ name: 'PagerDuty critical', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, t)).toBeNull();
+  });
+
+  it('uses the Angular template-id fallback for rule row display', () => {
+    const [row] = buildNoticeRuleRows(
+      [{ id: 6, name: 'Preset rule', enable: true, receiverName: ['ops-email'], templateId: null, templateName: 'Stale template', gmtUpdate: 1712730000000 }] as any,
+      t,
+      () => '2026-04-10 18:00:00',
+      'en-US'
+    );
+
+    expect(row.meta).toBe('Template · Updated 2026-04-10 18:00:00');
+    expect(row.meta).not.toContain('Stale template');
+  });
+
+  it('localizes alert notice validation and default row labels for chinese workspaces', () => {
+    expect(validateNoticeReceiverDraft(buildNoticeReceiverDraft(null), zhT)).toBe('接收人名称为必填项');
+    expect(validateNoticeTemplateDraft(buildNoticeTemplateDraft(null), zhT)).toBe('模板名称为必填项');
+    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: '邮件模板' }, zhT)).toBe('通知方式为必填项');
+    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: '邮件模板', type: '1' }, zhT)).toBe('模板内容为必填项');
+    expect(validateNoticeRuleDraft({ name: '', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBe('规则名称为必填项');
+    expect(validateNoticeRuleDraft({ name: '关键通知', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBe('接收人为必填项');
+    expect(validateNoticeRuleDraft({ name: '关键通知', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: false, labelsText: '', daysText: '1,2,3,4,5', periodStart: '09:00', periodEnd: '18:00' }, zhT)).toBe('匹配标签为必填项');
+    expect(validateNoticeRuleDraft({ name: '关键通知', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBeNull();
+
+    expect(buildNoticeReceiverRows([{ id: 8, name: '', type: 1, email: '', gmtUpdate: 1712730000000 }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')[0].title).toBe('接收人');
+    expect(buildNoticeTemplateRows([{ id: 9, name: '', preset: false, content: '', gmtUpdate: 1712730000000 }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')[0].title).toBe('模板');
+    expect(buildNoticeRuleRows([{ id: 10, name: '', enable: false, receiverName: [], templateName: '', gmtUpdate: 1712730000000 }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')[0].title).toBe('规则');
   });
 
   it('builds notice-policy evidence context from a three-signal handoff route', () => {

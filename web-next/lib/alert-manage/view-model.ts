@@ -32,10 +32,13 @@ type AlertGroupCardAlert = {
   key: string;
   title: string;
   status: string;
+  statusTone: 'critical' | 'warning' | 'success' | 'neutral';
   timeLabel: string;
   timeValue: string;
   triggerSummary?: string;
   labels: string[];
+  annotations: Array<{ key: string; value: string }>;
+  timeRows: Array<{ key: 'first' | 'last' | 'end'; label: string; value: string }>;
 };
 
 export type AlertRuleDialogMode = 'silence' | 'inhibit';
@@ -157,6 +160,14 @@ export function buildAlertMetrics(summary: AlertSummary, t: Translator) {
   ];
 }
 
+function formatAlertFact(value: string | number | null | undefined, emptyValue: string) {
+  return String(value ?? '').trim() || emptyValue;
+}
+
+function buildAlertIdentityLabel(alert: SingleAlert, emptyValue: string) {
+  return formatAlertFact(alert.labels?.service || alert.labels?.job || alert.labels?.instance, emptyValue);
+}
+
 export function buildAlertRows(
   alerts: PageResult<SingleAlert>,
   t: Translator,
@@ -165,10 +176,11 @@ export function buildAlertRows(
   formatTime: (value?: number | string | null) => string,
   defaultAlertTitle: string
 ): AlertRow[] {
+  const emptyValue = t('common.none');
   return (alerts.content || []).map(alert => ({
     key: String(alert.id),
     title: alert.content || alert.annotations?.summary || defaultAlertTitle,
-    copy: `${alert.labels?.service || alert.labels?.job || alert.labels?.instance || '-'} · ${statusLabel(alert.status)}`,
+    copy: `${buildAlertIdentityLabel(alert, emptyValue)} · ${statusLabel(alert.status)}`,
     meta: `${severityLabel(alert)} · ${formatTime(alert.gmtUpdate || alert.gmtCreate || null)}`
   }));
 }
@@ -181,37 +193,40 @@ export function buildSelectedAlertRows(
   formatTime: (value?: number | string | null) => string,
   defaultAlertTitle: string
 ): SummaryRow[] {
+  const emptyValue = t('common.none');
   if (!selectedAlert) {
     return [
       {
         title: t('alert.center.selected.empty.title'),
         copy: t('alert.center.selected.empty.copy'),
-        meta: '-'
+        meta: emptyValue
       }
     ];
   }
 
+  const triggerCount = selectedAlert.triggerTimes || 0;
+
   return [
     {
       title: selectedAlert.content || selectedAlert.annotations?.summary || defaultAlertTitle,
-      copy: `${selectedAlert.labels?.service || selectedAlert.labels?.job || selectedAlert.labels?.instance || '-'} · ${statusLabel(selectedAlert.status)}`,
+      copy: `${buildAlertIdentityLabel(selectedAlert, emptyValue)} · ${statusLabel(selectedAlert.status)}`,
       meta: severityLabel(selectedAlert)
     },
     {
       title: t('alert.center.selected.fingerprint'),
-      copy: `${selectedAlert.fingerprint || '-'} · ${selectedAlert.creator || '-'}`,
+      copy: `${formatAlertFact(selectedAlert.fingerprint, emptyValue)} · ${formatAlertFact(selectedAlert.creator, emptyValue)}`,
       meta: `${t('common.updated')} ${formatTime(selectedAlert.gmtUpdate || selectedAlert.gmtCreate || null)}`
     },
     {
       title: t('alert.center.selected.trigger-window'),
-      copy: `${selectedAlert.triggerTimes || 0} ${t('alert.center.selected.triggers')} · ${formatTime(selectedAlert.startAt || selectedAlert.activeAt || null)}`,
+      copy: `${t('alert.center.selected.trigger-count', { count: triggerCount })} · ${formatTime(selectedAlert.startAt || selectedAlert.activeAt || null)}`,
       meta: `${t('common.end')} ${formatTime(selectedAlert.endAt || selectedAlert.startAt || selectedAlert.activeAt || null)}`
     }
   ];
 }
 
 function isChineseTranslator(t: Translator): boolean {
-  return t('common.refresh') === '刷新' || t('alert.workbench.kicker') === '告警中心';
+  return t('common.locale-code') === 'zh-CN';
 }
 
 function buildEntityContextStatusLabel(status: string, t: Translator): string {
@@ -219,21 +234,20 @@ function buildEntityContextStatusLabel(status: string, t: Translator): string {
   if (normalizedStatus === 'firing') return t('alert.status.firing');
   if (normalizedStatus === 'acknowledged') return t('alert.status.acknowledged');
   if (normalizedStatus === 'resolved') return t('alert.status.resolved');
-  return status;
+  return t('alert.center.context.status.unknown', { status });
 }
 
 function buildEntityContextSeverityLabel(severity: string, t: Translator): string {
   const normalizedSeverity = severity.trim().toLowerCase();
-  const chinese = isChineseTranslator(t);
 
   if (normalizedSeverity === 'critical') return t('alert.center.metrics.critical');
   if (normalizedSeverity === 'warning' || normalizedSeverity === 'warn') return t('alert.center.metrics.warning');
   if (normalizedSeverity === 'emergency' || normalizedSeverity === 'fatal') return t('alert.center.metrics.emergency');
-  if (normalizedSeverity === 'error') return chinese ? '错误' : 'Error';
-  if (normalizedSeverity === 'info') return chinese ? '信息' : 'Info';
-  if (normalizedSeverity === 'unknown') return chinese ? '未知' : 'Unknown';
+  if (normalizedSeverity === 'error') return t('alert.center.metrics.error');
+  if (normalizedSeverity === 'info') return t('alert.center.metrics.info');
+  if (normalizedSeverity === 'unknown') return t('alert.center.metrics.unknown');
 
-  return severity;
+  return t('alert.center.context.severity.unknown', { severity });
 }
 
 export function buildAlertEntityContextSummary(query: AlertQueryState, t: Translator): string {
@@ -285,46 +299,46 @@ function formatAlertContextInstant(value: string, locale: string, timeZone?: str
   }
 }
 
-function formatAlertRefresh(value: string): string {
+function formatAlertRefresh(value: string, t: Translator): string {
   const normalized = normalizeAlertContextValue(value);
   if (!normalized) {
     return '';
   }
   if (/^\d+$/.test(normalized)) {
-    return `${normalized}s`;
+    return t('common.duration.seconds', { value: normalized });
   }
   return normalized;
 }
 
-function buildAlertSourceCopy(source: string, chinese: boolean): { copy: string; meta: string } {
+function buildAlertSourceCopy(source: string, t: Translator): { copy: string; meta: string } {
   const normalized = source.trim().toLowerCase();
   if (normalized === 'monitor') {
     return {
-      copy: chinese ? '传统监控' : 'Traditional monitor',
-      meta: chinese ? '监控中心上下文' : 'Monitor center context'
+      copy: t('alert.center.context.source.monitor.copy'),
+      meta: t('alert.center.context.source.monitor.meta')
     };
   }
   if (normalized === 'topology') {
     return {
-      copy: chinese ? '拓扑' : 'Topology',
-      meta: chinese ? '拓扑影响面上下文' : 'Topology impact context'
+      copy: t('alert.center.context.source.topology.copy'),
+      meta: t('alert.center.context.source.topology.meta')
     };
   }
   if (normalized === 'otlp') {
     return {
-      copy: chinese ? 'OTLP 三信号' : 'OTLP signals',
-      meta: chinese ? '指标、日志和链路上下文' : 'Metric, log, and trace context'
+      copy: t('alert.center.context.source.otlp.copy'),
+      meta: t('alert.center.context.source.otlp.meta')
     };
   }
   if (normalized === 'alert' || normalized.startsWith('alert:')) {
     return {
-      copy: chinese ? '告警事件' : 'Alert event',
-      meta: chinese ? '告警证据上下文' : 'Alert evidence context'
+      copy: t('alert.center.context.source.alert.copy'),
+      meta: t('alert.center.context.source.alert.meta')
     };
   }
   return {
-    copy: source,
-    meta: chinese ? '继承的证据来源' : 'Inherited evidence source'
+    copy: t('alert.center.context.source.unknown.copy', { source }),
+    meta: t('alert.center.context.source.default.meta')
   };
 }
 
@@ -371,15 +385,15 @@ export function buildAlertEvidenceContextRows(query: AlertQueryState, t: Transla
       : '';
     const metaParts = [
       timeRange && bounds ? bounds : '',
-      refresh ? `${chinese ? '刷新' : 'Refresh'} ${formatAlertRefresh(refresh)}` : '',
-      live ? (live.toLowerCase() === 'false' ? (chinese ? '已暂停' : 'paused') : (chinese ? '实时' : 'live')) : '',
+      refresh ? t('alert.center.context.time.refresh', { refresh: formatAlertRefresh(refresh, t) }) : '',
+      live ? (live.toLowerCase() === 'false' ? t('alert.center.context.time.paused') : t('alert.center.context.time.live')) : '',
       timezone
     ].filter(Boolean);
 
     rows.push({
       key: 'time',
-      title: chinese ? '时间范围' : 'Time range',
-      copy: timeRange || bounds || (chinese ? '继承时间窗口' : 'Inherited time window'),
+      title: t('alert.center.context.time.title'),
+      copy: timeRange || bounds || t('alert.center.context.time.inherited'),
       meta: metaParts.join(' · ')
     });
   }
@@ -391,18 +405,18 @@ export function buildAlertEvidenceContextRows(query: AlertQueryState, t: Transla
   if (monitorName || monitorId || monitorApp || monitorInstance) {
     rows.push({
       key: 'monitor',
-      title: chinese ? '监控实例' : 'Monitor',
+      title: t('alert.center.context.monitor.title'),
       copy: monitorName || monitorInstance || monitorId,
-      meta: [monitorApp, monitorInstance, monitorId ? `monitorId ${monitorId}` : ''].filter(Boolean).join(' · ')
+      meta: [monitorApp, monitorInstance, monitorId ? t('alert.center.context.monitor.id-meta', { monitorId }) : ''].filter(Boolean).join(' · ')
     });
   }
 
   const source = normalizeAlertContextValue(query.source);
   if (source) {
-    const sourceCopy = buildAlertSourceCopy(source, chinese);
+    const sourceCopy = buildAlertSourceCopy(source, t);
     rows.push({
       key: 'source',
-      title: chinese ? '采集来源' : 'Source',
+      title: t('alert.center.context.source.title'),
       copy: sourceCopy.copy,
       meta: sourceCopy.meta
     });
@@ -413,9 +427,9 @@ export function buildAlertEvidenceContextRows(query: AlertQueryState, t: Transla
   if (traceId || spanId) {
     rows.push({
       key: 'trace',
-      title: chinese ? '链路上下文' : 'Trace context',
+      title: t('alert.center.context.trace.title'),
       copy: traceId || spanId,
-      meta: spanId ? `spanId ${spanId}` : (chinese ? 'traceId 继承' : 'traceId inherited')
+      meta: spanId ? t('alert.center.context.trace.span-meta', { spanId }) : t('alert.center.context.trace.inherited')
     });
   }
 
@@ -451,11 +465,11 @@ export function buildAlertNoiseControlSummary(
           inhibitCount: summary.matchingInhibitCount
         }),
     silenceActionLabel:
-      suppressed && summary.activeSilenceCount === 0
+      summary.possibleAlertSuppression && summary.activeSilenceCount === 0
         ? t('entity.detail.noise-controls.manage-silence-create')
         : t('entity.detail.noise-controls.manage-silence'),
     inhibitActionLabel:
-      suppressed && summary.matchingInhibitCount === 0
+      summary.possibleAlertSuppression && summary.matchingInhibitCount === 0
         ? t('entity.detail.noise-controls.manage-inhibit-create')
         : t('entity.detail.noise-controls.manage-inhibit')
   };
@@ -576,7 +590,6 @@ export function buildAlertEvidenceClosureRows(
   group: GroupAlert | null | undefined,
   t: Translator
 ): AlertEvidenceClosureRow[] {
-  const chinese = isChineseTranslator(t);
   const serviceName = resolveAlertClosureService(query, group);
   const signalContext = buildAlertClosureSignalContext(query, serviceName, group);
   const metricsParams = new URLSearchParams();
@@ -596,49 +609,37 @@ export function buildAlertEvidenceClosureRows(
   return [
     {
       key: 'entity',
-      title: chinese ? '实体详情' : 'Entity detail',
-      copy: query.entityName || query.entityId || serviceName || (chinese ? '按服务名查找实体' : 'Search entity by service'),
-      meta: chinese ? '确认告警影响的 HertzBeat 实体' : 'Open the HertzBeat entity affected by this alert',
+      title: t('alert.center.evidence.entity.title'),
+      copy: query.entityName || query.entityId || serviceName || t('alert.center.evidence.entity.fallback'),
+      meta: t('alert.center.evidence.entity.meta'),
       href: buildSignalEntityHref(signalContext, serviceName)
     },
     {
       key: 'metrics',
-      title: chinese ? '指标证据' : 'Metric evidence',
-      copy: serviceName || (chinese ? '按告警上下文查看指标' : 'Inspect metrics by alert context'),
-      meta: chinese ? '查看同一服务、实体和时间范围的指标' : 'Inspect metrics in the same service, entity, and time range',
+      title: t('alert.center.evidence.metrics.title'),
+      copy: serviceName || t('alert.center.evidence.metrics.fallback'),
+      meta: t('alert.center.evidence.metrics.meta'),
       href: withOptionalQuery('/ingestion/otlp/metrics', metricsParams)
     },
     {
       key: 'logs',
-      title: chinese ? '日志证据' : 'Log evidence',
-      copy: serviceName ? `service.name = "${serviceName}"` : (chinese ? '按告警上下文查看日志' : 'Inspect logs by alert context'),
-      meta: hasTraceContext
-        ? chinese
-          ? '按 traceId/spanId 查看相关日志'
-          : 'Inspect logs by traceId/spanId'
-        : chinese
-          ? '查看同一服务的日志和链路字段'
-          : 'Inspect logs and trace fields for the same service',
+      title: t('alert.center.evidence.logs.title'),
+      copy: serviceName ? `service.name = "${serviceName}"` : t('alert.center.evidence.logs.fallback'),
+      meta: hasTraceContext ? t('alert.center.evidence.logs.meta.trace') : t('alert.center.evidence.logs.meta.service'),
       href: withOptionalQuery('/log/manage', logsParams)
     },
     {
       key: 'traces',
-      title: chinese ? '链路证据' : 'Trace evidence',
-      copy: serviceName || (chinese ? '按告警上下文查看链路' : 'Inspect traces by alert context'),
-      meta: hasTraceContext
-        ? chinese
-          ? '打开同一 traceId/spanId 的链路证据'
-          : 'Open trace evidence by traceId/spanId'
-        : chinese
-          ? '查看同一服务的调用耗时和错误跨度'
-          : 'Inspect latency and error spans for the same service',
+      title: t('alert.center.evidence.traces.title'),
+      copy: serviceName || t('alert.center.evidence.traces.fallback'),
+      meta: hasTraceContext ? t('alert.center.evidence.traces.meta.trace') : t('alert.center.evidence.traces.meta.service'),
       href: withOptionalQuery('/trace/manage', tracesParams)
     },
     {
       key: 'topology',
-      title: chinese ? '拓扑影响面' : 'Topology impact',
-      copy: query.edgeId || serviceName || (chinese ? '查看依赖影响' : 'Inspect dependency impact'),
-      meta: chinese ? '返回依赖关系，确认上下游影响范围' : 'Return to dependencies and confirm blast radius',
+      title: t('alert.center.evidence.topology.title'),
+      copy: query.edgeId || serviceName || t('alert.center.evidence.topology.fallback'),
+      meta: t('alert.center.evidence.topology.meta'),
       href: buildTopologyEvidenceHref(query, serviceName, group)
     }
   ];
@@ -649,71 +650,78 @@ export function buildAlertClosureOperationRows(
   group: GroupAlert | null | undefined,
   t: Translator
 ): AlertClosureOperationRow[] {
-  const chinese = isChineseTranslator(t);
   const activeCount = Math.max(group?.alerts?.length || 0, 1);
-  const target = query.entityName || query.entityId || resolveAlertClosureService(query, group) || (chinese ? '当前告警' : 'current alert');
+  const target = query.entityName || query.entityId || resolveAlertClosureService(query, group) || t('alert.center.operation.target.current-alert');
 
   return [
     {
       key: 'acknowledge',
-      label: chinese ? '确认告警' : 'Acknowledge',
-      copy: chinese ? `先确认 ${target} 的 ${activeCount} 条告警已被接手。` : `Mark ${activeCount} alert(s) for ${target} as owned.`
+      label: t('alert.center.operation.acknowledge.label'),
+      copy: t('alert.center.operation.acknowledge.copy', { target, count: activeCount })
     },
     {
       key: 'recover',
-      label: chinese ? '标记已恢复' : 'Mark recovered',
-      copy: chinese ? '恢复后继续保留证据，便于复盘。' : 'Keep the evidence bundle after recovery for review.'
+      label: t('alert.center.operation.recover.label'),
+      copy: t('alert.center.operation.recover.copy')
     },
     {
       key: 'threshold',
-      label: chinese ? '创建阈值规则' : 'Create threshold rule',
-      copy: chinese ? '把当前实体和信号上下文带入阈值规则。' : 'Carry this entity and signal context into threshold rules.',
+      label: t('alert.center.operation.threshold.label'),
+      copy: t('alert.center.operation.threshold.copy'),
       href: buildAlertRuleWorkspaceHref('setting', query, group)
     },
     {
       key: 'notice',
-      label: chinese ? '配置通知策略' : 'Configure notification policy',
-      copy: chinese ? '按当前实体和标签收敛通知路由。' : 'Route notifications from the current entity and labels.',
+      label: t('alert.center.operation.notice.label'),
+      copy: t('alert.center.operation.notice.copy'),
       href: buildAlertRuleWorkspaceHref('notice', query, group)
     },
     {
       key: 'group',
-      label: chinese ? '配置分组收敛' : 'Configure grouping',
-      copy: chinese ? '按稳定实体、服务和环境标签收敛告警组。' : 'Group alerts by stable entity, service, and environment labels.',
+      label: t('alert.center.operation.group.label'),
+      copy: t('alert.center.operation.group.copy'),
       href: buildAlertRuleWorkspaceHref('group', query, group)
     },
     {
       key: 'silence',
-      label: chinese ? '创建静默' : 'Create silence',
-      copy: chinese ? '为当前标签创建临时静默。' : 'Create a temporary silence from current labels.',
+      label: t('alert.center.operation.silence.label'),
+      copy: t('alert.center.operation.silence.copy'),
       href: buildAlertRuleWorkspaceHref('silence', query, group)
     },
     {
       key: 'inhibit',
-      label: chinese ? '创建抑制' : 'Create inhibit',
-      copy: chinese ? '用当前标签创建主从告警抑制。' : 'Create inhibit rules from the current labels.',
+      label: t('alert.center.operation.inhibit.label'),
+      copy: t('alert.center.operation.inhibit.copy'),
       href: buildAlertRuleWorkspaceHref('inhibit', query, group)
     },
     {
       key: 'automation',
-      label: chinese ? '建议自动化动作' : 'Suggest automation',
-      copy: chinese ? '带当前证据进入动作建议，人工确认后执行。' : 'Carry this evidence into suggested actions with human confirmation.',
+      label: t('alert.center.operation.automation.label'),
+      copy: t('alert.center.operation.automation.copy'),
       href: buildAlertAutomationSuggestionHref(query, group)
     },
     {
       key: 'close',
-      label: chinese ? '关闭告警' : 'Close alert',
-      copy: chinese ? '确认问题已处理后关闭本轮告警。' : 'Close this alert cycle after handling the issue.'
+      label: t('alert.center.operation.close.label'),
+      copy: t('alert.center.operation.close.copy')
     }
   ];
 }
 
 export function buildAlertClosureOperationFeedback(action: AlertClosureOperationAction, t: Translator): string {
-  if (action === 'acknowledge') return t('alert.center.operation.success.acknowledge');
-  if (action === 'recover' || action === 'resolve') return t('alert.center.operation.success.recover');
-  if (action === 'unacknowledge' || action === 'reopen') return t('alert.center.operation.success.reopen');
-  if (action === 'close' || action === 'delete') return t('alert.center.operation.success.close');
+  if (action === 'acknowledge' || action === 'recover' || action === 'resolve' || action === 'unacknowledge' || action === 'reopen') {
+    return t('common.notify.mark-success');
+  }
+  if (action === 'close' || action === 'delete') return t('common.notify.delete-success');
   return t('alert.center.operation.success');
+}
+
+export function buildAlertClosureOperationFailureFeedback(action: AlertClosureOperationAction, t: Translator): string {
+  if (action === 'acknowledge' || action === 'recover' || action === 'resolve' || action === 'unacknowledge' || action === 'reopen') {
+    return t('common.notify.mark-fail');
+  }
+  if (action === 'close' || action === 'delete') return t('common.notify.delete-fail');
+  return t('common.failed');
 }
 
 export function buildAlertNoiseControlManageHref(
@@ -816,36 +824,40 @@ function buildAlertStatusCopy(status: string | null | undefined, t: Translator):
   return status || t('alert.status.firing');
 }
 
-function formatResponseCount(count: number, singular: string, plural: string) {
-  return `${count} ${count === 1 ? singular : plural}`;
+function buildAlertStatusTone(status: string | null | undefined): AlertGroupCardAlert['statusTone'] {
+  const normalizedStatus = status?.trim().toLowerCase();
+  if (normalizedStatus === 'acknowledged') return 'warning';
+  if (normalizedStatus === 'resolved') return 'success';
+  if (!normalizedStatus || normalizedStatus === 'firing') return 'critical';
+  return 'neutral';
 }
 
 function buildAlertGroupResponseStage(group: GroupAlert, t: Translator): string {
-  const chinese = isChineseTranslator(t);
   const normalizedStatus = (group.status || '').trim().toLowerCase();
   if (!normalizedStatus || normalizedStatus === 'firing') {
-    return chinese ? '处置状态: 待确认' : 'Response state: Needs acknowledgement';
+    return t('alert.center.group.response.stage.firing');
   }
   if (normalizedStatus === 'acknowledged') {
-    return chinese ? '处置状态: 已接手' : 'Response state: Acknowledged';
+    return t('alert.center.group.response.stage.acknowledged');
   }
   if (normalizedStatus === 'resolved') {
-    return chinese ? '处置状态: 已恢复' : 'Response state: Recovered';
+    return t('alert.center.group.response.stage.resolved');
   }
-  return chinese ? `处置状态: ${buildAlertStatusCopy(group.status, t)}` : `Response state: ${buildAlertStatusCopy(group.status, t)}`;
+  return t('alert.center.group.response.stage.custom', { status: buildAlertStatusCopy(group.status, t) });
 }
 
 function buildAlertGroupEvidenceSummary(group: GroupAlert, labelCount: number, t: Translator): string {
-  const chinese = isChineseTranslator(t);
   const alertCount = Math.max(group.alerts?.length || 0, 1);
-  if (chinese) {
-    return `证据: ${alertCount} 条告警 · ${labelCount} 个标签`;
-  }
-  return `Evidence: ${formatResponseCount(alertCount, 'alert', 'alerts')} · ${formatResponseCount(labelCount, 'label', 'labels')}`;
+  return t('alert.center.group.evidence.summary', {
+    alertCount,
+    alertUnit: t(alertCount === 1 ? 'alert.center.group.evidence.alert.singular' : 'alert.center.group.evidence.alert.plural'),
+    labelCount,
+    labelUnit: t(labelCount === 1 ? 'alert.center.group.evidence.label.singular' : 'alert.center.group.evidence.label.plural')
+  });
 }
 
 function buildAlertGroupClosureSummary(actionLabels: string[], t: Translator): string {
-  return `${isChineseTranslator(t) ? '下一步' : 'Next'}: ${actionLabels.join(' / ')}`;
+  return t('alert.center.group.closure.next', { actions: actionLabels.join(' / ') });
 }
 
 function buildGroupPrimarySeverity(group: GroupAlert): string | undefined {
@@ -881,6 +893,7 @@ export function buildAlertGroupActions(group: Pick<GroupAlert, 'status'>, entity
   if (normalizedStatus === 'acknowledged') {
     return [
       { key: 'unacknowledge', label: t('entity.alert.workbench.action.unacknowledge') },
+      { key: 'resolve', label: t('entity.alert.workbench.action.resolve') },
       { key: 'silence', label: t('entity.alert.workbench.action.silence'), dialogMode: 'silence' },
       { key: 'inhibit', label: t('entity.alert.workbench.action.inhibit'), dialogMode: 'inhibit' }
     ];
@@ -928,8 +941,24 @@ function buildPreviewLabelText(labels: AlertRulePreviewLabel[]): string {
   return labels.map(label => `${label.key}:${label.value}`).join(', ');
 }
 
-function buildPreviewEqualLabels(labels: AlertRulePreviewLabel[]): string {
-  return labels.map(label => label.key).join(', ');
+const INHIBIT_EQUAL_LABEL_ALLOW_LIST = ['alertname', 'instance', 'job', 'service', 'host', 'env'];
+
+function buildInhibitTargetLabels(labels: AlertRulePreviewLabel[]): AlertRulePreviewLabel[] {
+  return labels.filter(label => label.key.toLowerCase() !== 'severity');
+}
+
+function buildInhibitEqualLabels(labels: AlertRulePreviewLabel[]): string {
+  return labels
+    .map(label => label.key)
+    .filter(key => INHIBIT_EQUAL_LABEL_ALLOW_LIST.includes(key))
+    .join(', ');
+}
+
+function resolveAlertRuleQuickDialogSelectionCount(group: GroupAlert): number {
+  if (group.groupKey === '__selected_batch__') {
+    return Math.max(group.alerts?.length || 0, 1);
+  }
+  return 1;
 }
 
 export function buildAlertRuleQuickDialogModel(
@@ -941,12 +970,14 @@ export function buildAlertRuleQuickDialogModel(
   const previewLabels = buildAlertRulePreviewLabels(group);
   const previewLabelText = buildPreviewLabelText(previewLabels);
   const entityTitle = query.entityName || query.entityId || t('common.none');
-  const selectionCount = Math.max(group.alerts?.length || 0, 1);
+  const ruleNameBase = query.entityName || query.returnLabel || query.entityId || 'entity';
+  const selectionCount = resolveAlertRuleQuickDialogSelectionCount(group);
   const hasEntityId = typeof query.entityId === 'string' && query.entityId.trim().length > 0;
 
   if (mode === 'silence') {
     const silenceDraft = {
       ...buildAlertSilenceFormDraft(),
+      name: `${ruleNameBase} silence`,
       matchAll: false,
       labelsText: previewLabelText
     };
@@ -970,11 +1001,15 @@ export function buildAlertRuleQuickDialogModel(
     };
   }
 
+  const inhibitTargetPreviewLabels = buildInhibitTargetLabels(previewLabels);
+  const inhibitEqualLabelText = buildInhibitEqualLabels(previewLabels);
+  const hasInhibitPrefillWarning = previewLabels.length === 0 || inhibitEqualLabelText.length === 0;
   const inhibitDraft = {
     ...buildAlertInhibitFormDraft(),
+    name: `${ruleNameBase} inhibit`,
     sourceLabelsText: previewLabelText,
-    targetLabelsText: previewLabelText,
-    equalLabelsText: buildPreviewEqualLabels(previewLabels)
+    targetLabelsText: buildPreviewLabelText(inhibitTargetPreviewLabels),
+    equalLabelsText: inhibitEqualLabelText
   };
 
   return {
@@ -988,11 +1023,11 @@ export function buildAlertRuleQuickDialogModel(
       : t('entity.noise-controls.authoring.inhibit.prefill-warning'),
     warning: !hasEntityId
       ? t('entity.noise-controls.authoring.prefill-warning.no-entity-id')
-      : previewLabels.length === 0
+      : hasInhibitPrefillWarning
         ? t('entity.alert.workbench.inhibit.warning.empty-labels')
         : null,
     previewLabels,
-    targetPreviewLabels: previewLabels,
+    targetPreviewLabels: inhibitTargetPreviewLabels,
     inhibitDraft
   };
 }
@@ -1047,21 +1082,38 @@ export function buildAlertGroupCards(
       actions,
       actionLabels,
       alerts: (group.alerts || []).map(alert => {
-      const normalizedStatus = (alert.status || '').toLowerCase();
-      const isResolved = normalizedStatus === 'resolved';
-      return {
-        key: String(alert.id),
-        title: alert.content || alert.annotations?.summary || t('alert.center.default-title'),
-        status: buildAlertStatusCopy(alert.status, t),
-        timeLabel: isResolved ? t('alert.center.end-time') : t('alert.center.last-time'),
-        timeValue: formatTime(isResolved ? alert.endAt || alert.startAt || null : alert.activeAt || alert.startAt || null),
-        triggerSummary:
-          typeof alert.triggerTimes === 'number' && alert.triggerTimes > 0
-            ? t('alert.center.time.tip', { times: alert.triggerTimes })
-            : undefined,
-        labels: Object.entries(alert.labels || {}).map(([key, value]) => `${key}:${String(value)}`)
-      };
-    })
+        const normalizedStatus = (alert.status || '').toLowerCase();
+        const isResolved = normalizedStatus === 'resolved';
+        const timeRows = [
+          alert.startAt
+            ? { key: 'first' as const, label: t('alert.center.first-time'), value: formatTime(alert.startAt) }
+            : null,
+          (normalizedStatus === 'firing' || normalizedStatus === 'acknowledged') && alert.activeAt
+            ? { key: 'last' as const, label: t('alert.center.last-time'), value: formatTime(alert.activeAt) }
+            : null,
+          isResolved && alert.endAt
+            ? { key: 'end' as const, label: t('alert.center.end-time'), value: formatTime(alert.endAt) }
+            : null
+        ].filter((row): row is { key: 'first' | 'last' | 'end'; label: string; value: string } => row != null);
+
+        return {
+          key: String(alert.id),
+          title: alert.content || alert.annotations?.summary || t('alert.center.default-title'),
+          status: buildAlertStatusCopy(alert.status, t),
+          statusTone: buildAlertStatusTone(alert.status),
+          timeLabel: isResolved ? t('alert.center.end-time') : t('alert.center.last-time'),
+          timeValue: formatTime(isResolved ? alert.endAt || alert.startAt || null : alert.activeAt || alert.startAt || null),
+          triggerSummary:
+            typeof alert.triggerTimes === 'number' && alert.triggerTimes > 0
+              ? t('alert.center.time.tip', { times: alert.triggerTimes })
+              : undefined,
+          labels: Object.entries(alert.labels || {}).map(([key, value]) => `${key}:${String(value)}`),
+          annotations: Object.entries(alert.annotations || {})
+            .filter(([, value]) => value != null && String(value).trim().length > 0)
+            .map(([key, value]) => ({ key, value: String(value) })),
+          timeRows
+        };
+      })
     };
   });
 }

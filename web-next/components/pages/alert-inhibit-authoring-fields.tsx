@@ -140,8 +140,8 @@ export function AlertInhibitAuthoringFields({
               name="inhibit_source_labels"
               value={draft.sourceLabelsText}
               labelOptions={effectiveLabelOptions}
-              keyPlaceholder="标签名"
-              valuePlaceholder="标签值"
+              keyPlaceholder={t('alert.inhibit.label.key.placeholder')}
+              valuePlaceholder={t('alert.inhibit.label.value.placeholder')}
               onValueChange={value => onDraftChange({ ...draft, sourceLabelsText: value })}
             />
           </div>
@@ -153,8 +153,8 @@ export function AlertInhibitAuthoringFields({
               name="inhibit_target_labels"
               value={draft.targetLabelsText}
               labelOptions={effectiveLabelOptions}
-              keyPlaceholder="标签名"
-              valuePlaceholder="标签值"
+              keyPlaceholder={t('alert.inhibit.label.key.placeholder')}
+              valuePlaceholder={t('alert.inhibit.label.value.placeholder')}
               onValueChange={value => onDraftChange({ ...draft, targetLabelsText: value })}
             />
           </div>
@@ -166,7 +166,7 @@ export function AlertInhibitAuthoringFields({
               name="inhibit_equal_labels"
               value={draft.equalLabelsText}
               suggestions={effectiveLabelOptions.keys}
-              placeholder="alertname, severity, service"
+              placeholder={t('alert.inhibit.equal.placeholder')}
               onValueChange={value => onDraftChange({ ...draft, equalLabelsText: value })}
             />
           </div>

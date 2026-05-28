@@ -91,7 +91,16 @@ vi.mock('../workbench/overlay-dialog', () => ({
 }));
 
 vi.mock('./alert-inhibit-authoring-fields', () => ({
-  AlertInhibitAuthoringFields: ({ mode }: any) => <div data-alert-inhibit-authoring-fields={mode}>fields</div>
+  AlertInhibitAuthoringFields: ({ mode, prefillTitle, prefillCopy, prefillWarning }: any) => (
+    <div
+      data-alert-inhibit-authoring-fields={mode}
+      data-alert-inhibit-authoring-prefill-title={prefillTitle || ''}
+      data-alert-inhibit-authoring-prefill-copy={prefillCopy || ''}
+      data-alert-inhibit-authoring-prefill-warning={prefillWarning || ''}
+    >
+      fields
+    </div>
+  )
 }));
 
 describe('AlertInhibitSurface', () => {
@@ -188,6 +197,15 @@ describe('AlertInhibitSurface', () => {
     expect(html).not.toContain('data-cold-search-input-shell');
     expect(html).toContain('data-cold-search-action="submit"');
     expect(html).toContain('data-alert-inhibit-table-shell="cold-dense-table"');
+    expect(html).toContain('data-alert-inhibit-pagination="cold-dense-pagination"');
+    expect(html).toContain('data-alert-inhibit-pagination-owner="hertzbeat-ui-pagination-bar"');
+    expect(html).toContain('data-hz-ui="pagination-bar"');
+    expect(html).toContain('data-hz-pagination-page-size="select-menu"');
+    expect(html).toContain('data-hz-pagination-page-jump="number-input"');
+    expect(html).toContain('data-alert-inhibit-pagination-page-size-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-alert-inhibit-pagination-page-jump-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-alert-inhibit-delete-selected="toolbar"');
+    expect(html).toContain('data-alert-inhibit-delete-selected-owner="route-no-select-warning"');
     expect(html).toContain('data-alert-inhibit-select-all="cold-checkbox"');
     expect(html).toContain('data-alert-inhibit-row-checkbox="cold-checkbox"');
     expect(html).toContain('data-alert-inhibit-enable-checkbox="cold-checkbox"');
@@ -213,8 +231,16 @@ describe('AlertInhibitSurface', () => {
     expect(html).not.toContain('angular-table-panel');
 
     expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain("from '@hertzbeat/ui'");
+    expect(source).toContain('HzPaginationBar');
+    expect(source).toContain('HzInlineFeedback');
+    expect(source).toContain('data-alert-inhibit-action-feedback-owner="hertzbeat-ui-inline-feedback"');
+    expect(source).not.toContain('disabled={selectedCount === 0}');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain("from '../ui/checkbox'");
+    expect(source).toContain('pageSizeOptions?: number[]');
+    expect(source).toContain('onPageIndexChange?: (nextPageIndex: number) => void');
+    expect(source).toContain('onPageSizeChange?: (nextPageSize: number) => void');
     expect(source).toContain('data-alert-inhibit-admin-layout="full-width-admin-list"');
     expect(source).not.toContain('className={coldInhibitVisual.search.input}');
     expect(source).not.toContain('className={coldInhibitVisual.search.row}');
@@ -283,6 +309,7 @@ describe('AlertInhibitSurface', () => {
     );
 
     expect(html).toContain('data-alert-inhibit-table-shell="cold-dense-table"');
+    expect(html).toContain('data-alert-inhibit-pagination="cold-dense-pagination"');
     expect(html).toContain('data-alert-inhibit-empty-state="cold-table-empty"');
     expect(html).toContain('data-alert-inhibit-empty-icon="cold-empty-box"');
     expect(html).toContain('还没有抑制规则');
@@ -358,6 +385,138 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('resource-dependency');
   });
 
+  it('renders Angular entity noise-control matched-rule management context', () => {
+    const html = renderToStaticMarkup(
+      <AlertInhibitSurface
+        t={t}
+        data={{ list: { content: [], totalElements: 0, pageIndex: 0, pageSize: 8 } } as any}
+        search=""
+        selectedId={null}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        managementContext={{
+          entityId: '42',
+          entityName: 'checkout-api',
+          returnTo: '/entities/42?tab=alerts',
+          returnLabel: 'checkout-api',
+          matchMode: 'entity-noise-controls',
+          matchingRuleType: 'inhibit',
+          matchingRuleIds: [11, 12],
+          matchedViewEnabled: true
+        }}
+        matchedViewEnabled
+        missingMatchedRuleCount={1}
+        draft={{
+          name: '',
+          enable: true,
+          sourceLabelsText: '',
+          targetLabelsText: '',
+          equalLabelsText: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onViewAllRules={vi.fn()}
+        onViewMatchedRules={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+        onCopySourceToTarget={vi.fn()}
+        onDropSeverity={vi.fn()}
+        onClearTarget={vi.fn()}
+        onClearEqual={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-inhibit-entity-context="angular-entity-context-bar"');
+    expect(html).toContain('data-alert-inhibit-entity-context-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-inhibit-match-mode="angular-entity-noise-controls"');
+    expect(html).toContain('data-alert-inhibit-match-mode-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-inhibit-match-view="matched"');
+    expect(html).toContain('data-alert-inhibit-matching-rule-count="2"');
+    expect(html).toContain('data-alert-inhibit-missing-rule-count="1"');
+    expect(html).toContain('data-alert-inhibit-match-action="view-all"');
+    expect(html).toContain('data-alert-inhibit-entity-return="true"');
+    expect(html).toContain('checkout-api');
+    expect(html).toContain('已有 1 条命中规则不可用或已不存在');
+  });
+
+  it('renders Angular created-outside-matched authoring notice', () => {
+    const html = renderToStaticMarkup(
+      <AlertInhibitSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        managementContext={{
+          entityId: '42',
+          entityName: 'checkout-api',
+          returnTo: '/entities/42?tab=alerts',
+          returnLabel: 'checkout-api',
+          matchMode: 'entity-noise-controls',
+          matchingRuleType: 'inhibit',
+          matchingRuleIds: [7],
+          matchedViewEnabled: true
+        }}
+        matchedViewEnabled
+        createdOutsideMatchedViewNotice
+        draft={{
+          name: '',
+          enable: true,
+          sourceLabelsText: '',
+          targetLabelsText: '',
+          equalLabelsText: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onViewAllRules={vi.fn()}
+        onViewMatchedRules={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+        onCopySourceToTarget={vi.fn()}
+        onDropSeverity={vi.fn()}
+        onClearTarget={vi.fn()}
+        onClearEqual={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-inhibit-created-outside-matched="angular-authoring-notice"');
+    expect(html).toContain('data-alert-inhibit-created-outside-matched-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-inhibit-created-outside-matched-action="view-all"');
+    expect(html).toContain('新规则已创建');
+    expect(html).toContain('当前视图不会自动显示这条新规则');
+  });
+
   it('renders three-signal evidence context before inhibit authoring', () => {
     const html = renderToStaticMarkup(
       <AlertInhibitSurface
@@ -431,6 +590,70 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('链路上下文');
   });
 
+  it('renders missing inhibit evidence labels with the localized empty fallback', () => {
+    const html = renderToStaticMarkup(
+      <AlertInhibitSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        evidenceContext={{
+          signal: 'metrics',
+          title: '来自指标的抑制上下文',
+          copy: '按当前实体创建抑制规则。',
+          sourceLabelsText: '',
+          targetLabelsText: '',
+          equalLabelsText: '',
+          returnHref: '/ingestion/otlp/metrics?entityId=service-1',
+          rows: [],
+          draftPatch: {
+            sourceLabelsText: '',
+            targetLabelsText: '',
+            equalLabelsText: ''
+          }
+        }}
+        draft={{
+          name: '',
+          enable: true,
+          sourceLabelsText: '',
+          targetLabelsText: '',
+          equalLabelsText: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+        onCopySourceToTarget={vi.fn()}
+        onDropSeverity={vi.fn()}
+        onClearTarget={vi.fn()}
+        onClearEqual={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-inhibit-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-inhibit-source-labels="localized-fallback"');
+    expect(html).toContain('data-alert-inhibit-target-labels="localized-fallback"');
+    expect(html).toContain('data-alert-inhibit-equal-labels="localized-fallback"');
+    expect(html.match(/无/g)?.length).toBeGreaterThanOrEqual(3);
+  });
+
   it('renders validation errors visibly inside the inhibit editor dialog', () => {
     const html = renderToStaticMarkup(
       <AlertInhibitSurface
@@ -476,5 +699,220 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('data-alert-inhibit-editor-error-inline="cold-validation"');
     expect(html).toContain('role="alert"');
     expect(html).toContain('请填写抑制规则名称');
+  });
+
+  it('renders Angular inhibit save failure title/detail through shared feedback', () => {
+    const html = renderToStaticMarkup(
+      <AlertInhibitSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="common.notify.edit-fail"
+        editorErrorDetail="backend-message"
+        editorErrorContract="save"
+        draft={{
+          id: 7,
+          name: 'checkout-inhibit',
+          enable: true,
+          sourceLabelsText: 'service:checkout',
+          targetLabelsText: 'service:checkout',
+          equalLabelsText: 'service'
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+        onCopySourceToTarget={vi.fn()}
+        onDropSeverity={vi.fn()}
+        onClearTarget={vi.fn()}
+        onClearEqual={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-inhibit-save-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-inhibit-save-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-inhibit-save-feedback-title="common.notify.edit-fail"');
+    expect(html).toContain('data-alert-inhibit-save-feedback-detail="backend-message"');
+    expect(html).toContain('data-hz-ui="inline-feedback"');
+    expect(html).toContain('backend-message');
+  });
+
+  it('renders Angular inhibit enable failure title/detail outside the editor', () => {
+    const html = renderToStaticMarkup(
+      <AlertInhibitSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="common.notify.edit-fail"
+        editorErrorDetail="backend-message"
+        editorErrorContract="enable"
+        draft={{
+          name: '',
+          enable: true,
+          sourceLabelsText: '',
+          targetLabelsText: '',
+          equalLabelsText: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+        onCopySourceToTarget={vi.fn()}
+        onDropSeverity={vi.fn()}
+        onClearTarget={vi.fn()}
+        onClearEqual={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-inhibit-enable-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-inhibit-enable-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-inhibit-enable-feedback-title="common.notify.edit-fail"');
+    expect(html).toContain('data-alert-inhibit-enable-feedback-detail="backend-message"');
+    expect(html).toContain('backend-message');
+  });
+
+  it('renders Angular inhibit delete failure title/detail outside the editor', () => {
+    const html = renderToStaticMarkup(
+      <AlertInhibitSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="common.notify.delete-fail"
+        editorErrorDetail="backend-message"
+        editorErrorContract="delete"
+        draft={{
+          name: '',
+          enable: true,
+          sourceLabelsText: '',
+          targetLabelsText: '',
+          equalLabelsText: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+        onCopySourceToTarget={vi.fn()}
+        onDropSeverity={vi.fn()}
+        onClearTarget={vi.fn()}
+        onClearEqual={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-inhibit-delete-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-inhibit-delete-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-inhibit-delete-feedback-title="common.notify.delete-fail"');
+    expect(html).toContain('data-alert-inhibit-delete-feedback-detail="backend-message"');
+    expect(html).toContain('backend-message');
+  });
+
+  it('renders Angular entity alert prefill copy inside the inhibit editor', () => {
+    const html = renderToStaticMarkup(
+      <AlertInhibitSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        managementContext={{
+          entityId: '42',
+          entityName: 'checkout-api',
+          returnTo: '/entities/42?tab=alerts',
+          returnLabel: 'checkout-api',
+          matchMode: 'entity-noise-controls',
+          matchingRuleType: 'inhibit',
+          matchingRuleIds: [7],
+          matchedViewEnabled: true
+        }}
+        entityPrefillSource="alerts-common-labels"
+        entityPrefillWarning={null}
+        draft={{
+          name: 'checkout-api inhibit',
+          enable: true,
+          sourceLabelsText: 'service:checkout, env:prod',
+          targetLabelsText: 'service:checkout, env:prod',
+          equalLabelsText: 'service, env'
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+        onCopySourceToTarget={vi.fn()}
+        onDropSeverity={vi.fn()}
+        onClearTarget={vi.fn()}
+        onClearEqual={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-inhibit-entity-prefill="angular-alert-common-labels"');
+    expect(html).toContain('data-alert-inhibit-authoring-prefill-title="为当前实体创建抑制规则"');
+    expect(html).toContain('data-alert-inhibit-authoring-prefill-copy="已提取当前实体可见告警的共享标签，并填入源条件、目标条件和相等标签。"');
+    expect(html).not.toContain('data-alert-inhibit-authoring-prefill-warning="当前没有稳定的共享告警标签，请手动填写抑制条件。"');
   });
 });

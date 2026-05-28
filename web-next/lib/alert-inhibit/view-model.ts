@@ -38,6 +38,11 @@ function firstText(...values: Array<string | null | undefined>) {
   return values.map(value => value?.trim()).find((value): value is string => Boolean(value));
 }
 
+function formatAlertInhibitEqualLabels(labels: string[] | null | undefined, emptyValue: string) {
+  const text = (labels || []).map(label => label.trim()).filter(Boolean).join(', ');
+  return text || emptyValue;
+}
+
 function buildAlertInhibitLabels(signal: string | undefined, context: SignalRouteContext) {
   return [
     ['hertzbeat.signal', signal],
@@ -125,32 +130,34 @@ export function buildAlertInhibitMetrics(items: AlertInhibit[], t: Translator) {
 export function buildAlertInhibitRows(items: AlertInhibit[], t: Translator, formatTime: (value?: number | string | null) => string) {
   const enabledText = t('common.enabled');
   const disabledText = t('common.disabled');
+  const emptyValue = t('common.none');
   return items.map(item => ({
     key: String(item.id),
     title: item.name || t('alert.inhibit.default-title'),
     copy: `${item.enable ? enabledText : disabledText} · ${t('alert.inhibit.source')} ${Object.keys(item.sourceLabels || {}).length} · ${t('alert.inhibit.target')} ${Object.keys(item.targetLabels || {}).length}`,
-    meta: `${t('alert.inhibit.equal')} ${(item.equalLabels || []).join(', ') || '-'} · ${t('common.updated')} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
+    meta: `${t('alert.inhibit.equal')} ${formatAlertInhibitEqualLabels(item.equalLabels, emptyValue)} · ${t('common.updated')} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
   }));
 }
 
 export function buildAlertInhibitSelectedRows(selected: AlertInhibit | null, t: Translator) {
   const enabledText = t('common.enabled');
   const disabledText = t('common.disabled');
+  const emptyValue = t('common.none');
   if (!selected) {
-    return [{ title: t('alert.inhibit.selected.empty.title'), copy: t('alert.inhibit.selected.empty.copy'), meta: '-' }];
+    return [{ title: t('alert.inhibit.selected.empty.title'), copy: t('alert.inhibit.selected.empty.copy'), meta: emptyValue }];
   }
 
   return [
-    { title: selected.name || t('alert.inhibit.default-title'), copy: selected.enable ? enabledText : disabledText, meta: `id ${selected.id}` },
+    { title: selected.name || t('alert.inhibit.default-title'), copy: selected.enable ? enabledText : disabledText, meta: t('alert.rule.selected.id-meta', { id: selected.id }) },
     { title: t('alert.inhibit.selected.source-target'), copy: `${Object.keys(selected.sourceLabels || {}).length} ${t('alert.inhibit.source')} · ${Object.keys(selected.targetLabels || {}).length} ${t('alert.inhibit.target')}`, meta: t('alert.inhibit.selected.label-selectors') },
-    { title: t('alert.inhibit.selected.equal-labels'), copy: (selected.equalLabels || []).join(', ') || '-', meta: `${(selected.equalLabels || []).length} ${t('alert.inhibit.selected.shared-labels')}` }
+    { title: t('alert.inhibit.selected.equal-labels'), copy: formatAlertInhibitEqualLabels(selected.equalLabels, emptyValue), meta: `${(selected.equalLabels || []).length} ${t('alert.inhibit.selected.shared-labels')}` }
   ];
 }
 
 export function buildAlertInhibitNoteRows(t: Translator) {
   return [
-    { title: t('common.sorting'), copy: 'id desc', meta: t('alert.inhibit.notes.query') },
-    { title: t('common.search'), copy: 'search', meta: t('common.behavior-preserved') }
+    { title: t('common.sorting'), copy: t('alert.rule.notes.sort-desc-copy'), meta: t('alert.inhibit.notes.query') },
+    { title: t('common.search'), copy: t('alert.rule.notes.search-copy'), meta: t('common.behavior-preserved') }
   ];
 }
 

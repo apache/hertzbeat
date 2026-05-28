@@ -44,7 +44,7 @@ describe('alert group view model', () => {
         key: '7',
         title: 'cpu',
         copy: '已启用 · 分组标签 service',
-        meta: `等待时间 30s · ${t('common.updated')} 2026-04-10 18:00:00`
+        meta: `等待时间 30 秒 · ${t('common.updated')} 2026-04-10 18:00:00`
       }
     ]);
   });
@@ -56,16 +56,53 @@ describe('alert group view model', () => {
         t
     )
     ).toEqual([
-      { title: 'cpu', copy: '已启用', meta: 'id 7' },
+      { title: 'cpu', copy: '已启用', meta: '规则 ID 7' },
       { title: t('alert.group.selected.labels'), copy: 'service', meta: '1 分组标签' },
-      { title: '时间窗口', copy: '等待时间 30s · 间隔时间 60s', meta: '重复间隔 300s' }
+      { title: '时间窗口', copy: '等待时间 30 秒 · 间隔时间 60 秒', meta: '重复间隔 300 秒' }
     ]);
+  });
+
+  it('renders empty selected alert group meta with the localized empty fallback', () => {
+    expect(buildAlertGroupSelectedRows(null, t)).toEqual([
+      {
+        title: t('alert.group.selected.empty.title'),
+        copy: t('alert.group.selected.empty.copy'),
+        meta: '无'
+      }
+    ]);
+  });
+
+  it('renders missing alert group labels with the localized empty fallback', () => {
+    expect(
+      buildAlertGroupRows(
+        [
+          { id: 8, name: 'empty grouping', enable: false, groupLabels: [' ', ''], groupWait: 30, gmtUpdate: 1712730000000 }
+        ] as any,
+        t,
+        () => '2026-04-10 18:00:00'
+      )[0]
+    ).toMatchObject({
+      key: '8',
+      title: 'empty grouping',
+      copy: '已停用 · 分组标签 无'
+    });
+
+    expect(
+      buildAlertGroupSelectedRows(
+        { id: 8, name: 'empty grouping', enable: false, groupLabels: [], groupWait: 30, groupInterval: 60, repeatInterval: 300 } as any,
+        t
+      )[1]
+    ).toMatchObject({
+      title: t('alert.group.selected.labels'),
+      copy: '无',
+      meta: '0 分组标签'
+    });
   });
 
   it('builds notes rows', () => {
     expect(buildAlertGroupNoteRows(t)).toEqual([
-      { title: t('common.sorting'), copy: 'id desc', meta: t('alert.group.notes.query') },
-      { title: t('common.search'), copy: 'search', meta: t('common.behavior-preserved') }
+      { title: t('common.sorting'), copy: 'ID 倒序', meta: t('alert.group.notes.query') },
+      { title: t('common.search'), copy: '支持搜索', meta: t('common.behavior-preserved') }
     ]);
   });
 
@@ -147,6 +184,12 @@ describe('alert group view model', () => {
 
     expect(validateAlertGroupForm(buildAlertGroupFormDraft(null), t)).toBe('规则名称为必填项');
     expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu' }, t)).toBe('分组标签为必填项');
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupWait: '' }, t)).toBe('等待时间为必填项');
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupInterval: '' }, t)).toBe('间隔时间为必填项');
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', repeatInterval: '' }, t)).toBe('重复间隔为必填项');
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupWait: '-1' }, t)).toBe('等待时间必须大于等于 0');
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupInterval: '-300' }, t)).toBe('间隔时间必须大于等于 0');
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', repeatInterval: 'abc' }, t)).toBe('重复间隔必须大于等于 0');
     expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service' }, t)).toBeNull();
   });
 

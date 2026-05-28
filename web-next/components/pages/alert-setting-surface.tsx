@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Inbox, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { HzBatchToolbar, HzInlineFeedback, HzPaginationBar, type HzStatusTone } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { SearchRow } from '../ui/search-row';
@@ -31,6 +32,15 @@ type AlertSettingSurfaceProps = {
   onEdit: (defineId: number) => void;
   onDelete: (defineId: number) => void;
   onCheckedIdsChange: (nextIds: number[]) => void;
+  onPageIndexChange?: (nextPageIndex: number) => void;
+  onPageSizeChange?: (nextPageSize: number) => void;
+  pendingActionId?: string | null;
+  actionFeedback?: {
+    tone: HzStatusTone;
+    title: string;
+    description?: string;
+    contract?: 'delete' | 'enable' | 'export-fail' | 'no-select-delete' | 'no-select-export' | 'import-success' | 'import-fail';
+  } | null;
 };
 
 const coldSettingVisual = coldOpsCatalogVisual;
@@ -62,12 +72,35 @@ export function AlertSettingSurface({
   onToggleEnabled,
   onEdit,
   onDelete,
-  onCheckedIdsChange
+  onCheckedIdsChange,
+  onPageIndexChange,
+  onPageSizeChange,
+  pendingActionId = null,
+  actionFeedback = null
 }: AlertSettingSurfaceProps) {
   const rows = buildAlertSettingRows(data.list.content, t, formatTime);
   const selectedCount = checkedIds.length;
   const visibleIds = data.list.content.map(item => item.id);
   const allVisibleChecked = visibleIds.length > 0 && visibleIds.every(id => checkedIds.includes(id));
+  const emptyValue = t('common.none');
+  const actionFeedbackContract = actionFeedback?.contract ?? null;
+  const currentPageIndex = data.list.pageIndex ?? 0;
+  const currentPageSize = data.list.pageSize || 8;
+  const totalElements = data.list.totalElements || 0;
+  const totalPages = Math.max(1, Math.ceil(totalElements / currentPageSize));
+  const currentPage = currentPageIndex + 1;
+  const pageSizeOptions = [8, 15, 25];
+  const paginationSummary = t('common.pagination.summary', {
+    page: currentPage,
+    totalPages,
+    total: totalElements
+  });
+  const handlePageJumpChange = (value: string) => {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isNaN(parsed)) return;
+    const nextPage = Math.min(Math.max(parsed, 1), totalPages);
+    onPageIndexChange?.(nextPage - 1);
+  };
 
   return (
     <div
@@ -101,7 +134,7 @@ export function AlertSettingSurface({
                     variant="default"
                     className={coldButtonClassName}
                     onClick={onDeleteSelected}
-                    disabled={selectedCount === 0}
+                    data-alert-setting-no-select-delete-trigger="angular-warning"
                   >
                     <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     {t('common.button.delete-batch')}
@@ -134,8 +167,11 @@ export function AlertSettingSurface({
                     </a>
                   ) : null}
                 </div>
-                <div className="mt-3 rounded-[3px] border border-[#222a34] bg-[#080a0e] px-3 py-2 font-mono text-[11px] leading-5 text-[#9aa5b5]">
-                  {evidenceContext.labelsText || '-'}
+                <div
+                  data-alert-setting-evidence-labels={evidenceContext.labelsText ? 'provided-labels' : 'localized-fallback'}
+                  className="mt-3 rounded-[3px] border border-[#222a34] bg-[#080a0e] px-3 py-2 font-mono text-[11px] leading-5 text-[#9aa5b5]"
+                >
+                  {evidenceContext.labelsText || emptyValue}
                 </div>
                 <div className="mt-3 grid gap-2 md:grid-cols-3 xl:grid-cols-5">
                   {evidenceContext.rows.map(row => (
@@ -151,6 +187,9 @@ export function AlertSettingSurface({
             <section className="min-w-0">
               <SearchRow
                 data-alert-setting-toolbar="cold-query-toolbar"
+                data-alert-setting-search-translation-contract="angular-app-entry-search"
+                data-alert-setting-search-translation-owner="alert-setting-query-state"
+                data-alert-setting-search-translation-source="/apps/defines"
                 value={search}
                 placeholder={t('alert.setting.search')}
                 searchLabel={t('common.search')}
@@ -159,6 +198,111 @@ export function AlertSettingSurface({
                 onSearch={onApplyFilter}
                 onClear={search ? onClearFilter : undefined}
               />
+              <HzBatchToolbar
+                data-alert-setting-batch-owner="hertzbeat-ui-batch-toolbar"
+                data-alert-setting-import-export-contract="angular-import-export"
+                selectionCount={selectedCount}
+                selectionLabel={t('alert.setting.batch.selection-label')}
+                variant="embedded"
+                actions={[
+                  {
+                    id: 'export-type',
+                    label: t('common.button.export'),
+                    busy: pendingActionId === 'export',
+                    busyLabel: t('common.notify.export-pending'),
+                    disabled: Boolean(pendingActionId && pendingActionId !== 'export'),
+                    onSelect: onExport,
+                    buttonProps: {
+                      'data-alert-setting-export-trigger-owner': 'hertzbeat-ui-batch-toolbar',
+                      'data-alert-setting-export-trigger': 'json-excel-dialog',
+                      'data-alert-setting-no-select-export-trigger': 'angular-warning'
+                    } as React.ButtonHTMLAttributes<HTMLButtonElement>
+                  },
+                  {
+                    id: 'import',
+                    label: t('common.button.import'),
+                    busy: pendingActionId === 'import',
+                    busyLabel: t('common.notify.import-pending'),
+                    disabled: Boolean(pendingActionId && pendingActionId !== 'import'),
+                    onSelect: onImport,
+                    buttonProps: {
+                      'data-alert-setting-import-trigger-owner': 'hertzbeat-ui-batch-toolbar',
+                      'data-alert-setting-import-trigger': 'file-upload'
+                    } as React.ButtonHTMLAttributes<HTMLButtonElement>
+                  },
+                  {
+                    id: 'delete',
+                    label: t('common.button.delete-batch'),
+                    tone: 'critical',
+                    disabled: Boolean(pendingActionId && pendingActionId !== 'delete'),
+                    onSelect: onDeleteSelected,
+                    buttonProps: {
+                      'data-alert-setting-delete-trigger-owner': 'hertzbeat-ui-batch-toolbar',
+                      'data-alert-setting-no-select-delete-trigger': 'angular-warning'
+                    } as React.ButtonHTMLAttributes<HTMLButtonElement>
+                  }
+                ]}
+              />
+              {actionFeedback ? (
+                <div data-alert-setting-action-feedback={actionFeedback.tone}>
+                  <HzInlineFeedback
+                    tone={actionFeedback.tone}
+                    title={actionFeedback.title}
+                    description={actionFeedback.description}
+                    meta={pendingActionId ? t('common.loading') : undefined}
+                    variant="embedded"
+                    data-alert-setting-action-feedback-owner="hertzbeat-ui-inline-feedback"
+                    data-alert-setting-delete-failure={actionFeedbackContract === 'delete' ? 'angular-notify-title-detail' : undefined}
+                    data-alert-setting-delete-failure-owner={
+                      actionFeedbackContract === 'delete' ? 'hertzbeat-ui-inline-feedback' : undefined
+                    }
+                    data-alert-setting-delete-feedback-title={
+                      actionFeedbackContract === 'delete' ? 'common.notify.delete-fail' : undefined
+                    }
+                    data-alert-setting-delete-feedback-detail={actionFeedbackContract === 'delete' ? 'backend-message' : undefined}
+                    data-alert-setting-enable-failure={actionFeedbackContract === 'enable' ? 'angular-notify-title-detail' : undefined}
+                    data-alert-setting-enable-failure-owner={
+                      actionFeedbackContract === 'enable' ? 'hertzbeat-ui-inline-feedback' : undefined
+                    }
+                    data-alert-setting-enable-feedback-title={
+                      actionFeedbackContract === 'enable' ? 'common.notify.edit-fail' : undefined
+                    }
+                    data-alert-setting-enable-feedback-detail={actionFeedbackContract === 'enable' ? 'backend-message' : undefined}
+                    data-alert-setting-export-failure={actionFeedbackContract === 'export-fail' ? 'angular-notify-title-detail' : undefined}
+                    data-alert-setting-export-failure-owner={
+                      actionFeedbackContract === 'export-fail' ? 'hertzbeat-ui-inline-feedback' : undefined
+                    }
+                    data-alert-setting-export-feedback-title={
+                      actionFeedbackContract === 'export-fail' ? 'common.notify.export-fail' : undefined
+                    }
+                    data-alert-setting-export-feedback-detail={actionFeedbackContract === 'export-fail' ? 'backend-message' : undefined}
+                    data-alert-setting-no-select-delete={actionFeedbackContract === 'no-select-delete' ? 'angular-warning' : undefined}
+                    data-alert-setting-no-select-delete-owner={
+                      actionFeedbackContract === 'no-select-delete' ? 'hertzbeat-ui-inline-feedback' : undefined
+                    }
+                    data-alert-setting-no-select-export={actionFeedbackContract === 'no-select-export' ? 'angular-warning' : undefined}
+                    data-alert-setting-no-select-export-owner={
+                      actionFeedbackContract === 'no-select-export' ? 'hertzbeat-ui-inline-feedback' : undefined
+                    }
+                    data-alert-setting-import-success={actionFeedbackContract === 'import-success' ? 'angular-notify-title' : undefined}
+                    data-alert-setting-import-success-owner={
+                      actionFeedbackContract === 'import-success' ? 'hertzbeat-ui-inline-feedback' : undefined
+                    }
+                    data-alert-setting-import-failure={actionFeedbackContract === 'import-fail' ? 'angular-notify-title-detail' : undefined}
+                    data-alert-setting-import-failure-owner={
+                      actionFeedbackContract === 'import-fail' ? 'hertzbeat-ui-inline-feedback' : undefined
+                    }
+                    data-alert-setting-import-feedback-title={
+                      actionFeedbackContract === 'import-success'
+                        ? 'common.notify.import-success'
+                        : actionFeedbackContract === 'import-fail'
+                          ? 'common.notify.import-fail'
+                          : undefined
+                    }
+                    data-alert-setting-import-feedback-detail={actionFeedbackContract === 'import-fail' ? 'backend-message' : undefined}
+                  />
+                </div>
+              ) : null}
 
               <div
                 data-alert-setting-table-shell="cold-dense-table"
@@ -232,7 +376,7 @@ export function AlertSettingSurface({
                                   <span key={`${row.key}-${label}`} className="rounded-[3px] border border-[#303743] bg-[#101217] px-2 py-0.5 text-[11px] leading-4 text-[#cbd5e1]">
                                     {label}
                                   </span>
-                                )) : <span className="text-[#6f7681]">-</span>}
+                                )) : <span data-alert-setting-empty-labels="localized-fallback" className="text-[#6f7681]">{emptyValue}</span>}
                               </div>
                             </td>
                             <td className="px-3 py-2.5" onClick={event => event.stopPropagation()}>
@@ -277,15 +421,54 @@ export function AlertSettingSurface({
                     </tbody>
                   </table>
                 </div>
+                <div
+                  data-alert-setting-pagination="angular-nz-table-server"
+                  data-alert-setting-pagination-owner="hertzbeat-ui-pagination-bar"
+                  data-alert-setting-pagination-contract="angular-page-index-size"
+                >
+                  <HzPaginationBar
+                    summary={paginationSummary}
+                    pageSizeLabel={t('common.page-size')}
+                    pageSizeValue={String(currentPageSize)}
+                    pageSizeOptions={pageSizeOptions.map(value => ({ value: String(value), label: String(value) }))}
+                    pageJumpLabel={t('common.page')}
+                    pageJumpValue={String(currentPage)}
+                    pageJumpMax={totalPages}
+                    previousLabel={t('common.previous-page')}
+                    nextLabel={t('common.next-page')}
+                    previousDisabled={currentPageIndex <= 0}
+                    nextDisabled={currentPage >= totalPages}
+                    onPrevious={() => onPageIndexChange?.(Math.max(currentPageIndex - 1, 0))}
+                    onNext={() => onPageIndexChange?.(Math.min(currentPageIndex + 1, totalPages - 1))}
+                    onPageSizeChange={value => onPageSizeChange?.(Number.parseInt(value, 10))}
+                    onPageJumpChange={handlePageJumpChange}
+                    pageSizeSelectProps={
+                      {
+                        'data-alert-setting-pagination-page-size-owner': 'hertzbeat-ui-select'
+                      } as React.ComponentProps<typeof HzPaginationBar>['pageSizeSelectProps']
+                    }
+                    pageJumpInputProps={
+                      {
+                        'data-alert-setting-pagination-page-jump-owner': 'hertzbeat-ui-input'
+                      } as React.ComponentProps<typeof HzPaginationBar>['pageJumpInputProps']
+                    }
+                    previousButtonProps={
+                      {
+                        'data-alert-setting-pagination-action': 'previous'
+                      } as React.ComponentProps<typeof HzPaginationBar>['previousButtonProps']
+                    }
+                    nextButtonProps={
+                      {
+                        'data-alert-setting-pagination-action': 'next'
+                      } as React.ComponentProps<typeof HzPaginationBar>['nextButtonProps']
+                    }
+                  />
+                </div>
               </div>
             </section>
           </div>
         </div>
       </section>
-      <div className="sr-only" data-alert-setting-overflow-actions="true">
-        <button type="button" onClick={onExport}>{t('common.button.export')}</button>
-        <button type="button" onClick={onImport}>{t('common.button.import')}</button>
-      </div>
     </div>
   );
 }

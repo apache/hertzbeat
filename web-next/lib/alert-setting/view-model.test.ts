@@ -79,6 +79,33 @@ describe('alert setting view model', () => {
     ).toBe(t('alert.setting.type.periodic.trace'));
   });
 
+  it('renders missing alert setting row facts with the localized empty fallback', () => {
+    expect(
+      buildAlertSettingRows(
+        [
+          {
+            id: 8,
+            name: 'empty threshold',
+            type: 'realtime_metric',
+            expr: ' ',
+            template: '',
+            labels: {},
+            enable: false
+          }
+        ] as any,
+        t,
+        vi.fn().mockReturnValue('2026-04-20 00:20:00')
+      )[0]
+    ).toMatchObject({
+      key: '8',
+      name: 'empty threshold',
+      expr: '无',
+      template: '无',
+      labels: [],
+      enabledLabel: '已停用'
+    });
+  });
+
   it('builds alert-rule evidence context from a three-signal handoff route', () => {
     const context = buildAlertSettingEvidenceContext(
       'traces',

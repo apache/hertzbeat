@@ -133,6 +133,37 @@ describe('AlertSettingCreateDialog', () => {
     expect(source).not.toContain('router.push');
   });
 
+  it('renders Angular title/detail feedback for threshold save failures inside the authoring modal', () => {
+    const html = renderToStaticMarkup(
+      <AlertSettingCreateDialog
+        t={t}
+        open
+        mode="authoring"
+        datasourceStatus={{ code: 0, data: { hasPromqlExecutor: true } }}
+        draft={draft}
+        submitting={false}
+        saveFeedback={{
+          tone: 'critical',
+          title: 'common.notify.new-fail',
+          description: 'backend-message',
+          contract: 'create'
+        }}
+        onClose={vi.fn()}
+        onSelectType={vi.fn()}
+        onDraftChange={vi.fn()}
+        onBackToType={vi.fn()}
+        onSubmit={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-save-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-setting-save-failure-intent="create"');
+    expect(html).toContain('data-alert-setting-save-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-setting-save-feedback-title="common.notify.new-fail"');
+    expect(html).toContain('data-alert-setting-save-feedback-detail="backend-message"');
+    expect(html).toContain('backend-message');
+  });
+
   it('keeps a troubleshooting return link in the threshold authoring footer', () => {
     const html = renderToStaticMarkup(
       <AlertSettingCreateDialog

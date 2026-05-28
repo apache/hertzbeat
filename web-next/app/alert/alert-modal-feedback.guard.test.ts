@@ -3,11 +3,11 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const alertPageFiles = [
-  'app/alert/silence/page.tsx',
-  'app/alert/group/page.tsx',
-  'app/alert/inhibit/page.tsx',
-  'app/alert/notice/page.tsx',
-  'app/alert/setting/page.tsx'
+  'app/alert/silence/alert-silence-page.tsx',
+  'app/alert/group/alert-group-page.tsx',
+  'app/alert/inhibit/alert-inhibit-page.tsx',
+  'app/alert/notice/alert-notice-page.tsx',
+  'app/alert/setting/alert-setting-page.tsx'
 ];
 
 describe('alert modal feedback guard', () => {

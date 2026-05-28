@@ -113,6 +113,7 @@ export function AlertSilenceAuthoringFields({
     <div
       data-alert-silence-authoring-fields={mode}
       data-alert-silence-authoring-layout="single-column-angular-function"
+      data-alert-silence-validation-contract="angular-name-labels-only"
       className="space-y-4"
     >
       <AlertAuthoringCallout
@@ -183,8 +184,8 @@ export function AlertSilenceAuthoringFields({
                 name="silence_labels"
                 value={draft.labelsText}
                 labelOptions={labelOptions}
-                keyPlaceholder="标签名"
-                valuePlaceholder="标签值"
+                keyPlaceholder={t('alert.silence.label.key.placeholder')}
+                valuePlaceholder={t('alert.silence.label.value.placeholder')}
                 onValueChange={value => onDraftChange({ ...draft, labelsText: value })}
               />
             </div>
@@ -211,8 +212,15 @@ export function AlertSilenceAuthoringFields({
               endName="silence_period_end"
               startValue={draft.periodStart}
               endValue={draft.periodEnd}
-              startLabel={`${t('alert.silence.time')} 开始`}
-              endLabel={`${t('alert.silence.time')} ${t('common.end')}`}
+              startLabel={t('alert.silence.time.start')}
+              endLabel={t('alert.silence.time.end')}
+              emptyLabel={t('time.range.unset')}
+              hourLabel={t('time.range.hour')}
+              minuteLabel={t('time.range.minute')}
+              previousMonthLabel={t('time.range.previous-month')}
+              nextMonthLabel={t('time.range.next-month')}
+              clearLabel={t('common.clear')}
+              confirmLabel={t('common.button.ok')}
               reserveActionSpace
               onStartChange={value => onDraftChange({ ...draft, periodStart: value })}
               onEndChange={value => onDraftChange({ ...draft, periodEnd: value })}

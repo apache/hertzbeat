@@ -36,6 +36,15 @@ function firstText(...values: Array<string | null | undefined>) {
   return values.map(value => value?.trim()).find((value): value is string => Boolean(value));
 }
 
+function formatAlertGroupLabels(labels: string[] | null | undefined, emptyValue: string) {
+  const text = (labels || []).map(label => label.trim()).filter(Boolean).join(', ');
+  return text || emptyValue;
+}
+
+function formatAlertGroupSeconds(value: number | null | undefined, t: Translator) {
+  return t('common.duration.seconds', { value: value || 0 });
+}
+
 function buildAlertGroupLabels(context: SignalRouteContext) {
   return [
     ['hertzbeat.entity.id', context.entityId],
@@ -96,32 +105,34 @@ export function buildAlertGroupMetrics(items: AlertGroupConverge[], t: Translato
 export function buildAlertGroupRows(items: AlertGroupConverge[], t: Translator, formatTime: (value?: number | string | null) => string) {
   const enabledText = t('common.enabled');
   const disabledText = t('common.disabled');
+  const emptyValue = t('common.none');
   return items.map(item => ({
     key: String(item.id),
     title: item.name || t('alert.group.default-title'),
-    copy: `${item.enable ? enabledText : disabledText} · ${t('alert.group.labels')} ${(item.groupLabels || []).join(', ') || '-'}`,
-    meta: `${t('alert.group.wait')} ${item.groupWait || 0}s · ${t('common.updated')} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
+    copy: `${item.enable ? enabledText : disabledText} · ${t('alert.group.labels')} ${formatAlertGroupLabels(item.groupLabels, emptyValue)}`,
+    meta: `${t('alert.group.wait')} ${formatAlertGroupSeconds(item.groupWait, t)} · ${t('common.updated')} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
   }));
 }
 
 export function buildAlertGroupSelectedRows(selected: AlertGroupConverge | null, t: Translator) {
   const enabledText = t('common.enabled');
   const disabledText = t('common.disabled');
+  const emptyValue = t('common.none');
   if (!selected) {
-    return [{ title: t('alert.group.selected.empty.title'), copy: t('alert.group.selected.empty.copy'), meta: '-' }];
+    return [{ title: t('alert.group.selected.empty.title'), copy: t('alert.group.selected.empty.copy'), meta: emptyValue }];
   }
 
   return [
-    { title: selected.name || t('alert.group.default-title'), copy: selected.enable ? enabledText : disabledText, meta: `id ${selected.id}` },
-    { title: t('alert.group.selected.labels'), copy: (selected.groupLabels || []).join(', ') || '-', meta: `${(selected.groupLabels || []).length} ${t('alert.group.labels')}` },
-    { title: t('alert.group.selected.timers'), copy: `${t('alert.group.wait')} ${selected.groupWait || 0}s · ${t('alert.group.interval')} ${selected.groupInterval || 0}s`, meta: `${t('alert.group.repeat')} ${selected.repeatInterval || 0}s` }
+    { title: selected.name || t('alert.group.default-title'), copy: selected.enable ? enabledText : disabledText, meta: t('alert.rule.selected.id-meta', { id: selected.id }) },
+    { title: t('alert.group.selected.labels'), copy: formatAlertGroupLabels(selected.groupLabels, emptyValue), meta: `${(selected.groupLabels || []).length} ${t('alert.group.labels')}` },
+    { title: t('alert.group.selected.timers'), copy: `${t('alert.group.wait')} ${formatAlertGroupSeconds(selected.groupWait, t)} · ${t('alert.group.interval')} ${formatAlertGroupSeconds(selected.groupInterval, t)}`, meta: `${t('alert.group.repeat')} ${formatAlertGroupSeconds(selected.repeatInterval, t)}` }
   ];
 }
 
 export function buildAlertGroupNoteRows(t: Translator) {
   return [
-    { title: t('common.sorting'), copy: 'id desc', meta: t('alert.group.notes.query') },
-    { title: t('common.search'), copy: 'search', meta: t('common.behavior-preserved') }
+    { title: t('common.sorting'), copy: t('alert.rule.notes.sort-desc-copy'), meta: t('alert.group.notes.query') },
+    { title: t('common.search'), copy: t('alert.rule.notes.search-copy'), meta: t('common.behavior-preserved') }
   ];
 }
 
@@ -149,11 +160,34 @@ export function buildAlertGroupFormDraft(group?: AlertGroupConverge | null, fall
 }
 
 export function validateAlertGroupForm(draft: AlertGroupFormDraft, t: Translator) {
+  function isNonNegativeTimer(value: string) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed >= 0;
+  }
+
   if (!draft.name.trim()) {
     return t('alert.group.validation.name');
   }
   if (!draft.groupLabelsText.trim()) {
     return t('alert.group.validation.labels');
+  }
+  if (!draft.groupWait.trim()) {
+    return t('alert.group.validation.group-wait');
+  }
+  if (!draft.groupInterval.trim()) {
+    return t('alert.group.validation.group-interval');
+  }
+  if (!draft.repeatInterval.trim()) {
+    return t('alert.group.validation.repeat-interval');
+  }
+  if (!isNonNegativeTimer(draft.groupWait)) {
+    return t('alert.group.validation.group-wait-non-negative');
+  }
+  if (!isNonNegativeTimer(draft.groupInterval)) {
+    return t('alert.group.validation.group-interval-non-negative');
+  }
+  if (!isNonNegativeTimer(draft.repeatInterval)) {
+    return t('alert.group.validation.repeat-interval-non-negative');
   }
   return null;
 }

@@ -1,8 +1,16 @@
-import type { AlertSilence } from '@/lib/types';
+import type { AlertSilence, PageResult, SingleAlert } from '@/lib/types';
+import { DEFAULT_ALERT_LABEL_OPTIONS, type AlertLabelOptions } from '../alert-label-options';
+import { type AlertSilenceListQuery } from './query-state';
 
 type ApiGetter = <T>(url: string) => Promise<T>;
 type ApiMutator = <T>(url: string, payload?: unknown) => Promise<T>;
 type AlertSilencePayload = Omit<AlertSilence, 'id'> & { id?: number };
+type AlertSilenceListReader = (query: AlertSilenceListQuery) => Promise<PageResult<AlertSilence>>;
+type AlertSilenceDetailReader = (id: number) => Promise<AlertSilence>;
+type EntityAlertReader = (entityId: number) => Promise<PageResult<SingleAlert>>;
+type AlertLabelOptionsReader = () => Promise<AlertLabelOptions>;
+type AlertSilenceWriter = (payload: AlertSilencePayload) => Promise<unknown>;
+type AlertSilenceDeleter = (ids: number[]) => Promise<unknown>;
 
 export type AlertSilenceFormDraft = {
   id?: number;
@@ -14,6 +22,12 @@ export type AlertSilenceFormDraft = {
   daysText: string;
   periodStart: string;
   periodEnd: string;
+};
+
+export type AlertSilenceEntityPrefillResult = {
+  draftPatch: Partial<AlertSilenceFormDraft>;
+  source: 'alerts-common-labels' | 'none';
+  warning: string | null;
 };
 
 type AlertSilenceFormDraftFallback = Partial<AlertSilenceFormDraft>;
@@ -29,8 +43,128 @@ export function buildAlertSilenceDeleteUrl(ids: number | number[]) {
   return `/alert/silences?${params.toString()}`;
 }
 
+export function buildEntityAlertsForSilencePrefillUrl(entityId: number) {
+  const params = new URLSearchParams({
+    pageIndex: '0',
+    pageSize: '20',
+    status: 'firing'
+  });
+  return `/entities/${entityId}/alerts?${params.toString()}`;
+}
+
+export function extractExactCommonAlertLabels(alerts: SingleAlert[]): Record<string, string> {
+  if (alerts.length === 0) return {};
+  const firstLabels = alerts[0]?.labels || {};
+  return Object.entries(firstLabels).reduce<Record<string, string>>((acc, [key, value]) => {
+    if (alerts.every(alert => alert.labels != null && alert.labels[key] === value)) {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+}
+
+function formatLabelsText(labels: Record<string, string>) {
+  return Object.entries(labels)
+    .map(([key, value]) => `${key}:${value}`)
+    .join(', ');
+}
+
+export async function buildAlertSilenceEntityPrefill(
+  apiGet: ApiGetter,
+  entityId: string,
+  warningCopy: string,
+  noEntityIdWarningCopy: string
+): Promise<AlertSilenceEntityPrefillResult> {
+  const normalizedEntityId = Number(entityId);
+  if (!Number.isFinite(normalizedEntityId) || normalizedEntityId <= 0) {
+    return { draftPatch: { labelsText: '' }, source: 'none', warning: noEntityIdWarningCopy };
+  }
+
+  try {
+    const page = await apiGet<PageResult<SingleAlert>>(buildEntityAlertsForSilencePrefillUrl(normalizedEntityId));
+    const alerts = page.content || [];
+    const commonLabels = extractExactCommonAlertLabels(alerts);
+    if (alerts.length > 0 && Object.keys(commonLabels).length > 0) {
+      return {
+        draftPatch: {
+          matchAll: false,
+          labelsText: formatLabelsText(commonLabels)
+        },
+        source: 'alerts-common-labels',
+        warning: null
+      };
+    }
+  } catch {
+    // Fall through to the Angular-compatible manual-entry warning.
+  }
+
+  return { draftPatch: { labelsText: '' }, source: 'none', warning: warningCopy };
+}
+
+export async function buildAlertSilenceEntityPrefillFromFacade(
+  readEntityAlerts: EntityAlertReader,
+  entityId: string,
+  warningCopy: string,
+  noEntityIdWarningCopy: string
+): Promise<AlertSilenceEntityPrefillResult> {
+  const normalizedEntityId = Number(entityId);
+  if (!Number.isFinite(normalizedEntityId) || normalizedEntityId <= 0) {
+    return { draftPatch: { labelsText: '' }, source: 'none', warning: noEntityIdWarningCopy };
+  }
+
+  try {
+    const page = await readEntityAlerts(normalizedEntityId);
+    const alerts = page.content || [];
+    const commonLabels = extractExactCommonAlertLabels(alerts);
+    if (alerts.length > 0 && Object.keys(commonLabels).length > 0) {
+      return {
+        draftPatch: {
+          matchAll: false,
+          labelsText: formatLabelsText(commonLabels)
+        },
+        source: 'alerts-common-labels',
+        warning: null
+      };
+    }
+  } catch {
+    // Fall through to the Angular-compatible manual-entry warning.
+  }
+
+  return { draftPatch: { labelsText: '' }, source: 'none', warning: warningCopy };
+}
+
 export async function loadAlertSilenceDetail(apiGet: ApiGetter, id: number) {
   return apiGet<AlertSilence>(buildAlertSilenceDetailUrl(id));
+}
+
+export async function loadAlertSilenceDetailFromFacade(readDetail: AlertSilenceDetailReader, id: number) {
+  return readDetail(id);
+}
+
+export async function loadAlertSilenceDataFromFacade(
+  readers: {
+    list: AlertSilenceListReader;
+    labelOptions: AlertLabelOptionsReader;
+  },
+  query: AlertSilenceListQuery
+) {
+  const [list, labelOptions] = await Promise.all([
+    readers.list(query),
+    readers.labelOptions().catch(() => DEFAULT_ALERT_LABEL_OPTIONS)
+  ]);
+  return { list, labelOptions };
+}
+
+export async function loadMatchedAlertSilencesFromFacade(readDetail: AlertSilenceDetailReader, ids: number[]) {
+  const results = await Promise.allSettled(ids.map(id => readDetail(id)));
+  const matched = results
+    .filter((result): result is PromiseFulfilledResult<AlertSilence> => result.status === 'fulfilled' && result.value != null)
+    .map(result => result.value)
+    .sort((left, right) => (Number(right.id) || 0) - (Number(left.id) || 0));
+  return {
+    matched,
+    missingMatchedRuleCount: Math.max(0, ids.length - matched.length)
+  };
 }
 
 export async function deleteAlertSilence(apiDelete: ApiMutator, id: number) {
@@ -39,6 +173,14 @@ export async function deleteAlertSilence(apiDelete: ApiMutator, id: number) {
 
 export async function deleteAlertSilences(apiDelete: ApiMutator, ids: number[]) {
   return apiDelete<void>(buildAlertSilenceDeleteUrl(ids));
+}
+
+export async function deleteAlertSilenceFromFacade(deleteSilences: AlertSilenceDeleter, id: number) {
+  return deleteSilences([id]);
+}
+
+export async function deleteAlertSilencesFromFacade(deleteSilences: AlertSilenceDeleter, ids: number[]) {
+  return deleteSilences(ids);
 }
 
 function parseLabelRecord(text: string) {
@@ -154,4 +296,25 @@ export async function createAlertSilence(apiPost: ApiMutator, draft: AlertSilenc
 
 export async function updateAlertSilence(apiPut: ApiMutator, draft: AlertSilenceFormDraft) {
   return apiPut<void>('/alert/silence', buildAlertSilencePayload(draft));
+}
+
+export async function createAlertSilenceFromFacade(createSilence: AlertSilenceWriter, draft: AlertSilenceFormDraft) {
+  return createSilence(buildAlertSilencePayload(draft));
+}
+
+export async function updateAlertSilenceFromFacade(updateSilence: AlertSilenceWriter, draft: AlertSilenceFormDraft) {
+  return updateSilence(buildAlertSilencePayload(draft));
+}
+
+export async function updateAlertSilenceEnabledFromFacade(
+  updateSilence: AlertSilenceWriter,
+  silence: AlertSilence,
+  enabled: boolean
+) {
+  return updateSilence(
+    buildAlertSilencePayload({
+      ...buildAlertSilenceFormDraft(silence),
+      enable: enabled
+    })
+  );
 }

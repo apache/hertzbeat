@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ArrowLeft, Inbox, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { HzCheckbox, HzInlineFeedback, HzPaginationBar } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { SearchRow } from '../ui/search-row';
@@ -27,6 +28,8 @@ type AlertGroupSurfaceProps = {
   editorSaving: boolean;
   editorMessage: string | null;
   editorError: string | null;
+  editorErrorDetail?: string | null;
+  editorErrorContract?: 'save' | 'enable' | 'delete' | null;
   evidenceContext?: AlertGroupEvidenceContext | null;
   draft: AlertGroupFormDraft;
   formatTime: (value?: number | string | null) => string;
@@ -37,6 +40,9 @@ type AlertGroupSurfaceProps = {
   onRefresh: () => void;
   onSelect: (nextId: number | null) => void;
   onCheckedIdsChange: (nextIds: number[]) => void;
+  pageSizeOptions?: number[];
+  onPageIndexChange?: (nextPageIndex: number) => void;
+  onPageSizeChange?: (nextPageSize: number) => void;
   onNew: () => void;
   onSave: () => void;
   onToggleEnabled: (group: AlertGroupConverge) => void;
@@ -69,6 +75,8 @@ export function AlertGroupSurface({
   editorSaving,
   editorMessage,
   editorError,
+  editorErrorDetail,
+  editorErrorContract,
   evidenceContext,
   draft,
   formatTime,
@@ -79,6 +87,9 @@ export function AlertGroupSurface({
   onRefresh,
   onSelect,
   onCheckedIdsChange,
+  pageSizeOptions = [8, 15, 25],
+  onPageIndexChange,
+  onPageSizeChange,
   onNew,
   onSave,
   onToggleEnabled,
@@ -90,6 +101,39 @@ export function AlertGroupSurface({
 }: AlertGroupSurfaceProps) {
   const selected = data.list.content.find(item => item.id === selectedId) ?? data.list.content[0] ?? null;
   const selectedCount = checkedIds.length;
+  const emptyValue = t('common.none');
+  const currentPageIndex = Math.max(0, data.list.pageIndex ?? 0);
+  const currentPageSize = Math.max(1, data.list.pageSize ?? pageSizeOptions[0] ?? 8);
+  const totalElements = data.list.totalElements || 0;
+  const totalPages = Math.max(1, Math.ceil(totalElements / currentPageSize));
+  const currentPage = Math.min(currentPageIndex + 1, totalPages);
+  const pageStart = totalElements === 0 || data.list.content.length === 0 ? 0 : currentPageIndex * currentPageSize + 1;
+  const pageEnd = totalElements === 0 ? 0 : Math.min(totalElements, currentPageIndex * currentPageSize + data.list.content.length);
+  const currentPageIds = data.list.content.map(item => item.id);
+  const currentPageIdSet = new Set(currentPageIds);
+  const allCurrentPageChecked = currentPageIds.length > 0 && currentPageIds.every(id => checkedIds.includes(id));
+  const paginationSummary = t('alert.group.pagination.summary', {
+    page: currentPage,
+    totalPages,
+    from: pageStart,
+    to: pageEnd,
+    total: totalElements
+  });
+
+  function handlePageJumpChange(value: string) {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed)) return;
+    const nextPageIndex = Math.min(Math.max(parsed, 1), totalPages) - 1;
+    onPageIndexChange?.(nextPageIndex);
+  }
+
+  function handleSelectCurrentPage(checked: boolean) {
+    if (checked) {
+      onCheckedIdsChange(Array.from(new Set([...checkedIds, ...currentPageIds])));
+      return;
+    }
+    onCheckedIdsChange(checkedIds.filter(id => !currentPageIdSet.has(id)));
+  }
 
   return (
     <>
@@ -124,7 +168,8 @@ export function AlertGroupSurface({
                       variant="default"
                       className={coldButtonClassName}
                       onClick={onDeleteSelected}
-                      disabled={selectedCount === 0}
+                      data-alert-group-delete-selected="toolbar"
+                      data-alert-group-delete-selected-owner="route-no-select-warning"
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                       {t('common.button.delete-batch')}
@@ -135,6 +180,24 @@ export function AlertGroupSurface({
             </div>
 
             <div data-alert-group-admin-layout="full-width-admin-list" className="space-y-5">
+              {!editorOpen && (editorError || editorMessage) ? (
+                <HzInlineFeedback
+                  tone={editorError ? 'warning' : 'success'}
+                  title={editorError || editorMessage}
+                  description={editorErrorContract === 'enable' || editorErrorContract === 'delete' ? editorErrorDetail : undefined}
+                  variant="embedded"
+                  data-alert-group-action-feedback-owner="hertzbeat-ui-inline-feedback"
+                  data-alert-group-action-feedback={editorError ? 'warning' : 'success'}
+                  data-alert-group-enable-failure={editorErrorContract === 'enable' ? 'angular-notify-title-detail' : undefined}
+                  data-alert-group-enable-failure-owner={editorErrorContract === 'enable' ? 'hertzbeat-ui-inline-feedback' : undefined}
+                  data-alert-group-enable-feedback-title={editorErrorContract === 'enable' ? 'common.notify.edit-fail' : undefined}
+                  data-alert-group-enable-feedback-detail={editorErrorContract === 'enable' ? 'backend-message' : undefined}
+                  data-alert-group-delete-failure={editorErrorContract === 'delete' ? 'angular-notify-title-detail' : undefined}
+                  data-alert-group-delete-failure-owner={editorErrorContract === 'delete' ? 'hertzbeat-ui-inline-feedback' : undefined}
+                  data-alert-group-delete-feedback-title={editorErrorContract === 'delete' ? 'common.notify.delete-fail' : undefined}
+                  data-alert-group-delete-feedback-detail={editorErrorContract === 'delete' ? 'backend-message' : undefined}
+                />
+              ) : null}
               {evidenceContext ? (
                 <section
                   data-alert-group-evidence-context="signal-route"
@@ -161,7 +224,9 @@ export function AlertGroupSurface({
                   <div className="mt-3 rounded-[3px] border border-[#222a34] bg-[#080a0e] px-3 py-2">
                     <p className="text-[11px] font-semibold text-[#788292]">{t('alert.group.evidence.labels')}</p>
                     <p className="mt-1 break-words font-mono text-[11px] leading-5 text-[#9aa5b5]">
-                      {evidenceContext.groupLabelsText || '-'}
+                      <span data-alert-group-evidence-labels={evidenceContext.groupLabelsText ? 'provided-labels' : 'localized-fallback'}>
+                        {evidenceContext.groupLabelsText || emptyValue}
+                      </span>
                     </p>
                   </div>
                   <div className="mt-3 grid gap-2 md:grid-cols-3 xl:grid-cols-5">
@@ -196,7 +261,15 @@ export function AlertGroupSurface({
                       <thead className="border-b border-[#252b34] bg-[#101217] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
                         <tr>
                           <th className="w-[44px] px-3 py-2.5">
-                            <span className="sr-only">{t('common.select')}</span>
+                            <HzCheckbox
+                              data-alert-group-select-current-page="table-header"
+                              data-alert-group-select-current-page-owner="hertzbeat-ui-checkbox"
+                              checked={allCurrentPageChecked}
+                              disabled={currentPageIds.length === 0}
+                              aria-label={t('common.select')}
+                              containerClassName="min-h-0"
+                              onChange={event => handleSelectCurrentPage(event.target.checked)}
+                            />
                           </th>
                           <th className="w-[17%] px-3 py-2.5">{t('alert.group-converge.name')}</th>
                           <th className="w-[18%] px-3 py-2.5">{t('alert.group-converge.group-labels')}</th>
@@ -293,6 +366,39 @@ export function AlertGroupSurface({
                       </tbody>
                     </table>
                   </div>
+                  <div
+                    data-alert-group-pagination="cold-dense-pagination"
+                    data-alert-group-pagination-owner="hertzbeat-ui-pagination-bar"
+                  >
+                    <HzPaginationBar
+                      summary={paginationSummary}
+                      pageSizeLabel={t('alert.group.pagination.page-size')}
+                      pageSizeValue={String(currentPageSize)}
+                      pageSizeOptions={pageSizeOptions.map(value => ({ value: String(value), label: String(value) }))}
+                      pageJumpLabel={t('alert.group.pagination.page')}
+                      pageJumpValue={String(currentPage)}
+                      pageJumpMax={totalPages}
+                      previousLabel={t('common.previous-page')}
+                      nextLabel={t('common.next-page')}
+                      previousDisabled={currentPageIndex <= 0}
+                      nextDisabled={currentPage >= totalPages}
+                      onPrevious={() => onPageIndexChange?.(Math.max(currentPageIndex - 1, 0))}
+                      onNext={() => onPageIndexChange?.(Math.min(currentPageIndex + 1, totalPages - 1))}
+                      onPageSizeChange={value => onPageSizeChange?.(Number.parseInt(value, 10))}
+                      onPageJumpChange={handlePageJumpChange}
+                      pageJumpInputProps={
+                        {
+                          'data-alert-group-pagination-page-jump-owner': 'hertzbeat-ui-input'
+                        } as React.ComponentProps<typeof HzPaginationBar>['pageJumpInputProps']
+                      }
+                      pageSizeSelectProps={
+                        {
+                          'data-alert-group-pagination-page-size-owner': 'hertzbeat-ui-select'
+                        } as React.ComponentProps<typeof HzPaginationBar>['pageSizeSelectProps']
+                      }
+                      className="border-x-0"
+                    />
+                  </div>
                 </div>
               </section>
             </div>
@@ -326,7 +432,20 @@ export function AlertGroupSurface({
           </div>
         }
       >
-        {editorError ? (
+        {editorErrorContract === 'save' && editorErrorDetail && editorError ? (
+          <HzInlineFeedback
+            tone="critical"
+            title={editorError}
+            description={editorErrorDetail}
+            variant="embedded"
+            className="mb-3 rounded-[3px] border border-[#5d3037] bg-[#1a1013]"
+            data-alert-group-editor-error-inline="cold-validation"
+            data-alert-group-save-failure="angular-notify-title-detail"
+            data-alert-group-save-failure-owner="hertzbeat-ui-inline-feedback"
+            data-alert-group-save-feedback-title={draft.id ? 'common.notify.edit-fail' : 'common.notify.new-fail'}
+            data-alert-group-save-feedback-detail="backend-message"
+          />
+        ) : editorError ? (
           <div
             role="alert"
             data-alert-group-editor-error-inline="cold-validation"

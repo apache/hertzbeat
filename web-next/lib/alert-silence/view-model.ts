@@ -36,6 +36,11 @@ function firstText(...values: Array<string | null | undefined>) {
   return values.map(value => value?.trim()).find((value): value is string => Boolean(value));
 }
 
+function formatAlertSilenceDays(days: string[] | null | undefined, emptyValue: string) {
+  const text = (days || []).map(day => day.trim()).filter(Boolean).join(', ');
+  return text || emptyValue;
+}
+
 function buildAlertSilenceLabels(signal: string | undefined, context: SignalRouteContext) {
   return [
     ['hertzbeat.signal', signal],
@@ -106,32 +111,36 @@ export function buildAlertSilenceMetrics(items: AlertSilence[], t: Translator) {
 export function buildAlertSilenceRows(items: AlertSilence[], t: Translator, formatTime: (value?: number | string | null) => string) {
   const enabledText = t('common.enabled');
   const disabledText = t('common.disabled');
-  return items.map(item => ({
-    key: String(item.id),
-    title: item.name || t('alert.silence.default-title'),
-    copy: `${item.enable ? enabledText : disabledText} · ${t('alert.silence.match-all')} ${item.matchAll ? 'true' : 'false'} · ${t('alert.silence.labels')} ${Object.keys(item.labels || {}).length}`,
-    meta: `${t('alert.silence.times')} ${item.times || 0} · ${t('common.updated')} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
-  }));
+  return items.map(item => {
+    const matchAllText = item.matchAll ? t('common.boolean.true') : t('common.boolean.false');
+    return {
+      key: String(item.id),
+      title: item.name || t('alert.silence.default-title'),
+      copy: `${item.enable ? enabledText : disabledText} · ${t('alert.silence.match-all')} ${matchAllText} · ${t('alert.silence.labels')} ${Object.keys(item.labels || {}).length}`,
+      meta: `${t('alert.silence.times')} ${item.times || 0} · ${t('common.updated')} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
+    };
+  });
 }
 
 export function buildAlertSilenceSelectedRows(selected: AlertSilence | null, t: Translator) {
   const enabledText = t('common.enabled');
   const disabledText = t('common.disabled');
+  const emptyValue = t('common.none');
   if (!selected) {
-    return [{ title: t('alert.silence.selected.empty.title'), copy: t('alert.silence.selected.empty.copy'), meta: '-' }];
+    return [{ title: t('alert.silence.selected.empty.title'), copy: t('alert.silence.selected.empty.copy'), meta: emptyValue }];
   }
 
   return [
-    { title: selected.name || t('alert.silence.default-title'), copy: selected.enable ? enabledText : disabledText, meta: `id ${selected.id}` },
-    { title: t('alert.silence.selected.strategy'), copy: selected.matchAll ? t('alert.silence.selected.strategy.all') : t('alert.silence.selected.strategy.any'), meta: `type ${selected.type ?? '-'}` },
-    { title: t('alert.silence.selected.labels-days'), copy: `${Object.keys(selected.labels || {}).length} ${t('alert.silence.labels')}`, meta: `${t('alert.silence.days')} ${(selected.days || []).join(', ') || '-'}` }
+    { title: selected.name || t('alert.silence.default-title'), copy: selected.enable ? enabledText : disabledText, meta: t('alert.rule.selected.id-meta', { id: selected.id }) },
+    { title: t('alert.silence.selected.strategy'), copy: selected.matchAll ? t('alert.silence.selected.strategy.all') : t('alert.silence.selected.strategy.any'), meta: t('alert.silence.selected.type-meta', { type: selected.type || t('common.none') }) },
+    { title: t('alert.silence.selected.labels-days'), copy: `${Object.keys(selected.labels || {}).length} ${t('alert.silence.labels')}`, meta: `${t('alert.silence.days')} ${formatAlertSilenceDays(selected.days, emptyValue)}` }
   ];
 }
 
 export function buildAlertSilenceNoteRows(t: Translator, times: number) {
   return [
     { title: t('alert.silence.notes.times.title'), copy: String(times), meta: t('alert.silence.notes.times.meta') },
-    { title: t('alert.silence.notes.query.title'), copy: 'search · id desc', meta: t('alert.silence.notes.query.meta') }
+    { title: t('alert.silence.notes.query.title'), copy: t('alert.rule.notes.search-sort-copy'), meta: t('alert.silence.notes.query.meta') }
   ];
 }
 
@@ -141,12 +150,6 @@ export function validateAlertSilenceForm(draft: AlertSilenceFormDraft, t: Transl
   }
   if (!draft.matchAll && !draft.labelsText.trim()) {
     return t('alert.silence.validation.labels');
-  }
-  if (!draft.periodStart || !draft.periodEnd) {
-    return t('alert.silence.validation.time');
-  }
-  if (draft.type === '1' && !draft.daysText.trim()) {
-    return t('alert.silence.validation.days');
   }
   return null;
 }

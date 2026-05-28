@@ -56,16 +56,61 @@ describe('alert inhibit view model', () => {
         t
     )
     ).toEqual([
-      { title: 'rule-a', copy: '已启用', meta: 'id 7' },
+      { title: 'rule-a', copy: '已启用', meta: '规则 ID 7' },
       { title: '源 / 目标', copy: '1 源标签 · 1 目标标签', meta: '标签选择器' },
       { title: '相等标签', copy: 'cluster', meta: '1 共享标签' }
     ]);
   });
 
+  it('renders empty selected alert inhibit meta with the localized empty fallback', () => {
+    expect(buildAlertInhibitSelectedRows(null, t)).toEqual([
+      {
+        title: t('alert.inhibit.selected.empty.title'),
+        copy: t('alert.inhibit.selected.empty.copy'),
+        meta: '无'
+      }
+    ]);
+  });
+
+  it('renders missing alert inhibit equal labels with the localized empty fallback', () => {
+    expect(
+      buildAlertInhibitRows(
+        [
+          {
+            id: 8,
+            name: 'empty inhibit',
+            enable: false,
+            sourceLabels: { service: 'checkout' },
+            targetLabels: { severity: 'warning' },
+            equalLabels: [' ', ''],
+            gmtUpdate: 1712730000000
+          }
+        ] as any,
+        t,
+        () => '2026-04-10 18:00:00'
+      )[0]
+    ).toMatchObject({
+      key: '8',
+      title: 'empty inhibit',
+      meta: `相等标签 无 · ${t('common.updated')} 2026-04-10 18:00:00`
+    });
+
+    expect(
+      buildAlertInhibitSelectedRows(
+        { id: 8, name: 'empty inhibit', enable: false, sourceLabels: {}, targetLabels: {}, equalLabels: [] } as any,
+        t
+      )[2]
+    ).toMatchObject({
+      title: '相等标签',
+      copy: '无',
+      meta: '0 共享标签'
+    });
+  });
+
   it('builds notes rows', () => {
     expect(buildAlertInhibitNoteRows(t)).toEqual([
-      { title: t('common.sorting'), copy: 'id desc', meta: t('alert.inhibit.notes.query') },
-      { title: t('common.search'), copy: 'search', meta: t('common.behavior-preserved') }
+      { title: t('common.sorting'), copy: 'ID 倒序', meta: t('alert.inhibit.notes.query') },
+      { title: t('common.search'), copy: '支持搜索', meta: t('common.behavior-preserved') }
     ]);
   });
 

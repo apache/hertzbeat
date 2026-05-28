@@ -3,18 +3,20 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   buildAlertCompatRouteUrl,
+  buildAlertCompatRouteUrlFromSearchParams,
   buildAlertListUrl,
   hasActiveAlertFilters,
   hasAlertEntityContext,
   hasAlertTopologyContext,
   normalizeAlertSearch,
-  queryStateFromParams
+  queryStateFromParams,
+  readAlertCenterRouteState
 } from './query-state';
 
 describe('alert query state codec', () => {
   it('keeps alert route state machine-only without display-label fields', () => {
     const queryStateSource = readFileSync(resolve(process.cwd(), 'lib/alert-manage/query-state.ts'), 'utf8');
-    const alertPageSource = readFileSync(resolve(process.cwd(), 'app/alert/page.tsx'), 'utf8');
+    const alertPageSource = readFileSync(resolve(process.cwd(), 'app/alert/alert-center-page.tsx'), 'utf8');
     const shellSource = readFileSync(resolve(process.cwd(), 'components/shell/app-frame.tsx'), 'utf8');
 
     expect(queryStateSource).not.toContain('returnLabel: string');
@@ -49,12 +51,14 @@ describe('alert query state codec', () => {
         search: ' checkout ',
         status: ' firing ',
         severity: ' critical ',
+        pageIndex: 2,
+        pageSize: 15,
         entityId: '',
         entityName: '',
         returnTo: ''
       })
     ).toBe(
-      '/alerts/group?pageIndex=0&pageSize=8&sort=gmtUpdate&order=desc&search=checkout&status=firing&severity=critical'
+      '/alerts/group?pageIndex=2&pageSize=15&sort=gmtUpdate&order=desc&search=checkout&status=firing&severity=critical'
     );
   });
 
@@ -62,6 +66,21 @@ describe('alert query state codec', () => {
     expect(buildAlertListUrl({ search: '   ', status: '', severity: '', entityId: '', entityName: '', returnTo: '' })).toBe(
       '/alerts/group?pageIndex=0&pageSize=8&sort=gmtUpdate&order=desc'
     );
+  });
+
+  it('normalizes unsupported alert center pagination back to Angular defaults', () => {
+    expect(
+      buildAlertListUrl({
+        search: '',
+        status: '',
+        severity: '',
+        pageIndex: -1,
+        pageSize: 20,
+        entityId: '',
+        entityName: '',
+        returnTo: ''
+      })
+    ).toBe('/alerts/group?pageIndex=0&pageSize=8&sort=gmtUpdate&order=desc');
   });
 
   it('normalizes search text by trimming whitespace', () => {
@@ -79,6 +98,8 @@ describe('alert query state codec', () => {
       search: 'checkout',
       status: 'acknowledged',
       severity: 'warning',
+      pageIndex: 0,
+      pageSize: 8,
       entityId: '',
       entityName: '',
       returnTo: ''
@@ -103,6 +124,8 @@ describe('alert query state codec', () => {
       search: '',
       status: 'firing',
       severity: '',
+      pageIndex: 0,
+      pageSize: 8,
       entityId: '42',
       entityName: 'Checkout API',
       returnTo: '/entities/42'
@@ -277,6 +300,60 @@ describe('alert query state codec', () => {
         }
       })
     ).toBe('/alert?search=checkout&status=acknowledged&severity=warning&entityId=42&entityName=Checkout+API&returnTo=%2Fentities%2F42');
+  });
+
+  it('maps raw Next search params through the alert compatibility owner', () => {
+    expect(
+      buildAlertCompatRouteUrlFromSearchParams({
+        content: ' checkout ',
+        status: ' ACKNOWLEDGED ',
+        severity: ' Warning ',
+        entityId: '42',
+        entityName: 'Checkout API',
+        returnTo: '/entities/42?returnLabel=Checkout',
+        returnLabel: 'Checkout',
+        signal: 'logs',
+        environment: ['prod', 'ignored']
+      })
+    ).toBe(
+      '/alert?search=checkout&status=acknowledged&severity=warning&entityId=42&entityName=Checkout+API&returnTo=%2Fentities%2F42&environment=prod&signal=logs'
+    );
+  });
+
+  it('normalizes multi-value URL search params into the first alert center query value', () => {
+    const routeState = readAlertCenterRouteState({
+      search: [' checkout ', 'ignored'],
+      status: [' ACKNOWLEDGED ', 'resolved'],
+      severity: [' Warning ', 'critical'],
+      entityId: ['42', '84'],
+      entityName: ['Checkout API', 'Payments API'],
+      returnTo: ['/entities/42?returnLabel=Checkout', '/entities/84'],
+      returnLabel: ['Checkout', 'Payments'],
+      signal: ['logs', 'metrics'],
+      environment: ['prod', 'staging']
+    });
+
+    expect(routeState.initialQuery).toMatchObject({
+      search: 'checkout',
+      status: 'acknowledged',
+      severity: 'warning',
+      entityId: '42',
+      entityName: 'Checkout API',
+      returnTo: '/entities/42',
+      signal: 'logs',
+      environment: 'prod'
+    });
+    expect(routeState.shouldCleanUrl).toBe(true);
+    expect(routeState.cleanUrl).not.toContain('returnLabel');
+    const canonicalParams = new URL(routeState.cleanUrl, 'http://localhost').searchParams;
+    expect(canonicalParams.get('search')).toBe('checkout');
+    expect(canonicalParams.get('status')).toBe('acknowledged');
+    expect(canonicalParams.get('severity')).toBe('warning');
+    expect(canonicalParams.get('entityId')).toBe('42');
+    expect(canonicalParams.get('entityName')).toBe('Checkout API');
+    expect(canonicalParams.get('returnTo')).toBe('/entities/42');
+    expect(canonicalParams.get('signal')).toBe('logs');
+    expect(canonicalParams.get('environment')).toBe('prod');
   });
 
   it('detects when the alert workbench is in entity context', () => {

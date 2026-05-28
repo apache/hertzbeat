@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { translateAlertIntegration } from '../../lib/alert-integration/view-model';
 
 type MermaidRenderResult = {
   svg: string;
@@ -102,10 +103,18 @@ export function AlertIntegrationMermaid({ source }: { source: string }) {
         ref={containerRef}
         data-alert-integration-mermaid-canvas="svg-host"
         className="min-h-[180px] overflow-auto [&_svg]:mx-auto [&_svg]:block [&_svg]:h-auto [&_svg]:max-w-full"
-        aria-label="Mermaid diagram"
+        aria-label={translateAlertIntegration('alert.integration.diagram.aria')}
       />
-      {status === 'pending' ? <div className="mt-2 text-center text-[12px] text-[#858d9a]">图表渲染中</div> : null}
-      {status === 'error' ? <div className="text-center text-[12px] text-[#f59f9f]">图表渲染失败</div> : null}
+      {status === 'pending' ? (
+        <div className="mt-2 text-center text-[12px] text-[#858d9a]">
+          {translateAlertIntegration('alert.integration.diagram.pending')}
+        </div>
+      ) : null}
+      {status === 'error' ? (
+        <div className="text-center text-[12px] text-[#f59f9f]">
+          {translateAlertIntegration('alert.integration.diagram.error')}
+        </div>
+      ) : null}
     </figure>
   );
 }

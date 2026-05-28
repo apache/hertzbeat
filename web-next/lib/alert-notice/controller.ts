@@ -9,9 +9,21 @@ type NoticeRuleLike = NoticeRule & Record<string, unknown>;
 type NoticeReceiverPayload = Omit<NoticeReceiver, 'id'> & { id?: number; [key: string]: unknown };
 type NoticeTemplatePayload = Omit<NoticeTemplate, 'id'> & { id?: number; [key: string]: unknown };
 type NoticeRulePayload = Omit<NoticeRule, 'id'> & { id?: number; [key: string]: unknown };
+type NoticeRuleDisplayOption = {
+  value: string | number;
+  label: string;
+};
+export type NoticeRuleDisplayNames = {
+  receiverName: string[];
+  templateName: string | null;
+};
+type NoticeReceiverListReader = (query?: NoticeListQuery) => Promise<PageResult<NoticeReceiver>>;
+type NoticeRuleListReader = (query?: NoticeListQuery) => Promise<PageResult<NoticeRule>>;
+type NoticeTemplateListReader = (query?: NoticeTemplateListQuery) => Promise<PageResult<NoticeTemplate> | NoticeTemplate[]>;
+type NoticeOptionsReader<T> = () => Promise<PageResult<T> | T[]>;
 
 const DEFAULT_PAGE_SIZE = 8;
-const TEMPLATE_PAGE_SIZE = 1000;
+const TEMPLATE_OPTION_PAGE_SIZE = 1000;
 const RECEIVER_OPTION_PAGE_SIZE = 1000;
 
 export type NoticeReceiverDraft = {
@@ -66,6 +78,7 @@ export type NoticeRuleDraft = {
   filterAll: boolean;
   labelsText: string;
   daysText: string;
+  periodLimit?: boolean;
   periodStart: string;
   periodEnd: string;
 } & Record<string, unknown>;
@@ -76,22 +89,27 @@ export type NoticeListQuery = {
   pageSize?: number;
 };
 
+export type NoticeTemplateListQuery = NoticeListQuery & {
+  preset?: boolean;
+};
+
 export type NoticeLoadQuery = {
   receivers?: NoticeListQuery;
   rules?: NoticeListQuery;
+  templates?: NoticeTemplateListQuery;
 };
 
-function toTemplatePageResult(templates: NoticeTemplate[] | PageResult<NoticeTemplate>): PageResult<NoticeTemplate> {
-  if (Array.isArray(templates)) {
+function toPageResult<T>(items: T[] | PageResult<T>): PageResult<T> {
+  if (Array.isArray(items)) {
     return {
-      content: templates,
-      totalElements: templates.length,
+      content: items,
+      totalElements: items.length,
       pageIndex: 0,
-      pageSize: templates.length
+      pageSize: items.length
     };
   }
 
-  return templates;
+  return items;
 }
 
 function emptyPageResult<T>(): PageResult<T> {
@@ -137,7 +155,7 @@ async function loadNoticeRules(apiGet: ApiGetter, query?: NoticeListQuery) {
   return apiGet<PageResult<NoticeRule>>(buildNoticeListUrl('/notice/rules', query));
 }
 
-function buildNoticeTemplateListUrl(query: NoticeListQuery & { preset: boolean }) {
+export function buildNoticeTemplateListUrl(query: NoticeTemplateListQuery = {}) {
   const params = new URLSearchParams({
     pageIndex: String(normalizePageIndex(query.pageIndex)),
     pageSize: String(normalizePageSize(query.pageSize))
@@ -146,12 +164,16 @@ function buildNoticeTemplateListUrl(query: NoticeListQuery & { preset: boolean }
   if (search) {
     params.set('name', search);
   }
-  params.set('preset', String(query.preset));
+  params.set('preset', String(query.preset ?? true));
   return `/notice/templates?${params.toString()}`;
 }
 
-async function loadNoticeTemplates(apiGet: ApiGetter) {
-  const pageSize = TEMPLATE_PAGE_SIZE;
+async function loadNoticeTemplates(apiGet: ApiGetter, query?: NoticeTemplateListQuery) {
+  return apiGet<PageResult<NoticeTemplate>>(buildNoticeTemplateListUrl(query));
+}
+
+async function loadNoticeTemplateOptions(apiGet: ApiGetter) {
+  const pageSize = TEMPLATE_OPTION_PAGE_SIZE;
   const [presetTemplates, customTemplates] = await Promise.all([
     apiGet<PageResult<NoticeTemplate>>(buildNoticeTemplateListUrl({ pageSize, preset: true })),
     apiGet<PageResult<NoticeTemplate>>(buildNoticeTemplateListUrl({ pageSize, preset: false }))
@@ -166,22 +188,60 @@ async function loadNoticeTemplates(apiGet: ApiGetter) {
 }
 
 export async function loadAlertNoticeData(apiGet: ApiGetter, query: NoticeLoadQuery = {}) {
-  const [receiversResult, rulesResult, receiverOptionsResult, templatesResult] = await Promise.allSettled([
+  const [receiversResult, rulesResult, receiverOptionsResult, templatesResult, templateOptionsResult] = await Promise.allSettled([
     loadNoticeReceivers(apiGet, query.receivers),
     loadNoticeRules(apiGet, query.rules),
     loadNoticeReceiverOptions(apiGet),
-    loadNoticeTemplates(apiGet)
+    loadNoticeTemplates(apiGet, query.templates),
+    loadNoticeTemplateOptions(apiGet)
   ]);
   const receivers = receiversResult.status === 'fulfilled' ? receiversResult.value : emptyPageResult<NoticeReceiver>();
+  const templates = templatesResult.status === 'fulfilled' ? toPageResult(templatesResult.value) : emptyPageResult<NoticeTemplate>();
 
   return {
     receivers,
     receiverOptions: receiverOptionsResult.status === 'fulfilled' ? receiverOptionsResult.value : receivers,
     rules: rulesResult.status === 'fulfilled' ? rulesResult.value : emptyPageResult<NoticeRule>(),
-    templates:
-      templatesResult.status === 'fulfilled'
-        ? toTemplatePageResult(templatesResult.value)
-        : emptyPageResult<NoticeTemplate>()
+    templates,
+    templateOptions:
+      templateOptionsResult.status === 'fulfilled'
+        ? toPageResult(templateOptionsResult.value)
+        : templates
+  };
+}
+
+export async function loadAlertNoticeDataFromFacade(
+  readers: {
+    receivers: NoticeReceiverListReader;
+    rules: NoticeRuleListReader;
+    receiverOptions: NoticeOptionsReader<NoticeReceiver>;
+    templates: NoticeTemplateListReader;
+    templateOptions: NoticeOptionsReader<NoticeTemplate>;
+  },
+  query: NoticeLoadQuery = {}
+) {
+  const [receiversResult, rulesResult, receiverOptionsResult, templatesResult, templateOptionsResult] = await Promise.allSettled([
+    readers.receivers(query.receivers),
+    readers.rules(query.rules),
+    readers.receiverOptions(),
+    readers.templates(query.templates),
+    readers.templateOptions()
+  ]);
+  const receivers = receiversResult.status === 'fulfilled' ? receiversResult.value : emptyPageResult<NoticeReceiver>();
+  const templates = templatesResult.status === 'fulfilled' ? toPageResult(templatesResult.value) : emptyPageResult<NoticeTemplate>();
+
+  return {
+    receivers,
+    receiverOptions:
+      receiverOptionsResult.status === 'fulfilled'
+        ? toPageResult(receiverOptionsResult.value)
+        : receivers,
+    rules: rulesResult.status === 'fulfilled' ? rulesResult.value : emptyPageResult<NoticeRule>(),
+    templates,
+    templateOptions:
+      templateOptionsResult.status === 'fulfilled'
+        ? toPageResult(templateOptionsResult.value)
+        : templates
   };
 }
 
@@ -332,6 +392,34 @@ function parseIdList(text: string) {
     .filter(id => Number.isFinite(id));
 }
 
+export function buildNoticeRuleDisplayNames(
+  draft: NoticeRuleDraft,
+  receiverOptions: NoticeRuleDisplayOption[] = [],
+  templateOptions: NoticeRuleDisplayOption[] = []
+): NoticeRuleDisplayNames {
+  const selectedReceiverIds = new Set(parseIdList(draft.receiverIdsText).map(id => String(id)));
+  const matchedReceiverNames = receiverOptions
+    .filter(option => selectedReceiverIds.has(String(option.value)))
+    .map(option => option.label);
+  const draftReceiverNames = Array.isArray(draft.receiverName)
+    ? draft.receiverName.map(name => String(name).trim()).filter(Boolean)
+    : [];
+  const receiverName = matchedReceiverNames.length > 0 ? matchedReceiverNames : draftReceiverNames;
+  const templateId = Number.parseInt(draft.templateId, 10);
+  const matchedTemplateName =
+    Number.isFinite(templateId) && templateId >= 0
+      ? templateOptions.find(option => String(option.value) === String(templateId))?.label
+      : null;
+  const draftTemplateName = typeof draft.templateName === 'string' && draft.templateName.trim()
+    ? draft.templateName.trim()
+    : null;
+  const templateName =
+    Number.isFinite(templateId) && templateId >= 0
+      ? matchedTemplateName ?? draftTemplateName
+      : null;
+  return { receiverName, templateName };
+}
+
 function parseLabelRecord(text: string) {
   return text
     .split(',')
@@ -384,12 +472,13 @@ function toTimeInput(value?: string | number | Date | null) {
   return `${hours}:${minutes}`;
 }
 
-export function buildNoticeRulePayload(draft: NoticeRuleDraft): NoticeRulePayload {
+export function buildNoticeRulePayload(draft: NoticeRuleDraft, displayNames?: NoticeRuleDisplayNames): NoticeRulePayload {
   const templateId = Number.parseInt(draft.templateId, 10);
-  const { id, name, receiverIdsText, enable, filterAll, labelsText, daysText, periodStart, periodEnd, ...rest } = draft;
+  const { id, name, receiverIdsText, enable, filterAll, labelsText, daysText, periodLimit: _periodLimit, periodStart, periodEnd, ...rest } = draft;
   return {
     ...(id ? { id } : {}),
     ...(rest as Record<string, unknown>),
+    ...(displayNames ? displayNames : {}),
     name: name.trim(),
     receiverId: parseIdList(receiverIdsText),
     templateId: Number.isFinite(templateId) && templateId >= 0 ? templateId : null,
@@ -404,6 +493,7 @@ export function buildNoticeRulePayload(draft: NoticeRuleDraft): NoticeRulePayloa
 
 export function buildNoticeRuleDraft(rule?: NoticeRule | null, fallback: Partial<NoticeRuleDraft> = {}): NoticeRuleDraft {
   const source = rule as NoticeRuleLike | null | undefined;
+  const sourceDays = source?.days;
   return {
     ...fallback,
     ...(source || {}),
@@ -414,18 +504,19 @@ export function buildNoticeRuleDraft(rule?: NoticeRule | null, fallback: Partial
     enable: source?.enable ?? fallback.enable ?? true,
     filterAll: source?.filterAll ?? fallback.filterAll ?? true,
     labelsText: Object.entries(source?.labels || {}).map(([key, value]) => `${key}:${value}`).join(', ') || fallback.labelsText || '',
-    daysText: (source?.days || []).join(', ') || fallback.daysText || [1, 2, 3, 4, 5, 6, 7].join(', '),
-    periodStart: toTimeInput(source?.periodStart) || fallback.periodStart || '09:00',
-    periodEnd: toTimeInput(source?.periodEnd) || fallback.periodEnd || '18:00',
+    daysText: (sourceDays || []).join(', ') || fallback.daysText || [1, 2, 3, 4, 5, 6, 7].join(', '),
+    periodLimit: sourceDays ? sourceDays.length !== 7 : fallback.periodLimit ?? false,
+    periodStart: toTimeInput(source?.periodStart) || fallback.periodStart || '',
+    periodEnd: toTimeInput(source?.periodEnd) || fallback.periodEnd || '',
   };
 }
 
-export async function createNoticeRule(apiPost: ApiMutator, draft: NoticeRuleDraft) {
-  return apiPost<void>('/notice/rule', buildNoticeRulePayload(draft));
+export async function createNoticeRule(apiPost: ApiMutator, draft: NoticeRuleDraft, displayNames?: NoticeRuleDisplayNames) {
+  return apiPost<void>('/notice/rule', buildNoticeRulePayload(draft, displayNames));
 }
 
-export async function updateNoticeRule(apiPut: ApiMutator, draft: NoticeRuleDraft) {
-  return apiPut<void>('/notice/rule', buildNoticeRulePayload(draft));
+export async function updateNoticeRule(apiPut: ApiMutator, draft: NoticeRuleDraft, displayNames?: NoticeRuleDisplayNames) {
+  return apiPut<void>('/notice/rule', buildNoticeRulePayload(draft, displayNames));
 }
 
 export async function deleteNoticeRule(apiDelete: ApiMutator, id: number) {

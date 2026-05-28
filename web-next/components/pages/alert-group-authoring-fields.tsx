@@ -64,7 +64,7 @@ export function AlertGroupAuthoringFields({
               name="alert_group_labels"
               value={draft.groupLabelsText}
               onValueChange={value => onDraftChange({ ...draft, groupLabelsText: value })}
-              placeholder="alertname, severity, service"
+              placeholder={t('alert.group.labels.placeholder')}
               suggestions={effectiveLabelOptions.keys}
             />
           </div>

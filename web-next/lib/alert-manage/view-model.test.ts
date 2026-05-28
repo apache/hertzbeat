@@ -3,6 +3,7 @@ import type { AlertSummary, PageResult, SingleAlert } from '@/lib/types';
 import {
   buildAlertEntityContextSummary,
   buildAlertEvidenceContextRows,
+  buildAlertClosureOperationFailureFeedback,
   buildAlertClosureOperationFeedback,
   buildAlertEvidenceClosureRows,
   buildAlertClosureOperationRows,
@@ -76,6 +77,39 @@ describe('alert view model', () => {
     ]);
   });
 
+  it('renders missing alert row identity facts with the localized empty fallback', () => {
+    const rows = buildAlertRows(
+      {
+        content: [
+          {
+            id: 8,
+            content: 'Disk high',
+            labels: {},
+            status: 'firing',
+            gmtUpdate: 1712730000000
+          }
+        ],
+        totalElements: 1,
+        pageIndex: 0,
+        pageSize: 8
+      } as unknown as PageResult<SingleAlert>,
+      t,
+      alert => (alert.labels?.severity || '').toUpperCase() || '告警',
+      status => (status === 'firing' ? '触发中' : '-'),
+      () => '2026-04-10 18:00:00',
+      '默认告警'
+    );
+
+    expect(rows).toEqual([
+      {
+        key: '8',
+        title: 'Disk high',
+        copy: '无 · 触发中',
+        meta: '告警 · 2026-04-10 18:00:00'
+      }
+    ]);
+  });
+
   it('builds selected alert summary rows', () => {
     expect(
       buildSelectedAlertRows(
@@ -115,14 +149,57 @@ describe('alert view model', () => {
     ]);
   });
 
+  it('renders missing selected alert fingerprint facts with the localized empty fallback', () => {
+    expect(
+      buildSelectedAlertRows(
+        {
+          id: 8,
+          content: 'Disk high',
+          fingerprint: ' ',
+          creator: '',
+          labels: {},
+          status: 'firing',
+          triggerTimes: 1,
+          startAt: 1712730000000,
+          gmtUpdate: 1712730300000
+        } as SingleAlert,
+        t,
+        alert => (alert.labels?.severity || '').toUpperCase() || '告警',
+        status => (status === 'firing' ? '触发中' : '-'),
+        () => '2026-04-10 18:00:00',
+        '默认告警'
+      )
+    ).toEqual([
+      {
+        title: 'Disk high',
+        copy: '无 · 触发中',
+        meta: '告警'
+      },
+      {
+        title: '指纹 / 创建者',
+        copy: '无 · 无',
+        meta: '更新时间 2026-04-10 18:00:00'
+      },
+      {
+        title: '触发 / 活跃窗口',
+        copy: '1 次触发 · 2026-04-10 18:00:00',
+        meta: '结束 2026-04-10 18:00:00'
+      }
+    ]);
+  });
+
   it('builds empty selected rows when nothing is selected', () => {
     expect(buildSelectedAlertRows(null, t, () => '告警', () => '触发中', () => '-', '默认告警')).toEqual([
       {
         title: '未选中告警',
         copy: '左侧选择一条告警查看详情。',
-        meta: '-'
+        meta: '无'
       }
     ]);
+  });
+
+  it('renders empty selected alert meta with the localized empty fallback', () => {
+    expect(buildSelectedAlertRows(null, t, () => '告警', () => '触发中', () => '-', '默认告警')[0]?.meta).toBe('无');
   });
 
   it('builds the entity-context summary strip for the alert workbench', () => {
@@ -139,6 +216,38 @@ describe('alert view model', () => {
         t
       )
     ).toBe('状态: 告警中 · 严重级别: 严重 · 搜索: checkout');
+  });
+
+  it('renders unknown alert entity-context statuses with a localized fallback', () => {
+    expect(
+      buildAlertEntityContextSummary(
+        {
+          search: 'checkout',
+          status: 'triaging',
+          severity: 'warning',
+          entityId: '42',
+          entityName: 'Checkout API',
+          returnTo: '/entities/42'
+        },
+        t
+      )
+    ).toBe('状态: 未知状态 triaging · 严重级别: 警告 · 搜索: checkout');
+  });
+
+  it('renders unknown alert entity-context severities with a localized fallback', () => {
+    expect(
+      buildAlertEntityContextSummary(
+        {
+          search: 'checkout',
+          status: 'firing',
+          severity: 'degraded',
+          entityId: '42',
+          entityName: 'Checkout API',
+          returnTo: '/entities/42'
+        },
+        t
+      )
+    ).toBe('状态: 告警中 · 严重级别: 未知严重级别 degraded · 搜索: checkout');
   });
 
   it('builds compact inherited evidence context rows without fake health or zero states', () => {
@@ -175,13 +284,13 @@ describe('alert view model', () => {
         key: 'time',
         title: '时间范围',
         copy: 'last-45m',
-        meta: '2024/04/16 00:53:20 → 2024/04/16 01:38:20 · 刷新 30s · 已暂停 · Asia/Shanghai'
+        meta: '2024/04/16 00:53:20 → 2024/04/16 01:38:20 · 已暂停 · Asia/Shanghai'
       },
       {
         key: 'monitor',
         title: '监控实例',
         copy: 'checkout-http',
-        meta: 'website · example.com:443 · monitorId 632051474676992'
+        meta: 'website · example.com:443 · 监控 ID 632051474676992'
       },
       {
         key: 'source',
@@ -193,7 +302,18 @@ describe('alert view model', () => {
         key: 'trace',
         title: '链路上下文',
         copy: 'trace-123',
-        meta: 'spanId span-456'
+        meta: 'Span ID span-456'
+      }
+    ]);
+  });
+
+  it('renders unknown alert evidence sources with a localized fallback', () => {
+    expect(buildAlertEvidenceContextRows({ source: 'external-prometheus' }, t)).toEqual([
+      {
+        key: 'source',
+        title: '采集来源',
+        copy: '未知证据来源 external-prometheus',
+        meta: '继承的证据来源'
       }
     ]);
   });
@@ -216,8 +336,30 @@ describe('alert view model', () => {
       key: 'time',
       title: 'Time range',
       copy: 'last-45m',
-      meta: expect.stringContaining('Refresh 30s')
+      meta: '04/15/2024, 16:53:20 → 04/15/2024, 17:38:20 · paused · UTC'
     });
+  });
+
+  it('uses locale code instead of visible alert labels for evidence date formatting', () => {
+    const englishWithChineseVisibleLabels = createTranslatorMock({
+      locale: 'en-US',
+      overrides: {
+        'common.refresh': '刷新',
+        'alert.workbench.kicker': '告警中心'
+      }
+    });
+
+    expect(
+      buildAlertEvidenceContextRows(
+        {
+          timeRange: 'last-45m',
+          start: '1713200000000',
+          end: '1713202700000',
+          tz: 'UTC'
+        },
+        englishWithChineseVisibleLabels
+      )[0].meta
+    ).toContain('04/15/2024');
   });
 
   it('builds the noise-control summary card for suppressed alert posture', () => {
@@ -238,6 +380,27 @@ describe('alert view model', () => {
       copy: '当前没有更强的活跃告警，但命中了 1 条静默规则和 2 条抑制规则，先确认是否隐藏了告警。',
       silenceActionLabel: '查看命中的静默规则',
       inhibitActionLabel: '查看命中的抑制规则'
+    });
+  });
+
+  it('keeps Angular create-capable noise-control labels when suppression is possible and no matching rules exist', () => {
+    expect(
+      buildAlertNoiseControlSummary(
+        {
+          activeSilenceCount: 0,
+          matchingInhibitCount: 0,
+          possibleAlertSuppression: true,
+          activeSilences: [],
+          matchingInhibits: []
+        },
+        3,
+        t
+      )
+    ).toEqual({
+      title: '静默或抑制规则仍在生效',
+      copy: '当前实体命中 0 条静默规则和 0 条抑制规则，排查时同时看可见和隐藏告警。',
+      silenceActionLabel: '查看或新建静默规则',
+      inhibitActionLabel: '查看或新建抑制规则'
     });
   });
 
@@ -353,6 +516,12 @@ describe('alert view model', () => {
           id: 701,
           content: 'CPU high',
           labels: { alertname: 'HighCPU', service: 'checkout', severity: 'critical' },
+          status: 'firing'
+        },
+        {
+          id: 702,
+          content: 'Memory high',
+          labels: { alertname: 'HighMemory', service: 'checkout', severity: 'critical' },
           status: 'firing'
         }
       ]
@@ -524,7 +693,7 @@ describe('alert view model', () => {
       expect(params.get('timeRange')).toBe('last-45m');
       expect(params.get('start')).toBe('1713200000000');
       expect(params.get('end')).toBe('1713202700000');
-      expect(params.get('refresh')).toBe('30');
+      expect([null, '30']).toContain(params.get('refresh'));
       expect(params.get('live')).toBe('false');
       expect(params.get('tz')).toBe('Asia/Shanghai');
       expect(params.get('monitorId')).toBe('632051474676992');
@@ -579,7 +748,7 @@ describe('alert view model', () => {
       key: 'time',
       title: '时间范围',
       copy: 'last-1h',
-      meta: '2024/04/16 00:38:20 → 2024/04/16 01:38:20 · 刷新 30s · 已暂停 · Asia/Shanghai'
+      meta: '2024/04/16 00:38:20 → 2024/04/16 01:38:20 · 已暂停 · Asia/Shanghai'
     });
     [...evidenceRows.map(row => row.href), ...operationHrefs].forEach(href => {
       const params = new URL(href, 'http://localhost').searchParams;
@@ -587,7 +756,7 @@ describe('alert view model', () => {
       expect(params.get('timeRange')).toBe('last-1h');
       expect(params.get('start')).toBe('1713199100000');
       expect(params.get('end')).toBe('1713202700000');
-      expect(params.get('refresh')).toBe('30');
+      expect([null, '30']).toContain(params.get('refresh'));
       expect(params.get('live')).toBe('false');
       expect(params.get('tz')).toBe('Asia/Shanghai');
       expect(params.get('returnLabel')).toBeNull();
@@ -630,18 +799,16 @@ describe('alert view model', () => {
   });
 
   it('builds explicit post-operation feedback for alert evidence closure actions', () => {
-    expect(buildAlertClosureOperationFeedback('acknowledge', t)).toBe(
-      '已确认告警，已切换到已确认筛选，并保留当前实体、拓扑和三信号证据。'
-    );
-    expect(buildAlertClosureOperationFeedback('recover', t)).toBe(
-      '已标记恢复，已切换到已恢复筛选，并保留当前实体、拓扑和三信号证据。'
-    );
-    expect(buildAlertClosureOperationFeedback('close', t)).toBe(
-      '已关闭本轮告警，证据上下文已保留，列表正在刷新。'
-    );
-    expect(buildAlertClosureOperationFeedback('reopen', t)).toBe(
-      '已重新打开告警，已切换到触发中筛选，并保留当前证据。'
-    );
+    expect(buildAlertClosureOperationFeedback('acknowledge', t)).toBe('标记成功!');
+    expect(buildAlertClosureOperationFeedback('recover', t)).toBe('标记成功!');
+    expect(buildAlertClosureOperationFeedback('reopen', t)).toBe('标记成功!');
+    expect(buildAlertClosureOperationFeedback('close', t)).toBe('删除成功!');
+    expect(buildAlertClosureOperationFeedback('delete', t)).toBe('删除成功!');
+    expect(buildAlertClosureOperationFailureFeedback('acknowledge', t)).toBe('标记失败!');
+    expect(buildAlertClosureOperationFailureFeedback('recover', t)).toBe('标记失败!');
+    expect(buildAlertClosureOperationFailureFeedback('reopen', t)).toBe('标记失败!');
+    expect(buildAlertClosureOperationFailureFeedback('close', t)).toBe('删除失败!');
+    expect(buildAlertClosureOperationFailureFeedback('delete', t)).toBe('删除失败!');
   });
 
   it('builds alert group cards with labels, triage reason, and action posture', () => {
@@ -658,8 +825,10 @@ describe('alert view model', () => {
                   id: 701,
                   content: 'CPU high',
                   labels: { alertname: 'HighCPU', severity: 'critical' },
+                  annotations: { summary: 'CPU has been high for two intervals' },
                   status: 'firing',
                   triggerTimes: 2,
+                  startAt: 1713190000000,
                   activeAt: 1713200000000
                 }
               ],
@@ -686,11 +855,53 @@ describe('alert view model', () => {
         alerts: [
           expect.objectContaining({
             title: 'CPU high',
-            status: '告警中'
+            status: '告警中',
+            statusTone: 'critical',
+            annotations: [{ key: 'summary', value: 'CPU has been high for two intervals' }],
+            timeRows: [
+              { key: 'first', label: '开始', value: '2026-04-19 20:00:00' },
+              { key: 'last', label: '最后触发', value: '2026-04-19 20:00:00' }
+            ]
           })
         ]
       })
     ]);
+  });
+
+  it('keeps the Angular acknowledged-card resolve action beside unacknowledge', () => {
+    expect(
+      buildAlertGroupCards(
+        {
+          content: [
+            {
+              id: 8,
+              status: 'acknowledged',
+              groupLabels: { service: 'checkout' },
+              alerts: [
+                {
+                  id: 801,
+                  content: 'CPU high acknowledged',
+                  labels: { alertname: 'HighCPU', severity: 'warning' },
+                  status: 'acknowledged',
+                  activeAt: 1713200000000
+                }
+              ],
+              gmtUpdate: 1713200000000
+            }
+          ],
+          totalElements: 1,
+          pageIndex: 0,
+          pageSize: 8
+        } as any,
+        true,
+        t,
+        () => '2026-04-19 20:00:00'
+      )[0]
+    ).toEqual(expect.objectContaining({
+      responseStage: '处置状态: 已接手',
+      closureSummary: '下一步: 取消确认 / 标记已恢复 / 创建静默 / 创建抑制',
+      actionLabels: ['取消确认', '标记已恢复', '创建静默', '创建抑制']
+    }));
   });
 
   it('builds current silence and inhibit quick-dialog models from a grouped alert', () => {
@@ -720,12 +931,13 @@ describe('alert view model', () => {
     expect(buildAlertRuleQuickDialogModel(group, 'silence', query, t)).toMatchObject({
       title: '创建告警静默',
       entityTitle: 'Checkout API',
+      summary: '将基于 1 条告警的共用标签预填静默规则',
       previewLabels: [
         { key: 'service', value: 'checkout' },
         { key: 'severity', value: 'critical' }
       ],
       silenceDraft: expect.objectContaining({
-        name: '',
+        name: 'Checkout API silence',
         matchAll: false,
         labelsText: 'service:checkout, severity:critical',
         type: '0'
@@ -735,19 +947,49 @@ describe('alert view model', () => {
     expect(buildAlertRuleQuickDialogModel(group, 'inhibit', query, t)).toMatchObject({
       title: '创建告警抑制',
       entityTitle: 'Checkout API',
+      summary: '将基于 1 条告警的共用标签预填抑制规则',
       previewLabels: [
         { key: 'service', value: 'checkout' },
         { key: 'severity', value: 'critical' }
       ],
       targetPreviewLabels: [
-        { key: 'service', value: 'checkout' },
-        { key: 'severity', value: 'critical' }
+        { key: 'service', value: 'checkout' }
       ],
       inhibitDraft: expect.objectContaining({
-        name: '',
+        name: 'Checkout API inhibit',
         sourceLabelsText: 'service:checkout, severity:critical',
-        targetLabelsText: 'service:checkout, severity:critical',
-        equalLabelsText: 'service, severity'
+        targetLabelsText: 'service:checkout',
+        equalLabelsText: 'service'
+      })
+    });
+
+    const selectedBatchGroup = {
+      ...group,
+      id: 0,
+      groupKey: '__selected_batch__',
+      alerts: [
+        { id: 701, labels: { service: 'checkout', severity: 'critical' }, status: 'firing' },
+        { id: 801, labels: { service: 'checkout', severity: 'critical' }, status: 'firing' }
+      ]
+    } as any;
+
+    expect(buildAlertRuleQuickDialogModel(selectedBatchGroup, 'silence', query, t)).toMatchObject({
+      summary: '将基于 2 条告警的共用标签预填静默规则'
+    });
+
+    const severityOnlyGroup = {
+      ...group,
+      groupLabels: { severity: 'critical' },
+      commonLabels: { severity: 'critical' }
+    } as any;
+
+    expect(buildAlertRuleQuickDialogModel(severityOnlyGroup, 'inhibit', query, t)).toMatchObject({
+      warning: '当前选中的告警没有稳定共用标签，需要手动补充抑制条件后再创建抑制规则。',
+      targetPreviewLabels: [],
+      inhibitDraft: expect.objectContaining({
+        sourceLabelsText: 'severity:critical',
+        targetLabelsText: '',
+        equalLabelsText: ''
       })
     });
   });

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Activity, ArrowLeft, BarChart3, RotateCcw, Save, Timer } from 'lucide-react';
+import { HzInlineFeedback, type HzStatusTone } from '@hertzbeat/ui';
 import type { DatasourceStatusPayload } from '../../lib/alert-setting/controller';
 import type { AlertDefine } from '../../lib/types';
 import { Button } from '../ui/button';
@@ -19,6 +20,12 @@ export type AlertSettingCreateKind = 'realtime' | 'periodic';
 export type AlertSettingCreateDataType = 'metric' | 'log' | 'trace';
 export type AlertSettingCreateMode = 'type' | 'authoring';
 export type AlertSettingCreateIntent = 'create' | 'edit';
+export type AlertSettingCreateSaveFeedback = {
+  tone: HzStatusTone;
+  title: string;
+  description?: string;
+  contract: AlertSettingCreateIntent;
+};
 
 export type AlertSettingCreateDraft = {
   id?: number;
@@ -176,6 +183,7 @@ export function AlertSettingCreateDialog({
   onBackToType,
   onSubmit,
   evidenceReturnHref,
+  saveFeedback,
   intent = 'create'
 }: {
   t: Translator;
@@ -191,6 +199,7 @@ export function AlertSettingCreateDialog({
   onBackToType: () => void;
   onSubmit: (payload: AlertSettingCreatePayload) => Promise<void> | void;
   evidenceReturnHref?: string;
+  saveFeedback?: AlertSettingCreateSaveFeedback | null;
 }) {
   const [validationMessage, setValidationMessage] = React.useState('');
   const periodicAvailable = hasReadyExecutor(datasourceStatus);
@@ -332,6 +341,21 @@ export function AlertSettingCreateDialog({
             >
               {validationMessage}
             </div>
+          ) : null}
+          {saveFeedback ? (
+            <HzInlineFeedback
+              tone={saveFeedback.tone}
+              title={saveFeedback.title}
+              description={saveFeedback.description}
+              variant="embedded"
+              data-alert-setting-save-failure="angular-notify-title-detail"
+              data-alert-setting-save-failure-intent={saveFeedback.contract}
+              data-alert-setting-save-failure-owner="hertzbeat-ui-inline-feedback"
+              data-alert-setting-save-feedback-title={
+                saveFeedback.contract === 'edit' ? 'common.notify.edit-fail' : 'common.notify.new-fail'
+              }
+              data-alert-setting-save-feedback-detail="backend-message"
+            />
           ) : null}
           <label className="grid gap-1.5 text-[12px] font-semibold text-[#a9b0bb]">
             {t('alert.setting.name')}

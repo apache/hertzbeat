@@ -18,6 +18,10 @@ import {
 } from '../../lib/alert-manage/view-model';
 import { AlertSilenceAuthoringFields } from './alert-silence-authoring-fields';
 import { AlertInhibitAuthoringFields } from './alert-inhibit-authoring-fields';
+import type { AlertSilenceFormDraft } from '../../lib/alert-silence/controller';
+import type { AlertInhibitFormDraft } from '../../lib/alert-inhibit/controller';
+import { validateAlertSilenceForm } from '../../lib/alert-silence/view-model';
+import { validateAlertInhibitForm } from '../../lib/alert-inhibit/view-model';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
@@ -27,6 +31,7 @@ type AlertRuleQuickDialogProps = {
   group: GroupAlert;
   query: AlertQueryState;
   onClose: () => void;
+  onSubmit?: (mode: AlertRuleDialogMode, draft: AlertSilenceFormDraft | AlertInhibitFormDraft) => Promise<void>;
 };
 
 export function AlertRuleQuickDialog({
@@ -34,11 +39,14 @@ export function AlertRuleQuickDialog({
   mode,
   group,
   query,
-  onClose
+  onClose,
+  onSubmit
 }: AlertRuleQuickDialogProps) {
   const model = React.useMemo(() => buildAlertRuleQuickDialogModel(group, mode, query, t), [group, mode, query, t]);
   const [silenceDraft, setSilenceDraft] = React.useState(model.silenceDraft);
   const [inhibitDraft, setInhibitDraft] = React.useState(model.inhibitDraft);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setSilenceDraft(model.silenceDraft);
@@ -50,6 +58,30 @@ export function AlertRuleQuickDialog({
   const silencePreviewLabels = buildAlertRulePreviewLabelsFromText(silenceDraft?.labelsText || '');
   const inhibitSourcePreviewLabels = buildAlertRulePreviewLabelsFromText(inhibitDraft?.sourceLabelsText || '');
   const inhibitTargetPreviewLabels = buildAlertRulePreviewLabelsFromText(inhibitDraft?.targetLabelsText || '');
+
+  async function handleSubmit() {
+    if (!onSubmit || submitting) return;
+    const nextDraft = mode === 'silence' ? silenceDraft : inhibitDraft;
+    if (!nextDraft) return;
+    const validationError =
+      mode === 'silence'
+        ? validateAlertSilenceForm(nextDraft as AlertSilenceFormDraft, t)
+        : validateAlertInhibitForm(nextDraft as AlertInhibitFormDraft, t);
+    if (validationError) {
+      setSubmitError(validationError);
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await onSubmit(mode, nextDraft);
+      onClose();
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : t('common.save-failed'));
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <OverlayDialog
@@ -71,6 +103,18 @@ export function AlertRuleQuickDialog({
           >
             {workspaceLabel}
           </a>
+          {onSubmit ? (
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => void handleSubmit()}
+              disabled={submitting}
+              data-alert-rule-dialog-submit={mode}
+              data-alert-rule-dialog-submit-owner="alert-center-quick-dialog"
+            >
+              {submitting ? t('common.saving') : t('common.save')}
+            </Button>
+          ) : null}
         </div>
       }
     >
@@ -83,6 +127,10 @@ export function AlertRuleQuickDialog({
 
         {model.warning ? (
           <AlertAuthoringCallout data-alert-rule-warning="true" warning={model.warning} className="text-sm leading-6" />
+        ) : null}
+
+        {submitError ? (
+          <AlertAuthoringCallout data-alert-rule-submit-error="true" warning={submitError} className="text-sm leading-6" />
         ) : null}
 
         {mode === 'silence' ? (

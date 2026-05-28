@@ -43,10 +43,26 @@ describe('alert silence view model', () => {
       {
         key: '7',
         title: 'silence-a',
-        copy: '已启用 · 匹配全部 true · 匹配标签 1',
+        copy: '已启用 · 匹配全部 是 · 匹配标签 1',
         meta: `${t('alert.silence.times')} 2 · ${t('common.updated')} 2026-04-10 18:00:00`
       }
     ]);
+  });
+
+  it('renders disabled alert silence row match-all boolean with localized false copy', () => {
+    expect(
+      buildAlertSilenceRows(
+        [
+          { id: 8, name: 'silence-b', enable: false, matchAll: false, labels: {}, times: 0, gmtUpdate: 1712730000000 }
+        ] as any,
+        t,
+        () => '2026-04-10 18:00:00'
+      )[0]
+    ).toMatchObject({
+      key: '8',
+      title: 'silence-b',
+      copy: '已停用 · 匹配全部 否 · 匹配标签 0'
+    });
   });
 
   it('builds selected rows', () => {
@@ -56,16 +72,61 @@ describe('alert silence view model', () => {
         t
       )
     ).toEqual([
-      { title: 'silence-a', copy: '已启用', meta: 'id 7' },
-      { title: t('alert.silence.selected.strategy'), copy: t('alert.silence.selected.strategy.all'), meta: 'type label' },
+      { title: 'silence-a', copy: '已启用', meta: '规则 ID 7' },
+      { title: t('alert.silence.selected.strategy'), copy: t('alert.silence.selected.strategy.all'), meta: '类型 label' },
       { title: '标签 / 周期', copy: '1 匹配标签', meta: '静默周期 MON' }
     ]);
+  });
+
+  it('renders empty selected alert silence meta with the localized empty fallback', () => {
+    expect(buildAlertSilenceSelectedRows(null, t)).toEqual([
+      {
+        title: t('alert.silence.selected.empty.title'),
+        copy: t('alert.silence.selected.empty.copy'),
+        meta: '无'
+      }
+    ]);
+  });
+
+  it('renders selected alert silence type meta with the localized empty fallback', () => {
+    expect(
+      buildAlertSilenceSelectedRows(
+        { id: 9, name: 'empty type silence', enable: true, matchAll: false, labels: {}, days: [] } as any,
+        t
+      )[1]
+    ).toMatchObject({
+      title: t('alert.silence.selected.strategy'),
+      copy: t('alert.silence.selected.strategy.any'),
+      meta: '类型 无'
+    });
+  });
+
+  it('renders missing alert silence days with the localized empty fallback', () => {
+    expect(
+      buildAlertSilenceSelectedRows(
+        {
+          id: 8,
+          name: 'empty silence',
+          enable: false,
+          matchAll: false,
+          type: 'label',
+          labels: { service: 'checkout' },
+          days: [' ', ''],
+          times: 0
+        } as any,
+        t
+      )[2]
+    ).toMatchObject({
+      title: '标签 / 周期',
+      copy: '1 匹配标签',
+      meta: '静默周期 无'
+    });
   });
 
   it('builds notes rows', () => {
     expect(buildAlertSilenceNoteRows(t, 2)).toEqual([
       { title: t('alert.silence.notes.times.title'), copy: '2', meta: '静默次数' },
-      { title: t('alert.silence.notes.query.title'), copy: 'search · id desc', meta: t('alert.silence.notes.query.meta') }
+      { title: t('alert.silence.notes.query.title'), copy: '搜索 · ID 倒序', meta: t('alert.silence.notes.query.meta') }
     ]);
   });
 
@@ -179,6 +240,22 @@ describe('alert silence view model', () => {
           daysText: '1,2,3,4,5',
           periodStart: '09:00',
           periodEnd: '18:00',
+        },
+        t
+      )
+    ).toBeNull();
+
+    expect(
+      validateAlertSilenceForm(
+        {
+          name: 'weekday',
+          enable: true,
+          matchAll: true,
+          type: '1',
+          labelsText: '',
+          daysText: '',
+          periodStart: '',
+          periodEnd: '',
         },
         t
       )

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ArrowLeft, Inbox, Network, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { HzInlineFeedback, HzPaginationBar } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { SearchRow } from '../ui/search-row';
@@ -14,6 +15,7 @@ import {
 } from '../../lib/alert-manage/query-state';
 import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
 import type { AlertInhibitFormDraft } from '../../lib/alert-inhibit/controller';
+import type { AlertInhibitManagementContext } from '../../lib/alert-inhibit/query-state';
 import type { AlertInhibitEvidenceContext } from '../../lib/alert-inhibit/view-model';
 import type { AlertLabelOptions } from '../../lib/alert-label-options';
 import type { AlertInhibit, PageResult } from '../../lib/types';
@@ -32,7 +34,15 @@ type AlertInhibitSurfaceProps = {
   editorSaving: boolean;
   editorMessage: string | null;
   editorError: string | null;
+  editorErrorDetail?: string | null;
+  editorErrorContract?: 'save' | 'enable' | 'delete' | null;
   returnContext?: AlertQueryState;
+  managementContext?: AlertInhibitManagementContext;
+  matchedViewEnabled?: boolean;
+  missingMatchedRuleCount?: number;
+  createdOutsideMatchedViewNotice?: boolean;
+  entityPrefillSource?: 'alerts-common-labels' | 'none';
+  entityPrefillWarning?: string | null;
   evidenceContext?: AlertInhibitEvidenceContext | null;
   draft: AlertInhibitFormDraft;
   labelOptions?: AlertLabelOptions;
@@ -43,6 +53,11 @@ type AlertInhibitSurfaceProps = {
   onRefresh: () => void;
   onSelect: (nextId: number | null) => void;
   onCheckedIdsChange: (nextIds: number[]) => void;
+  pageSizeOptions?: number[];
+  onPageIndexChange?: (nextPageIndex: number) => void;
+  onPageSizeChange?: (nextPageSize: number) => void;
+  onViewAllRules?: () => void;
+  onViewMatchedRules?: () => void;
   onNew: () => void;
   onEdit: (inhibitId?: number) => void;
   onSave: () => void;
@@ -83,7 +98,15 @@ export function AlertInhibitSurface({
   editorSaving,
   editorMessage,
   editorError,
+  editorErrorDetail,
+  editorErrorContract,
   returnContext,
+  managementContext,
+  matchedViewEnabled = false,
+  missingMatchedRuleCount = 0,
+  createdOutsideMatchedViewNotice = false,
+  entityPrefillSource = 'none',
+  entityPrefillWarning = null,
   evidenceContext,
   draft,
   labelOptions,
@@ -94,6 +117,11 @@ export function AlertInhibitSurface({
   onRefresh,
   onSelect,
   onCheckedIdsChange,
+  pageSizeOptions = [8, 15, 25],
+  onPageIndexChange,
+  onPageSizeChange,
+  onViewAllRules,
+  onViewMatchedRules,
   onNew,
   onEdit,
   onSave,
@@ -113,6 +141,32 @@ export function AlertInhibitSurface({
   const allVisibleChecked = visibleIds.length > 0 && visibleIds.every(id => checkedIds.includes(id));
   const topologyReturnHref = resolveAlertInternalReturnHref(returnContext?.returnTo);
   const topologyReturnActive = hasAlertTopologyReturnContext(returnContext);
+  const entityContextActive = Boolean(managementContext?.entityId || managementContext?.entityName || managementContext?.returnTo);
+  const matchModeActive = managementContext?.matchMode === 'entity-noise-controls';
+  const managementEntityLabel = managementContext?.entityName || managementContext?.returnLabel || managementContext?.entityId || t('entity.response.context.title');
+  const managementReturnHref = resolveAlertInternalReturnHref(managementContext?.returnTo);
+  const emptyValue = t('common.none');
+  const currentPageIndex = Math.max(0, data.list.pageIndex ?? 0);
+  const currentPageSize = Math.max(1, data.list.pageSize ?? pageSizeOptions[0] ?? 8);
+  const totalElements = data.list.totalElements || 0;
+  const totalPages = Math.max(1, Math.ceil(totalElements / currentPageSize));
+  const currentPage = Math.min(currentPageIndex + 1, totalPages);
+  const pageStart = totalElements === 0 || data.list.content.length === 0 ? 0 : currentPageIndex * currentPageSize + 1;
+  const pageEnd = totalElements === 0 ? 0 : Math.min(totalElements, currentPageIndex * currentPageSize + data.list.content.length);
+  const paginationSummary = t('alert.inhibit.pagination.summary', {
+    page: currentPage,
+    totalPages,
+    from: pageStart,
+    to: pageEnd,
+    total: totalElements
+  });
+
+  function handlePageJumpChange(value: string) {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed)) return;
+    const nextPageIndex = Math.min(Math.max(parsed, 1), totalPages) - 1;
+    onPageIndexChange?.(nextPageIndex);
+  }
 
   return (
     <>
@@ -154,6 +208,108 @@ export function AlertInhibitSurface({
                       </a>
                     </div>
                   ) : null}
+                  {entityContextActive ? (
+                    <div
+                      data-alert-inhibit-entity-context="angular-entity-context-bar"
+                      data-alert-inhibit-entity-context-owner="hertzbeat-ui-inline-feedback"
+                      className="mt-4"
+                    >
+                      <HzInlineFeedback
+                        tone="info"
+                        title={managementEntityLabel}
+                        meta={t('entity.response.context.title')}
+                        variant="embedded"
+                      />
+                    </div>
+                  ) : null}
+                  {matchModeActive ? (
+                    <div
+                      data-alert-inhibit-match-mode="angular-entity-noise-controls"
+                      data-alert-inhibit-match-mode-owner="hertzbeat-ui-inline-feedback"
+                      data-alert-inhibit-match-view={matchedViewEnabled ? 'matched' : 'all'}
+                      data-alert-inhibit-matching-rule-count={managementContext?.matchingRuleIds.length ?? 0}
+                      data-alert-inhibit-missing-rule-count={missingMatchedRuleCount}
+                      className="mt-3 rounded-[3px] border border-[#303743] bg-[#101217] px-3 py-2"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
+                            {t('entity.noise-controls.management.label')}
+                          </div>
+                          <div className="mt-1 text-[13px] font-semibold text-[#eef2f7]">
+                            {matchedViewEnabled
+                              ? t('entity.noise-controls.management.title.matched')
+                              : t('entity.noise-controls.management.title.global')}
+                          </div>
+                          {matchedViewEnabled && (managementContext?.matchingRuleIds.length ?? 0) === 0 ? (
+                            <div className="mt-1 text-[12px] leading-5 text-[#a9b0bb]">{t('entity.noise-controls.management.empty')}</div>
+                          ) : null}
+                          {matchedViewEnabled && missingMatchedRuleCount > 0 ? (
+                            <div className="mt-1 text-[12px] leading-5 text-[#a9b0bb]">
+                              {t('entity.noise-controls.management.missing', { count: missingMatchedRuleCount })}
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {matchedViewEnabled ? (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className={coldButtonClassName}
+                              onClick={onViewAllRules}
+                              data-alert-inhibit-match-action="view-all"
+                            >
+                              {t('entity.noise-controls.management.view-all')}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className={coldButtonClassName}
+                              onClick={onViewMatchedRules}
+                              data-alert-inhibit-match-action="view-matched"
+                            >
+                              {t('entity.noise-controls.management.view-matched')}
+                            </Button>
+                          )}
+                          {managementReturnHref ? (
+                            <a
+                              href={managementReturnHref}
+                              data-alert-inhibit-entity-return="true"
+                              className="inline-flex h-8 items-center rounded-[3px] border border-[#394150] px-3 text-[12px] font-semibold text-[#d8e4ff] hover:border-[#4e74f8] hover:text-white"
+                            >
+                              {t('entity.response.context.return')}
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                  {createdOutsideMatchedViewNotice ? (
+                    <div
+                      data-alert-inhibit-created-outside-matched="angular-authoring-notice"
+                      data-alert-inhibit-created-outside-matched-owner="hertzbeat-ui-inline-feedback"
+                      className="mt-3 rounded-[3px] border border-[#303743] bg-[#101217] px-3 py-2"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <HzInlineFeedback
+                          tone="info"
+                          title={t('entity.noise-controls.authoring.created-outside-matched.title')}
+                          meta={t('entity.noise-controls.authoring.created-outside-matched.copy')}
+                          variant="embedded"
+                        />
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className={coldButtonClassName}
+                          onClick={onViewAllRules}
+                          data-alert-inhibit-created-outside-matched-action="view-all"
+                        >
+                          {t('entity.noise-controls.management.view-all')}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
                   <div data-alert-inhibit-command-row="standard-equal-buttons" className={coldInhibitVisual.button.row}>
                     <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
                       <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
@@ -168,7 +324,8 @@ export function AlertInhibitSurface({
                       variant="default"
                       className={coldButtonClassName}
                       onClick={onDeleteSelected}
-                      disabled={selectedCount === 0}
+                      data-alert-inhibit-delete-selected="toolbar"
+                      data-alert-inhibit-delete-selected-owner="route-no-select-warning"
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                       {t('common.button.delete-batch')}
@@ -179,6 +336,28 @@ export function AlertInhibitSurface({
             </div>
 
             <div data-alert-inhibit-admin-layout="full-width-admin-list" className="space-y-5">
+              {!editorOpen && (editorError || editorMessage) ? (
+                <HzInlineFeedback
+                  tone={editorError ? 'warning' : 'success'}
+                  title={editorError || editorMessage}
+                  description={
+                    editorErrorContract === 'enable' || editorErrorContract === 'delete'
+                      ? editorErrorDetail
+                      : undefined
+                  }
+                  variant="embedded"
+                  data-alert-inhibit-action-feedback={editorError ? 'warning' : 'success'}
+                  data-alert-inhibit-action-feedback-owner="hertzbeat-ui-inline-feedback"
+                  data-alert-inhibit-enable-failure={editorErrorContract === 'enable' ? 'angular-notify-title-detail' : undefined}
+                  data-alert-inhibit-enable-failure-owner={editorErrorContract === 'enable' ? 'hertzbeat-ui-inline-feedback' : undefined}
+                  data-alert-inhibit-enable-feedback-title={editorErrorContract === 'enable' ? 'common.notify.edit-fail' : undefined}
+                  data-alert-inhibit-enable-feedback-detail={editorErrorContract === 'enable' ? 'backend-message' : undefined}
+                  data-alert-inhibit-delete-failure={editorErrorContract === 'delete' ? 'angular-notify-title-detail' : undefined}
+                  data-alert-inhibit-delete-failure-owner={editorErrorContract === 'delete' ? 'hertzbeat-ui-inline-feedback' : undefined}
+                  data-alert-inhibit-delete-feedback-title={editorErrorContract === 'delete' ? 'common.notify.delete-fail' : undefined}
+                  data-alert-inhibit-delete-feedback-detail={editorErrorContract === 'delete' ? 'backend-message' : undefined}
+                />
+              ) : null}
               {evidenceContext ? (
                 <section
                   data-alert-inhibit-evidence-context="signal-route"
@@ -206,15 +385,27 @@ export function AlertInhibitSurface({
                   <div className="mt-3 grid gap-2 lg:grid-cols-[1fr_1fr_0.8fr]">
                     <div className="rounded-[3px] border border-[#222a34] bg-[#080a0e] px-3 py-2">
                       <p className="mb-1 text-[11px] font-semibold text-[#788292]">{t('alert.inhibit.evidence.source-labels')}</p>
-                      <p className="font-mono text-[11px] leading-5 text-[#9aa5b5]">{evidenceContext.sourceLabelsText || '-'}</p>
+                      <p className="font-mono text-[11px] leading-5 text-[#9aa5b5]">
+                        <span data-alert-inhibit-source-labels={evidenceContext.sourceLabelsText ? 'provided-labels' : 'localized-fallback'}>
+                          {evidenceContext.sourceLabelsText || emptyValue}
+                        </span>
+                      </p>
                     </div>
                     <div className="rounded-[3px] border border-[#222a34] bg-[#080a0e] px-3 py-2">
                       <p className="mb-1 text-[11px] font-semibold text-[#788292]">{t('alert.inhibit.evidence.target-labels')}</p>
-                      <p className="font-mono text-[11px] leading-5 text-[#9aa5b5]">{evidenceContext.targetLabelsText || '-'}</p>
+                      <p className="font-mono text-[11px] leading-5 text-[#9aa5b5]">
+                        <span data-alert-inhibit-target-labels={evidenceContext.targetLabelsText ? 'provided-labels' : 'localized-fallback'}>
+                          {evidenceContext.targetLabelsText || emptyValue}
+                        </span>
+                      </p>
                     </div>
                     <div className="rounded-[3px] border border-[#222a34] bg-[#080a0e] px-3 py-2">
                       <p className="mb-1 text-[11px] font-semibold text-[#788292]">{t('alert.inhibit.evidence.equal-labels')}</p>
-                      <p className="font-mono text-[11px] leading-5 text-[#9aa5b5]">{evidenceContext.equalLabelsText || '-'}</p>
+                      <p className="font-mono text-[11px] leading-5 text-[#9aa5b5]">
+                        <span data-alert-inhibit-equal-labels={evidenceContext.equalLabelsText ? 'provided-labels' : 'localized-fallback'}>
+                          {evidenceContext.equalLabelsText || emptyValue}
+                        </span>
+                      </p>
                     </div>
                   </div>
                   <div className="mt-3 grid gap-2 md:grid-cols-3 xl:grid-cols-5">
@@ -369,6 +560,39 @@ export function AlertInhibitSurface({
                       </tbody>
                     </table>
                   </div>
+                  <div
+                    data-alert-inhibit-pagination="cold-dense-pagination"
+                    data-alert-inhibit-pagination-owner="hertzbeat-ui-pagination-bar"
+                  >
+                    <HzPaginationBar
+                      summary={paginationSummary}
+                      pageSizeLabel={t('alert.inhibit.pagination.page-size')}
+                      pageSizeValue={String(currentPageSize)}
+                      pageSizeOptions={pageSizeOptions.map(value => ({ value: String(value), label: String(value) }))}
+                      pageJumpLabel={t('alert.inhibit.pagination.page')}
+                      pageJumpValue={String(currentPage)}
+                      pageJumpMax={totalPages}
+                      previousLabel={t('common.previous-page')}
+                      nextLabel={t('common.next-page')}
+                      previousDisabled={currentPageIndex <= 0}
+                      nextDisabled={currentPage >= totalPages}
+                      onPrevious={() => onPageIndexChange?.(Math.max(currentPageIndex - 1, 0))}
+                      onNext={() => onPageIndexChange?.(Math.min(currentPageIndex + 1, totalPages - 1))}
+                      onPageSizeChange={value => onPageSizeChange?.(Number.parseInt(value, 10))}
+                      onPageJumpChange={handlePageJumpChange}
+                      pageJumpInputProps={
+                        {
+                          'data-alert-inhibit-pagination-page-jump-owner': 'hertzbeat-ui-input'
+                        } as React.ComponentProps<typeof HzPaginationBar>['pageJumpInputProps']
+                      }
+                      pageSizeSelectProps={
+                        {
+                          'data-alert-inhibit-pagination-page-size-owner': 'hertzbeat-ui-select'
+                        } as React.ComponentProps<typeof HzPaginationBar>['pageSizeSelectProps']
+                      }
+                      className="border-x-0"
+                    />
+                  </div>
                 </div>
               </section>
             </div>
@@ -404,7 +628,20 @@ export function AlertInhibitSurface({
           </div>
         }
       >
-        {editorError ? (
+        {editorErrorContract === 'save' && editorErrorDetail && editorError ? (
+          <HzInlineFeedback
+            tone="critical"
+            title={editorError}
+            description={editorErrorDetail}
+            variant="embedded"
+            className="mb-3 rounded-[3px] border border-[#5d3037] bg-[#1a1013]"
+            data-alert-inhibit-editor-error-inline="cold-validation"
+            data-alert-inhibit-save-failure="angular-notify-title-detail"
+            data-alert-inhibit-save-failure-owner="hertzbeat-ui-inline-feedback"
+            data-alert-inhibit-save-feedback-title={draft.id ? 'common.notify.edit-fail' : 'common.notify.new-fail'}
+            data-alert-inhibit-save-feedback-detail="backend-message"
+          />
+        ) : editorError ? (
           <div
             role="alert"
             data-alert-inhibit-editor-error-inline="cold-validation"
@@ -413,17 +650,25 @@ export function AlertInhibitSurface({
             {editorError}
           </div>
         ) : null}
-        <AlertInhibitAuthoringFields
-          t={t}
-          draft={draft}
-          onDraftChange={onDraftChange}
-          mode="workspace"
-          onCopySourceToTarget={onCopySourceToTarget}
-          onDropSeverity={onDropSeverity}
-          onClearTarget={onClearTarget}
-          onClearEqual={onClearEqual}
-          labelOptions={labelOptions}
-        />
+        <div
+          data-alert-inhibit-entity-prefill={entityPrefillSource === 'alerts-common-labels' ? 'angular-alert-common-labels' : 'manual'}
+          data-alert-inhibit-entity-prefill-warning={entityPrefillWarning ? 'true' : undefined}
+        >
+          <AlertInhibitAuthoringFields
+            t={t}
+            draft={draft}
+            onDraftChange={onDraftChange}
+            mode="workspace"
+            onCopySourceToTarget={onCopySourceToTarget}
+            onDropSeverity={onDropSeverity}
+            onClearTarget={onClearTarget}
+            onClearEqual={onClearEqual}
+            labelOptions={labelOptions}
+            prefillTitle={managementContext?.entityId || managementContext?.entityName || managementContext?.returnTo ? t('entity.noise-controls.authoring.inhibit.title') : undefined}
+            prefillCopy={entityPrefillSource === 'alerts-common-labels' ? t('entity.noise-controls.authoring.inhibit.prefill-success') : undefined}
+            prefillWarning={entityPrefillWarning}
+          />
+        </div>
       </OverlayDialog>
     </>
   );

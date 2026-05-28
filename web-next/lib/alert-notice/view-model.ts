@@ -111,10 +111,6 @@ const TEMPLATE_EXPRESSION_IGNORE = new Set([
   'length'
 ]);
 
-function isChineseLocale(locale?: string | null) {
-  return locale?.toLowerCase().startsWith('zh') ?? false;
-}
-
 function normalizeSignal(signal: string | null | undefined) {
   if (signal === 'logs' || signal === 'traces' || signal === 'metrics') {
     return signal;
@@ -174,57 +170,30 @@ export function buildAlertNoticeEvidenceContext(
   };
 }
 
-export function getAlertNoticeProductCopy(locale?: string | null) {
-  if (isChineseLocale(locale)) {
-    return {
-      metricVisibleReceivers: '当前接收对象',
-      metricVisibleRules: '当前通知策略',
-      metricPresetTemplates: '预置模板',
-      receiverLaneCopy: '管理告警发往哪些接收对象。',
-      ruleLaneCopy: '按标签、时间段和模板自动路由通知。',
-      templateLaneCopy: '以纯文本摘要预览模板，不暴露原始 HTML 或模板源码。',
-      countMeta: (total: number, visible: number) => `共 ${total} 个 · 当前 ${visible} 个`,
-      updatedLabel: '更新时间',
-      enabledLabel: '已启用',
-      disabledLabel: '已停用',
-      receiverFallback: '接收对象',
-      templateFallback: '通知模板',
-      ruleFallback: '通知策略',
-      ruleDeliveryPrefix: '发送到',
-      ruleNoReceiver: '未绑定接收对象',
-      receiverIdsPlaceholder: '接收对象 ID，例如 1, 2',
-      templateIdPlaceholder: '模板 ID，-1 表示默认模板',
-      labelsPlaceholder: '标签匹配，例如 severity:critical',
-      daysPlaceholder: '日期范围，例如 1,2,3,4,5',
-      emailPlaceholder: '邮箱地址，例如 ops@example.com',
-      phonePlaceholder: '手机号，例如 +86 13800000000',
-      hookUrlPlaceholder: 'Webhook 地址，例如 https://hooks.example.com'
-    };
-  }
-
+export function getAlertNoticeProductCopy(t: Translator) {
   return {
-    metricVisibleReceivers: 'Visible receivers',
-    metricVisibleRules: 'Visible policies',
-    metricPresetTemplates: 'Preset templates',
-    receiverLaneCopy: 'Manage who receives each alert notice.',
-    ruleLaneCopy: 'Route notices by labels, schedule, and template.',
-    templateLaneCopy: 'Preview templates as plain text without exposing raw HTML or source.',
-    countMeta: (total: number, visible: number) => `${total} total · ${visible} visible`,
-    updatedLabel: 'Updated',
-    enabledLabel: 'Enabled',
-    disabledLabel: 'Disabled',
-    receiverFallback: 'Receiver',
-    templateFallback: 'Template',
-    ruleFallback: 'Notice policy',
-    ruleDeliveryPrefix: 'Sending to',
-    ruleNoReceiver: 'No receiver linked',
-    receiverIdsPlaceholder: 'Receiver IDs, for example 1, 2',
-    templateIdPlaceholder: 'Template ID, use -1 for default',
-    labelsPlaceholder: 'Label filters, for example severity:critical',
-    daysPlaceholder: 'Weekdays, for example 1,2,3,4,5',
-    emailPlaceholder: 'Email address, for example ops@example.com',
-    phonePlaceholder: 'Phone number, for example +86 13800000000',
-    hookUrlPlaceholder: 'Webhook URL, for example https://hooks.example.com'
+    metricVisibleReceivers: t('alert.notice.metrics.visible-receivers'),
+    metricVisibleRules: t('alert.notice.metrics.visible-rules'),
+    metricPresetTemplates: t('alert.notice.metrics.preset-templates'),
+    receiverLaneCopy: t('alert.notice.lanes.receivers.copy'),
+    ruleLaneCopy: t('alert.notice.lanes.rules.copy'),
+    templateLaneCopy: t('alert.notice.lanes.templates.copy'),
+    countMeta: (total: number, visible: number) => t('alert.notice.lanes.count-meta', { total, visible }),
+    updatedLabel: t('alert.notice.row.updated'),
+    enabledLabel: t('alert.notice.row.enabled'),
+    disabledLabel: t('alert.notice.row.disabled'),
+    receiverFallback: t('alert.notice.receivers.default'),
+    templateFallback: t('alert.notice.templates.default'),
+    ruleFallback: t('alert.notice.rules.default'),
+    ruleDeliveryPrefix: t('alert.notice.row.delivery-prefix'),
+    ruleNoReceiver: t('alert.notice.row.no-receiver'),
+    receiverIdsPlaceholder: t('alert.notice.form.receiver-ids.placeholder'),
+    templateIdPlaceholder: t('alert.notice.form.template-id.placeholder'),
+    labelsPlaceholder: t('alert.notice.form.labels.placeholder'),
+    daysPlaceholder: t('alert.notice.form.days.placeholder'),
+    emailPlaceholder: t('alert.notice.form.email.placeholder'),
+    phonePlaceholder: t('alert.notice.form.phone.placeholder'),
+    hookUrlPlaceholder: t('alert.notice.form.webhook.placeholder')
   };
 }
 
@@ -289,26 +258,41 @@ function normalizeNoticeTemplatePreview(value: string) {
     .trim();
 }
 
-function buildNoticeTemplatePreview(content?: string | null) {
+function buildNoticeTemplatePreview(content: string | null | undefined, emptyValue: string) {
   if (!content) {
-    return '-';
+    return emptyValue;
   }
 
   const stripped = TEMPLATE_SOURCE_PATTERN.test(content) ? stripNoticeTemplateMarkup(content) : content;
   const decoded = decodeNoticeTemplateEntities(stripped);
   const normalized = normalizeNoticeTemplatePreview(stripNoticeTemplateMarkup(decoded));
 
-  return normalized ? truncateNoticeTemplatePreview(normalized) : '-';
+  return normalized ? truncateNoticeTemplatePreview(normalized) : emptyValue;
 }
 
-function formatNoticeReceiverType(value: NoticeReceiver['type'], t: Translator) {
+function formatNoticeReceiverType(value: NoticeReceiver['type'], t: Translator, emptyValue: string) {
   if (value == null) {
-    return '-';
+    return emptyValue;
   }
 
   const normalized = String(value).trim();
+  if (!normalized) {
+    return emptyValue;
+  }
   const key = NOTICE_RECEIVER_TYPE_KEYS[normalized] || NOTICE_RECEIVER_TYPE_KEYS[normalized.toUpperCase()];
   return key ? t(key) : normalized;
+}
+
+function formatNoticeReceiverTargetValue(value: string | null | undefined, emptyValue: string) {
+  return value?.trim() || emptyValue;
+}
+
+function formatNoticeReceiverTargetParts(
+  values: Array<string | number | null | undefined>,
+  emptyValue: string
+) {
+  const text = values.map(value => String(value ?? '').trim()).filter(Boolean).join(' · ');
+  return text || emptyValue;
 }
 
 export function getNoticeReceiverVisibleFieldKeys(draft: NoticeReceiverDraft) {
@@ -376,35 +360,35 @@ function getNoticeReceiverTypeRequiredFieldKeys(draft: NoticeReceiverDraft) {
   return getNoticeReceiverVisibleFieldKeys(draft).filter(field => isNoticeReceiverFieldRequired(draft, field));
 }
 
-function buildNoticeReceiverTargetCopy(receiver: NoticeReceiver) {
+function buildNoticeReceiverTargetCopy(receiver: NoticeReceiver, emptyValue: string) {
   const type = String(receiver.type ?? '');
   switch (type) {
     case '0':
-      return receiver.phone?.trim() || '-';
+      return formatNoticeReceiverTargetValue(receiver.phone, emptyValue);
     case '1':
-      return receiver.email?.trim() || '-';
+      return formatNoticeReceiverTargetValue(receiver.email, emptyValue);
     case '2':
-      return receiver.hookUrl?.trim() || '-';
+      return formatNoticeReceiverTargetValue(receiver.hookUrl, emptyValue);
     case '3':
     case '4':
-      return receiver.wechatId?.trim() || '-';
+      return formatNoticeReceiverTargetValue(receiver.wechatId, emptyValue);
     case '5':
     case '6':
-      return receiver.accessToken?.trim() || '-';
+      return formatNoticeReceiverTargetValue(receiver.accessToken, emptyValue);
     case '7':
-      return [receiver.tgBotToken?.trim(), receiver.tgUserId?.trim()].filter(Boolean).join(' · ') || '-';
+      return formatNoticeReceiverTargetParts([receiver.tgBotToken, receiver.tgUserId], emptyValue);
     case '8':
-      return receiver.slackWebHookUrl?.trim() || '-';
+      return formatNoticeReceiverTargetValue(receiver.slackWebHookUrl, emptyValue);
     case '9':
-      return [receiver.discordChannelId?.trim(), receiver.discordBotToken?.trim()].filter(Boolean).join(' · ') || '-';
+      return formatNoticeReceiverTargetParts([receiver.discordChannelId, receiver.discordBotToken], emptyValue);
     case '10':
-      return [receiver.corpId?.trim(), receiver.agentId != null ? String(receiver.agentId).trim() : ''].filter(Boolean).join(' · ') || '-';
+      return formatNoticeReceiverTargetParts([receiver.corpId, receiver.agentId], emptyValue);
     case '11':
-      return [receiver.smnAk?.trim(), receiver.smnProjectId?.trim()].filter(Boolean).join(' · ') || '-';
+      return formatNoticeReceiverTargetParts([receiver.smnAk, receiver.smnProjectId], emptyValue);
     case '12':
-      return receiver.serverChanToken?.trim() || '-';
+      return formatNoticeReceiverTargetValue(receiver.serverChanToken, emptyValue);
     case '13':
-      return receiver.gotifyToken?.trim() || '-';
+      return formatNoticeReceiverTargetValue(receiver.gotifyToken, emptyValue);
     case '14': {
       const larkReceiveType = String(receiver.larkReceiveType ?? '');
       const larkCopy =
@@ -415,15 +399,15 @@ function buildNoticeReceiverTargetCopy(receiver: NoticeReceiver) {
             : larkReceiveType === '2'
               ? receiver.partyId?.trim()
               : receiver.appId?.trim();
-      return [receiver.appId?.trim(), larkCopy].filter(Boolean).join(' · ') || '-';
+      return formatNoticeReceiverTargetParts([receiver.appId, larkCopy], emptyValue);
     }
     default:
-      return receiver.email?.trim() || receiver.phone?.trim() || receiver.hookUrl?.trim() || '-';
+      return formatNoticeReceiverTargetParts([receiver.email, receiver.phone, receiver.hookUrl], emptyValue);
   }
 }
 
-function buildNoticeRuleDeliveryCopy(receiverNames: string[] | undefined, locale?: string | null) {
-  const copy = getAlertNoticeProductCopy(locale);
+function buildNoticeRuleDeliveryCopy(receiverNames: string[] | undefined, t: Translator) {
+  const copy = getAlertNoticeProductCopy(t);
   const targets = receiverNames?.join(', ') || '';
   return targets ? `${copy.ruleDeliveryPrefix} ${targets}` : copy.ruleNoReceiver;
 }
@@ -441,10 +425,11 @@ export function buildNoticeMetrics(
   receivers: PageResult<NoticeReceiver>,
   rules: PageResult<NoticeRule>,
   templates: PageResult<NoticeTemplate>,
-  _t: Translator,
+  t: Translator,
   locale?: string | null
 ) {
-  const copy = getAlertNoticeProductCopy(locale);
+  void locale;
+  const copy = getAlertNoticeProductCopy(t);
   return [
     { label: copy.metricVisibleReceivers, value: String(receivers.content.length || 0) },
     { label: copy.metricVisibleRules, value: String(rules.content.length || 0) },
@@ -458,22 +443,25 @@ export function buildNoticeReceiverRows(
   formatTime: (value?: number | string | null) => string,
   locale?: string | null
 ) {
-  const copy = getAlertNoticeProductCopy(locale);
+  void locale;
+  const copy = getAlertNoticeProductCopy(t);
+  const emptyValue = t('common.none');
   return items.map(item => ({
     key: String(item.id ?? item.name ?? 'receiver'),
     title: item.name || copy.receiverFallback,
-    copy: buildNoticeReceiverTargetCopy(item),
-    meta: `${formatNoticeReceiverType(item.type, t)} · ${copy.updatedLabel} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
+    copy: buildNoticeReceiverTargetCopy(item, emptyValue),
+    meta: `${formatNoticeReceiverType(item.type, t, emptyValue)} · ${copy.updatedLabel} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
   }));
 }
 
 export function buildNoticeReceiverDraft(receiver?: NoticeReceiver | null): NoticeReceiverDraft {
   const source = receiver as (NoticeReceiver & Record<string, unknown>) | null | undefined;
+  const receiverType = source ? (source.type == null ? '' : String(source.type)) : '1';
   return {
     ...(source || {}),
     id: source?.id,
     name: source?.name || '',
-    type: String(source?.type ?? 1),
+    type: receiverType,
     email: source?.email || '',
     phone: source?.phone || '',
     hookUrl: source?.hookUrl || '',
@@ -583,11 +571,13 @@ export function buildNoticeTemplateRows(
   formatTime: (value?: number | string | null) => string,
   locale?: string | null
 ) {
-  const copy = getAlertNoticeProductCopy(locale);
+  void locale;
+  const copy = getAlertNoticeProductCopy(t);
+  const emptyValue = t('common.none');
   return items.map(item => ({
     key: String(item.id ?? item.name ?? 'template'),
     title: item.name || copy.templateFallback,
-    copy: buildNoticeTemplatePreview(item.content),
+    copy: buildNoticeTemplatePreview(item.content, emptyValue),
     meta: `${item.preset ? t('alert.notice.template.preset.true') : t('alert.notice.template.preset.false')} · ${copy.updatedLabel} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
   }));
 }
@@ -598,7 +588,7 @@ export function buildNoticeTemplateDraft(template?: NoticeTemplate | null): Noti
     ...(source || {}),
     id: source?.id,
     name: source?.name || '',
-    type: String(source?.type ?? 1),
+    type: source?.type == null ? '' : String(source.type),
     preset: source?.preset ?? false,
     content: source?.content || '',
   };
@@ -607,6 +597,9 @@ export function buildNoticeTemplateDraft(template?: NoticeTemplate | null): Noti
 export function validateNoticeTemplateDraft(draft: NoticeTemplateDraft, t: Translator) {
   if (!draft.name.trim()) {
     return t('alert.notice.template.validation.name');
+  }
+  if (!draft.type.trim()) {
+    return t('alert.notice.template.validation.type');
   }
   if (!draft.content.trim()) {
     return t('alert.notice.template.validation.content');
@@ -620,12 +613,13 @@ export function buildNoticeRuleRows(
   formatTime: (value?: number | string | null) => string,
   locale?: string | null
 ) {
-  const copy = getAlertNoticeProductCopy(locale);
+  void locale;
+  const copy = getAlertNoticeProductCopy(t);
   return items.map(item => ({
     key: String(item.id ?? item.name ?? 'rule'),
     title: item.name || copy.ruleFallback,
-    copy: `${item.enable ? copy.enabledLabel : copy.disabledLabel} · ${buildNoticeRuleDeliveryCopy(item.receiverName, locale)}`,
-    meta: `${item.templateName || copy.templateFallback} · ${copy.updatedLabel} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
+    copy: `${item.enable ? copy.enabledLabel : copy.disabledLabel} · ${buildNoticeRuleDeliveryCopy(item.receiverName, t)}`,
+    meta: `${item.templateId ? item.templateName || copy.templateFallback : copy.templateFallback} · ${copy.updatedLabel} ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
   }));
 }
 
@@ -636,7 +630,8 @@ export function buildNoticeLaneRows(
   t: Translator,
   locale?: string | null
 ) {
-  const copy = getAlertNoticeProductCopy(locale);
+  void locale;
+  const copy = getAlertNoticeProductCopy(t);
   return [
     {
       title: t('alert.notice.lanes.receivers.title'),
@@ -660,7 +655,5 @@ export function validateNoticeRuleDraft(draft: NoticeRuleDraft, t: Translator) {
   if (!draft.name.trim()) return t('alert.notice.rule.validation.name');
   if (!draft.receiverIdsText.trim()) return t('alert.notice.rule.validation.receivers');
   if (!draft.filterAll && !draft.labelsText.trim()) return t('alert.notice.rule.validation.labels');
-  if (!draft.daysText.trim()) return t('alert.notice.rule.validation.days');
-  if (!draft.periodStart || !draft.periodEnd) return t('alert.notice.rule.validation.period');
   return null;
 }

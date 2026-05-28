@@ -1,5 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildAlertSilenceDeleteUrl, buildAlertSilenceDetailUrl, buildAlertSilenceFormDraft, buildAlertSilencePayload, createAlertSilence, deleteAlertSilence, deleteAlertSilences, loadAlertSilenceDetail, updateAlertSilence } from './controller';
+import {
+  buildAlertSilenceDeleteUrl,
+  buildAlertSilenceDetailUrl,
+  buildAlertSilenceEntityPrefill,
+  buildAlertSilenceEntityPrefillFromFacade,
+  buildAlertSilenceFormDraft,
+  buildAlertSilencePayload,
+  buildEntityAlertsForSilencePrefillUrl,
+  createAlertSilence,
+  createAlertSilenceFromFacade,
+  deleteAlertSilence,
+  deleteAlertSilenceFromFacade,
+  deleteAlertSilences,
+  deleteAlertSilencesFromFacade,
+  extractExactCommonAlertLabels,
+  loadAlertSilenceDataFromFacade,
+  loadAlertSilenceDetail,
+  loadAlertSilenceDetailFromFacade,
+  loadMatchedAlertSilencesFromFacade,
+  updateAlertSilence,
+  updateAlertSilenceEnabledFromFacade,
+  updateAlertSilenceFromFacade
+} from './controller';
 
 describe('alert silence controller', () => {
   it('builds Angular-compatible new silence defaults with a six-hour one-time range', () => {
@@ -53,6 +75,105 @@ describe('alert silence controller', () => {
     const apiGet = vi.fn().mockResolvedValue({ id: 7, name: 'night-shift' });
     await expect(loadAlertSilenceDetail(apiGet as any, 7)).resolves.toEqual({ id: 7, name: 'night-shift' });
     expect(apiGet).toHaveBeenCalledWith('/alert/silence/7');
+  });
+
+  it('loads alert silence detail through facade readers', async () => {
+    const readDetail = vi.fn().mockResolvedValue({ id: 7, name: 'night-shift' });
+
+    await expect(loadAlertSilenceDetailFromFacade(readDetail as any, 7)).resolves.toEqual({
+      id: 7,
+      name: 'night-shift'
+    });
+
+    expect(readDetail).toHaveBeenCalledWith(7);
+  });
+
+  it('loads first-screen alert silence data through facade readers', async () => {
+    const list = vi.fn().mockResolvedValue({ content: [{ id: 7, name: 'weekday' }], totalElements: 1, pageIndex: 0, pageSize: 8 });
+    const labelOptions = vi.fn().mockResolvedValue({ keys: ['service'], valuesByKey: {} });
+
+    await expect(loadAlertSilenceDataFromFacade({ list, labelOptions }, { search: 'weekday', pageIndex: 0, pageSize: 8 })).resolves.toEqual({
+      list: { content: [{ id: 7, name: 'weekday' }], totalElements: 1, pageIndex: 0, pageSize: 8 },
+      labelOptions: { keys: ['service'], valuesByKey: {} }
+    });
+
+    expect(list).toHaveBeenCalledWith({ search: 'weekday', pageIndex: 0, pageSize: 8 });
+    expect(labelOptions).toHaveBeenCalledWith();
+  });
+
+  it('loads matched alert silences by id through facade readers', async () => {
+    const detail = vi.fn(async (id: number) => {
+      if (id === 12) throw new Error('missing');
+      return { id, name: `silence-${id}` };
+    });
+
+    await expect(loadMatchedAlertSilencesFromFacade(detail as any, [11, 12, 13])).resolves.toEqual({
+      matched: [{ id: 13, name: 'silence-13' }, { id: 11, name: 'silence-11' }],
+      missingMatchedRuleCount: 1
+    });
+    expect(detail).toHaveBeenCalledWith(11);
+    expect(detail).toHaveBeenCalledWith(12);
+    expect(detail).toHaveBeenCalledWith(13);
+  });
+
+  it('builds Angular entity alert prefill from stable common labels', async () => {
+    const apiGet = vi.fn().mockResolvedValue({
+      content: [
+        { id: 1, fingerprint: 'a', labels: { service: 'checkout', severity: 'critical', env: 'prod' } },
+        { id: 2, fingerprint: 'b', labels: { service: 'checkout', severity: 'warning', env: 'prod' } }
+      ],
+      totalElements: 2,
+      pageIndex: 0,
+      pageSize: 20
+    });
+
+    expect(buildEntityAlertsForSilencePrefillUrl(42)).toBe('/entities/42/alerts?pageIndex=0&pageSize=20&status=firing');
+    expect(
+      extractExactCommonAlertLabels([
+        { id: 1, fingerprint: 'a', labels: { service: 'checkout', severity: 'critical', env: 'prod' } },
+        { id: 2, fingerprint: 'b', labels: { service: 'checkout', severity: 'warning', env: 'prod' } }
+      ])
+    ).toEqual({ service: 'checkout', env: 'prod' });
+    await expect(buildAlertSilenceEntityPrefill(apiGet as any, '42', 'manual warning', 'no entity')).resolves.toEqual({
+      draftPatch: {
+        matchAll: false,
+        labelsText: 'service:checkout, env:prod'
+      },
+      source: 'alerts-common-labels',
+      warning: null
+    });
+    expect(apiGet).toHaveBeenCalledWith('/entities/42/alerts?pageIndex=0&pageSize=20&status=firing');
+
+    const readEntityAlerts = vi.fn().mockResolvedValue(apiGet.mock.results[0].value);
+    await expect(buildAlertSilenceEntityPrefillFromFacade(readEntityAlerts, '42', 'manual warning', 'no entity')).resolves.toEqual({
+      draftPatch: {
+        matchAll: false,
+        labelsText: 'service:checkout, env:prod'
+      },
+      source: 'alerts-common-labels',
+      warning: null
+    });
+    expect(readEntityAlerts).toHaveBeenCalledWith(42);
+  });
+
+  it('falls back to Angular manual-entry warning when entity alert prefill has no stable labels', async () => {
+    const apiGet = vi.fn().mockResolvedValue({
+      content: [{ id: 1, fingerprint: 'a', labels: { service: 'checkout' } }, { id: 2, fingerprint: 'b', labels: { service: 'orders' } }],
+      totalElements: 2,
+      pageIndex: 0,
+      pageSize: 20
+    });
+
+    await expect(buildAlertSilenceEntityPrefill(apiGet as any, '42', 'manual warning', 'no entity')).resolves.toEqual({
+      draftPatch: { labelsText: '' },
+      source: 'none',
+      warning: 'manual warning'
+    });
+    await expect(buildAlertSilenceEntityPrefill(apiGet as any, '', 'manual warning', 'no entity')).resolves.toEqual({
+      draftPatch: { labelsText: '' },
+      source: 'none',
+      warning: 'no entity'
+    });
   });
 
   it('builds a form draft and payload', () => {
@@ -173,5 +294,46 @@ describe('alert silence controller', () => {
     expect(apiPut).toHaveBeenCalledWith('/alert/silence', expect.objectContaining({ id: 7, name: 'weekday' }));
     expect(apiDelete).toHaveBeenCalledWith('/alert/silences?ids=7');
     expect(apiDelete).toHaveBeenCalledWith('/alert/silences?ids=7&ids=8');
+  });
+
+  it('creates, updates, toggles, and deletes through facade operations', async () => {
+    const create = vi.fn().mockResolvedValue(undefined);
+    const update = vi.fn().mockResolvedValue(undefined);
+    const remove = vi.fn().mockResolvedValue(undefined);
+    const draft = {
+      name: 'weekday',
+      enable: true,
+      matchAll: true,
+      type: '1' as const,
+      labelsText: '',
+      daysText: '1,2,3,4,5',
+      periodStart: '09:00',
+      periodEnd: '18:00',
+    };
+
+    await createAlertSilenceFromFacade(create, draft);
+    await updateAlertSilenceFromFacade(update, { ...draft, id: 7 });
+    await updateAlertSilenceEnabledFromFacade(
+      update,
+      {
+        id: 7,
+        name: 'weekday',
+        enable: true,
+        matchAll: true,
+        type: 1,
+        days: [1, 2, 3, 4, 5],
+        periodStart: '2026-04-10T09:00:00.000Z',
+        periodEnd: '2026-04-10T18:00:00.000Z'
+      } as any,
+      false
+    );
+    await deleteAlertSilenceFromFacade(remove, 7);
+    await deleteAlertSilencesFromFacade(remove, [7, 8]);
+
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ name: 'weekday' }));
+    expect(update).toHaveBeenNthCalledWith(1, expect.objectContaining({ id: 7, name: 'weekday' }));
+    expect(update).toHaveBeenNthCalledWith(2, expect.objectContaining({ id: 7, enable: false }));
+    expect(remove).toHaveBeenNthCalledWith(1, [7]);
+    expect(remove).toHaveBeenNthCalledWith(2, [7, 8]);
   });
 });

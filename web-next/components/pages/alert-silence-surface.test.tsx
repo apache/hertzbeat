@@ -76,7 +76,16 @@ vi.mock('../workbench/overlay-dialog', () => ({
 }));
 
 vi.mock('./alert-silence-authoring-fields', () => ({
-  AlertSilenceAuthoringFields: ({ mode }: any) => <div data-alert-silence-authoring-fields={mode}>fields</div>
+  AlertSilenceAuthoringFields: ({ mode, prefillTitle, prefillCopy, prefillWarning }: any) => (
+    <div
+      data-alert-silence-authoring-fields={mode}
+      data-alert-silence-authoring-prefill-title={prefillTitle || ''}
+      data-alert-silence-authoring-prefill-copy={prefillCopy || ''}
+      data-alert-silence-authoring-prefill-warning={prefillWarning || ''}
+    >
+      fields
+    </div>
+  )
 }));
 
 describe('AlertSilenceSurface', () => {
@@ -160,6 +169,8 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('data-alert-silence-header="cold-compact-header"');
     expect(html).toContain('data-alert-silence-command-row="standard-equal-buttons"');
     expect(html).toContain('data-alert-silence-admin-layout="full-width-admin-list"');
+    expect(html).toContain('data-alert-silence-delete-selected="toolbar"');
+    expect(html).toContain('data-alert-silence-delete-selected-owner="route-no-select-warning"');
     expect(html).toContain('data-alert-silence-toolbar="cold-query-toolbar"');
     expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
     expect(html).toContain('data-cold-search-input="fixed-width-direct"');
@@ -168,6 +179,13 @@ describe('AlertSilenceSurface', () => {
     expect(html).not.toContain('data-cold-search-input-shell');
     expect(html).toContain('data-cold-search-action="submit"');
     expect(html).toContain('data-alert-silence-table-shell="cold-dense-table"');
+    expect(html).toContain('data-alert-silence-pagination="cold-dense-pagination"');
+    expect(html).toContain('data-alert-silence-pagination-owner="hertzbeat-ui-pagination-bar"');
+    expect(html).toContain('data-hz-ui="pagination-bar"');
+    expect(html).toContain('data-hz-pagination-page-size="select-menu"');
+    expect(html).toContain('data-hz-pagination-page-jump="number-input"');
+    expect(html).toContain('data-alert-silence-pagination-page-size-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-alert-silence-pagination-page-jump-owner="hertzbeat-ui-input"');
     expect(html).toContain('data-alert-silence-select-all="cold-checkbox"');
     expect(html).toContain('data-alert-silence-row-checkbox="cold-checkbox"');
     expect(html).toContain('data-alert-silence-enable-checkbox="cold-checkbox"');
@@ -191,12 +209,20 @@ describe('AlertSilenceSurface', () => {
     expect(html).not.toContain('angular-table');
     expect(html).not.toContain('angular-table-panel');
     expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain("from '@hertzbeat/ui'");
+    expect(source).toContain('HzInlineFeedback');
+    expect(source).toContain('HzPaginationBar');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain("from '../ui/checkbox'");
+    expect(source).toContain('pageSizeOptions?: number[]');
+    expect(source).toContain('onPageIndexChange?: (nextPageIndex: number) => void');
+    expect(source).toContain('onPageSizeChange?: (nextPageSize: number) => void');
     expect(source).not.toContain('className={coldSilenceVisual.search.input}');
     expect(source).not.toContain('className=\"h-3.5 w-3.5 accent-[#4e74f8]\"');
     expect(source).not.toContain('min-h-[calc(100vh-64px)]');
     expect(source).toContain('data-alert-silence-admin-layout="full-width-admin-list"');
+    expect(source).toContain('data-alert-silence-action-feedback-owner="hertzbeat-ui-inline-feedback"');
+    expect(source).not.toContain('disabled={selectedCount === 0}');
     expect(source).not.toContain('coldSilenceVisual.layout.heroGrid');
     expect(source).not.toContain('coldSilenceVisual.layout.railGrid');
     expect(source).not.toContain('coldSilenceVisual.signal.band');
@@ -212,6 +238,206 @@ describe('AlertSilenceSurface', () => {
     expect(source).not.toContain('SurfaceSection');
     expect(source).not.toContain('side={');
     expect(source).not.toContain('ToolbarField');
+  });
+
+  it('renders route-level action feedback through shared inline feedback', () => {
+    const html = renderToStaticMarkup(
+      <AlertSilenceSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="请先选择要删除的监控"
+        draft={{
+          name: '',
+          enable: true,
+          matchAll: false,
+          type: '0',
+          labelsText: '',
+          daysText: '',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-hz-ui="inline-feedback"');
+    expect(html).toContain('data-alert-silence-action-feedback="warning"');
+    expect(html).toContain('data-alert-silence-action-feedback-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('role="alert"');
+    expect(html).toContain('请先选择要删除的监控');
+  });
+
+  it('renders Angular silence save failure title/detail through shared feedback', () => {
+    const html = renderToStaticMarkup(
+      <AlertSilenceSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="common.notify.edit-fail"
+        editorErrorDetail="backend-message"
+        editorErrorContract="save"
+        draft={{
+          id: 7,
+          name: 'weekday',
+          enable: true,
+          matchAll: false,
+          type: '1',
+          labelsText: 'service:checkout',
+          daysText: '1,2,3',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-silence-save-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-silence-save-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-silence-save-feedback-title="common.notify.edit-fail"');
+    expect(html).toContain('data-alert-silence-save-feedback-detail="backend-message"');
+    expect(html).toContain('data-hz-ui="inline-feedback"');
+    expect(html).toContain('backend-message');
+  });
+
+  it('renders Angular silence enable failure title/detail outside the editor', () => {
+    const html = renderToStaticMarkup(
+      <AlertSilenceSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="common.notify.edit-fail"
+        editorErrorDetail="backend-message"
+        editorErrorContract="enable"
+        draft={{
+          name: '',
+          enable: true,
+          matchAll: false,
+          type: '0',
+          labelsText: '',
+          daysText: '',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-silence-enable-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-silence-enable-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-silence-enable-feedback-title="common.notify.edit-fail"');
+    expect(html).toContain('data-alert-silence-enable-feedback-detail="backend-message"');
+    expect(html).toContain('backend-message');
+  });
+
+  it('renders Angular silence delete failure title/detail outside the editor', () => {
+    const html = renderToStaticMarkup(
+      <AlertSilenceSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError="common.notify.delete-fail"
+        editorErrorDetail="backend-message"
+        editorErrorContract="delete"
+        draft={{
+          name: '',
+          enable: true,
+          matchAll: false,
+          type: '0',
+          labelsText: '',
+          daysText: '',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-silence-delete-failure="angular-notify-title-detail"');
+    expect(html).toContain('data-alert-silence-delete-failure-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-silence-delete-feedback-title="common.notify.delete-fail"');
+    expect(html).toContain('data-alert-silence-delete-feedback-detail="backend-message"');
+    expect(html).toContain('backend-message');
   });
 
   it('keeps the empty state inside the cold dense silence table body', () => {
@@ -256,6 +482,7 @@ describe('AlertSilenceSurface', () => {
     );
 
     expect(html).toContain('data-alert-silence-table-shell="cold-dense-table"');
+    expect(html).toContain('data-alert-silence-pagination="cold-dense-pagination"');
     expect(html).toContain('data-alert-silence-empty-state="cold-table-empty"');
     expect(html).toContain('data-alert-silence-compact-canvas="content-height"');
     expect(html).toContain('min-height:auto');
@@ -332,6 +559,137 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('resource-dependency');
   });
 
+  it('renders Angular entity noise-control matched-rule management context', () => {
+    const html = renderToStaticMarkup(
+      <AlertSilenceSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        managementContext={{
+          entityId: '42',
+          entityName: 'checkout-api',
+          returnTo: '/entities/42?tab=alerts',
+          returnLabel: 'checkout-api',
+          matchMode: 'entity-noise-controls',
+          matchingRuleType: 'silence',
+          matchingRuleIds: [7, 8],
+          matchedViewEnabled: true
+        }}
+        matchedViewEnabled
+        missingMatchedRuleCount={1}
+        draft={{
+          name: '',
+          enable: true,
+          matchAll: false,
+          type: '0',
+          labelsText: '',
+          daysText: '',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onPageIndexChange={vi.fn()}
+        onPageSizeChange={vi.fn()}
+        onViewAllRules={vi.fn()}
+        onViewMatchedRules={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-silence-entity-context="angular-entity-context-bar"');
+    expect(html).toContain('data-alert-silence-entity-context-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-silence-match-mode="angular-entity-noise-controls"');
+    expect(html).toContain('data-alert-silence-match-mode-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-silence-match-view="matched"');
+    expect(html).toContain('data-alert-silence-matching-rule-count="2"');
+    expect(html).toContain('data-alert-silence-missing-rule-count="1"');
+    expect(html).toContain('data-alert-silence-match-action="view-all"');
+    expect(html).toContain('data-alert-silence-entity-return="true"');
+    expect(html).toContain('checkout-api');
+  });
+
+  it('renders Angular created-outside-matched authoring notice', () => {
+    const html = renderToStaticMarkup(
+      <AlertSilenceSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        managementContext={{
+          entityId: '42',
+          entityName: 'checkout-api',
+          returnTo: '/entities/42?tab=alerts',
+          returnLabel: 'checkout-api',
+          matchMode: 'entity-noise-controls',
+          matchingRuleType: 'silence',
+          matchingRuleIds: [7],
+          matchedViewEnabled: true
+        }}
+        matchedViewEnabled
+        createdOutsideMatchedViewNotice
+        draft={{
+          name: '',
+          enable: true,
+          matchAll: false,
+          type: '0',
+          labelsText: '',
+          daysText: '',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onViewAllRules={vi.fn()}
+        onViewMatchedRules={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-silence-created-outside-matched="angular-authoring-notice"');
+    expect(html).toContain('data-alert-silence-created-outside-matched-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-silence-created-outside-matched-action="view-all"');
+    expect(html).toContain('新规则已创建');
+    expect(html).toContain('当前视图不会自动显示这条新规则');
+  });
+
   it('renders three-signal evidence context before silence authoring', () => {
     const html = renderToStaticMarkup(
       <AlertSilenceSurface
@@ -397,6 +755,125 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('href="/log/manage?view=list&amp;traceId=trace-123"');
     expect(html).toContain('当前实体');
     expect(html).toContain('链路上下文');
+  });
+
+  it('renders Angular entity alert prefill copy inside the silence editor', () => {
+    const html = renderToStaticMarkup(
+      <AlertSilenceSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        managementContext={{
+          entityId: '42',
+          entityName: 'checkout-api',
+          returnTo: '/entities/42?tab=alerts',
+          returnLabel: 'checkout-api',
+          matchMode: 'entity-noise-controls',
+          matchingRuleType: 'silence',
+          matchingRuleIds: [],
+          matchedViewEnabled: true
+        }}
+        matchedViewEnabled
+        entityPrefillSource="alerts-common-labels"
+        entityPrefillWarning={null}
+        draft={{
+          name: 'checkout-api silence',
+          enable: true,
+          matchAll: false,
+          type: '0',
+          labelsText: 'service:checkout, env:prod',
+          daysText: '',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onViewAllRules={vi.fn()}
+        onViewMatchedRules={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-silence-entity-prefill="angular-alert-common-labels"');
+    expect(html).toContain('data-alert-silence-authoring-prefill-title="为当前实体创建静默规则"');
+    expect(html).toContain('data-alert-silence-authoring-prefill-copy="已提取当前实体可见告警的共享标签，作为静默条件默认值。"');
+    expect(html).not.toContain('data-alert-silence-authoring-prefill-warning="当前没有稳定的共享告警标签，请手动填写静默条件。"');
+  });
+
+  it('renders missing silence evidence labels with the localized empty fallback', () => {
+    const html = renderToStaticMarkup(
+      <AlertSilenceSurface
+        t={t}
+        data={data as any}
+        search=""
+        selectedId={7}
+        checkedIds={[]}
+        editorOpen={false}
+        editorLoading={false}
+        editorSaving={false}
+        editorMessage={null}
+        editorError={null}
+        evidenceContext={{
+          signal: 'metrics',
+          title: '来自指标的静默上下文',
+          copy: '按当前实体创建静默规则。',
+          labelsText: '',
+          returnHref: '/ingestion/otlp/metrics?entityId=service-1',
+          rows: [],
+          draftPatch: {
+            labelsText: ''
+          }
+        }}
+        draft={{
+          name: '',
+          enable: true,
+          matchAll: false,
+          type: '0',
+          labelsText: '',
+          daysText: '',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        formatTime={() => '-'}
+        onSearchChange={vi.fn()}
+        onApplyFilter={vi.fn()}
+        onClearFilter={vi.fn()}
+        onRefresh={vi.fn()}
+        onSelect={vi.fn()}
+        onCheckedIdsChange={vi.fn()}
+        onNew={vi.fn()}
+        onEdit={vi.fn()}
+        onSave={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onCloseEditor={vi.fn()}
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-silence-evidence-context="signal-route"');
+    expect(html).toContain('data-alert-silence-evidence-labels="localized-fallback"');
+    expect(html).toContain('无');
   });
 
   it('renders validation errors visibly inside the silence editor dialog', () => {

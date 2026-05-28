@@ -4,6 +4,9 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
+const redirect = vi.fn();
+const headers = vi.fn();
+
 const mockLoadIntegrationDoc = vi.hoisted(() =>
   vi.fn(
     async () => `# Webhook guide
@@ -33,6 +36,14 @@ vi.mock('next/link', () => ({
       {children}
     </a>
   )
+}));
+
+vi.mock('next/navigation', () => ({
+  redirect
+}));
+
+vi.mock('next/headers', () => ({
+  headers
 }));
 
 vi.mock('@/components/workbench/workbench-page', () => ({
@@ -76,6 +87,7 @@ vi.mock('@/lib/utils', () => ({
 
 vi.mock('@/lib/alert-integration/controller', () => ({
   fallbackDocCopy: 'No integration guide is available for this provider yet.',
+  getAlertIntegrationFallbackDocCopy: () => '当前告警源暂未提供集成指南。',
   loadIntegrationDoc: mockLoadIntegrationDoc
 }));
 
@@ -84,11 +96,25 @@ vi.mock('@/lib/alert-integration/view-model', () => ({
     { id: 'webhook', name: '默认Webhook', icon: '/assets/logo.svg' },
     { id: 'prometheus', name: 'Prometheus', icon: '/assets/img/integration/prometheus.svg' }
   ],
+  buildAlertIntegrationSourceHref: (source: any) => `/alert/integration/${source.id}`,
   getIntegrationSource: (source: string) =>
     [
       { id: 'webhook', name: '默认Webhook', icon: '/assets/logo.svg' },
       { id: 'prometheus', name: 'Prometheus', icon: '/assets/img/integration/prometheus.svg' }
     ].find(item => item.id === source) ?? { id: 'webhook', name: '默认Webhook', icon: '/assets/logo.svg' },
+  createAlertIntegrationTranslator: () => (key: string) =>
+    ({
+      'alert.integration.kicker': '集成接入',
+      'alert.integration.sources': '集成告警源',
+      'alert.integration.token.manage': '管理令牌'
+    })[key] ?? key,
+  getIntegrationSourceName: (item: any) => item.name ?? item.id,
+  translateAlertIntegration: (key: string) =>
+    ({
+      'alert.integration.kicker': '集成接入',
+      'alert.integration.sources': '集成告警源',
+      'alert.integration.token.manage': '管理令牌'
+    })[key] ?? key,
   buildIntegrationFacts: (source: string, hasDoc: boolean) => [
     { label: '集成接入', value: `alert/integration/${source}` },
     { label: '集成告警源', value: source },
@@ -107,6 +133,7 @@ vi.mock('@/lib/alert-integration/view-model', () => ({
 
 describe('alert integration page', () => {
   it('renders the OTLP cold-matte source rail plus markdown document shell for the selected integration source', async () => {
+    headers.mockResolvedValue(new Headers({ 'accept-language': 'zh-CN,zh;q=0.9' }));
     const source = readFileSync(resolve(process.cwd(), 'app/alert/integration/[source]/page.tsx'), 'utf8');
     const { default: AlertIntegrationPage } = await import('./page');
     const html = renderToStaticMarkup(
@@ -136,6 +163,7 @@ describe('alert integration page', () => {
     expect(html).toContain('管理令牌');
     expect(html).toContain('Webhook guide');
     expect(html).toContain('curl http://localhost:9090/api/v1/rules');
+    expect(mockLoadIntegrationDoc).toHaveBeenLastCalledWith(expect.stringContaining('alert-integration'), 'webhook', 'zh-CN');
     expect(html).not.toContain('# Webhook guide');
     expect(html).not.toContain('```json');
     expect(html).not.toContain('```bash');
@@ -156,6 +184,9 @@ describe('alert integration page', () => {
     expect(html).not.toContain('Navigation');
 
     expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain("from 'next/headers'");
+    expect(source).toContain('createAlertIntegrationTranslator(locale)');
+    expect(source).toContain('loadIntegrationDoc(baseDir, selectedSource.id, locale)');
     expect(source).toContain('data-alert-integration-surface="otlp-cold-source-doc"');
     expect(source).toContain('data-alert-integration-style-baseline={coldOpsVisual.canvasName}');
     expect(source).toContain('data-alert-integration-source-rail="cold-source-list"');
@@ -179,5 +210,21 @@ describe('alert integration page', () => {
     expect(source).not.toContain('buildIntegrationPostureRows');
     expect(source).not.toContain("from '@/components/workbench/primitives'");
     expect(source).not.toContain("from '@/components/observability/code-pane'");
+  });
+
+  it('redirects unknown source params to the canonical default source route', async () => {
+    headers.mockResolvedValue(new Headers({ 'accept-language': 'zh-CN' }));
+    redirect.mockImplementation((target: string) => {
+      throw new Error(`redirect:${target}`);
+    });
+
+    const { default: AlertIntegrationPage } = await import('./page');
+
+    await expect(
+      AlertIntegrationPage({
+        params: Promise.resolve({ source: 'unknown-provider' })
+      })
+    ).rejects.toThrow('redirect:/alert/integration/webhook');
+    expect(redirect).toHaveBeenLastCalledWith('/alert/integration/webhook');
   });
 });
