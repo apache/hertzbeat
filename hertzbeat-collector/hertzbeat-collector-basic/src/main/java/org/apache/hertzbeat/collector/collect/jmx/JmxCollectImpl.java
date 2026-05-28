@@ -18,9 +18,11 @@
 package org.apache.hertzbeat.collector.collect.jmx;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -106,31 +108,42 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     /**
-     * Validate JMX URL 
-     * 
+     * Validate JMX URL
+     *
      * @param url JMX URL to validate
      * @throws IllegalArgumentException if URL is potentially malicious
      */
     private void validateJmxUrl(String url) throws IllegalArgumentException {
-        // Only allow service:jmx:rmi protocol
-        Assert.isTrue(url.startsWith("service:jmx:rmi:"), "Only service:jmx:rmi protocol is supported");
+        JMXServiceURL serviceUrl;
+        try {
+            serviceUrl = new JMXServiceURL(url);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Invalid JMX URL", e);
+        }
+        Assert.isTrue("rmi".equalsIgnoreCase(serviceUrl.getProtocol()), "Only service:jmx:rmi protocol is supported");
 
-        String[] disallowedPatterns = { "ldap:", "rmi:", "iiop:", "nis:", "dns:", "corbaname:", "http:", "https:" };
+        String lowerUrl = url.toLowerCase(Locale.ROOT);
+        String[] disallowedPatterns = {"ldap:", "iiop:", "nis:", "dns:", "corbaname:", "http:", "https:"};
         for (String pattern : disallowedPatterns) {
-            if (url.contains(pattern) && !pattern.equals("rmi:///jndi/rmi:")) {
+            if (lowerUrl.contains(pattern)) {
                 throw new IllegalArgumentException("Potentially unsafe JNDI protocol detected in URL: " + pattern);
             }
         }
 
+        String lowerPath = serviceUrl.getURLPath().toLowerCase(Locale.ROOT);
+        if (lowerPath.startsWith("/jndi/") && !lowerPath.startsWith("/jndi/rmi://")) {
+            throw new IllegalArgumentException("Only rmi JNDI protocol is supported");
+        }
+
         // Check for suspicious patterns
-        if (url.contains("${") || url.contains("$[") || url.contains(":#") || url.contains(":/")) {
+        if (url.contains("${") || url.contains("$[") || url.contains(":#")) {
             throw new IllegalArgumentException("Potentially malicious pattern detected in JMX URL");
         }
     }
 
     /**
-     * Validate hostname format 
-     * 
+     * Validate hostname format
+     *
      * @param hostname Hostname to validate
      * @return true if hostname is valid
      */
