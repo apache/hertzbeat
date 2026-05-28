@@ -65,6 +65,7 @@ export function BulletinCenterSurface({
   const activeBulletin = pickSelectedBulletin(data.list.content, selectedId);
   const facts = buildBulletinFacts(data.list, activeBulletin, t);
   const activeBulletinId = activeBulletin?.id ?? null;
+  const currentBulletinName = (activeBulletin?.name || '').trim() || t('common.none');
 
   useEffect(() => {
     setBatchDeleteIds(current => current.filter(id => data.list.content.some(item => item.id === id)));
@@ -309,7 +310,7 @@ export function BulletinCenterSurface({
               }
             }))}
             variant="card"
-            ariaLabel="Bulletin navigation"
+            ariaLabel={t('bulletin.navigation.aria')}
           />
         </div>
         <div className="border-t border-[var(--ops-border-color)]">
@@ -339,23 +340,23 @@ export function BulletinCenterSurface({
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         kicker={t('menu.monitor.bulletin')}
-        title="确认删除公告"
+        title={t('bulletin.delete.title')}
         maxWidthClassName="max-w-xl"
         footer={
           <div className="flex flex-wrap justify-end gap-2">
             <Button size="sm" variant="subtle" onClick={() => setDeleteDialogOpen(false)}>
-              取消
+              {t('common.cancel')}
             </Button>
             <Button size="sm" variant="primary" onClick={() => void handleDeleteCurrent()} disabled={!activeBulletin?.id}>
-              确认删除
+              {t('bulletin.delete.confirm')}
             </Button>
           </div>
         }
       >
         <div data-bulletin-delete-confirm="cold-modal" className="space-y-3 text-[12px] leading-6 text-[var(--ops-text-secondary)]">
-          <p>删除后该公告看板会从当前工作台移除，指标刷新上下文需要重新选择公告看板。</p>
+          <p>{t('bulletin.delete.copy')}</p>
           <div className="rounded-[4px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-raised)] px-3 py-2 font-semibold text-[var(--ops-text-primary)]">
-            {activeBulletin?.name || '-'}
+            {currentBulletinName}
           </div>
         </div>
       </OverlayDialog>

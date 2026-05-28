@@ -67,7 +67,7 @@ export function BulletinManageDialog({
         <Input
           value={draft.monitorIdsText}
           onChange={event => onDraftChange({ ...draft, monitorIdsText: event.target.value })}
-          placeholder="1, 2, 3"
+          placeholder={t('bulletin.monitor.ids.placeholder')}
           className="h-10 border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] text-[var(--ops-text-primary)] placeholder:text-[var(--ops-text-tertiary)]"
         />
 

@@ -6,33 +6,50 @@ type Translator = (key: string, params?: Record<string, string | number | null |
 
 const BULLETIN_REFRESH_PRESETS = [10, 30, 60, 300, -1] as const;
 
+function formatBulletinFact(value: string | number | null | undefined, emptyValue: string) {
+  const text = value == null ? '' : String(value).trim();
+  return text || emptyValue;
+}
+
 export function buildBulletinFacts(list: PageResult<Bulletin>, selected: Bulletin | null, t: Translator) {
+  const emptyValue = t('common.none');
+
   return [
     { label: t('common.workspace'), value: 'bulletin' },
     { label: t('common.total'), value: String(list.totalElements || 0) },
     { label: t('common.current-page-count'), value: String(list.content?.length || 0) },
-    { label: t('bulletin.facts.selected'), value: selected?.name || t('common.none') }
+    { label: t('bulletin.facts.selected'), value: formatBulletinFact(selected?.name, emptyValue) }
   ];
 }
 
 export function buildBulletinRows(items: Bulletin[], t: Translator, formatTime: (value?: number | string | null) => string) {
-  return items.map(item => ({
-    key: String(item.id),
-    title: item.name,
-    copy: `${item.app || '-'} · ${t('bulletin.list.monitors')} ${(item.monitorIds || []).length}`,
-    meta: `${formatTime(item.gmtUpdate || item.gmtCreate || null)} · ${t('bulletin.list.creator')} ${item.creator || '-'}`
-  }));
+  const emptyValue = t('common.none');
+
+  return items.map(item => {
+    const rowTitle = formatBulletinFact(item.name, emptyValue);
+
+    return {
+      key: String(item.id),
+      title: rowTitle,
+      copy: `${formatBulletinFact(item.app, emptyValue)} · ${t('bulletin.list.monitors')} ${(item.monitorIds || []).length}`,
+      meta: `${formatTime(item.gmtUpdate || item.gmtCreate || null)} · ${t('bulletin.list.creator')} ${formatBulletinFact(item.creator, emptyValue)}`
+    };
+  });
 }
 
 export function buildBulletinSelectionRows(selected: Bulletin | null, t: Translator, formatTime: (value?: number | string | null) => string) {
+  const emptyValue = t('common.none');
+
   if (!selected) {
-    return [{ title: t('bulletin.selected.empty.title'), copy: t('bulletin.selected.empty.copy'), meta: '-' }];
+    return [{ title: t('bulletin.selected.empty.title'), copy: t('bulletin.selected.empty.copy'), meta: emptyValue }];
   }
+
+  const selectedTitle = formatBulletinFact(selected.name, emptyValue);
 
   return [
     {
-      title: selected.name,
-      copy: `${selected.app || '-'} · ${t('bulletin.list.monitors')} ${(selected.monitorIds || []).length}`,
+      title: selectedTitle,
+      copy: `${formatBulletinFact(selected.app, emptyValue)} · ${t('bulletin.list.monitors')} ${(selected.monitorIds || []).length}`,
       meta: `id ${selected.id}`
     },
     {

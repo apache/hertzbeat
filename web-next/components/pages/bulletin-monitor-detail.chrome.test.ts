@@ -53,6 +53,7 @@ describe('bulletin center and monitor-detail cold-workbench chrome', () => {
     const metricTableSource = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-metric-table.tsx'), 'utf8');
     const historyChartSource = readFileSync(resolve(process.cwd(), 'components/monitor-detail/history-line-chart.tsx'), 'utf8');
     const summaryCardSource = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-summary-card.tsx'), 'utf8');
+    const uiSource = readFileSync(resolve(process.cwd(), 'packages/hertzbeat-ui/src/index.tsx'), 'utf8');
 
     expect(bulletinSource).toContain('border-[var(--ops-border-color)]');
     expect(bulletinSource).toContain('bg-[var(--ops-surface-panel)]');
@@ -61,23 +62,19 @@ describe('bulletin center and monitor-detail cold-workbench chrome', () => {
     expect(bulletinSource).toContain('text-[var(--ops-text-secondary)]');
     expect(bulletinSource).toContain('text-[var(--ops-text-tertiary)]');
 
-    expect(metricTableSource).toContain('border-[var(--ops-border-color)]');
-    expect(metricTableSource).toContain('text-[var(--ops-text-primary)]');
-    expect(metricTableSource).toContain('text-[var(--ops-text-secondary)]');
-    expect(metricTableSource).toContain('text-[var(--ops-text-tertiary)]');
-    expect(metricTableSource).toContain('bg-[var(--ops-surface-panel)]');
-    expect(metricTableSource).toContain('bg-[var(--ops-surface-raised)]');
+    expect(metricTableSource).toContain('HzDataTable');
+    expect(metricTableSource).toContain('data-monitor-metric-table-owner="hertzbeat-ui-data-table"');
+    expect(uiSource).toContain('border border-[var(--ops-border-color)]');
+    expect(uiSource).toContain('bg-[var(--ops-surface-panel)]');
+    expect(uiSource).toContain('text-[var(--ops-text-secondary)]');
 
-    expect(historyChartSource).toContain('border-[var(--ops-border-color)]');
-    expect(historyChartSource).toContain('WorkbenchInsetPanel');
-    expect(historyChartSource).toContain('bg-[var(--ops-surface-raised)]');
-    expect(historyChartSource).toContain('text-[var(--ops-text-primary)]');
-    expect(historyChartSource).toContain('text-[var(--ops-text-secondary)]');
-    expect(historyChartSource).toContain('text-[var(--ops-text-tertiary)]');
+    expect(historyChartSource).toContain('HzChartSurface');
+    expect(historyChartSource).toContain('data-monitor-history-line-owner="hertzbeat-ui-chart-surface"');
+    expect(uiSource).toContain('export function HzChartSurface');
     expect(historyChartSource).not.toContain('className="rounded-[6px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] p-3"');
 
-    expect(summaryCardSource).toContain('text-[var(--ops-text-tertiary)]');
-    expect(summaryCardSource).toContain('WorkbenchBadge');
+    expect(summaryCardSource).toContain('HzMonitorBasicSummary');
+    expect(uiSource).toContain('export function HzMonitorBasicSummary');
     expect(summaryCardSource).not.toContain('inline-flex rounded-[2px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-2.5 py-1 text-xs text-[var(--ops-text-secondary)]');
   });
 });

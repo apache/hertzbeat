@@ -4,10 +4,11 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
+import { BulletinCenterSurface } from './bulletin-center-surface';
 
 vi.mock('../providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock()
+    t: createTranslatorMock({ locale: 'zh-CN' })
   })
 }));
 
@@ -21,8 +22,8 @@ vi.mock('../workbench/action-toolbar', () => ({
 }));
 
 vi.mock('../workbench/workspace-tab-strip', () => ({
-  WorkspaceTabStrip: ({ tabs }: any) => (
-    <div data-bulletin-tabs="true">
+  WorkspaceTabStrip: ({ tabs, ariaLabel }: any) => (
+    <div data-bulletin-tabs="true" aria-label={ariaLabel}>
       {tabs.map((tab: any) => (
         <button key={tab.key} type="button">
           {tab.label}
@@ -59,8 +60,7 @@ vi.mock('../ui/checkbox', () => ({
 }));
 
 describe('bulletin center surface', () => {
-  it('renders the shared HertzBeat toolbar, tabs, and metrics desk shell', async () => {
-    const { BulletinCenterSurface } = await import('./bulletin-center-surface');
+  it('renders the shared HertzBeat toolbar, tabs, and metrics desk shell', () => {
     const html = renderToStaticMarkup(
       <BulletinCenterSurface
         data={{
@@ -80,11 +80,12 @@ describe('bulletin center surface', () => {
     expect(html).toContain('data-bulletin-center-surface="true"');
     expect(html).toContain('data-action-toolbar="true"');
     expect(html).toContain('data-bulletin-tabs="true"');
+    expect(html).toContain('aria-label="公告导航"');
     expect(html).toContain('data-bulletin-metrics-table="true"');
     expect(html).toContain('Ops board');
     expect(html).toContain('DB board');
-    expect(html).toContain('Refresh');
-    expect(html).toContain('New');
+    expect(html).toContain('刷新');
+    expect(html).toContain('新增');
   });
 
   it('routes current bulletin deletion through a cold modal instead of native confirm', () => {
@@ -94,9 +95,23 @@ describe('bulletin center surface', () => {
     expect(source).not.toContain('confirm(');
     expect(source).toContain('data-bulletin-delete-confirm-trigger="cold-modal"');
     expect(source).toContain('data-bulletin-delete-confirm="cold-modal"');
-    expect(source).toContain('确认删除公告');
-    expect(source).toContain('确认删除');
-    expect(source).toContain('取消');
+    expect(source).toContain("ariaLabel={t('bulletin.navigation.aria')}");
+    expect(source).not.toContain('ariaLabel="Bulletin navigation"');
+    expect(source).toContain("t('bulletin.delete.title')");
+    expect(source).toContain("t('bulletin.delete.copy')");
+    expect(source).toContain("t('bulletin.delete.confirm')");
+    expect(source).toContain("t('common.cancel')");
+    expect(source).not.toContain('确认删除公告');
+    expect(source).not.toContain('删除后该公告看板会从当前工作台移除');
+  });
+
+  it('trims blank current bulletin names to the localized empty fallback', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/bulletin-center-surface.tsx'), 'utf8');
+
+    expect(source).toContain("const currentBulletinName = (activeBulletin?.name || '').trim() || t('common.none');");
+    expect(source).toContain('{currentBulletinName}');
+    expect(source).not.toContain("const currentBulletinName = activeBulletin?.name || t('common.none');");
+    expect(source).not.toContain("activeBulletin?.name || '-'");
   });
 
   it('uses the shared cold checkbox for batch delete selection instead of raw checkbox chrome', () => {
