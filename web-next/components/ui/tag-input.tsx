@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { X } from 'lucide-react';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import { cn } from '../../lib/utils';
 import { HiddenInput } from './hidden-input';
 
@@ -19,6 +20,10 @@ type PopoverMetrics = {
   top: number;
   width: number;
 };
+
+function translateTagInput(key: string) {
+  return SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+}
 
 export interface TagInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   value: string;
@@ -118,7 +123,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
               disabled={disabled}
               data-cold-tag-remove={tag}
               className="grid h-4 w-4 place-items-center rounded-[2px] text-[#8f99ab] transition hover:bg-[#202838] hover:text-[#f5f7fb] disabled:pointer-events-none"
-              aria-label={`删除 ${tag}`}
+              aria-label={`${translateTagInput('common.remove')} ${tag}`}
               onClick={() => removeTag(tag)}
             >
               <X className="h-3 w-3" aria-hidden="true" />
@@ -135,7 +140,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
             'h-6 min-w-[120px] flex-1 border-0 bg-transparent px-1 text-[12px] font-semibold text-[#dbe4f0] outline-none placeholder:text-[#858d9a]',
             className
           )}
-          placeholder={tags.length === 0 ? placeholder : '添加标签'}
+          placeholder={tags.length === 0 ? placeholder : translateTagInput('common.tag.add')}
           onChange={event => {
             setDraft(event.target.value);
             positionPopover(event.currentTarget);

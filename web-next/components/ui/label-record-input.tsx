@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Plus, X } from 'lucide-react';
 import type { AlertLabelOptions } from '../../lib/alert-label-options';
 import { DEFAULT_ALERT_LABEL_OPTIONS } from '../../lib/alert-label-options';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import { cn } from '../../lib/utils';
 import { HiddenInput } from './hidden-input';
 
@@ -54,6 +55,10 @@ function filterSuggestions(values: string[], query: string, limit = 8) {
     .slice(0, limit);
 }
 
+function translateLabelRecordInput(key: string) {
+  return SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+}
+
 export interface LabelRecordInputProps {
   value: string;
   onValueChange: (value: string) => void;
@@ -75,10 +80,10 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
       name,
       disabled,
       labelOptions = DEFAULT_ALERT_LABEL_OPTIONS,
-      keyPlaceholder = '标签名',
-      valuePlaceholder = '标签值',
-      addLabel = '添加',
-      removeLabel = '删除',
+      keyPlaceholder = translateLabelRecordInput('common.label.key'),
+      valuePlaceholder = translateLabelRecordInput('common.label.value'),
+      addLabel = translateLabelRecordInput('common.add'),
+      removeLabel = translateLabelRecordInput('common.remove'),
       containerClassName
     },
     ref

@@ -39,6 +39,7 @@ describe('overlay dialog', () => {
 
     const overlay = container.querySelector('[data-overlay-dialog="true"]') as HTMLElement | null;
     expect(overlay).not.toBeNull();
+    expect(overlay?.getAttribute('data-overlay-dialog-mask-closable')).toBe('true');
 
     await act(async () => {
       overlay?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -86,6 +87,37 @@ describe('overlay dialog', () => {
 
     const overlay = container.querySelector('[data-overlay-dialog="true"]') as HTMLElement | null;
     expect(overlay).not.toBeNull();
+    expect(overlay?.getAttribute('data-overlay-dialog-mask-closable')).toBe('false');
+
+    await act(async () => {
+      overlay?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('allows centered dialogs to explicitly preserve non-click-away modal semantics with route markers', async () => {
+    const onClose = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <OverlayDialog
+          open={true}
+          title="标签管理"
+          onClose={onClose}
+          maskClosable={false}
+          overlayProps={{ 'data-label-dialog-mask-closable': 'false' }}
+        >
+          <input aria-label="标签名称" />
+        </OverlayDialog>
+      );
+      await Promise.resolve();
+    });
+
+    const overlay = container.querySelector('[data-overlay-dialog="true"]') as HTMLElement | null;
+    expect(overlay?.getAttribute('data-overlay-dialog-mask-closable')).toBe('false');
+    expect(overlay?.getAttribute('data-label-dialog-mask-closable')).toBe('false');
 
     await act(async () => {
       overlay?.dispatchEvent(new MouseEvent('click', { bubbles: true }));

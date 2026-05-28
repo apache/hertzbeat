@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import ReactDatePicker, { registerLocale } from 'react-datepicker';
 import { zhCN } from 'date-fns/locale/zh-CN';
 import { ArrowRight } from 'lucide-react';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import { cn } from '../../lib/utils';
 import { HiddenInput } from './hidden-input';
 
@@ -16,6 +17,13 @@ export interface DateTimeRangeProps extends React.HTMLAttributes<HTMLDivElement>
   onEndChange: (value: string) => void;
   startLabel?: string;
   endLabel?: string;
+  emptyLabel?: string;
+  hourLabel?: string;
+  minuteLabel?: string;
+  previousMonthLabel?: string;
+  nextMonthLabel?: string;
+  clearLabel?: string;
+  confirmLabel?: string;
   reserveActionSpace?: boolean;
 }
 
@@ -33,6 +41,10 @@ const TIME_HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const TIME_MINUTES = Array.from({ length: 60 }, (_, minute) => minute);
 
 registerLocale('zh-CN', zhCN);
+
+function translateDateTimeRange(key: string) {
+  return SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+}
 
 function pad2(value: number) {
   return String(value).padStart(2, '0');
@@ -85,8 +97,8 @@ function formatDateChange(mode: DateTimeRangeProps['mode'], value: string, nextD
   return formatFromDate(mode, nextDate);
 }
 
-function formatValue(mode: DateTimeRangeProps['mode'], value: string) {
-  if (!value) return '未设置';
+function formatValue(mode: DateTimeRangeProps['mode'], value: string, emptyLabel: string) {
+  if (!value) return emptyLabel;
   return mode === 'time' ? value.slice(0, 5) : value.replace('T', ' ');
 }
 
@@ -188,11 +200,15 @@ function TimeColumn({
 function TimeColumns({
   mode,
   value,
-  onChange
+  onChange,
+  hourLabel,
+  minuteLabel
 }: {
   mode: DateTimeRangeProps['mode'];
   value: string;
   onChange: (value: string) => void;
+  hourLabel: string;
+  minuteLabel: string;
 }) {
   const { hour, minute } = getTimeParts(mode, value);
   return (
@@ -204,14 +220,14 @@ function TimeColumns({
       )}
     >
       <TimeColumn
-        label="时"
+        label={hourLabel}
         column="hour"
         values={TIME_HOURS}
         selectedValue={hour}
         onSelect={nextHour => onChange(formatWithTime(mode, value, nextHour, minute))}
       />
       <TimeColumn
-        label="分"
+        label={minuteLabel}
         column="minute"
         values={TIME_MINUTES}
         selectedValue={minute}
@@ -227,9 +243,29 @@ type ColdDateTimePickerProps = {
   value: string;
   label: string;
   onChange: (value: string) => void;
+  emptyLabel: string;
+  hourLabel: string;
+  minuteLabel: string;
+  previousMonthLabel: string;
+  nextMonthLabel: string;
+  clearLabel: string;
+  confirmLabel: string;
 };
 
-function ColdDateTimePicker({ mode, name, value, label, onChange }: ColdDateTimePickerProps) {
+function ColdDateTimePicker({
+  mode,
+  name,
+  value,
+  label,
+  onChange,
+  emptyLabel,
+  hourLabel,
+  minuteLabel,
+  previousMonthLabel,
+  nextMonthLabel,
+  clearLabel,
+  confirmLabel
+}: ColdDateTimePickerProps) {
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = React.useState(false);
   const [draftValue, setDraftValue] = React.useState(value);
@@ -301,10 +337,10 @@ function ColdDateTimePicker({ mode, name, value, label, onChange }: ColdDateTime
               onChange={next => setDraftValue(formatDateChange(mode, draftValue, next))}
               inline
               locale="zh-CN"
-              previousMonthButtonLabel="上个月"
-              nextMonthButtonLabel="下个月"
-              previousMonthAriaLabel="上个月"
-              nextMonthAriaLabel="下个月"
+              previousMonthButtonLabel={previousMonthLabel}
+              nextMonthButtonLabel={nextMonthLabel}
+              previousMonthAriaLabel={previousMonthLabel}
+              nextMonthAriaLabel={nextMonthLabel}
               calendarClassName="hertzbeat-date-picker-calendar"
               shouldCloseOnSelect={false}
               dateFormat="yyyy-MM-dd HH:mm"
@@ -312,7 +348,13 @@ function ColdDateTimePicker({ mode, name, value, label, onChange }: ColdDateTime
             />
           </div>
         )}
-        <TimeColumns mode={mode} value={draftValue} onChange={setDraftValue} />
+        <TimeColumns
+          mode={mode}
+          value={draftValue}
+          onChange={setDraftValue}
+          hourLabel={hourLabel}
+          minuteLabel={minuteLabel}
+        />
       </div>
         <div data-cold-date-time-picker-panel="body-portal-clear-confirm" className="flex justify-end gap-2 border-t border-[#252b34] p-3">
           <button
@@ -321,7 +363,7 @@ function ColdDateTimePicker({ mode, name, value, label, onChange }: ColdDateTime
             className="h-7 min-w-[58px] rounded-[3px] border border-[#2b3039] bg-[#0d1015] px-2 text-[12px] font-semibold text-[#a9b0bb] hover:border-[#3b4454] hover:text-[#dbe4f0]"
             onClick={clearValue}
           >
-            清除
+            {clearLabel}
           </button>
           <button
             type="button"
@@ -329,7 +371,7 @@ function ColdDateTimePicker({ mode, name, value, label, onChange }: ColdDateTime
             className="h-7 min-w-[58px] rounded-[3px] border border-[#31405c] bg-[#182238] px-2 text-[12px] font-semibold text-[#d8e4ff] hover:border-[#4e74f8]"
             onClick={confirmValue}
           >
-            确定
+            {confirmLabel}
           </button>
         </div>
     </div>
@@ -344,7 +386,7 @@ function ColdDateTimePicker({ mode, name, value, label, onChange }: ColdDateTime
       <HiddenInput data-cold-date-time-picker-input="hidden-value" name={name} value={value} />
       <PickerTrigger
         ref={triggerRef}
-        displayValue={formatValue(mode, open ? draftValue : value)}
+        displayValue={formatValue(mode, open ? draftValue : value, emptyLabel)}
         empty={!(open ? draftValue : value)}
         expanded={open}
         aria-label={label}
@@ -363,8 +405,15 @@ export function DateTimeRange({
   endValue,
   onStartChange,
   onEndChange,
-  startLabel = '开始',
-  endLabel = '结束',
+  startLabel = translateDateTimeRange('time.range.start'),
+  endLabel = translateDateTimeRange('time.range.end'),
+  emptyLabel = translateDateTimeRange('time.range.unset'),
+  hourLabel = translateDateTimeRange('time.range.hour'),
+  minuteLabel = translateDateTimeRange('time.range.minute'),
+  previousMonthLabel = translateDateTimeRange('time.range.previous-month'),
+  nextMonthLabel = translateDateTimeRange('time.range.next-month'),
+  clearLabel = translateDateTimeRange('common.clear'),
+  confirmLabel = translateDateTimeRange('common.button.ok'),
   reserveActionSpace,
   className,
   ...props
@@ -392,6 +441,13 @@ export function DateTimeRange({
         value={startValue}
         label={startLabel}
         onChange={onStartChange}
+        emptyLabel={emptyLabel}
+        hourLabel={hourLabel}
+        minuteLabel={minuteLabel}
+        previousMonthLabel={previousMonthLabel}
+        nextMonthLabel={nextMonthLabel}
+        clearLabel={clearLabel}
+        confirmLabel={confirmLabel}
       />
       <ArrowRight className="mx-auto h-3.5 w-3.5 shrink-0 text-[#7e8494]" aria-hidden="true" />
       <ColdDateTimePicker
@@ -400,6 +456,13 @@ export function DateTimeRange({
         value={endValue}
         label={endLabel}
         onChange={onEndChange}
+        emptyLabel={emptyLabel}
+        hourLabel={hourLabel}
+        minuteLabel={minuteLabel}
+        previousMonthLabel={previousMonthLabel}
+        nextMonthLabel={nextMonthLabel}
+        clearLabel={clearLabel}
+        confirmLabel={confirmLabel}
       />
       {reserveActionSpace ? <span data-cold-date-time-range-reserved-action="true" aria-hidden="true" /> : null}
     </div>

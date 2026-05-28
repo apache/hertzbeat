@@ -118,4 +118,53 @@ describe('DateTimeRange', () => {
     expect(html).not.toContain('今天');
     expect(html).not.toContain('type="time"');
   });
+
+  it('renders English fallback default trigger labels', () => {
+    const html = renderToStaticMarkup(
+      <DateTimeRange
+        mode="time"
+        startName="periodStart"
+        endName="periodEnd"
+        startValue=""
+        endValue=""
+        onStartChange={vi.fn()}
+        onEndChange={vi.fn()}
+      />
+    );
+
+    expect(html.match(/>Not set</g)).toHaveLength(2);
+    expect(html).toContain('aria-label="Start"');
+    expect(html).toContain('aria-label="End"');
+    expect(html).not.toContain('未设置');
+    expect(html).not.toContain('aria-label="开始"');
+    expect(html).not.toContain('aria-label="结束"');
+  });
+
+  it('keeps empty-state picker chrome caller-owned', () => {
+    const html = renderToStaticMarkup(
+      <DateTimeRange
+        mode="time"
+        startName="periodStart"
+        endName="periodEnd"
+        startValue=""
+        endValue=""
+        onStartChange={vi.fn()}
+        onEndChange={vi.fn()}
+        startLabel="Start time"
+        endLabel="End time"
+        emptyLabel="Not set"
+        hourLabel="Hour"
+        minuteLabel="Minute"
+        previousMonthLabel="Previous month"
+        nextMonthLabel="Next month"
+        clearLabel="Clear"
+        confirmLabel="OK"
+      />
+    );
+
+    expect(html.match(/Not set/g)).toHaveLength(2);
+    expect(html).toContain('aria-label="Start time"');
+    expect(html).toContain('aria-label="End time"');
+    expect(html).not.toContain('未设置');
+  });
 });

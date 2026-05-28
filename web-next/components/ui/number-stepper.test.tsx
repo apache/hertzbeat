@@ -11,6 +11,8 @@ describe('NumberStepper', () => {
     expect(html).toContain('data-cold-number-stepper-input="true"');
     expect(html).toContain('data-cold-number-stepper-action="decrement"');
     expect(html).toContain('data-cold-number-stepper-action="increment"');
+    expect(html).toContain('>Decrease<');
+    expect(html).toContain('>Increase<');
     expect(html).toContain('inputMode="numeric"');
     expect(html).toContain('rounded-[3px]');
     expect(html).not.toContain('type="number"');

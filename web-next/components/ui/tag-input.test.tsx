@@ -27,6 +27,9 @@ describe('TagInput', () => {
     expect(html).toContain('data-cold-tag-input-control="draft"');
     expect(html).toContain('data-cold-tag-input-value="hidden"');
     expect(html).toContain('type="hidden"');
+    expect(html).toContain('placeholder="Add tag"');
+    expect(html).toContain('aria-label="Remove alertname"');
+    expect(html).toContain('aria-label="Remove service"');
     expect(html).toContain('rounded-[3px]');
     expect(html).not.toContain('data-cold-tag-suggestion=');
     expect(html).not.toContain('data-cold-tag-suggestions-owner=');

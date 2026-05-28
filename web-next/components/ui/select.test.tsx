@@ -59,6 +59,31 @@ describe('Select', () => {
 
     expect(directNativeSelectFiles).toEqual([]);
   });
+
+  it('renders the catalog-backed empty trigger label when no option is available', () => {
+    const html = renderToStaticMarkup(<Select aria-label="empty select" />);
+
+    expect(html).toContain('data-cold-select-control="custom-trigger"');
+    expect(html).toContain('None');
+    expect(html).not.toContain('>-<');
+  });
+
+  it('can render the Angular searchable dropdown affordance for settings timezones', () => {
+    const html = renderToStaticMarkup(
+      <Select searchable searchPlaceholder="Search timezone" defaultOpen defaultValue="Asia/Shanghai" aria-label="Timezone">
+        <option value="Asia/Shanghai">Asia/Shanghai (+08:00) Shanghai</option>
+        <option value="UTC">UTC (+00:00) UTC</option>
+      </Select>
+    );
+    const source = readFileSync(resolve(process.cwd(), 'components/ui/select.tsx'), 'utf8');
+
+    expect(html).toContain('data-cold-select-search="angular-nz-show-search"');
+    expect(html).toContain('type="search"');
+    expect(html).toContain('placeholder="Search timezone"');
+    expect(html).toContain('data-cold-select-listbox="custom-menu"');
+    expect(source).toContain('searchable?: boolean');
+    expect(source).toContain('data-cold-select-empty="search-empty"');
+  });
 });
 
 function walkSourceFiles(dir: string): string[] {

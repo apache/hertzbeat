@@ -2,11 +2,12 @@ import * as React from 'react';
 import { Search, X } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '../../lib/utils';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 
 export interface SearchRowProps extends Omit<React.FormHTMLAttributes<HTMLFormElement>, 'onSubmit' | 'onChange'> {
   value: string;
   placeholder: string;
-  searchLabel: string;
+  searchLabel?: string;
   clearLabel?: string;
   filters?: React.ReactNode;
   inputWidthClassName?: string;
@@ -20,12 +21,14 @@ export interface SearchRowProps extends Omit<React.FormHTMLAttributes<HTMLFormEl
 
 const searchButtonClassName =
   'h-8 min-w-[72px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
+const DEFAULT_SEARCH_ROW_SEARCH_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['common.search'] ?? 'common.search';
+const DEFAULT_SEARCH_ROW_CLEAR_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['common.clear'] ?? 'common.clear';
 
 export function SearchRow({
   value,
   placeholder,
-  searchLabel,
-  clearLabel,
+  searchLabel = DEFAULT_SEARCH_ROW_SEARCH_LABEL,
+  clearLabel = DEFAULT_SEARCH_ROW_CLEAR_LABEL,
   filters,
   inputWidthClassName = 'w-[320px]',
   searchDisabled = false,

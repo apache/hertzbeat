@@ -24,6 +24,9 @@ describe('SearchRow', () => {
     expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
     expect(html).toContain('data-cold-search-action="submit"');
     expect(html).toContain('data-cold-search-action="clear"');
+    expect(html).toContain('<form');
+    expect(html).toContain('type="search"');
+    expect(html).toContain('type="submit"');
     expect(html).toContain('w-[320px]');
     expect(html).toContain('w-fit');
     expect(html).toContain('max-w-full');
@@ -53,5 +56,22 @@ describe('SearchRow', () => {
     expect(html.indexOf('data-cold-search-filter-slot="inline-before-submit"')).toBeLessThan(
       html.indexOf('data-cold-search-action="submit"')
     );
+  });
+
+  it('uses runtime defaults for action labels when callers omit shared copy', () => {
+    const html = renderToStaticMarkup(
+      <SearchRow
+        value="weekday"
+        placeholder="Policy name"
+        onValueChange={vi.fn()}
+        onSearch={vi.fn()}
+        onClear={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-cold-search-action="submit"');
+    expect(html).toContain('data-cold-search-action="clear"');
+    expect(html).toContain('Search');
+    expect(html).toContain('Clear');
   });
 });

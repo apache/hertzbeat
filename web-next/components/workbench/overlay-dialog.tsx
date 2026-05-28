@@ -2,7 +2,26 @@
 
 import React from 'react';
 import { X } from 'lucide-react';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import { cn } from '../../lib/utils';
+
+const DEFAULT_OVERLAY_DIALOG_CLOSE_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['common.dialog.close'] ?? 'common.dialog.close';
+
+type OverlayDialogProps = {
+  open: boolean;
+  title: React.ReactNode;
+  kicker?: React.ReactNode;
+  footer?: React.ReactNode;
+  onClose: () => void;
+  children: React.ReactNode;
+  className?: string;
+  contentClassName?: string;
+  maxWidthClassName?: string;
+  placement?: 'center' | 'right';
+  closeLabel?: string;
+  maskClosable?: boolean;
+  overlayProps?: Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'className' | 'onClick' | 'title'>;
+};
 
 export function OverlayDialog({
   open,
@@ -14,31 +33,25 @@ export function OverlayDialog({
   className,
   contentClassName,
   maxWidthClassName = 'max-w-5xl',
-  placement = 'center'
-}: {
-  open: boolean;
-  title: React.ReactNode;
-  kicker?: React.ReactNode;
-  footer?: React.ReactNode;
-  onClose: () => void;
-  children: React.ReactNode;
-  className?: string;
-  contentClassName?: string;
-  maxWidthClassName?: string;
-  placement?: 'center' | 'right';
-}) {
+  placement = 'center',
+  closeLabel = DEFAULT_OVERLAY_DIALOG_CLOSE_LABEL,
+  maskClosable,
+  overlayProps
+}: OverlayDialogProps) {
   if (!open) {
     return null;
   }
   const isSideDrawer = placement === 'right';
+  const isMaskClosable = maskClosable ?? isSideDrawer;
   const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (isSideDrawer && event.target === event.currentTarget) {
+    if (isMaskClosable && event.target === event.currentTarget) {
       onClose();
     }
   };
 
   return (
     <div
+      {...overlayProps}
       className={cn(
         'fixed inset-0 z-50 flex bg-[rgba(11,12,14,0.88)]',
         isSideDrawer ? 'items-stretch justify-end p-0' : 'items-center justify-center p-4'
@@ -48,6 +61,7 @@ export function OverlayDialog({
       aria-label={typeof title === 'string' ? title : undefined}
       data-overlay-dialog="true"
       data-overlay-dialog-placement={placement}
+      data-overlay-dialog-mask-closable={isMaskClosable ? 'true' : 'false'}
       onClick={handleOverlayClick}
     >
       <div
@@ -67,7 +81,7 @@ export function OverlayDialog({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close dialog"
+            aria-label={closeLabel}
             className="inline-flex h-8 w-8 items-center justify-center rounded-[2px] border border-[var(--ops-border-color)] bg-transparent text-[var(--ops-text-secondary)] transition hover:border-[var(--ops-primary)] hover:bg-[var(--ops-surface-raised)] hover:text-[var(--ops-text-primary)]"
           >
             <X size={16} />

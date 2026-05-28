@@ -34,6 +34,11 @@ describe('LabelRecordInput', () => {
     expect(html).toContain('data-cold-label-selector-value-input="searchable-value"');
     expect(html).toContain('data-cold-label-selector-value="hidden"');
     expect(html).toContain('type="hidden"');
+    expect(html).toContain('placeholder="Label key"');
+    expect(html).toContain('placeholder="Label value"');
+    expect(html).toContain('>Add<');
+    expect(html).toContain('>Remove<');
+    expect(html).toContain('aria-label="Remove service:checkout"');
     expect(html).toContain('rounded-[3px]');
     expect(html).not.toContain('data-cold-label-selector-chip-list="true"');
     expect(html).not.toContain('data-cold-label-selector-chip=');

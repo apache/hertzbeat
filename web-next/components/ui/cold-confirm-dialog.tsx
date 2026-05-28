@@ -4,6 +4,11 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from './button';
 import { OverlayDialog } from '../workbench/overlay-dialog';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
+
+function translateColdConfirm(key: string) {
+  return SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+}
 
 type ColdConfirmDialogProps = {
   open: boolean;
@@ -30,7 +35,7 @@ export function ColdConfirmDialog({
     <OverlayDialog
       open={open}
       title={title}
-      kicker="确认操作"
+      kicker={translateColdConfirm('common.confirm.operation')}
       onClose={pending ? () => undefined : onCancel}
       maxWidthClassName="max-w-md"
       contentClassName="py-4"
@@ -40,7 +45,7 @@ export function ColdConfirmDialog({
             {cancelLabel}
           </Button>
           <Button size="sm" variant="primary" onClick={onConfirm} disabled={pending}>
-            {pending ? '处理中' : confirmLabel}
+            {pending ? translateColdConfirm('common.processing') : confirmLabel}
           </Button>
         </div>
       }

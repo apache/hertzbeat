@@ -25,6 +25,7 @@ describe('workspace tab strip', () => {
 
     expect(html).toContain('Summary');
     expect(html).toContain('Details');
+    expect(html).toContain('aria-label="Workspace navigation"');
     expect(html).toContain('border-[var(--ops-border-color)]');
     expect(html).toContain('bg-[var(--ops-surface-panel)]');
     expect(html).toContain('bg-[var(--ops-surface-raised)]');
@@ -38,6 +39,7 @@ describe('workspace tab strip', () => {
   it('renders shared default tabs with ops-shell chrome and badge treatment', () => {
     const html = renderToStaticMarkup(
       <WorkspaceTabStrip
+        ariaLabel="Custom workspace sections"
         tabs={[
           { key: 'all', label: 'All', active: true, badge: '4' },
           { key: 'errors', label: 'Errors', onSelect: () => {} }
@@ -48,6 +50,7 @@ describe('workspace tab strip', () => {
     expect(html).toContain('All');
     expect(html).toContain('Errors');
     expect(html).toContain('>4<');
+    expect(html).toContain('aria-label="Custom workspace sections"');
     expect(html).toContain('border-[var(--ops-primary)]');
     expect(html).toContain('bg-[var(--ops-surface-raised)]');
     expect(html).toContain('text-[var(--ops-text-tertiary)]');

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Minus, Plus } from 'lucide-react';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import { cn } from '../../lib/utils';
 
 function toNumber(value: string | number | undefined, fallback: number) {
@@ -16,6 +17,10 @@ function toOptionalNumber(value: string | number | undefined) {
 
 function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(6)));
+}
+
+function translateNumberStepper(key: string) {
+  return SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
 }
 
 export interface NumberStepperProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'value' | 'onChange'> {
@@ -37,8 +42,8 @@ const NumberStepper = React.forwardRef<HTMLInputElement, NumberStepperProps>(
       step = 1,
       value,
       onValueChange,
-      decrementLabel = '减少',
-      incrementLabel = '增加',
+      decrementLabel = translateNumberStepper('common.decrement'),
+      incrementLabel = translateNumberStepper('common.increment'),
       ...props
     },
     ref
