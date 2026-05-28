@@ -24,6 +24,12 @@
     ],
     "baseUrl": ".",
     "paths": {
+      "@hertzbeat/ui/topology-g6": [
+        "./packages/hertzbeat-ui/src/topology-g6"
+      ],
+      "@hertzbeat/ui": [
+        "./packages/hertzbeat-ui/src"
+      ],
       "@/*": [
         "./*"
       ]

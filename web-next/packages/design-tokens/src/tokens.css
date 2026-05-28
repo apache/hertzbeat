@@ -1,0 +1,36 @@
+:root {
+  --hz-color-canvas: #0b0d10;
+  --hz-color-surface: #0d1014;
+  --hz-color-surface-soft: #10141a;
+  --hz-color-surface-raised: #131922;
+  --hz-color-surface-graphite: #0c0e12;
+  --hz-color-control: #0e1218;
+  --hz-color-code: #090b0e;
+  --hz-color-text: #eef2f6;
+  --hz-color-text-muted: #99a1b3;
+  --hz-color-text-subtle: #727b8c;
+  --hz-color-line-strong: rgba(166, 178, 195, 0.135);
+  --hz-color-line: rgba(166, 178, 195, 0.085);
+  --hz-color-line-soft: rgba(166, 178, 195, 0.052);
+  --hz-color-line-faint: rgba(166, 178, 195, 0.032);
+  --hz-color-accent: #7c93db;
+  --hz-color-accent-muted: rgba(124, 147, 219, 0.32);
+  --hz-color-action-primary: #4f6bdc;
+  --hz-color-action-primary-hover: #5d78ee;
+  --hz-color-action-danger: #7f232f;
+  --hz-color-action-danger-hover: #9b2a39;
+  --hz-color-success: #4cb782;
+  --hz-color-warning: #c59857;
+  --hz-color-critical: #d86f5b;
+  --hz-chart-blue: #7c93db;
+  --hz-chart-green: #4cb782;
+  --hz-chart-yellow: #c59857;
+  --hz-chart-red: #d86f5b;
+  --hz-chart-purple: #a78bfa;
+  --hz-density-control-height: 32px;
+  --hz-density-button-height: 28px;
+  --hz-radius-panel: 4px;
+  --hz-radius-control: 3px;
+  --hz-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --hz-font-mono: "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace;
+}

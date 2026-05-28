@@ -1,0 +1,12 @@
+{
+  "name": "@hertzbeat/design-tokens",
+  "private": true,
+  "version": "0.1.0",
+  "exports": {
+    "./tokens.css": "./src/tokens.css",
+    "./themes.css": "./src/themes.css"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}
