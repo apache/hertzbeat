@@ -63,7 +63,7 @@ services:
       - hertzbeat
 
   hertzbeat:
-    image: apache/hertzbeat:1.8.0
+    image: "${HERTZBEAT_SERVER_IMAGE:-apache/hertzbeat}:${HERTZBEAT_RELEASE_VERSION:-1.8.0}"
     container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always
@@ -88,9 +88,12 @@ services:
       - hertzbeat
 
   web-next:
+    image: "${HERTZBEAT_WEB_NEXT_IMAGE:-apache/hertzbeat-web-next}:${HERTZBEAT_RELEASE_VERSION:-1.8.0}"
     build:
       context: ../../..
       dockerfile: web-next/Dockerfile
+      args:
+        HERTZBEAT_RELEASE_VERSION: ${HERTZBEAT_RELEASE_VERSION:-1.8.0}
     container_name: compose-hertzbeat-web-next
     hostname: web-next
     restart: always

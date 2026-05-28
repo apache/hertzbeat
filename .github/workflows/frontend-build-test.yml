@@ -22,14 +22,14 @@ name: Frontend CI
 
 on:
   push:
-    branches: [ master, dev, action* ]
+    branches: [ master, dev, 'action*', 'codex/**', 'feature/**', 'release/**' ]
     paths:
       - 'web-app/**'
       - 'web-next/**'
       - 'web-app/src/assets/i18n/**'
       - '.github/workflows/frontend-build-test.yml'
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, 'codex/**', 'feature/**', 'release/**' ]
     paths:
       - 'web-app/**'
       - 'web-next/**'
@@ -107,3 +107,6 @@ jobs:
     - name: verify:full (blocking)
       working-directory: web-next
       run: npm run verify:full
+    - name: parity:smoke:baseline (blocking)
+      working-directory: web-next
+      run: npm run parity:smoke:baseline

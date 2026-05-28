@@ -10,9 +10,13 @@
     "test": "vitest run",
     "parity:runtime": "node ./scripts/parity/runtime.mjs",
     "parity:smoke": "node ./scripts/parity/harness.mjs",
+    "parity:smoke:baseline": "node ./scripts/parity/harness.mjs --milestone 1",
     "route:matrix": "node ./scripts/route-matrix.mjs",
+    "release:budget": "node ./scripts/release-budget.mjs",
+    "release:compose": "node ./scripts/release-compose.mjs",
+    "release:checklist": "node ./scripts/release-checklist.mjs",
     "verify": "npm run lint && npm run test && npm run i18n:report && npm run route:matrix",
-    "verify:full": "npm run build && npm run verify",
+    "verify:full": "npm run build && npm run release:budget && npm run release:compose && npm run release:checklist && npm run verify",
     "i18n:report": "node ./scripts/i18n-report.mjs"
   },
   "dependencies": {
