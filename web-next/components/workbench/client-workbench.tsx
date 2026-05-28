@@ -4,27 +4,39 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { ObservabilityStatusState } from '@/components/observability';
 import { useI18n } from '@/components/providers/i18n-provider';
-import { getAuthorizationToken } from '@/lib/api-client';
 import { resolveWorkbenchError } from '@/lib/client-workbench-state';
 import { buildLoginRedirectHref, buildLoginReturnTo } from '@/lib/passport-login/controller';
+import { readClientSessionState } from '@/lib/session-client';
 import { consumeWorkbenchLoad } from '@/lib/workbench-load-cache';
+
+const CLIENT_WORKBENCH_LOADING_DELAY_MS = 650;
 
 export function ClientWorkbench<T>({
   load,
   children,
+  renderError,
+  renderLoading,
   loadingTitle,
   loadingCopy,
-  cacheKey
+  cacheKey,
+  cacheSettledTtlMs,
+  loadingDelayMs = CLIENT_WORKBENCH_LOADING_DELAY_MS
 }: {
   load: () => Promise<T>;
   children: (data: T) => React.ReactNode;
+  renderError?: (message: string, retry: () => void) => React.ReactNode;
+  renderLoading?: (visible: boolean) => React.ReactNode;
   loadingTitle?: string;
   loadingCopy?: string;
   cacheKey?: string;
+  cacheSettledTtlMs?: number;
+  loadingDelayMs?: number;
 }) {
   const { t } = useI18n();
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showPendingState, setShowPendingState] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const loadRef = useRef<{
     load: (() => Promise<T>) | null;
     promise: Promise<T> | null;
@@ -32,8 +44,26 @@ export function ClientWorkbench<T>({
     load: null,
     promise: null
   });
+  const retry = () => {
+    loadRef.current = {
+      load: null,
+      promise: null
+    };
+    setData(null);
+    setError(null);
+    setShowPendingState(false);
+    setReloadKey(key => key + 1);
+  };
+
   useEffect(() => {
     let cancelled = false;
+    setShowPendingState(false);
+    const pendingDelay = Math.max(0, loadingDelayMs);
+    const pendingTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        setShowPendingState(true);
+      }
+    }, pendingDelay);
     if (loadRef.current.load !== load) {
       loadRef.current = {
         load,
@@ -42,7 +72,7 @@ export function ClientWorkbench<T>({
     }
     if (!loadRef.current.promise) {
       loadRef.current.promise = cacheKey
-        ? consumeWorkbenchLoad(cacheKey, load)
+        ? consumeWorkbenchLoad(cacheKey, load, { settledTtlMs: cacheSettledTtlMs })
         : load().finally(() => {
             if (loadRef.current.load === load) {
               loadRef.current.promise = null;
@@ -52,33 +82,55 @@ export function ClientWorkbench<T>({
     loadRef.current.promise
       .then(result => {
         if (!cancelled) {
+          window.clearTimeout(pendingTimer);
           setData(result);
           setError(null);
         }
       })
       .catch(err => {
         if (!cancelled) {
-          const { redirectToLogin, message } = resolveWorkbenchError(err, Boolean(getAuthorizationToken()), t);
+          window.clearTimeout(pendingTimer);
+          const { redirectToLogin, message } = resolveWorkbenchError(err, false, t);
           if (redirectToLogin) {
-            const returnTo = buildLoginReturnTo(window.location);
-            window.location.href = buildLoginRedirectHref(returnTo, process.env.NEXT_PUBLIC_LOGIN_PATH);
-            return;
+            void readClientSessionState().then(session => {
+              if (cancelled || session.authenticated) return;
+              const returnTo = buildLoginReturnTo(window.location);
+              window.location.href = buildLoginRedirectHref(returnTo, process.env.NEXT_PUBLIC_LOGIN_PATH);
+            });
           }
           setError(message);
         }
       });
     return () => {
       cancelled = true;
+      window.clearTimeout(pendingTimer);
     };
-  }, [cacheKey, load, t]);
+  }, [cacheKey, cacheSettledTtlMs, load, loadingDelayMs, reloadKey, t]);
 
   if (error) {
+    if (renderError) {
+      return <>{renderError(error, retry)}</>;
+    }
     return <ObservabilityStatusState title={t('common.load-failed')} copy={error} tone="danger" />;
   }
 
   if (!data) {
+    if (renderLoading) {
+      return <>{renderLoading(showPendingState)}</>;
+    }
+
+    if (!showPendingState) {
+      return (
+        <section
+          data-client-workbench-loading="deferred"
+          aria-busy="true"
+          className="min-h-[260px]"
+        />
+      );
+    }
+
     const pendingTitle = loadingTitle ?? t('common.workbench.loading.title');
-    const pendingCopy = loadingCopy ?? t('common.loading');
+    const pendingCopy = loadingCopy ?? t('common.workbench.loading.copy');
 
     return (
       <section

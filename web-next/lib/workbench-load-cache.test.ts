@@ -35,6 +35,37 @@ describe('workbench load cache', () => {
     expect(load).toHaveBeenCalledTimes(2);
   });
 
+  it('can keep a settled result for a short ttl when shared chrome needs the same state', async () => {
+    let now = 1_000;
+    const load = vi.fn()
+      .mockResolvedValueOnce('first')
+      .mockResolvedValueOnce('second');
+
+    await expect(
+      consumeWorkbenchLoad('app-frame:header-state:zh-CN', load, {
+        settledTtlMs: 500,
+        now: () => now,
+      })
+    ).resolves.toBe('first');
+    await expect(
+      consumeWorkbenchLoad('app-frame:header-state:zh-CN', load, {
+        settledTtlMs: 500,
+        now: () => now,
+      })
+    ).resolves.toBe('first');
+
+    now = 1_501;
+
+    await expect(
+      consumeWorkbenchLoad('app-frame:header-state:zh-CN', load, {
+        settledTtlMs: 500,
+        now: () => now,
+      })
+    ).resolves.toBe('second');
+
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
   it('clears the cache after a rejection so the next attempt can retry', async () => {
     const load = vi.fn()
       .mockRejectedValueOnce(new Error('boom'))

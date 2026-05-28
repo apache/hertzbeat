@@ -11,6 +11,8 @@ export const SUPPLEMENTAL_MESSAGES: Partial<Record<LocaleCode, Messages>> = {
   'en-US': {
     'common.active': 'Active',
     'common.annotation.bind': 'Annotations',
+    'common.api.message-nonzero': 'API message returned non-zero code',
+    'common.api.request-failed-status': 'API request failed: {{status}}',
     'common.attention': 'attention',
     'common.app': 'App',
     'common.application': 'application',
@@ -1061,6 +1063,8 @@ export const SUPPLEMENTAL_MESSAGES: Partial<Record<LocaleCode, Messages>> = {
   'zh-CN': {
     'common.active': '活跃',
     'common.annotation.bind': '注解',
+    'common.api.message-nonzero': 'API 消息返回非零状态码',
+    'common.api.request-failed-status': 'API 请求失败：{{status}}',
     'common.attention': '关注',
     'common.app': '应用',
     'common.application': 'application',
