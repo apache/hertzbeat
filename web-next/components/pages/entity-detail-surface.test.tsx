@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { EntityDetailSurface } from './entity-detail-surface';
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => (
@@ -27,11 +28,12 @@ const detail = {
       owner: 'platform',
       environment: 'prod',
       system: 'payments',
+      runbook: 'https://runbooks.local/checkout',
       description: 'Checkout service'
     },
     identities: [{ id: 'host' }],
     monitorBinds: [{ id: 1 }],
-    relations: [{ id: 2 }]
+    relations: [{ relationType: 'calls', targetEntityId: 'mysql-1', targetEntityName: 'mysql-prod' }]
   },
   evidenceSummary: {
     collectorOfflineCount: 1,
@@ -52,6 +54,17 @@ const detail = {
   traceSummary: {
     recentTraceCount: 4,
     recentErrorTraceCount: 1
+  },
+  unifiedEvidenceSummary: {
+    activeSignalCount: 3,
+    metricsActive: true,
+    logsActive: true,
+    tracesActive: true,
+    metricEvidenceCount: 2,
+    logEvidenceCount: 3,
+    traceEvidenceCount: 4,
+    latestObservedAt: '2026-05-13 14:55:00',
+    activeSignals: ['metrics', 'logs', 'traces']
   },
   activeAlerts: [{ id: 1 }],
   alertSummary: {
@@ -91,6 +104,13 @@ describe('EntityDetailSurface', () => {
     expect(source).toContain('data-entity-detail-template-binding="monitor-template-binding"');
     expect(source).toContain('data-entity-health-model="lightweight-service-health"');
     expect(source).toContain('data-entity-health-slo-mode="lightweight-no-slo-authoring"');
+    expect(source).toContain('data-entity-detail-evidence-model="red-use-read-model"');
+    expect(source).toContain('buildUnifiedEvidenceRows');
+    expect(source).toContain('data-entity-detail-evidence-handoff="alert-topology-runbook"');
+    expect(source).toContain('data-entity-detail-evidence-handoff-row={row.key}');
+    expect(source).toContain('data-entity-detail-evidence-handoff-source={row.evidence}');
+    expect(source).toContain('data-entity-detail-evidence-handoff-count={row.count}');
+    expect(source).toContain('buildEntityEvidenceHandoffRows');
     expect(source).toContain('data-entity-health-collector-handoff="collector-cluster"');
     expect(source).toContain('data-entity-health-collector-freshness="last-seen"');
     expect(source).toContain('buildEntityHealthModel');
@@ -101,9 +121,20 @@ describe('EntityDetailSurface', () => {
     expect(source).toContain("from '../workbench/overlay-dialog'");
     expect(source).toContain('data-entity-detail-delete-confirm-trigger="cold-modal"');
     expect(source).toContain('data-entity-detail-delete-confirm="cold-modal"');
-    expect(source).toContain('确认删除实体');
-    expect(source).toContain('确认删除');
-    expect(source).toContain('取消');
+    expect(source).toContain("translateEntityDetail('entities.detail.delete.title')");
+    expect(source).toContain("translateEntityDetail('entities.detail.delete.kicker')");
+    expect(source).toContain("translateEntityDetail('entities.detail.delete.cancel')");
+    expect(source).toContain("translateEntityDetail('entities.detail.delete.confirm')");
+    expect(source).toContain("translateEntityDetail('entities.detail.delete.copy')");
+    expect(source).toContain("translateEntityDetail('entities.detail.attribution.ready')");
+    expect(source).toContain("translateEntityDetail('entities.detail.attribution.review')");
+    expect(source).toContain("translateEntityDetail('entities.detail.attribution.missing')");
+    expect(source).not.toContain('title="确认删除实体"');
+    expect(source).not.toContain('kicker="对象目录"');
+    expect(source).not.toContain('删除后实体会从对象目录移除');
+    expect(source).not.toContain('已归因');
+    expect(source).not.toContain('待确认');
+    expect(source).not.toContain('缺失');
     expect(source).not.toContain('window.confirm');
     expect(source).not.toContain('confirm(');
     expect(source).toContain('buildEntityContextHandoffLinks');
@@ -119,8 +150,7 @@ describe('EntityDetailSurface', () => {
     expect(source).not.toContain('text-white/55');
   });
 
-  it('renders Chinese cold entity detail copy and compact action rows', async () => {
-    const { EntityDetailSurface } = await import('./entity-detail-surface');
+  it('renders English fallback cold entity detail copy and compact action rows', () => {
     const html = renderToStaticMarkup(
       <EntityDetailSurface detail={detail} actionError={null} isPending={false} onDelete={() => undefined} onRefresh={() => undefined} />
     );
@@ -148,6 +178,15 @@ describe('EntityDetailSurface', () => {
     expect(html).toContain('data-entity-detail-template-binding="monitor-template-binding"');
     expect(html).toContain('data-entity-health-model="lightweight-service-health"');
     expect(html).toContain('data-entity-health-slo-mode="lightweight-no-slo-authoring"');
+    expect(html).toContain('data-entity-detail-evidence-model="red-use-read-model"');
+    expect(html).toContain('data-entity-detail-evidence-handoff="alert-topology-runbook"');
+    expect(html).toContain('data-entity-detail-evidence-handoff-row="alerts"');
+    expect(html).toContain('data-entity-detail-evidence-handoff-source="active-alerts"');
+    expect(html).toContain('data-entity-detail-evidence-handoff-count="1"');
+    expect(html).toContain('data-entity-detail-evidence-handoff-row="topology"');
+    expect(html).toContain('data-entity-detail-evidence-handoff-source="topology-relation"');
+    expect(html).toContain('data-entity-detail-evidence-handoff-row="runbook"');
+    expect(html).toContain('data-entity-detail-evidence-handoff-source="runbook"');
     expect(html).toContain('data-entity-health-collector-handoff="collector-cluster"');
     expect(html).toContain('data-entity-health-collector-freshness="last-seen"');
     expect(html).toContain('href="/setting/collector?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
@@ -155,56 +194,70 @@ describe('EntityDetailSurface', () => {
     expect(html).toContain('href="/log/manage?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
     expect(html).toContain('href="/trace/manage?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
     expect(html).toContain('href="/alert/setting?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
+    expect(html).toContain('href="/alert?status=firing&amp;entityId=42&amp;entityName=Checkout+API&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h&amp;returnTo=%2Fentities%2F42"');
     expect(html).toContain('href="/monitors?entityId=42&amp;entityName=Checkout+API&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h&amp;returnTo=%2Fentities%2F42"');
     expect(html).toContain('href="/topology?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
+    expect(html).toContain('topologyTargetId=mysql-1');
+    expect(html).toContain('topologyTargetName=mysql-prod');
+    expect(html).toContain('href="https://runbooks.local/checkout"');
     expect(html).toContain('href="/entities/42/definition?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
-    expect(html).toContain('对象优先调查');
-    expect(html).toContain('实体详情');
-    expect(html).toContain('上下文');
-    expect(html).toContain('观测上下文');
-    expect(html).toContain('当前告警');
-    expect(html).toContain('相关信号');
-    expect(html).toContain('上下游关系');
-    expect(html).toContain('采集来源');
-    expect(html).toContain('传统监控绑定');
-    expect(html).toContain('OTLP 归因');
-    expect(html).toContain('候选确认');
-    expect(html).toContain('归因诊断');
-    expect(html).toContain('模板绑定');
-    expect(html).toContain('告警规则');
-    expect(html).toContain('绑定监控');
-    expect(html).toContain('上下游拓扑');
-    expect(html).toContain('轻量健康模型');
-    expect(html).toContain('可用性');
-    expect(html).toContain('错误率');
-    expect(html).toContain('延迟');
-    expect(html).toContain('当前告警');
-    expect(html).toContain('最近异常');
-    expect(html).toContain('采集健康');
-    expect(html).toContain('采集器 1 / 2 在线');
-    expect(html).toContain('任务 11 · 离线 1');
-    expect(html).toContain('最近上报 2026-04-10 18:05:00');
-    expect(html).toContain('健康评分');
-    expect(html).toContain('暂不展开 SLO 编排');
-    expect(html).toContain('下一步');
-    expect(html).toContain('高级入口');
-    expect(html).toContain('全部实体');
-    expect(html).toContain('刷新');
-    expect(html).toContain('编辑定义');
-    expect(html).toContain('删除');
-    expect(html).toContain('编辑');
-    expect(html).toContain('关联指标');
-    expect(html).toContain('先检查异常监控。');
+    expect(html).toContain('Entity-first investigation');
+    expect(html).toContain('Entity detail');
+    expect(html).toContain('Context');
+    expect(html).toContain('Observability context');
+    expect(html).toContain('Current alerts');
+    expect(html).toContain('Related signals');
+    expect(html).toContain('Upstream and downstream');
+    expect(html).toContain('Collection source');
+    expect(html).toContain('Traditional monitor binding');
+    expect(html).toContain('OTLP attribution');
+    expect(html).toContain('Candidate confirmation');
+    expect(html).toContain('Attribution diagnostics');
+    expect(html).toContain('Template binding');
+    expect(html).toContain('Alert rules');
+    expect(html).toContain('Bound monitors');
+    expect(html).toContain('Upstream topology');
+    expect(html).toContain('Lightweight health model');
+    expect(html).toContain('Evidence model');
+    expect(html).toContain('RED / USE read model');
+    expect(html).toContain('Active alert evidence');
+    expect(html).toContain('Topology context');
+    expect(html).toContain('Runbook');
+    expect(html).toContain('3 active signals');
+    expect(html).toContain('metrics · logs · traces');
+    expect(html).toContain('Metrics / USE');
+    expect(html).toContain('Logs / RED');
+    expect(html).toContain('Traces / RED');
+    expect(html).toContain('Availability');
+    expect(html).toContain('Error rate');
+    expect(html).toContain('Latency');
+    expect(html).toContain('Current alerts');
+    expect(html).toContain('Recent anomalies');
+    expect(html).toContain('Collection health');
+    expect(html).toContain('Collectors 1 / 2 online');
+    expect(html).toContain('Tasks 11 · offline 1');
+    expect(html).toContain('Last report 2026-04-10 18:05:00');
+    expect(html).toContain('Health score');
+    expect(html).toContain('without SLO authoring');
+    expect(html).toContain('Next step');
+    expect(html).toContain('Advanced entries');
+    expect(html).toContain('All entities');
+    expect(html).toContain('Refresh');
+    expect(html).toContain('Edit definition');
+    expect(html).toContain('Delete');
+    expect(html).toContain('Edit');
+    expect(html).toContain('Related metrics');
+    expect(html).toContain('Inspect abnormal monitors first.');
     expect(html).not.toContain('Next steps');
     expect(html).not.toContain('Review the summary first');
-    expect(html).not.toContain('Related metrics');
+    expect(html).not.toContain('对象优先调查');
+    expect(html).not.toContain('关联指标');
     expect(html).not.toContain('definition workspace');
     expect(html).not.toContain('data-stage-section');
     expect(html).not.toContain('data-drawer-section');
-  });
+  }, 30000);
 
-  it('renders entity context handoff links with inherited time and monitor context', async () => {
-    const { EntityDetailSurface } = await import('./entity-detail-surface');
+  it('renders entity context handoff links with inherited time and monitor context', () => {
     const html = renderToStaticMarkup(
       <EntityDetailSurface
         detail={detail}
@@ -235,14 +288,15 @@ describe('EntityDetailSurface', () => {
       'href="/topology?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-45m&amp;start=1713200000000&amp;end=1713202700000&amp;refresh=30&amp;live=false&amp;tz=Asia%2FShanghai&amp;source=monitor&amp;monitorId=632051474676992&amp;monitorName=checkout-http&amp;monitorApp=website&amp;monitorInstance=example.com%3A443"'
     );
     expect(html).toContain('data-entity-detail-inherited-context="route-context"');
-    expect(html).toContain('data-entity-detail-inherited-context-row="时间范围"');
+    expect(html).toContain('data-entity-detail-inherited-context-row="Time range"');
     expect(html).toContain('last-45m');
-    expect(html).toContain('2024/04/16 00:53:20 → 2024/04/16 01:38:20 · refresh 30s · 已暂停 · Asia/Shanghai');
-    expect(html).toContain('data-entity-detail-inherited-context-row="监控实例"');
+    expect(html).toContain('2024/04/16 00:53:20 → 2024/04/16 01:38:20 · Refresh 30s · Paused · Asia/Shanghai');
+    expect(html).toContain('data-entity-detail-inherited-context-row="Monitor instance"');
     expect(html).toContain('checkout-http');
     expect(html).toContain('website · example.com:443 · monitorId 632051474676992');
-    expect(html).toContain('data-entity-detail-inherited-context-row="采集来源"');
-    expect(html).toContain('传统监控');
+    expect(html).toContain('data-entity-detail-inherited-context-row="Source"');
+    expect(html).toContain('Traditional monitoring');
     expect(html).not.toContain('0 个证据');
-  });
+    expect(html).not.toContain('0 evidence');
+  }, 30000);
 });

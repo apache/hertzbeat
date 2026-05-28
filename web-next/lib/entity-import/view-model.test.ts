@@ -10,6 +10,7 @@ import {
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock();
+const zhT = createTranslatorMock({ locale: 'zh-CN' });
 
 describe('entity import view model', () => {
   it('builds import metrics from template/activity state', () => {
@@ -25,14 +26,15 @@ describe('entity import view model', () => {
       buildTemplateRows(
         [
           { id: 1, name: 'base-template', summary: 'shared service template', format: 'yaml', source: 'workspace' }
-        ] as any
+        ] as any,
+        t
       )
     ).toEqual([
       {
         key: '1',
         title: 'base-template',
         copy: 'shared service template',
-        meta: 'YAML · 工作区'
+        meta: 'YAML · Workspace'
       }
     ]);
   });
@@ -49,7 +51,7 @@ describe('entity import view model', () => {
       {
         title: 'imported service',
         copy: 'created from yaml',
-        meta: '成功 · YAML'
+        meta: 'Success · YAML'
       }
     ]);
   });
@@ -77,7 +79,7 @@ describe('entity import view model', () => {
             format: 'yaml'
           }
         ] as any,
-        t
+        zhT
       )
     ).toEqual([
       {
@@ -94,6 +96,175 @@ describe('entity import view model', () => {
         title: '目录实体已创建',
         copy: '服务: checkout · 来源: manual · 负责人: platform',
         meta: '已保存 · YAML'
+      }
+    ]);
+  });
+
+  it('uses localized empty fallback for missing import titles, template metadata, and activity rows', () => {
+    expect(
+      buildTemplateRows(
+        [
+          {
+            id: 9,
+            name: 'empty-template',
+            summary: ' ',
+            kind: '',
+            format: '',
+            source: ''
+          }
+        ] as any,
+        zhT
+      )
+    ).toEqual([
+      {
+        key: '9',
+        title: 'empty-template',
+        copy: '无',
+        meta: '无 · 无'
+      }
+    ]);
+
+    expect(
+      buildActivityRows(
+        [
+          {
+            summary: '',
+            detail: ' ',
+            status: '',
+            format: ''
+          }
+        ] as any,
+        zhT
+      )
+    ).toEqual([
+      {
+        title: '无',
+        copy: '无',
+        meta: '无 · 无'
+      }
+    ]);
+
+    const missingTranslator = (key: string) => key;
+
+    expect(
+      buildImportPreviewRows(
+        [
+          {
+            entity: {
+              type: 'service',
+              name: ' ',
+              displayName: ' ',
+              source: 'manual'
+            },
+            monitorBinds: [],
+            identities: []
+          }
+        ] as any,
+        zhT
+      )[0]
+    ).toEqual(expect.objectContaining({ title: '无' }));
+
+    expect(
+      buildActivityRows([{ summary: '', detail: '', status: '', format: '' }] as any, missingTranslator)
+    ).toEqual([{ title: 'None', copy: 'None', meta: 'None · None' }]);
+  });
+
+  it('localizes unknown import activity status and template source fallbacks', () => {
+    expect(
+      buildActivityRows(
+        [
+          {
+            summary: 'import deferred',
+            detail: 'manual review',
+            status: 'deferred',
+            format: 'yaml'
+          }
+        ] as any,
+        zhT
+      )
+    ).toEqual([
+      {
+        title: 'import deferred',
+        copy: 'manual review',
+        meta: '未知状态 deferred · YAML'
+      }
+    ]);
+
+    expect(
+      buildTemplateRows(
+        [
+          {
+            id: 12,
+            name: 'remote-template',
+            summary: 'external registry template',
+            format: 'json',
+            source: 'remote-registry'
+          }
+        ] as any,
+        zhT
+      )
+    ).toEqual([
+      {
+        key: '12',
+        title: 'remote-template',
+        copy: 'external registry template',
+        meta: 'JSON · 未知来源 remote-registry'
+      }
+    ]);
+  });
+
+  it('localizes unknown import entity kind and source labels', () => {
+    expect(
+      buildImportPreviewRows(
+        [
+          {
+            entity: {
+              type: 'lambda_function',
+              name: 'async-enricher',
+              source: 'cloud-scanner',
+              owner: 'platform',
+              system: 'enrichment',
+              runbook: 'https://runbooks.example.com/enrichment'
+            },
+            monitorBinds: [{ id: 7 }],
+            identities: [{ key: 'service.name', value: 'async-enricher' }]
+          }
+        ] as any,
+        zhT
+      )[0]
+    ).toEqual(
+      expect.objectContaining({
+        kindLabel: '未知类型 lambda_function',
+        sourceLabel: '未知来源 cloud-scanner'
+      })
+    );
+  });
+
+  it('localizes unknown import definition format labels', () => {
+    expect(buildImportMetrics({ format: 'toml' as any, templateCount: 1, activityCount: 0 }, zhT)).toEqual([
+      { label: '导入格式', value: '未知格式 toml' },
+      { label: '自定义模板', value: '1' },
+      { label: '最近活动', value: '0' }
+    ]);
+
+    expect(
+      buildActivityRows([{ summary: 'previewed custom format', detail: 'manual', status: 'preview', format: 'toml' }] as any, zhT)
+    ).toEqual([
+      {
+        title: 'previewed custom format',
+        copy: 'manual',
+        meta: '预览 · 未知格式 toml'
+      }
+    ]);
+
+    expect(
+      buildTemplateRows([{ id: 15, name: 'toml-template', summary: ' ', kind: 'custom template', format: 'toml', source: 'custom' }] as any, zhT)
+    ).toEqual([
+      {
+        key: '15',
+        title: 'toml-template',
+        copy: 'custom template',
+        meta: '未知格式 toml · 自定义'
       }
     ]);
   });
@@ -132,7 +303,7 @@ describe('entity import view model', () => {
         title: 'Checkout API',
         subtitle: 'checkout-api',
         telemetryLabel: 'Telemetry binding detected',
-        attributionLabel: '归因待确认',
+        attributionLabel: 'Attribution needs review',
         attributionState: 'review',
         gaps: [],
         validationLabel: 'Ready to import',
@@ -140,32 +311,32 @@ describe('entity import view model', () => {
         attributionRows: [
           expect.objectContaining({
             key: 'identity',
-            title: '身份标识',
-            copy: '缺少身份标识',
+            title: 'Identities',
+            copy: 'Missing identity',
             state: 'missing'
           }),
           expect.objectContaining({
             key: 'monitor-binding',
-            title: '监控绑定',
-            copy: '1 个监控绑定',
+            title: 'Monitor binding',
+            copy: '1 monitor bindings',
             meta: 'monitorId 1',
             state: 'ready'
           }),
           expect.objectContaining({
             key: 'ownership',
-            title: '负责人',
+            title: 'Owner',
             copy: 'platform',
             state: 'ready'
           }),
           expect.objectContaining({
             key: 'system-environment',
-            title: '系统与环境',
-            copy: 'commerce · 缺少环境',
+            title: 'System and environment',
+            copy: 'commerce · missing environment',
             state: 'review'
           }),
           expect.objectContaining({
             key: 'discovery-return',
-            title: '发现回路',
+            title: 'Discovery loop',
             href: '/entities/discovery?source=telemetry&monitorId=1'
           })
         ]
@@ -173,7 +344,7 @@ describe('entity import view model', () => {
       expect.objectContaining({
         title: 'payments-api',
         sourceLabel: 'Manual',
-        attributionLabel: '归因缺失',
+        attributionLabel: 'Attribution missing',
         attributionState: 'missing',
         gapKeys: ['owner', 'system', 'implementedBy', 'telemetry', 'runbook'],
         gaps: ['Owner', 'System', 'Implemented by', 'Telemetry bindings', 'Runbook'],
@@ -182,24 +353,24 @@ describe('entity import view model', () => {
         attributionRows: expect.arrayContaining([
           expect.objectContaining({
             key: 'identity',
-            copy: '缺少身份标识',
-            meta: '等待 service.name 或 hertzbeat.entity_id',
+            copy: 'Missing identity',
+            meta: 'Waiting for service.name or hertzbeat.entity_id',
             state: 'missing'
           }),
           expect.objectContaining({
             key: 'monitor-binding',
-            copy: '0 个监控绑定',
-            meta: '等待监控对象或模板绑定',
+            copy: '0 monitor bindings',
+            meta: 'Waiting for monitor object or template binding',
             state: 'missing'
           }),
           expect.objectContaining({
             key: 'ownership',
-            copy: '缺少负责人',
+            copy: 'Missing owner',
             state: 'missing'
           }),
           expect.objectContaining({
             key: 'system-environment',
-            copy: '缺少系统、环境',
+            copy: 'Missing system and environment',
             state: 'review'
           })
         ])

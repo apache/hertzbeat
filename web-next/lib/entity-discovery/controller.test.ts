@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { loadDiscoveryData, searchDiscoveryMonitors } from './controller';
+import { loadDiscoveryData, loadDiscoveryDataFromFacade, searchDiscoveryMonitors } from './controller';
 
 describe('entity discovery controller', () => {
   it('loads presets, activities and catalog suggestions together', async () => {
@@ -32,6 +32,55 @@ describe('entity discovery controller', () => {
       presets: [],
       activities: [],
       catalog: { owners: ['ops'], systems: ['checkout'], environments: ['prod'] }
+    });
+  });
+
+  it('loads discovery workspace data through the entity facade readers', async () => {
+    const readers = {
+      presets: vi.fn(async () => [{ id: 1, name: 'preset-a' }]),
+      activities: vi.fn(async () => [{ id: 2, summary: 'activity-a' }]),
+      catalogSuggestions: vi.fn(async () => ({ owners: ['ops'], systems: ['checkout'], environments: ['prod'] }))
+    };
+
+    await expect(loadDiscoveryDataFromFacade(readers as any)).resolves.toEqual({
+      presets: [{ id: 1, name: 'preset-a' }],
+      activities: [{ id: 2, summary: 'activity-a' }],
+      catalog: { owners: ['ops'], systems: ['checkout'], environments: ['prod'] }
+    });
+
+    expect(readers.presets).toHaveBeenCalledWith(8);
+    expect(readers.activities).toHaveBeenCalledWith(8);
+    expect(readers.catalogSuggestions).toHaveBeenCalledWith(120);
+  });
+
+  it('preserves discovery fallbacks through the entity facade readers', async () => {
+    const readers = {
+      presets: vi.fn(async () => {
+        throw new Error('GET /entities/discovery/governance-presets?limit=8 failed with 404');
+      }),
+      activities: vi.fn(async () => {
+        throw new Error('GET /entities/discovery/governance-activities?limit=8 failed with 404');
+      }),
+      catalogSuggestions: vi.fn(async () => {
+        throw new Error('GET /entities/catalog-suggestions?limit=120 failed with 404');
+      })
+    };
+
+    await expect(loadDiscoveryDataFromFacade(readers as any)).resolves.toEqual({
+      presets: [],
+      activities: [],
+      catalog: {
+        owners: [],
+        namespaces: [],
+        environments: [],
+        systems: [],
+        lifecycles: [],
+        tiers: [],
+        inheritFromRefs: [],
+        entityRefs: [],
+        languages: [],
+        linkProviders: []
+      }
     });
   });
 

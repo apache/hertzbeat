@@ -1,6 +1,14 @@
 import type { EntityDetailDto } from '@/lib/types';
+import { interpolate, type TranslationParams } from '@/lib/i18n';
+import { SUPPLEMENTAL_MESSAGES } from '@/lib/i18n-runtime-messages';
 
 type ApiGetter = <T>(url: string) => Promise<T>;
+type EntityDetailReader = <T = EntityDetailDto>(entityId: string | number) => Promise<T>;
+type EntityDetailTranslator = (key: string, params?: TranslationParams) => string;
+
+function defaultEntityDetailTranslator(key: string, params?: TranslationParams) {
+  return interpolate(SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? key, params);
+}
 
 export function buildEntityDetailUrl(entityId: string) {
   return `/entities/${entityId}/detail`;
@@ -19,7 +27,7 @@ function isRecoverableEntityDetailError(error: unknown) {
   );
 }
 
-export function buildFallbackEntityDetail(entityId: string): EntityDetailDto {
+export function buildFallbackEntityDetail(entityId: string, t: EntityDetailTranslator = defaultEntityDetailTranslator): EntityDetailDto {
   const parsedId = Number.parseInt(entityId, 10);
   const normalizedId = Number.isFinite(parsedId) ? parsedId : undefined;
 
@@ -28,14 +36,17 @@ export function buildFallbackEntityDetail(entityId: string): EntityDetailDto {
       entity: {
         id: normalizedId,
         name: normalizedId != null ? `entity-${normalizedId}` : 'entity-draft',
-        displayName: normalizedId != null ? `实体 ${normalizedId}` : '实体草稿',
+        displayName:
+          normalizedId != null
+            ? t('entities.detail.fallback.display-name', { id: normalizedId })
+            : t('entities.detail.fallback.draft-name'),
         type: 'service',
         status: 'unknown',
         owner: 'platform',
         environment: 'prod',
         system: 'catalog',
         source: 'manual',
-        description: '后端实体详情暂不可用时展示的临时工作台。'
+        description: t('entities.detail.fallback.description')
       },
       identities: [],
       monitorBinds: [],
@@ -74,22 +85,38 @@ export function buildFallbackEntityDetail(entityId: string): EntityDetailDto {
     nextActions: [
       {
         actionType: 'definition',
-        title: '打开定义',
-        summary: '先检查定义工作台，再补齐归属和证据。',
-        actionLabel: '打开定义',
+        title: t('entities.detail.action-text.open-definition'),
+        summary: t('entities.detail.action-text.review-definition'),
+        actionLabel: t('entities.detail.action-text.open-definition'),
         priority: 1
       }
     ]
   };
 }
 
-export async function loadEntityDetail(apiGet: ApiGetter, entityId: string) {
+async function loadEntityDetailWithFallback(
+  readDetail: () => Promise<EntityDetailDto>,
+  entityId: string,
+  t: EntityDetailTranslator = defaultEntityDetailTranslator
+) {
   try {
-    return await apiGet<EntityDetailDto>(buildEntityDetailUrl(entityId));
+    return await readDetail();
   } catch (error) {
     if (isRecoverableEntityDetailError(error)) {
-      return buildFallbackEntityDetail(entityId);
+      return buildFallbackEntityDetail(entityId, t);
     }
     throw error;
   }
+}
+
+export async function loadEntityDetail(apiGet: ApiGetter, entityId: string, t: EntityDetailTranslator = defaultEntityDetailTranslator) {
+  return loadEntityDetailWithFallback(() => apiGet<EntityDetailDto>(buildEntityDetailUrl(entityId)), entityId, t);
+}
+
+export async function loadEntityDetailFromFacade(
+  readEntityDetail: EntityDetailReader,
+  entityId: string,
+  t: EntityDetailTranslator = defaultEntityDetailTranslator
+) {
+  return loadEntityDetailWithFallback(() => readEntityDetail<EntityDetailDto>(entityId), entityId, t);
 }

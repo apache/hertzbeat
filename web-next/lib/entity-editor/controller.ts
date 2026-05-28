@@ -22,10 +22,18 @@ type InvalidJsonMessageBuilder = (label: string, index: number) => string;
 type EntityCreate = (payload: EntityDto) => Promise<number>;
 type EntityUpdate = (payload: EntityDto) => Promise<void>;
 type ApiGetter = <T>(url: string) => Promise<T>;
+type EntityCatalogSuggestionsReader = (limit?: number) => Promise<EntityCatalogSuggestions>;
+type EntityEditorEntityReader = (entityId: string) => Promise<EntityDto>;
+type MonitorSeedReader = (monitorId: string) => Promise<Monitor | { monitor?: Monitor }>;
 
 export type EntityEditorNewDraftSeed = {
   source?: string | null;
   monitorId?: string | null;
+  identityKey?: string | null;
+  identityValue?: string | null;
+  serviceName?: string | null;
+  serviceNamespace?: string | null;
+  environment?: string | null;
 };
 
 const hostLikeApps = new Set([
@@ -295,12 +303,15 @@ function extractTelemetryRunbook(monitor: Monitor) {
   );
 }
 
-async function loadSeedMonitor(apiGet: ApiGetter, monitorId: string) {
-  const payload = await apiGet<Monitor | { monitor?: Monitor }>(`/monitor/${monitorId}`);
+function unwrapSeedMonitor(payload: Monitor | { monitor?: Monitor }) {
   if (payload && typeof payload === 'object' && 'monitor' in payload && payload.monitor) {
     return payload.monitor;
   }
   return payload as Monitor;
+}
+
+async function loadSeedMonitor(apiGet: ApiGetter, monitorId: string) {
+  return unwrapSeedMonitor(await apiGet<Monitor | { monitor?: Monitor }>(buildEntityEditorSeedMonitorUrl(monitorId)));
 }
 
 export function buildTelemetrySeededEntityDraft(monitor: Monitor): EntityDto {
@@ -339,6 +350,50 @@ export function buildTelemetrySeededEntityDraft(monitor: Monitor): EntityDto {
         status: 'active'
       }
     ],
+    relations: []
+  };
+}
+
+export function buildOtlpCandidateEntityDraft(seed: EntityEditorNewDraftSeed): EntityDto {
+  const identityKey = trimText(seed.identityKey);
+  const identityValue = trimText(seed.identityValue);
+
+  if (identityKey == null || identityValue == null) {
+    return buildInitialEntityDraft();
+  }
+
+  const serviceName = trimText(seed.serviceName);
+  const serviceNamespace = trimText(seed.serviceNamespace);
+  const environment = trimText(seed.environment);
+  const entityName = serviceName || identityValue;
+  const identities = new Map<string, string>();
+  const baseDraft = buildInitialEntityDraft();
+  putTelemetryIdentityCandidate(identities, identityKey, identityValue);
+  putTelemetryIdentityCandidate(identities, 'service.namespace', serviceNamespace);
+  putTelemetryIdentityCandidate(identities, 'deployment.environment.name', environment);
+
+  return {
+    ...baseDraft,
+    entity: {
+      ...baseDraft.entity,
+      type: 'service',
+      name: entityName,
+      displayName: entityName,
+      namespace: serviceNamespace || '',
+      environment: environment || '',
+      source: 'otel_resource',
+      labels: {
+        'hertzbeat.discovery.source': 'otlp-candidate'
+      }
+    },
+    identities: Array.from(identities.entries()).map(([key, value], index) => ({
+      identityType: 'otel_resource',
+      identityKey: key,
+      identityValue: value,
+      priority: getEntityIdentityPriority(key),
+      primaryIdentity: index === 0
+    })),
+    monitorBinds: [],
     relations: []
   };
 }
@@ -390,9 +445,33 @@ export function buildFallbackEntityDto(entityId: string): EntityDto {
   };
 }
 
+export function buildEntityEditorCatalogSuggestionsUrl(limit = 120) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return `/entities/catalog-suggestions?${params.toString()}`;
+}
+
+export function buildEntityEditorEntityUrl(entityId: string) {
+  return `/entities/${entityId}`;
+}
+
+export function buildEntityEditorSeedMonitorUrl(monitorId: string) {
+  return `/monitor/${monitorId}`;
+}
+
 export async function loadEntityEditorCatalogSuggestions(apiGet: ApiGetter) {
   try {
-    return await apiGet<EntityCatalogSuggestions>('/entities/catalog-suggestions?limit=120');
+    return await apiGet<EntityCatalogSuggestions>(buildEntityEditorCatalogSuggestionsUrl());
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return buildEmptyEntityCatalogSuggestions();
+    }
+    throw error;
+  }
+}
+
+export async function loadEntityEditorCatalogSuggestionsFromFacade(readCatalogSuggestions: EntityCatalogSuggestionsReader, limit = 120) {
+  try {
+    return await readCatalogSuggestions(limit);
   } catch (error) {
     if (isNotFoundError(error)) {
       return buildEmptyEntityCatalogSuggestions();
@@ -403,7 +482,18 @@ export async function loadEntityEditorCatalogSuggestions(apiGet: ApiGetter) {
 
 export async function loadEntityEditorEntity(apiGet: ApiGetter, entityId: string) {
   try {
-    return await apiGet<EntityDto>(`/entities/${entityId}`);
+    return await apiGet<EntityDto>(buildEntityEditorEntityUrl(entityId));
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return buildFallbackEntityDto(entityId);
+    }
+    throw error;
+  }
+}
+
+export async function loadEntityEditorEntityFromFacade(readEntity: EntityEditorEntityReader, entityId: string) {
+  try {
+    return await readEntity(entityId);
   } catch (error) {
     if (isNotFoundError(error)) {
       return buildFallbackEntityDto(entityId);
@@ -416,12 +506,38 @@ export async function buildEntityEditorNewDraft(apiGet: ApiGetter, seed: EntityE
   const source = trimText(seed.source)?.toLowerCase();
   const monitorId = trimText(seed.monitorId);
 
+  if (source === 'otlp-candidate') {
+    return buildOtlpCandidateEntityDraft(seed);
+  }
+
   if (source !== 'telemetry' || monitorId == null) {
     return buildInitialEntityDraft();
   }
 
   try {
     return buildTelemetrySeededEntityDraft(await loadSeedMonitor(apiGet, monitorId));
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return buildInitialEntityDraft();
+    }
+    throw error;
+  }
+}
+
+export async function buildEntityEditorNewDraftFromFacade(readSeedMonitor: MonitorSeedReader, seed: EntityEditorNewDraftSeed) {
+  const source = trimText(seed.source)?.toLowerCase();
+  const monitorId = trimText(seed.monitorId);
+
+  if (source === 'otlp-candidate') {
+    return buildOtlpCandidateEntityDraft(seed);
+  }
+
+  if (source !== 'telemetry' || monitorId == null) {
+    return buildInitialEntityDraft();
+  }
+
+  try {
+    return buildTelemetrySeededEntityDraft(unwrapSeedMonitor(await readSeedMonitor(monitorId)));
   } catch (error) {
     if (isNotFoundError(error)) {
       return buildInitialEntityDraft();

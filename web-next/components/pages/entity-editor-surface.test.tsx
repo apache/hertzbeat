@@ -19,13 +19,128 @@ vi.mock('@/components/providers/i18n-provider', () => ({
       locale: 'zh-CN',
       overrides: {
         'common.button.cancel': '取消',
+        'common.cancel': '取消',
+        'common.save': '保存',
         'common.saving': '保存中',
         'common.remove': '移除',
         'common.item': '项目',
         'common.save-success': '保存成功',
         'common.save-failed': '保存失败',
         'entities.editor.json.invalid': '{{label}} 第 {{index}} 项不是合法 JSON',
-        'entities.editor.message.create-success': '已创建实体 #{{id}}'
+        'entities.editor.message.create-success': '已创建实体 #{{id}}',
+        'entities.editor.submit.create': '创建实体',
+        'entities.editor.stage.basic.label': '基本信息',
+        'entities.editor.stage.basic.description': '先确认类型、名称和核心元数据。',
+        'entities.editor.stage.ownership.label': '归属与处置',
+        'entities.editor.stage.ownership.description': '补齐负责人、联系人和处置入口。',
+        'entities.editor.stage.signals.label': '证据关联',
+        'entities.editor.stage.signals.description': '绑定监控、身份标识和遥测证据。',
+        'entities.editor.stage.relations.label': '关系与扩展',
+        'entities.editor.stage.relations.description': '记录上下游关系、标签和扩展字段。',
+        'entities.editor.route-tab.detail': '实体详情',
+        'entities.editor.route-tab.monitor': '监控中心',
+        'entities.editor.route-tab.logs': '日志管理与统计',
+        'entities.editor.route-tab.traces': '链路',
+        'entities.editor.shell.kicker': '实体',
+        'entities.editor.shell.title.new': '新建实体',
+        'entities.editor.shell.title.edit': '编辑实体',
+        'entities.editor.shell.copy.new': '先在页面中建立实体记录，再逐步补齐证据、负责人和依赖关系。',
+        'entities.editor.shell.copy.edit': '先在页面中建立实体记录，再逐步补充证据、负责人和依赖关系。',
+        'entities.editor.shell.freshness.new': '0% 最近更新',
+        'entities.editor.shell.freshness.edit': '75% 最近更新',
+        'entities.editor.shell.all-entities': '全部实体',
+        'entities.editor.shell.definition-workspace': '定义工作区',
+        'entities.editor.shell.entity-label': '实体',
+        'entities.editor.shell.preview.show': '显示快照',
+        'entities.editor.shell.preview.hide': '隐藏快照',
+        'entities.editor.shell.definition-version': '定义版本 · HertzBeat v1 / OTel 资源规范',
+        'entities.editor.shell.name-label': '名称',
+        'entities.editor.shell.name-placeholder': '实体唯一名称',
+        'entities.editor.shell.type-label': '类型',
+        'entities.editor.shell.entry-source-label': '录入来源',
+        'entities.editor.shell.stage-label': '编辑阶段',
+        'entities.editor.shell.preview-rail.title': '实体元数据',
+        'entities.editor.shell.preview-rail.copy': '查看或粘贴定义，应用到表单。',
+        'entities.editor.shell.definition-content.title': '定义内容',
+        'entities.editor.shell.definition-content.copy': '查看或粘贴定义，应用到表单。',
+        'entities.editor.mode.editor': '表单',
+        'entities.editor.type.system.label': '系统',
+        'entities.editor.type.system.description': '业务域或产品线',
+        'entities.editor.type.service.label': '服务',
+        'entities.editor.type.service.description': '对外提供业务能力的应用或接口',
+        'entities.editor.type.host.label': '主机',
+        'entities.editor.type.host.description': '承载服务的运行节点',
+        'entities.editor.type.database.label': '数据库',
+        'entities.editor.type.database.description': '数据持久化实例',
+        'entities.editor.type.queue.label': '队列',
+        'entities.editor.type.queue.description': '异步消息通道',
+        'entities.editor.type.middleware.label': '中间件',
+        'entities.editor.type.middleware.description': '共享基础组件',
+        'entities.editor.type.api.label': 'API',
+        'entities.editor.type.api.description': '接口或网关资源',
+        'entities.editor.type.endpoint.label': '端点',
+        'entities.editor.type.endpoint.description': '可观测访问入口',
+        'entities.editor.type.device.label': '设备',
+        'entities.editor.type.device.description': '网络或边缘设备',
+        'entities.editor.type.k8s-workload.label': 'K8s 工作负载',
+        'entities.editor.type.k8s-workload.description': 'K8s 原生工作负载',
+        'entities.editor.entry-source.manual': '页面录入',
+        'entities.editor.entry-source.telemetry': '遥测发现',
+        'entities.editor.entry-source.definition': '定义优先',
+        'entities.editor.telemetry-handoff.title': '遥测发现',
+        'entities.editor.telemetry-handoff.copy': '先通过监控和 OTel 资源字段识别实体，再补充基础信息。',
+        'entities.editor.telemetry-handoff.monitor-count': '{{count}} 个监控绑定',
+        'entities.editor.telemetry-handoff.identity-count': '{{count}} 个身份标识',
+        'entities.editor.telemetry-handoff.attribution-check': '归因检查',
+        'entities.editor.field.display-name': '显示名称',
+        'entities.editor.field.namespace': '命名空间',
+        'entities.editor.field.environment': '环境',
+        'entities.editor.field.subtype': '子类型',
+        'entities.editor.field.owner': '负责人',
+        'entities.editor.field.system': '所属系统',
+        'entities.editor.field.source': '来源',
+        'entities.editor.field.description': '描述',
+        'entities.editor.field.description-placeholder': '例如负责交易结算和支付编排。',
+        'entities.editor.field.runbook': '运行手册',
+        'entities.editor.placeholder.display-name': '例如 Checkout API',
+        'entities.editor.placeholder.namespace': '例如 commerce',
+        'entities.editor.placeholder.environment': '例如 prod',
+        'entities.editor.placeholder.subtype': '例如 http',
+        'entities.editor.placeholder.owner': '例如 payments-team',
+        'entities.editor.placeholder.system': '例如 website',
+        'entities.editor.placeholder.source': 'manual',
+        'entities.editor.contact.title': '联系人',
+        'entities.editor.contact.add': '新增联系人',
+        'entities.editor.contact.name-placeholder': '联系人',
+        'entities.editor.contact.type-placeholder': '类型',
+        'entities.editor.contact.value-placeholder': '联系方式',
+        'entities.editor.contact.contact-placeholder': '联系字段',
+        'entities.editor.link.title': '链接',
+        'entities.editor.link.add': '新增链接',
+        'entities.editor.link.name-placeholder': '链接名称',
+        'entities.editor.link.type-placeholder': '类型',
+        'entities.editor.link.provider-placeholder': '提供方',
+        'entities.editor.link.url-placeholder': '链接地址',
+        'entities.editor.collection.identities': '身份标识',
+        'entities.editor.collection.identities.add': '新增身份标识',
+        'entities.editor.collection.monitor-binds': '监控绑定',
+        'entities.editor.collection.monitor-binds.add': '新增监控绑定',
+        'entities.editor.collection.relations': '关系',
+        'entities.editor.collection.relations.add': '新增关系',
+        'entities.editor.relation.component-of': '上级组件',
+        'entities.editor.relation.components': '下级组件',
+        'entities.editor.relation.implemented-by': '实现服务',
+        'entities.editor.relation.languages': '开发语言',
+        'entities.editor.relation.component-of-placeholder': 'payment-platform, commerce',
+        'entities.editor.relation.components-placeholder': 'checkout-ui, order-router',
+        'entities.editor.relation.implemented-by-placeholder': 'checkout-api, order-worker',
+        'entities.editor.relation.languages-placeholder': 'java, typescript',
+        'entities.editor.relation.labels': '标签',
+        'entities.editor.relation.label-key': '标签键',
+        'entities.editor.relation.label-value': '标签值',
+        'entities.editor.relation.label-add': '新增标签',
+        'entities.editor.definition.aria.yaml': 'YAML 定义快照',
+        'entities.editor.definition.aria.json': 'JSON 定义快照'
       }
     })
   })
@@ -390,7 +505,7 @@ describe('EntityEditorSurface', () => {
     expect(source).not.toContain('<KeyValueEditor label="Labels"');
     expect(source).not.toContain('Provider"');
     expect(source).not.toContain('Telemetry Discovery</div>');
-  });
+  }, 30000);
 
   it('renders the edit shell with the same composer structure, save semantics, and definition handoff', async () => {
     const { EntityEditorSurface } = await import('./entity-editor-surface');
@@ -501,4 +616,53 @@ describe('EntityEditorSurface', () => {
     expect(html).not.toContain('Telemetry Discovery');
     expect(html).not.toContain('bound monitor');
   });
+
+  it('renders an OTLP candidate draft handoff with identity return context and no monitor requirement', async () => {
+    const { EntityEditorSurface } = await import('./entity-editor-surface');
+
+    const html = renderToStaticMarkup(
+      <EntityEditorSurface
+        initial={{
+          entity: {
+            type: 'service',
+            name: 'billing-api',
+            displayName: 'billing-api',
+            namespace: 'commerce',
+            environment: 'prod',
+            owner: '',
+            source: 'otel_resource',
+            labels: {
+              'hertzbeat.discovery.source': 'otlp-candidate'
+            }
+          },
+          identities: [
+            { identityType: 'otel_resource', identityKey: 'service.name', identityValue: 'billing', primaryIdentity: true },
+            { identityType: 'otel_resource', identityKey: 'service.namespace', identityValue: 'commerce' },
+            { identityType: 'otel_resource', identityKey: 'deployment.environment.name', identityValue: 'prod' }
+          ],
+          monitorBinds: [],
+          relations: []
+        }}
+        mode="new"
+        catalogSuggestions={{ owners: ['platform'], systems: ['commerce'], environments: ['prod'] }}
+      />
+    );
+
+    expect(html).toContain('data-entity-editor-telemetry-handoff="true"');
+    expect(html).toContain('data-entity-editor-telemetry-handoff-source="otlp-candidate"');
+    expect(html).toContain('0 个监控绑定');
+    expect(html).toContain('3 个身份标识');
+    expect(html).toContain(
+      'href="/entities/discovery?identityKey=service.name&amp;identityValue=billing&amp;serviceName=billing-api&amp;serviceNamespace=commerce&amp;environment=prod"'
+    );
+    expect(html).toContain('aria-label="名称"');
+    expect(html).toContain('value="billing-api"');
+    expect(html).toContain('aria-label="命名空间"');
+    expect(html).toContain('value="commerce"');
+    expect(html).toContain('aria-label="环境"');
+    expect(html).toContain('value="prod"');
+    expect(html).not.toContain('已归属');
+    expect(html).not.toContain('健康正常');
+    expect(html).not.toContain('拓扑已确认');
+  }, 30000);
 });

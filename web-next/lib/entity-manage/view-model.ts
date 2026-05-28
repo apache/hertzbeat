@@ -3,6 +3,19 @@ import { buildLightweightEntityHealthAffordance } from '../entity-health-afforda
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
+function entityStatusTone(status: string | null | undefined) {
+  const normalized = String(status || '').toLowerCase().replace(/[\s-]+/g, '_');
+  if (normalized === 'healthy' || normalized === 'up' || normalized === 'normal') return 'success';
+  if (normalized === 'warning') return 'warning';
+  if (['abnormal', 'critical', 'down', 'offline', 'unhealthy'].includes(normalized)) return 'danger';
+  return 'neutral';
+}
+
+export function isEntityHealthyStatus(status: string | null | undefined) {
+  const normalized = String(status || '').toLowerCase().replace(/[\s-]+/g, '_');
+  return normalized === 'healthy' || normalized === 'up' || normalized === 'normal';
+}
+
 export function buildEntityMetrics(items: Array<Pick<EntitySummaryInfo, 'activeAlertCount' | 'monitorCount' | 'relationCount'>>, t: Translator) {
   const totalAlerts = items.reduce((sum, item) => sum + (item.activeAlertCount || 0), 0);
   const totalMonitors = items.reduce((sum, item) => sum + (item.monitorCount || 0), 0);
@@ -22,12 +35,14 @@ export function buildEntityRows(
   entityEnvironmentLabel: (environment: string | null | undefined) => string,
   formatTime: (value?: number | string | null) => string
 ) {
+  const emptyValue = t('common.none');
+
   return items.map(item => {
     const entity = item.entity || {};
     return {
       key: String(entity.id || `${entity.name}-${entity.type}`),
       title: entity.displayName || entity.name || t('entities.list.item.fallback'),
-      copy: `${entityTypeLabel(entity.type)} · ${entity.owner || '-'} · ${entityEnvironmentLabel(entity.environment)}`,
+      copy: `${entityTypeLabel(entity.type)} · ${entity.owner || emptyValue} · ${entityEnvironmentLabel(entity.environment)}`,
       meta: t('entities.list.item.meta', {
         monitorCount: item.monitorCount || 0,
         alertCount: item.activeAlertCount || 0,
@@ -55,11 +70,12 @@ export function buildEntityTableRows(
       type: entityTypeLabel(entity.type),
       environment: entityEnvironmentLabel(entity.environment),
       status: entityStatusLabel(entity.status),
+      statusTone: entityStatusTone(entity.status),
       health: buildLightweightEntityHealthAffordance({
         status: entity.status,
         monitorCount: item.monitorCount,
         activeAlertCount: item.activeAlertCount
-      }),
+      }, t),
       monitorCount: String(item.monitorCount || 0),
       activeAlertCount: String(item.activeAlertCount || 0),
       relationCount: String(item.relationCount || 0),
@@ -76,7 +92,8 @@ export function buildSelectedEntityRows(
   entityStatusLabel: (status: string | null | undefined) => string
 ) {
   if (!selected) {
-    return [{ title: t('entities.list.unselected.title'), copy: t('entities.list.unselected.copy'), meta: '-' }];
+    const emptyValue = t('common.none');
+    return [{ title: t('entities.list.unselected.title'), copy: t('entities.list.unselected.copy'), meta: emptyValue }];
   }
 
   return [

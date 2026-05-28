@@ -16,7 +16,7 @@ import {
   Server,
   type LucideIcon
 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useI18n } from '@/components/providers/i18n-provider';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,14 +71,14 @@ function hasAnyStructuredValue(item: object) {
   });
 }
 
-function attributionStateLabel(state: string) {
+function attributionStateLabel(state: string, t: (key: string) => string) {
   if (state === 'ready') {
-    return '已就绪';
+    return t('entities.editor.attribution.state.ready');
   }
   if (state === 'missing') {
-    return '需补齐';
+    return t('entities.editor.attribution.state.missing');
   }
-  return '待确认';
+  return t('entities.editor.attribution.state.review');
 }
 
 function attributionStateClassName(state: string) {
@@ -112,6 +112,60 @@ function buildEntityDefinitionPreview(payload: EntityDto, format: 'yaml' | 'json
   ];
 
   return lines.join('\n');
+}
+
+function readIdentityValue(identities: unknown[], identityKey: string) {
+  for (const identity of identities) {
+    if (typeof identity !== 'object' || identity == null) {
+      continue;
+    }
+    const record = identity as Record<string, unknown>;
+    const key = typeof record.identityKey === 'string' ? record.identityKey : typeof record.key === 'string' ? record.key : null;
+    const value = typeof record.identityValue === 'string' ? record.identityValue : typeof record.value === 'string' ? record.value : null;
+    if (key === identityKey && value != null && value.trim() !== '') {
+      return value.trim();
+    }
+  }
+  return undefined;
+}
+
+function buildOtlpCandidateDiscoveryHref(payload: EntityDto) {
+  const labels = payload.entity.labels || {};
+  if (labels['hertzbeat.discovery.source'] !== 'otlp-candidate') {
+    return null;
+  }
+
+  const identities = Array.isArray(payload.identities) ? payload.identities : [];
+  const identityKey =
+    identities
+      .map(identity => (typeof identity === 'object' && identity != null ? (identity as Record<string, unknown>).identityKey : null))
+      .find(key => key === 'service.name' || key === 'host.name' || key === 'k8s.workload.name' || key === 'endpoint.url') ||
+    (typeof (identities[0] as Record<string, unknown> | undefined)?.identityKey === 'string'
+      ? (identities[0] as Record<string, unknown>).identityKey
+      : null);
+  const identityValue = typeof identityKey === 'string' ? readIdentityValue(identities, identityKey) : undefined;
+
+  if (typeof identityKey !== 'string' || identityValue == null) {
+    return null;
+  }
+
+  const params = new URLSearchParams();
+  params.set('identityKey', identityKey);
+  params.set('identityValue', identityValue);
+
+  if (hasNonEmptyText(payload.entity.name)) {
+    params.set('serviceName', payload.entity.name!.trim());
+  }
+  const namespace = payload.entity.namespace || readIdentityValue(identities, 'service.namespace');
+  if (hasNonEmptyText(namespace)) {
+    params.set('serviceNamespace', namespace!.trim());
+  }
+  const environment = payload.entity.environment || readIdentityValue(identities, 'deployment.environment.name');
+  if (hasNonEmptyText(environment)) {
+    params.set('environment', environment!.trim());
+  }
+
+  return `/entities/discovery?${params.toString()}`;
 }
 
 function MultiValueField({
@@ -425,11 +479,6 @@ export function EntityEditorSurface({
 }) {
   const { t } = useI18n();
 
-  const tr = useCallback((key: string, fallback: string) => {
-    const translated = t(key);
-    return translated === key ? fallback : translated;
-  }, [t]);
-
   const initialFormState = buildEntityEditorFormState(initial);
   const [draft, setDraft] = useState<EntityDto>(initial);
   const [labelRows, setLabelRows] = useState<KeyValueDraft[]>(initialFormState.labelRows);
@@ -509,6 +558,7 @@ export function EntityEditorSurface({
     const monitorBinds = Array.isArray(previewPayload.monitorBinds) ? previewPayload.monitorBinds : [];
     const identities = Array.isArray(previewPayload.identities) ? previewPayload.identities : [];
     const isTelemetryDraft = (previewPayload.entity.source || '').trim() === 'otel_resource';
+    const handoffSource = previewPayload.entity.labels?.['hertzbeat.discovery.source'] === 'otlp-candidate' ? 'otlp-candidate' : 'telemetry';
 
     if (!isTelemetryDraft && monitorBinds.length === 0 && identities.length === 0) {
       return null;
@@ -521,34 +571,40 @@ export function EntityEditorSurface({
         : undefined;
 
     return {
-      title: tr('entity.entry-source.telemetry', '遥测发现'),
-      copy: tr(
-        'entity.entry-source.telemetry.desc',
-        '先通过监控和 OTel 资源字段识别实体，再补充基础信息。'
-      ),
+      title: t('entities.editor.telemetry-handoff.title'),
+      copy: t('entities.editor.telemetry-handoff.copy'),
       monitorCount: monitorBinds.length,
+      monitorCountLabel: t('entities.editor.telemetry-handoff.monitor-count', {
+        count: monitorBinds.length
+      }),
       identityCount: identities.length,
+      identityCountLabel: t('entities.editor.telemetry-handoff.identity-count', {
+        count: identities.length
+      }),
+      source: handoffSource,
       discoveryHref:
-        resolvedMonitorId != null
+        handoffSource === 'otlp-candidate'
+          ? buildOtlpCandidateDiscoveryHref(previewPayload) || '/entities/discovery'
+          : resolvedMonitorId != null
           ? `/entities/discovery?source=telemetry&monitorId=${encodeURIComponent(String(resolvedMonitorId))}`
           : '/entities/discovery'
     };
-  }, [previewPayload, tr]);
+  }, [previewPayload, t]);
 
-  const attributionRows = useMemo(() => buildEntityEditorAttributionRows(previewPayload), [previewPayload]);
+  const attributionRows = useMemo(() => buildEntityEditorAttributionRows(previewPayload, t), [previewPayload, t]);
 
   const stageRows = useMemo<EntityEditorStageRow[]>(
     () => [
       {
         key: 'basic',
-        title: tr('entity.guide.profile', '基本信息'),
-        description: tr('entity.guide.profile.desc', '选择实体类型，并填写稳定的实体名称。'),
+        title: t('entities.editor.stage.basic.label'),
+        description: t('entities.editor.stage.basic.description'),
         done: hasNonEmptyText(draft.entity.type) && hasNonEmptyText(draft.entity.name)
       },
       {
         key: 'ownership',
-        title: tr('entity.guide.owner', '归属处置'),
-        description: tr('entity.guide.owner.desc', '补齐负责人或运行手册，让值班人员知道下一步动作。'),
+        title: t('entities.editor.stage.ownership.label'),
+        description: t('entities.editor.stage.ownership.description'),
         done:
           hasNonEmptyText(draft.entity.owner) ||
           hasNonEmptyText(draft.entity.runbook) ||
@@ -558,14 +614,14 @@ export function EntityEditorSurface({
       },
       {
         key: 'signals',
-        title: tr('entity.guide.evidence', '证据关联'),
-        description: tr('entity.guide.evidence.desc', '关联监控和身份标识，让告警与日志可以汇聚到该实体。'),
+        title: t('entities.editor.stage.signals.label'),
+        description: t('entities.editor.stage.signals.description'),
         done: (previewPayload.identities?.length || 0) > 0 || (previewPayload.monitorBinds?.length || 0) > 0
       },
       {
         key: 'relations',
-        title: tr('entity.guide.context', '关系上下文'),
-        description: tr('entity.guide.context.desc', '补充拓扑、备注和标签，让故障复盘更容易阅读。'),
+        title: t('entities.editor.stage.relations.label'),
+        description: t('entities.editor.stage.relations.description'),
         done:
           hasNonEmptyText(componentOfText) ||
           hasNonEmptyText(componentsText) ||
@@ -578,7 +634,7 @@ export function EntityEditorSurface({
           (previewPayload.relations?.length || 0) > 0
       }
     ],
-    [componentOfText, componentsText, contacts, draft.entity.criticality, draft.entity.inheritFrom, draft.entity.name, draft.entity.owner, draft.entity.runbook, draft.entity.type, implementedByText, labelRows, languagesText, links, owners, previewPayload.identities, previewPayload.monitorBinds, previewPayload.relations, tagsText, tr]
+    [componentOfText, componentsText, contacts, draft.entity.criticality, draft.entity.inheritFrom, draft.entity.name, draft.entity.owner, draft.entity.runbook, draft.entity.type, implementedByText, labelRows, languagesText, links, owners, previewPayload.identities, previewPayload.monitorBinds, previewPayload.relations, tagsText, t]
   );
 
   const isCompleteContextStage = mode === 'edit' && Boolean(entityId);
@@ -644,39 +700,62 @@ export function EntityEditorSurface({
 
   if (mode === 'new' || mode === 'edit') {
     const isEditMode = mode === 'edit';
-    const editorTitle = isEditMode ? '编辑实体' : '新建实体';
+    const editorTitle = isEditMode ? t('entities.editor.shell.title.edit') : t('entities.editor.shell.title.new');
     const editorCopy = isEditMode
-      ? '先在页面中建立实体记录，再逐步补充证据、负责人和依赖关系。'
-      : '先在页面中建立实体记录，再逐步补齐证据、负责人和依赖关系。';
-    const editorFreshness = isEditMode ? '75% 最近更新' : '0% 最近更新';
-    const submitLabel = isEditMode ? '保存' : '创建实体';
+      ? t('entities.editor.shell.copy.edit')
+      : t('entities.editor.shell.copy.new');
+    const editorFreshness = isEditMode ? t('entities.editor.shell.freshness.edit') : t('entities.editor.shell.freshness.new');
+    const submitLabel = isEditMode ? t('common.save') : t('entities.editor.submit.create');
+    const entityNameLabel = t('entities.editor.shell.name-label');
     const coldFieldLabelTextClassName = 'text-[12px] font-semibold text-[#8d95a5]';
     const coldInputClassName =
       'h-8 rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[12px] text-[#dbe4f0] placeholder:text-[#6f7787] focus-visible:border-[#4e74f8] focus-visible:bg-[#151923] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(78,116,248,0.12)]';
     const coldNameInputClassName =
       'h-8 rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[13px] text-[#f5f7fb] placeholder:text-[#6f7787] focus-visible:border-[#4e74f8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(78,116,248,0.12)]';
     const entityTypeCards: EntityTypeCard[] = [
-      { value: 'system', label: '系统', description: '业务域或产品线', icon: Network },
-      { value: 'service', label: '服务', description: '对外提供业务能力的应用或接口', icon: Cable },
-      { value: 'host', label: '主机', description: '承载服务的运行节点', icon: Monitor },
-      { value: 'database', label: '数据库', description: '数据持久化实例', icon: Database },
-      { value: 'queue', label: '队列', description: '异步消息通道', icon: ListTree },
-      { value: 'middleware', label: '中间件', description: '共享基础组件', icon: Server },
-      { value: 'api', label: 'API', description: '接口或网关资源', icon: Braces },
-      { value: 'endpoint', label: '端点', description: '可观测访问入口', icon: Globe2 },
-      { value: 'device', label: '设备', description: '网络或边缘设备', icon: Layers3 },
-      { value: 'k8s_workload', label: 'K8s 工作负载', description: 'K8s 原生工作负载', icon: Boxes }
+      { value: 'system', label: t('entities.editor.type.system.label'), description: t('entities.editor.type.system.description'), icon: Network },
+      { value: 'service', label: t('entities.editor.type.service.label'), description: t('entities.editor.type.service.description'), icon: Cable },
+      { value: 'host', label: t('entities.editor.type.host.label'), description: t('entities.editor.type.host.description'), icon: Monitor },
+      { value: 'database', label: t('entities.editor.type.database.label'), description: t('entities.editor.type.database.description'), icon: Database },
+      { value: 'queue', label: t('entities.editor.type.queue.label'), description: t('entities.editor.type.queue.description'), icon: ListTree },
+      { value: 'middleware', label: t('entities.editor.type.middleware.label'), description: t('entities.editor.type.middleware.description'), icon: Server },
+      { value: 'api', label: t('entities.editor.type.api.label'), description: t('entities.editor.type.api.description'), icon: Braces },
+      { value: 'endpoint', label: t('entities.editor.type.endpoint.label'), description: t('entities.editor.type.endpoint.description'), icon: Globe2 },
+      { value: 'device', label: t('entities.editor.type.device.label'), description: t('entities.editor.type.device.description'), icon: Layers3 },
+      { value: 'k8s_workload', label: t('entities.editor.type.k8s-workload.label'), description: t('entities.editor.type.k8s-workload.description'), icon: Boxes }
     ];
     const entrySources: Array<{ value: 'manual' | 'telemetry' | 'definition'; label: string; icon: LucideIcon }> = [
-      { value: 'manual', label: '页面录入', icon: PencilLine },
-      { value: 'telemetry', label: '遥测发现', icon: Network },
-      { value: 'definition', label: '定义优先', icon: Braces }
+      { value: 'manual', label: t('entities.editor.entry-source.manual'), icon: PencilLine },
+      { value: 'telemetry', label: t('entities.editor.entry-source.telemetry'), icon: Network },
+      { value: 'definition', label: t('entities.editor.entry-source.definition'), icon: Braces }
     ];
     const editorStages = [
-      { key: 'basic' as const, label: '基本信息', description: '先确认类型、名称和核心元数据。' },
-      { key: 'ownership' as const, label: '归属与处置', description: '补齐负责人、联系人和处置入口。' },
-      { key: 'signals' as const, label: '证据关联', description: '绑定监控、身份标识和遥测证据。' },
-      { key: 'relations' as const, label: '关系与扩展', description: '记录上下游关系、标签和扩展字段。' }
+      {
+        key: 'basic' as const,
+        label: t('entities.editor.stage.basic.label'),
+        description: t('entities.editor.stage.basic.description')
+      },
+      {
+        key: 'ownership' as const,
+        label: t('entities.editor.stage.ownership.label'),
+        description: t('entities.editor.stage.ownership.description')
+      },
+      {
+        key: 'signals' as const,
+        label: t('entities.editor.stage.signals.label'),
+        description: t('entities.editor.stage.signals.description')
+      },
+      {
+        key: 'relations' as const,
+        label: t('entities.editor.stage.relations.label'),
+        description: t('entities.editor.stage.relations.description')
+      }
+    ];
+    const routeTabs = [
+      { key: 'detail', label: t('entities.editor.route-tab.detail') },
+      { key: 'monitor', label: t('entities.editor.route-tab.monitor') },
+      { key: 'logs', label: t('entities.editor.route-tab.logs') },
+      { key: 'traces', label: t('entities.editor.route-tab.traces') }
     ];
     const activeStageCopy = editorStages.find(stage => stage.key === activeStage) || editorStages[0];
     const selectedEntrySource =
@@ -688,6 +767,11 @@ export function EntityEditorSurface({
     const bodyDataAttrs = detailsExpanded
       ? { 'data-entity-editor-body': 'cold-single-stage' }
       : { 'data-entity-editor-body-placement': 'cold-deferred-body' };
+    const definitionModeTabs = [
+      { value: 'editor', label: t('entities.editor.mode.editor') },
+      { value: 'yaml', label: 'YAML' },
+      { value: 'json', label: 'JSON' }
+    ];
 
     const renderField = (
       label: string,
@@ -724,14 +808,14 @@ export function EntityEditorSurface({
           className="grid gap-3 text-[#dbe4f0]"
         >
           <header data-entity-editor-header="cold-compact-header" className="grid gap-2">
-            <div className="text-[12px] font-medium text-[#98a2b3]">实体</div>
+            <div className="text-[12px] font-medium text-[#98a2b3]">{t('entities.editor.shell.kicker')}</div>
             <div data-entity-editor-header-rhythm="cold-compact" className="mb-1 grid gap-2">
               <div className="text-[24px] font-semibold leading-none text-[#f5f7fb]">{editorTitle}</div>
               <p className="text-[13px] leading-5 text-[#a8b0bf]">{editorCopy}</p>
               <div data-entity-editor-route-tabs="cold-segmented-tabs" className="flex flex-wrap gap-2">
-                {['实体详情', '监控中心', '日志管理与统计', '链路'].map((tab, index) => (
+                {routeTabs.map((tab, index) => (
                   <span
-                    key={tab}
+                    key={tab.key}
                     className={cn(
                       'inline-flex h-8 items-center border px-3 text-[12px] font-semibold',
                       index === 0
@@ -739,7 +823,7 @@ export function EntityEditorSurface({
                         : 'rounded-[3px] border-[#2b3039] bg-[#101217] text-[#98a2b3]'
                     )}
                   >
-                    {tab}
+                    {tab.label}
                   </span>
                 ))}
               </div>
@@ -759,7 +843,7 @@ export function EntityEditorSurface({
                 <div className="grid gap-2">
                   <Link href="/entities" className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#d8e4ff]">
                     <span aria-hidden="true">←</span>
-                    全部实体
+                    {t('entities.editor.shell.all-entities')}
                   </Link>
                   {isEditMode && entityId ? (
                     <Link
@@ -767,11 +851,11 @@ export function EntityEditorSurface({
                       data-entity-editor-definition-handoff="cold-hidden"
                       className="sr-only"
                     >
-                      定义工作区
+                      {t('entities.editor.shell.definition-workspace')}
                     </Link>
                   ) : null}
                   <div className="grid gap-1">
-                    <div className="text-[11px] font-semibold text-[#8d95a5]">实体</div>
+                    <div className="text-[11px] font-semibold text-[#8d95a5]">{t('entities.editor.shell.entity-label')}</div>
                     <div className="text-[18px] font-semibold leading-none text-[#f5f7fb]">{editorTitle}</div>
                   </div>
                 </div>
@@ -785,10 +869,10 @@ export function EntityEditorSurface({
                     onClick={() => setPreviewRailCollapsed(current => !current)}
                   >
                     <ListTree size={14} aria-hidden="true" data-entity-editor-preview-toggle-icon="cold" />
-                    {previewRailCollapsed ? '显示快照' : '隐藏快照'}
+                    {previewRailCollapsed ? t('entities.editor.shell.preview.show') : t('entities.editor.shell.preview.hide')}
                   </Button>
                   <span className="inline-flex min-h-8 items-center rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[11px] text-[#98a2b3]">
-                    定义版本 · HertzBeat v1 / OTel 资源规范
+                    {t('entities.editor.shell.definition-version')}
                   </span>
                   <span className="inline-flex min-h-8 items-center rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[11px] text-[#98a2b3]">
                     {editorFreshness}
@@ -798,14 +882,14 @@ export function EntityEditorSurface({
 
               <div className="grid gap-2 px-4 pt-3">
                 <label className="grid gap-2">
-                  <span className={coldFieldLabelTextClassName}>名称</span>
+                  <span className={coldFieldLabelTextClassName}>{entityNameLabel}</span>
                   <Input
-                    aria-label="名称"
+                    aria-label={entityNameLabel}
                     className={coldNameInputClassName}
                     required
                     maxLength={128}
                     value={draft.entity.name || ''}
-                    placeholder="实体唯一名称"
+                    placeholder={t('entities.editor.shell.name-placeholder')}
                     onChange={event => updateEntityField('name', event.target.value)}
                   />
                 </label>
@@ -814,7 +898,7 @@ export function EntityEditorSurface({
               <div className="grid grid-cols-[minmax(0,1fr)_380px] gap-4 px-4 pb-3 pt-2 max-xl:grid-cols-1">
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                    <div className="text-[11px] font-semibold text-[#8d95a5]">类型</div>
+                    <div className="text-[11px] font-semibold text-[#8d95a5]">{t('entities.editor.shell.type-label')}</div>
                     <div
                       data-entity-editor-type-strip="cold-catalog-grid"
                       data-entity-editor-type-strip-layout="cold-compact-grid"
@@ -852,7 +936,7 @@ export function EntityEditorSurface({
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-[11px] font-semibold text-[#8d95a5]">录入来源</div>
+                    <div className="text-[11px] font-semibold text-[#8d95a5]">{t('entities.editor.shell.entry-source-label')}</div>
                     <div data-entity-editor-entry-strip="cold-segmented-pills" className="inline-flex rounded-[3px] border border-[#2b3039] bg-[#101217] p-[3px]">
                       {entrySources.map(source => {
                         const EntryIcon = source.icon;
@@ -879,7 +963,7 @@ export function EntityEditorSurface({
                   </div>
 
                   <div className="grid gap-2">
-                    <div className="text-[11px] font-semibold text-[#8d95a5]">编辑阶段</div>
+                    <div className="text-[11px] font-semibold text-[#8d95a5]">{t('entities.editor.shell.stage-label')}</div>
                     <div
                       data-entity-editor-stage-strip="cold-stage-grid"
                       data-entity-editor-edit-stage-posture={isCompleteContextStage ? 'cold-complete-context' : undefined}
@@ -928,8 +1012,8 @@ export function EntityEditorSurface({
                     data-entity-editor-preview-rail="cold-inline-preview"
                     data-entity-editor-preview-rail-density="cold-inline-preview"
                   >
-                    <div className="text-[14px] font-semibold text-[#f5f7fb]">实体元数据</div>
-                    <p className="mt-2 text-[13px] leading-5 text-[#98a2b3]">查看或粘贴定义，应用到表单。</p>
+                    <div className="text-[14px] font-semibold text-[#f5f7fb]">{t('entities.editor.shell.preview-rail.title')}</div>
+                    <p className="mt-2 text-[13px] leading-5 text-[#98a2b3]">{t('entities.editor.shell.preview-rail.copy')}</p>
                   </aside>
                 ) : null}
               </div>
@@ -941,15 +1025,11 @@ export function EntityEditorSurface({
               className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-[#2b3039] pt-3"
             >
               <div>
-                <div className="text-[12px] font-semibold text-[#dbe4f0]">定义内容</div>
-                <div className="mt-1 text-[12px] leading-5 text-[#98a2b3]">查看或粘贴定义，应用到表单。</div>
+                <div className="text-[12px] font-semibold text-[#dbe4f0]">{t('entities.editor.shell.definition-content.title')}</div>
+                <div className="mt-1 text-[12px] leading-5 text-[#98a2b3]">{t('entities.editor.shell.definition-content.copy')}</div>
               </div>
               <div data-entity-editor-definition-tabs="cold-bottom-tabs" className="inline-flex overflow-hidden rounded-[3px] border border-[#2b3039]">
-                {[
-                  ['editor', '表单'],
-                  ['yaml', 'YAML'],
-                  ['json', 'JSON']
-                ].map(([value, label]) => (
+                {definitionModeTabs.map(({ value, label }) => (
                   <button
                     key={value}
                     type="button"
@@ -986,6 +1066,7 @@ export function EntityEditorSurface({
             {telemetryHandoff ? (
               <div
                 data-entity-editor-telemetry-handoff="true"
+                data-entity-editor-telemetry-handoff-source={telemetryHandoff.source}
                 className="mb-4 grid gap-3 rounded-[4px] border border-[#2b3039] bg-[#101217] px-3 py-3"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -995,10 +1076,10 @@ export function EntityEditorSurface({
                   </div>
                   <div className="flex flex-wrap gap-2 text-[12px] font-semibold">
                     <span className="rounded-[3px] border border-[#31405c] bg-[#182238] px-2.5 py-1 text-[#d8e4ff]">
-                      {`${telemetryHandoff.monitorCount} 个监控绑定`}
+                      {telemetryHandoff.monitorCountLabel}
                     </span>
                     <span className="rounded-[3px] border border-[#2b3039] bg-[#0b0c0e] px-2.5 py-1 text-[#98a2b3]">
-                      {`${telemetryHandoff.identityCount} 个身份标识`}
+                      {telemetryHandoff.identityCountLabel}
                     </span>
                     <Link href={telemetryHandoff.discoveryHref} className="rounded-[3px] border border-[#31405c] bg-[#182238] px-2.5 py-1 text-[#d8e4ff]">
                       {telemetryHandoff.title}
@@ -1009,7 +1090,7 @@ export function EntityEditorSurface({
                   data-entity-editor-attribution-panel="telemetry-attribution-check"
                   className="grid gap-2 border-t border-[#2b3039] pt-3"
                 >
-                  <div className="text-[12px] font-semibold text-[#dbe4f0]">归因检查</div>
+                  <div className="text-[12px] font-semibold text-[#dbe4f0]">{t('entities.editor.telemetry-handoff.attribution-check')}</div>
                   <div className="grid gap-2 md:grid-cols-5">
                     {attributionRows.map(row => (
                       <div
@@ -1021,7 +1102,7 @@ export function EntityEditorSurface({
                         <div className="flex items-center justify-between gap-2">
                           <div className="text-[12px] font-semibold text-[#f5f7fb]">{row.title}</div>
                           <span className={cn('rounded-[3px] border px-1.5 py-0.5 text-[10px] font-semibold', attributionStateClassName(row.state))}>
-                            {attributionStateLabel(row.state)}
+                            {attributionStateLabel(row.state, t)}
                           </span>
                         </div>
                         <div className="text-[12px] text-[#dbe4f0]">{row.copy}</div>
@@ -1044,21 +1125,21 @@ export function EntityEditorSurface({
                 {activeStage === 'basic' ? (
                   <>
                     <div className="grid gap-3 md:grid-cols-3">
-                      {renderField('显示名称', draft.entity.displayName || '', '例如 Checkout API', value => updateEntityField('displayName', value))}
-                      {renderField('命名空间', draft.entity.namespace || '', '例如 commerce', value => updateEntityField('namespace', value))}
-                      {renderField('环境', draft.entity.environment || '', '例如 prod', value => updateEntityField('environment', value))}
-                      {renderField('子类型', draft.entity.subtype || '', '例如 http', value => updateEntityField('subtype', value))}
-                      {renderField('负责人', draft.entity.owner || '', '例如 payments-team', value => updateEntityField('owner', value))}
-                      {renderField('所属系统', draft.entity.system || '', '例如 website', value => updateEntityField('system', value))}
-                      {renderField('来源', draft.entity.source || '', 'manual', value => updateEntityField('source', value))}
+                      {renderField(t('entities.editor.field.display-name'), draft.entity.displayName || '', t('entities.editor.placeholder.display-name'), value => updateEntityField('displayName', value))}
+                      {renderField(t('entities.editor.field.namespace'), draft.entity.namespace || '', t('entities.editor.placeholder.namespace'), value => updateEntityField('namespace', value))}
+                      {renderField(t('entities.editor.field.environment'), draft.entity.environment || '', t('entities.editor.placeholder.environment'), value => updateEntityField('environment', value))}
+                      {renderField(t('entities.editor.field.subtype'), draft.entity.subtype || '', t('entities.editor.placeholder.subtype'), value => updateEntityField('subtype', value))}
+                      {renderField(t('entities.editor.field.owner'), draft.entity.owner || '', t('entities.editor.placeholder.owner'), value => updateEntityField('owner', value))}
+                      {renderField(t('entities.editor.field.system'), draft.entity.system || '', t('entities.editor.placeholder.system'), value => updateEntityField('system', value))}
+                      {renderField(t('entities.editor.field.source'), draft.entity.source || '', t('entities.editor.placeholder.source'), value => updateEntityField('source', value))}
                     </div>
                     <label className="grid gap-2">
-                      <span className={coldFieldLabelTextClassName}>描述</span>
+                      <span className={coldFieldLabelTextClassName}>{t('entities.editor.field.description')}</span>
                       <Textarea
                         data-entity-editor-description-textarea="cold-textarea"
                         className="min-h-[112px] border-[#2b3039] bg-[#101217] text-[#dbe4f0] placeholder:text-[#6f7787] focus-visible:border-[#4e74f8]"
                         value={draft.entity.description || ''}
-                        placeholder="例如负责交易结算和支付编排。"
+                        placeholder={t('entities.editor.field.description-placeholder')}
                         onChange={event => updateEntityField('description', event.target.value)}
                       />
                     </label>
@@ -1067,48 +1148,48 @@ export function EntityEditorSurface({
 
                 {activeStage === 'ownership' ? (
                   <div className="grid gap-3 md:grid-cols-2">
-                    {renderField('负责人', draft.entity.owner || '', 'payments-team', value => updateEntityField('owner', value))}
-                    {renderField('运行手册', draft.entity.runbook || '', 'https://runbook.internal/...', value => updateEntityField('runbook', value))}
+                    {renderField(t('entities.editor.field.owner'), draft.entity.owner || '', 'payments-team', value => updateEntityField('owner', value))}
+                    {renderField(t('entities.editor.field.runbook'), draft.entity.runbook || '', 'https://runbook.internal/...', value => updateEntityField('runbook', value))}
                     <ContactEditor
                       value={contacts}
                       onChange={setContacts}
-                      title="联系人"
-                      addLabel="新增联系人"
+                      title={t('entities.editor.contact.title')}
+                      addLabel={t('entities.editor.contact.add')}
                       deleteLabel={t('common.remove')}
-                      namePlaceholder="联系人"
-                      typePlaceholder="类型"
-                      valuePlaceholder="联系方式"
-                      contactPlaceholder="联系字段"
+                      namePlaceholder={t('entities.editor.contact.name-placeholder')}
+                      typePlaceholder={t('entities.editor.contact.type-placeholder')}
+                      valuePlaceholder={t('entities.editor.contact.value-placeholder')}
+                      contactPlaceholder={t('entities.editor.contact.contact-placeholder')}
                     />
                     <LinkEditor
                       value={links}
                       onChange={setLinks}
-                      title="链接"
-                      addLabel="新增链接"
+                      title={t('entities.editor.link.title')}
+                      addLabel={t('entities.editor.link.add')}
                       deleteLabel={t('common.remove')}
-                      namePlaceholder="链接名称"
-                      typePlaceholder="类型"
-                      providerPlaceholder="提供方"
-                      urlPlaceholder="链接地址"
+                      namePlaceholder={t('entities.editor.link.name-placeholder')}
+                      typePlaceholder={t('entities.editor.link.type-placeholder')}
+                      providerPlaceholder={t('entities.editor.link.provider-placeholder')}
+                      urlPlaceholder={t('entities.editor.link.url-placeholder')}
                     />
                   </div>
                 ) : null}
 
                 {activeStage === 'signals' ? (
                   <div className="grid gap-3">
-                    <JsonObjectListEditor label="身份标识" value={identitiesItems} addCopy="新增身份标识" onChange={setIdentitiesItems} itemLabel={t('common.item')} deleteLabel={t('common.remove')} />
-                    <JsonObjectListEditor label="监控绑定" value={monitorBindItems} addCopy="新增监控绑定" onChange={setMonitorBindItems} itemLabel={t('common.item')} deleteLabel={t('common.remove')} />
-                    <JsonObjectListEditor label="关系" value={relationItems} addCopy="新增关系" onChange={setRelationItems} itemLabel={t('common.item')} deleteLabel={t('common.remove')} />
+                    <JsonObjectListEditor label={t('entities.editor.collection.identities')} value={identitiesItems} addCopy={t('entities.editor.collection.identities.add')} onChange={setIdentitiesItems} itemLabel={t('common.item')} deleteLabel={t('common.remove')} />
+                    <JsonObjectListEditor label={t('entities.editor.collection.monitor-binds')} value={monitorBindItems} addCopy={t('entities.editor.collection.monitor-binds.add')} onChange={setMonitorBindItems} itemLabel={t('common.item')} deleteLabel={t('common.remove')} />
+                    <JsonObjectListEditor label={t('entities.editor.collection.relations')} value={relationItems} addCopy={t('entities.editor.collection.relations.add')} onChange={setRelationItems} itemLabel={t('common.item')} deleteLabel={t('common.remove')} />
                   </div>
                 ) : null}
 
                 {activeStage === 'relations' ? (
                   <div className="grid gap-3 md:grid-cols-2">
-                    <MultiValueField label="上级组件" value={componentOfText} placeholder="payment-platform, commerce" onChange={setComponentOfText} />
-                    <MultiValueField label="下级组件" value={componentsText} placeholder="checkout-ui, order-router" onChange={setComponentsText} />
-                    <MultiValueField label="实现服务" value={implementedByText} placeholder="checkout-api, order-worker" onChange={setImplementedByText} />
-                    <MultiValueField label="开发语言" value={languagesText} placeholder="java, typescript" onChange={setLanguagesText} />
-                    <KeyValueEditor label="标签" rows={labelRows} onChange={setLabelRows} keyPlaceholder="标签键" valuePlaceholder="标签值" deleteLabel={t('common.remove')} addLabel="新增标签" />
+                    <MultiValueField label={t('entities.editor.relation.component-of')} value={componentOfText} placeholder={t('entities.editor.relation.component-of-placeholder')} onChange={setComponentOfText} />
+                    <MultiValueField label={t('entities.editor.relation.components')} value={componentsText} placeholder={t('entities.editor.relation.components-placeholder')} onChange={setComponentsText} />
+                    <MultiValueField label={t('entities.editor.relation.implemented-by')} value={implementedByText} placeholder={t('entities.editor.relation.implemented-by-placeholder')} onChange={setImplementedByText} />
+                    <MultiValueField label={t('entities.editor.relation.languages')} value={languagesText} placeholder={t('entities.editor.relation.languages-placeholder')} onChange={setLanguagesText} />
+                    <KeyValueEditor label={t('entities.editor.relation.labels')} rows={labelRows} onChange={setLabelRows} keyPlaceholder={t('entities.editor.relation.label-key')} valuePlaceholder={t('entities.editor.relation.label-value')} deleteLabel={t('common.remove')} addLabel={t('entities.editor.relation.label-add')} />
                   </div>
                 ) : null}
               </div>
@@ -1120,7 +1201,7 @@ export function EntityEditorSurface({
                   data-entity-editor-definition-code-editor="preview"
                   language={editorSurfaceMode === 'yaml' ? 'yaml' : 'json'}
                   minHeight="280px"
-                  ariaLabel={editorSurfaceMode === 'yaml' ? 'YAML 定义快照' : 'JSON 定义快照'}
+                  ariaLabel={editorSurfaceMode === 'yaml' ? t('entities.editor.definition.aria.yaml') : t('entities.editor.definition.aria.json')}
                   value={definitionPreview}
                 />
               </div>
@@ -1142,10 +1223,10 @@ export function EntityEditorSurface({
             )}
           >
             <Link href="/entities" className={buttonVariants({ variant: 'subtle', size: 'sm' })}>
-              取消
+              {t('common.cancel')}
             </Link>
             <Button type="submit" size="sm" variant="primary" disabled={saving}>
-              {saving ? '保存中' : submitLabel}
+              {saving ? t('common.saving') : submitLabel}
             </Button>
           </div>
         </div>

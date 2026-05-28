@@ -1,22 +1,45 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Database, Network, Plus, Search, Upload, Users } from 'lucide-react';
 import { useI18n } from '@/components/providers/i18n-provider';
 import { apiMessageGet } from '@/lib/api-client';
 import { searchDiscoveryMonitors } from '@/lib/entity-discovery/controller';
 import { buildDiscoveryTableRows } from '@/lib/entity-discovery/view-model';
-import type { DiscoveryTableRow } from '@/lib/entity-discovery/view-model';
+import type { DiscoveryStatusTone, DiscoveryTableRow } from '@/lib/entity-discovery/view-model';
 import type { EntityCatalogSuggestions, EntityDiscoveryGovernanceActivity, EntityDiscoveryGovernancePreset, Monitor } from '@/lib/types';
 import { SearchRow } from '../ui/search-row';
 import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
-import { resolveDiscoverySearchSubmission } from '../../lib/entity-discovery/search-state';
+import {
+  buildDiscoveryCandidateActionHref,
+  resolveDiscoverySearchSubmission,
+  type DiscoveryCandidateContext
+} from '../../lib/entity-discovery/search-state';
 
 type EntityDiscoverySurfaceProps = {
   presets: EntityDiscoveryGovernancePreset[];
   activities: EntityDiscoveryGovernanceActivity[];
   catalog: EntityCatalogSuggestions;
+  candidateContext?: DiscoveryCandidateContext | null;
+};
+
+type EntityDiscoveryTranslator = ReturnType<typeof useI18n>['t'];
+
+type EntityDiscoveryTableCopy = {
+  title: string;
+  resultStatus: string;
+  emptyTitle: string;
+  columns: {
+    clue: string;
+    instance: string;
+    status: string;
+    owner: string;
+    system: string;
+    environment: string;
+    attribution: string;
+    action: string;
+  };
 };
 
 const coldEntityDiscoveryVisual = coldOpsCatalogVisual;
@@ -27,14 +50,14 @@ const coldPrimaryLinkClassName =
 const coldLinkButtonClassName =
   'inline-flex h-8 min-w-[104px] items-center justify-center gap-2 rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
 
-function statusClassName(status: string) {
-  if (status === '正常' || status === '已启用' || status === '成功') {
+function statusClassName(tone: DiscoveryStatusTone) {
+  if (tone === 'success') {
     return 'border-[#166534]/45 bg-[#0f2f23] text-[#86efac]';
   }
-  if (status === '待确认' || status === '待处理') {
+  if (tone === 'warning') {
     return 'border-[#7c4a03]/50 bg-[#261903] text-[#fbbf24]';
   }
-  if (status === '异常') {
+  if (tone === 'critical') {
     return 'border-[#7f1d1d]/55 bg-[#2a1214] text-[#fca5a5]';
   }
   return 'border-[#303743] bg-[#101217] text-[#cbd5e1]';
@@ -50,40 +73,40 @@ function attributionClassName(state: DiscoveryTableRow['attributionState']) {
   return 'border-[#303743] bg-[#101217] text-[#cbd5e1]';
 }
 
-function localizeActivitySummary(summary?: string | null) {
+function localizeActivitySummary(summary: string | null | undefined, t: EntityDiscoveryTranslator) {
   const normalized = summary?.trim();
   switch (normalized) {
     case 'preset synced':
-      return '预设已同步';
+      return t('entities.discovery.activity.preset-synced');
     case 'shared governance updated':
-      return '共享治理已更新';
+      return t('entities.discovery.activity.shared-governance-updated');
     default:
-      return normalized || '暂无活动';
+      return normalized || t('entities.discovery.activity.empty');
   }
 }
 
-function EntityDiscoveryTable({ rows, emptyCopy }: { rows: DiscoveryTableRow[]; emptyCopy: string }) {
+function EntityDiscoveryTable({ rows, emptyCopy, copy }: { rows: DiscoveryTableRow[]; emptyCopy: string; copy: EntityDiscoveryTableCopy }) {
   return (
     <div
       data-entity-discovery-table-shell="cold-dense-table"
       className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
     >
       <div className="flex min-h-[42px] items-center justify-between gap-3 border-b border-[#252b34] bg-[#101217] px-3 text-[12px] text-[#8f99ab]">
-        <span className="font-semibold text-[#dbe4f0]">发现线索</span>
-        <span>{rows.length > 0 ? `${rows.length} 条结果` : '等待搜索'}</span>
+        <span className="font-semibold text-[#dbe4f0]">{copy.title}</span>
+        <span>{copy.resultStatus}</span>
       </div>
       <div className="overflow-x-auto">
         <table data-entity-discovery-table="cold-discovery-table" className="min-w-[1120px] w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
           <thead className="border-b border-[#252b34] bg-[#101217] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
             <tr>
-              <th className="w-[20%] px-3 py-2.5">线索</th>
-              <th className="w-[14%] px-3 py-2.5">实例</th>
-              <th className="w-[10%] px-3 py-2.5">状态</th>
-              <th className="w-[11%] px-3 py-2.5">归属</th>
-              <th className="w-[12%] px-3 py-2.5">系统</th>
-              <th className="w-[9%] px-3 py-2.5">环境</th>
-              <th className="w-[15%] px-3 py-2.5">归因</th>
-              <th className="w-[136px] px-3 py-2.5">操作</th>
+              <th className="w-[20%] px-3 py-2.5">{copy.columns.clue}</th>
+              <th className="w-[14%] px-3 py-2.5">{copy.columns.instance}</th>
+              <th className="w-[10%] px-3 py-2.5">{copy.columns.status}</th>
+              <th className="w-[11%] px-3 py-2.5">{copy.columns.owner}</th>
+              <th className="w-[12%] px-3 py-2.5">{copy.columns.system}</th>
+              <th className="w-[9%] px-3 py-2.5">{copy.columns.environment}</th>
+              <th className="w-[15%] px-3 py-2.5">{copy.columns.attribution}</th>
+              <th className="w-[136px] px-3 py-2.5">{copy.columns.action}</th>
             </tr>
           </thead>
           <tbody>
@@ -98,7 +121,7 @@ function EntityDiscoveryTable({ rows, emptyCopy }: { rows: DiscoveryTableRow[]; 
                   </td>
                   <td className="px-3 py-2.5 text-[#a9b0bb]">{row.instance}</td>
                   <td className="px-3 py-2.5">
-                    <span className={`rounded-[3px] border px-2 py-0.5 text-[11px] font-semibold leading-4 ${statusClassName(row.status)}`}>
+                    <span className={`rounded-[3px] border px-2 py-0.5 text-[11px] font-semibold leading-4 ${statusClassName(row.statusTone)}`}>
                       {row.status}
                     </span>
                   </td>
@@ -129,7 +152,7 @@ function EntityDiscoveryTable({ rows, emptyCopy }: { rows: DiscoveryTableRow[]; 
                     <span className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]">
                       <Search className="h-5 w-5" aria-hidden="true" />
                     </span>
-                    <div className="text-[13px] font-semibold text-[#eef2f7]">先搜索一组需要治理的监控线索</div>
+                    <div className="text-[13px] font-semibold text-[#eef2f7]">{copy.emptyTitle}</div>
                     <div className="text-[12px] leading-5 text-[#8f99ab]">{emptyCopy}</div>
                   </div>
                 </td>
@@ -142,34 +165,57 @@ function EntityDiscoveryTable({ rows, emptyCopy }: { rows: DiscoveryTableRow[]; 
   );
 }
 
-export function EntityDiscoverySurface({ presets, activities, catalog }: EntityDiscoverySurfaceProps) {
+export function EntityDiscoverySurface({ presets, activities, catalog, candidateContext = null }: EntityDiscoverySurfaceProps) {
   const { t } = useI18n();
-  const [search, setSearch] = useState('');
+  const candidateSearch = candidateContext?.search ?? '';
+  const [search, setSearch] = useState(candidateSearch);
   const [results, setResults] = useState<Monitor[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function tr(key: string, fallback: string) {
-    const translated = t(key);
-    return translated === key ? fallback : translated;
-  }
+  useEffect(() => {
+    if (candidateSearch !== '') {
+      setSearch(candidateSearch);
+    }
+  }, [candidateSearch]);
 
   const rows = useMemo(
-    () => (searched && results.length > 0 ? buildDiscoveryTableRows(results, presets, catalog) : []),
-    [catalog, presets, results, searched]
+    () => (searched && results.length > 0 ? buildDiscoveryTableRows(results, presets, catalog, t) : []),
+    [catalog, presets, results, searched, t]
   );
   const sourceCount = (catalog.systems?.length || 0) + (catalog.environments?.length || 0);
-  const latestActivity = localizeActivitySummary(activities[0]?.summary);
-  const searchLabel = tr('entities.discovery.action.search', '搜索');
-  const clearLabel = tr('entities.discovery.action.clear', '清空');
+  const latestActivity = localizeActivitySummary(activities[0]?.summary, t);
+  const searchLabel = t('entities.discovery.action.search');
+  const clearLabel = t('entities.discovery.action.clear');
+  const ownerChipLabel = t('entities.discovery.catalog.owner');
+  const systemChipLabel = t('entities.discovery.catalog.system');
+  const environmentChipLabel = t('entities.discovery.catalog.environment');
   const catalogChips = [
-    ...(catalog.owners || []).slice(0, 2).map(owner => ({ label: owner, type: '负责人' })),
-    ...(catalog.systems || []).slice(0, 2).map(system => ({ label: system, type: '系统' })),
-    ...(catalog.environments || []).slice(0, 1).map(environment => ({ label: environment, type: '环境' }))
+    ...(catalog.owners || []).slice(0, 2).map(owner => ({ label: owner, type: ownerChipLabel })),
+    ...(catalog.systems || []).slice(0, 2).map(system => ({ label: system, type: systemChipLabel })),
+    ...(catalog.environments || []).slice(0, 1).map(environment => ({ label: environment, type: environmentChipLabel }))
   ];
-  const matchedCount = rows.filter(row => row.owner !== '-').length;
-  const createCount = rows.filter(row => row.owner === '-').length;
+  const matchedCount = rows.filter(
+    row => row.attributionState === 'merge' || row.attributionState === 'resolved' || row.attributionState === 'preset'
+  ).length;
+  const createCount = rows.filter(row => row.attributionState === 'create' || row.attributionState === 'review').length;
+  const candidateActionHref = candidateContext != null ? buildDiscoveryCandidateActionHref(candidateContext) : null;
+  const tableCopy: EntityDiscoveryTableCopy = {
+    title: t('entities.discovery.table.title'),
+    resultStatus: rows.length > 0 ? t('entities.discovery.table.result-count', { count: rows.length }) : t('entities.discovery.table.waiting'),
+    emptyTitle: t('entities.discovery.empty.title'),
+    columns: {
+      clue: t('entities.discovery.table.column.clue'),
+      instance: t('entities.discovery.table.column.instance'),
+      status: t('entities.discovery.table.column.status'),
+      owner: t('entities.discovery.table.column.owner'),
+      system: t('entities.discovery.table.column.system'),
+      environment: t('entities.discovery.table.column.environment'),
+      attribution: t('entities.discovery.table.column.attribution'),
+      action: t('entities.discovery.table.column.action')
+    }
+  };
 
   async function runSearch() {
     const submission = resolveDiscoverySearchSubmission(search);
@@ -189,7 +235,7 @@ export function EntityDiscoverySurface({ presets, activities, catalog }: EntityD
       setResults(await searchDiscoveryMonitors(apiMessageGet, submission.normalizedSearch));
     } catch (nextError) {
       setResults([]);
-      setError(nextError instanceof Error ? nextError.message : tr('entities.discovery.search.error', '遥测发现查询失败'));
+      setError(nextError instanceof Error ? nextError.message : t('entities.discovery.search.error'));
     } finally {
       setLoading(false);
     }
@@ -215,23 +261,23 @@ export function EntityDiscoverySurface({ presets, activities, catalog }: EntityD
           <div className="mb-5">
             <div data-entity-discovery-header="cold-compact-header" className={coldEntityDiscoveryVisual.panel.hero}>
               <div className="max-w-[880px]">
-                <div className="text-[11px] font-semibold tracking-[0.12em] text-[#7e8494]">对象优先调查</div>
-                <h1 className="mt-2 text-[30px] font-semibold leading-tight text-[#f5f7fb]">遥测发现</h1>
+                <div className="text-[11px] font-semibold tracking-[0.12em] text-[#7e8494]">{t('entities.discovery.workspace.kicker')}</div>
+                <h1 className="mt-2 text-[30px] font-semibold leading-tight text-[#f5f7fb]">{t('entities.discovery.workspace.title')}</h1>
                 <p className="mt-4 max-w-[780px] text-[13px] leading-6 text-[#a9b0bb]">
-                  先搜索一组需要治理的监控线索，再决定归并、完善归属，还是送入定义工作台继续收口。
+                  {t('entities.discovery.workspace.subtitle')}
                 </p>
                 <div data-entity-discovery-command-row="standard-equal-buttons" className={coldEntityDiscoveryVisual.button.row}>
                   <Link href="/entities/import" className={coldPrimaryLinkClassName}>
                     <Upload className="h-3.5 w-3.5" aria-hidden="true" />
-                    从定义创建
+                    {t('entities.discovery.action.import')}
                   </Link>
                   <Link href="/entities/new" className={coldLinkButtonClassName}>
                     <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                    创建实体
+                    {t('entities.discovery.action.create')}
                   </Link>
                   <Link href="/entities" className={coldLinkButtonClassName}>
                     <Network className="h-3.5 w-3.5" aria-hidden="true" />
-                    对象目录
+                    {t('entities.discovery.action.catalog')}
                   </Link>
                 </div>
               </div>
@@ -241,10 +287,10 @@ export function EntityDiscoverySurface({ presets, activities, catalog }: EntityD
           <div className="space-y-5">
             <div data-entity-discovery-count-strip="cold-inline-counts" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
               {[
-                ['线索', rows.length, Search],
-                ['已匹配', matchedCount, Users],
-                ['建议新建', createCount, Plus],
-                ['目录来源', sourceCount, Database]
+                [t('entities.discovery.metric.clues'), rows.length, Search],
+                [t('entities.discovery.metric.matched'), matchedCount, Users],
+                [t('entities.discovery.metric.create-suggested'), createCount, Plus],
+                [t('entities.discovery.metric.catalog-sources'), sourceCount, Database]
               ].map(([label, value, Icon]) => {
                 const MetricIcon = Icon as typeof Search;
                 return (
@@ -267,8 +313,8 @@ export function EntityDiscoverySurface({ presets, activities, catalog }: EntityD
                 data-entity-discovery-toolbar="cold-search-row"
                 data-entity-discovery-search-owner="shared-search-row"
                 value={search}
-                placeholder="搜索监控名称或实例"
-                searchLabel={loading ? tr('common.loading', '加载中...') : searchLabel}
+                placeholder={t('entities.discovery.search.placeholder')}
+                searchLabel={loading ? t('common.loading') : searchLabel}
                 clearLabel={clearLabel}
                 inputWidthClassName="w-[360px]"
                 searchDisabled={loading}
@@ -278,6 +324,46 @@ export function EntityDiscoverySurface({ presets, activities, catalog }: EntityD
                 onClear={clearSearch}
               />
 
+              {candidateContext != null && candidateActionHref != null ? (
+                <div
+                  data-entity-discovery-otlp-candidate="query-context"
+                  data-entity-discovery-candidate-identity-key={candidateContext.identityKey}
+                  data-entity-discovery-candidate-identity-value={candidateContext.identityValue}
+                  data-entity-discovery-candidate-service={candidateContext.serviceName}
+                  data-entity-discovery-candidate-namespace={candidateContext.serviceNamespace}
+                  data-entity-discovery-candidate-environment={candidateContext.environment}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-[4px] border border-[#2b3039] bg-[#101217] px-3 py-2.5 text-[12px] text-[#a9b0bb]"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-semibold text-[#eef2f7]">{t('entities.discovery.candidate.title')}</div>
+                    <p className="mt-1 text-[12px] leading-5 text-[#8f99ab]">{t('entities.discovery.candidate.copy')}</p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-[#cbd5e1]">
+                      <span className="rounded-[3px] border border-[#303743] bg-[#0b0c0e] px-2 py-1">
+                        {t('entities.discovery.candidate.identity')} · {candidateContext.identityKey} = {candidateContext.identityValue}
+                      </span>
+                      {candidateContext.serviceNamespace != null ? (
+                        <span className="rounded-[3px] border border-[#303743] bg-[#0b0c0e] px-2 py-1">
+                          {t('entities.discovery.candidate.namespace')} · {candidateContext.serviceNamespace}
+                        </span>
+                      ) : null}
+                      {candidateContext.environment != null ? (
+                        <span className="rounded-[3px] border border-[#303743] bg-[#0b0c0e] px-2 py-1">
+                          {t('entities.discovery.candidate.environment')} · {candidateContext.environment}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <Link
+                    href={candidateActionHref}
+                    data-entity-discovery-candidate-action="create-draft"
+                    className={coldPrimaryLinkClassName}
+                  >
+                    <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                    {t('entities.discovery.candidate.action.create')}
+                  </Link>
+                </div>
+              ) : null}
+
               {error ? (
                 <div className="rounded-[3px] border border-rose-300/25 bg-rose-300/10 px-3 py-2 text-[12px] text-rose-100">{error}</div>
               ) : null}
@@ -285,10 +371,10 @@ export function EntityDiscoverySurface({ presets, activities, catalog }: EntityD
               <div data-entity-discovery-policy-panel="cold-policy-strip" className="rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <div className="text-[13px] font-semibold text-[#eef2f7]">治理筛选与共享策略</div>
-                    <p className="mt-1 text-[12px] leading-5 text-[#8f99ab]">按已有负责人、系统和环境预设给线索完善上下文。</p>
+                    <div className="text-[13px] font-semibold text-[#eef2f7]">{t('entities.discovery.policy.title')}</div>
+                    <p className="mt-1 text-[12px] leading-5 text-[#8f99ab]">{t('entities.discovery.policy.copy')}</p>
                   </div>
-                  <div className="text-[11px] text-[#858d9a]">最近活动 {latestActivity}</div>
+                  <div className="text-[11px] text-[#858d9a]">{t('entities.discovery.policy.latest-activity', { activity: latestActivity })}</div>
                 </div>
                 <div data-entity-discovery-source-chips="cold-inline-chips" className="mt-3 flex flex-wrap gap-2 text-[11px] text-[#cbd5e1]">
                   {catalogChips.length > 0 ? (
@@ -298,17 +384,18 @@ export function EntityDiscoverySurface({ presets, activities, catalog }: EntityD
                       </span>
                     ))
                   ) : (
-                    <span className="text-[#858d9a]">暂无共享策略，先搜索一条监控线索。</span>
+                    <span className="text-[#858d9a]">{t('entities.discovery.policy.empty')}</span>
                   )}
                 </div>
               </div>
 
               <EntityDiscoveryTable
                 rows={rows}
+                copy={tableCopy}
                 emptyCopy={
                   searched
-                    ? tr('entities.discovery.empty.search.copy', '没有找到匹配的监控线索。')
-                    : tr('entities.discovery.empty.idle.copy', '先搜索一条监控，再把它转成实体草稿。')
+                    ? t('entities.discovery.empty.search.copy')
+                    : t('entities.discovery.empty.idle.copy')
                 }
               />
             </section>

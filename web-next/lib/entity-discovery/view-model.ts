@@ -1,10 +1,14 @@
 import type { EntityCatalogSuggestions, EntityDiscoveryGovernanceActivity, EntityDiscoveryGovernancePreset, Monitor } from '@/lib/types';
 
+type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+
 export type DiscoveryGovernanceActionKind = 'primary' | 'secondary' | 'link';
 
 export type DiscoveryGovernanceState = 'merge' | 'create' | 'enrich' | 'resolved';
 
 export type DiscoveryAttributionState = 'merge' | 'create' | 'review' | 'resolved' | 'preset';
+
+export type DiscoveryStatusTone = 'success' | 'warning' | 'critical' | 'neutral';
 
 export type DiscoveryScope = 'all' | 'matched' | 'resolved' | 'new';
 
@@ -65,6 +69,7 @@ export interface DiscoveryTableRow {
   name: string;
   instance: string;
   status: string;
+  statusTone: DiscoveryStatusTone;
   owner: string;
   system: string;
   environment: string;
@@ -101,67 +106,98 @@ export interface DiscoveryGovernanceCard {
 export function buildDiscoveryFacts(
   presets: EntityDiscoveryGovernancePreset[],
   activities: EntityDiscoveryGovernanceActivity[],
-  catalog: EntityCatalogSuggestions
+  catalog: EntityCatalogSuggestions,
+  t: Translator
 ) {
   return [
-    { label: 'Workspace', value: 'entities/discovery' },
-    { label: 'Presets', value: String(presets.length) },
-    { label: 'Activities', value: String(activities.length) },
-    { label: 'Owners', value: String(catalog.owners?.length || 0) }
+    { label: t('entities.discovery.facts.workspace'), value: 'entities/discovery' },
+    { label: t('entities.discovery.facts.presets'), value: String(presets.length) },
+    { label: t('entities.discovery.facts.activities'), value: String(activities.length) },
+    { label: t('entities.discovery.facts.owners'), value: String(catalog.owners?.length || 0) }
   ];
 }
 
 export function buildDiscoveryMetrics(
   presets: EntityDiscoveryGovernancePreset[],
-  catalog: EntityCatalogSuggestions
+  catalog: EntityCatalogSuggestions,
+  t: Translator
 ) {
   return [
-    { label: 'owners', value: String(catalog.owners?.length || 0) },
-    { label: 'systems', value: String(catalog.systems?.length || 0) },
-    { label: 'environments', value: String(catalog.environments?.length || 0) },
-    { label: 'preset coverage', value: presets.length > 0 ? 'ready' : 'empty', tone: presets.length > 0 ? 'success' : 'warning' }
+    { label: t('entities.discovery.metrics.owners'), value: String(catalog.owners?.length || 0) },
+    { label: t('entities.discovery.metrics.systems'), value: String(catalog.systems?.length || 0) },
+    { label: t('entities.discovery.metrics.environments'), value: String(catalog.environments?.length || 0) },
+    {
+      label: t('entities.discovery.metrics.preset-coverage'),
+      value: presets.length > 0 ? t('entities.discovery.metrics.ready') : t('entities.discovery.metrics.empty'),
+      tone: presets.length > 0 ? 'success' : 'warning'
+    }
   ];
 }
 
-export function buildCatalogRows(catalog: EntityCatalogSuggestions) {
+export function buildCatalogRows(catalog: EntityCatalogSuggestions, t: Translator) {
   return [
-    { title: 'owners', copy: (catalog.owners || []).slice(0, 6).join(', ') || '-', meta: `count ${catalog.owners?.length || 0}` },
-    { title: 'systems', copy: (catalog.systems || []).slice(0, 6).join(', ') || '-', meta: `count ${catalog.systems?.length || 0}` },
-    { title: 'environments', copy: (catalog.environments || []).slice(0, 6).join(', ') || '-', meta: `count ${catalog.environments?.length || 0}` }
+    {
+      title: t('entities.discovery.catalog.owners'),
+      copy: (catalog.owners || []).slice(0, 6).join(', ') || t('entities.discovery.catalog.none'),
+      meta: t('entities.discovery.catalog.count', { count: catalog.owners?.length || 0 })
+    },
+    {
+      title: t('entities.discovery.catalog.systems'),
+      copy: (catalog.systems || []).slice(0, 6).join(', ') || t('entities.discovery.catalog.none'),
+      meta: t('entities.discovery.catalog.count', { count: catalog.systems?.length || 0 })
+    },
+    {
+      title: t('entities.discovery.catalog.environments'),
+      copy: (catalog.environments || []).slice(0, 6).join(', ') || t('entities.discovery.catalog.none'),
+      meta: t('entities.discovery.catalog.count', { count: catalog.environments?.length || 0 })
+    }
   ];
 }
 
-export function buildDiscoveryMonitorRows(monitors: Monitor[]) {
-  return monitors.map(monitor => ({
-    title: monitor.name || `#${monitor.id}`,
-    copy: [monitor.app || '-', monitor.instance || '-'].join(' · '),
-    meta: `#${monitor.id} · status ${monitor.status}`
-  }));
+export function buildDiscoveryMonitorRows(monitors: Monitor[], t: Translator) {
+  return monitors.map(monitor => {
+    const status = localizeDiscoveryStatus(monitor.status, t);
+
+    return {
+      title: monitor.name || `#${monitor.id}`,
+      copy: buildDiscoveryContextLine([monitor.app, monitor.instance], t),
+      meta: buildDiscoveryContextLine([`#${monitor.id}`, status.label], t)
+    };
+  });
 }
 
-function cleanCell(value?: string | number | null) {
+function emptyDiscoveryValue(t: Translator) {
+  const translated = t('common.none');
+  return translated === 'common.none' ? 'None' : translated;
+}
+
+function cleanCell(value: string | number | null | undefined, t: Translator) {
   const normalized = String(value ?? '').trim();
-  return normalized || '-';
+  return normalized || emptyDiscoveryValue(t);
 }
 
-function localizeDiscoveryStatus(value?: string | number | null) {
+function localizeDiscoveryStatus(value: string | number | null | undefined, t: Translator): { label: string; tone: DiscoveryStatusTone } {
   const normalized = String(value ?? '').trim().toLowerCase();
-  if (normalized === '0' || normalized === 'active' || normalized === 'success') {
-    return normalized === 'active' ? '已启用' : '正常';
+  if (normalized === 'active') {
+    return { label: t('entities.discovery.row.status.enabled'), tone: 'success' };
+  }
+  if (normalized === '0' || normalized === 'success') {
+    return { label: t('entities.discovery.row.status.normal'), tone: 'success' };
   }
   if (normalized === '1' || normalized === 'critical' || normalized === 'down' || normalized === 'failed') {
-    return '异常';
+    return { label: t('entities.discovery.row.status.abnormal'), tone: 'critical' };
   }
   if (normalized === '2' || normalized === 'pending' || normalized === 'warning' || normalized === 'warn') {
-    return '待确认';
+    return { label: t('entities.discovery.row.status.review'), tone: 'warning' };
   }
-  return cleanCell(value);
+  return { label: t('entities.discovery.row.status.unknown', { status: cleanCell(value, t) }), tone: 'neutral' };
 }
 
 export function buildDiscoveryTableRows(
   monitors: Monitor[],
   presets: EntityDiscoveryGovernancePreset[],
-  catalog: EntityCatalogSuggestions
+  catalog: EntityCatalogSuggestions,
+  t: Translator
 ): DiscoveryTableRow[] {
   if (monitors.length > 0) {
     return monitors.map(monitor => {
@@ -174,18 +210,20 @@ export function buildDiscoveryTableRows(
       const draftSystem = pickDraftSystem(monitor, matchingPreset, catalog);
       const draftEnvironment = pickDraftEnvironment(matchingPreset, catalog);
       const state = resolveGovernanceState(monitor, matchingPreset, catalog);
-      const candidateName = matchingPreset?.name?.trim() || `${humanize(monitor.app)} service`;
-      const attribution = buildDiscoveryRowAttribution(state, monitor, candidateName, draftOwner, draftSystem, draftEnvironment);
+      const candidateName = matchingPreset?.name?.trim() || buildDiscoveryServiceName(monitor.app, t);
+      const attribution = buildDiscoveryRowAttribution(state, monitor, candidateName, draftOwner, draftSystem, draftEnvironment, t);
+      const status = localizeDiscoveryStatus(monitor.status, t);
 
       return {
         key: `monitor-${monitor.id}`,
-        name: cleanCell(monitor.name || monitor.app || monitor.id),
-        instance: cleanCell(monitor.instance),
-        status: localizeDiscoveryStatus(monitor.status),
-        owner: cleanCell(draftOwner),
-        system: cleanCell(draftSystem),
-        environment: cleanCell(draftEnvironment),
-        activity: '搜索结果',
+        name: cleanCell(monitor.name || monitor.app || monitor.id, t),
+        instance: cleanCell(monitor.instance, t),
+        status: status.label,
+        statusTone: status.tone,
+        owner: cleanCell(draftOwner, t),
+        system: cleanCell(draftSystem, t),
+        environment: cleanCell(draftEnvironment, t),
+        activity: t('entities.discovery.row.activity.search-result'),
         ...attribution
       };
     });
@@ -193,22 +231,24 @@ export function buildDiscoveryTableRows(
 
   return presets.map((preset, index) => {
     const key = preset.id || String(index + 1);
-    const system = cleanCell(preset.system || catalog.systems?.[0]);
+    const system = cleanCell(preset.system || catalog.systems?.[0], t);
+    const status = localizeDiscoveryStatus(preset.status, t);
 
     return {
       key: `preset-${key}`,
-      name: cleanCell(preset.name),
+      name: cleanCell(preset.name, t),
       instance: system,
-      status: localizeDiscoveryStatus(preset.status),
-      owner: cleanCell(preset.owner || catalog.owners?.[0]),
+      status: status.label,
+      statusTone: status.tone,
+      owner: cleanCell(preset.owner || catalog.owners?.[0], t),
       system,
-      environment: cleanCell(preset.environment || catalog.environments?.[0]),
-      activity: '目录预设',
+      environment: cleanCell(preset.environment || catalog.environments?.[0], t),
+      activity: t('entities.discovery.row.activity.catalog-preset'),
       href: `/entities/discovery?preset=${encodeURIComponent(key)}`,
       attributionState: 'preset',
-      attributionLabel: '目录预设',
-      attributionCopy: '可作为候选确认基线',
-      primaryActionLabel: '查看预设'
+      attributionLabel: t('entities.discovery.row.attribution.preset.label'),
+      attributionCopy: t('entities.discovery.row.attribution.preset.copy'),
+      primaryActionLabel: t('entities.discovery.row.attribution.preset.action')
     };
   });
 }
@@ -224,13 +264,21 @@ function normalize(value?: string | null) {
 function humanize(value?: string | null) {
   const normalized = value?.trim();
   if (!normalized) {
-    return 'Unknown';
+    return '';
   }
   return normalized
     .split(/[-_\s]+/)
     .filter(Boolean)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
+}
+
+function buildDiscoveryServiceName(value: string | null | undefined, t: Translator) {
+  return t('entities.discovery.service-name', { name: cleanCell(value, t) });
+}
+
+function buildDiscoveryContextLine(values: Array<string | number | null | undefined>, t: Translator) {
+  return values.map(value => cleanCell(value, t)).join(' · ');
 }
 
 function pickDraftOwner(preset: EntityDiscoveryGovernancePreset | undefined, catalog: EntityCatalogSuggestions) {
@@ -292,13 +340,17 @@ function resolveGovernanceState(
   return 'create';
 }
 
-function buildMissingGovernanceCopy(owner: string, system: string, environment: string) {
+function buildMissingGovernanceCopy(owner: string, system: string, environment: string, t: Translator) {
   const missingParts = [
-    ...(owner ? [] : ['负责人']),
-    ...(system ? [] : ['系统']),
-    ...(environment ? [] : ['环境'])
+    ...(owner ? [] : [t('entities.discovery.row.missing.owner')]),
+    ...(system ? [] : [t('entities.discovery.row.missing.system')]),
+    ...(environment ? [] : [t('entities.discovery.row.missing.environment')])
   ];
-  return missingParts.length > 0 ? `缺少${missingParts.join('、')}` : '归因上下文待确认';
+  return missingParts.length > 0
+    ? t('entities.discovery.row.missing.copy', {
+        fields: missingParts.join(t('entities.discovery.row.missing.separator'))
+      })
+    : t('entities.discovery.row.missing.ready');
 }
 
 function buildDiscoveryRowAttribution(
@@ -307,90 +359,92 @@ function buildDiscoveryRowAttribution(
   candidateName: string,
   draftOwner: string,
   draftSystem: string,
-  draftEnvironment: string
+  draftEnvironment: string,
+  t: Translator
 ): Pick<DiscoveryTableRow, 'attributionCopy' | 'attributionLabel' | 'attributionState' | 'href' | 'primaryActionLabel'> {
   switch (state) {
     case 'resolved':
       return {
         attributionState: 'resolved',
-        attributionLabel: '已归因',
-        attributionCopy: '已归入对象目录',
+        attributionLabel: t('entities.discovery.row.attribution.resolved.label'),
+        attributionCopy: t('entities.discovery.row.attribution.resolved.copy'),
         href: buildCandidateSearchHref(monitor),
-        primaryActionLabel: '打开实体'
+        primaryActionLabel: t('entities.discovery.row.attribution.resolved.action')
       };
     case 'merge':
       return {
         attributionState: 'merge',
-        attributionLabel: '建议归并',
-        attributionCopy: `候选实体 ${candidateName}`,
+        attributionLabel: t('entities.discovery.row.attribution.merge.label'),
+        attributionCopy: t('entities.discovery.row.attribution.merge.copy', { candidate: candidateName }),
         href: buildDiscoveryActionHref(monitor, 'merge'),
-        primaryActionLabel: '确认归并'
+        primaryActionLabel: t('entities.discovery.row.attribution.merge.action')
       };
     case 'enrich':
       return {
         attributionState: 'review',
-        attributionLabel: '归因待补齐',
-        attributionCopy: buildMissingGovernanceCopy(draftOwner, draftSystem, draftEnvironment),
+        attributionLabel: t('entities.discovery.row.attribution.review.label'),
+        attributionCopy: buildMissingGovernanceCopy(draftOwner, draftSystem, draftEnvironment, t),
         href: buildDiscoveryActionHref(monitor, 'enrich'),
-        primaryActionLabel: '补齐归因'
+        primaryActionLabel: t('entities.discovery.row.attribution.review.action')
       };
     default:
       return {
         attributionState: 'create',
-        attributionLabel: '建议新建',
-        attributionCopy: '已有监控线索，可创建实体草稿',
+        attributionLabel: t('entities.discovery.row.attribution.create.label'),
+        attributionCopy: t('entities.discovery.row.attribution.create.copy'),
         href: buildDiscoveryHref('/entities/new', monitor),
-        primaryActionLabel: '创建实体'
+        primaryActionLabel: t('entities.discovery.row.attribution.create.action')
       };
   }
 }
 
-function buildCardActions(state: DiscoveryGovernanceState, monitor: Monitor): DiscoveryGovernanceAction[] {
+function buildCardActions(state: DiscoveryGovernanceState, monitor: Monitor, t: Translator): DiscoveryGovernanceAction[] {
   switch (state) {
     case 'resolved':
       return [
-        { label: 'Open resolved entity', href: buildCandidateSearchHref(monitor), kind: 'primary' },
-        { label: 'Open definition', href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' }
+        { label: t('entities.discovery.card.action.open-resolved'), href: buildCandidateSearchHref(monitor), kind: 'primary' },
+        { label: t('entities.discovery.card.action.open-definition'), href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' }
       ];
     case 'merge':
       return [
-        { label: 'Merge into suggested entity', href: `${buildDiscoveryHref('/entities/discovery', monitor)}&action=merge`, kind: 'primary' },
-        { label: 'Open definition', href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' },
-        { label: 'Open suggested entity', href: buildCandidateSearchHref(monitor), kind: 'secondary' },
-        { label: 'Adopt as draft', href: buildDiscoveryHref('/entities/new', monitor), kind: 'link' }
+        { label: t('entities.discovery.card.action.merge-suggested'), href: `${buildDiscoveryHref('/entities/discovery', monitor)}&action=merge`, kind: 'primary' },
+        { label: t('entities.discovery.card.action.open-definition'), href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' },
+        { label: t('entities.discovery.card.action.open-suggested'), href: buildCandidateSearchHref(monitor), kind: 'secondary' },
+        { label: t('entities.discovery.card.action.adopt-draft'), href: buildDiscoveryHref('/entities/new', monitor), kind: 'link' }
       ];
     case 'enrich':
       return [
-        { label: 'Review governance', href: `${buildDiscoveryHref('/entities/discovery', monitor)}&action=enrich`, kind: 'primary' },
-        { label: 'Send to definition workspace', href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' },
-        { label: 'Adopt as draft', href: buildDiscoveryHref('/entities/new', monitor), kind: 'link' }
+        { label: t('entities.discovery.card.action.review-governance'), href: `${buildDiscoveryHref('/entities/discovery', monitor)}&action=enrich`, kind: 'primary' },
+        { label: t('entities.discovery.card.action.send-definition'), href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' },
+        { label: t('entities.discovery.card.action.adopt-draft'), href: buildDiscoveryHref('/entities/new', monitor), kind: 'link' }
       ];
     default:
       return [
-        { label: 'Create entity draft', href: buildDiscoveryHref('/entities/new', monitor), kind: 'primary' },
-        { label: 'Send to definition workspace', href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' },
-        { label: 'Adopt as draft', href: buildDiscoveryHref('/entities/new', monitor), kind: 'link' }
+        { label: t('entities.discovery.card.action.create-draft'), href: buildDiscoveryHref('/entities/new', monitor), kind: 'primary' },
+        { label: t('entities.discovery.card.action.send-definition'), href: buildDiscoveryHref('/entities/import', monitor), kind: 'secondary' },
+        { label: t('entities.discovery.card.action.adopt-draft'), href: buildDiscoveryHref('/entities/new', monitor), kind: 'link' }
       ];
   }
 }
 
-function buildRecommendation(state: DiscoveryGovernanceState) {
+function buildRecommendation(state: DiscoveryGovernanceState, t: Translator) {
   switch (state) {
     case 'resolved':
-      return 'This telemetry has already been folded into the catalog, so the next step is to reopen the resolved entity or its definition workspace.';
+      return t('entities.discovery.card.recommendation.resolved');
     case 'merge':
-      return 'A matching directory candidate already exists, so this telemetry should merge before a new draft is created.';
+      return t('entities.discovery.card.recommendation.merge');
     case 'enrich':
-      return 'Fill the shared governance context first, then send the monitor into the definition workspace or create a draft.';
+      return t('entities.discovery.card.recommendation.enrich');
     default:
-      return 'This telemetry already has enough shared governance context to open a new entity draft right away.';
+      return t('entities.discovery.card.recommendation.create');
   }
 }
 
 export function buildDiscoveryGovernanceCards(
   monitors: Monitor[],
   presets: EntityDiscoveryGovernancePreset[],
-  catalog: EntityCatalogSuggestions
+  catalog: EntityCatalogSuggestions,
+  t: Translator
 ): DiscoveryGovernanceCard[] {
   return monitors.map(monitor => {
     const appKey = normalize(monitor.app);
@@ -403,46 +457,46 @@ export function buildDiscoveryGovernanceCards(
     const draftSystem = pickDraftSystem(monitor, matchingPreset, catalog);
     const draftEnvironment = pickDraftEnvironment(matchingPreset, catalog);
     const state = resolveGovernanceState(monitor, matchingPreset, catalog);
-    const candidateName = matchingPreset?.name?.trim() || `${humanize(monitor.app)} service`;
+    const candidateName = matchingPreset?.name?.trim() || buildDiscoveryServiceName(monitor.app, t);
 
     return {
       key: `monitor-${monitor.id}`,
       title: monitor.name || `#${monitor.id}`,
       state,
-      meta: [`#${monitor.id}`, monitor.app || '-', monitor.instance || '-'].join(' · '),
-      draftTitle: `${monitor.name || humanize(monitor.app)} service`,
-      draftSubtitle: [draftOwner || '-', draftSystem || '-', draftEnvironment || '-'].join(' · '),
+      meta: buildDiscoveryContextLine([`#${monitor.id}`, monitor.app, monitor.instance], t),
+      draftTitle: buildDiscoveryServiceName(monitor.name || humanize(monitor.app), t),
+      draftSubtitle: buildDiscoveryContextLine([draftOwner, draftSystem, draftEnvironment], t),
       completeness: buildDraftCompleteness([monitor.name, draftOwner, draftSystem, draftEnvironment, monitor.instance]),
       riskLabel:
         state === 'resolved'
-          ? 'Governance risk low'
+          ? t('entities.discovery.card.risk.low')
           : state === 'merge'
-          ? 'Governance risk medium'
+          ? t('entities.discovery.card.risk.medium')
           : state === 'enrich'
-            ? 'Governance risk high'
-            : 'Governance risk low',
+            ? t('entities.discovery.card.risk.high')
+            : t('entities.discovery.card.risk.low'),
       nextActionLabel:
         state === 'resolved'
-          ? 'Next step open'
+          ? t('entities.discovery.card.next.open')
           : state === 'merge'
-            ? 'Next step merge'
+            ? t('entities.discovery.card.next.merge')
             : state === 'enrich'
-              ? 'Next step enrich'
-              : 'Next step create',
-      recommendation: buildRecommendation(state),
-      candidateLabel: state === 'merge' ? `Suggested entity · ${candidateName} · score strong` : undefined,
-      candidateContext: state === 'merge' ? [draftOwner || '-', draftSystem || '-', draftEnvironment || '-'].join(' · ') : undefined,
-      actions: buildCardActions(state, monitor)
+              ? t('entities.discovery.card.next.enrich')
+              : t('entities.discovery.card.next.create'),
+      recommendation: buildRecommendation(state, t),
+      candidateLabel: state === 'merge' ? t('entities.discovery.card.candidate-label', { candidate: candidateName }) : undefined,
+      candidateContext: state === 'merge' ? buildDiscoveryContextLine([draftOwner, draftSystem, draftEnvironment], t) : undefined,
+      actions: buildCardActions(state, monitor, t)
     };
   });
 }
 
-export function buildDiscoveryScopeOptions(cards: DiscoveryGovernanceCard[]): DiscoveryScopeOption[] {
+export function buildDiscoveryScopeOptions(cards: DiscoveryGovernanceCard[], t: Translator): DiscoveryScopeOption[] {
   return [
-    { key: 'all', label: 'All', count: cards.length },
-    { key: 'matched', label: 'Matched', count: cards.filter(card => card.state === 'merge').length },
-    { key: 'resolved', label: 'Resolved', count: cards.filter(card => isResolvedState(card.state)).length },
-    { key: 'new', label: 'Suggested new', count: cards.filter(card => card.state === 'create' || card.state === 'enrich').length }
+    { key: 'all', label: t('entities.discovery.scope.all'), count: cards.length },
+    { key: 'matched', label: t('entities.discovery.scope.matched'), count: cards.filter(card => card.state === 'merge').length },
+    { key: 'resolved', label: t('entities.discovery.scope.resolved'), count: cards.filter(card => isResolvedState(card.state)).length },
+    { key: 'new', label: t('entities.discovery.scope.suggested-new'), count: cards.filter(card => card.state === 'create' || card.state === 'enrich').length }
   ];
 }
 
@@ -459,7 +513,7 @@ export function filterDiscoveryCardsByScope(cards: DiscoveryGovernanceCard[], sc
   }
 }
 
-export function buildDiscoveryIntakeQueueGroups(cards: DiscoveryGovernanceCard[]): DiscoveryIntakeQueueGroup[] {
+export function buildDiscoveryIntakeQueueGroups(cards: DiscoveryGovernanceCard[], t: Translator): DiscoveryIntakeQueueGroup[] {
   const reviewCards = cards.filter(card => card.state === 'enrich');
   const mergeCards = cards.filter(card => card.state === 'merge');
   const createCards = cards.filter(card => card.state === 'create');
@@ -470,9 +524,9 @@ export function buildDiscoveryIntakeQueueGroups(cards: DiscoveryGovernanceCard[]
   if (reviewCards.length > 0) {
     groups.push({
       key: 'review',
-      title: 'Needs governance review',
-      summary: `${reviewCards.length} telemetry result${reviewCards.length === 1 ? '' : 's'} still need governance review before they can be merged or created.`,
-      actionLabel: 'Review governance',
+      title: t('entities.discovery.queue.review.title'),
+      summary: t('entities.discovery.queue.review.summary', { count: reviewCards.length }),
+      actionLabel: t('entities.discovery.queue.review.action'),
       action: 'review',
       cardKeys: reviewCards.map(card => card.key),
       sampleTitles: reviewCards.slice(0, 3).map(card => card.title)
@@ -482,9 +536,9 @@ export function buildDiscoveryIntakeQueueGroups(cards: DiscoveryGovernanceCard[]
   if (mergeCards.length > 0) {
     groups.push({
       key: 'merge',
-      title: 'Ready to merge',
-      summary: `${mergeCards.length} telemetry result${mergeCards.length === 1 ? '' : 's'} can be selected for merge immediately.`,
-      actionLabel: 'Select merge-ready',
+      title: t('entities.discovery.queue.merge.title'),
+      summary: t('entities.discovery.queue.merge.summary', { count: mergeCards.length }),
+      actionLabel: t('entities.discovery.queue.merge.action'),
       action: 'select-merge',
       cardKeys: mergeCards.map(card => card.key),
       sampleTitles: mergeCards.slice(0, 3).map(card => card.title)
@@ -494,9 +548,9 @@ export function buildDiscoveryIntakeQueueGroups(cards: DiscoveryGovernanceCard[]
   if (createCards.length > 0) {
     groups.push({
       key: 'create',
-      title: 'Suggested new entities',
-      summary: `${createCards.length} telemetry result${createCards.length === 1 ? '' : 's'} are ready to open as new entity drafts or send into the definition workspace.`,
-      actionLabel: 'Select suggested new',
+      title: t('entities.discovery.queue.create.title'),
+      summary: t('entities.discovery.queue.create.summary', { count: createCards.length }),
+      actionLabel: t('entities.discovery.queue.create.action'),
       action: 'select-create',
       cardKeys: createCards.map(card => card.key),
       sampleTitles: createCards.slice(0, 3).map(card => card.title)
@@ -505,12 +559,12 @@ export function buildDiscoveryIntakeQueueGroups(cards: DiscoveryGovernanceCard[]
 
   groups.push({
     key: 'resolved',
-    title: 'Already resolved',
+    title: t('entities.discovery.queue.resolved.title'),
     summary:
       resolvedCards.length > 0
-        ? `${resolvedCards.length} telemetry result${resolvedCards.length === 1 ? '' : 's'} already map to resolved catalog entities.`
-        : 'No discovery results are marked as resolved yet.',
-    actionLabel: 'View resolved',
+        ? t('entities.discovery.queue.resolved.summary.present', { count: resolvedCards.length })
+        : t('entities.discovery.queue.resolved.summary.empty'),
+    actionLabel: t('entities.discovery.queue.resolved.action'),
     action: 'resolved',
     cardKeys: resolvedCards.map(card => card.key),
     sampleTitles: resolvedCards.slice(0, 3).map(card => card.title)
@@ -531,17 +585,17 @@ export function buildDiscoveryBulkSummary(cards: DiscoveryGovernanceCard[], sele
   };
 }
 
-export function buildDiscoveryBulkOverrideTags(drafts: DiscoveryBulkOverrideDrafts): DiscoveryBulkOverrideTag[] {
+export function buildDiscoveryBulkOverrideTags(drafts: DiscoveryBulkOverrideDrafts, t: Translator): DiscoveryBulkOverrideTag[] {
   const tags: DiscoveryBulkOverrideTag[] = [];
   const owner = drafts.ownerDraft?.trim();
   const system = drafts.systemDraft?.trim();
 
   if (owner) {
-    tags.push({ label: 'Owner', value: owner });
+    tags.push({ label: t('entities.discovery.bulk.tag.owner'), value: owner });
   }
 
   if (system) {
-    tags.push({ label: 'System', value: system });
+    tags.push({ label: t('entities.discovery.bulk.tag.system'), value: system });
   }
 
   return tags;
@@ -550,7 +604,8 @@ export function buildDiscoveryBulkOverrideTags(drafts: DiscoveryBulkOverrideDraf
 export function buildDiscoveryBulkSuggestionChips(
   catalog: EntityCatalogSuggestions,
   presets: EntityDiscoveryGovernancePreset[],
-  drafts: DiscoveryBulkOverrideDrafts
+  drafts: DiscoveryBulkOverrideDrafts,
+  t: Translator
 ): DiscoveryBulkSuggestionSet {
   const ownerDraft = drafts.ownerDraft?.trim() || '';
   const systemDraft = drafts.systemDraft?.trim() || '';
@@ -571,7 +626,7 @@ export function buildDiscoveryBulkSuggestionChips(
         const owner = (preset.bulkOwner || '').trim();
         const system = (preset.bulkSystem || '').trim();
         return {
-          label: `Apply ${preset.name}`,
+          label: t('entities.discovery.bulk.preset.apply', { name: preset.name }),
           owner: owner || undefined,
           system: system || undefined,
           active: owner === ownerDraft && system === systemDraft

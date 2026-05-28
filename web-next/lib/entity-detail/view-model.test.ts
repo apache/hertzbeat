@@ -6,8 +6,10 @@ import {
   buildDrilldownRows,
   buildEntityAttributionRows,
   buildEntityContextHandoffLinks,
+  buildEntityEvidenceHandoffRows,
   buildEntityHealthModel,
   buildEntityIncomingContextRows,
+  buildUnifiedEvidenceRows,
   buildNextActionRows,
   buildOverviewRows,
   buildRelationshipRows,
@@ -19,10 +21,10 @@ describe('entity detail view model', () => {
     expect(
       buildDetailFacts({ id: 123, type: 'service', status: 'unknown', owner: 'ops' } as any)
     ).toEqual([
-      { label: '实体 ID', value: '123' },
-      { label: '类型', value: 'service' },
-      { label: '状态', value: '未知' },
-      { label: '负责人', value: 'ops' }
+      { label: 'Entity ID', value: '123' },
+      { label: 'Type', value: 'service' },
+      { label: 'Status', value: 'Unknown' },
+      { label: 'Owner', value: 'ops' }
     ]);
   });
 
@@ -40,10 +42,10 @@ describe('entity detail view model', () => {
         {} as any
       )
     ).toEqual([
-      { title: '状态', copy: '健康', meta: 'service' },
-      { title: '负责人', copy: 'platform', meta: 'payments' },
-      { title: '环境', copy: 'prod', meta: '-' },
-      { title: '描述', copy: 'checkout service', meta: '-' }
+      { title: 'Status', copy: 'Healthy', meta: 'service', tone: 'success' },
+      { title: 'Owner', copy: 'platform', meta: 'payments' },
+      { title: 'Environment', copy: 'prod', meta: '-' },
+      { title: 'Description', copy: 'checkout service', meta: '-' }
     ]);
   });
 
@@ -56,9 +58,9 @@ describe('entity detail view model', () => {
         traceSummary: { recentTraceCount: 4, recentErrorTraceCount: 1 }
       } as any)
     ).toEqual([
-      { title: '关联指标', copy: '2 个绑定监控', meta: '1 个异常监控' },
-      { title: '关联日志', copy: '3 条查询线索可用', meta: 'checkout errors' },
-      { title: '关联链路', copy: '4 条近期链路', meta: '1 条错误链路' }
+      { title: 'Related metrics', copy: '2 bound monitors', meta: '1 abnormal monitors', tone: 'danger' },
+      { title: 'Related logs', copy: '3 query hints available', meta: 'checkout errors', tone: 'warning' },
+      { title: 'Related traces', copy: '4 recent traces', meta: '1 error traces', tone: 'danger' }
     ]);
   });
 
@@ -97,18 +99,57 @@ describe('entity detail view model', () => {
         }
       } as any)
     ).toEqual([
-      { title: '健康评分', copy: '66 / 100', meta: '轻量健康模型' },
-      { title: '可用性', copy: '50%', meta: '1 / 2 监控健康' },
-      { title: '错误率', copy: '25%', meta: '1 / 4 错误链路' },
-      { title: '延迟', copy: '暂无链路延迟', meta: '等待 OTLP Span' },
-      { title: '当前告警', copy: '1 个活跃告警', meta: '告警闭环' },
-      { title: '最近异常', copy: '5 个异常线索', meta: '监控 1 · 链路 1 · 日志 3' },
+      { title: 'Health score', copy: '66 / 100', meta: 'Lightweight health model', tone: 'warning' },
+      { title: 'Availability', copy: '50%', meta: '1 / 2 monitors healthy', tone: 'danger' },
+      { title: 'Error rate', copy: '25%', meta: '1 / 4 error traces', tone: 'danger' },
+      { title: 'Latency', copy: 'No trace latency', meta: 'Waiting for OTLP span', tone: 'neutral' },
+      { title: 'Current alerts', copy: '1 active alerts', meta: 'Alert closure', tone: 'danger' },
+      { title: 'Recent anomalies', copy: '5 anomaly signals', meta: 'Monitors 1 · Traces 1 · Logs 3', tone: 'warning' },
       {
-        title: '采集健康',
-        copy: '采集器 1 / 2 在线',
-        meta: '任务 11 · 离线 1',
-        freshness: '最近上报 2026-04-10 18:05:00',
-        href: '/setting/collector?entityId=42&serviceName=checkout-api&environment=prod&timeRange=last-1h'
+        title: 'Collection health',
+        copy: 'Collectors 1 / 2 online',
+        meta: 'Tasks 11 · offline 1',
+        freshness: 'Last report 2026-04-10 18:05:00',
+        href: '/setting/collector?entityId=42&serviceName=checkout-api&environment=prod&timeRange=last-1h',
+        tone: 'warning'
+      }
+    ]);
+  });
+
+  it('builds entity-level RED/USE read-model evidence rows from unified backend evidence', () => {
+    expect(
+      buildUnifiedEvidenceRows({
+        unifiedEvidenceSummary: {
+          activeSignalCount: 3,
+          metricsActive: true,
+          logsActive: true,
+          tracesActive: true,
+          metricEvidenceCount: 5,
+          logEvidenceCount: 7,
+          traceEvidenceCount: 11,
+          latestObservedAt: '2026-05-13 14:55:00',
+          activeSignals: ['metrics', 'logs', 'traces']
+        },
+        traceSummary: {
+          recentErrorTraceCount: 2
+        }
+      } as any)
+    ).toEqual([
+      { title: 'Evidence coverage', copy: '3 active signals', meta: 'metrics · logs · traces', tone: 'success' },
+      { title: 'Metrics / USE', copy: '5 metric evidence', meta: 'Monitor and metric read model', tone: 'success' },
+      { title: 'Logs / RED', copy: '7 log hints', meta: 'Log read model', tone: 'warning' },
+      { title: 'Traces / RED', copy: '11 recent traces', meta: '2 error traces', tone: 'danger' },
+      { title: 'Latest observation', copy: '2026-05-13 14:55:00', meta: 'Backend read model', tone: 'neutral' }
+    ]);
+  });
+
+  it('does not fabricate zero RED/USE evidence when the backend read model is absent', () => {
+    expect(buildUnifiedEvidenceRows({} as any)).toEqual([
+      {
+        title: 'Evidence coverage',
+        copy: 'Waiting for backend evidence',
+        meta: 'No unified read model',
+        tone: 'neutral'
       }
     ]);
   });
@@ -133,16 +174,16 @@ describe('entity detail view model', () => {
         '123'
       )
     ).toEqual([
-      { title: '打开监控', copy: '先检查异常监控。', meta: '打开监控' },
-      { title: '打开发现', copy: '先补充更多证据。', meta: '打开发现' }
+      { title: 'Open monitors', copy: 'Inspect abnormal monitors first.', meta: 'Open monitors' },
+      { title: 'Open discovery', copy: 'Add more evidence before triage.', meta: 'Open discovery' }
     ]);
   });
 
   it('builds drilldown rows', () => {
     expect(buildDrilldownRows('123')).toEqual([
-      { title: '定义工作台', copy: '/entities/123/definition', meta: '下一步路由' },
-      { title: '编辑实体', copy: '/entities/123/edit', meta: '下一步路由' },
-      { title: '遥测发现', copy: '/entities/discovery', meta: '共享路由' }
+      { title: 'Definition workspace', copy: '/entities/123/definition', meta: 'Next route' },
+      { title: 'Edit entity', copy: '/entities/123/edit', meta: 'Next route' },
+      { title: 'Telemetry discovery', copy: '/entities/discovery', meta: 'Shared route' }
     ]);
   });
 
@@ -168,47 +209,126 @@ describe('entity detail view model', () => {
     ).toEqual([
       {
         key: 'metrics',
-        title: '关联指标',
+        title: 'Related metrics',
         copy: '/ingestion/otlp/metrics?entityId=42&serviceName=checkout&environment=prod&timeRange=last-30m',
-        meta: '指标工作台'
+        meta: 'Metrics workbench'
       },
       {
         key: 'logs',
-        title: '关联日志',
+        title: 'Related logs',
         copy: '/log/manage?entityId=42&serviceName=checkout&environment=prod&timeRange=last-30m&traceId=trace-123&spanId=span-456',
-        meta: '日志工作台'
+        meta: 'Logs workbench'
       },
       {
         key: 'traces',
-        title: '关联链路',
+        title: 'Related traces',
         copy: '/trace/manage?entityId=42&serviceName=checkout&environment=prod&timeRange=last-30m&traceId=trace-123&spanId=span-456',
-        meta: '链路工作台'
+        meta: 'Traces workbench'
       },
       {
         key: 'alerts',
-        title: '告警规则',
+        title: 'Alert rules',
         copy: '/alert/setting?entityId=42&serviceName=checkout&environment=prod&timeRange=last-30m',
-        meta: '阈值规则'
+        meta: 'Threshold rules'
       },
       {
         key: 'monitors',
-        title: '绑定监控',
+        title: 'Bound monitors',
         copy: '/monitors?entityId=42&entityName=Checkout&serviceName=checkout&environment=prod&timeRange=last-30m&returnTo=%2Fentities%2F42',
-        meta: '监控对象'
+        meta: 'Monitored resources'
       },
       {
         key: 'topology',
-        title: '上下游拓扑',
+        title: 'Upstream topology',
         copy: '/topology?entityId=42&serviceName=checkout&environment=prod&timeRange=last-30m',
-        meta: '关系图'
+        meta: 'Topology graph'
       },
       {
         key: 'template',
-        title: '模板绑定',
+        title: 'Template binding',
         copy: '/entities/42/definition?entityId=42&serviceName=checkout&environment=prod&timeRange=last-30m',
-        meta: '监控模板'
+        meta: 'Monitoring template'
       }
     ]);
+  });
+
+  it('builds alert, topology, and runbook handoffs only from real entity evidence', () => {
+    const rows = buildEntityEvidenceHandoffRows(
+      {
+        entity: {
+          entity: {
+            id: 42,
+            name: 'checkout',
+            displayName: 'Checkout',
+            environment: 'prod',
+            runbook: 'https://runbooks.local/checkout'
+          },
+          relations: [{ relationType: 'calls', targetEntityId: 'mysql-1', targetEntityName: 'mysql-prod' }]
+        },
+        alertSummary: {
+          totalActiveAlerts: 2
+        },
+        activeAlerts: [
+          { id: 11, status: 'firing', content: 'latency high' },
+          { id: 12, status: 'firing', content: 'error rate high' }
+        ]
+      } as any,
+      {
+        timeRange: 'last-45m',
+        serviceName: 'checkout-route',
+        environment: 'staging',
+        start: '1713200000000',
+        end: '1713202700000',
+        refresh: '30',
+        live: 'false',
+        tz: 'Asia/Shanghai',
+        source: 'monitor',
+        monitorId: '632051474676992',
+        monitorName: 'checkout-http'
+      }
+    );
+
+    expect(rows.map(row => row.key)).toEqual(['alerts', 'topology', 'runbook']);
+    expect(rows.map(row => row.evidence)).toEqual(['active-alerts', 'topology-relation', 'runbook']);
+    expect(rows[0]).toMatchObject({
+      key: 'alerts',
+      count: 2,
+      title: 'Active alert evidence',
+      copy: '2 active alerts',
+      meta: 'Open alert handling',
+      href: expect.stringContaining('/alert?status=firing')
+    });
+    expect(rows[1]).toMatchObject({
+      key: 'topology',
+      count: 1,
+      title: 'Topology context',
+      copy: 'mysql-prod',
+      meta: 'calls · mysql-1',
+      href: expect.stringContaining('/topology?')
+    });
+    expect(rows[2]).toMatchObject({
+      key: 'runbook',
+      count: 1,
+      title: 'Runbook',
+      copy: 'https://runbooks.local/checkout',
+      meta: 'Response guidance',
+      href: 'https://runbooks.local/checkout'
+    });
+
+    const alertHref = new URL(rows[0]?.href || '/', 'http://localhost');
+    expect(alertHref.searchParams.get('entityId')).toBe('42');
+    expect(alertHref.searchParams.get('entityName')).toBe('Checkout');
+    expect(alertHref.searchParams.get('serviceName')).toBe('checkout-route');
+    expect(alertHref.searchParams.get('environment')).toBe('staging');
+    expect(alertHref.searchParams.get('timeRange')).toBe('last-45m');
+    expect(alertHref.searchParams.get('start')).toBe('1713200000000');
+    expect(alertHref.searchParams.get('returnTo')).toBe('/entities/42');
+
+    const topologyHref = new URL(rows[1]?.href || '/', 'http://localhost');
+    expect(topologyHref.searchParams.get('topologyTargetId')).toBe('mysql-1');
+    expect(topologyHref.searchParams.get('topologyTargetName')).toBe('mysql-prod');
+
+    expect(buildEntityEvidenceHandoffRows({ entity: { entity: { id: 99, name: 'empty' }, relations: [] }, activeAlerts: [] } as any)).toEqual([]);
   });
 
   it('preserves inherited absolute time, refresh, pause, timezone, and monitor context from entity handoffs', () => {
@@ -288,15 +408,15 @@ describe('entity detail view model', () => {
         monitorInstance: 'example.com:443'
       })
     ).toEqual([
-      { label: '监控实例', value: 'checkout-http', meta: 'website · example.com:443 · monitorId 632051474676992' },
-      { label: '当前服务', value: 'checkout-api', meta: '服务上下文' },
-      { label: '当前环境', value: 'prod', meta: '环境' },
+      { label: 'Monitor instance', value: 'checkout-http', meta: 'website · example.com:443 · monitorId 632051474676992' },
+      { label: 'Current service', value: 'checkout-api', meta: 'Service context' },
+      { label: 'Current environment', value: 'prod', meta: 'Environment' },
       {
-        label: '时间范围',
+        label: 'Time range',
         value: 'last-45m',
-        meta: '2024/04/16 00:53:20 → 2024/04/16 01:38:20 · 刷新 30s · 已暂停 · Asia/Shanghai'
+        meta: '2024/04/16 00:53:20 → 2024/04/16 01:38:20 · Refresh 30s · Paused · Asia/Shanghai'
       },
-      { label: '采集来源', value: '传统监控', meta: '监控中心上下文' }
+      { label: 'Source', value: 'Traditional monitoring', meta: 'Monitor center context' }
     ]);
     expect(buildEntityIncomingContextRows({})).toEqual([]);
   });
@@ -324,17 +444,17 @@ describe('entity detail view model', () => {
     } as any;
 
     expect(buildCurrentAlertRows(detail)).toEqual([
-      { title: '当前告警 #1', copy: 'error rate high', meta: 'firing · severity=critical' }
+      { title: 'Current alert #1', copy: 'error rate high', meta: 'firing · severity=critical', tone: 'danger' }
     ]);
     expect(buildRelationshipRows(detail)).toEqual([
       { title: 'calls', copy: 'mysql-prod', meta: 'mysql-1' },
-      { title: 'owned-by', copy: 'payment-app', meta: '上下游关系' }
+      { title: 'owned-by', copy: 'payment-app', meta: 'Upstream/downstream relationship' }
     ]);
     expect(buildCollectionSourceRows(detail)).toEqual([
-      { title: '采集来源', copy: 'otlp', meta: '实体来源' },
-      { title: '身份标识', copy: '1 个身份', meta: 'service.name=checkout' },
-      { title: '模板绑定', copy: '1 个绑定', meta: 'spring-boot' },
-      { title: '标签', copy: '1 个标签', meta: 'k8s.namespace.name=prod' }
+      { title: 'Collection source', copy: 'otlp', meta: 'Entity source' },
+      { title: 'Identities', copy: '1 identities', meta: 'service.name=checkout' },
+      { title: 'Template binding', copy: '1 bindings', meta: 'spring-boot' },
+      { title: 'Labels', copy: '1 labels', meta: 'k8s.namespace.name=prod' }
     ]);
   });
 
@@ -357,10 +477,10 @@ describe('entity detail view model', () => {
     } as any;
 
     expect(buildEntityAttributionRows(detail)).toEqual([
-      { key: 'traditional-monitor', state: 'ready', title: '传统监控绑定', copy: '1 个绑定', meta: 'spring-boot' },
-      { key: 'otlp-attribution', state: 'ready', title: 'OTLP 归因', copy: '2 个身份', meta: 'service.name=checkout' },
-      { key: 'candidate-confirmation', state: 'ready', title: '候选确认', copy: '已归入实体', meta: 'Checkout API' },
-      { key: 'missing-diagnostics', state: 'ready', title: '归因诊断', copy: '归因证据完整', meta: '可进入对象详情' }
+      { key: 'traditional-monitor', state: 'ready', title: 'Traditional monitor binding', copy: '1 bindings', meta: 'spring-boot' },
+      { key: 'otlp-attribution', state: 'ready', title: 'OTLP attribution', copy: '2 identities', meta: 'service.name=checkout' },
+      { key: 'candidate-confirmation', state: 'ready', title: 'Candidate confirmation', copy: 'Merged into entity', meta: 'Checkout API' },
+      { key: 'missing-diagnostics', state: 'ready', title: 'Attribution diagnostics', copy: 'Attribution evidence complete', meta: 'Ready for entity detail' }
     ]);
   });
 
@@ -379,10 +499,10 @@ describe('entity detail view model', () => {
         }
       } as any)
     ).toEqual([
-      { key: 'traditional-monitor', state: 'missing', title: '传统监控绑定', copy: '0 个绑定', meta: '等待监控模板' },
-      { key: 'otlp-attribution', state: 'missing', title: 'OTLP 归因', copy: '缺少身份', meta: '等待 hertzbeat.entity_id 或 service.name' },
-      { key: 'candidate-confirmation', state: 'review', title: '候选确认', copy: '待确认', meta: '进入遥测发现确认候选' },
-      { key: 'missing-diagnostics', state: 'missing', title: '归因诊断', copy: '需要补齐归因', meta: '缺少身份标识、监控绑定' }
+      { key: 'traditional-monitor', state: 'missing', title: 'Traditional monitor binding', copy: '0 bindings', meta: 'Waiting for monitor template' },
+      { key: 'otlp-attribution', state: 'missing', title: 'OTLP attribution', copy: 'Missing identity', meta: 'Waiting for hertzbeat.entity_id or service.name' },
+      { key: 'candidate-confirmation', state: 'review', title: 'Candidate confirmation', copy: 'Pending confirmation', meta: 'Open telemetry discovery to confirm candidate' },
+      { key: 'missing-diagnostics', state: 'missing', title: 'Attribution diagnostics', copy: 'Attribution evidence needed', meta: 'Missing identity、monitor binding' }
     ]);
   });
 });

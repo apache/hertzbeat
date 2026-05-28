@@ -47,14 +47,14 @@ function resolveDefinitionEditorLanguage(format: EntityDefinitionFormat): ColdCo
   }
 }
 
-function attributionStateLabel(state: string) {
+function attributionStateLabel(state: string, t: (key: string) => string) {
   if (state === 'ready') {
-    return '已就绪';
+    return t('entities.definition.workspace.attribution-state.ready');
   }
   if (state === 'missing') {
-    return '需补齐';
+    return t('entities.definition.workspace.attribution-state.missing');
   }
-  return '待确认';
+  return t('entities.definition.workspace.attribution-state.unknown');
 }
 
 function attributionStateClassName(state: string) {
@@ -77,6 +77,7 @@ export function EntityDefinitionWorkspaceSurface({
   initialMessage = null
 }: EntityDefinitionWorkspaceSurfaceProps) {
   const { t } = useI18n();
+  const emptyValue = t('common.none');
   const initialDraftContent = mode === 'import' && initialContent.trim() === '' ? getImportStarterDraft(initialFormat) : initialContent;
   const [content, setContent] = useState(initialDraftContent);
   const [format, setFormat] = useState<EntityDefinitionFormat>(initialFormat);
@@ -101,16 +102,11 @@ export function EntityDefinitionWorkspaceSurface({
     } catch (error) {
       setMessage(
         error instanceof Error
-          ? localizeEntityDefinitionMessage(error.message)
-          : tr('entities.definition.message.load-failed', '加载实体定义失败。')
+          ? localizeEntityDefinitionMessage(error.message, t)
+          : t('entities.definition.message.load-failed')
       );
       setMessageTone('error');
     }
-  }
-
-  function tr(key: string, fallback: string, params?: Record<string, string | number | null | undefined>) {
-    const translated = t(key, params);
-    return translated === key ? fallback : translated;
   }
 
   function clearPreviewState() {
@@ -127,7 +123,7 @@ export function EntityDefinitionWorkspaceSurface({
     const nextContent = content.trim();
     if (nextContent === '') {
       clearPreviewState();
-      setMessage(tr('entity.definition.import.empty', '请先粘贴定义，再预览。'));
+      setMessage(t('entity.definition.import.empty-preview'));
       setMessageTone('error');
       return;
     }
@@ -141,14 +137,13 @@ export function EntityDefinitionWorkspaceSurface({
       setPreviewRows(rows);
       setPreviewScope('all');
       setMessage(
-        tr(
-          'entity.definition.import.activity.preview',
-          rows.length === 1 ? '已预览 1 个定义。' : `已预览 ${rows.length} 个定义。`
-        )
+        rows.length === 1
+          ? t('entity.definition.import.activity.preview-one')
+          : t('entity.definition.import.activity.preview-many', { count: rows.length })
       );
       setMessageTone('success');
     } catch (error) {
-      setMessage(error instanceof Error ? localizeEntityDefinitionMessage(error.message) : tr('entity.definition.import.parse-failed', '定义解析失败。'));
+      setMessage(error instanceof Error ? localizeEntityDefinitionMessage(error.message, t) : t('entity.definition.import.parse-failed'));
       setMessageTone('error');
     } finally {
       setParsing(false);
@@ -159,10 +154,9 @@ export function EntityDefinitionWorkspaceSurface({
     const nextContent = content.trim();
     if (nextContent === '') {
       setMessage(
-        tr(
-          'entity.definition.import.empty',
-          mode === 'definition' ? '请先粘贴或加载定义，再保存。' : '请先粘贴定义，再导入。'
-        )
+        mode === 'definition'
+          ? t('entity.definition.import.empty-save')
+          : t('entity.definition.import.empty-import')
       );
       setMessageTone('error');
       return;
@@ -176,18 +170,13 @@ export function EntityDefinitionWorkspaceSurface({
     if (mode === 'definition') {
       if (previewRows.length > 1) {
         setPreviewScope('all');
-        setMessage(
-          tr(
-            'entity.definition.workspace.single-required',
-            '编辑已有实体时一次只能保存一个定义文档。'
-          )
-        );
+        setMessage(t('entity.definition.workspace.single-required'));
         setMessageTone('error');
         return;
       }
 
       if (entityId == null) {
-        setMessage(tr('entities.definition.message.update-failed', '无法确认要更新的实体定义。'));
+        setMessage(t('entities.definition.message.update-missing-entity'));
         setMessageTone('error');
         return;
       }
@@ -197,10 +186,10 @@ export function EntityDefinitionWorkspaceSurface({
 
       try {
         await apiMessagePut<void>(`/entities/${entityId}/definition`, updateDefinitionPayload(nextContent, format));
-        setMessage(tr('entities.definition.message.updated', '实体定义已更新。'));
+        setMessage(t('entities.definition.message.updated'));
         setMessageTone('success');
       } catch (error) {
-        setMessage(error instanceof Error ? localizeEntityDefinitionMessage(error.message) : tr('entities.definition.message.update-failed', '实体定义保存失败。'));
+        setMessage(error instanceof Error ? localizeEntityDefinitionMessage(error.message, t) : t('entities.definition.message.update-failed'));
         setMessageTone('error');
       } finally {
         setSubmitting(false);
@@ -210,12 +199,7 @@ export function EntityDefinitionWorkspaceSurface({
 
     if (previewRows.some(row => row.gaps.length > 0)) {
       setPreviewScope('attention');
-      setMessage(
-        tr(
-          'entity.definition.import.blocked',
-          '部分定义仍需处理，请检查后再导入。'
-        )
-      );
+      setMessage(t('entity.definition.import.blocked'));
       setMessageTone('error');
       return;
     }
@@ -227,12 +211,12 @@ export function EntityDefinitionWorkspaceSurface({
       const entityIds = await createDefinitionBundle(apiMessagePost, nextContent, format);
       setMessage(
         entityIds.length > 1
-          ? tr('entity.definition.import.success-bundle', `已导入 ${entityIds.length} 个实体。`)
-          : tr('entity.definition.import.success-single', '实体定义已导入。')
+          ? t('entity.definition.import.success-bundle', { count: entityIds.length })
+          : t('entity.definition.import.success-single')
       );
       setMessageTone('success');
     } catch (error) {
-      setMessage(error instanceof Error ? localizeEntityDefinitionMessage(error.message) : tr('entity.definition.import.create-failed', '实体导入失败。'));
+      setMessage(error instanceof Error ? localizeEntityDefinitionMessage(error.message, t) : t('entity.definition.import.create-failed'));
       setMessageTone('error');
     } finally {
       setSubmitting(false);
@@ -261,18 +245,12 @@ export function EntityDefinitionWorkspaceSurface({
     resetStatus();
   }
 
-  const clearDraftCopy =
-    mode === 'definition'
-      ? '清空草稿'
-      : '清空草稿';
-  const previewDefinitionsCopy =
-    mode === 'definition'
-      ? '预览定义'
-      : '预览定义';
+  const clearDraftCopy = t('entity.definition.action.clear-draft');
+  const previewDefinitionsCopy = t('entity.definition.action.preview');
   const submitDefinitionsCopy =
     mode === 'definition'
-      ? '保存定义'
-      : '导入实体';
+      ? t('entity.definition.action.save')
+      : t('entity.definition.action.import');
 
   function renderActionControls() {
     return (
@@ -290,10 +268,10 @@ export function EntityDefinitionWorkspaceSurface({
         {clearDraftCopy}
       </Button>
       <Button size="sm" variant="default" onClick={() => void previewDefinitions()} disabled={parsing || submitting}>
-        {parsing ? tr('common.loading', '加载中...') : previewDefinitionsCopy}
+        {parsing ? t('common.loading') : previewDefinitionsCopy}
       </Button>
       <Button size="sm" variant="primary" onClick={() => void submitDefinitions()} disabled={parsing || submitting}>
-        {submitting ? tr('common.saving', '保存中...') : submitDefinitionsCopy}
+        {submitting ? t('common.saving') : submitDefinitionsCopy}
       </Button>
       </>
     );
@@ -309,7 +287,7 @@ export function EntityDefinitionWorkspaceSurface({
         data-entity-import-attribution-preview="definition-attribution-check"
         className="grid gap-2 rounded-[4px] border border-[#2b3039] bg-[#101217] p-3"
       >
-        <div className="text-[12px] font-semibold text-[#f5f7fb]">归因检查</div>
+        <div className="text-[12px] font-semibold text-[#f5f7fb]">{t('entities.definition.workspace.attribution-check')}</div>
         <div className="grid gap-2">
           {visiblePreviewRows.map(row => (
             <div key={row.key} className="grid gap-2 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-2">
@@ -333,7 +311,7 @@ export function EntityDefinitionWorkspaceSurface({
                     <span className="font-semibold text-[#dbe4f0]">{attribute.title}</span>
                     <span className="min-w-0 truncate text-[#98a2b3]">{attribute.copy}</span>
                     <span className={cn('rounded-[3px] border px-1.5 py-0.5 font-semibold', attributionStateClassName(attribute.state))}>
-                      {attributionStateLabel(attribute.state)}
+                      {attributionStateLabel(attribute.state, t)}
                     </span>
                   </div>
                 ))}
@@ -347,13 +325,15 @@ export function EntityDefinitionWorkspaceSurface({
 
   if (mode === 'import') {
     const visual = coldOpsCatalogVisual;
+    const importSubtitle = t('entities.import.workspace.subtitle');
+    const importFormatHelp = t('entities.import.workspace.format-help');
     const readyCount = previewRows.filter(row => row.gaps.length === 0).length;
     const attentionCount = previewRows.filter(row => row.gaps.length > 0).length;
     const telemetryGapCount = previewRows.filter(row => row.gapKeys.includes('telemetry')).length;
     const metricCards = [
-      { label: '可直接导入', value: String(readyCount), icon: FileText },
-      { label: '待完善', value: String(attentionCount), icon: AlertTriangle },
-      { label: '缺少遥测绑定', value: String(telemetryGapCount), icon: Network }
+      { label: t('entities.definition.workspace.metric.ready'), value: String(readyCount), icon: FileText },
+      { label: t('entities.definition.workspace.metric.attention'), value: String(attentionCount), icon: AlertTriangle },
+      { label: t('entities.definition.workspace.metric.telemetry-gaps'), value: String(telemetryGapCount), icon: Network }
     ];
 
     return (
@@ -367,9 +347,9 @@ export function EntityDefinitionWorkspaceSurface({
         className="min-h-[calc(100vh-64px)] bg-[#0b0c0e] px-6 pb-6 pt-4 text-[#dbe4f0]"
       >
         <WorkbenchPage
-          kicker="实体定义"
-          title="导入实体定义"
-          subtitle="从 YAML、JSON 或 cURL 请求内容导入一个或多个实体定义，先预览再写入目录。"
+          kicker={t('entities.definition.workspace.kicker')}
+          title={t('entities.import.workspace.title')}
+          subtitle={importSubtitle}
           tone="operator"
           facts={[]}
           main={
@@ -385,22 +365,22 @@ export function EntityDefinitionWorkspaceSurface({
                     data-entity-definition-import-action-row="cold-inline-actions"
                     className="flex flex-wrap items-end justify-between gap-3 rounded-[4px] border border-[#2b3039] bg-[#101217] px-3 py-3"
                   >
-                    <ToolbarField label="导入格式" className="w-[144px] min-w-[144px] flex-none">
+                    <ToolbarField label={t('entity.definition.format.label')} className="w-[144px] min-w-[144px] flex-none">
                       <ToolbarNativeSelect
                         data-entity-definition-format-select="cold-compact-select"
                         value={format}
                         onChange={event => void handleFormatChange(event.target.value as EntityDefinitionFormat)}
                       >
-                        <option value="yaml">YAML</option>
-                        <option value="json">JSON</option>
-                        <option value="curl">cURL</option>
+                        <option value="yaml">{t('entity.definition.format.option.yaml')}</option>
+                        <option value="json">{t('entity.definition.format.option.json')}</option>
+                        <option value="curl">{t('entity.definition.format.option.curl')}</option>
                       </ToolbarNativeSelect>
                     </ToolbarField>
                     <div className="flex flex-wrap items-center justify-end gap-2">{renderActionControls()}</div>
                   </div>
 
                   <p className="text-[12px] leading-5 text-[#98a2b3]">
-                    支持 YAML、JSON 和从预览或自动化流程生成的 cURL。导入前会先解析实体基础信息、遥测绑定和依赖关系。
+                    {importFormatHelp}
                   </p>
 
                   <ColdCodeEditor
@@ -413,7 +393,7 @@ export function EntityDefinitionWorkspaceSurface({
                     language={resolveDefinitionEditorLanguage(format)}
                     minHeight="520px"
                     onChange={handleDraftChange}
-                    placeholder={resolveImportPlaceholder(tr, format)}
+                    placeholder={resolveImportPlaceholder(t, format)}
                     spellCheck={false}
                   />
 
@@ -453,7 +433,7 @@ export function EntityDefinitionWorkspaceSurface({
 
                   {previewRows.length > 0 ? (
                     <section className="grid gap-2 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
-                      <div className="text-[12px] font-semibold text-[#f5f7fb]">当前定义</div>
+                      <div className="text-[12px] font-semibold text-[#f5f7fb]">{t('entities.definition.workspace.current-definition')}</div>
                       <div className="grid gap-2">
                         {queueGroups.map(group => (
                           <WorkbenchInsetPanel
@@ -491,17 +471,18 @@ export function EntityDefinitionWorkspaceSurface({
 
   if (mode === 'definition') {
     const visual = coldOpsCatalogVisual;
-    const definitionSubtitle = '直接编辑当前定义。保存后会同步更新基础信息、遥测绑定和依赖。';
+    const definitionSubtitle = t('entities.definition.workspace.subtitle');
+    const definitionFormatHelp = t('entities.definition.workspace.format-help');
     const definitionErrorState = messageTone === 'error' && message != null && content.trim() === '';
-    const definitionPlaceholder = resolveImportPlaceholder(tr, format);
+    const definitionPlaceholder = resolveImportPlaceholder(t, format);
     const readyCount = previewRows.filter(row => row.gaps.length === 0).length;
     const attentionCount = previewRows.filter(row => row.gaps.length > 0).length;
     const telemetryGapCount = previewRows.filter(row => row.gapKeys.includes('telemetry')).length;
-    const visibleMessage = message == null ? null : localizeEntityDefinitionMessage(message);
+    const visibleMessage = message == null ? null : localizeEntityDefinitionMessage(message, t);
     const metricCards = [
-      { label: '可直接导入', value: String(readyCount), icon: FileText },
-      { label: '待完善', value: String(attentionCount), icon: AlertTriangle },
-      { label: '缺少遥测绑定', value: String(telemetryGapCount), icon: Network }
+      { label: t('entities.definition.workspace.metric.ready'), value: String(readyCount), icon: FileText },
+      { label: t('entities.definition.workspace.metric.attention'), value: String(attentionCount), icon: AlertTriangle },
+      { label: t('entities.definition.workspace.metric.telemetry-gaps'), value: String(telemetryGapCount), icon: Network }
     ];
 
     return (
@@ -514,8 +495,8 @@ export function EntityDefinitionWorkspaceSurface({
         className="-mx-4 -mb-3 -mt-4 bg-[#0b0c0e] text-[#dbe4f0] sm:-mx-6"
       >
         <WorkbenchPage
-          kicker="实体定义"
-          title="编辑实体定义"
+          kicker={t('entities.definition.workspace.kicker')}
+          title={t('entities.definition.workspace.title')}
           subtitle={definitionSubtitle}
           tone="operator"
           facts={[]}
@@ -532,22 +513,22 @@ export function EntityDefinitionWorkspaceSurface({
                     data-entity-definition-action-row="cold-inline-actions"
                     className="flex flex-wrap items-end justify-between gap-3 rounded-[4px] border border-[#2b3039] bg-[#101217] px-3 py-3"
                   >
-                    <ToolbarField label="导入格式" className="w-[144px] min-w-[144px] flex-none">
+                    <ToolbarField label={t('entity.definition.format.label')} className="w-[144px] min-w-[144px] flex-none">
                       <ToolbarNativeSelect
                         data-entity-definition-format-select="cold-compact-select"
                         value={format}
                         onChange={event => void handleFormatChange(event.target.value as EntityDefinitionFormat)}
                       >
-                        <option value="yaml">YAML</option>
-                        <option value="json">JSON</option>
-                        <option value="curl">cURL</option>
+                        <option value="yaml">{t('entity.definition.format.option.yaml')}</option>
+                        <option value="json">{t('entity.definition.format.option.json')}</option>
+                        <option value="curl">{t('entity.definition.format.option.curl')}</option>
                       </ToolbarNativeSelect>
                     </ToolbarField>
                     <div className="flex flex-wrap items-center justify-end gap-2">{renderActionControls()}</div>
                   </div>
 
                   <p className="text-[12px] leading-5 text-[#98a2b3]">
-                    {definitionSubtitle} 支持 YAML、JSON 和 cURL 请求内容，保存前可先预览解析结果。
+                    {definitionSubtitle} {definitionFormatHelp}
                   </p>
 
                   <ColdCodeEditor
@@ -601,19 +582,19 @@ export function EntityDefinitionWorkspaceSurface({
                   ) : null}
 
                   <section className="grid gap-2 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
-                    <div className="text-[12px] font-semibold text-[#f5f7fb]">自定义模板</div>
+                    <div className="text-[12px] font-semibold text-[#f5f7fb]">{t('entities.definition.workspace.template-title')}</div>
                     {definitionErrorState ? (
-                      <p className="text-[12px] leading-5 text-[#98a2b3]">定义加载失败后可先确认实体是否存在，再继续编辑。</p>
+                      <p className="text-[12px] leading-5 text-[#98a2b3]">{t('entities.definition.workspace.template-error-help')}</p>
                     ) : (
                       <RowList
                         rows={
                           templates.length > 0
-                            ? buildTemplateRows(templates)
+                            ? buildTemplateRows(templates, t)
                             : [
                                 {
-                                  title: '暂无模板',
-                                  copy: '可复用模板会显示在这里。',
-                                  meta: '-'
+                                  title: t('entities.definition.workspace.template-empty-title'),
+                                  copy: t('entities.definition.workspace.template-empty-copy'),
+                                  meta: emptyValue
                                 }
                               ]
                         }
@@ -624,10 +605,12 @@ export function EntityDefinitionWorkspaceSurface({
                   <section data-entity-definition-batch-panel="true" className="grid gap-2 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <div className="text-[12px] font-semibold text-[#f5f7fb]">模板与批量编辑</div>
-                        <p className="mt-1 text-[12px] leading-5 text-[#98a2b3]">查看模板、草稿来源和可选操作。</p>
+                        <div className="text-[12px] font-semibold text-[#f5f7fb]">{t('entities.definition.workspace.batch-title')}</div>
+                        <p className="mt-1 text-[12px] leading-5 text-[#98a2b3]">{t('entities.definition.workspace.batch-copy')}</p>
                       </div>
-                      <span className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 py-1 text-[11px] font-semibold text-[#d8e4ff]">展开</span>
+                      <span className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 py-1 text-[11px] font-semibold text-[#d8e4ff]">
+                        {t('entities.definition.workspace.batch-expand')}
+                      </span>
                     </div>
                   </section>
 
@@ -635,7 +618,7 @@ export function EntityDefinitionWorkspaceSurface({
                     <>
                       {previewRows.length > 0 ? (
                         <section className="grid gap-2 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
-                          <div className="text-[12px] font-semibold text-[#f5f7fb]">当前定义</div>
+                          <div className="text-[12px] font-semibold text-[#f5f7fb]">{t('entities.definition.workspace.current-definition')}</div>
                           <div className="grid gap-2">
                             {queueGroups.map(group => (
                               <WorkbenchInsetPanel
@@ -663,17 +646,17 @@ export function EntityDefinitionWorkspaceSurface({
                         </section>
                       ) : null}
 
-                      <section className="grid gap-2 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
-                        <div className="text-[12px] font-semibold text-[#f5f7fb]">最近活动</div>
+                      <section data-entity-definition-activity-panel="true" className="grid gap-2 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
+                        <div className="text-[12px] font-semibold text-[#f5f7fb]">{t('entities.definition.workspace.activity-title')}</div>
                         <RowList
                           rows={
                             activities.length > 0
                               ? buildActivityRows(activities, t)
                               : [
                                   {
-                                    title: '暂无最近活动',
-                                    copy: '预览和导入活动会显示在这里。',
-                                    meta: '-'
+                                    title: t('entities.definition.workspace.activity-empty-title'),
+                                    copy: t('entities.definition.workspace.activity-empty-copy'),
+                                    meta: emptyValue
                                   }
                                 ]
                           }
@@ -682,14 +665,14 @@ export function EntityDefinitionWorkspaceSurface({
                     </>
                   )}
 
-                  <section className="grid gap-2 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
-                    <div className="text-[12px] font-semibold text-[#f5f7fb]">入口</div>
+                  <section data-entity-definition-entry-panel="true" className="grid gap-2 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
+                    <div className="text-[12px] font-semibold text-[#f5f7fb]">{t('entities.definition.workspace.entry-title')}</div>
                     <div className="grid gap-2 text-[12px] text-[#dbe4f0]">
                       <Link className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-2.5 py-2" href={entityId != null ? `/entities/${entityId}` : '/entities'}>
-                        查看实体
+                        {t('entities.definition.workspace.entry-view-entity')}
                       </Link>
                       <Link className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-2.5 py-2" href="/entities">
-                        回到表单
+                        {t('entities.definition.workspace.entry-back-to-form')}
                       </Link>
                     </div>
                   </section>
@@ -705,35 +688,40 @@ export function EntityDefinitionWorkspaceSurface({
   return null;
 }
 
-function localizeEntityDefinitionMessage(message: string) {
+function localizeEntityDefinitionMessage(
+  message: string,
+  t: (key: string, params?: Record<string, string>) => string
+) {
   const normalized = message.trim();
+  if (normalized === '') {
+    return t('entities.definition.message.process-failed');
+  }
   switch (normalized) {
     case 'Entity not exist.':
     case 'Entity not exist':
-      return '实体不存在。';
+      return t('entities.definition.message.entity-not-exist');
     case 'Failed to load entity definition.':
     case 'Definition parsing failed.':
-      return '实体定义处理失败。';
+      return t('entities.definition.message.process-failed');
     case 'Entity definition save failed.':
-      return '实体定义保存失败。';
+      return t('entities.definition.message.update-failed');
     default:
-      return message;
+      return t('entities.definition.message.backend-fallback', { message: normalized });
   }
 }
 
 function resolveImportPlaceholder(
-  tr: (key: string, fallback: string, params?: Record<string, string | number | null | undefined>) => string,
+  t: (key: string) => string,
   format: EntityDefinitionFormat
 ) {
-  void tr;
   switch (format) {
     case 'json':
-      return '粘贴 JSON 实体定义，编辑器会解析基础信息、遥测绑定和依赖关系。';
+      return t('entity.definition.import.placeholder.json');
     case 'curl':
-      return '粘贴从预览或自动化流程生成的 cURL 请求。';
+      return t('entity.definition.import.placeholder.curl');
     case 'yaml':
     default:
-      return '粘贴 YAML 实体定义，编辑器会解析基础信息、遥测绑定和依赖关系。';
+      return t('entity.definition.import.placeholder.yaml');
   }
 }
 

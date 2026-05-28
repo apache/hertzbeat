@@ -1,19 +1,7 @@
-'use client';
+import React from 'react';
 
-import React, { useCallback } from 'react';
-import { ClientWorkbench } from '@/components/workbench/client-workbench';
-import { EntityDiscoverySurface } from '@/components/pages/entity-discovery-surface';
-import { apiMessageGet } from '@/lib/api-client';
-import { loadDiscoveryData } from '@/lib/entity-discovery/controller';
+import EntityDiscoveryPage from './entity-discovery-page';
 
-type DiscoveryData = Awaited<ReturnType<typeof loadDiscoveryData>>;
-
-export default function EntityDiscoveryPage() {
-  const load = useCallback(async (): Promise<DiscoveryData> => loadDiscoveryData(apiMessageGet), []);
-
-  return (
-    <ClientWorkbench load={load} loadingCopy="遥测发现">
-      {data => <EntityDiscoverySurface presets={data.presets} activities={data.activities} catalog={data.catalog} />}
-    </ClientWorkbench>
-  );
+export default function EntityDiscoveryRoutePage() {
+  return <EntityDiscoveryPage />;
 }

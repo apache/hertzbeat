@@ -2,12 +2,12 @@ import type { EntityDefinitionActivity, EntityDefinitionWorkspaceTemplate } from
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
-export function buildDefinitionFacts(entityId: string, format: 'yaml' | 'json', activityCount: number, templateCount: number) {
+export function buildDefinitionFacts(entityId: string, format: 'yaml' | 'json', activityCount: number, templateCount: number, t: Translator) {
   return [
-    { label: 'Workspace', value: `entities/${entityId}/definition` },
-    { label: 'Format', value: format },
-    { label: 'Activities', value: String(activityCount) },
-    { label: 'Templates', value: String(templateCount) }
+    { label: t('entities.definition.workspace.fact.workspace'), value: `entities/${entityId}/definition` },
+    { label: t('entities.definition.workspace.fact.format'), value: format },
+    { label: t('entities.definition.workspace.fact.activities'), value: String(activityCount) },
+    { label: t('entities.definition.workspace.fact.templates'), value: String(templateCount) }
   ];
 }
 

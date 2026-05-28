@@ -1,7 +1,16 @@
 import type { EntityDefinitionActivity, EntityDefinitionFormat, EntityDefinitionWorkspaceTemplate, EntityDto, Entity } from '@/lib/types';
-import { buildEntityEditorAttributionRows, type EntityEditorAttributionRow, type EntityEditorAttributionState } from '@/lib/entity-editor/view-model';
+import {
+  buildEntityEditorAttributionRows,
+  translateEntityEditorViewModel,
+  type EntityEditorAttributionRow,
+  type EntityEditorAttributionState
+} from '@/lib/entity-editor/view-model';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+
+const KNOWN_IMPORT_ENTITY_TYPES = new Set(['service', 'api', 'endpoint', 'database', 'queue', 'middleware', 'host', 'pod', 'container']);
+const KNOWN_IMPORT_ENTITY_SOURCES = new Set(['manual', 'telemetry', 'otel_resource', 'workspace', 'discovery', 'template', 'import']);
+const KNOWN_IMPORT_FORMATS = new Set(['yaml', 'json', 'curl']);
 
 export type ImportPreviewRow = {
   key: string;
@@ -34,26 +43,26 @@ export function buildImportMetrics(
   t: Translator
 ) {
   return [
-    { label: translate(t, 'entity.definition.import.format', 'Import format'), value: input.format.toUpperCase() },
-    { label: translate(t, 'entity.definition.workspace.template.custom', 'Templates'), value: String(input.templateCount) },
-    { label: translate(t, 'entity.definition.import.activity.shared-title', 'Recent activity'), value: String(input.activityCount) }
+    { label: t('entity.definition.import.format'), value: formatLabel(input.format, t) },
+    { label: t('entity.definition.workspace.template.custom'), value: String(input.templateCount) },
+    { label: t('entities.definition.workspace.activity-title'), value: String(input.activityCount) }
   ];
 }
 
-export function buildTemplateRows(items: EntityDefinitionWorkspaceTemplate[]) {
+export function buildTemplateRows(items: EntityDefinitionWorkspaceTemplate[], t: Translator) {
   return items.map(item => ({
     key: String(item.id),
     title: item.name,
-    copy: item.summary || item.kind || '-',
-    meta: `${(item.format || '-').toUpperCase()} · ${localizeTemplateSource(item.source)}`
+    copy: trim(item.summary) ?? trim(item.kind) ?? emptyImportValue(t),
+    meta: `${formatLabel(item.format, t)} · ${localizeTemplateSource(item.source, t)}`
   }));
 }
 
-export function buildActivityRows(items: EntityDefinitionActivity[], _t: Translator) {
+export function buildActivityRows(items: EntityDefinitionActivity[], t: Translator) {
   return items.map(item => ({
-    title: localizeActivityText(item.summary),
-    copy: localizeActivityText(item.detail || item.activityType),
-    meta: `${localizeActivityStatus(item.status)} · ${(item.format || '-').toUpperCase()}`
+    title: localizeActivityText(item.summary, t),
+    copy: localizeActivityText(item.detail || item.activityType, t),
+    meta: `${localizeActivityStatus(item.status, t)} · ${formatLabel(item.format, t)}`
   }));
 }
 
@@ -62,50 +71,52 @@ export function buildImportPreviewRows(items: EntityDto[], t: Translator): Impor
     const entity = dto.entity || {};
     const gapKeys: ImportPreviewRow['gapKeys'] = [];
     const gaps: string[] = [];
-    const attributionRows = buildEntityEditorAttributionRows(dto);
+    const attributionRows = buildEntityEditorAttributionRows(dto, (key, params) =>
+      translateOrFallback(t, key, translateEntityEditorViewModel(key, params), params)
+    );
     const attributionState = resolveImportAttributionState(dto, attributionRows);
 
     if (trim(entity.owner) == null) {
       gapKeys.push('owner');
-      gaps.push(translate(t, 'entity.field.owner', 'Owner'));
+      gaps.push(t('entity.field.owner'));
     }
     if (trim(entity.system) == null && requiresSystem(entity.type)) {
       gapKeys.push('system');
-      gaps.push(translate(t, 'entity.field.system', 'System'));
+      gaps.push(t('entity.field.system'));
     }
     if (entity.type === 'api' && (entity.implementedBy || []).length === 0) {
       gapKeys.push('implementedBy');
-      gaps.push(translate(t, 'entity.field.implemented-by', 'Implemented by'));
+      gaps.push(t('entity.field.implemented-by'));
     }
     if ((dto.identities || []).length === 0 && (dto.monitorBinds || []).length === 0) {
       gapKeys.push('telemetry');
-      gaps.push(translate(t, 'entity.definition.import.gap.telemetry', 'Telemetry bindings'));
+      gaps.push(t('entity.definition.import.gap.telemetry'));
     }
     if (trim(entity.runbook) == null) {
       gapKeys.push('runbook');
-      gaps.push(translate(t, 'entity.field.runbook', 'Runbook'));
+      gaps.push(t('entity.field.runbook'));
     }
 
     return {
       key: String(entity.name || entity.displayName || index),
       dto,
-      title: getEntityTitle(entity),
+      title: getEntityTitle(entity, t),
       subtitle: getEntitySubtitle(entity),
-      kindLabel: translate(t, `entity.type.${entity.type}`, humanize(entity.type || 'entity')),
-      sourceLabel: translate(t, `entity.source.${entity.source}`, humanize(entity.source || 'manual')),
+      kindLabel: localizeImportEntityKind(entity.type, t),
+      sourceLabel: localizeImportEntitySource(entity.source, t),
       telemetryLabel:
         (dto.monitorBinds || []).length > 0 || (dto.identities || []).length > 0
-          ? translate(t, 'entity.definition.import.telemetry.ready', 'Telemetry binding detected')
-          : translate(t, 'entity.definition.import.telemetry.pending', 'Telemetry binding still missing'),
-      attributionLabel: localizeAttributionState(attributionState),
+          ? t('entity.definition.import.telemetry.ready')
+          : t('entity.definition.import.telemetry.pending'),
+      attributionLabel: localizeImportAttributionState(attributionState, t),
       attributionState,
       attributionRows,
       gapKeys,
       gaps,
       validationLabel:
         gaps.length === 0
-          ? translate(t, 'entity.definition.import.validation.ready', 'Ready to import')
-          : translate(t, 'entity.definition.import.validation.needs-attention', 'Needs attention before import'),
+          ? t('entity.definition.import.validation.ready')
+          : t('entity.definition.import.validation.needs-attention'),
       readinessScore: Math.max(0, 100 - gaps.length * 20)
     };
   });
@@ -120,14 +131,14 @@ function resolveImportAttributionState(dto: EntityDto, rows: EntityEditorAttribu
   return rows.every(row => row.state === 'ready') ? 'ready' : 'review';
 }
 
-function localizeAttributionState(state: EntityEditorAttributionState) {
+function localizeImportAttributionState(state: EntityEditorAttributionState, t: Translator) {
   if (state === 'ready') {
-    return '归因完整';
+    return t('entity.definition.import.attribution.ready');
   }
   if (state === 'missing') {
-    return '归因缺失';
+    return t('entity.definition.import.attribution.missing');
   }
-  return '归因待确认';
+  return t('entity.definition.import.attribution.review');
 }
 
 export function buildImportSummaryFacts(rows: ImportPreviewRow[], t: Translator) {
@@ -137,15 +148,15 @@ export function buildImportSummaryFacts(rows: ImportPreviewRow[], t: Translator)
 
   return [
     {
-      label: translate(t, 'entity.definition.import.summary.ready', 'Ready to import'),
+      label: t('entity.definition.import.summary.ready'),
       value: String(readyCount)
     },
     {
-      label: translate(t, 'entity.definition.import.summary.attention', 'Needs attention'),
+      label: t('entity.definition.import.summary.attention'),
       value: String(attentionCount)
     },
     {
-      label: translate(t, 'entity.definition.import.summary.telemetry', 'Telemetry still missing'),
+      label: t('entity.definition.import.summary.telemetry'),
       value: String(telemetryPendingCount)
     }
   ];
@@ -160,13 +171,9 @@ export function buildImportQueueGroups(rows: ImportPreviewRow[], t: Translator):
   if (readyRows.length > 0) {
     groups.push({
       key: 'ready',
-      title: translate(t, 'entity.definition.import.queue.ready.title', 'Ready to import'),
-      summary: translate(
-        t,
-        'entity.definition.import.queue.ready.copy',
-        'These definitions already meet the basic requirements and can move straight into import or save.'
-      ),
-      actionLabel: translate(t, 'entity.definition.import.queue.ready.action', 'View ready definitions'),
+      title: t('entity.definition.import.queue.ready.title'),
+      summary: t('entity.definition.import.queue.ready.copy'),
+      actionLabel: t('entity.definition.import.queue.ready.action'),
       scope: 'ready',
       rows: readyRows
     });
@@ -175,13 +182,9 @@ export function buildImportQueueGroups(rows: ImportPreviewRow[], t: Translator):
   if (attentionRows.length > 0) {
     groups.push({
       key: 'attention',
-      title: translate(t, 'entity.definition.import.queue.attention.title', 'Needs attention first'),
-      summary: translate(
-        t,
-        'entity.definition.import.queue.attention.copy',
-        'These definitions still miss owner, system, runbook, or interface details. Fix them before import.'
-      ),
-      actionLabel: translate(t, 'entity.definition.import.queue.attention.action', 'View blocked definitions'),
+      title: t('entity.definition.import.queue.attention.title'),
+      summary: t('entity.definition.import.queue.attention.copy'),
+      actionLabel: t('entity.definition.import.queue.attention.action'),
       scope: 'attention',
       rows: attentionRows
     });
@@ -190,13 +193,9 @@ export function buildImportQueueGroups(rows: ImportPreviewRow[], t: Translator):
   if (telemetryRows.length > 0) {
     groups.push({
       key: 'telemetry',
-      title: translate(t, 'entity.definition.import.queue.telemetry.title', 'Still needs telemetry after import'),
-      summary: translate(
-        t,
-        'entity.definition.import.queue.telemetry.copy',
-        'These definitions still do not have telemetry bindings and should return to telemetry discovery after import.'
-      ),
-      actionLabel: translate(t, 'entity.definition.import.queue.telemetry.action', 'View telemetry-pending definitions'),
+      title: t('entity.definition.import.queue.telemetry.title'),
+      summary: t('entity.definition.import.queue.telemetry.copy'),
+      actionLabel: t('entity.definition.import.queue.telemetry.action'),
       scope: 'telemetry',
       rows: telemetryRows
     });
@@ -205,8 +204,22 @@ export function buildImportQueueGroups(rows: ImportPreviewRow[], t: Translator):
   return groups;
 }
 
-function getEntityTitle(entity?: Entity) {
-  return entity?.displayName || entity?.name || '-';
+function emptyImportValue(t: Translator) {
+  return translateOrFallback(t, 'common.none', 'None');
+}
+
+function formatLabel(format: string | null | undefined, t: Translator) {
+  const normalized = trim(format);
+  if (normalized == null) {
+    return emptyImportValue(t);
+  }
+
+  const key = normalized.toLowerCase();
+  return KNOWN_IMPORT_FORMATS.has(key) ? key.toUpperCase() : t('entity.definition.import.format.unknown', { format: normalized });
+}
+
+function getEntityTitle(entity: Entity | undefined, t: Translator) {
+  return trim(entity?.displayName) ?? trim(entity?.name) ?? emptyImportValue(t);
 }
 
 function getEntitySubtitle(entity?: Entity) {
@@ -215,6 +228,30 @@ function getEntitySubtitle(entity?: Entity) {
   }
 
   return entity.name;
+}
+
+function localizeImportEntityKind(type: string | null | undefined, t: Translator) {
+  const normalized = trim(type);
+  if (normalized == null) {
+    return emptyImportValue(t);
+  }
+
+  const key = normalized.toLowerCase();
+  return KNOWN_IMPORT_ENTITY_TYPES.has(key)
+    ? translateOrFallback(t, `entity.type.${key}`, humanize(normalized))
+    : t('entity.definition.import.kind.unknown', { kind: normalized });
+}
+
+function localizeImportEntitySource(source: string | null | undefined, t: Translator) {
+  const normalized = trim(source);
+  if (normalized == null) {
+    return emptyImportValue(t);
+  }
+
+  const key = normalized.toLowerCase();
+  return KNOWN_IMPORT_ENTITY_SOURCES.has(key)
+    ? translateOrFallback(t, `entity.source.${key}`, humanize(normalized))
+    : t('entity.definition.import.source.unknown', { source: normalized });
 }
 
 function requiresSystem(type?: string) {
@@ -238,42 +275,47 @@ function trim(value?: string | null) {
   return next === '' ? null : next;
 }
 
-function localizeActivityStatus(status?: string | null) {
+function localizeActivityStatus(status: string | null | undefined, t: Translator) {
   const normalized = (status || '').trim().toLowerCase();
-  if (normalized === 'success') return '成功';
-  if (normalized === 'saved') return '已保存';
-  if (normalized === 'starter') return '初始';
-  if (normalized === 'failed' || normalized === 'failure' || normalized === 'error') return '失败';
-  if (normalized === 'preview') return '预览';
-  return status || '-';
+  if (normalized === 'success') return t('entity.definition.import.activity.status.success');
+  if (normalized === 'saved') return t('entity.definition.import.activity.status.saved');
+  if (normalized === 'starter') return t('entity.definition.import.activity.status.starter');
+  if (normalized === 'failed' || normalized === 'failure' || normalized === 'error') {
+    return t('entity.definition.import.activity.status.failed');
+  }
+  if (normalized === 'preview') return t('entity.definition.import.activity.status.preview');
+  const fallback = trim(status);
+  return fallback == null ? emptyImportValue(t) : t('entity.definition.import.activity.status.unknown', { status: fallback });
 }
 
-function localizeActivityText(value?: string | null) {
-  if (value == null || value.trim() === '') return '-';
-  return value
-    .replace(/\bTelemetry discovery applied\b/g, '遥测发现已应用')
-    .replace(/\bCatalog entity updated\b/g, '目录实体已更新')
-    .replace(/\bCatalog entity created\b/g, '目录实体已创建')
-    .replace(/\bendpoint:/g, '端点:')
-    .replace(/\bservice:/g, '服务:')
-    .replace(/\bsystem:/g, '系统:')
-    .replace(/\bsource:/g, '来源:')
-    .replace(/\bowner:/g, '负责人:')
-    .replace(/\benvironment:/g, '环境:')
-    .replace(/\bevidence:/g, '证据:')
-    .replace(/\bmonitor binds\b/g, '监控绑定');
+function localizeActivityText(value: string | null | undefined, t: Translator) {
+  const normalized = trim(value);
+  if (normalized == null) return emptyImportValue(t);
+  return normalized
+    .replace(/\bTelemetry discovery applied\b/g, t('entity.definition.import.activity.summary.telemetry-discovery-applied'))
+    .replace(/\bCatalog entity updated\b/g, t('entity.definition.import.activity.summary.catalog-entity-updated'))
+    .replace(/\bCatalog entity created\b/g, t('entity.definition.import.activity.summary.catalog-entity-created'))
+    .replace(/\bendpoint:/g, `${t('entity.definition.import.activity.field.endpoint')}:`)
+    .replace(/\bservice:/g, `${t('entity.definition.import.activity.field.service')}:`)
+    .replace(/\bsystem:/g, `${t('entity.definition.import.activity.field.system')}:`)
+    .replace(/\bsource:/g, `${t('entity.definition.import.activity.field.source')}:`)
+    .replace(/\bowner:/g, `${t('entity.definition.import.activity.field.owner')}:`)
+    .replace(/\benvironment:/g, `${t('entity.definition.import.activity.field.environment')}:`)
+    .replace(/\bevidence:/g, `${t('entity.definition.import.activity.field.evidence')}:`)
+    .replace(/\bmonitor binds\b/g, t('entity.definition.import.activity.field.monitor-binds'));
 }
 
-function localizeTemplateSource(source?: string | null) {
+function localizeTemplateSource(source: string | null | undefined, t: Translator) {
   const normalized = (source || '').trim().toLowerCase();
-  if (normalized === 'workspace') return '工作区';
-  if (normalized === 'saved') return '已保存';
-  if (normalized === 'starter') return '初始';
-  if (normalized === 'custom') return '自定义';
-  return source || '-';
+  if (normalized === 'workspace') return t('entity.definition.import.template.source.workspace');
+  if (normalized === 'saved') return t('entity.definition.import.template.source.saved');
+  if (normalized === 'starter') return t('entity.definition.import.template.source.starter');
+  if (normalized === 'custom') return t('entity.definition.import.template.source.custom');
+  const fallback = trim(source);
+  return fallback == null ? emptyImportValue(t) : t('entity.definition.import.template.source.unknown', { source: fallback });
 }
 
-function translate(t: Translator, key: string, fallback: string, params?: Record<string, string | number | null | undefined>) {
+function translateOrFallback(t: Translator, key: string, fallback: string, params?: Record<string, string | number | null | undefined>) {
   const translated = t(key, params);
   return translated === key ? fallback : translated;
 }

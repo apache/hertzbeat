@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import EntityDetailPage from './page';
+import EntityDetailPage from './entity-detail-page';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
 
 const mockState = vi.hoisted(() => ({
@@ -44,7 +44,6 @@ const mockState = vi.hoisted(() => ({
       }
     ]
   },
-  searchParams: new URLSearchParams(),
   refresh: vi.fn(),
   push: vi.fn()
 }));
@@ -63,8 +62,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     refresh: mockState.refresh,
     push: mockState.push
-  }),
-  useSearchParams: () => mockState.searchParams
+  })
 }));
 
 vi.mock('@/components/providers/i18n-provider', () => ({
@@ -126,26 +124,36 @@ vi.mock('@/components/ui/button', () => ({
 }));
 
 vi.mock('@/lib/api-client', () => ({
-  apiMessageDelete: vi.fn(),
-  apiMessageGet: vi.fn()
+  apiMessageDelete: vi.fn()
 }));
 
-vi.mock('@/lib/entity-detail/controller', () => ({
-  loadEntityDetail
+vi.mock('@/lib/api-facade', () => ({
+  api: {
+    entities: {
+      detail: vi.fn()
+    }
+  }
 }));
+
+vi.mock('@/lib/entity-detail/controller', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/lib/entity-detail/controller')>();
+  return {
+    ...actual,
+    loadEntityDetailFromFacade: loadEntityDetail
+  };
+});
 
 describe('EntityDetailPage', () => {
   beforeEach(() => {
     mockState.lastLoad = null;
-    mockState.searchParams = new URLSearchParams();
     mockState.refresh.mockReset();
     mockState.push.mockReset();
     loadEntityDetail.mockClear().mockResolvedValue(mockState.renderData);
   });
 
   it('renders the cold full-width entity detail workbench without old Workbench side panels', async () => {
-    const source = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/page.tsx'), 'utf8');
-    const html = renderToStaticMarkup(<EntityDetailPage params={Promise.resolve({ entityId: '42' })} />);
+    const source = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/entity-detail-page.tsx'), 'utf8');
+    const html = renderToStaticMarkup(<EntityDetailPage entityId="42" />);
 
     expect(html).toContain('data-entity-detail-surface="otlp-cold-entity-detail"');
     expect(html).toContain('data-entity-detail-style-baseline="hertzbeat-cold-matte"');
@@ -186,11 +194,11 @@ describe('EntityDetailPage', () => {
 
     await mockState.lastLoad?.();
 
-    expect(loadEntityDetail).toHaveBeenCalledWith(expect.any(Function), '42');
+    expect(loadEntityDetail).toHaveBeenCalledWith(expect.any(Function), '42', expect.any(Function));
   });
 
   it('passes inherited time and monitor context into the entity detail surface', () => {
-    mockState.searchParams = new URLSearchParams({
+    const routeContext = {
       timeRange: 'last-45m',
       start: '1713200000000',
       end: '1713202700000',
@@ -202,11 +210,28 @@ describe('EntityDetailPage', () => {
       monitorName: 'checkout-http',
       monitorApp: 'website',
       monitorInstance: 'example.com:443'
-    });
+    };
 
-    const html = renderToStaticMarkup(<EntityDetailPage params={Promise.resolve({ entityId: '42' })} />);
+    const html = renderToStaticMarkup(<EntityDetailPage entityId="42" routeContext={routeContext} />);
 
     expect(html).toContain('data-entity-detail-route-monitor-id="632051474676992"');
     expect(html).toContain('data-entity-detail-route-time-range="last-45m"');
+  });
+
+  it('keeps entity detail remounts on a short settled cache window with refresh invalidation', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/entity-detail-page.tsx'), 'utf8');
+
+    expect(source).toContain('ENTITY_DETAIL_SETTLED_CACHE_TTL_MS = 10_000');
+    expect(source).toContain('const [reloadNonce, setReloadNonce] = useState(0)');
+    expect(source).toContain("['entity-detail', entityDetailUrl, reloadNonce].join(':')");
+    expect(source).toContain('[entityDetailUrl, reloadNonce]');
+    expect(source).toContain('void reloadNonce');
+    expect(source).toContain("import { api } from '@/lib/api-facade';");
+    expect(source).toContain('return loadEntityDetailFromFacade(api.entities.detail, entityId, t);');
+    expect(source).not.toContain('return loadEntityDetail(apiMessageGet, entityId, t);');
+    expect(source).toContain('setReloadNonce(current => current + 1)');
+    expect(source).toContain('router.refresh();');
+    expect(source).toContain('cacheKey={entityDetailCacheKey}');
+    expect(source).toContain('cacheSettledTtlMs={ENTITY_DETAIL_SETTLED_CACHE_TTL_MS}');
   });
 });

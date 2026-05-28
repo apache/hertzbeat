@@ -7,7 +7,55 @@ import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock()
+    t: createTranslatorMock({
+      locale: 'zh-CN',
+      overrides: {
+        'entities.discovery.workspace.kicker': '对象优先调查',
+        'entities.discovery.workspace.title': '遥测发现',
+        'entities.discovery.workspace.subtitle': '先搜索一组需要治理的监控线索，再决定归并、完善归属，还是送入定义工作台继续收口。',
+        'entities.discovery.action.import': '从定义创建',
+        'entities.discovery.action.create': '创建实体',
+        'entities.discovery.action.catalog': '对象目录',
+        'entities.discovery.action.search': '搜索',
+        'entities.discovery.action.clear': '清空',
+        'entities.discovery.search.placeholder': '搜索监控名称或实例',
+        'entities.discovery.search.error': '遥测发现查询失败',
+        'entities.discovery.candidate.title': 'OTLP 候选实体',
+        'entities.discovery.candidate.copy': '保留 OTLP 资源身份，确认后再写入对象目录。',
+        'entities.discovery.candidate.action.create': '创建实体草稿',
+        'entities.discovery.candidate.identity': '资源身份',
+        'entities.discovery.candidate.namespace': '命名空间',
+        'entities.discovery.candidate.environment': '环境',
+        'entities.discovery.policy.title': '治理筛选与共享策略',
+        'entities.discovery.policy.copy': '按已有负责人、系统和环境预设给线索完善上下文。',
+        'entities.discovery.policy.latest-activity': '最近活动 {{activity}}',
+        'entities.discovery.policy.empty': '暂无共享策略，先搜索一条监控线索。',
+        'entities.discovery.catalog.owner': '负责人',
+        'entities.discovery.catalog.system': '系统',
+        'entities.discovery.catalog.environment': '环境',
+        'entities.discovery.metric.clues': '线索',
+        'entities.discovery.metric.matched': '已匹配',
+        'entities.discovery.metric.create-suggested': '建议新建',
+        'entities.discovery.metric.catalog-sources': '目录来源',
+        'entities.discovery.table.title': '发现线索',
+        'entities.discovery.table.result-count': '{{count}} 条结果',
+        'entities.discovery.table.waiting': '等待搜索',
+        'entities.discovery.table.column.clue': '线索',
+        'entities.discovery.table.column.instance': '实例',
+        'entities.discovery.table.column.status': '状态',
+        'entities.discovery.table.column.owner': '归属',
+        'entities.discovery.table.column.system': '系统',
+        'entities.discovery.table.column.environment': '环境',
+        'entities.discovery.table.column.attribution': '归因',
+        'entities.discovery.table.column.action': '操作',
+        'entities.discovery.empty.title': '先搜索一组需要治理的监控线索',
+        'entities.discovery.empty.search.copy': '没有找到匹配的监控线索。',
+        'entities.discovery.empty.idle.copy': '先搜索一条监控，再把它转成实体草稿。',
+        'entities.discovery.activity.preset-synced': '预设已同步',
+        'entities.discovery.activity.shared-governance-updated': '共享治理已更新',
+        'entities.discovery.activity.empty': '暂无活动'
+      }
+    })
   })
 }));
 
@@ -208,5 +256,45 @@ describe('EntityDiscoverySurface', () => {
     expect(html).not.toContain('data-workbench-page');
     expect(html).not.toContain('Governance presets');
     expect(html).not.toContain('Catalog suggestions');
-  });
+  }, 30000);
+
+  it('preserves OTLP candidate identity as confirmation context without inventing entity state', async () => {
+    const { EntityDiscoverySurface } = await import('./entity-discovery-surface');
+
+    const html = renderToStaticMarkup(
+      <EntityDiscoverySurface
+        presets={[]}
+        activities={[]}
+        catalog={{ owners: [], systems: [], environments: [] } as any}
+        candidateContext={{
+          source: 'otlp-candidate',
+          identityKey: 'service.name',
+          identityValue: 'billing',
+          serviceName: 'billing-api',
+          serviceNamespace: 'commerce',
+          environment: 'prod',
+          search: 'billing-api'
+        }}
+      />
+    );
+
+    expect(html).toContain('data-entity-discovery-otlp-candidate="query-context"');
+    expect(html).toContain('data-entity-discovery-candidate-identity-key="service.name"');
+    expect(html).toContain('data-entity-discovery-candidate-identity-value="billing"');
+    expect(html).toContain('data-entity-discovery-candidate-service="billing-api"');
+    expect(html).toContain('data-entity-discovery-candidate-namespace="commerce"');
+    expect(html).toContain('data-entity-discovery-candidate-environment="prod"');
+    expect(html).toContain('OTLP 候选实体');
+    expect(html).toContain('service.name = billing');
+    expect(html).toContain('命名空间 · commerce');
+    expect(html).toContain('环境 · prod');
+    expect(html).toContain('value="billing-api"');
+    expect(html).toContain('data-entity-discovery-candidate-action="create-draft"');
+    expect(html).toContain(
+      'href="/entities/new?source=otlp-candidate&amp;identityKey=service.name&amp;identityValue=billing&amp;serviceName=billing-api&amp;serviceNamespace=commerce&amp;environment=prod"'
+    );
+    expect(html).not.toContain('已归属');
+    expect(html).not.toContain('健康正常');
+    expect(html).not.toContain('拓扑已确认');
+  }, 30000);
 });

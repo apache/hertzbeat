@@ -1,3 +1,15 @@
+import {
+  buildCompatRedirectTarget,
+  createCompatSearchParamReader,
+  type SearchParamsRecord
+} from '../compat/search-params';
+
+export type { SearchParamsRecord } from '../compat/search-params';
+
+export const ENTITY_LIST_ROUTE = '/entities';
+
+export type EntityListSearchParams = SearchParamsRecord;
+
 export type EntityQueryState = {
   search: string;
   type: string;
@@ -16,12 +28,20 @@ export function queryStateFromParams(params: SearchParamReader): EntityQueryStat
   };
 }
 
+export function readEntityListQueryState(searchParams: EntityListSearchParams = {}): EntityQueryState {
+  return queryStateFromParams(createCompatSearchParamReader(searchParams));
+}
+
 export function buildEntityUrl(query: EntityQueryState): string {
   const params = new URLSearchParams({ pageIndex: '0', pageSize: '8', sort: 'gmtUpdate', order: 'desc' });
   if (query.search.trim()) params.set('search', query.search.trim());
   if (query.type.trim()) params.set('type', query.type.trim());
   if (query.status.trim()) params.set('status', query.status.trim());
-  return `/entities?${params.toString()}`;
+  return `${ENTITY_LIST_ROUTE}?${params.toString()}`;
+}
+
+export function buildEntityListCompatRouteUrl(searchParams?: SearchParamsRecord): string {
+  return buildCompatRedirectTarget(ENTITY_LIST_ROUTE, searchParams);
 }
 
 export function queryStateToQueryString(query: EntityQueryState): string {

@@ -1,11 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  buildEntityEditorCatalogSuggestionsUrl,
   buildEntityEditorNewDraft,
+  buildEntityEditorNewDraftFromFacade,
+  buildEntityEditorSeedMonitorUrl,
   buildEmptyEntityCatalogSuggestions,
   buildEntityPayload,
   buildFallbackEntityDto,
   loadEntityEditorCatalogSuggestions,
+  loadEntityEditorCatalogSuggestionsFromFacade,
   loadEntityEditorEntity,
+  loadEntityEditorEntityFromFacade,
   parseEntityJsonCollection,
   saveEntityPayload
 } from './controller';
@@ -23,6 +28,11 @@ const baseDraft: EntityDto = {
 };
 
 describe('entity editor controller', () => {
+  it('exposes stable resource URLs for editor cache keys', () => {
+    expect(buildEntityEditorCatalogSuggestionsUrl()).toBe('/entities/catalog-suggestions?limit=120');
+    expect(buildEntityEditorSeedMonitorUrl('42')).toBe('/monitor/42');
+  });
+
   it('builds the API payload from editor state', () => {
     expect(
       buildEntityPayload(
@@ -84,12 +94,44 @@ describe('entity editor controller', () => {
     await expect(loadEntityEditorCatalogSuggestions(apiGet as any)).resolves.toEqual(buildEmptyEntityCatalogSuggestions());
   });
 
+  it('loads catalog suggestions through the entity facade reader while preserving the 404 fallback', async () => {
+    const readCatalogSuggestions = vi.fn(async (limit?: number) => {
+      expect(limit).toBe(120);
+      return { owners: ['platform'] };
+    });
+
+    await expect(loadEntityEditorCatalogSuggestionsFromFacade(readCatalogSuggestions as any)).resolves.toEqual({ owners: ['platform'] });
+    expect(readCatalogSuggestions).toHaveBeenCalledWith(120);
+
+    const missingCatalogSuggestions = async () => {
+      throw new Error('GET /entities/catalog-suggestions failed with 404');
+    };
+    await expect(loadEntityEditorCatalogSuggestionsFromFacade(missingCatalogSuggestions as any)).resolves.toEqual(
+      buildEmptyEntityCatalogSuggestions()
+    );
+  });
+
   it('falls back to a reusable draft entity when the backend entity endpoint is missing', async () => {
     const apiGet = async () => {
       throw new Error('GET /entities/42 failed with 404');
     };
 
     await expect(loadEntityEditorEntity(apiGet as any, '42')).resolves.toEqual(buildFallbackEntityDto('42'));
+  });
+
+  it('loads editor entity drafts through the entity facade reader while preserving the 404 fallback', async () => {
+    const readEntity = vi.fn(async (entityId: string) => {
+      expect(entityId).toBe('42');
+      return baseDraft;
+    });
+
+    await expect(loadEntityEditorEntityFromFacade(readEntity as any, '42')).resolves.toEqual(baseDraft);
+    expect(readEntity).toHaveBeenCalledWith('42');
+
+    const missingEntity = async () => {
+      throw new Error('GET /entities/42 failed with 404');
+    };
+    await expect(loadEntityEditorEntityFromFacade(missingEntity as any, '42')).resolves.toEqual(buildFallbackEntityDto('42'));
   });
 
   it('builds a telemetry-seeded draft when discovery hands off a monitor id', async () => {
@@ -128,6 +170,51 @@ describe('entity editor controller', () => {
     );
   });
 
+  it('builds a telemetry-seeded draft through the monitor facade reader', async () => {
+    const readSeedMonitor = vi.fn(async (monitorId: string) => {
+      expect(monitorId).toBe('42');
+      return {
+        id: 42,
+        name: 'codex-history-green-443',
+        app: 'website',
+        instance: 'example.com:443',
+        status: 1
+      };
+    });
+
+    await expect(
+      buildEntityEditorNewDraftFromFacade(readSeedMonitor as any, {
+        source: 'telemetry',
+        monitorId: '42'
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({
+        entity: expect.objectContaining({
+          type: 'endpoint',
+          name: 'example.com:443',
+          displayName: 'codex-history-green-443',
+          system: 'website',
+          source: 'otel_resource'
+        }),
+        monitorBinds: expect.arrayContaining([expect.objectContaining({ monitorId: 42, source: 'otel_resource' })])
+      })
+    );
+    expect(readSeedMonitor).toHaveBeenCalledWith('42');
+  });
+
+  it('keeps the reusable manual draft when the monitor facade seed endpoint is missing', async () => {
+    const readSeedMonitor = async () => {
+      throw new Error('GET /monitor/42 failed with 404');
+    };
+
+    await expect(
+      buildEntityEditorNewDraftFromFacade(readSeedMonitor as any, {
+        source: 'telemetry',
+        monitorId: '42'
+      })
+    ).resolves.toEqual(buildInitialManualDraftForTest());
+  });
+
   it('keeps the reusable manual draft when telemetry handoff is incomplete', async () => {
     const apiGet = vi.fn();
 
@@ -156,6 +243,54 @@ describe('entity editor controller', () => {
     expect(apiGet).not.toHaveBeenCalled();
   });
 
+  it('builds an OTLP candidate draft without inventing monitor binds or ownership', async () => {
+    const apiGet = vi.fn();
+
+    await expect(
+      buildEntityEditorNewDraft(apiGet as any, {
+        source: 'otlp-candidate',
+        identityKey: 'service.name',
+        identityValue: 'billing',
+        serviceName: 'billing-api',
+        serviceNamespace: 'commerce',
+        environment: 'prod'
+      } as any)
+    ).resolves.toEqual(
+      expect.objectContaining({
+        entity: expect.objectContaining({
+          type: 'service',
+          name: 'billing-api',
+          displayName: 'billing-api',
+          namespace: 'commerce',
+          environment: 'prod',
+          source: 'otel_resource',
+          owner: ''
+        }),
+        identities: expect.arrayContaining([
+          expect.objectContaining({
+            identityType: 'otel_resource',
+            identityKey: 'service.name',
+            identityValue: 'billing',
+            primaryIdentity: true
+          }),
+          expect.objectContaining({
+            identityType: 'otel_resource',
+            identityKey: 'service.namespace',
+            identityValue: 'commerce'
+          }),
+          expect.objectContaining({
+            identityType: 'otel_resource',
+            identityKey: 'deployment.environment.name',
+            identityValue: 'prod'
+          })
+        ]),
+        monitorBinds: [],
+        relations: []
+      })
+    );
+    expect(apiGet).not.toHaveBeenCalled();
+  });
+
   it('creates new entities and returns the translated success message', async () => {
     await expect(
       saveEntityPayload('new', baseDraft, {
@@ -178,3 +313,23 @@ describe('entity editor controller', () => {
     ).resolves.toBe('saved');
   });
 });
+
+function buildInitialManualDraftForTest() {
+  return {
+    entity: {
+      type: 'service',
+      name: '',
+      displayName: '',
+      environment: '',
+      status: 'unknown',
+      owner: '',
+      system: '',
+      source: 'manual',
+      description: '',
+      labels: {}
+    },
+    identities: [],
+    monitorBinds: [],
+    relations: []
+  };
+}

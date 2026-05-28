@@ -6,6 +6,8 @@ import { Activity, ArrowLeft, Bell, Edit3, FileText, GitBranch, Network, Refresh
 import { Button } from '../ui/button';
 import { OverlayDialog } from '../workbench/overlay-dialog';
 import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { interpolate, type TranslationParams } from '../../lib/i18n';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import {
   buildCollectionSourceRows,
   buildCurrentAlertRows,
@@ -13,12 +15,14 @@ import {
   buildDrilldownRows,
   buildEntityAttributionRows,
   buildEntityContextHandoffLinks,
+  buildEntityEvidenceHandoffRows,
   buildEntityHealthModel,
   buildEntityIncomingContextRows,
   buildNextActionRows,
   buildOverviewRows,
   buildRelationshipRows,
-  buildSummaryRows
+  buildSummaryRows,
+  buildUnifiedEvidenceRows
 } from '../../lib/entity-detail/view-model';
 import type { SignalRouteContext } from '../../lib/signal-route-context';
 import type { EntityDetailDto } from '../../lib/types';
@@ -38,10 +42,17 @@ type DetailRow = {
   freshness?: string;
   href?: string;
   meta: string;
+  tone?: 'success' | 'warning' | 'danger' | 'neutral';
 };
 
 type ContextLinkRow = DetailRow & {
   key: string;
+};
+
+type EvidenceHandoffRow = DetailRow & {
+  key: string;
+  evidence: string;
+  count: number;
 };
 
 type IncomingContextRow = {
@@ -69,9 +80,14 @@ const coldPrimaryLinkClassName =
 const coldLinkButtonClassName =
   'inline-flex h-8 min-w-[104px] items-center justify-center gap-2 rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
 
+function translateEntityDetail(key: string, params?: TranslationParams) {
+  const template = SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+  return interpolate(template, params);
+}
+
 function resolveTitle(detail: EntityDetailDto) {
   const entity = detail.entity?.entity || {};
-  return entity.displayName || entity.name || '实体详情';
+  return entity.displayName || entity.name || translateEntityDetail('entities.detail.title.fallback');
 }
 
 function resolveSubtitle(detail: EntityDetailDto) {
@@ -80,51 +96,53 @@ function resolveSubtitle(detail: EntityDetailDto) {
   const hasEvidence = (detail.logSummary?.hintCount ?? 0) > 0 || (detail.traceSummary?.recentTraceCount ?? 0) > 0 || (detail.boundMonitors?.length ?? 0) > 0;
 
   if (activeAlerts > 0) {
-    return '当前实体已有活跃告警，优先确认告警和最近变化。';
+    return translateEntityDetail('entities.detail.subtitle.active-alerts');
   }
   if (downMonitors > 0) {
-    return '已有绑定监控异常，先从监控证据确认影响面。';
+    return translateEntityDetail('entities.detail.subtitle.down-monitors');
   }
   if (hasEvidence) {
-    return '日志、链路或监控证据已关联，可继续排查。';
+    return translateEntityDetail('entities.detail.subtitle.has-evidence');
   }
-  return '先补齐负责人、定义和遥测绑定，让实体成为可用工作台。';
+  return translateEntityDetail('entities.detail.subtitle.needs-context');
 }
 
 function countMetrics(detail: EntityDetailDto) {
   return [
     {
-      label: '绑定监控',
+      label: translateEntityDetail('entities.detail.metric.bound-monitors'),
       value: detail.monitorSummary?.totalBoundMonitors ?? detail.boundMonitors?.length ?? detail.entity?.monitorBinds?.length ?? 0,
       Icon: Network
     },
     {
-      label: '活跃告警',
+      label: translateEntityDetail('entities.detail.metric.active-alerts'),
       value: detail.alertSummary?.totalActiveAlerts ?? detail.activeAlerts?.length ?? detail.evidenceSummary?.activeAlertCount ?? 0,
       Icon: Bell
     },
     {
-      label: '身份标识',
+      label: translateEntityDetail('entities.detail.metric.identities'),
       value: detail.evidenceSummary?.identityCount ?? detail.entity?.identities?.length ?? 0,
       Icon: FileText
     },
     {
-      label: '关联关系',
+      label: translateEntityDetail('entities.detail.metric.relations'),
       value: detail.entity?.relations?.length ?? 0,
       Icon: GitBranch
     }
   ];
 }
 
-function rowStatusClass(row: DetailRow) {
-  const value = `${row.title} ${row.copy} ${row.meta}`;
-  if (value.includes('异常') || value.includes('告警') || value.includes('错误')) {
-    return 'border-[#7f1d1d]/55 bg-[#2a1214] text-[#fca5a5]';
+function rowStatusClass(tone: DetailRow['tone'] = 'neutral') {
+  switch (tone) {
+    case 'success':
+      return 'border-[#166534]/45 bg-[#0f2f23] text-[#86efac]';
+    case 'warning':
+      return 'border-[#574622] bg-[#1b1710] text-[#facc6b]';
+    case 'danger':
+      return 'border-[#7f1d1d]/55 bg-[#2a1214] text-[#fca5a5]';
+    default:
+      return 'border-[#303743] bg-[#101217] text-[#cbd5e1]';
   }
-  if (value.includes('健康') || value.includes('可用')) {
-    return 'border-[#166534]/45 bg-[#0f2f23] text-[#86efac]';
-  }
-  return 'border-[#303743] bg-[#101217] text-[#cbd5e1]';
 }
 
 function attributionStateClass(state: AttributionRow['state']) {
@@ -135,6 +153,17 @@ function attributionStateClass(state: AttributionRow['state']) {
       return 'border-[#574622] bg-[#1b1710] text-[#facc6b]';
     default:
       return 'border-[#5f2630] bg-[#211217] text-[#f0b8c1]';
+  }
+}
+
+function attributionStateLabel(state: AttributionRow['state']) {
+  switch (state) {
+    case 'ready':
+      return translateEntityDetail('entities.detail.attribution.ready');
+    case 'review':
+      return translateEntityDetail('entities.detail.attribution.review');
+    default:
+      return translateEntityDetail('entities.detail.attribution.missing');
   }
 }
 
@@ -154,7 +183,7 @@ function AttributionRows({ rows }: { rows: AttributionRow[] }) {
               <p className="mt-1 truncate text-[12px] leading-5 text-[#8f99ab]">{row.copy}</p>
             </div>
             <span className={`shrink-0 rounded-[3px] border px-2 py-0.5 text-[11px] font-semibold leading-4 ${attributionStateClass(row.state)}`}>
-              {row.state === 'ready' ? '已归因' : row.state === 'review' ? '待确认' : '缺失'}
+              {attributionStateLabel(row.state)}
             </span>
           </div>
           <p className="mt-2 truncate text-[11px] leading-4 text-[#7e8494]">{row.meta}</p>
@@ -180,7 +209,7 @@ function RowStack({ rows }: { rows: DetailRow[] }) {
               </p>
             ) : null}
           </div>
-          <span className={`inline-flex max-w-full items-center justify-center truncate rounded-[3px] border px-2 py-0.5 text-[11px] font-semibold leading-4 ${rowStatusClass(row)}`}>
+          <span className={`inline-flex max-w-full items-center justify-center truncate rounded-[3px] border px-2 py-0.5 text-[11px] font-semibold leading-4 ${rowStatusClass(row.tone)}`}>
             {row.meta}
           </span>
           </>
@@ -272,6 +301,31 @@ function ContextLinkRows({ rows }: { rows: ContextLinkRow[] }) {
   );
 }
 
+function EvidenceHandoffRows({ rows }: { rows: EvidenceHandoffRow[] }) {
+  if (rows.length === 0) return null;
+
+  return (
+    <div data-entity-detail-evidence-handoff="alert-topology-runbook" className="mt-3 grid gap-2 sm:grid-cols-3">
+      {rows.map(row => (
+        <Link
+          key={row.key}
+          data-entity-detail-evidence-handoff-row={row.key}
+          data-entity-detail-evidence-handoff-source={row.evidence}
+          data-entity-detail-evidence-handoff-count={row.count}
+          href={row.href || '#'}
+          className="grid min-h-[64px] gap-1 rounded-[3px] border border-[#252b34] bg-[#101217] px-3 py-2.5 text-[#dbe4f0] hover:border-[#4e74f8] hover:bg-[#151820]"
+        >
+          <span className="text-[12px] font-semibold text-[#eef2f7]">{row.title}</span>
+          <span className="truncate text-[11px] text-[#8f99ab]">{row.copy}</span>
+          <span className={`mt-1 w-fit max-w-full truncate rounded-[3px] border px-2 py-0.5 text-[11px] font-semibold ${rowStatusClass(row.tone)}`}>
+            {row.meta}
+          </span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function InheritedContextRows({ rows }: { rows: IncomingContextRow[] }) {
   if (rows.length === 0) return null;
 
@@ -299,11 +353,13 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
   const entity = detail.entity?.entity || {};
   const entityId = entity.id;
   const title = resolveTitle(detail);
-  const facts = buildDetailFacts(entity);
+  const facts = buildDetailFacts(entity, translateEntityDetail);
   const metrics = countMetrics(detail);
-  const contextLinks = buildEntityContextHandoffLinks(detail, routeContext || 'last-1h');
-  const incomingContextRows = buildEntityIncomingContextRows(routeContext);
-  const healthRows = buildEntityHealthModel(detail);
+  const contextLinks = buildEntityContextHandoffLinks(detail, routeContext || 'last-1h', translateEntityDetail);
+  const incomingContextRows = buildEntityIncomingContextRows(routeContext, translateEntityDetail);
+  const healthRows = buildEntityHealthModel(detail, translateEntityDetail);
+  const evidenceRows = buildUnifiedEvidenceRows(detail, translateEntityDetail);
+  const evidenceHandoffRows = buildEntityEvidenceHandoffRows(detail, routeContext || 'last-1h', translateEntityDetail);
   const closeDeleteDialog = () => setDeleteDialogOpen(false);
   const submitDeleteDialog = () => {
     if (!entityId) {
@@ -329,24 +385,24 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
               <div data-entity-detail-header="cold-compact-header" className={coldEntityDetailVisual.panel.hero}>
                 <div className="max-w-[920px]">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-semibold tracking-[0.12em] text-[#7e8494]">对象优先调查</span>
-                    <span className="rounded-[3px] border border-[#303743] bg-[#101217] px-2 py-0.5 text-[11px] font-semibold text-[#cbd5e1]">实体详情</span>
+                    <span className="text-[11px] font-semibold tracking-[0.12em] text-[#7e8494]">{translateEntityDetail('entities.detail.header.kicker')}</span>
+                    <span className="rounded-[3px] border border-[#303743] bg-[#101217] px-2 py-0.5 text-[11px] font-semibold text-[#cbd5e1]">{translateEntityDetail('entities.detail.header.badge')}</span>
                   </div>
                   <h1 className="mt-2 text-[30px] font-semibold leading-tight text-[#f5f7fb]">{title}</h1>
                   <p className="mt-4 max-w-[780px] text-[13px] leading-6 text-[#a9b0bb]">{resolveSubtitle(detail)}</p>
                   <div data-entity-detail-command-row="standard-equal-buttons" className={coldEntityDetailVisual.button.row}>
                     <Link href="/entities" className={coldLinkButtonClassName}>
                       <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-                      全部实体
+                      {translateEntityDetail('entities.detail.action.all-entities')}
                     </Link>
                     <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
                       <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                      刷新
+                      {translateEntityDetail('common.refresh')}
                     </Button>
                     {entityId ? (
                       <Link href={`/entities/${entityId}/definition`} className={coldLinkButtonClassName}>
                         <FileText className="h-3.5 w-3.5" aria-hidden="true" />
-                        编辑定义
+                        {translateEntityDetail('entities.detail.action.edit-definition')}
                       </Link>
                     ) : null}
                     {entityId ? (
@@ -360,13 +416,13 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
                         onClick={() => setDeleteDialogOpen(true)}
                       >
                         <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                        删除
+                        {translateEntityDetail('entities.detail.action.delete')}
                       </Button>
                     ) : null}
                     {entityId ? (
                       <Link href={`/entities/${entityId}/edit`} className={coldPrimaryLinkClassName}>
                         <Edit3 className="h-3.5 w-3.5" aria-hidden="true" />
-                        编辑
+                        {translateEntityDetail('entities.detail.action.edit')}
                       </Link>
                     ) : null}
                   </div>
@@ -394,12 +450,16 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
             className={actionError ? 'mb-5 rounded-[4px] border border-[#7f1d1d]/55 bg-[#2a1214] px-4 py-3 text-[12px] text-[#fca5a5]' : 'hidden'}
             aria-hidden={actionError ? undefined : true}
           >
-            <span className="font-semibold">操作未完成</span>
+            <span className="font-semibold">{translateEntityDetail('entities.detail.error.title')}</span>
             {actionError ? <span className="ml-2">{actionError}</span> : null}
           </div>
 
           <div data-entity-detail-signal-grid="cold-detail-grid" className="grid items-start gap-5 lg:grid-cols-2">
-            <DetailPanel marker="overview" title="上下文" copy="先确认实体身份、归属和运行状态，再进入信号工作台。">
+            <DetailPanel
+              marker="overview"
+              title={translateEntityDetail('entities.detail.panel.overview.title')}
+              copy={translateEntityDetail('entities.detail.panel.overview.copy')}
+            >
               <div data-entity-detail-overview-panel="cold-overview-panel">
                 <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                   {facts.map(fact => (
@@ -409,11 +469,15 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
                     </div>
                   ))}
                 </div>
-                <RowStack rows={buildOverviewRows(entity, detail)} />
+                <RowStack rows={buildOverviewRows(entity, detail, translateEntityDetail)} />
               </div>
             </DetailPanel>
 
-            <DetailPanel marker="context" title="观测上下文" copy="所有跳转都携带实体、服务、环境和时间范围，链路相关入口会继续带 trace/span。">
+            <DetailPanel
+              marker="context"
+              title={translateEntityDetail('entities.detail.panel.context.title')}
+              copy={translateEntityDetail('entities.detail.panel.context.copy')}
+            >
               <div data-entity-detail-context-center="hertzbeat-entity-context">
                 <InheritedContextRows rows={incomingContextRows} />
                 <ContextLinkRows rows={contextLinks} />
@@ -422,8 +486,8 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
 
             <DetailPanel
               marker="health"
-              title="轻量健康模型"
-              copy="用可用性、错误率、延迟、当前告警、最近异常和采集健康形成轻量评分，暂不展开 SLO 编排。"
+              title={translateEntityDetail('entities.detail.panel.health.title')}
+              copy={translateEntityDetail('entities.detail.panel.health.copy')}
             >
               <div
                 data-entity-health-model="lightweight-service-health"
@@ -433,51 +497,86 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
               </div>
             </DetailPanel>
 
-            <DetailPanel marker="alerts" title="当前告警" copy="先确认正在影响该实体的告警，再决定静默、抑制、分组或通知闭环。">
+            <DetailPanel
+              marker="evidence"
+              title={translateEntityDetail('entities.detail.panel.evidence.title')}
+              copy={translateEntityDetail('entities.detail.panel.evidence.copy')}
+            >
+              <div data-entity-detail-evidence-model="red-use-read-model">
+                <RowStack rows={evidenceRows} />
+                <EvidenceHandoffRows rows={evidenceHandoffRows} />
+              </div>
+            </DetailPanel>
+
+            <DetailPanel
+              marker="alerts"
+              title={translateEntityDetail('entities.detail.panel.alerts.title')}
+              copy={translateEntityDetail('entities.detail.panel.alerts.copy')}
+            >
               <div data-entity-detail-current-alerts="current-alerts">
-                <RowStack rows={buildCurrentAlertRows(detail)} />
+                <RowStack rows={buildCurrentAlertRows(detail, translateEntityDetail)} />
               </div>
             </DetailPanel>
 
-            <DetailPanel marker="next" title="下一步" copy="保留服务端建议，但用当前冷峻控制台语言收口。">
+            <DetailPanel
+              marker="next"
+              title={translateEntityDetail('entities.detail.panel.next.title')}
+              copy={translateEntityDetail('entities.detail.panel.next.copy')}
+            >
               <div data-entity-detail-next-panel="cold-next-panel">
-                <RowStack rows={buildNextActionRows(detail, entityId)} />
+                <RowStack rows={buildNextActionRows(detail, entityId, translateEntityDetail)} />
               </div>
             </DetailPanel>
 
-            <DetailPanel marker="related" title="相关信号" copy="用监控、日志和链路快速判断影响范围。">
+            <DetailPanel
+              marker="related"
+              title={translateEntityDetail('entities.detail.panel.related.title')}
+              copy={translateEntityDetail('entities.detail.panel.related.copy')}
+            >
               <div data-entity-detail-related-panel="cold-related-panel">
-                <RowStack rows={buildSummaryRows(detail)} />
+                <RowStack rows={buildSummaryRows(detail, translateEntityDetail)} />
               </div>
             </DetailPanel>
 
-            <DetailPanel marker="relationships" title="上下游关系" copy="关系来自实体归并、调用链、监控对象归属或 CMDB 标签，后续会进入拓扑影响面。">
+            <DetailPanel
+              marker="relationships"
+              title={translateEntityDetail('entities.detail.panel.relationships.title')}
+              copy={translateEntityDetail('entities.detail.panel.relationships.copy')}
+            >
               <div data-entity-detail-relationships-panel="upstream-downstream">
-                <RowStack rows={buildRelationshipRows(detail)} />
+                <RowStack rows={buildRelationshipRows(detail, translateEntityDetail)} />
               </div>
             </DetailPanel>
 
-            <DetailPanel marker="source" title="采集来源" copy="确认这个实体来自 HertzBeat 监控对象、Collector、OTLP 资源属性还是手工/CMDB 标签。">
+            <DetailPanel
+              marker="source"
+              title={translateEntityDetail('entities.detail.panel.source.title')}
+              copy={translateEntityDetail('entities.detail.panel.source.copy')}
+            >
               <div data-entity-detail-collection-source-panel="source-template-binding">
-                <AttributionRows rows={buildEntityAttributionRows(detail)} />
+                <AttributionRows rows={buildEntityAttributionRows(detail, translateEntityDetail)} />
                 <div data-entity-detail-template-binding="monitor-template-binding">
-                  <RowStack rows={buildCollectionSourceRows(detail)} />
+                  <RowStack rows={buildCollectionSourceRows(detail, translateEntityDetail)} />
                 </div>
               </div>
             </DetailPanel>
 
-            <DetailPanel marker="drilldown" title="高级入口" copy="只保留真正有用的深层入口，不增加右侧统计装饰。">
+            <DetailPanel
+              marker="drilldown"
+              title={translateEntityDetail('entities.detail.panel.drilldown.title')}
+              copy={translateEntityDetail('entities.detail.panel.drilldown.copy')}
+            >
               <div data-entity-detail-drilldown-panel="cold-drilldown-panel">
-                <RouteRows rows={buildDrilldownRows(entityId)} />
+                <RouteRows rows={buildDrilldownRows(entityId, translateEntityDetail)} />
               </div>
             </DetailPanel>
 
             <div className="rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-4 text-[12px] leading-5 text-[#8f99ab] lg:col-span-2">
               <div className="mb-2 flex items-center gap-2 text-[12px] font-semibold text-[#eef2f7]">
                 <Activity className="h-3.5 w-3.5 text-[#858d9a]" aria-hidden="true" />
-                处置节奏
+                {translateEntityDetail('entities.detail.disposition.title')}
               </div>
-              告警、监控和日志入口从这里分流；详情页只做对象上下文，不复制目录页的右侧统计栏。
+              {translateEntityDetail('entities.detail.disposition.copy')}
             </div>
           </div>
         </div>
@@ -486,24 +585,22 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
       <OverlayDialog
         open={deleteDialogOpen}
         onClose={closeDeleteDialog}
-        title="确认删除实体"
-        kicker="对象目录"
+        title={translateEntityDetail('entities.detail.delete.title')}
+        kicker={translateEntityDetail('entities.detail.delete.kicker')}
         maxWidthClassName="max-w-xl"
         footer={
           <div className="flex justify-end gap-2">
             <Button size="sm" variant="default" className={coldButtonClassName} onClick={closeDeleteDialog}>
-              取消
+              {translateEntityDetail('entities.detail.delete.cancel')}
             </Button>
             <Button size="sm" variant="default" className={coldDangerButtonClassName} disabled={isPending} onClick={submitDeleteDialog}>
-              确认删除
+              {translateEntityDetail('entities.detail.delete.confirm')}
             </Button>
           </div>
         }
       >
         <div data-entity-detail-delete-confirm="cold-modal" className="space-y-3 text-[12px] leading-6 text-[#a9b0bb]">
-          <p>
-            删除后实体会从对象目录移除，相关监控绑定、遥测上下文和告警排查入口需要重新归并。
-          </p>
+          <p>{translateEntityDetail('entities.detail.delete.copy')}</p>
           <div className="rounded-[3px] border border-[#3f2228] bg-[#181013] px-3 py-2 text-[#f0b8c1]">
             {title} {entityId ? <span className="text-[#8f99ab]">#{entityId}</span> : null}
           </div>

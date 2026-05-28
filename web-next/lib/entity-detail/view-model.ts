@@ -1,6 +1,16 @@
-import type { EntityDetailDto } from '@/lib/types';
+import type { Entity, EntityDetailDto, EntityLinkRef } from '@/lib/types';
 import { buildCollectorHealthEvidence } from '../collector-health-evidence';
+import { interpolate, type TranslationParams } from '../i18n';
+import { SUPPLEMENTAL_MESSAGES } from '../i18n-runtime-messages';
 import { buildSignalEntityContextRows, type SignalEntityContextRow, type SignalRouteContext } from '../signal-route-context';
+
+export type EntityDetailViewModelTranslator = (key: string, params?: TranslationParams) => string;
+export type EntityDetailRowTone = 'success' | 'warning' | 'danger' | 'neutral';
+
+export function translateEntityDetailViewModel(key: string, params?: TranslationParams) {
+  const template = SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+  return interpolate(template, params);
+}
 
 type DetailRow = {
   title: string;
@@ -8,10 +18,17 @@ type DetailRow = {
   freshness?: string;
   href?: string;
   meta: string;
+  tone?: EntityDetailRowTone;
 };
 
 type HandoffRow = DetailRow & {
   key: string;
+};
+
+type EvidenceHandoffRow = DetailRow & {
+  key: 'alerts' | 'topology' | 'runbook';
+  evidence: 'active-alerts' | 'topology-relation' | 'runbook';
+  count: number;
 };
 
 export type EntityIncomingContextRow = SignalEntityContextRow;
@@ -23,7 +40,7 @@ type AttributionRow = DetailRow & {
   state: AttributionState;
 };
 
-function localizeStatus(status?: string | null) {
+function localizeStatus(status?: string | null, t: EntityDetailViewModelTranslator = translateEntityDetailViewModel) {
   const normalized = status?.trim();
   if (!normalized) {
     return '-';
@@ -34,26 +51,55 @@ function localizeStatus(status?: string | null) {
     case 'normal':
     case 'up':
     case 'active':
-      return '健康';
+      return t('entities.detail.status.healthy');
     case 'unknown':
-      return '未知';
+      return t('entities.detail.status.unknown');
     case 'down':
     case 'critical':
     case 'error':
-      return '异常';
+      return t('entities.detail.status.abnormal');
     case 'warning':
-      return '告警';
+      return t('entities.detail.status.warning');
     default:
       return normalized;
   }
 }
 
-export function buildDetailFacts(entity: { id?: number | string | null; type?: string | null; status?: string | null; owner?: string | null }) {
+function entityDetailStatusTone(status?: string | null): EntityDetailRowTone {
+  const normalized = String(status || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+
+  if (['healthy', 'normal', 'up', 'active'].includes(normalized)) {
+    return 'success';
+  }
+  if (normalized === 'warning') {
+    return 'warning';
+  }
+  if (['abnormal', 'critical', 'down', 'error', 'offline', 'unhealthy'].includes(normalized)) {
+    return 'danger';
+  }
+  return 'neutral';
+}
+
+function scoreTone(score: number): EntityDetailRowTone {
+  if (score >= 80) return 'success';
+  if (score >= 60) return 'warning';
+  return 'danger';
+}
+
+function countEvidenceTone(count: number, healthyWhenZero = true): EntityDetailRowTone {
+  if (count <= 0) return healthyWhenZero ? 'success' : 'neutral';
+  return 'danger';
+}
+
+export function buildDetailFacts(
+  entity: { id?: number | string | null; type?: string | null; status?: string | null; owner?: string | null },
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+) {
   return [
-    { label: '实体 ID', value: String(entity.id || '-') },
-    { label: '类型', value: entity.type || '-' },
-    { label: '状态', value: localizeStatus(entity.status) },
-    { label: '负责人', value: entity.owner || '-' }
+    { label: t('entities.detail.fact.id'), value: String(entity.id || '-') },
+    { label: t('entities.detail.fact.type'), value: entity.type || '-' },
+    { label: t('entities.detail.fact.status'), value: localizeStatus(entity.status, t) },
+    { label: t('entities.detail.fact.owner'), value: entity.owner || '-' }
   ];
 }
 
@@ -68,13 +114,14 @@ export function buildOverviewRows(
     system?: string | null;
     type?: string | null;
   },
-  _detail: Pick<EntityDetailDto, 'activeAlerts' | 'boundMonitors' | 'nextActions'>
+  _detail: Pick<EntityDetailDto, 'activeAlerts' | 'boundMonitors' | 'nextActions'>,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ) {
   return [
-    { title: '状态', copy: localizeStatus(entity.status), meta: entity.type || '-' },
-    { title: '负责人', copy: entity.owner || '-', meta: entity.system || '-' },
-    { title: '环境', copy: entity.environment || '-', meta: entity.namespace || '-' },
-    { title: '描述', copy: entity.description || '-', meta: entity.source || '-' }
+    { title: t('entities.detail.overview.status'), copy: localizeStatus(entity.status, t), meta: entity.type || '-', tone: entityDetailStatusTone(entity.status) },
+    { title: t('entities.detail.overview.owner'), copy: entity.owner || '-', meta: entity.system || '-' },
+    { title: t('entities.detail.overview.environment'), copy: entity.environment || '-', meta: entity.namespace || '-' },
+    { title: t('entities.detail.overview.description'), copy: entity.description || '-', meta: entity.source || '-' }
   ];
 }
 
@@ -82,7 +129,11 @@ function formatCount(value: number, unit: string) {
   return `${value} ${unit}`;
 }
 
-function localizeActionText(value?: string | null, fallback = '-') {
+function localizeActionText(
+  value?: string | null,
+  fallback = '-',
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+) {
   const normalized = value?.trim();
   if (!normalized) {
     return fallback;
@@ -90,30 +141,31 @@ function localizeActionText(value?: string | null, fallback = '-') {
 
   switch (normalized) {
     case 'Open monitors':
-      return '打开监控';
+      return t('entities.detail.action-text.open-monitors');
     case 'Open discovery':
-      return '打开发现';
+      return t('entities.detail.action-text.open-discovery');
     case 'Open definition':
     case 'Open definition workspace':
-      return '打开定义';
+      return t('entities.detail.action-text.open-definition');
     case 'Inspect abnormal monitors first.':
     case 'Inspect the abnormal monitors first.':
-      return '先检查异常监控。';
+      return t('entities.detail.action-text.inspect-abnormal');
     case 'Add more evidence before triage.':
-      return '先补充更多证据。';
+      return t('entities.detail.action-text.add-evidence');
     case 'Review the definition shell before adding ownership or evidence.':
-      return '先检查定义工作台，再补齐归属和证据。';
+      return t('entities.detail.action-text.review-definition');
     case 'Next action':
-      return '下一步动作';
+      return t('entities.detail.action-text.next-action');
     case 'server guidance':
-      return '服务端建议';
+      return t('entities.detail.action-text.server-guidance');
     default:
       return normalized;
   }
 }
 
 export function buildSummaryRows(
-  detail: Pick<EntityDetailDto, 'evidenceSummary' | 'monitorSummary' | 'logSummary' | 'traceSummary' | 'boundMonitors'>
+  detail: Pick<EntityDetailDto, 'evidenceSummary' | 'monitorSummary' | 'logSummary' | 'traceSummary' | 'boundMonitors'>,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ) {
   const boundMonitorCount = detail.monitorSummary?.totalBoundMonitors ?? detail.boundMonitors?.length ?? 0;
   const downMonitorCount = detail.evidenceSummary?.downMonitorCount ?? 0;
@@ -123,19 +175,31 @@ export function buildSummaryRows(
 
   return [
     {
-      title: '关联指标',
-      copy: formatCount(boundMonitorCount, '个绑定监控'),
-      meta: downMonitorCount > 0 ? formatCount(downMonitorCount, '个异常监控') : '暂无异常监控'
+      title: t('entities.detail.summary.metrics.title'),
+      copy: formatCount(boundMonitorCount, t('entities.detail.summary.metrics.bound')),
+      meta:
+        downMonitorCount > 0
+          ? formatCount(downMonitorCount, t('entities.detail.summary.metrics.down'))
+          : t('entities.detail.summary.metrics.no-down'),
+      tone: downMonitorCount > 0 ? 'danger' : boundMonitorCount > 0 ? 'success' : 'neutral'
     },
     {
-      title: '关联日志',
-      copy: logHintCount > 0 ? `${formatCount(logHintCount, '条查询线索')}可用` : '暂无查询线索',
-      meta: detail.logSummary?.preferredQueryTitle || detail.logSummary?.fallbackSearchTerm || '-'
+      title: t('entities.detail.summary.logs.title'),
+      copy:
+        logHintCount > 0
+          ? t('entities.detail.summary.logs.available', { count: formatCount(logHintCount, t('entities.detail.summary.logs.hints')) })
+          : t('entities.detail.summary.logs.no-hints'),
+      meta: detail.logSummary?.preferredQueryTitle || detail.logSummary?.fallbackSearchTerm || '-',
+      tone: logHintCount > 0 ? 'warning' : 'neutral'
     },
     {
-      title: '关联链路',
-      copy: formatCount(traceCount, '条近期链路'),
-      meta: errorTraceCount > 0 ? formatCount(errorTraceCount, '条错误链路') : '暂无错误链路'
+      title: t('entities.detail.summary.traces.title'),
+      copy: formatCount(traceCount, t('entities.detail.summary.traces.recent')),
+      meta:
+        errorTraceCount > 0
+          ? formatCount(errorTraceCount, t('entities.detail.summary.traces.errors'))
+          : t('entities.detail.summary.traces.no-errors'),
+      tone: errorTraceCount > 0 ? 'danger' : traceCount > 0 ? 'success' : 'neutral'
     }
   ];
 }
@@ -161,6 +225,23 @@ function formatPercent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
+function formatEvidenceCount(count: number, key: string, t: EntityDetailViewModelTranslator) {
+  return t(key, { count });
+}
+
+function activeSignalNames(summary: EntityDetailDto['unifiedEvidenceSummary']) {
+  const explicit = summary?.activeSignals?.filter(Boolean) || [];
+  if (explicit.length > 0) {
+    return explicit;
+  }
+
+  const signals = [];
+  if (summary?.metricsActive) signals.push('metrics');
+  if (summary?.logsActive) signals.push('logs');
+  if (summary?.tracesActive) signals.push('traces');
+  return signals;
+}
+
 function readNumericField(source: unknown, keys: string[]) {
   if (!source || typeof source !== 'object') {
     return null;
@@ -183,7 +264,10 @@ function readNumericField(source: unknown, keys: string[]) {
   return null;
 }
 
-function formatLatency(traceSummary: EntityDetailDto['traceSummary']) {
+function formatLatency(
+  traceSummary: EntityDetailDto['traceSummary'],
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+) {
   const latencyMs = readNumericField(traceSummary, [
     'latencyP95Ms',
     'p95LatencyMs',
@@ -195,17 +279,20 @@ function formatLatency(traceSummary: EntityDetailDto['traceSummary']) {
   const normalizedMs = latencyMs ?? (durationNanos == null ? null : durationNanos / 1_000_000);
 
   if (normalizedMs == null) {
-    return { copy: '暂无链路延迟', meta: '等待 OTLP Span' };
+    return { copy: t('entities.detail.health.latency.no-data'), meta: t('entities.detail.health.latency.waiting'), tone: 'neutral' as EntityDetailRowTone };
   }
 
   if (normalizedMs >= 1000) {
-    return { copy: `${(normalizedMs / 1000).toFixed(1)} s`, meta: '链路延迟' };
+    return { copy: `${(normalizedMs / 1000).toFixed(1)} s`, meta: t('entities.detail.health.latency.meta'), tone: 'warning' as EntityDetailRowTone };
   }
 
-  return { copy: `${Math.round(normalizedMs)} ms`, meta: '链路延迟' };
+  return { copy: `${Math.round(normalizedMs)} ms`, meta: t('entities.detail.health.latency.meta'), tone: 'success' as EntityDetailRowTone };
 }
 
-export function buildEntityHealthModel(detail: EntityDetailDto): DetailRow[] {
+export function buildEntityHealthModel(
+  detail: EntityDetailDto,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+): DetailRow[] {
   const totalBoundMonitors = finiteNumber(
     detail.monitorSummary?.totalBoundMonitors ?? detail.boundMonitors?.length ?? detail.entity?.monitorBinds?.length,
     0
@@ -225,7 +312,7 @@ export function buildEntityHealthModel(detail: EntityDetailDto): DetailRow[] {
   const availabilityRatio = totalBoundMonitors > 0 ? healthyMonitorCount / totalBoundMonitors : 0;
   const errorRate = recentTraceCount > 0 ? recentErrorTraceCount / recentTraceCount : 0;
   const recentAnomalyCount = downMonitorCount + recentErrorTraceCount + logHintCount;
-  const latency = formatLatency(detail.traceSummary);
+  const latency = formatLatency(detail.traceSummary, t);
   const collectorEvidence = buildCollectorHealthEvidence({
     healthyMonitorCount,
     lastEvidenceLabel: detail.evidenceSummary?.lastEvidenceAt == null ? null : String(detail.evidenceSummary.lastEvidenceAt),
@@ -235,7 +322,7 @@ export function buildEntityHealthModel(detail: EntityDetailDto): DetailRow[] {
     taskCount: detail.evidenceSummary?.collectorTaskCount,
     totalBoundMonitors,
     totalCollectorCount: detail.evidenceSummary?.collectorTotalCount
-  });
+  }, t);
   const collectorHandoff = withQuery('/setting/collector', buildContextParams(detail, 'last-1h'));
   const score = clampScore(
     100 -
@@ -246,55 +333,153 @@ export function buildEntityHealthModel(detail: EntityDetailDto): DetailRow[] {
   );
 
   return [
-    { title: '健康评分', copy: `${score} / 100`, meta: '轻量健康模型' },
+    { title: t('entities.detail.health.score.title'), copy: `${score} / 100`, meta: t('entities.detail.health.score.meta'), tone: scoreTone(score) },
     {
-      title: '可用性',
-      copy: totalBoundMonitors > 0 ? formatPercent(availabilityRatio) : '等待监控模板',
-      meta: totalBoundMonitors > 0 ? `${healthyMonitorCount} / ${totalBoundMonitors} 监控健康` : '暂无绑定监控'
+      title: t('entities.detail.health.availability.title'),
+      copy: totalBoundMonitors > 0 ? formatPercent(availabilityRatio) : t('entities.detail.health.availability.waiting'),
+      meta:
+        totalBoundMonitors > 0
+          ? t('entities.detail.health.availability.meta', { healthy: healthyMonitorCount, total: totalBoundMonitors })
+          : t('entities.detail.health.availability.no-monitors'),
+      tone: totalBoundMonitors > 0 ? countEvidenceTone(downMonitorCount) : 'neutral'
     },
     {
-      title: '错误率',
-      copy: recentTraceCount > 0 ? formatPercent(errorRate) : '暂无链路样本',
-      meta: recentTraceCount > 0 ? `${recentErrorTraceCount} / ${recentTraceCount} 错误链路` : '等待链路上报'
+      title: t('entities.detail.health.error-rate.title'),
+      copy: recentTraceCount > 0 ? formatPercent(errorRate) : t('entities.detail.health.error-rate.no-samples'),
+      meta:
+        recentTraceCount > 0
+          ? t('entities.detail.health.error-rate.meta', { errors: recentErrorTraceCount, total: recentTraceCount })
+          : t('entities.detail.health.error-rate.waiting'),
+      tone: recentTraceCount > 0 ? countEvidenceTone(recentErrorTraceCount) : 'neutral'
     },
-    { title: '延迟', copy: latency.copy, meta: latency.meta },
-    { title: '当前告警', copy: `${activeAlertCount} 个活跃告警`, meta: '告警闭环' },
+    { title: t('entities.detail.health.latency.title'), copy: latency.copy, meta: latency.meta, tone: latency.tone },
     {
-      title: '最近异常',
-      copy: `${recentAnomalyCount} 个异常线索`,
-      meta: `监控 ${downMonitorCount} · 链路 ${recentErrorTraceCount} · 日志 ${logHintCount}`
+      title: t('entities.detail.health.alerts.title'),
+      copy: t('entities.detail.health.alerts.copy', { count: activeAlertCount }),
+      meta: t('entities.detail.health.alerts.meta'),
+      tone: countEvidenceTone(activeAlertCount)
     },
     {
-      title: '采集健康',
+      title: t('entities.detail.health.anomalies.title'),
+      copy: t('entities.detail.health.anomalies.copy', { count: recentAnomalyCount }),
+      meta: t('entities.detail.health.anomalies.meta', {
+        logs: logHintCount,
+        monitors: downMonitorCount,
+        traces: recentErrorTraceCount
+      }),
+      tone: recentAnomalyCount > 0 ? 'warning' : 'success'
+    },
+    {
+      title: t('entities.detail.health.collector.title'),
       copy: collectorEvidence.copy,
       freshness: collectorEvidence.freshness,
       meta: collectorEvidence.meta,
+      tone: collectorEvidence.tone,
       ...(collectorHandoff ? { href: collectorHandoff } : {})
+    }
+  ];
+}
+
+export function buildUnifiedEvidenceRows(
+  detail: Pick<EntityDetailDto, 'unifiedEvidenceSummary' | 'traceSummary'>,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+): DetailRow[] {
+  const summary = detail.unifiedEvidenceSummary;
+  if (!summary) {
+    return [
+      {
+        title: t('entities.detail.evidence.coverage.title'),
+        copy: t('entities.detail.evidence.coverage.waiting'),
+        meta: t('entities.detail.evidence.coverage.no-model'),
+        tone: 'neutral'
+      }
+    ];
+  }
+
+  const signals = activeSignalNames(summary);
+  const activeSignalCount = finiteNumber(summary.activeSignalCount, signals.length);
+  const metricEvidenceCount = finiteNumber(summary.metricEvidenceCount, 0);
+  const logEvidenceCount = finiteNumber(summary.logEvidenceCount, 0);
+  const traceEvidenceCount = finiteNumber(summary.traceEvidenceCount, 0);
+  const traceErrorCount = finiteNumber(detail.traceSummary?.recentErrorTraceCount, 0);
+
+  return [
+    {
+      title: t('entities.detail.evidence.coverage.title'),
+      copy: t('entities.detail.evidence.coverage.copy', { count: activeSignalCount }),
+      meta: signals.length > 0 ? signals.join(' · ') : t('entities.detail.evidence.coverage.no-signals'),
+      tone: activeSignalCount > 0 ? 'success' : 'neutral'
+    },
+    {
+      title: t('entities.detail.evidence.metrics.title'),
+      copy: formatEvidenceCount(metricEvidenceCount, 'entities.detail.evidence.metrics.copy', t),
+      meta: t('entities.detail.evidence.metrics.meta'),
+      tone: summary.metricsActive || metricEvidenceCount > 0 ? 'success' : 'neutral'
+    },
+    {
+      title: t('entities.detail.evidence.logs.title'),
+      copy: formatEvidenceCount(logEvidenceCount, 'entities.detail.evidence.logs.copy', t),
+      meta: t('entities.detail.evidence.logs.meta'),
+      tone: summary.logsActive || logEvidenceCount > 0 ? 'warning' : 'neutral'
+    },
+    {
+      title: t('entities.detail.evidence.traces.title'),
+      copy: formatEvidenceCount(traceEvidenceCount, 'entities.detail.evidence.traces.copy', t),
+      meta:
+        traceErrorCount > 0
+          ? t('entities.detail.evidence.traces.errors', { count: traceErrorCount })
+          : t('entities.detail.evidence.traces.meta'),
+      tone: traceErrorCount > 0 ? 'danger' : summary.tracesActive || traceEvidenceCount > 0 ? 'success' : 'neutral'
+    },
+    {
+      title: t('entities.detail.evidence.latest.title'),
+      copy:
+        summary.latestObservedAt == null
+          ? t('entities.detail.evidence.latest.waiting')
+          : String(summary.latestObservedAt),
+      meta: t('entities.detail.evidence.latest.meta'),
+      tone: 'neutral'
     }
   ];
 }
 
 export function buildNextActionRows(
   detail: Pick<EntityDetailDto, 'nextActions'>,
-  entityId: string | number | null | undefined
+  entityId: string | number | null | undefined,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ) {
   const actions = (detail.nextActions || [])
     .filter(action => action?.title || action?.summary || action?.actionLabel)
     .map(action => ({
-      title: localizeActionText(action.title || action.actionLabel, '下一步动作'),
-      copy: localizeActionText(action.summary, '-'),
-      meta: localizeActionText(action.actionLabel || action.actionType, '服务端建议')
+      title: localizeActionText(action.title || action.actionLabel, t('entities.detail.action-text.next-action'), t),
+      copy: localizeActionText(action.summary, '-', t),
+      meta: localizeActionText(action.actionLabel || action.actionType, t('entities.detail.action-text.server-guidance'), t)
     }));
 
-  return actions.length > 0 ? actions : buildDrilldownRows(entityId);
+  return actions.length > 0 ? actions : buildDrilldownRows(entityId, t);
 }
 
-export function buildDrilldownRows(entityId: string | number | null | undefined) {
+export function buildDrilldownRows(
+  entityId: string | number | null | undefined,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+) {
   const id = entityId ? String(entityId) : null;
   return [
-    { title: '定义工作台', copy: id ? `/entities/${id}/definition` : '-', meta: '下一步路由' },
-    { title: '编辑实体', copy: id ? `/entities/${id}/edit` : '-', meta: '下一步路由' },
-    { title: '遥测发现', copy: '/entities/discovery', meta: '共享路由' }
+    {
+      title: t('entities.detail.drilldown.definition.title'),
+      copy: id ? `/entities/${id}/definition` : '-',
+      meta: t('entities.detail.drilldown.next-route')
+    },
+    {
+      title: t('entities.detail.drilldown.edit.title'),
+      copy: id ? `/entities/${id}/edit` : '-',
+      meta: t('entities.detail.drilldown.next-route')
+    },
+    {
+      title: t('entities.detail.drilldown.discovery.title'),
+      copy: '/entities/discovery',
+      meta: t('entities.detail.drilldown.shared-route')
+    }
   ];
 }
 
@@ -330,6 +515,17 @@ function normalizeContextText(value: string | null | undefined) {
   return trimmed ? trimmed : undefined;
 }
 
+function normalizeUnknownText(value: unknown) {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return undefined;
+}
+
 function resolveEntityTimeContext(context: EntityDetailTimeContext | undefined): SignalRouteContext {
   if (!context) return { timeRange: 'last-1h' };
   return typeof context === 'string' ? { timeRange: context } : context;
@@ -339,16 +535,24 @@ function hasExplicitRouteContext(context: SignalRouteContext | undefined) {
   return Boolean(context && Object.values(context).some(value => normalizeContextText(value)));
 }
 
-export function buildEntityIncomingContextRows(routeContext?: SignalRouteContext): EntityIncomingContextRow[] {
+export function buildEntityIncomingContextRows(
+  routeContext?: SignalRouteContext,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+): EntityIncomingContextRow[] {
   if (!hasExplicitRouteContext(routeContext)) return [];
   const hasTimeContext = Boolean(routeContext?.timeRange || routeContext?.start || routeContext?.end || routeContext?.refresh || routeContext?.live || routeContext?.tz);
   const hasSourceContext = Boolean(routeContext?.source || routeContext?.collector || routeContext?.template);
+  const entityLabel = t('signal.context.entity.label');
+  const serviceLabel = t('signal.context.service.label');
+  const environmentLabel = t('signal.context.environment.label');
+  const timeLabel = t('signal.context.time.label');
+  const sourceLabel = t('signal.context.source.label');
 
-  return buildSignalEntityContextRows(routeContext || {}).filter(row => {
-    if (row.label === '当前实体') return false;
-    if (row.label === '当前服务' || row.label === '当前环境') return row.value !== '-';
-    if (row.label === '时间范围') return hasTimeContext;
-    if (row.label === '采集来源') return hasSourceContext;
+  return buildSignalEntityContextRows(routeContext || {}, {}, t).filter(row => {
+    if (row.label === entityLabel) return false;
+    if (row.label === serviceLabel || row.label === environmentLabel) return row.value !== '-';
+    if (row.label === timeLabel) return hasTimeContext;
+    if (row.label === sourceLabel) return hasSourceContext;
     return row.value !== '-';
   });
 }
@@ -394,7 +598,11 @@ function withQuery(path: string, query: string) {
   return query ? `${path}?${query}` : path;
 }
 
-export function buildEntityContextHandoffLinks(detail: EntityDetailDto, timeContext: EntityDetailTimeContext = 'last-1h'): HandoffRow[] {
+export function buildEntityContextHandoffLinks(
+  detail: EntityDetailDto,
+  timeContext: EntityDetailTimeContext = 'last-1h',
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+): HandoffRow[] {
   const entity = getEntityRecord(detail);
   const entityId = entity.id != null ? String(entity.id) : '';
   const shared = buildContextParams(detail, timeContext);
@@ -404,47 +612,143 @@ export function buildEntityContextHandoffLinks(detail: EntityDetailDto, timeCont
   return [
     {
       key: 'metrics',
-      title: '关联指标',
+      title: t('entities.detail.handoff.metrics.title'),
       copy: withQuery('/ingestion/otlp/metrics', shared),
-      meta: '指标工作台'
+      meta: t('entities.detail.handoff.metrics.meta')
     },
     {
       key: 'logs',
-      title: '关联日志',
+      title: t('entities.detail.handoff.logs.title'),
       copy: withQuery('/log/manage', sharedWithTrace),
-      meta: '日志工作台'
+      meta: t('entities.detail.handoff.logs.meta')
     },
     {
       key: 'traces',
-      title: '关联链路',
+      title: t('entities.detail.handoff.traces.title'),
       copy: withQuery('/trace/manage', sharedWithTrace),
-      meta: '链路工作台'
+      meta: t('entities.detail.handoff.traces.meta')
     },
     {
       key: 'alerts',
-      title: '告警规则',
+      title: t('entities.detail.handoff.alerts.title'),
       copy: withQuery('/alert/setting', shared),
-      meta: '阈值规则'
+      meta: t('entities.detail.handoff.alerts.meta')
     },
     {
       key: 'monitors',
-      title: '绑定监控',
+      title: t('entities.detail.handoff.monitors.title'),
       copy: withQuery('/monitors', monitorQuery),
-      meta: '监控对象'
+      meta: t('entities.detail.handoff.monitors.meta')
     },
     {
       key: 'topology',
-      title: '上下游拓扑',
+      title: t('entities.detail.handoff.topology.title'),
       copy: withQuery('/topology', shared),
-      meta: '关系图'
+      meta: t('entities.detail.handoff.topology.meta')
     },
     {
       key: 'template',
-      title: '模板绑定',
+      title: t('entities.detail.handoff.template.title'),
       copy: withQuery(entityId ? `/entities/${entityId}/definition` : '/entities', shared),
-      meta: '监控模板'
+      meta: t('entities.detail.handoff.template.meta')
     }
   ];
+}
+
+function buildPrefixedQuery(prefix: [string, string][], baseQuery: string) {
+  const params = new URLSearchParams();
+  prefix.forEach(([key, value]) => params.set(key, value));
+  const baseParams = new URLSearchParams(baseQuery);
+  baseParams.forEach((value, key) => params.set(key, value));
+  return params.toString();
+}
+
+function findRunbookLink(entity: Entity): EntityLinkRef | null {
+  const links = entity.links || [];
+  return (
+    links.find(link => {
+      const type = normalizeUnknownText(link.type)?.toLowerCase();
+      const name = normalizeUnknownText(link.name)?.toLowerCase();
+      const provider = normalizeUnknownText(link.provider)?.toLowerCase();
+      return Boolean(link.url && [type, name, provider].some(value => value?.includes('runbook')));
+    }) || null
+  );
+}
+
+export function buildEntityEvidenceHandoffRows(
+  detail: EntityDetailDto,
+  timeContext: EntityDetailTimeContext = 'last-1h',
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+): EvidenceHandoffRow[] {
+  const entity = getEntityRecord(detail);
+  const entityId = entity.id != null ? String(entity.id) : '';
+  const entityName = normalizeUnknownText(entity.displayName) || normalizeUnknownText(entity.name) || entityId;
+  const contextQuery = buildContextParams(detail, timeContext, { includeEntityName: true, includeReturnTo: true });
+  const sharedQuery = buildContextParams(detail, timeContext);
+  const activeAlertCount = Math.max(
+    finiteNumber(detail.alertSummary?.totalActiveAlerts, 0),
+    finiteNumber(detail.evidenceSummary?.activeAlertCount, 0),
+    finiteNumber(detail.activeAlerts?.length, 0)
+  );
+  const relations = ((detail.entity?.relations || []) as Array<Record<string, unknown>>).filter(Boolean);
+  const firstRelation = relations[0];
+  const relationType = normalizeUnknownText(firstRelation?.type) || normalizeUnknownText(firstRelation?.relationType);
+  const relationTargetId = normalizeUnknownText(firstRelation?.targetEntityId) || normalizeUnknownText(firstRelation?.targetId);
+  const relationTargetName =
+    normalizeUnknownText(firstRelation?.targetEntityName) ||
+    normalizeUnknownText(firstRelation?.targetName) ||
+    relationTargetId ||
+    t('entities.detail.evidence-handoff.topology.unknown-target');
+  const runbookUrl = normalizeUnknownText(entity.runbook);
+  const runbookLink = runbookUrl ? null : findRunbookLink(entity);
+  const resolvedRunbookUrl = runbookUrl || normalizeUnknownText(runbookLink?.url);
+  const rows: EvidenceHandoffRow[] = [];
+
+  if (activeAlertCount > 0) {
+    rows.push({
+      key: 'alerts',
+      evidence: 'active-alerts',
+      count: activeAlertCount,
+      title: t('entities.detail.evidence-handoff.alerts.title'),
+      copy: t('entities.detail.evidence-handoff.alerts.copy', { count: activeAlertCount }),
+      meta: t('entities.detail.evidence-handoff.alerts.meta'),
+      href: withQuery('/alert', buildPrefixedQuery([['status', 'firing']], contextQuery)),
+      tone: 'danger'
+    });
+  }
+
+  if (firstRelation) {
+    const topologyParams = new URLSearchParams(sharedQuery);
+    addContextParam(topologyParams, 'topologyTargetId', relationTargetId);
+    addContextParam(topologyParams, 'topologyTargetName', relationTargetName);
+    rows.push({
+      key: 'topology',
+      evidence: 'topology-relation',
+      count: relations.length,
+      title: t('entities.detail.evidence-handoff.topology.title'),
+      copy: relationTargetName,
+      meta: relationTargetId
+        ? `${relationType || t('entities.detail.evidence-handoff.topology.default-relation')} · ${relationTargetId}`
+        : relationType || t('entities.detail.evidence-handoff.topology.default-relation'),
+      href: withQuery('/topology', topologyParams.toString()),
+      tone: 'warning'
+    });
+  }
+
+  if (resolvedRunbookUrl) {
+    rows.push({
+      key: 'runbook',
+      evidence: 'runbook',
+      count: 1,
+      title: t('entities.detail.evidence-handoff.runbook.title'),
+      copy: normalizeUnknownText(runbookLink?.name) || resolvedRunbookUrl,
+      meta: t('entities.detail.evidence-handoff.runbook.meta'),
+      href: resolvedRunbookUrl,
+      tone: 'success'
+    });
+  }
+
+  return rows;
 }
 
 function recordLabelSummary(value: unknown) {
@@ -457,15 +761,19 @@ function recordLabelSummary(value: unknown) {
   return entries.slice(0, 2).map(([key, entryValue]) => `${key}=${String(entryValue)}`).join(', ');
 }
 
-export function buildCurrentAlertRows(detail: EntityDetailDto): DetailRow[] {
+export function buildCurrentAlertRows(
+  detail: EntityDetailDto,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+): DetailRow[] {
   const alerts = (detail.activeAlerts || []) as Array<Record<string, unknown>>;
 
   if (alerts.length === 0) {
     return [
       {
-        title: '当前告警',
-        copy: '暂无活跃告警',
-        meta: `${detail.alertSummary?.totalActiveAlerts ?? 0} 个活跃`
+        title: t('entities.detail.alert-row.empty.title'),
+        copy: t('entities.detail.alert-row.empty.copy'),
+        meta: t('entities.detail.alert-row.empty.meta', { count: detail.alertSummary?.totalActiveAlerts ?? 0 }),
+        tone: 'success'
       }
     ];
   }
@@ -475,24 +783,42 @@ export function buildCurrentAlertRows(detail: EntityDetailDto): DetailRow[] {
     const status = String(alert.status || alert.state || 'firing');
     const labelSummary = recordLabelSummary(alert.labels);
     return {
-      title: `当前告警 #${alertId}`,
-      copy: String(alert.content || alert.summary || alert.name || alert.annotations || '告警待处理'),
-      meta: labelSummary === '-' ? status : `${status} · ${labelSummary}`
+      title: t('entities.detail.alert-row.active.title', { id: String(alertId) }),
+      copy: String(alert.content || alert.summary || alert.name || alert.annotations || t('entities.detail.alert-row.pending.copy')),
+      meta: labelSummary === '-' ? status : `${status} · ${labelSummary}`,
+      tone: 'danger'
     };
   });
 }
 
-export function buildRelationshipRows(detail: EntityDetailDto): DetailRow[] {
+export function buildRelationshipRows(
+  detail: EntityDetailDto,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+): DetailRow[] {
   const relations = (detail.entity?.relations || []) as Array<Record<string, unknown>>;
 
   if (relations.length === 0) {
-    return [{ title: '上下游关系', copy: '暂无关系数据', meta: '等待拓扑归并' }];
+    return [
+      {
+        title: t('entities.detail.relationship-row.empty.title'),
+        copy: t('entities.detail.relationship-row.empty.copy'),
+        meta: t('entities.detail.relationship-row.empty.meta')
+      }
+    ];
   }
 
   return relations.map(relation => ({
     title: String(relation.type || relation.relationType || 'related'),
-    copy: String(relation.targetEntityName || relation.targetName || relation.targetEntityId || '未知目标'),
-    meta: relation.targetEntityId != null ? String(relation.targetEntityId) : '上下游关系'
+    copy: String(
+      relation.targetEntityName ||
+      relation.targetName ||
+      relation.targetEntityId ||
+      t('entities.detail.relationship-row.unknown-target')
+    ),
+    meta:
+      relation.targetEntityId != null
+        ? String(relation.targetEntityId)
+        : t('entities.detail.relationship-row.default-meta')
   }));
 }
 
@@ -509,20 +835,23 @@ function templateSummary(monitorBinds: unknown[]) {
   return String(first.templateName || first.template || first.app || first.monitorId || first.id || '-');
 }
 
-function entityDisplayName(detail: EntityDetailDto) {
+function entityDisplayName(detail: EntityDetailDto, t: EntityDetailViewModelTranslator = translateEntityDetailViewModel) {
   const entity = getEntityRecord(detail);
-  return String(entity.displayName || entity.name || entity.id || '实体详情');
+  return String(entity.displayName || entity.name || entity.id || t('entities.detail.title.fallback'));
 }
 
-export function buildEntityAttributionRows(detail: EntityDetailDto): AttributionRow[] {
+export function buildEntityAttributionRows(
+  detail: EntityDetailDto,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+): AttributionRow[] {
   const identities = detail.entity?.identities || [];
   const monitorBinds = detail.entity?.monitorBinds || [];
   const hasIdentities = identities.length > 0;
   const hasMonitorBinds = monitorBinds.length > 0;
   const hasAnyAttribution = hasIdentities || hasMonitorBinds;
   const missingParts = [
-    ...(hasIdentities ? [] : ['身份标识']),
-    ...(hasMonitorBinds ? [] : ['监控绑定'])
+    ...(hasIdentities ? [] : [t('entities.detail.attribution.diagnostic.missing-part.identity')]),
+    ...(hasMonitorBinds ? [] : [t('entities.detail.attribution.diagnostic.missing-part.monitor-bind')])
   ];
   const diagnosticState: AttributionState = missingParts.length === 0 ? 'ready' : hasAnyAttribution ? 'review' : 'missing';
 
@@ -530,44 +859,75 @@ export function buildEntityAttributionRows(detail: EntityDetailDto): Attribution
     {
       key: 'traditional-monitor',
       state: hasMonitorBinds ? 'ready' : 'missing',
-      title: '传统监控绑定',
-      copy: `${monitorBinds.length} 个绑定`,
-      meta: hasMonitorBinds ? templateSummary(monitorBinds) : '等待监控模板'
+      title: t('entities.detail.attribution.traditional-monitor.title'),
+      copy: t('entities.detail.attribution.monitor-bind.count', { count: monitorBinds.length }),
+      meta: hasMonitorBinds ? templateSummary(monitorBinds) : t('entities.detail.attribution.traditional-monitor.waiting-meta')
     },
     {
       key: 'otlp-attribution',
       state: hasIdentities ? 'ready' : 'missing',
-      title: 'OTLP 归因',
-      copy: hasIdentities ? `${identities.length} 个身份` : '缺少身份',
-      meta: hasIdentities ? identitySummary(identities) : '等待 hertzbeat.entity_id 或 service.name'
+      title: t('entities.detail.attribution.otlp.title'),
+      copy: hasIdentities
+        ? t('entities.detail.attribution.identity.count', { count: identities.length })
+        : t('entities.detail.attribution.identity.missing'),
+      meta: hasIdentities ? identitySummary(identities) : t('entities.detail.attribution.otlp.waiting-meta')
     },
     {
       key: 'candidate-confirmation',
       state: hasAnyAttribution ? 'ready' : 'review',
-      title: '候选确认',
-      copy: hasAnyAttribution ? '已归入实体' : '待确认',
-      meta: hasAnyAttribution ? entityDisplayName(detail) : '进入遥测发现确认候选'
+      title: t('entities.detail.attribution.candidate.title'),
+      copy: hasAnyAttribution
+        ? t('entities.detail.attribution.candidate.assigned')
+        : t('entities.detail.attribution.candidate.pending'),
+      meta: hasAnyAttribution ? entityDisplayName(detail, t) : t('entities.detail.attribution.candidate.discover-meta')
     },
     {
       key: 'missing-diagnostics',
       state: diagnosticState,
-      title: '归因诊断',
-      copy: missingParts.length === 0 ? '归因证据完整' : hasAnyAttribution ? '归因证据不完整' : '需要补齐归因',
-      meta: missingParts.length === 0 ? '可进入对象详情' : `缺少${missingParts.join('、')}`
+      title: t('entities.detail.attribution.diagnostic.title'),
+      copy:
+        missingParts.length === 0
+          ? t('entities.detail.attribution.diagnostic.complete')
+          : hasAnyAttribution
+            ? t('entities.detail.attribution.diagnostic.incomplete')
+            : t('entities.detail.attribution.diagnostic.missing'),
+      meta:
+        missingParts.length === 0
+          ? t('entities.detail.attribution.diagnostic.complete-meta')
+          : t('entities.detail.attribution.diagnostic.missing-meta', { parts: missingParts.join('、') })
     }
   ];
 }
 
-export function buildCollectionSourceRows(detail: EntityDetailDto): DetailRow[] {
+export function buildCollectionSourceRows(
+  detail: EntityDetailDto,
+  t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
+): DetailRow[] {
   const entity = getEntityRecord(detail);
   const identities = detail.entity?.identities || [];
   const monitorBinds = detail.entity?.monitorBinds || [];
   const labels = entity.labels || {};
 
   return [
-    { title: '采集来源', copy: entity.source || 'manual', meta: '实体来源' },
-    { title: '身份标识', copy: `${identities.length} 个身份`, meta: identitySummary(identities) },
-    { title: '模板绑定', copy: `${monitorBinds.length} 个绑定`, meta: templateSummary(monitorBinds) },
-    { title: '标签', copy: `${Object.keys(labels).length} 个标签`, meta: recordLabelSummary(labels) }
+    {
+      title: t('entities.detail.collection.source.title'),
+      copy: entity.source || 'manual',
+      meta: t('entities.detail.collection.source.meta')
+    },
+    {
+      title: t('entities.detail.collection.identity.title'),
+      copy: t('entities.detail.collection.identity.count', { count: identities.length }),
+      meta: identitySummary(identities)
+    },
+    {
+      title: t('entities.detail.collection.template.title'),
+      copy: t('entities.detail.collection.template.count', { count: monitorBinds.length }),
+      meta: templateSummary(monitorBinds)
+    },
+    {
+      title: t('entities.detail.collection.labels.title'),
+      copy: t('entities.detail.collection.labels.count', { count: Object.keys(labels).length }),
+      meta: recordLabelSummary(labels)
+    }
   ];
 }

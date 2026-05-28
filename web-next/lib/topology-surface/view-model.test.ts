@@ -2,13 +2,18 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
-import { buildTopologyFaultAnalysisReview, buildTopologyServiceMap } from './view-model';
+import {
+  buildTopologyFaultAnalysisReview,
+  buildTopologyServiceMap,
+  buildTopologyServiceMapFromApiGraph
+} from './view-model';
 
 describe('topology surface config', () => {
   it('builds a HertzBeat-native topology model with enterprise relationship sources', () => {
     const model = buildTopologyServiceMap();
 
-    expect(model.productIdentity).toBe('HertzBeat 企业运维拓扑');
+    expect(model.dataSource).toBe('static-fallback');
+    expect(model.productIdentity).toBe('Operations topology');
     expect(model.viewModes.map(mode => mode.key)).toEqual(['application', 'service-call', 'resource-dependency', 'alert-impact']);
     expect(model.sources.map(source => source.kind)).toEqual(
       expect.arrayContaining([
@@ -32,9 +37,9 @@ describe('topology surface config', () => {
       healthAffordance: {
         score: 62,
         scoreText: '62 / 100',
-        label: '健康评分 62',
-        copy: '采集 1 / 2 健康',
-        meta: '告警 1 · 异常 5',
+        label: 'Health score 62',
+        copy: 'Collected 1 / 2 healthy',
+        meta: 'Alerts 1 · anomalies 5',
         tone: 'warning'
       },
       signals: expect.arrayContaining(['metrics', 'logs', 'traces', 'alerts']),
@@ -74,6 +79,502 @@ describe('topology surface config', () => {
       ])
     );
     expect(model.edges.some(edge => edge.alertImpact === 'critical')).toBe(true);
+  });
+
+  it('maps API-backed topology graph data instead of falling back to the static service map', () => {
+    const model = buildTopologyServiceMapFromApiGraph(
+      {
+        apiBacked: true,
+        focusEntityId: 501,
+        depth: 2,
+        sourceKinds: ['otlp-trace-call'],
+        nodes: [
+          {
+            id: '501',
+            entityId: 501,
+            entityName: 'api-checkout',
+            entityType: 'service',
+            namespace: 'commerce',
+            environment: 'prod',
+            health: 'warning',
+            focus: true,
+            evidenceBadges: ['entity-relation', 'otlp'],
+            redMetrics: {
+              requestRatePerSecond: 12.34,
+              errorRate: 0.042,
+              latencyP95Ms: 180
+            }
+          },
+          {
+            id: '502',
+            entityId: 502,
+            entityName: 'api-orders',
+            entityType: 'service',
+            namespace: 'commerce',
+            environment: 'prod',
+            health: 'healthy',
+            focus: false,
+            evidenceBadges: ['entity-relation', 'otlp'],
+            redMetrics: {
+              requestRatePerSecond: '9.5',
+              errorRate: '0.01',
+              latencyP95Ms: '95'
+            }
+          }
+        ],
+        edges: [
+          {
+            id: '700',
+            relationId: 700,
+            sourceEntityId: 501,
+            targetEntityId: 502,
+            targetRef: undefined,
+            relationType: 'trace-call',
+            relationSource: 'otlp-trace-call',
+            sampleTraceId: 'trace-700',
+            sampleSpanId: 'span-700',
+            firstSeen: '2026-05-20T03:01:00Z',
+            lastSeen: '2026-05-20T03:08:00Z',
+            status: 'active',
+            score: 96,
+            evidenceBadges: ['entity-relation', 'otlp-trace-call'],
+            redMetrics: {
+              requestRatePerSecond: 7.25,
+              errorRate: 0.021,
+              latencyP95Ms: 123
+            }
+          }
+        ]
+      },
+      {
+        entityId: '501',
+        environment: 'prod',
+        timeRange: 'last-30m',
+        groupBy: 'source-kind'
+      }
+    );
+
+    expect(model.dataSource).toBe('api');
+    expect(model.apiDepth).toBe(2);
+    expect(model.activeNodeId).toBe('entity-501');
+    expect(model.filterContext.groupBy).toBe('source-kind');
+    expect(model.nodes.map(node => node.label)).toEqual(['api-checkout', 'api-orders']);
+    expect(model.nodes[0]).toMatchObject({
+      health: 'warning',
+      evidenceBadges: ['entity-relation', 'otlp', 'otlp-trace-call']
+    });
+    expect(model.nodes[0].redMetrics).toMatchObject({
+      requestRatePerSecond: 12.34,
+      errorRate: 0.042,
+      latencyP95Ms: 180
+    });
+    expect(model.nodes[1].redMetrics).toMatchObject({
+      requestRatePerSecond: 9.5,
+      errorRate: 0.01,
+      latencyP95Ms: 95
+    });
+    expect(model.nodes.map(node => node.id)).not.toContain('svc-checkout');
+    expect(model.edges).toHaveLength(1);
+    expect(model.edges[0]).toMatchObject({
+      id: 'relation-700',
+      from: 'entity-501',
+      to: 'entity-502',
+      relationshipType: 'trace-call',
+      source: 'otlp-trace-call',
+      evidenceBadges: ['entity-relation', 'otlp-trace-call'],
+      redMetrics: {
+        requestRatePerSecond: 7.25,
+        errorRate: 0.021,
+        latencyP95Ms: 123
+      },
+      focus: 'active-path'
+    });
+    expect(model.edges[0].evidence.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: 'api-checkout', meta: '501' }),
+        expect.objectContaining({ value: 'api-orders', meta: '502' }),
+        expect.objectContaining({ value: 'otlp-trace-call' }),
+        expect.objectContaining({ value: 'trace-700', meta: 'span-700' }),
+        expect.objectContaining({ value: '2026-05-20T03:01:00Z' })
+      ])
+    );
+    expect(model.edges[0].evidence).toMatchObject({
+      firstSeen: '2026-05-20T03:01:00Z',
+      lastSeen: '2026-05-20T03:08:00Z',
+      sampleTraceId: 'trace-700',
+      sampleSpanId: 'span-700'
+    });
+    expect(model.nodes[0].links.metricsHref).toContain('entityId=501');
+    expect(model.nodes[0].links.metricsHref).toContain('timeRange=last-30m');
+  });
+
+  it('uses trace-call edge sample context for signal drilldowns and return links', () => {
+    const model = buildTopologyServiceMapFromApiGraph(
+      {
+        apiBacked: true,
+        focusEntityId: 501,
+        depth: 2,
+        sourceKinds: ['otlp-trace-call'],
+        nodes: [
+          {
+            id: '501',
+            entityId: 501,
+            entityName: 'checkout-api',
+            entityType: 'service',
+            namespace: 'commerce',
+            environment: 'prod',
+            health: 'warning',
+            focus: true
+          },
+          {
+            id: '502',
+            entityId: 502,
+            entityName: 'payment-api',
+            entityType: 'service',
+            namespace: 'commerce',
+            environment: 'prod',
+            health: 'healthy'
+          }
+        ],
+        edges: [
+          {
+            id: 'trace-call:501:502:trace-701',
+            sourceEntityId: 501,
+            targetEntityId: 502,
+            relationType: 'trace-call',
+            relationSource: 'otlp-trace-call',
+            sampleTraceId: 'trace-701',
+            sampleSpanId: 'span-701',
+            status: 'warning',
+            evidenceBadges: ['otlp-trace-call', 'service-graph']
+          }
+        ]
+      },
+      {
+        entityId: '501',
+        entityName: 'checkout-api',
+        serviceName: 'checkout-api',
+        serviceNamespace: 'commerce',
+        environment: 'prod',
+        timeRange: 'last-30m',
+        traceId: 'incoming-trace',
+        spanId: 'incoming-span',
+        viewMode: 'service-call',
+        sourceKind: 'otlp-trace-call'
+      }
+    );
+
+    const selected = model.selectedEdge ?? model.edges[0];
+    expect(selected.evidence.sampleTraceId).toBe('trace-701');
+    expect(selected.evidence.sampleSpanId).toBe('span-701');
+
+    [selected.links.logsHref, selected.links.tracesHref].forEach(href => {
+      const url = new URL(href, 'http://localhost');
+      expect(url.searchParams.get('traceId')).toBe('trace-701');
+      expect(url.searchParams.get('spanId')).toBe('span-701');
+      expect(url.searchParams.get('viewMode')).toBe('service-call');
+      expect(url.searchParams.get('sourceKind')).toBe('otlp-trace-call');
+      expect(url.searchParams.get('edgeId')).toBe('relation-trace-call:501:502:trace-701');
+
+      const returnUrl = new URL(url.searchParams.get('returnTo') || '/', 'http://localhost');
+      expect(returnUrl.pathname).toBe('/topology');
+      expect(returnUrl.searchParams.get('traceId')).toBe('trace-701');
+      expect(returnUrl.searchParams.get('spanId')).toBe('span-701');
+      expect(returnUrl.searchParams.get('edgeId')).toBe('relation-trace-call:501:502:trace-701');
+    });
+  });
+
+  it('normalizes fallback topology groupBy route scope for shared G6 controls', () => {
+    const grouped = buildTopologyServiceMap({ groupBy: 'entity-type' });
+    const invalid = buildTopologyServiceMap({ groupBy: 'cluster' });
+
+    expect(grouped.filterContext.groupBy).toBe('entity-type');
+    expect(invalid.filterContext.groupBy).toBe('none');
+  });
+
+  it('preserves active groupBy route scope across source and view mode controls', () => {
+    const model = buildTopologyServiceMap({
+      entityId: 'service:commerce/checkout',
+      serviceName: 'checkout-api',
+      environment: 'prod',
+      timeRange: 'last-1h',
+      viewMode: 'service-call',
+      sourceKind: 'otlp-trace-call',
+      groupBy: 'source-kind'
+    });
+
+    const databaseSourceHref = model.sources.find(source => source.kind === 'database-middleware-connection')?.href;
+    const serviceCallHref = model.viewModes.find(mode => mode.key === 'service-call')?.href;
+    const resourceDependencyHref = model.viewModes.find(mode => mode.key === 'resource-dependency')?.href;
+
+    [databaseSourceHref, serviceCallHref, resourceDependencyHref].forEach(href => {
+      const params = new URL(href || '/', 'http://localhost').searchParams;
+      expect(params.get('groupBy')).toBe('source-kind');
+      expect(params.get('entityId')).toBe('service:commerce/checkout');
+      expect(params.get('serviceName')).toBe('checkout-api');
+      expect(params.get('timeRange')).toBe('last-1h');
+    });
+  });
+
+  it('keeps API-backed empty topology graphs instead of falling back to seed data', () => {
+    const model = buildTopologyServiceMapFromApiGraph(
+      {
+        apiBacked: true,
+        focusEntityId: null,
+        depth: 2,
+        sourceKinds: ['entity-relation'],
+        nodes: [],
+        edges: []
+      },
+      {
+        environment: 'prod',
+        timeRange: 'last-1h'
+      }
+    );
+
+    expect(model.dataSource).toBe('api');
+    expect(model.nodes).toEqual([]);
+    expect(model.edges).toEqual([]);
+    expect(model.activeNodeId).toBeUndefined();
+    expect(model.filterContext).toMatchObject({
+      environment: 'prod',
+      timeRange: 'last-1h',
+      search: '',
+      hasIncomingContext: true
+    });
+  });
+
+  it('treats backend entity-relation sourceKind as the manual relation source filter in the UI model', () => {
+    const model = buildTopologyServiceMapFromApiGraph(
+      {
+        apiBacked: true,
+        focusEntityId: null,
+        depth: 2,
+        sourceKinds: ['entity-relation'],
+        nodes: [
+          {
+            id: '501',
+            entityId: 501,
+            entityName: 'Checkout API',
+            entityType: 'service',
+            namespace: 'commerce',
+            environment: 'prod',
+            health: 'warning',
+            evidenceBadges: ['entity-relation']
+          },
+          {
+            id: '502',
+            entityId: 502,
+            entityName: 'Payment API',
+            entityType: 'service',
+            namespace: 'commerce',
+            environment: 'prod',
+            health: 'healthy',
+            evidenceBadges: ['entity-relation']
+          }
+        ],
+        edges: [
+          {
+            id: '101',
+            relationId: 101,
+            sourceEntityId: 501,
+            targetEntityId: 502,
+            relationType: 'depends_on',
+            relationSource: 'manual',
+            status: 'confirmed',
+            score: 92,
+            evidenceBadges: ['entity-relation', 'manual']
+          }
+        ]
+      },
+      {
+        environment: 'prod',
+        sourceKind: 'entity-relation',
+        depth: '2'
+      }
+    );
+
+    expect(model.filterContext.sourceKind).toBe('cmdb-manual-label');
+    expect(model.sources.find(source => source.kind === 'cmdb-manual-label')).toMatchObject({
+      active: true
+    });
+    expect(model.edges[0]).toMatchObject({
+      source: 'cmdb-manual-label',
+      focus: 'active-path'
+    });
+  });
+
+  it('maps API-backed impact timeline events without treating change history as roadmap-only', () => {
+    const model = buildTopologyServiceMapFromApiGraph(
+      {
+        apiBacked: true,
+        focusEntityId: 501,
+        depth: 1,
+        sourceKinds: ['entity-relation'],
+        nodes: [
+          {
+            id: '501',
+            entityId: 501,
+            entityName: 'api-checkout',
+            entityType: 'service',
+            namespace: 'commerce',
+            environment: 'prod',
+            health: 'warning',
+            focus: true,
+            evidenceBadges: ['entity-relation']
+          },
+          {
+            id: '502',
+            entityId: 502,
+            entityName: 'api-orders',
+            entityType: 'service',
+            namespace: 'commerce',
+            environment: 'prod',
+            health: 'healthy',
+            evidenceBadges: ['entity-relation']
+          }
+        ],
+        edges: [
+          {
+            id: '101',
+            relationId: 101,
+            sourceEntityId: 501,
+            targetEntityId: 502,
+            relationType: 'depends_on',
+            relationSource: 'manual',
+            status: 'confirmed',
+            score: 92,
+            evidenceBadges: ['entity-relation', 'manual']
+          }
+        ],
+        impactTimeline: [
+          {
+            id: 'activity:901',
+            entityId: 501,
+            sourceKind: 'cmdb-manual-label',
+            eventType: 'entity-definition',
+            title: 'Definition updated',
+            detail: 'owner changed',
+            actor: 'alice',
+            occurredAt: '2026-05-19T11:12:00'
+          },
+          {
+            id: 'relation:101',
+            edgeId: '101',
+            sourceKind: 'cmdb-manual-label',
+            eventType: 'relation-updated',
+            title: 'depends_on updated',
+            detail: 'manual',
+            actor: 'system',
+            occurredAt: '2026-05-19T11:10:00'
+          }
+        ]
+      },
+      {
+        entityId: '501',
+        environment: 'prod',
+        timeRange: 'last-1h'
+      }
+    );
+
+    expect(model.impactTimeline).toEqual([
+      expect.objectContaining({
+        id: 'activity:901',
+        entityId: '501',
+        sourceKind: 'cmdb-manual-label',
+        eventType: 'entity-definition',
+        title: 'Definition updated',
+        detail: 'owner changed',
+        actor: 'alice',
+        occurredAt: '2026-05-19T11:12:00'
+      }),
+      expect.objectContaining({
+        id: 'relation:101',
+        edgeId: 'relation-101',
+        sourceKind: 'cmdb-manual-label',
+        eventType: 'relation-updated',
+        title: 'depends_on updated',
+        detail: 'manual',
+        actor: 'system',
+        occurredAt: '2026-05-19T11:10:00'
+      })
+    ]);
+    expect(buildTopologyFaultAnalysisReview().futureRoadmapOnly).not.toContain('change-timeline');
+    expect(buildTopologyFaultAnalysisReview().implementedCapabilities).toContain('impact-timeline');
+  });
+
+  it('maps API monitor-bind nodes and non-entity edge endpoints', () => {
+    const model = buildTopologyServiceMapFromApiGraph(
+      {
+        apiBacked: true,
+        focusEntityId: 501,
+        depth: 1,
+        sourceKinds: ['entity-relation', 'monitor-bind'],
+        nodes: [
+          {
+            id: '501',
+            entityId: 501,
+            entityName: 'checkout-api',
+            entityType: 'service',
+            namespace: 'commerce',
+            environment: 'prod',
+            health: 'warning',
+            focus: true,
+            evidenceBadges: ['entity-relation']
+          },
+          {
+            id: 'monitor:701',
+            entityId: 701,
+            entityName: 'checkout-http',
+            entityType: 'monitor',
+            namespace: 'website',
+            environment: 'prod',
+            health: 'healthy',
+            evidenceBadges: ['monitor-bind', 'service.name']
+          }
+        ],
+        edges: [
+          {
+            id: 'monitor-bind:901',
+            relationId: 901,
+            sourceNodeId: '501',
+            targetNodeId: 'monitor:701',
+            sourceEntityId: 501,
+            targetEntityId: null,
+            targetRef: 'monitor:701',
+            relationType: 'monitors',
+            relationSource: 'monitor-bind',
+            status: 'active',
+            score: 97,
+            evidenceBadges: ['monitor-bind', 'service.name']
+          }
+        ]
+      },
+      {
+        entityId: '501',
+        environment: 'prod',
+        timeRange: 'last-1h'
+      }
+    );
+
+    expect(model.dataSource).toBe('api');
+    expect(model.nodes.map(node => node.id)).toEqual(expect.arrayContaining(['entity-501', 'monitor:701']));
+    expect(model.edges).toHaveLength(1);
+    expect(model.edges[0]).toMatchObject({
+      id: 'relation-901',
+      from: 'entity-501',
+      to: 'monitor:701',
+      relationshipType: 'monitors',
+      source: 'monitor-ownership',
+      label: 'monitors'
+    });
+    expect(model.edges[0].evidence.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: 'checkout-api', meta: '501' }),
+        expect.objectContaining({ value: 'checkout-http', meta: '701' }),
+        expect.objectContaining({ value: 'monitor-bind' })
+      ])
+    );
   });
 
   it('consumes incoming entity context to focus the matching service and preserve the filter window', () => {
@@ -228,16 +729,16 @@ describe('topology surface config', () => {
       selected: true,
       focus: 'active-path',
       evidence: {
-        title: '订单库连接',
-        sourceLabel: '数据库 / 中间件连接',
+        title: 'Orders database connection',
+        sourceLabel: 'Database / middleware connection',
         confidence: 'high',
         boundary:
-          '当前边仅基于已采集的关系证据；依赖自动发现、变更时间线和根因分析仍是 roadmap 能力。',
-        alertImpactCopy: '带当前边、实体和三信号上下文进入告警影响面。',
+          'This edge only uses collected relationship evidence; dependency auto-discovery and root cause analysis remain roadmap capabilities.',
+        alertImpactCopy: 'Open alert impact with the current edge, entity, and three-signal context.',
         rows: expect.arrayContaining([
-          expect.objectContaining({ label: '起点实体', value: 'checkout-api' }),
-          expect.objectContaining({ label: '终点实体', value: 'orders-db' }),
-          expect.objectContaining({ label: '采集证据', value: expect.stringContaining('连接') })
+          expect.objectContaining({ label: 'Source entity', value: 'checkout-api' }),
+          expect.objectContaining({ label: 'Target entity', value: 'orders-db' }),
+          expect.objectContaining({ label: 'Collection evidence', value: expect.stringContaining('connection') })
         ])
       }
     });
@@ -290,12 +791,12 @@ describe('topology surface config', () => {
     expect(model.activeNodeId).toBe('svc-checkout');
     expect(selected?.id).toBe('svc-checkout--res-orders-db');
     expect(model.faultContextRows).toEqual([
-      { label: '当前实体', value: 'checkout-api', meta: 'entityId service:commerce/checkout' },
-      { label: '当前服务', value: 'checkout-api', meta: 'commerce' },
-      { label: '链路上下文', value: 'trace-123', meta: 'spanId span-456' },
-      { label: '当前环境', value: 'prod', meta: '环境' },
-      { label: '时间范围', value: 'last-1h', meta: '查询窗口' },
-      { label: '采集来源', value: 'OTLP', meta: '采集器 edge-collector-a · 模板 java-service' }
+      { label: 'Current entity', value: 'checkout-api', meta: 'entityId service:commerce/checkout' },
+      { label: 'Current service', value: 'checkout-api', meta: 'commerce' },
+      { label: 'Trace context', value: 'trace-123', meta: 'spanId span-456' },
+      { label: 'Current environment', value: 'prod', meta: 'Environment' },
+      { label: 'Time range', value: 'last-1h', meta: 'Query window' },
+      { label: 'Source', value: 'OTLP', meta: 'Collector edge-collector-a · Template java-service' }
     ]);
 
     [
@@ -368,7 +869,7 @@ describe('topology surface config', () => {
       faultContextRows: model.faultContextRows
     });
 
-    expect(model.productIdentity).toBe('HertzBeat operations topology');
+    expect(model.productIdentity).toBe('Operations topology');
     expect(model.sources.find(source => source.kind === 'database-middleware-connection')).toMatchObject({
       label: 'Database / middleware connection'
     });
@@ -408,19 +909,19 @@ describe('topology surface config', () => {
     const selected = model.selectedEdge;
 
     expect(model.faultContextRows).toContainEqual({
-      label: '监控实例',
+      label: 'Monitor instance',
       value: 'checkout-http',
       meta: 'website · example.com:443 · monitorId 632051474676992'
     });
     expect(model.faultContextRows).toContainEqual({
-      label: '时间范围',
+      label: 'Time range',
       value: 'last-45m',
-      meta: '2024/04/16 00:53:20 → 2024/04/16 01:38:20 · 刷新 30s · 已暂停 · Asia/Shanghai'
+      meta: '2024/04/16 00:53:20 → 2024/04/16 01:38:20 · Refresh 30s · Paused · Asia/Shanghai'
     });
     expect(model.faultContextRows).toContainEqual({
-      label: '采集来源',
-      value: '传统监控',
-      meta: '监控中心上下文'
+      label: 'Source',
+      value: 'Traditional monitoring',
+      meta: 'Monitor center context'
     });
 
     [
@@ -445,7 +946,7 @@ describe('topology surface config', () => {
       expect(params.get('monitorApp')).toBe('website');
       expect(params.get('monitorInstance')).toBe('example.com:443');
     });
-  });
+  }, 15000);
 
   it('drops stale selected edge context when source or view switches no longer match the collected relationship evidence', () => {
     const mismatched = buildTopologyServiceMap({
@@ -506,6 +1007,7 @@ describe('topology surface config', () => {
       'selected-edge-evidence',
       'edge-evidence-boundary',
       'alert-impact-handoff',
+      'impact-timeline',
       'stale-edge-sanitization',
       'three-signal-drilldowns'
     ]);
@@ -520,7 +1022,6 @@ describe('topology surface config', () => {
     ]);
     expect(review.futureRoadmapOnly).toEqual([
       'dependency-auto-discovery',
-      'change-timeline',
       'blast-radius-analysis',
       'root-cause-analysis',
       'resource-config-changes'

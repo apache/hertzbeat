@@ -1,4 +1,5 @@
 import { interpolate, type TranslationParams } from './i18n';
+import { SUPPLEMENTAL_MESSAGES } from './i18n-runtime-messages';
 
 export type LightweightEntityHealthTone = 'success' | 'warning' | 'danger' | 'neutral';
 
@@ -24,7 +25,9 @@ export type LightweightEntityHealthInput = {
 
 type Translator = (key: string, params?: TranslationParams) => string;
 
-function translate(t: Translator | undefined, key: string, fallback: string, params?: TranslationParams) {
+function translate(t: Translator | undefined, key: string, params?: TranslationParams) {
+  const fallback = SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+
   if (!t) return interpolate(fallback, params);
   const value = t(key, params);
   return value && value !== key ? value : interpolate(fallback, params);
@@ -47,34 +50,30 @@ function clampScore(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
+const ENTITY_HEALTH_STATUS_PENALTY_BY_STATUS: Record<string, number> = {
+  active: 0,
+  healthy: 0,
+  normal: 0,
+  up: 0,
+  warning: 10,
+  unknown: 12,
+  abnormal: 24,
+  critical: 24,
+  down: 24,
+  error: 24,
+  offline: 24,
+  unhealthy: 24
+};
+
 function normalizeStatus(value?: string | null) {
-  return value?.trim().toLowerCase() || '';
+  const normalized = value?.trim().toLowerCase() || '';
+  return normalized.replace(/[\s-]+/g, '_');
 }
 
 function statusPenalty(status?: string | null) {
   const normalized = normalizeStatus(status);
-  if (!normalized || normalized === 'healthy' || normalized === 'normal' || normalized === 'up' || normalized === 'active' || normalized === '健康') {
-    return 0;
-  }
-  if (normalized === 'warning' || normalized === '告警') {
-    return 10;
-  }
-  if (normalized === 'unknown' || normalized === '未知') {
-    return 12;
-  }
-  if (
-    normalized === 'critical' ||
-    normalized === 'down' ||
-    normalized === 'error' ||
-    normalized === 'offline' ||
-    normalized === 'unhealthy' ||
-    normalized === '异常' ||
-    normalized === '离线' ||
-    normalized === '严重'
-  ) {
-    return 24;
-  }
-  return 8;
+  if (!normalized) return 0;
+  return ENTITY_HEALTH_STATUS_PENALTY_BY_STATUS[normalized] ?? 8;
 }
 
 function toneForScore(score: number): LightweightEntityHealthTone {
@@ -109,15 +108,15 @@ export function buildLightweightEntityHealthAffordance(input: LightweightEntityH
   return {
     score,
     scoreText: `${score} / 100`,
-    label: translate(t, 'entity.health.label', '健康评分 {{score}}', { score }),
+    label: translate(t, 'entity.health.label', { score }),
     copy:
       monitorCount > 0
-        ? translate(t, 'entity.health.copy.collected', '采集 {{healthy}} / {{total}} 健康', {
+        ? translate(t, 'entity.health.copy.collected', {
             healthy: healthyMonitorCount,
             total: monitorCount
           })
-        : translate(t, 'entity.health.copy.waiting', '等待采集绑定'),
-    meta: translate(t, 'entity.health.meta', '告警 {{alerts}} · 异常 {{anomalies}}', {
+        : translate(t, 'entity.health.copy.waiting'),
+    meta: translate(t, 'entity.health.meta', {
       alerts: activeAlertCount,
       anomalies: anomalyCount
     }),

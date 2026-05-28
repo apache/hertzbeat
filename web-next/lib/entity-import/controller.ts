@@ -8,6 +8,20 @@ import type {
 
 type ApiGetter = <T>(url: string) => Promise<T>;
 type ApiPoster = <T>(url: string, body: EntityDefinitionRequest) => Promise<T>;
+type EntityImportReaders = {
+  templates: (limit?: number) => Promise<EntityDefinitionWorkspaceTemplate[]>;
+  activities: (limit?: number) => Promise<EntityDefinitionActivity[]>;
+};
+
+export function buildImportTemplatesUrl(limit = 8) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return `/entities/definition/templates?${params.toString()}`;
+}
+
+export function buildImportActivitiesUrl(limit = 8) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return `/entities/definition-activities?${params.toString()}`;
+}
 
 function isRecoverableImportLoadError(error: unknown) {
   if (!(error instanceof Error)) {
@@ -19,7 +33,7 @@ function isRecoverableImportLoadError(error: unknown) {
 
 async function loadImportTemplates(apiGet: ApiGetter) {
   try {
-    return await apiGet<EntityDefinitionWorkspaceTemplate[]>('/entities/definition/templates?limit=8');
+    return await apiGet<EntityDefinitionWorkspaceTemplate[]>(buildImportTemplatesUrl());
   } catch (error) {
     if (isRecoverableImportLoadError(error)) {
       return [];
@@ -30,7 +44,7 @@ async function loadImportTemplates(apiGet: ApiGetter) {
 
 async function loadImportActivities(apiGet: ApiGetter) {
   try {
-    return await apiGet<EntityDefinitionActivity[]>('/entities/definition-activities?limit=8');
+    return await apiGet<EntityDefinitionActivity[]>(buildImportActivitiesUrl());
   } catch (error) {
     if (isRecoverableImportLoadError(error)) {
       return [];
@@ -43,6 +57,25 @@ export async function loadImportData(apiGet: ApiGetter) {
   const [templates, activities] = await Promise.all([
     loadImportTemplates(apiGet),
     loadImportActivities(apiGet)
+  ]);
+
+  return { templates, activities };
+}
+
+export async function loadImportDataFromFacade(readers: EntityImportReaders) {
+  const [templates, activities] = await Promise.all([
+    readers.templates(8).catch(error => {
+      if (isRecoverableImportLoadError(error)) {
+        return [];
+      }
+      throw error;
+    }),
+    readers.activities(8).catch(error => {
+      if (isRecoverableImportLoadError(error)) {
+        return [];
+      }
+      throw error;
+    })
   ]);
 
   return { templates, activities };

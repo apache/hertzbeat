@@ -1,5 +1,7 @@
 import { uniqueSuggestions } from './draft-utils';
 import type { Entity, EntityCatalogSuggestions, EntityDto } from '@/lib/types';
+import { interpolate, type TranslationParams } from '../i18n';
+import { SUPPLEMENTAL_MESSAGES } from '../i18n-runtime-messages';
 
 type Fact = { label: string; value: string };
 type Row = { title: string; copy: string; meta?: string };
@@ -45,6 +47,13 @@ type EntityEditorNextStepsCopy = {
   discoveryCopy: string;
 };
 
+export type EntityEditorViewModelTranslator = (key: string, params?: TranslationParams) => string;
+
+export function translateEntityEditorViewModel(key: string, params?: TranslationParams) {
+  const template = SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+  return interpolate(template, params);
+}
+
 function readText(value: unknown) {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
@@ -66,10 +75,10 @@ function firstRecord(items: unknown[] | undefined) {
   return items?.find(item => item && typeof item === 'object') as Record<string, unknown> | undefined;
 }
 
-function buildIdentityMeta(identities: unknown[]) {
+function buildIdentityMeta(identities: unknown[], t: EntityEditorViewModelTranslator = translateEntityEditorViewModel) {
   const first = firstRecord(identities);
   if (!first) {
-    return '等待 service.name 或 hertzbeat.entity_id';
+    return t('entities.editor.attribution.identity.waiting-meta');
   }
 
   const key = readRecordText(first, ['identityKey', 'key', 'name', 'attributeKey']);
@@ -81,13 +90,13 @@ function buildIdentityMeta(identities: unknown[]) {
   if (key) {
     return key;
   }
-  return value || '已识别身份';
+  return value || t('entities.editor.attribution.identity.recognized-meta');
 }
 
-function buildMonitorBindMeta(monitorBinds: unknown[]) {
+function buildMonitorBindMeta(monitorBinds: unknown[], t: EntityEditorViewModelTranslator = translateEntityEditorViewModel) {
   const first = firstRecord(monitorBinds);
   if (!first) {
-    return '等待监控对象或模板绑定';
+    return t('entities.editor.attribution.monitor.waiting-meta');
   }
 
   const monitorId = readRecordText(first, ['monitorId', 'id']);
@@ -95,7 +104,7 @@ function buildMonitorBindMeta(monitorBinds: unknown[]) {
     return `monitorId ${monitorId}`;
   }
 
-  return readRecordText(first, ['templateName', 'template', 'app', 'bindType']) || '已有监控绑定';
+  return readRecordText(first, ['templateName', 'template', 'app', 'bindType']) || t('entities.editor.attribution.monitor.existing-meta');
 }
 
 function buildDiscoveryHref(monitorBinds: unknown[]) {
@@ -107,17 +116,21 @@ function buildDiscoveryHref(monitorBinds: unknown[]) {
   return `/entities/discovery?source=telemetry&monitorId=${encodeURIComponent(monitorId)}`;
 }
 
-function missingSystemEnvironmentCopy(system: string | undefined, environment: string | undefined) {
+function missingSystemEnvironmentCopy(
+  system: string | undefined,
+  environment: string | undefined,
+  t: EntityEditorViewModelTranslator = translateEntityEditorViewModel
+) {
   if (system && environment) {
     return `${system} · ${environment}`;
   }
   if (system) {
-    return `${system} · 缺少环境`;
+    return t('entities.editor.attribution.system-environment.missing-environment', { system });
   }
   if (environment) {
-    return `缺少系统 · ${environment}`;
+    return t('entities.editor.attribution.system-environment.missing-system', { environment });
   }
-  return '缺少系统、环境';
+  return t('entities.editor.attribution.system-environment.missing-both');
 }
 
 export function buildEntityEditorTitle(mode: 'new' | 'edit', entityId: string | undefined, copy: EntityEditorTitleCopy) {
@@ -195,7 +208,10 @@ export function buildEntityEditorNextStepRows(mode: 'new' | 'edit', entityId: st
   ];
 }
 
-export function buildEntityEditorAttributionRows(payload: EntityDto): EntityEditorAttributionRow[] {
+export function buildEntityEditorAttributionRows(
+  payload: EntityDto,
+  t: EntityEditorViewModelTranslator = translateEntityEditorViewModel
+): EntityEditorAttributionRow[] {
   const entity = payload.entity || {};
   const identities = Array.isArray(payload.identities) ? payload.identities : [];
   const monitorBinds = Array.isArray(payload.monitorBinds) ? payload.monitorBinds : [];
@@ -207,36 +223,38 @@ export function buildEntityEditorAttributionRows(payload: EntityDto): EntityEdit
   return [
     {
       key: 'identity',
-      title: '身份标识',
-      copy: identities.length > 0 ? `${identities.length} 个身份标识` : '缺少身份标识',
-      meta: buildIdentityMeta(identities),
+      title: t('entities.editor.attribution.identity.title'),
+      copy: identities.length > 0
+        ? t('entities.editor.attribution.identity.count', { count: identities.length })
+        : t('entities.editor.attribution.identity.missing'),
+      meta: buildIdentityMeta(identities, t),
       state: identities.length > 0 ? 'ready' : 'missing'
     },
     {
       key: 'monitor-binding',
-      title: '监控绑定',
-      copy: monitorBinds.length > 0 ? `${monitorBinds.length} 个监控绑定` : '0 个监控绑定',
-      meta: buildMonitorBindMeta(monitorBinds),
+      title: t('entities.editor.attribution.monitor.title'),
+      copy: t('entities.editor.attribution.monitor.count', { count: monitorBinds.length }),
+      meta: buildMonitorBindMeta(monitorBinds, t),
       state: monitorBinds.length > 0 ? 'ready' : 'missing'
     },
     {
       key: 'ownership',
-      title: '负责人',
-      copy: owner || '缺少负责人',
-      meta: owner ? '可追责' : '先补负责人或值班组',
+      title: t('entities.editor.attribution.owner.title'),
+      copy: owner || t('entities.editor.attribution.owner.missing'),
+      meta: owner ? t('entities.editor.attribution.owner.ready-meta') : t('entities.editor.attribution.owner.missing-meta'),
       state: owner ? 'ready' : 'missing'
     },
     {
       key: 'system-environment',
-      title: '系统与环境',
-      copy: missingSystemEnvironmentCopy(system, environment),
-      meta: '用于告警收敛和拓扑',
+      title: t('entities.editor.attribution.system-environment.title'),
+      copy: missingSystemEnvironmentCopy(system, environment, t),
+      meta: t('entities.editor.attribution.system-environment.meta'),
       state: system && environment ? 'ready' : 'review'
     },
     {
       key: 'discovery-return',
-      title: '发现回路',
-      copy: '可回到遥测发现',
+      title: t('entities.editor.attribution.discovery.title'),
+      copy: t('entities.editor.attribution.discovery.copy'),
       meta: discoveryHref,
       state: discoveryHref.includes('monitorId=') ? 'ready' : 'review',
       href: discoveryHref

@@ -12,20 +12,24 @@ import {
   buildDiscoveryScopeOptions,
   buildDiscoveryTableRows
 } from './view-model';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 describe('entity discovery view model', () => {
+  const t = createTranslatorMock({ locale: 'zh-CN' });
+
   it('builds discovery facts', () => {
     expect(
       buildDiscoveryFacts(
         [{}, {}] as any,
         [{}, {}] as any,
-        { owners: ['ops', 'platform'] } as any
+        { owners: ['ops', 'platform'] } as any,
+        t
       )
     ).toEqual([
-      { label: 'Workspace', value: 'entities/discovery' },
-      { label: 'Presets', value: '2' },
-      { label: 'Activities', value: '2' },
-      { label: 'Owners', value: '2' }
+      { label: '工作区', value: 'entities/discovery' },
+      { label: '预设', value: '2' },
+      { label: '活动', value: '2' },
+      { label: '负责人', value: '2' }
     ]);
   });
 
@@ -33,34 +37,35 @@ describe('entity discovery view model', () => {
     expect(
       buildDiscoveryMetrics(
         [{}, {}] as any,
-        { owners: ['ops'], systems: ['checkout', 'billing'], environments: ['prod'] } as any
+        { owners: ['ops'], systems: ['checkout', 'billing'], environments: ['prod'] } as any,
+        t
       )
     ).toEqual([
-      { label: 'owners', value: '1' },
-      { label: 'systems', value: '2' },
-      { label: 'environments', value: '1' },
-      { label: 'preset coverage', value: 'ready', tone: 'success' }
+      { label: '负责人', value: '1' },
+      { label: '系统', value: '2' },
+      { label: '环境', value: '1' },
+      { label: '预设覆盖', value: '就绪', tone: 'success' }
     ]);
   });
 
   it('builds catalog rows', () => {
     expect(
-      buildCatalogRows({ owners: ['ops'], systems: ['checkout'], environments: ['prod'] } as any)
+      buildCatalogRows({ owners: ['ops'], systems: ['checkout'], environments: ['prod'] } as any, t)
     ).toEqual([
-      { title: 'owners', copy: 'ops', meta: 'count 1' },
-      { title: 'systems', copy: 'checkout', meta: 'count 1' },
-      { title: 'environments', copy: 'prod', meta: 'count 1' }
+      { title: '负责人', copy: 'ops', meta: '数量 1' },
+      { title: '系统', copy: 'checkout', meta: '数量 1' },
+      { title: '环境', copy: 'prod', meta: '数量 1' }
     ]);
   });
 
   it('builds discovery monitor rows for the telemetry search results console', () => {
     expect(
-      buildDiscoveryMonitorRows([{ id: 9, name: 'checkout-api', app: 'springboot3', instance: '10.0.0.1', status: 0 }] as any)
+      buildDiscoveryMonitorRows([{ id: 9, name: 'checkout-api', app: 'springboot3', instance: '10.0.0.1', status: 0 }] as any, t)
     ).toEqual([
       {
         title: 'checkout-api',
         copy: 'springboot3 · 10.0.0.1',
-        meta: '#9 · status 0'
+        meta: '#9 · 正常'
       }
     ]);
   });
@@ -70,7 +75,8 @@ describe('entity discovery view model', () => {
       buildDiscoveryTableRows(
         [],
         [{ id: 'preset-1', name: 'checkout baseline', owner: 'platform', system: 'checkout', environment: 'prod', status: 'active' }] as any,
-        { owners: ['platform'], systems: ['checkout'], environments: ['prod'] } as any
+        { owners: ['platform'], systems: ['checkout'], environments: ['prod'] } as any,
+        t
       )
     ).toEqual([
       {
@@ -78,6 +84,7 @@ describe('entity discovery view model', () => {
         name: 'checkout baseline',
         instance: 'checkout',
         status: '已启用',
+        statusTone: 'success',
         owner: 'platform',
         system: 'checkout',
         environment: 'prod',
@@ -96,7 +103,8 @@ describe('entity discovery view model', () => {
       buildDiscoveryTableRows(
         [{ id: 9, name: 'checkout-api', app: 'springboot3', instance: '10.0.0.1', status: 0 }] as any,
         [{ id: 'preset-1', name: 'spring catalog', owner: 'platform', system: 'springboot3', environment: 'prod' }] as any,
-        { owners: ['ops'], systems: ['checkout'], environments: ['prod'] } as any
+        { owners: ['ops'], systems: ['checkout'], environments: ['prod'] } as any,
+        t
       )
     ).toEqual([
       {
@@ -104,6 +112,7 @@ describe('entity discovery view model', () => {
         name: 'checkout-api',
         instance: '10.0.0.1',
         status: '正常',
+        statusTone: 'success',
         owner: 'platform',
         system: 'springboot3',
         environment: 'prod',
@@ -117,22 +126,60 @@ describe('entity discovery view model', () => {
     ]);
   });
 
+  it('localizes fallback service names for discovered merge candidates and draft cards', () => {
+    const monitors = [{ id: 11, name: 'node-worker', app: 'node_worker', instance: '10.0.0.2', status: 0 }] as any;
+    const catalog = { owners: ['platform'], systems: ['node_worker'], environments: ['prod'] } as any;
+
+    expect(buildDiscoveryTableRows(monitors, [], catalog, t)[0]).toEqual(
+      expect.objectContaining({
+        attributionState: 'merge',
+        attributionCopy: '候选实体 node_worker 服务'
+      })
+    );
+
+    expect(buildDiscoveryGovernanceCards(monitors, [], catalog, t)[0]).toEqual(
+      expect.objectContaining({
+        draftTitle: 'node-worker 服务',
+        candidateLabel: '建议实体 · node_worker 服务 · 匹配强'
+      })
+    );
+  });
+
+  it('localizes empty governance card context values', () => {
+    expect(
+      buildDiscoveryGovernanceCards(
+        [{ id: 12, name: 'queue-worker', app: 'queue', instance: '', status: 0 }] as any,
+        [] as any,
+        { owners: [], systems: ['queue'], environments: [] } as any,
+        t
+      )[0]
+    ).toEqual(
+      expect.objectContaining({
+        meta: '#12 · queue · 无',
+        draftSubtitle: '无 · queue · 无',
+        candidateContext: '无 · queue · 无'
+      })
+    );
+  });
+
   it('marks telemetry discovery rows as missing attribution before they can become trusted entities', () => {
     expect(
       buildDiscoveryTableRows(
         [{ id: 10, name: 'anonymous-worker', app: 'worker', instance: '', status: 2 }] as any,
         [] as any,
-        { owners: [], systems: [], environments: [] } as any
+        { owners: [], systems: [], environments: [] } as any,
+        t
       )
     ).toEqual([
       {
         key: 'monitor-10',
         name: 'anonymous-worker',
-        instance: '-',
+        instance: '无',
         status: '待确认',
-        owner: '-',
+        statusTone: 'warning',
+        owner: '无',
         system: 'worker',
-        environment: '-',
+        environment: '无',
         activity: '搜索结果',
         href: '/entities/discovery?source=telemetry&monitorId=10&action=enrich',
         attributionState: 'review',
@@ -143,24 +190,65 @@ describe('entity discovery view model', () => {
     ]);
   });
 
+  it('uses localized empty values for missing discovery governance cells', () => {
+    expect(
+      buildDiscoveryTableRows(
+        [{ id: 10, name: 'anonymous-worker', app: 'worker', instance: ' ', status: 'mystery' }] as any,
+        [] as any,
+        { owners: [], systems: [], environments: [] } as any,
+        t
+      )[0]
+    ).toEqual(
+      expect.objectContaining({
+        name: 'anonymous-worker',
+        instance: '无',
+        status: '未知状态 mystery',
+        owner: '无',
+        system: 'worker',
+        environment: '无',
+        attributionState: 'review'
+      })
+    );
+
+    expect(
+      buildDiscoveryTableRows(
+        [],
+        [{ id: 'empty-preset', name: ' ', owner: ' ', system: ' ', environment: ' ', status: 'unknown' }] as any,
+        { owners: [], systems: [], environments: [] } as any,
+        t
+      )[0]
+    ).toEqual(
+      expect.objectContaining({
+        name: '无',
+        instance: '无',
+        status: '未知状态 unknown',
+        owner: '无',
+        system: '无',
+        environment: '无',
+        attributionState: 'preset'
+      })
+    );
+  });
+
   it('builds merge-first governance cards when the telemetry search finds a catalog candidate', () => {
     expect(
       buildDiscoveryGovernanceCards(
         [{ id: 9, name: 'checkout-api', app: 'checkout', instance: '10.0.0.1', status: 0 }] as any,
         [{ id: 'preset-1', name: 'checkout-catalog', owner: 'platform', system: 'checkout', environment: 'prod' }] as any,
-        { owners: ['platform'], systems: ['checkout'], environments: ['prod'] } as any
+        { owners: ['platform'], systems: ['checkout'], environments: ['prod'] } as any,
+        t
       )
     ).toEqual([
       expect.objectContaining({
         title: 'checkout-api',
-        riskLabel: 'Governance risk medium',
-        nextActionLabel: 'Next step merge',
-        candidateLabel: 'Suggested entity · checkout-catalog · score strong',
+        riskLabel: '治理风险中',
+        nextActionLabel: '下一步归并',
+        candidateLabel: '建议实体 · checkout-catalog · 匹配强',
         actions: [
-          expect.objectContaining({ label: 'Merge into suggested entity', kind: 'primary' }),
-          expect.objectContaining({ label: 'Open definition', kind: 'secondary' }),
-          expect.objectContaining({ label: 'Open suggested entity', kind: 'secondary' }),
-          expect.objectContaining({ label: 'Adopt as draft', kind: 'link' })
+          expect.objectContaining({ label: '归并到建议实体', kind: 'primary' }),
+          expect.objectContaining({ label: '打开定义', kind: 'secondary' }),
+          expect.objectContaining({ label: '打开建议实体', kind: 'secondary' }),
+          expect.objectContaining({ label: '作为草稿采用', kind: 'link' })
         ]
       })
     ]);
@@ -171,17 +259,18 @@ describe('entity discovery view model', () => {
       buildDiscoveryGovernanceCards(
         [{ id: 10, name: 'anonymous-worker', app: 'worker', instance: '', status: 2 }] as any,
         [] as any,
-        { owners: [], systems: [], environments: [] } as any
+        { owners: [], systems: [], environments: [] } as any,
+        t
       )
     ).toEqual([
       expect.objectContaining({
         title: 'anonymous-worker',
-        riskLabel: 'Governance risk high',
-        nextActionLabel: 'Next step enrich',
+        riskLabel: '治理风险高',
+        nextActionLabel: '下一步补齐',
         actions: [
-          expect.objectContaining({ label: 'Review governance', kind: 'primary' }),
-          expect.objectContaining({ label: 'Send to definition workspace', kind: 'secondary' }),
-          expect.objectContaining({ label: 'Adopt as draft', kind: 'link' })
+          expect.objectContaining({ label: '复核治理', kind: 'primary' }),
+          expect.objectContaining({ label: '送入定义工作台', kind: 'secondary' }),
+          expect.objectContaining({ label: '作为草稿采用', kind: 'link' })
         ]
       })
     ]);
@@ -198,33 +287,34 @@ describe('entity discovery view model', () => {
         { id: 'preset-1', name: 'checkout-catalog', owner: 'platform', system: 'checkout', environment: 'prod' },
         { id: 'preset-2', name: 'inventory-catalog', owner: 'ops', system: 'inventory', environment: 'prod' }
       ] as any,
-      { owners: ['platform'], systems: ['checkout', 'inventory'], environments: ['prod'] } as any
+      { owners: ['platform'], systems: ['checkout', 'inventory'], environments: ['prod'] } as any,
+      t
     );
 
-    expect(buildDiscoveryScopeOptions(cards)).toEqual([
-      { key: 'all', label: 'All', count: 3 },
-      { key: 'matched', label: 'Matched', count: 2 },
-      { key: 'resolved', label: 'Resolved', count: 0 },
-      { key: 'new', label: 'Suggested new', count: 1 }
+    expect(buildDiscoveryScopeOptions(cards, t)).toEqual([
+      { key: 'all', label: '全部', count: 3 },
+      { key: 'matched', label: '已匹配', count: 2 },
+      { key: 'resolved', label: '已归因', count: 0 },
+      { key: 'new', label: '建议新建', count: 1 }
     ]);
 
-    expect(buildDiscoveryIntakeQueueGroups(cards)).toEqual([
+    expect(buildDiscoveryIntakeQueueGroups(cards, t)).toEqual([
       expect.objectContaining({
         key: 'merge',
-        title: 'Ready to merge',
-        actionLabel: 'Select merge-ready',
+        title: '可归并',
+        actionLabel: '选择可归并',
         cardKeys: ['monitor-9', 'monitor-11']
       }),
       expect.objectContaining({
         key: 'create',
-        title: 'Suggested new entities',
-        actionLabel: 'Select suggested new',
+        title: '建议新建实体',
+        actionLabel: '选择建议新建',
         cardKeys: ['monitor-10']
       }),
       expect.objectContaining({
         key: 'resolved',
-        title: 'Already resolved',
-        actionLabel: 'View resolved',
+        title: '已收口',
+        actionLabel: '查看已收口',
         cardKeys: []
       })
     ]);
@@ -237,7 +327,8 @@ describe('entity discovery view model', () => {
         { id: 10, name: 'billing-worker', app: 'worker', instance: '', status: 2 }
       ] as any,
       [{ id: 'preset-1', name: 'checkout-catalog', owner: 'platform', system: 'checkout', environment: 'prod' }] as any,
-      { owners: ['platform'], systems: ['checkout'], environments: ['prod'] } as any
+      { owners: ['platform'], systems: ['checkout'], environments: ['prod'] } as any,
+      t
     );
 
     expect(buildDiscoveryBulkSummary(cards, new Set(['monitor-9', 'monitor-10']))).toEqual({
@@ -254,10 +345,10 @@ describe('entity discovery view model', () => {
       buildDiscoveryBulkOverrideTags({
         ownerDraft: 'catalog-oncall',
         systemDraft: 'commerce-platform'
-      })
+      }, t)
     ).toEqual([
-      { label: 'Owner', value: 'catalog-oncall' },
-      { label: 'System', value: 'commerce-platform' }
+      { label: '负责人', value: 'catalog-oncall' },
+      { label: '系统', value: 'commerce-platform' }
     ]);
   });
 
@@ -269,7 +360,8 @@ describe('entity discovery view model', () => {
         {
           ownerDraft: 'catalog-oncall',
           systemDraft: ''
-        }
+        },
+        t
       )
     ).toEqual({
       ownerChips: [
@@ -282,7 +374,7 @@ describe('entity discovery view model', () => {
       ],
       presetActions: [
         {
-          label: 'Apply catalog baseline',
+          label: '应用 catalog baseline',
           owner: 'catalog-oncall',
           system: 'commerce-platform',
           active: false

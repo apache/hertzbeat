@@ -3,11 +3,10 @@ import { resolve } from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import EntitiesPage from './page';
+import EntityListPage from './entity-list-page';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const mockState = vi.hoisted(() => ({
-  searchParams: new URLSearchParams(),
   lastLoad: null as null | (() => Promise<unknown>),
   renderData: {
     list: {
@@ -27,31 +26,50 @@ vi.mock('next/link', () => ({
   )
 }));
 
-vi.mock('next/navigation', () => ({
-  useSearchParams: () =>
-    ({
-      get: (key: string) => mockState.searchParams.get(key)
-    }) as { get(name: string): string | null }
-}));
-
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
     t: createTranslatorMock({
       locale: 'zh-CN',
       overrides: {
         'entities.list.title': '对象目录',
+        'entities.list.kicker': '对象优先调查',
+        'entities.list.subtitle': '围绕服务、资源与实体定位问题并进入调查，先按对象筛出风险，再决定进入日志、链路、指标还是告警工作台。',
         'entities.list.environment.select': '选择环境',
         'entities.list.environment.all': '全部环境',
         'entities.list.resource-search.placeholder': '搜索并过滤资源属性',
         'entities.list.action.new': '新建对象',
+        'entities.list.action.create': '创建实体',
+        'entities.list.action.discovery': '从遥测发现',
+        'entities.list.action.import': '导入定义',
+        'entities.list.metric.total': '实体总数',
+        'entities.list.metric.abnormal': '活跃异常对象',
+        'entities.list.metric.alerting': '高风险对象',
+        'entities.list.metric.linked': '有关联对象',
+        'entities.list.search.placeholder': '搜索实体名称、命名空间、负责人',
         'entities.list.column.object': '对象',
+        'entities.list.column.owner': '负责人',
+        'entities.list.column.progress': '进展',
+        'entities.list.column.evidence': '证据关联',
         'entities.list.column.type': '类型',
         'entities.list.column.status': '状态',
+        'entities.list.column.next-action': '下一步动作',
         'entities.list.column.alerts': '告警',
         'entities.list.column.monitors': '监控',
         'entities.list.column.relations': '关系',
         'entities.list.column.updated': '最近证据',
+        'entities.list.table.total': '{{total}} 个实体',
+        'entities.list.table.range': '显示 {{from}}-{{to}} / {{total}}',
         'entities.list.pagination.items': '{{from}}-{{to}} / {{total}} 项',
+        'entities.list.row.owner.unset': '未设置',
+        'entities.list.row.progress.incomplete': '{{percent}} · 待完善',
+        'entities.list.row.progress.missing': '当前缺少负责人、处置手册',
+        'entities.list.row.evidence.monitors': '{{count}} 监控',
+        'entities.list.row.evidence.alerts': '{{count}} 告警',
+        'entities.list.row.evidence.identities': '{{count}} 身份标识',
+        'entities.list.row.evidence.updated': '最近更新 {{time}}',
+        'entities.list.row.action.owner': '设置负责人',
+        'entities.list.row.action.logs': '日志线索',
+        'entities.list.row.action.traces': '链路证据',
         'common.clear': '清除',
         'common.apply-filters': '应用筛选'
       }
@@ -62,13 +80,15 @@ vi.mock('@/components/providers/i18n-provider', () => ({
 vi.mock('@/components/workbench/client-workbench', () => ({
   ClientWorkbench: ({
     children,
-    load
+    load,
+    loadingCopy
   }: {
     children: (data: any) => React.ReactNode;
     load: () => Promise<unknown>;
+    loadingCopy?: string;
   }) => {
     mockState.lastLoad = load;
-    return <div data-client-workbench="true">{children(mockState.renderData)}</div>;
+    return <div data-client-workbench="true" data-loading-copy={loadingCopy}>{children(mockState.renderData)}</div>;
   }
 }));
 
@@ -129,12 +149,23 @@ vi.mock('@/components/ui/input', () => ({
 }));
 
 vi.mock('@/lib/api-client', () => ({
-  apiMessageGet: vi.fn()
 }));
 
-vi.mock('@/lib/entity-manage/controller', () => ({
-  loadEntityList
+vi.mock('@/lib/api-facade', () => ({
+  api: {
+    entities: {
+      list: vi.fn()
+    }
+  }
 }));
+
+vi.mock('@/lib/entity-manage/controller', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/lib/entity-manage/controller')>();
+  return {
+    ...actual,
+    loadEntityListFromFacade: loadEntityList
+  };
+});
 
 vi.mock('@/lib/entity-manage/display-mapping', () => ({
   entityEnvironmentLabel: (value: string) => value,
@@ -144,11 +175,6 @@ vi.mock('@/lib/entity-manage/display-mapping', () => ({
 
 vi.mock('@/lib/entity-manage/query-state', () => ({
   buildEntityUrl: vi.fn(),
-  queryStateFromParams: (params: { get(name: string): string | null }) => ({
-    search: params.get('search') || '',
-    type: params.get('type') || '',
-    status: params.get('status') || ''
-  }),
   queryStateToQueryString: (query: Record<string, string>) =>
     new URLSearchParams(
       Object.entries(query).filter(([, value]) => value)
@@ -156,6 +182,8 @@ vi.mock('@/lib/entity-manage/query-state', () => ({
 }));
 
 vi.mock('@/lib/entity-manage/view-model', () => ({
+  isEntityHealthyStatus: (status: string | null | undefined) =>
+    ['healthy', 'up', 'normal'].includes(String(status || '').toLowerCase().replace(/[\s-]+/g, '_')),
   buildEntityTableRows: vi.fn(() => [
     {
       key: '1',
@@ -176,17 +204,28 @@ vi.mock('@/lib/format', () => ({
   formatTime: vi.fn(() => 'now')
 }));
 
-describe('EntitiesPage', () => {
+describe('EntityListPage', () => {
   beforeEach(() => {
-    mockState.searchParams = new URLSearchParams('search=checkout&type=service&status=healthy');
     mockState.lastLoad = null;
     loadEntityList.mockClear().mockResolvedValue(mockState.renderData.list);
   });
 
-  it('loads the entity list through the shared controller contract', async () => {
-    const source = readFileSync(resolve(process.cwd(), 'app/entities/page.tsx'), 'utf8');
-    const html = renderToStaticMarkup(<EntitiesPage />);
+  it('keeps entity catalog remounts on a short settled cache window while refresh invalidates that cache', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/entities/entity-list-page.tsx'), 'utf8');
 
+    expect(source).toContain('ENTITY_LIST_SETTLED_CACHE_TTL_MS = 10_000');
+    expect(source).toContain("['entity-list', entityListUrl, refreshNonce].join(':')");
+    expect(source).toContain('setRefreshNonce(current => current + 1)');
+    expect(source).toContain('onRefresh={refreshQuery}');
+    expect(source).toContain('cacheSettledTtlMs={ENTITY_LIST_SETTLED_CACHE_TTL_MS}');
+  });
+
+  it('loads the entity list through the shared controller contract', async () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/entities/entity-list-page.tsx'), 'utf8');
+    const initialQuery = { search: 'checkout', type: 'service', status: 'healthy' };
+    const html = renderToStaticMarkup(<EntityListPage initialQuery={initialQuery} />);
+
+    expect(html).toContain('data-loading-copy="正在加载对象目录"');
     expect(html).toContain('data-entity-list-surface="otlp-cold-entity-console"');
     expect(html).toContain('data-entity-list-style-baseline="hertzbeat-cold-matte"');
     expect(html).toContain('data-entity-list-header="cold-compact-header"');
@@ -248,6 +287,9 @@ describe('EntitiesPage', () => {
     expect(source).not.toContain('signoz-services-table');
     expect(source).not.toContain('signoz-services-rail');
     expect(source).not.toContain('angular-sidebar-flush');
+    expect(source).toContain("import { api } from '@/lib/api-facade';");
+    expect(source).toContain('const list = await loadEntityListFromFacade(api.entities.list, query);');
+    expect(source).not.toContain('const list = await loadEntityList(apiMessageGet, query);');
 
     await mockState.lastLoad?.();
 

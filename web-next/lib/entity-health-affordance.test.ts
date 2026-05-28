@@ -17,9 +17,34 @@ describe('lightweight entity health affordance', () => {
     ).toEqual({
       score: 63,
       scoreText: '63 / 100',
-      label: '健康评分 63',
-      copy: '采集 1 / 2 健康',
-      meta: '告警 1 · 异常 4',
+      label: 'Health score 63',
+      copy: 'Collected 1 / 2 healthy',
+      meta: 'Alerts 1 · anomalies 4',
+      tone: 'warning'
+    });
+  });
+
+  it('scores raw status aliases without depending on localized status labels', () => {
+    const base = {
+      activeAlertCount: 0,
+      downMonitorCount: 0,
+      healthyMonitorCount: 0,
+      logHintCount: 0,
+      monitorCount: 0,
+      recentErrorTraceCount: 0,
+      recentTraceCount: 0
+    };
+
+    expect(buildLightweightEntityHealthAffordance({ ...base, status: 'healthy' })).toMatchObject({
+      score: 92,
+      tone: 'success'
+    });
+    expect(buildLightweightEntityHealthAffordance({ ...base, status: 'unknown' })).toMatchObject({
+      score: 80,
+      tone: 'warning'
+    });
+    expect(buildLightweightEntityHealthAffordance({ ...base, status: 'down' })).toMatchObject({
+      score: 68,
       tone: 'warning'
     });
   });

@@ -1,6 +1,25 @@
 import type { EntityDefinitionActivity, EntityDefinitionFormat, EntityDefinitionRequest, EntityDefinitionWorkspaceTemplate } from '@/lib/types';
 
 type ApiGetter = <T>(url: string) => Promise<T>;
+type EntityDefinitionReaders = {
+  definition: (entityId: string, format: EntityDefinitionFormat) => Promise<string>;
+  activities: (entityId: string, limit?: number) => Promise<EntityDefinitionActivity[]>;
+  templates: (limit?: number) => Promise<EntityDefinitionWorkspaceTemplate[]>;
+};
+
+export function buildEntityDefinitionUrl(entityId: string, format: EntityDefinitionFormat) {
+  return `/entities/${entityId}/definition?format=${format}`;
+}
+
+export function buildEntityDefinitionActivitiesUrl(entityId: string, limit = 8) {
+  const params = new URLSearchParams({ entityId, limit: String(limit) });
+  return `/entities/definition-activities?${params.toString()}`;
+}
+
+export function buildEntityDefinitionTemplatesUrl(limit = 8) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return `/entities/definition/templates?${params.toString()}`;
+}
 
 function isRecoverableEntityDefinitionError(error: unknown) {
   if (!(error instanceof Error)) {
@@ -67,7 +86,7 @@ function buildFallbackEntityDefinitionContent(entityId: string, format: EntityDe
 
 export async function loadEntityDefinitionPageData(apiGet: ApiGetter, entityId: string, format: EntityDefinitionFormat) {
   const [definitionState, activities, templates] = await Promise.all([
-    apiGet<string>(`/entities/${entityId}/definition?format=${format}`).then(
+    apiGet<string>(buildEntityDefinitionUrl(entityId, format)).then(
       definition => ({ definition, loadMessage: null as string | null }),
       error => {
         if (isLegacyEntityNotExistError(error)) {
@@ -79,13 +98,48 @@ export async function loadEntityDefinitionPageData(apiGet: ApiGetter, entityId: 
         throw error;
       }
     ),
-    apiGet<EntityDefinitionActivity[]>(`/entities/definition-activities?entityId=${entityId}&limit=8`).catch(error => {
+    apiGet<EntityDefinitionActivity[]>(buildEntityDefinitionActivitiesUrl(entityId)).catch(error => {
       if (isRecoverableEntityDefinitionError(error)) {
         return [];
       }
       throw error;
     }),
-    apiGet<EntityDefinitionWorkspaceTemplate[]>('/entities/definition/templates?limit=8').catch(error => {
+    apiGet<EntityDefinitionWorkspaceTemplate[]>(buildEntityDefinitionTemplatesUrl()).catch(error => {
+      if (isRecoverableEntityDefinitionError(error)) {
+        return [];
+      }
+      throw error;
+    })
+  ]);
+
+  return { definition: definitionState.definition, loadMessage: definitionState.loadMessage, activities, templates, entityId };
+}
+
+export async function loadEntityDefinitionPageDataFromFacade(
+  readers: EntityDefinitionReaders,
+  entityId: string,
+  format: EntityDefinitionFormat
+) {
+  const [definitionState, activities, templates] = await Promise.all([
+    readers.definition(entityId, format).then(
+      definition => ({ definition, loadMessage: null as string | null }),
+      error => {
+        if (isLegacyEntityNotExistError(error)) {
+          return { definition: '', loadMessage: error.message };
+        }
+        if (isRecoverableEntityDefinitionError(error)) {
+          return { definition: buildFallbackEntityDefinitionContent(entityId, format), loadMessage: null };
+        }
+        throw error;
+      }
+    ),
+    readers.activities(entityId, 8).catch(error => {
+      if (isRecoverableEntityDefinitionError(error)) {
+        return [];
+      }
+      throw error;
+    }),
+    readers.templates(8).catch(error => {
       if (isRecoverableEntityDefinitionError(error)) {
         return [];
       }

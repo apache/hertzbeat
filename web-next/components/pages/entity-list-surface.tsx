@@ -17,6 +17,7 @@ export type EntityListTableRow = {
   type: string;
   environment: string;
   status: string;
+  statusTone: 'success' | 'warning' | 'danger' | 'neutral';
   health?: LightweightEntityHealthAffordance;
   monitorCount: string;
   activeAlertCount: string;
@@ -58,19 +59,17 @@ const coldSmallButtonClassName =
 const coldEvidenceBadgeClassName =
   'rounded-[3px] border border-[#303743] bg-[#101217] px-2 py-0.5 text-[11px] leading-4 text-[#cbd5e1]';
 
-function statusClassName(status: string) {
-  if (status === 'healthy' || status === '健康' || status.includes('正常')) {
+function statusClassName(statusTone: EntityListTableRow['statusTone']) {
+  if (statusTone === 'success') {
     return 'border-[#166534]/45 bg-[#0f2f23] text-[#86efac]';
   }
-  if (status.includes('告警') || status.includes('异常') || status.toLowerCase().includes('critical')) {
+  if (statusTone === 'danger') {
     return 'border-[#7f1d1d]/55 bg-[#2a1214] text-[#fca5a5]';
   }
+  if (statusTone === 'warning') {
+    return 'border-[#854d0e]/55 bg-[#2a1c0c] text-[#facc15]';
+  }
   return 'border-[#303743] bg-[#101217] text-[#cbd5e1]';
-}
-
-function resolveCopy(t: Translator, key: string, fallback: string): string {
-  const value = t(key);
-  return value === key ? fallback : value;
 }
 
 function EmptyTableRow({ t }: { t: Translator }) {
@@ -82,10 +81,10 @@ function EmptyTableRow({ t }: { t: Translator }) {
             <Inbox className="h-5 w-5" aria-hidden="true" />
           </span>
           <div className="text-[13px] font-semibold text-[#eef2f7]">
-            {resolveCopy(t, 'entities.list.empty.title', '暂无实体')}
+            {t('entities.list.empty.title')}
           </div>
           <div className="text-[12px] leading-5 text-[#8f99ab]">
-            {resolveCopy(t, 'entities.list.empty.copy', '创建实体或导入定义后会出现在这里。')}
+            {t('entities.list.empty.copy')}
           </div>
         </div>
       </td>
@@ -108,7 +107,12 @@ export function EntityListSurface({
   onRefresh,
   onReset
 }: EntityListSurfaceProps) {
-  const title = resolveCopy(t, 'entities.list.title', '对象目录');
+  const metricItems = [
+    { label: t('entities.list.metric.total'), value: total, Icon: Network },
+    { label: t('entities.list.metric.abnormal'), value: abnormalCount, Icon: Bell },
+    { label: t('entities.list.metric.alerting'), value: alertingCount, Icon: Bell },
+    { label: t('entities.list.metric.linked'), value: linkedCount, Icon: GitBranch }
+  ];
 
   return (
     <main
@@ -122,10 +126,10 @@ export function EntityListSurface({
           <div className="mb-5">
             <div data-entity-list-header="cold-compact-header" className={coldEntityVisual.panel.hero}>
               <div className="max-w-[880px]">
-                <div className="text-[11px] font-semibold tracking-[0.12em] text-[#7e8494]">对象优先调查</div>
-                <h1 className="mt-2 text-[30px] font-semibold leading-tight text-[#f5f7fb]">{title}</h1>
+                <div className="text-[11px] font-semibold tracking-[0.12em] text-[#7e8494]">{t('entities.list.kicker')}</div>
+                <h1 className="mt-2 text-[30px] font-semibold leading-tight text-[#f5f7fb]">{t('entities.list.title')}</h1>
                 <p className="mt-4 max-w-[780px] text-[13px] leading-6 text-[#a9b0bb]">
-                  围绕服务、资源与实体定位问题并进入调查，先按对象筛出风险，再决定进入日志、链路、指标还是告警工作台。
+                  {t('entities.list.subtitle')}
                 </p>
                 <div data-entity-list-command-row="standard-equal-buttons" className={coldEntityVisual.button.row}>
                   <Button size="sm" variant="default" className={coldButtonClassName} onClick={onRefresh}>
@@ -134,15 +138,15 @@ export function EntityListSurface({
                   </Button>
                   <Link href="/entities/new" className={coldPrimaryLinkClassName}>
                     <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                    创建实体
+                    {t('entities.list.action.create')}
                   </Link>
                   <Link href="/entities/discovery" className={coldLinkButtonClassName}>
                     <Network className="h-3.5 w-3.5" aria-hidden="true" />
-                    从遥测发现
+                    {t('entities.list.action.discovery')}
                   </Link>
                   <Link href="/entities/import" className={coldLinkButtonClassName}>
                     <Upload className="h-3.5 w-3.5" aria-hidden="true" />
-                    导入定义
+                    {t('entities.list.action.import')}
                   </Link>
                 </div>
               </div>
@@ -151,16 +155,11 @@ export function EntityListSurface({
 
           <div data-entity-list-admin-layout="full-width-admin-list" className="space-y-5">
             <div data-entity-list-count-strip="cold-inline-counts" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              {[
-                ['实体总数', total, Network],
-                ['活跃异常对象', abnormalCount, Bell],
-                ['高风险对象', alertingCount, Bell],
-                ['有关联对象', linkedCount, GitBranch]
-              ].map(([label, value, Icon]) => {
-                const MetricIcon = Icon as typeof Network;
+              {metricItems.map(({ label, value, Icon }) => {
+                const MetricIcon = Icon;
                 return (
                   <div
-                    key={String(label)}
+                    key={label}
                     className="flex min-h-[36px] items-center justify-between gap-3 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] px-3 text-[12px] text-[#a9b0bb]"
                   >
                     <span className="inline-flex min-w-0 items-center gap-2">
@@ -177,7 +176,7 @@ export function EntityListSurface({
               <SearchRow
                 data-entity-list-toolbar="cold-table-toolbar"
                 value={draft.search}
-                placeholder="搜索实体名称、命名空间、负责人"
+                placeholder={t('entities.list.search.placeholder')}
                 searchLabel={t('common.search')}
                 inputWidthClassName="w-[420px]"
                 onValueChange={value => onDraftChange({ search: value })}
@@ -213,19 +212,19 @@ export function EntityListSurface({
                 className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
               >
                 <div className="flex min-h-[42px] items-center justify-between gap-3 border-b border-[#252b34] bg-[#101217] px-3 text-[12px] text-[#8f99ab]">
-                  <span className="font-semibold text-[#dbe4f0]">{total} 个实体</span>
-                  <span>显示 {rangeFrom}-{rangeTo} / {total}</span>
+                  <span className="font-semibold text-[#dbe4f0]">{t('entities.list.table.total', { total })}</span>
+                  <span>{t('entities.list.table.range', { from: rangeFrom, to: rangeTo, total })}</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table data-entity-list-table="cold-entity-table" className="min-w-[1040px] w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
                     <thead className="border-b border-[#252b34] bg-[#101217] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
                       <tr>
                         <th className="w-[24%] px-3 py-2.5">{t('entities.list.column.object')}</th>
-                        <th className="w-[14%] px-3 py-2.5">负责人</th>
-                        <th className="w-[18%] px-3 py-2.5">进展</th>
-                        <th className="w-[24%] px-3 py-2.5">证据关联</th>
+                        <th className="w-[14%] px-3 py-2.5">{t('entities.list.column.owner')}</th>
+                        <th className="w-[18%] px-3 py-2.5">{t('entities.list.column.progress')}</th>
+                        <th className="w-[24%] px-3 py-2.5">{t('entities.list.column.evidence')}</th>
                         <th className="w-[12%] px-3 py-2.5">{t('entities.list.column.status')}</th>
-                        <th className="w-[150px] px-3 py-2.5">下一步动作</th>
+                        <th className="w-[150px] px-3 py-2.5">{t('entities.list.column.next-action')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -239,7 +238,7 @@ export function EntityListSurface({
                               {row.type} · {row.environment}
                             </div>
                           </td>
-                          <td className="px-3 py-2.5 font-semibold text-[#dbe4f0]">未设置</td>
+                          <td className="px-3 py-2.5 font-semibold text-[#dbe4f0]">{t('entities.list.row.owner.unset')}</td>
                           <td className="px-3 py-2.5">
                             {row.health ? (
                               <div
@@ -253,22 +252,24 @@ export function EntityListSurface({
                             ) : (
                               <>
                                 <div className="font-semibold text-[#eef2f7]">
-                                  {row.status === 'healthy' || row.status === '健康' ? '40%' : '20%'} · 待完善
+                                  {t('entities.list.row.progress.incomplete', {
+                                    percent: row.statusTone === 'success' ? '40%' : '20%'
+                                  })}
                                 </div>
-                                <div className="mt-1 text-[11px] text-[#858d9a]">当前缺少负责人、处置手册</div>
+                                <div className="mt-1 text-[11px] text-[#858d9a]">{t('entities.list.row.progress.missing')}</div>
                               </>
                             )}
                           </td>
                           <td className="px-3 py-2.5">
                             <div className="flex flex-wrap gap-1.5">
-                              <span className={coldEvidenceBadgeClassName}>{row.monitorCount} 监控</span>
-                              <span className={coldEvidenceBadgeClassName}>{row.activeAlertCount} 告警</span>
-                              <span className={coldEvidenceBadgeClassName}>{row.relationCount} 身份标识</span>
+                              <span className={coldEvidenceBadgeClassName}>{t('entities.list.row.evidence.monitors', { count: row.monitorCount })}</span>
+                              <span className={coldEvidenceBadgeClassName}>{t('entities.list.row.evidence.alerts', { count: row.activeAlertCount })}</span>
+                              <span className={coldEvidenceBadgeClassName}>{t('entities.list.row.evidence.identities', { count: row.relationCount })}</span>
                             </div>
-                            <div className="mt-2 text-[11px] text-[#858d9a]">最近更新 {row.updatedAt}</div>
+                            <div className="mt-2 text-[11px] text-[#858d9a]">{t('entities.list.row.evidence.updated', { time: row.updatedAt })}</div>
                           </td>
                           <td className="px-3 py-2.5">
-                            <span className={`rounded-[3px] border px-2 py-0.5 text-[11px] font-semibold leading-4 ${statusClassName(row.status)}`}>
+                            <span className={`rounded-[3px] border px-2 py-0.5 text-[11px] font-semibold leading-4 ${statusClassName(row.statusTone)}`}>
                               {row.status}
                             </span>
                           </td>
@@ -279,13 +280,13 @@ export function EntityListSurface({
                                 data-entity-list-row-owner-action="text-only"
                                 className="rounded-[3px] border border-[#303743] bg-[#101217] px-2 py-1 text-[11px] font-semibold text-[#dbe4f0] hover:border-[#4e74f8] hover:text-white"
                               >
-                                设置负责人
+                                {t('entities.list.row.action.owner')}
                               </Link>
                               <Link href="/log/manage" className="rounded-[3px] border border-[#303743] bg-[#101217] px-2 py-1 text-[11px] font-semibold text-[#dbe4f0] hover:border-[#4e74f8] hover:text-white">
-                                日志线索
+                                {t('entities.list.row.action.logs')}
                               </Link>
                               <Link href="/trace/manage" className="rounded-[3px] border border-[#303743] bg-[#101217] px-2 py-1 text-[11px] font-semibold text-[#dbe4f0] hover:border-[#4e74f8] hover:text-white">
-                                链路证据
+                                {t('entities.list.row.action.traces')}
                               </Link>
                             </div>
                           </td>

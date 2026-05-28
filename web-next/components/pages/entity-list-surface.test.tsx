@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
 import { EntityListSurface } from './entity-list-surface';
 
 vi.mock('next/link', () => ({
@@ -22,19 +23,7 @@ vi.mock('../ui/search-row', async () => {
   return actual;
 });
 
-const t = (key: string) =>
-  ({
-    'entities.list.title': '对象目录',
-    'entities.list.environment.select': '选择环境',
-    'entities.list.environment.all': '全部环境',
-    'entities.list.column.object': '对象',
-    'entities.list.column.status': '状态',
-    'entities.list.empty.title': '暂无实体',
-    'entities.list.empty.copy': '创建实体或导入定义后会出现在这里。',
-    'common.search': '搜索',
-    'common.refresh': '刷新',
-    'common.clear': '清除'
-  })[key] || key;
+const t = createTranslatorMock({ locale: 'zh-CN' });
 
 describe('EntityListSurface', () => {
   it('owns the OTLP cold-matte entity admin/list shell without a copied right rail', () => {
@@ -49,6 +38,7 @@ describe('EntityListSurface', () => {
             type: '服务',
             environment: '本地',
             status: '健康',
+            statusTone: 'success',
             health: {
               score: 84,
               scoreText: '84 / 100',

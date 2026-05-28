@@ -136,36 +136,36 @@ describe('entity editor view model', () => {
     ).toEqual([
       {
         key: 'identity',
-        title: '身份标识',
-        copy: '1 个身份标识',
+        title: 'Identities',
+        copy: '1 identities',
         meta: 'service.name=checkout',
         state: 'ready'
       },
       {
         key: 'monitor-binding',
-        title: '监控绑定',
-        copy: '1 个监控绑定',
+        title: 'Monitor binding',
+        copy: '1 monitor bindings',
         meta: 'monitorId 42',
         state: 'ready'
       },
       {
         key: 'ownership',
-        title: '负责人',
+        title: 'Owner',
         copy: 'platform',
-        meta: '可追责',
+        meta: 'Accountable',
         state: 'ready'
       },
       {
         key: 'system-environment',
-        title: '系统与环境',
+        title: 'System and environment',
         copy: 'commerce · prod',
-        meta: '用于告警收敛和拓扑',
+        meta: 'Used for alert convergence and topology',
         state: 'ready'
       },
       {
         key: 'discovery-return',
-        title: '发现回路',
-        copy: '可回到遥测发现',
+        title: 'Discovery loop',
+        copy: 'Return to telemetry discovery',
         meta: '/entities/discovery?source=telemetry&monitorId=42',
         state: 'ready',
         href: '/entities/discovery?source=telemetry&monitorId=42'
@@ -186,36 +186,36 @@ describe('entity editor view model', () => {
     ).toEqual([
       {
         key: 'identity',
-        title: '身份标识',
-        copy: '缺少身份标识',
-        meta: '等待 service.name 或 hertzbeat.entity_id',
+        title: 'Identities',
+        copy: 'Missing identity',
+        meta: 'Waiting for service.name or hertzbeat.entity_id',
         state: 'missing'
       },
       {
         key: 'monitor-binding',
-        title: '监控绑定',
-        copy: '0 个监控绑定',
-        meta: '等待监控对象或模板绑定',
+        title: 'Monitor binding',
+        copy: '0 monitor bindings',
+        meta: 'Waiting for monitor object or template binding',
         state: 'missing'
       },
       {
         key: 'ownership',
-        title: '负责人',
-        copy: '缺少负责人',
-        meta: '先补负责人或值班组',
+        title: 'Owner',
+        copy: 'Missing owner',
+        meta: 'Add owner or on-call group first',
         state: 'missing'
       },
       {
         key: 'system-environment',
-        title: '系统与环境',
-        copy: 'checkout · 缺少环境',
-        meta: '用于告警收敛和拓扑',
+        title: 'System and environment',
+        copy: 'checkout · missing environment',
+        meta: 'Used for alert convergence and topology',
         state: 'review'
       },
       {
         key: 'discovery-return',
-        title: '发现回路',
-        copy: '可回到遥测发现',
+        title: 'Discovery loop',
+        copy: 'Return to telemetry discovery',
         meta: '/entities/discovery',
         state: 'review',
         href: '/entities/discovery'

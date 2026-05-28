@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildDefinitionRequest, createDefinitionBundle, loadImportData, parseDefinitionBundle } from './controller';
+import { buildDefinitionRequest, createDefinitionBundle, loadImportData, loadImportDataFromFacade, parseDefinitionBundle } from './controller';
 
 describe('entity import controller', () => {
   it('loads templates and activities together', async () => {
@@ -25,6 +25,37 @@ describe('entity import controller', () => {
     const result = await loadImportData(apiGet as any);
 
     expect(result).toEqual({
+      templates: [],
+      activities: []
+    });
+  });
+
+  it('loads import workspace data through the entity facade readers', async () => {
+    const readers = {
+      templates: vi.fn(async () => [{ id: 1, name: 'base-template' }]),
+      activities: vi.fn(async () => [{ id: 2, summary: 'imported service' }])
+    };
+
+    await expect(loadImportDataFromFacade(readers as any)).resolves.toEqual({
+      templates: [{ id: 1, name: 'base-template' }],
+      activities: [{ id: 2, summary: 'imported service' }]
+    });
+
+    expect(readers.templates).toHaveBeenCalledWith(8);
+    expect(readers.activities).toHaveBeenCalledWith(8);
+  });
+
+  it('preserves the empty import workspace fallback through the entity facade readers', async () => {
+    const readers = {
+      templates: vi.fn(async () => {
+        throw new Error('GET /entities/definition/templates failed with 404');
+      }),
+      activities: vi.fn(async () => {
+        throw new Error('GET /entities/definition-activities failed with ECONNRESET');
+      })
+    };
+
+    await expect(loadImportDataFromFacade(readers as any)).resolves.toEqual({
       templates: [],
       activities: []
     });
