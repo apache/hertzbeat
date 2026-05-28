@@ -1,15 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Database, Eye, FileText, Inbox, Moon, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, FileText, Moon, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import { HzButton, HzButtonLink, HzConfirmDialog, HzSwitch, HzYamlWorkspace, type HzTemplateCategory } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
-import { Checkbox } from '../ui/checkbox';
 import { ColdCodeEditor } from '../ui/cold-code-editor';
-import { SearchRow } from '../ui/search-row';
 import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
-import { buildDefineRows, buildPreviewRows } from '../../lib/setting-define/view-model';
+import { buildTemplateFacts, buildTemplateMenuView, buildTemplateSummaryRows } from '../../lib/setting-define/view-model';
 import type { SettingDefinePageData } from '../../lib/setting-define/controller';
-import type { AlertDefine } from '../../lib/types';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
@@ -17,25 +15,37 @@ type SettingDefineSurfaceProps = {
   t: Translator;
   data: SettingDefinePageData;
   search: string;
-  selectedDefine: AlertDefine | null;
+  selectedApp: string | null;
   editorValue: string;
-  yamlLabel: string | null;
+  originalYaml: string;
+  yamlLabel: string;
   darkMode: boolean;
   isEditing: boolean;
-  formatTime: (value?: number | string | null) => string;
+  menuLoading?: boolean;
+  editorLoading?: boolean;
+  savePending?: boolean;
   message?: string | null;
-  preview?: unknown;
+  messageMeta?: string | null;
+  messageContract?: string | null;
+  loadError?: string | null;
   onSearchChange: (value: string) => void;
   onSearch: () => void;
-  onSelectDefine: (define: AlertDefine) => void;
+  onSelectApp: (app: string) => void;
   onNew: () => void;
   onEdit: () => void;
   onCancel: () => void;
   onSave: () => void;
   onDelete: () => void;
+  onToggleTemplateVisibility: (app: string, hide: boolean) => void;
   onToggleDarkMode: (checked: boolean) => void;
-  onPreview: () => void;
   onEditorValueChange: (value: string) => void;
+};
+
+type TemplateVisibilityConfirm = {
+  app: string;
+  label: string;
+  hidden: boolean;
+  nextHide: boolean;
 };
 
 const coldDefineVisual = coldOpsCatalogVisual;
@@ -46,97 +56,328 @@ const coldButtonClassName =
 const coldPrimaryButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#31405c] bg-[#182238] px-3 text-[12px] font-semibold text-[#d8e4ff] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#4e74f8] hover:bg-[#202a42] hover:text-[#f8fafc]';
 
-const coldPanelClassName = 'rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]';
-const coldPanelHeaderClassName = 'border-b border-[#252b34] bg-[#101217] px-4 py-3';
-const coldPanelBodyClassName = 'p-4';
-
-function applyParams(copy: string, params?: Record<string, string | number | null | undefined>) {
-  if (!params) return copy;
-  return Object.entries(params).reduce((next, [key, value]) => {
-    return next.replace(new RegExp(`{{\\s*${key}\\s*}}`, 'g'), String(value ?? ''));
-  }, copy);
-}
-
-function hasHan(copy: string) {
-  return /[\u4e00-\u9fff]/.test(copy);
-}
-
-function resolveCopy(
-  t: Translator,
-  key: string,
-  fallback: string,
-  params?: Record<string, string | number | null | undefined>
-) {
-  const translated = t(key, params);
-  const copy = translated && translated !== key && (!hasHan(fallback) || hasHan(translated)) ? translated : fallback;
-  return applyParams(copy, params);
-}
-
-function normalizeDefineTitle(copy: string) {
-  return copy === '监控模版' || copy === '监控模板' ? '定义' : copy;
-}
-
-function normalizeNewDefineCopy(copy: string) {
-  return copy === '新增监控类型' ? '新增类型' : copy;
-}
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <div className="text-[11px] font-semibold tracking-[0.12em] text-[#858d9a]">{children}</div>;
-}
-
-function EmptyDefineList({ title, copy }: { title: string; copy: string }) {
-  return (
-    <div
-      data-setting-define-empty-state="cold-list-empty"
-      className="flex min-h-[220px] flex-col items-center justify-center rounded-[4px] border border-dashed border-[#303743] bg-[#0b0c0e] px-5 py-8 text-center"
-    >
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]">
-        <Inbox className="h-5 w-5" aria-hidden="true" />
-      </span>
-      <div className="mt-4 text-[13px] font-semibold text-[#eef2f7]">{title}</div>
-      <div className="mt-2 max-w-[220px] text-[12px] leading-5 text-[#858d9a]">{copy}</div>
-    </div>
-  );
-}
-
 export function SettingDefineSurface({
   t,
   data,
   search,
-  selectedDefine,
+  selectedApp,
   editorValue,
+  originalYaml,
   yamlLabel,
   darkMode,
   isEditing,
-  formatTime,
+  menuLoading = false,
+  editorLoading = false,
+  savePending = false,
   message,
-  preview,
+  messageMeta = null,
+  messageContract = null,
+  loadError = null,
   onSearchChange,
   onSearch,
-  onSelectDefine,
+  onSelectApp,
   onNew,
   onEdit,
   onCancel,
   onSave,
   onDelete,
+  onToggleTemplateVisibility,
   onToggleDarkMode,
-  onPreview,
   onEditorValueChange
 }: SettingDefineSurfaceProps) {
-  const items = data.list.content ?? [];
-  const defineRows = buildDefineRows(items, t, formatTime);
-  const previewRows = buildPreviewRows(selectedDefine, t);
-  const defineTitle = normalizeDefineTitle(resolveCopy(t, 'menu.advanced.define', '定义'));
-  const newDefineLabel = normalizeNewDefineCopy(resolveCopy(t, 'define.new', '新增类型'));
-  const searchLabel = resolveCopy(t, 'common.search', '搜索');
-  const selectedName = selectedDefine?.name || resolveCopy(t, 'setting.define.item.fallback', '未命名定义');
-  const editorTitle = yamlLabel || selectedDefine?.name || defineTitle;
-  const deleteLabel = resolveCopy(t, 'define.delete', '删除 {{app}}', { app: selectedName });
+  const defineTitle = t('setting.define.title');
+  const selectedLabel = selectedApp ? data.appLabels[selectedApp] || selectedApp : t('setting.define.new-template');
+  const deleteActionTarget = selectedApp || selectedLabel;
+  const menuGroups = buildTemplateMenuView(data.menuGroups, '', t);
+  const visibleMenuGroups = buildTemplateMenuView(data.menuGroups, search, t);
+  const hasTemplateItems = data.menuGroups.some(group => group.items.length > 0);
+  const isSearchMiss = hasTemplateItems && search.trim().length > 0 && visibleMenuGroups.length === 0;
+  const facts = buildTemplateFacts(data, t);
+  const summaryRows = buildTemplateSummaryRows(selectedApp, editorValue, t, selectedLabel);
+  const hasSelectedApp = Boolean(selectedApp);
+  const editorTitle = yamlLabel || selectedLabel;
+  const editorMeta = summaryRows.map(row => `${row.title}: ${row.copy}`).join(' · ');
+  const showExistingTemplateDiff = hasSelectedApp && isEditing;
+  const hasYamlChanges = editorValue !== originalYaml;
+  const showSaveAction = !editorLoading && hasYamlChanges;
+  const editorTheme = darkMode ? 'vs-dark' : 'vs';
+  const applyFailure = messageContract === 'angular-apply-fail-notification';
+  const deleteFailure = messageContract === 'angular-delete-fail-notification';
+  const [saveConfirmOpen, setSaveConfirmOpen] = React.useState(false);
+  const [saveGuardMessage, setSaveGuardMessage] = React.useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [visibilityConfirm, setVisibilityConfirm] = React.useState<TemplateVisibilityConfirm | null>(null);
+  const emptyStateTitle = isSearchMiss ? t('setting.define.empty.search-title') : t('setting.define.empty.title');
+  const templateCategories: HzTemplateCategory[] = menuGroups.map(group => ({
+    id: group.key,
+    label: group.label,
+    items: group.rows.map(row => ({
+      id: row.app,
+      label: row.title,
+      meta: row.app,
+      status: (
+        <span className="rounded-[3px] border border-[#303743] bg-[#0b0c0e] px-1.5 py-0.5 text-[10px] text-[#858d9a]">
+          {row.meta}
+        </span>
+      ),
+      action: (
+        <HzButton
+          size="sm"
+          intent="ghost"
+          aria-label={t(row.hidden ? 'setting.define.action.show-aria' : 'setting.define.action.hide-aria', { app: row.title })}
+          title={t(row.hidden ? 'setting.define.action.show-aria' : 'setting.define.action.hide-aria', { app: row.title })}
+          data-setting-define-template-visibility={row.app}
+          data-setting-define-template-visibility-contract="angular-hide-true-or-undefined-contextual"
+          data-setting-define-template-visibility-owner="hertzbeat-ui-button"
+          data-setting-define-template-visibility-label={row.title}
+          data-setting-define-template-visibility-action={row.hidden ? 'show' : 'hide'}
+          data-setting-define-template-visibility-next-hide={String(!row.hidden)}
+          onClick={event => {
+            event.stopPropagation();
+            setVisibilityConfirm({
+              app: row.app,
+              label: row.title,
+              hidden: row.hidden,
+              nextHide: !row.hidden
+            });
+          }}
+        >
+          {row.hidden ? <Eye className="h-3.5 w-3.5" aria-hidden="true" /> : <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />}
+          {row.hidden ? t('setting.define.action.show') : t('setting.define.action.hide')}
+        </HzButton>
+      )
+    }))
+  }));
+
+  const handleRequestSave = () => {
+    if (editorValue === '') {
+      setSaveConfirmOpen(false);
+      setSaveGuardMessage(t('define.save-apply.no-code'));
+      return;
+    }
+    setSaveGuardMessage(null);
+    setSaveConfirmOpen(true);
+  };
+
+  const handleConfirmSave = () => {
+    setSaveConfirmOpen(false);
+    setSaveGuardMessage(null);
+    onSave();
+  };
+
+  const handleConfirmDelete = () => {
+    setDeleteConfirmOpen(false);
+    onDelete();
+  };
+
+  const handleConfirmVisibility = () => {
+    if (!visibilityConfirm) return;
+    const { app, nextHide } = visibilityConfirm;
+    setVisibilityConfirm(null);
+    onToggleTemplateVisibility(app, nextHide);
+  };
+
+  const workspaceActions = (
+    <>
+      <span
+        data-setting-define-current-yaml="true"
+        className="inline-flex h-8 items-center rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#a9b0bb]"
+      >
+        {yamlLabel}
+      </span>
+      <HzSwitch
+        data-setting-define-theme-toggle="angular-nz-switch"
+        data-setting-define-theme-toggle-owner="hertzbeat-ui-switch"
+        data-setting-define-theme-toggle-state={editorTheme}
+        checked={darkMode}
+        onCheckedChange={onToggleDarkMode}
+        aria-label={t('common.dark-mode')}
+        label={
+          <>
+            <Moon className="h-3.5 w-3.5 text-[#858d9a]" aria-hidden="true" />
+            <span>{t('common.dark-mode')}</span>
+          </>
+        }
+      />
+    </>
+  );
+
+  const workspaceFeedback = (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="truncate text-[#8f99ab]">{editorMeta}</span>
+      {savePending ? (
+        <span
+          data-setting-define-save-pending-feedback="angular-save-loading"
+          data-setting-define-save-pending-feedback-owner="hertzbeat-ui-workspace-feedback"
+          className="text-[#9cc9aa]"
+        >
+          {t('setting.define.save.pending')}
+        </span>
+      ) : null}
+      {!hasTemplateItems || isSearchMiss ? (
+        <span data-setting-define-empty-state="cold-list-empty" className="text-[#efd29b]">
+          {emptyStateTitle}
+        </span>
+      ) : null}
+      {saveGuardMessage || message ? (
+        <span
+          className="text-[#efd29b]"
+          data-setting-define-action-feedback={messageContract || (saveGuardMessage ? 'angular-no-code-warning' : undefined)}
+          data-setting-define-action-feedback-contract={messageContract || undefined}
+          data-setting-define-action-feedback-owner={messageContract ? 'hertzbeat-ui-inline-feedback' : undefined}
+          data-setting-define-action-feedback-title={messageContract ? (applyFailure ? 'common.notify.apply-fail' : 'common.notify.delete-fail') : undefined}
+          data-setting-define-action-feedback-detail={messageContract && messageMeta ? 'backend-message' : undefined}
+          data-setting-define-save-feedback={applyFailure ? 'angular-apply-fail-notification' : undefined}
+          data-setting-define-save-feedback-title={applyFailure ? 'common.notify.apply-fail' : undefined}
+          data-setting-define-save-feedback-detail={applyFailure && messageMeta ? 'backend-message' : undefined}
+          data-setting-define-delete-feedback={deleteFailure ? 'angular-delete-fail-notification' : undefined}
+          data-setting-define-delete-feedback-title={deleteFailure ? 'common.notify.delete-fail' : undefined}
+          data-setting-define-delete-feedback-detail={deleteFailure && messageMeta ? 'backend-message' : undefined}
+          data-setting-define-visibility-feedback={applyFailure ? 'angular-apply-fail-notification' : undefined}
+          data-setting-define-visibility-feedback-title={applyFailure ? 'common.notify.apply-fail' : undefined}
+          data-setting-define-visibility-feedback-detail={applyFailure && messageMeta ? 'backend-message' : undefined}
+        >
+          {saveGuardMessage || message}
+          {message && messageMeta ? <span> · {messageMeta}</span> : null}
+        </span>
+      ) : null}
+    </div>
+  );
+
+  const yamlEditor = showExistingTemplateDiff ? (
+    <div data-setting-define-diff-shell="monitor-template-diff" className="grid gap-4 p-3 lg:grid-cols-2">
+      <div data-setting-define-diff-original="true" className="min-w-0">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#858d9a]">
+          {t('setting.define.diff.original')}
+        </div>
+        <ColdCodeEditor
+          data-setting-define-editor-field="cold-code-editor"
+          data-setting-define-code-editor="monitor-template-yaml-original"
+          data-setting-define-editor-theme={editorTheme}
+          data-setting-define-editor-theme-owner="angular-nz-code-editor-theme"
+          data-setting-define-editor-folding="true"
+          data-setting-define-editor-automatic-layout="true"
+          data-setting-define-editor-loading={editorLoading ? 'true' : 'false'}
+          className={darkMode ? 'bg-[#0d1117]' : undefined}
+          value={originalYaml}
+          language="yaml"
+          theme={editorTheme}
+          loading={editorLoading}
+          loadingLabel={t('setting.define.loading')}
+          minHeight="360px"
+          ariaLabel={`${editorTitle} ${t('setting.define.diff.original')}`}
+          readOnly
+        />
+      </div>
+      <div data-setting-define-diff-current="true" className="min-w-0">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#858d9a]">
+          {t('setting.define.diff.current')}
+        </div>
+        <ColdCodeEditor
+          data-hz-ui="yaml-editor"
+          data-setting-define-editor-field="cold-code-editor"
+          data-setting-define-code-editor="monitor-template-yaml"
+          data-setting-define-editor-theme={editorTheme}
+          data-setting-define-editor-theme-owner="angular-nz-code-editor-theme"
+          data-setting-define-editor-folding="true"
+          data-setting-define-editor-automatic-layout="true"
+          data-setting-define-editor-loading={editorLoading ? 'true' : 'false'}
+          className={darkMode ? 'bg-[#0d1117]' : undefined}
+          value={editorValue}
+          language="yaml"
+          theme={editorTheme}
+          loading={editorLoading}
+          loadingLabel={t('setting.define.loading')}
+          minHeight="360px"
+          ariaLabel={editorTitle}
+          onChange={value => {
+            setSaveGuardMessage(null);
+            onEditorValueChange(value);
+          }}
+          readOnly={!isEditing}
+        />
+      </div>
+    </div>
+  ) : (
+    <div className="p-3">
+      <ColdCodeEditor
+        data-hz-ui="yaml-editor"
+        data-setting-define-editor-field="cold-code-editor"
+        data-setting-define-code-editor="monitor-template-yaml"
+        data-setting-define-editor-theme={editorTheme}
+        data-setting-define-editor-theme-owner="angular-nz-code-editor-theme"
+        data-setting-define-editor-folding="true"
+        data-setting-define-editor-automatic-layout="true"
+        data-setting-define-editor-loading={editorLoading ? 'true' : 'false'}
+        className={darkMode ? 'bg-[#0d1117]' : undefined}
+        value={editorValue}
+        language="yaml"
+        theme={editorTheme}
+        loading={editorLoading}
+        loadingLabel={t('setting.define.loading')}
+        minHeight="520px"
+        ariaLabel={editorTitle}
+        onChange={value => {
+          setSaveGuardMessage(null);
+          onEditorValueChange(value);
+        }}
+        readOnly={!isEditing}
+      />
+    </div>
+  );
 
   return (
     <div
       data-setting-define-surface="otlp-cold-define-console"
       data-setting-define-style-baseline={coldDefineVisual.canvasName}
+      data-setting-define-route-state="angular-current-app-url-retained"
+      data-setting-define-theme-contract="angular-theme-service-initial"
+      data-setting-define-theme-owner="angular-theme-service"
+      data-setting-define-theme-mode={darkMode ? 'dark-ops' : 'light-ops'}
+      data-setting-define-theme-switch-contract="angular-nz-switch-code-editor-theme"
+      data-setting-define-theme-switch-owner="hertzbeat-ui-switch"
+      data-setting-define-theme-switch-state={editorTheme}
+      data-setting-define-menu-filter-contract="angular-monitor-select-list-label-only"
+      data-setting-define-menu-filter-owner="hertzbeat-ui-template-picker"
+      data-setting-define-menu-filtered-contract="angular-hide-prometheus-system"
+      data-setting-define-menu-filtered-owner="setting-define-controller"
+      data-setting-define-menu-loading-contract="angular-monitor-select-list-loading"
+      data-setting-define-menu-loading-owner="hertzbeat-ui-template-picker"
+      data-setting-define-menu-loading={menuLoading ? 'true' : 'false'}
+      data-setting-define-load-failure-contract="angular-console-only-shell"
+      data-setting-define-load-failure-owner="setting-define-controller"
+      data-setting-define-load-failure={loadError ? 'angular-console-only-shell' : 'none'}
+      data-setting-define-new-draft-contract="angular-locale-comment-five-newlines"
+      data-setting-define-new-draft-owner="setting-define-controller"
+      data-setting-define-new-draft-state={hasSelectedApp ? 'existing-template' : 'new-template'}
+      data-setting-define-new-action-contract="angular-current-app-reset-url-retained"
+      data-setting-define-new-action-owner="setting-define-controller"
+      data-setting-define-new-action-state={hasSelectedApp ? 'available' : 'hidden'}
+      data-setting-define-menu-select-contract="angular-router-navigate-app-query"
+      data-setting-define-menu-select-owner="hertzbeat-ui-template-picker"
+      data-setting-define-menu-select-query-contract="angular-replace-with-app-only"
+      data-setting-define-menu-select-query-owner="setting-define-page-router"
+      data-setting-define-confirm-closable-contract="angular-nz-closable-false"
+      data-setting-define-confirm-ok-contract="angular-nz-ok-danger-primary"
+      data-setting-define-delete-success-edit-state-contract="angular-preserve-is-editing"
+      data-setting-define-save-visibility-contract="angular-code-diff-independent-of-editing"
+      data-setting-define-save-reload-contract="angular-load-app-define-content-after-save"
+      data-setting-define-save-reload-owner="setting-define-controller"
+      data-setting-define-save-reload-scope={hasSelectedApp ? 'existing-template' : 'new-template-draft'}
+      data-setting-define-startup-reload-contract="angular-startup-load-after-success"
+      data-setting-define-startup-reload-owner="startup-service"
+      data-setting-define-startup-reload-scope="save-delete-visibility-success"
+      data-setting-define-startup-reload-failure-contract="angular-fire-and-forget"
+      data-setting-define-startup-reload-failure-owner="startup-service"
+      data-setting-define-template-visibility-loading-contract="angular-save-loading"
+      data-setting-define-template-visibility-loading-owner="setting-define-controller"
+      data-setting-define-template-visibility-loading={savePending ? 'true' : 'false'}
+      data-setting-define-editor-option-contract="angular-yaml-vs-folding-automatic-layout"
+      data-setting-define-editor-option-owner="cold-code-editor"
+      data-setting-define-editor-loading-contract="angular-nz-code-editor-loading"
+      data-setting-define-editor-loading-owner="cold-code-editor"
+      data-setting-define-editor-loading={editorLoading ? 'true' : 'false'}
+      data-setting-define-editor-loading-save-contract="angular-save-hidden-while-editor-loading"
       className={coldDefineVisual.canvas.root}
       style={coldDefineVisual.canvas.backgroundStyle}
     >
@@ -144,205 +385,215 @@ export function SettingDefineSurface({
         <div className="mx-auto max-w-[1480px]">
           <div className="mb-5">
             <div data-setting-define-header="cold-compact-header" className={coldDefineVisual.panel.hero}>
-              <div className="max-w-[860px]">
+              <div className="max-w-[920px]">
                 <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">{defineTitle}</h1>
                 <p className="mt-4 max-w-[780px] text-[13px] leading-6 text-[#a9b0bb]">
-                  {resolveCopy(t, 'setting.define.subtitle', '管理监控类型定义、数据源和规则 YAML。')}
+                  {t('setting.define.subtitle')}
                 </p>
                 <div data-setting-define-command-row="standard-equal-buttons" className={coldDefineVisual.button.row}>
-                  <Button size="sm" variant="default" className={coldPrimaryButtonClassName} onClick={onNew}>
-                    <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                    {newDefineLabel}
-                  </Button>
-                  {selectedDefine ? (
+                  {hasSelectedApp ? (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      data-setting-define-new-action="angular-current-app-reset"
+                      data-setting-define-new-action-contract="angular-current-app-reset-url-retained"
+                      data-setting-define-new-action-owner="setting-define-controller"
+                      data-setting-define-new-route-state="url-retained"
+                      className={coldPrimaryButtonClassName}
+                      onClick={onNew}
+                    >
+                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                      {t('setting.define.action.new')}
+                    </Button>
+                  ) : null}
+                  {hasSelectedApp ? (
+                    <HzButtonLink
+                      data-setting-define-monitor-link={selectedApp || undefined}
+                      data-setting-define-monitor-link-contract="angular-routerlink-monitors-app"
+                      data-setting-define-monitor-link-owner="hertzbeat-ui-button-link"
+                      data-setting-define-monitor-link-app={selectedApp || undefined}
+                      href={`/monitors?app=${encodeURIComponent(selectedApp || '')}`}
+                      className={`${coldButtonClassName} inline-flex items-center justify-center gap-2`}
+                    >
+                      <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+                      {yamlLabel}
+                    </HzButtonLink>
+                  ) : null}
+                  {hasSelectedApp && !isEditing ? (
                     <Button size="sm" variant="default" className={coldButtonClassName} onClick={onEdit}>
                       <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                      {resolveCopy(t, 'common.button.edit', '编辑')}
+                      {t('common.button.edit')}
                     </Button>
                   ) : null}
-                  {isEditing ? (
+                  {isEditing && hasSelectedApp ? (
                     <Button size="sm" variant="default" className={coldButtonClassName} onClick={onCancel}>
                       <X className="h-3.5 w-3.5" aria-hidden="true" />
-                      {resolveCopy(t, 'common.button.cancel', '取消')}
+                      {t('common.button.cancel')}
                     </Button>
                   ) : null}
-                  {isEditing ? (
-                    <Button size="sm" variant="default" className={coldPrimaryButtonClassName} onClick={onSave}>
+                  {showSaveAction ? (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      data-setting-define-save-action="request"
+                      data-setting-define-save-pending={savePending ? 'true' : 'false'}
+                      data-setting-define-save-loading-owner="angular-nz-loading"
+                      aria-busy={savePending ? 'true' : undefined}
+                      disabled={savePending}
+                      className={coldPrimaryButtonClassName}
+                      onClick={handleRequestSave}
+                    >
                       <Save className="h-3.5 w-3.5" aria-hidden="true" />
-                      {resolveCopy(t, 'define.save-apply', '保存并应用')}
+                      {t('setting.define.action.save-apply')}
                     </Button>
                   ) : null}
-                  {selectedDefine ? (
-                    <Button size="sm" variant="default" className={coldButtonClassName} onClick={onDelete}>
+                  {hasSelectedApp ? (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      data-setting-define-delete-action="angular-current-app-id"
+                      data-setting-define-delete-action-owner="hertzbeat-ui-button"
+                      data-setting-define-delete-action-label={deleteActionTarget}
+                      aria-label={t('setting.define.action.delete', { app: deleteActionTarget })}
+                      title={t('setting.define.action.delete', { app: deleteActionTarget })}
+                      className={coldButtonClassName}
+                      onClick={() => setDeleteConfirmOpen(true)}
+                    >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                      {deleteLabel}
+                      {t('setting.define.action.delete', { app: deleteActionTarget })}
                     </Button>
                   ) : null}
                 </div>
+              </div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-4">
+                {facts.map(fact => (
+                  <div key={fact.label} className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 py-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#858d9a]">{fact.label}</div>
+                    <div className="mt-1 truncate text-[13px] font-semibold text-[#eef2f7]">{fact.value}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          <div data-setting-define-workspace="cold-define-workspace" className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
-            <aside data-setting-define-menu="cold-static-list" className="min-w-0">
-              <SearchRow
-                data-setting-define-toolbar="cold-search-row"
-                data-setting-define-search-owner="shared-search-row"
-                className="mb-3"
-                inputWidthClassName="w-[180px]"
-                value={search}
-                placeholder={searchLabel}
-                searchLabel={searchLabel}
-                onValueChange={onSearchChange}
-                onSearch={onSearch}
+          <div data-setting-define-workspace="cold-define-workspace">
+            <div data-setting-define-editor-shell="shared-yaml-workspace">
+              <HzYamlWorkspace
+                categories={templateCategories}
+                selectedId={selectedApp || undefined}
+                onSelect={onSelectApp}
+                search={search}
+                onSearchChange={value => {
+                  onSearchChange(value);
+                  onSearch();
+                }}
+                code={editorValue}
+                title={editorTitle}
+                filename={yamlLabel}
+                feedback={workspaceFeedback}
+                actions={workspaceActions}
+                templatePickerLoading={menuLoading}
+                templatePickerLabels={{
+                  defaultTitle: t('menu.advanced.define'),
+                  itemCount: total => String(total),
+                  searchPlaceholder: t('common.search'),
+                  empty: emptyStateTitle
+                }}
+                editor={yamlEditor}
               />
-
-              <div data-setting-define-menu-shell="cold-dense-list" className={coldPanelClassName}>
-                <div className={coldPanelHeaderClassName}>
-                  <div className="flex items-center gap-2 text-[12px] font-semibold text-[#eef2f7]">
-                    <FileText className="h-3.5 w-3.5 text-[#858d9a]" aria-hidden="true" />
-                    {defineTitle}
-                  </div>
-                  <div className="mt-1 text-[11px] text-[#858d9a]">{items.length} / {data.list.totalElements || 0}</div>
-                </div>
-                <div className="space-y-2 p-2">
-                  {defineRows.length > 0 ? (
-                    defineRows.map((row, index) => {
-                      const original = items[index];
-                      const active = Boolean(selectedDefine && selectedDefine.id === original.id);
-                      return (
-                        <button
-                          key={row.key}
-                          type="button"
-                          data-setting-define-menu-item={row.key}
-                          className={`w-full rounded-[3px] border px-3 py-2.5 text-left transition ${
-                            active
-                              ? 'border-[#4e74f8] bg-[#121a2a] text-[#eef2f7]'
-                              : 'border-[#2b3039] bg-[#101217] text-[#a9b0bb] hover:border-[#3f4654] hover:bg-[#151820]'
-                          }`}
-                          onClick={() => onSelectDefine(original)}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="min-w-0 truncate text-[13px] font-semibold text-[#eef2f7]">{row.title}</span>
-                            <span className="shrink-0 rounded-[3px] border border-[#303743] bg-[#0b0c0e] px-1.5 py-0.5 text-[10px] text-[#858d9a]">
-                              #{row.key}
-                            </span>
-                          </div>
-                          <div className="mt-1 truncate text-[12px] leading-5 text-[#a9b0bb]">{row.copy}</div>
-                          <div className="mt-2 truncate text-[10px] font-semibold tracking-[0.12em] text-[#858d9a]">{row.meta}</div>
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <EmptyDefineList
-                      title={resolveCopy(t, 'setting.define.empty.title', '暂无定义')}
-                      copy={resolveCopy(t, 'setting.define.empty.copy', '请先新增监控类型定义。')}
-                    />
-                  )}
-                </div>
-              </div>
-            </aside>
-
-            <section data-setting-define-editor="cold-settings-form" className="min-w-0 space-y-5">
-              <div data-setting-define-editor-shell="cold-yaml-editor" className={coldPanelClassName}>
-                <div className={`${coldPanelHeaderClassName} flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between`}>
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <FileText className="h-3.5 w-3.5 shrink-0 text-[#858d9a]" aria-hidden="true" />
-                      <h2 className="truncate text-[13px] font-semibold text-[#eef2f7]">{editorTitle}</h2>
-                    </div>
-                    <div className="mt-1 truncate text-[12px] text-[#858d9a]">{previewRows[0]?.meta || '-'}</div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {yamlLabel ? (
-                      <span
-                        data-setting-define-current-yaml="true"
-                        className="inline-flex h-8 items-center rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#a9b0bb]"
-                      >
-                        {yamlLabel}
-                      </span>
-                    ) : null}
-                    <Checkbox
-                      data-setting-define-theme-toggle="cold-theme-toggle"
-                      checked={darkMode}
-                      onChange={event => onToggleDarkMode(event.target.checked)}
-                      containerClassName="h-8 rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[#a9b0bb]"
-                      label={
-                        <>
-                          <Moon className="h-3.5 w-3.5 text-[#858d9a]" aria-hidden="true" />
-                          <span>{resolveCopy(t, 'common.dark-mode', '深色模式')}</span>
-                        </>
-                      }
-                    />
-                  </div>
-                </div>
-                <div className={coldPanelBodyClassName}>
-                  <ColdCodeEditor
-                    data-setting-define-editor-field="cold-code-editor"
-                    data-setting-define-code-editor="definition-yaml"
-                    className={darkMode ? 'bg-[#0d1117]' : undefined}
-                    value={editorValue}
-                    language="yaml"
-                    minHeight="360px"
-                    ariaLabel={editorTitle}
-                    onChange={onEditorValueChange}
-                    readOnly={!isEditing}
-                  />
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Button size="sm" variant="default" className={coldButtonClassName} onClick={onPreview} disabled={!selectedDefine}>
-                      <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                      {resolveCopy(t, 'setting.define.preview.action', '预览查询')}
-                    </Button>
-                    {message ? <p className="text-[12px] leading-5 text-[#a9b0bb]">{message}</p> : null}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-5 lg:grid-cols-2">
-                <div data-setting-define-preview-panel="cold-preview-panel" className={coldPanelClassName}>
-                  <div className={coldPanelHeaderClassName}>
-                    <div className="flex items-center gap-2 text-[12px] font-semibold text-[#eef2f7]">
-                      <Eye className="h-3.5 w-3.5 text-[#858d9a]" aria-hidden="true" />
-                      {resolveCopy(t, 'setting.define.preview.title', '定义预览')}
-                    </div>
-                  </div>
-                  <div className={coldPanelBodyClassName}>
-                    <div className="divide-y divide-[#252b34]">
-                      {previewRows.map(row => (
-                        <div key={`${row.title}-${row.meta}`} className="py-2 first:pt-0 last:pb-0">
-                          <div className="text-[13px] font-semibold text-[#eef2f7]">{row.title}</div>
-                          <div className="mt-1 break-words text-[12px] leading-5 text-[#a9b0bb]">{row.copy}</div>
-                          <div className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-[#858d9a]">{row.meta}</div>
-                        </div>
-                      ))}
-                    </div>
-                    {preview ? (
-                      <pre className="mt-3 max-h-[260px] overflow-auto rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-[12px] leading-5 text-[#a9b0bb]">
-                        {JSON.stringify(preview, null, 2)}
-                      </pre>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div data-setting-define-datasource-panel="cold-datasource-panel" className={coldPanelClassName}>
-                  <div className={coldPanelHeaderClassName}>
-                    <div className="flex items-center gap-2 text-[12px] font-semibold text-[#eef2f7]">
-                      <Database className="h-3.5 w-3.5 text-[#858d9a]" aria-hidden="true" />
-                      {resolveCopy(t, 'setting.define.datasource.title', '数据源状态')}
-                    </div>
-                  </div>
-                  <div className={coldPanelBodyClassName}>
-                    <FieldLabel>{resolveCopy(t, 'common.current-view', '当前视图')}</FieldLabel>
-                    <pre className="mt-3 max-h-[260px] overflow-auto rounded-[3px] border border-[#2b3039] bg-[#101217] p-3 text-[12px] leading-5 text-[#a9b0bb]">
-                      {JSON.stringify(data.datasourceStatus.data || {}, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              </div>
-            </section>
+            </div>
           </div>
         </div>
       </section>
+      <div
+        data-setting-define-save-confirm={saveConfirmOpen ? 'open' : 'closed'}
+        data-setting-define-save-confirm-owner="hertzbeat-ui-confirm-dialog"
+        data-setting-define-save-confirm-closable="false"
+        data-setting-define-save-confirm-ok-danger="true"
+        data-setting-define-save-confirm-ok-type="primary"
+      >
+        <HzConfirmDialog
+          open={saveConfirmOpen}
+          tone="critical"
+          kicker={t('setting.define.title')}
+          title={t('define.save-apply.confirm')}
+          confirmLabel={t('common.button.ok')}
+          cancelLabel={t('common.button.cancel')}
+          onClose={() => setSaveConfirmOpen(false)}
+          onConfirm={handleConfirmSave}
+          data-setting-define-save-confirm-dialog="angular-modal-confirm"
+          data-setting-define-confirm-owner="hertzbeat-ui-confirm-dialog"
+          data-setting-define-confirm-title="angular-title-copy"
+          data-setting-define-confirm-closable="false"
+          data-setting-define-confirm-ok-danger="true"
+          data-setting-define-confirm-ok-type="primary"
+          confirmButtonProps={{
+            'data-setting-define-save-confirm-submit': 'angular-modal-confirm',
+            'data-setting-define-save-confirm-submit-danger': 'true',
+            'data-setting-define-save-confirm-submit-type': 'primary'
+          } as React.ComponentProps<typeof HzConfirmDialog>['confirmButtonProps']}
+        />
+      </div>
+      <div
+        data-setting-define-delete-confirm={deleteConfirmOpen ? 'open' : 'closed'}
+        data-setting-define-delete-confirm-owner="hertzbeat-ui-confirm-dialog"
+        data-setting-define-delete-confirm-closable="false"
+        data-setting-define-delete-confirm-ok-danger="true"
+        data-setting-define-delete-confirm-ok-type="primary"
+      >
+        <HzConfirmDialog
+          open={deleteConfirmOpen}
+          tone="critical"
+          kicker={t('setting.define.title')}
+          title={t('define.delete.confirm', { app: selectedLabel })}
+          confirmLabel={t('common.button.ok')}
+          cancelLabel={t('common.button.cancel')}
+          onClose={() => setDeleteConfirmOpen(false)}
+          onConfirm={handleConfirmDelete}
+          data-setting-define-delete-confirm-dialog="angular-modal-confirm"
+          data-setting-define-confirm-owner="hertzbeat-ui-confirm-dialog"
+          data-setting-define-confirm-title="angular-title-copy"
+          data-setting-define-confirm-closable="false"
+          data-setting-define-confirm-ok-danger="true"
+          data-setting-define-confirm-ok-type="primary"
+          confirmButtonProps={{
+            'data-setting-define-delete-confirm-submit': 'angular-modal-confirm',
+            'data-setting-define-delete-confirm-submit-danger': 'true',
+            'data-setting-define-delete-confirm-submit-type': 'primary'
+          } as React.ComponentProps<typeof HzConfirmDialog>['confirmButtonProps']}
+        />
+      </div>
+      <div
+        data-setting-define-template-visibility-confirm={visibilityConfirm ? 'open' : 'closed'}
+        data-setting-define-template-visibility-confirm-contract="angular-popconfirm-before-config-update"
+        data-setting-define-template-visibility-confirm-owner="hertzbeat-ui-confirm-dialog"
+        data-setting-define-template-visibility-app={visibilityConfirm?.app || undefined}
+        data-setting-define-template-visibility-action={visibilityConfirm ? (visibilityConfirm.nextHide ? 'hide' : 'show') : undefined}
+        data-setting-define-template-visibility-next-hide={visibilityConfirm ? String(visibilityConfirm.nextHide) : undefined}
+      >
+        <HzConfirmDialog
+          open={Boolean(visibilityConfirm)}
+          tone="info"
+          kicker={t('setting.define.title')}
+          title={
+            visibilityConfirm
+              ? `${visibilityConfirm.nextHide ? t('setting.define.action.hide') : t('setting.define.action.show')} ${visibilityConfirm.label}`
+              : t('setting.define.title')
+          }
+          confirmLabel={t('common.button.ok')}
+          cancelLabel={t('common.button.cancel')}
+          onClose={() => setVisibilityConfirm(null)}
+          onConfirm={handleConfirmVisibility}
+          bodyRhythm="stack"
+          data-setting-define-template-visibility-confirm-dialog="angular-popconfirm"
+          data-setting-define-confirm-owner="hertzbeat-ui-confirm-dialog"
+          confirmButtonProps={{
+            'data-setting-define-template-visibility-confirm-submit': 'angular-popconfirm'
+          } as React.ComponentProps<typeof HzConfirmDialog>['confirmButtonProps']}
+        >
+          <p>{visibilityConfirm?.hidden ? t('define.hide-true.confirm') : t('define.hide-false.confirm')}</p>
+        </HzConfirmDialog>
+      </div>
     </div>
   );
 }

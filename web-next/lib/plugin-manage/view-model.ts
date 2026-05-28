@@ -11,33 +11,35 @@ export function buildPluginFacts(list: PageResult<Plugin>, query: { search: stri
   ];
 }
 
-export function buildPluginMetrics(items: Plugin[], _t: Translator) {
+export function buildPluginMetrics(items: Plugin[], t: Translator) {
   const enabledCount = items.filter(item => item.enableStatus).length;
   const disabledCount = items.filter(item => !item.enableStatus).length;
   const paramCount = items.reduce((sum, item) => sum + (item.paramCount || 0), 0);
 
   return [
-    { label: 'enabled in page', value: String(enabledCount), tone: enabledCount > 0 ? 'success' : undefined },
-    { label: 'disabled in page', value: String(disabledCount), tone: disabledCount > 0 ? 'warning' : undefined },
-    { label: 'params in page', value: String(paramCount) }
+    { label: t('setting.plugins.metric.enabled-page'), value: String(enabledCount), tone: enabledCount > 0 ? 'success' : undefined },
+    { label: t('setting.plugins.metric.disabled-page'), value: String(disabledCount), tone: disabledCount > 0 ? 'warning' : undefined },
+    { label: t('setting.plugins.metric.params-page'), value: String(paramCount) }
   ];
 }
 
-export function buildPluginRows(items: Plugin[]) {
+export function buildPluginRows(items: Plugin[], t: Translator) {
   return items.map(item => ({
     title: item.name,
-    copy: `${item.items?.map(sub => sub.type).filter(Boolean).join(' · ') || 'plugin item -'}`,
-    meta: `${item.enableStatus ? 'enabled' : 'disabled'} · params ${item.paramCount || 0}`
+    copy: item.items?.map(sub => sub.type).filter(Boolean).join(' · ') || t('setting.plugins.row.item-fallback'),
+    meta: `${item.enableStatus ? t('common.enabled') : t('common.disabled')} · ${t('setting.plugins.row.params', {
+      count: item.paramCount || 0
+    })}`
   }));
 }
 
-export function buildPluginTableRows(items: Plugin[]) {
+export function buildPluginTableRows(items: Plugin[], t: Translator) {
   return items.map(item => ({
     key: String(item.id),
     name: item.name,
     typeLabels: item.items?.map(sub => sub.type).filter(Boolean) || [],
-    statusLabel: item.enableStatus ? 'enabled' : 'disabled',
-    paramCount: item.paramCount || 0,
-    canEditParams: Boolean(item.paramCount)
+    statusLabel: item.enableStatus ? t('common.enabled') : t('common.disabled'),
+    paramCount: item.paramCount ?? 0,
+    canEditParams: item.paramCount !== 0
   }));
 }

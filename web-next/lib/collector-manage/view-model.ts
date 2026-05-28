@@ -3,6 +3,13 @@ import { buildCollectorHealthEvidence } from '../collector-health-evidence';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
+type CollectorStatusTone = 'success' | 'danger';
+
+function formatCollectorFact(value: string | number | null | undefined, emptyValue: string) {
+  const text = value == null ? '' : String(value).trim();
+  return text || emptyValue;
+}
+
 function isCollectorOnline(summary: CollectorSummary) {
   const status = summary.collector?.status;
   if (typeof status === 'number') {
@@ -16,6 +23,10 @@ function isCollectorOnline(summary: CollectorSummary) {
   }
 
   return Boolean(summary.collector?.online);
+}
+
+function collectorStatusTone(summary: CollectorSummary): CollectorStatusTone {
+  return isCollectorOnline(summary) ? 'success' : 'danger';
 }
 
 function toEpoch(value?: number | string | null) {
@@ -58,10 +69,10 @@ function formatCollectorLastSeen(value: number | string | null | undefined, form
 export function buildCollectorFacts(list: PageResult<CollectorSummary>, t: Translator) {
   const pinCount = list.content.reduce((sum, item) => sum + (item.pinMonitorNum || 0), 0);
   const dispatchCount = list.content.reduce((sum, item) => sum + (item.dispatchMonitorNum || 0), 0);
-  const healthEvidence = buildCollectorClusterHealthEvidence(list.content);
+  const healthEvidence = buildCollectorClusterHealthEvidence(list.content, undefined, t);
 
   return [
-    { label: 'Workspace', value: 'setting/collector' },
+    { label: t('common.workspace'), value: 'setting/collector' },
     { label: t('common.total'), value: String(list.totalElements || 0) },
     { label: t('common.current-page-count'), value: String(list.content?.length || 0) },
     {
@@ -76,7 +87,11 @@ export function buildCollectorFacts(list: PageResult<CollectorSummary>, t: Trans
   ];
 }
 
-export function buildCollectorClusterHealthEvidence(items: CollectorSummary[], formatTime?: (value?: number | string | null) => string) {
+export function buildCollectorClusterHealthEvidence(
+  items: CollectorSummary[],
+  formatTime?: (value?: number | string | null) => string,
+  t?: Translator
+) {
   const onlineCollectorCount = items.filter(item => isCollectorOnline(item)).length;
   const taskCount = items.reduce((sum, item) => sum + (item.pinMonitorNum || 0) + (item.dispatchMonitorNum || 0), 0);
   const latestUpdate = resolveLatestCollectorUpdate(items);
@@ -87,7 +102,7 @@ export function buildCollectorClusterHealthEvidence(items: CollectorSummary[], f
     onlineCollectorCount,
     taskCount,
     totalCollectorCount: items.length
-  });
+  }, t);
 }
 
 export function buildCollectorTableRows(
@@ -95,6 +110,8 @@ export function buildCollectorTableRows(
   t: Translator,
   formatTime: (value?: number | string | null) => string
 ) {
+  const emptyValue = t('common.none');
+
   return items.map(item => {
     const online = isCollectorOnline(item);
     const pinCount = item.pinMonitorNum || 0;
@@ -106,12 +123,13 @@ export function buildCollectorTableRows(
       key: item.collector?.name || t('setting.collector.item.fallback'),
       name: item.collector?.name || t('setting.collector.item.fallback'),
       statusLabel: online ? t('monitor.collector.status.online') : t('monitor.collector.status.offline'),
+      statusTone: collectorStatusTone(item),
       modeLabel: mode === 'private' ? t('collector.mode.private') : t('collector.mode.public'),
       taskCount: String(taskCount),
       pinCount: String(pinCount),
       dispatchCount: String(dispatchCount),
-      ip: item.collector?.ip || '-',
-      version: item.collector?.version || '-',
+      ip: formatCollectorFact(item.collector?.ip, emptyValue),
+      version: formatCollectorFact(item.collector?.version, emptyValue),
       updatedAt: formatTime(item.collector?.gmtUpdate || null),
       healthEvidence: buildCollectorHealthEvidence({
         lastSeenLabel: formatCollectorLastSeen(item.collector?.gmtUpdate, formatTime),
@@ -119,7 +137,7 @@ export function buildCollectorTableRows(
         onlineCollectorCount: online ? 1 : 0,
         taskCount,
         totalCollectorCount: 1
-      }),
+      }, t),
       canMutate: item.collector?.name !== 'main-default-collector',
       nextAction: online ? 'offline' : 'online'
     };

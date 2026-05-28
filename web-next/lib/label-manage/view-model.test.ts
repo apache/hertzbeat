@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildLabelCards, buildLabelDisplayName, buildLabelFacts, buildLabelMetrics, buildLabelRows } from './view-model';
+import { buildLabelCards, buildLabelDisplayName, buildLabelFacts, buildLabelMetrics, buildLabelRows, renderAngularLabelColor } from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
@@ -15,9 +15,9 @@ describe('label view model', () => {
 
   it('builds metrics', () => {
     expect(buildLabelMetrics([{ type: 0 }, { type: 1 }, { type: 2 }, { type: 1 }] as any, t)).toEqual([
-      { label: 'auto in page', value: '1' },
-      { label: 'user in page', value: '2', tone: 'success' },
-      { label: 'preset in page', value: '1', tone: 'warning' }
+      { label: '自动标签/当前页', value: '1' },
+      { label: '用户标签/当前页', value: '2', tone: 'success' },
+      { label: '预置标签/当前页', value: '1', tone: 'warning' }
     ]);
   });
 
@@ -57,6 +57,14 @@ describe('label view model', () => {
 
   it('builds label display names', () => {
     expect(buildLabelDisplayName({ name: 'team', tagValue: 'ops' } as any)).toBe('team:ops');
+    expect(buildLabelDisplayName({ name: 'team', tagValue: ' ops ' } as any)).toBe('team: ops ');
     expect(buildLabelDisplayName({ name: 'source', tagValue: '' } as any)).toBe('source');
+    expect(buildLabelDisplayName({ name: 'source', tagValue: '   ' } as any)).toBe('source');
+  });
+
+  it('keeps the old Angular stable label color hashing', () => {
+    expect(renderAngularLabelColor('team')).toBe('geekblue');
+    expect(renderAngularLabelColor('source')).toBe('green');
+    expect(renderAngularLabelColor('env')).toBe('yellow');
   });
 });

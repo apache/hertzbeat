@@ -1,85 +1,95 @@
-import type { AlertDefine, PageResult } from '@/lib/types';
+import type { SettingDefinePageData, TemplateMenuGroup } from './controller';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
-const DEFINE_TYPE_COPY: Record<string, { key: string; zh: string }> = {
-  realtime_metric: { key: 'alert.setting.type.realtime.metric', zh: '指标实时' },
-  periodic_metric: { key: 'alert.setting.type.periodic.metric', zh: '指标周期' },
-  realtime_log: { key: 'alert.setting.type.realtime.log', zh: '日志实时' },
-  periodic_log: { key: 'alert.setting.type.periodic.log', zh: '日志周期' },
-  periodic_trace: { key: 'alert.setting.type.periodic.trace', zh: '链路周期' }
-};
-
-function hasChineseCopy(t: Translator) {
-  return t('common.workspace') === '工作区' || t('menu.advanced.define') === '定义';
+export interface TemplateMenuRow {
+  key: string;
+  title: string;
+  copy: string;
+  meta: string;
+  app: string;
+  hidden: boolean;
 }
 
-function resolveCopy(t: Translator, key: string, fallback: string) {
-  const value = t(key);
-  return value && value !== key ? value : fallback;
+export interface TemplateMenuGroupView {
+  key: string;
+  label: string;
+  rows: TemplateMenuRow[];
 }
 
-function formatDefineType(type: string | null | undefined, t: Translator) {
-  if (!type) return '-';
-  const copy = DEFINE_TYPE_COPY[type];
-  if (!copy) return type;
-  const translated = t(copy.key);
-  if (translated && translated !== copy.key) return translated;
-  return hasChineseCopy(t) ? copy.zh : type;
+function allItems(groups: TemplateMenuGroup[]) {
+  return groups.flatMap(group => group.items);
 }
 
-function formatEnableState(enabled: boolean | undefined, t: Translator) {
-  if (hasChineseCopy(t)) {
-    return enabled ? '已启用' : '已停用';
-  }
-  return enabled ? resolveCopy(t, 'common.enabled', 'enabled') : resolveCopy(t, 'common.disabled', 'disabled');
+function matchesSearch(value: string, search: string) {
+  return value.toLocaleLowerCase().includes(search.toLocaleLowerCase());
 }
 
-function formatDatasourceHealth(code: number, t: Translator) {
-  if (hasChineseCopy(t)) {
-    return code === 0 ? '就绪' : '关注';
-  }
-  return code === 0 ? resolveCopy(t, 'common.ready', 'ready') : resolveCopy(t, 'common.attention', 'attention');
+function formatVisibility(hidden: boolean, t: Translator) {
+  return hidden ? t('setting.define.template.hidden') : t('setting.define.template.visible');
 }
 
-export function buildDefineFacts(list: PageResult<AlertDefine>, datasourceStatus: { code: number }, t: Translator) {
+function formatCategoryLabel(group: TemplateMenuGroup, t: Translator) {
+  const key = `menu.monitor.${group.key}`;
+  const translated = t(key);
+  return translated && translated !== key ? translated : group.label;
+}
+
+function readAppFromYaml(yaml: string) {
+  const match = yaml.match(/^\s*app:\s*([^\s#]+)/m);
+  return match?.[1]?.trim() || 'custom';
+}
+
+export function buildTemplateFacts(data: SettingDefinePageData, t: Translator) {
+  const items = allItems(data.menuGroups);
+  const selectedLabel = data.selectedApp ? data.appLabels[data.selectedApp] || data.selectedApp : t('setting.define.new-template');
+
   return [
     { label: t('common.workspace'), value: 'setting/define' },
-    { label: t('common.total'), value: String(list.totalElements || 0) },
-    { label: t('common.current-page-count'), value: String(list.content?.length || 0) },
-    { label: hasChineseCopy(t) ? '数据源' : 'Datasource', value: formatDatasourceHealth(datasourceStatus.code, t) }
+    { label: t('common.total'), value: String(items.length) },
+    { label: t('setting.define.fact.selected-template'), value: selectedLabel },
+    { label: t('setting.define.fact.hidden'), value: String(items.filter(item => item.hide).length) }
   ];
 }
 
-export function buildDefineRows(items: AlertDefine[], t: Translator, formatTime: (value?: number | string | null) => string) {
-  const chineseCopy = hasChineseCopy(t);
-  return items.map(item => ({
-    key: String(item.id),
-    title: item.name || resolveCopy(t, 'setting.define.item.fallback', chineseCopy ? '未命名定义' : 'Unnamed define'),
-    copy: `${formatDefineType(item.type, t)} · ${item.datasource || '-'} · ${formatEnableState(item.enable, t)}`,
-    meta: chineseCopy
-      ? `周期 ${item.period || 0} 秒 · 更新 ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
-      : `period ${item.period || 0}s · updated ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
-  }));
+export function buildTemplateMenuView(groups: TemplateMenuGroup[], search: string, t: Translator): TemplateMenuGroupView[] {
+  const normalizedSearch = search.trim();
+
+  return groups
+    .map(group => {
+      const rows = group.items
+        .filter(item => {
+          if (!normalizedSearch) return true;
+          return matchesSearch(item.label, normalizedSearch);
+        })
+        .map(item => ({
+          key: item.value,
+          title: item.label || item.value,
+          copy: `${item.category} · ${item.value}`,
+          meta: formatVisibility(item.hide, t),
+          app: item.value,
+          hidden: item.hide
+        }));
+
+      return { key: group.key, label: formatCategoryLabel(group, t), rows };
+    })
+    .filter(group => group.rows.length > 0);
 }
 
-export function buildPreviewRows(selected: AlertDefine | null, t: Translator) {
-  if (!selected) {
-    const chineseCopy = hasChineseCopy(t);
-    return [
-      {
-        title: resolveCopy(t, 'setting.define.empty-selected.title', chineseCopy ? '未选择定义' : 'No definition selected'),
-        copy: resolveCopy(t, 'setting.define.empty-selected.copy', chineseCopy ? '从左侧列表选择一条定义。' : 'Select a definition from the list.'),
-        meta: '-'
-      }
-    ];
-  }
+export function buildTemplateSummaryRows(selectedApp: string | null, yaml: string, t: Translator, selectedLabel?: string | null) {
+  const app = selectedApp || readAppFromYaml(yaml);
+  const lineCount = yaml.split(/\r?\n/).filter(line => line.length > 0).length;
 
   return [
     {
-      title: selected.name || resolveCopy(t, 'setting.define.item.fallback', hasChineseCopy(t) ? '未命名定义' : 'Unnamed define'),
-      copy: selected.expr || '-',
-      meta: `${selected.datasource || '-'} · ${formatDefineType(selected.type, t)}`
+      title: selectedApp ? selectedLabel || selectedApp : t('setting.define.new-template'),
+      copy: `app-${app}.yml`,
+      meta: selectedApp ? t('setting.define.summary.mode.edit') : t('setting.define.summary.mode.new')
+    },
+    {
+      title: 'YAML',
+      copy: t('setting.define.summary.yaml-lines', { count: lineCount }),
+      meta: 'setting/define'
     }
   ];
 }

@@ -15,10 +15,10 @@ export type LabelManagePageData = Awaited<ReturnType<typeof loadLabelData>>;
 export function createEmptyLabelDraft(): Label {
   return {
     id: 0,
-    name: '',
-    tagValue: '',
-    description: '',
-    type: 1
+    name: undefined as unknown as string,
+    tagValue: undefined,
+    description: undefined,
+    type: undefined as unknown as number
   };
 }
 
@@ -32,10 +32,10 @@ export function cloneLabelDraft(label: Label): Label {
 function normalizeLabelDraft(draft: Label): Label {
   return {
     ...draft,
-    name: draft.name.trim(),
-    tagValue: draft.tagValue?.trim() || '',
-    description: draft.description?.trim() || '',
-    type: draft.type ?? 1
+    name: (draft.name ?? '').trim(),
+    tagValue: draft.tagValue == undefined ? undefined : draft.tagValue.trim(),
+    description: draft.description == undefined ? undefined : draft.description.trim(),
+    type: draft.type
   };
 }
 
@@ -47,6 +47,14 @@ export async function saveLabel(apiPost: ApiWriter, apiPut: ApiWriter, draft: La
   return apiPut('/label', payload);
 }
 
+export async function deleteLabels(apiDelete: ApiDelete, labelIds: number[]) {
+  const params = new URLSearchParams();
+  labelIds.forEach(labelId => {
+    params.append('ids', String(labelId));
+  });
+  return apiDelete(`/label?${params.toString()}`);
+}
+
 export async function deleteLabel(apiDelete: ApiDelete, labelId: number) {
-  return apiDelete(`/label/${labelId}`);
+  return deleteLabels(apiDelete, [labelId]);
 }

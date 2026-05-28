@@ -1,4 +1,8 @@
+import { interpolate, type TranslationParams } from './i18n';
+import { SUPPLEMENTAL_MESSAGES } from './i18n-runtime-messages';
+
 export type CollectorHealthTone = 'success' | 'warning' | 'danger' | 'neutral';
+type CollectorHealthTranslator = (key: string, params?: TranslationParams) => string;
 
 export type CollectorHealthEvidence = {
   title: string;
@@ -18,6 +22,11 @@ export type CollectorHealthEvidenceInput = {
   totalBoundMonitors?: number | string | null;
   totalCollectorCount?: number | string | null;
 };
+
+function translateCollectorHealthEvidence(key: string, params?: TranslationParams) {
+  const template = SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+  return interpolate(template, params);
+}
 
 function finiteNumber(value: unknown, fallback = 0) {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -46,7 +55,10 @@ function normalizeLabel(value?: string | null) {
   return value?.trim() || '-';
 }
 
-export function buildCollectorHealthEvidence(input: CollectorHealthEvidenceInput): CollectorHealthEvidence {
+export function buildCollectorHealthEvidence(
+  input: CollectorHealthEvidenceInput,
+  t: CollectorHealthTranslator = translateCollectorHealthEvidence
+): CollectorHealthEvidence {
   const totalCollectorCount = finiteNumber(input.totalCollectorCount, 0);
 
   if (totalCollectorCount > 0) {
@@ -61,10 +73,10 @@ export function buildCollectorHealthEvidence(input: CollectorHealthEvidenceInput
     const taskCount = finiteNumber(input.taskCount, 0);
 
     return {
-      title: '采集集群健康',
-      copy: `采集器 ${onlineCollectorCount} / ${totalCollectorCount} 在线`,
-      meta: `任务 ${taskCount} · 离线 ${offlineCollectorCount}`,
-      freshness: `最近上报 ${normalizeLabel(input.lastSeenLabel || input.lastEvidenceLabel)}`,
+      title: t('collector.health.cluster.title'),
+      copy: t('collector.health.cluster.copy', { online: onlineCollectorCount, total: totalCollectorCount }),
+      meta: t('collector.health.cluster.meta', { tasks: taskCount, offline: offlineCollectorCount }),
+      freshness: t('collector.health.cluster.freshness', { time: normalizeLabel(input.lastSeenLabel || input.lastEvidenceLabel) }),
       tone: toneForCollectorHealth(onlineCollectorCount, totalCollectorCount)
     };
   }
@@ -76,10 +88,13 @@ export function buildCollectorHealthEvidence(input: CollectorHealthEvidenceInput
   );
 
   return {
-    title: '采集健康',
-    copy: totalBoundMonitors > 0 ? `监控 ${healthyMonitorCount} / ${totalBoundMonitors} 健康` : '暂无绑定监控',
-    meta: totalBoundMonitors > 0 ? '采集证据已归并' : '等待模板绑定',
-    freshness: `最近证据 ${normalizeLabel(input.lastEvidenceLabel || input.lastSeenLabel)}`,
+    title: t('collector.health.monitor.title'),
+    copy:
+      totalBoundMonitors > 0
+        ? t('collector.health.monitor.copy', { healthy: healthyMonitorCount, total: totalBoundMonitors })
+        : t('collector.health.monitor.empty-copy'),
+    meta: totalBoundMonitors > 0 ? t('collector.health.monitor.meta') : t('collector.health.monitor.empty-meta'),
+    freshness: t('collector.health.monitor.freshness', { time: normalizeLabel(input.lastEvidenceLabel || input.lastSeenLabel) }),
     tone: toneForMonitorHealth(healthyMonitorCount, totalBoundMonitors)
   };
 }

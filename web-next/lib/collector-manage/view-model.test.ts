@@ -31,7 +31,7 @@ describe('collector view model', () => {
         t
       )
     ).toEqual([
-      { label: 'Workspace', value: 'setting/collector' },
+      { label: '工作区', value: 'setting/collector' },
       { label: '总量', value: '3' },
       { label: '当前页', value: '1' },
       {
@@ -86,6 +86,7 @@ describe('collector view model', () => {
         key: 'edge-a',
         name: 'edge-a',
         statusLabel: 'Online',
+        statusTone: 'success',
         modeLabel: 'Public',
         taskCount: '7',
         pinCount: '2',
@@ -107,12 +108,13 @@ describe('collector view model', () => {
         key: 'main-default-collector',
         name: 'main-default-collector',
         statusLabel: 'Offline',
+        statusTone: 'danger',
         modeLabel: 'Private',
         taskCount: '1',
         pinCount: '0',
         dispatchCount: '1',
         ip: '10.0.0.9',
-        version: '-',
+        version: '无',
         updatedAt: '2026-04-10 18:00:00',
         healthEvidence: {
           title: '采集集群健康',
@@ -125,5 +127,28 @@ describe('collector view model', () => {
         nextAction: 'online'
       }
     ]);
+  });
+
+  it('renders missing collector row facts with the localized empty fallback', () => {
+    expect(
+      buildCollectorTableRows(
+        [
+          {
+            collector: { name: 'edge-empty', ip: ' ', status: 0, mode: 'public', version: '' },
+            pinMonitorNum: 0,
+            dispatchMonitorNum: 0
+          }
+        ] as any,
+        t,
+        () => '2026-04-10 18:00:00'
+      )[0]
+    ).toMatchObject({
+      key: 'edge-empty',
+      name: 'edge-empty',
+      ip: '无',
+      version: '无',
+      statusLabel: 'Online',
+      statusTone: 'success'
+    });
   });
 });

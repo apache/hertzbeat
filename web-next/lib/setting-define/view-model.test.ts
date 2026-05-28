@@ -1,73 +1,157 @@
-import { describe, expect, it, vi } from 'vitest';
-import { buildDefineFacts, buildDefineRows, buildPreviewRows } from './view-model';
+import { describe, expect, it } from 'vitest';
+import { buildTemplateFacts, buildTemplateMenuView, buildTemplateSummaryRows } from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
+import type { SettingDefinePageData } from './controller';
 
-const t = createTranslatorMock({ locale: 'zh-CN' });
+const t = createTranslatorMock({
+  locale: 'zh-CN',
+  overrides: {
+    'setting.define.fact.selected-template': '当前模板',
+    'setting.define.fact.hidden': '隐藏模板',
+    'setting.define.new-template': '新增模板草稿',
+    'setting.define.template.visible': '可见',
+    'setting.define.template.hidden': '隐藏',
+    'setting.define.summary.yaml-lines': '{{count}} 行 YAML',
+    'setting.define.summary.mode.new': '新增',
+    'setting.define.summary.mode.edit': '编辑'
+  }
+});
 
-describe('setting define view model', () => {
-  it('builds facts from define list and datasource status', () => {
-    expect(buildDefineFacts({ totalElements: 8, content: [1, 2, 3] } as any, { code: 0 }, t)).toEqual([
+const data: SettingDefinePageData = {
+  selectedApp: 'mysql',
+  yaml: 'app: mysql\ncategory: database\nparams:\n  - field: host',
+  originalYaml: 'app: mysql\ncategory: database\nparams:\n  - field: host',
+  appLabels: {
+    mysql: 'MySQL',
+    linux: 'Linux'
+  },
+  menuGroups: [
+    {
+      key: 'database',
+      label: 'DATABASE',
+      items: [{ category: 'database', value: 'mysql', label: 'MySQL', hide: false }]
+    },
+    {
+      key: 'os',
+      label: 'OS',
+      items: [{ category: 'os', value: 'linux', label: 'Linux', hide: true }]
+    }
+  ]
+};
+
+describe('setting define monitor-template view model', () => {
+  it('builds facts from template YML workspace data', () => {
+    expect(buildTemplateFacts(data, t)).toEqual([
       { label: '工作区', value: 'setting/define' },
-      { label: '总量', value: '8' },
-      { label: '当前页', value: '3' },
-      { label: '数据源', value: '就绪' }
+      { label: '总量', value: '2' },
+      { label: '当前模板', value: 'MySQL' },
+      { label: '隐藏模板', value: '1' }
     ]);
   });
 
-  it('builds list rows for defines', () => {
+  it('builds grouped menu rows with visible and hidden template state', () => {
+    expect(buildTemplateMenuView(data.menuGroups, '', t)).toEqual([
+      {
+        key: 'database',
+        label: 'DATABASE',
+        rows: [
+          {
+            key: 'mysql',
+            title: 'MySQL',
+            copy: 'database · mysql',
+            meta: '可见',
+            app: 'mysql',
+            hidden: false
+          }
+        ]
+      },
+      {
+        key: 'os',
+        label: '操作系统监控',
+        rows: [
+          {
+            key: 'linux',
+            title: 'Linux',
+            copy: 'os · linux',
+            meta: '隐藏',
+            app: 'linux',
+            hidden: true
+          }
+        ]
+      }
+    ]);
+  });
+
+  it('renders monitor-template category headers through old Angular menu.monitor translations', () => {
+    const translatedCategoryT = createTranslatorMock({
+      locale: 'zh-CN',
+      overrides: {
+        'menu.monitor.db': '数据库监控',
+        'setting.define.template.visible': '可见'
+      }
+    });
+
     expect(
-      buildDefineRows(
+      buildTemplateMenuView(
         [
           {
-            id: 1,
-            name: 'cpu-alert',
-            type: 'realtime_metric',
-            datasource: 'promql',
-            enable: true,
-            period: 60,
-            gmtUpdate: 1712730000000
+            key: 'db',
+            label: 'DB',
+            items: [{ category: 'db', value: 'mysql', label: 'Mysql数据库', hide: false }]
+          },
+          {
+            key: 'edge_device',
+            label: 'EDGE_DEVICE',
+            items: [{ category: 'edge_device', value: 'edge_box', label: 'Edge Box', hide: false }]
           }
-        ] as any,
-        t,
-        () => '2026-04-10 18:00:00'
-      )
-    ).toEqual([
-      {
-        key: '1',
-        title: 'cpu-alert',
-        copy: '指标实时 · promql · 已启用',
-        meta: '周期 60 秒 · 更新 2026-04-10 18:00:00'
-      }
-    ]);
+        ],
+        '',
+        translatedCategoryT
+      ).map(group => group.label)
+    ).toEqual(['数据库监控', 'EDGE_DEVICE']);
   });
 
-  it('builds preview summary rows for the selected define', () => {
+  it('filters menu rows by visible template label like old Angular monitor-select-list', () => {
+    expect(buildTemplateMenuView(data.menuGroups, 'lin', t).map(group => group.key)).toEqual(['os']);
+    expect(buildTemplateMenuView(data.menuGroups, 'database', t).map(group => group.key)).toEqual([]);
+
     expect(
-      buildPreviewRows(
-        {
-          name: 'cpu-alert',
-          expr: 'up == 0',
-          datasource: 'promql',
-          type: 'realtime_metric'
-        } as any,
+      buildTemplateMenuView(
+        [
+          {
+            key: 'database',
+            label: 'DATABASE',
+            items: [{ category: 'database', value: 'postgresql', label: 'Postgres DB', hide: false }]
+          }
+        ],
+        'postgresql',
         t
       )
-    ).toEqual([
-      {
-        title: 'cpu-alert',
-        copy: 'up == 0',
-        meta: 'promql · 指标实时'
-      }
-    ]);
+    ).toEqual([]);
+    expect(
+      buildTemplateMenuView(
+        [
+          {
+            key: 'database',
+            label: 'DATABASE',
+            items: [{ category: 'database', value: 'postgresql', label: 'Postgres DB', hide: false }]
+          }
+        ],
+        'postgres',
+        t
+      ).map(group => group.key)
+    ).toEqual(['database']);
   });
 
-  it('keeps the empty preview state in Chinese when optional translation keys are missing', () => {
-    expect(buildPreviewRows(null, t)).toEqual([
-      {
-        title: '未选择定义',
-        copy: '从左侧列表选择一条定义。',
-        meta: '-'
-      }
+  it('builds compact editor summary rows for existing and new templates', () => {
+    expect(buildTemplateSummaryRows('mysql', 'app: mysql\ncategory: database', t, 'MySQL')).toEqual([
+      { title: 'MySQL', copy: 'app-mysql.yml', meta: '编辑' },
+      { title: 'YAML', copy: '2 行 YAML', meta: 'setting/define' }
+    ]);
+
+    expect(buildTemplateSummaryRows(null, 'app: custom', t)).toEqual([
+      { title: '新增模板草稿', copy: 'app-custom.yml', meta: '新增' },
+      { title: 'YAML', copy: '1 行 YAML', meta: 'setting/define' }
     ]);
   });
 });

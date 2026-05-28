@@ -22,21 +22,23 @@ describe('plugin view model', () => {
           { enableStatus: false, paramCount: 1 }
         ] as any,
         t
-      )
+    )
     ).toEqual([
-      { label: 'enabled in page', value: '1', tone: 'success' },
-      { label: 'disabled in page', value: '1', tone: 'warning' },
-      { label: 'params in page', value: '3' }
+      { label: '当前页启用插件', value: '1', tone: 'success' },
+      { label: '当前页停用插件', value: '1', tone: 'warning' },
+      { label: '当前页参数项', value: '3' }
     ]);
   });
 
   it('builds plugin rows', () => {
     expect(
       buildPluginRows([
-        { name: 'smtp', items: [{ type: 'notice' }, { type: 'email' }], enableStatus: true, paramCount: 2 }
-      ] as any)
+        { name: 'smtp', items: [{ type: 'notice' }, { type: 'email' }], enableStatus: true, paramCount: 2 },
+        { name: 'slack', items: [], enableStatus: false, paramCount: 0 }
+      ] as any, t)
     ).toEqual([
-      { title: 'smtp', copy: 'notice · email', meta: 'enabled · params 2' }
+      { title: 'smtp', copy: 'notice · email', meta: '已启用 · 参数 2' },
+      { title: 'slack', copy: '插件项 -', meta: '已停用 · 参数 0' }
     ]);
   });
 
@@ -44,14 +46,15 @@ describe('plugin view model', () => {
     expect(
       buildPluginTableRows([
         { id: 1, name: 'smtp', items: [{ type: 'POST_ALERT' }, { type: 'POST_COLLECT' }], enableStatus: true, paramCount: 2 },
-        { id: 2, name: 'slack', items: [{ type: 'POST_ALERT' }], enableStatus: false, paramCount: 0 }
-      ] as any)
+        { id: 2, name: 'slack', items: [{ type: 'POST_ALERT' }], enableStatus: false, paramCount: 0 },
+        { id: 3, name: 'legacy', items: [{ type: 'POST_COLLECT' }], enableStatus: true }
+      ] as any, t)
     ).toEqual([
       {
         key: '1',
         name: 'smtp',
         typeLabels: ['POST_ALERT', 'POST_COLLECT'],
-        statusLabel: 'enabled',
+        statusLabel: '已启用',
         paramCount: 2,
         canEditParams: true
       },
@@ -59,9 +62,17 @@ describe('plugin view model', () => {
         key: '2',
         name: 'slack',
         typeLabels: ['POST_ALERT'],
-        statusLabel: 'disabled',
+        statusLabel: '已停用',
         paramCount: 0,
         canEditParams: false
+      },
+      {
+        key: '3',
+        name: 'legacy',
+        typeLabels: ['POST_COLLECT'],
+        statusLabel: '已启用',
+        paramCount: 0,
+        canEditParams: true
       }
     ]);
   });

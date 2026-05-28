@@ -2,6 +2,10 @@ import type { Label, PageResult } from '@/lib/types';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
+const ANGULAR_LABEL_COLORS = ['blue', 'green', 'orange', 'purple', 'cyan', 'yellow', 'pink', 'lime', 'red', 'geekblue', 'volcano', 'magenta'] as const;
+
+export type AngularLabelColor = (typeof ANGULAR_LABEL_COLORS)[number];
+
 export function buildLabelFacts(list: PageResult<Label>, t: Translator) {
   return [
     { label: t('common.workspace'), value: 'setting/labels' },
@@ -10,20 +14,31 @@ export function buildLabelFacts(list: PageResult<Label>, t: Translator) {
   ];
 }
 
-export function buildLabelMetrics(items: Label[], _t: Translator) {
+export function buildLabelMetrics(items: Label[], t: Translator) {
   const autoCount = items.filter(item => item.type === 0).length;
   const userCount = items.filter(item => item.type === 1).length;
   const presetCount = items.filter(item => item.type === 2).length;
 
   return [
-    { label: 'auto in page', value: String(autoCount) },
-    { label: 'user in page', value: String(userCount), tone: userCount > 0 ? 'success' : undefined },
-    { label: 'preset in page', value: String(presetCount), tone: presetCount > 0 ? 'warning' : undefined }
+    { label: t('setting.labels.metric.auto-page'), value: String(autoCount) },
+    { label: t('setting.labels.metric.user-page'), value: String(userCount), tone: userCount > 0 ? 'success' : undefined },
+    { label: t('setting.labels.metric.preset-page'), value: String(presetCount), tone: presetCount > 0 ? 'warning' : undefined }
   ];
 }
 
 export function buildLabelDisplayName(item: Pick<Label, 'name' | 'tagValue'>) {
-  return item.tagValue && item.tagValue.trim() ? `${item.name}:${item.tagValue.trim()}` : item.name;
+  const name = item.name ?? '';
+  return item.tagValue && item.tagValue.trim() ? `${name}:${item.tagValue}` : name;
+}
+
+export function renderAngularLabelColor(key = ''): AngularLabelColor {
+  let hash = 0;
+  for (let index = 0; index < key.length; index += 1) {
+    const char = key.charCodeAt(index);
+    hash = (hash << 5) - hash + char;
+    hash &= hash;
+  }
+  return ANGULAR_LABEL_COLORS[Math.abs(hash) % ANGULAR_LABEL_COLORS.length];
 }
 
 export function buildLabelCards(items: Label[], labelTypeLabel: (type?: number | null) => string, formatTime: (value?: number | string | null) => string) {
