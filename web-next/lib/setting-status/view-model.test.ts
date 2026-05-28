@@ -1,5 +1,24 @@
-import { describe, expect, it } from 'vitest';
-import { buildStatusComponentDraft, buildStatusComponentEvidenceRows, buildStatusComponentPayload, buildStatusFacts, buildStatusIncidentDraft, buildStatusIncidentEvidenceRows, buildStatusIncidentPayload, buildStatusMetrics, buildStatusOrgDraft, buildStatusOrgOverviewRows, buildStatusOrgPayload, buildStatusRows, stateLabel, validateStatusComponentDraft, validateStatusIncidentDraft, validateStatusOrgDraft } from './view-model';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  buildStatusComponentDraft,
+  buildStatusComponentEvidenceRows,
+  buildStatusComponentPayload,
+  buildStatusFacts,
+  buildStatusIncidentDraft,
+  buildStatusIncidentEvidenceRows,
+  buildStatusIncidentPayload,
+  buildStatusMetrics,
+  buildStatusOrgDraft,
+  buildStatusOrgOverviewRows,
+  buildStatusOrgPayload,
+  buildStatusRows,
+  settingStatusComponentTagTone,
+  settingStatusIncidentTagTone,
+  stateLabel,
+  validateStatusComponentDraft,
+  validateStatusIncidentDraft,
+  validateStatusOrgDraft
+} from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({
@@ -21,7 +40,12 @@ const zhT = createTranslatorMock({
     'setting.status.title': '状态页设置',
     'setting.status.org.title': '组织档案',
     'setting.status.components.title': '组件',
+    'setting.status.components.empty.title': '暂无组件',
+    'setting.status.components.empty.copy': '还没有公开状态组件。',
     'setting.status.incidents.title': '事件',
+    'setting.status.incidents.empty.title': '暂无事件',
+    'setting.status.incidents.empty.copy': '还没有维护事件。',
+    'setting.status.incidents.item.fallback': '事件',
     'setting.status.org.state': '组织状态',
     'setting.status.org.copy': '配置公开状态页展示的组织信息。',
     'setting.status.org.fallback': '未命名状态组织',
@@ -31,11 +55,23 @@ const zhT = createTranslatorMock({
 
 describe('setting status view model', () => {
   it('maps state labels', () => {
-    expect(stateLabel(0)).toBe('Normal');
-    expect(stateLabel(1)).toBe('Abnormal');
-    expect(stateLabel(2)).toBe('Unknown');
+    expect(stateLabel(0, t)).toBe('Normal');
+    expect(stateLabel(1, t)).toBe('Abnormal');
+    expect(stateLabel(2, t)).toBe('Unknown');
     expect(stateLabel(0, zhT)).toBe('正常');
-    expect(stateLabel(undefined)).toBe('-');
+    expect(stateLabel(undefined, t)).toBe('-');
+  });
+
+  it('maps admin status tag tones from normalized state values', () => {
+    expect(settingStatusComponentTagTone(0)).toBe('ok');
+    expect(settingStatusComponentTagTone('degraded')).toBe('bad');
+    expect(settingStatusComponentTagTone(undefined)).toBe('neutral');
+
+    expect(settingStatusIncidentTagTone('investigating')).toBe('bad');
+    expect(settingStatusIncidentTagTone(1)).toBe('warn');
+    expect(settingStatusIncidentTagTone(2)).toBe('warn');
+    expect(settingStatusIncidentTagTone('resolved')).toBe('ok');
+    expect(settingStatusIncidentTagTone(undefined)).toBe('neutral');
   });
 
   it('builds status facts', () => {
@@ -69,6 +105,46 @@ describe('setting status view model', () => {
     ]);
   });
 
+  it('uses runtime none fallback for setting status component rows without descriptions', () => {
+    expect(
+      buildStatusRows(
+        'component',
+        [{ name: 'API', state: 1, gmtUpdate: 1712730000000 }] as any,
+        { content: [] } as any,
+        zhT,
+        () => '2026-04-10 18:00:00'
+      )
+    ).toEqual([
+      { title: 'API', copy: '无', meta: '异常 · 2026-04-10 18:00:00' }
+    ]);
+  });
+
+  it('uses runtime none fallback for setting status empty row meta', () => {
+    expect(
+      buildStatusRows(
+        'component',
+        [],
+        { content: [] } as any,
+        zhT,
+        () => '2026-04-10 18:00:00'
+      )
+    ).toEqual([
+      { title: '暂无组件', copy: '还没有公开状态组件。', meta: '无' }
+    ]);
+
+    expect(
+      buildStatusRows(
+        'incident',
+        [],
+        { content: [] } as any,
+        zhT,
+        () => '2026-04-10 18:00:00'
+      )
+    ).toEqual([
+      { title: '暂无事件', copy: '还没有维护事件。', meta: '无' }
+    ]);
+  });
+
   it('builds selectable component evidence rows', () => {
     expect(
       buildStatusComponentEvidenceRows(
@@ -78,6 +154,18 @@ describe('setting status view model', () => {
       )
     ).toEqual([
       { key: '7', title: 'API', copy: 'public api', meta: 'Normal · 2026-04-10 18:00:00' }
+    ]);
+  });
+
+  it('uses runtime none fallback for setting status component evidence without descriptions', () => {
+    expect(
+      buildStatusComponentEvidenceRows(
+        [{ id: 8, name: 'Worker', state: 0, gmtUpdate: 1712730000000 }] as any,
+        zhT,
+        () => '2026-04-10 18:00:00'
+      )
+    ).toEqual([
+      { key: '8', title: 'Worker', copy: '无', meta: '正常 · 2026-04-10 18:00:00' }
     ]);
   });
 
@@ -114,7 +202,10 @@ describe('setting status view model', () => {
         name: 'API degraded',
         state: 1,
         components: [{ id: 7 }, { id: 8 }],
-        contents: [{ message: 'Investigating', state: 1, timestamp: 10 }]
+        contents: [
+          { message: 'Investigating', state: 1, timestamp: 10 },
+          { message: 'Monitoring mitigation', state: 2, timestamp: 30 }
+        ]
       } as any)
     ).toEqual({
       id: 9,
@@ -122,8 +213,11 @@ describe('setting status view model', () => {
       name: 'API degraded',
       state: '1',
       componentIdsText: '7, 8',
-      message: 'Investigating',
-      existingContents: [{ message: 'Investigating', state: 1, timestamp: 10 }],
+      message: 'Monitoring mitigation',
+      existingContents: [
+        { message: 'Monitoring mitigation', state: 2, timestamp: 30 },
+        { message: 'Investigating', state: 1, timestamp: 10 }
+      ],
       startTime: null,
       endTime: null
     });
@@ -149,6 +243,91 @@ describe('setting status view model', () => {
     expect(validateStatusIncidentDraft({ name: 'API degraded', state: '0', componentIdsText: '', message: '' }, t)).toBe('At least one component id is required');
     expect(validateStatusIncidentDraft({ name: 'API degraded', state: '0', componentIdsText: '7', message: '' }, t)).toBe('Incident message is required');
     expect(validateStatusIncidentDraft({ name: 'API degraded', state: '0', componentIdsText: '7', message: 'Investigating' }, t)).toBeNull();
+  });
+
+  it('appends status incident content with the selected state and incident id', () => {
+    const now = 1779753000000;
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(now);
+
+    try {
+      const payload = buildStatusIncidentPayload(
+        {
+          id: 9,
+          orgId: 1,
+          name: 'API degraded',
+          state: '3',
+          componentIdsText: '7, 8',
+          message: 'Resolved after rollback',
+          existingContents: [{ id: 8, incidentId: 9, message: 'Identified bad deploy', state: 1, timestamp: 1000 }],
+          startTime: 500,
+          endTime: null
+        },
+        [
+          { id: 7, name: 'API' },
+          { id: 8, name: 'Checkout' },
+          { id: 12, name: 'Database' }
+        ] as any
+      );
+
+      expect(payload).toMatchObject({
+        id: 9,
+        orgId: 1,
+        name: 'API degraded',
+        state: 3,
+        startTime: 500,
+        endTime: now,
+        components: [
+          { id: 7, name: 'API' },
+          { id: 8, name: 'Checkout' }
+        ],
+        contents: [
+          { id: 8, incidentId: 9, message: 'Identified bad deploy', state: 1, timestamp: 1000 },
+          { incidentId: 9, message: 'Resolved after rollback', state: 3, timestamp: now }
+        ]
+      });
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
+  it('uses runtime none fallback for setting status incident titles without id', () => {
+    const incidentWithoutIdentity = {
+      state: 1,
+      components: [],
+      contents: [{ message: '正在排查', state: 1, timestamp: 10 }],
+      gmtUpdate: 1712730000000
+    };
+
+    expect(
+      buildStatusRows(
+        'incident',
+        [],
+        { content: [incidentWithoutIdentity] } as any,
+        zhT,
+        () => '2026-04-10 18:00:00'
+      )
+    ).toEqual([
+      {
+        title: '事件 无',
+        copy: '正在排查',
+        meta: '已确认 · 组件 0 · 2026-04-10 18:00:00'
+      }
+    ]);
+
+    expect(
+      buildStatusIncidentEvidenceRows(
+        { content: [incidentWithoutIdentity], totalElements: 1 } as any,
+        zhT,
+        () => '2026-04-10 18:00:00'
+      )
+    ).toEqual([
+      {
+        key: 'incident',
+        title: '事件 无',
+        copy: '正在排查',
+        meta: '已确认 · 组件 0 · 2026-04-10 18:00:00'
+      }
+    ]);
   });
 
   it('builds localized org overview rows and zh-CN summaries', () => {
@@ -213,6 +392,34 @@ describe('setting status view model', () => {
         title: '支付接口抖动',
         copy: '正在排查',
         meta: '已确认 · 组件 1 · 2026-04-10 18:00:00'
+      }
+    ]);
+  });
+
+  it('uses runtime none fallback for setting status org overview links', () => {
+    expect(
+      buildStatusOrgOverviewRows(
+        {
+          name: 'HB Status',
+          description: 'Public status overview',
+          state: 0,
+          home: '',
+          feedback: '   ',
+          gmtUpdate: 1712730000000
+        } as any,
+        t,
+        () => '2026-04-10 18:00:00'
+      )
+    ).toEqual([
+      {
+        title: 'HB Status',
+        copy: 'Public status overview',
+        meta: 'All Systems Operational'
+      },
+      {
+        title: 'Feedback',
+        copy: 'None · None',
+        meta: '2026-04-10 18:00:00'
       }
     ]);
   });

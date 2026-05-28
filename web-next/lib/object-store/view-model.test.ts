@@ -31,6 +31,34 @@ describe('object store view model', () => {
     ]);
   });
 
+  it('uses localized empty fallbacks for missing object store facts', () => {
+    const scopedT = createTranslatorMock({
+      locale: 'zh-CN',
+      overrides: {
+        'common.workspace': '工作区',
+        'common.none': '无对象存储值',
+        'setting.object-store.fact.type': '类型',
+        'setting.object-store.fact.bucket': 'Bucket',
+        'setting.object-store.fact.endpoint': 'Endpoint'
+      }
+    });
+
+    expect(
+      buildObjectStoreFacts(
+        {
+          type: '',
+          config: { bucketName: '   ', endpoint: null }
+        } as any,
+        scopedT
+      )
+    ).toEqual([
+      { label: '工作区', value: 'setting/settings/object-store' },
+      { label: '类型', value: '无对象存储值' },
+      { label: 'Bucket', value: '无对象存储值' },
+      { label: 'Endpoint', value: '无对象存储值' }
+    ]);
+  });
+
   it('updates nested config fields immutably', () => {
     expect(
       updateObjectStoreField(

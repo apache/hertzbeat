@@ -4,8 +4,8 @@ import {
   incidentStateLabel,
   latestIncidentMessage,
   normalizeComponentState,
+  normalizeIncidentState,
   orgStateLabel,
-  readStatusCopy,
   statusComponentsCountLabel,
   statusComponentsLabel,
   statusFieldLabel,
@@ -19,6 +19,8 @@ import {
 } from '../status-center/display';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+export type StatusSettingTagTone = 'ok' | 'bad' | 'warn' | 'neutral';
+
 export type StatusOrgDraft = {
   id?: number;
   name: string;
@@ -50,6 +52,7 @@ export type StatusIncidentDraft = {
   message: string;
   existingContents?: Array<{
     id?: number;
+    incidentId?: number;
     message?: string;
     state?: number;
     timestamp?: number | null;
@@ -58,20 +61,28 @@ export type StatusIncidentDraft = {
   endTime?: number | null;
 };
 
-export function stateLabel(state?: number | string | null, t?: Translator): string {
-  if (t) {
-    return componentStateLabel(state, t);
-  }
+export function stateLabel(state: number | string | null | undefined, t: Translator): string {
+  return componentStateLabel(state, t);
+}
+
+export function settingStatusComponentTagTone(state?: number | string | null): StatusSettingTagTone {
   const normalizedState = normalizeComponentState(state);
-  if (normalizedState === 0) return 'Normal';
-  if (normalizedState === 1) return 'Abnormal';
-  if (normalizedState === 2) return 'Unknown';
-  return '-';
+  if (normalizedState === 0) return 'ok';
+  if (normalizedState === 1) return 'bad';
+  return 'neutral';
+}
+
+export function settingStatusIncidentTagTone(state?: number | string | null): StatusSettingTagTone {
+  const normalizedState = normalizeIncidentState(state);
+  if (normalizedState === 0) return 'bad';
+  if (normalizedState === 1 || normalizedState === 2) return 'warn';
+  if (normalizedState === 3) return 'ok';
+  return 'neutral';
 }
 
 export function buildStatusFacts(org: StatusPageOrg, components: StatusPageComponent[], incidents: PageResult<StatusPageIncident>, t: Translator) {
   return [
-    { label: readStatusCopy(t, 'common.workspace', 'Workspace'), value: statusSettingLabel(t) },
+    { label: t('common.workspace'), value: statusSettingLabel(t) },
     { label: statusOrganizationLabel(t), value: org.name || statusOrganizationFallback(t) },
     { label: statusComponentsCountLabel(t), value: String(components.length) },
     { label: statusIncidentsCountLabel(t), value: String(incidents.totalElements || 0) }
@@ -86,6 +97,11 @@ export function buildStatusMetrics(components: StatusPageComponent[], incidents:
   ];
 }
 
+function statusIncidentFallbackTitle(item: StatusPageIncident, t: Translator) {
+  const incidentId = item.id ?? t('common.none');
+  return item.name || `${t('setting.status.incidents.item.fallback')} ${incidentId}`;
+}
+
 export function buildStatusRows(
   mode: 'component' | 'incident',
   components: StatusPageComponent[],
@@ -93,23 +109,25 @@ export function buildStatusRows(
   t: Translator,
   formatTime: (value?: number | string | null) => string
 ) {
+  const emptyValue = t('common.none');
+
   if (mode === 'component') {
     return components.length > 0
       ? components.map(item => ({
           title: item.name || t('setting.status.components.item.fallback'),
-          copy: item.description || '-',
+          copy: item.description || emptyValue,
           meta: `${stateLabel(item.state, t)} · ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
         }))
-      : [{ title: t('setting.status.components.empty.title'), copy: t('setting.status.components.empty.copy'), meta: '-' }];
+      : [{ title: t('setting.status.components.empty.title'), copy: t('setting.status.components.empty.copy'), meta: emptyValue }];
   }
 
   return incidents.content.length > 0
     ? incidents.content.map(item => ({
-        title: item.name || `${t('setting.status.incidents.item.fallback')} ${item.id || '-'}`,
+        title: statusIncidentFallbackTitle(item, t),
         copy: latestIncidentMessage(item) || `${statusFieldLabel(t)} ${incidentStateLabel(item.state ?? item.status ?? null, t)}`,
         meta: `${incidentStateLabel(item.state ?? item.status ?? null, t)} · ${statusComponentsLabel(t)} ${(item.components || []).length} · ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
       }))
-    : [{ title: t('setting.status.incidents.empty.title'), copy: t('setting.status.incidents.empty.copy'), meta: '-' }];
+    : [{ title: t('setting.status.incidents.empty.title'), copy: t('setting.status.incidents.empty.copy'), meta: emptyValue }];
 }
 
 export function buildStatusIncidentEvidenceRows(
@@ -119,7 +137,7 @@ export function buildStatusIncidentEvidenceRows(
 ) {
   return incidents.content.map(item => ({
     key: String(item.id || item.name || 'incident'),
-    title: item.name || `${t('setting.status.incidents.item.fallback')} ${item.id || '-'}`,
+    title: statusIncidentFallbackTitle(item, t),
     copy: latestIncidentMessage(item) || `${statusFieldLabel(t)} ${incidentStateLabel(item.state ?? item.status ?? null, t)}`,
     meta: `${incidentStateLabel(item.state ?? item.status ?? null, t)} · ${statusComponentsLabel(t)} ${(item.components || []).length} · ${formatTime(item.gmtUpdate || item.gmtCreate || null)}`
   }));
@@ -130,12 +148,18 @@ export function buildStatusComponentEvidenceRows(
   t: Translator,
   formatTime: (value?: number | string | null) => string
 ) {
+  const emptyValue = t('common.none');
+
   return components.map(component => ({
     key: String(component.id || component.name || 'component'),
     title: component.name || t('setting.status.components.item.fallback'),
-    copy: component.description || '-',
+    copy: component.description || emptyValue,
     meta: `${stateLabel(component.state, t)} · ${formatTime(component.gmtUpdate || component.gmtCreate || null)}`
   }));
+}
+
+function statusOrgLinkFallback(value: string | null | undefined, t: Translator) {
+  return value?.trim() || t('common.none');
 }
 
 export function buildStatusOrgOverviewRows(
@@ -143,6 +167,9 @@ export function buildStatusOrgOverviewRows(
   t: Translator,
   formatTime: (value?: number | string | null) => string
 ) {
+  const home = statusOrgLinkFallback(org.home, t);
+  const feedback = statusOrgLinkFallback(org.feedback, t);
+
   return [
     {
       title: org.name || statusOrganizationFallback(t),
@@ -150,8 +177,8 @@ export function buildStatusOrgOverviewRows(
       meta: orgStateLabel(org.state, t)
     },
     {
-      title: readStatusCopy(t, 'setting.status.org.feedback', 'Feedback'),
-      copy: `${org.home || '-'} · ${org.feedback || '-'}`,
+      title: t('setting.status.org.feedback'),
+      copy: `${home} · ${feedback}`,
       meta: formatTime(org.gmtUpdate || org.gmtCreate || null)
     }
   ];
@@ -249,7 +276,8 @@ function parseIdList(text: string) {
 }
 
 export function buildStatusIncidentDraft(incident?: StatusPageIncident | null): StatusIncidentDraft {
-  const latestMessage = incident?.contents?.slice().sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0]?.message || '';
+  const existingContents = sortStatusIncidentContents(incident?.contents || []);
+  const latestMessage = existingContents[0]?.message || '';
   return {
     id: incident?.id,
     orgId: incident?.orgId,
@@ -257,10 +285,14 @@ export function buildStatusIncidentDraft(incident?: StatusPageIncident | null): 
     state: String(incident?.state ?? 0),
     componentIdsText: (incident?.components || []).map(component => component.id).filter(Boolean).join(', '),
     message: latestMessage,
-    existingContents: incident?.contents || [],
+    existingContents,
     startTime: incident?.startTime ?? null,
     endTime: incident?.endTime ?? null,
   };
+}
+
+export function sortStatusIncidentContents(contents: StatusIncidentDraft['existingContents'] = []) {
+  return contents.slice().sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 }
 
 export function buildStatusIncidentPayload(draft: StatusIncidentDraft, components: StatusPageComponent[]): StatusPageIncident {
@@ -271,6 +303,7 @@ export function buildStatusIncidentPayload(draft: StatusIncidentDraft, component
   const nextContents = [...(draft.existingContents || [])];
   if (draft.message.trim()) {
     nextContents.push({
+      ...(draft.id ? { incidentId: draft.id } : {}),
       message: draft.message.trim(),
       state,
       timestamp: now

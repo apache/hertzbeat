@@ -1,7 +1,9 @@
 import type { AuthToken } from '@/lib/types';
 
 type ApiGetter = <T>(url: string) => Promise<T>;
+type ApiDeleter = <T>(url: string) => Promise<T>;
 type RawTokenResponse = { code: number; msg?: string; data?: { token?: string } };
+type RawMessageResponse = { code: number; msg?: string };
 
 export async function loadTokenData(apiGet: ApiGetter) {
   const tokens = await apiGet<AuthToken[]>('/account/token');
@@ -21,4 +23,11 @@ export async function generateTokenValue(apiGet: ApiGetter, name: string, expire
     throw new Error(message.msg || failureMessage);
   }
   return message.data?.token || '';
+}
+
+export async function deleteTokenById(apiDelete: ApiDeleter, id: number | string, failureMessage: string) {
+  const message = await apiDelete<RawMessageResponse>(`/account/token/${id}`);
+  if (message.code !== 0) {
+    throw new Error(message.msg || failureMessage);
+  }
 }

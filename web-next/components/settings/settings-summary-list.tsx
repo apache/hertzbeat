@@ -9,6 +9,7 @@ export type SettingsSummaryItem = {
   title: React.ReactNode;
   lines: React.ReactNode[];
   actionLabel: string;
+  actionAriaLabel?: string;
   onAction: () => void;
 };
 
@@ -53,6 +54,7 @@ export function SettingsSummaryList({
               data-settings-summary-action={item.key}
               data-settings-summary-action-style="cold-compact-action"
               variant="default"
+              aria-label={item.actionAriaLabel}
               className="h-8 min-w-[72px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] hover:border-[#4e74f8] hover:bg-[#151923] hover:text-[#f8fafc]"
               onClick={item.onAction}
             >

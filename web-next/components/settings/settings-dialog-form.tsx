@@ -21,20 +21,31 @@ export function SettingsDialogField({
   label,
   required,
   children,
-  className
+  className,
+  layout = 'horizontal'
 }: {
   label: string;
   required?: boolean;
   children: React.ReactNode;
   className?: string;
+  layout?: 'horizontal' | 'vertical';
 }) {
+  const isVertical = layout === 'vertical';
+
   return (
-    <label data-settings-dialog-field="cold-dialog-field" className={cn('grid gap-2 md:grid-cols-[180px_minmax(0,1fr)] md:items-center', className)}>
-      <span className="text-[12px] font-semibold text-[#dbe4f0]">
+    <label
+      data-settings-dialog-field="cold-dialog-field"
+      data-settings-dialog-field-layout={isVertical ? 'angular-vertical-form' : 'angular-label-7-control-12'}
+      className={cn(isVertical ? 'grid gap-1.5' : 'grid gap-2 md:grid-cols-[7fr_12fr] md:items-center', className)}
+    >
+      <span
+        data-settings-dialog-label-span={isVertical ? 'vertical' : '7'}
+        className="text-[12px] font-semibold text-[#dbe4f0]"
+      >
         {label}
         {required ? <span className="ml-1 text-[#8da2ff]">*</span> : null}
       </span>
-      <div className="min-w-0">{children}</div>
+      <div data-settings-dialog-control-span={isVertical ? 'vertical' : '12'} className="min-w-0">{children}</div>
     </label>
   );
 }

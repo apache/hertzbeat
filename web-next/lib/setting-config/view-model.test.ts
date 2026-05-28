@@ -25,10 +25,26 @@ describe('setting config view model', () => {
       )
     ).toEqual([
       { label: 'Workspace', value: 'setting/settings/config' },
-      { label: 'System Language', value: 'Simplified Chinese(zh_CN)' },
-      { label: 'System Theme', value: 'Dark Theme' },
-      { label: 'System Time Zone', value: 'Asia/Shanghai' }
+      { label: 'System language', value: 'Simplified Chinese(zh_CN)' },
+      { label: 'System theme', value: 'Dark theme' },
+      { label: 'System timezone', value: 'Asia/Shanghai' }
     ]);
+  });
+
+  it('renders missing system config facts with the localized empty fallback', () => {
+    expect(
+      buildConfigFacts(
+        { locale: ' ', theme: 'dark', timeZoneId: '' } as any,
+        t
+      )
+    ).toEqual([
+      { label: 'Workspace', value: 'setting/settings/config' },
+      { label: 'System language', value: 'None' },
+      { label: 'System theme', value: 'Dark theme' },
+      { label: 'System timezone', value: 'None' }
+    ]);
+
+    expect(resolveSystemLocaleLabel('custom-locale', t)).toBe('custom-locale');
   });
 
   it('updates config fields immutably', () => {
@@ -90,6 +106,6 @@ describe('setting config view model', () => {
 
   it('resolves translated locale and theme labels for supported values', () => {
     expect(resolveSystemLocaleLabel('pt-BR', t)).toBe('Portuguese(pt_BR)');
-    expect(resolveSystemThemeLabel('default', t)).toBe('Default Theme');
+    expect(resolveSystemThemeLabel('default', t)).toBe('Default theme');
   });
 });

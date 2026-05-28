@@ -13,6 +13,7 @@ describe('SettingsSummaryList', () => {
             title: '邮件服务器',
             lines: ['邮箱服务器地址: -', '邮箱账号: -'],
             actionLabel: '配置',
+            actionAriaLabel: '配置邮件服务器',
             onAction: vi.fn()
           },
           {
@@ -20,6 +21,7 @@ describe('SettingsSummaryList', () => {
             title: '短信配置',
             lines: ['短信类型: 腾讯短信', '启用状态: 否'],
             actionLabel: '配置',
+            actionAriaLabel: '配置短信配置',
             onAction: vi.fn()
           }
         ]}
@@ -35,6 +37,8 @@ describe('SettingsSummaryList', () => {
     expect(html).toContain('data-settings-summary-action="email"');
     expect(html).toContain('data-settings-summary-action="sms"');
     expect(html).toContain('data-settings-summary-action-style="cold-compact-action"');
+    expect(html).toContain('aria-label="配置邮件服务器"');
+    expect(html).toContain('aria-label="配置短信配置"');
     expect(html).toContain('rounded-[4px]');
     expect(html).toContain('border-[#2b3039]');
     expect(html).toContain('bg-[#0b0c0e]');

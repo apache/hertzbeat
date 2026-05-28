@@ -42,7 +42,7 @@ export function SettingsSurfacePage({
             copy={t('settings.surface.governance.copy')}
             variant="flat"
           >
-            <RowList rows={buildPlatformGovernanceRows()} />
+            <RowList rows={buildPlatformGovernanceRows(t)} />
           </SurfaceSection>
         </div>
       }

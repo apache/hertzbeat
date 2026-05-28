@@ -8,6 +8,10 @@ type RuntimeHandlers = {
   reload?: () => void;
 };
 
+export function normalizeSystemConfigRuntimeLocale(locale?: string | null) {
+  return locale?.trim().replace('_', '-') ?? '';
+}
+
 export async function loadSystemConfigData(apiGet: ApiGetter) {
   const [config, timezones] = await Promise.all([
     apiGet<SystemConfig>('/config/system'),
@@ -22,8 +26,9 @@ export async function saveSystemConfig(apiPost: ApiPoster, config: SystemConfig)
 }
 
 export async function applySystemConfigRuntime(config: SystemConfig, handlers?: RuntimeHandlers) {
-  if (config.locale && handlers?.setLocale) {
-    await handlers.setLocale(config.locale);
+  const runtimeLocale = normalizeSystemConfigRuntimeLocale(config.locale);
+  if (runtimeLocale && handlers?.setLocale) {
+    await handlers.setLocale(runtimeLocale);
   }
   handlers?.applyTheme?.(config.theme);
   handlers?.reload?.();

@@ -12,6 +12,7 @@ import {
   normalizeSmsSender,
   resolveBooleanText,
   resolveSmsTypeLabel,
+  resolveUniSmsAuthModeLabel,
   updateSmsProviderField,
   updateSmsType
 } from './view-model';
@@ -63,24 +64,81 @@ describe('setting server view model', () => {
     ).toEqual([
       {
         key: 'email',
-        title: 'Email Server',
+        title: 'Email server',
         lines: [
-          'Email Server Address: smtp.example.com',
-          'Email Account: ops',
-          'Email Port: 587',
+          'Email server address: smtp.example.com',
+          'Email account: ops',
+          'Email port: 587',
           'Enable SSL: Yes',
           'Enable STARTTLS: No',
-          'Enable Email Configuration: Yes'
+          'Enable email configuration: Yes'
         ]
       },
       {
         key: 'sms',
-        title: 'SMS Server',
+        title: 'SMS settings',
         lines: [
-          'Sms Type: Twilio Sms',
-          'Twilio Account SID: AC-1',
-          'Twilio Phone Number: +86-10000',
+          'SMS type: Twilio Sms',
+          'Twilio account SID: AC-1',
+          'Twilio phone number: +86-10000',
           'Enable: No'
+        ]
+      }
+    ]);
+  });
+
+  it('uses localized empty fallbacks for missing summary facts', () => {
+    const scopedT = createTranslatorMock({
+      locale: 'zh-CN',
+      overrides: {
+        'common.none': '无消息配置值',
+        'common.enable': '启用',
+        'common.yes': '是',
+        'common.no': '否',
+        'settings.server.email': '邮件服务',
+        'settings.server.sms': '短信服务',
+        'alert.notice.sender.mail.host': '邮件服务器地址',
+        'alert.notice.sender.mail.username': '邮件账户',
+        'alert.notice.sender.mail.port': '邮件端口',
+        'alert.notice.sender.mail.ssl': '启用 SSL',
+        'alert.notice.sender.mail.starttls': '启用 STARTTLS',
+        'alert.notice.sender.mail.enable': '启用邮件配置',
+        'alert.notice.sender.sms.type': '短信类型',
+        'alert.notice.sender.sms.type.tencent': '腾讯云短信',
+        'alert.notice.sender.sms.tencent.appId': '腾讯云 App ID',
+        'alert.notice.sender.sms.tencent.signName': '短信签名',
+        'alert.notice.sender.sms.tencent.templateId': '短信模板'
+      }
+    });
+
+    expect(
+      buildMessageServerSummaryItems(
+        { emailHost: '', emailUsername: '  ', emailPort: undefined, emailSsl: true, emailStarttls: false, enable: false } as any,
+        { type: 'tencent', enable: false, tencent: { appId: '', signName: ' ', templateId: null } } as any,
+        scopedT
+      )
+    ).toEqual([
+      {
+        key: 'email',
+        title: '邮件服务',
+        lines: [
+          '邮件服务器地址: 无消息配置值',
+          '邮件账户: 无消息配置值',
+          '邮件端口: 无消息配置值',
+          '启用 SSL: 是',
+          '启用 STARTTLS: 否',
+          '启用邮件配置: 否'
+        ]
+      },
+      {
+        key: 'sms',
+        title: '短信服务',
+        lines: [
+          '短信类型: 腾讯云短信',
+          '腾讯云 App ID: 无消息配置值',
+          '短信签名: 无消息配置值',
+          '短信模板: 无消息配置值',
+          '启用: 否'
         ]
       }
     ]);
@@ -134,7 +192,8 @@ describe('setting server view model', () => {
   it('resolves provider labels and auth-mode gating', () => {
     expect(normalizeSmsProviderType('aws')).toBe('aws');
     expect(normalizeSmsProviderType('aliyun')).toBe('tencent');
-    expect(resolveSmsTypeLabel('alibaba', t)).toBe('Alibaba Sms');
+    expect(resolveSmsTypeLabel('alibaba', t)).toBe('Alibaba SMS');
+    expect(resolveUniSmsAuthModeLabel('simple', t)).toBe('Simple');
     expect(resolveBooleanText(true, t)).toBe('Yes');
     expect(
       isUniSmsAccessKeySecretRequired({

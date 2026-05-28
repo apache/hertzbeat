@@ -27,25 +27,7 @@ const apiMessagePost = vi.hoisted(() => vi.fn());
 vi.mock('../../../../components/providers/i18n-provider', () => ({
   useI18n: () => ({
     t: createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'settings.object-store': '文件服务配置',
-        'settings.object-store.type': '文件服务提供商',
-        'settings.object-store.obs.accessKey': 'AccessKey',
-        'settings.object-store.obs.secretKey': 'SecretKey',
-        'settings.object-store.obs.bucketName': 'Bucket',
-        'settings.object-store.obs.endpoint': 'EndPoint',
-        'settings.object-store.obs.savePath': '保存路径',
-        'settings.object-store.obs.accessKey.placeholder': '华为云的AccessKeyId',
-        'settings.object-store.obs.secretKey.placeholder': '华为云的AccessKeySecret',
-        'settings.object-store.obs.bucketName.placeholder': '华为云OBS中您创建的Bucket名称',
-        'settings.object-store.obs.endpoint.placeholder': '华为云OBS地域域名，不包括Bucket名',
-        'settings.object-store.obs.savePath.placeholder': '备份文件保存路径, 默认是hertzbeat',
-        'settings.object-store.type.database': '本地数据库（默认）',
-        'settings.object-store.type.file': '本地文件',
-        'settings.object-store.type.obs': '华为云OBS',
-        'settings.system-config.ok': '确认更新'
-      }
+      locale: 'zh-CN'
     })
   })
 }));
@@ -79,8 +61,15 @@ vi.mock('../../../../components/settings/settings-form', () => ({
   ),
   SettingsFormInput: (props: any) => <input data-settings-form-control="cold-input-control" {...props} />,
   SettingsFormSelect: ({ children, ...props }: any) => <select data-settings-form-control="cold-select-control" {...props}>{children}</select>,
-  SettingsFormActions: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  SettingsFormFeedback: ({ children }: any) => <div data-settings-form-feedback="true">{children}</div>
+  SettingsFormActions: ({ children, ...props }: any) => <div {...props}>{children}</div>
+}));
+
+vi.mock('@hertzbeat/ui', () => ({
+  HzInlineFeedback: ({ title, ...props }: any) => (
+    <div data-hz-ui="inline-feedback" {...props}>
+      {title}
+    </div>
+  )
 }));
 
 vi.mock('../../../../components/ui/button', () => ({
@@ -108,8 +97,13 @@ describe('setting object store page', () => {
     expect(html).toContain('data-setting-object-store-page="otlp-cold-object-store"');
     expect(html).toContain('data-setting-object-store-style-baseline="hertzbeat-cold-matte"');
     expect(html).toContain('data-setting-object-store-layout="full-width-settings-form"');
+    expect(html).toContain('data-setting-object-store-type-change-contract="angular-reset-config-on-type-change"');
+    expect(html).toContain('data-setting-object-store-provider-select-contract="angular-centered-bold-dropdown"');
     expect(html).toContain('data-setting-object-store-form="cold-settings-form"');
+    expect(html).toContain('data-setting-object-store-apply-contract="angular-apply-notify"');
     expect(html).toContain('data-setting-object-store-provider="cold-provider-select"');
+    expect(html).toContain('data-setting-object-store-provider-select="angular-centered-bold-dropdown"');
+    expect(html).toContain('data-setting-object-store-type-change="angular-reset-config-on-type-change"');
     expect(html).toContain('data-setting-object-store-obs-fields="cold-obs-fields"');
     expect(html).toContain('data-setting-object-store-actions="standard-equal-buttons"');
     expect(html).toContain('文件服务配置');
@@ -120,11 +114,16 @@ describe('setting object store page', () => {
     expect(html).toContain('AccessKey');
     expect(html).toContain('SecretKey');
     expect(html).toContain('Bucket');
-    expect(html).toContain('EndPoint');
+    expect(html).toContain('Endpoint');
     expect(html).toContain('保存路径');
+    expect(html).toContain('placeholder="华为云 AccessKeyId"');
+    expect(html).toContain('placeholder="华为云 AccessKeySecret"');
+    expect(html).toContain('placeholder="华为云 OBS 中创建的 Bucket 名称"');
+    expect(html).toContain('placeholder="华为云 OBS 地域域名，不包括 Bucket 名"');
+    expect(html).toContain('placeholder="备份文件保存路径，默认是 hertzbeat"');
     expect(html).toContain('本地数据库（默认）');
     expect(html).toContain('本地文件');
-    expect(html).toContain('华为云OBS');
+    expect(html).toContain('华为云 OBS');
     expect(html).toContain('确认更新');
     expect(html).not.toContain('data-setting-object-store-page="angular-object-store"');
     expect(html).not.toContain('data-setting-object-store-form="angular-vertical-form"');
@@ -143,17 +142,26 @@ describe('setting object store page', () => {
   });
 
   it('keeps the object-store route on the cold settings form owner', () => {
-    const source = readFileSync(resolve(__dirname, 'page.tsx'), 'utf8');
+    const source = readFileSync(resolve(__dirname, 'setting-object-store-page.tsx'), 'utf8');
 
     expect(source).toContain('coldOpsCatalogVisual');
     expect(source).toContain('data-setting-object-store-page="otlp-cold-object-store"');
     expect(source).toContain('data-setting-object-store-style-baseline={coldObjectStoreVisual.canvasName}');
     expect(source).toContain('data-setting-object-store-layout="full-width-settings-form"');
+    expect(source).toContain('data-setting-object-store-type-change-contract="angular-reset-config-on-type-change"');
+    expect(source).toContain('data-setting-object-store-provider-select-contract="angular-centered-bold-dropdown"');
     expect(source).toContain('data-setting-object-store-form="cold-settings-form"');
+    expect(source).toContain('data-setting-object-store-apply-contract="angular-apply-notify"');
     expect(source).toContain('data-setting-object-store-provider="cold-provider-select"');
+    expect(source).toContain('data-setting-object-store-provider-select="angular-centered-bold-dropdown"');
+    expect(source).toContain('data-setting-object-store-type-change="angular-reset-config-on-type-change"');
+    expect(source).toContain('updateObjectStoreType(prev || data.config || {}, e.target.value)');
     expect(source).toContain('data-setting-object-store-actions="standard-equal-buttons"');
     expect(source).toContain('SettingsConsoleTitle');
     expect(source).toContain('SettingsForm');
+    expect(source).toContain("t('common.notify.apply-success')");
+    expect(source).toContain("t('common.notify.apply-fail')");
+    expect(source).toContain('data-setting-object-store-apply-feedback-owner="hertzbeat-ui-inline-feedback"');
     expect(source).not.toContain('angular-object-store');
     expect(source).not.toContain('angular-vertical-form');
     expect(source).not.toContain('angular-provider-select');
@@ -161,5 +169,17 @@ describe('setting object store page', () => {
     expect(source).not.toContain('data-setting-object-store-summary-rail');
     expect(source).not.toContain('WorkbenchPage');
     expect(source).not.toContain('@/components/observability');
+  });
+
+  it('keeps object-store remounts on a short settled cache window while saves invalidate it', () => {
+    const source = readFileSync(resolve(__dirname, 'setting-object-store-page.tsx'), 'utf8');
+
+    expect(source).toContain('SETTING_OBJECT_STORE_SETTLED_CACHE_TTL_MS = 10_000');
+    expect(source).toContain("['setting-object-store', '/config/oss', reloadVersion].join(':')");
+    expect(source).toContain('void reloadVersion');
+    expect(source).toContain('[reloadVersion]');
+    expect(source).toContain('setReloadVersion(version => version + 1)');
+    expect(source).toContain('cacheKey={settingObjectStoreCacheKey}');
+    expect(source).toContain('cacheSettledTtlMs={SETTING_OBJECT_STORE_SETTLED_CACHE_TTL_MS}');
   });
 });

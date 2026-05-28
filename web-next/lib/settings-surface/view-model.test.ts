@@ -14,15 +14,15 @@ describe('settings surface view model', () => {
   it('builds settings facts', () => {
     expect(buildSettingsFacts('Token management', '生成令牌', t)).toEqual([
       { label: '工作区', value: 'token management' },
-      { label: 'Mode', value: 'settings' },
-      { label: 'Focus', value: '生成令牌' }
+      { label: '模式', value: '设置' },
+      { label: '焦点', value: '生成令牌' }
     ]);
   });
 
   it('builds settings surface rows', () => {
     expect(buildSettingsRows(t)).toEqual([
-      { title: '设置导航', copy: '从这里进入状态页、采集器、标签、插件、令牌和系统配置。', meta: 'stable' },
-      { title: '运维配置', copy: '统一维护采集器、标签、插件、令牌、状态页和通知通道。', meta: 'stable' }
+      { title: '设置导航', copy: '从这里进入状态页、采集器、标签、插件、令牌和系统配置。', meta: '路由契约' },
+      { title: '运维配置', copy: '统一维护采集器、标签、插件、令牌、状态页和通知通道。', meta: 'API 契约' }
     ]);
   });
 
@@ -40,11 +40,11 @@ describe('settings surface view model', () => {
       'mcp-ai-foundation'
     ]);
     expect(review.currentGroups.find(group => group.key === 'api-access')).toMatchObject({
-      label: 'API access',
+      labelKey: 'settings.surface.governance.group.api-access',
       routes: ['/setting/settings/token']
     });
     expect(review.currentGroups.find(group => group.key === 'notifications')).toMatchObject({
-      label: 'Notifications',
+      labelKey: 'settings.surface.governance.group.notifications',
       routes: ['/alert/notice']
     });
     expect(review.currentGroups.find(group => group.key === 'template-marketplace')?.routes).toEqual([
@@ -77,7 +77,7 @@ describe('settings surface view model', () => {
   });
 
   it('builds operator-facing governance rows from current routes and roadmap docs only', () => {
-    const rows = buildPlatformGovernanceRows();
+    const rows = buildPlatformGovernanceRows(t);
 
     expect(rows.map(row => row.key)).toEqual([
       'users-permissions',
@@ -100,9 +100,11 @@ describe('settings surface view model', () => {
     const futureBoundary = rows.find(row => row.key === 'future-roadmap-boundary');
     expect(futureBoundary).toMatchObject({
       title: '未来大域边界',
-      meta: 'roadmap only'
+      meta: '仅规划'
     });
-    expect(futureBoundary?.copy).toContain('Security');
+    expect(futureBoundary?.copy).toContain('安全治理');
+    expect(futureBoundary?.copy).toContain('路线图能力规划');
+    expect(futureBoundary?.copy).not.toContain('Data Observability');
     expect(futureBoundary?.copy).toContain('/docs/roadmap/future-security');
     expect(rows.map(row => row.meta).join(' ')).not.toContain('/security');
   });

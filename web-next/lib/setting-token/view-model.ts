@@ -7,14 +7,14 @@ export function isExpired(token: AuthToken, now = Date.now()) {
   return new Date(token.expireTime).getTime() < now;
 }
 
-export function buildTokenMetrics(tokens: AuthToken[], now = Date.now()) {
+export function buildTokenMetrics(tokens: AuthToken[], t: Translator, now = Date.now()) {
   const activeCount = tokens.filter(token => !isExpired(token, now)).length;
   const expiredCount = tokens.filter(token => isExpired(token, now)).length;
 
   return [
-    { label: 'total tokens', value: String(tokens.length) },
-    { label: 'active tokens', value: String(activeCount), tone: 'success' },
-    { label: 'expired tokens', value: String(expiredCount), tone: expiredCount > 0 ? 'warning' : 'success' }
+    { label: t('setting.token.metric.total'), value: String(tokens.length) },
+    { label: t('setting.token.metric.active'), value: String(activeCount), tone: 'success' },
+    { label: t('setting.token.metric.expired'), value: String(expiredCount), tone: expiredCount > 0 ? 'warning' : 'success' }
   ];
 }
 
@@ -30,12 +30,22 @@ export function buildTokenFacts(tokens: AuthToken[], t: Translator, now = Date.n
   ];
 }
 
+function formatTokenFact(value: unknown, fallback: string) {
+  const text = value == null ? '' : String(value).trim();
+  return text || fallback;
+}
+
 export function buildTokenRows(tokens: AuthToken[], t: Translator, formatTime: (value?: number | string | null) => string, now = Date.now()) {
-  return tokens.map(token => ({
-    title: token.name || token.tokenMask || t('setting.token.item.fallback'),
-    copy: `${token.tokenMask || '-'} · creator ${token.creator || '-'}`,
-    meta: `${isExpired(token, now) ? 'expired' : 'active'} · ${formatTime(token.expireTime || token.gmtCreate || null)}`
-  }));
+  const emptyValue = t('common.none');
+  return tokens.map(token => {
+    const tokenMask = formatTokenFact(token.tokenMask, emptyValue);
+    const creator = formatTokenFact(token.creator, emptyValue);
+    return {
+      title: token.name || token.tokenMask || t('setting.token.item.fallback'),
+      copy: `${tokenMask} · ${t('setting.token.row.creator', { creator })}`,
+      meta: `${isExpired(token, now) ? t('setting.token.row.state.expired') : t('setting.token.row.state.active')} · ${formatTime(token.expireTime || token.gmtCreate || null)}`
+    };
+  });
 }
 
 export function buildTokenExpirationOptions(t: Translator) {

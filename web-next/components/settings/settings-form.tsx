@@ -62,6 +62,9 @@ export const SettingsFormSelect = React.forwardRef<HTMLSelectElement, React.Sele
     <Select
       ref={ref}
       data-settings-form-control="cold-select-control"
+      data-settings-form-select-width="angular-400px"
+      data-settings-form-select-style="angular-centered-bold"
+      data-settings-form-select-dropdown-style="angular-bold-larger"
       containerClassName="w-full max-w-[400px]"
       className={cn(
         'max-w-[400px] text-center [text-align-last:center]',

@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applySystemConfigRuntime, loadSystemConfigData, persistSystemConfig, saveSystemConfig } from './controller';
+import {
+  applySystemConfigRuntime,
+  loadSystemConfigData,
+  normalizeSystemConfigRuntimeLocale,
+  persistSystemConfig,
+  saveSystemConfig
+} from './controller';
 
 describe('setting config controller', () => {
   it('loads config and timezone options together', async () => {
@@ -47,7 +53,7 @@ describe('setting config controller', () => {
       )
     ).resolves.toBe('Saved successfully');
 
-    expect(setLocale).toHaveBeenCalledWith('ja_JP');
+    expect(setLocale).toHaveBeenCalledWith('ja-JP');
     expect(applyTheme).toHaveBeenCalledWith('compact');
     expect(reload).toHaveBeenCalled();
   });
@@ -59,8 +65,15 @@ describe('setting config controller', () => {
 
     await applySystemConfigRuntime({ locale: 'pt_BR', theme: 'light-ops' } as any, { setLocale, applyTheme, reload });
 
-    expect(setLocale).toHaveBeenCalledWith('pt_BR');
+    expect(setLocale).toHaveBeenCalledWith('pt-BR');
     expect(applyTheme).toHaveBeenCalledWith('light-ops');
     expect(reload).toHaveBeenCalled();
+  });
+
+  it('normalizes Angular system config locale values before runtime reload', () => {
+    expect(normalizeSystemConfigRuntimeLocale('zh_CN')).toBe('zh-CN');
+    expect(normalizeSystemConfigRuntimeLocale('en-US')).toBe('en-US');
+    expect(normalizeSystemConfigRuntimeLocale(' pt_BR ')).toBe('pt-BR');
+    expect(normalizeSystemConfigRuntimeLocale(null)).toBe('');
   });
 });

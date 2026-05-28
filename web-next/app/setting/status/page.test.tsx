@@ -18,15 +18,16 @@ const loadStatusManagementData = vi.fn(async () => ({
 
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock()
+    t: createTranslatorMock({ locale: 'en-US' }),
+    locale: 'en-US'
   })
 }));
 
 vi.mock('@/components/workbench/client-workbench', () => ({
-  ClientWorkbench: ({ children, load }: { children: (data: any) => React.ReactNode; load: () => Promise<unknown> }) => {
+  ClientWorkbench: ({ children, load, loadingCopy }: { children: (data: any) => React.ReactNode; load: () => Promise<unknown>; loadingCopy?: string }) => {
     loadState.lastLoad = load;
     return (
-      <div data-client-workbench="true">
+      <div data-client-workbench="true" data-loading-copy={loadingCopy}>
         {children({
           org: { id: 1, name: 'HB Status', description: 'Service health', state: 0 },
           components: [{ id: 1, name: 'API', description: 'public api', state: 0, gmtUpdate: 1712730000000 }],
@@ -150,6 +151,7 @@ vi.mock('@/lib/api-client', () => ({
 }));
 
 vi.mock('@/lib/setting-status/controller', () => ({
+  buildStatusIncidentListUrl: ({ search = '', pageIndex = 0, pageSize = 8 }: any = {}) => `/status/page/incident?pageIndex=${pageIndex}&pageSize=${pageSize}${search ? `&search=${search}` : ''}`,
   createStatusPageComponent: vi.fn(),
   createStatusPageIncident: vi.fn(),
   deleteStatusPageComponent: vi.fn(),
@@ -172,6 +174,7 @@ describe('setting status page', () => {
     await lastLoad?.();
 
     expect(html).toContain('data-client-workbench="true"');
+    expect(html).toContain('data-loading-copy="Loading status settings"');
     expect(html).toContain('data-status-setting-surface="otlp-cold-status-console"');
     expect(html).toContain('data-status-setting-style-baseline="hertzbeat-cold-matte"');
     expect(html).toContain('data-status-admin-layout="full-width-admin-list"');
@@ -188,13 +191,40 @@ describe('setting status page', () => {
   }, 15000);
 
   it('keeps the route as load composition and leaves visual ownership in the shared surface', () => {
-    const source = readFileSync(resolve(process.cwd(), 'app/setting/status/page.tsx'), 'utf8');
+    const source = readFileSync(resolve(process.cwd(), 'app/setting/status/setting-status-page.tsx'), 'utf8');
 
     expect(source).toContain('StatusSettingSurface');
+    expect(source).toContain("t('common.notify.apply-success')");
+    expect(source).toContain("t('common.notify.apply-fail')");
+    expect(source).toContain("t(isEdit ? 'common.notify.edit-success' : 'common.notify.new-success')");
+    expect(source).toContain("t(isEdit ? 'common.notify.edit-fail' : 'common.notify.new-fail')");
+    expect(source).toContain("t('common.notify.delete-success')");
+    expect(source).toContain("t('common.notify.delete-fail')");
+    expect(source).toContain("t('status.component.notify.need-org')");
+    expect(source).not.toContain("t('common.save-success')");
+    expect(source).not.toContain("t('common.save-failed')");
+    expect(source).not.toContain("t('common.delete-success')");
+    expect(source).not.toContain("t('common.delete-failed')");
     expect(source).not.toContain('window.confirm');
     expect(source).not.toContain('confirm(');
     expect(source).not.toContain('WorkbenchPage');
     expect(source).not.toContain('SurfaceSection');
     expect(source).not.toContain('SelectableEvidenceList');
+  });
+
+  it('keeps status setting remounts on a short settled cache window while mutations invalidate it', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/setting/status/setting-status-page.tsx'), 'utf8');
+
+    expect(source).toContain('SETTING_STATUS_SETTLED_CACHE_TTL_MS = 10_000');
+    expect(source).toContain("['setting-status', '/status/page/org', '/status/page/component', statusIncidentListUrl, refreshTick].join(':')");
+    expect(source).toContain('void refreshTick');
+    expect(source).toContain('setRefreshTick(value => value + 1)');
+    expect(source).toContain("function handleModeChange(nextMode: 'component' | 'incident')");
+    expect(source).toContain('onModeChange={handleModeChange}');
+    expect(source).toContain('onIncidentPageIndexChange={nextPageIndex => setIncidentPageIndex(nextPageIndex)}');
+    expect(source).toContain('setIncidentError(error instanceof Error ? error.message : t(isEdit ? \'common.notify.edit-fail\' : \'common.notify.new-fail\'))');
+    expect(source).toContain('setEditingIncident(false);');
+    expect(source).toContain('cacheKey={settingStatusCacheKey}');
+    expect(source).toContain('cacheSettledTtlMs={SETTING_STATUS_SETTLED_CACHE_TTL_MS}');
   });
 });

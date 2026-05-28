@@ -1,18 +1,9 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
 
-const t = (key: string) => {
-  const messages: Record<string, string> = {
-    'menu.settings': '平台设置',
-    'settings.surface.title': '设置总览',
-    'settings.surface.copy': '把平台配置入口收拢到一个工作台。',
-    'settings.surface.governance.title': '平台治理',
-    'settings.surface.governance.copy': '只展示当前已有入口；未来大域保留在 roadmap 文档。'
-  };
-
-  return messages[key] ?? key;
-};
+const t = createTranslatorMock({ locale: 'zh-CN' });
 
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
@@ -60,7 +51,12 @@ describe('SettingsSurfacePage', () => {
     );
 
     expect(html).toContain('平台治理');
+    expect(html).toContain('设置总览');
+    expect(html).toContain('把平台配置入口收拢到一个工作台。');
+    expect(html).toContain('路由契约');
+    expect(html).toContain('API 契约');
     expect(html).toContain('只展示当前已有入口');
+    expect(html).toContain('未来大域保留在路线图文档');
     expect(html).toContain('API 访问');
     expect(html).toContain('/setting/settings/token');
     expect(html).toContain('通知通道');
@@ -68,6 +64,9 @@ describe('SettingsSurfacePage', () => {
     expect(html).toContain('模板与插件');
     expect(html).toContain('/setting/define · /setting/plugins');
     expect(html).toContain('未来大域边界');
+    expect(html).toContain('仅规划');
+    expect(html).toContain('安全治理');
+    expect(html).toContain('路线图能力规划');
     expect(html).toContain('/docs/roadmap/future-security');
     expect(html).not.toContain('href="/security"');
   });

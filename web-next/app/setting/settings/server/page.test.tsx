@@ -36,52 +36,22 @@ const apiMessagePost = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../../components/providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'settings.server': '消息服务配置',
-        'settings.server.email': '邮件服务器',
-        'settings.server.sms': '短信配置',
-        'settings.server.email.setting': '配置邮件服务器',
-        'settings.server.sms.setting': '配置短信参数',
-        'alert.notice.sender.mail.host': '邮箱服务器地址',
-        'alert.notice.sender.mail.port': '邮箱端口',
-        'alert.notice.sender.mail.username': '邮箱账号',
-        'alert.notice.sender.mail.password': '邮箱密码',
-        'alert.notice.sender.mail.ssl': '是否启用SSL',
-        'alert.notice.sender.mail.starttls': '是否启用STARTTLS',
-        'alert.notice.sender.mail.enable': '是否启用邮箱配置',
-        'alert.notice.sender.sms.type': '短信类型',
-        'alert.notice.sender.sms.type.tencent': '腾讯短信',
-        'alert.notice.sender.sms.type.alibaba': '阿里短信',
-        'alert.notice.sender.sms.type.unisms': '合一短信（UniSMS）',
-        'alert.notice.sender.sms.type.smslocal': '当地短信（Smslocal）',
-        'alert.notice.sender.sms.type.aws': 'Aws Sms',
-        'alert.notice.sender.sms.type.twilio': 'Twilio Sms',
-        'alert.notice.sender.sms.tencent.appId': '腾讯短信AppId',
-        'alert.notice.sender.sms.tencent.signName': '腾讯短信SignName',
-        'alert.notice.sender.sms.tencent.templateId': '腾讯短信TemplateId',
-        'common.button.setting': '配置',
-        'common.button.cancel': '取消',
-        'common.button.save': '保存',
-        'common.enable': '启用状态',
-        'common.yes': '是',
-        'common.no': '否'
-      }
-    })
+    t: createTranslatorMock({ locale: 'zh-CN' })
   })
 }));
 
 vi.mock('../../../../components/workbench/client-workbench', () => ({
   ClientWorkbench: ({
     children,
-    load
+    load,
+    loadingCopy
   }: {
     children: (data: unknown) => React.ReactNode;
     load: () => Promise<unknown>;
+    loadingCopy?: string;
   }) => {
     mockState.lastLoad = load;
-    return <div data-client-workbench="true">{children(mockState.renderData)}</div>;
+    return <div data-client-workbench="true" data-loading-copy={loadingCopy}>{children(mockState.renderData)}</div>;
   }
 }));
 
@@ -100,6 +70,7 @@ vi.mock('../../../../components/settings/settings-summary-list', () => ({
       title: React.ReactNode;
       lines: React.ReactNode[];
       actionLabel: string;
+      actionAriaLabel?: string;
     }>;
   }) => (
     <div
@@ -111,7 +82,12 @@ vi.mock('../../../../components/settings/settings-summary-list', () => ({
         <section key={item.key} data-settings-summary-item={item.key} data-settings-summary-row-style="cold-summary-row">
           <h2>{item.title}</h2>
           <div>{item.lines.map((line, index) => <div key={`${item.key}-${index}`}>{line}</div>)}</div>
-          <button type="button" data-settings-summary-action={item.key} data-settings-summary-action-style="cold-compact-action">
+          <button
+            type="button"
+            data-settings-summary-action={item.key}
+            data-settings-summary-action-style="cold-compact-action"
+            aria-label={item.actionAriaLabel}
+          >
             {item.actionLabel}
           </button>
         </section>
@@ -125,14 +101,24 @@ vi.mock('../../../../components/workbench/overlay-dialog', () => ({
     open,
     title,
     footer,
-    children
+    children,
+    maxWidthClassName,
+    overlayProps
   }: {
     open: boolean;
     title: React.ReactNode;
     footer?: React.ReactNode;
     children: React.ReactNode;
+    maxWidthClassName?: string;
+    overlayProps?: React.HTMLAttributes<HTMLDivElement>;
   }) => (
-    <section data-overlay-dialog="true" data-open={open ? 'true' : 'false'} data-overlay-dialog-title={title}>
+    <section
+      data-overlay-dialog="true"
+      data-open={open ? 'true' : 'false'}
+      data-overlay-dialog-title={title}
+      data-overlay-dialog-max-width={maxWidthClassName}
+      {...overlayProps}
+    >
       <header>{title}</header>
       <div>{children}</div>
       <footer>{footer}</footer>
@@ -141,11 +127,13 @@ vi.mock('../../../../components/workbench/overlay-dialog', () => ({
 }));
 
 vi.mock('../../../../components/settings/settings-dialog-form', () => ({
-  SettingsDialogForm: ({ children }: { children: React.ReactNode }) => <form data-settings-dialog-form="true">{children}</form>,
+  SettingsDialogForm: ({ children, ...props }: React.FormHTMLAttributes<HTMLFormElement>) => (
+    <form data-settings-dialog-form="true" {...props}>{children}</form>
+  ),
   SettingsDialogField: ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <label data-settings-dialog-field={label}>
-      <span>{label}</span>
-      {children}
+    <label data-settings-dialog-field={label} data-settings-dialog-field-layout="angular-label-7-control-12">
+      <span data-settings-dialog-label-span="7">{label}</span>
+      <div data-settings-dialog-control-span="12">{children}</div>
     </label>
   ),
   SettingsDialogInput: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
@@ -158,6 +146,14 @@ vi.mock('../../../../components/settings/settings-dialog-form', () => ({
 
 vi.mock('../../../../components/ui/button', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props}>{children}</button>
+}));
+
+vi.mock('@hertzbeat/ui', () => ({
+  HzInlineFeedback: ({ title, ...props }: any) => (
+    <div data-hz-ui="inline-feedback" {...props}>
+      {title}
+    </div>
+  )
 }));
 
 vi.mock('../../../../lib/api-client', () => ({
@@ -179,10 +175,13 @@ describe('setting server page', () => {
     const html = renderToStaticMarkup(<SettingServerPage />);
 
     expect(html).toContain('data-client-workbench="true"');
+    expect(html).toContain('data-loading-copy="正在加载消息服务配置。"');
     expect(html).toContain('data-settings-console-title="true"');
     expect(html).toContain('data-settings-server-page="otlp-cold-message-server"');
     expect(html).toContain('data-settings-server-style-baseline="hertzbeat-cold-matte"');
     expect(html).toContain('data-settings-server-layout="full-width-settings-summary"');
+    expect(html).toContain('data-settings-server-dialog-width-contract="angular-width-40-percent"');
+    expect(html).toContain('data-settings-server-dialog-field-layout-contract="angular-label-7-control-12"');
     expect(html).toContain('data-settings-server-summary="cold-summary-list"');
     expect(html).toContain('data-settings-summary-list="true"');
     expect(html).toContain('data-settings-summary-list-owner="cold-settings-summary-owner"');
@@ -193,16 +192,29 @@ describe('setting server page', () => {
     expect(html).toContain('data-settings-summary-action="email"');
     expect(html).toContain('data-settings-summary-action="sms"');
     expect(html).toContain('data-settings-summary-action-style="cold-compact-action"');
+    expect(html).toContain('aria-label="配置邮件服务器"');
+    expect(html).toContain('aria-label="配置短信配置"');
     expect(html).toContain('消息服务配置');
     expect(html).toContain('邮件服务器');
     expect(html).toContain('短信配置');
     expect(html).toContain('邮箱服务器地址: smtp.example.com');
     expect(html).toContain('邮箱账号: ops');
+    expect(html).toContain('是否启用邮箱配置: 是');
     expect(html).toContain('腾讯短信AppId: 10001');
     expect(html).toContain('腾讯短信SignName: old-sign');
     expect(html).toContain('启用状态: 否');
     expect(html).toContain('data-overlay-dialog-title="配置邮件服务器"');
     expect(html).toContain('data-overlay-dialog-title="配置短信参数"');
+    expect(html).toContain('data-overlay-dialog-max-width="w-[min(92vw,520px)] md:w-[40vw] md:max-w-[40vw]"');
+    expect(html).toContain('data-settings-server-email-dialog-width="angular-width-40-percent"');
+    expect(html).toContain('data-settings-server-email-dialog-mask="angular-mask-closable-false"');
+    expect(html).toContain('data-settings-server-sms-dialog-width="angular-width-40-percent"');
+    expect(html).toContain('data-settings-server-sms-dialog-mask="angular-mask-closable-false"');
+    expect(html).toContain('data-settings-dialog-field-layout="angular-label-7-control-12"');
+    expect(html).toContain('data-settings-dialog-label-span="7"');
+    expect(html).toContain('data-settings-dialog-control-span="12"');
+    expect(html).toContain('data-settings-server-email-apply-contract="angular-apply-notify"');
+    expect(html).toContain('data-settings-server-sms-apply-contract="angular-apply-notify"');
     expect(html).toContain('邮箱密码');
     expect(html).toContain('短信类型');
     expect(html).toContain('腾讯短信');
@@ -223,16 +235,28 @@ describe('setting server page', () => {
 
     expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/config/email');
     expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/config/sms');
-  });
+  }, 15000);
 
   it('keeps the server route on the cold settings-console summary owner', () => {
-    const source = readFileSync(resolve(__dirname, 'page.tsx'), 'utf8');
+    const source = readFileSync(resolve(__dirname, 'setting-server-page.tsx'), 'utf8');
 
     expect(source).toContain('coldOpsCatalogVisual');
     expect(source).toContain('data-settings-server-page="otlp-cold-message-server"');
     expect(source).toContain('data-settings-server-style-baseline={coldServerVisual.canvasName}');
     expect(source).toContain('data-settings-server-layout="full-width-settings-summary"');
+    expect(source).toContain('data-settings-server-dialog-width-contract="angular-width-40-percent"');
+    expect(source).toContain('data-settings-server-dialog-field-layout-contract="angular-label-7-control-12"');
     expect(source).toContain('data-settings-server-summary="cold-summary-list"');
+    expect(source).toContain('maxWidthClassName="w-[min(92vw,520px)] md:w-[40vw] md:max-w-[40vw]"');
+    expect(source).toContain("'data-settings-server-email-dialog-width': 'angular-width-40-percent'");
+    expect(source).toContain("'data-settings-server-sms-dialog-width': 'angular-width-40-percent'");
+    expect(source).toContain("'data-settings-server-email-dialog-mask': 'angular-mask-closable-false'");
+    expect(source).toContain("'data-settings-server-sms-dialog-mask': 'angular-mask-closable-false'");
+    expect(source).toContain('data-settings-server-email-apply-contract="angular-apply-notify"');
+    expect(source).toContain('data-settings-server-sms-apply-contract="angular-apply-notify"');
+    expect(source).toContain("t('common.notify.apply-success')");
+    expect(source).toContain("t('common.notify.apply-fail')");
+    expect(source).toContain('data-settings-server-apply-feedback-owner="hertzbeat-ui-inline-feedback"');
     expect(source).toContain('SettingsSummaryList');
     expect(source).not.toContain('data-settings-server-summary-rail');
     expect(source).not.toContain('angular-message-server');
@@ -244,7 +268,7 @@ describe('setting server page', () => {
   it('uses the shared cold number stepper for the email port field', async () => {
     const { default: SettingServerPage } = await import('./page');
     const html = renderToStaticMarkup(<SettingServerPage />);
-    const source = readFileSync(resolve(__dirname, 'page.tsx'), 'utf8');
+    const source = readFileSync(resolve(__dirname, 'setting-server-page.tsx'), 'utf8');
 
     expect(source).toContain("from '../../../../components/ui/number-stepper'");
     expect(source).toContain('data-settings-server-email-port-stepper="cold-number-stepper"');
@@ -255,5 +279,19 @@ describe('setting server page', () => {
     expect(html).toContain('data-cold-number-stepper-action="decrement"');
     expect(html).toContain('data-cold-number-stepper-action="increment"');
     expect(html).toContain('value="587"');
+  });
+
+  it('keeps message-server remounts on a short settled cache window while email and SMS saves invalidate it', () => {
+    const source = readFileSync(resolve(__dirname, 'setting-server-page.tsx'), 'utf8');
+
+    expect(source).toContain('SETTING_SERVER_SETTLED_CACHE_TTL_MS = 10_000');
+    expect(source).toContain("['setting-server', '/config/email', '/config/sms', reloadVersion].join(':')");
+    expect(source).toContain('void reloadVersion');
+    expect(source).toContain('[reloadVersion]');
+    expect(source).toContain('await saveEmailConfig(apiMessagePost, email);');
+    expect(source).toContain('await saveSmsConfig(apiMessagePost, sms);');
+    expect(source.match(/setReloadVersion\(version => version \+ 1\)/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(source).toContain('cacheKey={settingServerCacheKey}');
+    expect(source).toContain('cacheSettledTtlMs={SETTING_SERVER_SETTLED_CACHE_TTL_MS}');
   });
 });

@@ -14,9 +14,9 @@ export const SMS_PROVIDER_OPTIONS: Array<{ value: SmsProviderType; labelKey: str
   { value: 'twilio', labelKey: 'alert.notice.sender.sms.type.twilio' }
 ] as const;
 
-export const UNISMS_AUTH_MODE_OPTIONS: Array<{ value: UniSmsAuthModeType; label: string }> = [
-  { value: 'hmac', label: 'HMAC' },
-  { value: 'simple', label: 'Simple' }
+export const UNISMS_AUTH_MODE_OPTIONS: Array<{ value: UniSmsAuthModeType; labelKey: string }> = [
+  { value: 'hmac', labelKey: 'alert.notice.sender.sms.unisms.authMode.hmac' },
+  { value: 'simple', labelKey: 'alert.notice.sender.sms.unisms.authMode.simple' }
 ] as const;
 
 function hasText(value: unknown) {
@@ -159,30 +159,53 @@ export function resolveSmsTypeLabel(type: string | null | undefined, t: Translat
   return t(`alert.notice.sender.sms.type.${normalized}`);
 }
 
-function buildSmsSummaryLines(sms: SmsNoticeSender, t: Translator) {
+export function resolveUniSmsAuthModeLabel(mode: string | null | undefined, t: Translator) {
+  const normalized = mode === 'simple' ? 'simple' : 'hmac';
+  return t(`alert.notice.sender.sms.unisms.authMode.${normalized}`);
+}
+
+function formatMessageServerFact(value: unknown, fallback: string) {
+  const text = value == null ? '' : String(value).trim();
+  return text || fallback;
+}
+
+function buildSmsSummaryLines(sms: SmsNoticeSender, t: Translator, emptyValue: string) {
   const lines = [`${t('alert.notice.sender.sms.type')}: ${resolveSmsTypeLabel(sms.type, t)}`];
 
   switch (normalizeSmsProviderType(sms.type)) {
-    case 'tencent':
-      lines.push(`${t('alert.notice.sender.sms.tencent.appId')}: ${String((sms.tencent as Record<string, unknown>)?.appId || '-')}`);
-      lines.push(`${t('alert.notice.sender.sms.tencent.signName')}: ${String((sms.tencent as Record<string, unknown>)?.signName || '-')}`);
-      lines.push(`${t('alert.notice.sender.sms.tencent.templateId')}: ${String((sms.tencent as Record<string, unknown>)?.templateId || '-')}`);
+    case 'tencent': {
+      const config = sms.tencent as Record<string, unknown>;
+      lines.push(`${t('alert.notice.sender.sms.tencent.appId')}: ${formatMessageServerFact(config?.appId, emptyValue)}`);
+      lines.push(`${t('alert.notice.sender.sms.tencent.signName')}: ${formatMessageServerFact(config?.signName, emptyValue)}`);
+      lines.push(`${t('alert.notice.sender.sms.tencent.templateId')}: ${formatMessageServerFact(config?.templateId, emptyValue)}`);
       break;
-    case 'alibaba':
-      lines.push(`${t('alert.notice.sender.sms.alibaba.signName')}: ${String((sms.alibaba as Record<string, unknown>)?.signName || '-')}`);
-      lines.push(`${t('alert.notice.sender.sms.alibaba.templateCode')}: ${String((sms.alibaba as Record<string, unknown>)?.templateCode || '-')}`);
+    }
+    case 'alibaba': {
+      const config = sms.alibaba as Record<string, unknown>;
+      lines.push(`${t('alert.notice.sender.sms.alibaba.signName')}: ${formatMessageServerFact(config?.signName, emptyValue)}`);
+      lines.push(`${t('alert.notice.sender.sms.alibaba.templateCode')}: ${formatMessageServerFact(config?.templateCode, emptyValue)}`);
       break;
-    case 'unisms':
-      lines.push(`${t('alert.notice.sender.sms.unisms.signature')}: ${String((sms.unisms as Record<string, unknown>)?.signature || '-')}`);
-      lines.push(`${t('alert.notice.sender.sms.unisms.templateId')}: ${String((sms.unisms as Record<string, unknown>)?.templateId || '-')}`);
-      lines.push(`${t('alert.notice.sender.sms.unisms.authMode')}: ${String((sms.unisms as Record<string, unknown>)?.authMode || '-')}`);
-      break;
-    case 'twilio':
-      lines.push(`${t('alert.notice.sender.sms.twilio.accountSid')}: ${String((sms.twilio as Record<string, unknown>)?.accountSid || '-')}`);
+    }
+    case 'unisms': {
+      const config = sms.unisms as Record<string, unknown>;
+      lines.push(`${t('alert.notice.sender.sms.unisms.signature')}: ${formatMessageServerFact(config?.signature, emptyValue)}`);
+      lines.push(`${t('alert.notice.sender.sms.unisms.templateId')}: ${formatMessageServerFact(config?.templateId, emptyValue)}`);
       lines.push(
-        `${t('alert.notice.sender.sms.twilio.twilioPhoneNumber')}: ${String((sms.twilio as Record<string, unknown>)?.twilioPhoneNumber || '-')}`
+        `${t('alert.notice.sender.sms.unisms.authMode')}: ${resolveUniSmsAuthModeLabel(
+          String(config?.authMode || 'hmac'),
+          t
+        )}`
       );
       break;
+    }
+    case 'twilio': {
+      const config = sms.twilio as Record<string, unknown>;
+      lines.push(`${t('alert.notice.sender.sms.twilio.accountSid')}: ${formatMessageServerFact(config?.accountSid, emptyValue)}`);
+      lines.push(
+        `${t('alert.notice.sender.sms.twilio.twilioPhoneNumber')}: ${formatMessageServerFact(config?.twilioPhoneNumber, emptyValue)}`
+      );
+      break;
+    }
     default:
       break;
   }
@@ -194,15 +217,16 @@ function buildSmsSummaryLines(sms: SmsNoticeSender, t: Translator) {
 export function buildMessageServerSummaryItems(email: EmailNoticeSender, sms: SmsNoticeSender, t: Translator) {
   const resolvedEmail = normalizeEmailSender(email);
   const resolvedSms = normalizeSmsSender(sms);
+  const emptyValue = t('common.none');
 
   return [
     {
       key: 'email',
       title: t('settings.server.email'),
       lines: [
-        `${t('alert.notice.sender.mail.host')}: ${resolvedEmail.emailHost || '-'}`,
-        `${t('alert.notice.sender.mail.username')}: ${resolvedEmail.emailUsername || '-'}`,
-        `${t('alert.notice.sender.mail.port')}: ${resolvedEmail.emailPort ?? '-'}`,
+        `${t('alert.notice.sender.mail.host')}: ${formatMessageServerFact(resolvedEmail.emailHost, emptyValue)}`,
+        `${t('alert.notice.sender.mail.username')}: ${formatMessageServerFact(resolvedEmail.emailUsername, emptyValue)}`,
+        `${t('alert.notice.sender.mail.port')}: ${formatMessageServerFact(resolvedEmail.emailPort, emptyValue)}`,
         `${t('alert.notice.sender.mail.ssl')}: ${resolveBooleanText(Boolean(resolvedEmail.emailSsl), t)}`,
         `${t('alert.notice.sender.mail.starttls')}: ${resolveBooleanText(Boolean(resolvedEmail.emailStarttls), t)}`,
         `${t('alert.notice.sender.mail.enable')}: ${resolveBooleanText(Boolean(resolvedEmail.enable), t)}`
@@ -211,7 +235,7 @@ export function buildMessageServerSummaryItems(email: EmailNoticeSender, sms: Sm
     {
       key: 'sms',
       title: t('settings.server.sms'),
-      lines: buildSmsSummaryLines(resolvedSms, t)
+      lines: buildSmsSummaryLines(resolvedSms, t, emptyValue)
     }
   ];
 }

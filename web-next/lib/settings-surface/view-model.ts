@@ -18,7 +18,7 @@ export type PlatformGovernanceFutureDomain =
 
 export type PlatformGovernanceGroup = {
   key: PlatformGovernanceGroupKey;
-  label: string;
+  labelKey: string;
   currentStatus: 'implemented-route' | 'foundation-only';
   routes: string[];
 };
@@ -63,53 +63,53 @@ const FUTURE_GOVERNANCE_DOMAINS: PlatformGovernanceFutureDomain[] = [
   'developer-integrations'
 ];
 
-const GOVERNANCE_GROUP_TITLES: Record<PlatformGovernanceGroupKey, string> = {
-  'users-permissions': '用户与权限',
-  'api-access': 'API 访问',
-  notifications: '通知通道',
-  'template-marketplace': '模板与插件',
-  'mcp-ai-foundation': 'MCP 与 AI 基础'
+const GOVERNANCE_GROUP_TITLE_KEYS: Record<PlatformGovernanceGroupKey, string> = {
+  'users-permissions': 'settings.surface.governance.group.users-permissions',
+  'api-access': 'settings.surface.governance.group.api-access',
+  notifications: 'settings.surface.governance.group.notifications',
+  'template-marketplace': 'settings.surface.governance.group.template-marketplace',
+  'mcp-ai-foundation': 'settings.surface.governance.group.mcp-ai-foundation'
 };
 
-const FUTURE_GOVERNANCE_TITLES: Record<PlatformGovernanceFutureDomain, string> = {
-  security: 'Security',
-  'data-observability': 'Data Observability',
-  'digital-experience': 'Digital Experience',
-  'software-delivery': 'Software Delivery',
-  'cloud-cost': 'Cloud Cost',
-  'ai-observability': 'AI Observability',
-  'developer-integrations': 'Developer Integrations'
+const FUTURE_GOVERNANCE_TITLE_KEYS: Record<PlatformGovernanceFutureDomain, string> = {
+  security: 'settings.surface.governance.future.security',
+  'data-observability': 'settings.surface.governance.future.data-observability',
+  'digital-experience': 'settings.surface.governance.future.digital-experience',
+  'software-delivery': 'settings.surface.governance.future.software-delivery',
+  'cloud-cost': 'settings.surface.governance.future.cloud-cost',
+  'ai-observability': 'settings.surface.governance.future.ai-observability',
+  'developer-integrations': 'settings.surface.governance.future.developer-integrations'
 };
 
 export function buildPlatformGovernanceReview(): PlatformGovernanceReview {
   const currentGroups: PlatformGovernanceGroup[] = [
     {
       key: 'users-permissions',
-      label: 'Users and permissions',
+      labelKey: GOVERNANCE_GROUP_TITLE_KEYS['users-permissions'],
       currentStatus: 'foundation-only',
       routes: ['/passport/login', '/passport/lock']
     },
     {
       key: 'api-access',
-      label: 'API access',
+      labelKey: GOVERNANCE_GROUP_TITLE_KEYS['api-access'],
       currentStatus: 'implemented-route',
       routes: ['/setting/settings/token']
     },
     {
       key: 'notifications',
-      label: 'Notifications',
+      labelKey: GOVERNANCE_GROUP_TITLE_KEYS.notifications,
       currentStatus: 'implemented-route',
       routes: ['/alert/notice']
     },
     {
       key: 'template-marketplace',
-      label: 'Template marketplace',
+      labelKey: GOVERNANCE_GROUP_TITLE_KEYS['template-marketplace'],
       currentStatus: 'implemented-route',
       routes: ['/setting/define', '/setting/plugins']
     },
     {
       key: 'mcp-ai-foundation',
-      label: 'MCP and AI foundations',
+      labelKey: GOVERNANCE_GROUP_TITLE_KEYS['mcp-ai-foundation'],
       currentStatus: 'foundation-only',
       routes: ['/setting/settings/config', '/setting/settings/mcp-server']
     }
@@ -126,27 +126,31 @@ export function buildPlatformGovernanceReview(): PlatformGovernanceReview {
   };
 }
 
-export function buildPlatformGovernanceRows(): PlatformGovernanceRow[] {
+export function buildPlatformGovernanceRows(t: Translator): PlatformGovernanceRow[] {
   const review = buildPlatformGovernanceReview();
   const currentRows = review.currentGroups.map(group => ({
     key: group.key,
-    title: GOVERNANCE_GROUP_TITLES[group.key],
+    title: t(GOVERNANCE_GROUP_TITLE_KEYS[group.key]),
     copy:
       group.currentStatus === 'implemented-route'
-        ? '已接入当前平台入口，继续沿用现有页面，不新增空菜单。'
-        : '保留当前基础能力入口，完整治理能力继续在 roadmap 中推进。',
+        ? t('settings.surface.governance.copy.implemented-route')
+        : t('settings.surface.governance.copy.foundation-only'),
     meta: group.routes.join(' · ')
   }));
+  const futureDomains = review.futureRoadmapOnly
+    .map(domain => t(FUTURE_GOVERNANCE_TITLE_KEYS[domain]))
+    .join(t('settings.surface.governance.future.separator'));
 
   return [
     ...currentRows,
     {
       key: 'future-roadmap-boundary',
-      title: '未来大域边界',
-      copy: `${review.futureRoadmapOnly
-        .map(domain => FUTURE_GOVERNANCE_TITLES[domain])
-        .join('、')} 仅作为 roadmap 能力规划，不展示为已上线应用入口。文档：${review.futureRoadmapDocs.join(' · ')}`,
-      meta: 'roadmap only'
+      title: t('settings.surface.governance.future.title'),
+      copy: t('settings.surface.governance.future.copy', {
+        domains: futureDomains,
+        docs: review.futureRoadmapDocs.join(' · ')
+      }),
+      meta: t('settings.surface.governance.future.meta')
     }
   ];
 }
@@ -171,8 +175,8 @@ export function buildPlatformGovernanceClosureReview(): PlatformGovernanceClosur
 export function buildSettingsFacts(title: string, nextStep: string, t: Translator) {
   return [
     { label: t('common.workspace'), value: title.toLowerCase() },
-    { label: t('common.mode'), value: t('common.settings-mode') },
-    { label: t('common.focus'), value: nextStep }
+    { label: t('settings.surface.fact.mode-label'), value: t('settings.surface.fact.mode-value') },
+    { label: t('settings.surface.fact.focus-label'), value: nextStep }
   ];
 }
 
@@ -181,12 +185,12 @@ export function buildSettingsRows(t: Translator) {
     {
       title: t('settings.surface.route-contract.title'),
       copy: t('settings.surface.route-contract.copy'),
-      meta: t('common.stable')
+      meta: t('settings.surface.route-contract.meta')
     },
     {
       title: t('settings.surface.api-contract.title'),
       copy: t('settings.surface.api-contract.copy'),
-      meta: t('common.stable')
+      meta: t('settings.surface.api-contract.meta')
     }
   ];
 }

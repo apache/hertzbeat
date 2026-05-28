@@ -15,13 +15,19 @@ export function normalizeObjectStoreType(type?: string | null) {
   return 'DATABASE';
 }
 
-export function buildObjectStoreFacts(config: ObjectStoreConfig, _t: Translator) {
+function formatObjectStoreFact(value: unknown, fallback: string) {
+  const text = value == null ? '' : String(value).trim();
+  return text || fallback;
+}
+
+export function buildObjectStoreFacts(config: ObjectStoreConfig, t: Translator) {
   const storeConfig = (config.config || {}) as Record<string, unknown>;
+  const emptyValue = t('common.none');
   return [
-    { label: 'Workspace', value: 'setting/settings/object-store' },
-    { label: 'Type', value: config.type || '-' },
-    { label: 'Bucket', value: String(storeConfig.bucketName || '-') },
-    { label: 'Endpoint', value: String(storeConfig.endpoint || '-') }
+    { label: t('common.workspace'), value: 'setting/settings/object-store' },
+    { label: t('setting.object-store.fact.type'), value: formatObjectStoreFact(config.type, emptyValue) },
+    { label: t('setting.object-store.fact.bucket'), value: formatObjectStoreFact(storeConfig.bucketName, emptyValue) },
+    { label: t('setting.object-store.fact.endpoint'), value: formatObjectStoreFact(storeConfig.endpoint, emptyValue) }
   ];
 }
 

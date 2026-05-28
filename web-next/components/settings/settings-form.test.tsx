@@ -34,6 +34,9 @@ describe('settings form controls', () => {
     expect(html).toContain('data-settings-form-field="cold-form-field"');
     expect(html).toContain('data-settings-form-control="cold-input-control"');
     expect(html).toContain('data-settings-form-control="cold-select-control"');
+    expect(html).toContain('data-settings-form-select-width="angular-400px"');
+    expect(html).toContain('data-settings-form-select-style="angular-centered-bold"');
+    expect(html).toContain('data-settings-form-select-dropdown-style="angular-bold-larger"');
     expect(html).toContain('data-cold-select-owner="cold-custom-select"');
     expect(html).toContain('data-cold-select-icon="chevron"');
     expect(html).toContain('appearance-none');
@@ -54,6 +57,9 @@ describe('settings form controls', () => {
     expect(source).toContain('data-settings-form-owner="cold-settings-form-owner"');
     expect(source).toContain('data-settings-form-control="cold-input-control"');
     expect(source).toContain('data-settings-form-control="cold-select-control"');
+    expect(source).toContain('data-settings-form-select-width="angular-400px"');
+    expect(source).toContain('data-settings-form-select-style="angular-centered-bold"');
+    expect(source).toContain('data-settings-form-select-dropdown-style="angular-bold-larger"');
     expect(source).toContain("from '../ui/select'");
     expect(source).not.toContain('ToolbarInput');
     expect(source).not.toContain('ToolbarNativeSelect');

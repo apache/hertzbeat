@@ -24,7 +24,11 @@ export function buildSettingsMenuRows(t: Translator): Array<{
     copy: t('setting.settings.menu.copy'),
     meta: item.href,
     extra: (
-      <Link href={item.href} className="text-xs uppercase tracking-[0.16em] text-white/44">
+      <Link
+        href={item.href}
+        aria-label={t('setting.settings.menu.open-action', { title: item.label })}
+        className="text-xs uppercase tracking-[0.16em] text-white/44"
+      >
         {t('common.open')}
       </Link>
     )

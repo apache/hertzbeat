@@ -17,7 +17,9 @@ export function SettingsConsoleShell({
   activeHref,
   children,
   className,
+  contentLabel,
   kicker,
+  navigationLabel,
   title,
   subtitle
 }: {
@@ -25,14 +27,22 @@ export function SettingsConsoleShell({
   activeHref?: string | null;
   children: React.ReactNode;
   className?: string;
+  contentLabel?: string;
   kicker?: string;
+  navigationLabel?: string;
   title?: string;
   subtitle?: string;
 }) {
+  const activeItem = items.find(item => item.href === activeHref) ?? items[0] ?? null;
+
   return (
     <div
       data-settings-console-surface="otlp-cold-settings-console"
       data-settings-console-style-baseline={coldSettingsVisual.canvasName}
+      data-settings-console-route-contract="angular-settings-shell"
+      data-settings-console-menu-contract="angular-config-server-object-store-token"
+      data-settings-console-menu-mode-contract="angular-inline-horizontal-responsive"
+      data-settings-console-active-title-contract="angular-active-child-title"
       className={cn(coldSettingsVisual.canvas.root, className)}
       style={coldSettingsVisual.canvas.backgroundStyle}
     >
@@ -53,9 +63,10 @@ export function SettingsConsoleShell({
           >
             <aside
               data-settings-console-menu="cold-static-list"
-              className="self-start overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
+              data-settings-console-menu-mode="angular-responsive-inline-horizontal"
+              className="self-start overflow-x-auto rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)] lg:overflow-hidden"
             >
-              <nav className="flex flex-col gap-2 p-2">
+              <nav aria-label={navigationLabel} className="flex min-w-max flex-row gap-2 p-2 lg:min-w-0 lg:flex-col">
                 {items.map(item => {
                   const active = item.href === activeHref;
 
@@ -66,8 +77,9 @@ export function SettingsConsoleShell({
                       aria-current={active ? 'page' : undefined}
                       data-settings-console-menu-item={item.href}
                       data-settings-console-active={active ? 'true' : undefined}
+                      data-settings-console-selected-contract={active ? 'angular-nz-selected' : undefined}
                       className={cn(
-                        'flex min-h-[36px] items-center rounded-[3px] border px-3 text-[12px] font-semibold leading-5 transition-colors duration-150',
+                        'flex min-h-[36px] shrink-0 items-center rounded-[3px] border px-3 text-[12px] font-semibold leading-5 transition-colors duration-150 lg:shrink',
                         active
                           ? 'border-[#4e74f8] bg-[#121a2a] text-[#eef2f7]'
                           : 'border-[#2b3039] bg-[#101217] text-[#a9b0bb] hover:border-[#3f4654] hover:bg-[#151820] hover:text-[#eef2f7]'
@@ -81,8 +93,11 @@ export function SettingsConsoleShell({
             </aside>
             <section
               data-settings-console-content="cold-settings-content"
+              data-settings-console-active-title={activeItem?.label ?? ''}
+              aria-label={contentLabel}
               className="min-w-0 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] px-5 py-5 shadow-[0_20px_56px_rgba(0,0,0,0.32)] md:px-6"
             >
+              <div hidden data-settings-console-active-title-marker={activeItem?.label ?? ''} />
               {children}
             </section>
           </div>

@@ -17,6 +17,11 @@ export const SYSTEM_CONFIG_THEME_OPTIONS = [
   { value: 'compact', labelKey: 'settings.system-config.theme.compact' }
 ] as const;
 
+function formatSystemConfigFact(value: string | null | undefined, emptyValue: string) {
+  const text = value?.trim() ?? '';
+  return text || emptyValue;
+}
+
 export function normalizeSystemConfigLocale(locale?: string | null) {
   if (!locale) return '';
   return locale
@@ -34,10 +39,10 @@ export function normalizeSystemConfigTheme(theme?: string | null) {
   return 'dark-ops';
 }
 
-export function resolveSystemLocaleLabel(locale: string | null | undefined, t: Translator) {
+export function resolveSystemLocaleLabel(locale: string | null | undefined, t: Translator, emptyValue = t('common.none')) {
   const normalizedLocale = normalizeSystemConfigLocale(locale);
   const option = SYSTEM_CONFIG_LOCALE_OPTIONS.find(item => item.value === normalizedLocale);
-  return option ? t(option.labelKey) : locale || '-';
+  return option ? t(option.labelKey) : formatSystemConfigFact(locale, emptyValue);
 }
 
 export function resolveSystemThemeLabel(theme: string | null | undefined, t: Translator) {
@@ -47,11 +52,13 @@ export function resolveSystemThemeLabel(theme: string | null | undefined, t: Tra
 }
 
 export function buildConfigFacts(config: SystemConfig, t: Translator) {
+  const emptyValue = t('common.none');
+
   return [
     { label: t('common.workspace'), value: 'setting/settings/config' },
-    { label: t('settings.system-config.locale'), value: resolveSystemLocaleLabel(config.locale, t) },
+    { label: t('settings.system-config.locale'), value: resolveSystemLocaleLabel(config.locale, t, emptyValue) },
     { label: t('settings.system-config.theme'), value: resolveSystemThemeLabel(config.theme, t) },
-    { label: t('settings.system-config.timezone'), value: config.timeZoneId || '-' }
+    { label: t('settings.system-config.timezone'), value: formatSystemConfigFact(config.timeZoneId, emptyValue) }
   ];
 }
 
