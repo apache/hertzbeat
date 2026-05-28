@@ -19,6 +19,8 @@ const defaultRouteMatrix = [
   '/alert/silence',
   '/alert/inhibit',
   '/alert/integration/webhook',
+  '/incidents',
+  '/actions',
   '/dashboard',
   '/events',
   '/log/manage',

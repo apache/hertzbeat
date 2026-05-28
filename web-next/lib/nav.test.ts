@@ -83,15 +83,19 @@ describe('navigation information architecture', () => {
     expect(navSections.map(section => t(section.titleKey))).toEqual(['接入采集', '对象资源', '可观测排障', '告警处置', '仪表盘', '平台设置']);
   });
 
-  it('tracks candidate, hold, and placeholder cutover groups explicitly', () => {
+  it('tracks the completed M10 cutover groups without stale hold or placeholder routes', () => {
     expect(cutoverCandidateRoutes.some(route => route.href === '/overview')).toBe(true);
     expect(cutoverCandidateRoutes.some(route => route.href === '/dashboard')).toBe(false);
     expect(cutoverCandidateRoutes.some(route => route.href === '/topology')).toBe(true);
-    expect(cutoverHoldRoutes.some(route => route.href === '/log/manage')).toBe(true);
-    expect(cutoverHoldRoutes.some(route => route.href === '/trace/manage')).toBe(true);
+    expect(cutoverCandidateRoutes.some(route => route.href === '/log/manage')).toBe(true);
+    expect(cutoverCandidateRoutes.some(route => route.href === '/trace/manage')).toBe(true);
+    expect(cutoverCandidateRoutes.some(route => route.href === '/monitors/[monitorId]')).toBe(true);
+    expect(cutoverCandidateRoutes.some(route => route.href === '/passport/login')).toBe(true);
+    expect(cutoverCandidateRoutes.some(route => route.href === '/actions')).toBe(true);
     expect(cutoverCandidateRoutes.some(route => route.href === '/incidents')).toBe(true);
     expect(cutoverCandidateRoutes.some(route => route.href === '/explorer')).toBe(true);
-    expect(placeholderRoutes.map(route => route.href)).toEqual(['/actions']);
+    expect(cutoverHoldRoutes.map(route => route.href)).toEqual([]);
+    expect(placeholderRoutes.map(route => route.href)).toEqual([]);
   });
 
   it('keeps legacy aliases and route-matrix targets in the route contract', () => {
@@ -99,7 +103,7 @@ describe('navigation information architecture', () => {
       expect.arrayContaining(['/setting', '/setting/settings/mcp-server', '/dashboard', '/alerts', '/events', '/alert/center', '/log/stream', '/log/integration', '/status/public'])
     );
     expect(routeMatrixPaths).toEqual(
-      expect.arrayContaining(['/setting', '/alert/center', '/alerts', '/events', '/log/stream', '/monitors/1', '/entities/1', '/status/public'])
+      expect.arrayContaining(['/setting', '/alert/center', '/alerts', '/events', '/log/stream', '/incidents', '/actions', '/monitors/1', '/entities/1', '/status/public'])
     );
   });
 

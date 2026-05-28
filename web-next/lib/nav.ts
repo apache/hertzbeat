@@ -215,7 +215,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     routeKind: 'primary',
     cutoverStatus: 'candidate',
     smokePath: '/incidents',
-    includeInRouteMatrix: false
+    includeInRouteMatrix: true
   },
   {
     key: 'actions',
@@ -224,9 +224,9 @@ export const routeCatalog: RouteCatalogEntry[] = [
     href: '/actions',
     icon: 'actions',
     routeKind: 'primary',
-    cutoverStatus: 'placeholder',
+    cutoverStatus: 'candidate',
     smokePath: '/actions',
-    includeInRouteMatrix: false
+    includeInRouteMatrix: true
   },
   {
     key: 'alert-notice',
@@ -284,7 +284,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     icon: 'log',
     navSectionKey: 'observability',
     routeKind: 'primary',
-    cutoverStatus: 'hold',
+    cutoverStatus: 'candidate',
     smokePath: '/log/manage',
     includeInRouteMatrix: true,
     legacyAliases: ['/events', '/log/stream', '/log/integration', '/log/integration/[source]']
@@ -297,7 +297,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     icon: 'trace',
     navSectionKey: 'observability',
     routeKind: 'primary',
-    cutoverStatus: 'hold',
+    cutoverStatus: 'candidate',
     smokePath: '/trace/manage',
     includeInRouteMatrix: true
   },
@@ -352,7 +352,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     label: 'Monitor detail',
     href: '/monitors/[monitorId]',
     routeKind: 'primary',
-    cutoverStatus: 'hold',
+    cutoverStatus: 'candidate',
     smokePath: '/monitors/1',
     includeInRouteMatrix: true
   },
@@ -547,7 +547,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     label: 'Login',
     href: '/passport/login',
     routeKind: 'primary',
-    cutoverStatus: 'hold',
+    cutoverStatus: 'candidate',
     smokePath: '/passport/login',
     includeInRouteMatrix: true,
     legacyAliases: ['/login']
@@ -579,7 +579,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     label: 'Passport login alias',
     href: '/login',
     routeKind: 'legacy-alias',
-    cutoverStatus: 'hold',
+    cutoverStatus: 'candidate',
     smokePath: '/login',
     includeInRouteMatrix: true,
     redirectTo: '/passport/login'
@@ -612,7 +612,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     label: 'Events log alias',
     href: '/events',
     routeKind: 'legacy-alias',
-    cutoverStatus: 'hold',
+    cutoverStatus: 'candidate',
     smokePath: '/events',
     includeInRouteMatrix: true,
     redirectTo: '/log/manage'
@@ -634,7 +634,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     label: 'Log stream alias',
     href: '/log/stream',
     routeKind: 'legacy-alias',
-    cutoverStatus: 'hold',
+    cutoverStatus: 'candidate',
     smokePath: '/log/stream',
     includeInRouteMatrix: true,
     redirectTo: '/log/manage?view=stream'
@@ -645,7 +645,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     label: 'Log integration alias',
     href: '/log/integration',
     routeKind: 'legacy-alias',
-    cutoverStatus: 'hold',
+    cutoverStatus: 'candidate',
     smokePath: '/log/integration',
     includeInRouteMatrix: true,
     redirectTo: '/log/manage'
@@ -656,7 +656,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
     label: 'Log integration source alias',
     href: '/log/integration/[source]',
     routeKind: 'legacy-alias',
-    cutoverStatus: 'hold',
+    cutoverStatus: 'candidate',
     smokePath: '/log/integration/webhook',
     includeInRouteMatrix: true,
     redirectTo: '/log/manage'
