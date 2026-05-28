@@ -11,22 +11,57 @@ import {
   buildPauseMonitorUrl,
   buildPauseMonitorsUrl,
   copyMonitor,
+  copyMonitorFromFacade,
   deleteGrafanaDashboard,
   deleteMonitors,
   enableMonitor,
   enableMonitors,
+  importMonitorsFromFacade,
+  loadMonitorListFromFacade,
   pauseMonitor,
   pauseMonitors,
   resolveDownloadFilename
 } from './controller';
 
 describe('monitor manage controller', () => {
+  it('loads the monitor list through the domain facade reader', async () => {
+    const readMonitorList = vi.fn().mockResolvedValue({ content: [{ id: 42 }], totalElements: 1, pageIndex: 0, pageSize: 8 });
+    const query = {
+      search: 'mysql',
+      app: 'mysql',
+      labels: '',
+      status: '2',
+      pageIndex: '0',
+      pageSize: '8',
+      entityId: '',
+      entityName: '',
+      returnTo: ''
+    };
+
+    await expect(loadMonitorListFromFacade(readMonitorList as any, query)).resolves.toEqual({
+      content: [{ id: 42 }],
+      totalElements: 1,
+      pageIndex: 0,
+      pageSize: 8
+    });
+
+    expect(readMonitorList).toHaveBeenCalledWith(query);
+  });
+
   it('builds copy url and posts null payload', async () => {
     const apiPost = vi.fn().mockResolvedValue({ id: 108 });
 
     expect(buildCopyMonitorUrl(42)).toBe('/monitor/copy/42');
     await expect(copyMonitor(apiPost as any, 42)).resolves.toEqual({ id: 108 });
     expect(apiPost).toHaveBeenCalledWith('/monitor/copy/42', null);
+  });
+
+  it('copies monitors through the domain facade writer', async () => {
+    const writeCopyMonitor = vi.fn().mockResolvedValue({ id: 108 });
+
+    await expect(copyMonitorFromFacade(writeCopyMonitor, 42)).resolves.toEqual({ id: 108 });
+
+    expect(writeCopyMonitor).toHaveBeenCalledWith(42);
   });
 
   it('builds enable and pause urls', async () => {
@@ -77,5 +112,15 @@ describe('monitor manage controller', () => {
     expect(buildImportMonitorsUrl()).toBe('/monitors/import');
     expect(resolveDownloadFilename('attachment; filename=monitors.json', 'fallback.json')).toBe('monitors.json');
     expect(resolveDownloadFilename(undefined, 'fallback.json')).toBe('fallback.json');
+  });
+
+  it('builds Angular-style import form data through the facade writer', async () => {
+    const writeImportMonitors = vi.fn().mockResolvedValue(undefined);
+    const file = new Blob(['name: mysql'], { type: 'application/x-yaml' }) as File;
+
+    await importMonitorsFromFacade(writeImportMonitors, file);
+
+    expect(writeImportMonitors).toHaveBeenCalledWith(expect.any(FormData));
+    expect(await ((writeImportMonitors.mock.calls[0]?.[0] as FormData).get('file') as Blob).text()).toBe('name: mysql');
   });
 });

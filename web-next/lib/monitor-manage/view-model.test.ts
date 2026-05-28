@@ -49,6 +49,38 @@ describe('monitor view model', () => {
     ]);
   });
 
+  it('uses localized empty fallback for missing selected monitor rail meta', () => {
+    expect(
+      buildSelectedMonitorRows(
+        null,
+        t,
+        () => '2026-04-10 18:00:00',
+        () => '异常'
+      )
+    ).toEqual([{ title: '还未选择监控', copy: '从列表选择监控实例后，这里会显示操作和上下文。', meta: '无' }]);
+  });
+
+  it('uses localized fallback for missing selected monitor identity facts', () => {
+    expect(
+      buildSelectedMonitorRows(
+        {
+          name: 'orphan-monitor',
+          app: '',
+          instance: '',
+          status: 1,
+          labels: {},
+          gmtCreate: '2026-04-10T10:00:00Z'
+        } as any,
+        t,
+        () => '2026-04-10 18:00:00',
+        () => '正常'
+      )
+    ).toEqual([
+      { title: 'orphan-monitor', copy: '无 · 无', meta: '正常' },
+      { title: '标签', copy: '0', meta: '更新时间 2026-04-10 18:00:00' }
+    ]);
+  });
+
   it('builds entity workbench copy for fallback and empty states', () => {
     expect(
       buildMonitorWorkbenchNarrative(

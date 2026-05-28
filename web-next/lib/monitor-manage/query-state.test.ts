@@ -3,7 +3,8 @@ import {
   applyMonitorWorkspaceDefaults,
   buildMonitorRouteUrl,
   buildMonitorUrl,
-  queryStateFromParams
+  queryStateFromParams,
+  readMonitorManageRouteState
 } from './query-state';
 
 describe('monitor query state codec', () => {
@@ -21,6 +22,24 @@ describe('monitor query state codec', () => {
       entityId: '42',
       entityName: 'Checkout',
       returnTo: '/entities/42'
+    });
+  });
+
+  it('honors the legacy Angular content query before search and canonicalizes it', () => {
+    const params = new URLSearchParams('content=mysql-primary&search=ignored&app=mysql');
+
+    expect(queryStateFromParams(params)).toMatchObject({
+      search: 'mysql-primary',
+      app: 'mysql'
+    });
+
+    expect(readMonitorManageRouteState({ content: 'mysql-primary', search: 'ignored', app: 'mysql' })).toMatchObject({
+      query: {
+        search: 'mysql-primary',
+        app: 'mysql'
+      },
+      canonicalRoute: '/monitors?search=mysql-primary&app=mysql',
+      shouldRedirect: true
     });
   });
 
@@ -114,5 +133,61 @@ describe('monitor query state codec', () => {
         returnTo: ''
       }).status
     ).toBe('');
+  });
+
+  it('normalizes multi-value URL search params into the first monitor manage query value', () => {
+    expect(
+      readMonitorManageRouteState({
+        search: ['mysql', 'ignored'],
+        app: ['website', 'ignored'],
+        labels: ['team=platform', 'ignored'],
+        status: ['2', '1'],
+        pageIndex: ['3', '0'],
+        pageSize: ['20', '8'],
+        entityId: ['42', '43'],
+        entityName: ['Checkout', 'Other'],
+        returnTo: ['/entities/42?returnLabel=Checkout', '/entities/43'],
+        returnLabel: 'Checkout'
+      })
+    ).toMatchObject({
+      query: {
+        search: 'mysql',
+        app: 'website',
+        labels: 'team=platform',
+        status: '2',
+        pageIndex: '3',
+        pageSize: '20',
+        entityId: '42',
+        entityName: 'Checkout',
+        returnTo: '/entities/42'
+      },
+      explicitStatus: '2',
+      canonicalRoute:
+        '/monitors?search=mysql&app=website&labels=team%3Dplatform&status=2&pageIndex=3&pageSize=20&entityId=42&entityName=Checkout&returnTo=%2Fentities%2F42',
+      shouldRedirect: true
+    });
+  });
+
+  it('canonicalizes display-only return labels out of monitor manage route state', () => {
+    expect(
+      readMonitorManageRouteState({
+        app: 'website',
+        entityId: '42',
+        entityName: 'Checkout Service',
+        returnTo: '/entities/42?returnLabel=Checkout',
+        returnLabel: 'Checkout'
+      })
+    ).toMatchObject({
+      query: {
+        app: 'website',
+        status: '2',
+        entityId: '42',
+        entityName: 'Checkout Service',
+        returnTo: '/entities/42'
+      },
+      explicitStatus: '',
+      canonicalRoute: '/monitors?app=website&status=2&entityId=42&entityName=Checkout+Service&returnTo=%2Fentities%2F42',
+      shouldRedirect: true
+    });
   });
 });

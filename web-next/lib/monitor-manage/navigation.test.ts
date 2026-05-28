@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildMonitorDetailHref,
   buildMonitorEditHref,
+  buildMonitorListCompatRouteUrl,
   buildMonitorListReturnHref,
   buildMonitorEntityReturnHref,
   buildMonitorNewHref,
@@ -83,6 +84,19 @@ describe('monitor manage navigation', () => {
     );
 
     expect(buildMonitorListReturnHref()).toBe('/monitors');
+  });
+
+  it('builds monitor list compatibility redirects with normalized query context', () => {
+    expect(buildMonitorListCompatRouteUrl()).toBe('/monitors');
+    expect(
+      buildMonitorListCompatRouteUrl({
+        app: 'website',
+        labels: 'team=platform',
+        entityId: '42',
+        returnTo: '/entities/42?returnLabel=Checkout Service',
+        returnLabel: 'Monitor list'
+      })
+    ).toBe('/monitors?app=website&labels=team%3Dplatform&entityId=42&returnTo=%2Fentities%2F42');
   });
 
   it('keeps selected monitor context when checkbox selection changes', () => {

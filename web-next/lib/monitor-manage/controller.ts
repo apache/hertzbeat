@@ -1,6 +1,14 @@
+import type { Monitor, PageResult } from '@/lib/types';
+import type { MonitorQueryState } from './query-state';
+
 type ApiPost = <T>(url: string, payload: unknown) => Promise<T>;
 type ApiGet = <T>(url: string) => Promise<T>;
 type ApiDelete = <T>(url: string) => Promise<T>;
+type MonitorListReader = <T = PageResult<Monitor>>(query: MonitorQueryState) => Promise<T>;
+
+export async function loadMonitorListFromFacade(readMonitorList: MonitorListReader, query: MonitorQueryState) {
+  return readMonitorList<PageResult<Monitor>>(query);
+}
 
 export function buildCopyMonitorUrl(monitorId: number | string) {
   return `/monitor/copy/${monitorId}`;
@@ -8,6 +16,10 @@ export function buildCopyMonitorUrl(monitorId: number | string) {
 
 export async function copyMonitor(apiPost: ApiPost, monitorId: number | string) {
   return apiPost<unknown>(buildCopyMonitorUrl(monitorId), null);
+}
+
+export async function copyMonitorFromFacade(writeCopyMonitor: (monitorId: number | string) => Promise<unknown>, monitorId: number | string) {
+  return writeCopyMonitor(monitorId);
 }
 
 export function buildEnableMonitorUrl(monitorId: number | string) {
@@ -67,6 +79,12 @@ export async function deleteGrafanaDashboard(apiDelete: ApiDelete, monitorId: nu
 
 export function buildImportMonitorsUrl() {
   return '/monitors/import';
+}
+
+export async function importMonitorsFromFacade(writeImportMonitors: (body: FormData) => Promise<unknown>, file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return writeImportMonitors(formData);
 }
 
 export function buildExportMonitorsUrl(ids: Array<number | string>, type: 'JSON' | 'EXCEL') {

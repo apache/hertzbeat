@@ -36,12 +36,14 @@ export function buildSelectedMonitorRows(
   formatTime: (value?: number | string | null) => string,
   statusLabel: (status: number, t?: (key: string, params?: Record<string, string | number | null | undefined>) => string) => string
 ) {
+  const emptyValue = t('common.none');
+
   if (!selected) {
-    return [{ title: t('monitors.empty-selected.title'), copy: t('monitors.empty-selected.copy'), meta: '-' }];
+    return [{ title: t('monitors.empty-selected.title'), copy: t('monitors.empty-selected.copy'), meta: emptyValue }];
   }
 
   return [
-    { title: selected.name, copy: `${selected.app} · ${selected.instance}`, meta: statusLabel(selected.status, t) },
+    { title: selected.name, copy: `${selected.app || emptyValue} · ${selected.instance || emptyValue}`, meta: statusLabel(selected.status, t) },
     {
       title: t('common.labels'),
       copy: String(Object.keys(selected.labels || {}).length),

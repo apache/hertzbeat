@@ -1,4 +1,7 @@
+import { createCompatSearchParamReader, type SearchParamsRecord } from '../compat/search-params';
 import { stripReturnLabelFromHref } from '../signal-route-context';
+
+export type MonitorManageSearchParams = SearchParamsRecord;
 
 export type MonitorQueryState = {
   search: string;
@@ -16,13 +19,20 @@ export type SearchParamReader = {
   get(name: string): string | null;
 };
 
+export type MonitorManageRouteState = {
+  query: MonitorQueryState;
+  explicitStatus: string;
+  canonicalRoute: string;
+  shouldRedirect: boolean;
+};
+
 export function hasMonitorEntityContext(query: Pick<MonitorQueryState, 'entityId' | 'entityName' | 'returnTo'>) {
   return Boolean(query.entityId.trim() || query.entityName.trim() || query.returnTo.trim());
 }
 
 export function queryStateFromParams(searchParams: SearchParamReader): MonitorQueryState {
   return {
-    search: searchParams.get('search') || '',
+    search: searchParams.get('content') || searchParams.get('search') || '',
     app: searchParams.get('app') || '',
     labels: searchParams.get('labels') || '',
     status: searchParams.get('status') || '',
@@ -31,6 +41,29 @@ export function queryStateFromParams(searchParams: SearchParamReader): MonitorQu
     entityId: searchParams.get('entityId') || '',
     entityName: searchParams.get('entityName') || '',
     returnTo: stripReturnLabelFromHref(searchParams.get('returnTo')) || ''
+  };
+}
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function hasDisplayLabelParam(searchParams: MonitorManageSearchParams = {}) {
+  return Boolean(firstParam(searchParams.returnLabel) || firstParam(searchParams.returnTo)?.includes('returnLabel'));
+}
+
+function hasLegacyContentParam(searchParams: MonitorManageSearchParams = {}) {
+  return Boolean(firstParam(searchParams.content));
+}
+
+export function readMonitorManageRouteState(searchParams: MonitorManageSearchParams = {}): MonitorManageRouteState {
+  const query = applyMonitorWorkspaceDefaults(queryStateFromParams(createCompatSearchParamReader(searchParams)));
+
+  return {
+    query,
+    explicitStatus: firstParam(searchParams.status) ?? '',
+    canonicalRoute: buildMonitorRouteUrl(query),
+    shouldRedirect: hasDisplayLabelParam(searchParams) || hasLegacyContentParam(searchParams)
   };
 }
 

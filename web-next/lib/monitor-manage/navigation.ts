@@ -1,4 +1,9 @@
+import { buildCompatRedirectTarget, type SearchParamsRecord } from '../compat/search-params';
 import { stripReturnLabelFromHref } from '../signal-route-context';
+
+export type { SearchParamsRecord } from '../compat/search-params';
+
+export const MONITOR_LIST_ROUTE = '/monitors';
 
 export type MonitorNavigationContext = {
   app?: string | null;
@@ -54,12 +59,16 @@ export function buildMonitorNewHref(context?: MonitorNavigationContext) {
   return appendMonitorContext('/monitors/new', context);
 }
 
+export function buildMonitorListCompatRouteUrl(searchParams?: SearchParamsRecord) {
+  return buildCompatRedirectTarget(MONITOR_LIST_ROUTE, searchParams);
+}
+
 export function buildMonitorListReturnHref(context?: MonitorNavigationContext) {
   if (isSafeInternalHref(context?.returnTo)) {
     return stripReturnLabelFromHref(context?.returnTo)!;
   }
 
-  return appendMonitorContext('/monitors', {
+  return appendMonitorContext(MONITOR_LIST_ROUTE, {
     app: context?.app,
     labels: context?.labels,
     pageIndex: context?.pageIndex,
