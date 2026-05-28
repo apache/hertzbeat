@@ -203,6 +203,12 @@ describe('observability waterfall', () => {
         spanLabel="跨度"
         durationLabel="耗时"
         timelineLabel="时间轴"
+        waterfallCopy={{
+          overviewTitle: '时间轴总览',
+          spanCount: count => `${count} 个跨度`,
+          eventCount: count => `${count} 个事件`,
+          rowEventCount: count => `${count} 个事件`
+        }}
         rows={[
           {
             key: 'root',

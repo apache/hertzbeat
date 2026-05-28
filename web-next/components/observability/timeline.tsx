@@ -1,5 +1,6 @@
 'use client';
 
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import React from 'react';
 
 export type ObservabilityTimelineItem = {
@@ -16,9 +17,11 @@ const TONE_CLASS: Record<NonNullable<ObservabilityTimelineItem['tone']>, string>
   danger: 'bg-rose-400/70'
 };
 
+const DEFAULT_OBSERVABILITY_TIMELINE_EMPTY_TEXT = SUPPLEMENTAL_MESSAGES['en-US']?.['common.timeline.empty'] ?? 'common.timeline.empty';
+
 export function ObservabilityTimeline({
   items,
-  emptyText = 'No events yet'
+  emptyText = DEFAULT_OBSERVABILITY_TIMELINE_EMPTY_TEXT
 }: {
   items: ObservabilityTimelineItem[];
   emptyText?: string;

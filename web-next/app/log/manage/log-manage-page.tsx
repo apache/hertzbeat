@@ -19,23 +19,21 @@ import {
   WifiOff,
   Workflow
 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { HzActionGroup, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzControlStack, HzDataTable, HzDetailAside, HzDetailBodyStack, HzDetailRows, HzEmptyState, HzInput, HzLogStreamLiveRow, HzPanelHeader, HzPanelSurface, HzScrollViewport, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalTrendBars, HzStateNotice, HzStatCell, HzStatusBadge, HzWorkbenchLayout, type HzStatusTone } from '@hertzbeat/ui';
 import { LogRelatedTraceDialog } from '../../../components/log-manage/log-related-trace-dialog';
 import { LogStreamDetailDialog } from '../../../components/log-manage/log-stream-detail-dialog';
 import { buildTimeRangeControlLabels, TimeRangeControl } from '@/components/observability/time-range-control';
 import { useI18n } from '@/components/providers/i18n-provider';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
 import { apiMessageGet } from '@/lib/api-client';
 import { bodyText, formatTime } from '@/lib/format';
-import { severityLabel } from '@/lib/log-manage/display-mapping';
+import { logSeverityTone, severityLabel, type LogSeverityTone } from '@/lib/log-manage/display-mapping';
 import {
   buildLogStreamUrl,
   buildLogUrls,
-  queryStateFromParams,
   resolveBrowserLogStreamUrl,
-  resolveLogWorkbenchView,
+  type LogManageRouteState,
   type LogQueryState,
   type LogWorkbenchView
 } from '@/lib/log-manage/query-state';
@@ -58,7 +56,7 @@ import {
   buildSelectedLogRows,
   type LogAttributionDiagnostic
 } from '@/lib/log-manage/view-model';
-import { buildSignalEntityContextRows, readSignalRouteContext, type SignalRouteContext } from '@/lib/signal-route-context';
+import { buildSignalEntityContextRows, type SignalRouteContext } from '@/lib/signal-route-context';
 import { loadTraceDetailBundle } from '../../../lib/trace-manage/controller';
 import { buildSelectedSpanFacts, buildTraceWaterfallRows } from '../../../lib/trace-manage/view-model';
 import { resolveAppliedTimeContext, sanitizeTimeContext, type TimeContext } from '@/lib/time-context';
@@ -71,6 +69,10 @@ type LogManageData = {
   trend: LogTrendStats;
   coverage: LogTraceCoverage;
   query: LogQueryState;
+  loadStatus?: {
+    state: 'degraded';
+    message: string;
+  };
 };
 
 type BackendLogOverview = LogOverview & {
@@ -92,26 +94,30 @@ const EMPTY_QUERY: LogQueryState = {
   severityText: ''
 };
 
+const EMPTY_LOG_MANAGE_ROUTE_STATE: LogManageRouteState = {
+  initialQuery: EMPTY_QUERY,
+  currentView: 'stream',
+  routeContext: {},
+  shouldCleanUrl: false
+};
+
 const quickSeverityFilters = ['ERROR', 'WARN', 'INFO', 'DEBUG'];
 const maxStreamEntries = 10000;
 const maxPendingStreamEntries = 1000;
+const LOG_MANAGE_SETTLED_CACHE_TTL_MS = 10_000;
+const LOG_MANAGE_API_TIMEOUT_MS = 3_500;
 
-const actionClass =
-  'inline-flex h-8 items-center justify-center gap-2 rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe3ee] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-colors hover:border-[#3b4454] hover:bg-[#151821]';
-const primaryActionClass =
-  'inline-flex h-8 items-center justify-center gap-2 rounded-[3px] border border-[#3b4454] bg-[#18202c] px-4 text-[12px] font-semibold text-[#f2f6fb] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors hover:bg-[#202938]';
-const disabledActionClass =
-  'inline-flex h-8 cursor-not-allowed items-center justify-center gap-2 rounded-[3px] border border-[#242a34] bg-[#0b0e13] px-3 text-[12px] font-semibold text-[#687386] opacity-80 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]';
-const panelClass = 'rounded-[4px] border border-[#252b35] bg-[#0d1015] shadow-[0_18px_60px_rgba(0,0,0,0.28)]';
-const inputClass =
-  'h-8 rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#e6edf7] outline-none transition-colors placeholder:text-[#697386] focus:border-[#4e74f8] focus:ring-2 focus:ring-[rgba(78,116,248,0.12)]';
+function logSeverityStatusTone(severityTone: LogSeverityTone): HzStatusTone {
+  if (severityTone === 'danger') return 'critical';
+  if (severityTone === 'warning') return 'warning';
+  if (severityTone === 'success') return 'success';
+  return 'neutral';
+}
 
-function severityTone(severity: string) {
-  const normalized = severity.toUpperCase();
-  if (normalized.includes('ERROR') || normalized.includes('FATAL')) return 'border-[#70424a] bg-[#231116] text-[#f39aa8]';
-  if (normalized.includes('WARN')) return 'border-[#6f5730] bg-[#21190d] text-[#efca83]';
-  if (normalized.includes('INFO')) return 'border-[#315b49] bg-[#0f211b] text-[#8bd8ad]';
-  return 'border-[#303642] bg-[#151821] text-[#d7dce6]';
+function logStreamStatusBadgeTone(status: 'connecting' | 'connected' | 'disconnected'): HzStatusTone {
+  if (status === 'connected') return 'success';
+  if (status === 'connecting') return 'warning';
+  return 'critical';
 }
 
 function updateDraftField(field: keyof LogQueryState, value: string) {
@@ -127,6 +133,64 @@ function normalizeLogOverview(overview: BackendLogOverview): LogOverview {
     totalLogs: overview.totalLogs ?? overview.totalCount ?? 0,
     errorLogs: overview.errorLogs ?? overview.errorCount ?? 0
   };
+}
+
+function emptyLogManageData(query: LogQueryState, message: string): LogManageData {
+  return {
+    overview: {
+      totalLogs: 0,
+      errorLogs: 0,
+      distinctTraceCount: 0,
+      latestObservedAt: null,
+      hasActiveLog: false
+    },
+    list: {
+      content: [],
+      totalElements: 0,
+      pageIndex: 0,
+      pageSize: 8
+    },
+    trend: {
+      hourlyStats: {}
+    },
+    coverage: {
+      traceCoverage: {
+        withBothTraceAndSpan: 0,
+        withTrace: 0,
+        withoutTrace: 0,
+        withSpan: 0
+      }
+    },
+    query,
+    loadStatus: {
+      state: 'degraded',
+      message
+    }
+  };
+}
+
+function describeLogManageLoadFailure(error: unknown) {
+  return error instanceof Error && error.message ? error.message : 'Log API request failed';
+}
+
+async function apiMessageGetWithTimeout<T>(path: string, timeoutMs = LOG_MANAGE_API_TIMEOUT_MS): Promise<T> {
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`Log API request timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([
+      apiMessageGet<T>(path, { signal: controller.signal }),
+      timeout
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
 }
 
 type StreamLogItem = {
@@ -150,6 +214,8 @@ type RelatedTracePreviewState = {
   contextLog: LogEntry | null;
 };
 
+type LogManageTranslate = ReturnType<typeof useI18n>['t'];
+
 function readLogAttribute(source: Record<string, unknown> | undefined, key: string) {
   const value = source?.[key];
   return typeof value === 'string' ? value.trim() || undefined : undefined;
@@ -171,79 +237,86 @@ function LogEntityDetailAction({
   href,
   canOpen,
   missingEntityHandoffTitle,
+  label,
+  actionScope = 'detail',
   showIcon = false
 }: {
   href: string;
   canOpen: boolean;
   missingEntityHandoffTitle: string;
+  label: string;
+  actionScope?: 'header' | 'stream-detail' | 'detail';
   showIcon?: boolean;
 }) {
-  const icon = showIcon ? <Workflow className="h-4 w-4" aria-hidden="true" /> : null;
+  const icon = showIcon ? (
+    <HzButtonIcon
+      icon={Workflow}
+      data-log-manage-header-action-icon={actionScope === 'header' ? 'entity' : undefined}
+      data-log-manage-header-action-icon-owner={actionScope === 'header' ? 'hertzbeat-ui-button-icon' : undefined}
+    />
+  ) : null;
+  const actionScopeProps =
+    actionScope === 'header'
+      ? { 'data-log-manage-header-action': 'entity' }
+      : actionScope === 'stream-detail'
+        ? { 'data-log-manage-stream-detail-action': 'entity' }
+        : { 'data-log-manage-detail-action': 'entity' };
 
   if (canOpen) {
     return (
-      <Link data-log-manage-entity-action="true" href={href} className={actionClass}>
+      <HzButtonLink component={Link} data-log-manage-entity-action="true" href={href} size="md" {...actionScopeProps}>
         {icon}
-        实体详情
-      </Link>
+        {label}
+      </HzButtonLink>
     );
   }
 
   return (
     <span className="inline-flex" title={missingEntityHandoffTitle}>
-      <button
+      <HzButton
         data-log-manage-entity-action="true"
         data-log-manage-entity-action-disabled="missing-entity-id"
-        type="button"
-        className={disabledActionClass}
+        size="md"
         disabled
         title={missingEntityHandoffTitle}
         aria-label={missingEntityHandoffTitle}
+        {...actionScopeProps}
       >
         {icon}
-        实体详情
-      </button>
+        {label}
+      </HzButton>
     </span>
   );
 }
 
-function LogAttributionDiagnosticsPanel({ rows }: { rows: LogAttributionDiagnostic[] }) {
+function LogAttributionDiagnosticsPanel({ rows, t }: { rows: LogAttributionDiagnostic[]; t: LogManageTranslate }) {
   if (rows.length === 0) return null;
 
   return (
-    <div
+    <HzAttributeDiagnostics
       data-log-manage-selected-attribution-diagnostics="hertzbeat-attribute-diagnostics"
-      aria-label="归因诊断 hertzbeat.entity_id hertzbeat.collector hertzbeat.template"
+      data-log-manage-selected-attribution-diagnostics-owner="hertzbeat-ui-attribute-diagnostics"
+      aria-label={t('log.manage.selected.attribution.aria')}
       className="mt-4 rounded-[4px] border border-[#252b35] bg-[#10141b] px-3 py-3"
-    >
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold text-[#8792a5]">归因诊断</p>
-        <span className="text-[11px] font-semibold text-[#6d7788]">hertzbeat.*</span>
-      </div>
-      <div className="space-y-2">
-        {rows.map(row => (
-          <div
-            key={row.key}
-            data-log-manage-selected-attribution-diagnostic-state={row.state}
-            className="grid grid-cols-[minmax(0,1fr)_52px] gap-2 text-[11px]"
-          >
-            <span className="min-w-0">
-              <span className="block truncate font-mono font-semibold text-[#e6edf7]">{row.label}</span>
-              <span className="block truncate text-[#6d7788]">{row.value} · {row.meta}</span>
-            </span>
-            <span
-              className={`inline-flex h-5 items-center justify-center rounded-[3px] border px-1.5 font-semibold ${
-                row.state === 'present'
-                  ? 'border-[rgba(96,181,134,0.36)] bg-[rgba(96,181,134,0.1)] text-[rgba(120,220,160,0.95)]'
-                  : 'border-[rgba(216,111,91,0.36)] bg-[rgba(216,111,91,0.1)] text-[rgba(244,154,168,0.95)]'
-              }`}
-            >
-              {row.state === 'present' ? '已提供' : '缺失'}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+      title={t('log.manage.selected.attribution.title')}
+      namespaceLabel="hertzbeat.*"
+      rows={rows.map(row => ({
+        key: row.key,
+        label: row.label,
+        value: row.value,
+        meta: row.meta,
+        state: row.state,
+        stateLabel: row.state === 'present'
+          ? t('log.manage.selected.attribution.state.present')
+          : t('log.manage.selected.attribution.state.missing'),
+        tone: row.state === 'present' ? 'success' : 'critical',
+        rowProps: { 'data-log-manage-selected-attribution-diagnostic-state': row.state },
+        badgeProps: {
+          'data-log-manage-attribution-diagnostic-badge-owner': 'hertzbeat-ui-status-badge',
+          'data-log-manage-attribution-diagnostic-badge-state': row.state
+        }
+      }))}
+    />
   );
 }
 
@@ -282,14 +355,14 @@ function stringifyLogEntry(entry: LogEntry | null) {
   }
 }
 
-function resolveLogDetailTitle(entry: LogEntry | null) {
-  if (!entry) return '日志详情';
+function resolveLogDetailTitle(entry: LogEntry | null, t: LogManageTranslate) {
+  if (!entry) return t('log.manage.stream.detail.title');
   const text = bodyText(entry.body);
-  return text.length > 96 ? `${text.slice(0, 96)}...` : text || '日志详情';
+  return text.length > 96 ? `${text.slice(0, 96)}...` : text || t('log.manage.stream.detail.title');
 }
 
-function resolveLogDetailSubtitle(entry: LogEntry | null) {
-  if (!entry) return '未选择日志';
+function resolveLogDetailSubtitle(entry: LogEntry | null, t: LogManageTranslate) {
+  if (!entry) return t('log.manage.stream.selected.none');
   return (
     readLogAttribute(entry.resource, 'service.name') ||
     readLogAttribute(entry.attributes, 'service.name') ||
@@ -298,10 +371,10 @@ function resolveLogDetailSubtitle(entry: LogEntry | null) {
   );
 }
 
-function streamStatusCopy(status: 'connecting' | 'connected' | 'disconnected') {
-  if (status === 'connected') return '已连接';
-  if (status === 'connecting') return '连接中';
-  return '未连接';
+function streamStatusCopy(status: 'connecting' | 'connected' | 'disconnected', t: LogManageTranslate) {
+  if (status === 'connected') return t('log.manage.stream.status.connected');
+  if (status === 'connecting') return t('log.manage.stream.status.connecting');
+  return t('log.manage.stream.status.disconnected');
 }
 
 function formatTraceDurationNanos(value?: number | null) {
@@ -321,28 +394,11 @@ function buildTraceTimelineTicks(durationNanos?: number | null) {
   }));
 }
 
-function tracePreviewTranslator(t: (key: string, params?: Record<string, string | number | null | undefined>) => string) {
-  return (key: string, params?: Record<string, string | number | null | undefined>) => {
-    const tracePreviewMessages: Record<string, string> = {
-      'trace.manage.empty-selected-span.title': '选择一个跨度',
-      'trace.manage.empty-selected-span.copy': '选择左侧跨度后查看服务、状态和事件证据。',
-      'trace.manage.selected-span.service-namespace': '服务与命名空间',
-      'trace.manage.trace-state-empty': '暂无链路状态'
-    };
-    return tracePreviewMessages[key] || t(key, params);
-  };
-}
-
 function mergeTraceDetailSpans(detail: TraceDetail, spans: TraceDetail['spans']): TraceDetail {
   return {
     ...detail,
     spans: spans.length > 0 ? spans : detail.spans || []
   };
-}
-
-function hasDisplayReturnLabel(searchParams: { get(name: string): string | null }) {
-  const returnTo = searchParams.get('returnTo') || '';
-  return Boolean(searchParams.get('returnLabel') || returnTo.includes('returnLabel='));
 }
 
 function LogManageExplorer({
@@ -380,11 +436,14 @@ function LogManageExplorer({
     formatTime,
     severityLabel
   });
+  const logEntryByRowKey = useMemo(
+    () => new Map(rows.map((row, index) => [row.key, data.list.content?.[index] ?? null])),
+    [data.list.content, rows]
+  );
   const selectedSeverity = draft.severityText.trim().toUpperCase();
   const latestObservedAt = data.overview.latestObservedAt ? formatTime(data.overview.latestObservedAt) : '-';
   const traceCoverage = data.coverage.traceCoverage?.withBothTraceAndSpan ?? 0;
   const trendBars = Object.entries(data.trend.hourlyStats || {}).slice(-12);
-  const maxTrend = Math.max(...trendBars.map(([, count]) => Number(count) || 0), 1);
   const activeRow = rows[0];
   const activeEntry = data.list.content?.[0] ?? null;
   const handoffLinks = buildLogHandoffLinks(activeEntry, routeContext, {
@@ -396,10 +455,10 @@ function LogManageExplorer({
   const activeEnvironment = activeEntry?.resource?.['deployment.environment.name']?.toString();
   const activeAttributionDiagnostics = buildLogAttributionDiagnostics(activeEntry, t);
   const activeLogEvidenceRows = [
-    ['日志时间', activeRow?.timestamp || '-', '日志写入时间'],
-    ['日志级别', activeRow?.severity || '-', selectedSeverity || '当前筛选'],
-    ['正文摘要', activeRow?.message || '-', '日志正文'],
-    ['最近上报', latestObservedAt, '工作台最新日志']
+    [t('log.manage.evidence.time.title'), activeRow?.timestamp || '-', t('log.manage.evidence.time.meta')],
+    [t('log.manage.evidence.severity.title'), activeRow?.severity || '-', selectedSeverity || t('log.manage.evidence.severity.current-filter')],
+    [t('log.manage.evidence.body.title'), activeRow?.message || '-', t('log.manage.evidence.body.meta')],
+    [t('log.manage.evidence.latest.title'), latestObservedAt, t('log.manage.evidence.latest.meta')]
   ];
   const entityContextRows = buildSignalEntityContextRows(routeContext, {
     serviceName: activeServiceName,
@@ -496,28 +555,28 @@ function LogManageExplorer({
   const relatedTraceSelectedFacts = buildSelectedSpanFacts(
     relatedTraceSelectedSpan,
     relatedTraceDetail,
-    tracePreviewTranslator(t),
+    t,
     formatTraceDurationNanos
   );
   const relatedTraceStageFacts = relatedTraceDetail
     ? [
         {
-          label: '当前跨度',
+          label: t('log.manage.related-trace.fact.current-span'),
           value: relatedTraceSelectedSpan?.spanName || relatedTraceSelectedSpan?.spanId || relatedTraceDetail.rootSpanName || relatedTraceDetail.traceId,
           tone: 'accent' as const
         },
         {
-          label: '错误跨度',
+          label: t('log.manage.related-trace.fact.error-spans'),
           value: String(relatedTraceDetail.errorSpanCount || relatedTraceRows.filter(row => row.tone === 'danger').length),
           tone: (relatedTraceDetail.errorSpanCount || relatedTraceRows.filter(row => row.tone === 'danger').length) > 0 ? ('error' as const) : ('default' as const)
         },
         {
-          label: '事件',
+          label: t('log.manage.related-trace.fact.events'),
           value: String(relatedTraceEventCount),
           tone: 'default' as const
         },
         {
-          label: '关联',
+          label: t('log.manage.related-trace.fact.links'),
           value: String((relatedTraceSelectedSpan?.links || []).length),
           tone: 'default' as const
         }
@@ -742,7 +801,7 @@ function LogManageExplorer({
       setRelatedTracePreview({
         open: true,
         loading: false,
-        error: '链路预览暂时不可用，请稍后重试或打开完整链路工作台。',
+        error: t('log.manage.related-trace.error'),
         detail: null,
         selectedSpanId: entry.spanId || null,
         selectedEventKey: null,
@@ -778,88 +837,108 @@ function LogManageExplorer({
 
   const renderViewSwitch = () =>
     showViewToggle ? (
-      <section data-log-manage-view-switch="stream-history" className={`${panelClass} px-3 py-3`}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-[12px] font-semibold text-[#8792a5]">日志视图</div>
-          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-            <button
-              type="button"
+      <HzPanelSurface
+        data-log-manage-view-switch="stream-history"
+        data-log-manage-panel-surface="view-switch"
+        data-log-manage-view-switch-panel-surface-owner="hertzbeat-ui-panel-surface"
+        padding="view-switch"
+      >
+        <HzWorkbenchLayout
+          as="div"
+          variant="view-switch"
+          data-log-manage-view-switch-layout="shared-view-switch"
+          data-log-manage-view-switch-layout-owner="hertzbeat-ui-workbench-layout"
+        >
+          <div className="text-[12px] font-semibold text-[#8792a5]">{t('log.manage.stream.view-switch.title')}</div>
+          <HzActionGroup
+            layout="end-wrap"
+            data-log-manage-view-toggle-group="shared-action-group"
+            data-log-manage-view-toggle-group-owner="hertzbeat-ui-action-group"
+          >
+            <HzButton
+              data-log-manage-view-toggle-control="shared-hz-button"
               data-log-manage-view-option="stream"
               data-log-manage-view-active={currentView === 'stream'}
+              aria-pressed={currentView === 'stream'}
+              intent={currentView === 'stream' ? 'primary' : 'secondary'}
+              size="md"
               onClick={() => switchView('stream')}
-              className={currentView === 'stream' ? primaryActionClass : actionClass}
             >
               <Wifi className="h-4 w-4" aria-hidden="true" />
-              日志流
-            </button>
-            <button
-              type="button"
+              {t('log.manage.stream.view.stream')}
+            </HzButton>
+            <HzButton
+              data-log-manage-view-toggle-control="shared-hz-button"
               data-log-manage-view-option="list"
               data-log-manage-view-active={currentView === 'list'}
+              aria-pressed={currentView === 'list'}
+              intent={currentView === 'list' ? 'primary' : 'secondary'}
+              size="md"
               onClick={() => switchView('list')}
-              className={currentView === 'list' ? primaryActionClass : actionClass}
             >
               <ScrollText className="h-4 w-4" aria-hidden="true" />
-              历史检索
-            </button>
-          </div>
-        </div>
-      </section>
+              {t('log.manage.stream.view.history')}
+            </HzButton>
+          </HzActionGroup>
+        </HzWorkbenchLayout>
+      </HzPanelSurface>
     ) : null;
 
   const renderDetailDialog = () => (
     <LogStreamDetailDialog
       open={detailLog != null}
       onClose={() => setDetailSelection(null)}
-      title={detailSelection?.source === 'stream' ? '日志流详情' : '日志详情'}
-      subtitle={resolveLogDetailTitle(detailLog)}
+      title={detailSelection?.source === 'stream' ? t('log.manage.stream.detail.stream-title') : t('log.manage.stream.detail.title')}
+      subtitle={resolveLogDetailTitle(detailLog, t)}
       traceId={detailLog?.traceId}
       selectionState={detailSelection?.selectionState}
+      warning={detailSelection?.selectionState === 'detached' ? t('log.manage.stream.detail.detached-warning') : undefined}
       facts={detailFacts}
       attributionDiagnostics={detailAttributionDiagnostics}
       badges={['JSON']}
       metaItems={[
-        resolveLogDetailSubtitle(detailLog),
+        resolveLogDetailSubtitle(detailLog, t),
         ...(detailLog?.traceId ? [`traceId · ${detailLog.traceId}`] : [])
       ]}
       actions={
         <div className="flex flex-wrap gap-2">
           {detailLog?.traceId ? (
-            <button
+            <HzButton
+              data-log-manage-detail-dialog-action="trace"
               data-log-manage-results-open-trace-action="true"
-              type="button"
-              className={actionClass}
+              size="md"
               onClick={() => openRelatedTracePreview(detailLog)}
             >
-              查看链路
-            </button>
+              {t('log.manage.stream.action.view-trace')}
+            </HzButton>
           ) : (
             <span className="inline-flex" title={missingTraceHandoffTitle}>
-              <button
+              <HzButton
+                data-log-manage-detail-dialog-action="trace"
                 data-log-manage-results-open-trace-action="true"
                 data-log-manage-results-open-trace-action-disabled="missing-trace-id"
-                type="button"
-                className={disabledActionClass}
+                size="md"
                 disabled
                 title={missingTraceHandoffTitle}
                 aria-label={missingTraceHandoffTitle}
               >
-                查看链路
-              </button>
+                {t('log.manage.stream.action.view-trace')}
+              </HzButton>
             </span>
           )}
-          <Link href={detailHandoffLinks.metricsHref} className={actionClass}>
-            查看指标
-          </Link>
+          <HzButtonLink component={Link} data-log-manage-detail-dialog-action="metrics" href={detailHandoffLinks.metricsHref} size="md">
+            {t('log.manage.stream.action.view-metrics')}
+          </HzButtonLink>
           <LogEntityDetailAction
             href={detailHandoffLinks.entityHref}
             canOpen={canOpenDetailEntity}
             missingEntityHandoffTitle={missingEntityHandoffTitle}
+            label={t('log.manage.route.action.entity')}
           />
           {detailCodeHref ? (
-            <a href={detailCodeHref} target="_blank" rel="noreferrer" className={actionClass}>
-              查看代码
-            </a>
+            <HzButtonLink data-log-manage-detail-dialog-action="code" href={detailCodeHref} target="_blank" rel="noreferrer" size="md">
+              {t('log.manage.stream.action.view-code')}
+            </HzButtonLink>
           ) : null}
         </div>
       }
@@ -872,8 +951,8 @@ function LogManageExplorer({
     <LogRelatedTraceDialog
       open={relatedTracePreview.open}
       onClose={closeRelatedTracePreview}
-      title={relatedTraceSelectedSpan?.spanName || relatedTraceDetail?.rootSpanName || relatedTraceDetail?.traceId || '关联链路预览'}
-      subtitle={relatedTraceDetail?.serviceName || resolveLogDetailSubtitle(relatedTraceContextLog)}
+      title={relatedTraceSelectedSpan?.spanName || relatedTraceDetail?.rootSpanName || relatedTraceDetail?.traceId || t('log.manage.related-trace.fallback-title')}
+      subtitle={relatedTraceDetail?.serviceName || resolveLogDetailSubtitle(relatedTraceContextLog, t)}
       loading={relatedTracePreview.loading}
       error={relatedTracePreview.error}
       rows={relatedTraceRows}
@@ -883,41 +962,47 @@ function LogManageExplorer({
       onSelectEvent={(eventKey, rowKey) => setRelatedTracePreview(previous => ({ ...previous, selectedSpanId: rowKey || previous.selectedSpanId, selectedEventKey: eventKey }))}
       stageMeta={[
         ...(relatedTraceDetail?.traceId ? [relatedTraceDetail.traceId] : []),
-        relatedTraceRows.length > 0 ? `${relatedTraceRows.length} 个跨度` : '',
+        relatedTraceRows.length > 0 ? t('log.manage.related-trace.spans-count', { count: relatedTraceRows.length }) : '',
         ...(relatedTraceDetail?.durationNanos ? [formatTraceDurationNanos(relatedTraceDetail.durationNanos)] : [])
       ].filter(Boolean)}
-      badges={relatedTraceDetail ? ['链路预览'] : []}
+      badges={relatedTraceDetail ? [t('log.manage.related-trace.badge')] : []}
       metaItems={relatedTraceDetail ? [`traceId · ${relatedTraceDetail.traceId}`] : []}
       stageFacts={relatedTraceStageFacts}
       timelineTicks={buildTraceTimelineTicks(relatedTraceDetail?.durationNanos)}
       selectedFacts={relatedTraceSelectedFacts}
       headerAction={
         relatedTraceWorkspaceEntry?.traceId ? (
-          <Link data-log-related-trace-open-workspace-action="true" href={relatedTraceWorkspaceHref} className={actionClass}>
-            查看完整链路
-          </Link>
+          <HzButtonLink
+            component={Link}
+            data-log-related-trace-open-workspace-action="true"
+            data-log-related-trace-detail-action="workspace"
+            href={relatedTraceWorkspaceHref}
+            size="md"
+          >
+            {t('log.manage.related-trace.open-workspace')}
+          </HzButtonLink>
         ) : (
           <span className="inline-flex" title={missingFullTraceHandoffTitle}>
-            <button
+            <HzButton
               data-log-related-trace-open-workspace-action-disabled="missing-trace-id"
-              type="button"
-              className={disabledActionClass}
+              data-log-related-trace-detail-action="workspace"
+              size="md"
               disabled
               title={missingFullTraceHandoffTitle}
               aria-label={missingFullTraceHandoffTitle}
             >
-              查看完整链路
-            </button>
+              {t('log.manage.related-trace.open-workspace')}
+            </HzButton>
           </span>
         )
       }
-      emptyTitle="暂无关联链路"
-      emptyCopy="该日志没有可预览的链路详情。"
-      loadingTitle="正在加载链路预览"
-      loadingCopy="正在从当前日志上下文加载链路预览。"
-      spanLabel="跨度"
-      durationLabel="耗时"
-      timelineLabel="时间轴"
+      emptyTitle={t('log.manage.related-trace.empty-title')}
+      emptyCopy={t('log.manage.related-trace.empty-copy')}
+      loadingTitle={t('log.manage.related-trace.loading-title')}
+      loadingCopy={t('log.manage.related-trace.loading-copy')}
+      spanLabel={t('log.manage.related-trace.span-label')}
+      durationLabel={t('log.manage.related-trace.duration-label')}
+      timelineLabel={t('log.manage.related-trace.timeline-label')}
     />
   );
 
@@ -926,76 +1011,87 @@ function LogManageExplorer({
       ? buildSelectedLogRows(selectedStreamEntry, t, bodyText, formatTime, severityLabel)
       : [];
     const pauseVisible = shouldShowStreamPauseOverlay({ isPaused: isStreamPaused, itemCount: streamItems.length });
+    const streamStageHeaderActions = (
+      <>
+        <HzStatusBadge
+          data-log-manage-stream-status={streamStatus}
+          data-log-manage-stream-status-badge-owner="hertzbeat-ui-status-badge"
+          tone={logStreamStatusBadgeTone(streamStatus)}
+          size="md"
+        >
+          {streamStatus === 'connected' ? <Wifi className="h-4 w-4" aria-hidden="true" /> : <WifiOff className="h-4 w-4" aria-hidden="true" />}
+          {streamStatusCopy(streamStatus, t)}
+        </HzStatusBadge>
+        <HzStatusBadge data-log-manage-stream-count-badge-owner="hertzbeat-ui-status-badge" tone="neutral" size="md">
+          {t('log.manage.stream.count', { count: streamItems.length })}
+        </HzStatusBadge>
+        <HzStatusBadge
+          data-log-manage-stream-live-chip={isStreamPaused ? 'paused' : 'live'}
+          data-log-manage-stream-live-badge-owner="hertzbeat-ui-status-badge"
+          tone={isStreamPaused ? 'warning' : 'success'}
+          size="md"
+        >
+          {isStreamPaused ? t('log.manage.stream.state.paused') : t('log.manage.stream.state.live')}
+        </HzStatusBadge>
+        <HzButton
+          data-log-manage-reconnect-action="true"
+          data-log-manage-stream-control="reconnect"
+          size="md"
+          onClick={() => setStreamReconnectNonce(value => value + 1)}
+        >
+          <RotateCcw className="h-4 w-4" aria-hidden="true" />
+          {t('log.manage.stream.action.reconnect')}
+        </HzButton>
+        <HzButton data-log-manage-stream-control="pause-toggle" size="md" onClick={() => setIsStreamPaused(value => !value)}>
+          {isStreamPaused ? <PlayCircle className="h-4 w-4" aria-hidden="true" /> : <PauseCircle className="h-4 w-4" aria-hidden="true" />}
+          {isStreamPaused ? t('log.manage.stream.action.resume') : t('log.manage.stream.action.pause')}
+        </HzButton>
+        <HzButton data-log-manage-stream-control="clear" size="md" onClick={clearStream}>
+          <Trash2 className="h-4 w-4" aria-hidden="true" />
+          {t('log.manage.stream.action.clear')}
+        </HzButton>
+      </>
+    );
 
     return (
-      <section
+      <HzPanelSurface
         data-log-manage-stream-stage="hertzbeat-live-log-stream"
+        data-log-manage-panel-surface="stream-stage"
         data-log-manage-stream-live-state={isStreamPaused ? 'paused' : 'live'}
-        className={`${panelClass} overflow-hidden`}
+        data-log-manage-stream-stage-panel-surface-owner="hertzbeat-ui-panel-surface"
+        clip
       >
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#252b35] px-4 py-3">
-          <div className="min-w-0">
-            <p className="text-[12px] font-semibold text-[#8792a5]">日志流</p>
-            <h2 className="mt-1 text-[18px] font-semibold text-[#f0f4fa]">实时日志流</h2>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              data-log-manage-stream-status={streamStatus}
-              className={`inline-flex h-8 items-center gap-2 rounded-[3px] border px-3 text-[12px] font-semibold ${
-                streamStatus === 'connected'
-                  ? 'border-[#315b49] bg-[#0d1b17] text-[#8bd8ad]'
-                  : streamStatus === 'connecting'
-                    ? 'border-[#6f5730] bg-[#1d170d] text-[#efca83]'
-                    : 'border-[#70424a] bg-[#1d1115] text-[#f39aa8]'
-              }`}
-            >
-              {streamStatus === 'connected' ? <Wifi className="h-4 w-4" aria-hidden="true" /> : <WifiOff className="h-4 w-4" aria-hidden="true" />}
-              {streamStatusCopy(streamStatus)}
-            </span>
-            <span className="inline-flex h-8 items-center rounded-[3px] border border-[#2b3039] px-3 text-[12px] font-semibold text-[#dbe3ee]">
-              {streamItems.length} 条日志
-            </span>
-            <span
-              data-log-manage-stream-live-chip={isStreamPaused ? 'paused' : 'live'}
-              className={`inline-flex h-8 items-center rounded-[3px] border px-3 text-[12px] font-semibold ${
-                isStreamPaused ? 'border-[#6f5730] bg-[#1d170d] text-[#efca83]' : 'border-[#315b49] bg-[#0d1b17] text-[#8bd8ad]'
-              }`}
-            >
-              {isStreamPaused ? '已暂停' : '实时'}
-            </span>
-            <button
-              data-log-manage-reconnect-action="true"
-              type="button"
-              className={actionClass}
-              onClick={() => setStreamReconnectNonce(value => value + 1)}
-            >
-              <RotateCcw className="h-4 w-4" aria-hidden="true" />
-              重连
-            </button>
-            <button type="button" className={actionClass} onClick={() => setIsStreamPaused(value => !value)}>
-              {isStreamPaused ? <PlayCircle className="h-4 w-4" aria-hidden="true" /> : <PauseCircle className="h-4 w-4" aria-hidden="true" />}
-              {isStreamPaused ? '继续' : '暂停'}
-            </button>
-            <button type="button" className={actionClass} onClick={clearStream}>
-              <Trash2 className="h-4 w-4" aria-hidden="true" />
-              清空
-            </button>
-          </div>
-        </div>
+        <HzPanelHeader
+          data-log-manage-stream-stage-header-owner="hertzbeat-ui-panel-header"
+          eyebrow={t('log.manage.stream.stage.kicker')}
+          title={t('log.manage.stream.stage.title')}
+          actions={streamStageHeaderActions}
+        />
         {pauseVisible ? (
-          <div className="border-b border-[#2b3039] bg-[#17140b] px-4 py-2 text-[12px] font-semibold text-[#efca83]">
-            日志流已暂停，新的日志会暂时留在采集链路中，继续后重新连接。
-          </div>
+          <HzStateNotice
+            data-log-manage-stream-pause-notice-owner="hertzbeat-ui-state-notice"
+            data-log-manage-stream-pause-notice="paused-buffer-visible"
+            tone="warning"
+            title={t('log.manage.stream.paused-copy')}
+            variant="embedded"
+            className="border-b border-t-0 border-[#2b3039] bg-[#17140b]"
+          />
         ) : null}
-        <div className="grid min-h-[520px] lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div
+        <HzWorkbenchLayout
+          as="div"
+          variant="stream-stage"
+          data-log-manage-stream-stage-layout="shared-stream-stage"
+          data-log-manage-stream-stage-layout-owner="hertzbeat-ui-workbench-layout"
+        >
+          <HzScrollViewport
             ref={streamViewportRef}
+            variant="log-stream"
             data-log-manage-stream-viewport="virtualized-log-stream"
+            data-log-manage-stream-viewport-owner="hertzbeat-ui-scroll-viewport"
             data-log-manage-stream-window={`${streamWindow.startIndex}:${streamWindow.endIndex}`}
             data-log-manage-stream-row-height={STREAM_VIEWPORT_ROW_HEIGHT}
             data-log-manage-stream-retention={`${streamItems.length}/${maxStreamEntries}`}
             onScroll={event => setStreamViewport(readStreamViewportState(event.currentTarget))}
-            className="hb-scrollbar max-h-[620px] overflow-auto"
           >
             {streamItems.length > 0 ? (
               <div className="divide-y divide-[#252b35]">
@@ -1005,24 +1101,28 @@ function LogManageExplorer({
                   const entryTraceId = entry.traceId || '-';
                   const selected = item.key === selectedStreamKey;
                   const rowIndex = streamWindow.startIndex + offset;
+                  const streamSeverity = severityLabel(entry);
                   return (
-                    <button
+                    <HzLogStreamLiveRow
                       key={item.key}
-                      type="button"
+                      selected={selected}
                       data-log-manage-stream-row="true"
+                      data-log-manage-stream-row-owner="hertzbeat-ui-log-stream-row"
                       data-log-manage-stream-row-index={rowIndex}
                       data-log-manage-stream-row-style="compact-live-row"
                       data-log-manage-stream-trace-id={entryTraceId}
                       data-log-manage-stream-selected={selected}
                       onClick={() => selectStreamItem(item)}
                       style={{ height: STREAM_VIEWPORT_ROW_HEIGHT }}
-                      className={`grid w-full grid-cols-[58px_minmax(0,112px)_minmax(0,1fr)] items-center gap-3 px-4 text-left transition-colors hover:bg-[#10141b] sm:grid-cols-[64px_156px_minmax(0,1fr)_180px] lg:grid-cols-[72px_176px_minmax(0,1fr)_220px] ${
-                        selected ? 'bg-[#111927]' : 'bg-transparent'
-                      }`}
                     >
-                      <span className={`inline-flex h-5 min-w-[50px] items-center justify-center self-center rounded-[3px] border px-2 text-[11px] font-semibold ${severityTone(severityLabel(entry))}`}>
-                        {severityLabel(entry)}
-                      </span>
+                      <HzStatusBadge
+                        data-log-manage-stream-severity-tone={logSeverityTone(streamSeverity)}
+                        data-log-manage-stream-severity-badge-owner="hertzbeat-ui-status-badge"
+                        tone={logSeverityStatusTone(logSeverityTone(streamSeverity))}
+                        className="min-w-[50px] justify-center self-center"
+                      >
+                        {streamSeverity}
+                      </HzStatusBadge>
                       <span className="truncate font-mono text-[11px] text-[#7f8a9d]">
                         {formatTime(entry.timeUnixNano ? entry.timeUnixNano / 1_000_000 : null)}
                       </span>
@@ -1031,77 +1131,98 @@ function LogManageExplorer({
                         <span className="truncate">{readLogAttribute(entry.resource, 'service.name') || 'unknown-service'}</span>
                         <span className="min-w-[72px] truncate font-mono">traceId · {entryTraceId}</span>
                       </span>
-                    </button>
+                    </HzLogStreamLiveRow>
                   );
                 })}
                 {streamWindow.bottomSpacerHeight > 0 ? <div aria-hidden="true" style={{ height: streamWindow.bottomSpacerHeight }} /> : null}
               </div>
             ) : (
-              <div data-log-manage-stream-empty-state="true" className="flex h-[520px] items-center justify-center text-center text-[13px] text-[#d5d8e1]">
-                <div>
-                  <div className="mx-auto grid h-11 w-11 place-items-center rounded-[4px] border border-[#2b3039] bg-[#101217]">
-                    <Wifi className="h-5 w-5 text-[#9aa6b8]" aria-hidden="true" />
-                  </div>
-                  <p className="mt-3 font-semibold">等待实时日志</p>
-                  <p className="mt-2 text-[#8f9bad]">保持连接后，Collector 和 OTLP 写入的日志会实时进入这里。</p>
-                </div>
-              </div>
+              <HzEmptyState
+                data-log-manage-stream-empty-state="true"
+                data-log-manage-stream-empty-owner="hertzbeat-ui-empty-state"
+                title={t('log.manage.stream.empty.title')}
+                description={t('log.manage.stream.empty.copy')}
+                className="h-[520px] border-y-0 text-left"
+              />
             )}
-          </div>
-          <aside className="border-l border-[#252b35] bg-[#0b0e13] px-4 py-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[12px] font-semibold text-[#8792a5]">选中日志</p>
-              {streamSelection.detached ? <span className="text-[11px] font-semibold text-[#efca83]">已脱离缓冲</span> : null}
-            </div>
-            <h3 className="mt-2 line-clamp-2 text-[16px] font-semibold text-[#f0f4fa]">
-              {selectedStreamEntry ? resolveLogDetailTitle(selectedStreamEntry) : '未选择日志'}
-            </h3>
-            <div className="mt-4 space-y-2">
+          </HzScrollViewport>
+          <HzDetailAside
+            data-log-manage-stream-selected-aside="shared-detail-aside"
+            data-log-manage-stream-selected-aside-owner="hertzbeat-ui-detail-aside"
+          >
+            <HzPanelHeader
+              data-log-manage-stream-selected-header-owner="hertzbeat-ui-panel-header"
+              eyebrow={t('log.manage.stream.selected.title')}
+              title={selectedStreamEntry ? resolveLogDetailTitle(selectedStreamEntry, t) : t('log.manage.stream.selected.none')}
+              meta={streamSelection.detached ? (
+                <HzStatusBadge
+                  data-log-manage-stream-selected-detached-badge-owner="hertzbeat-ui-status-badge"
+                  tone="warning"
+                  size="xs"
+                >
+                  {t('log.manage.stream.selected.detached')}
+                </HzStatusBadge>
+              ) : null}
+              className="-mx-4 -mt-4 border-x-0 border-t-0 bg-transparent"
+            />
+            <HzDetailBodyStack
+              data-log-manage-stream-selected-body="shared-detail-body-stack"
+              data-log-manage-stream-selected-body-owner="hertzbeat-ui-detail-body-stack"
+            >
               {selectedStreamRows.length > 0 ? (
-                selectedStreamRows.map(row => (
-                  <div key={row.title} className="rounded-[4px] border border-[#252b35] bg-[#10141b] px-3 py-2">
-                    <p className="truncate text-[11px] font-semibold text-[#8792a5]">{row.title}</p>
-                    <p className="mt-1 truncate text-[12px] font-semibold text-[#e6edf7]">{row.copy}</p>
-                    <p className="mt-1 truncate text-[11px] text-[#6d7788]">{row.meta}</p>
-                  </div>
-                ))
+                <HzDetailRows
+                  data-log-manage-stream-selected-detail-owner="hertzbeat-ui-detail-rows"
+                  rows={selectedStreamRows}
+                />
               ) : (
-                <p className="text-[12px] text-[#7f8a9d]">点击任意日志查看完整内容、链路和实体上下文。</p>
+                <HzStateNotice
+                  data-log-manage-stream-selected-helper-owner="hertzbeat-ui-state-notice"
+                  data-log-manage-stream-selected-helper="selected-empty"
+                  tone="info"
+                  title={t('log.manage.stream.selected.helper')}
+                  variant="hint"
+                />
               )}
-            </div>
-            <LogAttributionDiagnosticsPanel rows={selectedStreamAttributionDiagnostics} />
-            <div className="mt-4 flex flex-col gap-2">
-              <button
-                type="button"
-                className={actionClass}
+            </HzDetailBodyStack>
+            <LogAttributionDiagnosticsPanel rows={selectedStreamAttributionDiagnostics} t={t} />
+            <HzControlStack
+              data-log-manage-stream-detail-action-stack="shared-control-stack"
+              data-log-manage-stream-detail-action-stack-owner="hertzbeat-ui-control-stack"
+              className="mt-4"
+            >
+              <HzButton
+                data-log-manage-stream-detail-action="view-log"
+                size="md"
                 disabled={!selectedStreamEntry}
                 onClick={() => openLogDetails(selectedStreamEntry, 'stream', streamSelection.detached ? 'detached' : 'attached')}
               >
                 <Eye className="h-4 w-4" aria-hidden="true" />
-                查看日志
-              </button>
-              <button
+                {t('log.manage.stream.action.view-log')}
+              </HzButton>
+              <HzButton
                 data-log-manage-results-open-trace-action="true"
                 data-log-manage-open-log-detail-before-trace="true"
-                type="button"
-                className={selectedStreamEntry?.traceId ? actionClass : disabledActionClass}
+                data-log-manage-stream-detail-action="view-trace"
+                size="md"
                 disabled={!selectedStreamEntry?.traceId}
                 title={!selectedStreamEntry?.traceId ? missingTraceHandoffTitle : undefined}
                 aria-label={!selectedStreamEntry?.traceId ? missingTraceHandoffTitle : undefined}
                 data-log-manage-results-open-trace-action-disabled={!selectedStreamEntry?.traceId ? 'missing-trace-id' : undefined}
                 onClick={() => openTraceDrilldownFromLog(selectedStreamEntry, 'stream', streamSelection.detached ? 'detached' : 'attached')}
               >
-                查看链路
-              </button>
+                {t('log.manage.stream.action.view-trace')}
+              </HzButton>
               <LogEntityDetailAction
                 href={streamHandoffLinks.entityHref}
                 canOpen={canOpenStreamEntity}
                 missingEntityHandoffTitle={missingEntityHandoffTitle}
+                label={t('log.manage.route.action.entity')}
+                actionScope="stream-detail"
               />
-            </div>
-          </aside>
-        </div>
-      </section>
+            </HzControlStack>
+          </HzDetailAside>
+        </HzWorkbenchLayout>
+      </HzPanelSurface>
     );
   };
 
@@ -1112,13 +1233,18 @@ function LogManageExplorer({
       className="min-h-[calc(100vh-56px)] bg-[#07090b] text-[#e8edf5]"
     >
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-6 py-6">
-        <section data-log-manage-header="cold-compact-header" className={`${panelClass} px-5 py-4`}>
+        <HzPanelSurface
+          data-log-manage-header="cold-compact-header"
+          data-log-manage-panel-surface="header"
+          data-log-manage-header-padding-owner="hertzbeat-ui-panel-surface"
+          padding="header"
+        >
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
             <div className="min-w-0">
-              <p className="mb-2 text-[12px] font-semibold tracking-[0.08em] text-[#8792a5]">可观测</p>
-              <h1 className="text-[30px] font-semibold tracking-normal text-[#f4f7fb]">日志工作台</h1>
+              <p className="mb-2 text-[12px] font-semibold tracking-[0.08em] text-[#8792a5]">{t('log.manage.route.kicker')}</p>
+              <h1 className="text-[30px] font-semibold tracking-normal text-[#f4f7fb]">{t('log.manage.route.title')}</h1>
               <p className="mt-3 max-w-[780px] text-[13px] leading-6 text-[#9ca7ba]">
-                围绕采集来源、实体、链路和告警处理筛选日志，把实时流、历史检索和上下文排查放在同一工作台。
+                {t('log.manage.route.subtitle')}
               </p>
             </div>
             <div
@@ -1146,321 +1272,410 @@ function LogManageExplorer({
                   refreshActionProps={{ 'data-log-manage-time-refresh-action': 'true' }}
                 />
               </div>
-              <div data-log-manage-action-row="cold-workbench-actions" className="flex flex-wrap items-center justify-end gap-2">
-                <Link href={handoffLinks.intakeHref} className={actionClass}>
-                  <Workflow className="h-4 w-4" aria-hidden="true" />
-                  返回 OTLP 接入
-                </Link>
-                <Link href="/setting/collector" className={actionClass}>
-                  <Server className="h-4 w-4" aria-hidden="true" />
-                  采集集群
-                </Link>
+              <HzActionGroup
+                data-log-manage-action-row="cold-workbench-actions"
+                data-log-manage-action-row-owner="hertzbeat-ui-action-group"
+                data-log-manage-action-row-layout-owner="hertzbeat-ui-action-group"
+                layout="full-end"
+              >
+                {routeContext.returnTo ? (
+                  <HzButtonLink
+                    component={Link}
+                    data-log-manage-return-action="true"
+                    data-log-manage-header-action="return-source"
+                    href={routeContext.returnTo}
+                    size="md"
+                  >
+                    <HzButtonIcon
+                      icon={Workflow}
+                      data-log-manage-header-action-icon="return-source"
+                      data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
+                    />
+                    {t('log.manage.route.action.return-source')}
+                  </HzButtonLink>
+                ) : null}
+                <HzButtonLink component={Link} href={handoffLinks.intakeHref} size="md" data-log-manage-header-action="intake">
+                  <HzButtonIcon
+                    icon={Workflow}
+                    data-log-manage-header-action-icon="intake"
+                    data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
+                  />
+                  {t('log.manage.route.action.intake')}
+                </HzButtonLink>
+                <HzButtonLink component={Link} href="/setting/collector" size="md" data-log-manage-header-action="collector">
+                  <HzButtonIcon
+                    icon={Server}
+                    data-log-manage-header-action-icon="collector"
+                    data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
+                  />
+                  {t('log.manage.route.action.collector')}
+                </HzButtonLink>
                 <LogEntityDetailAction
                   href={handoffLinks.entityHref}
                   canOpen={canOpenActiveEntity}
                   missingEntityHandoffTitle={missingEntityHandoffTitle}
+                  label={t('log.manage.route.action.entity')}
+                  actionScope="header"
                   showIcon
                 />
-                <Link href={handoffLinks.alertHandlingHref} className={actionClass}>
-                  <BellRing className="h-4 w-4" aria-hidden="true" />
-                  告警处理
-                </Link>
-                <Link href="/setting/define" className={actionClass}>
-                  <ListChecks className="h-4 w-4" aria-hidden="true" />
-                  监控模板
-                </Link>
-              </div>
+                <HzButtonLink component={Link} href={handoffLinks.alertHandlingHref} size="md" data-log-manage-header-action="alerts">
+                  <HzButtonIcon
+                    icon={BellRing}
+                    data-log-manage-header-action-icon="alerts"
+                    data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
+                  />
+                  {t('log.manage.route.action.alerts')}
+                </HzButtonLink>
+                <HzButtonLink component={Link} href="/setting/define" size="md" data-log-manage-header-action="templates">
+                  <HzButtonIcon
+                    icon={ListChecks}
+                    data-log-manage-header-action-icon="templates"
+                    data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
+                  />
+                  {t('log.manage.route.action.templates')}
+                </HzButtonLink>
+              </HzActionGroup>
             </div>
           </div>
-        </section>
+        </HzPanelSurface>
 
         {renderViewSwitch()}
 
-        <section data-log-manage-query-bar="cold-query-row" className={`${panelClass} px-4 py-3`}>
+        <HzPanelSurface
+          data-log-manage-query-bar="cold-query-row"
+          data-log-manage-panel-surface="query"
+          data-log-manage-panel-surface-padding-owner="hertzbeat-ui-panel-surface"
+          padding="query"
+        >
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative min-w-[320px] max-w-[560px] flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7d8798]" aria-hidden="true" />
-              <Input
-                aria-label="日志查询"
+            <HzSearchFieldFrame
+              width="log-query"
+              data-log-manage-query-search-frame="shared-search-field-frame"
+              data-log-manage-query-search-frame-owner="hertzbeat-ui-search-field-frame"
+              icon={(
+                <HzSearchFieldIcon
+                  icon={Search}
+                  data-log-manage-query-search-icon="service"
+                  data-log-manage-query-search-icon-owner="hertzbeat-ui-search-field-icon"
+                />
+              )}
+            >
+              <HzInput
+                aria-label={t('log.manage.query.search.aria')}
                 value={draft.search}
                 onChange={event => setDraft(updateDraftField('search', event.target.value))}
-                placeholder='service.name = "checkout"'
-                className={`${inputClass} w-full pl-9 font-mono`}
+                placeholder={t('log.manage.query.search.placeholder')}
+                inset="search-icon"
+                width="log-query-expression"
+                data-log-manage-query-search-input="true"
+                data-log-manage-query-search-input-owner="hertzbeat-ui-input"
               />
-            </div>
-            <Select aria-label="严重级别" value={draft.severityText || 'all'} onChange={event => applySeverity(event.target.value === 'all' ? '' : event.target.value)} containerClassName="w-[132px]" className="h-8 min-w-0 text-[#d5dce8]">
-              <option value="all">全部级别</option>
-              {quickSeverityFilters.map(severity => (
-                <option key={severity} value={severity}>
-                  {severity}
-                </option>
-              ))}
-            </Select>
-            <button data-log-manage-run-query-action="true" type="button" className={primaryActionClass} onClick={() => applyQuery()}>
+            </HzSearchFieldFrame>
+            <HzSelect
+              aria-label={t('log.manage.query.severity.aria')}
+              value={draft.severityText || 'all'}
+              onChange={event => applySeverity(event.target.value === 'all' ? '' : event.target.value)}
+              width="log-severity"
+              triggerTone="signal-query"
+              data-log-manage-query-severity-select="shared-log-severity-select"
+              data-log-manage-query-severity-select-owner="hertzbeat-ui-select"
+              options={[
+                { value: 'all', label: t('log.manage.query.severity.all') },
+                ...quickSeverityFilters.map(severity => ({ value: severity, label: severity }))
+              ]}
+            />
+            <HzButton data-log-manage-run-query-action="true" intent="primary" size="md" onClick={() => applyQuery()}>
               <Play className="h-4 w-4" aria-hidden="true" />
-              {currentView === 'stream' ? '应用到日志流' : '运行查询'}
-            </button>
-            <button type="button" className={actionClass} onClick={resetQuery}>
+              {currentView === 'stream' ? t('log.manage.query.run.stream') : t('log.manage.query.run.history')}
+            </HzButton>
+            <HzButton data-log-manage-reset-action="true" intent="secondary" size="md" onClick={resetQuery}>
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
-              重置
-            </button>
+              {t('log.manage.query.reset')}
+            </HzButton>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Input
-              aria-label="链路 ID"
+            <HzInput
+              aria-label={t('log.manage.query.trace-id')}
               value={draft.traceId}
               onChange={event => setDraft(updateDraftField('traceId', event.target.value))}
-              placeholder="链路 ID"
-              className={`${inputClass} w-[220px] font-mono`}
+              placeholder={t('log.manage.query.trace-id')}
+              width="log-query-token"
+              data-log-manage-query-token-input="trace-id"
+              data-log-manage-query-token-input-owner="hertzbeat-ui-input"
             />
-            <Input
-              aria-label="跨度 ID"
+            <HzInput
+              aria-label={t('log.manage.query.span-id')}
               value={draft.spanId}
               onChange={event => setDraft(updateDraftField('spanId', event.target.value))}
-              placeholder="跨度 ID"
-              className={`${inputClass} w-[220px] font-mono`}
+              placeholder={t('log.manage.query.span-id')}
+              width="log-query-token"
+              data-log-manage-query-token-input="span-id"
+              data-log-manage-query-token-input-owner="hertzbeat-ui-input"
             />
-            <Input
-              aria-label="日志正文"
+            <HzInput
+              aria-label={t('log.manage.query.body.aria')}
               value={draft.logContent}
               onChange={event => setDraft(updateDraftField('logContent', event.target.value))}
-              placeholder="搜索日志正文"
-              className={`${inputClass} min-w-[280px] max-w-[520px] flex-1`}
+              placeholder={t('log.manage.query.body.placeholder')}
+              width="log-query-body"
+              data-log-manage-query-body-input="shared-log-body-input"
+              data-log-manage-query-body-input-owner="hertzbeat-ui-input"
             />
           </div>
-        </section>
+        </HzPanelSurface>
+
+        {data.loadStatus?.state === 'degraded' ? (
+          <HzStateNotice
+            data-log-manage-api-degraded="true"
+            data-log-manage-api-degraded-owner="hertzbeat-ui-state-notice"
+            tone="warning"
+            title={t('log.manage.api.degraded.title')}
+            description={t('log.manage.api.degraded.copy')}
+            meta={data.loadStatus.message}
+          />
+        ) : null}
 
         {currentView === 'stream' ? renderStreamStage() : null}
 
         {currentView === 'list' ? (
-        <section data-log-manage-chart-band="cold-chart-band" className={`${panelClass} px-4 py-4`}>
+        <HzPanelSurface
+          data-log-manage-chart-band="cold-chart-band"
+          data-log-manage-panel-surface="chart"
+          data-log-manage-chart-padding-owner="hertzbeat-ui-panel-surface"
+          padding="chart"
+        >
           <div className="grid gap-3 lg:grid-cols-[repeat(4,minmax(0,160px))_minmax(0,1fr)]">
             {[
-              ['日志总数', data.overview.totalLogs],
-              ['错误日志', data.overview.errorLogs],
-              ['链路关联', traceCoverage],
-              ['最近时间', latestObservedAt]
-            ].map(([label, value]) => (
-              <div key={String(label)} className="rounded-[4px] border border-[#252b35] bg-[#10141b] px-3 py-3">
-                <p className="text-[12px] font-semibold text-[#8792a5]">{label}</p>
-                <p className="mt-2 truncate text-[18px] font-semibold text-[#f2f6fb]">{value}</p>
-              </div>
+              { id: 'total', label: t('log.manage.summary.total'), value: data.overview.totalLogs },
+              { id: 'errors', label: t('log.manage.summary.errors'), value: data.overview.errorLogs },
+              { id: 'trace-coverage', label: t('log.manage.summary.trace-coverage'), value: traceCoverage },
+              { id: 'latest', label: t('log.manage.summary.latest'), value: latestObservedAt }
+            ].map(item => (
+              <HzStatCell
+                key={item.id}
+                data-log-manage-summary-stat-owner="hertzbeat-ui-stat-cell"
+                data-log-manage-summary-stat={item.id}
+                label={item.label}
+                value={item.value}
+                variant="tile"
+              />
             ))}
-            <div className="min-w-0 rounded-[4px] border border-[#252b35] bg-[#10141b] px-3 py-3">
-              <div className="mb-3 flex items-center justify-between text-[12px] text-[#8792a5]">
-                <span className="font-semibold">趋势带</span>
-                <span className="inline-flex items-center gap-1">
+            <HzSignalTrendBars
+              data-log-manage-signal-trend-owner="hertzbeat-ui-signal-trend-bars"
+              title={t('log.manage.trend.title')}
+              meta={(
+                <>
                   <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                  {trendBars.length || 0} 点
-                </span>
-              </div>
-              <div className="flex h-16 items-end gap-2">
-                {(trendBars.length ? trendBars : [['-', 0]]).map(([hour, count]) => (
-                  <div key={hour} className="min-w-0 flex-1">
-                    <div
-                      className="rounded-[3px] border border-[#2f3b4d] bg-[#182232]"
-                      style={{ height: `${Math.max(10, (Number(count) / maxTrend) * 64)}px` }}
-                      title={`${hour}: ${count}`}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
+                  {t('log.manage.trend.points', { count: trendBars.length || 0 })}
+                </>
+              )}
+              bars={trendBars.map(([hour, count]) => ({
+                id: hour,
+                label: hour,
+                value: Number(count) || 0,
+                tone: 'info' as const,
+                title: `${hour}: ${count}`
+              }))}
+            />
           </div>
-        </section>
+        </HzPanelSurface>
         ) : null}
 
         {currentView === 'list' ? (
         <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_320px]">
-          <section data-log-manage-log-list="cold-dense-log-list" className={`${panelClass} min-w-0 overflow-hidden`}>
-            <div className="flex h-11 items-center justify-between border-b border-[#252b35] px-4 text-[12px] text-[#8e99ab]">
-              <span className="inline-flex items-center gap-2">
-                <ScrollText className="h-4 w-4" aria-hidden="true" />
-                最近日志
-              </span>
-              <span>{rows.length} 条</span>
-            </div>
-            {rows.length ? (
-              <table className="w-full border-collapse text-left text-[13px]">
-                <thead className="border-b border-[#252b35] bg-[#10141b] text-[12px] font-semibold text-[#8f9aab]">
-                  <tr>
-                    <th className="w-[176px] px-4 py-3">时间</th>
-                    <th className="w-[116px] px-4 py-3">严重级别</th>
-                    <th className="w-[180px] px-4 py-3">服务</th>
-                    <th className="px-4 py-3">日志正文</th>
-                    <th className="w-[220px] px-4 py-3">链路</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, index) => {
-                    const entry = data.list.content?.[index] ?? null;
-                    return (
-                      <tr
-                        key={row.key}
-                        data-log-manage-row-detail-action="true"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => openLogDetails(entry, 'history')}
-                        onKeyDown={event => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            openLogDetails(entry, 'history');
-                          }
-                        }}
-                        className="cursor-pointer border-b border-[#232a34] last:border-b-0 hover:bg-[#10141b]"
-                      >
-                        <td className="px-4 py-3 font-mono text-[12px] text-[#cbd5e1]">{row.timestamp}</td>
-                        <td className="px-4 py-3">
-                          <span className={`rounded-[3px] border px-2 py-0.5 text-[11px] font-semibold ${severityTone(row.severity)}`}>
-                            {row.severity}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-[#e6edf7]">{row.service}</td>
-                        <td className="min-w-0 px-4 py-3">
-                          <span className="block truncate font-mono text-[12px] text-[#e8edf5]">{row.message}</span>
-                          <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#7f8a9d]">
-                            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                            查看日志
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 font-mono text-[11px] text-[#9aa6b8]">
-                          <button
-                            data-log-manage-row-trace-detail-action="true"
-                            type="button"
-                            disabled={row.traceId === '-'}
-                            title={row.traceId === '-' ? missingTraceHandoffTitle : undefined}
-                            aria-label={row.traceId === '-' ? missingTraceHandoffTitle : undefined}
-                            data-log-manage-row-trace-detail-action-disabled={row.traceId === '-' ? 'missing-trace-id' : undefined}
-                            onClick={event => {
-                              event.stopPropagation();
-                              openLogDetails(entry, 'history');
-                            }}
-                            className="text-left hover:text-[#d7e2ff] disabled:cursor-not-allowed disabled:text-[#5d6674]"
-                          >
-                            {row.traceId}
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ) : (
-              <div className="flex h-[360px] items-center justify-center text-center text-[13px] text-[#d5d8e1]">
-                <div>
-                  <div className="mx-auto grid h-11 w-11 place-items-center rounded-[4px] border border-[#2b3039] bg-[#101217]">
-                    <ScrollText className="h-5 w-5 text-[#9aa6b8]" aria-hidden="true" />
-                  </div>
-                  <p className="mt-3 font-semibold">暂无日志</p>
-                  <p data-log-manage-empty-guidance="operator-no-data-guidance" className="mt-2 text-[#8f9bad]">
-                    确认时间范围、实体归因、采集器和监控模板后再查看日志。
-                  </p>
-                </div>
-              </div>
-            )}
-          </section>
-
-          <aside data-log-manage-detail-panel="cold-detail-panel" className={`${panelClass} h-fit px-4 py-4`}>
-            <p className="text-[12px] font-semibold text-[#8d98aa]">详情面板</p>
-            <h2 className="mt-2 truncate text-[18px] font-semibold text-[#f0f4fa]">{activeRow?.service || '未选择日志'}</h2>
-            <div className="mt-4 space-y-3 text-[12px] text-[#9aa6b8]">
-              <div className="flex items-center justify-between border-b border-dashed border-[#2c3441] pb-2">
-                <span>严重级别</span>
-                <span className="font-semibold text-[#dbe5f3]">{activeRow?.severity || '-'}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-dashed border-[#2c3441] pb-2">
-                <span>链路 ID</span>
-                <span className="max-w-[190px] truncate font-mono font-semibold text-[#dbe5f3]">{activeRow?.traceId || '-'}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-dashed border-[#2c3441] pb-2">
-                <span>跨度 ID</span>
-                <span className="max-w-[190px] truncate font-mono font-semibold text-[#dbe5f3]">{activeRow?.spanId || '-'}</span>
-              </div>
-            </div>
-            <div
-              data-log-manage-selected-evidence="selected-log-evidence"
-              aria-label="日志证据 日志时间 日志级别 正文摘要 最近上报"
-              className="mt-4 rounded-[4px] border border-[#252b35] bg-[#10141b] px-3 py-3"
-            >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-[11px] font-semibold text-[#8792a5]">日志证据</p>
-                <span className="text-[11px] font-semibold text-[#6d7788]">当前选中</span>
-              </div>
-              <div className="space-y-2">
-                {activeLogEvidenceRows.map(([label, value, meta]) => (
-                  <div key={label} className="grid grid-cols-[72px_minmax(0,1fr)] gap-2 text-[11px]">
-                    <span className="text-[#7f8a9d]">{label}</span>
-                    <span className="min-w-0">
-                      <span className="block truncate font-semibold text-[#e6edf7]">{value}</span>
-                      <span className="block truncate text-[#6d7788]">{meta}</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div
-              data-log-manage-entity-context="hertzbeat-signal-entity-context"
-              aria-label="实体上下文 当前实体 监控实例 当前服务 链路上下文 当前环境 时间范围 采集来源"
-              className="mt-4 rounded-[4px] border border-[#252b35] bg-[#10141b] px-3 py-3"
-            >
-              <div className="mb-2 flex items-center gap-2">
-                <p className="text-[11px] font-semibold text-[#8792a5]">实体上下文</p>
-              </div>
-              <div className="space-y-2">
-                {entityContextRows.map(row => (
-                  <div key={row.label} className="grid grid-cols-[72px_minmax(0,1fr)] gap-2 text-[11px]">
-                    <span className="text-[#7f8a9d]">{row.label}</span>
-                    <span className="min-w-0">
-                      <span className="block truncate font-semibold text-[#e6edf7]">{row.value}</span>
-                      <span className="block truncate text-[#6d7788]">{row.meta}</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <LogAttributionDiagnosticsPanel rows={activeAttributionDiagnostics} />
-            <div className="mt-4 flex flex-col gap-2">
-              <p
-                data-log-manage-alert-context-hint="entity-trace-alert-handoff"
-                className="rounded-[3px] border border-[#252b35] bg-[#10141b] px-2.5 py-2 text-[11px] leading-4 text-[#8792a5]"
-              >
-                按当前实体、服务和已带入的链路上下文查看相关告警
-              </p>
-              <p
-                data-log-manage-signal-handoff-hint="log-trace-metric-context"
-                className="rounded-[3px] border border-[#252b35] bg-[#10141b] px-2.5 py-2 text-[11px] leading-4 text-[#8792a5]"
-              >
-                当前日志的链路、跨度和服务上下文会带入链路与指标工作台
-              </p>
-              <LogEntityDetailAction
-                href={handoffLinks.entityHref}
-                canOpen={canOpenActiveEntity}
-                missingEntityHandoffTitle={missingEntityHandoffTitle}
+          <HzPanelSurface
+            data-log-manage-log-list="cold-dense-log-list"
+            data-log-manage-panel-surface="table"
+            data-log-manage-row-control-owner="shared-hz-button"
+            className="overflow-hidden"
+          >
+            <HzPanelHeader
+              data-log-manage-table-header-owner="hertzbeat-ui-panel-header"
+              title={(
+                <>
+                  <ScrollText className="h-4 w-4" aria-hidden="true" />
+                  {t('log.manage.list.title')}
+                </>
+              )}
+              meta={<HzStatusBadge data-log-manage-table-count-badge-owner="hertzbeat-ui-status-badge" tone="neutral" size="xs">{t('log.manage.list.count', { count: rows.length })}</HzStatusBadge>}
+            />
+            <HzDataTable
+              data-log-manage-table-chrome-owner="hertzbeat-ui-data-table"
+              variant="embedded"
+              rows={rows}
+              getRowKey={row => row.key}
+              selectedRowKey={activeRow?.key}
+              onRowClick={row => openLogDetails(logEntryByRowKey.get(row.key) ?? null, 'history')}
+              getRowProps={() => ({ 'data-log-manage-row-detail-action': 'true' })}
+              emptyLabel={(
+              <HzEmptyState
+                data-log-manage-empty-guidance="operator-no-data-guidance"
+                data-log-manage-empty-state-owner="hertzbeat-ui-empty-state"
+                title={t('log.manage.empty.title')}
+                description={t('log.manage.empty.copy')}
+                className="h-[360px] border-y-0 text-left"
               />
-              <Link href={handoffLinks.alertHandlingHref} className={actionClass}>
-                告警处理
-              </Link>
-              <button
-                data-log-manage-results-open-trace-action="true"
-                data-log-manage-open-log-detail-before-trace="true"
-                type="button"
-                className={activeEntry?.traceId ? actionClass : disabledActionClass}
-                disabled={!activeEntry?.traceId}
-                title={!activeEntry?.traceId ? missingTraceHandoffTitle : undefined}
-                aria-label={!activeEntry?.traceId ? missingTraceHandoffTitle : undefined}
-                data-log-manage-results-open-trace-action-disabled={!activeEntry?.traceId ? 'missing-trace-id' : undefined}
-                onClick={() => openTraceDrilldownFromLog(activeEntry, 'history')}
+              )}
+              columns={[
+                {
+                  key: 'time',
+                  header: t('log.manage.list.column.time'),
+                  width: '176px',
+                  render: row => <span className="font-mono text-[12px] text-[#cbd5e1]">{row.timestamp}</span>
+                },
+                {
+                  key: 'severity',
+                  header: t('log.manage.list.column.severity'),
+                  width: '116px',
+                  render: row => (
+                    <HzStatusBadge
+                      data-log-manage-severity-tone={row.severityTone}
+                      data-log-manage-severity-badge-owner="hertzbeat-ui-status-badge"
+                      tone={logSeverityStatusTone(row.severityTone)}
+                    >
+                      {row.severity}
+                    </HzStatusBadge>
+                  )
+                },
+                {
+                  key: 'service',
+                  header: t('log.manage.list.column.service'),
+                  width: '180px',
+                  render: row => <span className="font-semibold text-[#e6edf7]">{row.service}</span>
+                },
+                {
+                  key: 'body',
+                  header: t('log.manage.list.column.body'),
+                  render: row => (
+                    <span className="min-w-0">
+                      <span className="block truncate font-mono text-[12px] text-[#e8edf5]">{row.message}</span>
+                      <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#7f8a9d]">
+                        <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('log.manage.stream.action.view-log')}
+                      </span>
+                    </span>
+                  )
+                },
+                {
+                  key: 'trace',
+                  header: t('log.manage.list.column.trace'),
+                  width: '220px',
+                  render: row => (
+                    <HzButton
+                      data-log-manage-row-trace-detail-action="true"
+                      data-log-manage-row-control="shared-hz-button"
+                      intent="ghost"
+                      size="xs"
+                      disabled={row.traceId === '-'}
+                      title={row.traceId === '-' ? missingTraceHandoffTitle : undefined}
+                      aria-label={row.traceId === '-' ? missingTraceHandoffTitle : undefined}
+                      data-log-manage-row-trace-detail-action-disabled={row.traceId === '-' ? 'missing-trace-id' : undefined}
+                      onClick={() => openLogDetails(logEntryByRowKey.get(row.key) ?? null, 'history')}
+                      className="max-w-[180px] justify-start truncate font-mono"
+                    >
+                      {row.traceId}
+                    </HzButton>
+                  )
+                }
+              ]}
+            />
+          </HzPanelSurface>
+
+          <HzPanelSurface data-log-manage-detail-panel="cold-detail-panel" data-log-manage-panel-surface="detail" className="h-fit overflow-hidden">
+            <HzPanelHeader
+              data-log-manage-detail-header-owner="hertzbeat-ui-panel-header"
+              eyebrow={t('log.manage.detail.title')}
+              title={(
+                <>
+                  <Server className="h-4 w-4" aria-hidden="true" />
+                  {activeRow?.service || t('log.manage.stream.selected.none')}
+                </>
+              )}
+            />
+            <div className="px-4 py-4">
+              <HzDetailRows
+                data-log-manage-detail-facts-owner="hertzbeat-ui-detail-rows"
+                rows={[
+                  { key: 'severity', title: t('log.manage.detail.severity'), copy: activeRow?.severity || '-' },
+                  { key: 'trace-id', title: t('log.manage.detail.trace-id'), copy: activeRow?.traceId || '-' },
+                  { key: 'span-id', title: t('log.manage.detail.span-id'), copy: activeRow?.spanId || '-' }
+                ]}
+              />
+              <HzDetailRows
+                data-log-manage-selected-evidence="selected-log-evidence"
+                data-log-manage-selected-evidence-owner="hertzbeat-ui-detail-rows"
+                aria-label={t('log.manage.evidence.aria')}
+                className="mt-4"
+                heading={t('log.manage.evidence.title')}
+                rows={activeLogEvidenceRows.map(([label, value, meta]) => ({
+                  key: String(label),
+                  title: label,
+                  copy: value,
+                  meta
+                }))}
+              />
+              <HzDetailRows
+                data-log-manage-entity-context="hertzbeat-signal-entity-context"
+                data-log-manage-entity-context-owner="hertzbeat-ui-detail-rows"
+                aria-label={t('log.manage.context.entity.aria')}
+                className="mt-4"
+                heading={t('log.manage.context.entity.title')}
+                rows={entityContextRows.map(row => ({
+                  key: row.label,
+                  title: row.label,
+                  copy: row.value,
+                  meta: row.meta
+                }))}
+              />
+              <LogAttributionDiagnosticsPanel rows={activeAttributionDiagnostics} t={t} />
+              <HzControlStack
+                data-log-manage-history-detail-action-stack="shared-control-stack"
+                data-log-manage-history-detail-action-stack-owner="hertzbeat-ui-control-stack"
+                className="mt-4"
               >
-                查看链路
-              </button>
-              <Link href={handoffLinks.metricsHref} className={actionClass}>
-                查看指标
-              </Link>
-              <Link href={handoffLinks.entitiesHref} className={actionClass}>
-                对象目录
-              </Link>
+                <HzStateNotice
+                  data-log-manage-alert-context-hint="entity-trace-alert-handoff"
+                  data-log-manage-handoff-hint-owner="hertzbeat-ui-state-notice"
+                  title={t('log.manage.handoff.alert-hint')}
+                  variant="hint"
+                />
+                <HzStateNotice
+                  data-log-manage-signal-handoff-hint="log-trace-metric-context"
+                  data-log-manage-handoff-hint-owner="hertzbeat-ui-state-notice"
+                  title={t('log.manage.handoff.signal-hint')}
+                  variant="hint"
+                />
+                <LogEntityDetailAction
+                  href={handoffLinks.entityHref}
+                  canOpen={canOpenActiveEntity}
+                  missingEntityHandoffTitle={missingEntityHandoffTitle}
+                  label={t('log.manage.route.action.entity')}
+                />
+                <HzButtonLink component={Link} data-log-manage-history-detail-action="alerts" href={handoffLinks.alertHandlingHref} size="md">
+                  {t('log.manage.handoff.alerts')}
+                </HzButtonLink>
+                <HzButton
+                  data-log-manage-history-detail-action="traces"
+                  data-log-manage-results-open-trace-action="true"
+                  data-log-manage-open-log-detail-before-trace="true"
+                  size="md"
+                  disabled={!activeEntry?.traceId}
+                  title={!activeEntry?.traceId ? missingTraceHandoffTitle : undefined}
+                  aria-label={!activeEntry?.traceId ? missingTraceHandoffTitle : undefined}
+                  data-log-manage-results-open-trace-action-disabled={!activeEntry?.traceId ? 'missing-trace-id' : undefined}
+                  onClick={() => openTraceDrilldownFromLog(activeEntry, 'history')}
+                >
+                  {t('log.manage.handoff.traces')}
+                </HzButton>
+                <HzButtonLink component={Link} data-log-manage-history-detail-action="metrics" href={handoffLinks.metricsHref} size="md">
+                  {t('log.manage.handoff.metrics')}
+                </HzButtonLink>
+                <HzButtonLink component={Link} data-log-manage-history-detail-action="entities" href={handoffLinks.entitiesHref} size="md">
+                  {t('log.manage.handoff.entities')}
+                </HzButtonLink>
+              </HzControlStack>
             </div>
-          </aside>
+          </HzPanelSurface>
         </div>
         ) : null}
         {renderDetailDialog()}
@@ -1471,16 +1686,17 @@ function LogManageExplorer({
 }
 
 export default function LogManagePage({
+  initialRouteState,
   forcedView,
   showViewToggle = true
-}: LogManagePageProps = {}) {
-  const searchParams = useSearchParams();
+}: LogManagePageProps & { initialRouteState?: LogManageRouteState } = {}) {
+  const logManageRouteState = initialRouteState ?? EMPTY_LOG_MANAGE_ROUTE_STATE;
   const router = useRouter();
-  const [draft, setDraft] = useState<LogQueryState>(() => queryStateFromParams(searchParams));
-  const [query, setQuery] = useState<LogQueryState>(() => queryStateFromParams(searchParams));
+  const [draft, setDraft] = useState<LogQueryState>(() => logManageRouteState.initialQuery);
+  const [query, setQuery] = useState<LogQueryState>(() => logManageRouteState.initialQuery);
   const { t } = useI18n();
-  const currentView = forcedView ?? resolveLogWorkbenchView(searchParams);
-  const routeContext = useMemo(() => readSignalRouteContext(searchParams), [searchParams]);
+  const currentView = forcedView ?? logManageRouteState.currentView;
+  const routeContext = logManageRouteState.routeContext;
   const logTimeContext = useMemo(() => sanitizeTimeContext({
     timeRange: routeContext.timeRange || 'last-30m',
     start: routeContext.start,
@@ -1489,41 +1705,62 @@ export default function LogManagePage({
     live: routeContext.live || 'true',
     tz: routeContext.tz
   }), [routeContext]);
+  const logUrls = useMemo(() => buildLogUrls(query, routeContext), [query, routeContext]);
+  const logManageCacheKey = useMemo(
+    () => [
+      'log-manage',
+      currentView,
+      logUrls.overviewUrl,
+      logUrls.listUrl,
+      logUrls.trendUrl,
+      logUrls.coverageUrl
+    ].join('|'),
+    [currentView, logUrls]
+  );
 
   const buildRouteWithContext = useCallback(
-    (nextQuery: LogQueryState, view: LogWorkbenchView) => buildLogManageRoute(searchParams, nextQuery, view),
-    [searchParams]
+    (nextQuery: LogQueryState, view: LogWorkbenchView) => buildLogManageRoute(routeContext, nextQuery, view),
+    [routeContext]
   );
 
   useEffect(() => {
-    if (hasDisplayReturnLabel(searchParams)) {
-      router.replace(buildLogManageRoute(searchParams, query, currentView));
+    if (logManageRouteState.shouldCleanUrl) {
+      router.replace(buildLogManageRoute(routeContext, query, currentView));
     }
-  }, [currentView, query, router, searchParams]);
+  }, [currentView, logManageRouteState.shouldCleanUrl, query, routeContext, router]);
 
   const applyLogTimeContext = useCallback((timeContext: TimeContext) => {
     const appliedContext = resolveAppliedTimeContext(timeContext, logTimeContext);
-    router.replace(buildLogManageRoute(searchParams, query, currentView, appliedContext));
-  }, [currentView, logTimeContext, query, router, searchParams]);
+    router.replace(buildLogManageRoute(routeContext, query, currentView, appliedContext));
+  }, [currentView, logTimeContext, query, routeContext, router]);
 
   const load = useCallback(async (): Promise<LogManageData> => {
-    const { listUrl, overviewUrl, trendUrl, coverageUrl } = buildLogUrls(query, routeContext);
-    const [overview, list, trend, coverage] = await Promise.all([
-      apiMessageGet<BackendLogOverview>(overviewUrl),
-      apiMessageGet<PageResult<LogEntry>>(listUrl),
-      apiMessageGet<LogTrendStats>(trendUrl),
-      apiMessageGet<LogTraceCoverage>(coverageUrl)
-    ]);
-    return { overview: normalizeLogOverview(overview), list, trend, coverage, query };
-  }, [query, routeContext]);
+    const { listUrl, overviewUrl, trendUrl, coverageUrl } = logUrls;
+    try {
+      const [overview, list, trend, coverage] = await Promise.all([
+        apiMessageGetWithTimeout<BackendLogOverview>(overviewUrl),
+        apiMessageGetWithTimeout<PageResult<LogEntry>>(listUrl),
+        apiMessageGetWithTimeout<LogTrendStats>(trendUrl),
+        apiMessageGetWithTimeout<LogTraceCoverage>(coverageUrl)
+      ]);
+      return { overview: normalizeLogOverview(overview), list, trend, coverage, query };
+    } catch (error) {
+      return emptyLogManageData(query, describeLogManageLoadFailure(error));
+    }
+  }, [logUrls, query]);
 
   return (
-    <ClientWorkbench load={load} loadingCopy={t('log.manage.loading')}>
+    <ClientWorkbench
+      load={load}
+      loadingCopy={t('log.manage.loading')}
+      cacheKey={logManageCacheKey}
+      cacheSettledTtlMs={LOG_MANAGE_SETTLED_CACHE_TTL_MS}
+    >
       {data => {
         const resetQuery = () => {
           setDraft(EMPTY_QUERY);
           setQuery(EMPTY_QUERY);
-          router.replace(buildResetLogManageRoute(searchParams, currentView));
+          router.replace(buildResetLogManageRoute(routeContext, currentView));
         };
 
         const applyQuery = (override?: LogQueryState) => {
@@ -1550,7 +1787,7 @@ export default function LogManagePage({
             routeContext={routeContext}
             timeContext={logTimeContext}
             applyTimeContext={applyLogTimeContext}
-            currentLogReturnHref={buildLogManageRoute(searchParams, query, currentView)}
+            currentLogReturnHref={buildLogManageRoute(routeContext, query, currentView)}
           />
         );
       }}

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { readSignalRouteContext } from '../../../lib/signal-route-context';
 import { buildLogManageRoute, buildResetLogManageRoute } from './route-state';
 
 function createSearchParams(input: string) {
@@ -10,9 +11,9 @@ function createSearchParams(input: string) {
 describe('log manage route state', () => {
   it('preserves workbench context when applying a query', () => {
     const route = buildLogManageRoute(
-      createSearchParams(
+      readSignalRouteContext(createSearchParams(
         'timeRange=last-1h&start=1713200000000&end=1713203600000&refresh=30&live=false&tz=Asia%2FShanghai&entityId=42&entityName=checkout&returnTo=%2Foverview&returnLabel=Overview&serviceName=checkout&serviceNamespace=payments&environment=prod&codeRepo=https%3A%2F%2Fexample.test%2Frepo&codeProvider=github&codePath=src%2Fapp.ts&codeSearch=CheckoutService&codeLabel=source'
-      ),
+      )),
       {
         search: 'timeout',
         logContent: '',
@@ -32,7 +33,7 @@ describe('log manage route state', () => {
 
   it('keeps route context when resetting back to an empty stream query', () => {
     const route = buildResetLogManageRoute(
-      createSearchParams('timeRange=last-1h&start=1713200000000&end=1713203600000&refresh=30&live=false&tz=UTC&returnTo=%2Fentities&returnLabel=Entities&serviceName=checkout'),
+      readSignalRouteContext(createSearchParams('timeRange=last-1h&start=1713200000000&end=1713203600000&refresh=30&live=false&tz=UTC&returnTo=%2Fentities&returnLabel=Entities&serviceName=checkout')),
       'stream'
     );
 
@@ -44,9 +45,9 @@ describe('log manage route state', () => {
 
   it('overrides only the shared time context when applying the visible time control', () => {
     const route = buildLogManageRoute(
-      createSearchParams(
+      readSignalRouteContext(createSearchParams(
         'timeRange=last-1h&start=1713200000000&end=1713203600000&refresh=30&live=false&tz=UTC&entityId=42&returnTo=%2Foverview&serviceName=checkout'
-      ),
+      )),
       {
         search: 'timeout',
         logContent: '',

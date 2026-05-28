@@ -1,7 +1,14 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
 import { LogRelatedTraceDialog } from './log-related-trace-dialog';
+
+vi.mock('@/components/providers/i18n-provider', () => ({
+  useI18n: () => ({
+    t: createTranslatorMock({ locale: 'zh-CN' })
+  })
+}));
 
 describe('log related trace dialog', () => {
   it('renders the preview toolbar, stage facts, and full-trace follow-up action', () => {
@@ -68,7 +75,22 @@ describe('log related trace dialog', () => {
     );
 
     expect(html).toContain('data-log-related-trace-dialog="true"');
+    expect(html).toContain('data-log-related-trace-dialog-body-owner="hertzbeat-ui-dialog-body-layout"');
+    expect(html).toContain('data-hz-ui="dialog-body-layout"');
+    expect(html).toContain('data-hz-dialog-body-layout-variant="stack"');
     expect(html).toContain('data-log-related-trace-toolbar="true"');
+    expect(html).toContain('data-log-related-trace-toolbar-owner="hertzbeat-ui-toolbar-chips"');
+    expect(html).toContain('data-hz-ui="chip-group"');
+    expect(html).toContain('data-hz-chip-group-owner="hertzbeat-ui-toolbar-chips"');
+    expect(html).toContain('data-log-related-trace-toolbar-badge-owner="hertzbeat-ui-status-badge"');
+    expect(html).toContain('data-log-related-trace-toolbar-meta-owner="hertzbeat-ui-inline-context-mark"');
+    expect(html).toContain('data-log-related-trace-subtitle-owner="hertzbeat-ui-inline-context-mark"');
+    expect(html).toContain('data-log-related-trace-subtitle="dialog-context"');
+    expect(html).toContain('data-log-related-trace-header-action-owner="hertzbeat-ui-action-group"');
+    expect(html).toContain('data-log-related-trace-header-action="full-trace"');
+    expect(html).toContain('data-hz-ui="status-badge"');
+    expect(html).toContain('data-hz-ui="inline-context-mark"');
+    expect(html).toContain('data-hz-ui="action-group"');
     expect(html).toContain('trace-123');
     expect(html).toContain('4 spans');
     expect(html).toContain('View Full Trace');
@@ -79,7 +101,11 @@ describe('log related trace dialog', () => {
     expect(html).toContain('data-waterfall-event-marker="true"');
     expect(html).toContain('data-waterfall-event-marker-action="select-span-event"');
     expect(html).toContain('data-log-related-trace-event-detail="span-event-detail"');
+    expect(html).toContain('data-log-related-trace-event-detail-owner="hertzbeat-ui-state-notice"');
     expect(html).toContain('data-log-related-trace-event-detail-copy="span-event-not-span"');
+    expect(html).toContain('data-log-related-trace-event-detail-meta="span-event-label"');
+    expect(html).toContain('data-hz-ui="state-notice"');
+    expect(html).toContain('data-hz-state-variant="hint"');
     expect(html).toContain('跨度事件');
     expect(html).toContain('不是新的跨度，是当前跨度上的时间点');
     expect(html).toContain('所属跨度');
@@ -90,10 +116,26 @@ describe('log related trace dialog', () => {
     expect(html).toContain('data-waterfall-minimap-event-marker="true"');
     expect(html).toContain('aria-label="exception"');
     expect(html).toContain('data-log-related-trace-stage-meta="true"');
+    expect(html).toContain('data-log-related-trace-stage-meta-owner="hertzbeat-ui-toolbar-chips"');
+    expect(html).toContain('data-log-related-trace-stage-meta-item-owner="hertzbeat-ui-inline-context-mark"');
     expect(html).toContain('checkout');
     expect(html).toContain('span-1...');
     expect(html).toContain('data-log-related-trace-stage-facts="true"');
-    expect(html).toContain('data-log-related-trace-stage-facts-layout="compact-operator-strip"');
+    expect(html).toContain('data-log-related-trace-stage-facts-layout="shared-stat-strip"');
+    expect(html).toContain('data-log-related-trace-stage-facts-owner="hertzbeat-ui-stat-strip"');
+    expect(html).toContain('data-hz-ui="stat-strip"');
+    expect(html).toContain('data-hz-stat-strip-owner="hertzbeat-ui-stat-strip"');
+    expect(html).toContain('data-hz-stat-strip-columns="4"');
+    expect(html).toContain('data-log-related-trace-stage-fact-owner="hertzbeat-ui-stat-cell"');
+    expect(html).toContain('data-hz-ui="stat-cell"');
+    expect(html).toContain('data-log-related-trace-selected-facts-owner="hertzbeat-ui-detail-rows"');
+    expect(html).toContain('data-log-related-trace-body-layout-owner="hertzbeat-ui-dialog-body-layout"');
+    expect(html).toContain('data-log-related-trace-body-layout="split-detail"');
+    expect(html).toContain('data-hz-dialog-body-layout-variant="split-detail"');
+    expect(html).toContain('data-log-related-trace-side-stack-owner="hertzbeat-ui-dialog-body-layout"');
+    expect(html).toContain('data-log-related-trace-side-stack="selected-facts"');
+    expect(html).toContain('data-hz-dialog-body-layout-variant="side-stack"');
+    expect(html).toContain('data-hz-ui="detail-rows"');
     expect(html).toContain('Current Span');
     expect(html).toContain('Error Spans');
     expect(html).toContain('Events');
@@ -104,13 +146,44 @@ describe('log related trace dialog', () => {
     expect(html).not.toContain('bg-[rgba(216,111,91,0.08)]');
     expect(html).toContain('0 ms');
     expect(html).toContain('120 ms');
-    expect(html).toContain('border-[var(--ops-border-color)]');
-    expect(html).toContain('bg-[var(--ops-surface-raised)]');
-    expect(html).toContain('text-[var(--ops-text-primary)]');
-    expect(html).toContain('text-[var(--ops-text-tertiary)]');
+    expect(html).toContain('data-hz-stat-variant="tile"');
+    expect(html).toContain('data-hz-stat-tone="critical"');
+    expect(html).toContain('data-hz-stat-tone="info"');
     expect(html).not.toContain('<footer');
     expect(html).not.toContain('>Close</button>');
     expect(html).not.toContain('border-white/8');
     expect(html).not.toContain('text-white/45');
+  });
+
+  it('renders catalog-backed default loading and empty states', () => {
+    const loadingHtml = renderToStaticMarkup(
+      <LogRelatedTraceDialog
+        open={true}
+        onClose={() => undefined}
+        title="trace preview"
+        loading={true}
+        rows={[]}
+        selectedFacts={[]}
+        onSelect={() => undefined}
+      />
+    );
+
+    expect(loadingHtml).toContain('Loading trace preview');
+    expect(loadingHtml).toContain('Loading the trace preview from the current log context.');
+
+    const emptyHtml = renderToStaticMarkup(
+      <LogRelatedTraceDialog
+        open={true}
+        onClose={() => undefined}
+        title="trace preview"
+        rows={[]}
+        selectedFacts={[]}
+        onSelect={() => undefined}
+      />
+    );
+
+    expect(emptyHtml).toContain('No related trace');
+    expect(emptyHtml).toContain('This log has no trace details available for preview.');
+    expect(emptyHtml).toContain('data-log-related-trace-dialog="true"');
   });
 });

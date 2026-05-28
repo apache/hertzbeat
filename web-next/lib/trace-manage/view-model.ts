@@ -9,6 +9,7 @@ import {
 } from '../signal-route-context';
 import type { CodeNavigationHint, TraceDetail, TraceListItem, TraceOverview, TraceSpanEvent, TraceSpanLink, TraceSpanNode } from '@/lib/types';
 import { buildCodeNavigationUrl } from '../code-navigation';
+import { statusTone } from './display-mapping';
 import { buildSpanRows } from './span-derivation';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
@@ -28,6 +29,7 @@ export type TraceExplorerRow = {
   namespace: string;
   duration: string;
   status: string;
+  statusTone: 'danger' | 'warning' | 'success' | undefined;
   startTime: string;
 };
 
@@ -79,6 +81,7 @@ export function buildTraceExplorerRows(
       namespace: item.serviceNamespace || 'default',
       duration: formatDurationNanos(item.durationNanos),
       status: item.status || 'UNSET',
+      statusTone: statusTone(item.status || null),
       startTime: formatTime(item.startTime)
     };
   });
@@ -87,7 +90,8 @@ export function buildTraceExplorerRows(
 export function buildTraceWaterfallRows(
   detail: TraceDetail | null,
   selectedSpanId: string | null | undefined,
-  formatDurationNanos: (value?: number | null) => string
+  formatDurationNanos: (value?: number | null) => string,
+  t: Translator
 ): TraceWaterfallPreviewRow[] {
   const spans = detail?.spans || [];
   const orderedSpans = buildSpanRows(spans);
@@ -116,7 +120,7 @@ export function buildTraceWaterfallRows(
       depth: span.depth,
       tone,
       selected: span.spanId === selectedSpanId,
-      events: buildSpanEventMarkers(span.spanId, span.events, traceStartMs, totalDurationMs, spanStartMs, spanDurationMs, tone)
+      events: buildSpanEventMarkers(span.spanId, span.events, traceStartMs, totalDurationMs, spanStartMs, spanDurationMs, tone, t)
     };
   });
 }
@@ -174,7 +178,8 @@ function buildSpanEventMarkers(
   totalDurationMs: number,
   spanStartMs: number,
   spanDurationMs: number,
-  spanTone: 'default' | 'danger'
+  spanTone: 'default' | 'danger',
+  t: Translator
 ): TraceWaterfallEventMarker[] {
   const eventItems = events || [];
   return eventItems
@@ -182,11 +187,11 @@ function buildSpanEventMarkers(
       const eventMs = toEpochMillis(event.timeUnixNano) ?? spanStartMs + (spanDurationMs * (index + 1)) / (eventItems.length + 1);
       return {
         key: `${spanId}:event:${index}`,
-        label: event.name || '未命名事件',
+        label: event.name || t('trace.manage.event.fallback'),
         leftPct: clampPercent(((eventMs - traceStartMs) / totalDurationMs) * 100),
         tone: spanTone === 'danger' || (event.name || '').toLowerCase().includes('exception') ? ('danger' as const) : ('default' as const),
         offsetLabel: `+${Math.round(Math.max(eventMs - traceStartMs, 0))} ms`,
-        attributesLabel: formatEventAttributes(event.attributes)
+        attributesLabel: formatEventAttributes(event.attributes, t)
       };
     })
     .filter((event): event is TraceWaterfallEventMarker => event != null);
@@ -240,7 +245,6 @@ export function buildTraceAttributionDiagnostics(
   routeContext: SignalRouteContext = {},
   t: Translator
 ): TraceAttributionDiagnostic[] {
-  void t;
   const read = (...keys: string[]) =>
     firstText(
       ...keys.flatMap(key => [
@@ -264,11 +268,36 @@ export function buildTraceAttributionDiagnostics(
   const template = read('template', 'hertzbeat.template', 'hertzbeat_template', 'hertzbeat.monitor_template', 'hertzbeat_monitor_template');
 
   return [
-    row('hertzbeat.entity_id', entityId, '可打开实体详情', '缺少实体 ID，实体详情会保持禁用'),
-    row('hertzbeat.entity_name', entityName, '用于展示实体名称', '缺少实体名称时使用服务名辅助检索'),
-    row('hertzbeat.workspace_id', workspaceId, '工作区归属', '缺少工作区字段时使用当前部署上下文'),
-    row('hertzbeat.collector', collector, '采集器来源', '缺少采集器字段时使用链路服务上下文排查'),
-    row('hertzbeat.template', template, '监控模板归属', '缺少模板字段时从实体或服务补齐模板归属')
+    row(
+      'hertzbeat.entity_id',
+      entityId,
+      t('trace.manage.attribution-diagnostics.entity-id.present'),
+      t('trace.manage.attribution-diagnostics.entity-id.missing')
+    ),
+    row(
+      'hertzbeat.entity_name',
+      entityName,
+      t('trace.manage.attribution-diagnostics.entity-name.present'),
+      t('trace.manage.attribution-diagnostics.entity-name.missing')
+    ),
+    row(
+      'hertzbeat.workspace_id',
+      workspaceId,
+      t('trace.manage.attribution-diagnostics.workspace-id.present'),
+      t('trace.manage.attribution-diagnostics.workspace-id.missing')
+    ),
+    row(
+      'hertzbeat.collector',
+      collector,
+      t('trace.manage.attribution-diagnostics.collector.present'),
+      t('trace.manage.attribution-diagnostics.collector.missing')
+    ),
+    row(
+      'hertzbeat.template',
+      template,
+      t('trace.manage.attribution-diagnostics.template.present'),
+      t('trace.manage.attribution-diagnostics.template.missing')
+    )
   ];
 }
 
@@ -286,43 +315,47 @@ export function buildQueryStats(overview: TraceOverview, listCount: number, t: T
   ];
 }
 
-export function buildSelectedSpanEventRows(selectedSpan: TraceSpanNode | null, formatTime: (value?: number | string | null) => string): Row[] {
+export function buildSelectedSpanEventRows(
+  selectedSpan: TraceSpanNode | null,
+  formatTime: (value?: number | string | null) => string,
+  t: Translator
+): Row[] {
   return selectedSpan?.events?.slice(0, 5).map((event: TraceSpanEvent) => ({
-    title: event.name || '未命名事件',
-    copy: formatEventAttributes(event.attributes),
+    title: event.name || t('trace.manage.event.fallback'),
+    copy: formatEventAttributes(event.attributes, t),
     meta: formatTime(toEventEpochMillis(event.timeUnixNano) ?? null)
   })) || [];
 }
 
-export function buildSelectedSpanLinkRows(selectedSpan: TraceSpanNode | null): Row[] {
+export function buildSelectedSpanLinkRows(selectedSpan: TraceSpanNode | null, t: Translator): Row[] {
   return selectedSpan?.links?.slice(0, 5).map((link: TraceSpanLink) => ({
-    title: link.traceId || '关联链路',
+    title: link.traceId || t('trace.manage.link.fallback'),
     copy: link.spanId || '-',
-    meta: link.traceState || '关联链路'
+    meta: link.traceState || t('trace.manage.link.meta')
   })) || [];
 }
 
-function formatEventAttributes(attributes?: TraceSpanEvent['attributes']) {
+function formatEventAttributes(attributes: TraceSpanEvent['attributes'] | undefined, t: Translator) {
   const entries = Object.entries(attributes || {}).filter(([key]) => key.trim() !== '');
-  if (entries.length === 0) return '无属性';
+  if (entries.length === 0) return t('trace.manage.event.attributes.empty');
 
-  const visibleEntries = entries.slice(0, 4).map(([key, value]) => `${key}=${formatEventAttributeValue(value)}`);
+  const visibleEntries = entries.slice(0, 4).map(([key, value]) => `${key}=${formatEventAttributeValue(value, t)}`);
   if (entries.length > 4) {
-    visibleEntries.push(`还有 ${entries.length - 4} 项`);
+    visibleEntries.push(t('trace.manage.event.attributes.more', { count: entries.length - 4 }));
   }
   return visibleEntries.join(' · ');
 }
 
-function formatEventAttributeValue(value: unknown): string {
+function formatEventAttributeValue(value: unknown, t: Translator): string {
   if (value == null || value === '') return '-';
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
     return String(value);
   }
   if (Array.isArray(value)) {
-    const joined = value.map(formatEventAttributeValue).filter(part => part !== '-').join(', ');
+    const joined = value.map(part => formatEventAttributeValue(part, t)).filter(part => part !== '-').join(', ');
     return joined || '-';
   }
-  return '对象属性';
+  return t('trace.manage.event.attributes.object');
 }
 
 function toEventEpochMillis(value?: number | string | null) {
@@ -393,6 +426,7 @@ export function buildTraceHandoffLinks(
     intakeReturnLabel?: string;
     logsReturnTo?: string;
     logsReturnLabel?: string;
+    metricsReturnTo?: string;
   }
 ) {
   const traceId = detail?.traceId || options?.traceId;
@@ -454,6 +488,10 @@ export function buildTraceHandoffLinks(
     ...signalContext,
     returnTo: stripReturnLabelFromHref(options?.logsReturnTo || signalContext.returnTo)
   };
+  const metricsContext: SignalRouteContext = {
+    ...signalContext,
+    returnTo: stripReturnLabelFromHref(options?.metricsReturnTo || signalContext.returnTo)
+  };
 
   const intakeParams = new URLSearchParams();
   appendSignalRouteContext(intakeParams, signalContext);
@@ -470,7 +508,7 @@ export function buildTraceHandoffLinks(
   if (spanId) metricsParams.set('spanId', spanId);
   if (serviceName) metricsParams.set('serviceName', serviceName);
   if (serviceNamespace) metricsParams.set('serviceNamespace', serviceNamespace);
-  appendSignalRouteContext(metricsParams, signalContext);
+  appendSignalRouteContext(metricsParams, metricsContext);
 
   const entityParams = new URLSearchParams();
   if (serviceName) entityParams.set('search', serviceName);

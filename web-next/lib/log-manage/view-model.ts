@@ -8,6 +8,7 @@ import {
 } from '../signal-route-context';
 import type { CodeNavigationHint, LogEntry, TraceSpanNode } from '@/lib/types';
 import { buildCodeNavigationUrl } from '../code-navigation';
+import { logSeverityTone, type LogSeverityTone } from './display-mapping';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
@@ -37,6 +38,7 @@ export type LogExplorerRow = {
   message: string;
   service: string;
   severity: string;
+  severityTone: LogSeverityTone;
   traceId: string;
   spanId: string;
 };
@@ -157,7 +159,6 @@ function buildHertzBeatLogFacts(selectedLog: LogEntry): Fact[] {
 
 export function buildLogAttributionDiagnostics(selectedLog: LogEntry | null, t: Translator): LogAttributionDiagnostic[] {
   if (!selectedLog) return [];
-  void t;
   const read = (...keys: string[]) => firstText(
     ...keys.flatMap(key => [
       readAttribute(selectedLog.resource, key),
@@ -180,13 +181,13 @@ export function buildLogAttributionDiagnostics(selectedLog: LogEntry | null, t: 
   const template = read('hertzbeat.template', 'hertzbeat_template', 'hertzbeat.monitor_template', 'hertzbeat_monitor_template', 'template');
 
   return [
-    row('hertzbeat.event_id', eventId, eventId ? '用于定位一次日志接入事件' : '缺少事件 ID 时只能按时间和内容排查'),
-    row('hertzbeat.ingest_id', ingestId, ingestId ? '用于排查接入批次' : '缺少接入批次时使用 Collector 日志排查'),
-    row('hertzbeat.entity_id', entityId, entityId ? '可打开实体详情' : '缺少实体 ID，实体详情会保持禁用'),
-    row('hertzbeat.entity_name', entityName, entityName ? '用于展示实体名称' : '缺少实体名称时使用服务名辅助检索'),
-    row('hertzbeat.workspace_id', workspaceId, workspaceId ? '工作区归属' : '缺少工作区字段时使用当前部署上下文'),
-    row('hertzbeat.collector', collector, '采集器来源'),
-    row('hertzbeat.template', template, '监控模板归属')
+    row('hertzbeat.event_id', eventId, eventId ? t('log.manage.attribution.event-id.present') : t('log.manage.attribution.event-id.missing')),
+    row('hertzbeat.ingest_id', ingestId, ingestId ? t('log.manage.attribution.ingest-id.present') : t('log.manage.attribution.ingest-id.missing')),
+    row('hertzbeat.entity_id', entityId, entityId ? t('log.manage.attribution.entity-id.present') : t('log.manage.attribution.entity-id.missing')),
+    row('hertzbeat.entity_name', entityName, entityName ? t('log.manage.attribution.entity-name.present') : t('log.manage.attribution.entity-name.missing')),
+    row('hertzbeat.workspace_id', workspaceId, workspaceId ? t('log.manage.attribution.workspace-id.present') : t('log.manage.attribution.workspace-id.missing')),
+    row('hertzbeat.collector', collector, t('log.manage.attribution.collector')),
+    row('hertzbeat.template', template, t('log.manage.attribution.template'))
   ];
 }
 
@@ -209,6 +210,7 @@ export function buildLogExplorerRows(
       message: formatters.bodyText(entry.body),
       service,
       severity: formatters.severityLabel(entry),
+      severityTone: logSeverityTone(formatters.severityLabel(entry)),
       traceId: entry.traceId || '-',
       spanId: entry.spanId || '-'
     };

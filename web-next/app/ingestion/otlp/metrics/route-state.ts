@@ -29,6 +29,8 @@ const METRICS_ROUTE_KEYS: Array<keyof OtlpMetricsQueryState> = [
   'aggregation',
   'groupBy',
   'timeRange',
+  'from',
+  'to',
   'serviceName',
   'serviceNamespace',
   'environment',
@@ -40,6 +42,7 @@ const METRICS_ROUTE_KEYS: Array<keyof OtlpMetricsQueryState> = [
   'refresh',
   'live',
   'tz',
+  'timezone',
   'codeRepo',
   'codeProvider',
   'codePath',
@@ -59,7 +62,7 @@ function appendRouteValue(params: URLSearchParams, key: keyof OtlpMetricsQuerySt
     if (entityId) params.set(key, entityId);
     return;
   }
-  if (key === 'timeRange' || key === 'start' || key === 'end' || key === 'refresh' || key === 'live' || key === 'tz') {
+  if (key === 'timeRange' || key === 'from' || key === 'to' || key === 'start' || key === 'end' || key === 'refresh' || key === 'live' || key === 'tz' || key === 'timezone') {
     const timeValue = normalizeTimeContextValue(key, value);
     if (timeValue) params.set(key, timeValue);
     return;
@@ -83,6 +86,16 @@ export function hasMetricsUnsanitizedTimeBounds(searchParams: SearchParamReader)
 
 export function buildOtlpMetricsRoute(query: OtlpMetricsQueryState) {
   const params = new URLSearchParams();
-  METRICS_ROUTE_KEYS.forEach(key => appendRouteValue(params, key, query[key]));
+  const expressionFrom = normalizeTimeContextValue('from', query.from);
+  const expressionTo = normalizeTimeContextValue('to', query.to);
+  const expressionOwnsRoute = Boolean(expressionFrom && expressionTo);
+  METRICS_ROUTE_KEYS.forEach(key => {
+    if (expressionOwnsRoute && (key === 'start' || key === 'end')) return;
+    if (expressionOwnsRoute && key === 'tz') {
+      if (!query.timezone) appendRouteValue(params, 'timezone', query.tz);
+      return;
+    }
+    appendRouteValue(params, key, query[key]);
+  });
   return params.toString() ? `/ingestion/otlp/metrics?${params.toString()}` : '/ingestion/otlp/metrics';
 }

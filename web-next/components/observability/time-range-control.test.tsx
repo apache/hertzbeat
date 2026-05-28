@@ -233,7 +233,6 @@ describe('TimeRangeControl', () => {
       timeRange: 'last-30m',
       start: '1713200000000',
       end: '1713203600000',
-      refresh: '30',
       live: 'false',
       tz: 'Asia/Shanghai'
     });
@@ -260,7 +259,6 @@ describe('TimeRangeControl', () => {
       timeRange: 'last-30m',
       start: '1713200000000',
       end: '1713203600000',
-      refresh: '30',
       live: 'false',
       tz: 'Asia/Shanghai'
     });
@@ -279,6 +277,7 @@ describe('TimeRangeControl', () => {
 
     expect(html).toContain('data-time-range-control-visual="grafana-like-narrow-rail"');
     expect(html).toContain('data-time-range-control-layout="nowrap-top-right-rail"');
+    expect(html).toContain('data-time-range-control-align="end"');
     expect(html).toContain('data-time-range-control-wrap="nowrap"');
     expect(html).toContain('data-time-range-control-card="false"');
     expect(html).toContain('data-time-range-control-density="narrow"');
@@ -291,6 +290,7 @@ describe('TimeRangeControl', () => {
     expect(html).toContain('data-time-range-start-input="true"');
     expect(html).toContain('data-time-range-end-input="true"');
     expect(html).toContain('flex-nowrap');
+    expect(html).toContain('justify-end');
     expect(html).not.toContain('overflow-x-auto');
     expect(html).not.toContain('flex-wrap items-center gap-1.5 rounded-[3px] border');
     expect(html).not.toContain('bg-[var(--ops-surface-panel)] px-2 py-1');

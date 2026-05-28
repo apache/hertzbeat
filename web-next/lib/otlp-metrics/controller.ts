@@ -33,11 +33,14 @@ export function queryStateFromParams(params: SearchParamReader): OtlpMetricsQuer
     serviceName: params.get('serviceName') || undefined,
     serviceNamespace: params.get('serviceNamespace') || undefined,
     environment: params.get('environment') || undefined,
+    from: normalizeTimeContextValue('from', params.get('from')),
+    to: normalizeTimeContextValue('to', params.get('to')),
     start: normalizeTimeContextValue('start', params.get('start')),
     end: normalizeTimeContextValue('end', params.get('end')),
     refresh: normalizeTimeContextValue('refresh', params.get('refresh')),
     live: normalizeTimeContextValue('live', params.get('live')),
     tz: normalizeTimeContextValue('tz', params.get('tz')),
+    timezone: normalizeTimeContextValue('timezone', params.get('timezone')),
     codeRepo: params.get('codeRepo') || undefined,
     codeProvider: params.get('codeProvider') || undefined,
     codePath: params.get('codePath') || undefined,
@@ -56,7 +59,7 @@ export function buildOtlpMetricsConsoleUrl(query: OtlpMetricsQueryState) {
         if (entityId) params.set(key, entityId);
         return;
       }
-      if (key === 'timeRange' || key === 'start' || key === 'end' || key === 'refresh' || key === 'live' || key === 'tz') {
+      if (key === 'timeRange' || key === 'from' || key === 'to' || key === 'start' || key === 'end' || key === 'refresh' || key === 'live' || key === 'tz' || key === 'timezone') {
         const timeValue = normalizeTimeContextValue(key, String(value));
         if (timeValue) params.set(key, timeValue);
         return;

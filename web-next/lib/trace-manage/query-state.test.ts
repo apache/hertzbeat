@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTraceRouteUrl, buildTraceUrls, queryStateFromParams } from './query-state';
+import { buildTraceRouteUrl, buildTraceUrls, queryStateFromParams, readTraceManageRouteState } from './query-state';
 
 describe('trace query state codec', () => {
   it('reads query state from search params', () => {
@@ -10,6 +10,45 @@ describe('trace query state codec', () => {
       serviceName: 'checkout',
       errorOnly: true
     });
+  });
+
+  it('normalizes multi-value URL search params into the first trace manage query value', () => {
+    const routeState = readTraceManageRouteState({
+      traceId: [' trace-123 ', 'trace-ignored'],
+      spanId: [' span-456 ', 'span-ignored'],
+      serviceName: [' checkout ', 'payments'],
+      errorOnly: ['true', 'false'],
+      timeRange: ['last-1h', 'last-6h'],
+      start: ['1713200000000.5', '1713200000000'],
+      end: ['1713203600000', 'not-epoch'],
+      entityId: ['7', '8'],
+      entityName: ['Checkout API', 'Payments API'],
+      serviceNamespace: ['payments', 'ignored'],
+      environment: ['prod', 'staging'],
+      returnTo: ['/overview?returnLabel=Overview', '/entities'],
+      returnLabel: ['Overview', 'Entities']
+    });
+
+    expect(routeState.initialQuery).toEqual({
+      traceId: 'trace-123',
+      spanId: 'span-456',
+      serviceName: 'checkout',
+      errorOnly: true
+    });
+    expect(routeState.routeContext).toMatchObject({
+      timeRange: 'last-1h',
+      end: '1713203600000',
+      entityId: '7',
+      entityName: 'Checkout API',
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      environment: 'prod',
+      returnTo: '/overview',
+      traceId: 'trace-123',
+      spanId: 'span-456'
+    });
+    expect(routeState.routeContext.start).toBeUndefined();
+    expect(routeState.shouldCleanUrl).toBe(true);
   });
 
   it('builds a clean route url when empty', () => {

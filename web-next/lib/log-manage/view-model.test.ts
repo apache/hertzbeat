@@ -12,6 +12,7 @@ import {
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
+const enT = createTranslatorMock({ locale: 'en-US' });
 
 describe('log view model', () => {
   it('builds trend rows from hourly stats', () => {
@@ -19,6 +20,16 @@ describe('log view model', () => {
       { title: '10:00', copy: '日志 2', meta: '趋势' },
       { title: '11:00', copy: '日志 5', meta: '趋势' }
     ]);
+  });
+
+  it('builds English trend count rows without localized fallback text', () => {
+    const rows = buildTrendRows({ '10:00': 2, '11:00': 5 }, enT);
+
+    expect(rows).toEqual([
+      { title: '10:00', copy: '2 logs', meta: 'Trend' },
+      { title: '11:00', copy: '5 logs', meta: 'Trend' }
+    ]);
+    expect(rows.map(row => `${row.copy} ${row.meta}`).join('\n')).not.toMatch(/[\u4e00-\u9fff]/);
   });
 
   it('builds selected log rows from a selected log entry', () => {
@@ -72,6 +83,7 @@ describe('log view model', () => {
         message: 'checkout timeout',
         service: 'checkout',
         severity: 'ERROR',
+        severityTone: 'danger',
         traceId: 'trace-1',
         spanId: 'span-1'
       }

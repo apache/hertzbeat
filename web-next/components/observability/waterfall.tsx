@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CircleAlert, Flag } from 'lucide-react';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 
 export type ObservabilityWaterfallRow = {
   key: string;
@@ -32,13 +33,40 @@ export type ObservabilityWaterfallTick = {
   label: string;
 };
 
+export type ObservabilityWaterfallCopy = {
+  overviewTitle?: string;
+  spanCount?: (count: number) => string;
+  eventCount?: (count: number) => string;
+  rowEventCount?: (count: number) => string;
+};
+
+type WaterfallLocaleCode = 'en-US' | 'zh-CN';
+
 function clampPercent(value: number) {
   if (!Number.isFinite(value)) return 0;
   return Math.min(Math.max(value, 0), 100);
 }
 
-function usesChineseTimelineLabels(spanLabel: string, durationLabel: string, timelineLabel: string) {
-  return spanLabel === '跨度' || durationLabel === '耗时' || timelineLabel === '时间轴';
+function translateWaterfall(key: string, locale: WaterfallLocaleCode = 'en-US') {
+  return (
+    SUPPLEMENTAL_MESSAGES[locale]?.[key] ??
+    SUPPLEMENTAL_MESSAGES['en-US']?.[key] ??
+    SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ??
+    key
+  );
+}
+
+function interpolateWaterfallCopy(template: string, values: Record<string, string | number>) {
+  return template.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (_, key: string) => String(values[key] ?? ''));
+}
+
+function resolveWaterfallLocale(spanLabel: string, durationLabel: string, timelineLabel: string): WaterfallLocaleCode {
+  const zhMessages = SUPPLEMENTAL_MESSAGES['zh-CN'];
+  return spanLabel === zhMessages?.['observability.waterfall.span-label'] ||
+    durationLabel === zhMessages?.['observability.waterfall.duration-label'] ||
+    timelineLabel === zhMessages?.['observability.waterfall.timeline-label']
+    ? 'zh-CN'
+    : 'en-US';
 }
 
 const timelineMetaGridClass = 'grid grid-cols-[minmax(0,1fr)_88px] gap-3';
@@ -64,9 +92,10 @@ function WaterfallEventIcon({ tone }: { tone?: ObservabilityWaterfallEvent['tone
 
 export function ObservabilityWaterfall({
   rows,
-  spanLabel = 'Span',
-  durationLabel = 'Duration',
-  timelineLabel = 'Timeline',
+  spanLabel = translateWaterfall('observability.waterfall.span-label'),
+  durationLabel = translateWaterfall('observability.waterfall.duration-label'),
+  timelineLabel = translateWaterfall('observability.waterfall.timeline-label'),
+  waterfallCopy,
   timelineTicks = [],
   selectedEventKey = null,
   onSelect,
@@ -76,6 +105,7 @@ export function ObservabilityWaterfall({
   spanLabel?: string;
   durationLabel?: string;
   timelineLabel?: string;
+  waterfallCopy?: ObservabilityWaterfallCopy;
   timelineTicks?: ObservabilityWaterfallTick[];
   selectedEventKey?: string | null;
   onSelect?: (key: string) => void;
@@ -84,10 +114,17 @@ export function ObservabilityWaterfall({
   const totalEvents = rows.reduce((count, row) => count + (row.events?.length || 0), 0);
   const minimapLaneHeight = 22;
   const minimapHeight = Math.max(34, rows.length * minimapLaneHeight + 8);
-  const overviewTitle = timelineLabel === 'Timeline' ? 'Timeline overview' : `${timelineLabel}总览`;
-  const isChineseTimeline = usesChineseTimelineLabels(spanLabel, durationLabel, timelineLabel);
-  const spanCountLabel = isChineseTimeline ? `${rows.length} 个跨度` : `${rows.length} spans`;
-  const eventCountLabel = isChineseTimeline ? `${totalEvents} 个事件` : `${totalEvents} events`;
+  const waterfallLocale = resolveWaterfallLocale(spanLabel, durationLabel, timelineLabel);
+  const defaultSpanCount = (count: number) =>
+    interpolateWaterfallCopy(translateWaterfall('observability.waterfall.span-count', waterfallLocale), { count });
+  const defaultEventCount = (count: number) =>
+    interpolateWaterfallCopy(translateWaterfall('observability.waterfall.event-count', waterfallLocale), { count });
+  const overviewTitle =
+    waterfallCopy?.overviewTitle ??
+    interpolateWaterfallCopy(translateWaterfall('observability.waterfall.overview-title', waterfallLocale), { timeline: timelineLabel });
+  const spanCountLabel = (waterfallCopy?.spanCount ?? defaultSpanCount)(rows.length);
+  const eventCountLabel = (waterfallCopy?.eventCount ?? defaultEventCount)(totalEvents);
+  const rowEventCount = waterfallCopy?.rowEventCount ?? waterfallCopy?.eventCount ?? defaultEventCount;
 
   return (
     <div
@@ -275,7 +312,7 @@ export function ObservabilityWaterfall({
                         ))}
                         {row.events?.length ? (
                           <span data-waterfall-event-count="true" className="whitespace-nowrap text-[#cfac5c]">
-                            {isChineseTimeline ? `${row.events.length} 个事件` : `${row.events.length} events`}
+                            {rowEventCount(row.events.length)}
                           </span>
                         ) : null}
                       </div>

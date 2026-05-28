@@ -23,6 +23,22 @@ describe('log integration source alias route', () => {
     expect(redirect).toHaveBeenCalledWith('/ingestion/otlp?signal=logs');
   });
 
+  it('does not seed source aliases into discarded log search filters', async () => {
+    redirect.mockImplementation((target: string) => {
+      throw new Error(`redirect:${target}`);
+    });
+
+    const { default: LogIntegrationSourcePage } = await import('./page');
+
+    await expect(
+      LogIntegrationSourcePage({
+        params: Promise.resolve({ source: 'fluentbit' }),
+        searchParams: Promise.resolve({})
+      })
+    ).rejects.toThrow('redirect:/ingestion/otlp?signal=logs');
+    expect(redirect).toHaveBeenLastCalledWith('/ingestion/otlp?signal=logs');
+  });
+
   it('keeps route context and drops source fallback when redirecting a bookmarked source alias', async () => {
     redirect.mockImplementation((target: string) => {
       throw new Error(`redirect:${target}`);

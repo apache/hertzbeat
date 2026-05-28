@@ -35,16 +35,44 @@ export type OtlpSelfCheckRow = {
   tone: ReadinessTone;
 };
 
+export type OtlpUnboundCandidateRow = {
+  key: string;
+  title: string;
+  copy: string;
+  meta: string;
+  href: string;
+  signals: string[];
+  canonicalIdentitySummary: string;
+};
+
 function toFiniteCount(value: number | null | undefined) {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
+function cleanText(value: string | null | undefined) {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
 function defaultFormatTime(value: number | null | undefined) {
-  if (!value) return '暂无上报';
+  if (!value) return '-';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '暂无上报';
+  if (Number.isNaN(date.getTime())) return '-';
   const pad = (item: number) => String(item).padStart(2, '0');
   return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function translateText(t: Translator | undefined, key: string, params?: Record<string, string | number | null | undefined>) {
+  if (!t) return key;
+  const translated = t(key, params);
+  return translated && translated !== key ? translated : key;
+}
+
+function translateGuideText(value: string | null | undefined, t?: Translator) {
+  const text = cleanText(value);
+  if (!text) return '-';
+  if (!t || !text.startsWith('otlp.guide.')) return text;
+  const translated = t(text);
+  return translated && translated !== text ? translated : text;
 }
 
 export function buildSignalRows(
@@ -58,10 +86,10 @@ export function buildSignalRows(
   }));
 }
 
-export function buildGuideRows(signals: OtlpIngestionGuide['signals'] = []) {
+export function buildGuideRows(signals: OtlpIngestionGuide['signals'] = [], t?: Translator) {
   return signals.map(item => ({
     title: `${item.signal} · ${item.protocol || '-'}`,
-    copy: item.summary || item.note || '-',
+    copy: translateGuideText(item.summary || item.note, t),
     meta: item.endpoint || '-'
   }));
 }
@@ -74,10 +102,47 @@ export function buildBindingRows(items: OtlpEntityBindingSummary['recentBoundEnt
   }));
 }
 
+export function buildUnboundCandidateRows(
+  items: OtlpEntityBindingSummary['recentUnboundCandidates'] = []
+): OtlpUnboundCandidateRow[] {
+  return items.map((item, index) => {
+    const primaryIdentityKey = cleanText(item.primaryIdentityKey) || 'service.name';
+    const title = cleanText(item.suggestedName) || cleanText(item.primaryIdentityValue) || `candidate-${index + 1}`;
+    const primaryIdentityValue = cleanText(item.primaryIdentityValue) || title;
+    const namespace = cleanText(item.namespace);
+    const environment = cleanText(item.environment);
+    const signals = (item.signals || []).map(cleanText).filter(Boolean) as string[];
+    const meta = [namespace, environment, signals.length > 0 ? signals.join(', ') : undefined]
+      .filter(Boolean)
+      .join(' · ') || 'OTLP resource';
+    const query = new URLSearchParams();
+    query.set('identityKey', primaryIdentityKey);
+    query.set('identityValue', primaryIdentityValue);
+    query.set('serviceName', title);
+    if (namespace) query.set('serviceNamespace', namespace);
+    if (environment) query.set('environment', environment);
+    const canonicalIdentitySummary = Object.entries(item.canonicalIdentities || {})
+      .filter(([key, value]) => cleanText(key) && cleanText(value))
+      .map(([key, value]) => `${key}=${value}`)
+      .join(';');
+
+    return {
+      key: [primaryIdentityKey, primaryIdentityValue, namespace, environment].filter(Boolean).join(':') || `candidate-${index + 1}`,
+      title,
+      copy: `${primaryIdentityKey} = ${primaryIdentityValue}`,
+      meta,
+      href: `/entities/discovery?${query.toString()}`,
+      signals,
+      canonicalIdentitySummary
+    };
+  });
+}
+
 export function buildReadinessRows(
   overview: OtlpIngestionOverview,
   bindings: Partial<OtlpEntityBindingSummary> = {},
-  formatTime: TimeFormatter = defaultFormatTime
+  formatTime: TimeFormatter = defaultFormatTime,
+  t?: Translator
 ): OtlpReadinessRow[] {
   const metricsCount = toFiniteCount(overview.metrics?.totalCount);
   const logsCount = toFiniteCount(overview.logs?.totalCount);
@@ -85,36 +150,38 @@ export function buildReadinessRows(
   const activeSignalCount = Math.min(3, toFiniteCount(overview.activeSignalCount));
   const boundEntityCount = toFiniteCount(overview.boundEntityCount) || toFiniteCount(bindings.recentBoundEntities?.length);
   const recentServiceCount = toFiniteCount(overview.recentServiceCount);
-  const latestReportCopy = overview.latestObservedAt ? formatTime(overview.latestObservedAt) : '暂无上报';
-  const latestReportMeta = overview.latestObservedAt ? '已收到遥测' : '等待首条遥测';
+  const latestReportCopy = overview.latestObservedAt ? formatTime(overview.latestObservedAt) : translateText(t, 'otlp.readiness.latest.empty');
+  const latestReportMeta = overview.latestObservedAt
+    ? translateText(t, 'otlp.readiness.latest.received')
+    : translateText(t, 'otlp.readiness.latest.waiting');
 
   return [
     {
       key: 'signals',
-      title: '三信号接入',
-      copy: `${activeSignalCount} / 3 活跃`,
+      title: translateText(t, 'otlp.readiness.signals.title'),
+      copy: translateText(t, 'otlp.readiness.signals.copy', { active: activeSignalCount, total: 3 }),
       meta: `Metrics ${metricsCount} · Logs ${logsCount} · Traces ${tracesCount}`,
       tone: activeSignalCount > 0 ? 'success' : 'neutral'
     },
     {
       key: 'latest-report',
-      title: '最近上报',
+      title: translateText(t, 'otlp.readiness.latest.title'),
       copy: latestReportCopy,
       meta: latestReportMeta,
       tone: overview.latestObservedAt ? 'neutral' : 'warning'
     },
     {
       key: 'entity-binding',
-      title: '实体归因',
-      copy: `${boundEntityCount} 个实体`,
-      meta: '对象目录',
+      title: translateText(t, 'otlp.readiness.entity.title'),
+      copy: translateText(t, 'otlp.readiness.entity.copy', { count: boundEntityCount }),
+      meta: translateText(t, 'otlp.readiness.entity.meta'),
       tone: boundEntityCount > 0 ? 'success' : 'warning'
     },
     {
       key: 'service-discovery',
-      title: '服务发现',
-      copy: `${recentServiceCount} 个服务`,
-      meta: '最近 24 小时',
+      title: translateText(t, 'otlp.readiness.discovery.title'),
+      copy: translateText(t, 'otlp.readiness.discovery.copy', { count: recentServiceCount }),
+      meta: translateText(t, 'otlp.readiness.discovery.meta'),
       tone: recentServiceCount > 0 ? 'success' : 'neutral'
     }
   ];
@@ -137,49 +204,49 @@ export function buildSelfCheckRows(checks: OtlpIngestionOverview['readinessCheck
   }));
 }
 
-export function buildCollectionLoopLinks(): OtlpCollectionLoopLink[] {
+export function buildCollectionLoopLinks(t?: Translator): OtlpCollectionLoopLink[] {
   return [
     {
       key: 'otlp-intake',
-      title: 'OTLP 三信号接入',
-      copy: '接入 OpenTelemetry 指标、日志和链路，再进入对应工作台排查。',
+      title: translateText(t, 'otlp.collection-loop.otlp-intake.title'),
+      copy: translateText(t, 'otlp.collection-loop.otlp-intake.copy'),
       href: '/ingestion/otlp',
-      meta: '三信号'
+      meta: translateText(t, 'otlp.collection-loop.otlp-intake.meta')
     },
     {
       key: 'traditional-monitoring',
-      title: '传统监控资源',
-      copy: '继续保留主机、数据库、中间件、网络设备等模板化监控。',
+      title: translateText(t, 'otlp.collection-loop.traditional-monitoring.title'),
+      copy: translateText(t, 'otlp.collection-loop.traditional-monitoring.copy'),
       href: '/monitors',
-      meta: '已有资源'
+      meta: translateText(t, 'otlp.collection-loop.traditional-monitoring.meta')
     },
     {
       key: 'collector-cluster',
-      title: '采集器集群',
-      copy: '管理私有化部署中的采集节点、任务分发和接入状态。',
+      title: translateText(t, 'otlp.collection-loop.collector-cluster.title'),
+      copy: translateText(t, 'otlp.collection-loop.collector-cluster.copy'),
       href: '/setting/collector',
-      meta: 'Collector'
+      meta: translateText(t, 'otlp.collection-loop.collector-cluster.meta')
     },
     {
       key: 'monitoring-template',
-      title: '监控模板',
-      copy: '维护多协议采集模板，让传统监控和 OTLP 实体归到同一对象。',
+      title: translateText(t, 'otlp.collection-loop.monitoring-template.title'),
+      copy: translateText(t, 'otlp.collection-loop.monitoring-template.copy'),
       href: '/setting/define',
-      meta: '模板'
+      meta: translateText(t, 'otlp.collection-loop.monitoring-template.meta')
     },
     {
       key: 'service-discovery',
-      title: '服务发现',
-      copy: '把新发现的服务、资源和遥测身份确认到 HertzBeat 实体。',
+      title: translateText(t, 'otlp.collection-loop.service-discovery.title'),
+      copy: translateText(t, 'otlp.collection-loop.service-discovery.copy'),
       href: '/entities/discovery',
-      meta: '发现'
+      meta: translateText(t, 'otlp.collection-loop.service-discovery.meta')
     },
     {
       key: 'object-directory',
-      title: '对象目录',
-      copy: '围绕实体查看资源、三信号、拓扑和告警处理上下文。',
+      title: translateText(t, 'otlp.collection-loop.object-directory.title'),
+      copy: translateText(t, 'otlp.collection-loop.object-directory.copy'),
       href: '/entities',
-      meta: '实体'
+      meta: translateText(t, 'otlp.collection-loop.object-directory.meta')
     }
   ];
 }
@@ -210,8 +277,8 @@ export function buildGuideAuthRows(guide: OtlpIngestionGuide, t: Translator) {
   return rows;
 }
 
-export function filterGuideRowsByProtocol(signals: OtlpIngestionGuide['signals'] = [], protocol: Protocol) {
-  return buildGuideRows(signals.filter(item => !item.protocol || item.protocol === protocol));
+export function filterGuideRowsByProtocol(signals: OtlpIngestionGuide['signals'] = [], protocol: Protocol, t?: Translator) {
+  return buildGuideRows(signals.filter(item => !item.protocol || item.protocol === protocol), t);
 }
 
 export function filterGuideSnippetsByProtocol(snippets: OtlpIngestionGuide['snippets'] = [], protocol: Protocol) {

@@ -1,9 +1,11 @@
 'use client';
 
+import { useI18n } from '@/components/providers/i18n-provider';
+import { SUPPLEMENTAL_MESSAGES } from '@/lib/i18n-runtime-messages';
+import { HzActionGroup, HzButton, HzChipGroup, HzDetailRows, HzDialogBodyLayout, HzInlineContextMark, HzStateNotice, HzStatCell, HzStatStrip, HzStatusBadge, type HzStatusTone } from '@hertzbeat/ui';
 import * as React from 'react';
 import { ObservabilityStatusState, ObservabilityWaterfall, type ObservabilityWaterfallTick } from '../observability';
 import { SelectableEvidenceList } from '../observability/selectable-evidence-list';
-import { RowList } from '../workbench/workbench-page';
 import { OverlayDialog } from '../workbench/overlay-dialog';
 
 type EvidenceRow = {
@@ -45,6 +47,12 @@ type StageFact = {
   tone?: 'default' | 'accent' | 'error';
 };
 
+type Translator = (key: string) => string;
+
+function readRelatedTraceDialogDefault(key: string) {
+  return SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+}
+
 function findSelectedTraceEvent(rows: EvidenceRow[], selectedEventKey?: string | null): SelectedTraceEvent | null {
   if (!selectedEventKey) return null;
   for (const row of rows) {
@@ -54,30 +62,36 @@ function findSelectedTraceEvent(rows: EvidenceRow[], selectedEventKey?: string |
   return null;
 }
 
-function buildSelectedTraceEventFacts(selection: SelectedTraceEvent): FactRow[] {
+function buildSelectedTraceEventFacts(selection: SelectedTraceEvent, t: Translator): FactRow[] {
   const { row, event } = selection;
   return [
     {
-      title: '跨度事件',
-      copy: event.label || '未命名事件',
-      meta: '不是新的跨度，是当前跨度上的时间点'
+      title: t('log.manage.related-trace.event-fact.title'),
+      copy: event.label || t('log.manage.related-trace.event-fact.fallback'),
+      meta: t('log.manage.related-trace.event-fact.meta')
     },
     {
-      title: '所属跨度',
+      title: t('log.manage.related-trace.event-fact.span'),
       copy: row.title || row.key,
       meta: row.detailLabel || row.copy
     },
     {
-      title: '事件位置',
+      title: t('log.manage.related-trace.event-fact.position'),
       copy: event.offsetLabel || `${Math.round(event.leftPct)}%`,
-      meta: '相对链路时间轴'
+      meta: t('log.manage.related-trace.event-fact.timeline')
     },
     {
-      title: '事件属性',
-      copy: event.attributesLabel || '无属性',
+      title: t('log.manage.related-trace.event-fact.attributes'),
+      copy: event.attributesLabel || t('log.manage.related-trace.event-fact.no-attributes'),
       meta: 'attributes'
     }
   ];
+}
+
+function stageFactTone(tone: StageFact['tone']): HzStatusTone {
+  if (tone === 'error') return 'critical';
+  if (tone === 'accent') return 'info';
+  return 'neutral';
 }
 
 export function LogRelatedTraceDialog({
@@ -99,13 +113,13 @@ export function LogRelatedTraceDialog({
   stageFacts = [],
   timelineTicks = [],
   selectedFacts,
-  emptyTitle = 'No Related Traces',
-  emptyCopy = 'No related trace preview is available yet.',
-  loadingTitle = 'Loading trace preview',
-  loadingCopy = 'Loading trace preview from the current log context.',
-  spanLabel = 'Span',
-  durationLabel = 'Duration',
-  timelineLabel = 'Timeline'
+  emptyTitle = readRelatedTraceDialogDefault('log.manage.related-trace.empty-title'),
+  emptyCopy = readRelatedTraceDialogDefault('log.manage.related-trace.empty-copy'),
+  loadingTitle = readRelatedTraceDialogDefault('log.manage.related-trace.loading-title'),
+  loadingCopy = readRelatedTraceDialogDefault('log.manage.related-trace.loading-copy'),
+  spanLabel = readRelatedTraceDialogDefault('log.manage.related-trace.span-label'),
+  durationLabel = readRelatedTraceDialogDefault('log.manage.related-trace.duration-label'),
+  timelineLabel = readRelatedTraceDialogDefault('log.manage.related-trace.timeline-label')
 }: {
   open: boolean;
   onClose: () => void;
@@ -133,13 +147,14 @@ export function LogRelatedTraceDialog({
   durationLabel?: string;
   timelineLabel?: string;
 }) {
+  const { t } = useI18n();
   const [internalSelectedEventKey, setInternalSelectedEventKey] = React.useState<string | null>(null);
   const activeSelectedEventKey = selectedEventKey === undefined ? internalSelectedEventKey : selectedEventKey;
   const hasWaterfallRows = rows.some(
     row => typeof row.leftPct === 'number' && typeof row.widthPct === 'number' && typeof row.durationLabel === 'string'
   );
   const selectedTraceEvent = findSelectedTraceEvent(rows, activeSelectedEventKey);
-  const activeSelectedFacts = selectedTraceEvent ? buildSelectedTraceEventFacts(selectedTraceEvent) : selectedFacts;
+  const activeSelectedFacts = selectedTraceEvent ? buildSelectedTraceEventFacts(selectedTraceEvent, t) : selectedFacts;
   const selectSpan = React.useCallback(
     (key: string) => {
       setInternalSelectedEventKey(null);
@@ -166,69 +181,109 @@ export function LogRelatedTraceDialog({
     <OverlayDialog
       open={open}
       onClose={onClose}
-      kicker="相关链路"
+      kicker={t('log.manage.related-trace.kicker')}
       title={title}
       placement="right"
       maxWidthClassName="max-w-[1120px]"
     >
-      <div className="grid gap-4" data-log-related-trace-dialog="true">
-        {subtitle ? <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--ops-text-tertiary)]">{subtitle}</div> : null}
-        {stageMeta.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--ops-text-secondary)]" data-log-related-trace-stage-meta="true">
-            {stageMeta.map(item => (
-              <span key={item} className="whitespace-nowrap">
-                {item}
-              </span>
-            ))}
-          </div>
+      <HzDialogBodyLayout
+        data-log-related-trace-dialog="true"
+        data-log-related-trace-dialog-body-owner="hertzbeat-ui-dialog-body-layout"
+      >
+        {subtitle ? (
+          <HzInlineContextMark
+            data-log-related-trace-subtitle-owner="hertzbeat-ui-inline-context-mark"
+            data-log-related-trace-subtitle="dialog-context"
+            active={false}
+            className="h-6 max-w-[320px] text-[11px]"
+          >
+            {subtitle}
+          </HzInlineContextMark>
         ) : null}
-        {headerAction ? <div className="flex justify-end">{headerAction}</div> : null}
+        {stageMeta.length > 0 ? (
+          <HzChipGroup
+            data-log-related-trace-stage-meta="true"
+            data-log-related-trace-stage-meta-owner="hertzbeat-ui-toolbar-chips"
+          >
+            {stageMeta.map(item => (
+              <HzInlineContextMark
+                key={item}
+                data-log-related-trace-stage-meta-item-owner="hertzbeat-ui-inline-context-mark"
+                active={false}
+                className="h-6 max-w-[220px] text-[11px]"
+              >
+                {item}
+              </HzInlineContextMark>
+            ))}
+          </HzChipGroup>
+        ) : null}
+        {headerAction ? (
+          <HzActionGroup
+            data-log-related-trace-header-action-owner="hertzbeat-ui-action-group"
+            data-log-related-trace-header-action="full-trace"
+            density="inline"
+            className="w-full justify-end"
+          >
+            {headerAction}
+          </HzActionGroup>
+        ) : null}
         {badges.length > 0 || metaItems.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-2" data-log-related-trace-toolbar="true">
+          <HzChipGroup
+            data-log-related-trace-toolbar="true"
+            data-log-related-trace-toolbar-owner="hertzbeat-ui-toolbar-chips"
+          >
             {badges.map(badge => (
-              <span
+              <HzStatusBadge
                 key={badge}
-                className="rounded-[999px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-raised)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ops-text-secondary)]"
+                data-log-related-trace-toolbar-badge-owner="hertzbeat-ui-status-badge"
+                tone="neutral"
+                size="xs"
               >
                 {badge}
-              </span>
+              </HzStatusBadge>
             ))}
             {metaItems.map(item => (
-              <span key={item} className="text-[11px] text-[var(--ops-text-secondary)]">
+              <HzInlineContextMark
+                key={item}
+                data-log-related-trace-toolbar-meta-owner="hertzbeat-ui-inline-context-mark"
+                active={false}
+                className="h-6 max-w-[260px] text-[11px]"
+              >
                 {item}
-              </span>
+              </HzInlineContextMark>
             ))}
-          </div>
+          </HzChipGroup>
         ) : null}
         {stageFacts.length > 0 ? (
-          <div
-            className="flex flex-wrap items-center gap-x-5 gap-y-1 border-y border-[var(--ops-border-color)] py-2 text-[12px]"
+          <HzStatStrip
             data-log-related-trace-stage-facts="true"
-            data-log-related-trace-stage-facts-layout="compact-operator-strip"
+            data-log-related-trace-stage-facts-layout="shared-stat-strip"
+            data-log-related-trace-stage-facts-owner="hertzbeat-ui-stat-strip"
           >
             {stageFacts.map(item => (
-              <span
+              <HzStatCell
                 key={`${item.label}:${item.value}`}
-                className="inline-flex min-w-0 items-baseline gap-2"
-              >
-                <span className="text-[11px] text-[var(--ops-text-tertiary)]">{item.label}</span>
-                <span
-                  className={`max-w-[260px] truncate font-semibold ${
-                    item.tone === 'error' ? 'text-[#d8898f]' : item.tone === 'accent' ? 'text-[var(--ops-text-primary)]' : 'text-[var(--ops-text-secondary)]'
-                  }`}
-                >
-                  {item.value}
-                </span>
-              </span>
+                data-log-related-trace-stage-fact-owner="hertzbeat-ui-stat-cell"
+                data-log-related-trace-stage-fact-tone={item.tone || 'default'}
+                label={item.label}
+                value={item.value}
+                tone={stageFactTone(item.tone)}
+                variant="tile"
+                className="min-h-[64px]"
+              />
             ))}
-          </div>
+          </HzStatStrip>
         ) : null}
         {loading ? (
           <ObservabilityStatusState title={loadingTitle} copy={loadingCopy} />
         ) : error ? (
-          <ObservabilityStatusState title="Trace detail error" copy={error} tone="danger" />
+          <ObservabilityStatusState title={t('log.manage.related-trace.error-title')} copy={error} tone="danger" />
         ) : rows.length > 0 ? (
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <HzDialogBodyLayout
+            variant="split-detail"
+            data-log-related-trace-body-layout-owner="hertzbeat-ui-dialog-body-layout"
+            data-log-related-trace-body-layout="split-detail"
+          >
             {hasWaterfallRows ? (
               <ObservabilityWaterfall
                 rows={rows.map(row => ({
@@ -256,31 +311,58 @@ export function LogRelatedTraceDialog({
             ) : (
               <SelectableEvidenceList rows={rows} selectedKey={selectedKey || null} onSelect={selectSpan} />
             )}
-            <div className="grid gap-3">
+            <HzDialogBodyLayout
+              variant="side-stack"
+              data-log-related-trace-side-stack-owner="hertzbeat-ui-dialog-body-layout"
+              data-log-related-trace-side-stack="selected-facts"
+            >
               {selectedTraceEvent ? (
-                <div
+                <HzStateNotice
                   data-log-related-trace-event-detail="span-event-detail"
-                  className="flex items-center justify-between gap-3 border-b border-[var(--ops-border-color)] pb-2"
-                >
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-[var(--ops-text-tertiary)]">事件详情</p>
-                    <p className="mt-1 truncate text-[13px] font-semibold text-[var(--ops-text-primary)]">{selectedTraceEvent.event.label}</p>
-                    <p data-log-related-trace-event-detail-copy="span-event-not-span" className="mt-0.5 text-[11px] text-[var(--ops-text-tertiary)]">
-                      不是新的跨度，是当前跨度上的时间点
-                    </p>
-                  </div>
-                  <button type="button" className="text-[11px] font-semibold text-[var(--ops-text-secondary)] hover:text-[var(--ops-text-primary)]" onClick={showSelectedSpan}>
-                    查看跨度
-                  </button>
-                </div>
+                  data-log-related-trace-event-detail-owner="hertzbeat-ui-state-notice"
+                  title={selectedTraceEvent.event.label}
+                  description={(
+                    <span data-log-related-trace-event-detail-copy="span-event-not-span">
+                      {t('log.manage.related-trace.event-detail.copy')}
+                    </span>
+                  )}
+                  meta={(
+                    <span data-log-related-trace-event-detail-meta="span-event-label">
+                      {t('log.manage.related-trace.event-detail.title')}
+                    </span>
+                  )}
+                  actions={(
+                    <HzButton
+                      data-log-related-trace-event-detail-action="view-span"
+                      data-log-related-trace-event-detail-control="shared-hz-button"
+                      intent="ghost"
+                      size="xs"
+                      onClick={showSelectedSpan}
+                    >
+                      {t('log.manage.related-trace.event-detail.action.span')}
+                    </HzButton>
+                  )}
+                  tone="info"
+                  variant="hint"
+                  className="border-x-0 border-b border-t-0 bg-transparent px-0 pb-2 pt-0"
+                />
               ) : null}
-              <RowList rows={activeSelectedFacts} />
-            </div>
-          </div>
+              <HzDetailRows
+                data-log-related-trace-selected-facts="shared-detail-rows"
+                data-log-related-trace-selected-facts-owner="hertzbeat-ui-detail-rows"
+                rows={activeSelectedFacts.map(row => ({
+                  key: `${row.title}-${row.meta ?? ''}`,
+                  title: row.title,
+                  copy: row.copy,
+                  meta: row.meta
+                }))}
+              />
+            </HzDialogBodyLayout>
+          </HzDialogBodyLayout>
         ) : (
           <ObservabilityStatusState title={emptyTitle} copy={emptyCopy} />
         )}
-      </div>
+      </HzDialogBodyLayout>
     </OverlayDialog>
   );
 }

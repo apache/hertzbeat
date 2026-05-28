@@ -17,7 +17,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('../providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock()
+    t: createTranslatorMock({ locale: 'zh-CN' })
   })
 }));
 
@@ -38,8 +38,9 @@ describe('log integration redirect shell', () => {
     expect(html).toContain('data-parity-app-shell="true"');
     expect(html).toContain('data-parity-app-header="true"');
     expect(html).toContain('data-parity-placeholder-shell="true"');
-    expect(html).toContain('Open HertzBeat OTLP Intake');
-    expect(html).toContain('Open Logs Workbench');
+    expect(html).toContain('日志接入已合并到可观测接入');
+    expect(html).toContain('前往可观测接入');
+    expect(html).toContain('前往日志工作台');
     expect(html).not.toContain('Observability Intake');
   });
 

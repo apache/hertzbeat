@@ -27,4 +27,17 @@ describe('observability timeline', () => {
     expect(html).not.toContain('bg-black/10');
     expect(html).not.toContain('text-white/62');
   });
+
+  it('renders catalog-backed default empty text while preserving caller overrides', () => {
+    const defaultHtml = renderToStaticMarkup(<ObservabilityTimeline items={[]} />);
+
+    expect(defaultHtml).toContain('No events yet');
+    expect(defaultHtml).toContain('border-[var(--ops-border-color)]');
+    expect(defaultHtml).toContain('bg-[var(--ops-surface-raised)]');
+
+    const overrideHtml = renderToStaticMarkup(<ObservabilityTimeline items={[]} emptyText="Custom quiet timeline" />);
+
+    expect(overrideHtml).toContain('Custom quiet timeline');
+    expect(overrideHtml).not.toContain('No events yet');
+  });
 });

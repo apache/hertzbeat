@@ -22,4 +22,12 @@ describe('ExceptionPage', () => {
     expect(html).toContain(`data-exception-type="${type}"`);
     expect(mockSurfaceProps.type).toBe(type);
   });
+
+  it('normalizes unsupported exception route params to the 404 surface type', async () => {
+    const html = renderToStaticMarkup(await ExceptionPage({ params: Promise.resolve({ type: '999' }) }));
+
+    expect(html).toContain('data-exception-center-surface="hertzbeat-exceptions"');
+    expect(html).toContain('data-exception-type="404"');
+    expect(mockSurfaceProps.type).toBe('404');
+  });
 });

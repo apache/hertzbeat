@@ -1,5 +1,7 @@
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
+export type ExceptionRouteType = '403' | '404' | '500';
+
 type ExceptionCopy = {
   title: string;
   subtitle: string;
@@ -10,6 +12,7 @@ type ExceptionCopy = {
 
 export type ExceptionExplorerRow = {
   key: string;
+  href: string;
   exceptionType: string;
   errorMessage: string;
   count: string;
@@ -23,47 +26,75 @@ export type ExceptionFilterGroup = {
   values: string[];
 };
 
+export type ExceptionRecoveryRow = {
+  title: string;
+  copy: string;
+  href: string;
+  label: string;
+};
+
+type ExceptionExplorerRowBase = Omit<ExceptionExplorerRow, 'href'>;
+
+export function normalizeExceptionRouteType(type: string): ExceptionRouteType {
+  return type === '403' || type === '404' || type === '500' ? type : '404';
+}
+
+function withExceptionDetailHrefs(type: string, rows: ExceptionExplorerRowBase[]): ExceptionExplorerRow[] {
+  return rows.map(row => ({
+    ...row,
+    href: `/exception/${type}?error=${encodeURIComponent(row.key)}`
+  }));
+}
+
+function exceptionSubtitle(t: Translator, key: string, fallbackKey = 'exception.subtitle.default'): string {
+  const value = t(key);
+  const fallbackValue = fallbackKey === 'exception.subtitle.default'
+    ? t('exception.subtitle.default')
+    : t(fallbackKey);
+  return value.startsWith('exception.') ? fallbackValue : value;
+}
+
 export function buildExceptionCopy(type: string, t: Translator): ExceptionCopy {
   const exceptionCopy: Record<string, ExceptionCopy> = {
     '403': {
-      title: '403 无权限访问',
-      subtitle: t('exception.403.subtitle'),
+      title: t('exception.403.title'),
+      subtitle: exceptionSubtitle(t, 'exception.403.subtitle'),
       tone: 'danger',
       facts: [
         { label: t('common.workspace'), value: 'exception/403' },
-        { label: t('common.status'), value: '权限边界' },
-        { label: t('common.action'), value: '复核访问策略' }
+        { label: t('common.status'), value: t('exception.403.fact.status') },
+        { label: t('exception.fact.action'), value: t('exception.403.fact.action') }
       ],
       rows: [
-        { title: t('exception.403.boundary.title'), copy: t('exception.403.boundary.copy'), meta: 'authz' },
-        { title: t('exception.next-step.title'), copy: t('exception.403.next-step.copy'), meta: 'operator action' }
+        { title: t('exception.403.boundary.title'), copy: t('exception.403.boundary.copy'), meta: t('exception.403.boundary.meta') },
+        { title: t('exception.next-step.title'), copy: t('exception.403.next-step.copy'), meta: t('exception.next-step.meta') }
       ]
     },
     '404': {
-      title: '404 路由不存在',
-      subtitle: t('exception.404.subtitle'),
+      title: t('exception.404.title'),
+      subtitle: exceptionSubtitle(t, 'exception.404.subtitle'),
       facts: [
         { label: t('common.workspace'), value: 'exception/404' },
-        { label: t('common.status'), value: '路由缺失' },
-        { label: t('common.action'), value: '返回或重定向' }
+        { label: t('common.status'), value: t('exception.404.fact.status') },
+        { label: t('exception.fact.action'), value: t('exception.404.fact.action') }
       ],
       rows: [
-        { title: t('exception.404.boundary.title'), copy: t('exception.404.boundary.copy'), meta: 'routing' },
-        { title: t('exception.next-step.title'), copy: t('exception.404.next-step.copy'), meta: 'operator action' }
+        { title: t('exception.404.boundary.title'), copy: t('exception.404.boundary.copy'), meta: t('exception.404.boundary.meta') },
+        { title: t('exception.next-step.title'), copy: t('exception.404.next-step.copy'), meta: t('exception.next-step.meta') }
       ]
     },
     '500': {
-      title: '500 运行时异常',
-      subtitle: t('exception.500.subtitle'),
+      title: t('exception.500.title'),
+      subtitle: exceptionSubtitle(t, 'exception.500.subtitle'),
       tone: 'danger',
       facts: [
         { label: t('common.workspace'), value: 'exception/500' },
-        { label: t('common.status'), value: '运行时故障' },
-        { label: t('common.action'), value: '重试或排查' }
+        { label: t('common.status'), value: t('exception.500.fact.status') },
+        { label: t('exception.fact.action'), value: t('exception.500.fact.action') }
       ],
       rows: [
-        { title: t('exception.500.boundary.title'), copy: t('exception.500.boundary.copy'), meta: 'runtime' },
-        { title: t('exception.next-step.title'), copy: t('exception.500.next-step.copy'), meta: 'operator action' }
+        { title: t('exception.500.boundary.title'), copy: t('exception.500.boundary.copy'), meta: t('exception.500.boundary.meta') },
+        { title: t('exception.next-step.title'), copy: t('exception.500.next-step.copy'), meta: t('exception.next-step.meta') }
       ]
     }
   };
@@ -72,7 +103,7 @@ export function buildExceptionCopy(type: string, t: Translator): ExceptionCopy {
 }
 
 export function buildExceptionExplorerRows(type: string): ExceptionExplorerRow[] {
-  const rows = [
+  const rows: ExceptionExplorerRowBase[] = [
     {
       key: 'econnreset-browser-frontend',
       exceptionType: 'ECONNRESET',
@@ -121,42 +152,42 @@ export function buildExceptionExplorerRows(type: string): ExceptionExplorerRow[]
   ];
 
   if (type === '403') {
-    return rows.slice(0, 3).map(row => ({
+    return withExceptionDetailHrefs(type, rows.slice(0, 3).map(row => ({
       ...row,
       application: row.application === 'checkout' ? 'auth-gateway' : row.application
-    }));
+    })));
   }
 
   if (type === '404') {
-    return rows.slice(0, 3).map(row => ({
+    return withExceptionDetailHrefs(type, rows.slice(0, 3).map(row => ({
       ...row,
       exceptionType: row.key === 'econnreset-browser-frontend' ? 'NotFoundError' : row.exceptionType,
       errorMessage: row.key === 'econnreset-browser-frontend' ? 'route not found' : row.errorMessage
-    }));
+    })));
   }
 
-  return rows;
+  return withExceptionDetailHrefs(type, rows);
 }
 
-export function buildExceptionFilters(): ExceptionFilterGroup[] {
+export function buildExceptionFilters(t: Translator): ExceptionFilterGroup[] {
   return [
-    { title: '部署环境', values: ['demo'] },
+    { title: t('exception.filters.deployment-environment'), values: ['demo'] },
     {
-      title: '服务',
+      title: t('exception.filters.service'),
       values: ['cart', 'product-catalog', 'quote-python', 'accounting', 'ad', 'browser-frontend', 'checkout', 'currency', 'email', 'fraud-detection']
     },
-    { title: '主机', values: [] },
-    { title: 'K8s 集群', values: [] },
-    { title: 'K8s Deployment', values: [] },
-    { title: 'K8s 命名空间', values: [] },
-    { title: 'K8s Pod', values: [] }
+    { title: t('exception.filters.host'), values: [] },
+    { title: t('exception.filters.k8s-cluster'), values: [] },
+    { title: t('exception.filters.k8s-deployment'), values: [] },
+    { title: t('exception.filters.k8s-namespace'), values: [] },
+    { title: t('exception.filters.k8s-pod'), values: [] }
   ];
 }
 
-export function buildRecoveryRows(t: Translator) {
+export function buildRecoveryRows(t: Translator): ExceptionRecoveryRow[] {
   return [
-    { title: t('exception.rail.overview.title'), copy: t('exception.rail.overview.copy'), meta: '/overview' },
-    { title: t('exception.rail.logs.title'), copy: t('exception.rail.logs.copy'), meta: '/log/manage' },
-    { title: t('exception.rail.traces.title'), copy: t('exception.rail.traces.copy'), meta: '/trace/manage' }
+    { title: t('exception.rail.overview.title'), copy: t('exception.rail.overview.copy'), href: '/overview', label: t('menu.dashboard.back') },
+    { title: t('exception.rail.logs.title'), copy: t('exception.rail.logs.copy'), href: '/log/manage', label: t('menu.log.manage') },
+    { title: t('exception.rail.traces.title'), copy: t('exception.rail.traces.copy'), href: '/trace/manage', label: t('menu.trace.manage') }
   ];
 }

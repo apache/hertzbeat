@@ -11,11 +11,8 @@ export function ExceptionCenterSurface({ type }: { type: string }) {
   const { t } = useI18n();
   const copy = buildExceptionCopy(type, t);
   const rows = buildExceptionExplorerRows(type);
-  const filters = buildExceptionFilters();
+  const filters = buildExceptionFilters(t);
   const recoveryRows = buildRecoveryRows(t);
-  const subtitle = copy.subtitle.startsWith('exception.')
-    ? '按服务、资源和时间聚合服务端异常事件，便于进入日志和链路排查。'
-    : copy.subtitle;
 
   return (
     <main
@@ -31,9 +28,13 @@ export function ExceptionCenterSurface({ type }: { type: string }) {
           <div className="flex h-12 items-center justify-between border-b border-[#252832] px-4">
             <div className="flex items-center gap-2">
               <span className="text-[16px] text-[#d7dbe5]">▽</span>
-              <p className="text-[14px] font-semibold text-[#f3f4f7]">筛选</p>
+              <p className="text-[14px] font-semibold text-[#f3f4f7]">{t('exception.chrome.filter-title')}</p>
             </div>
-            <button type="button" className="h-7 rounded-[4px] border border-[#252832] bg-[#151821] px-2 text-[12px] text-[#d7dbe5]">
+            <button
+              type="button"
+              aria-label={t('exception.chrome.refresh-filters')}
+              className="h-7 rounded-[4px] border border-[#252832] bg-[#151821] px-2 text-[12px] text-[#d7dbe5]"
+            >
               ↻
             </button>
           </div>
@@ -44,7 +45,7 @@ export function ExceptionCenterSurface({ type }: { type: string }) {
                 <div className="mb-2 flex items-center justify-between text-[12px] font-semibold text-[#d5d8e1]">
                   <span>{filter.title}</span>
                   <button type="button" className="text-[11px] font-medium text-[#7190ff]">
-                    清除全部
+                    {t('exception.chrome.clear-all')}
                   </button>
                 </div>
                 {filter.values.length > 0 ? (
@@ -56,7 +57,7 @@ export function ExceptionCenterSurface({ type }: { type: string }) {
                       </label>
                     ))}
                     {index === 1 ? (
-                      <button type="button" className="ml-6 text-[12px] font-medium text-[#7190ff]">展开更多</button>
+                      <button type="button" className="ml-6 text-[12px] font-medium text-[#7190ff]">{t('exception.chrome.expand-more')}</button>
                     ) : null}
                   </div>
                 ) : (
@@ -73,47 +74,47 @@ export function ExceptionCenterSurface({ type }: { type: string }) {
         <section className="min-w-0 flex-1">
           <header className="flex h-12 items-center justify-between border-b border-[#252832] bg-[#0b0c0f] px-5">
             <div className="flex h-full items-center gap-3">
-              <h1 className="text-[14px] font-semibold text-[#f3f4f7]">异常中心</h1>
+              <h1 className="text-[14px] font-semibold text-[#f3f4f7]">{t('exception.chrome.title')}</h1>
               <span className="rounded-[4px] border border-[#252832] bg-[#151821] px-2 py-1 text-[11px] font-semibold text-[#8f98aa]">
                 {copy.title}
               </span>
             </div>
             <div className="flex items-center gap-2 text-[12px] text-[#d6d9e2]">
               <span className="rounded-[4px] border border-[#252832] bg-[#151821] px-2 py-1">1w</span>
-              <span className="font-semibold">最近 7 天</span>
+              <span className="font-semibold">{t('exception.time.last-7d')}</span>
               <span className="rounded-[4px] border border-[#252832] bg-[#151821] px-2 py-1 text-[#9ca3b4]">UTC + 8:00</span>
-              <button type="button" className="h-8 rounded-[4px] border border-[#252832] bg-[#151821] px-3 text-[#d7dbe5]">搜索</button>
-              <button type="button" className="h-8 rounded-[4px] border border-[#526cff] bg-[#526cff] px-4 font-semibold text-white">运行查询</button>
-              <button type="button" className="h-8 rounded-[4px] border border-[#252832] bg-[#151821] px-3 text-[#d7dbe5]">反馈</button>
-              <button type="button" className="h-8 rounded-[4px] border border-[#252832] bg-[#151821] px-3 text-[#d7dbe5]">分享</button>
+              <button type="button" className="h-8 rounded-[4px] border border-[#252832] bg-[#151821] px-3 text-[#d7dbe5]">{t('exception.action.search')}</button>
+              <button type="button" className="h-8 rounded-[4px] border border-[#526cff] bg-[#526cff] px-4 font-semibold text-white">{t('exception.action.run-query')}</button>
+              <button type="button" className="h-8 rounded-[4px] border border-[#252832] bg-[#151821] px-3 text-[#d7dbe5]">{t('exception.action.feedback')}</button>
+              <button type="button" className="h-8 rounded-[4px] border border-[#252832] bg-[#151821] px-3 text-[#d7dbe5]">{t('exception.action.share')}</button>
             </div>
           </header>
 
           <section data-exception-query-bar="hertzbeat-error-query" className="border-b border-[#252832] bg-[#0b0c0f] px-5 py-3">
             <div className="grid grid-cols-[minmax(0,1fr)_150px_120px] gap-2">
               <Input
-                aria-label="异常查询"
+                aria-label={t('exception.query.aria')}
                 className="h-8 rounded-[4px] border border-[#252832] bg-[#111318] px-3 font-mono text-[12px] text-[#e7eaf1] outline-none placeholder:text-[#777f91]"
                 defaultValue=""
-                placeholder="按资源属性搜索和筛选，支持 IN / NOT IN 条件，选择后按 Enter 确认"
+                placeholder={t('exception.query.placeholder')}
               />
               <Select
-                aria-label="异常范围"
+                aria-label={t('exception.scope.aria')}
                 containerClassName="w-full"
                 className="h-8 min-w-0 text-[#d5d8e1]"
                 defaultValue="all"
               >
-                <option value="all">全部异常</option>
-                <option value="critical">严重异常</option>
+                <option value="all">{t('exception.scope.all')}</option>
+                <option value="critical">{t('exception.scope.critical')}</option>
               </Select>
               <Select
-                aria-label="异常排序"
+                aria-label={t('exception.sort.aria')}
                 containerClassName="w-full"
                 className="h-8 min-w-0 text-[#d5d8e1]"
                 defaultValue="lastSeen"
               >
-                <option value="lastSeen">最后出现</option>
-                <option value="count">次数</option>
+                <option value="lastSeen">{t('exception.sort.last-seen')}</option>
+                <option value="count">{t('exception.sort.count')}</option>
               </Select>
             </div>
           </section>
@@ -123,19 +124,19 @@ export function ExceptionCenterSurface({ type }: { type: string }) {
               <table className="w-full border-collapse text-left text-[13px]">
                 <thead className="border-b border-[#303440] bg-[#1a1c22] text-[12px] font-semibold text-[#dfe3ed]">
                   <tr>
-                    <th className="w-[280px] px-4 py-3">异常类型</th>
-                    <th className="px-4 py-3">错误信息</th>
-                    <th className="w-[120px] px-4 py-3">次数</th>
-                    <th className="w-[200px] px-4 py-3">最后出现</th>
-                    <th className="w-[200px] px-4 py-3">首次出现</th>
-                    <th className="w-[180px] px-4 py-3">应用</th>
+                    <th className="w-[280px] px-4 py-3">{t('exception.table.type')}</th>
+                    <th className="px-4 py-3">{t('exception.table.message')}</th>
+                    <th className="w-[120px] px-4 py-3">{t('exception.table.count')}</th>
+                    <th className="w-[200px] px-4 py-3">{t('exception.table.last-seen')}</th>
+                    <th className="w-[200px] px-4 py-3">{t('exception.table.first-seen')}</th>
+                    <th className="w-[180px] px-4 py-3">{t('exception.table.application')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map(row => (
                     <tr key={row.key} className="border-b border-[#303440] last:border-b-0">
                       <td className="px-4 py-4">
-                        <Link href={`/exception/${type}?error=${encodeURIComponent(row.key)}`} className="font-medium text-[#7190ff]">
+                        <Link href={row.href} className="font-medium text-[#7190ff]">
                           {row.exceptionType}
                         </Link>
                       </td>
@@ -152,17 +153,19 @@ export function ExceptionCenterSurface({ type }: { type: string }) {
 
             <div className="mt-4 flex items-center justify-between rounded-[4px] border border-[#252832] bg-[#101217] px-4 py-3 text-[12px] text-[#8f98aa]">
               <div className="flex items-center gap-3">
-                <span>{rows.length} 个异常分组</span>
-                <span>{subtitle}</span>
+                <span>
+                  {rows.length} {t('exception.summary.groups')}
+                </span>
+                <span>{copy.subtitle}</span>
               </div>
               <div className="flex items-center gap-2">
                 {recoveryRows.map(row => (
                   <Link
-                    key={row.meta}
-                    href={row.meta || '/overview'}
+                    key={row.href}
+                    href={row.href}
                     className="rounded-full border border-[#252832] bg-[#0b0c0f] px-3 py-1.5 font-semibold text-[#f3f4f7]"
                   >
-                    {row.meta === '/overview' ? t('menu.dashboard.back') : row.meta === '/log/manage' ? t('menu.log.manage') : t('menu.trace.manage')}
+                    {row.label}
                   </Link>
                 ))}
               </div>

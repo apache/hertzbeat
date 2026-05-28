@@ -1,6 +1,8 @@
-import { normalizeTimeContextValue } from './time-context';
+import { appendTimeContextParams, normalizeTimeContextValue, sanitizeTimeContext, type TimeContext } from './time-context';
+import { interpolate, type TranslationParams } from './i18n';
+import { SUPPLEMENTAL_MESSAGES } from './i18n-runtime-messages';
 
-type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+type Translator = (key: string, params?: TranslationParams) => string;
 
 export type SearchParamReader = {
   get: (name: string) => string | null;
@@ -9,12 +11,17 @@ export type SearchParamReader = {
 export const SIGNAL_ROUTE_CONTEXT_PARAM_KEYS = [
   'start',
   'end',
+  'from',
+  'to',
   'timeRange',
   'refresh',
   'live',
   'tz',
+  'timezone',
   'entityId',
+  'entityType',
   'entityName',
+  'filters',
   'returnTo',
   'serviceName',
   'serviceNamespace',
@@ -39,6 +46,18 @@ export type SignalRouteContextKey = (typeof SIGNAL_ROUTE_CONTEXT_PARAM_KEYS)[num
 
 export type SignalRouteContext = Partial<Record<SignalRouteContextKey, string>>;
 
+const SIGNAL_TIME_CONTEXT_PARAM_KEYS = new Set<SignalRouteContextKey>([
+  'start',
+  'end',
+  'from',
+  'to',
+  'timeRange',
+  'refresh',
+  'live',
+  'tz',
+  'timezone'
+]);
+
 function normalizeValue(value: string | null | undefined) {
   if (value == null) return undefined;
   const trimmed = value.trim();
@@ -59,7 +78,7 @@ export function readEntityIdRouteParam(value: string | null | undefined) {
 
 function normalizeContextValue(key: SignalRouteContextKey, value: string | null | undefined) {
   if (key === 'returnTo') return stripReturnLabelFromHref(value);
-  if (key === 'timeRange' || key === 'start' || key === 'end' || key === 'refresh' || key === 'live' || key === 'tz') {
+  if (key === 'timeRange' || key === 'start' || key === 'end' || key === 'from' || key === 'to' || key === 'refresh' || key === 'live' || key === 'tz' || key === 'timezone') {
     return normalizeTimeContextValue(key, value);
   }
   if (key === 'entityId') return readEntityIdRouteParam(value);
@@ -68,7 +87,26 @@ function normalizeContextValue(key: SignalRouteContextKey, value: string | null 
 }
 
 export function appendSignalRouteContext(nextParams: URLSearchParams, context: SignalRouteContext) {
+  const expressionOwnsTimeRoute = Boolean(
+    normalizeContextValue('from', context.from) && normalizeContextValue('to', context.to)
+  );
+  if (expressionOwnsTimeRoute) {
+    appendTimeContextParams(nextParams, {
+      timeRange: context.timeRange,
+      from: context.from,
+      to: context.to,
+      start: context.start,
+      end: context.end,
+      refresh: context.refresh,
+      live: context.live,
+      tz: context.tz,
+      timezone: context.timezone
+    } satisfies TimeContext);
+  }
   SIGNAL_ROUTE_CONTEXT_PARAM_KEYS.forEach(key => {
+    if (expressionOwnsTimeRoute && SIGNAL_TIME_CONTEXT_PARAM_KEYS.has(key)) {
+      return;
+    }
     const value = normalizeContextValue(key, context[key]);
     if (value) {
       nextParams.set(key, value);
@@ -84,6 +122,20 @@ export function readSignalRouteContext(searchParams: SearchParamReader): SignalR
       nextContext[key] = value;
     }
   });
+  Object.assign(
+    nextContext,
+    sanitizeTimeContext({
+      timeRange: nextContext.timeRange,
+      from: nextContext.from,
+      to: nextContext.to,
+      start: nextContext.start,
+      end: nextContext.end,
+      refresh: nextContext.refresh,
+      live: nextContext.live,
+      tz: nextContext.tz,
+      timezone: nextContext.timezone
+    })
+  );
   return nextContext;
 }
 
@@ -95,10 +147,12 @@ function firstText(...values: Array<string | null | undefined>) {
   return values.find((value): value is string => normalizeValue(value) != null);
 }
 
-function translate(t: Translator | undefined, key: string, fallback: string, params?: Record<string, string | number | null | undefined>) {
-  if (!t) return fallback;
+function translate(t: Translator | undefined, key: string, params?: TranslationParams) {
+  const fallback = SUPPLEMENTAL_MESSAGES['en-US']?.[key] ?? SUPPLEMENTAL_MESSAGES['zh-CN']?.[key] ?? key;
+
+  if (!t) return interpolate(fallback, params);
   const translated = t(key, params);
-  return translated && translated !== key ? translated : fallback;
+  return translated && translated !== key ? translated : interpolate(fallback, params);
 }
 
 function withQuery(path: string, params: URLSearchParams) {
@@ -108,13 +162,13 @@ function withQuery(path: string, params: URLSearchParams) {
 
 function buildSourceContextRow(source: string, sourceMeta: string, t?: Translator): SignalEntityContextRow {
   const normalizedSource = source.trim().toLowerCase();
-  const label = translate(t, 'signal.context.source.label', '采集来源');
+  const label = translate(t, 'signal.context.source.label');
 
   if (normalizedSource === 'alert' || normalizedSource.startsWith('alert:')) {
     return {
       label,
-      value: translate(t, 'signal.context.source.alert.value', '告警事件'),
-      meta: sourceMeta || translate(t, 'signal.context.source.alert.meta', '告警证据上下文')
+      value: translate(t, 'signal.context.source.alert.value'),
+      meta: sourceMeta || translate(t, 'signal.context.source.alert.meta')
     };
   }
 
@@ -122,32 +176,32 @@ function buildSourceContextRow(source: string, sourceMeta: string, t?: Translato
     const topologySource = normalizedSource.slice('topology:'.length);
     const topologyMeta =
       topologySource === 'otlp-trace-call'
-        ? translate(t, 'signal.context.source.topology.otlp-trace-call', 'OTLP 调用关系')
+        ? translate(t, 'signal.context.source.topology.otlp-trace-call')
         : topologySource === 'monitor-ownership'
-          ? translate(t, 'signal.context.source.topology.monitor-ownership', '监控对象归属')
+          ? translate(t, 'signal.context.source.topology.monitor-ownership')
           : topologySource === 'template-dependency'
-            ? translate(t, 'signal.context.source.topology.template-dependency', '模板依赖')
+            ? translate(t, 'signal.context.source.topology.template-dependency')
             : topologySource === 'k8s-workload'
-              ? translate(t, 'signal.context.source.topology.k8s-workload', 'K8s 工作负载')
+              ? translate(t, 'signal.context.source.topology.k8s-workload')
               : topologySource === 'database-middleware-connection'
-                ? translate(t, 'signal.context.source.topology.database-middleware-connection', '数据库 / 中间件连接')
+                ? translate(t, 'signal.context.source.topology.database-middleware-connection')
                 : topologySource === 'cmdb-manual-label'
-                  ? translate(t, 'signal.context.source.topology.cmdb-manual-label', 'CMDB / 手工标签')
+                  ? translate(t, 'signal.context.source.topology.cmdb-manual-label')
                   : topologySource === 'alert-impact'
-                    ? translate(t, 'signal.context.source.topology.alert-impact', '告警影响面')
+                    ? translate(t, 'signal.context.source.topology.alert-impact')
                     : undefined;
     return {
       label,
-      value: translate(t, 'signal.context.source.topology.value', '拓扑关系'),
-      meta: sourceMeta || topologyMeta || translate(t, 'signal.context.source.topology.meta', '拓扑影响面上下文')
+      value: translate(t, 'signal.context.source.topology.value'),
+      meta: sourceMeta || topologyMeta || translate(t, 'signal.context.source.topology.meta')
     };
   }
 
   if (normalizedSource === 'monitor') {
     return {
       label,
-      value: translate(t, 'signal.context.source.monitor.value', '传统监控'),
-      meta: sourceMeta || translate(t, 'signal.context.source.monitor.meta', '监控中心上下文')
+      value: translate(t, 'signal.context.source.monitor.value'),
+      meta: sourceMeta || translate(t, 'signal.context.source.monitor.meta')
     };
   }
 
@@ -155,14 +209,14 @@ function buildSourceContextRow(source: string, sourceMeta: string, t?: Translato
     return {
       label,
       value: 'OTLP',
-      meta: sourceMeta || translate(t, 'signal.context.source.otlp.meta', 'HertzBeat OTLP 接入')
+      meta: sourceMeta || translate(t, 'signal.context.source.otlp.meta')
     };
   }
 
   return {
     label,
     value: source,
-    meta: sourceMeta || translate(t, 'signal.context.source.default.meta', 'HertzBeat 接入')
+    meta: sourceMeta || translate(t, 'signal.context.source.default.meta')
   };
 }
 
@@ -189,8 +243,8 @@ function formatEpochMillisLabel(value: string | undefined, timezone: string | un
 
 function formatLiveState(value: string | undefined, t?: Translator) {
   const normalized = value?.trim().toLowerCase();
-  if (normalized === 'false' || normalized === '0') return translate(t, 'signal.context.time.live.paused', '已暂停');
-  if (normalized === 'true' || normalized === '1') return translate(t, 'signal.context.time.live.active', '实时刷新');
+  if (normalized === 'false' || normalized === '0') return translate(t, 'signal.context.time.live.paused');
+  if (normalized === 'true' || normalized === '1') return translate(t, 'signal.context.time.live.active');
   return undefined;
 }
 
@@ -215,7 +269,7 @@ function buildTimeContextMeta({
     parts.push(`${formatEpochMillisLabel(start, timezone)} → ${formatEpochMillisLabel(end, timezone)}`);
   }
   if (refresh) {
-    parts.push(translate(t, 'signal.context.time.refresh', `刷新 ${refresh}${/^\d+$/.test(refresh) ? 's' : ''}`, {
+    parts.push(translate(t, 'signal.context.time.refresh', {
       value: `${refresh}${/^\d+$/.test(refresh) ? 's' : ''}`
     }));
   }
@@ -227,7 +281,7 @@ function buildTimeContextMeta({
     parts.push(timezone);
   }
 
-  return parts.length > 0 ? parts.join(' · ') : translate(t, 'signal.context.time.meta.default', '查询窗口');
+  return parts.length > 0 ? parts.join(' · ') : translate(t, 'signal.context.time.meta.default');
 }
 
 export function stripReturnLabelFromHref(href: string | null | undefined, depth = 0): string | undefined {
@@ -313,44 +367,44 @@ export function buildSignalEntityContextRows(
   const collector = firstText(context.collector, fallback.collector);
   const template = firstText(context.template, fallback.template);
   const sourceMeta = [
-    collector ? `${translate(t, 'signal.context.collector.prefix', '采集器')} ${collector}` : undefined,
-    template ? `${translate(t, 'signal.context.template.prefix', '模板')} ${template}` : undefined
+    collector ? `${translate(t, 'signal.context.collector.prefix')} ${collector}` : undefined,
+    template ? `${translate(t, 'signal.context.template.prefix')} ${template}` : undefined
   ]
     .filter(Boolean)
     .join(' · ');
 
   const rows: SignalEntityContextRow[] = [
     {
-      label: translate(t, 'signal.context.entity.label', '当前实体'),
+      label: translate(t, 'signal.context.entity.label'),
       value: entityName || entityId || '-',
-      meta: entityId ? `entityId ${entityId}` : translate(t, 'signal.context.entity.meta', '实体中心')
+      meta: entityId ? `entityId ${entityId}` : translate(t, 'signal.context.entity.meta')
     }
   ];
 
   if (monitorId || monitorName || monitorInstance || monitorApp) {
     rows.push({
-      label: translate(t, 'signal.context.monitor.label', '监控实例'),
+      label: translate(t, 'signal.context.monitor.label'),
       value: monitorName || monitorInstance || monitorId || '-',
       meta:
         [monitorApp, monitorInstance, monitorId ? `monitorId ${monitorId}` : undefined].filter(Boolean).join(' · ') ||
-        translate(t, 'signal.context.monitor.meta', '监控中心')
+        translate(t, 'signal.context.monitor.meta')
     });
   }
 
   rows.push(
     {
-      label: translate(t, 'signal.context.service.label', '当前服务'),
+      label: translate(t, 'signal.context.service.label'),
       value: serviceName || '-',
-      meta: serviceNamespace || translate(t, 'signal.context.service.meta', '服务上下文')
+      meta: serviceNamespace || translate(t, 'signal.context.service.meta')
     },
     {
-      label: translate(t, 'signal.context.environment.label', '当前环境'),
+      label: translate(t, 'signal.context.environment.label'),
       value: environment || '-',
-      meta: translate(t, 'signal.context.environment.meta', '环境')
+      meta: translate(t, 'signal.context.environment.meta')
     },
     {
-      label: translate(t, 'signal.context.time.label', '时间范围'),
-      value: timeRange || (start || end ? `${start || '-'} → ${end || '-'}` : translate(t, 'signal.context.time.current-query', '当前查询')),
+      label: translate(t, 'signal.context.time.label'),
+      value: timeRange || (start || end ? `${start || '-'} → ${end || '-'}` : translate(t, 'signal.context.time.current-query')),
       meta: buildTimeContextMeta({ end, live, refresh, start, timezone, t })
     }
   );
@@ -359,7 +413,7 @@ export function buildSignalEntityContextRows(
 
   if (traceId || spanId) {
     rows.splice(2, 0, {
-      label: translate(t, 'signal.context.trace.label', '链路上下文'),
+      label: translate(t, 'signal.context.trace.label'),
       value: traceId || '-',
       meta: spanId ? `spanId ${spanId}` : 'traceId'
     });

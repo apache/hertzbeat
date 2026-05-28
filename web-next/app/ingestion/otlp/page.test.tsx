@@ -2,6 +2,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
+import { SUPPLEMENTAL_MESSAGES } from '../../../lib/i18n-runtime-messages';
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>
@@ -17,7 +18,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
     locale: 'zh-CN',
-    t: createTranslatorMock()
+    t: createTranslatorMock({ overrides: SUPPLEMENTAL_MESSAGES['zh-CN'] })
   })
 }));
 
@@ -57,6 +58,9 @@ vi.mock('@/lib/format', () => ({
 }));
 
 vi.mock('@/lib/otlp-center/controller', () => ({
+  OTLP_BINDINGS_URL: '/ingestion/otlp/bindings',
+  OTLP_GUIDE_URL: '/ingestion/otlp/guide',
+  OTLP_OVERVIEW_URL: '/ingestion/otlp/overview',
   loadOtlpPageData: vi.fn()
 }));
 
@@ -84,6 +88,15 @@ vi.mock('@/lib/otlp-center/view-model', () => ({
     meta: check.detail,
     tone: check.status
   })),
+  buildUnboundCandidateRows: (items: any[] = []) => items.map(item => ({
+    key: `${item.primaryIdentityKey}:${item.primaryIdentityValue}:${item.namespace}:${item.environment}`,
+    title: item.suggestedName,
+    copy: `${item.primaryIdentityKey} = ${item.primaryIdentityValue}`,
+    meta: `${item.namespace} · ${item.environment} · ${item.signals.join(', ')}`,
+    href: `/entities/discovery?identityKey=${item.primaryIdentityKey}&identityValue=${item.primaryIdentityValue}&serviceName=${item.suggestedName}&serviceNamespace=${item.namespace}&environment=${item.environment}`,
+    signals: item.signals,
+    canonicalIdentitySummary: Object.entries(item.canonicalIdentities).map(([key, value]) => `${key}=${value}`).join(';')
+  })),
   buildProtocolOptions: () => [{ key: 'http', label: 'HTTP' }, { key: 'grpc', label: 'gRPC' }],
   buildSignalRows: (signals: any[]) => signals.map(signal => ({ title: signal.signal, copy: signal.summary || '-', meta: String(signal.totalCount || 0) })),
   filterGuideRowsByProtocol: (signals: any[]) => signals.map(item => ({ title: item.signal, copy: item.summary || '-', meta: item.endpoint || '-' })),
@@ -95,8 +108,9 @@ vi.mock('@/lib/setting-token/controller', () => ({
 }));
 
 vi.mock('@/components/workbench/client-workbench', () => ({
-  ClientWorkbench: ({ children }: { children: (data: any) => React.ReactNode }) =>
-    children({
+  ClientWorkbench: ({ children, cacheKey }: { children: (data: any) => React.ReactNode; cacheKey?: string }) => (
+    <div data-client-workbench-cache-key={cacheKey}>
+      {children({
       overview: {
         activeSignalCount: 3,
         recentServiceCount: 2,
@@ -121,14 +135,43 @@ vi.mock('@/components/workbench/client-workbench', () => ({
       },
       bindings: {
         recentBoundEntities: [{ entityId: 1, name: 'checkout', primaryIdentityKey: 'service.name', primaryIdentityValue: 'checkout', monitorBindCount: 1 }],
+        recentUnboundCandidates: [{
+          suggestedName: 'billing',
+          suggestedType: 'service',
+          namespace: 'commerce',
+          environment: 'prod',
+          primaryIdentityKey: 'service.name',
+          primaryIdentityValue: 'billing',
+          signals: ['logs', 'metrics'],
+          canonicalIdentities: {
+            'service.name': 'billing',
+            'service.namespace': 'commerce',
+            'deployment.environment.name': 'prod'
+          },
+          latestObservedAt: 1712730000000
+        }],
         recentIdentitySamples: [{ signal: 'metrics', key: 'service.name', value: 'checkout' }]
       }
-    })
+      })}
+    </div>
+  )
 }));
 
 describe('otlp page', () => {
+  it('keeps OTLP source catalog and page chrome copy behind i18n keys', async () => {
+    const source = await import('node:fs/promises')
+      .then(fs => fs.readFile(new URL('./otlp-page.tsx', import.meta.url), 'utf8'));
+
+    expect(source).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(source).toContain("t('otlp.source.section.quickstart')");
+    expect(source).toContain("t('otlp.source.item.demo-data.label')");
+    expect(source).toContain("t('otlp.hero.title')");
+    expect(source).toContain("t('otlp.section.collection-loop.title')");
+    expect(source).toContain("t('otlp.source.search.placeholder')");
+  });
+
   it('filters source catalog by explicit names instead of generic OpenTelemetry description text', async () => {
-    const { filterOtlpSourceSections } = await import('./page');
+    const { filterOtlpSourceSections } = await import('./otlp-page');
     const icon = (() => null) as any;
     const sections = [
       {
@@ -164,10 +207,10 @@ describe('otlp page', () => {
 
     expect(filteredKeys).toEqual(['open-telemetry']);
     expect(filteredKeys).not.toContain('java');
-  });
+  }, 15000);
 
   it('keeps single-letter source search at card-token level instead of matching whole sections', async () => {
-    const { filterOtlpSourceSections } = await import('./page');
+    const { filterOtlpSourceSections } = await import('./otlp-page');
     const icon = (() => null) as any;
     const sections = [
       {
@@ -197,6 +240,7 @@ describe('otlp page', () => {
     const html = renderToStaticMarkup(<OtlpPage />);
 
     expect(html).toContain('data-workspace-shell="true"');
+    expect(html).toContain('data-client-workbench-cache-key="otlp-center:/ingestion/otlp/overview:/ingestion/otlp/guide:/ingestion/otlp/bindings"');
     expect(html).toContain('data-otlp-center-route="hertzbeat-intake-cortex"');
     expect(html).toContain('data-otlp-center-visual-system="hertzbeat-native-avant-garde"');
     expect(html).toContain('data-otlp-visual-contract="cold-ops-catalog-v1"');
@@ -233,6 +277,16 @@ describe('otlp page', () => {
     expect(html).toContain('data-otlp-self-check-row="storage"');
     expect(html).toContain('data-otlp-self-check-row="query"');
     expect(html).toContain('data-otlp-self-check-row="greptime"');
+    expect(html).toContain('data-otlp-entity-candidates="telemetry-derived"');
+    expect(html).toContain('data-otlp-entity-candidate-count="1"');
+    expect(html).toContain('data-otlp-entity-candidate-row="service.name:billing:commerce:prod"');
+    expect(html).toContain('data-otlp-entity-candidate-signals="logs,metrics"');
+    expect(html).toContain('data-otlp-entity-candidate-identities="service.name=billing;service.namespace=commerce;deployment.environment.name=prod"');
+    expect(html).toContain('候选实体');
+    expect(html).toContain('billing');
+    expect(html).toContain('service.name = billing');
+    expect(html).toContain('commerce · prod · logs, metrics');
+    expect(html).toContain('href="/entities/discovery?identityKey=service.name&amp;identityValue=billing&amp;serviceName=billing&amp;serviceNamespace=commerce&amp;environment=prod"');
     expect(html).toContain('运行自检');
     expect(html).toContain('Collector 集群');
     expect(html).toContain('历史存储');
@@ -431,7 +485,7 @@ describe('otlp page', () => {
   }, 15000);
 
   it('keeps the source catalog filtering as an instant inline result transform', async () => {
-    const { filterOtlpSourceSections } = await import('./page');
+    const { filterOtlpSourceSections } = await import('./otlp-page');
     const filtered = filterOtlpSourceSections(
       [
         {
@@ -495,7 +549,7 @@ describe('otlp page', () => {
 
   it('renders OTLP readiness from real overview fields instead of fake quality counters', async () => {
     const source = await import('node:fs/promises')
-      .then(fs => fs.readFile(new URL('./page.tsx', import.meta.url), 'utf8'));
+      .then(fs => fs.readFile(new URL('./otlp-page.tsx', import.meta.url), 'utf8'));
 
     expect(source).toContain('buildReadinessRows');
     expect(source).toContain('buildSelfCheckRows');

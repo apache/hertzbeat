@@ -88,4 +88,22 @@ describe('otlp metrics route state', () => {
       '/ingestion/otlp/metrics?timeRange=last-6h&serviceName=checkout&start=1712730000000&end=1712751600000&refresh=30&live=false&tz=Asia%2FShanghai'
     );
   });
+
+  it('keeps readable expression time windows in metrics workbench URLs', () => {
+    const route = buildOtlpMetricsRoute({
+      serviceName: 'checkout',
+      timeRange: 'last-1h',
+      from: '2026-05-17 15:30:00',
+      to: '2026-05-17 16:30:00',
+      timezone: 'Asia/Shanghai',
+      start: '1779003000000',
+      end: '1779006600000'
+    });
+
+    expect(route).toBe(
+      '/ingestion/otlp/metrics?timeRange=last-1h&from=2026-05-17+15%3A30%3A00&to=2026-05-17+16%3A30%3A00&serviceName=checkout&timezone=Asia%2FShanghai'
+    );
+    expect(route).not.toContain('start=');
+    expect(route).not.toContain('end=');
+  });
 });

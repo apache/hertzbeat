@@ -1,6 +1,11 @@
-import React from 'react';
-import LogManagePage from '../log/manage/log-manage-page';
+import { redirect } from 'next/navigation';
+import { buildLogCompatRouteUrlFromSearchParams, type SearchParamsRecord } from '../../lib/log-manage/query-state';
 
-export default function EventsAliasPage() {
-  return <LogManagePage forcedView="explorer" showViewToggle={false} />;
+export default async function EventsAliasPage({
+  searchParams
+}: {
+  searchParams?: Promise<SearchParamsRecord>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  redirect(buildLogCompatRouteUrlFromSearchParams(resolvedSearchParams, { view: 'list' }));
 }

@@ -42,9 +42,28 @@ describe('observability tab strip', () => {
     );
 
     expect(html).toContain('data-observability-tabstrip-extra="true"');
+    expect(html).toContain('aria-label="Tab navigation"');
     expect(html).toContain('data-observability-tabstrip-extra-slot="true"');
     expect(html.indexOf('role="tablist"')).toBeLessThan(html.indexOf('data-observability-tabstrip-extra-slot="true"'));
     expect(html).toContain('Refresh controls');
+  });
+
+  it('lets callers override the shared tablist aria label', () => {
+    const html = renderToStaticMarkup(
+      <ObservabilityTabStrip
+        items={[
+          { key: 'realtime', label: 'Realtime' },
+          { key: 'history', label: 'History' }
+        ]}
+        selectedKey="realtime"
+        onSelect={() => {}}
+        tone="operator"
+        ariaLabel="Monitor evidence tabs"
+      />
+    );
+
+    expect(html).toContain('aria-label="Monitor evidence tabs"');
+    expect(html).not.toContain('aria-label="Tab navigation"');
   });
 
   it('can render Angular-style card tabs without the line-tab underline affordance', () => {

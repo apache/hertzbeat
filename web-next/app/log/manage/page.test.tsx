@@ -7,10 +7,12 @@ import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
+import LogManagePage from './log-manage-page';
+import type { LogManageRouteState, LogQueryState, LogWorkbenchView } from '@/lib/log-manage/query-state';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const apiMessageGet = vi.fn();
+const apiMessageGet = vi.hoisted(() => vi.fn());
 
 const mockState = vi.hoisted(() => ({
   searchParams: new URLSearchParams(),
@@ -80,14 +82,35 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock()
+    t: createTranslatorMock({ locale: 'zh-CN' })
   })
 }));
 
 vi.mock('@/components/workbench/client-workbench', () => ({
-  ClientWorkbench: ({ children, load }: { children: (data: any) => React.ReactNode; load: () => Promise<unknown> }) => {
+  ClientWorkbench: ({
+    children,
+    load,
+    cacheKey,
+    cacheSettledTtlMs,
+    loadingCopy
+  }: {
+    children: (data: any) => React.ReactNode;
+    load: () => Promise<unknown>;
+    cacheKey?: string;
+    cacheSettledTtlMs?: number;
+    loadingCopy?: string;
+  }) => {
     mockState.lastLoad = load;
-    return <div data-client-workbench="true">{children(mockState.renderData)}</div>;
+    return (
+      <div
+        data-client-workbench="true"
+        data-cache-key={cacheKey}
+        data-cache-settled-ttl={cacheSettledTtlMs}
+        data-loading-copy={loadingCopy}
+      >
+        {children(mockState.renderData)}
+      </div>
+    );
   }
 }));
 
@@ -113,6 +136,13 @@ vi.mock('@/lib/format', () => ({
 }));
 
 vi.mock('@/lib/log-manage/display-mapping', () => ({
+  logSeverityTone: (severity?: string | number | null) => {
+    const normalized = String(severity ?? '').toUpperCase();
+    if (normalized.includes('ERROR') || normalized.includes('FATAL')) return 'danger';
+    if (normalized.includes('WARN')) return 'warning';
+    if (normalized.includes('INFO')) return 'success';
+    return 'neutral';
+  },
   severityLabel: (entry: any) => entry.severityText || 'LOG'
 }));
 
@@ -251,6 +281,7 @@ vi.mock('@/lib/log-manage/view-model', () => ({
       message: String(entry.body),
       service: entry.resource?.['service.name'] || '-',
       severity: entry.severityText || 'LOG',
+      severityTone: entry.severityText === 'ERROR' ? 'danger' : entry.severityText === 'WARN' ? 'warning' : 'neutral',
       traceId: entry.traceId || '-',
       spanId: entry.spanId || '-'
     })),
@@ -278,18 +309,68 @@ vi.mock('@/lib/log-manage/view-model', () => ({
 }));
 
 vi.mock('./route-state', () => ({
-  buildLogManageRoute: (_searchParams: any, query: any) => {
+  buildLogManageRoute: (routeContext: any, query: any, view?: string) => {
     const params = new URLSearchParams();
     if (query.search) params.set('search', query.search);
     if (query.traceId) params.set('traceId', query.traceId);
     if (query.spanId) params.set('spanId', query.spanId);
-    const view = _searchParams.get('view');
     if (view) params.set('view', view);
-    params.set('source', _searchParams.get('source') || 'otlp');
+    params.set('source', routeContext.source || 'otlp');
     return params.toString() ? `/log/manage?${params.toString()}` : '/log/manage';
   },
   buildResetLogManageRoute: () => '/log/manage'
 }));
+
+function buildLogManageRouteState(): LogManageRouteState {
+  const query: LogQueryState = {
+    search: mockState.searchParams.get('search') || mockState.searchParams.get('content') || '',
+    logContent: mockState.searchParams.get('logContent') || '',
+    traceId: mockState.searchParams.get('traceId') || '',
+    spanId: mockState.searchParams.get('spanId') || '',
+    severityNumber: mockState.searchParams.get('severityNumber') || '',
+    severityText: mockState.searchParams.get('severityText') || ''
+  };
+  const requestedView = mockState.searchParams.get('view');
+  const currentView: LogWorkbenchView =
+    requestedView === 'list' || requestedView === 'history'
+      ? 'list'
+      : requestedView === 'stream'
+        ? 'stream'
+        : query.search || query.traceId || query.spanId || query.severityNumber || query.severityText
+          ? 'list'
+          : 'stream';
+
+  return {
+    initialQuery: query,
+    currentView,
+    routeContext: {
+      entityId: mockState.searchParams.get('entityId') || undefined,
+      entityName: mockState.searchParams.get('entityName') || undefined,
+      returnTo: mockState.searchParams.get('returnTo') || undefined,
+      serviceName: mockState.searchParams.get('serviceName') || undefined,
+      serviceNamespace: mockState.searchParams.get('serviceNamespace') || undefined,
+      environment: mockState.searchParams.get('environment') || undefined,
+      start: mockState.searchParams.get('start') || undefined,
+      end: mockState.searchParams.get('end') || undefined,
+      timeRange: mockState.searchParams.get('timeRange') || undefined,
+      refresh: mockState.searchParams.get('refresh') || undefined,
+      live: mockState.searchParams.get('live') || undefined,
+      tz: mockState.searchParams.get('tz') || undefined,
+      source: mockState.searchParams.get('source') || undefined,
+      traceId: mockState.searchParams.get('traceId') || undefined,
+      spanId: mockState.searchParams.get('spanId') || undefined
+    },
+    shouldCleanUrl: Boolean(mockState.searchParams.get('returnLabel') || mockState.searchParams.get('returnTo')?.includes('returnLabel='))
+  };
+}
+
+function renderLogManagePage(initialRouteState = buildLogManageRouteState()) {
+  return renderToStaticMarkup(<LogManagePage initialRouteState={initialRouteState} />);
+}
+
+function renderInteractiveLogManagePage(initialRouteState = buildLogManageRouteState()) {
+  interactionRoot?.render(<LogManagePage initialRouteState={initialRouteState} />);
+}
 
 beforeEach(() => {
   mockState.searchParams = new URLSearchParams();
@@ -315,39 +396,113 @@ afterEach(() => {
 describe('log manage page', () => {
   it('keeps log manage on the OTLP cold Workbench owner instead of the old external-product shell', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
+    const messagesSource = readFileSync(resolve(process.cwd(), 'lib/i18n-runtime-messages.ts'), 'utf8');
 
     expect(source).toContain('data-log-manage-route="otlp-cold-log-workbench"');
     expect(source).toContain('data-log-manage-style-baseline="hertzbeat-cold-matte"');
+    expect(source).toContain('data-log-manage-header-padding-owner="hertzbeat-ui-panel-surface"');
+    expect(source).toContain('padding="header"');
+    expect(source).not.toContain('data-log-manage-header="cold-compact-header" data-log-manage-panel-surface="header" className="px-5 py-4"');
     expect(source).toContain('data-log-manage-query-bar="cold-query-row"');
+    expect(source).toContain('data-log-manage-panel-surface-padding-owner="hertzbeat-ui-panel-surface"');
+    expect(source).toContain('padding="query"');
+    expect(source).not.toContain('data-log-manage-query-bar="cold-query-row" data-log-manage-panel-surface="query" className="px-4 py-3"');
+    expect(source).toContain('data-log-manage-api-degraded="true"');
+    expect(source).toContain('data-log-manage-api-degraded-owner="hertzbeat-ui-state-notice"');
+    expect(messagesSource).toContain("'log.manage.api.degraded.title':");
+    expect(messagesSource).toContain("'log.manage.api.degraded.copy':");
     expect(source).toContain('data-log-manage-chart-band="cold-chart-band"');
+    expect(source).toContain('data-log-manage-chart-padding-owner="hertzbeat-ui-panel-surface"');
+    expect(source).toContain('padding="chart"');
+    expect(source).not.toContain('data-log-manage-chart-band="cold-chart-band" data-log-manage-panel-surface="chart" className="px-4 py-4"');
     expect(source).toContain('data-log-manage-log-list="cold-dense-log-list"');
+    expect(source).toContain('data-log-manage-table-chrome-owner="hertzbeat-ui-data-table"');
+    expect(source).toContain('HzDataTable');
+    expect(source).toContain('HzPanelHeader');
+    expect(source).toContain('data-log-manage-table-header-owner="hertzbeat-ui-panel-header"');
+    expect(source).toContain('data-log-manage-table-count-badge-owner="hertzbeat-ui-status-badge"');
     expect(source).toContain('data-log-manage-detail-panel="cold-detail-panel"');
+    expect(source).toContain('data-log-manage-detail-header-owner="hertzbeat-ui-panel-header"');
+    expect(source).toContain("eyebrow={t('log.manage.detail.title')}");
     expect(source).not.toContain('data-log-manage-hertzbeat-loop="collector-template-alert-loop"');
     expect(source).toContain('data-log-manage-entity-context="hertzbeat-signal-entity-context"');
-    expect(source).toContain('aria-label="实体上下文 当前实体 监控实例 当前服务 链路上下文 当前环境 时间范围 采集来源"');
+    expect(source).toContain('data-log-manage-entity-context-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('data-log-manage-selected-evidence-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('data-log-manage-detail-facts-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('data-log-manage-stream-selected-detail-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('data-log-manage-stream-detail-action-stack="shared-control-stack"');
+    expect(source).toContain('data-log-manage-stream-detail-action-stack-owner="hertzbeat-ui-control-stack"');
+    expect(source).toContain('data-log-manage-history-detail-action-stack="shared-control-stack"');
+    expect(source).toContain('data-log-manage-history-detail-action-stack-owner="hertzbeat-ui-control-stack"');
+    expect(source).not.toContain('className="mt-4 flex flex-col gap-2"');
+    expect(source).toContain("aria-label={t('log.manage.context.entity.aria')}");
     expect(source).not.toContain('data-log-manage-intake-quality="logs-collector-quality"');
     expect(source).not.toContain('data-log-manage-intake-quality-row={row.key}');
     expect(source).not.toContain('buildLogIntakeQualityRows');
     expect(source).toContain('data-log-manage-view-switch="stream-history"');
+    expect(source).toContain('data-log-manage-view-switch-panel-surface-owner="hertzbeat-ui-panel-surface"');
+    expect(source).toContain('padding="view-switch"');
+    expect(source).toContain('data-log-manage-view-switch-layout="shared-view-switch"');
+    expect(source).toContain('data-log-manage-view-switch-layout-owner="hertzbeat-ui-workbench-layout"');
+    expect(source).toContain('variant="view-switch"');
+    expect(source).toContain('data-log-manage-view-toggle-group="shared-action-group"');
+    expect(source).toContain('data-log-manage-view-toggle-group-owner="hertzbeat-ui-action-group"');
+    expect(source).toContain('layout="end-wrap"');
+    expect(source).not.toContain('className="flex flex-wrap items-center justify-between gap-2"');
+    expect(source).not.toContain('className="ml-auto flex flex-wrap items-center justify-end gap-2"');
+    expect(source).not.toContain('data-log-manage-panel-surface="view-switch" className="px-3 py-3"');
     expect(source).toContain('data-log-manage-stream-stage="hertzbeat-live-log-stream"');
+    expect(source).toContain('data-log-manage-stream-stage-panel-surface-owner="hertzbeat-ui-panel-surface"');
+    expect(source).toContain('clip');
+    expect(source).toContain('data-log-manage-stream-stage-layout="shared-stream-stage"');
+    expect(source).toContain('data-log-manage-stream-stage-layout-owner="hertzbeat-ui-workbench-layout"');
+    expect(source).toContain('variant="stream-stage"');
+    expect(source).not.toContain('className="grid min-h-[520px] lg:grid-cols-[minmax(0,1fr)_320px]"');
+    expect(source).not.toContain(`data-log-manage-stream-live-state={isStreamPaused ? 'paused' : 'live'}
+        className="overflow-hidden"`);
+    expect(source).toContain('data-log-manage-stream-stage-header-owner="hertzbeat-ui-panel-header"');
+    expect(source).toContain('data-log-manage-stream-selected-header-owner="hertzbeat-ui-panel-header"');
+    expect(source).toContain('data-log-manage-stream-pause-notice-owner="hertzbeat-ui-state-notice"');
+    expect(source).toContain('data-log-manage-stream-selected-helper-owner="hertzbeat-ui-state-notice"');
+    expect(source).toContain("warning={detailSelection?.selectionState === 'detached' ? t('log.manage.stream.detail.detached-warning') : undefined}");
+    expect(source).toContain("eyebrow={t('log.manage.stream.stage.kicker')}");
+    expect(source).toContain("eyebrow={t('log.manage.stream.selected.title')}");
     expect(source).toContain('data-log-manage-reconnect-action="true"');
-    expect(source).toContain('data-log-manage-row-detail-action="true"');
+    expect(source).toContain("'data-log-manage-row-detail-action': 'true'");
     expect(source).toContain('data-log-manage-row-trace-detail-action="true"');
     expect(source).toContain('LogStreamDetailDialog');
     expect(source).toContain('buildLogAttributionDiagnostics(detailLog, t)');
     expect(source).toContain('attributionDiagnostics={detailAttributionDiagnostics}');
-    expect(source).toContain('实体上下文');
+    expect(source).toContain('HzAttributeDiagnostics');
+    expect(source).toContain('data-log-manage-selected-attribution-diagnostics-owner="hertzbeat-ui-attribute-diagnostics"');
+    expect(source).toContain("t('log.manage.context.entity.title')");
     expect(source).not.toContain('HertzBeat 采集闭环');
     expect(source).not.toContain('告警闭环');
     expect(source).not.toContain('日志排查可返回接入总览、采集集群、监控模板和告警处理上下文。');
-    expect(source).toContain('采集集群');
-    expect(source).toContain('监控模板');
-    expect(source).toContain('采集来源');
-    expect(source).toContain('实体详情');
-    expect(source).toContain('告警处理');
+    [
+      'log.manage.route.action.collector',
+      'log.manage.route.action.templates',
+      'log.manage.route.action.return-source',
+      'log.manage.route.action.entity',
+      'log.manage.route.action.alerts',
+      'log.manage.context.entity.aria'
+    ].forEach(key => {
+      expect(source).toContain(`t('${key}`);
+      expect(messagesSource).toContain(`'${key}'`);
+    });
     expect(source).toContain('href={handoffLinks.alertHandlingHref}');
+    expect(source).toContain('data-log-manage-action-row-owner="hertzbeat-ui-action-group"');
+    expect(source).toContain('data-log-manage-action-row-layout-owner="hertzbeat-ui-action-group"');
+    expect(source).toContain('data-log-manage-return-action="true"');
+    expect(source).toContain('data-log-manage-header-action="return-source"');
+    expect(source).toContain('data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"');
+    expect(source).toContain('layout="full-end"');
+    expect(source).not.toContain('data-log-manage-action-row="cold-workbench-actions" className="flex flex-wrap items-center justify-end gap-2"');
+    expect(source).not.toContain('data-log-manage-header-action="collector">\n                  <Server className="h-4 w-4"');
+    expect(source).not.toContain('data-log-manage-header-action="templates">\n                  <ListChecks className="h-4 w-4"');
+    expect(source).not.toContain('data-log-manage-header-action="alerts">\n                  <BellRing className="h-4 w-4"');
     expect(source).toContain('data-log-manage-alert-context-hint="entity-trace-alert-handoff"');
-    expect(source).toContain('按当前实体、服务和已带入的链路上下文查看相关告警');
+    expect(source).toContain("t('log.manage.handoff.alert-hint')");
     expect(source).not.toContain('告警规则');
     expect(source).not.toContain('signoz-');
     expect(source).not.toContain('data-log-manage-floating-actions');
@@ -367,7 +522,8 @@ describe('log manage page', () => {
     expect(source).not.toContain('SummaryMetricGrid');
     expect(source).not.toContain('DrawerSection');
     expect(source).not.toContain('VirtualList');
-    expect(source).not.toContain('DataTable');
+    expect(source).not.toContain('<DataTable');
+    expect(source).not.toContain('import { DataTable');
   });
 
   it('keeps log route-level actions on the cold-matte palette instead of bright blue demo buttons', () => {
@@ -377,6 +533,23 @@ describe('log manage page', () => {
     expect(source).not.toContain('border-[#4f6df0]');
     expect(source).not.toContain('bg-[#4566e8]');
     expect(source).not.toContain('hover:bg-[#5574f4]');
+  });
+
+  it('renders a shared return action when logs inherit a trace return path', () => {
+    mockState.searchParams = new URLSearchParams(
+      'view=list&traceId=trace-123&spanId=span-456&serviceName=checkout&returnTo=%2Ftrace%2Fmanage%3FtraceId%3Dtrace-123%26spanId%3Dspan-456%26serviceName%3Dcheckout'
+    );
+
+    const html = renderLogManagePage();
+
+    expect(html).toContain('data-log-manage-action-row-owner="hertzbeat-ui-action-group"');
+    expect(html).toContain('data-hz-action-group-layout="full-end"');
+    expect(html).toContain('data-log-manage-return-action="true"');
+    expect(html).toContain('data-log-manage-header-action="return-source"');
+    expect(html).toContain('data-log-manage-header-action-icon="return-source"');
+    expect(html).toContain('data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"');
+    expect(html).toContain('href="/trace/manage?traceId=trace-123&amp;spanId=span-456&amp;serviceName=checkout"');
+    expect(html).toContain('返回来源');
   });
 
   it('keeps the Angular log-to-trace drilldown contract as drawer preview before route navigation', () => {
@@ -389,10 +562,10 @@ describe('log manage page', () => {
     expect(source).toContain('openTraceDrilldownFromLog');
     expect(source).toContain('data-log-manage-row-trace-detail-action="true"');
     expect(source).toContain('data-log-manage-open-log-detail-before-trace="true"');
-    expect(source).toContain("openLogDetails(entry, 'history');");
+    expect(source).toContain("onRowClick={row => openLogDetails(logEntryByRowKey.get(row.key) ?? null, 'history')}");
     expect(source).toContain('data-log-related-trace-open-workspace-action="true"');
     expect(source).toContain('data-log-manage-results-open-trace-action="true"');
-    expect(source).toContain('查看完整链路');
+    expect(source).toContain("t('log.manage.related-trace.open-workspace')");
     expect(source).not.toContain('data-log-manage-row-trace-link="context-preserved"');
     expect(source).not.toContain('data-log-manage-row-trace-preview-action="true"');
     expect(source).not.toContain('href={row.traceId !== \'-\' ? rowHandoffLinks.traceHref : \'/trace/manage\'}');
@@ -402,9 +575,9 @@ describe('log manage page', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
 
     expect(source).toContain('buildSelectedSpanFacts');
-    expect(source).toContain('`${relatedTraceRows.length} 个跨度`');
-    expect(source).toContain("badges={relatedTraceDetail ? ['链路预览'] : []}");
-    expect(source).toContain("label: '关联'");
+    expect(source).toContain("t('log.manage.related-trace.spans-count'");
+    expect(source).toContain("badges={relatedTraceDetail ? [t('log.manage.related-trace.badge')] : []}");
+    expect(source).toContain("label: t('log.manage.related-trace.fact.links')");
     expect(source).not.toContain('`${relatedTraceRows.length} spans`');
     expect(source).not.toContain("badges={relatedTraceDetail ? ['SPAN'] : []}");
     expect(source).not.toContain("label: 'Links'");
@@ -442,8 +615,7 @@ describe('log manage page', () => {
     ];
 
     try {
-      const { default: LogManagePage } = await import('./page');
-      const html = renderToStaticMarkup(<LogManagePage />);
+      const html = renderLogManagePage();
 
       expect(source).toContain("const missingEntityHandoffTitle = t('log.manage.handoff.entity-disabled')");
       expect(source).toContain('data-log-manage-entity-action-disabled="missing-entity-id"');
@@ -456,18 +628,35 @@ describe('log manage page', () => {
     } finally {
       mockState.renderData.list.content = originalContent;
     }
-  }, 15000);
+  }, 30000);
 
   it('renders the in-place log stream when the Angular stream view is requested', async () => {
     mockState.searchParams = new URLSearchParams('view=stream&traceId=trace-123&spanId=span-456&severityText=ERROR');
-
-    const { default: LogManagePage } = await import('./page');
-    const html = renderToStaticMarkup(<LogManagePage />);
+    const html = renderLogManagePage();
 
     expect(html).toContain('data-log-manage-view-switch="stream-history"');
+    expect(html).toContain('data-log-manage-view-switch-layout="shared-view-switch"');
+    expect(html).toContain('data-log-manage-view-switch-layout-owner="hertzbeat-ui-workbench-layout"');
+    expect(html).toContain('data-hz-workbench-layout-variant="view-switch"');
+    expect(html).toContain('data-log-manage-view-toggle-group="shared-action-group"');
+    expect(html).toContain('data-log-manage-view-toggle-group-owner="hertzbeat-ui-action-group"');
+    expect(html).toContain('data-hz-action-group-layout="end-wrap"');
     expect(html).toContain('data-log-manage-stream-stage="hertzbeat-live-log-stream"');
+    expect(html).toContain('data-log-manage-stream-stage-panel-surface-owner="hertzbeat-ui-panel-surface"');
+    expect(html).toContain('data-hz-panel-surface-clip="true"');
+    expect(html).toContain('data-log-manage-stream-stage-layout="shared-stream-stage"');
+    expect(html).toContain('data-log-manage-stream-stage-layout-owner="hertzbeat-ui-workbench-layout"');
+    expect(html).toContain('data-hz-workbench-layout-variant="stream-stage"');
+    expect(html).toContain('data-log-manage-stream-stage-header-owner="hertzbeat-ui-panel-header"');
+    expect(html).toContain('data-log-manage-stream-selected-header-owner="hertzbeat-ui-panel-header"');
+    expect(html).toContain('data-log-manage-stream-detail-action-stack="shared-control-stack"');
+    expect(html).toContain('data-log-manage-stream-detail-action-stack-owner="hertzbeat-ui-control-stack"');
+    expect(html).toContain('data-hz-control-stack-layout="stack"');
+    expect(html).toContain('data-hz-panel-header-eyebrow="true"');
+    expect(html).not.toContain('data-log-manage-stream-selected-helper-owner="hertzbeat-ui-state-notice"');
     expect(html).toContain('data-log-manage-reconnect-action="true"');
     expect(html).toContain('data-log-manage-stream-row="true"');
+    expect(html).toContain('data-log-manage-stream-severity-tone="danger"');
     expect(html).toContain('checkout timeout');
     expect(html).not.toContain('data-log-manage-stream-empty-state="true"');
     expect(html).toContain('日志流');
@@ -479,7 +668,7 @@ describe('log manage page', () => {
     expect(html).not.toContain('运行查询');
     expect(html).not.toContain('/api/logs/sse/subscribe');
     expect(html).not.toContain('data-log-manage-log-list="cold-dense-log-list"');
-  });
+  }, 30000);
 
   it('keeps live stream rows keyed by a monotonic sequence without surfacing normal retention as backpressure', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
@@ -493,9 +682,14 @@ describe('log manage page', () => {
 
   it('keeps no-log empty guidance operator-facing instead of generic storage copy', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
+    const messagesSource = readFileSync(resolve(process.cwd(), 'lib/i18n-runtime-messages.ts'), 'utf8');
 
     expect(source).toContain('data-log-manage-empty-guidance="operator-no-data-guidance"');
-    expect(source).toContain('确认时间范围、实体归因、采集器和监控模板后再查看日志。');
+    expect(source).toContain('data-log-manage-empty-state-owner="hertzbeat-ui-empty-state"');
+    expect(source).toContain('data-log-manage-stream-empty-owner="hertzbeat-ui-empty-state"');
+    expect(source).toContain('HzEmptyState');
+    expect(source).toContain("t('log.manage.empty.copy')");
+    expect(messagesSource).toContain("'log.manage.empty.copy': '确认时间范围、实体归因、采集器和监控模板后再查看日志。'");
     expect(source).not.toContain('日志写入后会在这里按时间倒序展示。');
   });
 
@@ -509,15 +703,31 @@ describe('log manage page', () => {
     expect(source).toContain('requestAnimationFrame(flushPendingStreamItems)');
     expect(source).toContain('resolveBrowserLogStreamUrl(buildLogStreamUrl(query, routeContext))');
     expect(source).toContain("useState(() => routeContext.live === 'false')");
-    expect(source).toContain('const { listUrl, overviewUrl, trendUrl, coverageUrl } = buildLogUrls(query, routeContext);');
+    expect(source).toContain('const logUrls = useMemo(() => buildLogUrls(query, routeContext), [query, routeContext]);');
+    expect(source).toContain('const { listUrl, overviewUrl, trendUrl, coverageUrl } = logUrls;');
     expect(source).toContain('resolveStreamWindow');
     expect(source).toContain('readStreamViewportState');
     expect(source).toContain('STREAM_VIEWPORT_ROW_HEIGHT');
     expect(source).toContain('anchorIndex: streamViewport.isPinnedToLatest ? null : selectedStreamIndex');
+    expect(source).toContain('HzScrollViewport');
+    expect(source).toContain('HzLogStreamLiveRow');
+    expect(source).toContain('HzDetailAside');
+    expect(source).toContain('HzDetailBodyStack');
     expect(source).toContain('data-log-manage-stream-viewport="virtualized-log-stream"');
+    expect(source).toContain('data-log-manage-stream-viewport-owner="hertzbeat-ui-scroll-viewport"');
+    expect(source).toContain('variant="log-stream"');
+    expect(source).not.toContain('className="hb-scrollbar max-h-[620px] overflow-auto"');
     expect(source).toContain('data-log-manage-stream-window');
+    expect(source).toContain('data-log-manage-stream-row-owner="hertzbeat-ui-log-stream-row"');
     expect(source).toContain('data-log-manage-stream-row-style="compact-live-row"');
+    expect(source).toContain('data-log-manage-stream-selected-aside="shared-detail-aside"');
+    expect(source).toContain('data-log-manage-stream-selected-aside-owner="hertzbeat-ui-detail-aside"');
+    expect(source).toContain('data-log-manage-stream-selected-body="shared-detail-body-stack"');
+    expect(source).toContain('data-log-manage-stream-selected-body-owner="hertzbeat-ui-detail-body-stack"');
     expect(source).toContain('visibleStreamItems.map');
+    expect(source).not.toContain('className={`grid w-full grid-cols-[58px_minmax(0,112px)_minmax(0,1fr)]');
+    expect(source).not.toContain('<aside className="border-l border-[#252b35] bg-[#0b0e13] px-4 py-4">');
+    expect(source).not.toContain('<div className="mt-4 space-y-2">');
     expect(source).not.toContain('日志流过快');
     expect(source).not.toContain('前端已隐藏');
     expect(source).not.toContain('shouldShowStreamBackpressureNotice');
@@ -529,15 +739,23 @@ describe('log manage page', () => {
       'view=stream&timeRange=last-1h&start=1713200000000&end=1713203600000&refresh=30&live=false&tz=Asia%2FShanghai&serviceName=checkout'
     );
     const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
-
-    const { default: LogManagePage } = await import('./page');
-    const html = renderToStaticMarkup(<LogManagePage />);
+    const html = renderLogManagePage();
 
     expect(source).toContain("useEffect(() => {\n    setIsStreamPaused(routeContext.live === 'false');\n  }, [routeContext.live]);");
     expect(source).toContain("if (isStreamPaused) {\n      setStreamStatus('disconnected');\n      return undefined;\n    }");
     expect(source).toContain("data-log-manage-stream-live-state={isStreamPaused ? 'paused' : 'live'}");
     expect(html).toContain('data-log-manage-stream-stage="hertzbeat-live-log-stream"');
     expect(html).toContain('data-log-manage-stream-live-state="paused"');
+    expect(html).toContain('data-log-manage-stream-stage-header-owner="hertzbeat-ui-panel-header"');
+    expect(html).toContain('data-log-manage-stream-selected-aside="shared-detail-aside"');
+    expect(html).toContain('data-log-manage-stream-selected-aside-owner="hertzbeat-ui-detail-aside"');
+    expect(html).toContain('data-hz-ui="detail-aside"');
+    expect(html).toContain('data-log-manage-stream-selected-body="shared-detail-body-stack"');
+    expect(html).toContain('data-log-manage-stream-selected-body-owner="hertzbeat-ui-detail-body-stack"');
+    expect(html).toContain('data-hz-ui="detail-body-stack"');
+    expect(html).toContain('data-log-manage-stream-pause-notice-owner="hertzbeat-ui-state-notice"');
+    expect(html).toContain('data-log-manage-stream-pause-notice="paused-buffer-visible"');
+    expect(html).toContain('data-hz-ui="state-notice"');
     expect(html).toContain('已暂停');
     expect(html).toContain('继续');
   }, 15000);
@@ -547,14 +765,12 @@ describe('log manage page', () => {
       'view=list&timeRange=last-1h&start=1713200000000&end=1713203600000&refresh=30&live=false&tz=Asia%2FShanghai&serviceName=checkout'
     );
     const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
-
-    const { default: LogManagePage } = await import('./page');
-    const html = renderToStaticMarkup(<LogManagePage />);
+    const html = renderLogManagePage();
 
     expect(source).toContain("import { buildTimeRangeControlLabels, TimeRangeControl } from '@/components/observability/time-range-control';");
     expect(source).toContain('labels={buildTimeRangeControlLabels(t)}');
     expect(source).toContain("live: routeContext.live || 'true'");
-    expect(source).toContain('buildLogManageRoute(searchParams, query, currentView, appliedContext)');
+    expect(source).toContain('buildLogManageRoute(routeContext, query, currentView, appliedContext)');
     expect(source).toContain('data-log-manage-time-control="shared-time-context-control"');
     expect(source).toContain('data-log-manage-time-control-placement="top-right"');
     expect(source).toContain('data-log-manage-time-control-visual="narrow-top-right-rail"');
@@ -587,19 +803,51 @@ describe('log manage page', () => {
 
   it('renders the cold query row, trend band, dense log list, and detail handoffs', async () => {
     mockState.searchParams = new URLSearchParams('view=list');
-
-    const { default: LogManagePage } = await import('./page');
-    const html = renderToStaticMarkup(<LogManagePage />);
+    const html = renderLogManagePage();
 
     expect(html).toContain('data-log-manage-route="otlp-cold-log-workbench"');
+    expect(html).toContain('data-loading-copy="正在加载日志工作台"');
     expect(html).toContain('data-log-manage-style-baseline="hertzbeat-cold-matte"');
     expect(html).toContain('data-log-manage-query-bar="cold-query-row"');
+    expect(html).toContain('data-log-manage-panel-surface-padding-owner="hertzbeat-ui-panel-surface"');
+    expect(html).toContain('data-hz-panel-surface-padding="query"');
+    expect(html).toContain('data-log-manage-query-search-frame="shared-search-field-frame"');
+    expect(html).toContain('data-log-manage-query-search-frame-owner="hertzbeat-ui-search-field-frame"');
+    expect(html).toContain('data-hz-search-field-frame-width="log-query"');
+    expect(html).toContain('data-log-manage-query-search-icon-owner="hertzbeat-ui-search-field-icon"');
+    expect(html).toContain('data-log-manage-query-search-input-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-hz-input-inset="search-icon"');
+    expect(html).toContain('data-hz-input-width="log-query-expression"');
+    expect(html).toContain('data-log-manage-query-severity-select="shared-log-severity-select"');
+    expect(html).toContain('data-log-manage-query-severity-select-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-hz-select-width="log-severity"');
+    expect(html).toContain('data-hz-select-trigger-tone="signal-query"');
+    expect(html).toContain('data-log-manage-query-token-input="trace-id"');
+    expect(html).toContain('data-log-manage-query-token-input="span-id"');
+    expect(html).toContain('data-log-manage-query-token-input-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-hz-input-width="log-query-token"');
+    expect(html).toContain('data-log-manage-query-body-input="shared-log-body-input"');
+    expect(html).toContain('data-log-manage-query-body-input-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-hz-input-width="log-query-body"');
+    expect(html).toContain('placeholder="service.name = &quot;checkout&quot;"');
     expect(html).toContain('data-log-manage-chart-band="cold-chart-band"');
+    expect(html).toContain('data-log-manage-chart-padding-owner="hertzbeat-ui-panel-surface"');
+    expect(html).toContain('data-hz-panel-surface-padding="chart"');
     expect(html).toContain('data-log-manage-log-list="cold-dense-log-list"');
+    expect(html).toContain('data-log-manage-table-chrome-owner="hertzbeat-ui-data-table"');
+    expect(html).toContain('data-hz-ui="data-table"');
+    expect(html).toContain('data-log-manage-table-header-owner="hertzbeat-ui-panel-header"');
+    expect(html).toContain('data-hz-ui="panel-header"');
+    expect(html).toContain('data-log-manage-table-count-badge-owner="hertzbeat-ui-status-badge"');
     expect(html).toContain('data-log-manage-detail-panel="cold-detail-panel"');
+    expect(html).toContain('data-log-manage-detail-header-owner="hertzbeat-ui-panel-header"');
+    expect(html).toContain('data-hz-panel-header-eyebrow="true"');
     expect(html).toContain('data-log-manage-row-detail-action="true"');
+    expect(html).toContain('data-log-manage-severity-tone="danger"');
     expect(html).toContain('查看日志');
     expect(html).toContain('data-log-manage-selected-evidence="selected-log-evidence"');
+    expect(html).toContain('data-log-manage-selected-evidence-owner="hertzbeat-ui-detail-rows"');
+    expect(html).toContain('data-log-manage-detail-facts-owner="hertzbeat-ui-detail-rows"');
     expect(html).toContain('日志证据');
     expect(html).toContain('日志时间');
     expect(html).toContain('日志级别');
@@ -607,6 +855,9 @@ describe('log manage page', () => {
     expect(html).toContain('最近上报');
     expect(html).not.toContain('data-log-manage-hertzbeat-loop="collector-template-alert-loop"');
     expect(html).toContain('data-log-manage-entity-context="hertzbeat-signal-entity-context"');
+    expect(html).toContain('data-log-manage-entity-context-owner="hertzbeat-ui-detail-rows"');
+    expect(html).toContain('data-log-manage-selected-attribution-diagnostics-owner="hertzbeat-ui-attribute-diagnostics"');
+    expect(html).toContain('data-hz-ui="attribute-diagnostics"');
     expect(html).not.toContain('data-log-manage-intake-quality="logs-collector-quality"');
     expect(html).not.toContain('data-log-manage-intake-quality-row=');
     expect(html).toContain('data-log-manage-row-trace-detail-action="true"');
@@ -672,8 +923,7 @@ describe('log manage page', () => {
     ];
 
     try {
-      const { default: LogManagePage } = await import('./page');
-      const html = renderToStaticMarkup(<LogManagePage />);
+      const html = renderLogManagePage();
 
       expect(html).toContain('data-log-manage-results-open-trace-action="true"');
       expect(html).toContain('data-log-manage-results-open-trace-action-disabled="missing-trace-id"');
@@ -686,14 +936,12 @@ describe('log manage page', () => {
 
   it('opens the first trace-matched log in the side detail when a trace route lands on history', async () => {
     mockState.searchParams = new URLSearchParams('view=list&traceId=trace-123&spanId=span-456');
-
-    const { default: LogManagePage } = await import('./page');
     interactionContainer = document.createElement('div');
     document.body.appendChild(interactionContainer);
     interactionRoot = createRoot(interactionContainer);
 
     await act(async () => {
-      interactionRoot?.render(<LogManagePage />);
+      renderInteractiveLogManagePage();
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -711,14 +959,12 @@ describe('log manage page', () => {
 
   it('opens the first trace-matched seeded stream row in the side detail when a trace route lands on stream', async () => {
     mockState.searchParams = new URLSearchParams('view=stream&traceId=trace-123&spanId=span-456');
-
-    const { default: LogManagePage } = await import('./page');
     interactionContainer = document.createElement('div');
     document.body.appendChild(interactionContainer);
     interactionRoot = createRoot(interactionContainer);
 
     await act(async () => {
-      interactionRoot?.render(<LogManagePage />);
+      renderInteractiveLogManagePage();
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -753,13 +999,12 @@ describe('log manage page', () => {
     ];
 
     try {
-      const { default: LogManagePage } = await import('./page');
       interactionContainer = document.createElement('div');
       document.body.appendChild(interactionContainer);
       interactionRoot = createRoot(interactionContainer);
 
       await act(async () => {
-        interactionRoot?.render(<LogManagePage />);
+        renderInteractiveLogManagePage();
         await Promise.resolve();
       });
 
@@ -806,8 +1051,7 @@ describe('log manage page', () => {
     ];
 
     try {
-      const { default: LogManagePage } = await import('./page');
-      const html = renderToStaticMarkup(<LogManagePage />);
+      const html = renderLogManagePage();
 
       expect(html).toContain('data-log-manage-selected-attribution-diagnostics="hertzbeat-attribute-diagnostics"');
       expect(html).toContain('归因诊断');
@@ -886,14 +1130,12 @@ describe('log manage page', () => {
       }
       throw new Error(`Unexpected trace preview URL: ${url}`);
     });
-
-    const { default: LogManagePage } = await import('./page');
     interactionContainer = document.createElement('div');
     document.body.appendChild(interactionContainer);
     interactionRoot = createRoot(interactionContainer);
 
     await act(async () => {
-      interactionRoot?.render(<LogManagePage />);
+      renderInteractiveLogManagePage();
       await Promise.resolve();
     });
 
@@ -960,14 +1202,12 @@ describe('log manage page', () => {
 
   it('keeps side-panel trace actions on the log detail drawer before loading trace preview', async () => {
     mockState.searchParams = new URLSearchParams('view=list');
-
-    const { default: LogManagePage } = await import('./page');
     interactionContainer = document.createElement('div');
     document.body.appendChild(interactionContainer);
     interactionRoot = createRoot(interactionContainer);
 
     await act(async () => {
-      interactionRoot?.render(<LogManagePage />);
+      renderInteractiveLogManagePage();
       await Promise.resolve();
     });
 
@@ -996,17 +1236,38 @@ describe('log manage page', () => {
       .mockResolvedValueOnce(mockState.renderData.list)
       .mockResolvedValueOnce(mockState.renderData.trend)
       .mockResolvedValueOnce(mockState.renderData.coverage);
-
-    const { default: LogManagePage } = await import('./page');
-    renderToStaticMarkup(<LogManagePage />);
+    const html = renderLogManagePage();
     await mockState.lastLoad?.();
 
-    expect(apiMessageGet.mock.calls).toEqual([
-      ['/logs/stats/overview?search=timeout&traceId=trace-123&severityText=ERROR&severityNumber=17'],
-      ['/logs/list?pageIndex=0&pageSize=8&search=timeout&traceId=trace-123&severityText=ERROR&severityNumber=17'],
-      ['/logs/stats/trend?search=timeout&traceId=trace-123&severityText=ERROR&severityNumber=17'],
-      ['/logs/stats/trace-coverage?search=timeout&traceId=trace-123&severityText=ERROR&severityNumber=17']
+    expect(html).toContain('data-cache-key="log-manage|list|');
+    expect(html).toContain('/logs/stats/overview?search=timeout&amp;traceId=trace-123&amp;severityText=ERROR&amp;severityNumber=17');
+    expect(html).toContain('/logs/list?pageIndex=0&amp;pageSize=8&amp;search=timeout&amp;traceId=trace-123&amp;severityText=ERROR&amp;severityNumber=17');
+    expect(html).toContain('/logs/stats/trend?search=timeout&amp;traceId=trace-123&amp;severityText=ERROR&amp;severityNumber=17');
+    expect(html).toContain('/logs/stats/trace-coverage?search=timeout&amp;traceId=trace-123&amp;severityText=ERROR&amp;severityNumber=17');
+    expect(html).toContain('data-cache-settled-ttl="10000"');
+    expect(apiMessageGet.mock.calls.map(([url]) => url)).toEqual([
+      '/logs/stats/overview?search=timeout&traceId=trace-123&severityText=ERROR&severityNumber=17',
+      '/logs/list?pageIndex=0&pageSize=8&search=timeout&traceId=trace-123&severityText=ERROR&severityNumber=17',
+      '/logs/stats/trend?search=timeout&traceId=trace-123&severityText=ERROR&severityNumber=17',
+      '/logs/stats/trace-coverage?search=timeout&traceId=trace-123&severityText=ERROR&severityNumber=17'
     ]);
+    expect(apiMessageGet.mock.calls.every(([, init]) => init?.signal instanceof AbortSignal)).toBe(true);
+  });
+
+  it('returns an explicit degraded empty state when the log API blocks the initial route load', async () => {
+    mockState.searchParams = new URLSearchParams('view=list');
+    apiMessageGet.mockRejectedValueOnce(new Error('Log API request timed out after 3500ms'));
+    renderLogManagePage();
+    const result = await mockState.lastLoad?.() as any;
+
+    expect(result.loadStatus).toEqual({
+      state: 'degraded',
+      message: 'Log API request timed out after 3500ms'
+    });
+    expect(result.list.content).toEqual([]);
+    expect(result.overview.totalLogs).toBe(0);
+    expect(result.trend.hourlyStats).toEqual({});
+    expect(result.coverage.traceCoverage.withTrace).toBe(0);
   });
 
   it('normalizes live log overview counters before rendering status cards', async () => {
@@ -1022,9 +1283,7 @@ describe('log manage page', () => {
       .mockResolvedValueOnce(mockState.renderData.list)
       .mockResolvedValueOnce(mockState.renderData.trend)
       .mockResolvedValueOnce(mockState.renderData.coverage);
-
-    const { default: LogManagePage } = await import('./page');
-    renderToStaticMarkup(<LogManagePage />);
+    renderLogManagePage();
     const result = await mockState.lastLoad?.() as any;
 
     expect(result.overview.totalLogs).toBe(42);

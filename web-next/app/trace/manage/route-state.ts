@@ -1,16 +1,20 @@
-import { buildTraceRouteUrl, type SearchParamReader, type TraceQueryState } from '../../../lib/trace-manage/query-state';
-import { copySignalRouteContextParams } from '../../../lib/signal-route-context';
+import { buildTraceRouteUrl, type TraceQueryState } from '../../../lib/trace-manage/query-state';
+import { appendSignalRouteContext, type SignalRouteContext } from '../../../lib/signal-route-context';
 import { appendTimeContextParams, type TimeContext } from '../../../lib/time-context';
 
-export function buildTraceManageRoute(searchParams: SearchParamReader, nextQuery: TraceQueryState, timeContext?: TimeContext) {
+export function buildTraceManageRoute(
+  routeContext: SignalRouteContext,
+  nextQuery: TraceQueryState,
+  timeContext?: TimeContext
+) {
   const next = new URLSearchParams(buildTraceRouteUrl(nextQuery).split('?')[1] || '');
-  copySignalRouteContextParams(searchParams, next);
+  appendSignalRouteContext(next, routeContext);
   if (timeContext) {
     appendTimeContextParams(next, timeContext);
   }
   return next.toString() ? `/trace/manage?${next.toString()}` : '/trace/manage';
 }
 
-export function buildResetTraceManageRoute(searchParams: SearchParamReader) {
-  return buildTraceManageRoute(searchParams, { traceId: '', spanId: '', serviceName: '', errorOnly: false });
+export function buildResetTraceManageRoute(routeContext: SignalRouteContext) {
+  return buildTraceManageRoute(routeContext, { traceId: '', spanId: '', serviceName: '', errorOnly: false });
 }

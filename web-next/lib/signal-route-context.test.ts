@@ -94,6 +94,36 @@ describe('signal route context', () => {
     expect(next.get('returnLabel')).toBeNull();
   });
 
+  it('uses the platform time URL contract when appending monitor-linked expression ranges', () => {
+    const next = new URLSearchParams('source=monitor');
+    appendSignalRouteContext(next, {
+      timeRange: 'last-1h',
+      from: 'now-6h',
+      to: 'now',
+      start: '1712730000000',
+      end: '1712733600000',
+      refresh: '30',
+      live: 'true',
+      tz: 'Asia/Shanghai',
+      monitorId: '42',
+      monitorName: 'HTTPS Probe'
+    });
+
+    expect(next.toString()).toBe(
+      'source=monitor&from=now-6h&to=now&refresh=30&live=true&timezone=Asia%2FShanghai&monitorId=42&monitorName=HTTPS+Probe'
+    );
+  });
+
+  it('bridges canonical timezone URLs back to the signal context timezone control alias', () => {
+    expect(readSignalRouteContext(new URLSearchParams('from=now-6h&to=now&timezone=Asia%2FShanghai&source=monitor'))).toEqual({
+      from: 'now-6h',
+      to: 'now',
+      tz: 'Asia/Shanghai',
+      timezone: 'Asia/Shanghai',
+      source: 'monitor'
+    });
+  });
+
   it('does not read display return labels into signal route context', () => {
     const context = readSignalRouteContext(
       new URLSearchParams(
@@ -143,7 +173,7 @@ describe('signal route context', () => {
       spanId: 'span-1',
       source: 'otlp'
     })).toContainEqual({
-      label: '链路上下文',
+      label: 'Trace context',
       value: 'trace-1',
       meta: 'spanId span-1'
     });
@@ -158,7 +188,7 @@ describe('signal route context', () => {
       monitorApp: 'website',
       monitorInstance: 'example.com:443'
     })).toContainEqual({
-      label: '监控实例',
+      label: 'Monitor instance',
       value: 'HTTPS Probe',
       meta: 'website · example.com:443 · monitorId 42'
     });
@@ -175,14 +205,14 @@ describe('signal route context', () => {
     });
 
     expect(rows).toContainEqual({
-      label: '监控实例',
+      label: 'Monitor instance',
       value: 'HTTPS Probe',
       meta: 'website · example.com:443 · monitorId 42'
     });
     expect(rows).toContainEqual({
-      label: '采集来源',
-      value: '传统监控',
-      meta: '监控中心上下文'
+      label: 'Source',
+      value: 'Traditional monitoring',
+      meta: 'Monitor center context'
     });
     expect(rows.map(row => `${row.value} ${row.meta}`).join(' ')).not.toContain('OTLP');
   });
@@ -198,14 +228,14 @@ describe('signal route context', () => {
     });
 
     expect(alertRows).toContainEqual({
-      label: '采集来源',
-      value: '告警事件',
-      meta: '告警证据上下文'
+      label: 'Source',
+      value: 'Alert event',
+      meta: 'Alert evidence context'
     });
     expect(topologyRows).toContainEqual({
-      label: '采集来源',
-      value: '拓扑关系',
-      meta: '数据库 / 中间件连接'
+      label: 'Source',
+      value: 'Topology relation',
+      meta: 'Database / middleware connection'
     });
     expect([...alertRows, ...topologyRows].map(row => `${row.value} ${row.meta}`).join(' ')).not.toContain('topology:');
     expect([...alertRows, ...topologyRows].map(row => `${row.value} ${row.meta}`).join(' ')).not.toContain('alert ');
@@ -227,19 +257,19 @@ describe('signal route context', () => {
     });
 
     expect(rows).toContainEqual({
-      label: '时间范围',
+      label: 'Time range',
       value: 'last-45m',
-      meta: '2024/04/16 00:53:20 → 2024/04/16 01:38:20 · 刷新 30s · 已暂停 · Asia/Shanghai'
+      meta: '2024/04/16 00:53:20 → 2024/04/16 01:38:20 · Refresh 30s · Paused · Asia/Shanghai'
     });
     expect(rows).toContainEqual({
-      label: '监控实例',
+      label: 'Monitor instance',
       value: 'checkout-http',
       meta: 'website · example.com:443 · monitorId 632051474676992'
     });
     expect(rows).toContainEqual({
-      label: '采集来源',
-      value: '传统监控',
-      meta: '监控中心上下文'
+      label: 'Source',
+      value: 'Traditional monitoring',
+      meta: 'Monitor center context'
     });
   });
 });

@@ -9,7 +9,10 @@ import {
   type ColumnDef,
   type TableOptions
 } from '@tanstack/react-table';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import { cn } from '../../lib/utils';
+
+const DEFAULT_DATA_TABLE_EMPTY_STATE = SUPPLEMENTAL_MESSAGES['en-US']?.['common.no-data'] ?? 'common.no-data';
 
 export type DataTableProps<TData> = {
   columns: ColumnDef<TData, unknown>[];
@@ -26,7 +29,7 @@ export function DataTable<TData>({
   columns,
   data,
   className,
-  emptyState = 'No data',
+  emptyState = DEFAULT_DATA_TABLE_EMPTY_STATE,
   tableOptions,
   onRowClick,
   rowClassName,

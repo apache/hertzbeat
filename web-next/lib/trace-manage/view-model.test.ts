@@ -44,6 +44,7 @@ describe('trace view model', () => {
         namespace: 'payments',
         duration: '420ms',
         status: 'ERROR',
+        statusTone: 'danger',
         startTime: '2026-04-16 22:00:00'
       }
     ]);
@@ -120,7 +121,8 @@ describe('trace view model', () => {
         ]
       },
       'db',
-      (nanos?: number | null) => `${(nanos ?? 0) / 1_000_000}ms`
+      (nanos?: number | null) => `${(nanos ?? 0) / 1_000_000}ms`,
+      t
     );
 
     expect(rows).toHaveLength(2);
@@ -174,7 +176,8 @@ describe('trace view model', () => {
         ]
       },
       'root',
-      (nanos?: number | null) => `${(nanos ?? 0) / 1_000_000}ms`
+      (nanos?: number | null) => `${(nanos ?? 0) / 1_000_000}ms`,
+      t
     );
 
     expect(rows[0].events).toHaveLength(2);
@@ -208,7 +211,8 @@ describe('trace view model', () => {
           }
         ]
       } as any,
-      value => (value ? `time:${value}` : '-')
+      value => (value ? `time:${value}` : '-'),
+      t
     );
 
     expect(eventRows).toEqual([
@@ -226,7 +230,7 @@ describe('trace view model', () => {
     expect(eventRows[0].copy).not.toContain('{');
     expect(eventRows[0].copy).not.toContain('}');
 
-    expect(buildSelectedSpanLinkRows({ links: [{ traceId: 'trace-linked', spanId: 'span-linked' }, {}] } as any)).toEqual([
+    expect(buildSelectedSpanLinkRows({ links: [{ traceId: 'trace-linked', spanId: 'span-linked' }, {}] } as any, t)).toEqual([
       {
         title: 'trace-linked',
         copy: 'span-linked',
@@ -539,6 +543,8 @@ describe('trace view model', () => {
       {
         logsReturnTo:
           '/trace/manage?traceId=trace-1&spanId=span-1&serviceName=checkout&errorOnly=true&returnTo=%2Foverview&returnLabel=链路工作台',
+        metricsReturnTo:
+          '/trace/manage?traceId=trace-1&spanId=span-1&serviceName=checkout&errorOnly=true&returnTo=%2Foverview&returnLabel=链路工作台',
         logsReturnLabel: '日志工作台',
         intakeReturnLabel: '链路接入'
       }
@@ -554,9 +560,17 @@ describe('trace view model', () => {
       '/trace/manage?traceId=trace-1&spanId=span-1&serviceName=checkout&errorOnly=true&returnTo=%2Foverview'
     );
     expect(logParams.get('returnLabel')).toBeNull();
+
+    const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
+    expect(metricsParams.get('traceId')).toBe('trace-1');
+    expect(metricsParams.get('spanId')).toBe('span-1');
+    expect(metricsParams.get('returnTo')).toBe(
+      '/trace/manage?traceId=trace-1&spanId=span-1&serviceName=checkout&errorOnly=true&returnTo=%2Foverview'
+    );
+    expect(metricsParams.get('returnLabel')).toBeNull();
   });
 
-  it('keeps the trace-to-log handoff populated before detail hydration finishes', () => {
+  it('keeps the trace-to-log and trace-to-metrics handoffs populated before detail hydration finishes', () => {
     const result = buildTraceHandoffLinks(
       null,
       null,
@@ -571,7 +585,8 @@ describe('trace view model', () => {
       {
         traceId: 'trace-1',
         spanId: 'span-root-1',
-        logsReturnTo: '/trace/manage?traceId=trace-1&spanId=span-root-1'
+        logsReturnTo: '/trace/manage?traceId=trace-1&spanId=span-root-1',
+        metricsReturnTo: '/trace/manage?traceId=trace-1&spanId=span-root-1'
       }
     );
 
@@ -585,6 +600,17 @@ describe('trace view model', () => {
     expect(logParams.get('end')).toBe('1100');
     expect(logParams.get('returnTo')).toBe('/trace/manage?traceId=trace-1&spanId=span-root-1');
     expect(logParams.get('returnLabel')).toBeNull();
+
+    const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
+    expect(metricsParams.get('traceId')).toBe('trace-1');
+    expect(metricsParams.get('spanId')).toBe('span-root-1');
+    expect(metricsParams.get('serviceName')).toBe('checkout');
+    expect(metricsParams.get('serviceNamespace')).toBe('payments');
+    expect(metricsParams.get('environment')).toBe('prod');
+    expect(metricsParams.get('start')).toBe('1000');
+    expect(metricsParams.get('end')).toBe('1100');
+    expect(metricsParams.get('returnTo')).toBe('/trace/manage?traceId=trace-1&spanId=span-root-1');
+    expect(metricsParams.get('returnLabel')).toBeNull();
   });
 
   it('does not round decimal trace detail time bounds into handoff urls', () => {

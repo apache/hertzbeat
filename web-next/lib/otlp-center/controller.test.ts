@@ -46,4 +46,20 @@ describe('otlp center controller', () => {
       recentIdentitySamples: []
     });
   });
+
+  it('keeps fallback guide copy as i18n keys instead of localized literals', async () => {
+    const apiGet = vi.fn()
+      .mockResolvedValueOnce({ activeSignalCount: 2 })
+      .mockRejectedValueOnce(new Error('API request failed: 404'))
+      .mockRejectedValueOnce(new Error('API request failed: 404'));
+
+    const result = await loadOtlpPageData(apiGet as any);
+
+    expect(result.guide.signals.map(signal => signal.summary)).toEqual([
+      'otlp.guide.fallback.metrics.summary',
+      'otlp.guide.fallback.logs.summary',
+      'otlp.guide.fallback.traces.summary'
+    ]);
+    expect(JSON.stringify(result.guide)).not.toMatch(/[\u4e00-\u9fff]/);
+  });
 });

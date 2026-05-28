@@ -3,17 +3,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
 import { ExceptionCenterSurface } from './exception-center-surface';
 
-const t = (key: string) => {
-  const messages: Record<string, string> = {
-    'menu.dashboard.back': '返回概览',
-    'menu.log.manage': '日志工作台',
-    'menu.trace.manage': '链路工作台'
-  };
-
-  return messages[key] ?? key;
-};
+const t = createTranslatorMock({ locale: 'zh-CN' });
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => (
@@ -40,6 +33,7 @@ describe('ExceptionCenterSurface', () => {
     expect(html).toContain('data-exception-table="hertzbeat-exception-list"');
     expect(html).toContain('异常中心');
     expect(html).toContain('筛选');
+    expect(html).toContain('aria-label="刷新筛选"');
     expect(html).toContain('部署环境');
     expect(html).toContain('服务');
     expect(html).toContain('最近 7 天');
@@ -50,6 +44,8 @@ describe('ExceptionCenterSurface', () => {
     expect(html).toContain('最后出现');
     expect(html).toContain('应用');
     expect(html).toContain('ECONNRESET');
+    expect(html).toContain('href="/exception/500?error=econnreset-browser-frontend"');
+    expect(html).toContain('href="/exception/500?error=payment-402-checkout"');
     expect(html).toContain('payment service returned 402');
     expect(html).toContain('browser-frontend');
     expect(html).not.toContain('Exceptions');
@@ -71,7 +67,7 @@ describe('ExceptionCenterSurface', () => {
     expect(html).toContain('href="/overview"');
     expect(html).toContain('href="/log/manage"');
     expect(html).toContain('href="/trace/manage"');
-    expect(html).toContain('返回概览');
+    expect(html).toContain('打开总览');
     expect(html).toContain('日志工作台');
     expect(html).toContain('链路工作台');
   });
@@ -85,6 +81,7 @@ describe('ExceptionCenterSurface', () => {
     expect(source).not.toContain('StatusState');
     expect(source).not.toContain("from '../workbench/primitives'");
     expect(source).toContain('data-exception-center-surface="hertzbeat-exceptions"');
+    expect(source).toContain("aria-label={t('exception.chrome.refresh-filters')}");
     expect(source).not.toContain('signoz');
   });
 });

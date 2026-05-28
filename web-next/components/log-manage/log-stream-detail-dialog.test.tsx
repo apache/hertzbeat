@@ -1,7 +1,14 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
 import { LogStreamDetailDialog } from './log-stream-detail-dialog';
+
+vi.mock('@/components/providers/i18n-provider', () => ({
+  useI18n: () => ({
+    t: createTranslatorMock({ locale: 'zh-CN' })
+  })
+}));
 
 describe('log stream detail dialog', () => {
   it('renders facts and toolbar actions for the selected stream log', () => {
@@ -15,6 +22,7 @@ describe('log stream detail dialog', () => {
         selectionState="attached"
         badges={['JSON']}
         metaItems={['traceId · trace-123']}
+        warning="Detached stream selection"
         facts={[
           { label: 'Severity', value: 'ERROR' },
           { label: 'Timestamp', value: '2026-04-10 10:00:00' },
@@ -43,11 +51,35 @@ describe('log stream detail dialog', () => {
     );
 
     expect(html).toContain('data-log-stream-detail-dialog="true"');
+    expect(html).toContain('data-log-stream-detail-dialog-body-owner="hertzbeat-ui-dialog-body-layout"');
+    expect(html).toContain('data-hz-ui="dialog-body-layout"');
+    expect(html).toContain('data-hz-dialog-body-layout-variant="stack"');
     expect(html).toContain('data-log-stream-detail-trace-id="trace-123"');
     expect(html).toContain('data-log-stream-detail-selection="attached"');
+    expect(html).toContain('data-log-stream-detail-warning-owner="hertzbeat-ui-state-notice"');
+    expect(html).toContain('data-log-stream-detail-warning="attached-state-warning"');
+    expect(html).toContain('data-hz-ui="state-notice"');
+    expect(html).toContain('data-hz-state-tone="warning"');
+    expect(html).toContain('data-hz-state-variant="embedded"');
+    expect(html).toContain('Detached stream selection');
     expect(html).toContain('data-log-stream-detail-facts="true"');
+    expect(html).toContain('data-log-stream-detail-facts-owner="hertzbeat-ui-detail-rows"');
+    expect(html).toContain('data-log-stream-detail-row-list-owner="hertzbeat-ui-detail-rows"');
+    expect(html).toContain('data-hz-ui="detail-rows"');
     expect(html).toContain('data-log-stream-detail-attribution-diagnostics="hertzbeat-attribute-diagnostics"');
+    expect(html).toContain('data-log-stream-detail-attribution-diagnostics-owner="hertzbeat-ui-attribute-diagnostics"');
+    expect(html).toContain('data-hz-ui="attribute-diagnostics"');
     expect(html).toContain('data-log-stream-detail-attribution-diagnostic-state="missing"');
+    expect(html).toContain('data-log-stream-detail-toolbar-owner="hertzbeat-ui-toolbar-chips"');
+    expect(html).toContain('data-hz-ui="chip-group"');
+    expect(html).toContain('data-hz-chip-group-owner="hertzbeat-ui-toolbar-chips"');
+    expect(html).toContain('data-log-stream-detail-toolbar-badge-owner="hertzbeat-ui-status-badge"');
+    expect(html).toContain('data-log-stream-detail-toolbar-meta-owner="hertzbeat-ui-inline-context-mark"');
+    expect(html).toContain('data-hz-ui="status-badge"');
+    expect(html).toContain('data-hz-ui="inline-context-mark"');
+    expect(html).toContain('data-log-stream-detail-actions-owner="hertzbeat-ui-action-group"');
+    expect(html).toContain('data-log-stream-detail-actions="dialog-actions"');
+    expect(html).toContain('data-hz-ui="action-group"');
     expect(html).toContain('归因诊断');
     expect(html).toContain('hertzbeat.entity_id');
     expect(html).toContain('缺少实体 ID，实体详情会保持禁用');

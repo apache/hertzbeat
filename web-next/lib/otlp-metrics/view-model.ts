@@ -94,38 +94,38 @@ export function buildConsoleFacts(
   formatTime: (value?: number | string | null) => string
 ) {
   return [
-    { label: '指标序列', value: String(data.stats?.totalSeries ?? 0) },
-    { label: '有数据序列', value: String(data.stats?.nonEmptySeries ?? 0) },
-    { label: '存储来源', value: data.datasource || '-' },
-    { label: '最近上报', value: formatTime(data.stats?.latestObservedAt) }
+    { label: t('otlp.metrics.stats.total-series'), value: String(data.stats?.totalSeries ?? 0) },
+    { label: t('otlp.metrics.stats.non-empty-series'), value: String(data.stats?.nonEmptySeries ?? 0) },
+    { label: t('otlp.metrics.stats.datasource'), value: data.datasource || '-' },
+    { label: t('otlp.metrics.stats.latest-observed'), value: formatTime(data.stats?.latestObservedAt) }
   ];
 }
 
 export function buildConsoleMetrics(data: OtlpMetricsConsole, t: Translator) {
   return [
-    { label: '有数据序列', value: String(data.stats?.nonEmptySeries ?? 0) },
-    { label: '序列总数', value: String(data.stats?.totalSeries ?? 0) },
-    { label: '接入状态', value: data.query ? t('common.ready') : t('common.empty') }
+    { label: t('otlp.metrics.stats.non-empty-series'), value: String(data.stats?.nonEmptySeries ?? 0) },
+    { label: t('otlp.metrics.stats.series-total'), value: String(data.stats?.totalSeries ?? 0) },
+    { label: t('otlp.metrics.stats.intake-state'), value: data.query ? t('common.ready') : t('common.empty') }
   ];
 }
 
-export function buildMetricsExplorerState(data: OtlpMetricsConsole): MetricsExplorerState {
+export function buildMetricsExplorerState(data: OtlpMetricsConsole, t: Translator): MetricsExplorerState {
   const totalSeries = data.stats?.totalSeries ?? data.results?.frames?.length ?? 0;
   const nonEmptySeries = data.stats?.nonEmptySeries ?? 0;
   return {
-    chartLabel: `${nonEmptySeries} 条有数据序列`,
+    chartLabel: t('otlp.metrics.explorer.chart-label', { count: nonEmptySeries }),
     hasSeries: totalSeries > 0 || nonEmptySeries > 0,
-    emptyTitle: '暂无指标序列',
-    noMetricsTitle: '确认时间范围、实体归因、采集器和监控模板后再查看指标。',
-    sendMetricsLabel: '等待 OTLP 指标写入',
-    seriesCountLabel: `${totalSeries} 条序列`
+    emptyTitle: t('otlp.metrics.explorer.empty-title'),
+    noMetricsTitle: t('otlp.metrics.explorer.no-metrics-title'),
+    sendMetricsLabel: t('otlp.metrics.explorer.waiting-ingest'),
+    seriesCountLabel: t('otlp.metrics.explorer.series-count', { count: totalSeries })
   };
 }
 
 export function buildConsoleRows(data: OtlpMetricsConsole, t: Translator) {
   return [
-    { title: '当前指标', copy: data.query || '-', meta: data.emptyStateReason || data.errorMessage || t('otlp.metrics.query-ready') },
-    { title: '排障去向', copy: '关联实体、日志、链路和告警处理。', meta: '按服务、模板和时间范围继续定位' }
+    { title: t('otlp.metrics.context.current-metric'), copy: data.query || '-', meta: data.emptyStateReason || data.errorMessage || t('otlp.metrics.query-ready') },
+    { title: t('otlp.metrics.context.handoff-destination'), copy: t('otlp.metrics.context.handoff-copy'), meta: t('otlp.metrics.context.handoff-meta') }
   ];
 }
 
@@ -135,8 +135,8 @@ export function buildContextRows(
   formatTime: (value?: number | string | null) => string
 ) {
   return [
-    { title: '当前服务', copy: data.context?.serviceName || '-', meta: data.context?.serviceNamespace || '-' },
-    { title: '时间范围', copy: `${formatTime(data.context?.start)} → ${formatTime(data.context?.end)}`, meta: data.results?.msg || t('otlp.metrics.query-context') }
+    { title: t('otlp.metrics.context.current-service'), copy: data.context?.serviceName || '-', meta: data.context?.serviceNamespace || '-' },
+    { title: t('otlp.metrics.context.time-range'), copy: `${formatTime(data.context?.start)} → ${formatTime(data.context?.end)}`, meta: data.results?.msg || t('otlp.metrics.query-context') }
   ];
 }
 
@@ -278,7 +278,7 @@ export function buildMetricSeriesRows(seriesList: OtlpMetricSeriesView[], t: Tra
       copy: context.serviceName || t('otlp.metrics.series.unknown-service'),
       meta: series.latestValue == null ? '-' : String(series.latestValue),
       entityLabel: context.entityName || entityId || '-',
-      entityMeta: entityId ? `entityId ${entityId}` : '等待实体归因',
+      entityMeta: entityId ? t('otlp.metrics.series.entity-id', { entityId }) : t('otlp.metrics.series.entity-missing'),
       entityState: entityId ? 'present' : 'missing'
     };
   });
@@ -290,36 +290,37 @@ export function buildMetricSeriesContextRows(series: OtlpMetricSeriesView | null
   const entityId = readEntityIdRouteParam(context.entityId);
   return [
     {
-      label: '指标名称',
+      label: t('otlp.metrics.series.context.metric-name'),
       value: series.name || '-',
-      meta: '当前选中序列'
+      meta: t('otlp.metrics.series.context.selected-series')
     },
     {
-      label: '关联实体',
+      label: t('otlp.metrics.series.context.entity'),
       value: context.entityName || entityId || '-',
-      meta: entityId ? `entityId ${entityId}` : '等待实体归因'
+      meta: entityId ? t('otlp.metrics.series.entity-id', { entityId }) : t('otlp.metrics.series.entity-missing')
     },
     {
-      label: '当前服务',
+      label: t('otlp.metrics.series.context.service'),
       value: context.serviceName || '-',
-      meta: context.serviceNamespace || '服务上下文'
+      meta: context.serviceNamespace || t('otlp.metrics.series.context.service-context')
     },
     {
-      label: '采集模板',
+      label: t('otlp.metrics.series.context.template'),
       value: context.template || '-',
-      meta: context.collector ? `采集器 ${context.collector}` : '监控模板'
+      meta: context.collector ? t('otlp.metrics.series.context.collector', { collector: context.collector }) : t('otlp.metrics.series.context.monitor-template')
     },
     {
-      label: '当前环境',
+      label: t('otlp.metrics.series.context.environment'),
       value: context.environment || '-',
-      meta: '部署环境'
+      meta: t('otlp.metrics.series.context.deployment-environment')
     }
   ];
 }
 
 export function buildMetricSeriesEvidenceRows(
   series: OtlpMetricSeriesView | null | undefined,
-  formatTime: (value?: number | string | null) => string
+  formatTime: (value?: number | string | null) => string,
+  t: Translator
 ): OtlpMetricSeriesEvidenceRow[] {
   if (!series) return [];
   const validPoints = series.points.filter((point): point is [number, number] => {
@@ -340,36 +341,37 @@ export function buildMetricSeriesEvidenceRows(
 
   return [
     {
-      label: '采样点',
+      label: t('otlp.metrics.evidence.samples'),
       value: String(validPoints.length),
-      meta: skippedCount > 0 ? `${skippedCount} 个空值已跳过` : '真实采样点'
+      meta: skippedCount > 0 ? t('otlp.metrics.evidence.empty-skipped', { count: skippedCount }) : t('otlp.metrics.evidence.real-samples')
     },
     {
-      label: '最新值',
+      label: t('otlp.metrics.evidence.latest-value'),
       value: latestPoint ? String(latestPoint[1]) : '-',
-      meta: latestPoint ? formatTime(latestPoint[0]) : '等待最新采样'
+      meta: latestPoint ? formatTime(latestPoint[0]) : t('otlp.metrics.evidence.waiting-latest')
     },
     {
-      label: '值域',
+      label: t('otlp.metrics.evidence.value-range'),
       value: minValue != null && maxValue != null ? `${minValue} - ${maxValue}` : '-',
-      meta: average != null ? `平均 ${average}` : '等待真实采样'
+      meta: average != null ? t('otlp.metrics.evidence.average', { average }) : t('otlp.metrics.evidence.waiting-real-samples')
     },
     {
-      label: '采样窗口',
+      label: t('otlp.metrics.evidence.sample-window'),
       value: firstTimestamp != null && lastTimestamp != null ? `${formatTime(firstTimestamp)} → ${formatTime(lastTimestamp)}` : '-',
-      meta: firstTimestamp != null && lastTimestamp != null ? '真实采样时间' : '等待采样时间'
+      meta: firstTimestamp != null && lastTimestamp != null ? t('otlp.metrics.evidence.real-sample-time') : t('otlp.metrics.evidence.waiting-sample-time')
     },
     {
-      label: '关联链路',
+      label: t('otlp.metrics.evidence.linked-trace'),
       value: traceId || '-',
-      meta: spanId || (traceId ? '未提供 span_id' : '缺少 trace_id/span_id')
+      meta: spanId || (traceId ? t('otlp.metrics.evidence.missing-span') : t('otlp.metrics.evidence.missing-trace-span'))
     }
   ];
 }
 
 export function buildMetricSeriesLinkedRecordRows(
   series: OtlpMetricSeriesView | null | undefined,
-  handoffLinks: Pick<ReturnType<typeof buildMetricsHandoffLinks>, 'logsHref' | 'tracesHref' | 'alertHandlingHref'>
+  handoffLinks: Pick<ReturnType<typeof buildMetricsHandoffLinks>, 'logsHref' | 'tracesHref' | 'alertHandlingHref'>,
+  t: Translator
 ): OtlpMetricSeriesLinkedRecordRow[] {
   if (!series) return [];
   const traceId = readSeriesLabel(series, 'traceId', 'trace_id', 'trace.id', 'trace_id_hex');
@@ -380,23 +382,23 @@ export function buildMetricSeriesLinkedRecordRows(
   return [
     {
       key: 'logs',
-      label: '历史日志',
-      value: traceId ? '按链路查看' : '按服务查看',
-      meta: traceId ? (spanId ? '历史日志会定位到当前 span' : '历史日志会定位到当前链路') : serviceName ? '缺少链路 ID 时按服务筛选' : '等待服务或链路上下文',
+      label: t('otlp.metrics.handoff.logs'),
+      value: traceId ? t('otlp.metrics.handoff.logs-by-trace') : t('otlp.metrics.handoff.logs-by-service'),
+      meta: traceId ? (spanId ? t('otlp.metrics.handoff.logs-current-span') : t('otlp.metrics.handoff.logs-current-trace')) : serviceName ? t('otlp.metrics.handoff.logs-service-filter') : t('otlp.metrics.handoff.logs-waiting-context'),
       href: handoffLinks.logsHref
     },
     {
       key: 'traces',
-      label: '链路瀑布图',
-      value: traceId ? '可打开' : '等待链路 ID',
-      meta: traceId ? (spanId ? '打开完整链路并保留当前 span' : '打开完整链路') : '指标没有链路 ID，暂不能定位链路',
+      label: t('otlp.metrics.handoff.traces'),
+      value: traceId ? t('otlp.metrics.handoff.trace-open') : t('otlp.metrics.handoff.trace-waiting-id'),
+      meta: traceId ? (spanId ? t('otlp.metrics.handoff.trace-full-current-span') : t('otlp.metrics.handoff.trace-full')) : t('otlp.metrics.handoff.trace-missing-id'),
       href: handoffLinks.tracesHref
     },
     {
       key: 'alerts',
-      label: '告警处理',
-      value: entityId ? '带实体处理' : '按服务处理',
-      meta: entityId ? '按实体、服务和指标进入告警' : '缺少实体 ID 时按服务进入告警',
+      label: t('otlp.metrics.handoff.alerts'),
+      value: entityId ? t('otlp.metrics.handoff.alerts-by-entity') : t('otlp.metrics.handoff.alerts-by-service'),
+      meta: entityId ? t('otlp.metrics.handoff.alerts-by-entity-meta') : t('otlp.metrics.handoff.alerts-by-service-meta'),
       href: handoffLinks.alertHandlingHref
     }
   ];
@@ -422,11 +424,11 @@ export function buildMetricSeriesAttributionDiagnostics(
   });
 
   return [
-    row('hertzbeat.entity_id', entityId, entityId ? '可打开实体详情' : '缺少实体 ID，实体详情会保持禁用'),
-    row('hertzbeat.entity_name', entityName, '用于展示实体名称'),
-    row('hertzbeat.workspace_id', workspaceId, '缺少工作区字段时使用当前部署上下文'),
-    row('hertzbeat.collector', collector, '采集器来源'),
-    row('hertzbeat.template', template, '监控模板归属')
+    row('hertzbeat.entity_id', entityId, entityId ? t('otlp.metrics.attribution.entity-id.present') : t('otlp.metrics.attribution.entity-id.missing')),
+    row('hertzbeat.entity_name', entityName, t('otlp.metrics.attribution.entity-name')),
+    row('hertzbeat.workspace_id', workspaceId, t('otlp.metrics.attribution.workspace-id')),
+    row('hertzbeat.collector', collector, t('otlp.metrics.attribution.collector')),
+    row('hertzbeat.template', template, t('otlp.metrics.attribution.template'))
   ];
 }
 

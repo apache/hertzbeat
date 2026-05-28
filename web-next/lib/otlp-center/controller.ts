@@ -2,6 +2,10 @@ import type { OtlpEntityBindingSummary, OtlpIngestionGuide, OtlpIngestionOvervie
 
 type ApiGetter = <T>(url: string) => Promise<T>;
 
+export const OTLP_OVERVIEW_URL = '/ingestion/otlp/overview';
+export const OTLP_GUIDE_URL = '/ingestion/otlp/guide';
+export const OTLP_BINDINGS_URL = '/ingestion/otlp/bindings';
+
 const fallbackGuide: OtlpIngestionGuide = {
   httpProtocolLabel: 'HTTP',
   grpcProtocolLabel: 'gRPC',
@@ -14,21 +18,21 @@ const fallbackGuide: OtlpIngestionGuide = {
       protocol: 'http',
       mode: 'push',
       endpoint: '/api/otlp/v1/metrics',
-      summary: '通过 Collector 或 SDK 推送指标，再绑定到 HertzBeat 监控模板。'
+      summary: 'otlp.guide.fallback.metrics.summary'
     },
     {
       signal: 'logs',
       protocol: 'http',
       mode: 'push',
       endpoint: '/api/otlp/v1/logs',
-      summary: '通过 OTLP 日志上报进入日志工作台，并参与实体归并。'
+      summary: 'otlp.guide.fallback.logs.summary'
     },
     {
       signal: 'traces',
       protocol: 'http',
       mode: 'push',
       endpoint: '/api/otlp/v1/traces',
-      summary: '通过 OTLP 链路上报生成服务调用关系和拓扑证据。'
+      summary: 'otlp.guide.fallback.traces.summary'
     }
   ],
   snippets: []
@@ -38,6 +42,7 @@ const fallbackBindings: OtlpEntityBindingSummary = {
   canonicalIdentityKeys: ['service.name', 'service.namespace', 'deployment.environment'],
   recentServices: [],
   recentBoundEntities: [],
+  recentUnboundCandidates: [],
   recentIdentitySamples: []
 };
 
@@ -51,9 +56,9 @@ async function loadWithFallback<T>(load: Promise<T>, fallback: T): Promise<T> {
 
 export async function loadOtlpPageData(apiGet: ApiGetter) {
   const [overview, guide, bindings] = await Promise.all([
-    apiGet<OtlpIngestionOverview>('/ingestion/otlp/overview'),
-    loadWithFallback(apiGet<OtlpIngestionGuide>('/ingestion/otlp/guide'), fallbackGuide),
-    loadWithFallback(apiGet<OtlpEntityBindingSummary>('/ingestion/otlp/bindings'), fallbackBindings)
+    apiGet<OtlpIngestionOverview>(OTLP_OVERVIEW_URL),
+    loadWithFallback(apiGet<OtlpIngestionGuide>(OTLP_GUIDE_URL), fallbackGuide),
+    loadWithFallback(apiGet<OtlpEntityBindingSummary>(OTLP_BINDINGS_URL), fallbackBindings)
   ]);
 
   return { overview, guide, bindings };

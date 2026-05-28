@@ -1,16 +1,20 @@
 'use client';
 
 import React from 'react';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 
 export type ObservabilityTabStripItem<T extends string> = {
   key: T;
   label: React.ReactNode;
 };
 
+const DEFAULT_OBSERVABILITY_TAB_STRIP_ARIA_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['common.tab-navigation'] ?? 'common.tab-navigation';
+
 export function ObservabilityTabStrip<T extends string>({
   items,
   selectedKey,
   onSelect,
+  ariaLabel = DEFAULT_OBSERVABILITY_TAB_STRIP_ARIA_LABEL,
   panelIdPrefix = 'observability',
   tone = 'default',
   variant = 'line',
@@ -19,6 +23,7 @@ export function ObservabilityTabStrip<T extends string>({
   items: Array<ObservabilityTabStripItem<T>>;
   selectedKey: T;
   onSelect: (key: T) => void;
+  ariaLabel?: string;
   panelIdPrefix?: string;
   tone?: 'default' | 'deck' | 'operator';
   variant?: 'line' | 'card';
@@ -52,6 +57,7 @@ export function ObservabilityTabStrip<T extends string>({
         <div
           className="flex flex-wrap items-end gap-1"
           role="tablist"
+          aria-label={ariaLabel}
           aria-orientation="horizontal"
           data-observability-tabstrip-card-list="true"
         >
@@ -110,6 +116,7 @@ export function ObservabilityTabStrip<T extends string>({
           extra ? '' : 'border-b border-[var(--ops-border-color)]'
         ].join(' ')}
         role="tablist"
+        aria-label={ariaLabel}
         aria-orientation="horizontal"
         data-observability-tabstrip-variant="line"
       >

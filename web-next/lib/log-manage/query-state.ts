@@ -1,4 +1,12 @@
-import { copySignalRouteContextParams, readEpochMillisRouteParam, type SignalRouteContext } from '../signal-route-context';
+import { createCompatSearchParamReader, type SearchParamsRecord } from '../compat/search-params';
+import {
+  copySignalRouteContextParams,
+  readEpochMillisRouteParam,
+  readSignalRouteContext,
+  type SignalRouteContext
+} from '../signal-route-context';
+
+export type { SearchParamsRecord };
 
 export type LogQueryState = {
   search: string;
@@ -10,6 +18,15 @@ export type LogQueryState = {
 };
 
 export type LogWorkbenchView = 'list' | 'stream';
+
+export type LogManageSearchParams = SearchParamsRecord;
+
+export type LogManageRouteState = {
+  initialQuery: LogQueryState;
+  currentView: LogWorkbenchView;
+  routeContext: SignalRouteContext;
+  shouldCleanUrl: boolean;
+};
 
 export type SearchParamReader = {
   get(name: string): string | null;
@@ -40,6 +57,21 @@ function readSearchParam(searchParams: SearchParamReader, name: string) {
   const value = searchParams.get(name);
   if (value == null) return '';
   return value.trim();
+}
+
+function readFirstSearchParamValue(searchParams: LogManageSearchParams | undefined, key: string): string {
+  const value = searchParams?.[key];
+  if (Array.isArray(value)) {
+    return value[0] || '';
+  }
+  return value || '';
+}
+
+function hasLogRouteDisplayLabels(searchParams?: LogManageSearchParams): boolean {
+  return Boolean(
+    readFirstSearchParamValue(searchParams, 'returnLabel') ||
+      readFirstSearchParamValue(searchParams, 'returnTo').includes('returnLabel')
+  );
 }
 
 function normalizeSeverityNumberParam(value: string | null | undefined) {
@@ -114,6 +146,26 @@ export function buildLogCompatRouteUrl(
   copyLogRouteContextParams(searchParams, nextParams);
   const queryString = nextParams.toString();
   return queryString ? `/log/manage?${queryString}` : '/log/manage';
+}
+
+export function buildLogCompatRouteUrlFromSearchParams(
+  searchParams?: SearchParamsRecord,
+  options?: {
+    view?: LogWorkbenchView;
+    fallbackSearch?: string;
+  }
+) {
+  return buildLogCompatRouteUrl(createCompatSearchParamReader(searchParams), options);
+}
+
+export function readLogManageRouteState(searchParams?: LogManageSearchParams): LogManageRouteState {
+  const reader = createCompatSearchParamReader(searchParams);
+  return {
+    initialQuery: queryStateFromParams(reader),
+    currentView: resolveLogWorkbenchView(reader),
+    routeContext: readSignalRouteContext(reader),
+    shouldCleanUrl: hasLogRouteDisplayLabels(searchParams)
+  };
 }
 
 export function buildLogUrls(query: LogQueryState, routeContext: SignalRouteContext = {}) {

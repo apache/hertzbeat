@@ -21,6 +21,16 @@ type TimeRangeControlTranslator = (key: string) => string;
 type TimeRangePresetLabels = Partial<Record<TimeContextPreset, string>>;
 type TimeRangeControlVariant = 'toolbar' | 'narrow-rail';
 
+const DEFAULT_TIME_RANGE_PRESET_LABELS: Record<TimeContextPreset, string> = {
+  'last-30m': 'Last 30 minutes',
+  'last-1h': 'Last 1 hour',
+  'last-6h': 'Last 6 hours',
+  'last-1d': 'Last 1 day',
+  'last-1w': 'Last 1 week',
+  'last-4w': 'Last 4 weeks',
+  'last-12w': 'Last 12 weeks'
+};
+
 export type TimeRangeControlLabels = {
   preset: string;
   presets: TimeRangePresetLabels;
@@ -44,7 +54,7 @@ export type TimeRangeControlLabels = {
 
 const DEFAULT_LABELS: TimeRangeControlLabels = {
   preset: 'Time range',
-  presets: Object.fromEntries(TIME_CONTEXT_PRESETS.map(preset => [preset.value, preset.label])) as TimeRangePresetLabels,
+  presets: DEFAULT_TIME_RANGE_PRESET_LABELS,
   relative: 'Relative',
   start: 'Start',
   end: 'End',
@@ -105,7 +115,7 @@ export function buildTimeRangePresetLabels(t: TimeRangeControlTranslator): TimeR
   return Object.fromEntries(
     TIME_CONTEXT_PRESETS.map(preset => [
       preset.value,
-      readLocalizedLabel(t, `time.range.preset.${preset.value}`, preset.label)
+      readLocalizedLabel(t, `time.range.preset.${preset.value}`, DEFAULT_TIME_RANGE_PRESET_LABELS[preset.value])
     ])
   ) as TimeRangePresetLabels;
 }
@@ -113,7 +123,7 @@ export function buildTimeRangePresetLabels(t: TimeRangeControlTranslator): TimeR
 function buildTimeRangePresetOptions(labels: TimeRangePresetLabels): TimeRangePresetOption[] {
   return TIME_CONTEXT_PRESETS.map(preset => ({
     value: preset.value,
-    label: labels[preset.value] || preset.label
+    label: labels[preset.value] || DEFAULT_TIME_RANGE_PRESET_LABELS[preset.value]
   }));
 }
 
@@ -217,6 +227,22 @@ function stableContextSignature(context: TimeContext) {
   });
 }
 
+export type TimeRangeControlProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'onReset'> & {
+  value: TimeContext;
+  onApply: (context: TimeContext) => void;
+  onRefresh?: () => void;
+  onReset?: () => void;
+  presets?: TimeRangePresetOption[];
+  refreshOptions?: TimeRangePresetOption[];
+  timezoneOptions?: string[];
+  labels?: Partial<TimeRangeControlLabels>;
+  showAbsoluteFields?: boolean;
+  variant?: TimeRangeControlVariant;
+  presetSelectProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
+  presetOptionDataAttribute?: string;
+  refreshActionProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
+};
+
 export function TimeRangeControl({
   value,
   onApply,
@@ -231,23 +257,9 @@ export function TimeRangeControl({
   presetSelectProps,
   presetOptionDataAttribute,
   refreshActionProps,
-  variant = 'toolbar'
-}: {
-  value: TimeContext;
-  onApply: (context: TimeContext) => void;
-  onRefresh?: () => void;
-  onReset?: () => void;
-  presets?: TimeRangePresetOption[];
-  refreshOptions?: TimeRangePresetOption[];
-  timezoneOptions?: string[];
-  labels?: Partial<TimeRangeControlLabels>;
-  className?: string;
-  showAbsoluteFields?: boolean;
-  variant?: TimeRangeControlVariant;
-  presetSelectProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
-  presetOptionDataAttribute?: string;
-  refreshActionProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
-}) {
+  variant = 'toolbar',
+  ...rootProps
+}: TimeRangeControlProps) {
   const mergedLabels = {
     ...DEFAULT_LABELS,
     ...labels,
@@ -319,6 +331,7 @@ export function TimeRangeControl({
 
   return (
     <div
+      {...rootProps}
       className={cn(
         rootClass,
         className
@@ -328,6 +341,7 @@ export function TimeRangeControl({
       data-time-range-control-visual={isNarrowRail ? 'grafana-like-narrow-rail' : 'cold-operator-toolbar'}
       data-time-range-control-density={isNarrowRail ? 'narrow' : 'compact'}
       data-time-range-control-layout={isNarrowRail ? 'nowrap-top-right-rail' : 'single-row-rail'}
+      data-time-range-control-align={isNarrowRail ? 'end' : 'natural'}
       data-time-range-control-wrap={isNarrowRail ? 'nowrap' : 'wrap'}
       data-time-range-control-card={isNarrowRail ? 'false' : 'true'}
       data-time-range-control-overflow={isNarrowRail ? 'fit-without-scroll' : 'wrap'}

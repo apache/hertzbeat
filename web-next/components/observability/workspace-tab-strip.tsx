@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import * as React from 'react';
 import { cn } from '../../lib/utils';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 
 export type WorkspaceShellTab = {
   key: string;
@@ -13,6 +14,8 @@ export type WorkspaceShellTab = {
   badge?: string;
   onSelect?: () => void;
 };
+
+const DEFAULT_WORKSPACE_TAB_STRIP_ARIA_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['common.workspace-navigation'] ?? 'common.workspace-navigation';
 
 function WorkspaceTabControl({
   tab,
@@ -63,7 +66,7 @@ function WorkspaceTabControl({
 
 export function WorkspaceTabStrip({
   tabs,
-  ariaLabel = 'Workspace navigation',
+  ariaLabel = DEFAULT_WORKSPACE_TAB_STRIP_ARIA_LABEL,
   className,
   variant = 'default'
 }: {

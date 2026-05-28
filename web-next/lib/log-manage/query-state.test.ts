@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildLogCompatRouteUrl,
+  buildLogCompatRouteUrlFromSearchParams,
   buildLogRouteUrl,
   buildLogStreamUrl,
   buildLogUrls,
   copyLogRouteContextParams,
   queryStateFromParams,
+  readLogManageRouteState,
   resolveBrowserLogStreamUrl,
   resolveLogWorkbenchView
 } from './query-state';
@@ -189,6 +191,71 @@ describe('log query state codec', () => {
     ).toBe(
       '/log/manage?search=checkout+timeout&traceId=trace-123&spanId=span-456&severityText=ERROR&view=stream&start=10&end=20&timeRange=last-1h&refresh=30&live=false&tz=Asia%2FShanghai&entityId=7&entityName=Checkout+API&returnTo=%2Foverview&serviceName=checkout&serviceNamespace=payments&environment=prod'
     );
+  });
+
+  it('maps raw Next search params through the log compatibility owner', () => {
+    expect(
+      buildLogCompatRouteUrlFromSearchParams(
+        {
+          content: ' checkout timeout ',
+          traceId: ' trace-123 ',
+          severityNumber: '17',
+          start: '10',
+          end: '20',
+          entityId: '7',
+          entityName: 'Checkout API',
+          returnTo: '/overview?returnLabel=Overview',
+          returnLabel: 'Overview',
+          serviceName: 'checkout',
+          environment: ['prod', 'ignored']
+        },
+        { view: 'list' }
+      )
+    ).toBe(
+      '/log/manage?search=checkout+timeout&traceId=trace-123&severityNumber=17&view=list&start=10&end=20&entityId=7&entityName=Checkout+API&returnTo=%2Foverview&serviceName=checkout&environment=prod'
+    );
+  });
+
+  it('normalizes multi-value URL search params into the first log manage query value', () => {
+    const routeState = readLogManageRouteState({
+      search: [' checkout timeout ', 'ignored'],
+      logContent: [' raw timeout ', 'ignored raw'],
+      traceId: ['trace-123', 'trace-ignored'],
+      spanId: ['span-456', 'span-ignored'],
+      severityNumber: ['17', '25'],
+      severityText: ['ERROR', 'WARN'],
+      view: ['list', 'stream'],
+      timeRange: ['last-1h', 'last-6h'],
+      start: ['10', 'not-epoch'],
+      end: ['20', 'not-epoch'],
+      entityId: ['7', '8'],
+      entityName: ['Checkout API', 'Payments API'],
+      serviceName: ['checkout', 'payments'],
+      environment: ['prod', 'staging'],
+      returnTo: ['/overview?returnLabel=Overview', '/entities'],
+      returnLabel: ['Overview', 'Entities']
+    });
+
+    expect(routeState.initialQuery).toEqual({
+      search: 'checkout timeout',
+      logContent: 'raw timeout',
+      traceId: 'trace-123',
+      spanId: 'span-456',
+      severityNumber: '17',
+      severityText: 'ERROR'
+    });
+    expect(routeState.currentView).toBe('list');
+    expect(routeState.routeContext).toMatchObject({
+      timeRange: 'last-1h',
+      start: '10',
+      end: '20',
+      entityId: '7',
+      entityName: 'Checkout API',
+      serviceName: 'checkout',
+      environment: 'prod',
+      returnTo: '/overview'
+    });
+    expect(routeState.shouldCleanUrl).toBe(true);
   });
 
   it('preserves machine log route context params while rewriting the canonical query string', () => {

@@ -23,12 +23,15 @@ const t = createTranslatorMock({ locale: 'zh-CN' });
 describe('otlp metrics view model', () => {
   it('builds the cold metrics Workbench empty-state summary', () => {
     expect(
-      buildMetricsExplorerState({
-        query: '',
-        stats: { totalSeries: 0, nonEmptySeries: 0 },
-        results: { frames: [] },
-        emptyStateReason: 'no_context'
-      } as any)
+      buildMetricsExplorerState(
+        {
+          query: '',
+          stats: { totalSeries: 0, nonEmptySeries: 0 },
+          results: { frames: [] },
+          emptyStateReason: 'no_context'
+        } as any,
+        t
+      )
     ).toEqual({
       chartLabel: '0 条有数据序列',
       hasSeries: false,
@@ -180,15 +183,18 @@ describe('otlp metrics view model', () => {
   });
 
   it('maps OTLP metric chart zoom into the shared absolute time context only when applied', () => {
+    const first = new Date(2026, 4, 17, 15, 0, 0).getTime();
+    const middle = new Date(2026, 4, 17, 16, 0, 0).getTime();
+    const last = new Date(2026, 4, 17, 17, 0, 0).getTime();
     const series = [
       {
         key: 'http_requests_total-0',
         name: 'http_requests_total',
         labels: { service_name: 'checkout' },
         points: [
-          [1000, 12],
-          [2000, 14],
-          [3000, 16]
+          [first, 12],
+          [middle, 14],
+          [last, 16]
         ],
         latestValue: 16
       }
@@ -196,8 +202,8 @@ describe('otlp metrics view model', () => {
 
     expect(buildMetricsDataZoomTimeContext(series as any, { start: 25, end: 75 }, 'last-1h')).toEqual({
       timeRange: 'last-1h',
-      start: '1500',
-      end: '2500'
+      from: '2026-05-17 15:30:00',
+      to: '2026-05-17 16:30:00'
     });
 
     expect(buildMetricsDataZoomTimeContext(series as any, { start: 0, end: 100 }, 'last-1h')).toBeNull();
@@ -252,7 +258,8 @@ describe('otlp metrics view model', () => {
             latestValue: 18
           }
         ],
-        value => `T${value}`
+        value => `T${value}`,
+        t
       )
     ).toEqual([
       {
@@ -329,7 +336,8 @@ describe('otlp metrics view model', () => {
           ],
           latestValue: 18
         },
-        value => `T${value}`
+        value => `T${value}`,
+        t
       )
     ).toEqual([
       { label: '采样点', value: '3', meta: '1 个空值已跳过' },
@@ -359,7 +367,7 @@ describe('otlp metrics view model', () => {
       alertHandlingHref: '/alert?status=firing&signal=metrics&search=checkout'
     };
 
-    expect(buildMetricSeriesLinkedRecordRows(series, handoffLinks)).toEqual([
+    expect(buildMetricSeriesLinkedRecordRows(series, handoffLinks, t)).toEqual([
       {
         key: 'logs',
         label: '历史日志',

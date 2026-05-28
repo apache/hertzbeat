@@ -2,7 +2,7 @@ import { copySignalRouteContextParams, type SearchParamReader as SignalSearchPar
 
 export type SearchParamsRecord = Record<string, string | string[] | undefined>;
 
-export function createSearchParamReader(searchParams?: SearchParamsRecord, source?: string): SignalSearchParamReader {
+export function createSearchParamReader(searchParams?: SearchParamsRecord): SignalSearchParamReader {
   const params = new URLSearchParams();
 
   Object.entries(searchParams || {}).forEach(([key, value]) => {
@@ -16,10 +16,6 @@ export function createSearchParamReader(searchParams?: SearchParamsRecord, sourc
       params.set(key, value);
     }
   });
-
-  if (source && !params.get('search')?.trim() && !params.get('content')?.trim()) {
-    params.set('search', source);
-  }
 
   return {
     get(name: string) {

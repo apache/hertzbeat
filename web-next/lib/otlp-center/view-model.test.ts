@@ -8,6 +8,7 @@ import {
   buildReadinessRows,
   buildSelfCheckRows,
   buildSignalRows,
+  buildUnboundCandidateRows,
   filterGuideRowsByProtocol,
   filterGuideSnippetsByProtocol
 } from './view-model';
@@ -39,6 +40,24 @@ describe('otlp center view model', () => {
     ]);
   });
 
+  it('resolves fallback guide summary keys through i18n', () => {
+    expect(
+      buildGuideRows(
+        [
+          {
+            signal: 'metrics',
+            protocol: 'http',
+            summary: 'otlp.guide.fallback.metrics.summary',
+            endpoint: '/v1/metrics'
+          }
+        ] as any,
+        ((key: string) => (key === 'otlp.guide.fallback.metrics.summary' ? 'Translated metrics guide' : key)) as any
+      )
+    ).toEqual([
+      { title: 'metrics · http', copy: 'Translated metrics guide', meta: '/v1/metrics' }
+    ]);
+  });
+
   it('builds binding rows', () => {
     expect(
       buildBindingRows([
@@ -49,7 +68,41 @@ describe('otlp center view model', () => {
     ]);
   });
 
-  it('builds OTLP readiness rows only from overview fields returned by the backend today', () => {
+  it('builds OTLP unbound entity candidate rows from telemetry identity without inventing entity health', () => {
+    const rows = buildUnboundCandidateRows([
+      {
+        suggestedName: 'checkout',
+        suggestedType: 'service',
+        namespace: 'commerce',
+        environment: 'prod',
+        primaryIdentityKey: 'service.name',
+        primaryIdentityValue: 'checkout',
+        signals: ['logs', 'metrics'],
+        canonicalIdentities: {
+          'service.name': 'checkout',
+          'service.namespace': 'commerce',
+          'deployment.environment.name': 'prod'
+        },
+        latestObservedAt: 1775834700000
+      }
+    ] as any);
+
+    expect(rows).toEqual([
+      {
+        key: 'service.name:checkout:commerce:prod',
+        title: 'checkout',
+        copy: 'service.name = checkout',
+        meta: 'commerce · prod · logs, metrics',
+        href: '/entities/discovery?identityKey=service.name&identityValue=checkout&serviceName=checkout&serviceNamespace=commerce&environment=prod',
+        signals: ['logs', 'metrics'],
+        canonicalIdentitySummary: 'service.name=checkout;service.namespace=commerce;deployment.environment.name=prod'
+      }
+    ]);
+    expect(JSON.stringify(rows)).not.toContain('healthy');
+    expect(JSON.stringify(rows)).not.toContain('entityId');
+  });
+
+  it('builds OTLP readiness rows through i18n from overview fields returned by the backend today', () => {
     const rows = buildReadinessRows(
       {
         metrics: { signal: 'metrics', active: true, totalCount: 12 },
@@ -66,14 +119,28 @@ describe('otlp center view model', () => {
           { entityId: 1, name: 'checkout', monitorBindCount: 1 }
         ]
       } as any,
-      () => '2026/04/10 18:05:00'
+      () => '2026/04/10 18:05:00',
+      createTranslatorMock({
+        overrides: {
+          'otlp.readiness.signals.title': 'Signals connected',
+          'otlp.readiness.signals.copy': '{{active}} / {{total}} active',
+          'otlp.readiness.latest.title': 'Latest report',
+          'otlp.readiness.latest.received': 'Telemetry received',
+          'otlp.readiness.entity.title': 'Entity attribution',
+          'otlp.readiness.entity.copy': '{{count}} entities',
+          'otlp.readiness.entity.meta': 'Object catalog',
+          'otlp.readiness.discovery.title': 'Service discovery',
+          'otlp.readiness.discovery.copy': '{{count}} services',
+          'otlp.readiness.discovery.meta': 'Last 24 hours'
+        }
+      })
     );
 
     expect(rows).toEqual([
-      { key: 'signals', title: '三信号接入', copy: '2 / 3 活跃', meta: 'Metrics 12 · Logs 9 · Traces 0', tone: 'success' },
-      { key: 'latest-report', title: '最近上报', copy: '2026/04/10 18:05:00', meta: '已收到遥测', tone: 'neutral' },
-      { key: 'entity-binding', title: '实体归因', copy: '3 个实体', meta: '对象目录', tone: 'success' },
-      { key: 'service-discovery', title: '服务发现', copy: '4 个服务', meta: '最近 24 小时', tone: 'success' }
+      { key: 'signals', title: 'Signals connected', copy: '2 / 3 active', meta: 'Metrics 12 · Logs 9 · Traces 0', tone: 'success' },
+      { key: 'latest-report', title: 'Latest report', copy: '2026/04/10 18:05:00', meta: 'Telemetry received', tone: 'neutral' },
+      { key: 'entity-binding', title: 'Entity attribution', copy: '3 entities', meta: 'Object catalog', tone: 'success' },
+      { key: 'service-discovery', title: 'Service discovery', copy: '4 services', meta: 'Last 24 hours', tone: 'success' }
     ]);
     expect(rows.map(row => row.key)).not.toEqual(expect.arrayContaining([
       'dropped',
@@ -100,8 +167,31 @@ describe('otlp center view model', () => {
     ]);
   });
 
-  it('builds the existing HertzBeat collection loop without future-only app entries', () => {
-    const links = buildCollectionLoopLinks();
+  it('builds the existing HertzBeat collection loop through i18n without future-only app entries', () => {
+    const links = buildCollectionLoopLinks(
+      createTranslatorMock({
+        overrides: {
+          'otlp.collection-loop.otlp-intake.title': 'OTLP signal intake',
+          'otlp.collection-loop.otlp-intake.copy': 'Connect OpenTelemetry signals and keep drilldowns available.',
+          'otlp.collection-loop.otlp-intake.meta': 'Signals',
+          'otlp.collection-loop.traditional-monitoring.title': 'Traditional monitors',
+          'otlp.collection-loop.traditional-monitoring.copy': 'Keep host and database monitors in the same operations loop.',
+          'otlp.collection-loop.traditional-monitoring.meta': 'Resources',
+          'otlp.collection-loop.collector-cluster.title': 'Collector cluster',
+          'otlp.collection-loop.collector-cluster.copy': 'Manage collection nodes and dispatch status.',
+          'otlp.collection-loop.collector-cluster.meta': 'Collector',
+          'otlp.collection-loop.monitoring-template.title': 'Monitor templates',
+          'otlp.collection-loop.monitoring-template.copy': 'Maintain templates that map traditional monitors and OTLP entities.',
+          'otlp.collection-loop.monitoring-template.meta': 'Templates',
+          'otlp.collection-loop.service-discovery.title': 'Service discovery',
+          'otlp.collection-loop.service-discovery.copy': 'Confirm discovered services and telemetry identities.',
+          'otlp.collection-loop.service-discovery.meta': 'Discovery',
+          'otlp.collection-loop.object-directory.title': 'Object catalog',
+          'otlp.collection-loop.object-directory.copy': 'Review resources, signals, topology, and alert context around entities.',
+          'otlp.collection-loop.object-directory.meta': 'Entities'
+        }
+      })
+    );
 
     expect(links.map(link => [link.key, link.href])).toEqual([
       ['otlp-intake', '/ingestion/otlp'],
@@ -112,13 +202,14 @@ describe('otlp center view model', () => {
       ['object-directory', '/entities']
     ]);
     expect(links.map(link => link.title)).toEqual([
-      'OTLP 三信号接入',
-      '传统监控资源',
-      '采集器集群',
-      '监控模板',
-      '服务发现',
-      '对象目录'
+      'OTLP signal intake',
+      'Traditional monitors',
+      'Collector cluster',
+      'Monitor templates',
+      'Service discovery',
+      'Object catalog'
     ]);
+    expect(JSON.stringify(links)).not.toMatch(/[\u4e00-\u9fff]/);
     expect(links.map(link => link.href)).not.toEqual(expect.arrayContaining([
       '/observability-pipelines',
       '/pipelines',
