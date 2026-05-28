@@ -138,6 +138,9 @@ export interface Monitor {
   description?: string;
   labels?: Record<string, string>;
   annotations?: Record<string, string>;
+  _displayStatus?: 'ACTIVE' | 'DISAPPEARED';
+  _disappearTime?: number;
+  _graceTimer?: unknown;
   gmtUpdate?: number;
   gmtCreate?: number;
 }
@@ -305,10 +308,23 @@ export interface OtlpBoundEntity {
   monitorBindCount: number;
 }
 
+export interface OtlpUnboundEntityCandidate {
+  suggestedName?: string;
+  suggestedType?: string;
+  namespace?: string;
+  environment?: string;
+  primaryIdentityKey?: string;
+  primaryIdentityValue?: string;
+  signals?: string[];
+  canonicalIdentities?: Record<string, string>;
+  latestObservedAt?: number | null;
+}
+
 export interface OtlpEntityBindingSummary {
   canonicalIdentityKeys: string[];
   recentServices: string[];
   recentBoundEntities: OtlpBoundEntity[];
+  recentUnboundCandidates?: OtlpUnboundEntityCandidate[];
   recentIdentitySamples?: Array<{
     key: string;
     value: string;
@@ -493,10 +509,23 @@ export interface EntityDetailDto {
   monitorSummary?: EntityMonitorSummary;
   logSummary?: EntityLogSummary;
   traceSummary?: EntityTraceSummary;
+  unifiedEvidenceSummary?: EntityUnifiedEvidenceSummary;
   boundMonitors?: Monitor[];
   activeAlerts?: unknown[];
   nextActions?: EntityNextAction[];
   noiseControlSummary?: EntityNoiseControlSummary;
+}
+
+export interface EntityUnifiedEvidenceSummary {
+  activeSignalCount?: number;
+  metricsActive?: boolean;
+  logsActive?: boolean;
+  tracesActive?: boolean;
+  metricEvidenceCount?: number;
+  logEvidenceCount?: number;
+  traceEvidenceCount?: number;
+  latestObservedAt?: number | string | null;
+  activeSignals?: string[];
 }
 
 export interface EntityEvidenceSummary {
@@ -787,6 +816,7 @@ export interface StatusPageIncident {
   components?: StatusPageComponent[];
   contents?: Array<{
     id?: number;
+    incidentId?: number;
     message?: string;
     state?: number;
     timestamp?: number | null;
