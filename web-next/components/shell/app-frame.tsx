@@ -13,16 +13,32 @@ import {
   Github,
   Lock,
   LogOut,
+  MapPin,
   Megaphone,
   Menu,
   Sparkles,
   MessageSquare,
   Maximize2,
-  Info,
+  Minimize2,
+  Send,
   Settings,
-  Settings2,
-  Tags
+  Tags,
+  Wrench
 } from 'lucide-react';
+import {
+  HzAiChatModalSurface,
+  HzAboutModalSurface,
+  HzHeaderIconButton,
+  HzHeaderMenuAction,
+  HzHeaderRealtimeNotice,
+  HzUserMenuAction,
+  type HzAiChatConfigStatus,
+  type HzAiChatProviderConfigValue,
+  type HzAiChatScheduleDraft,
+  type HzAiChatScheduleDeleteStatus,
+  type HzAiChatScheduleRow,
+  type HzAiChatScheduleStatus
+} from '@hertzbeat/ui';
 import { useI18n } from '@/components/providers/i18n-provider';
 import { LocaleOptionList } from '@/components/shell/locale-option-list';
 import { AuthGate } from '@/components/shell/auth-gate';
@@ -32,7 +48,57 @@ import { Input } from '../ui/input';
 import { apiGet } from '@/lib/api-client';
 import { isStandaloneRoute, shouldLoadHeaderState } from '@/lib/app-frame-state';
 import { buildAlertListUrl } from '@/lib/alert-manage/query-state';
+import {
+  AI_CHAT_CONVERSATION_STATUS_LABEL_KEYS,
+  AI_CHAT_MESSAGE_STATUS_LABEL_KEYS,
+  AI_CHAT_MESSAGE_ROLE_LABEL_KEYS,
+  createAiChatConversation,
+  deleteAiChatConversation,
+  loadAiChatConversationHistory,
+  loadAiChatConversations,
+  streamAiChatResponse,
+  type AiChatConversationMessage,
+  type AiChatConversationHistoryState,
+  type AiChatConversationListState
+} from '@/lib/ai-chat/conversations';
+import {
+  AI_CHAT_CONFIG_STATUS_LABEL_KEYS,
+  AI_CHAT_PROVIDER_OPTIONS,
+  applyAiChatProviderDefaults,
+  buildDefaultAiChatProviderConfig,
+  loadAiChatProviderConfig,
+  saveAiChatProviderConfig
+} from '@/lib/ai-chat/provider-config';
+import {
+  AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS,
+  createAiChatSchedule,
+  deleteAiChatSchedule,
+  loadAiChatScheduleSkills,
+  loadAiChatSchedules,
+  toggleAiChatSchedule,
+  updateAiChatSchedule
+} from '@/lib/ai-chat/schedules';
 import { buildLoginRedirectHref } from '@/lib/passport-login/controller';
+import { clearClientSession, readClientSessionUserSnapshot } from '@/lib/session-client';
+import { consumeAboutAutoShowAfterLogin, readAboutNotShowNextLogin, writeAboutNotShowNextLogin } from '@/lib/shell/about';
+import { loadHeaderMuteConfig, saveHeaderMuteConfig } from '@/lib/shell/header-mute';
+import { showHeaderLocaleReloadSpinner } from '@/lib/shell/locale-reload';
+import {
+  HEADER_ALERT_EVENT_TYPE,
+  HEADER_ALERT_SSE_URL,
+  HEADER_DUAL_SSE_CONTRACT,
+  HEADER_IMPORT_TASK_EVENT_TYPE,
+  HEADER_MANAGER_SSE_URL,
+  buildHeaderNoticeFromAlert,
+  buildManagerImportMessage,
+  mergeHeaderNoticeEvent,
+  parseHeaderSseJson,
+  resolveHeaderAlertSoundSrc,
+  type HeaderManagerImportEvent,
+  type HeaderNoticeEvent,
+  type HeaderRealtimeStatus
+} from '@/lib/shell/header-realtime';
+import { consumeWorkbenchLoad } from '@/lib/workbench-load-cache';
 import { bootstrapWorkbenchTheme } from '@/lib/workbench-theme';
 import type {
   AlertSummary,
@@ -45,11 +111,13 @@ import type {
 } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const HEADER_MUTE_STORAGE_KEY = 'hb.header-mute';
 const PLATFORM_FOOTER_VERSION = 'v1.8.0';
 const ANGULAR_SETUP_BASELINE_COMPLETED = 5;
 const ANGULAR_SETUP_BASELINE_TOTAL = 6;
 const ANGULAR_SETUP_BASELINE_PERCENT = 83;
+const APP_FRAME_HEADER_STATE_CACHE_TTL_MS = 60_000;
+const AI_CHAT_SKILL_REPORT_MARKER = '[[SKILL_REPORT]]';
+const ABOUT_AUTO_CLOSE_AFTER_LOGIN_MS = 20_000;
 
 export type ContentFrameShellKind = 'standard' | 'flat-workbench';
 
@@ -104,22 +172,14 @@ type SetupSummaryData = {
   governanceCount: number;
 };
 
-type HeaderNotice = {
-  id: number;
+type HeaderNotice = HeaderNoticeEvent;
+
+type HeaderRealtimeNotice = {
+  status: Exclude<HeaderRealtimeStatus, 'connecting' | 'idle' | 'unsupported'> | 'live';
   title: string;
-  status: string;
-  activeAt?: number | null;
+  description?: string;
+  meta?: string;
 };
-
-function readHeaderMute() {
-  if (typeof window === 'undefined') return true;
-  return window.localStorage.getItem(HEADER_MUTE_STORAGE_KEY) !== 'false';
-}
-
-function writeHeaderMute(muted: boolean) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(HEADER_MUTE_STORAGE_KEY, String(muted));
-}
 
 function buildEmptySetupSummary(t: (key: string, params?: Record<string, string | number | null | undefined>) => string): SetupSummary {
   return {
@@ -136,9 +196,35 @@ function buildEmptySetupSummary(t: (key: string, params?: Record<string, string 
   };
 }
 
-function formatHeaderTime(value?: number | null) {
-  if (!value) return '-';
+function formatHeaderTime(value: number | null | undefined, fallback: string) {
+  if (!value) return fallback;
   return new Date(value).toLocaleString();
+}
+
+function playHeaderAlertSound(locale: string, audioRef: React.MutableRefObject<HTMLAudioElement | null>) {
+  if (typeof window === 'undefined' || !window.Audio) return;
+  const audio = audioRef.current ?? new window.Audio();
+  audioRef.current = audio;
+  audio.src = resolveHeaderAlertSoundSrc(locale);
+  audio.load();
+  void audio.play().catch(() => undefined);
+}
+
+function showHeaderAlertNotification(
+  t: (key: string, params?: Record<string, string | number | null | undefined>) => string,
+  navigateToAlertCenter: () => void
+) {
+  if (typeof window === 'undefined' || !('Notification' in window)) return;
+  if (window.Notification.permission !== 'granted') return;
+  const notification = new window.Notification(t('alert.notify.title'), {
+    body: t('alert.notify.body'),
+    icon: '/assets/logo.svg'
+  });
+  notification.onclick = () => {
+    window.focus();
+    navigateToAlertCenter();
+    notification.close();
+  };
 }
 
 function resolveSetupActionHref(action: SetupAction) {
@@ -293,6 +379,55 @@ function shouldKeepAngularSetupBaseline(pathname: string, data: SetupSummaryData
   );
 }
 
+function processAiChatStreamContent(content: string) {
+  const markerIndex = content.indexOf(AI_CHAT_SKILL_REPORT_MARKER);
+  if (markerIndex === -1) return content;
+  return content.substring(markerIndex + AI_CHAT_SKILL_REPORT_MARKER.length).replace(/^\n+/, '');
+}
+
+function appendToLastStreamingAiAssistantMessage(messages: AiChatConversationMessage[], content: string): AiChatConversationMessage[] {
+  const nextMessages = [...messages];
+  const lastMessage = nextMessages[nextMessages.length - 1];
+  if (lastMessage?.role === 'assistant') {
+    const nextContent = processAiChatStreamContent(`${lastMessage.content}${content}`);
+    nextMessages[nextMessages.length - 1] = {
+      ...lastMessage,
+      content: nextContent
+    };
+    return nextMessages;
+  }
+
+  return [
+    ...nextMessages,
+    {
+      role: 'assistant',
+      labelKey: AI_CHAT_MESSAGE_ROLE_LABEL_KEYS.assistant,
+      content
+    }
+  ];
+}
+
+function replaceLastStreamingAiAssistantMessage(messages: AiChatConversationMessage[], content: string): AiChatConversationMessage[] {
+  const nextMessages = [...messages];
+  const lastMessage = nextMessages[nextMessages.length - 1];
+  if (lastMessage?.role === 'assistant') {
+    nextMessages[nextMessages.length - 1] = {
+      ...lastMessage,
+      content
+    };
+    return nextMessages;
+  }
+
+  return [
+    ...nextMessages,
+    {
+      role: 'assistant',
+      labelKey: AI_CHAT_MESSAGE_ROLE_LABEL_KEYS.assistant,
+      content
+    }
+  ];
+}
+
 export function buildRouteSetupSummary(
   pathname: string,
   data: SetupSummaryData,
@@ -307,26 +442,70 @@ export function buildRouteSetupSummary(
 export function AppFrame({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { t, locale, locales, setLocale } = useI18n();
+  const [sessionUser] = useState(() => readClientSessionUserSnapshot());
+  const currentUserName = sessionUser?.name || 'admin';
+  const emptyValue = t('common.none');
   const pathname = usePathname();
   const [setupOpen, setSetupOpen] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [aboutNotShowNextLogin, setAboutNotShowNextLogin] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
+  const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [aiInitialPrompt, setAiInitialPrompt] = useState('');
+  const [aiConversations, setAiConversations] = useState<AiChatConversationListState>({
+    status: 'loading',
+    conversations: [],
+    statusLabelKey: AI_CHAT_CONVERSATION_STATUS_LABEL_KEYS.loading
+  });
+  const [selectedAiConversationId, setSelectedAiConversationId] = useState<string | number | null>(null);
+  const [aiConversationHistory, setAiConversationHistory] = useState<AiChatConversationHistoryState>({
+    status: 'idle',
+    messages: [],
+    statusLabelKey: AI_CHAT_MESSAGE_STATUS_LABEL_KEYS.idle
+  });
+  const [aiDraftMessage, setAiDraftMessage] = useState('');
+  const [aiLocalMessages, setAiLocalMessages] = useState<AiChatConversationMessage[]>([]);
+  const [aiSendStatus, setAiSendStatus] = useState<'idle' | 'sending' | 'error'>('idle');
+  const [aiConfigOpen, setAiConfigOpen] = useState(false);
+  const [aiProviderConfig, setAiProviderConfig] = useState<HzAiChatProviderConfigValue>(() => buildDefaultAiChatProviderConfig());
+  const [aiConfigStatus, setAiConfigStatus] = useState<HzAiChatConfigStatus>('idle');
+  const [aiConfigStatusLabelKey, setAiConfigStatusLabelKey] = useState(AI_CHAT_CONFIG_STATUS_LABEL_KEYS.idle);
+  const [aiScheduleOpen, setAiScheduleOpen] = useState(false);
+  const [aiScheduleStatus, setAiScheduleStatus] = useState<HzAiChatScheduleStatus>('idle');
+  const [aiScheduleStatusLabelKey, setAiScheduleStatusLabelKey] = useState(AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS.idle);
+  const [aiSchedules, setAiSchedules] = useState<HzAiChatScheduleRow[]>([]);
+  const [aiScheduleSkills, setAiScheduleSkills] = useState<Array<{ value: string; label: string }>>([]);
+  const [aiScheduleDraft, setAiScheduleDraft] = useState<HzAiChatScheduleDraft>({ sopName: '', cronExpression: '', enabled: true });
+  const [aiScheduleEditDraft, setAiScheduleEditDraft] = useState<(HzAiChatScheduleDraft & { id: string | number }) | null>(null);
+  const [aiDeleteScheduleId, setAiDeleteScheduleId] = useState<string | number | null>(null);
+  const [aiDeleteScheduleStatus, setAiDeleteScheduleStatus] = useState<HzAiChatScheduleDeleteStatus>('idle');
+  const [aiNewConversationStatus, setAiNewConversationStatus] = useState<'idle' | 'creating' | 'error'>('idle');
+  const [aiDeleteConversationId, setAiDeleteConversationId] = useState<string | number | null>(null);
+  const [aiDeleteConversationStatus, setAiDeleteConversationStatus] = useState<'idle' | 'confirming' | 'deleting' | 'error'>('idle');
   const [notificationsMuted, setNotificationsMuted] = useState(true);
+  const notificationMuteLabel = notificationsMuted ? t('common.unmute') : t('common.mute');
+  const [fullscreenActive, setFullscreenActive] = useState(false);
+  const fullscreenLabel = fullscreenActive ? t('menu.fullscreen.exit') : t('menu.fullscreen');
   const [alertSummary, setAlertSummary] = useState<AlertSummary | null>(null);
   const [alertNotices, setAlertNotices] = useState<HeaderNotice[]>([]);
+  const [headerRealtimeStatus, setHeaderRealtimeStatus] = useState<HeaderRealtimeStatus>('idle');
+  const [headerRealtimeNotice, setHeaderRealtimeNotice] = useState<HeaderRealtimeNotice | null>(null);
   const [setupSummary, setSetupSummary] = useState<SetupSummary>(() => buildEmptySetupSummary(t));
   const setupRef = useRef<HTMLDivElement | null>(null);
   const notifyRef = useRef<HTMLDivElement | null>(null);
   const settingsRef = useRef<HTMLDivElement | null>(null);
   const userRef = useRef<HTMLDivElement | null>(null);
+  const notifiedAlertIdsRef = useRef<Set<number>>(new Set());
+  const alertAudioRef = useRef<HTMLAudioElement | null>(null);
   const standaloneRoute = isStandaloneRoute(pathname);
 
   function logout() {
-    window.localStorage.removeItem('Authorization');
-    window.localStorage.removeItem('refresh-token');
-    window.location.href = buildLoginRedirectHref(undefined, process.env.NEXT_PUBLIC_LOGIN_PATH);
+    void clearClientSession().finally(() => {
+      window.location.href = buildLoginRedirectHref(undefined, process.env.NEXT_PUBLIC_LOGIN_PATH);
+    });
   }
 
   function toggleFullscreen() {
@@ -338,12 +517,43 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
     void document.documentElement.requestFullscreen();
   }
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+
+    const syncFullscreenStatus = () => {
+      setFullscreenActive(Boolean(document.fullscreenElement));
+    };
+
+    syncFullscreenStatus();
+    document.addEventListener('fullscreenchange', syncFullscreenStatus);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', syncFullscreenStatus);
+    };
+  }, []);
+
   function toggleMute() {
-    setNotificationsMuted(current => {
-      const next = !current;
-      writeHeaderMute(next);
-      return next;
+    const nextMuted = !notificationsMuted;
+
+    if (!nextMuted && typeof window !== 'undefined' && 'Notification' in window) {
+      void window.Notification.requestPermission();
+    }
+
+    void saveHeaderMuteConfig(nextMuted).then(result => {
+      if (result.status === 'saved') {
+        setNotificationsMuted(result.muted);
+      }
     });
+  }
+
+  function openAboutModal() {
+    setUserOpen(false);
+    setAboutOpen(true);
+  }
+
+  function changeAboutNotShowNextLogin(checked: boolean) {
+    writeAboutNotShowNextLogin(checked);
+    setAboutNotShowNextLogin(checked);
   }
 
   function openSetupAction(action: SetupAction) {
@@ -351,18 +561,469 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
     router.push(resolveSetupActionHref(action));
   }
 
+  function openAiChatModal(initialPrompt = '') {
+    const nextPrompt = initialPrompt.trim();
+    setAiInitialPrompt(nextPrompt);
+    setAiDraftMessage(nextPrompt);
+    setAiChatOpen(true);
+  }
+
   function submitAiPrompt() {
     const query = aiPrompt.trim();
-    router.push(query ? `/overview?ai=${encodeURIComponent(query)}` : '/overview');
+    if (!query) return;
+    openAiChatModal(query);
+    setAiPrompt('');
+  }
+
+  async function loadAiProviderConfig(openOnError = false) {
+    setAiConfigStatus('loading');
+    setAiConfigStatusLabelKey(AI_CHAT_CONFIG_STATUS_LABEL_KEYS.loading);
+    const next = await loadAiChatProviderConfig();
+    setAiProviderConfig(next.config);
+    setAiConfigStatus(next.status);
+    setAiConfigStatusLabelKey(next.statusLabelKey);
+    if (openOnError && next.status === 'error') {
+      setAiConfigOpen(true);
+    }
+  }
+
+  function openAiProviderConfig() {
+    setAiConfigOpen(true);
+    void loadAiProviderConfig(false);
+  }
+
+  function changeAiProviderConfig(next: HzAiChatProviderConfigValue) {
+    setAiProviderConfig(current => {
+      const codeChanged = current.code !== next.code;
+      if (!codeChanged) {
+        return next;
+      }
+      return applyAiChatProviderDefaults(next);
+    });
+    setAiConfigStatus(current => current === 'error' ? 'ready' : current);
+    setAiConfigStatusLabelKey(AI_CHAT_CONFIG_STATUS_LABEL_KEYS.ready);
+  }
+
+  function resetAiProviderDefaults() {
+    setAiProviderConfig(current => ({
+      ...buildDefaultAiChatProviderConfig(current.code),
+      apiKey: current.apiKey
+    }));
+    setAiConfigStatus(current => current === 'error' ? 'ready' : current);
+    setAiConfigStatusLabelKey(AI_CHAT_CONFIG_STATUS_LABEL_KEYS.ready);
+  }
+
+  async function saveAiProviderConfig() {
+    const nextConfig = applyAiChatProviderDefaults(aiProviderConfig);
+    if (!nextConfig.code) {
+      setAiConfigStatus('error');
+      setAiConfigStatusLabelKey('ai.chat.config.provider.required');
+      return;
+    }
+    if (!nextConfig.apiKey.trim()) {
+      setAiConfigStatus('error');
+      setAiConfigStatusLabelKey('ai.chat.config.api-key.required');
+      return;
+    }
+    if (!nextConfig.baseUrl.trim()) {
+      setAiConfigStatus('error');
+      setAiConfigStatusLabelKey('ai.chat.config.base-url.required');
+      return;
+    }
+    if (!nextConfig.model.trim()) {
+      setAiConfigStatus('error');
+      setAiConfigStatusLabelKey('ai.chat.config.model.required');
+      return;
+    }
+
+    setAiConfigStatus('saving');
+    setAiConfigStatusLabelKey(AI_CHAT_CONFIG_STATUS_LABEL_KEYS.saving);
+    const result = await saveAiChatProviderConfig(nextConfig);
+    setAiConfigStatus(result.status);
+    setAiConfigStatusLabelKey(result.statusLabelKey);
+    if (result.status === 'saved') {
+      setAiProviderConfig(nextConfig);
+      setAiConfigOpen(false);
+      void loadAiChatConversations().then(next => {
+        setAiConversations(next);
+        setSelectedAiConversationId(next.conversations[0]?.id ?? null);
+      });
+    }
+  }
+
+  function openAiSchedulePanel() {
+    setAiScheduleOpen(true);
+    setAiScheduleEditDraft(null);
+    setAiDeleteScheduleId(null);
+    setAiDeleteScheduleStatus('idle');
+  }
+
+  async function createAiScheduleFromDraft() {
+    if (selectedAiConversationId === null || selectedAiConversationId === 0 || !aiScheduleDraft.sopName || !aiScheduleDraft.cronExpression) return;
+    setAiScheduleStatus('saving');
+    setAiScheduleStatusLabelKey(AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS.saving);
+    const result = await createAiChatSchedule(selectedAiConversationId, aiScheduleDraft);
+    if (result.status === 'ready' && result.schedule) {
+      setAiSchedules(current => [...current, result.schedule!]);
+      setAiScheduleDraft({ sopName: '', cronExpression: '', enabled: true });
+      setAiScheduleStatus('ready');
+    } else {
+      setAiScheduleStatus('error');
+    }
+    setAiScheduleStatusLabelKey(result.statusLabelKey);
+  }
+
+  async function toggleAiSchedule(scheduleId: string | number, enabled: boolean) {
+    setAiScheduleStatus('saving');
+    setAiScheduleStatusLabelKey(AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS.saving);
+    setAiSchedules(current => current.map(row => String(row.id) === String(scheduleId) ? { ...row, enabled } : row));
+    const result = await toggleAiChatSchedule(scheduleId, enabled);
+    if (result.status === 'ready' && result.schedule) {
+      setAiSchedules(current => current.map(row => String(row.id) === String(scheduleId) ? result.schedule! : row));
+      setAiScheduleStatus('ready');
+    } else {
+      setAiSchedules(current => current.map(row => String(row.id) === String(scheduleId) ? { ...row, enabled: !enabled } : row));
+      setAiScheduleStatus('error');
+    }
+    setAiScheduleStatusLabelKey(result.statusLabelKey);
+  }
+
+  function startAiScheduleEdit(row: HzAiChatScheduleRow) {
+    setAiScheduleEditDraft({
+      id: row.id,
+      sopName: String(row.sopName),
+      cronExpression: row.cronExpression,
+      enabled: row.enabled
+    });
+  }
+
+  async function updateAiScheduleFromDraft() {
+    if (!aiScheduleEditDraft || selectedAiConversationId === null || selectedAiConversationId === 0) return;
+    setAiScheduleStatus('saving');
+    setAiScheduleStatusLabelKey(AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS.saving);
+    const result = await updateAiChatSchedule(aiScheduleEditDraft.id, selectedAiConversationId, aiScheduleEditDraft);
+    if (result.status === 'ready' && result.schedule) {
+      setAiSchedules(current => current.map(row => String(row.id) === String(aiScheduleEditDraft.id) ? result.schedule! : row));
+      setAiScheduleEditDraft(null);
+      setAiScheduleStatus('ready');
+    } else {
+      setAiScheduleStatus('error');
+    }
+    setAiScheduleStatusLabelKey(result.statusLabelKey);
+  }
+
+  function requestDeleteAiSchedule(scheduleId: string | number) {
+    setAiDeleteScheduleId(scheduleId);
+    setAiDeleteScheduleStatus('confirming');
+  }
+
+  function cancelDeleteAiSchedule() {
+    setAiDeleteScheduleId(null);
+    setAiDeleteScheduleStatus('idle');
+  }
+
+  async function confirmDeleteAiSchedule() {
+    if (aiDeleteScheduleId === null) return;
+    const scheduleId = aiDeleteScheduleId;
+    setAiScheduleStatus('saving');
+    setAiScheduleStatusLabelKey(AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS.saving);
+    setAiDeleteScheduleStatus('deleting');
+    const result = await deleteAiChatSchedule(scheduleId);
+    if (result.status === 'ready') {
+      setAiSchedules(current => {
+        const next = current.filter(row => String(row.id) !== String(scheduleId));
+        setAiScheduleStatus(next.length > 0 ? 'ready' : 'empty');
+        return next;
+      });
+      setAiDeleteScheduleId(null);
+      setAiDeleteScheduleStatus('idle');
+    } else {
+      setAiScheduleStatus('error');
+      setAiDeleteScheduleStatus('error');
+    }
+    setAiScheduleStatusLabelKey(result.statusLabelKey);
+  }
+
+  async function createNewAiConversation() {
+    setAiNewConversationStatus('creating');
+    const next = await createAiChatConversation();
+    setAiNewConversationStatus(next.status === 'ready' ? 'idle' : 'error');
+    setAiConversations(current => ({
+      status: next.status === 'ready' ? 'ready' : 'error',
+      statusLabelKey: next.statusLabelKey,
+      conversations: [
+        next.conversation,
+        ...current.conversations.filter(conversation => String(conversation.id) !== String(next.conversation.id))
+      ]
+    }));
+    setSelectedAiConversationId(next.conversation.id);
+    setAiLocalMessages([]);
+    setAiSendStatus('idle');
+  }
+
+  function requestDeleteAiConversation(conversationId: string | number) {
+    setAiDeleteConversationId(conversationId);
+    setAiDeleteConversationStatus('confirming');
+  }
+
+  function cancelDeleteAiConversation() {
+    setAiDeleteConversationId(null);
+    setAiDeleteConversationStatus('idle');
+  }
+
+  async function confirmDeleteAiConversation(conversationId: string | number) {
+    setAiDeleteConversationId(conversationId);
+    setAiDeleteConversationStatus('deleting');
+    const next = await deleteAiChatConversation(conversationId);
+    if (next.status === 'error') {
+      setAiDeleteConversationStatus('error');
+      setAiConversations(current => ({
+        ...current,
+        status: 'error',
+        statusLabelKey: next.statusLabelKey
+      }));
+      return;
+    }
+
+    setAiDeleteConversationId(null);
+    setAiDeleteConversationStatus('idle');
+    const conversations = aiConversations.conversations.filter(conversation => String(conversation.id) !== String(conversationId));
+    if (conversations.length === 0) {
+      setAiConversations({
+        status: 'empty',
+        statusLabelKey: AI_CHAT_CONVERSATION_STATUS_LABEL_KEYS.empty,
+        conversations: []
+      });
+      setSelectedAiConversationId(null);
+      await createNewAiConversation();
+      return;
+    }
+
+    const nextSelected = String(selectedAiConversationId) === String(conversationId)
+      ? conversations[0].id
+      : selectedAiConversationId;
+    setAiConversations({
+      status: 'ready',
+      statusLabelKey: AI_CHAT_CONVERSATION_STATUS_LABEL_KEYS.ready,
+      conversations
+    });
+    setSelectedAiConversationId(nextSelected);
+    setAiLocalMessages([]);
+    setAiSendStatus('idle');
+  }
+
+  function appendOfflineAiAssistantResponse() {
+    globalThis.setTimeout(() => {
+      setAiLocalMessages(current => replaceLastStreamingAiAssistantMessage(current, t('ai.chat.offline.response')));
+      setAiSendStatus('idle');
+    }, 1000);
+  }
+
+  function appendAiStreamChunk(content: string) {
+    setAiLocalMessages(current => appendToLastStreamingAiAssistantMessage(current, content));
+  }
+
+  function failAiStreamResponse() {
+    setAiLocalMessages(current => replaceLastStreamingAiAssistantMessage(current, t('ai.chat.error.processing')));
+    setAiSendStatus('error');
+  }
+
+  async function refreshAiConversationAfterStream(conversationId: string | number | null) {
+    if (conversationId === null || conversationId === 0) return;
+    const next = await loadAiChatConversationHistory(conversationId);
+    if (next.status === 'ready' && next.messages.length > 0) {
+      setAiConversationHistory(next);
+      setAiLocalMessages([]);
+    }
+  }
+
+  function sendAiMessage() {
+    const messageContent = aiDraftMessage.trim();
+    if (!messageContent || aiSendStatus === 'sending') return;
+
+    setAiDraftMessage('');
+    setAiLocalMessages(current => [
+      ...current,
+      {
+        role: 'user',
+        labelKey: AI_CHAT_MESSAGE_ROLE_LABEL_KEYS.user,
+        content: messageContent
+      },
+      {
+        role: 'assistant',
+        labelKey: AI_CHAT_MESSAGE_ROLE_LABEL_KEYS.assistant,
+        content: ''
+      }
+    ]);
+    setAiSendStatus('sending');
+
+    if (
+      selectedAiConversationId === 0 ||
+      selectedAiConversationId === null ||
+      aiConversations.status === 'error' ||
+      aiConversationHistory.status === 'error'
+    ) {
+      appendOfflineAiAssistantResponse();
+      return;
+    }
+
+    const streamConversationId = selectedAiConversationId;
+    void streamAiChatResponse(messageContent, {
+      conversationId: streamConversationId,
+      onChunk: chunk => appendAiStreamChunk(chunk.content)
+    }).then(() => {
+      setAiSendStatus('idle');
+      void refreshAiConversationAfterStream(streamConversationId);
+    }).catch(() => {
+      failAiStreamResponse();
+    });
   }
 
   useEffect(() => {
-    setNotificationsMuted(readHeaderMute());
+    let mounted = true;
+
+    void loadHeaderMuteConfig().then(result => {
+      if (mounted) {
+        setNotificationsMuted(result.muted);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setAboutNotShowNextLogin(readAboutNotShowNextLogin());
+  }, []);
+
+  useEffect(() => {
+    if (!consumeAboutAutoShowAfterLogin()) return undefined;
+    if (readAboutNotShowNextLogin()) return undefined;
+
+    setAboutOpen(true);
+    const timeout = window.setTimeout(() => {
+      setAboutOpen(false);
+    }, ABOUT_AUTO_CLOSE_AFTER_LOGIN_MS);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {
     bootstrapWorkbenchTheme();
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (!aiChatOpen) return () => {
+      mounted = false;
+    };
+
+    setAiConversations({
+      status: 'loading',
+      conversations: [],
+      statusLabelKey: AI_CHAT_CONVERSATION_STATUS_LABEL_KEYS.loading
+    });
+    setSelectedAiConversationId(null);
+    setAiConversationHistory({
+      status: 'idle',
+      messages: [],
+      statusLabelKey: AI_CHAT_MESSAGE_STATUS_LABEL_KEYS.idle
+    });
+    setAiLocalMessages([]);
+    setAiSendStatus('idle');
+    setAiNewConversationStatus('idle');
+    setAiDeleteConversationId(null);
+    setAiDeleteConversationStatus('idle');
+    setAiConfigOpen(false);
+    setAiConfigStatus('idle');
+    setAiConfigStatusLabelKey(AI_CHAT_CONFIG_STATUS_LABEL_KEYS.idle);
+    setAiScheduleOpen(false);
+    setAiScheduleStatus('idle');
+    setAiScheduleStatusLabelKey(AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS.idle);
+    setAiSchedules([]);
+    setAiScheduleEditDraft(null);
+    setAiDeleteScheduleId(null);
+    setAiDeleteScheduleStatus('idle');
+
+    void loadAiProviderConfig(true);
+
+    void loadAiChatConversations().then(next => {
+      if (mounted) {
+        setAiConversations(next);
+        setSelectedAiConversationId(next.conversations[0]?.id ?? null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [aiChatOpen]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (!aiChatOpen || selectedAiConversationId === null) return () => {
+      mounted = false;
+    };
+
+    setAiConversationHistory({
+      status: 'loading',
+      messages: [],
+      statusLabelKey: AI_CHAT_MESSAGE_STATUS_LABEL_KEYS.loading,
+      conversationId: selectedAiConversationId
+    });
+    setAiLocalMessages([]);
+    setAiSendStatus('idle');
+
+    void loadAiChatConversationHistory(selectedAiConversationId).then(next => {
+      if (mounted) {
+        setAiConversationHistory(next);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [aiChatOpen, selectedAiConversationId]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (!aiChatOpen || !aiScheduleOpen) return () => {
+      mounted = false;
+    };
+
+    if (selectedAiConversationId === null || selectedAiConversationId === 0) {
+      setAiScheduleStatus('error');
+      setAiScheduleStatusLabelKey(AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS.error);
+      setAiSchedules([]);
+      setAiScheduleSkills([]);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    setAiScheduleStatus('loading');
+    setAiScheduleStatusLabelKey(AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS.loading);
+    void Promise.all([
+      loadAiChatSchedules(selectedAiConversationId),
+      loadAiChatScheduleSkills()
+    ]).then(([schedules, skills]) => {
+      if (!mounted) return;
+      setAiSchedules(schedules.schedules);
+      setAiScheduleSkills(skills.skills.map(skill => ({ value: skill.value, label: String(skill.label) })));
+      setAiScheduleStatus(schedules.status);
+      setAiScheduleStatusLabelKey(schedules.statusLabelKey);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [aiChatOpen, aiScheduleOpen, selectedAiConversationId]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -404,17 +1065,21 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
           governancePresets,
           summary,
           alerts,
-        ] = await Promise.all([
-          apiGet<PageResult<unknown>>('/monitors?pageIndex=0&pageSize=1').catch(() => ({ content: [], totalElements: 0, pageIndex: 0, pageSize: 1 })),
-          apiGet<PageResult<CollectorSummary>>('/collector?pageIndex=0&pageSize=1').catch(() => ({ content: [], totalElements: 0, pageIndex: 0, pageSize: 1 })),
-          apiGet<PageResult<EntitySummaryInfo>>('/entities?pageIndex=0&pageSize=40&sort=gmtUpdate&order=desc').catch(() => ({ content: [], totalElements: 0, pageIndex: 0, pageSize: 40 })),
-          apiGet<EntityDefinitionActivity[]>('/entities/definition-activities?limit=8').catch(() => []),
-          apiGet<EntityDiscoveryGovernancePreset[]>('/entities/discovery/governance-presets?limit=8').catch(() => []),
-          apiGet<AlertSummary>('/alerts/summary').catch(() => null),
-          apiGet<PageResult<SingleAlert>>(
-            buildAlertListUrl({ search: '', status: '', severity: '', entityId: '', entityName: '', returnTo: '' })
-          ).catch(() => ({ content: [], totalElements: 0, pageIndex: 0, pageSize: 8 })),
-        ]);
+        ] = await consumeWorkbenchLoad(
+          `app-frame:header-state:${locale}`,
+          () => Promise.all([
+            apiGet<PageResult<unknown>>('/monitors?pageIndex=0&pageSize=1').catch(() => ({ content: [], totalElements: 0, pageIndex: 0, pageSize: 1 })),
+            apiGet<PageResult<CollectorSummary>>('/collector?pageIndex=0&pageSize=1').catch(() => ({ content: [], totalElements: 0, pageIndex: 0, pageSize: 1 })),
+            apiGet<PageResult<EntitySummaryInfo>>('/entities?pageIndex=0&pageSize=40&sort=gmtUpdate&order=desc').catch(() => ({ content: [], totalElements: 0, pageIndex: 0, pageSize: 40 })),
+            apiGet<EntityDefinitionActivity[]>('/entities/definition-activities?limit=8').catch(() => []),
+            apiGet<EntityDiscoveryGovernancePreset[]>('/entities/discovery/governance-presets?limit=8').catch(() => []),
+            apiGet<AlertSummary>('/alerts/summary').catch(() => null),
+            apiGet<PageResult<SingleAlert>>(
+              buildAlertListUrl({ search: '', status: '', severity: '', entityId: '', entityName: '', returnTo: '' })
+            ).catch(() => ({ content: [], totalElements: 0, pageIndex: 0, pageSize: 8 })),
+          ]),
+          { settledTtlMs: APP_FRAME_HEADER_STATE_CACHE_TTL_MS }
+        );
 
         if (cancelled) return;
 
@@ -464,15 +1129,127 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [pathname, standaloneRoute, t]);
+  }, [locale, pathname, standaloneRoute, t]);
+
+  useEffect(() => {
+    if (!shouldLoadHeaderState(pathname)) {
+      setHeaderRealtimeStatus('idle');
+      setHeaderRealtimeNotice(null);
+      return undefined;
+    }
+    if (typeof window === 'undefined' || !window.EventSource) {
+      setHeaderRealtimeStatus('unsupported');
+      return undefined;
+    }
+
+    let cancelled = false;
+    setHeaderRealtimeStatus('connecting');
+
+    const alertSource = new window.EventSource(HEADER_ALERT_SSE_URL);
+    const managerSource = new window.EventSource(HEADER_MANAGER_SSE_URL);
+
+    const markLive = () => {
+      if (!cancelled) setHeaderRealtimeStatus('live');
+    };
+    const markError = () => {
+      if (!cancelled) setHeaderRealtimeStatus('error');
+    };
+
+    alertSource.onopen = markLive;
+    managerSource.onopen = markLive;
+
+    alertSource.addEventListener(HEADER_ALERT_EVENT_TYPE, (event: MessageEvent) => {
+      if (cancelled) return;
+      const alert = parseHeaderSseJson<SingleAlert>(event.data);
+      if (!alert) return;
+
+      const notice = buildHeaderNoticeFromAlert(alert, t('dashboard.alerts.center-title'));
+      setHeaderRealtimeStatus('live');
+      setHeaderRealtimeNotice({
+        status: 'live',
+        title: notice.title,
+        description: `${notice.status} · ${formatHeaderTime(notice.activeAt, emptyValue)}`,
+        meta: HEADER_ALERT_EVENT_TYPE
+      });
+      setAlertNotices(current => mergeHeaderNoticeEvent(current, notice));
+      setAlertSummary(current => current
+        ? { ...current, total: Math.max(current.total, 1) }
+        : { total: 1, dealNum: 0, rate: 0, priorityWarningNum: 0, priorityCriticalNum: 0, priorityEmergencyNum: 0 });
+
+      if (!notificationsMuted && !notifiedAlertIdsRef.current.has(alert.id)) {
+        notifiedAlertIdsRef.current.add(alert.id);
+        playHeaderAlertSound(locale, alertAudioRef);
+        showHeaderAlertNotification(t, () => router.push('/alert'));
+      }
+    });
+
+    managerSource.addEventListener(HEADER_IMPORT_TASK_EVENT_TYPE, (event: MessageEvent) => {
+      if (cancelled) return;
+      const payload = parseHeaderSseJson<HeaderManagerImportEvent>(event.data);
+      if (!payload) return;
+      const message = buildManagerImportMessage(payload, t);
+      if (!message) return;
+      setHeaderRealtimeStatus(message.status === 'error' ? 'error' : 'live');
+      setHeaderRealtimeNotice(message);
+    });
+
+    alertSource.onerror = () => {
+      markError();
+      alertSource.close();
+    };
+    managerSource.onerror = () => {
+      markError();
+      managerSource.close();
+    };
+
+    return () => {
+      cancelled = true;
+      alertSource.close();
+      managerSource.close();
+    };
+  }, [emptyValue, locale, notificationsMuted, pathname, router, t]);
 
   if (standaloneRoute) {
     return <>{children}</>;
   }
 
+  const aiConversationRows = aiConversations.conversations.map(conversation => ({
+    ...conversation,
+    active: selectedAiConversationId === null
+      ? Boolean(conversation.active)
+      : String(conversation.id) === String(selectedAiConversationId)
+  }));
+  const aiConversationMessageRows = aiConversationHistory.messages.map(message => ({
+    role: message.role,
+    label: t(message.labelKey),
+    content: message.content
+  })).concat(aiLocalMessages.map(message => ({
+    role: message.role,
+    label: t(message.labelKey),
+    content: message.content
+  })));
+  const aiMessageStatus = aiLocalMessages.length > 0 ? 'ready' : aiConversationHistory.status;
+  const aiMessageStatusLabelKey = aiLocalMessages.length > 0
+    ? AI_CHAT_MESSAGE_STATUS_LABEL_KEYS.ready
+    : aiConversationHistory.statusLabelKey;
+
   return (
     <AuthGate>
       <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
+        {headerRealtimeNotice ? (
+          <div
+            className="fixed right-4 top-20 z-40 w-[320px]"
+            data-app-frame-header-realtime-toast="angular-sse"
+          >
+            <HzHeaderRealtimeNotice
+              status={headerRealtimeNotice.status}
+              title={headerRealtimeNotice.title}
+              description={headerRealtimeNotice.description}
+              meta={headerRealtimeNotice.meta}
+              data-app-frame-header-realtime-notice-owner="hertzbeat-ui-header-realtime-notice"
+            />
+          </div>
+        ) : null}
         <div className="grid min-h-screen lg:grid-cols-[164px_minmax(0,1fr)] lg:grid-rows-[64px_minmax(0,1fr)]">
           <header className="sticky top-0 z-20 col-span-full border-b border-[hsl(var(--border))] bg-[hsl(var(--background))]">
             <div className="grid h-16 lg:grid-cols-[164px_minmax(0,1fr)]">
@@ -494,22 +1271,22 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   className="inline-flex h-8 w-8 items-center justify-center rounded-[2px] text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--accent)/0.35)] hover:text-[hsl(var(--foreground))]"
-                  aria-label="Menu"
+                  aria-label={t('app.frame.utility.menu')}
                   data-app-frame-icon-trigger="menu"
                 >
                   <Menu size={17} />
-                  <span className="sr-only">Menu</span>
+                  <span className="sr-only">{t('app.frame.utility.menu')}</span>
                 </button>
                 <a
                   className="inline-flex h-8 w-8 items-center justify-center rounded-[2px] text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--accent)/0.35)] hover:text-[hsl(var(--foreground))]"
                   href="https://github.com/apache/hertzbeat"
                   target="_blank"
                   rel="noreferrer"
-                  aria-label="GitHub"
+                  aria-label={t('app.frame.utility.github')}
                   data-app-frame-icon-trigger="github"
                 >
                   <Github size={17} />
-                  <span className="sr-only">GitHub</span>
+                  <span className="sr-only">{t('app.frame.utility.github')}</span>
                 </a>
 
                 <div className="relative hidden lg:block" ref={setupRef}>
@@ -622,7 +1399,12 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="hidden min-w-[320px] max-w-[500px] flex-1 lg:block">
-                  <div className="flex h-8 items-stretch overflow-hidden rounded-[2px] border border-[hsl(var(--border))] bg-[hsl(var(--background))]">
+                  <div
+                    className="flex h-8 items-stretch overflow-hidden rounded-[2px] border border-[hsl(var(--border))] bg-[hsl(var(--background))]"
+                    data-app-frame-ai-chat-input="angular-header-ai-chat"
+                    data-app-frame-ai-chat-initial-message-contract="angular-open-modal-initial-message"
+                    data-app-frame-ai-chat-initial-message-owner="route-ai-chat-modal-contract"
+                  >
                     <Input
                       value={aiPrompt}
                       onChange={event => setAiPrompt(event.target.value)}
@@ -639,9 +1421,11 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                       type="button"
                       className="flex w-8 items-center justify-center border-l border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--accent)/0.2)] hover:text-[hsl(var(--foreground))]"
                       onClick={submitAiPrompt}
+                      disabled={!aiPrompt.trim()}
                       aria-label={t('ai.chat.submit')}
+                      data-app-frame-ai-chat-submit-state={aiPrompt.trim() ? 'ready' : 'empty'}
                     >
-                      <MessageSquare size={15} />
+                      {aiPrompt.trim() ? <Send size={15} /> : <MessageSquare size={15} />}
                     </button>
                   </div>
                 </div>
@@ -655,6 +1439,10 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                         aria-label={t('common.notify')}
                         onClick={() => setNotifyOpen(open => !open)}
                         data-app-frame-icon-trigger="notify"
+                        data-app-frame-header-realtime-sse-contract={HEADER_DUAL_SSE_CONTRACT}
+                        data-app-frame-header-realtime-sse-owner="route-realtime-sse-contract"
+                        data-app-frame-header-realtime-alert-source={HEADER_ALERT_SSE_URL}
+                        data-app-frame-header-realtime-manager-source={HEADER_MANAGER_SSE_URL}
                       >
                         <span className="relative inline-flex items-center">
                           <Bell size={16} data-app-frame-glyph="notify-bell" />
@@ -666,16 +1454,17 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                         </span>
                         <span className="sr-only">{t('common.notify')}</span>
                       </button>
-                      <button
-                        type="button"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-[2px] text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--accent)/0.35)] hover:text-[hsl(var(--foreground))]"
+                      <HzHeaderIconButton
+                        label={notificationMuteLabel}
+                        state={notificationsMuted ? 'active' : 'inactive'}
                         onClick={toggleMute}
-                        aria-label={notificationsMuted ? t('common.unmute') : t('common.mute')}
                         data-app-frame-icon-trigger="mute"
+                        data-app-frame-mute-state={notificationsMuted ? 'muted' : 'audible'}
+                        data-app-frame-mute-save-lifecycle="angular-success-only-state-update"
+                        data-app-frame-mute-save-lifecycle-owner="route-action-state-contract"
                       >
                         <Megaphone size={16} data-app-frame-glyph="mute-megaphone" />
-                        <span className="sr-only">{notificationsMuted ? t('common.mute') : t('common.unmute')}</span>
-                      </button>
+                      </HzHeaderIconButton>
                     </div>
                     {notifyOpen ? (
                       <div className="absolute right-0 top-10 z-30 w-[320px] rounded-[4px] border border-[hsl(var(--border))] bg-[hsl(var(--card))] py-3 shadow-[0_10px_30px_rgba(0,0,0,.22)]">
@@ -694,8 +1483,18 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                             onClick={toggleMute}
                           >
                             <Megaphone size={15} />
-                            <span>{notificationsMuted ? t('common.unmute') : t('common.mute')}</span>
+                            <span>{notificationMuteLabel}</span>
                           </button>
+                        </div>
+                        <div className="mt-3 px-4">
+                          <HzHeaderRealtimeNotice
+                            status={headerRealtimeStatus}
+                            title={t('dashboard.alerts.notifications-title')}
+                            description={headerRealtimeNotice?.description || t('dashboard.alerts.enter')}
+                            meta={headerRealtimeNotice?.meta || HEADER_ALERT_EVENT_TYPE}
+                            data-app-frame-header-realtime-notice-owner="hertzbeat-ui-header-realtime-notice"
+                            data-app-frame-header-realtime-status={headerRealtimeStatus}
+                          />
                         </div>
                         <div className="mt-3 border-t border-[hsl(var(--border))]">
                           {alertNotices.length > 0 ? (
@@ -715,7 +1514,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                                 <span className="min-w-0">
                                   <span className="block truncate text-[12px] font-medium text-[hsl(var(--foreground))]">{item.title}</span>
                                   <span className="mt-1 block text-[11px] text-[hsl(var(--muted-foreground))]">
-                                    {item.status} · {formatHeaderTime(item.activeAt)}
+                                    {item.status} · {formatHeaderTime(item.activeAt, emptyValue)}
                                   </span>
                                 </span>
                               </button>
@@ -757,23 +1556,29 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                       aria-label={t('menu.settings')}
                       onClick={() => setSettingsOpen(open => !open)}
                       data-app-frame-icon-trigger="settings"
+                      data-app-frame-locale-reload-contract="angular-load-use-layout-reload"
+                      data-app-frame-locale-reload-owner="route-locale-reload-contract"
                     >
                       <Settings size={16} data-app-frame-glyph="settings-gear" />
                       <span className="sr-only">{t('menu.settings')}</span>
                     </button>
                     {settingsOpen ? (
                       <div className="absolute right-0 top-10 z-30 min-w-[220px] rounded-[4px] border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-1 shadow-[0_8px_24px_rgba(0,0,0,.22)]">
-                        <button
-                          type="button"
-                          className="flex w-full items-center gap-2 rounded-[2px] px-2.5 py-2 text-left text-[12px] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent)/0.5)]"
+                        <HzHeaderMenuAction
+                          label={fullscreenLabel}
+                          state={fullscreenActive ? 'active' : 'inactive'}
                           onClick={() => {
                             setSettingsOpen(false);
                             toggleFullscreen();
                           }}
+                          data-app-frame-settings-fullscreen-action="angular-toggle"
                         >
-                          <Maximize2 size={14} />
-                          {t('common.fullscreen')}
-                        </button>
+                          {fullscreenActive ? (
+                            <Minimize2 size={14} data-app-frame-glyph="fullscreen-exit" />
+                          ) : (
+                            <Maximize2 size={14} data-app-frame-glyph="fullscreen-enter" />
+                          )}
+                        </HzHeaderMenuAction>
                         <Link
                           href="/setting/labels"
                           className="flex items-center gap-2 rounded-[2px] px-2.5 py-2 text-[12px] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent)/0.5)]"
@@ -792,8 +1597,10 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                           inactiveItemClassName="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent)/0.5)]"
                           activeIndicatorClassName="text-[11px] text-[hsl(var(--muted-foreground))]"
                           onSelect={async nextLocale => {
+                            showHeaderLocaleReloadSpinner();
                             await setLocale(nextLocale);
                             setSettingsOpen(false);
+                            window.location.reload();
                           }}
                         />
                       </div>
@@ -804,42 +1611,55 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
                       type="button"
                       className="inline-flex h-8 w-8 items-center justify-center rounded-[2px] text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--accent)/0.35)] hover:text-[hsl(var(--foreground))]"
                       onClick={() => setUserOpen(open => !open)}
-                      aria-label="admin"
+                      aria-label={t('app.frame.utility.user', { user: currentUserName })}
                       data-app-frame-icon-trigger="user"
+                      data-app-frame-user-name={currentUserName}
+                      data-app-frame-user-role={sessionUser?.role || 'unknown'}
+                      data-app-frame-user-logout-lifecycle-contract="angular-clear-then-passport-login"
+                      data-app-frame-user-logout-lifecycle-owner="route-session-contract"
+                      data-app-frame-about-closable-contract="angular-nz-closable-false"
+                      data-app-frame-about-cancel-contract="angular-on-cancel"
                     >
                       <span
                         className="flex h-6 w-6 items-center justify-center rounded-full bg-[#d9dde5]"
                         data-app-frame-user-avatar="angular-circle"
                       />
-                      <span className="sr-only">admin</span>
+                      <span className="sr-only">{t('app.frame.utility.user', { user: currentUserName })}</span>
                     </button>
                     {userOpen ? (
-                      <div className="absolute right-0 top-10 z-30 min-w-[180px] rounded-[4px] border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-1 shadow-[0_8px_24px_rgba(0,0,0,.22)]">
-                        <Link
+                      <div
+                        className="absolute right-0 top-10 z-30 min-w-[180px] rounded-[4px] border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-1 shadow-[0_8px_24px_rgba(0,0,0,.22)]"
+                        data-app-frame-user-menu="angular-width-sm"
+                      >
+                        <HzUserMenuAction
+                          component={Link}
                           href="/setting/settings/config"
-                          className="flex items-center gap-2 rounded-[2px] px-2.5 py-2 text-[12px] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent)/0.5)]"
+                          item="setting"
+                          label={t('menu.extras.setting')}
                           onClick={() => setUserOpen(false)}
+                          data-app-frame-user-action="setting"
                         >
-                          <Settings2 size={14} />
-                          {t('menu.settings')}
-                        </Link>
-                        <a
-                          href="https://hertzbeat.apache.org/docs/"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-2 rounded-[2px] px-2.5 py-2 text-[12px] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent)/0.5)]"
-                        >
-                          <Info size={14} />
-                          {t('common.about')}
-                        </a>
-                        <button
-                          type="button"
-                          className="flex w-full items-center gap-2 rounded-[2px] px-2.5 py-2 text-left text-[12px] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent)/0.5)]"
+                          <Wrench size={14} data-app-frame-user-menu-icon="tool" />
+                        </HzUserMenuAction>
+                        <HzUserMenuAction
+                          item="logout"
+                          label={t('menu.account.logout')}
                           onClick={logout}
+                          data-app-frame-user-action="logout"
+                          data-app-frame-user-logout-lifecycle="angular-clear-then-passport-login"
+                          data-app-frame-user-logout-lifecycle-owner="route-session-contract"
                         >
-                          <LogOut size={14} />
-                          {t('common.logout')}
-                        </button>
+                          <LogOut size={14} data-app-frame-user-menu-icon="logout" />
+                        </HzUserMenuAction>
+                        <HzUserMenuAction
+                          item="about"
+                          label={t('menu.extras.about')}
+                          onClick={openAboutModal}
+                          data-app-frame-user-action="about"
+                          data-app-frame-user-about-action="angular-modal"
+                        >
+                          <MapPin size={14} data-app-frame-user-menu-icon="environment" />
+                        </HzUserMenuAction>
                       </div>
                     ) : null}
                   </div>
@@ -850,30 +1670,196 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
 
           <AppSidebar pathname={pathname} t={t} />
 
-          <main className="relative min-w-0 self-start">
+          <main
+            className="relative flex min-h-0 min-w-0 flex-col self-stretch"
+            data-platform-main-scroll="content-flow"
+          >
             <div data-app-frame-content-shell={buildContentFrameShellKind(pathname)} className={buildContentFrameClassName(pathname)}>
               {children}
             </div>
             <PlatformCopyrightFooter
-              className="border-t border-[var(--ops-border-color)] py-2.5 text-center"
+              className="mt-auto border-t border-[var(--ops-border-color)] py-2.5 text-center"
               data-platform-footer="angular-footer"
+              data-platform-footer-placement="flow-end-or-viewport-bottom"
               headlineClassName="text-[11px] font-semibold text-[var(--ops-text-secondary)]"
               innerClassName="space-y-0.5"
               lineClassName="text-[10px] leading-4 text-[var(--ops-text-tertiary)]"
               linkClassName="text-[var(--ops-text-secondary)]"
               version={PLATFORM_FOOTER_VERSION}
             />
-            <a
-              aria-label={t('common.help')}
+            <HzAboutModalSurface
+              open={aboutOpen}
+              title={t('about.title')}
+              points={[
+                t('about.point.1'),
+                t('about.point.2'),
+                t('about.point.3'),
+                t('about.point.4'),
+                t('about.point.5'),
+                t('about.point.6')
+              ]}
+              help={t('about.help')}
+              version={PLATFORM_FOOTER_VERSION}
+              releaseHref={`https://github.com/apache/hertzbeat/releases/tag/${PLATFORM_FOOTER_VERSION}`}
+              copyright={t('about.copyright', { year: new Date().getFullYear() })}
+              notShowLabel={t('about.not-show-next-login')}
+              notShowChecked={aboutNotShowNextLogin}
+              closeLabel={t('common.dialog.close')}
+              communityLinks={[
+                { href: 'https://github.com/apache/hertzbeat', label: t('about.github') },
+                { href: 'https://github.com/apache/hertzbeat/issues', label: t('about.issue') },
+                { href: 'https://github.com/apache/hertzbeat/pulls', label: t('about.pr') },
+                { href: 'https://discord.com/invite/Fb6M73htGr', label: t('about.discuss') },
+                { href: 'https://hertzbeat.apache.org/docs/', label: t('about.doc') },
+                { href: 'https://hertzbeat.apache.org/docs/start/upgrade', label: t('about.upgrade') },
+                { href: 'https://github.com/apache/hertzbeat', label: t('about.star') }
+              ]}
+              onClose={() => setAboutOpen(false)}
+              onNotShowChange={changeAboutNotShowNextLogin}
+              data-app-frame-about-modal="angular-user-menu"
+              data-app-frame-about-closable-contract="angular-nz-closable-false"
+              data-app-frame-about-cancel-contract="angular-on-cancel"
+            />
+            <button
+              type="button"
+              aria-label={t('ai.chat.launch')}
               className="fixed bottom-4 right-5 z-40 inline-flex h-12 w-12 items-center justify-center rounded-[6px] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-[0_14px_38px_rgba(67,97,238,0.34)] transition hover:brightness-110"
-              data-shell-help-launcher="angular-help"
-              href="https://hertzbeat.apache.org/docs/"
-              rel="noreferrer"
-              target="_blank"
+              data-shell-ai-chat-launcher="angular-ai-chat"
+              data-app-frame-ai-chat-launcher-contract="angular-empty-modal"
+              data-app-frame-ai-chat-config-save-lifecycle-contract="angular-validate-save-close-refresh"
+              data-app-frame-ai-chat-config-save-lifecycle-owner="route-ai-chat-config-contract"
+              data-app-frame-ai-chat-conversation-action-lifecycle-contract="angular-create-select-delete-fallback"
+              data-app-frame-ai-chat-conversation-action-lifecycle-owner="route-ai-chat-conversation-contract"
+              data-app-frame-ai-chat-schedule-action-lifecycle-contract="angular-load-create-toggle-revert-confirm-update-delete"
+              data-app-frame-ai-chat-schedule-action-lifecycle-owner="route-ai-chat-schedule-contract"
+              data-app-frame-ai-chat-stream-history-lifecycle-contract="angular-push-user-placeholder-sse-skill-report-refresh"
+              data-app-frame-ai-chat-stream-history-lifecycle-owner="route-ai-chat-stream-contract"
+              onClick={() => openAiChatModal()}
             >
               <Bot size={28} strokeWidth={2.2} />
-              <span className="sr-only">{t('common.help')}</span>
-            </a>
+              <span className="sr-only">{t('ai.chat.launch')}</span>
+            </button>
+            {aiChatOpen ? (
+              <HzAiChatModalSurface
+                data-app-frame-ai-chat-owner="hertzbeat-ui-ai-chat-modal"
+                data-app-frame-ai-chat-initial-message-contract={aiInitialPrompt ? 'angular-open-modal-initial-message' : 'angular-empty-modal'}
+                data-app-frame-ai-chat-initial-message-owner="route-ai-chat-modal-contract"
+                data-app-frame-ai-chat-config-save-lifecycle-contract="angular-validate-save-close-refresh"
+                data-app-frame-ai-chat-config-save-lifecycle-owner="route-ai-chat-config-contract"
+                data-app-frame-ai-chat-conversation-action-lifecycle-contract="angular-create-select-delete-fallback"
+                data-app-frame-ai-chat-conversation-action-lifecycle-owner="route-ai-chat-conversation-contract"
+                data-app-frame-ai-chat-schedule-action-lifecycle-contract="angular-load-create-toggle-revert-confirm-update-delete"
+                data-app-frame-ai-chat-schedule-action-lifecycle-owner="route-ai-chat-schedule-contract"
+                data-app-frame-ai-chat-stream-history-lifecycle-contract="angular-push-user-placeholder-sse-skill-report-refresh"
+                data-app-frame-ai-chat-stream-history-lifecycle-owner="route-ai-chat-stream-contract"
+                title={t('ai.chat.title')}
+                subtitle={t('ai.chat.subtitle')}
+                conversationsTitle={t('ai.chat.conversations')}
+                newChatLabel={t('ai.chat.new-chat')}
+                newChatStatus={aiNewConversationStatus}
+                deleteLabel={t('ai.chat.conversation.delete.title')}
+                deleteConfirmLabel={t('ai.chat.conversation.delete.confirm')}
+                deleteCancelLabel={t('common.cancel')}
+                deleteStatus={aiDeleteConversationStatus}
+                deleteConversationId={aiDeleteConversationId}
+                welcomeTitle={t('ai.chat.welcome.title')}
+                welcomeDescription={t('ai.chat.welcome.description')}
+                inputPlaceholder={t('ai.chat.input.placeholder')}
+                inputValue={aiDraftMessage}
+                inputHint={t('ai.chat.input.hint')}
+                closeLabel={t('common.dialog.close')}
+                sendLabel={t('ai.chat.submit')}
+                sendStatus={aiSendStatus}
+                streamingLabel={t('ai.chat.typing')}
+                configOpen={aiConfigOpen}
+                configTitle={t('ai.chat.config.title')}
+                configDescription={t('ai.chat.config.required.content')}
+                configStatus={aiConfigStatus}
+                configStatusLabel={t(aiConfigStatusLabelKey)}
+                configTriggerLabel={t('ai.chat.modify-api-key')}
+                configProviderLabel={t('ai.chat.config.provider')}
+                configProviderHelp={t('ai.chat.config.provider.help')}
+                configApiKeyLabel={t('ai.chat.config.api-key')}
+                configApiKeyHelp={t('ai.chat.config.api-key.help')}
+                configBaseUrlLabel={t('ai.chat.config.base-url')}
+                configBaseUrlHelp={t('ai.chat.config.base-url.help')}
+                configModelLabel={t('ai.chat.config.model')}
+                configModelHelp={t('ai.chat.config.model.help')}
+                configResetLabel={t('ai.chat.config.reset')}
+                configSaveLabel={t('ai.chat.config.save')}
+                configCancelLabel={t('ai.chat.config.cancel')}
+                configProviderOptions={AI_CHAT_PROVIDER_OPTIONS}
+                configValue={aiProviderConfig}
+                scheduleOpen={aiScheduleOpen}
+                scheduleStatus={aiScheduleStatus}
+                scheduleStatusLabel={t(aiScheduleStatusLabelKey)}
+                scheduleTriggerLabel={t('ai.chat.schedule.button')}
+                scheduleTitle={t('ai.chat.schedule.title')}
+                scheduleConfiguredTitle={t('ai.chat.schedule.configured')}
+                scheduleCreateTitle={t('ai.chat.schedule.create')}
+                scheduleAddTitle={t('ai.chat.schedule.add')}
+                scheduleSkillLabel={t('ai.chat.schedule.skill')}
+                scheduleSkillSelectLabel={t('ai.chat.schedule.skill.select')}
+                scheduleSkillPlaceholder={t('ai.chat.schedule.skill.placeholder')}
+                scheduleCronLabel={t('ai.chat.schedule.cron.label')}
+                scheduleCronHelp={t('ai.chat.schedule.cron.help')}
+                scheduleCronCommonLabel={t('ai.chat.schedule.cron.common')}
+                scheduleCronMondayLabel={t('ai.chat.schedule.cron.monday')}
+                scheduleStatusColumnLabel={t('ai.chat.schedule.status')}
+                scheduleActionLabel={t('ai.chat.schedule.action')}
+                scheduleEnabledLabel={t('common.enabled')}
+                scheduleDisabledLabel={t('common.disabled')}
+                scheduleEditLabel={t('ai.chat.schedule.edit')}
+                scheduleDeleteLabel={t('common.button.delete')}
+                scheduleDeleteConfirmLabel={t('ai.chat.conversation.delete.confirm')}
+                scheduleDeleteCancelLabel={t('common.button.cancel')}
+                scheduleDeleteStatus={aiDeleteScheduleStatus}
+                scheduleDeleteScheduleId={aiDeleteScheduleId}
+                scheduleSaveLabel={t('common.button.save')}
+                scheduleCancelLabel={t('common.button.cancel')}
+                scheduleCreateLabel={t('ai.chat.schedule.create')}
+                scheduleRows={aiSchedules}
+                scheduleSkills={aiScheduleSkills}
+                scheduleDraft={aiScheduleDraft}
+                scheduleEditDraft={aiScheduleEditDraft}
+                initialMessageLabel={t('ai.chat.initial-message')}
+                initialMessage={aiInitialPrompt}
+                conversationStatus={aiConversations.status}
+                conversationStatusLabel={t(aiConversations.statusLabelKey)}
+                conversations={aiConversationRows}
+                onNewConversation={createNewAiConversation}
+                onConversationSelect={setSelectedAiConversationId}
+                onConversationDeleteRequest={requestDeleteAiConversation}
+                onConversationDeleteCancel={cancelDeleteAiConversation}
+                onConversationDeleteConfirm={confirmDeleteAiConversation}
+                messageStatus={aiMessageStatus}
+                messageStatusLabel={t(aiMessageStatusLabelKey)}
+                conversationMessages={aiConversationMessageRows}
+                onInputChange={setAiDraftMessage}
+                onSendMessage={sendAiMessage}
+                onConfigOpen={openAiProviderConfig}
+                onConfigClose={() => setAiConfigOpen(false)}
+                onConfigSave={saveAiProviderConfig}
+                onConfigResetDefaults={resetAiProviderDefaults}
+                onConfigChange={changeAiProviderConfig}
+                onScheduleOpen={openAiSchedulePanel}
+                onScheduleClose={() => setAiScheduleOpen(false)}
+                onScheduleDraftChange={setAiScheduleDraft}
+                onScheduleCreate={createAiScheduleFromDraft}
+                onScheduleToggle={toggleAiSchedule}
+                onScheduleEditStart={startAiScheduleEdit}
+                onScheduleEditCancel={() => setAiScheduleEditDraft(null)}
+                onScheduleEditChange={setAiScheduleEditDraft}
+                onScheduleUpdate={updateAiScheduleFromDraft}
+                onScheduleDeleteRequest={requestDeleteAiSchedule}
+                onScheduleDeleteCancel={cancelDeleteAiSchedule}
+                onScheduleDeleteConfirm={confirmDeleteAiSchedule}
+                previewMessages={[
+                  { role: 'assistant', label: t('ai.chat.assistant'), content: t('ai.chat.offline.response') }
+                ]}
+                onClose={() => setAiChatOpen(false)}
+              />
+            ) : null}
           </main>
         </div>
       </div>

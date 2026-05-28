@@ -1,13 +1,34 @@
-import { Compass, LayoutDashboard, Settings2 } from 'lucide-react';
-import { describe, expect, it, vi } from 'vitest';
+import {
+  BellOff,
+  Compass,
+  FileCode2,
+  GitMerge,
+  LayoutDashboard,
+  Plug,
+  RadioReceiver,
+  Send,
+  Settings2,
+  Webhook
+} from 'lucide-react';
+import { describe, expect, it } from 'vitest';
 import { buildShellSidebarSections, resolveShellNavIcon } from './sidebar';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
 
-const t = vi.fn((key: string) => `translated:${key}`);
+const t = createTranslatorMock({ locale: 'zh-CN' });
 
 describe('shell sidebar helpers', () => {
   it('maps configured icons and falls back safely', () => {
     expect(resolveShellNavIcon('overview')).toBe(LayoutDashboard);
     expect(resolveShellNavIcon('settings')).toBe(Settings2);
+    expect(resolveShellNavIcon('collector')).toBe(RadioReceiver);
+    expect(resolveShellNavIcon('monitor-template')).toBe(FileCode2);
+    expect(resolveShellNavIcon('alert-integration')).toBe(Webhook);
+    expect(resolveShellNavIcon('alert-group')).toBe(GitMerge);
+    expect(resolveShellNavIcon('alert-silence')).toBe(BellOff);
+    expect(resolveShellNavIcon('alert-notice')).toBe(Send);
+    expect(resolveShellNavIcon('plugins')).toBe(Plug);
     expect(resolveShellNavIcon('missing')).toBe(Compass);
     expect(resolveShellNavIcon()).toBe(Compass);
   });
@@ -26,21 +47,46 @@ describe('shell sidebar helpers', () => {
       'dashboards',
       'settings'
     ]);
-    expect(ingestion?.title).toBe('translated:menu.section.ingestion');
+    expect(ingestion?.title).toBe('接入采集');
     expect(ingestion?.items.map(item => item.href)).toEqual([
       '/ingestion/otlp',
       '/monitors',
       '/setting/collector',
       '/setting/define'
     ]);
-    expect(alerting?.title).toBe('translated:menu.section.alerting');
+    expect(ingestion?.items.map(item => item.iconKey)).toEqual([
+      'otlp',
+      'monitor',
+      'collector',
+      'monitor-template'
+    ]);
+    expect(alerting?.title).toBe('告警处置');
     expect(alerting?.items.some(item => item.href === '/alert' && item.active)).toBe(true);
     expect(alerting?.items.some(item => item.href === '/alert/setting' && item.active)).toBe(true);
-    expect(alerting?.items.find(item => item.href === '/alert/setting')?.title).toBe('translated:menu.alert.setting');
+    expect(alerting?.items.find(item => item.href === '/alert/setting')?.title).toBe('阈值规则');
+    expect(alerting?.items.map(item => item.iconKey)).toEqual([
+      'alert',
+      'alert-setting',
+      'alert-integration',
+      'alert-group',
+      'alert-inhibit',
+      'alert-silence',
+      'alert-notice',
+      'alert-bulletin'
+    ]);
     expect(alerting?.items.some(item => item.href === '/incidents')).toBe(false);
     expect(alerting?.items.some(item => item.href === '/actions')).toBe(false);
-    expect(settings?.items.find(item => item.key === 'settings-mcp-server')?.title).toBe('translated:menu.advanced.mcp-server');
-    expect(settings?.items.find(item => item.key === 'help-center')?.title).toBe('translated:menu.extras.help');
+    expect(settings?.items.find(item => item.key === 'settings-mcp-server')?.title).toBe('MCP服务器');
+    expect(settings?.items.find(item => item.key === 'help-center')?.title).toBe('帮助中心');
     expect(settings?.items.some(item => item.href === '/status')).toBe(false);
+  });
+
+  it('does not fall back to catalog English labels for visible sidebar text', () => {
+    const source = readFileSync(resolve(process.cwd(), 'lib/shell/sidebar.ts'), 'utf8');
+
+    expect(source).toContain('title: t(section.titleKey)');
+    expect(source).toContain('title: t(item.labelKey)');
+    expect(source).not.toContain(': section.title');
+    expect(source).not.toContain(': item.label');
   });
 });

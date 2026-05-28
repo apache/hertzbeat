@@ -28,4 +28,11 @@ describe('app frame state', () => {
     expect(shouldLoadHeaderState('/exception/404')).toBe(false);
     expect(shouldLoadHeaderState('/overview')).toBe(true);
   });
+
+  it('does not let app-frame setup polling compete with monitor CRUD interactions', () => {
+    expect(shouldLoadHeaderState('/monitors')).toBe(false);
+    expect(shouldLoadHeaderState('/monitors/new')).toBe(false);
+    expect(shouldLoadHeaderState('/monitors/42')).toBe(false);
+    expect(shouldLoadHeaderState('/monitors/42/edit')).toBe(false);
+  });
 });

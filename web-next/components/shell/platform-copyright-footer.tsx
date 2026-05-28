@@ -33,7 +33,6 @@ export function PlatformCopyrightFooter({
             Apache HertzBeat™
           </a>
         </div>
-        <div className={lineClassName}>Licensed under the Apache License, Version 2.0</div>
       </div>
     </footer>
   );

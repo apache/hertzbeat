@@ -1,4 +1,5 @@
 import React from 'react';
+import { HzLocaleMenuOption } from '@hertzbeat/ui';
 import { useI18n } from '../providers/i18n-provider';
 import { cn } from '../../lib/utils';
 import type { LOCALES, LocaleCode } from '../../lib/i18n';
@@ -29,22 +30,19 @@ export function LocaleOptionList({
   return (
     <div className={className}>
       {locales.map(option => (
-        <button
+        <HzLocaleMenuOption
           key={option.code}
-          type="button"
+          abbr={option.abbr}
+          label={t(option.labelKey)}
+          selected={locale === option.code}
           className={cn(
-            'flex w-full items-center gap-2 text-left transition',
             itemClassName,
             locale === option.code ? activeItemClassName : inactiveItemClassName
           )}
+          indicatorClassName={activeIndicatorClassName}
           onClick={() => void onSelect(option.code)}
-        >
-          <span className="inline-flex min-w-5 items-center justify-center text-[14px] leading-none">
-            {option.abbr}
-          </span>
-          <span className="flex-1">{t(option.labelKey)}</span>
-          {locale === option.code ? <span className={activeIndicatorClassName}>✓</span> : null}
-        </button>
+          data-app-frame-locale-option={option.code}
+        />
       ))}
     </div>
   );

@@ -1,20 +1,34 @@
 import {
   Activity,
+  BellDot,
+  BellOff,
   BellRing,
   Boxes,
   ChevronRight,
   CircleGauge,
+  CircleHelp,
   Compass,
+  FileCode2,
+  FileCog,
+  GitMerge,
   LayoutDashboard,
+  ListTree,
   Logs,
   Network,
   Orbit,
+  Plug,
+  RadioReceiver,
   type LucideIcon,
   RadioTower,
+  Search,
+  Send,
+  ServerCog,
   Settings2,
+  ShieldOff,
   Siren,
   Tags,
-  Waypoints
+  Waypoints,
+  Webhook
 } from 'lucide-react';
 import { isActiveRoute } from '../app-frame-state';
 import { navSections } from '../nav';
@@ -26,6 +40,7 @@ export type ShellSidebarItem = {
   href: string;
   title: string;
   active: boolean;
+  iconKey: string;
   Icon: LucideIcon;
 };
 
@@ -39,9 +54,13 @@ const shellNavIconMap: Record<string, LucideIcon> = {
   overview: LayoutDashboard,
   bulletin: BellRing,
   entities: Boxes,
+  'entity-discovery': Search,
+  'entity-definition': ListTree,
   trace: Waypoints,
   log: Logs,
   monitor: CircleGauge,
+  collector: RadioReceiver,
+  'monitor-template': FileCode2,
   otlp: RadioTower,
   'otlp-metrics': Activity,
   incidents: Siren,
@@ -50,7 +69,17 @@ const shellNavIconMap: Record<string, LucideIcon> = {
   explorer: Compass,
   alert: BellRing,
   'alert-setting': Settings2,
+  'alert-integration': Webhook,
+  'alert-group': GitMerge,
+  'alert-inhibit': ShieldOff,
+  'alert-silence': BellOff,
+  'alert-notice': Send,
   settings: Settings2,
+  'mcp-server': ServerCog,
+  'settings-config': FileCog,
+  plugins: Plug,
+  help: CircleHelp,
+  'alert-bulletin': BellDot,
   token: Tags,
   status: Network
 };
@@ -63,12 +92,13 @@ export function resolveShellNavIcon(icon?: string) {
 export function buildShellSidebarSections(pathname: string, t: Translator): ShellSidebarSection[] {
   return navSections.map(section => ({
     key: section.key,
-    title: section.titleKey ? t(section.titleKey) : section.title,
+    title: t(section.titleKey),
     items: section.items.map(item => ({
       key: item.key,
       href: item.href,
-      title: item.labelKey ? t(item.labelKey) : item.label,
+      title: t(item.labelKey),
       active: isActiveRoute(pathname, item.href),
+      iconKey: item.icon,
       Icon: resolveShellNavIcon(item.icon)
     }))
   }));

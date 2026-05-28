@@ -10,5 +10,7 @@ export function isStandaloneRoute(pathname: string) {
 }
 
 export function shouldLoadHeaderState(pathname: string) {
-  return !isStandaloneRoute(pathname);
+  const pathOnly = pathname.split('?')[0] || pathname;
+  const isMonitorCrudRoute = pathOnly === '/monitors' || pathOnly.startsWith('/monitors/');
+  return !isStandaloneRoute(pathOnly) && !isMonitorCrudRoute;
 }

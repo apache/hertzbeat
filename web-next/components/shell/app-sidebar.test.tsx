@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
 import { AppSidebar } from './app-sidebar';
 
 vi.mock('next/link', () => ({
@@ -11,50 +12,73 @@ vi.mock('next/link', () => ({
   )
 }));
 
+const t = createTranslatorMock({ locale: 'zh-CN' });
+
 describe('AppSidebar', () => {
   it('renders translated navigation groups without the old operator footer card', () => {
-    const html = renderToStaticMarkup(
-      <AppSidebar pathname="/overview" t={key => `translated:${key}`} />
-    );
+    const html = renderToStaticMarkup(<AppSidebar pathname="/overview" t={t} />);
 
     expect(html).toContain('data-app-sidebar="true"');
     expect(html).toContain('data-app-sidebar-nav="true"');
     expect(html).toContain('data-shell-nav-item="overview-home"');
-    expect(html).toContain('translated:menu.section.ingestion');
-    expect(html).toContain('translated:menu.section.objects');
-    expect(html).toContain('translated:menu.section.observability');
-    expect(html).toContain('translated:menu.section.alerting');
-    expect(html).toContain('translated:menu.section.dashboards');
-    expect(html).toContain('translated:menu.section.settings');
-    expect(html).not.toContain('translated:menu.home');
-    expect(html).not.toContain('>translated:menu.monitor</div>');
+    expect(html).toContain('接入采集');
+    expect(html).toContain('对象资源');
+    expect(html).toContain('可观测排障');
+    expect(html).toContain('告警处置');
+    expect(html).toContain('仪表盘');
+    expect(html).toContain('平台设置');
     expect(html).toContain('data-shell-nav-item="settings-mcp-server"');
-    expect(html).toContain('translated:menu.advanced.mcp-server');
+    expect(html).toContain('MCP服务器');
     expect(html).toContain('data-shell-nav-item="help-center"');
-    expect(html).toContain('translated:menu.extras.help');
+    expect(html).toContain('帮助中心');
     expect(html).not.toContain('data-shell-nav-item="incidents"');
     expect(html).not.toContain('data-shell-nav-item="actions"');
     expect(html).not.toContain('data-shell-nav-item="status-public"');
     expect(html).toContain('href="/overview"');
     expect(html).not.toContain('data-app-sidebar-operator="true"');
-    expect(html).not.toContain('translated:common.operator');
-    expect(html).not.toContain('translated:common.session.authenticated');
+    expect(html).not.toContain('操作员');
+    expect(html).not.toContain('已认证会话');
   });
 
   it('flattens shared nav rows so the sidebar no longer renders every item as a bordered card with a boxed icon', () => {
-    const html = renderToStaticMarkup(
-      <AppSidebar pathname="/overview" t={key => `translated:${key}`} />
-    );
+    const html = renderToStaticMarkup(<AppSidebar pathname="/overview" t={t} />);
 
     expect(html).toContain('data-shell-nav-item="entities"');
     expect(html).not.toContain('rounded-[2px] border px-3 py-1.5');
     expect(html).not.toContain('rounded-[2px] border transition-colors');
   });
 
+  it('renders top-level nav rows with a left rail active treatment instead of filled card states', () => {
+    const html = renderToStaticMarkup(<AppSidebar pathname="/monitors/640360126405888" t={t} />);
+
+    expect(html).toContain('data-app-sidebar-visual="left-rail-primary-nav"');
+    expect(html).toContain('data-shell-nav-visual="left-rail"');
+    expect(html).toContain('data-shell-nav-item-active="true"');
+    expect(html).toContain('data-shell-nav-active-rail="true"');
+    expect(html).toContain('data-shell-nav-icon-key="monitor"');
+    expect(html).not.toContain('bg-[var(--ops-surface-raised)]');
+    expect(html).not.toContain('hover:bg-[var(--ops-surface-panel)]');
+  });
+
+  it('keeps visible primary menu icons specific to each operator workflow', () => {
+    const html = renderToStaticMarkup(<AppSidebar pathname="/monitors" t={t} />);
+
+    [
+      'data-shell-nav-icon-key="otlp"',
+      'data-shell-nav-icon-key="monitor"',
+      'data-shell-nav-icon-key="collector"',
+      'data-shell-nav-icon-key="monitor-template"',
+      'data-shell-nav-icon-key="entity-discovery"',
+      'data-shell-nav-icon-key="entity-definition"',
+      'data-shell-nav-icon-key="alert-group"',
+      'data-shell-nav-icon-key="alert-silence"',
+      'data-shell-nav-icon-key="plugins"',
+      'data-shell-nav-icon-key="help"'
+    ].forEach(marker => expect(html).toContain(marker));
+  });
+
   it('bounds the navigation scroll area so long menus do not create page-level footer whitespace', () => {
-    const html = renderToStaticMarkup(
-      <AppSidebar pathname="/alert/silence" t={key => `translated:${key}`} />
-    );
+    const html = renderToStaticMarkup(<AppSidebar pathname="/alert/silence" t={t} />);
 
     expect(html).toContain('data-app-sidebar-scroll-owner="bounded-sidebar-nav"');
     expect(html).toContain('flex h-full min-h-0 flex-col overflow-hidden');
