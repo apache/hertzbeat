@@ -41,7 +41,7 @@ limitations under the License.
 
 - 💬**Suggestion**: You can also make some suggestions to the project or community to promote the healthy development of the community;
 
-More see [Contribution Types](https://allcontributors.org/emoji-key)
+More see [Contribution Types](https://allcontributors.org/en/reference/emoji-key/)
 
 Even small corrections to typos are very welcome :)
 
@@ -85,27 +85,27 @@ Of course, if you have a good idea, you can also propose it directly on GitHub D
 2. Then download the code locally with git command:
 
     ```shell
-    git clone git@github.com:`YOUR_USERNAME`/hertzbeat.git #Recommended  
+    git clone git@github.com:`YOUR_USERNAME`/hertzbeat.git #Recommended
     ```
 
 3. After the download is complete, please refer to the getting started guide or README file of the target repository to initialize the project.
 4. Then, you can refer to the following command to submit the code:
 
     ```shell
-    git checkout -b a-feature-branch #Recommended  
+    git checkout -b a-feature-branch #Recommended
     ```
 
 5. Submit the coed as a commit, the commit message format specification required: [module name or type name]feature or bugfix or doc: custom message.
 
     ```shell
-    git add <modified file/path> 
-    git commit -m '[docs]feature: necessary instructions' #Recommended 
+    git add <modified file/path>
+    git commit -m '[docs]feature: necessary instructions' #Recommended
     ```
 
 6. Push to the remote repository
 
     ```shell
-    git push origin a-feature-branch   
+    git push origin a-feature-branch
     ```
 
 7. Then you can initiate a new PR (Pull Request) on GitHub.
@@ -135,7 +135,7 @@ On the master/main branch, you can do the following to sync the upstream reposit
 
 ```shell
 git remote add upstream https://github.com/apache/hertzbeat.git #Bind the remote warehouse, if it has been executed, it does not need to be executed again
-git checkout master 
+git checkout master
 git pull upstream master
 ```
 
