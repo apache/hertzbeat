@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildMonitorEditorReturnUrl } from './navigation';
+import { buildMonitorEditorCancelUrl, buildMonitorEditorReturnUrl } from './navigation';
 
 describe('monitor editor navigation', () => {
   it('builds the filtered return path when app is present', () => {
@@ -25,5 +25,12 @@ describe('monitor editor navigation', () => {
     ).toBe(
       '/monitors?app=website&labels=team%3Dplatform&pageIndex=1&pageSize=20&entityId=42&entityName=Checkout+Service'
     );
+  });
+
+  it('keeps Angular-style cancel navigation on the monitor list root unless a safe return target exists', () => {
+    expect(buildMonitorEditorCancelUrl()).toBe('/monitors');
+    expect(buildMonitorEditorCancelUrl({ labels: 'team=platform', pageIndex: '2' })).toBe('/monitors');
+    expect(buildMonitorEditorCancelUrl({ returnTo: '/entities/42?returnLabel=Checkout' })).toBe('/entities/42');
+    expect(buildMonitorEditorCancelUrl({ returnTo: '//evil.example', labels: 'team=platform' })).toBe('/monitors');
   });
 });

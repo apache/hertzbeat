@@ -1,38 +1,23 @@
-'use client';
-
 import React from 'react';
-import { useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { ClientWorkbench } from '@/components/workbench/client-workbench';
-import { MonitorEditorSurface } from '../../../components/pages/monitor-editor-surface';
-import { useI18n } from '@/components/providers/i18n-provider';
-import { apiMessageGet } from '@/lib/api-client';
-import { loadMonitorEditorDraft } from '@/lib/monitor-editor/controller';
+import { redirect } from 'next/navigation';
 
-export default function MonitorNewPage() {
-  const { t } = useI18n();
-  const searchParams = useSearchParams();
-  const app = searchParams.get('app') || 'website';
-  const returnTo = searchParams.get('returnTo');
+import MonitorNewPage from './monitor-new-page';
+import {
+  buildMonitorNewDefaultAppRedirectUrl,
+  hasMonitorNewAppParam,
+  readMonitorNewRouteState,
+  type MonitorNewSearchParams
+} from '../../../lib/monitor-editor/query-state';
 
-  const load = useCallback(async () => loadMonitorEditorDraft(apiMessageGet, 'new', { app }), [app]);
-
-  return (
-    <ClientWorkbench load={load} loadingCopy={t('monitor.editor.loading.new')}>
-      {data => (
-        <MonitorEditorSurface
-          initial={data}
-          mode="new"
-          returnContext={{
-            labels: searchParams.get('labels'),
-            pageIndex: searchParams.get('pageIndex'),
-            pageSize: searchParams.get('pageSize'),
-            entityId: searchParams.get('entityId'),
-            entityName: searchParams.get('entityName'),
-            returnTo
-          }}
-        />
-      )}
-    </ClientWorkbench>
-  );
+export default async function MonitorNewRoutePage({
+  searchParams
+}: {
+  searchParams?: Promise<MonitorNewSearchParams>;
+} = {}) {
+  const resolvedSearchParams = await searchParams;
+  if (!hasMonitorNewAppParam(resolvedSearchParams)) {
+    redirect(buildMonitorNewDefaultAppRedirectUrl());
+  }
+  const routeState = readMonitorNewRouteState(resolvedSearchParams);
+  return <MonitorNewPage initialRouteState={routeState} />;
 }

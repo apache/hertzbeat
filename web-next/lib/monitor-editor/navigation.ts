@@ -8,3 +8,7 @@ export function buildMonitorEditorReturnUrl(app?: string | null, returnContext?:
     app
   });
 }
+
+export function buildMonitorEditorCancelUrl(returnContext?: MonitorEditorReturnContext | null) {
+  return buildMonitorListReturnHref(returnContext?.returnTo ? { returnTo: returnContext.returnTo } : undefined);
+}

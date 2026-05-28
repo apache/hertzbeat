@@ -16,7 +16,7 @@ export type MonitorEditorDraft = {
   advancedParamDefines: ParamDefine[];
   scrapeParams: Param[];
   scrapeParamDefines: ParamDefine[];
-  collectors: string[];
+  collectors: Array<MonitorCollectorOption | string>;
 };
 
 export type MonitorScrapeDraft = {
@@ -24,15 +24,85 @@ export type MonitorScrapeDraft = {
   scrapeParamDefines: ParamDefine[];
 };
 
+export type MonitorCollectorOption = {
+  name: string;
+  ip?: string;
+  status?: string | number;
+  online?: boolean;
+  mode?: string | null;
+};
+
 type ParamCollectionKind = 'params' | 'advancedParams' | 'scrapeParams';
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
-type MonitorDetailResponse = {
+export type MonitorDetailResponse = {
   monitor: Monitor;
   params?: Param[];
   collector?: string | null;
   grafanaDashboard?: GrafanaDashboard;
 };
+
+export type MonitorEditorDraftReaders = {
+  readMonitorDetail?: (monitorId: string) => Promise<MonitorDetailResponse>;
+  readCollectors: () => Promise<{ content?: CollectorSummary[] }>;
+  readParamDefines: (app: string) => Promise<ParamDefine[]>;
+};
+
+const SYSTEM_DEFAULT_COLLECTOR = 'main-default-collector';
+const MONITOR_NAME_ADJECTIVES = ['quick', 'bright', 'calm', 'brave', 'cool', 'eager', 'gentle', 'lively'];
+const MONITOR_NAME_NOUNS = ['probe', 'service', 'signal', 'watch', 'beacon', 'node', 'pulse', 'guard'];
+const MONITOR_NAME_DIGITS = '23456789';
+const MONITOR_NAME_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz';
+
+function isSystemDefaultCollector(value?: string | null) {
+  return value === SYSTEM_DEFAULT_COLLECTOR;
+}
+
+function normalizeCollectorForDraft(value?: string | null) {
+  return isSystemDefaultCollector(value) ? '' : value || '';
+}
+
+function normalizeCollectorForPayload(value?: string | null) {
+  const normalized = value?.trim();
+  return normalized && !isSystemDefaultCollector(normalized) ? normalized : null;
+}
+
+function pickRandomToken(values: string[], random: () => number) {
+  return values[Math.floor(random() * values.length)] || values[0];
+}
+
+function capitalizeMonitorNamePart(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+export function generateMonitorEditorReadableName(random: () => number = Math.random) {
+  const adjective = capitalizeMonitorNamePart(pickRandomToken(MONITOR_NAME_ADJECTIVES, random));
+  const noun = capitalizeMonitorNamePart(pickRandomToken(MONITOR_NAME_NOUNS, random));
+  const randomDigits = Array.from({ length: 2 }, () => MONITOR_NAME_DIGITS.charAt(Math.floor(random() * MONITOR_NAME_DIGITS.length))).join('');
+  const randomChars = Array.from({ length: 2 }, () => MONITOR_NAME_CHARS.charAt(Math.floor(random() * MONITOR_NAME_CHARS.length))).join('');
+  return `${adjective}_${noun}_${randomDigits}${randomChars}`;
+}
+
+export function applyMonitorHostNameAutofill(
+  draft: MonitorEditorDraft,
+  {
+    mode,
+    field,
+    generateName = generateMonitorEditorReadableName
+  }: { mode: MonitorEditorMode; field?: string; generateName?: () => string }
+) {
+  if (mode !== 'new' || field !== 'host' || draft.monitor.name?.trim()) {
+    return draft;
+  }
+
+  return {
+    ...draft,
+    monitor: {
+      ...draft.monitor,
+      name: generateName()
+    }
+  };
+}
 
 function paramType(type?: string) {
   if (type === 'number') return 0;
@@ -126,7 +196,8 @@ export function isValidMonitorCronExpression(cronExpression: string): boolean {
   return cronRegex.test(cronExpression);
 }
 
-export function validateMonitorEditorDraft(draft: MonitorEditorDraft, t: Translator) {
+export function validateMonitorEditorDraft(draft: MonitorEditorDraft, t: Translator, options: { validateCronFormat?: boolean } = {}) {
+  const validateCronFormat = options.validateCronFormat !== false;
   const normalizedMonitor = normalizeMonitorFields(draft.monitor);
   if (!normalizedMonitor.app?.trim()) return t('monitor.editor.validation.app');
   if (!normalizedMonitor.name?.trim()) return t('monitor.editor.validation.name');
@@ -151,7 +222,8 @@ export function validateMonitorEditorDraft(draft: MonitorEditorDraft, t: Transla
   }
 
   if (normalizedMonitor.scheduleType === 'cron') {
-    if (!isValidMonitorCronExpression(normalizedMonitor.cronExpression || '')) {
+    const cronExpression = normalizedMonitor.cronExpression || '';
+    if (!cronExpression.trim() || (validateCronFormat && !isValidMonitorCronExpression(cronExpression))) {
       return t('monitor.editor.validation.cron');
     }
   } else if (normalizedMonitor.intervals == null || !Number.isFinite(Number(normalizedMonitor.intervals)) || Number(normalizedMonitor.intervals) <= 0) {
@@ -195,29 +267,70 @@ function mergeParamDrafts(defines: ParamDefine[], paramMap: Map<string, Param>) 
   };
 }
 
+export function buildMonitorEditorParamDefinesUrl(app: string) {
+  return `/apps/${app}/params`;
+}
+
+export function buildMonitorEditorCollectorsUrl() {
+  return '/collector';
+}
+
+export function buildMonitorEditCacheKey(monitorId: number | string) {
+  return ['monitor-editor-edit', buildMonitorEditorMonitorUrl(String(monitorId)), buildMonitorEditorCollectorsUrl()].join(':');
+}
+
+export function buildMonitorEditorMonitorUrl(monitorId: string) {
+  return `/monitor/${monitorId}`;
+}
+
 async function loadParamDefines(apiGet: ApiGetter, app: string) {
-  return apiGet<ParamDefine[]>(`/apps/${app}/params`);
+  return apiGet<ParamDefine[]>(buildMonitorEditorParamDefinesUrl(app));
 }
 
 async function loadCollectors(apiGet: ApiGetter) {
-  const response = await apiGet<{ content?: CollectorSummary[] }>('/collector');
-  return (response.content || []).map(item => item.collector?.name).filter((value): value is string => Boolean(value));
+  const response = await apiGet<{ content?: CollectorSummary[] }>(buildMonitorEditorCollectorsUrl());
+  return normalizeCollectorSummaries(response);
+}
+
+function normalizeCollectorSummaries(response: { content?: CollectorSummary[] }) {
+  return (response.content || [])
+    .map(item => item.collector)
+    .filter((collector): collector is NonNullable<CollectorSummary['collector']> => Boolean(collector?.name) && !isSystemDefaultCollector(collector.name))
+    .map(collector => ({
+      name: String(collector.name),
+      ip: collector.ip,
+      status: collector.status,
+      online: collector.online,
+      mode: collector.mode
+    }));
 }
 
 export async function loadMonitorScrapeDraft(apiGet: ApiGetter, scrape?: string | null, existingParams?: Param[]) {
+  return loadMonitorScrapeDraftFromFacade(app => loadParamDefines(apiGet, app), scrape, existingParams);
+}
+
+export async function loadMonitorScrapeDraftFromFacade(
+  readParamDefines: (app: string) => Promise<ParamDefine[]>,
+  scrape?: string | null,
+  existingParams?: Param[]
+) {
   if (!scrape || scrape === 'static') {
     return {
       scrapeParams: [],
       scrapeParamDefines: []
     } satisfies MonitorScrapeDraft;
   }
-  const defines = await loadParamDefines(apiGet, scrape);
+  const defines = await readParamDefines(scrape);
   const paramMap = new Map((existingParams || []).map(param => [String(param.field), param]));
   const merged = mergeParamDrafts(defines, paramMap);
   return {
     scrapeParams: merged.params,
     scrapeParamDefines: merged.paramDefines
   } satisfies MonitorScrapeDraft;
+}
+
+export function shouldPreserveMonitorScrapeParamsForLoad(previousScrape: string | null | undefined, nextScrape: string) {
+  return !previousScrape && nextScrape !== 'static';
 }
 
 function syncDependentCollection(defines: ParamDefine[], params: Param[], fieldValues: Map<string, unknown>) {
@@ -270,7 +383,46 @@ export function updateMonitorEditorParam(draft: MonitorEditorDraft, kind: ParamC
   return syncMonitorDependentDisplay(nextDraft);
 }
 
+export function resolveMonitorEditorParamChangeNotice(draft: MonitorEditorDraft, kind: ParamCollectionKind, index: number, value: unknown) {
+  const changedField = String(draft[kind][index]?.field || '');
+  if (changedField !== 'ssl' || typeof value !== 'boolean') {
+    return null;
+  }
+
+  const portParam = draft.params.find(param => param.field === 'port');
+  if (!portParam) {
+    return null;
+  }
+
+  const current = Number(portParam.paramValue);
+  if (draft.monitor.app === 'api') {
+    if (value && (!Number.isFinite(current) || current === 80)) return 'monitor.new.notify.change-to-https';
+    if (!value && (!Number.isFinite(current) || current === 443)) return 'monitor.new.notify.change-to-http';
+  }
+  if (draft.monitor.app === 'ftp') {
+    if (value && (!Number.isFinite(current) || current === 21)) return 'monitor.new.notify.change-to-sftp';
+    if (!value && (!Number.isFinite(current) || current === 22)) return 'monitor.new.notify.change-to-ftp';
+  }
+  return null;
+}
+
 export async function loadMonitorEditorDraft(apiGet: ApiGetter, mode: MonitorEditorMode, options: { app?: string; monitorId?: string }) {
+  return loadMonitorEditorDraftFromFacade(
+    {
+      readMonitorDetail: monitorId => apiGet<MonitorDetailResponse>(buildMonitorEditorMonitorUrl(monitorId)),
+      readCollectors: () => apiGet<{ content?: CollectorSummary[] }>(buildMonitorEditorCollectorsUrl()),
+      readParamDefines: app => loadParamDefines(apiGet, app)
+    },
+    mode,
+    options
+  );
+}
+
+export async function loadMonitorEditorDraftFromFacade(
+  readers: MonitorEditorDraftReaders,
+  mode: MonitorEditorMode,
+  options: { app?: string; monitorId?: string }
+) {
   const baseMonitor: Monitor = {
     id: options.monitorId ? Number(options.monitorId) : 0,
     app: options.app || 'website',
@@ -290,7 +442,10 @@ export async function loadMonitorEditorDraft(apiGet: ApiGetter, mode: MonitorEdi
   let grafanaDashboard: GrafanaDashboard = { enabled: false };
 
   if (mode === 'edit' && options.monitorId) {
-    const detail = await apiGet<MonitorDetailResponse>(`/monitor/${options.monitorId}`);
+    if (!readers.readMonitorDetail) {
+      throw new Error('Monitor detail reader is required for edit drafts');
+    }
+    const detail = await readers.readMonitorDetail(options.monitorId);
     monitor = {
       ...baseMonitor,
       ...detail.monitor,
@@ -301,14 +456,14 @@ export async function loadMonitorEditorDraft(apiGet: ApiGetter, mode: MonitorEdi
       annotations: detail.monitor.annotations || {}
     };
     paramMap = new Map((detail.params || []).map(param => [String(param.field), param]));
-    collector = detail.collector || '';
+    collector = normalizeCollectorForDraft(detail.collector);
     grafanaDashboard = detail.grafanaDashboard || { enabled: false };
   }
 
   const [collectors, mainDefines, scrapeDefines] = await Promise.all([
-    loadCollectors(apiGet),
-    loadParamDefines(apiGet, monitor.app),
-    monitor.scrape && monitor.scrape !== 'static' ? loadParamDefines(apiGet, monitor.scrape) : Promise.resolve<ParamDefine[]>([])
+    readers.readCollectors().then(normalizeCollectorSummaries),
+    readers.readParamDefines(monitor.app),
+    monitor.scrape && monitor.scrape !== 'static' ? readers.readParamDefines(monitor.scrape) : Promise.resolve<ParamDefine[]>([])
   ]);
 
   const mergedMain = mergeParamDrafts(mainDefines, paramMap);
@@ -336,7 +491,7 @@ export function buildMonitorSavePayload(draft: MonitorEditorDraft) {
   ];
   return {
     monitor: normalizeMonitorInstanceForSave(normalizeMonitorFields(draft.monitor), params),
-    collector: draft.collector,
+    collector: normalizeCollectorForPayload(draft.collector),
     params,
     grafanaDashboard: draft.grafanaDashboard
   };
@@ -350,7 +505,7 @@ export function buildMonitorDetectPayload(draft: MonitorEditorDraft) {
   ];
   return {
     monitor: normalizeMonitorInstanceForSave(normalizeMonitorFields(draft.monitor), params),
-    collector: draft.collector,
+    collector: normalizeCollectorForPayload(draft.collector),
     params
   };
 }
@@ -359,10 +514,22 @@ export async function createMonitor(apiPost: ApiPoster, draft: MonitorEditorDraf
   return apiPost<unknown>('/monitor', buildMonitorSavePayload(draft));
 }
 
+export async function createMonitorFromFacade(writeCreateMonitor: (payload: unknown) => Promise<unknown>, draft: MonitorEditorDraft) {
+  return writeCreateMonitor(buildMonitorSavePayload(draft));
+}
+
 export async function updateMonitor(apiPut: ApiPutter, draft: MonitorEditorDraft) {
   return apiPut<unknown>('/monitor', buildMonitorSavePayload(draft));
 }
 
+export async function updateMonitorFromFacade(writeUpdateMonitor: (payload: unknown) => Promise<unknown>, draft: MonitorEditorDraft) {
+  return writeUpdateMonitor(buildMonitorSavePayload(draft));
+}
+
 export async function detectMonitor(apiPost: ApiPoster, draft: MonitorEditorDraft) {
   return apiPost<unknown>('/monitor/detect', buildMonitorDetectPayload(draft));
+}
+
+export async function detectMonitorFromFacade(writeDetectMonitor: (payload: unknown) => Promise<unknown>, draft: MonitorEditorDraft) {
+  return writeDetectMonitor(buildMonitorDetectPayload(draft));
 }
