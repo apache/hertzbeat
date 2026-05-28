@@ -60,6 +60,18 @@ describe('overview console primitives', () => {
       />
     );
 
+    const customGuidanceHtml = renderToStaticMarkup(
+      <OverviewGuidancePanel
+        headline="Next: preserve caller-owned labels"
+        description="Custom labels are still passed through by callers that own this workflow language."
+        reasons={[{ label: 'Source', value: 'Caller' }]}
+        nextLinks={[{ label: 'Review', href: '/overview' }]}
+        startLabel="Custom start"
+        reasonsLabel="Custom reasons"
+        nextLabel="Custom next"
+      />
+    );
+
     expect(summaryHtml).toContain('data-overview-summary-grid="true"');
     expect(summaryHtml).toContain('data-overview-summary-item="true"');
     expect(summaryHtml).toContain('data-overview-summary-item-chrome="flat"');
@@ -67,8 +79,11 @@ describe('overview console primitives', () => {
     expect(summaryHtml).toContain('Critical pressure is still active');
     expect(summaryHtml).not.toContain('rounded-[10px] border border-[var(--ops-border-color)]');
     expect(guidanceHtml).toContain('data-overview-guidance="true"');
+    expect(guidanceHtml).toContain('>Next<');
     expect(guidanceHtml).toContain('Next: work the most important issue first');
+    expect(guidanceHtml).toContain('>Reasons<');
     expect(guidanceHtml).toContain('Entities in scope');
+    expect(guidanceHtml).toContain('>After that<');
     expect(guidanceHtml).toContain('href="/log/manage"');
     expect(compactGuidanceHtml).toContain('data-overview-guidance-reasons-layout="pill-row"');
     expect(compactGuidanceHtml).toContain('data-overview-guidance-reasons-density="compact"');
@@ -96,6 +111,11 @@ describe('overview console primitives', () => {
     expect(compactGuidanceHtml).toContain('text-[10px] leading-[1.25]');
     expect(compactGuidanceHtml).toContain('Logs');
     expect(compactGuidanceHtml).toContain('Pending');
+    expect(customGuidanceHtml).toContain('Custom start');
+    expect(customGuidanceHtml).toContain('Custom reasons');
+    expect(customGuidanceHtml).toContain('Custom next');
+    expect(customGuidanceHtml).not.toContain('>Reasons<');
+    expect(customGuidanceHtml).not.toContain('>After that<');
   });
 
   it('switches summary cards and impacted rows to button-backed actions when overview needs drawer-first posture', () => {
@@ -125,6 +145,7 @@ describe('overview console primitives', () => {
             type: 'service',
             severity: 'critical',
             severityLabel: 'Critical',
+            severityTone: 'danger',
             owner: 'Platform',
             statusLabel: 'Impacted',
             lastIssue: 'Latency high'
@@ -140,6 +161,7 @@ describe('overview console primitives', () => {
     expect(impactedHtml).toContain('<button');
     expect(impactedHtml).toContain('type="button"');
     expect(impactedHtml).toContain('checkout');
+    expect(impactedHtml).toContain('data-overview-impacted-severity-tone="danger"');
     expect(impactedHtml).not.toContain('href="/entities?app=checkout"');
   });
 
@@ -168,7 +190,7 @@ describe('overview console primitives', () => {
       <OverviewChecklist
         title="Next Steps"
         items={[
-          { key: 'logs', label: 'Review logs', ready: false },
+          { key: 'logs', label: 'Review logs', ready: true },
           { key: 'traces', label: 'Review traces', ready: false },
           { key: 'metrics', label: 'Review metrics', ready: false },
           { key: 'alerts', label: 'Create an alert', ready: false }
@@ -184,6 +206,8 @@ describe('overview console primitives', () => {
     expect(checklistHtml).toContain('gap-0 py-1');
     expect(checklistHtml).toContain('text-[10px] leading-[1.25]');
     expect(checklistHtml).toContain('text-[9px] leading-[1.2]');
+    expect(checklistHtml).toContain('>Ready<');
+    expect(checklistHtml).toContain('>Pending<');
     expect(checklistHtml).not.toContain('gap-1.5');
     expect(checklistHtml).not.toContain('py-1.5');
   });

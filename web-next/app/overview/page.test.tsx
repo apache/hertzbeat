@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -53,6 +55,7 @@ function createOverviewViewModel() {
       title: 'checkout latency spike',
       severity: 'critical',
       severityLabel: 'Critical',
+      severityTone: 'danger',
       entity: 'checkout',
       owner: 'Platform',
       summary: 'Latency high'
@@ -61,7 +64,7 @@ function createOverviewViewModel() {
       { label: 'Alert Trend', value: '1', insight: 'Check alert pressure.', tone: 'danger' }
     ],
     impactedEntities: [
-      { name: 'checkout', type: 'service', severity: 'critical', severityLabel: 'Critical', owner: 'Platform', status: 'impacted', statusLabel: 'Impacted', lastIssue: 'Latency high' }
+      { name: 'checkout', type: 'service', severity: 'critical', severityLabel: 'Critical', severityTone: 'danger', owner: 'Platform', status: 'impacted', statusLabel: 'Impacted', lastIssue: 'Latency high' }
     ],
     activityItems: [
       { title: 'checkout latency spike', detail: 'Platform · checkout', timestamp: '2026-04-16 22:00:00', tone: 'danger', tag: 'Firing' }
@@ -103,7 +106,10 @@ function createOverviewViewModel() {
 const mockState = vi.hoisted(() => ({
   lastLoad: null as null | (() => Promise<unknown>),
   clientData: createClientData(),
-  viewModel: createOverviewViewModel()
+  viewModel: createOverviewViewModel(),
+  queryClient: {
+    fetchQuery: vi.fn(async ({ queryFn }: { queryFn: () => Promise<unknown> }) => queryFn())
+  }
 }));
 
 const apiMessageGet = vi.fn();
@@ -119,14 +125,26 @@ vi.mock('@/components/providers/i18n-provider', () => ({
 }));
 
 vi.mock('@/components/workbench/client-workbench', () => ({
-  ClientWorkbench: ({ children, load }: { children: (data: any) => React.ReactNode; load: () => Promise<unknown> }) => {
+  ClientWorkbench: ({
+    children,
+    load,
+    loadingCopy
+  }: {
+    children: (data: any) => React.ReactNode;
+    load: () => Promise<unknown>;
+    loadingCopy?: string;
+  }) => {
     mockState.lastLoad = load;
     return (
-      <div data-client-workbench="true">
+      <div data-client-workbench="true" data-loading-copy={loadingCopy}>
         {children(mockState.clientData)}
       </div>
     );
   }
+}));
+
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => mockState.queryClient
 }));
 
 vi.mock('../../components/workbench/primitives', () => ({
@@ -272,10 +290,27 @@ beforeEach(() => {
   mockState.lastLoad = null;
   mockState.clientData = createClientData();
   mockState.viewModel = createOverviewViewModel();
+  mockState.queryClient.fetchQuery.mockReset();
+  mockState.queryClient.fetchQuery.mockImplementation(async ({ queryFn }: { queryFn: () => Promise<unknown> }) => queryFn());
   apiMessageGet.mockReset();
 });
 
 describe('overview page', () => {
+  it('keeps overview remounts on a short settled cache window without bypassing refresh keys', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/overview/overview-page.tsx'), 'utf8');
+
+    expect(source).toContain('OVERVIEW_SETTLED_CACHE_TTL_MS = 10_000');
+    expect(source).toContain('cacheSettledTtlMs={OVERVIEW_SETTLED_CACHE_TTL_MS}');
+    expect(source).toContain('key={refreshNonce}');
+    expect(source).toContain('cacheKey={overviewCacheKey}');
+    expect(source).toContain('queryKeys.overview.console');
+    expect(source).toContain('api.overview.summary()');
+    expect(source).toContain('api.overview.alerts(OVERVIEW_ALERT_LIST_QUERY)');
+    expect(source).toContain('resolveOverviewRenderData(data, lastReadyOverviewDataRef.current)');
+    expect(source).toContain('data-overview-stale-ready-retained');
+    expect(source).not.toContain("import { apiMessageGet } from '@/lib/api-client'");
+  });
+
   it('renders the HertzBeat overview shell and keeps the expected data loader contract', async () => {
     apiMessageGet
       .mockResolvedValueOnce({ apps: [] })
@@ -287,6 +322,7 @@ describe('overview page', () => {
 
     expect(html).toContain('data-workspace-shell="true"');
     expect(html).toContain('data-workspace-shell-rail-width="wide"');
+    expect(html).toContain('data-loading-copy="Loading overview console"');
     expect(html).toContain('checkout latency spike');
     expect(html).toContain('Refresh');
     expect(html).toContain('Alerts');
@@ -317,6 +353,131 @@ describe('overview page', () => {
       ['/summary'],
       ['/alerts?pageIndex=0&pageSize=6&sort=gmtUpdate&order=desc']
     ]);
+    expect(mockState.queryClient.fetchQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ['overview', 'console', {
+          summary: '/summary',
+          alerts: '/alerts?pageIndex=0&pageSize=6&sort=gmtUpdate&order=desc',
+          refreshNonce: 0
+        }],
+        staleTime: 5000
+      })
+    );
+  }, 60000);
+
+  it('keeps Angular forkJoin-style summary fallback when alerts still load', async () => {
+    apiMessageGet
+      .mockRejectedValueOnce(new Error('summary unavailable'))
+      .mockResolvedValueOnce({
+        content: [
+          {
+            id: 7,
+            fingerprint: 'alert-7',
+            content: 'collector timeout',
+            status: 'firing',
+            labels: { severity: 'warning', service: 'collector' }
+          }
+        ],
+        totalElements: 1,
+        pageIndex: 0,
+        pageSize: 6
+      });
+
+    const { default: OverviewPage } = await import('./page');
+    renderToStaticMarkup(<OverviewPage />);
+
+    await expect(mockState.lastLoad?.()).resolves.toMatchObject({
+      summary: { apps: [] },
+      alerts: { content: [{ fingerprint: 'alert-7' }] },
+      summaryFailed: true,
+      alertsFailed: false
+    });
+    expect(apiMessageGet.mock.calls).toEqual([
+      ['/summary'],
+      ['/alerts?pageIndex=0&pageSize=6&sort=gmtUpdate&order=desc']
+    ]);
+  }, 60000);
+
+  it('keeps Angular forkJoin-style alert fallback when summary still loads', async () => {
+    apiMessageGet
+      .mockResolvedValueOnce({
+        apps: [
+          { app: 'api', category: 'service', size: 2, availableSize: 2, unAvailableSize: 0, unManageSize: 0 }
+        ]
+      })
+      .mockRejectedValueOnce(new Error('alerts unavailable'));
+
+    const { default: OverviewPage } = await import('./page');
+    renderToStaticMarkup(<OverviewPage />);
+
+    await expect(mockState.lastLoad?.()).resolves.toMatchObject({
+      summary: { apps: [{ app: 'api' }] },
+      alerts: { content: [], totalElements: 0, pageIndex: 0, pageSize: 6 },
+      summaryFailed: false,
+      alertsFailed: true
+    });
+  }, 60000);
+
+  it('marks partial overview read fallback without changing the route shell', async () => {
+    mockState.clientData = {
+      ...createClientData(),
+      summaryFailed: true
+    };
+
+    const { default: OverviewPage } = await import('./page');
+    const html = renderToStaticMarkup(<OverviewPage />);
+
+    expect(html).toContain('data-overview-request-fallback="angular-partial-request-fallback"');
+    expect(html).toContain('data-workspace-shell="true"');
+  }, 60000);
+
+  it('retains the previous ready overview data when a later refresh returns empty fallback data', async () => {
+    const { hasOverviewReadyContext, resolveOverviewRenderData } = await import('./overview-page');
+    const readyData = {
+      summary: {
+        apps: [
+          { app: 'checkout', category: 'service', size: 4, availableSize: 3, unAvailableSize: 1, unManageSize: 0 }
+        ]
+      },
+      alerts: {
+        content: [
+          {
+            id: 7,
+            fingerprint: 'alert-7',
+            content: 'collector timeout',
+            status: 'firing',
+            labels: { severity: 'warning', service: 'collector' }
+          }
+        ],
+        totalElements: 1,
+        pageIndex: 0,
+        pageSize: 6
+      }
+    };
+    const emptyFallbackData = {
+      summary: { apps: [] },
+      alerts: { content: [], totalElements: 0, pageIndex: 0, pageSize: 6 },
+      summaryFailed: true,
+      alertsFailed: true
+    };
+
+    expect(hasOverviewReadyContext(readyData)).toBe(true);
+    expect(hasOverviewReadyContext(emptyFallbackData)).toBe(false);
+    expect(resolveOverviewRenderData(readyData, null)).toEqual({
+      renderData: readyData,
+      nextReadyData: readyData,
+      retainedReadyData: false
+    });
+    expect(resolveOverviewRenderData(emptyFallbackData, readyData)).toEqual({
+      renderData: readyData,
+      nextReadyData: readyData,
+      retainedReadyData: true
+    });
+    expect(resolveOverviewRenderData(emptyFallbackData, null)).toEqual({
+      renderData: emptyFallbackData,
+      nextReadyData: null,
+      retainedReadyData: false
+    });
   }, 60000);
 
   it('keeps the populated overview rail focused on next-step guidance instead of rendering the duplicated workbench recap panel', async () => {
@@ -410,6 +571,7 @@ describe('overview page', () => {
           type: 'service',
           severity: 'healthy',
           severityLabel: 'Healthy',
+          severityTone: 'success',
           owner: 'Platform',
           status: 'healthy',
           statusLabel: 'Stable',
@@ -433,6 +595,7 @@ describe('overview page', () => {
         title: 'No issue needs attention right now',
         severity: 'healthy',
         severityLabel: 'Healthy',
+        severityTone: 'success',
         entity: 'Overall environment',
         owner: 'Platform on call',
         summary: 'There is no issue requiring immediate escalation right now. Start with the trend and affected items.'
@@ -468,6 +631,7 @@ describe('overview page', () => {
         title: 'No issue needs attention right now',
         severity: 'healthy',
         severityLabel: 'Healthy',
+        severityTone: 'success',
         entity: 'Overall environment',
         owner: 'Platform on call',
         summary: 'There is no issue requiring immediate escalation right now. Start with the trend and affected items.'
@@ -483,6 +647,7 @@ describe('overview page', () => {
           type: 'service',
           severity: 'warning',
           severityLabel: 'Warning',
+          severityTone: 'warning',
           owner: 'Platform',
           status: 'impacted',
           statusLabel: 'Impacted',

@@ -10,18 +10,19 @@ type OverviewDetailSection = {
   value: string;
 };
 
-function resolveBadgeVariant(severity?: string) {
-  switch (`${severity || ''}`.toLowerCase()) {
-    case 'critical':
-    case 'error':
-      return 'danger' as const;
-    case 'healthy':
-      return 'success' as const;
-    case 'warning':
-      return 'accent' as const;
-    default:
-      return 'default' as const;
+type OverviewDetailBadgeTone = 'default' | 'success' | 'warning' | 'danger';
+
+function overviewDetailBadgeVariant(tone: OverviewDetailBadgeTone) {
+  if (tone === 'danger') {
+    return 'danger' as const;
   }
+  if (tone === 'success') {
+    return 'success' as const;
+  }
+  if (tone === 'warning') {
+    return 'accent' as const;
+  }
+  return 'default' as const;
 }
 
 export function OverviewDetailDialog({
@@ -31,7 +32,7 @@ export function OverviewDetailDialog({
   title,
   subtitle,
   description,
-  status,
+  statusTone = 'default',
   statusLabel,
   sections,
   closeLabel
@@ -42,7 +43,7 @@ export function OverviewDetailDialog({
   title: string;
   subtitle: string;
   description: string;
-  status?: string;
+  statusTone?: OverviewDetailBadgeTone;
   statusLabel?: string;
   sections: OverviewDetailSection[];
   closeLabel: string;
@@ -68,7 +69,11 @@ export function OverviewDetailDialog({
             <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--ops-text-tertiary)]">{subtitle}</div>
             <div className="text-[13px] leading-[1.6] text-[var(--ops-text-secondary)]">{description}</div>
           </div>
-          {statusLabel ? <Badge variant={resolveBadgeVariant(status)}>{statusLabel}</Badge> : null}
+          {statusLabel ? (
+            <Badge variant={overviewDetailBadgeVariant(statusTone)} data-overview-detail-status-tone={statusTone}>
+              {statusLabel}
+            </Badge>
+          ) : null}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {sections.map(section => (

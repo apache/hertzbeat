@@ -1,5 +1,10 @@
+import { buildCompatRedirectTarget, type SearchParamsRecord } from '../compat/search-params';
 import type { SingleAlert } from '../types';
 import { stripReturnLabelFromHref } from '../signal-route-context';
+
+export type { SearchParamsRecord };
+
+export const OVERVIEW_ROUTE = '/overview';
 
 const OVERVIEW_SIGNAL_DESK_PATHS = new Set([
   '/log/manage',
@@ -26,6 +31,10 @@ function setIfMissing(params: URLSearchParams, key: string, value: string | unde
     return;
   }
   params.set(key, value);
+}
+
+export function buildOverviewCompatRouteUrl(searchParams?: SearchParamsRecord) {
+  return buildCompatRedirectTarget(OVERVIEW_ROUTE, searchParams);
 }
 
 export function buildOverviewSignalDeskHref(

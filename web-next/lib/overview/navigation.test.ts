@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildOverviewSignalDeskHref } from './navigation';
+import { buildOverviewCompatRouteUrl, buildOverviewSignalDeskHref } from './navigation';
 
 const topAlert = {
   labels: {
@@ -14,9 +14,29 @@ const topAlert = {
 } as const;
 
 describe('overview navigation', () => {
+  it('builds overview compatibility redirects with normalized machine query context', () => {
+    const target = buildOverviewCompatRouteUrl({
+      source: 'root',
+      serviceName: 'checkout',
+      returnTo: '/entities?returnLabel=Catalog',
+      returnLabel: 'Overview',
+      start: '1700000000000',
+      environment: ['prod', 'ignored']
+    });
+    const url = new URL(target, 'http://127.0.0.1');
+
+    expect(url.pathname).toBe('/overview');
+    expect(url.searchParams.get('source')).toBe('root');
+    expect(url.searchParams.get('serviceName')).toBe('checkout');
+    expect(url.searchParams.get('environment')).toBe('prod');
+    expect(url.searchParams.get('returnTo')).toBe('/entities');
+    expect(url.searchParams.get('returnLabel')).toBeNull();
+    expect(url.searchParams.get('start')).toBe('1700000000000');
+  });
+
   it('keeps overview and monitor-editor navigation machine-only without display-label fields', () => {
     const overviewNavigationSource = readFileSync(resolve(process.cwd(), 'lib/overview/navigation.ts'), 'utf8');
-    const overviewPageSource = readFileSync(resolve(process.cwd(), 'app/overview/page.tsx'), 'utf8');
+    const overviewPageSource = readFileSync(resolve(process.cwd(), 'app/overview/overview-page.tsx'), 'utf8');
     const monitorEditorTestSource = readFileSync(resolve(process.cwd(), 'lib/monitor-editor/navigation.test.ts'), 'utf8');
 
     expect(overviewNavigationSource).not.toContain('returnLabel: string');

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import * as React from 'react';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import { WorkbenchPanel } from '../../components/workbench/primitives';
 import { Badge } from '../ui/badge';
 import { buttonVariants } from '../ui/button';
@@ -36,6 +37,7 @@ export type OverviewImpactedItem = {
   type: string;
   severity: string;
   severityLabel: string;
+  severityTone: Tone;
   owner: string;
   statusLabel: string;
   lastIssue: string;
@@ -110,6 +112,12 @@ function timelineDotClass(tone: Tone) {
       return 'bg-[var(--ops-primary)]';
   }
 }
+
+const DEFAULT_OVERVIEW_GUIDANCE_START_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['overview.guidance.default.start'] ?? 'overview.guidance.default.start';
+const DEFAULT_OVERVIEW_GUIDANCE_REASONS_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['overview.guidance.default.reasons'] ?? 'overview.guidance.default.reasons';
+const DEFAULT_OVERVIEW_GUIDANCE_NEXT_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['overview.guidance.default.next'] ?? 'overview.guidance.default.next';
+const OVERVIEW_CHECKLIST_READY_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['overview.checklist.status.ready'] ?? 'overview.checklist.status.ready';
+const OVERVIEW_CHECKLIST_PENDING_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['overview.checklist.status.pending'] ?? 'overview.checklist.status.pending';
 
 export function OverviewStatusGrid({
   title,
@@ -271,7 +279,10 @@ export function OverviewImpactedList({
                 <span className="text-[12px] text-[var(--ops-text-secondary)]">{item.type} · {item.owner}</span>
               </span>
               <span className="grid justify-items-end gap-1">
-                <span className={cn('text-[12px] font-semibold uppercase', toneTextClass(resolveSeverityTone(item.severity)))}>
+                <span
+                  className={cn('text-[12px] font-semibold uppercase', toneTextClass(item.severityTone))}
+                  data-overview-impacted-severity-tone={item.severityTone}
+                >
                   {item.severityLabel}
                 </span>
                 <span className="text-[12px] text-[var(--ops-text-secondary)]">{item.statusLabel}</span>
@@ -322,9 +333,9 @@ export function OverviewGuidancePanel({
   density = 'default',
   compactReasons = false,
   reasonDensity = 'default',
-  startLabel = 'Next',
-  reasonsLabel = 'Reasons',
-  nextLabel = 'After that'
+  startLabel = DEFAULT_OVERVIEW_GUIDANCE_START_LABEL,
+  reasonsLabel = DEFAULT_OVERVIEW_GUIDANCE_REASONS_LABEL,
+  nextLabel = DEFAULT_OVERVIEW_GUIDANCE_NEXT_LABEL
 }: {
   headline: string;
   description: string;
@@ -531,7 +542,7 @@ export function OverviewChecklist({
                 density === 'compact' ? 'text-[9px] leading-[1.2]' : 'text-[11px] leading-[1.45]'
               )}
             >
-              {item.ready ? 'Ready' : 'Pending'}
+              {item.ready ? OVERVIEW_CHECKLIST_READY_LABEL : OVERVIEW_CHECKLIST_PENDING_LABEL}
             </div>
           </div>
         ))}
@@ -665,18 +676,4 @@ export function OverviewSectionAction({
       {label}
     </Link>
   );
-}
-
-function resolveSeverityTone(severity: string): Tone {
-  switch (severity.toLowerCase()) {
-    case 'critical':
-    case 'error':
-      return 'danger';
-    case 'warning':
-      return 'warning';
-    case 'healthy':
-      return 'success';
-    default:
-      return 'default';
-  }
 }

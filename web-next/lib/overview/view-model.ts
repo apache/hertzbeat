@@ -2,6 +2,8 @@ import type { AlertSummary, AppCount, SingleAlert } from '@/lib/types';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
+type OverviewTone = 'default' | 'success' | 'warning' | 'danger';
+
 type OverviewMetrics = {
   totalEntities: number;
   healthyEntities: number;
@@ -27,13 +29,14 @@ type OverviewSummaryCard = {
   value: string;
   hint: string;
   delta: string;
-  tone: 'default' | 'success' | 'warning' | 'danger';
+  tone: OverviewTone;
 };
 
 type OverviewProblemFocus = {
   title: string;
   severity: string;
   severityLabel: string;
+  severityTone: OverviewTone;
   entity: string;
   owner: string;
   summary: string;
@@ -43,7 +46,7 @@ type OverviewTrendCard = {
   label: string;
   value: string;
   insight: string;
-  tone: 'default' | 'success' | 'warning' | 'danger';
+  tone: OverviewTone;
 };
 
 type OverviewImpactedEntity = {
@@ -51,6 +54,7 @@ type OverviewImpactedEntity = {
   type: string;
   severity: string;
   severityLabel: string;
+  severityTone: OverviewTone;
   owner: string;
   status: string;
   statusLabel: string;
@@ -61,7 +65,7 @@ type OverviewActivityItem = {
   title: string;
   detail: string;
   timestamp: string;
-  tone: 'default' | 'success' | 'warning' | 'danger';
+  tone: OverviewTone;
   tag: string;
 };
 
@@ -332,6 +336,7 @@ function buildProblemFocus(alerts: SingleAlert[], t: Translator): OverviewProble
       title: t('dashboard.problem-focus.empty.title'),
       severity: 'healthy',
       severityLabel: resolveSeverityLabel('healthy', t),
+      severityTone: overviewSeverityTone('healthy'),
       entity: t('dashboard.problem-focus.empty.entity'),
       owner: t('dashboard.problem-focus.empty.owner'),
       summary: t('dashboard.problem-focus.empty.summary')
@@ -343,6 +348,7 @@ function buildProblemFocus(alerts: SingleAlert[], t: Translator): OverviewProble
     title: focus.content || focus.annotations?.summary || t('dashboard.problem-focus.default-title'),
     severity,
     severityLabel: resolveSeverityLabel(severity, t),
+    severityTone: overviewSeverityTone(severity),
     entity: focus.labels?.service || focus.labels?.job || focus.labels?.instance || t('dashboard.problem-focus.default-entity'),
     owner: getAlertOwnerLabel(focus, t),
     summary: focus.annotations?.summary || focus.content || t('dashboard.problem-focus.default-summary')
@@ -401,6 +407,7 @@ function buildImpactedEntities(appCounts: AppCount[], alerts: SingleAlert[], t: 
         type: item.category || 'service',
         severity,
         severityLabel: resolveSeverityLabel(severity, t),
+        severityTone: overviewSeverityTone(severity),
         owner: getAlertOwnerLabel(linkedAlert, t),
         status: degraded > 0 ? 'impacted' : 'healthy',
         statusLabel: degraded > 0
@@ -449,6 +456,20 @@ function buildQuickEntryItems(t: Translator): OverviewQuickEntryItem[] {
 
 function getAlertSeverity(alert?: SingleAlert) {
   return `${alert?.labels?.severity || alert?.annotations?.severity || 'warning'}`.toLowerCase();
+}
+
+function overviewSeverityTone(severity: string): OverviewTone {
+  switch (severity.toLowerCase()) {
+    case 'critical':
+    case 'error':
+      return 'danger';
+    case 'warning':
+      return 'warning';
+    case 'healthy':
+      return 'success';
+    default:
+      return 'default';
+  }
 }
 
 function getAlertOwnerLabel(alert: SingleAlert | undefined, t: Translator) {
