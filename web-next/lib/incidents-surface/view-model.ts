@@ -21,42 +21,45 @@ export type IncidentsPlaceholderState = {
   };
 };
 
-export function buildIncidentsPlaceholderState(): IncidentsPlaceholderState {
+export function buildIncidentsPlaceholderState(t: Translator): IncidentsPlaceholderState {
   return {
-    kicker: '事件入口',
-    title: '故障事件',
-    subtitle: '按 OTLP 工作台的冷色基线统一响应时间线、责任人和证据入口。',
+    kicker: t('incidents.entry.kicker'),
+    title: t('incidents.entry.title'),
+    subtitle: t('incidents.entry.subtitle'),
     actions: [
-      { label: '打开概览', href: '/overview', variant: 'primary' },
-      { label: '查看对象', href: '/entities', variant: 'subtle' }
+      { label: t('incidents.entry.action.overview'), href: '/overview', variant: 'primary' },
+      { label: t('incidents.entry.action.entities'), href: '/entities', variant: 'subtle' }
     ],
     shell: {
-      eyebrow: '冷色入口已接入',
-      copy:
-        '此入口继承 OTLP 接入页的近黑画布、小按钮、硬边面板和静态右栏节奏，后续只需要接入事件适配器。',
-      chips: ['事件入口', '响应时间线', '责任人优先']
+      eyebrow: t('incidents.entry.shell.eyebrow'),
+      copy: t('incidents.entry.shell.copy'),
+      chips: [
+        t('incidents.entry.chip.entry'),
+        t('incidents.entry.chip.timeline'),
+        t('incidents.entry.chip.owner-first')
+      ]
     },
-    checklistTitle: '接入清单',
+    checklistTitle: t('incidents.entry.checklist.title'),
     checklist: [
       {
-        title: '统一入口上下文',
-        copy: '已和 OTLP 基线共用同一套页面节奏。',
+        title: t('incidents.entry.checklist.context.title'),
+        copy: t('incidents.entry.checklist.context.copy'),
         tone: 'bg-[#75ad86]'
       },
       {
-        title: '接入事件适配器',
-        copy: '等事件列表、责任人和时间线数据落地后直接挂载。',
+        title: t('incidents.entry.checklist.adapter.title'),
+        copy: t('incidents.entry.checklist.adapter.copy'),
         tone: 'bg-[#c2a86b]'
       },
       {
-        title: '保留证据跳转',
-        copy: '日志、链路和对象入口保持在同一响应上下文。',
+        title: t('incidents.entry.checklist.evidence.title'),
+        copy: t('incidents.entry.checklist.evidence.copy'),
         tone: 'bg-[#9aa9cf]'
       }
     ],
     empty: {
-      title: '等待接入事件适配器',
-      copy: '视觉骨架已经统一到 OTLP 基线，后续数据接入可以增量完成。'
+      title: t('incidents.entry.empty.title'),
+      copy: t('incidents.entry.empty.copy')
     }
   };
 }
@@ -76,7 +79,7 @@ export function buildIncidentsSurfaceViewModel(t: Translator) {
 
   return {
     ...model,
-    kicker: 'Incident response desk',
+    kicker: t('incidents.surface.kicker'),
     facts: buildOpsFacts(model.title, model.focus, model.tags, t),
     incidentCards: model.incidents.map(item => ({
       id: item.id,
@@ -93,9 +96,21 @@ export function buildIncidentsSurfaceViewModel(t: Translator) {
       meta: item.meta
     })),
     handoffRows: [
-      { title: 'Log evidence', copy: 'Jump into logs when mitigation needs fresh payload evidence.', meta: 'logs' },
-      { title: 'Trace evidence', copy: 'Preserve trace-first drilldown for latency and dependency regressions.', meta: 'traces' },
-      { title: 'Overview return path', copy: 'Keep incident status visible in the same global response rhythm.', meta: 'overview' }
+      {
+        title: t('incidents.surface.handoff.logs.title'),
+        copy: t('incidents.surface.handoff.logs.copy'),
+        meta: 'logs'
+      },
+      {
+        title: t('incidents.surface.handoff.traces.title'),
+        copy: t('incidents.surface.handoff.traces.copy'),
+        meta: 'traces'
+      },
+      {
+        title: t('incidents.surface.handoff.overview.title'),
+        copy: t('incidents.surface.handoff.overview.copy'),
+        meta: 'overview'
+      }
     ]
   };
 }

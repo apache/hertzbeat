@@ -1,8 +1,16 @@
 import { buildOpsFacts } from '../ops-surface/view-model';
 import {
   buildActionsAdapterBoundary,
+  buildActionApprovalDecision,
+  buildActionApprovalDraftQueue,
+  buildActionCatalogReadAdapter,
   buildActionsDomainModel,
+  buildActionApprovalDraft,
   buildSuggestedRemediationActions,
+  type ActionApprovalDraft,
+  type ActionApprovalDecision,
+  type ActionApprovalDraftQueue,
+  type ActionCatalogReadAdapter,
   type ActionAdapterBoundary,
   type ActionRisk,
   type ActionRunStatus,
@@ -24,6 +32,10 @@ export type ActionsPlaceholderState = {
     chips: string[];
   };
   adapterBoundary: ActionAdapterBoundary;
+  approvalDraft: ActionApprovalDraft;
+  approvalDecision: ActionApprovalDecision;
+  approvalDraftQueue: ActionApprovalDraftQueue;
+  catalogAdapter: ActionCatalogReadAdapter;
   checklistTitle: string;
   checklist: Array<{ title: string; copy: string; tone: string }>;
   suggestedActions: SuggestedRemediationAction[];
@@ -33,62 +45,69 @@ export type ActionsPlaceholderState = {
   };
 };
 
-export function buildActionsPlaceholderState(context: ActionSuggestionContext = {}): ActionsPlaceholderState {
+export function buildActionsPlaceholderState(t: Translator, context: ActionSuggestionContext = {}): ActionsPlaceholderState {
   return {
-    kicker: '自动化入口',
-    title: '自动化处置',
-    subtitle: '按 OTLP 工作台的冷色基线统一入口、上下文和审批语义。',
+    kicker: t('actions.entry.kicker'),
+    title: t('actions.entry.title'),
+    subtitle: t('actions.entry.subtitle'),
     actions: [
-      { label: '打开概览', href: '/overview', variant: 'primary' },
-      { label: '查看对象', href: '/entities', variant: 'subtle' }
+      { label: t('actions.entry.action.overview'), href: '/overview', variant: 'primary' },
+      { label: t('actions.entry.action.entities'), href: '/entities', variant: 'subtle' }
     ],
     shell: {
-      eyebrow: '冷色入口已接入',
-      copy:
-        '此入口继承 OTLP 接入页的近黑画布、小按钮、硬边面板和静态右栏节奏，后续只需要接入执行适配器。',
-      chips: ['自动化目录', '风险动作', '审批流']
+      eyebrow: t('actions.entry.shell.eyebrow'),
+      copy: t('actions.entry.shell.copy'),
+      chips: [
+        t('actions.entry.chip.catalog'),
+        t('actions.entry.chip.risk'),
+        t('actions.entry.chip.approval')
+      ]
     },
-    adapterBoundary: buildActionsAdapterBoundary(),
-    checklistTitle: '接入清单',
+    adapterBoundary: buildActionsAdapterBoundary(t),
+    catalogAdapter: buildActionCatalogReadAdapter(t),
+    approvalDraft: buildActionApprovalDraft(context, t),
+    approvalDecision: buildActionApprovalDecision(t),
+    approvalDraftQueue: buildActionApprovalDraftQueue(t),
+    checklistTitle: t('actions.entry.checklist.title'),
     checklist: [
       {
-        title: '统一入口上下文',
-        copy: '已和 OTLP 基线共用同一套页面节奏。',
+        title: t('actions.entry.checklist.context.title'),
+        copy: t('actions.entry.checklist.context.copy'),
         tone: 'bg-[#75ad86]'
       },
       {
-        title: '接入执行适配器',
-        copy: '等动作目录和审批流数据落地后直接挂载。',
+        title: t('actions.entry.checklist.adapter.title'),
+        copy: t('actions.entry.checklist.adapter.copy'),
         tone: 'bg-[#c2a86b]'
       },
       {
-        title: '保留证据跳转',
-        copy: '实体、告警和链路入口保持在同一操作上下文。',
+        title: t('actions.entry.checklist.evidence.title'),
+        copy: t('actions.entry.checklist.evidence.copy'),
         tone: 'bg-[#9aa9cf]'
       }
     ],
-    suggestedActions: buildSuggestedRemediationActions(context),
+    suggestedActions: buildSuggestedRemediationActions(context, t),
     empty: {
-      title: '等待接入执行适配器',
-      copy: '视觉骨架已经统一到 OTLP 基线，后续数据接入可以增量完成。'
+      title: t('actions.entry.empty.title'),
+      copy: t('actions.entry.empty.copy')
     }
   };
 }
 
-function formatRiskTone(risk: ActionRisk) {
-  if (risk === 'high') return 'high risk';
-  if (risk === 'medium') return 'medium risk';
-  return 'low risk';
+function formatRiskTone(risk: ActionRisk, t: Translator) {
+  if (risk === 'high') return t('actions.risk.high');
+  if (risk === 'medium') return t('actions.risk.medium');
+  return t('actions.risk.low');
 }
 
-function formatRunTone(status: ActionRunStatus) {
-  if (status === 'awaiting-approval') return 'awaiting approval';
-  if (status === 'running') return 'running now';
-  return 'completed';
+function formatRunTone(status: ActionRunStatus, t: Translator) {
+  if (status === 'awaiting-approval') return t('actions.run-status.awaiting-approval');
+  if (status === 'running') return t('actions.run-status.running');
+  return t('actions.run-status.completed');
 }
 
-function formatApprovalTone(status: ApprovalStatus) {
-  return status === 'pending' ? 'pending owner decision' : 'approved';
+function formatApprovalTone(status: ApprovalStatus, t: Translator) {
+  return status === 'pending' ? t('actions.approval-status.pending') : t('actions.approval-status.approved');
 }
 
 export function buildActionsSurfaceViewModel(t: Translator) {
@@ -96,14 +115,14 @@ export function buildActionsSurfaceViewModel(t: Translator) {
 
   return {
     ...model,
-    kicker: 'Action control plane',
+    kicker: t('actions.surface.kicker'),
     facts: buildOpsFacts(model.title, model.focus, model.tags, t),
     catalogCards: model.catalog.map(item => ({
       id: item.id,
       eyebrow: item.category,
       title: item.name,
       copy: `${item.scope} · ${item.owner}`,
-      meta: `${formatRiskTone(item.risk)} · ${item.lastRun} · 示例快照`,
+      meta: `${formatRiskTone(item.risk, t)} · ${item.lastRun} · ${t('actions.snapshot.label')}`,
       posture: item.posture,
       badges: [item.risk, item.lastRun],
       snapshotState: item.snapshotState
@@ -111,19 +130,19 @@ export function buildActionsSurfaceViewModel(t: Translator) {
     runRows: model.runs.map(item => ({
       title: item.name,
       copy: `${item.target} · ${item.actor} · ${item.duration}`,
-      meta: `${formatRunTone(item.status)} · ${item.startedAt} · 示例快照`,
+      meta: `${formatRunTone(item.status, t)} · ${item.startedAt} · ${t('actions.snapshot.label')}`,
       snapshotState: item.snapshotState
     })),
     approvalRows: model.approvals.map(item => ({
       title: item.summary,
       copy: `${item.owner} · ${item.evidence}`,
-      meta: `${formatApprovalTone(item.status)} · ${item.id} · 示例快照`,
+      meta: `${formatApprovalTone(item.status, t)} · ${item.id} · ${t('actions.snapshot.label')}`,
       snapshotState: item.snapshotState
     })),
     handoffRows: [
-      { title: 'Entity context handoff', copy: 'Open entity inventory before expanding action target scope.', meta: 'entities' },
-      { title: 'Monitor posture handoff', copy: 'Validate signal health before issuing recovery actions.', meta: 'monitors' },
-      { title: 'Approval evidence handoff', copy: 'Keep alerts, traces, and rollback notes together in the same operator flow.', meta: 'approval' }
+      { title: t('actions.surface.handoff.entity.title'), copy: t('actions.surface.handoff.entity.copy'), meta: 'entities' },
+      { title: t('actions.surface.handoff.monitor.title'), copy: t('actions.surface.handoff.monitor.copy'), meta: 'monitors' },
+      { title: t('actions.surface.handoff.approval.title'), copy: t('actions.surface.handoff.approval.copy'), meta: 'approval' }
     ]
   };
 }

@@ -2,19 +2,66 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
+
+const t = createTranslatorMock({ locale: 'zh-CN' });
+
+vi.mock('../../components/providers/i18n-provider', () => ({
+  useI18n: () => ({ t })
+}));
 
 describe('actions page', () => {
   it('renders the OTLP cold-matte entry shell without the previous placeholder stack', async () => {
-    const source = readFileSync(resolve(process.cwd(), 'app/actions/page.tsx'), 'utf8');
-    const { default: ActionsPage } = await import('./page');
+    const routeSource = readFileSync(resolve(process.cwd(), 'app/actions/page.tsx'), 'utf8');
+    const source = readFileSync(resolve(process.cwd(), 'app/actions/actions-page.tsx'), 'utf8');
+    const { default: ActionsPage } = await import('./actions-page');
     const html = renderToStaticMarkup(<ActionsPage />);
 
+    expect(routeSource).toContain("import ActionsPage from './actions-page'");
+    expect(routeSource).toContain("import { readActionsSuggestionContext, type ActionsSearchParams } from '../../lib/actions-surface/query-state'");
+    expect(routeSource).toContain('const resolvedSearchParams = await searchParams');
+    expect(routeSource).toContain('const suggestionContext = readActionsSuggestionContext(resolvedSearchParams)');
+    expect(routeSource).toContain('return <ActionsPage suggestionContext={suggestionContext} />');
     expect(html).toContain('data-actions-route="otlp-cold-ops-entry"');
     expect(html).toContain('data-actions-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-actions-placeholder-replacement="api-backed-workbench"');
+    expect(html).toContain('data-actions-legacy-open-context="adapter-boundary-panel"');
+    expect(html).toContain('data-actions-legacy-entity-handoff="/entities"');
+    expect(html).toContain('data-actions-shared-workbench="hertzbeat-ui"');
+    expect(html).toContain('data-hz-ui="action-workbench"');
+    expect(html).toContain('data-hz-action-workbench-owner="hertzbeat-ui-action-workbench"');
+    expect(html).toContain('data-hz-action-workbench-density="operator-compact"');
+    expect(html).toContain('data-hz-action-workbench-style="cold-matte-hard-edge"');
     expect(html).toContain('data-actions-shell-panel="cold-ops-shell-panel"');
     expect(html).toContain('data-actions-launch-checklist="cold-ops-static-rail"');
     expect(html).toContain('data-actions-adapter-boundary="adapter-pending"');
+    expect(html).toContain('data-actions-catalog="manual-action-catalog-api"');
+    expect(html).toContain('data-actions-catalog-state="loading"');
+    expect(html).toContain('data-actions-catalog-owner="next-actions-catalog-bff"');
+    expect(html).toContain('data-actions-catalog-endpoint="/api/actions/catalog?limit=8"');
+    expect(html).toContain('data-actions-catalog-manager-backed="false"');
+    expect(html).toContain('data-actions-catalog-execution-mode="manual-approval-draft-only"');
+    expect(html).toContain('data-actions-catalog-execution-allowed="false"');
+    expect(html).toContain('data-actions-catalog-item-count="0"');
+    expect(html).toContain('data-actions-approval-draft="manual-approval-draft-api"');
+    expect(html).toContain('data-actions-approval-draft-state="awaiting-context"');
+    expect(html).toContain('data-actions-approval-draft-owner="next-actions-approval-draft-bff"');
+    expect(html).toContain('data-actions-approval-draft-endpoint="/api/actions/approval-drafts"');
+    expect(html).toContain('data-actions-approval-draft-execution-mode="manual-approval-draft-only"');
+    expect(html).toContain('data-actions-approval-draft-execution-allowed="false"');
+    expect(html).toContain('data-actions-approval-draft-queue="manual-approval-draft-read-api"');
+    expect(html).toContain('data-actions-approval-draft-queue-state="loading"');
+    expect(html).toContain('data-actions-approval-draft-queue-owner="next-actions-approval-draft-bff"');
+    expect(html).toContain('data-actions-approval-draft-queue-endpoint="/api/actions/approval-drafts?limit=8"');
+    expect(html).toContain('data-actions-approval-draft-queue-execution-mode="manual-approval-draft-only"');
+    expect(html).toContain('data-actions-approval-draft-queue-execution-allowed="false"');
+    expect(html).toContain('data-actions-approval-decision="manual-approval-decision-api"');
+    expect(html).toContain('data-actions-approval-decision-state="awaiting-draft"');
+    expect(html).toContain('data-actions-approval-decision-owner="next-actions-approval-decision-bff"');
+    expect(html).toContain('data-actions-approval-decision-endpoint="/api/actions/approval-drafts/:draftId/decision"');
+    expect(html).toContain('data-actions-approval-decision-execution-mode="manual-approval-draft-only"');
+    expect(html).toContain('data-actions-approval-decision-execution-allowed="false"');
     expect(html).toContain('data-actions-empty-state="cold-ops-domain-adapter"');
     expect(html).toContain('自动化处置');
     expect(html).toContain('按 OTLP 工作台的冷色基线统一入口、上下文和审批语义。');
@@ -23,6 +70,10 @@ describe('actions page', () => {
     expect(html).toContain('roadmap 示例快照');
     expect(html).toContain('不代表实时运行状态');
     expect(html).toContain('告警上下文建议是当前证据生成的人工交接');
+    expect(html).toContain('工作流自动化');
+    expect(html).toContain('处置手册编排');
+    expect(html).not.toContain('workflow-automation');
+    expect(html).not.toContain('runbook-orchestration');
     expect(html).toContain('等待接入执行适配器');
     expect(html).toContain('打开概览');
     expect(html).toContain('查看对象');
@@ -37,6 +88,14 @@ describe('actions page', () => {
     expect(html).not.toContain('V1 SHELL IS LIVE');
     expect(html).not.toContain('Domain adapter comes next');
     expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('HzActionWorkbench');
+    expect(source).toContain('data-actions-placeholder-replacement="api-backed-workbench"');
+    expect(source).toContain('data-actions-legacy-open-context="adapter-boundary-panel"');
+    expect(source).toContain('data-actions-legacy-entity-handoff="/entities"');
+    expect(source).toContain('fetch(state.catalogAdapter.endpoint');
+    expect(source).toContain('fetch(state.approvalDraft.endpoint');
+    expect(source).toContain('fetch(state.approvalDraftQueue.endpoint');
+    expect(source).toContain('fetch(endpoint');
     expect(source).not.toContain('rounded-[16px]');
     expect(source).not.toContain('rounded-[14px]');
     expect(source).not.toContain('#4f6cff');
@@ -51,10 +110,10 @@ describe('actions page', () => {
   });
 
   it('renders alert-context suggested remediation actions as human-confirmed suggestions only', async () => {
-    const { default: ActionsPage } = await import('./page');
+    const { default: ActionsPage } = await import('./actions-page');
     const html = renderToStaticMarkup(
       <ActionsPage
-        searchParams={{
+        suggestionContext={{
           source: 'alert',
           signal: 'traces',
           severity: 'critical',
@@ -74,17 +133,49 @@ describe('actions page', () => {
     );
 
     expect(html).toContain('data-actions-suggested-remediation="alert-context-human-confirmation"');
+    expect(html).toContain('data-hz-action-workbench-owner="hertzbeat-ui-action-workbench"');
     expect(html).toContain('data-actions-adapter-boundary="adapter-pending"');
     expect(html).toContain('建议动作');
     expect(html).toContain('只生成建议，不自动执行。');
     expect(html).toContain('data-actions-suggested-action="suggest-restart-checkout"');
     expect(html).toContain('建议重启 checkout-api');
+    expect(html).toContain('高风险 · 重启 checkout 部署');
+    expect(html).toContain('中风险 · 静默边缘饱和告警');
+    expect(html).not.toContain('high risk · restart-checkout');
+    expect(html).not.toContain('medium risk · mute-edge-alerts');
+    expect(html).toContain('来源 告警中心');
+    expect(html).toContain('信号 链路');
+    expect(html).not.toContain('来源 alert');
+    expect(html).not.toContain('信号 traces');
     expect(html).toContain('data-actions-suggested-action-confirm="manual-required"');
+    expect(html).toContain('data-actions-approval-draft-state="ready"');
+    expect(html).toContain('data-actions-approval-draft-status="ready"');
+    expect(html).toContain('data-actions-approval-draft-request="preview"');
+    expect(html).toContain('&quot;actionId&quot;:&quot;suggest-restart-checkout&quot;');
+    expect(html).toContain('&quot;executionAllowed&quot;:false');
     expect(html).toContain('人工确认后执行');
     expect(html).toContain('data-actions-suggested-action-evidence="suggest-restart-checkout"');
     expect(html).toContain('/alert?status=firing');
     expect(html).toContain('traceId=trace-123');
     expect(html).not.toContain('data-actions-auto-execute');
     expect(html).not.toContain('/actions/run');
+  });
+
+  it('renders entity-id-only suggested remediation targets with localized fallback copy', async () => {
+    const { default: ActionsPage } = await import('./actions-page');
+    const html = renderToStaticMarkup(
+      <ActionsPage
+        suggestionContext={{
+          entityId: 'service:commerce/checkout',
+          source: 'entity',
+          returnTo: '/entities/service%3Acommerce%2Fcheckout?returnLabel=实体'
+        }}
+      />
+    );
+
+    expect(html).toContain('建议重启 实体 service:commerce/checkout');
+    expect(html).not.toContain('建议重启 service:commerce/checkout');
+    expect(html).toContain('entityId=service%3Acommerce%2Fcheckout');
+    expect(html).not.toContain('returnLabel=');
   });
 });

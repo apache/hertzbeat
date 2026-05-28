@@ -12,15 +12,53 @@ import {
   clampStatusIncidentYear,
   componentTone
 } from './view-model';
+import {
+  componentStateLabel,
+  incidentStateLabel,
+  orgStateLabel,
+  statusIncidentPublicStartAtLabel,
+  statusIncidentPublicUpdateAtLabel,
+  statusComponentsCountLabel,
+  statusComponentsLabel,
+  statusFieldLabel,
+  statusIncidentsCountLabel,
+  statusIncidentsLabel,
+  statusOrganizationCopy,
+  statusOrganizationFallback,
+  statusOrganizationLabel,
+  statusOrganizationStateLabel,
+  statusPageLabel,
+  statusPublicComponentHistoryLabel,
+  statusPublicFeedbackLabel,
+  statusPublicHistoryLabel,
+  statusPublicHomeLabel,
+  statusPublicIncidentRangeLabel,
+  statusPublicPoweredByLabel,
+  statusPublicThirtyDayLabel,
+  statusPublicTodayLabel,
+  statusPublicToComponentLabel,
+  statusPublicToIncidentLabel,
+  statusPublicUpdatedLabel,
+  statusPublicUptimeLabel,
+  statusPublicYearLabel,
+  statusSettingLabel,
+  statusViewLabel
+} from './display';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({
   locale: 'zh-CN',
   overrides: {
+    'status.incident.default-title': '事件',
+    'status.components.empty.title': '还没有组件',
+    'status.components.empty.copy': '配置完成后，公开状态页组件会显示在这里。',
+    'status.incidents.empty.title': '还没有事件',
+    'status.incidents.empty.copy': '发布事件更新后，公开事件历史会显示在这里。',
     'status.incidents.view': '事件历史视图',
     'status.incidents.copy': '查看最近的公开事件和恢复进展。',
   }
 });
+const enT = createTranslatorMock({ locale: 'en-US' });
 
 describe('status center view model', () => {
   it('maps component status to tone buckets', () => {
@@ -71,6 +109,24 @@ describe('status center view model', () => {
     ]);
   });
 
+  it('uses runtime none fallback for status component rows without description or endpoint', () => {
+    expect(
+      buildStatusRows(
+        'component',
+        [{ name: 'queue', status: 1, latestTime: 1712730000000 }] as any,
+        [],
+        t,
+        () => '2026-04-10 18:00:00'
+      )
+    ).toEqual([
+      {
+        title: 'queue',
+        copy: '无',
+        meta: '异常 · 2026-04-10 18:00:00'
+      }
+    ]);
+  });
+
   it('builds incident rows for incident mode', () => {
     expect(
       buildStatusRows(
@@ -95,6 +151,46 @@ describe('status center view model', () => {
     ]);
   });
 
+  it('uses runtime none fallback for status incident rows without title or id', () => {
+    expect(
+      buildStatusRows(
+        'incident',
+        [],
+        [{
+          status: 0,
+          updateTime: 1712730000000,
+          contents: [{ message: 'Checking gateway errors', timestamp: 1712730000000 }]
+        }] as any,
+        t,
+        () => '2026-04-10 18:00:00'
+      )
+    ).toEqual([
+      {
+        title: '事件 无',
+        copy: 'Checking gateway errors',
+        meta: '调查中 · 2026-04-10 18:00:00'
+      }
+    ]);
+  });
+
+  it('uses runtime none fallback for status empty row meta', () => {
+    expect(buildStatusRows('component', [], [], t, () => '2026-04-10 18:00:00')).toEqual([
+      {
+        title: '还没有组件',
+        copy: '配置完成后，公开状态页组件会显示在这里。',
+        meta: '无'
+      }
+    ]);
+
+    expect(buildStatusRows('incident', [], [], t, () => '2026-04-10 18:00:00')).toEqual([
+      {
+        title: '还没有事件',
+        copy: '发布事件更新后，公开事件历史会显示在这里。',
+        meta: '无'
+      }
+    ]);
+  });
+
   it('builds status org rows and public posture', () => {
     expect(buildStatusOrgRows('component', { name: 'Ops', description: 'Public board', state: 0 } as any, t)).toEqual([
       { title: 'Ops', copy: 'Public board', meta: '所有系统正常运行' },
@@ -106,6 +202,65 @@ describe('status center view model', () => {
       copy: '查看最近的公开事件和恢复进展。',
       tone: 'danger'
     });
+  });
+
+  it('keeps English incident posture locale copy without localized fallback text', () => {
+    const copy = enT('status.incidents.posture');
+
+    expect(copy).toBe('Focus the public incident history entry.');
+    expect(copy).not.toMatch(/[\u4e00-\u9fff]/);
+  });
+
+  it('uses English runtime fallbacks for public status history labels when translations are missing', () => {
+    const missingTranslator = (key: string) => key;
+
+    expect(statusPublicHomeLabel(missingTranslator)).toBe('Home');
+    expect(statusPublicFeedbackLabel(missingTranslator)).toBe('Feedback');
+    expect(statusPublicYearLabel(missingTranslator)).toBe('Year');
+    expect(statusPublicHistoryLabel(missingTranslator)).toBe('History');
+    expect(statusPublicUptimeLabel(missingTranslator)).toBe('Uptime');
+    expect(statusPublicUpdatedLabel(missingTranslator)).toBe('Updated');
+    expect(statusPublicComponentHistoryLabel(missingTranslator)).toBe('Component history');
+    expect(statusPublicIncidentRangeLabel(missingTranslator)).toBe('Incident range');
+    expect(statusPublicTodayLabel(missingTranslator)).toBe('Today');
+    expect(statusPublicThirtyDayLabel(missingTranslator)).toBe('30 days');
+    expect(statusPublicPoweredByLabel(missingTranslator)).toBe('Powered by HertzBeat');
+    expect(statusPublicToIncidentLabel(missingTranslator)).toBe('Incident History');
+    expect(statusPublicToComponentLabel(missingTranslator)).toBe('Status Page');
+    expect(statusIncidentPublicStartAtLabel(missingTranslator)).toBe('Start At');
+    expect(statusIncidentPublicUpdateAtLabel(missingTranslator)).toBe('Update At');
+  });
+
+  it('uses English runtime fallbacks for status center admin and fact labels when translations are missing', () => {
+    const missingTranslator = (key: string) => key;
+
+    expect(statusPageLabel(missingTranslator)).toBe('Status Page');
+    expect(statusSettingLabel(missingTranslator)).toBe('Status page settings');
+    expect(statusComponentsLabel(missingTranslator)).toBe('Components');
+    expect(statusIncidentsLabel(missingTranslator)).toBe('Incidents');
+    expect(statusOrganizationLabel(missingTranslator)).toBe('Org profile');
+    expect(statusOrganizationStateLabel(missingTranslator)).toBe('Org state');
+    expect(statusViewLabel(missingTranslator)).toBe('Current view');
+    expect(statusFieldLabel(missingTranslator)).toBe('Status');
+    expect(statusComponentsCountLabel(missingTranslator)).toBe('Components');
+    expect(statusIncidentsCountLabel(missingTranslator)).toBe('Incidents');
+    expect(statusOrganizationCopy(missingTranslator)).toBe('Configure the public org information shown on the status page.');
+    expect(statusOrganizationFallback(missingTranslator)).toBe('Unnamed status org');
+  });
+
+  it('uses English runtime fallbacks for status center state labels when translations are missing', () => {
+    const missingTranslator = (key: string) => key;
+
+    expect(componentStateLabel(0, missingTranslator)).toBe('Normal');
+    expect(componentStateLabel(1, missingTranslator)).toBe('Abnormal');
+    expect(componentStateLabel(2, missingTranslator)).toBe('Unknown');
+    expect(incidentStateLabel(0, missingTranslator)).toBe('Investigating');
+    expect(incidentStateLabel(1, missingTranslator)).toBe('Identified');
+    expect(incidentStateLabel(2, missingTranslator)).toBe('Monitoring');
+    expect(incidentStateLabel(3, missingTranslator)).toBe('Resolved');
+    expect(orgStateLabel(0, missingTranslator)).toBe('All Systems Operational');
+    expect(orgStateLabel(1, missingTranslator)).toBe('Some Systems Abnormal');
+    expect(orgStateLabel(2, missingTranslator)).toBe('All Systems Abnormal');
   });
 
   it('builds the public brand block and year selector options', () => {
@@ -136,7 +291,7 @@ describe('status center view model', () => {
       homeLabel: '主页',
       feedbackLabel: '问题反馈',
       historyLabel: '历史',
-      uptimeLabel: 'Uptime',
+      uptimeLabel: '可用率',
       updatedLabel: '更新于',
       updatedAt: '2026-04-10 18:00:00'
     });
@@ -177,11 +332,12 @@ describe('status center view model', () => {
         title: 'API',
         copy: 'public api',
         state: 0,
+        tone: 'success',
         statusLabel: '正常',
         latestTimeLabel: '2026-04-10 18:00:00',
         latestUptimeLabel: '99.00%',
         historyLabel: '组件历史',
-        uptimeLabel: 'Uptime',
+        uptimeLabel: '可用率',
         history: [
           { timestamp: 1712730000000, state: 0, uptime: 0.99, abnormal: 1, normal: 70, unknowing: 0 },
           { timestamp: 1712640000000, state: 1, uptime: 0.84, abnormal: 10, normal: 50, unknowing: 2 }
@@ -190,13 +346,13 @@ describe('status center view model', () => {
           {
             timestampLabel: '2026-04-10 18:00:00',
             uptimeLabel: '99.00%',
-            title: '2026-04-10 18:00:00 · Uptime 99.00%',
+            title: '2026-04-10 18:00:00 · 可用率 99.00%',
             color: '#28a745'
           },
           {
             timestampLabel: '2026-04-10 18:00:00',
             uptimeLabel: '84.00%',
-            title: '2026-04-10 18:00:00 · Uptime 84.00%',
+            title: '2026-04-10 18:00:00 · 可用率 84.00%',
             color: 'rgb(255, 252, 0)'
           }
         ]
@@ -227,6 +383,7 @@ describe('status center view model', () => {
         title: 'API degraded',
         copy: 'Monitoring progress',
         state: 1,
+        tone: 'default',
         stateLabel: '已确认',
         stateColor: '#e56c23',
         meta: '已确认 · 2026-04-10 18:00:00',
@@ -238,6 +395,7 @@ describe('status center view model', () => {
             timestampLabel: '2026-04-10 18:00:00',
             stateLabel: '调查中',
             state: 0,
+            tone: 'danger',
             stateColor: '#ff2f2f',
             message: 'Investigating payment latency'
           },
@@ -245,11 +403,107 @@ describe('status center view model', () => {
             timestampLabel: '2026-04-10 18:00:00',
             stateLabel: '观察中',
             state: 2,
+            tone: 'default',
             stateColor: '#19a7e7',
             message: 'Monitoring progress'
           }
         ]
       }
     ]);
+  });
+
+  it('uses runtime none fallback for incident content without state', () => {
+    expect(
+      buildStatusIncidentCards(
+        [
+          {
+            id: 10,
+            title: 'API latency',
+            state: 2,
+            updateTime: 1712730000000,
+            contents: [{ message: 'Waiting for upstream confirmation', timestamp: 1712730000000 }]
+          }
+        ] as any,
+        t,
+        () => '2026-04-10 18:00:00'
+      )[0].contents[0]
+    ).toEqual({
+      timestampLabel: '2026-04-10 18:00:00',
+      stateLabel: '无',
+      state: null,
+      tone: 'default',
+      stateColor: '#6b7280',
+      message: 'Waiting for upstream confirmation'
+    });
+  });
+
+  it('uses runtime none fallback for public incident cards without title, name, or id', () => {
+    expect(
+      buildStatusIncidentCards(
+        [
+          {
+            state: 0,
+            updateTime: 1712730000000,
+            contents: [{ message: 'Checking public impact', timestamp: 1712730000000 }]
+          }
+        ] as any,
+        t,
+        () => '2026-04-10 18:00:00'
+      )[0]
+    ).toMatchObject({
+      key: 'incident',
+      title: '事件 无',
+      copy: 'Checking public impact',
+      stateLabel: '调查中'
+    });
+  });
+
+  it('uses runtime none fallback for component history without uptime', () => {
+    expect(
+      buildStatusComponentHistoryRows(
+        [
+          {
+            id: 11,
+            name: 'Gateway',
+            endpoint: '/ready',
+            state: 1,
+            latestTime: 1712730000000,
+            history: [{ timestamp: 1712730000000, state: 2 }]
+          }
+        ] as any,
+        t,
+        () => '2026-04-10 18:00:00'
+      )[0]
+    ).toMatchObject({
+      key: '11',
+      title: 'Gateway',
+      copy: '/ready',
+      latestUptimeLabel: '无',
+      blocks: [
+        {
+          timestampLabel: '2026-04-10 18:00:00',
+          uptimeLabel: '无',
+          title: '2026-04-10 18:00:00 · 可用率 无'
+        }
+      ]
+    });
+  });
+
+  it('uses runtime none fallback for component history without description or endpoint', () => {
+    expect(
+      buildStatusComponentHistoryRows(
+        [
+          {
+            id: 12,
+            name: 'Worker',
+            state: 0,
+            latestTime: 1712730000000,
+            history: [{ timestamp: 1712730000000, state: 0, uptime: 1 }]
+          }
+        ] as any,
+        t,
+        () => '2026-04-10 18:00:00'
+      )[0].copy
+    ).toBe('无');
   });
 });

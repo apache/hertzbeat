@@ -25,11 +25,14 @@ type PublicStatusBrand = {
   updatedAt: string;
 };
 
+type PublicStatusBadgeTone = 'success' | 'danger' | 'default';
+
 type PublicStatusComponentCard = {
   key: string;
   title: string;
   copy: string;
   state: number | string | null;
+  tone: PublicStatusBadgeTone;
   statusLabel: string;
   latestTimeLabel: string;
   latestUptimeLabel: string;
@@ -46,6 +49,7 @@ type PublicStatusIncidentCard = {
   title: string;
   copy: string;
   state: number | string | null;
+  tone: PublicStatusBadgeTone;
   stateLabel: string;
   stateColor: string;
   startAtLabel: string;
@@ -54,6 +58,7 @@ type PublicStatusIncidentCard = {
     timestampLabel: string;
     stateLabel: string;
     state: number | null;
+    tone: PublicStatusBadgeTone;
     stateColor: string;
     message: string;
   }>;
@@ -102,26 +107,6 @@ const shellTextPrimaryClass = 'text-[var(--ops-text-primary)]';
 const shellTextSecondaryClass = 'text-[var(--ops-text-secondary)]';
 const shellTextTertiaryClass = 'text-[var(--ops-text-tertiary)]';
 
-function componentTone(state?: number | string | null) {
-  if (state === 0 || state === '0') {
-    return 'success' as const;
-  }
-  if (state === 1 || state === '1') {
-    return 'danger' as const;
-  }
-  return 'default' as const;
-}
-
-function incidentTone(state?: number | string | null) {
-  if (state === 3 || state === '3') {
-    return 'success' as const;
-  }
-  if (state === 0 || state === '0') {
-    return 'danger' as const;
-  }
-  return 'default' as const;
-}
-
 function accentStyle(accent?: string | null) {
   const color = accent || 'var(--ops-text-tertiary)';
   return {
@@ -163,7 +148,7 @@ function PublicStatusComponentRows({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className={cn('text-[15px] font-semibold', shellTextPrimaryClass)}>{card.title}</h3>
-                <Badge variant={componentTone(card.state)}>{card.statusLabel}</Badge>
+                <Badge variant={card.tone}>{card.statusLabel}</Badge>
               </div>
               <p className={cn('mt-1 text-[12px] leading-6', shellTextSecondaryClass)}>{card.copy}</p>
             </div>
@@ -269,7 +254,7 @@ function PublicStatusIncidentRows({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: card.stateColor || '#6b7280' }} />
-            <Badge variant={incidentTone(card.state)} style={accentStyle(card.stateColor)}>
+            <Badge variant={card.tone} style={accentStyle(card.stateColor)}>
               {card.stateLabel}
             </Badge>
           </div>
@@ -290,7 +275,7 @@ function PublicStatusIncidentRows({
               <div key={`${card.key}-${contentItem.timestampLabel}-${contentItem.message}`} className="grid gap-2 md:grid-cols-[140px_minmax(0,120px)_1fr]">
                 <div className={cn('text-[11px] uppercase tracking-[0.16em]', shellTextTertiaryClass)}>{contentItem.timestampLabel}</div>
                 <div>
-                  <Badge variant={incidentTone(contentItem.state)} style={accentStyle(contentItem.stateColor || card.stateColor)}>
+                  <Badge variant={contentItem.tone} style={accentStyle(contentItem.stateColor || card.stateColor)}>
                     {contentItem.stateLabel}
                   </Badge>
                 </div>
@@ -382,7 +367,14 @@ export function PublicStatusShell({
   const bannerColor = brand.color || '#121317';
 
   return (
-    <div className="min-h-screen bg-[var(--ops-background)] text-[var(--ops-text-primary)]" data-public-status-shell="true" data-public-status-mode={mode}>
+    <div
+      className="min-h-screen bg-[var(--ops-background)] text-[var(--ops-text-primary)]"
+      data-public-status-shell="true"
+      data-public-status-mode={mode}
+      data-public-status-api-contract="angular-public-status"
+      data-public-status-api-owner="status-center-public-controller"
+      data-public-status-mode-switch-contract="component-incident"
+    >
       <div
         className={cn('border-b bg-[var(--ops-surface-panel)]', shellBorderClass)}
         style={{ backgroundImage: 'linear-gradient(180deg,rgba(18,19,23,0.96),rgba(11,12,14,0.98))' }}
@@ -556,6 +548,8 @@ export function PublicStatusShell({
             <Button
               type="button"
               data-testid="status-public-mode-incident"
+              data-public-status-mode-switch="component-to-incident"
+              data-public-status-mode-switch-owner="hertzbeat-ui-button"
               variant="ghost"
               className="justify-start rounded-[2px] px-0 text-[var(--ops-text-secondary)] hover:bg-transparent hover:text-[var(--ops-text-primary)]"
               onClick={() => onModeChange('incident')}
@@ -567,6 +561,8 @@ export function PublicStatusShell({
             <Button
               type="button"
               data-testid="status-public-mode-component"
+              data-public-status-mode-switch="incident-to-component"
+              data-public-status-mode-switch-owner="hertzbeat-ui-button"
               variant="ghost"
               className="justify-start rounded-[2px] px-0 text-[var(--ops-text-secondary)] hover:bg-transparent hover:text-[var(--ops-text-primary)]"
               onClick={() => onModeChange('component')}

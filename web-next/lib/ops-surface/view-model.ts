@@ -3,9 +3,9 @@ type Translator = (key: string, params?: Record<string, string | number | null |
 export function buildOpsFacts(title: string, focus: string, tags: string[], t: Translator) {
   return [
     { label: t('common.workspace'), value: title.toLowerCase() },
-    { label: t('common.focus'), value: focus },
-    { label: t('common.mode'), value: t('ops.surface.mode.entry') },
-    { label: t('common.signals'), value: String(tags.length) }
+    { label: t('ops.surface.fact.focus-label'), value: focus },
+    { label: t('ops.surface.fact.mode-label'), value: t('ops.surface.fact.mode-entry') },
+    { label: t('ops.surface.fact.signals-label'), value: String(tags.length) }
   ];
 }
 

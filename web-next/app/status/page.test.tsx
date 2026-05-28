@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
@@ -45,7 +48,7 @@ vi.mock('../../components/providers/i18n-provider', async () => {
   const actual = await import('../../lib/i18n');
   return {
     useI18n: () => ({
-      t: createTranslatorMock(),
+      t: createTranslatorMock({ locale: 'en-US' }),
       locale: 'en-US',
       locales: actual.LOCALES,
       setLocale: vi.fn(async () => {})
@@ -54,10 +57,10 @@ vi.mock('../../components/providers/i18n-provider', async () => {
 });
 
 vi.mock('../../components/workbench/client-workbench', () => ({
-  ClientWorkbench: ({ children, load }: { children: (data: any) => React.ReactNode; load: () => Promise<unknown> }) => {
+  ClientWorkbench: ({ children, load, loadingCopy }: { children: (data: any) => React.ReactNode; load: () => Promise<unknown>; loadingCopy?: string }) => {
     loadState.lastLoad = load;
     return (
-      <div data-client-workbench="true">
+      <div data-client-workbench="true" data-loading-copy={loadingCopy}>
         {children({
           org: {
             name: 'Codex Demo Status',
@@ -97,14 +100,20 @@ vi.mock('../../components/workbench/client-workbench', () => ({
 
 vi.mock('../../components/pages/public-status-shell', () => ({
   PublicStatusShell: ({ brand, mode, poweredByLabel, componentCards, incidentCards, refreshLabel }: any) => (
-    <main data-public-status-shell="true" data-public-status-mode={mode}>
+    <main
+      data-public-status-shell="true"
+      data-public-status-mode={mode}
+      data-public-status-api-contract="angular-public-status"
+      data-public-status-api-owner="status-center-public-controller"
+      data-public-status-mode-switch-contract="component-incident"
+    >
       <span>{brand.title}</span>
       <span>{brand.copy}</span>
       <span>{poweredByLabel}</span>
       <span>{refreshLabel}</span>
       <span>{componentCards.length}</span>
       <span>{incidentCards.length}</span>
-      <button type="button">Refresh</button>
+      <button type="button">{refreshLabel}</button>
     </main>
   )
 }));
@@ -113,10 +122,14 @@ vi.mock('../../lib/api-client', () => ({
   apiMessageGet
 }));
 
-vi.mock('../../lib/status-center/controller', () => ({
-  loadStatusPageData,
-  loadStatusPageIncidentFeed: vi.fn(async () => [])
-}));
+vi.mock('../../lib/status-center/controller', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../lib/status-center/controller')>();
+  return {
+    ...actual,
+    loadStatusPageData,
+    loadStatusPageIncidentFeed: vi.fn(async () => [])
+  };
+});
 
 vi.mock('../../lib/format', () => ({
   formatTime: () => '2026-04-16 22:00:00'
@@ -134,11 +147,29 @@ describe('status page', () => {
     await lastLoad?.();
 
     expect(html).toContain('data-client-workbench="true"');
+    expect(html).toContain('data-loading-copy="Loading status page"');
     expect(html).toContain('data-public-status-shell="true"');
     expect(html).toContain('data-public-status-mode="component"');
+    expect(html).toContain('data-public-status-api-contract="angular-public-status"');
+    expect(html).toContain('data-public-status-api-owner="status-center-public-controller"');
+    expect(html).toContain('data-public-status-mode-switch-contract="component-incident"');
     expect(html).toContain('Codex Demo Status');
-    expect(html).toContain('Power by Apache HertzBeat™. Star Us !');
+    expect(html).toContain('Powered by HertzBeat');
     expect(html).toContain('Refresh');
     expect(loadStatusPageData).toHaveBeenCalledWith(apiMessageGet);
   }, 15000);
+
+  it('keeps public status remounts on a short settled cache window while incident reload stays explicit', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/status/status-page.tsx'), 'utf8');
+
+    expect(source).toContain('PUBLIC_STATUS_SETTLED_CACHE_TTL_MS = 10_000');
+    expect(source).toContain('/status/page/public/org');
+    expect(source).toContain('/status/page/public/component');
+    expect(source).toContain('loadStatusPageData(apiMessageGet)');
+    expect(source).toContain('publicStatusIncidentListUrl');
+    expect(source).toContain('reloadToken: incidentReloadToken');
+    expect(source).toContain('onRefreshIncidents={() => setIncidentReloadToken(value => value + 1)}');
+    expect(source).toContain('cacheKey={publicStatusCacheKey}');
+    expect(source).toContain('cacheSettledTtlMs={PUBLIC_STATUS_SETTLED_CACHE_TTL_MS}');
+  });
 });

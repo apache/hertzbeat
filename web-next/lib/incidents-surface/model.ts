@@ -45,90 +45,94 @@ export function buildIncidentsDomainModel(t: Translator): IncidentsDomainModel {
   const incidents: IncidentItem[] = [
     {
       id: 'inc-204',
-      title: 'Checkout latency spike across prod-ap',
+      title: t('incidents.row.checkout.title'),
       severity: 'critical',
-      service: 'checkout',
-      owner: 'checkout-oncall',
+      service: t('incidents.row.checkout.service'),
+      owner: t('incidents.row.checkout.owner'),
       stage: 'mitigating',
       openedAt: '2026-04-16 09:06',
-      blastRadius: '2 regions'
+      blastRadius: t('incidents.row.checkout.blast-radius')
     },
     {
       id: 'inc-203',
-      title: 'Collector queue delay on metrics ingestion',
+      title: t('incidents.row.collector.title'),
       severity: 'warning',
-      service: 'otlp-gateway',
-      owner: 'observability',
+      service: t('incidents.row.collector.service'),
+      owner: t('incidents.row.collector.owner'),
       stage: 'monitoring',
       openedAt: '2026-04-16 08:22',
-      blastRadius: 'metrics only'
+      blastRadius: t('incidents.row.collector.blast-radius')
     },
     {
       id: 'inc-202',
-      title: 'Edge proxy saturation after deploy',
+      title: t('incidents.row.edge.title'),
       severity: 'warning',
-      service: 'edge-proxy',
-      owner: 'edge-sre',
+      service: t('incidents.row.edge.service'),
+      owner: t('incidents.row.edge.owner'),
       stage: 'investigating',
       openedAt: '2026-04-16 07:48',
-      blastRadius: 'cn-hz ingress'
+      blastRadius: t('incidents.row.edge.blast-radius')
     }
   ];
 
   return {
-    title: 'Incidents',
+    title: t('incidents.entry.title'),
     subtitle: t('incidents.subtitle'),
     focus: t('incidents.focus'),
     summary: t('incidents.summary'),
-    tags: ['incident shell', 'response timeline', 'owner-first'],
+    tags: [
+      t('incidents.tag.shell'),
+      t('incidents.tag.timeline'),
+      t('incidents.tag.owner-first')
+    ],
     metrics: [
-      { label: 'Open incidents', value: String(incidents.length) },
-      { label: 'Critical', value: String(incidents.filter(item => item.severity === 'critical').length) },
-      { label: 'Mitigating', value: String(incidents.filter(item => item.stage === 'mitigating').length) },
-      { label: 'Ownership queues', value: '3' }
+      { label: t('incidents.metric.open'), value: String(incidents.length) },
+      { label: t('incidents.metric.critical'), value: String(incidents.filter(item => item.severity === 'critical').length) },
+      { label: t('incidents.metric.mitigating'), value: String(incidents.filter(item => item.stage === 'mitigating').length) },
+      { label: t('incidents.metric.ownership-queues'), value: '3' }
     ],
     incidents,
     timeline: [
       {
-        title: '09:08 mitigation started',
-        copy: 'Rollback and restart actions were opened from the alert evidence bundle.',
-        meta: 'checkout latency incident'
+        title: t('incidents.timeline.checkout.title'),
+        copy: t('incidents.timeline.checkout.copy'),
+        meta: t('incidents.timeline.checkout.meta')
       },
       {
-        title: '08:33 metrics replay approved',
-        copy: 'Collector backlog dropped below the replay threshold and handoff stayed in the same rail.',
-        meta: 'ingestion incident'
+        title: t('incidents.timeline.collector.title'),
+        copy: t('incidents.timeline.collector.copy'),
+        meta: t('incidents.timeline.collector.meta')
       },
       {
-        title: '07:56 edge saturation escalated',
-        copy: 'Operator routed the incident from monitor detail to trace and log evidence.',
-        meta: 'edge incident'
+        title: t('incidents.timeline.edge.title'),
+        copy: t('incidents.timeline.edge.copy'),
+        meta: t('incidents.timeline.edge.meta')
       }
     ],
     ownership: [
       {
-        owner: 'checkout-oncall',
-        queue: 'primary responder',
-        copy: 'Keeps alert, trace, and deploy context bound to the active mitigation thread.',
-        meta: '2 active handoffs'
+        owner: t('incidents.ownership.checkout.owner'),
+        queue: t('incidents.ownership.checkout.queue'),
+        copy: t('incidents.ownership.checkout.copy'),
+        meta: t('incidents.ownership.checkout.meta')
       },
       {
-        owner: 'observability',
-        queue: 'signal validation',
-        copy: 'Validates replay safety and ingestion recovery before closing the incident.',
-        meta: '1 active handoff'
+        owner: t('incidents.ownership.observability.owner'),
+        queue: t('incidents.ownership.observability.queue'),
+        copy: t('incidents.ownership.observability.copy'),
+        meta: t('incidents.ownership.observability.meta')
       },
       {
-        owner: 'edge-sre',
-        queue: 'capacity review',
-        copy: 'Tracks post-deploy regressions and the next rollback checkpoint.',
-        meta: 'awaiting rollback note'
+        owner: t('incidents.ownership.edge.owner'),
+        queue: t('incidents.ownership.edge.queue'),
+        copy: t('incidents.ownership.edge.copy'),
+        meta: t('incidents.ownership.edge.meta')
       }
     ],
     checklist: [
-      { title: t('incidents.checklist.shell.title'), copy: t('incidents.checklist.shell.copy'), meta: 'done' },
-      { title: t('incidents.checklist.adapter.title'), copy: t('incidents.checklist.adapter.copy'), meta: 'next' },
-      { title: t('incidents.checklist.drilldown.title'), copy: t('incidents.checklist.drilldown.copy'), meta: 'reserved' }
+      { title: t('incidents.checklist.shell.title'), copy: t('incidents.checklist.shell.copy'), meta: t('incidents.checklist.shell.meta') },
+      { title: t('incidents.checklist.adapter.title'), copy: t('incidents.checklist.adapter.copy'), meta: t('incidents.checklist.adapter.meta') },
+      { title: t('incidents.checklist.drilldown.title'), copy: t('incidents.checklist.drilldown.copy'), meta: t('incidents.checklist.drilldown.meta') }
     ],
     nextHops: [
       { label: t('menu.dashboard.back'), href: '/overview', variant: 'subtle' },

@@ -1,6 +1,16 @@
 import type { StatusPageComponent, StatusPageHistory, StatusPageIncident, StatusPageOrg } from '@/lib/types';
+import { buildCompatRedirectTarget, type SearchParamsRecord } from '../compat/search-params';
+import { SUPPLEMENTAL_MESSAGES } from '../i18n-runtime-messages';
+
+export type { SearchParamsRecord } from '../compat/search-params';
 
 type ApiGetter = <T>(url: string) => Promise<T>;
+
+export const PUBLIC_STATUS_ROUTE = '/status';
+
+export function buildPublicStatusCompatRouteUrl(searchParams?: SearchParamsRecord) {
+  return buildCompatRedirectTarget(PUBLIC_STATUS_ROUTE, searchParams);
+}
 
 export type StatusIncidentListQuery = {
   search?: string;
@@ -31,6 +41,7 @@ export type StatusIncidentFeedOptions = {
 };
 
 const STATUS_PAGE_ORG_NOT_FOUND = 'Status Page Organization Not Found';
+const STATUS_INCIDENTS_LOAD_FAILED_FALLBACK = SUPPLEMENTAL_MESSAGES['en-US']?.['status.public.incidents.load-failed'] ?? 'status.public.incidents.load-failed';
 
 function isStatusPageOrgNotFound(error: unknown) {
   return error instanceof Error && error.message.includes(STATUS_PAGE_ORG_NOT_FOUND);
@@ -48,6 +59,10 @@ function describeLoadFailure(error: unknown, fallback: string) {
     return error.message;
   }
   return fallback;
+}
+
+export function describeStatusIncidentLoadFailure(error: unknown, fallback = STATUS_INCIDENTS_LOAD_FAILED_FALLBACK) {
+  return describeLoadFailure(error, fallback || STATUS_INCIDENTS_LOAD_FAILED_FALLBACK);
 }
 
 function normalizePageIndex(value?: number) {
@@ -215,7 +230,7 @@ export async function loadStatusPageData(apiGet: ApiGetter, query: StatusInciden
   try {
     incidents = await loadStatusPageIncidents(apiGet, incidentQuery);
   } catch (error) {
-    incidentsError = describeLoadFailure(error, 'Failed to load public incidents');
+    incidentsError = describeStatusIncidentLoadFailure(error);
   }
 
   return {

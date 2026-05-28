@@ -3,21 +3,9 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { createTranslatorMock } from '../../test/i18n-test-helper';
 
-const t = (key: string) => {
-  const messages: Record<string, string> = {
-    'ops.surface.kicker': 'Operator surface',
-    'ops.surface.route-contract.title': 'Route contract',
-    'ops.surface.route-contract.copy': 'Shared shell status stays visible during the landing phase.',
-    'ops.surface.launch-checklist': 'Launch checklist',
-    'ops.surface.route-posture': 'Route posture',
-    'ops.surface.entry-shell': 'Entry shell ready',
-    'common.mode': 'Mode',
-    'menu.dashboard.back-en': 'Open overview'
-  };
-
-  return messages[key] ?? key;
-};
+const t = createTranslatorMock();
 
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
@@ -125,5 +113,26 @@ describe('OpsSurfacePage', () => {
     expect(source).not.toContain('ObservabilityPanelShell as SurfaceSection');
     expect(source).not.toContain('ObservabilityRailShell as RailSection');
     expect(source).not.toContain('ObservabilityStatusState as StatusState');
+  });
+
+  it('renders localized default overview and entity handoffs', async () => {
+    const { OpsSurfacePage } = await import('./ops-surface-page');
+
+    const html = renderToStaticMarkup(
+      <OpsSurfacePage
+        title="Safe automation"
+        subtitle="Manual control-plane entry."
+        tags={['manual approval']}
+        focus="Approval-safe action entry"
+        summary="Actions stay bounded to the operator entry shell."
+        lanes={[{ title: 'Action catalog', copy: 'Catalog posture stays visible.' }]}
+        checklist={[{ title: 'Entry shell ready', copy: 'The route uses shared shell primitives.' }]}
+      />
+    );
+
+    expect(html).toContain('Open overview');
+    expect(html).toContain('Entity center');
+    expect(html).not.toContain('menu.entity.browse');
+    expect(html).not.toContain('menu.dashboard.back-en');
   });
 });

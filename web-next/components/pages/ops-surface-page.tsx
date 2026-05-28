@@ -52,7 +52,7 @@ export function OpsSurfacePage({
             {t('menu.dashboard.back')}
           </Link>
           <Link className={buttonVariants({ variant: 'primary', size: 'sm' })} href="/entities">
-            {t('menu.entity.browse')}
+            {t('menu.entity.center')}
           </Link>
         </>
       );
@@ -100,12 +100,12 @@ export function OpsSurfacePage({
           <RailSection title={t('ops.surface.route-posture')}>
             <div className="space-y-3">
               <div className="rounded-[6px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-3.5 py-3">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ops-text-tertiary)]">{t('common.mode')}</div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ops-text-tertiary)]">{t('ops.surface.route-posture.mode-label')}</div>
                 <div className="mt-2 text-base font-semibold text-[var(--ops-text-primary)]">{t('ops.surface.entry-shell')}</div>
                 <div className="mt-2 text-sm leading-6 text-[var(--ops-text-secondary)]">{focus}</div>
               </div>
               <Link className={buttonVariants({ variant: 'default', size: 'sm' })} href="/overview">
-                {t('menu.dashboard.back-en')}
+                {t('menu.dashboard.back')}
               </Link>
             </div>
           </RailSection>

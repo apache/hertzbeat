@@ -5,6 +5,7 @@ import {
   incidentStateLabel,
   latestIncidentMessage,
   normalizeComponentState,
+  normalizeIncidentState,
   resolveStatusHref,
   readStatusCopy,
   statusHistoryBlockColor,
@@ -29,12 +30,27 @@ export { statusIncidentStateColor } from './display';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 type TranslatorWithValues = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+type PublicStatusBadgeTone = 'success' | 'danger' | 'default';
 
 export function componentTone(status?: number | string | null): string {
   const normalizedState = normalizeComponentState(status);
   if (normalizedState === 0) return 'normal';
   if (normalizedState === 1) return 'abnormal';
   return 'unknown';
+}
+
+function publicComponentBadgeTone(state: number | string | null | undefined): PublicStatusBadgeTone {
+  const normalizedState = normalizeComponentState(state);
+  if (normalizedState === 0) return 'success';
+  if (normalizedState === 1) return 'danger';
+  return 'default';
+}
+
+function publicIncidentBadgeTone(state: number | string | null | undefined): PublicStatusBadgeTone {
+  const normalizedState = normalizeIncidentState(state);
+  if (normalizedState === 3) return 'success';
+  if (normalizedState === 0) return 'danger';
+  return 'default';
 }
 
 export function buildStatusMetrics(components: StatusPageComponent[], incidents: StatusPageIncident[], t: Translator) {
@@ -70,23 +86,28 @@ export function buildStatusRows(
   t: Translator,
   formatTime: (value?: number | string | null) => string
 ) {
+  const emptyValue = t('common.none');
+
   if (mode === 'component') {
     return components.length > 0
       ? components.map(item => ({
           title: item.name || t('status.component.default-title'),
-          copy: item.description || item.endpoint || '-',
+          copy: item.description || item.endpoint || emptyValue,
           meta: `${componentStateLabel(item.status ?? item.state ?? null, t)} · ${formatTime(item.latestTime || item.gmtUpdate || item.gmtCreate || null)}`
         }))
-      : [{ title: t('status.components.empty.title'), copy: t('status.components.empty.copy'), meta: '-' }];
+      : [{ title: t('status.components.empty.title'), copy: t('status.components.empty.copy'), meta: emptyValue }];
   }
 
   return incidents.length > 0
-    ? incidents.map(item => ({
-        title: item.title || `${t('status.incident.default-title')} ${item.id || '-'}`,
-        copy: latestIncidentMessage(item) || `${readStatusCopy(t, 'common.status', 'Status')} ${incidentStateLabel(item.status ?? item.state ?? null, t)}`,
-        meta: `${incidentStateLabel(item.status ?? item.state ?? null, t)} · ${formatTime(item.updateTime || item.createTime || null)}`
-      }))
-    : [{ title: t('status.incidents.empty.title'), copy: t('status.incidents.empty.copy'), meta: '-' }];
+    ? incidents.map(item => {
+        const incidentId = item.id || emptyValue;
+        return {
+          title: item.title || `${t('status.incident.default-title')} ${incidentId}`,
+          copy: latestIncidentMessage(item) || `${readStatusCopy(t, 'common.status', 'Status')} ${incidentStateLabel(item.status ?? item.state ?? null, t)}`,
+          meta: `${incidentStateLabel(item.status ?? item.state ?? null, t)} · ${formatTime(item.updateTime || item.createTime || null)}`
+        };
+      })
+    : [{ title: t('status.incidents.empty.title'), copy: t('status.incidents.empty.copy'), meta: emptyValue }];
 }
 
 export function buildStatusOrgRows(mode: 'component' | 'incident', org: StatusPageOrg, t: Translator) {
@@ -153,19 +174,22 @@ export function buildStatusComponentHistoryRows(
   t: Translator,
   formatTime: (value?: number | string | null) => string
 ) {
+  const emptyValue = t('common.none');
+
   return components.map(component => {
     const history = [...(component.history || [])].sort(
       (left, right) => Number(right.timestamp ?? 0) - Number(left.timestamp ?? 0)
     ) as StatusPageHistory[];
     const latestHistory = history[0];
     const latestTime = component.latestTime || component.gmtUpdate || component.gmtCreate || latestHistory?.timestamp || null;
-    const latestUptime = latestHistory?.uptime != null ? `${(latestHistory.uptime * 100).toFixed(2)}%` : '-';
+    const latestUptime = latestHistory?.uptime != null ? `${(latestHistory.uptime * 100).toFixed(2)}%` : emptyValue;
 
     return {
       key: String(component.id || component.name || 'component'),
       title: component.name || t('status.component.default-title'),
-      copy: component.description || component.endpoint || '-',
+      copy: component.description || component.endpoint || emptyValue,
       state: component.status ?? component.state ?? null,
+      tone: publicComponentBadgeTone(component.status ?? component.state ?? null),
       statusLabel: componentStateLabel(component.status ?? component.state ?? null, t),
       latestTimeLabel: formatTime(latestTime),
       latestUptimeLabel: latestUptime,
@@ -174,8 +198,8 @@ export function buildStatusComponentHistoryRows(
       history,
       blocks: history.map(item => ({
         timestampLabel: formatTime(item.timestamp || null),
-        uptimeLabel: item.uptime != null ? `${(item.uptime * 100).toFixed(2)}%` : '-',
-        title: `${formatTime(item.timestamp || null)} · ${statusPublicUptimeLabel(t)} ${item.uptime != null ? `${(item.uptime * 100).toFixed(2)}%` : '-'}`,
+        uptimeLabel: item.uptime != null ? `${(item.uptime * 100).toFixed(2)}%` : emptyValue,
+        title: `${formatTime(item.timestamp || null)} · ${statusPublicUptimeLabel(t)} ${item.uptime != null ? `${(item.uptime * 100).toFixed(2)}%` : emptyValue}`,
         color: statusHistoryBlockColor(item)
       }))
     };
@@ -187,17 +211,21 @@ export function buildStatusIncidentCards(
   t: Translator,
   formatTime: (value?: number | string | null) => string
 ) {
+  const emptyValue = t('common.none');
+
   return incidents.map(incident => {
     const contents = [...(incident.contents || [])];
     const latestMessage = latestIncidentMessage(incident);
     const stateLabel = incidentStateLabel(incident.status ?? incident.state ?? null, t);
     const stateColor = statusIncidentStateColor(incident.status ?? incident.state ?? null);
+    const incidentId = incident.id || emptyValue;
 
     return {
       key: String(incident.id || incident.title || incident.name || 'incident'),
-      title: incident.title || incident.name || `${t('status.incident.default-title')} ${incident.id || '-'}`,
+      title: incident.title || incident.name || `${t('status.incident.default-title')} ${incidentId}`,
       copy: latestMessage || `${readStatusCopy(t, 'status.incident.status', 'Status')} ${stateLabel}`,
       state: incident.status ?? incident.state ?? null,
+      tone: publicIncidentBadgeTone(incident.status ?? incident.state ?? null),
       stateLabel,
       stateColor,
       meta: `${stateLabel} · ${formatTime(incident.updateTime || incident.createTime || incident.endTime || incident.startTime || null)}`,
@@ -206,8 +234,9 @@ export function buildStatusIncidentCards(
       updateAtLabel: formatTime(incident.endTime || incident.updateTime || incident.startTime || incident.createTime || null),
       contents: contents.map(content => ({
         timestampLabel: formatTime(content.timestamp || null),
-        stateLabel: content.state != null ? incidentStateLabel(content.state, t) : '-',
+        stateLabel: content.state != null ? incidentStateLabel(content.state, t) : emptyValue,
         state: content.state ?? null,
+        tone: publicIncidentBadgeTone(content.state ?? null),
         stateColor: statusIncidentStateColor(content.state ?? null),
         message: content.message || ''
       }))

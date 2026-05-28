@@ -1,13 +1,28 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  buildPublicStatusCompatRouteUrl,
   buildStatusIncidentListUrl,
   buildStatusIncidentYearQuery,
+  describeStatusIncidentLoadFailure,
   loadStatusPageData,
   loadStatusPageIncidentFeed,
   loadStatusPageIncidents
 } from './controller';
 
 describe('status center controller', () => {
+  it('builds the public status compatibility alias URL while preserving status filters', () => {
+    expect(buildPublicStatusCompatRouteUrl()).toBe('/status');
+    expect(
+      buildPublicStatusCompatRouteUrl({
+        component: 'api',
+        status: 'down',
+        year: '2026',
+        returnTo: '/overview',
+        returnLabel: 'Overview'
+      })
+    ).toBe('/status?component=api&status=down&year=2026&returnTo=%2Foverview');
+  });
+
   it('builds public incident urls with search and range params', () => {
     expect(
       buildStatusIncidentListUrl({
@@ -208,5 +223,25 @@ describe('status center controller', () => {
       incidents: [],
       incidentsError: 'incident feed unavailable'
     });
+  });
+
+  it('uses runtime fallback copy for blank incident load failures', async () => {
+    const apiGet = vi
+      .fn()
+      .mockResolvedValueOnce({ name: 'OpenStatus' })
+      .mockResolvedValueOnce([{ info: { id: 1, name: 'api', state: 0 } }])
+      .mockRejectedValueOnce(new Error('   '));
+
+    const result = await loadStatusPageData(apiGet as any);
+
+    expect(result.incidents).toEqual([]);
+    expect(result.incidentsError).toBe('Failed to load public incidents');
+  });
+
+  it('shares public incident load-failure fallback for refresh failures', () => {
+    expect(describeStatusIncidentLoadFailure(new Error('backend incident error'))).toBe('backend incident error');
+    expect(describeStatusIncidentLoadFailure(new Error('   '))).toBe('Failed to load public incidents');
+    expect(describeStatusIncidentLoadFailure('')).toBe('Failed to load public incidents');
+    expect(describeStatusIncidentLoadFailure(new Error('   '), 'Localized refresh failure')).toBe('Localized refresh failure');
   });
 });

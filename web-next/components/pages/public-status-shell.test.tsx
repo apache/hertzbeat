@@ -52,6 +52,7 @@ describe('PublicStatusShell', () => {
             title: 'Public API',
             copy: 'Primary signal intake service.',
             state: 0,
+            tone: 'success',
             statusLabel: 'Operational',
             latestTimeLabel: '19:10',
             latestUptimeLabel: '99.99%',
@@ -94,6 +95,11 @@ describe('PublicStatusShell', () => {
 
     expect(html).toContain('data-public-status-shell="true"');
     expect(html).toContain('data-public-status-mode="component"');
+    expect(html).toContain('data-public-status-api-contract="angular-public-status"');
+    expect(html).toContain('data-public-status-api-owner="status-center-public-controller"');
+    expect(html).toContain('data-public-status-mode-switch-contract="component-incident"');
+    expect(html).toContain('data-public-status-mode-switch="component-to-incident"');
+    expect(html).toContain('data-public-status-mode-switch-owner="hertzbeat-ui-button"');
     expect(html).toContain('Operator Status');
     expect(html).toContain('Unified public signal posture for the active operator desk.');
     expect(html).toContain('English(en_US)');
@@ -135,6 +141,12 @@ describe('PublicStatusShell', () => {
     expect(source).toContain("from '../workbench/primitives'");
     expect(source).toContain('WorkbenchPanel');
     expect(source).toContain('WorkbenchActionButton');
+    expect(source).toContain('data-public-status-api-contract="angular-public-status"');
+    expect(source).toContain('data-public-status-api-owner="status-center-public-controller"');
+    expect(source).toContain('data-public-status-mode-switch-contract="component-incident"');
+    expect(source).toContain('data-public-status-mode-switch="component-to-incident"');
+    expect(source).toContain('data-public-status-mode-switch="incident-to-component"');
+    expect(source).toContain('data-public-status-mode-switch-owner="hertzbeat-ui-button"');
     expect(source).not.toContain('inline-flex h-9 items-center gap-2 rounded-[2px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-3 text-[12px] text-[var(--ops-text-secondary)] transition-colors hover:border-[var(--ops-primary)] hover:bg-[var(--ops-surface-elevated)] hover:text-[var(--ops-text-primary)]');
   });
 
