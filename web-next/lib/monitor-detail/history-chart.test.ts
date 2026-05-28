@@ -5,7 +5,10 @@ import {
   buildHistoryChartPoints,
   buildHistoryChartPolyline,
   buildHistoryChartSeries,
+  buildHistoryDataZoomApplyTimeContext,
+  buildHistoryDataZoomPreviewTimeContext,
   buildHistoryDataZoomTimeContext,
+  buildHistoryResetTimeContext,
   findNearestHistoryChartPointIndex,
   buildHistoryChartSvgDataUrl,
   buildHistoryChartSvgDocument
@@ -238,11 +241,14 @@ describe('monitor history chart helpers', () => {
   });
 
   it('resolves a local dataZoom percentage range into an explicit query time window', () => {
+    const first = new Date(2026, 4, 17, 15, 0, 0).getTime();
+    const middle = new Date(2026, 4, 17, 16, 0, 0).getTime();
+    const last = new Date(2026, 4, 17, 17, 0, 0).getTime();
     const context = buildHistoryDataZoomTimeContext(
       [
-        { origin: '10', time: 1_000 },
-        { origin: '20', time: 2_000 },
-        { origin: '30', time: 3_000 }
+        { origin: '10', time: first },
+        { origin: '20', time: middle },
+        { origin: '30', time: last }
       ] as any,
       { start: 25, end: 75 },
       'last-1h'
@@ -250,26 +256,156 @@ describe('monitor history chart helpers', () => {
 
     expect(context).toEqual({
       timeRange: 'last-1h',
-      start: '1500',
-      end: '2500'
+      from: '2026-05-17 15:30:00',
+      to: '2026-05-17 16:30:00'
     });
   });
 
   it('prefers concrete dataZoom startValue and endValue when applying chart zoom to query time', () => {
+    const first = new Date(2026, 4, 17, 15, 0, 0).getTime();
+    const middle = new Date(2026, 4, 17, 16, 0, 0).getTime();
+    const last = new Date(2026, 4, 17, 17, 0, 0).getTime();
     const context = buildHistoryDataZoomTimeContext(
       [
-        { origin: '10', time: 1_000 },
-        { origin: '20', time: 2_000 },
-        { origin: '30', time: 3_000 }
+        { origin: '10', time: first },
+        { origin: '20', time: middle },
+        { origin: '30', time: last }
       ] as any,
-      { start: 0, end: 100, startValue: 1_200, endValue: 2_600 },
+      { start: 0, end: 100, startValue: first + 15 * 60 * 1000, endValue: last - 15 * 60 * 1000 },
       'last-1h'
     );
 
     expect(context).toEqual({
       timeRange: 'last-1h',
-      start: '1200',
-      end: '2600'
+      from: '2026-05-17 15:15:00',
+      to: '2026-05-17 16:45:00'
+    });
+  });
+
+  it('keeps refresh live and timezone controls attached when dataZoom previews the toolbar range', () => {
+    const first = new Date(2026, 4, 17, 15, 0, 0).getTime();
+    const middle = new Date(2026, 4, 17, 16, 0, 0).getTime();
+    const last = new Date(2026, 4, 17, 17, 0, 0).getTime();
+    const context = buildHistoryDataZoomPreviewTimeContext(
+      [
+        { origin: '10', time: first },
+        { origin: '20', time: middle },
+        { origin: '30', time: last }
+      ] as any,
+      { start: 25, end: 75 },
+      {
+        timeRange: 'last-1h',
+        from: 'now-1h',
+        to: 'now',
+        start: String(first),
+        end: String(last),
+        refresh: '30',
+        live: 'true',
+        tz: 'Asia/Shanghai',
+        timezone: 'Asia/Shanghai'
+      },
+      'last-1h'
+    );
+
+    expect(context).toEqual({
+      timeRange: 'last-1h',
+      from: '2026-05-17 15:30:00',
+      to: '2026-05-17 16:30:00',
+      refresh: '30',
+      live: 'true',
+      tz: 'Asia/Shanghai',
+      timezone: 'Asia/Shanghai'
+    });
+  });
+
+  it('applies chart dataZoom as a readable expression query without carrying the relative preset', () => {
+    const first = new Date(2026, 4, 17, 15, 0, 0).getTime();
+    const middle = new Date(2026, 4, 17, 16, 0, 0).getTime();
+    const last = new Date(2026, 4, 17, 17, 0, 0).getTime();
+    const context = buildHistoryDataZoomApplyTimeContext(
+      [
+        { origin: '10', time: first },
+        { origin: '20', time: middle },
+        { origin: '30', time: last }
+      ] as any,
+      { start: 25, end: 75 },
+      {
+        timeRange: 'last-1h',
+        from: 'now-1h',
+        to: 'now',
+        start: String(first),
+        end: String(last),
+        refresh: '30',
+        live: 'true',
+        timezone: 'Asia/Shanghai'
+      },
+      'last-1h'
+    );
+
+    expect(context).toEqual({
+      from: '2026-05-17 15:30:00',
+      to: '2026-05-17 16:30:00',
+      refresh: '30',
+      live: 'true',
+      tz: 'Asia/Shanghai',
+      timezone: 'Asia/Shanghai'
+    });
+  });
+
+  it('keeps manual refresh canonical when dataZoom previews inherit a stale interval', () => {
+    const first = new Date(2026, 4, 17, 15, 0, 0).getTime();
+    const middle = new Date(2026, 4, 17, 16, 0, 0).getTime();
+    const last = new Date(2026, 4, 17, 17, 0, 0).getTime();
+    const context = buildHistoryDataZoomPreviewTimeContext(
+      [
+        { origin: '10', time: first },
+        { origin: '20', time: middle },
+        { origin: '30', time: last }
+      ] as any,
+      { start: 25, end: 75 },
+      {
+        timeRange: 'last-1h',
+        from: 'now-1h',
+        to: 'now',
+        refresh: '60',
+        live: 'false',
+        timezone: 'Asia/Shanghai'
+      },
+      'last-1h'
+    );
+
+    expect(context).toEqual({
+      timeRange: 'last-1h',
+      from: '2026-05-17 15:30:00',
+      to: '2026-05-17 16:30:00',
+      live: 'false',
+      tz: 'Asia/Shanghai',
+      timezone: 'Asia/Shanghai'
+    });
+  });
+
+  it('resets explicit chart zoom windows back to the quick range while preserving toolbar controls', () => {
+    expect(
+      buildHistoryResetTimeContext(
+        {
+          timeRange: 'last-1h',
+          from: '2026-05-17 15:30:00',
+          to: '2026-05-17 16:30:00',
+          start: '1779003000000',
+          end: '1779006600000',
+          refresh: '30',
+          live: 'true',
+          tz: 'Asia/Shanghai',
+          timezone: 'Asia/Shanghai'
+        },
+        'last-1h'
+      )
+    ).toEqual({
+      timeRange: 'last-1h',
+      refresh: '30',
+      live: 'true',
+      tz: 'Asia/Shanghai',
+      timezone: 'Asia/Shanghai'
     });
   });
 

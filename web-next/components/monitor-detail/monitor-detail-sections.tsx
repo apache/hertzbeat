@@ -1,10 +1,25 @@
 import React from 'react';
-import { Pencil } from 'lucide-react';
+import {
+  HzActionGroup,
+  HzButton,
+  HzButtonLink,
+  HzEmptyState,
+  HzLoadingState,
+  HzMonitorBasicCard,
+  HzMonitorEvidenceFrame,
+  HzMonitorFavoritePane,
+  HzMonitorFavoriteSurface,
+  HzMonitorDetailStage,
+  HzMonitorDetailTabSequence,
+  HzMonitorDetailSignalList,
+  HzMonitorIncrementalLoadFooter,
+  HzMonitorMetricCard,
+  HzMonitorMetricCardGrid,
+  HzMonitorMetricFavoriteAction,
+  HzStateNotice
+} from '@hertzbeat/ui';
 import { MonitorHistoryChartGrid } from './monitor-history-chart-grid';
 import { MonitorSummaryCard } from './monitor-summary-card';
-import { Button } from '../ui/button';
-import { Select } from '../ui/select';
-import { RowList } from '../workbench/workbench-page';
 import type { MonitorHistoryMetricCatalogItem } from '../../lib/monitor-detail/controller';
 import { buildMonitorDetailSections, type MonitorDetailSectionsInput, type MonitorDetailSectionsOutput } from '../../lib/monitor-detail/detail-route-state';
 import { buildMonitorMetricTableMatrix, type MonitorFavoriteJumpRow } from '../../lib/monitor-detail/view-model';
@@ -20,76 +35,57 @@ type MetricCardPayloadState = {
   error: string | null;
 };
 
-function FlatStage({
-  title,
-  description,
-  children,
-  className = '',
-  header = 'visible',
-  rhythm = 'default'
-}: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-  className?: string;
-  header?: 'visible' | 'hidden';
-  rhythm?: 'default' | 'angular-tight';
-}) {
-  const stageClassName =
-    rhythm === 'angular-tight'
-      ? `monitor-detail-stage space-y-2 pt-0 ${className}`
-      : `monitor-detail-stage space-y-3 border-t border-[var(--ops-border-color)] pt-3 ${className}`;
-
-  return (
-    <section
-      className={stageClassName}
-      data-monitor-detail-flat-stage="true"
-      data-monitor-detail-stage-header={header === 'hidden' ? 'hidden' : undefined}
-      data-monitor-detail-stage-rhythm={rhythm === 'angular-tight' ? 'angular-tight' : undefined}
-    >
-      {header === 'visible' ? (
-        <div>
-          <h3 className="text-[13px] font-semibold tracking-[0.02em] text-[var(--ops-text-primary)]">{title}</h3>
-          {description ? <p className="mt-1 text-[12px] leading-5 text-[var(--ops-text-secondary)]">{description}</p> : null}
-        </div>
-      ) : null}
-      {children}
-    </section>
-  );
-}
-
 function MetricSignalList({
   leadingCard,
   rows,
   selectedKey,
   payloads,
+  favoriteNames,
   onSelectMetric,
-  t
+  onToggleFavorite,
+  visibleTotal,
+  hasMore,
+  onLoadMore,
+  loadMoreLabel,
+  completeLabel,
+  incrementalMode = 'angular-sentinel',
+  incrementalScope = 'realtime',
+  t,
+  ...signalListProps
 }: {
   leadingCard?: React.ReactNode;
   rows: EvidenceRow[];
   selectedKey: string | null;
   payloads: Record<string, MetricCardPayloadState | undefined>;
+  favoriteNames: string[];
   onSelectMetric: (key: string) => void;
+  onToggleFavorite: (metricName: string) => Promise<void> | void;
+  visibleTotal?: number;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  loadMoreLabel?: React.ReactNode;
+  completeLabel?: React.ReactNode;
+  incrementalMode?: string;
+  incrementalScope?: string;
   t: Translator;
-}) {
+} & React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className="monitor-detail-stage monitor-detail-stage--signals space-y-2 pt-0.5"
-      data-monitor-detail-signal-list="true"
+    <HzMonitorDetailSignalList
+      {...signalListProps}
+      data-monitor-detail-signal-list-owner="hertzbeat-ui-signal-list"
       data-monitor-detail-signal-grid="monitor-data-table"
-      data-monitor-detail-signal-list-rhythm="angular-tight"
-      data-monitor-detail-signal-list-geometry="angular-two-column-metric-cards"
+      data-monitor-detail-signal-list-rhythm="shared-tight"
+      data-monitor-detail-signal-list-geometry="shared-two-column-metric-cards"
+      data-monitor-detail-realtime-payload-errors="card-local"
     >
       {rows.length > 0 ? (
-        <div
-          className="monitor-detail-card-grid monitor-detail-card-grid--realtime monitor-detail-signal-card-grid grid auto-rows-fr grid-cols-1 items-stretch gap-2 lg:grid-cols-2"
-          data-monitor-detail-card-grid-rhythm="angular-tight"
-          data-monitor-detail-realtime-card-flow="angular-cards-list"
+        <HzMonitorMetricCardGrid
+          data-monitor-detail-card-grid-rhythm="shared-tight"
+          data-monitor-detail-realtime-card-flow="shared-metric-card-grid"
           data-monitor-detail-realtime-card-grid="basic-and-metrics"
-          data-monitor-detail-realtime-reference="apache-hertzbeat-master-cards-lists"
-          data-monitor-detail-realtime-card-height="angular-400px"
-          data-monitor-detail-realtime-card-chrome="angular-card-box"
+          data-monitor-detail-realtime-reference="hertzbeat-ui-monitor-card-grid"
+          data-monitor-detail-realtime-card-height="content-driven"
+          data-monitor-detail-realtime-card-chrome="hertzbeat-ui-card-grid"
         >
           {leadingCard}
           {rows.map(row => {
@@ -98,102 +94,71 @@ function MetricSignalList({
             const matrix = buildMonitorMetricTableMatrix(state?.payload, t);
             const columns = matrix.columns.slice(0, 3);
             const tableRows = matrix.rows.slice(0, 4);
-            const hasTable = columns.length > 0 && tableRows.length > 0;
+            const favorited = favoriteNames.includes(row.key);
             return (
-              <section
+              <HzMonitorMetricCard
                 key={row.key}
-                className={[
-                  'monitor-detail-card monitor-detail-card--signal-flat monitor-detail-card--signal-metric monitor-workbench-surface monitor-workbench-surface--plain min-h-[400px] min-w-0 grid content-start gap-3 rounded-[3px] border p-3 bg-[var(--ops-surface-raised)] transition-colors',
-                  'border-[var(--ops-border-color)]'
-                ].join(' ')}
+                title={row.title}
+                columns={columns}
+                rows={tableRows.map(tableRow => ({
+                  key: tableRow.key,
+                  label: tableRow.label,
+                  values: columns.map((_, index) => tableRow.values[index] ?? '-')
+                }))}
+                selected={selected}
+                loading={state?.loading}
+                error={state?.error}
+                loadingLabel={t('common.loading')}
+                emptyLabel={t('monitor.detail.metric.table.empty.copy')}
+                labelHeader={t('common.labels')}
+                actions={
+                  <HzMonitorMetricFavoriteAction
+                    active={favorited}
+                    label={favorited ? t('monitor.detail.favorite.remove') : t('monitor.detail.favorite.add')}
+                    onClick={event => {
+                      event.stopPropagation();
+                      void onToggleFavorite(row.key);
+                    }}
+                    data-monitor-detail-signal-row-action="favorite"
+                  />
+                }
+                onSelect={() => onSelectMetric(row.key)}
+                data-monitor-detail-metric-card-owner="hertzbeat-ui-metric-card"
                 data-monitor-detail-signal-card="true"
-                data-monitor-detail-signal-card-chrome="angular-card-box"
+                data-monitor-detail-signal-card-chrome="hertzbeat-ui-metric-card"
                 data-monitor-detail-signal-row={row.key}
-                data-monitor-detail-signal-row-density="angular-metric-card"
-                data-monitor-detail-signal-selected-style="angular-neutral"
-                data-selected={selected ? 'true' : 'false'}
-              >
-                <header className="monitor-workbench-surface__header flex items-start justify-between gap-3 border-b border-[var(--ops-border-color)] pb-2">
-                  <button
-                    type="button"
-                    className="monitor-workbench-card-title__copy min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring)/0.2)]"
-                    data-monitor-detail-signal-row-title="true"
-                    onClick={() => onSelectMetric(row.key)}
-                  >
-                    <div className="monitor-workbench-card-title__title truncate text-[16px] font-semibold leading-6 text-[var(--ops-text-primary)]">
-                      {row.title}
-                    </div>
-                  </button>
-                  {state?.loading ? (
-                    <span className="flex-none text-[11px] text-[var(--ops-text-tertiary)]">{t('common.loading')}</span>
-                  ) : null}
-                </header>
-                <button
-                  type="button"
-                  className="monitor-workbench-metric-table grid w-full gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring)/0.2)]"
-                  data-monitor-detail-signal-card-table="true"
-                  data-monitor-detail-signal-card-body-density="angular-card-table"
-                  onClick={() => onSelectMetric(row.key)}
-                >
-                  {state?.error ? (
-                    <span className="border-y border-rose-400/20 bg-rose-400/10 px-3 py-3 text-sm text-rose-200">{state.error}</span>
-                  ) : hasTable ? (
-                    <span className="grid overflow-hidden border-y border-[var(--ops-border-color)]" data-monitor-detail-signal-card-table-row="metric-fields">
-                      <span
-                        className="grid gap-2 border-b border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-3 py-2 text-[11px] font-semibold text-[var(--ops-text-tertiary)]"
-                        style={{ gridTemplateColumns: `minmax(96px, 0.8fr) repeat(${columns.length}, minmax(64px, 1fr))` }}
-                      >
-                        <span>{t('common.labels')}</span>
-                        {columns.map(column => (
-                          <span key={column.key} className="truncate">
-                            {column.title}
-                          </span>
-                        ))}
-                      </span>
-                      {tableRows.map(tableRow => (
-                        <span
-                          key={tableRow.key}
-                          className="grid gap-2 border-b border-[var(--ops-border-color)] px-3 py-2 text-[12px] last:border-b-0"
-                          style={{ gridTemplateColumns: `minmax(96px, 0.8fr) repeat(${columns.length}, minmax(64px, 1fr))` }}
-                        >
-                          <span className="truncate text-[var(--ops-text-secondary)]">{tableRow.label}</span>
-                          {columns.map((column, index) => (
-                            <span key={column.key} className="truncate font-semibold text-[var(--ops-text-primary)]">
-                              {tableRow.values[index] ?? '-'}
-                            </span>
-                          ))}
-                        </span>
-                      ))}
-                    </span>
-                  ) : (
-                    <span className="border-y border-[var(--ops-border-color)] px-3 py-4 text-sm text-[var(--ops-text-secondary)]">
-                      {state?.loading ? t('common.loading') : t('monitor.detail.metric.table.empty.copy')}
-                    </span>
-                  )}
-                </button>
-              </section>
+                data-monitor-detail-signal-row-density="shared-metric-card"
+                data-monitor-detail-signal-selected-style="left-rail"
+              />
             );
           })}
-        </div>
+        </HzMonitorMetricCardGrid>
       ) : (
-        <RowList rows={[{ title: t('monitor.detail.metric.search.empty.title'), copy: t('monitor.detail.metric.search.empty.copy'), meta: '-' }]} />
+        <HzEmptyState
+          title={t('monitor.detail.metric.search.empty.title')}
+          description={t('monitor.detail.metric.search.empty.copy')}
+          data-monitor-detail-empty-owner="hertzbeat-ui-empty-state"
+          data-monitor-detail-empty-scope="metric-search"
+        />
       )}
-    </div>
+      {visibleTotal != null && visibleTotal > rows.length ? (
+        <HzMonitorIncrementalLoadFooter
+          visibleCount={rows.length}
+          totalCount={visibleTotal}
+          hasMore={hasMore}
+          loadMoreLabel={loadMoreLabel ?? t('common.view-more')}
+          completeLabel={completeLabel}
+          onLoadMore={onLoadMore}
+          data-monitor-detail-incremental-owner="hertzbeat-ui-incremental-load-footer"
+          data-monitor-detail-incremental-mode={incrementalMode}
+          data-monitor-detail-incremental-scope={incrementalScope}
+        />
+      ) : null}
+    </HzMonitorDetailSignalList>
   );
 }
 
-function MonitorRealtimeTightSequence({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="monitor-detail-tab-sequence monitor-detail-tab-sequence--angular-tight space-y-2"
-      data-monitor-detail-tab-sequence="angular-tight"
-    >
-      {children}
-    </div>
-  );
-}
-
-function MonitorBasicPlainSurface({
+function MonitorBasicSharedSurface({
   monitor,
   editHref,
   t
@@ -203,32 +168,14 @@ function MonitorBasicPlainSurface({
   t: Translator;
 }) {
   return (
-    <section
-      className="monitor-detail-card monitor-detail-card--overview monitor-detail-card--overview-flat monitor-workbench-surface monitor-workbench-surface--plain min-h-[400px] min-w-0 grid content-start gap-3 rounded-[3px] border p-3 border-[var(--ops-border-color)] bg-[var(--ops-surface-raised)]"
-      data-monitor-basic-stage-surface="monitor-data-table"
-      data-monitor-basic-grid-item="angular-first-card"
-      data-monitor-basic-card-chrome="angular-card-box"
+    <HzMonitorBasicCard
+      heading={t('monitor.detail.basic')}
+      editHref={editHref}
+      editLabel={t('monitor.edit-monitor')}
+      data-monitor-basic-owner="hertzbeat-ui-basic-card"
     >
-      <header className="monitor-workbench-surface__header flex items-start justify-between gap-3 border-b border-[var(--ops-border-color)] pb-2">
-        <div className="monitor-workbench-card-title__copy min-w-0">
-          <div className="monitor-workbench-card-title__title text-[16px] font-semibold leading-6 text-[var(--ops-text-primary)]">
-            {t('monitor.detail.basic')}
-          </div>
-        </div>
-        <div className="monitor-workbench-surface__meta flex flex-none items-center gap-2">
-          <a
-            href={editHref}
-            aria-label={t('monitor.edit-monitor')}
-            className="monitor-workbench-surface__edit inline-flex h-6 w-6 items-center justify-center border-0 bg-transparent text-[var(--ops-text-tertiary)] transition-colors hover:text-[var(--ops-text-primary)]"
-            data-monitor-basic-edit-action="monitor-data-table"
-            data-monitor-basic-edit-action-density="plain-icon"
-          >
-            <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
-          </a>
-        </div>
-      </header>
       <MonitorSummaryCard monitor={monitor} formatTime={formatTime} t={t} />
-    </section>
+    </HzMonitorBasicCard>
   );
 }
 
@@ -239,12 +186,17 @@ export type MonitorSectionCompositionProps = {
   selectedMetric: MonitorDetailMetric | null;
   metricSearch: string;
   metricRows: EvidenceRow[];
+  realtimeMetricTotalCount: number;
+  realtimeMetricHasMore: boolean;
   metricCardPayloads: Record<string, MetricCardPayloadState | undefined>;
   metrics: MonitorDetailMetric[];
   favoriteNames: string[];
   favoriteJumpRows: MonitorFavoriteJumpRow[];
   selectedFavoriteKey: string | null;
   favoriteSurfaceMode: 'realtime' | 'history';
+  favoriteRealtimeMetricVisibleCount: number;
+  favoriteRealtimeMetricTotalCount: number;
+  favoriteRealtimeMetricHasMore: boolean;
   selectedMetricKey: string | null;
   metricPayload: unknown;
   metricPayloadLoading: boolean;
@@ -257,6 +209,9 @@ export type MonitorSectionCompositionProps = {
   historyMetrics: MonitorHistoryMetricCatalogItem[];
   historyMetricSearch: string;
   historyRows: EvidenceRow[];
+  historyChartVisibleCount: number;
+  historyChartTotalCount: number;
+  historyChartHasMore: boolean;
   selectedHistoryMetricKey: string | null;
   historySeriesSearch: string;
   historySeriesRows: EvidenceRow[];
@@ -274,6 +229,9 @@ export type MonitorSectionCompositionProps = {
   historyWindows: Array<{ value: string; label: string }>;
   historyModes: Array<{ value: boolean; label: string }>;
   historyFullscreen: boolean;
+  favoriteHistoryChartVisibleCount: number;
+  favoriteHistoryChartTotalCount: number;
+  favoriteHistoryChartHasMore: boolean;
   grafanaState: GrafanaDashboard;
   grafanaMessage: string | null;
   grafanaError: string | null;
@@ -282,6 +240,7 @@ export type MonitorSectionCompositionProps = {
   onMetricSearchChange: (value: string) => void;
   onSelectMetric: (key: string) => void;
   onToggleFavorite: (metricName: string) => Promise<void> | void;
+  onLoadMoreRealtimeMetrics: () => void;
   onSelectMetricRow: (key: string) => void;
   onMetricModeChange: (mode: 'table' | 'detail') => void;
   onMetricRefresh: () => void;
@@ -293,6 +252,8 @@ export type MonitorSectionCompositionProps = {
   onSelectHistorySeries: (key: string) => void;
   onSelectHistoryPoint: (index: number) => void;
   onHistoryRefresh: () => void;
+  onFavoriteHistoryRefresh: () => void;
+  onLoadMoreHistoryCharts: () => void;
   onHistoryWindowChange: (value: string) => void;
   onHistoryTimeContextApply?: (context: TimeContext) => void;
   onApplyHistoryChartZoomTimeRange?: (context: TimeContext) => void;
@@ -300,6 +261,8 @@ export type MonitorSectionCompositionProps = {
   onHistoryFullscreenToggle: () => void;
   onSelectFavorite: (key: string) => void;
   onSetFavoriteSurfaceMode: (mode: 'realtime' | 'history') => void;
+  onLoadMoreFavoriteRealtimeMetrics: () => void;
+  onLoadMoreFavoriteHistoryCharts: () => void;
   onRemoveFavoriteToken: (token: string) => Promise<void> | void;
   onDeleteGrafanaDashboard: () => Promise<void> | void;
   t: Translator;
@@ -310,9 +273,15 @@ export function MonitorDetailSections(props: MonitorSectionCompositionProps): Mo
     monitor,
     editHref,
     metricRows,
+    realtimeMetricTotalCount,
+    realtimeMetricHasMore,
     metricCardPayloads,
+    favoriteNames,
     favoriteJumpRows,
     favoriteSurfaceMode,
+    favoriteRealtimeMetricVisibleCount,
+    favoriteRealtimeMetricTotalCount,
+    favoriteRealtimeMetricHasMore,
     selectedMetricKey,
     metricPayloadLoading,
     metricPayloadError,
@@ -320,6 +289,9 @@ export function MonitorDetailSections(props: MonitorSectionCompositionProps): Mo
     historyError,
     historyMetrics,
     historyRows,
+    historyChartVisibleCount,
+    historyChartTotalCount,
+    historyChartHasMore,
     selectedHistoryMetricKey,
     historyChartPayloads,
     historyChartLoadingKeys,
@@ -329,19 +301,29 @@ export function MonitorDetailSections(props: MonitorSectionCompositionProps): Mo
     historyTimeContext,
     historyWindows,
     historyModes,
+    favoriteHistoryChartVisibleCount,
+    favoriteHistoryChartTotalCount,
+    favoriteHistoryChartHasMore,
     grafanaState,
     grafanaMessage,
     grafanaError,
     favoriteMessage,
     favoriteError,
     onSelectMetric,
+    onToggleFavorite,
+    onLoadMoreRealtimeMetrics,
     onSelectHistoryMetric,
+    onToggleHistoryFavorite,
     onHistoryWindowChange,
     onHistoryTimeContextApply,
     onApplyHistoryChartZoomTimeRange,
     onHistoryModeChange,
     onHistoryRefresh,
+    onFavoriteHistoryRefresh,
+    onLoadMoreHistoryCharts,
     onSetFavoriteSurfaceMode,
+    onLoadMoreFavoriteRealtimeMetrics,
+    onLoadMoreFavoriteHistoryCharts,
     onDeleteGrafanaDashboard,
     t
   } = props;
@@ -352,8 +334,9 @@ export function MonitorDetailSections(props: MonitorSectionCompositionProps): Mo
   const historyChartItems = historyRows
     .map(row => historyMetrics.find(item => `${item.metrics}:${item.metric}` === row.key))
     .filter((item): item is MonitorHistoryMetricCatalogItem => Boolean(item))
-    .slice(0, 6);
-  const favoriteMetricRows = realtimeFavoriteRows.map(row => ({
+    .slice(0, historyChartVisibleCount);
+  const visibleRealtimeFavoriteRows = realtimeFavoriteRows.slice(0, favoriteRealtimeMetricVisibleCount);
+  const favoriteMetricRows = visibleRealtimeFavoriteRows.map(row => ({
     key: row.targetKey,
     title: row.title,
     copy: row.copy,
@@ -362,116 +345,186 @@ export function MonitorDetailSections(props: MonitorSectionCompositionProps): Mo
   const favoriteHistoryChartItems = historyFavoriteRows
     .map(row => historyMetricByKey.get(row.targetKey))
     .filter((item): item is MonitorHistoryMetricCatalogItem => Boolean(item))
-    .slice(0, 6);
+    .slice(0, favoriteHistoryChartVisibleCount);
+  const renderFavoriteFeedback = (scope: 'realtime' | 'history') => {
+    if (favoriteMessage) {
+      return (
+        <HzStateNotice
+          tone="success"
+          title={favoriteMessage}
+          variant="embedded"
+          data-monitor-detail-favorite-feedback="success"
+          data-monitor-detail-favorite-feedback-scope={scope}
+          data-monitor-detail-favorite-feedback-copy="angular-favorite-copy"
+        />
+      );
+    }
+    if (favoriteError) {
+      return (
+        <HzStateNotice
+          tone="critical"
+          title={favoriteError}
+          variant="embedded"
+          data-monitor-detail-favorite-feedback="error"
+          data-monitor-detail-favorite-feedback-scope={scope}
+          data-monitor-detail-favorite-feedback-copy="angular-favorite-copy"
+        />
+      );
+    }
+    return null;
+  };
 
   const contextNode = null;
 
   const realtimeNode = (
-    <MonitorRealtimeTightSequence>
-      <FlatStage
+    <HzMonitorDetailTabSequence data-monitor-detail-tab-sequence-owner="hertzbeat-ui-detail-tab-sequence">
+      <HzMonitorDetailStage
         title={t('monitor.detail.tab.realtime')}
-        className="monitor-detail-stage--signals"
         header="hidden"
-        rhythm="angular-tight"
+        rhythm="tight"
+        data-monitor-detail-stage-owner="hertzbeat-ui-detail-stage"
       >
-        {metricPayloadLoading ? (
-          <div className="text-sm text-[var(--ops-text-secondary)]">{t('common.loading')}</div>
-        ) : metricPayloadError ? (
-          <div className="text-sm text-rose-300">{metricPayloadError}</div>
-        ) : (
-          null
-        )}
+        {renderFavoriteFeedback('realtime')}
         <MetricSignalList
-          leadingCard={<MonitorBasicPlainSurface monitor={monitor} editHref={editHref} t={t} />}
+          leadingCard={<MonitorBasicSharedSurface monitor={monitor} editHref={editHref} t={t} />}
           rows={metricRows}
           selectedKey={selectedMetricKey}
           payloads={metricCardPayloads}
+          favoriteNames={favoriteNames}
           onSelectMetric={onSelectMetric}
+          onToggleFavorite={onToggleFavorite}
+          visibleTotal={realtimeMetricTotalCount}
+          hasMore={realtimeMetricHasMore}
+          onLoadMore={onLoadMoreRealtimeMetrics}
+          loadMoreLabel={t('common.view-more')}
+          data-monitor-detail-realtime-selection-reset="angular-table-reload"
           t={t}
         />
-      </FlatStage>
-    </MonitorRealtimeTightSequence>
+      </HzMonitorDetailStage>
+    </HzMonitorDetailTabSequence>
   );
 
   const historyNode = (
     <div
-      className="monitor-detail-history-cards"
-      data-monitor-detail-history-layout="angular-chart-cards-only"
-      data-monitor-detail-history-reference="apache-hertzbeat-master-cards"
+      className="monitor-detail-history-charts"
+      data-monitor-detail-history-layout="hertzbeat-ui-history-chart-grid"
+      data-monitor-detail-history-reference="hertzbeat-ui-history-chart-grid"
     >
+      {renderFavoriteFeedback('history')}
       {historyLoading ? (
-        <div className="rounded-[3px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-raised)] px-4 py-8 text-sm text-[var(--ops-text-secondary)]">
-          {t('common.loading')}
-        </div>
-      ) : historyError ? (
-        <div className="rounded-[3px] border border-rose-400/20 bg-rose-400/10 px-4 py-8 text-sm text-rose-200">
-          {historyError}
-        </div>
-      ) : (
-        <MonitorHistoryChartGrid
-          items={historyChartItems}
-          payloads={historyChartPayloads}
-          loadingKeys={historyChartLoadingKeys}
-          errors={historyChartErrors}
-          selectedKey={selectedHistoryMetricKey}
-          aggregated={historyInterval}
-          showControls={true}
-          historyWindow={historyWindow}
-          timeContext={historyTimeContext}
-          historyWindows={historyWindows}
-          historyModes={historyModes}
-          onHistoryWindowChange={onHistoryWindowChange}
-          onHistoryTimeContextApply={onHistoryTimeContextApply}
-          onApplyChartZoomTimeRange={onApplyHistoryChartZoomTimeRange}
-          onHistoryModeChange={onHistoryModeChange}
-          onRefresh={onHistoryRefresh}
-          onSelectMetric={onSelectHistoryMetric}
-          formatTime={formatTime}
-          t={t}
+        <HzLoadingState
+          title={t('common.loading')}
+          rows={4}
+          data-monitor-detail-state-owner="hertzbeat-ui-loading-state"
+          data-monitor-detail-state-scope="history"
         />
+      ) : historyError ? (
+        <HzStateNotice
+          tone="critical"
+          title={t('common.load-failed')}
+          description={historyError}
+          data-monitor-detail-state-owner="hertzbeat-ui-state-notice"
+          data-monitor-detail-state-scope="history"
+        />
+      ) : (
+        <>
+          <MonitorHistoryChartGrid
+            items={historyChartItems}
+            payloads={historyChartPayloads}
+            loadingKeys={historyChartLoadingKeys}
+            errors={historyChartErrors}
+            selectedKey={selectedHistoryMetricKey}
+            aggregated={historyInterval}
+            showControls={true}
+            historyWindow={historyWindow}
+            timeContext={historyTimeContext}
+            historyWindows={historyWindows}
+            historyModes={historyModes}
+            onHistoryWindowChange={onHistoryWindowChange}
+            onHistoryTimeContextApply={onHistoryTimeContextApply}
+            onApplyChartZoomTimeRange={onApplyHistoryChartZoomTimeRange}
+            onHistoryModeChange={onHistoryModeChange}
+            onRefresh={onHistoryRefresh}
+            onSelectMetric={onSelectHistoryMetric}
+            favoriteNames={favoriteNames}
+            onToggleFavorite={onToggleHistoryFavorite}
+            formatTime={formatTime}
+            t={t}
+          />
+          {historyChartTotalCount > historyChartItems.length ? (
+            <HzMonitorIncrementalLoadFooter
+              visibleCount={historyChartItems.length}
+              totalCount={historyChartTotalCount}
+              hasMore={historyChartHasMore}
+              loadMoreLabel={t('common.view-more')}
+              onLoadMore={onLoadMoreHistoryCharts}
+              data-monitor-detail-incremental-owner="hertzbeat-ui-incremental-load-footer"
+              data-monitor-detail-incremental-mode="angular-chart-sentinel"
+              data-monitor-detail-incremental-scope="history"
+            />
+          ) : null}
+        </>
       )}
     </div>
   );
 
   const favoritesNode = (
-    <div
-      className="favorite-content space-y-3 rounded-[3px] border border-[var(--ops-border-color)] bg-transparent p-2"
-      data-monitor-detail-favorite-layout="angular-favorite-content"
+    <HzMonitorFavoriteSurface
+      value={favoriteSurfaceMode}
+      options={[
+        { value: 'realtime', label: t('monitor.detail.realtime') },
+        { value: 'history', label: t('monitor.detail.history') }
+      ]}
+      selectorLabel={t('monitor.detail.favorite')}
+      onValueChange={value => onSetFavoriteSurfaceMode(value as 'realtime' | 'history')}
+      message={favoriteMessage}
+      error={favoriteError}
+      data-monitor-detail-favorite-owner="hertzbeat-ui-favorite-surface"
+      data-monitor-detail-favorite-layout="hertzbeat-ui-favorite-surface"
       data-monitor-detail-favorite-mode={favoriteSurfaceMode}
+      data-monitor-detail-favorite-feedback-copy="angular-favorite-copy"
+      data-monitor-detail-favorite-set-semantics="angular-set"
+      data-monitor-detail-favorite-active-fallback="angular-subselector-sticky"
+      data-monitor-detail-favorite-history-reload-reset="angular-chart-reload"
+      data-monitor-detail-favorite-empty-contract="angular-subselector-empty"
+      data-monitor-detail-favorite-realtime-incremental="angular-favorite-sentinel"
+      selectorProps={{ 'data-monitor-detail-favorite-selector': 'hertzbeat-ui-select-menu' } as React.HTMLAttributes<HTMLDivElement>}
     >
-      <div className="favorite-selector" data-monitor-detail-favorite-selector="angular-select-200">
-        <Select
-          aria-label={t('monitor.detail.favorite')}
-          value={favoriteSurfaceMode}
-          containerClassName="w-[200px]"
-          onChange={event => onSetFavoriteSurfaceMode(event.target.value as 'realtime' | 'history')}
-        >
-          <option value="realtime">{t('monitor.detail.realtime')}</option>
-          <option value="history">{t('monitor.detail.history')}</option>
-        </Select>
-      </div>
-
       {favoriteSurfaceMode === 'realtime' ? (
         favoriteMetricRows.length > 0 ? (
-          <div data-monitor-detail-favorite-realtime="cards-lists">
+          <HzMonitorFavoritePane kind="realtime" data-monitor-detail-favorite-realtime="shared-pane">
             <MetricSignalList
               rows={favoriteMetricRows}
               selectedKey={selectedMetricKey}
               payloads={metricCardPayloads}
+              favoriteNames={favoriteNames}
               onSelectMetric={onSelectMetric}
+              onToggleFavorite={onToggleFavorite}
+              data-monitor-detail-realtime-selection-reset="angular-table-reload"
+              visibleTotal={favoriteRealtimeMetricTotalCount}
+              hasMore={favoriteRealtimeMetricHasMore}
+              onLoadMore={onLoadMoreFavoriteRealtimeMetrics}
+              loadMoreLabel={t('common.view-more')}
+              incrementalMode="angular-favorite-sentinel"
+              incrementalScope="favorite-realtime"
               t={t}
             />
-          </div>
+          </HzMonitorFavoritePane>
         ) : (
-          <div
-            className="rounded-[3px] border border-dashed border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-5 py-10 text-sm text-[var(--ops-text-secondary)]"
-            data-monitor-detail-favorite-empty="realtime"
-          >
-            {t('monitor.detail.favorite.surface.empty.realtime.title')}
-          </div>
+          <HzEmptyState
+            title={t('monitor.detail.favorite.surface.empty.realtime.title')}
+            data-monitor-detail-empty-owner="hertzbeat-ui-empty-state"
+            data-monitor-detail-empty-scope="favorite-realtime"
+            data-monitor-detail-favorite-empty-teardown="angular-empty-no-sentinel"
+          />
         )
       ) : favoriteHistoryChartItems.length > 0 ? (
-        <div data-monitor-detail-favorite-history="cards">
+        <HzMonitorFavoritePane
+          kind="history"
+          data-monitor-detail-favorite-history="shared-pane"
+          data-monitor-detail-favorite-history-source="favorite-history-chart-payloads"
+          data-monitor-detail-favorite-history-controls="angular-chart-toolbox"
+        >
           <MonitorHistoryChartGrid
             items={favoriteHistoryChartItems}
             payloads={historyChartPayloads}
@@ -479,59 +532,116 @@ export function MonitorDetailSections(props: MonitorSectionCompositionProps): Mo
             errors={historyChartErrors}
             selectedKey={selectedHistoryMetricKey}
             aggregated={historyInterval}
+            showControls={true}
             historyWindow={historyWindow}
             timeContext={historyTimeContext}
+            historyWindows={historyWindows}
+            historyModes={historyModes}
+            onHistoryWindowChange={onHistoryWindowChange}
+            onHistoryTimeContextApply={onHistoryTimeContextApply}
             onApplyChartZoomTimeRange={onApplyHistoryChartZoomTimeRange}
+            onHistoryModeChange={onHistoryModeChange}
+            onRefresh={onFavoriteHistoryRefresh}
             onSelectMetric={onSelectHistoryMetric}
+            favoriteNames={favoriteNames}
+            onToggleFavorite={onToggleHistoryFavorite}
             formatTime={formatTime}
             t={t}
           />
-        </div>
+          {favoriteHistoryChartTotalCount > favoriteHistoryChartItems.length ? (
+            <HzMonitorIncrementalLoadFooter
+              visibleCount={favoriteHistoryChartItems.length}
+              totalCount={favoriteHistoryChartTotalCount}
+              hasMore={favoriteHistoryChartHasMore}
+              loadMoreLabel={t('common.view-more')}
+              onLoadMore={onLoadMoreFavoriteHistoryCharts}
+              data-monitor-detail-incremental-owner="hertzbeat-ui-incremental-load-footer"
+              data-monitor-detail-incremental-mode="angular-favorite-chart-sentinel"
+              data-monitor-detail-incremental-scope="favorite-history"
+            />
+          ) : null}
+        </HzMonitorFavoritePane>
       ) : (
-        <div
-          className="rounded-[3px] border border-dashed border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-5 py-10 text-sm text-[var(--ops-text-secondary)]"
-          data-monitor-detail-favorite-empty="history"
-        >
-          {t('monitor.detail.favorite.surface.empty.history.title')}
-        </div>
+        <HzEmptyState
+          title={t('monitor.detail.favorite.surface.empty.history.title')}
+          data-monitor-detail-empty-owner="hertzbeat-ui-empty-state"
+          data-monitor-detail-empty-scope="favorite-history"
+          data-monitor-detail-favorite-empty-teardown="angular-empty-no-sentinel"
+        />
       )}
-
-      {favoriteMessage ? <div className="text-sm text-emerald-300">{favoriteMessage}</div> : null}
-      {favoriteError ? <div className="text-sm text-rose-300">{favoriteError}</div> : null}
-    </div>
+    </HzMonitorFavoriteSurface>
   );
 
   const grafanaNode = (
-    <div className="space-y-4">
-      <FlatStage
-        title={t('monitor.detail.section.grafana.title')}
-        description={t('monitor.detail.grafana.copy')}
-      >
-        <RowList
-          rows={[
-            {
-              title: t('monitor.detail.grafana.status'),
-              copy: grafanaState.enabled ? t('common.enabled') : t('common.disabled'),
-              meta: grafanaState.url || '-'
-            }
-          ]}
+    <HzMonitorDetailStage
+      title={t('monitor.detail.section.grafana.title')}
+      description={t('monitor.detail.grafana.copy')}
+      data-monitor-detail-stage-owner="hertzbeat-ui-detail-stage"
+      data-monitor-detail-grafana-layout-owner="hertzbeat-ui-detail-stage"
+      data-monitor-detail-grafana-action-contract="angular-edit-config-delete-dashboard"
+    >
+      <HzStateNotice
+        tone={grafanaState.enabled ? 'success' : 'neutral'}
+        title={t('monitor.detail.grafana.status')}
+        description={grafanaState.enabled ? t('common.enabled') : t('common.disabled')}
+        meta={grafanaState.url || '-'}
+        variant="embedded"
+        data-monitor-detail-grafana-status-owner="hertzbeat-ui-state-notice"
+      />
+      {grafanaState.enabled && grafanaState.url ? (
+        <>
+          <HzMonitorEvidenceFrame
+            variant="media"
+            data-monitor-detail-grafana-frame-owner="hertzbeat-ui-evidence-frame"
+          >
+            <iframe title="grafana-dashboard" src={grafanaState.url} />
+          </HzMonitorEvidenceFrame>
+          <HzActionGroup
+            density="inline"
+            data-monitor-detail-grafana-actions-owner="hertzbeat-ui-action-group"
+            data-monitor-detail-grafana-actions-contract="angular-dashboard-actions"
+          >
+            <HzButtonLink
+              href={editHref}
+              size="sm"
+              data-monitor-detail-grafana-config-owner="hertzbeat-ui-button-link"
+              data-monitor-detail-grafana-config-action="monitor-edit-grafana"
+            >
+              {t('monitor.detail.grafana.configure')}
+            </HzButtonLink>
+            <HzButton
+              intent="danger"
+              size="sm"
+              onClick={() => void onDeleteGrafanaDashboard()}
+              data-monitor-detail-grafana-delete-owner="hertzbeat-ui-button"
+              data-monitor-detail-grafana-delete-action="delete-dashboard"
+            >
+              {t('monitor.detail.delete-grafana')}
+            </HzButton>
+          </HzActionGroup>
+        </>
+      ) : null}
+      {grafanaMessage ? (
+        <HzStateNotice
+          tone="success"
+          title={grafanaMessage}
+          variant="embedded"
+          data-monitor-detail-state-owner="hertzbeat-ui-state-notice"
+          data-monitor-detail-state-scope="grafana-success"
+          data-monitor-detail-grafana-delete-teardown="angular-hide-tab"
         />
-        {grafanaState.enabled && grafanaState.url ? (
-          <>
-            <div className="overflow-hidden border-y border-[var(--ops-border-color)]">
-              <iframe title="grafana-dashboard" src={grafanaState.url} className="h-[720px] w-full border-0" />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="subtle" onClick={() => void onDeleteGrafanaDashboard()}>
-                {t('monitor.detail.delete-grafana')}
-              </Button>
-            </div>
-          </>
-        ) : null}
-        {grafanaMessage ? <div className="text-sm text-emerald-300">{grafanaMessage}</div> : null}
-        {grafanaError ? <div className="text-sm text-rose-300">{grafanaError}</div> : null}
-      </FlatStage>
-    </div>
+      ) : null}
+      {grafanaError ? (
+        <HzStateNotice
+          tone="critical"
+          title={t('common.delete-failed')}
+          description={grafanaError}
+          variant="embedded"
+          data-monitor-detail-state-owner="hertzbeat-ui-state-notice"
+          data-monitor-detail-state-scope="grafana-error"
+        />
+      ) : null}
+    </HzMonitorDetailStage>
   );
 
   return buildMonitorDetailSections({

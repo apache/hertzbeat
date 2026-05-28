@@ -1,18 +1,18 @@
 'use client';
 
 import React from 'react';
-import { ObservabilityStatGrid, type ObservabilityStatGridItem } from '../observability/stat-grid';
+import { HzMonitorSignalBars, HzMonitorStatGrid, type HzMonitorSignalBarItem, type HzMonitorStatGridItem } from '@hertzbeat/ui';
 
-export type { ObservabilitySignalBarItem as MonitorSignalBarItem } from '../observability/signal-bars';
-export type MonitorStatItem = ObservabilityStatGridItem;
-export { ObservabilitySignalBars as MonitorSignalBars } from '../observability/signal-bars';
+export type MonitorSignalBarItem = HzMonitorSignalBarItem;
+export type MonitorStatItem = HzMonitorStatGridItem;
+export const MonitorSignalBars = HzMonitorSignalBars;
 
 export function MonitorStatGrid({
   items,
   columns = 3
 }: {
-  items: ObservabilityStatGridItem[];
+  items: HzMonitorStatGridItem[];
   columns?: 2 | 3 | 4;
 }) {
-  return <ObservabilityStatGrid items={items} columns={columns} tone="operator" />;
+  return <HzMonitorStatGrid items={items} columns={columns} />;
 }

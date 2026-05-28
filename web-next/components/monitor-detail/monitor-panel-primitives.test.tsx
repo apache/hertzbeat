@@ -1,6 +1,8 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { MonitorSignalBars, MonitorStatGrid } from './monitor-panel-primitives';
 
 describe('monitor panel primitives', () => {
@@ -21,6 +23,8 @@ describe('monitor panel primitives', () => {
     expect(html).toContain('+10');
     expect(html).toContain('Range');
     expect(html).toContain('10 - 29');
+    expect(html).toContain('data-hz-ui="monitor-stat-grid"');
+    expect(html).toContain('data-monitor-stat-grid-owner="hertzbeat-ui-monitor-stat-grid"');
   });
 
   it('renders reusable signal bars', () => {
@@ -39,5 +43,17 @@ describe('monitor panel primitives', () => {
     expect(html).toContain('28 %');
     expect(html).toContain('width:72%');
     expect(html).toContain('width:28%');
+    expect(html).toContain('data-hz-ui="monitor-signal-bars"');
+    expect(html).toContain('data-monitor-signal-bars-owner="hertzbeat-ui-monitor-signal-bars"');
+  });
+
+  it('does not bridge monitor panel primitives through legacy observability chrome', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-panel-primitives.tsx'), 'utf8');
+
+    expect(source).toContain('@hertzbeat/ui');
+    expect(source).not.toContain('../observability/stat-grid');
+    expect(source).not.toContain('../observability/signal-bars');
+    expect(source).not.toContain('ObservabilityStatGrid');
+    expect(source).not.toContain('ObservabilitySignalBars');
   });
 });

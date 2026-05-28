@@ -1,12 +1,18 @@
 'use client';
 
 import React from 'react';
-import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable, ObservabilityDetailRows } from '../observability';
+import { HzDataMetaText, HzDataTable } from '@hertzbeat/ui';
 import { buildMonitorMetricSelectedRowTableRows, buildMonitorMetricTableMatrix, type MonitorMetricTableMatrix } from '../../lib/monitor-detail/view-model';
 import type { MonitorRealtimeMetricData } from '../../lib/types';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+type MetricMatrixRow = MonitorMetricTableMatrix['rows'][number];
+type MetricDetailRow = {
+  key: string;
+  title: string;
+  copy: string;
+  meta: string;
+};
 
 export function MonitorMetricTable({
   payload,
@@ -30,55 +36,86 @@ export function MonitorMetricTable({
     const rowIndex = selectedRowKey == null ? null : Number(selectedRowKey);
     const selectedRow = rowIndex == null ? null : resolvedMatrix.rows.find(row => row.key === selectedRowKey) ?? null;
     const detailRows = buildMonitorMetricSelectedRowTableRows(payload, rowIndex, t);
+    const rows: MetricDetailRow[] = [
+      {
+        key: 'selected-row',
+        title: t('monitor.detail.metric.row-label'),
+        copy: selectedRow?.label || t('monitor.detail.metric.table.empty.title'),
+        meta: ''
+      },
+      ...detailRows.map((row, index) => ({
+        key: `${row.title}-${index}`,
+        title: row.title,
+        copy: row.copy,
+        meta: row.meta
+      }))
+    ];
 
     return (
-      <div className="space-y-3 border-y border-[var(--ops-border-color)] py-3">
-        <ObservabilityDetailRows
-          tone="operator"
-          rows={[
+      <div className="min-w-0" data-monitor-metric-detail-owner="hertzbeat-ui-data-table">
+        <HzDataTable
+          columns={[
             {
-              title: t('monitor.detail.metric.row-label'),
-              copy: selectedRow?.label || t('monitor.detail.metric.table.empty.title')
+              key: 'title',
+              header: t('monitor.detail.metric.row-label'),
+              width: '180px',
+              render: row => <span className="font-semibold">{row.title}</span>
             },
-            ...detailRows
+            {
+              key: 'copy',
+              header: t('monitor.detail.metric.payload.meta'),
+              render: row => (
+                <span>
+                  <span>{row.copy}</span>
+                  {row.meta ? (
+                    <HzDataMetaText spacing="inline" data-monitor-metric-row-meta-owner="hertzbeat-ui-data-meta-text">
+                      {row.meta}
+                    </HzDataMetaText>
+                  ) : null}
+                </span>
+              )
+            }
           ]}
+          rows={rows}
+          getRowKey={row => row.key}
+          emptyLabel={t('monitor.detail.metric.table.empty.copy')}
         />
       </div>
     );
   }
 
-  const columns: ColumnDef<(typeof resolvedMatrix.rows)[number], unknown>[] = [
+  const columns = [
     {
-      id: 'label',
+      key: 'label',
       header: t('monitor.detail.metric.row-label'),
-      cell: ({ row }) => <span className="font-medium text-[var(--ops-text-primary)]">{row.original.label}</span>
+      render: (row: MetricMatrixRow) => <span className="font-medium">{row.label}</span>
     },
     ...resolvedMatrix.columns.map((column, index) => ({
-      id: column.key,
-      header: () => (
-        <div>
-          <div>{column.title}</div>
-          {column.unit ? <div className="mt-1 text-[10px] tracking-normal text-[var(--ops-text-tertiary)]">{column.unit}</div> : null}
-        </div>
+      key: column.key,
+      header: (
+        <span>
+          <span>{column.title}</span>
+          {column.unit ? (
+            <HzDataMetaText variant="unit" spacing="compact" data-monitor-metric-unit-owner="hertzbeat-ui-data-meta-text">
+              {column.unit}
+            </HzDataMetaText>
+          ) : null}
+        </span>
       ),
-      cell: ({ row }: { row: { original: (typeof resolvedMatrix.rows)[number] } }) => (
-        <span className="text-[var(--ops-text-secondary)]">{row.original.values[index]}</span>
-      )
+      render: (row: MetricMatrixRow) => <span>{row.values[index]}</span>
     }))
   ];
 
   return (
-    <DataTable
-      columns={columns}
-      data={resolvedMatrix.rows}
-      emptyState={t('monitor.detail.metric.table.empty.copy')}
-      tableOptions={{ getRowId: row => row.key }}
-      rowClassName={row => (row.original.key === selectedRowKey ? 'bg-[var(--ops-surface-raised)] shadow-[inset_2px_0_0_var(--ops-primary)]' : undefined)}
-      rowAttributes={row => ({
-        'data-selected': row.original.key === selectedRowKey ? 'true' : 'false'
-      })}
-      onRowClick={row => onSelect(row.original.key)}
-      className="rounded-none border-x-0 border-y border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)]"
-    />
+    <div className="min-w-0" data-monitor-metric-table-owner="hertzbeat-ui-data-table">
+      <HzDataTable
+        columns={columns}
+        rows={resolvedMatrix.rows}
+        emptyLabel={t('monitor.detail.metric.table.empty.copy')}
+        getRowKey={row => row.key}
+        selectedRowKey={selectedRowKey ?? undefined}
+        onRowClick={row => onSelect(row.key)}
+      />
+    </div>
   );
 }

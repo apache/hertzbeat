@@ -18,11 +18,14 @@ export type MonitorDetailNavigationContext = {
   entityName: string | null;
   returnTo: string | null;
   timeRange?: string;
+  from?: string;
+  to?: string;
   start?: string;
   end?: string;
   refresh?: string;
   live?: string;
   tz?: string;
+  timezone?: string;
 };
 
 export type MonitorSignalHandoffLinks = {
@@ -32,6 +35,7 @@ export type MonitorSignalHandoffLinks = {
 };
 
 export type MonitorDetailRefreshTarget = 'realtime' | 'history' | 'favorites' | 'grafana';
+export type MonitorDetailRefreshableTab = Exclude<MonitorDetailConsoleTabKey, 'grafana'>;
 
 export type MonitorDetailSectionsInput = {
   contextNode: ReactNode;
@@ -61,11 +65,14 @@ export function readMonitorDetailNavigationContext(searchParams: URLSearchParams
     entityName: searchParams.get('entityName'),
     returnTo: stripReturnLabelFromHref(searchParams.get('returnTo')) || null,
     ...(signalContext.timeRange ? { timeRange: signalContext.timeRange } : {}),
+    ...(signalContext.from ? { from: signalContext.from } : {}),
+    ...(signalContext.to ? { to: signalContext.to } : {}),
     ...(signalContext.start ? { start: signalContext.start } : {}),
     ...(signalContext.end ? { end: signalContext.end } : {}),
     ...(signalContext.refresh ? { refresh: signalContext.refresh } : {}),
     ...(signalContext.live ? { live: signalContext.live } : {}),
-    ...(signalContext.tz ? { tz: signalContext.tz } : {})
+    ...(signalContext.tz ? { tz: signalContext.tz } : {}),
+    ...(signalContext.timezone ? { timezone: signalContext.timezone } : {})
   };
 }
 
@@ -85,11 +92,14 @@ export function buildMonitorSignalHandoffLinks(
   const returnTo = stripReturnLabelFromHref(currentHref || (monitorId ? `/monitors/${monitorId}` : '/monitors'));
   const signalContext: SignalRouteContext = {
     timeRange: context.timeRange,
+    from: context.from,
+    to: context.to,
     start: context.start,
     end: context.end,
     refresh: context.refresh,
     live: context.live,
     tz: context.tz,
+    timezone: context.timezone,
     entityId: context.entityId || undefined,
     entityName: context.entityName || undefined,
     returnTo,
@@ -107,10 +117,13 @@ export function buildMonitorSignalHandoffLinks(
   };
 }
 
-export function resolveMonitorDetailRefreshTarget(currentTab: MonitorDetailConsoleTabKey): MonitorDetailRefreshTarget {
+export function resolveMonitorDetailRefreshTarget(
+  currentTab: MonitorDetailConsoleTabKey,
+  previousDataTab: MonitorDetailRefreshableTab = 'realtime'
+): MonitorDetailRefreshTarget {
   if (currentTab === 'history') return 'history';
   if (currentTab === 'favorites') return 'favorites';
-  if (currentTab === 'grafana') return 'grafana';
+  if (currentTab === 'grafana') return previousDataTab;
   return 'realtime';
 }
 
@@ -122,9 +135,15 @@ export function resolveFavoriteJumpTarget(row: MonitorFavoriteJumpRow): { tab: '
 
 export function resolveActiveFavoriteRow(
   favoriteRows: MonitorFavoriteJumpRow[],
-  selectedFavoriteKey: string | null
+  selectedFavoriteKey: string | null,
+  preferredMode?: 'realtime' | 'history'
 ): MonitorFavoriteJumpRow | null {
-  return favoriteRows.find(row => row.key === selectedFavoriteKey) ?? favoriteRows[0] ?? null;
+  const selectedRow = favoriteRows.find(row => row.key === selectedFavoriteKey);
+  if (selectedRow) return selectedRow;
+  if (preferredMode) {
+    return favoriteRows.find(row => row.targetKind === preferredMode) ?? null;
+  }
+  return favoriteRows[0] ?? null;
 }
 
 export function resolveFavoriteSurfaceMode(
@@ -132,19 +151,12 @@ export function resolveFavoriteSurfaceMode(
   favoriteRows: MonitorFavoriteJumpRow[],
   selectedFavoriteKey: string | null
 ): 'realtime' | 'history' {
-  const activeRow = resolveActiveFavoriteRow(favoriteRows, selectedFavoriteKey);
+  const activeRow = favoriteRows.find(row => row.key === selectedFavoriteKey);
   if (activeRow) {
     return activeRow.targetKind;
   }
 
-  const hasRealtimeFavorites = favoriteRows.some(row => row.targetKind === 'realtime');
-  const hasHistoryFavorites = favoriteRows.some(row => row.targetKind === 'history');
-
-  if (currentMode === 'realtime' && hasRealtimeFavorites) return currentMode;
-  if (currentMode === 'history' && hasHistoryFavorites) return currentMode;
-  if (hasRealtimeFavorites) return 'realtime';
-  if (hasHistoryFavorites) return 'history';
-  return 'realtime';
+  return currentMode;
 }
 
 export function shouldFallbackFromGrafanaTab(grafanaEnabled: boolean, currentTab: MonitorDetailConsoleTabKey): boolean {

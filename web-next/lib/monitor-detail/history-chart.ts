@@ -1,5 +1,5 @@
 import { graphic, type EChartsOption } from 'echarts';
-import { buildChartDataZoomTimeContext, type ChartDataZoomRange, type TimeContext } from '@/lib/time-context';
+import { buildChartDataZoomTimeContext, sanitizeTimeContext, type ChartDataZoomRange, type TimeContext } from '@/lib/time-context';
 import type { MonitorHistoryValue } from '@/lib/types';
 
 export type HistoryChartPoint = {
@@ -192,6 +192,59 @@ export function buildHistoryDataZoomTimeContext(
   fallbackTimeRange?: string
 ): TimeContext | null {
   return buildChartDataZoomTimeContext(values.map(value => value.time as number | string | null | undefined), zoomRange, fallbackTimeRange);
+}
+
+export function buildHistoryDataZoomPreviewTimeContext(
+  values: MonitorHistoryValue[],
+  zoomRange: HistoryDataZoomRange | null | undefined,
+  currentTimeContext: TimeContext | undefined,
+  fallbackTimeRange?: string
+): TimeContext | null {
+  const zoomContext = buildHistoryDataZoomTimeContext(values, zoomRange, fallbackTimeRange);
+  if (!zoomContext) return null;
+
+  const timezone = currentTimeContext?.timezone || currentTimeContext?.tz;
+  return sanitizeTimeContext({
+    ...zoomContext,
+    refresh: currentTimeContext?.refresh,
+    live: currentTimeContext?.live,
+    tz: currentTimeContext?.tz || timezone,
+    timezone
+  });
+}
+
+export function buildHistoryDataZoomApplyTimeContext(
+  values: MonitorHistoryValue[],
+  zoomRange: HistoryDataZoomRange | null | undefined,
+  currentTimeContext: TimeContext | undefined,
+  fallbackTimeRange?: string
+): TimeContext | null {
+  const zoomContext = buildHistoryDataZoomTimeContext(values, zoomRange, fallbackTimeRange);
+  if (!zoomContext?.from || !zoomContext.to) return null;
+
+  const timezone = currentTimeContext?.timezone || currentTimeContext?.tz;
+  return sanitizeTimeContext({
+    from: zoomContext.from,
+    to: zoomContext.to,
+    refresh: currentTimeContext?.refresh,
+    live: currentTimeContext?.live,
+    tz: currentTimeContext?.tz || timezone,
+    timezone
+  });
+}
+
+export function buildHistoryResetTimeContext(
+  currentTimeContext: TimeContext | undefined,
+  fallbackTimeRange?: string
+): TimeContext {
+  const timezone = currentTimeContext?.timezone || currentTimeContext?.tz;
+  return sanitizeTimeContext({
+    timeRange: fallbackTimeRange || currentTimeContext?.timeRange,
+    refresh: currentTimeContext?.refresh,
+    live: currentTimeContext?.live,
+    tz: currentTimeContext?.tz || timezone,
+    timezone
+  });
 }
 
 export function buildHistoryChartEChartsOption({

@@ -1,14 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { Activity, BarChart3, FileText, GitBranch, LineChart, RefreshCw, Star } from 'lucide-react';
+import { Activity, HelpCircle, LineChart, RefreshCw, Star } from 'lucide-react';
 import React from 'react';
 import {
-  ObservabilityBadge,
-  ObservabilityControlChip,
-  ObservabilityTabStrip
-} from '../observability';
-import { Select } from '../ui/select';
+  HzActionGroup,
+  HzIconLink,
+  HzInlineContextMark,
+  HzMonitorBreadcrumb,
+  HzMonitorDetailConsoleShell,
+  HzMonitorDetailTabLabel,
+  HzMonitorDetailTabPanel,
+  HzMonitorDetailTabs,
+  HzMonitorDetailWorkbenchFrame,
+  HzMonitorRefreshToolbar
+} from '@hertzbeat/ui';
 import type { Monitor } from '../../lib/types';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
@@ -25,27 +31,13 @@ type NavigationContext = {
   app?: string | null;
 };
 
-type SignalHandoffLinks = {
-  metricsHref: string;
-  logsHref: string;
-  tracesHref: string;
-};
-
 const REFRESH_OPTIONS = [
-  { value: 10, label: '10s' },
-  { value: 30, label: '30s' },
-  { value: 60, label: '60s' },
-  { value: 300, label: '300s' },
-  { value: -1, label: 'Off' }
+  { value: 10 },
+  { value: 30 },
+  { value: 60 },
+  { value: 300 },
+  { value: -1 }
 ] as const;
-
-const cockpitSansStyle = {
-  fontFamily: '"IBM Plex Sans", "Avenir Next", "Segoe UI", system-ui, sans-serif'
-} as const;
-
-const cockpitMonoStyle = {
-  fontFamily: '"IBM Plex Mono", "SFMono-Regular", "SF Mono", ui-monospace, monospace'
-} as const;
 
 export function MonitorDetailConsole({
   monitor,
@@ -53,10 +45,12 @@ export function MonitorDetailConsole({
   refreshInterval,
   refreshCountdown,
   backHref,
+  helpHref,
   appHref,
   grafanaUrl,
   navigationContext,
-  signalHandoffLinks,
+  refreshTarget,
+  grafanaRefreshFallbackTab,
   onSelectTab,
   onSelectRefreshInterval,
   onRefresh,
@@ -77,7 +71,8 @@ export function MonitorDetailConsole({
   appHref?: string | null;
   grafanaUrl?: string | null;
   navigationContext?: NavigationContext;
-  signalHandoffLinks?: SignalHandoffLinks;
+  refreshTarget?: MonitorDetailConsoleTabKey;
+  grafanaRefreshFallbackTab?: Exclude<MonitorDetailConsoleTabKey, 'grafana'>;
   onSelectTab: (tab: MonitorDetailConsoleTabKey) => void;
   onSelectRefreshInterval: (value: number) => void;
   onRefresh: () => void;
@@ -93,14 +88,13 @@ export function MonitorDetailConsole({
     label: string,
     Icon: typeof Activity
   ) => (
-    <span
-      className="inline-flex items-center gap-2"
-      data-monitor-detail-tab-label-source="angular-title"
-      data-monitor-detail-tab-label={key}
+    <HzMonitorDetailTabLabel
+      tabKey={key}
+      icon={Icon}
+      data-monitor-detail-tab-label-owner="hertzbeat-ui-detail-tab-label"
     >
-      <Icon aria-hidden="true" className="h-3.5 w-3.5" data-monitor-detail-tab-icon={key} />
-      <span>{label}</span>
-    </span>
+      {label}
+    </HzMonitorDetailTabLabel>
   );
   const tabs = [
     { key: 'realtime', label: renderTabLabel('realtime', t('monitor.detail.realtime'), Activity) },
@@ -124,10 +118,20 @@ export function MonitorDetailConsole({
     }
   }
 
+  const selectedRefreshValue = String(refreshInterval);
+  const refreshOptions = REFRESH_OPTIONS.map(option => ({
+    value: String(option.value),
+    label: option.value > 0 ? t('monitor.detail.config-refresh', { time: option.value }) : t('monitor.detail.close-refresh')
+  }));
+  const selectedRefreshHasMenuOption = refreshOptions.some(option => option.value === selectedRefreshValue);
+  const effectiveRefreshOptions =
+    selectedRefreshHasMenuOption || refreshInterval <= 0
+      ? refreshOptions
+      : [{ value: selectedRefreshValue, label: t('monitor.detail.auto-refresh', { time: refreshInterval }) }, ...refreshOptions];
   const refreshCopy =
     refreshInterval > 0
-      ? `${t('monitor.detail.refresh-countdown')} ${refreshCountdown}s`
-      : t('monitor.detail.refresh-disabled');
+      ? t('monitor.detail.auto-refresh', { time: refreshCountdown })
+      : t('monitor.detail.close-refresh');
 
   const breadcrumbApp = navigationContext?.app || monitor.app || null;
   const breadcrumbAppTranslation = breadcrumbApp ? t(`monitor.app.${breadcrumbApp}`) : null;
@@ -136,172 +140,137 @@ export function MonitorDetailConsole({
       ? breadcrumbAppTranslation
       : breadcrumbApp;
 
-  const refreshToolbar = (
-    <div
-      className="flex flex-wrap items-center justify-end gap-1.5"
-      data-monitor-refresh-toolbar-variant="angular-tab-extra"
-      data-monitor-refresh-toolbar-position="tabbar-extra"
-      data-monitor-refresh-toolbar-density="angular-bordered-controls"
+  const detailTabExtra = (
+    <HzActionGroup
+      layout="end-wrap"
+      density="inline"
+      data-monitor-detail-tab-extra-owner="hertzbeat-ui-action-group"
+      data-monitor-detail-tab-extra-contract="angular-refresh-help"
     >
-      {signalHandoffLinks ? (
-        <div
-          className="flex min-w-0 flex-wrap items-center gap-1.5"
-          data-monitor-signal-handoff="compact-actions"
-          data-monitor-signal-handoff-source="context-only"
+      <HzMonitorRefreshToolbar
+        refreshLabel={refreshCopy}
+        refreshActionLabel={t('common.refresh')}
+        selectedRefresh={selectedRefreshValue}
+        refreshOptions={effectiveRefreshOptions}
+        refreshIcon={<RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />}
+        onRefreshChange={value => onSelectRefreshInterval(Number(value))}
+        onRefresh={onRefresh}
+        data-monitor-refresh-toolbar-variant="compact-toolbar-extra"
+        data-monitor-refresh-toolbar-position="tabbar-extra"
+        data-monitor-refresh-toolbar-density="inline-quiet-controls"
+        data-hz-monitor-refresh-toolbar-layout="single-row-compact"
+        data-monitor-detail-refresh-options-contract="angular-config-refresh-copy"
+        data-monitor-detail-refresh-copy-contract="angular-deadline-label"
+        data-monitor-detail-default-refresh-contract={refreshInterval === 90 ? 'angular-deadline-90' : undefined}
+        data-monitor-detail-refresh-current-option={selectedRefreshHasMenuOption ? 'configured-option' : 'angular-default-deadline-current'}
+        data-monitor-detail-countdown-reset-contract="angular-deadline-reset"
+        data-monitor-detail-refresh-target={refreshTarget}
+        data-monitor-detail-grafana-refresh-target={currentTab === 'grafana' ? grafanaRefreshFallbackTab : undefined}
+      />
+      {helpHref ? (
+        <HzIconLink
+          href={helpHref}
+          label={t('common.button.help')}
+          target="_blank"
+          rel="noreferrer"
+          data-monitor-detail-help-action="angular-docs-help"
+          data-monitor-detail-help-owner="hertzbeat-ui-icon-link"
+          data-monitor-detail-help-target={helpHref}
         >
-          <ObservabilityControlChip
-            as={Link}
-            href={signalHandoffLinks.metricsHref}
-            size="compact"
-            title={t('otlp.metrics.title')}
-            className="h-7 gap-1.5 px-2"
-            data-monitor-signal-handoff-link="metrics"
-          >
-            <BarChart3 aria-hidden="true" className="h-3.5 w-3.5" />
-            <span>{t('otlp.metrics.title')}</span>
-          </ObservabilityControlChip>
-          <ObservabilityControlChip
-            as={Link}
-            href={signalHandoffLinks.logsHref}
-            size="compact"
-            title={t('menu.log.manage')}
-            className="h-7 gap-1.5 px-2"
-            data-monitor-signal-handoff-link="logs"
-          >
-            <FileText aria-hidden="true" className="h-3.5 w-3.5" />
-            <span>{t('menu.log.manage')}</span>
-          </ObservabilityControlChip>
-          <ObservabilityControlChip
-            as={Link}
-            href={signalHandoffLinks.tracesHref}
-            size="compact"
-            title={t('menu.trace.manage')}
-            className="h-7 gap-1.5 px-2"
-            data-monitor-signal-handoff-link="traces"
-          >
-            <GitBranch aria-hidden="true" className="h-3.5 w-3.5" />
-            <span>{t('menu.trace.manage')}</span>
-          </ObservabilityControlChip>
-        </div>
+          <HelpCircle aria-hidden="true" className="h-3.5 w-3.5" />
+        </HzIconLink>
       ) : null}
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-        <ObservabilityBadge
-          as="span"
-          size="compact"
-          tone="tertiary"
-          className="h-7 rounded-[2px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] px-2.5 py-1 text-[11px] tracking-[0.04em]"
-          style={cockpitMonoStyle}
-          data-monitor-refresh-badge-variant="bordered"
-        >
-          {refreshCopy}
-        </ObservabilityBadge>
-        <Select
-          aria-label={refreshCopy}
-          data-monitor-refresh-select="true"
-          data-monitor-refresh-select-density="bordered"
-          value={refreshInterval}
-          containerClassName="w-[82px]"
-          className="h-7 min-w-0 text-[11px] font-medium text-[var(--ops-text-secondary)] hover:text-[var(--ops-text-primary)]"
-          style={cockpitMonoStyle}
-          onChange={event => onSelectRefreshInterval(Number(event.target.value))}
-        >
-          {REFRESH_OPTIONS.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
-      </div>
-      <ObservabilityControlChip
-        type="button"
-        size="compact"
-        aria-label={t('common.refresh')}
-        title={t('common.refresh')}
-        className="h-7 w-7 px-0"
-        data-monitor-refresh-action-density="bordered"
-        onClick={onRefresh}
-      >
-        <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
-        <span className="sr-only">{t('common.refresh')}</span>
-      </ObservabilityControlChip>
-    </div>
+    </HzActionGroup>
   );
 
   return (
-    <div
-      className="monitor-detail-page-frame -mx-4 space-y-2 border-t border-[var(--ops-border-color)] px-3 py-3 text-[var(--ops-text-primary)] sm:-mx-6 sm:px-3"
+    <HzMonitorDetailConsoleShell
       data-monitor-console-layout="angular-workbench"
       data-monitor-console-tone="operator-sheet"
+      data-monitor-detail-console-shell-owner="hertzbeat-ui-detail-console-shell"
       data-monitor-detail-completion-guard="reported-angular-no-card-stack"
       data-monitor-detail-body-stack-state="single-workbench-table-rows"
       data-monitor-detail-completion-header="breadcrumb-only"
       data-monitor-first-viewport-rhythm="angular-tight"
-      style={cockpitSansStyle}
+      data-monitor-detail-history-catalog-load="angular-tab-click-lazy"
+      data-monitor-detail-history-tab-load="angular-click-load-metric-chart"
+      data-monitor-detail-realtime-tab-load="angular-click-load-real-time-metric"
+      data-monitor-detail-favorite-tab-load="angular-click-load-favorite-metrics"
+      data-monitor-detail-grafana-fallback-tab="angular-previous-data-tab"
     >
-      <nav
-        className="monitor-detail-workbench-breadcrumb flex flex-wrap items-center gap-2 border-b border-[var(--ops-border-color)] pb-2 text-[11px] text-[var(--ops-text-tertiary)]"
+      <HzMonitorBreadcrumb
         data-monitor-detail-header-mode="breadcrumb-only"
         data-monitor-detail-reference-source="apache-hertzbeat-master-monitor-detail"
+        data-monitor-detail-breadcrumb-owner="hertzbeat-ui-monitor-breadcrumb"
         aria-label={t('monitor.detail')}
       >
-        <Link href="/" className="transition hover:text-[var(--ops-text-primary)]">
+        <Link href="/">
           {t('menu.dashboard')}
         </Link>
-        <span className="text-[var(--ops-text-tertiary)]">/</span>
-        <Link href={backHref} className="transition hover:text-[var(--ops-text-primary)]">
+        <span>/</span>
+        <Link
+          href={backHref}
+          data-monitor-detail-list-return="angular-app-filter"
+          data-monitor-detail-list-return-target={backHref}
+        >
           {t('monitor.list')}
         </Link>
-        <span className="text-[var(--ops-text-tertiary)]">/</span>
-        <span className="text-[var(--ops-text-secondary)]">{t('monitor.detail')}</span>
+        <span>/</span>
+        <span>{t('monitor.detail')}</span>
         {breadcrumbApp ? (
           appHref ? (
-            <ObservabilityControlChip
-              as={Link}
+            <HzInlineContextMark
+              component={Link}
               href={appHref}
-              size="micro"
-              className="ml-1"
-              data-monitor-detail-app-chip="breadcrumb"
+              placement="breadcrumb"
+              data-monitor-detail-context-mark="breadcrumb"
+              data-monitor-detail-context-mark-owner="hertzbeat-ui-inline-context-mark"
+              data-monitor-detail-app-definition-link="angular-monitor-app"
+              data-monitor-detail-app-definition-target={appHref}
             >
               {breadcrumbAppLabel || breadcrumbApp}
-            </ObservabilityControlChip>
+            </HzInlineContextMark>
           ) : (
-            <ObservabilityControlChip as="span" size="micro" className="ml-1" data-monitor-detail-app-chip="breadcrumb">
+            <HzInlineContextMark
+              placement="breadcrumb"
+              data-monitor-detail-context-mark="breadcrumb"
+              data-monitor-detail-context-mark-owner="hertzbeat-ui-inline-context-mark"
+            >
               {breadcrumbAppLabel || breadcrumbApp}
-            </ObservabilityControlChip>
+            </HzInlineContextMark>
           )
         ) : null}
-      </nav>
+      </HzMonitorBreadcrumb>
 
-      <section
-        className="monitor-detail-workbench-layout overflow-visible bg-transparent"
+      <HzMonitorDetailWorkbenchFrame
         data-monitor-workbench-stage="angular-layout"
+        data-monitor-workbench-stage-owner="hertzbeat-ui-detail-workbench-frame"
         data-monitor-workbench-stage-chrome="angular-tabset-direct"
         data-monitor-workbench-stage-rhythm="direct-tab-body"
-      >
-        <div className="monitor-detail-workbench-tabs pb-2" data-monitor-detail-tabset-type="angular-card">
-          <ObservabilityTabStrip
+        tabs={
+          <HzMonitorDetailTabs
             items={tabs}
             selectedKey={currentTab}
             onSelect={onSelectTab}
             panelIdPrefix={panelIdPrefix}
-            tone="operator"
-            variant="card"
-            extra={refreshToolbar}
+            extra={detailTabExtra}
+            data-monitor-detail-tabs-owner="hertzbeat-ui-monitor-detail-tabs"
           />
-        </div>
+        }
+        tabsetProps={{
+          'data-monitor-detail-tabset-type': 'bottom-underline-switch'
+        } as React.HTMLAttributes<HTMLDivElement>}
+      >
 
-        <div
-          className="space-y-2"
-          data-monitor-console-tab-panel="true"
-          data-monitor-console-tab-panel-rhythm="angular-tight"
-          data-monitor-tab-body-surface="angular-tab-content-direct"
+        <HzMonitorDetailTabPanel
           id={`${panelIdPrefix}-panel-${currentTab}`}
-          role="tabpanel"
-          aria-labelledby={`${panelIdPrefix}-tab-${currentTab}`}
+          tabId={`${panelIdPrefix}-tab-${currentTab}`}
+          active
+          data-monitor-console-tab-panel-owner="hertzbeat-ui-detail-tab-panel"
         >
           {renderTabContent()}
-        </div>
-      </section>
-    </div>
+        </HzMonitorDetailTabPanel>
+      </HzMonitorDetailWorkbenchFrame>
+    </HzMonitorDetailConsoleShell>
   );
 }

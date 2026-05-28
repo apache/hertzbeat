@@ -1,14 +1,21 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { EChartsPanel } from '../observability/echarts-panel';
 import {
-  ObservabilityChipToggle,
-  ObservabilityControlButton,
-  ObservabilityDetailRows,
-  ObservabilitySelectableRows,
-  ObservabilitySelectableRowsOrDetails
-} from '../observability';
+  HzActionGroup,
+  HzButton,
+  HzDataMetaText,
+  HzEChartsPanel,
+  HzInlineFeedback,
+  HzMonitorControlBand,
+  HzMonitorDetailStage,
+  HzMonitorEvidenceFrame,
+  HzMonitorFullscreenFrame,
+  HzMonitorRowNavigator,
+  HzUnderlineToggle,
+  HzDetailRows,
+  HzSelectableRows
+} from '@hertzbeat/ui';
 import { buildHistoryChartEChartsOption } from '../../lib/monitor-detail/history-chart';
 import {
   buildMonitorHistoryPointNavigation,
@@ -23,7 +30,6 @@ import {
 } from '../../lib/monitor-detail/view-model';
 import type { MonitorHistoryData } from '../../lib/types';
 import { MonitorStatGrid } from './monitor-panel-primitives';
-import { WorkbenchFullscreenShell } from '../workbench/primitives';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
@@ -41,13 +47,13 @@ function SelectablePointRows({
   if (rows.length === 0) return null;
 
   return (
-    <ObservabilitySelectableRows
+    <HzSelectableRows
       heading={t('monitor.detail.history-points.title')}
       rows={rows}
       selectedKey={selectedPointIndex == null ? null : String(selectedPointIndex)}
       selectionAttrName="data-selected"
       onSelect={key => onSelectPoint(Number(key))}
-      tone="operator"
+      data-monitor-history-selectable-owner="hertzbeat-ui-selectable-rows"
     />
   );
 }
@@ -67,13 +73,13 @@ function SelectableSeriesRows({
   if (visibleRows.length === 0) return null;
 
   return (
-    <ObservabilitySelectableRows
+    <HzSelectableRows
       heading={t('monitor.detail.history-series.samples.title')}
       rows={visibleRows}
       selectedKey={selectedSeriesKey}
       selectionAttrName="data-series-selected"
       onSelect={onSelectSeries}
-      tone="operator"
+      data-monitor-history-selectable-owner="hertzbeat-ui-selectable-rows"
     />
   );
 }
@@ -89,16 +95,23 @@ function SelectableCompareRows({
 }) {
   const visibleRows = rows.filter(row => row.key !== 'empty');
   if (visibleRows.length === 0) {
-    return <ObservabilityDetailRows tone="operator" rows={rows} />;
+    return (
+      <HzSelectableRows
+        rows={rows}
+        selectedKey={null}
+        selectable={false}
+        data-monitor-history-compare-owner="hertzbeat-ui-selectable-rows"
+      />
+    );
   }
 
   return (
-    <ObservabilitySelectableRowsOrDetails
+    <HzSelectableRows
       rows={visibleRows}
       selectedKey={selectedSeriesKey}
       selectionAttrName="data-compare-row-selected"
       onSelect={onSelectSeries}
-      tone="operator"
+      data-monitor-history-compare-owner="hertzbeat-ui-selectable-rows"
     />
   );
 }
@@ -214,72 +227,67 @@ function Surface({
   const latestValue = latestRaw == null || latestRaw === '' ? '-' : String(latestRaw);
 
   return (
-    <div className="space-y-3" data-monitor-surface="history-stage">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ops-border-color)] pb-3">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--ops-text-tertiary)]">{t('monitor.detail.history.stage.title')}</div>
-          <div className="mt-1 max-w-2xl text-sm text-[var(--ops-text-secondary)]">
-            {t('monitor.detail.history.stage.copy')}
-          </div>
-        </div>
-        <div className="border-l border-[var(--ops-border-color)] pl-3 text-right" data-monitor-surface-panel="series-compare">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ops-text-tertiary)]">
-            Selected series
-          </div>
-          <div className="mt-1 text-sm font-semibold text-[var(--ops-text-primary)]">
-            {activeSelectedSeriesKey || t('monitor.detail.history.compare.empty')}
-          </div>
-        </div>
-      </div>
-
+    <HzMonitorDetailStage
+      title={t('monitor.detail.tab.history')}
+      header="hidden"
+      rhythm="stack"
+      data-monitor-surface="history-stage"
+      data-monitor-history-stage-owner="hertzbeat-ui-detail-stage"
+      data-monitor-history-selection-reset="angular-chart-reload"
+    >
       {values.length > 0 ? (
-        <div className="space-y-3 border-y border-[var(--ops-border-color)] py-3">
+        <HzMonitorEvidenceFrame data-monitor-history-chart-frame-owner="hertzbeat-ui-evidence-frame">
           {aggregated && chartSeriesKeys.length > 1 ? (
-            <div className="space-y-2 border-y border-[var(--ops-border-color)] px-0 py-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-[11px] uppercase tracking-[0.16em] text-[var(--ops-text-tertiary)]">{t('monitor.detail.history-chart.scope.title')}</div>
-                <div className="flex flex-wrap gap-2">
-                  <ObservabilityControlButton
-                    tone="operator"
+            <HzMonitorControlBand
+              title={t('monitor.detail.history-chart.scope.title')}
+              actions={
+                <>
+                  <HzButton
+                    size="sm"
+                    intent="ghost"
+                    data-monitor-history-control-owner="hertzbeat-ui-button"
                     disabled={!canFocusPrimarySeries}
                     onClick={() => setActiveChartSeriesKeys(['mean'])}
                   >
                     {t('monitor.detail.history-chart.scope.primary-only')}
-                  </ObservabilityControlButton>
-                  <ObservabilityControlButton
-                    tone="operator"
+                  </HzButton>
+                  <HzButton
+                    size="sm"
+                    intent="ghost"
+                    data-monitor-history-control-owner="hertzbeat-ui-button"
                     disabled={!canShowAllChartStats}
                     onClick={() => setActiveChartSeriesKeys(chartSeriesKeys)}
                   >
                     {t('monitor.detail.history-chart.scope.all')}
-                  </ObservabilityControlButton>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {chartSeriesKeys.map(key => {
-                  const selected = activeChartSeriesKeys.includes(key);
-                  const title = key === 'origin' ? 'Value' : key.charAt(0).toUpperCase() + key.slice(1);
-                  return (
-                    <ObservabilityChipToggle
-                      key={key}
-                      tone="operator"
-                      selected={selected}
-                      selectionAttrName="data-chart-selected"
-                      onClick={() => setActiveChartSeriesKeys(currentKeys => toggleMonitorHistoryVisibleSeriesKey(currentKeys, key, chartSeriesKeys))}
-                    >
-                      <span>{title}</span>
-                    </ObservabilityChipToggle>
-                  );
-                })}
-              </div>
-            </div>
+                  </HzButton>
+                </>
+              }
+              variant="embedded"
+              data-monitor-history-chart-band-owner="hertzbeat-ui-control-band"
+            >
+              {chartSeriesKeys.map(key => {
+                const selected = activeChartSeriesKeys.includes(key);
+                const title = key === 'origin' ? 'Value' : key.charAt(0).toUpperCase() + key.slice(1);
+                return (
+                  <HzUnderlineToggle
+                    key={key}
+                    selected={selected}
+                    selectionAttrName="data-chart-selected"
+                    data-monitor-history-toggle-owner="hertzbeat-ui-underline-toggle"
+                    onClick={() => setActiveChartSeriesKeys(currentKeys => toggleMonitorHistoryVisibleSeriesKey(currentKeys, key, chartSeriesKeys))}
+                  >
+                    <span>{title}</span>
+                  </HzUnderlineToggle>
+                );
+              })}
+            </HzMonitorControlBand>
           ) : null}
-          <EChartsPanel
+          <HzEChartsPanel
             option={historyChartOption}
             height={260}
-            className="rounded-none border-x-0 border-y border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)]"
             onChartClick={index => onSelectPoint(index)}
             tone="operator"
+            data-monitor-history-chart-owner="hertzbeat-ui-echarts-panel"
           />
           <MonitorStatGrid
             items={[
@@ -288,170 +296,175 @@ function Surface({
               { label: t('monitor.detail.history.stats.range'), value: rangeValue }
             ]}
           />
-        </div>
+        </HzMonitorEvidenceFrame>
       ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-2">
+      <HzActionGroup
+        density="inline"
+        layout="split"
+        data-monitor-history-action-owner="hertzbeat-ui-action-group"
+        data-monitor-history-action="history-toolbar"
+      >
+        <HzActionGroup
+          density="inline"
+          data-monitor-history-action-owner="hertzbeat-ui-action-group"
+          data-monitor-history-action="history-range-mode"
+        >
           {historyWindows.map(option => (
-            <ObservabilityChipToggle
+            <HzUnderlineToggle
               key={option.value}
-              tone="operator"
               selected={historyWindow === option.value}
+              data-monitor-history-toggle-owner="hertzbeat-ui-underline-toggle"
               onClick={() => onSetHistoryWindow(option.value)}
             >
               {option.label}
-            </ObservabilityChipToggle>
+            </HzUnderlineToggle>
           ))}
           {historyModes.map(option => (
-            <ObservabilityChipToggle
+            <HzUnderlineToggle
               key={option.label}
-              tone="operator"
               selected={aggregated === option.value}
+              data-monitor-history-toggle-owner="hertzbeat-ui-underline-toggle"
               onClick={() => onSetHistoryMode(option.value)}
             >
               {option.label}
-            </ObservabilityChipToggle>
+            </HzUnderlineToggle>
           ))}
-        </div>
-        <div className="flex flex-wrap gap-2">
+        </HzActionGroup>
+        <HzActionGroup
+          density="inline"
+          data-monitor-history-action-owner="hertzbeat-ui-action-group"
+          data-monitor-history-action="history-actions"
+        >
           {values.length > 0 ? (
-            <ObservabilityControlButton tone="operator" onClick={() => onSelectPoint(values.length - 1)}>
+            <HzButton size="sm" intent="ghost" data-monitor-history-control-owner="hertzbeat-ui-button" onClick={() => onSelectPoint(values.length - 1)}>
               {t('monitor.detail.history.latest-point')}
-            </ObservabilityControlButton>
+            </HzButton>
           ) : null}
-          <ObservabilityControlButton tone="operator" onClick={onRefresh}>{t('common.refresh')}</ObservabilityControlButton>
+          <HzButton size="sm" intent="ghost" data-monitor-history-control-owner="hertzbeat-ui-button" onClick={onRefresh}>{t('common.refresh')}</HzButton>
           {showExpandControl ? (
-            <ObservabilityControlButton tone="operator" onClick={onToggleExpanded}>
+            <HzButton size="sm" intent="ghost" data-monitor-history-control-owner="hertzbeat-ui-button" onClick={onToggleExpanded}>
               {t('monitor.detail.history.fullscreen.enter')}
-            </ObservabilityControlButton>
+            </HzButton>
           ) : null}
-        </div>
-      </div>
+        </HzActionGroup>
+      </HzActionGroup>
       {payload && !hasPersistedSeriesData ? (
-        <div className="border-y border-amber-300/16 bg-amber-300/[0.06] px-3 py-2 text-sm text-amber-50/92">
-          <div className="font-medium">{t('monitor.detail.history.blocker.title')}</div>
-          <div className="mt-1 text-amber-100/80">
-            {t('monitor.detail.history.blocker.copy')}
-          </div>
-        </div>
+        <HzInlineFeedback
+          tone="warning"
+          title={t('monitor.detail.history.blocker.title')}
+          description={t('monitor.detail.history.blocker.copy')}
+          data-monitor-history-feedback-owner="hertzbeat-ui-inline-feedback"
+        />
       ) : null}
       {seriesNavigation.total > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-y border-[var(--ops-border-color)] px-3 py-2 text-xs text-[var(--ops-text-secondary)]">
-          <div>
-            {seriesNavigation.selectedIndex != null
+        <HzMonitorRowNavigator
+          label={
+            seriesNavigation.selectedIndex != null
               ? `${t('monitor.detail.history-series.label')} ${seriesNavigation.selectedIndex + 1} / ${seriesNavigation.total}${
                   seriesNavigation.selectedLabel ? ` · ${seriesNavigation.selectedLabel}` : ''
                 }`
-              : t('monitor.detail.history-series.empty.copy')}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <ObservabilityControlButton
-              tone="operator"
-              disabled={!seriesNavigation.canPrevious}
-              onClick={() => {
-                if (seriesNavigation.selectedIndex == null || !seriesNavigation.canPrevious) return;
-                onSelectSeries(seriesKeys[seriesNavigation.selectedIndex - 1] || selectedSeriesKey || '');
-              }}
-            >
-              {t('common.previous-series')}
-            </ObservabilityControlButton>
-            <ObservabilityControlButton
-              tone="operator"
-              disabled={!seriesNavigation.canNext}
-              onClick={() => {
-                if (seriesNavigation.selectedIndex == null || !seriesNavigation.canNext) return;
-                onSelectSeries(seriesKeys[seriesNavigation.selectedIndex + 1] || selectedSeriesKey || '');
-              }}
-            >
-              {t('common.next-series')}
-            </ObservabilityControlButton>
-          </div>
-        </div>
+              : t('monitor.detail.history-series.empty.copy')
+          }
+          previousLabel={t('common.previous-series')}
+          nextLabel={t('common.next-series')}
+          canPrevious={seriesNavigation.canPrevious}
+          canNext={seriesNavigation.canNext}
+          onPrevious={() => {
+            if (seriesNavigation.selectedIndex == null || !seriesNavigation.canPrevious) return;
+            onSelectSeries(seriesKeys[seriesNavigation.selectedIndex - 1] || selectedSeriesKey || '');
+          }}
+          onNext={() => {
+            if (seriesNavigation.selectedIndex == null || !seriesNavigation.canNext) return;
+            onSelectSeries(seriesKeys[seriesNavigation.selectedIndex + 1] || selectedSeriesKey || '');
+          }}
+          data-monitor-history-row-nav-owner="hertzbeat-ui-row-navigator"
+        />
       ) : null}
       {pointNavigation.total > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-y border-[var(--ops-border-color)] px-3 py-2 text-xs text-[var(--ops-text-secondary)]">
-          <div>
-            {pointNavigation.selectedIndex != null
+        <HzMonitorRowNavigator
+          label={
+            pointNavigation.selectedIndex != null
               ? `${t('monitor.detail.history-point.label')} ${pointNavigation.selectedIndex + 1} / ${pointNavigation.total}${
                   pointNavigation.selectedLabel ? ` · ${pointNavigation.selectedLabel}` : ''
                 }`
-              : t('monitor.detail.history-selected.empty.copy')}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <ObservabilityControlButton
-              tone="operator"
-              disabled={!pointNavigation.canPrevious}
-              onClick={() => {
-                if (pointNavigation.selectedIndex == null || !pointNavigation.canPrevious) return;
-                onSelectPoint(pointNavigation.selectedIndex - 1);
-              }}
-            >
-              {t('common.previous-point')}
-            </ObservabilityControlButton>
-            <ObservabilityControlButton
-              tone="operator"
-              disabled={!pointNavigation.canNext}
-              onClick={() => {
-                if (pointNavigation.selectedIndex == null || !pointNavigation.canNext) return;
-                onSelectPoint(pointNavigation.selectedIndex + 1);
-              }}
-            >
-              {t('common.next-point')}
-            </ObservabilityControlButton>
-          </div>
-        </div>
+              : t('monitor.detail.history-selected.empty.copy')
+          }
+          previousLabel={t('common.previous-point')}
+          nextLabel={t('common.next-point')}
+          canPrevious={pointNavigation.canPrevious}
+          canNext={pointNavigation.canNext}
+          onPrevious={() => {
+            if (pointNavigation.selectedIndex == null || !pointNavigation.canPrevious) return;
+            onSelectPoint(pointNavigation.selectedIndex - 1);
+          }}
+          onNext={() => {
+            if (pointNavigation.selectedIndex == null || !pointNavigation.canNext) return;
+            onSelectPoint(pointNavigation.selectedIndex + 1);
+          }}
+          data-monitor-history-row-nav-owner="hertzbeat-ui-row-navigator"
+        />
       ) : null}
       <SelectableSeriesRows rows={seriesRows} selectedSeriesKey={activeSelectedSeriesKey} onSelectSeries={onSelectSeries} t={t} />
-      <ObservabilityDetailRows tone="operator" rows={summaryRows} />
+      <HzDetailRows rows={summaryRows} data-monitor-history-summary-owner="hertzbeat-ui-detail-rows" />
       <SelectablePointRows rows={pointRows.slice(0, 5)} selectedPointIndex={selectedPointIndex} onSelectPoint={onSelectPoint} t={t} />
-      <ObservabilityDetailRows tone="operator" rows={selectedPointRows} />
+      <HzDetailRows rows={selectedPointRows} data-monitor-history-selected-point-owner="hertzbeat-ui-detail-rows" />
       {availableSeriesKeys.length > 1 ? (
-        <div className="space-y-2 border-y border-[var(--ops-border-color)] px-3 py-2" data-monitor-surface-panel="series-compare">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-[11px] uppercase tracking-[0.16em] text-[var(--ops-text-tertiary)]">{t('monitor.detail.history-compare.scope.title')}</div>
-            <div className="flex flex-wrap gap-2">
-              <ObservabilityControlButton
-                tone="operator"
+        <HzMonitorControlBand
+          title={t('monitor.detail.history-compare.scope.title')}
+          actions={
+            <>
+              <HzButton
+                size="sm"
+                intent="ghost"
+                data-monitor-history-control-owner="hertzbeat-ui-button"
                 disabled={!activeSelectedSeriesKey}
                 onClick={() => activeSelectedSeriesKey && setActiveCompareSeriesKeys([activeSelectedSeriesKey])}
               >
                 {t('monitor.detail.history-compare.scope.selected-only')}
-              </ObservabilityControlButton>
-              <ObservabilityControlButton tone="operator" onClick={() => setActiveCompareSeriesKeys(availableSeriesKeys)}>
+              </HzButton>
+              <HzButton
+                size="sm"
+                intent="ghost"
+                data-monitor-history-control-owner="hertzbeat-ui-button"
+                onClick={() => setActiveCompareSeriesKeys(availableSeriesKeys)}
+              >
                 {t('monitor.detail.history-compare.scope.all')}
-              </ObservabilityControlButton>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {seriesRows
-              .filter(row => row.key !== 'empty' && availableSeriesKeys.includes(row.key))
-              .map(row => {
-                const selected = activeCompareSeriesKeys.includes(row.key);
-                const locked = activeSelectedSeriesKey === row.key;
-                return (
-                  <ObservabilityChipToggle
-                    key={row.key}
-                    tone="operator"
-                    selected={selected}
-                    disabled={locked}
-                    selectionAttrName="data-compare-selected"
-                    onClick={() =>
-                      !locked &&
-                      setActiveCompareSeriesKeys(currentKeys =>
-                        toggleMonitorHistoryVisibleSeriesKey(currentKeys, row.key, availableSeriesKeys)
-                      )
-                    }
+              </HzButton>
+            </>
+          }
+          data-monitor-history-compare-band-owner="hertzbeat-ui-control-band"
+        >
+          {seriesRows
+            .filter(row => row.key !== 'empty' && availableSeriesKeys.includes(row.key))
+            .map(row => {
+              const selected = activeCompareSeriesKeys.includes(row.key);
+              const locked = activeSelectedSeriesKey === row.key;
+              return (
+                <HzUnderlineToggle
+                  key={row.key}
+                  selected={selected}
+                  disabled={locked}
+                  selectionAttrName="data-compare-selected"
+                  data-monitor-history-toggle-owner="hertzbeat-ui-underline-toggle"
+                  onClick={() =>
+                    !locked &&
+                    setActiveCompareSeriesKeys(currentKeys => toggleMonitorHistoryVisibleSeriesKey(currentKeys, row.key, availableSeriesKeys))
+                  }
+                >
+                  <span>{row.title}</span>
+                  <HzDataMetaText
+                    className="normal-case tracking-normal"
+                    data-monitor-history-compare-meta-owner="hertzbeat-ui-data-meta-text"
                   >
-                    <span>{row.title}</span>
-                    <span className="text-[var(--ops-text-tertiary)]">{row.copy}</span>
-                  </ObservabilityChipToggle>
-                );
-              })}
-          </div>
-        </div>
+                    {row.copy}
+                  </HzDataMetaText>
+                </HzUnderlineToggle>
+              );
+            })}
+        </HzMonitorControlBand>
       ) : null}
       <SelectableCompareRows rows={compareRows} selectedSeriesKey={activeSelectedSeriesKey} onSelectSeries={onSelectSeries} />
-    </div>
+    </HzMonitorDetailStage>
   );
 }
 
@@ -536,48 +549,35 @@ export function MonitorHistoryPanel({
         t={t}
       />
       {expanded ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(6,7,10,0.88)] p-4"
+        <HzMonitorFullscreenFrame
+          ref={dialogRef}
           data-expanded="true"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('monitor.detail.history.fullscreen.title')}
+          title={t('monitor.detail.history.fullscreen.title')}
+          kicker={t('monitor.detail.history.fullscreen.kicker')}
+          closeLabel={t('monitor.detail.history.fullscreen.exit')}
+          onClose={onToggleExpanded}
+          data-monitor-history-fullscreen-owner="hertzbeat-ui-fullscreen-frame"
         >
-          <WorkbenchFullscreenShell
-            ref={dialogRef}
-            tabIndex={-1}
-            className="hb-scrollbar max-h-[92vh] w-full max-w-6xl overflow-auto"
-          >
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[11px] uppercase tracking-[0.16em] text-[var(--ops-text-tertiary)]">{t('monitor.detail.history.fullscreen.kicker')}</div>
-                <div className="mt-1 text-lg font-semibold text-[var(--ops-text-primary)]">{t('monitor.detail.history.fullscreen.title')}</div>
-              </div>
-              <ObservabilityControlButton tone="operator" onClick={onToggleExpanded}>
-                {t('monitor.detail.history.fullscreen.exit')}
-              </ObservabilityControlButton>
-            </div>
-            <Surface
-              payload={payload}
-              selectedSeriesKey={selectedSeriesKey}
-              selectedPointIndex={selectedPointIndex}
-              aggregated={aggregated}
-              historyWindow={historyWindow}
-              historyWindows={historyWindows}
-              historyModes={historyModes}
-              visibleSeriesKeys={visibleSeriesKeys}
-              showExpandControl={false}
-              onSelectSeries={onSelectSeries}
-              onSelectPoint={onSelectPoint}
-              onRefresh={onRefresh}
-              onSetHistoryWindow={onSetHistoryWindow}
-              onSetHistoryMode={onSetHistoryMode}
-              onToggleExpanded={onToggleExpanded}
-              formatTime={formatTime}
-              t={t}
-            />
-          </WorkbenchFullscreenShell>
-        </div>
+          <Surface
+            payload={payload}
+            selectedSeriesKey={selectedSeriesKey}
+            selectedPointIndex={selectedPointIndex}
+            aggregated={aggregated}
+            historyWindow={historyWindow}
+            historyWindows={historyWindows}
+            historyModes={historyModes}
+            visibleSeriesKeys={visibleSeriesKeys}
+            showExpandControl={false}
+            onSelectSeries={onSelectSeries}
+            onSelectPoint={onSelectPoint}
+            onRefresh={onRefresh}
+            onSetHistoryWindow={onSetHistoryWindow}
+            onSetHistoryMode={onSetHistoryMode}
+            onToggleExpanded={onToggleExpanded}
+            formatTime={formatTime}
+            t={t}
+          />
+        </HzMonitorFullscreenFrame>
       ) : null}
     </>
   );

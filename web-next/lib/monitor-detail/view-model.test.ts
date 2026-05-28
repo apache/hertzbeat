@@ -31,6 +31,7 @@ import {
   buildMonitorMetricTableMatrix,
   buildMonitorMetricTableEvidenceRows,
   buildMonitorMetricTableRows,
+  normalizeMonitorFavoriteNames,
   resolveMonitorMetricTableMode,
   buildMonitorNextRows,
   buildMonitorParamRows,
@@ -516,6 +517,18 @@ describe('monitor detail view model', () => {
         favoriteToken: 'cpu.usage'
       }
     ]);
+  });
+
+  it('keeps monitor favorites aligned to Angular Set semantics', () => {
+    expect(normalizeMonitorFavoriteNames(['cpu', 'cpu', '', undefined, 'cpu.usage', 'cpu.usage'])).toEqual(['cpu', 'cpu.usage']);
+    expect(
+      buildMonitorFavoriteJumpRows(
+        ['cpu', 'cpu', 'cpu.usage', 'cpu.usage'],
+        [{ name: 'cpu', fields: [{ field: 'usage' }] }] as any,
+        [{ metrics: 'cpu', metric: 'usage', unit: '%' }] as any,
+        t
+      ).map(row => row.key)
+    ).toEqual(['realtime:cpu', 'history:cpu.usage']);
   });
 
   it('filters history metric catalog and history series rows by search text', () => {

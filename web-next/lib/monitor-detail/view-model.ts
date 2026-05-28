@@ -33,6 +33,10 @@ export type MonitorMetricTableMatrix = {
   }>;
 };
 
+export function normalizeMonitorFavoriteNames(favoriteNames: Array<string | null | undefined>): string[] {
+  return Array.from(new Set(favoriteNames.filter((name): name is string => Boolean(name))));
+}
+
 export function filterMonitorMetricTableMatrix(matrix: MonitorMetricTableMatrix, query: string): MonitorMetricTableMatrix {
   const normalizedQuery = normalizeMonitorDetailQuery(query);
   if (!normalizedQuery) return matrix;
@@ -799,9 +803,10 @@ export function buildMonitorFavoriteJumpRows(
   t: Translator
 ): MonitorFavoriteJumpRow[] {
   const rows: MonitorFavoriteJumpRow[] = [];
+  const favoriteNameSet = new Set(normalizeMonitorFavoriteNames(favoriteNames));
 
   for (const metric of metrics) {
-    if (favoriteNames.includes(metric.name)) {
+    if (favoriteNameSet.has(metric.name)) {
       rows.push({
         key: `realtime:${metric.name}`,
         title: metric.name,
@@ -816,7 +821,7 @@ export function buildMonitorFavoriteJumpRows(
 
   for (const item of historyMetrics) {
     const fullPath = `${item.metrics}.${item.metric}`;
-    if (favoriteNames.includes(fullPath) || favoriteNames.includes(item.metrics) || favoriteNames.includes(item.metric)) {
+    if (favoriteNameSet.has(fullPath) || favoriteNameSet.has(item.metrics) || favoriteNameSet.has(item.metric)) {
       rows.push({
         key: `history:${fullPath}`,
         title: fullPath,
@@ -824,9 +829,9 @@ export function buildMonitorFavoriteJumpRows(
         meta: t('monitor.detail.favorite.history.meta'),
         targetKey: `${item.metrics}:${item.metric}`,
         targetKind: 'history',
-        favoriteToken: favoriteNames.includes(fullPath)
+        favoriteToken: favoriteNameSet.has(fullPath)
           ? fullPath
-          : favoriteNames.includes(item.metrics)
+          : favoriteNameSet.has(item.metrics)
             ? item.metrics
             : item.metric
       });

@@ -80,12 +80,15 @@ describe('monitor history panel', () => {
     expect(html).toContain('Next series');
     expect(html).toContain('Previous point');
     expect(html).toContain('Next point');
-    expect(html).toContain('History chart');
-    expect(html).toContain('Selected series');
+    expect(html).not.toContain('History chart');
+    expect(html).not.toContain('Selected series');
     expect(html).not.toContain('Metric timeline canvas');
     expect(html).not.toContain('Series compare lane');
     expect(html).toMatch(/data-monitor-surface=\"history-stage\"/);
-    expect(html).toMatch(/data-monitor-surface-panel=\"series-compare\"/);
+    expect(html).toContain('data-monitor-history-stage-owner="hertzbeat-ui-detail-stage"');
+    expect(html).toContain('data-monitor-history-selection-reset="angular-chart-reload"');
+    expect(html).toContain('data-monitor-detail-stage-rhythm="shared-stack"');
+    expect(html).not.toMatch(/data-monitor-surface-panel=\"series-compare\"/);
   });
 
   it('disables series navigation at the current boundaries', () => {
@@ -223,6 +226,394 @@ describe('monitor history panel', () => {
     expect(html).toMatch(/<button[^>]*(data-compare-selected="true"[^>]*disabled=""|disabled=""[^>]*data-compare-selected="true")[^>]*>[\s\S]*host=db-2/);
     expect(html).toMatch(/<button[^>]*data-compare-row-selected="true"[^>]*>[\s\S]*host=db-2/);
     expect(html).toMatch(/<button[^>]*data-compare-row-selected="false"[^>]*>[\s\S]*host=db-1/);
+    expect(html).toContain('data-monitor-history-compare-meta-owner="hertzbeat-ui-data-meta-text"');
+    expect(html).toContain('data-hz-ui="data-meta-text"');
+  });
+
+  it('routes history selectable rows through shared HertzBeat UI ownership', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-history-panel.tsx'), 'utf8');
+    const historyPayload = {
+      values: {
+        'host=db-1': [
+          { mean: '15', min: '10', max: '20', time: 1 },
+          { mean: '25', min: '22', max: '29', time: 2 }
+        ],
+        'host=db-2': [
+          { mean: '18', min: '12', max: '24', time: 1 },
+          { mean: '28', min: '24', max: '31', time: 2 }
+        ]
+      }
+    } as any;
+
+    const html = renderToStaticMarkup(
+      <MonitorHistoryPanel
+        payload={historyPayload}
+        selectedSeriesKey="host=db-2"
+        selectedPointIndex={1}
+        aggregated
+        historyWindow="1h"
+        historyWindows={[
+          { value: '30m', label: '30m' },
+          { value: '1h', label: '1h' }
+        ]}
+        historyModes={[
+          { value: false, label: 'Raw' },
+          { value: true, label: 'Aggregated' }
+        ]}
+        visibleSeriesKeys={['host=db-1', 'host=db-2']}
+        expanded={false}
+        onSelectSeries={() => {}}
+        onSelectPoint={() => {}}
+        onRefresh={() => {}}
+        onSetHistoryWindow={() => {}}
+        onSetHistoryMode={() => {}}
+        onToggleExpanded={() => {}}
+        formatTime={value => `t${value}`}
+        t={t}
+      />
+    );
+
+    expect(source).toContain('HzSelectableRows');
+    expect(source).toContain('data-monitor-history-selectable-owner="hertzbeat-ui-selectable-rows"');
+    expect(source).toContain('data-monitor-history-compare-owner="hertzbeat-ui-selectable-rows"');
+    expect(source).not.toContain('ObservabilitySelectableRows');
+    expect(source).not.toContain('ObservabilitySelectableRowsOrDetails');
+    expect(html).toContain('data-hz-ui="selectable-rows"');
+    expect(html).toContain('data-hz-selectable-row-owner="hertzbeat-ui-selectable-rows"');
+    expect(html).toContain('data-monitor-history-selectable-owner="hertzbeat-ui-selectable-rows"');
+    expect(html).toContain('data-monitor-history-compare-owner="hertzbeat-ui-selectable-rows"');
+    expect(html).toContain('data-hz-selectable-row-style="left-rail"');
+    expect(html).toMatch(/<button[^>]*data-series-selected="true"[^>]*>[\s\S]*host=db-2/);
+    expect(html).toMatch(/<button[^>]*data-compare-row-selected="true"[^>]*>[\s\S]*host=db-2/);
+  });
+
+  it('routes history buttons and toggle chips through shared HertzBeat UI controls', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-history-panel.tsx'), 'utf8');
+    const historyPayload = {
+      values: {
+        'host=db-1': [
+          { mean: '15', min: '10', max: '20', time: 1 },
+          { mean: '25', min: '22', max: '29', time: 2 }
+        ],
+        'host=db-2': [
+          { mean: '18', min: '12', max: '24', time: 1 },
+          { mean: '28', min: '24', max: '31', time: 2 }
+        ]
+      }
+    } as any;
+
+    const html = renderToStaticMarkup(
+      <MonitorHistoryPanel
+        payload={historyPayload}
+        selectedSeriesKey="host=db-2"
+        selectedPointIndex={1}
+        aggregated
+        historyWindow="1h"
+        historyWindows={[
+          { value: '30m', label: '30m' },
+          { value: '1h', label: '1h' }
+        ]}
+        historyModes={[
+          { value: false, label: 'Raw' },
+          { value: true, label: 'Aggregated' }
+        ]}
+        visibleSeriesKeys={['host=db-1', 'host=db-2']}
+        expanded={false}
+        onSelectSeries={() => {}}
+        onSelectPoint={() => {}}
+        onRefresh={() => {}}
+        onSetHistoryWindow={() => {}}
+        onSetHistoryMode={() => {}}
+        onToggleExpanded={() => {}}
+        formatTime={value => `t${value}`}
+        t={t}
+      />
+    );
+
+    expect(source).toContain('HzButton');
+    expect(source).toContain('HzUnderlineToggle');
+    expect(source).toContain('data-monitor-history-control-owner="hertzbeat-ui-button"');
+    expect(source).toContain('data-monitor-history-toggle-owner="hertzbeat-ui-underline-toggle"');
+    expect(source).toContain('HzActionGroup');
+    expect(source).toContain('data-monitor-history-action-owner="hertzbeat-ui-action-group"');
+    expect(source).toContain('layout="split"');
+    expect(source).not.toContain('className="w-full justify-between"');
+    expect(source).not.toContain('className="flex flex-wrap gap-2"');
+    expect(source).not.toContain('className="flex flex-wrap items-center justify-between gap-2"');
+    expect(source).not.toContain('ObservabilityControlButton');
+    expect(source).not.toContain('ObservabilityChipToggle');
+    expect(html).toContain('data-hz-ui="button"');
+    expect(html).toContain('data-hz-ui="underline-toggle"');
+    expect(html).toContain('data-monitor-history-control-owner="hertzbeat-ui-button"');
+    expect(html).toContain('data-monitor-history-toggle-owner="hertzbeat-ui-underline-toggle"');
+    expect(html).toContain('data-monitor-history-action-owner="hertzbeat-ui-action-group"');
+    expect(html).toContain('data-hz-action-group-layout="split"');
+    expect(html).toContain('data-hz-control-height="28"');
+    expect(html).toContain('data-hz-control-edge="bottom-underline"');
+    expect(html).toMatch(/<button[^>]*data-chart-selected="true"[^>]*>[\s\S]*Mean/);
+    expect(html).toMatch(/<button[^>]*data-compare-selected="true"[^>]*>[\s\S]*host=db-2/);
+    expect(html).not.toContain('data-hz-ui="chip-toggle"');
+    expect(html).not.toContain('data-hz-chip-toggle-owner');
+  });
+
+  it('routes the history persistence blocker through shared HertzBeat UI feedback chrome', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-history-panel.tsx'), 'utf8');
+    const emptyPayload = { values: { 'host=db-1': [] } } as any;
+
+    const html = renderToStaticMarkup(
+      <MonitorHistoryPanel
+        payload={emptyPayload}
+        selectedSeriesKey="host=db-1"
+        selectedPointIndex={null}
+        aggregated
+        historyWindow="1h"
+        historyWindows={[
+          { value: '30m', label: '30m' },
+          { value: '1h', label: '1h' }
+        ]}
+        historyModes={[
+          { value: false, label: 'Raw' },
+          { value: true, label: 'Aggregated' }
+        ]}
+        visibleSeriesKeys={['host=db-1']}
+        expanded={false}
+        onSelectSeries={() => {}}
+        onSelectPoint={() => {}}
+        onRefresh={() => {}}
+        onSetHistoryWindow={() => {}}
+        onSetHistoryMode={() => {}}
+        onToggleExpanded={() => {}}
+        formatTime={value => `t${value}`}
+        t={t}
+      />
+    );
+
+    expect(source).toContain('HzInlineFeedback');
+    expect(source).toContain('data-monitor-history-feedback-owner="hertzbeat-ui-inline-feedback"');
+    expect(source).not.toContain('border-y border-amber-300/16 bg-amber-300/[0.06]');
+    expect(html).toContain('data-hz-ui="inline-feedback"');
+    expect(html).toContain('data-monitor-history-feedback-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-hz-feedback-tone="warning"');
+  });
+
+  it('routes history series and point navigation through the shared monitor row navigator', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-history-panel.tsx'), 'utf8');
+    const historyPayload = {
+      values: {
+        'host=db-1': [
+          { mean: '15', min: '10', max: '20', time: 1 },
+          { mean: '25', min: '22', max: '29', time: 2 }
+        ],
+        'host=db-2': [
+          { mean: '18', min: '12', max: '24', time: 1 },
+          { mean: '28', min: '24', max: '31', time: 2 }
+        ]
+      }
+    } as any;
+
+    const html = renderToStaticMarkup(
+      <MonitorHistoryPanel
+        payload={historyPayload}
+        selectedSeriesKey="host=db-2"
+        selectedPointIndex={1}
+        aggregated
+        historyWindow="1h"
+        historyWindows={[
+          { value: '30m', label: '30m' },
+          { value: '1h', label: '1h' }
+        ]}
+        historyModes={[
+          { value: false, label: 'Raw' },
+          { value: true, label: 'Aggregated' }
+        ]}
+        visibleSeriesKeys={['host=db-1', 'host=db-2']}
+        expanded={false}
+        onSelectSeries={() => {}}
+        onSelectPoint={() => {}}
+        onRefresh={() => {}}
+        onSetHistoryWindow={() => {}}
+        onSetHistoryMode={() => {}}
+        onToggleExpanded={() => {}}
+        formatTime={value => `t${value}`}
+        t={t}
+      />
+    );
+
+    expect(source).toContain('HzMonitorRowNavigator');
+    expect(source).toContain('data-monitor-history-row-nav-owner="hertzbeat-ui-row-navigator"');
+    expect(source).not.toContain('border-y border-[var(--ops-border-color)] px-3 py-2 text-xs text-[var(--ops-text-secondary)]');
+    expect(html).toContain('data-hz-ui="monitor-row-navigator"');
+    expect(html).toContain('data-monitor-history-row-nav-owner="hertzbeat-ui-row-navigator"');
+    expect(html).toContain('data-monitor-row-nav-action="previous"');
+    expect(html).toContain('data-monitor-row-nav-action="next"');
+  });
+
+  it('routes history compare scope through the shared monitor control band', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-history-panel.tsx'), 'utf8');
+    const historyPayload = {
+      values: {
+        'host=db-1': [
+          { mean: '15', min: '10', max: '20', time: 1 },
+          { mean: '25', min: '22', max: '29', time: 2 }
+        ],
+        'host=db-2': [
+          { mean: '18', min: '12', max: '24', time: 1 },
+          { mean: '28', min: '24', max: '31', time: 2 }
+        ]
+      }
+    } as any;
+
+    const html = renderToStaticMarkup(
+      <MonitorHistoryPanel
+        payload={historyPayload}
+        selectedSeriesKey="host=db-2"
+        selectedPointIndex={1}
+        aggregated
+        historyWindow="1h"
+        historyWindows={[
+          { value: '30m', label: '30m' },
+          { value: '1h', label: '1h' }
+        ]}
+        historyModes={[
+          { value: false, label: 'Raw' },
+          { value: true, label: 'Aggregated' }
+        ]}
+        visibleSeriesKeys={['host=db-1', 'host=db-2']}
+        expanded={false}
+        onSelectSeries={() => {}}
+        onSelectPoint={() => {}}
+        onRefresh={() => {}}
+        onSetHistoryWindow={() => {}}
+        onSetHistoryMode={() => {}}
+        onToggleExpanded={() => {}}
+        formatTime={value => `t${value}`}
+        t={t}
+      />
+    );
+
+    expect(source).toContain('HzMonitorControlBand');
+    expect(source).toContain('HzDataMetaText');
+    expect(source).toContain('data-monitor-history-compare-band-owner="hertzbeat-ui-control-band"');
+    expect(source).toContain('data-monitor-history-compare-meta-owner="hertzbeat-ui-data-meta-text"');
+    expect(source).not.toContain('className="space-y-2 border-y border-[var(--ops-border-color)] px-3 py-2" data-monitor-surface-panel="series-compare"');
+    expect(source).not.toContain('<span className="text-[var(--ops-text-tertiary)]">{row.copy}</span>');
+    expect(html).toContain('data-hz-ui="monitor-control-band"');
+    expect(html).toContain('data-monitor-control-band-owner="hertzbeat-ui-control-band"');
+    expect(html).toContain('data-monitor-history-compare-band-owner="hertzbeat-ui-control-band"');
+    expect(html).toContain('data-monitor-history-compare-meta-owner="hertzbeat-ui-data-meta-text"');
+    expect(html).toContain('data-compare-selected="true"');
+  });
+
+  it('routes history chart scope through the shared monitor control band', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-history-panel.tsx'), 'utf8');
+    const historyPayload = {
+      values: {
+        'host=db-1': [
+          { mean: '15', min: '10', max: '20', time: 1 },
+          { mean: '25', min: '22', max: '29', time: 2 }
+        ]
+      }
+    } as any;
+
+    const html = renderToStaticMarkup(
+      <MonitorHistoryPanel
+        payload={historyPayload}
+        selectedSeriesKey="host=db-1"
+        selectedPointIndex={1}
+        aggregated
+        historyWindow="1h"
+        historyWindows={[
+          { value: '30m', label: '30m' },
+          { value: '1h', label: '1h' }
+        ]}
+        historyModes={[
+          { value: false, label: 'Raw' },
+          { value: true, label: 'Aggregated' }
+        ]}
+        visibleSeriesKeys={['host=db-1']}
+        expanded={false}
+        onSelectSeries={() => {}}
+        onSelectPoint={() => {}}
+        onRefresh={() => {}}
+        onSetHistoryWindow={() => {}}
+        onSetHistoryMode={() => {}}
+        onToggleExpanded={() => {}}
+        formatTime={value => `t${value}`}
+        t={t}
+      />
+    );
+
+    expect(source).toContain('data-monitor-history-chart-band-owner="hertzbeat-ui-control-band"');
+    expect(source).toContain('variant="embedded"');
+    expect(source).not.toContain('className="px-0"');
+    expect(source).toContain('HzEChartsPanel');
+    expect(source).toContain('HzMonitorEvidenceFrame');
+    expect(source).toContain('data-monitor-history-chart-frame-owner="hertzbeat-ui-evidence-frame"');
+    expect(source).toContain('data-monitor-history-chart-owner="hertzbeat-ui-echarts-panel"');
+    expect(source).not.toContain("import { EChartsPanel } from '../observability/echarts-panel'");
+    expect(source).not.toContain('className="rounded-none border-x-0 border-y border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)]"');
+    expect(source).not.toContain('className="space-y-2 border-y border-[var(--ops-border-color)] px-0 py-2"');
+    expect(source).not.toContain('className="space-y-3 border-y border-[var(--ops-border-color)] py-3"');
+    expect(html).toContain('data-hz-ui="monitor-control-band"');
+    expect(html).toContain('data-hz-ui="monitor-evidence-frame"');
+    expect(html).toContain('data-monitor-history-chart-frame-owner="hertzbeat-ui-evidence-frame"');
+    expect(html).toContain('data-hz-ui="echarts-panel"');
+    expect(html).toContain('data-monitor-history-chart-owner="hertzbeat-ui-echarts-panel"');
+    expect(html).toContain('data-monitor-history-chart-band-owner="hertzbeat-ui-control-band"');
+    expect(html).toContain('data-hz-control-band-variant="embedded"');
+    expect(html).toContain('data-chart-selected="true"');
+  });
+
+  it('routes history summary and selected-point detail rows through shared HertzBeat UI ownership', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-history-panel.tsx'), 'utf8');
+    const historyPayload = {
+      values: {
+        'host=db-1': [
+          { mean: '15', min: '10', max: '20', time: 1 },
+          { mean: '25', min: '22', max: '29', time: 2 }
+        ]
+      }
+    } as any;
+
+    const html = renderToStaticMarkup(
+      <MonitorHistoryPanel
+        payload={historyPayload}
+        selectedSeriesKey="host=db-1"
+        selectedPointIndex={1}
+        aggregated
+        historyWindow="1h"
+        historyWindows={[
+          { value: '30m', label: '30m' },
+          { value: '1h', label: '1h' }
+        ]}
+        historyModes={[
+          { value: false, label: 'Raw' },
+          { value: true, label: 'Aggregated' }
+        ]}
+        visibleSeriesKeys={['host=db-1']}
+        expanded={false}
+        onSelectSeries={() => {}}
+        onSelectPoint={() => {}}
+        onRefresh={() => {}}
+        onSetHistoryWindow={() => {}}
+        onSetHistoryMode={() => {}}
+        onToggleExpanded={() => {}}
+        formatTime={value => `t${value}`}
+        t={t}
+      />
+    );
+
+    expect(source).toContain('HzDetailRows');
+    expect(source).toContain('data-monitor-history-summary-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('data-monitor-history-selected-point-owner="hertzbeat-ui-detail-rows"');
+    expect(source).not.toContain('ObservabilityDetailRows');
+    expect(html).toContain('data-hz-ui="detail-rows"');
+    expect(html).toContain('data-hz-detail-rows-owner="hertzbeat-ui-detail-rows"');
+    expect(html).toContain('data-hz-detail-rows-style="flat-evidence"');
+    expect(html).toContain('data-monitor-history-summary-owner="hertzbeat-ui-detail-rows"');
+    expect(html).toContain('data-monitor-history-selected-point-owner="hertzbeat-ui-detail-rows"');
+    expect(html).toContain('Latest value');
+    expect(html).toContain('selected point');
   });
 
   it('limits compare rows to the currently visible series keys', () => {
@@ -554,10 +945,49 @@ describe('monitor history panel', () => {
     expect(lastPointHtml).toMatch(/<button[^>]*disabled=""[^>]*>Next point<\/button>/);
   });
 
-  it('routes the fullscreen shell through the shared workbench fullscreen owner', () => {
+  it('routes the fullscreen shell through the shared monitor fullscreen frame owner', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/monitor-detail/monitor-history-panel.tsx'), 'utf8');
 
-    expect(source).toContain('WorkbenchFullscreenShell');
-    expect(source).not.toContain('hb-scrollbar max-h-[92vh] w-full max-w-6xl overflow-auto rounded-[6px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)]');
+    expect(source).toContain('HzMonitorFullscreenFrame');
+    expect(source).toContain('data-monitor-history-fullscreen-owner="hertzbeat-ui-fullscreen-frame"');
+    expect(source).not.toContain('WorkbenchFullscreenShell');
+    expect(source).not.toContain('className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(6,7,10,0.88)] p-4"');
+    expect(source).not.toContain('className="mb-3 flex items-center justify-between gap-3"');
+    expect(source).not.toContain('text-[11px] uppercase tracking-[0.16em] text-[var(--ops-text-tertiary)]');
+    expect(source).not.toContain('mt-1 text-lg font-semibold text-[var(--ops-text-primary)]');
+  });
+
+  it('renders expanded history through the shared fullscreen frame', () => {
+    const html = renderToStaticMarkup(
+      <MonitorHistoryPanel
+        payload={payload}
+        selectedSeriesKey="host=db-1"
+        selectedPointIndex={1}
+        aggregated
+        historyWindow="1h"
+        historyWindows={[
+          { value: '30m', label: '30m' },
+          { value: '1h', label: '1h' }
+        ]}
+        historyModes={[
+          { value: false, label: 'Raw' },
+          { value: true, label: 'Aggregated' }
+        ]}
+        visibleSeriesKeys={['host=db-1']}
+        expanded
+        onSelectSeries={() => {}}
+        onSelectPoint={() => {}}
+        onRefresh={() => {}}
+        onSetHistoryWindow={() => {}}
+        onSetHistoryMode={() => {}}
+        onToggleExpanded={() => {}}
+        formatTime={value => `t${value}`}
+        t={t}
+      />
+    );
+
+    expect(html).toContain('data-hz-ui="monitor-fullscreen-frame"');
+    expect(html).toContain('data-monitor-history-fullscreen-owner="hertzbeat-ui-fullscreen-frame"');
+    expect(html).toContain('Exit fullscreen');
   });
 });

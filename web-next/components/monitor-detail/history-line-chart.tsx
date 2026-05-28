@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ObservabilityInsetPanel, ObservabilityPillButton } from '../observability';
+import { HzActionGroup, HzButton, HzButtonLink, HzChartSurface, HzDataMetaText, HzDetailRows } from '@hertzbeat/ui';
 import {
   buildHistoryChartDownloadName,
   buildHistoryChartPoints,
@@ -52,6 +52,22 @@ export function HistoryLineChart({
         }))
         .filter(item => item.point);
   const activePoint = activePointIndex == null ? null : points[activePointIndex] || null;
+  const activeDetailRows = activePoint
+    ? [
+        {
+          key: 'active-point',
+          title: hoveredPointIndex != null ? 'hovered point' : 'selected point',
+          copy: activePoint.rawValue,
+          meta: activePoint.label
+        },
+        ...activeSeriesValues.map(item => ({
+          key: item.key,
+          title: item.label,
+          copy: item.point?.rawValue ?? '-',
+          meta: item.key
+        }))
+      ]
+    : [];
   const downloadUrl = buildHistoryChartSvgDataUrl(buildHistoryChartSvgDocument(visibleSeries, selectedPointIndex));
   const downloadName = buildHistoryChartDownloadName(aggregated);
   const primarySeriesKey = aggregated ? 'mean' : 'origin';
@@ -59,37 +75,61 @@ export function HistoryLineChart({
   const canShowAllStats = aggregated && resolvedVisibleSeriesKeys.length !== seriesKeys.length;
 
   return (
-    <ObservabilityInsetPanel>
+    <HzChartSurface
+      heading={aggregated ? 'Aggregated history' : 'History'}
+      variant="inline"
+      data-monitor-history-line-owner="hertzbeat-ui-chart-surface"
+      data-monitor-history-line-legacy-svg="true"
+      contentClassName="px-3 py-2"
+    >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         {aggregated && series.length > 1 ? (
-          <div className="space-y-2">
+          <HzActionGroup
+            layout="stack"
+            density="inline"
+            data-monitor-history-line-action-stack-owner="hertzbeat-ui-action-group"
+          >
             {onVisibleSeriesKeysChange ? (
-              <div className="flex flex-wrap gap-2 text-[11px] text-[var(--ops-text-secondary)]">
-                <ObservabilityPillButton
+              <HzActionGroup
+                density="inline"
+                data-monitor-history-line-action-owner="hertzbeat-ui-action-group"
+                data-monitor-history-line-action="quick-presets"
+              >
+                <HzButton
                   type="button"
-                  size="compact"
+                  size="xs"
+                  intent="ghost"
+                  data-monitor-history-line-control-owner="hertzbeat-ui-button"
                   disabled={!canFocusPrimarySeries}
                   onClick={() => onVisibleSeriesKeysChange([primarySeriesKey])}
                 >
                   Primary only
-                </ObservabilityPillButton>
-                <ObservabilityPillButton
+                </HzButton>
+                <HzButton
                   type="button"
-                  size="compact"
+                  size="xs"
+                  intent="ghost"
+                  data-monitor-history-line-control-owner="hertzbeat-ui-button"
                   disabled={!canShowAllStats}
                   onClick={() => onVisibleSeriesKeysChange(seriesKeys)}
                 >
                   Show all stats
-                </ObservabilityPillButton>
-              </div>
+                </HzButton>
+              </HzActionGroup>
             ) : null}
-            <div className="flex flex-wrap gap-3 text-[11px] text-[var(--ops-text-secondary)]">
+            <HzActionGroup
+              density="inline"
+              data-monitor-history-line-action-owner="hertzbeat-ui-action-group"
+              data-monitor-history-line-action="series-visibility"
+            >
               {series.map(item => (
-                <ObservabilityPillButton
+                <HzButton
                   key={item.key}
                   type="button"
-                  size="compact"
-                  active={resolvedVisibleSeriesKeys.includes(item.key)}
+                  size="xs"
+                  intent={resolvedVisibleSeriesKeys.includes(item.key) ? 'secondary' : 'ghost'}
+                  data-monitor-history-line-control-owner="hertzbeat-ui-button"
+                  data-series-selected={resolvedVisibleSeriesKeys.includes(item.key) ? 'true' : 'false'}
                   className="gap-2"
                   style={{ opacity: resolvedVisibleSeriesKeys.includes(item.key) ? 1 : 0.45 }}
                   onClick={() => {
@@ -100,26 +140,31 @@ export function HistoryLineChart({
                 >
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                   <span>{item.label}</span>
-                </ObservabilityPillButton>
-              ))}
-            </div>
-          </div>
+                </HzButton>
+                ))}
+              </HzActionGroup>
+          </HzActionGroup>
         ) : (
           <div />
         )}
-        <ObservabilityPillButton
-          as="a"
-          size="compact"
+        <HzButtonLink
           href={downloadUrl}
           download={downloadName}
+          size="xs"
+          intent="secondary"
+          data-monitor-history-line-control-owner="hertzbeat-ui-button"
+          data-monitor-history-download-owner="hertzbeat-ui-button-link"
         >
           Download SVG
-        </ObservabilityPillButton>
+        </HzButtonLink>
       </div>
       {onSelectPoint ? (
-        <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-[var(--ops-text-tertiary)]">
+        <HzDataMetaText
+          className="mb-2 block tracking-[0.16em]"
+          data-monitor-history-line-meta-owner="hertzbeat-ui-data-meta-text"
+        >
           Click or hover the chart to inspect the nearest point
-        </div>
+        </HzDataMetaText>
       ) : null}
       <svg viewBox="0 0 100 100" className="h-40 w-full overflow-visible">
         <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
@@ -183,52 +228,48 @@ export function HistoryLineChart({
       {activePoint ? (
         <div className="mt-3 space-y-2">
           {onSelectPoint ? (
-            <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--ops-text-secondary)]">
-              <ObservabilityPillButton
+            <HzActionGroup
+              density="inline"
+              data-monitor-history-line-action-owner="hertzbeat-ui-action-group"
+              data-monitor-history-line-action="point-navigation"
+            >
+              <HzButton
                 type="button"
-                size="compact"
+                size="xs"
+                intent="ghost"
+                data-monitor-history-line-control-owner="hertzbeat-ui-button"
                 disabled={activePointIndex == null || activePointIndex <= 0}
                 onClick={() => activePointIndex != null && onSelectPoint(Math.max(0, activePointIndex - 1))}
               >
                 Previous
-              </ObservabilityPillButton>
+              </HzButton>
               <span>{`Point ${(activePointIndex ?? 0) + 1} / ${points.length}`}</span>
-              <ObservabilityPillButton
+              <HzButton
                 type="button"
-                size="compact"
+                size="xs"
+                intent="ghost"
+                data-monitor-history-line-control-owner="hertzbeat-ui-button"
                 disabled={activePointIndex == null || activePointIndex >= points.length - 1}
                 onClick={() => activePointIndex != null && onSelectPoint(Math.min(points.length - 1, activePointIndex + 1))}
               >
                 Next
-              </ObservabilityPillButton>
-            </div>
+              </HzButton>
+            </HzActionGroup>
           ) : null}
-          <div className="rounded-[6px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-raised)] px-3 py-2 text-xs text-[var(--ops-text-secondary)]">
-            <span className="font-medium text-[var(--ops-text-primary)]">{hoveredPointIndex != null ? 'hovered point' : 'selected point'}</span>
-            {' · '}
-            <span>{activePoint.label}</span>
-            {' · '}
-            <span>{activePoint.rawValue}</span>
-          </div>
-          {activeSeriesValues.length > 0 ? (
-            <div className="grid gap-2 sm:grid-cols-3">
-              {activeSeriesValues.map(item => (
-                <div key={item.key} className="rounded-[6px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-raised)] px-3 py-2 text-xs text-[var(--ops-text-secondary)]">
-                  <div className="inline-flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="font-medium text-[var(--ops-text-primary)]">{item.label}</span>
-                  </div>
-                  <div className="mt-1">{item.point?.rawValue}</div>
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <HzDetailRows
+            rows={activeDetailRows}
+            data-monitor-history-line-point-owner="hertzbeat-ui-detail-rows"
+          />
         </div>
       ) : null}
-      <div className="mt-2 flex flex-wrap justify-between gap-2 text-[11px] text-[var(--ops-text-tertiary)]">
-        <span>{points[0]?.label}</span>
-        <span>{points[points.length - 1]?.label}</span>
+      <div className="mt-2 flex flex-wrap justify-between gap-2">
+        <HzDataMetaText data-monitor-history-line-meta-owner="hertzbeat-ui-data-meta-text">
+          {points[0]?.label}
+        </HzDataMetaText>
+        <HzDataMetaText data-monitor-history-line-meta-owner="hertzbeat-ui-data-meta-text">
+          {points[points.length - 1]?.label}
+        </HzDataMetaText>
       </div>
-    </ObservabilityInsetPanel>
+    </HzChartSurface>
   );
 }

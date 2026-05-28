@@ -47,6 +47,28 @@ describe('monitor detail route state', () => {
     });
   });
 
+  it('reads monitor detail expression time context for shared signal handoff links', () => {
+    const params = new URLSearchParams(
+      'app=mysql&entityId=42&entityName=orders-db&returnTo=%2Fmonitors&from=now-6h&to=now&refresh=30&live=true&timezone=Asia%2FShanghai'
+    );
+
+    expect(readMonitorDetailNavigationContext(params)).toEqual({
+      app: 'mysql',
+      labels: null,
+      pageIndex: null,
+      pageSize: null,
+      entityId: '42',
+      entityName: 'orders-db',
+      returnTo: '/monitors',
+      from: 'now-6h',
+      to: 'now',
+      refresh: '30',
+      live: 'true',
+      tz: 'Asia/Shanghai',
+      timezone: 'Asia/Shanghai'
+    });
+  });
+
   it('builds traditional-monitor signal handoff links with time and monitor context only', () => {
     const links = buildMonitorSignalHandoffLinks(
       {
@@ -93,11 +115,56 @@ describe('monitor detail route state', () => {
     expect(metricsUrl.searchParams.has('status')).toBe(false);
   });
 
+  it('builds monitor signal handoff links with canonical expression time context', () => {
+    const links = buildMonitorSignalHandoffLinks(
+      {
+        id: 640360126405888,
+        name: 'mysql-prod',
+        app: 'mysql',
+        instance: '127.0.0.1:3306'
+      } as any,
+      {
+        app: 'mysql',
+        entityId: 'orders-db',
+        entityName: 'Orders DB',
+        timeRange: 'last-1h',
+        from: 'now-6h',
+        to: 'now',
+        start: '1712730000000',
+        end: '1712733600000',
+        refresh: '30',
+        live: 'true',
+        tz: 'Asia/Shanghai',
+        timezone: 'Asia/Shanghai'
+      },
+      '/monitors/640360126405888?app=mysql&from=now-6h&to=now&timezone=Asia%2FShanghai&returnLabel=Monitor'
+    );
+
+    const metricsUrl = new URL(links.metricsHref, 'http://hertzbeat.local');
+    expect(metricsUrl.searchParams.get('from')).toBe('now-6h');
+    expect(metricsUrl.searchParams.get('to')).toBe('now');
+    expect(metricsUrl.searchParams.get('refresh')).toBe('30');
+    expect(metricsUrl.searchParams.get('live')).toBe('true');
+    expect(metricsUrl.searchParams.get('timezone')).toBe('Asia/Shanghai');
+    expect(metricsUrl.searchParams.get('source')).toBe('monitor');
+    expect(metricsUrl.searchParams.get('monitorId')).toBe('640360126405888');
+    expect(metricsUrl.searchParams.get('monitorApp')).toBe('mysql');
+    expect(metricsUrl.searchParams.get('returnTo')).toBe(
+      '/monitors/640360126405888?app=mysql&from=now-6h&to=now&timezone=Asia%2FShanghai'
+    );
+    expect(metricsUrl.searchParams.has('timeRange')).toBe(false);
+    expect(metricsUrl.searchParams.has('start')).toBe(false);
+    expect(metricsUrl.searchParams.has('end')).toBe(false);
+    expect(metricsUrl.searchParams.has('tz')).toBe(false);
+  });
+
   it('resolves tab-scoped refresh targets', () => {
     expect(resolveMonitorDetailRefreshTarget('realtime')).toBe('realtime');
     expect(resolveMonitorDetailRefreshTarget('history')).toBe('history');
     expect(resolveMonitorDetailRefreshTarget('favorites')).toBe('favorites');
-    expect(resolveMonitorDetailRefreshTarget('grafana')).toBe('grafana');
+    expect(resolveMonitorDetailRefreshTarget('grafana')).toBe('realtime');
+    expect(resolveMonitorDetailRefreshTarget('grafana', 'history')).toBe('history');
+    expect(resolveMonitorDetailRefreshTarget('grafana', 'favorites')).toBe('favorites');
   });
 
   it('resolves favorite jump targets from the favorite row kind', () => {
@@ -152,6 +219,36 @@ describe('monitor detail route state', () => {
     expect(resolveActiveFavoriteRow(favoriteRows as any, null)?.key).toBe('realtime:summary');
     expect(resolveFavoriteSurfaceMode('realtime', favoriteRows as any, 'history:latency')).toBe('history');
     expect(resolveFavoriteSurfaceMode('history', favoriteRows as any, 'realtime:summary')).toBe('realtime');
+  });
+
+  it('keeps favorite removal fallback scoped to the Angular subselector', () => {
+    const favoriteRows = [
+      {
+        key: 'realtime:summary',
+        title: 'summary',
+        copy: 'Favorite realtime metric',
+        meta: 'realtime',
+        targetKey: 'summary',
+        targetKind: 'realtime',
+        favoriteToken: 'summary'
+      },
+      {
+        key: 'history:latency',
+        title: 'latency',
+        copy: 'Favorite history metric',
+        meta: 'history',
+        targetKey: 'website:latency',
+        targetKind: 'history',
+        favoriteToken: 'website.latency'
+      }
+    ] as const;
+
+    expect(resolveActiveFavoriteRow(favoriteRows as any, 'history:removed', 'history')?.key).toBe('history:latency');
+    expect(resolveActiveFavoriteRow(favoriteRows as any, 'history:removed', 'realtime')?.key).toBe('realtime:summary');
+    expect(resolveActiveFavoriteRow(favoriteRows as any, 'history:removed', 'history')?.targetKind).toBe('history');
+    expect(resolveActiveFavoriteRow([favoriteRows[0]] as any, 'history:removed', 'history')).toBeNull();
+    expect(resolveFavoriteSurfaceMode('history', [favoriteRows[0]] as any, 'history:removed')).toBe('history');
+    expect(resolveFavoriteSurfaceMode('realtime', [favoriteRows[1]] as any, null)).toBe('realtime');
   });
 
   it('falls back from grafana tab only when grafana is disabled', () => {
