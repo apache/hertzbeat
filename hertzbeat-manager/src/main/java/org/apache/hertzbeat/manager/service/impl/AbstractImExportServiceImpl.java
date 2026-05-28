@@ -127,6 +127,17 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         if (exportMonitor.monitor != null) {
             // Add one more null check
             BeanUtils.copyProperties(exportMonitor.monitor, monitor);
+            if (exportMonitor.params != null) {
+                String host = exportMonitor.params.stream()
+                        .filter(p -> "host".equals(p.field)).findFirst()
+                        .map(p -> p.value).orElse(null);
+                String port = exportMonitor.params.stream()
+                        .filter(p -> "port".equals(p.field)).findFirst()
+                        .map(p -> p.value).orElse(null);
+                if (host != null) {
+                    monitor.setInstance(port != null ? host + ":" + port : host);
+                }
+            }
         }
         monitorDto.setMonitor(monitor);
         if (exportMonitor.getMonitor() != null) {
