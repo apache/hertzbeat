@@ -1,17 +1,20 @@
 'use client';
 
-import React, { type ReactNode, useState } from 'react';
+import React, { type ReactNode, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Globe2 } from 'lucide-react';
+import { HzPassportSessionClearFrame } from '@hertzbeat/ui';
 import { useI18n } from '../providers/i18n-provider';
 import { LocaleOptionList } from '../shell/locale-option-list';
 import { PlatformCopyrightFooter } from '../shell/platform-copyright-footer';
 import { WorkbenchPanel } from '../workbench/primitives';
+import { clearClientSessionMarker, clearClientSessionUserSnapshot } from '../../lib/session-client';
 import { cn } from '../../lib/utils';
 
 type PassportShellProps = {
   children: ReactNode;
   panelClassName?: string;
+  sessionLifecycle?: 'clear-on-entry' | 'preserve-on-lock';
 };
 
 type PassportPanelProps = {
@@ -21,9 +24,11 @@ type PassportPanelProps = {
   className?: string;
 };
 
-export function PassportShell({ children, panelClassName }: PassportShellProps) {
+export function PassportShell({ children, panelClassName, sessionLifecycle = 'clear-on-entry' }: PassportShellProps) {
   const { t, locale, locales, setLocale } = useI18n();
   const [localeOpen, setLocaleOpen] = useState(false);
+  const shouldClearSession = sessionLifecycle === 'clear-on-entry';
+  const sessionContract = shouldClearSession ? 'angular-token-service-clear-on-passport-entry' : 'angular-lock-preserve-session';
   const passportPoints = [
     t('about.point.1'),
     t('about.point.2'),
@@ -33,11 +38,23 @@ export function PassportShell({ children, panelClassName }: PassportShellProps) 
     t('about.point.6')
   ];
 
+  useEffect(() => {
+    if (!shouldClearSession) {
+      return;
+    }
+    clearClientSessionMarker();
+    clearClientSessionUserSnapshot();
+  }, [shouldClearSession]);
+
   return (
-    <div
+    <HzPassportSessionClearFrame
       className="relative min-h-screen overflow-hidden bg-[var(--ops-background)] bg-cover bg-center bg-no-repeat text-[var(--ops-text-primary)]"
+      lifecycle={sessionLifecycle}
       data-login-shell="passport"
       data-passport-shell="true"
+      data-passport-session-clear-contract={sessionContract}
+      data-passport-session-clear-enabled={shouldClearSession ? 'true' : 'false'}
+      data-passport-session-clear-owner="hertzbeat-ui-passport-session-clear"
       style={{ backgroundImage: "url('/assets/bg.png')" }}
     >
       <div
@@ -53,7 +70,7 @@ export function PassportShell({ children, panelClassName }: PassportShellProps) 
             <div className="absolute right-0 top-0 hidden md:block">
               <div className="relative">
                 <button
-                  aria-label="Switch language"
+                  aria-label={t('app.passport.language-switch')}
                   className="inline-flex h-9 w-9 items-center justify-center text-[#d11ce6] transition-colors hover:text-[#f149ff]"
                   data-passport-locale-trigger="globe"
                   data-passport-locale-tone="angular-magenta"
@@ -149,7 +166,7 @@ export function PassportShell({ children, panelClassName }: PassportShellProps) 
           />
         </div>
       </div>
-    </div>
+    </HzPassportSessionClearFrame>
   );
 }
 

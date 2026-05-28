@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildLoginFeatureCards, buildLoginNotice, shouldBlockDefaultPasswordSubmit, shouldWarnDefaultPassword } from './view-model';
+import { buildLoginFeatureCards, buildLoginNotice, shouldBlockDefaultPasswordSubmit, shouldWarnDefaultPassword, validateCredentialLoginDraft } from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
+const enT = createTranslatorMock({ locale: 'en-US' });
 
 describe('passport login view model', () => {
   it('detects the default password warning condition', () => {
@@ -16,6 +17,20 @@ describe('passport login view model', () => {
     expect(shouldBlockDefaultPasswordSubmit(false, 'custom')).toBe(false);
   });
 
+  it('validates the Angular credential-login required fields before submit', () => {
+    expect(validateCredentialLoginDraft('', 'custom', enT)).toEqual({
+      field: 'identifier',
+      message: 'Please enter your username'
+    });
+    expect(validateCredentialLoginDraft('ops-admin', '', enT)).toEqual({
+      field: 'credential',
+      message: 'Please enter password'
+    });
+    expect(validateCredentialLoginDraft(' ops-admin ', ' custom ', enT)).toBeNull();
+    expect(validateCredentialLoginDraft('   ', 'custom', enT)).toBeNull();
+    expect(validateCredentialLoginDraft('ops-admin', '   ', enT)).toBeNull();
+  });
+
   it('builds the login feature cards', () => {
     expect(buildLoginFeatureCards(t)).toEqual([
       { title: '运维入口', copy: '登录后继续查看资源、实体、遥测数据和告警。' },
@@ -27,7 +42,7 @@ describe('passport login view model', () => {
   it('builds the warning or session notice', () => {
     expect(buildLoginNotice(true, t)).toEqual({
       kind: 'warning',
-      copy: '当前使用默认密码，建议登录后尽快修改。',
+      copy: '请及时更新初始默认密码!',
       href: 'https://hertzbeat.apache.org/docs/start/account-modify'
     });
 
@@ -35,5 +50,15 @@ describe('passport login view model', () => {
       kind: 'session',
       copy: '登录成功后会自动恢复当前工作台会话，并在需要时尝试刷新令牌。'
     });
+  });
+
+  it('builds the English session notice without localized fallback copy', () => {
+    const notice = buildLoginNotice(false, enT);
+
+    expect(notice).toEqual({
+      kind: 'session',
+      copy: 'After login, HertzBeat will restore the current workspace session and try to refresh tokens when needed.'
+    });
+    expect(notice.copy).not.toMatch(/[\u4e00-\u9fff]/);
   });
 });

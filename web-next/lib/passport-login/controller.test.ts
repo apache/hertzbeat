@@ -1,13 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   assertLoginSuccess,
+  assertSessionLoginSuccess,
   bootstrapPostLoginSession,
+  buildLoginCompatRouteUrl,
   buildLoginRedirectHref,
   buildLoginRequestBody,
   buildLoginReturnTo,
-  persistLoginTokens,
+  buildPostLoginSessionUser,
+  readPassportLoginRouteState,
   resolveLoginError,
   resolvePostLoginRedirectTarget,
+  resolvePostLoginStartupFailureTarget,
   sanitizeLoginRedirectTarget
 } from './controller';
 
@@ -36,13 +40,43 @@ describe('passport login controller', () => {
     expect(() => assertLoginSuccess(200, { code: 0, data: { token: 'access' } }, 'Login failed: {{status}}')).toThrow('Login failed: 200');
   });
 
-  it('persists access and refresh tokens', () => {
-    const storage = { setItem: vi.fn() };
+  it('accepts BFF-cookie login success without exposing tokens to the browser', () => {
+    expect(
+      assertSessionLoginSuccess(200, { code: 0, data: { authenticated: true } }, 'Login failed: {{status}}')
+    ).toBeUndefined();
 
-    persistLoginTokens(storage, { token: 'access', refreshToken: 'refresh' });
+    expect(() => assertSessionLoginSuccess(401, { code: 1 }, 'Login failed: {{status}}')).toThrow('Login failed: 401');
+    expect(() => assertSessionLoginSuccess(200, { code: 1, msg: 'denied' }, 'Login failed: {{status}}')).toThrow('denied');
+  });
 
-    expect(storage.setItem).toHaveBeenNthCalledWith(1, 'Authorization', 'access');
-    expect(storage.setItem).toHaveBeenNthCalledWith(2, 'refresh-token', 'refresh');
+  it('builds the Angular-style post-login user snapshot from the raw submitted identifier', () => {
+    expect(
+      buildPostLoginSessionUser(' ops-admin ', {
+        code: 0,
+        data: {
+          authenticated: true,
+          tokenBoundary: 'bff-cookie',
+          role: 'ADMIN'
+        }
+      })
+    ).toEqual({
+      name: ' ops-admin ',
+      avatar: './assets/img/avatar.svg',
+      email: 'administrator',
+      role: 'ADMIN'
+    });
+
+    expect(buildPostLoginSessionUser('   ', { code: 0, data: { authenticated: true } })).toEqual({
+      name: '   ',
+      avatar: './assets/img/avatar.svg',
+      email: 'administrator'
+    });
+
+    expect(buildPostLoginSessionUser('', { code: 0, data: { authenticated: true } })).toEqual({
+      name: 'admin',
+      avatar: './assets/img/avatar.svg',
+      email: 'administrator'
+    });
   });
 
   it('sanitizes login redirect targets to internal non-auth routes', () => {
@@ -87,20 +121,68 @@ describe('passport login controller', () => {
     expect(buildLoginRedirectHref('/passport/login')).toBe('/passport/login');
     expect(buildLoginRedirectHref('/passport/login', '/login')).toBe('/login');
     expect(resolvePostLoginRedirectTarget('/monitors?app=website')).toBe('/monitors?app=website');
-    expect(resolvePostLoginRedirectTarget('/passport/login')).toBe('/overview');
-    expect(resolvePostLoginRedirectTarget('https://example.com')).toBe('/overview');
+    expect(resolvePostLoginRedirectTarget('/passport/login')).toBe('/');
+    expect(resolvePostLoginRedirectTarget('https://example.com')).toBe('/');
+    expect(resolvePostLoginRedirectTarget('/passport/login', '/overview')).toBe('/overview');
+    expect(resolvePostLoginStartupFailureTarget()).toBe('/exception/500');
   });
 
-  it('warms the post-login session bootstrap without failing on bootstrap misses', async () => {
+  it('builds the compatibility login alias URL while preserving guard context', () => {
+    expect(buildLoginCompatRouteUrl()).toBe('/passport/login');
+    expect(buildLoginCompatRouteUrl({ redirect: '/monitors?app=website', source: 'guard' })).toBe(
+      '/passport/login?redirect=%2Fmonitors%3Fapp%3Dwebsite&source=guard'
+    );
+    expect(buildLoginCompatRouteUrl({ redirect: '/trace/manage?traceId=1', returnLabel: 'Login' })).toBe(
+      '/passport/login?redirect=%2Ftrace%2Fmanage%3FtraceId%3D1'
+    );
+  });
+
+  it('normalizes multi-value URL search params into the first passport login redirect target', () => {
+    expect(
+      readPassportLoginRouteState({
+        redirect: ['/monitors?app=website', '/trace/manage?traceId=1'],
+        returnLabel: ['Login', 'Ignored']
+      })
+    ).toEqual({
+      redirectTarget: '/monitors?app=website'
+    });
+
+    expect(
+      readPassportLoginRouteState({
+        redirect: ['https://evil.example', '/monitors?app=website']
+      })
+    ).toEqual({
+      redirectTarget: '/'
+    });
+  });
+
+  it('warms the post-login session bootstrap after login success', async () => {
     const apiGet = vi
       .fn()
-      .mockResolvedValueOnce({ locale: 'en-US' });
+      .mockResolvedValueOnce({ code: 0, data: { locale: 'zh_CN' } })
+      .mockResolvedValueOnce({ code: 0, data: [] });
 
     await expect(bootstrapPostLoginSession(apiGet as any)).resolves.toBeUndefined();
-    expect(apiGet).toHaveBeenCalledWith('/config/system');
+    expect(apiGet).toHaveBeenNthCalledWith(1, '/config/system');
+    expect(apiGet).toHaveBeenNthCalledWith(2, '/apps/hierarchy?lang=zh-CN');
 
-    const failingApiGet = vi.fn().mockRejectedValueOnce(new Error('bootstrap failed'));
+    const failingApiGet = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('bootstrap failed'))
+      .mockResolvedValueOnce({ code: 0, data: [] });
     await expect(bootstrapPostLoginSession(failingApiGet as any)).resolves.toBeUndefined();
-    expect(failingApiGet).toHaveBeenCalledWith('/config/system');
+    expect(failingApiGet).toHaveBeenNthCalledWith(1, '/config/system');
+    expect(failingApiGet).toHaveBeenNthCalledWith(2, '/apps/hierarchy?lang=en-US');
+  });
+
+  it('preserves Angular startup failure routing when the hierarchy bootstrap fails', async () => {
+    const apiGet = vi
+      .fn()
+      .mockResolvedValueOnce({ code: 0, data: { locale: 'zh_CN' } })
+      .mockRejectedValueOnce(new Error('hierarchy failed'));
+
+    await expect(bootstrapPostLoginSession(apiGet as any)).rejects.toThrow('hierarchy failed');
+    expect(apiGet).toHaveBeenNthCalledWith(1, '/config/system');
+    expect(apiGet).toHaveBeenNthCalledWith(2, '/apps/hierarchy?lang=zh-CN');
   });
 });

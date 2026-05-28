@@ -1,10 +1,21 @@
 import React, { Suspense } from 'react';
 import { LoginForm } from '@/components/pages/login-form';
+import {
+  readPassportLoginRouteState,
+  type PassportLoginSearchParams
+} from '@/lib/passport-login/controller';
 
-export default function PassportLoginPage() {
+export default async function PassportLoginPage({
+  searchParams
+}: {
+  searchParams?: Promise<PassportLoginSearchParams>;
+} = {}) {
+  const resolvedSearchParams = await searchParams;
+  const routeState = readPassportLoginRouteState(resolvedSearchParams);
+
   return (
     <Suspense fallback={null}>
-      <LoginForm />
+      <LoginForm initialRouteState={routeState} />
     </Suspense>
   );
 }

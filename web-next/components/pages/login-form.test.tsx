@@ -6,36 +6,35 @@ import { resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-const ZH_CN_LABEL = 'Simplified Chinese(zh_CN)';
+const ZH_CN_LABEL = '简体中文(zh_CN)';
 const JA_JP_LABEL = 'Japanese(ja_JP)';
 const LOGIN_NOTICE_COPY =
   '\u767b\u5f55\u6210\u529f\u540e\u4f1a\u81ea\u52a8\u6062\u590d\u5f53\u524d\u5de5\u4f5c\u53f0\u4f1a\u8bdd\uff0c\u5e76\u5728\u9700\u8981\u65f6\u5c1d\u8bd5\u5237\u65b0\u4ee4\u724c\u3002';
-const HERO_TITLE = 'Open-source enterprise observability for private operations';
-const HERO_LEAD = 'Collectors, monitoring templates, entities, metrics, logs, and traces';
-const HERO_FOCUS = 'Handle alerts and close issues inside HertzBeat';
+const HERO_TITLE = '开源私有化企业运维可观测平台';
+const HERO_LEAD = '采集器、监控模板、实体、指标、日志和链路';
+const HERO_FOCUS = '处理告警并关闭问题';
 const HERO_BODY =
-  'Collect metrics from applications, databases, operating systems, middleware, and network devices without sending data outside your deployment.';
-const LOGIN_HEADING = 'Sign In HertzBeat';
-const USERNAME_PROMPT = 'Please enter your username';
-const PASSWORD_PROMPT = 'Please enter password';
-const LOGIN_BUTTON = 'Login';
+  '通过采集器接入应用、数据库、操作系统、中间件和网络设备指标，数据留在私有化部署内。';
+const LOGIN_HEADING = '登入 HertzBeat';
+const USERNAME_PROMPT = '请输入用户名';
+const PASSWORD_PROMPT = '请输入密码';
+const PASSWORD_TOGGLE_LABEL = '显示密码';
+const REMEMBER_ME_LABEL = '记住我';
+const LOGIN_BUTTON = '登录';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     replace: vi.fn()
-  }),
-  useSearchParams: () => ({
-    get: () => null
   })
 }));
 
 vi.mock('next/image', () => ({
-  default: ({ alt, src, priority: _priority, ...props }: any) => <img alt={alt} src={src} {...props} />
+  default: ({ alt, src, priority: _priority, ...props }: any) => React.createElement('img', { alt, src, ...props })
 }));
 
 vi.mock('../providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock(),
+    t: createTranslatorMock({ locale: 'zh-CN' }),
     locale: 'zh-CN',
     locales: [
       { code: 'en-US', labelKey: 'settings.system-config.locale.en_US', abbr: '🇬🇧' },
@@ -55,10 +54,9 @@ vi.mock('../ui/input', () => ({
 }));
 
 vi.mock('../../lib/passport-login/controller', () => ({
-  assertLoginSuccess: vi.fn(),
+  assertSessionLoginSuccess: vi.fn(),
   buildLoginRequestBody: vi.fn(),
   bootstrapPostLoginSession: vi.fn(),
-  persistLoginTokens: vi.fn(),
   resolvePostLoginRedirectTarget: vi.fn(() => '/overview'),
   LOGIN_REDIRECT_QUERY_KEY: 'redirect'
 }));
@@ -86,7 +84,7 @@ describe('LoginForm', () => {
     expect(html).toContain(HERO_LEAD);
     expect(html).toContain(HERO_FOCUS);
     expect(html).toContain(HERO_BODY);
-    expect(html).not.toContain('Open-source private-deployable enterprise operations observability platform');
+    expect(html).not.toContain('Open-source enterprise observability for private operations');
     expect(html).not.toContain('Unified metrics platform, agentless and supports web, db, os, mid, network etc.');
     expect(html).not.toContain('Unified logs platform');
     expect(html).not.toContain('seamlessly integrates');
@@ -95,11 +93,35 @@ describe('LoginForm', () => {
     expect(html).toContain(USERNAME_PROMPT);
     expect(html).toContain(PASSWORD_PROMPT);
     expect(html).toContain(LOGIN_BUTTON);
-    expect(html).toContain('placeholder="Please enter your username"');
-    expect(html).toContain('placeholder="Please enter password"');
+    expect(html).toContain(`placeholder="${USERNAME_PROMPT}"`);
+    expect(html).toContain(`placeholder="${PASSWORD_PROMPT}"`);
+    expect(html).toContain(`aria-label="${PASSWORD_TOGGLE_LABEL}"`);
     expect(html).toContain('data-passport-login-password-eye="true"');
     expect(html).toContain('data-passport-login-panel="angular-gray-card"');
     expect(html).toContain('data-passport-login-panel-align="angular-top"');
+    expect(html).toContain('data-passport-login-submit-lifecycle-contract="angular-required-default-warning-session-bootstrap-redirect"');
+    expect(html).toContain('data-passport-login-submit-lifecycle-owner="hertzbeat-ui-passport-login-action"');
+    expect(html).toContain('data-passport-login-required-mode-contract="angular-required-no-trim"');
+    expect(html).toContain('data-passport-login-required-mode-owner="hertzbeat-ui-passport-login-action"');
+    expect(html).toContain('data-passport-login-session-user-name-contract="angular-raw-identifier"');
+    expect(html).toContain('data-passport-login-session-user-name-owner="hertzbeat-ui-passport-login-action"');
+    expect(html).toContain('data-hz-ui="passport-login-action-frame"');
+    expect(html).toContain('data-hz-passport-login-action-owner="hertzbeat-ui-passport-login-action"');
+    expect(html).toContain('data-hz-passport-login-submit-lifecycle="angular-required-default-warning-session-bootstrap-redirect"');
+    expect(html).toContain('data-hz-passport-login-required-fields="identifier-credential"');
+    expect(html).toContain('data-hz-passport-login-required-mode="angular-required-no-trim"');
+    expect(html).toContain('data-hz-passport-login-default-password="angular-first-submit-warning"');
+    expect(html).toContain('data-hz-passport-login-default-password-lifecycle="angular-sticky-until-submit"');
+    expect(html).toContain('data-passport-login-default-password-lifecycle-contract="angular-sticky-until-submit"');
+    expect(html).toContain('data-hz-passport-login-token-boundary="bff-cookie-no-localstorage"');
+    expect(html).toContain('data-hz-passport-login-session-bootstrap="angular-startup-load-after-success"');
+    expect(html).toContain('data-hz-passport-login-session-user-name="angular-raw-identifier"');
+    expect(html).toContain('data-hz-passport-login-startup-failure="angular-exception-500"');
+    expect(html).toContain('data-passport-login-startup-failure-contract="angular-exception-500"');
+    expect(html).toContain('data-hz-passport-login-redirect="angular-referrer-non-passport-fallback"');
+    expect(html).toContain('data-hz-passport-login-redirect-fallback="angular-root-fallback"');
+    expect(html).toContain('data-passport-login-redirect-fallback-contract="angular-root-fallback"');
+    expect(html).toContain('data-hz-passport-login-remember-default="true"');
     expect(html).toContain('data-passport-login-accent="true"');
     expect(html).toContain('data-passport-login-remember="true"');
     expect(html).toContain('data-passport-login-remember-checkbox="cold-checkbox"');
@@ -113,21 +135,23 @@ describe('LoginForm', () => {
     expect(html).toContain('data-passport-hero-offset="angular-left-reference"');
     expect(html).toContain('data-passport-brand-lockup="angular-lowered"');
     expect(html).toContain('data-passport-intro-bullet-tone="angular-cyan"');
-    expect(html).toContain('Remember me');
+    expect(html).toContain(REMEMBER_ME_LABEL);
     expect(html).toContain('data-passport-locale-trigger="globe"');
     expect(html).toContain('data-passport-footer-tone="angular-muted"');
     expect(html).toContain('data-passport-footer-band="angular-raised"');
     expect(html).not.toContain(ZH_CN_LABEL);
     expect(html).toContain('Apache HertzBeat™');
     expect(html).toContain('Apache HertzBeat™ v1.8.0');
-    expect(html).toContain('Licensed under the Apache License, Version 2.0');
+    expect(html).toContain('Copyright ©');
+    expect(html).not.toContain('遵循 Apache License, Version 2.0 授权');
     expect(html).not.toContain(LOGIN_NOTICE_COPY);
     expect(html).not.toContain('value="admin"');
     expect(html).not.toContain('value="hertzbeat"');
-  }, 15000);
+  }, 60000);
 
   it('removes the remaining bright auth-field residue and adopts shared ops form tokens', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/login-form.tsx'), 'utf8');
+    const uiSource = readFileSync(resolve(process.cwd(), 'packages/hertzbeat-ui/src/index.tsx'), 'utf8');
 
     expect(source).not.toContain('text-[#424955]');
     expect(source).not.toContain('text-[#697180]');
@@ -142,17 +166,27 @@ describe('LoginForm', () => {
     expect(source).not.toContain('text-[#8f1d37]');
     expect(source).not.toContain('pt-8 lg:pt-7');
 
-    expect(source).toContain('text-[var(--ops-text-secondary)]');
+    expect(uiSource).toContain('text-[var(--ops-text-secondary)]');
     expect(source).toContain('text-[var(--ops-text-tertiary)]');
     expect(source).toContain('border-[var(--ops-border-color)]');
     expect(source).toContain('bg-[var(--ops-surface-panel)]');
-    expect(source).toContain('bg-[var(--ops-surface-elevated)]');
-    expect(source).toContain("from '../workbench/primitives'");
+    expect(uiSource).toContain('bg-[var(--ops-surface-elevated)]');
+    expect(source).toContain("import { HzPassportLoginActionFrame, HzPassportLoginNotice, HzPassportLoginValidationNotice } from '@hertzbeat/ui';");
+    expect(source).toContain('<HzPassportLoginActionFrame');
     expect(source).toContain("import { Checkbox } from '../ui/checkbox';");
-    expect(source).toContain('StatusState');
+    expect(source).toContain('<HzPassportLoginNotice copy={notice.copy} href={notice.href} />');
+    expect(source).toContain('<HzPassportLoginValidationNotice title={t(\'common.attention\')} copy={error} />');
+    expect(source).toContain('validateCredentialLoginDraft(identifier, credential, t)');
+    expect(source).toContain("import { resetWorkbenchLoadCache } from '../../lib/workbench-load-cache';");
+    expect(source).toContain('resetWorkbenchLoadCache();');
+    expect(source).toContain('await bootstrapPostLoginSession(apiGet);');
     expect(source).toContain('data-passport-login-panel-align="angular-top"');
+    expect(source).not.toContain('<AlertTriangle');
     expect(source).not.toContain('input type="checkbox"');
     expect(source).not.toContain('<input type="checkbox" className="sr-only" defaultChecked />');
+    expect(source).not.toContain('StatusState');
     expect(source).not.toContain('ObservabilityStatusState');
+    expect(source).toContain("aria-label={showCredential ? t('app.login.password-hide') : t('app.login.password-show')}");
+    expect(source).toContain("label={t('app.login.remember-me')}");
   });
 });

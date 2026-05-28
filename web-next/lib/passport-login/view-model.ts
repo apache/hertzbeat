@@ -8,6 +8,24 @@ export function shouldBlockDefaultPasswordSubmit(needUpdatePassword: boolean, cr
   return !needUpdatePassword && shouldWarnDefaultPassword(credential);
 }
 
+export function validateCredentialLoginDraft(identifier: string, credential: string, t: Translator) {
+  if (identifier.length === 0) {
+    return {
+      field: 'identifier' as const,
+      message: t('app.login.message-need-identifier')
+    };
+  }
+
+  if (credential.length === 0) {
+    return {
+      field: 'credential' as const,
+      message: t('app.login.message-need-credential')
+    };
+  }
+
+  return null;
+}
+
 export function buildLoginFeatureCards(t: Translator) {
   return [
     {
@@ -29,7 +47,7 @@ export function buildLoginNotice(needUpdatePassword: boolean, t: Translator) {
   if (needUpdatePassword) {
     return {
       kind: 'warning' as const,
-      copy: t('passport.login.default-password-warning'),
+      copy: t('app.login.need-change-password'),
       href: 'https://hertzbeat.apache.org/docs/start/account-modify'
     };
   }

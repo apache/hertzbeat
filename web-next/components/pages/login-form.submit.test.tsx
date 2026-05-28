@@ -90,13 +90,13 @@ describe('login form submit flow', () => {
     vi.unstubAllGlobals();
   });
 
-  it('persists tokens, warms bootstrap config, and restores the guarded return path after login', async () => {
+  it('uses the BFF cookie session, warms bootstrap config, and restores the guarded return path after login', async () => {
     const fetchMock = global.fetch as unknown as ReturnType<typeof vi.fn>;
     fetchMock
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: async () => ({ code: 0, data: { token: 'access-token', refreshToken: 'refresh-token' } })
+        json: async () => ({ code: 0, data: { authenticated: true, tokenBoundary: 'bff-cookie' } })
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -130,13 +130,14 @@ describe('login form submit flow', () => {
       '/api/config/system',
       expect.objectContaining({
         cache: 'no-store',
-        headers: expect.objectContaining({
-          Authorization: 'Bearer access-token'
+        credentials: 'same-origin',
+        headers: expect.not.objectContaining({
+          Authorization: expect.any(String)
         })
       })
     );
-    expect(window.localStorage.getItem('Authorization')).toBe('access-token');
-    expect(window.localStorage.getItem('refresh-token')).toBe('refresh-token');
+    expect(window.localStorage.getItem('Authorization')).toBeNull();
+    expect(window.localStorage.getItem('refresh-token')).toBeNull();
     expect(mockState.routerReplace).toHaveBeenCalledWith('/monitors?app=website');
   }, 15000);
 
@@ -146,7 +147,7 @@ describe('login form submit flow', () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: async () => ({ code: 0, data: { token: 'access-token', refreshToken: 'refresh-token' } })
+        json: async () => ({ code: 0, data: { authenticated: true, tokenBoundary: 'bff-cookie' } })
       })
       .mockResolvedValueOnce({
         ok: true,

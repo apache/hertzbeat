@@ -7,12 +7,12 @@ import { PassportPanel, PassportShell } from './passport-shell';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 vi.mock('next/image', () => ({
-  default: ({ alt, src, priority: _priority, ...props }: any) => <img alt={alt} src={src} {...props} />
+  default: ({ alt, src, priority: _priority, ...props }: any) => React.createElement('img', { alt, src, ...props })
 }));
 
 vi.mock('../providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock(),
+    t: createTranslatorMock({ locale: 'zh-CN' }),
     locale: 'zh-CN',
     locales: [
       { code: 'en-US', labelKey: 'settings.system-config.locale.en_US', abbr: '🇬🇧' },
@@ -39,7 +39,7 @@ vi.mock('../shell/platform-copyright-footer', () => ({
     <footer {...props}>
       <div className={headlineClassName}>Apache HertzBeat™{version ? ` ${version}` : ''}</div>
       <a className={linkClassName}>Apache HertzBeat™</a>
-      <div className={lineClassName}>{children ?? 'Licensed under the Apache License, Version 2.0'}</div>
+      {children ? <div className={lineClassName}>{children}</div> : null}
     </footer>
   )
 }));
@@ -57,6 +57,13 @@ describe('PassportShell', () => {
     );
 
     expect(html).toContain('data-passport-shell="true"');
+    expect(html).toContain('data-hz-ui="passport-session-clear-frame"');
+    expect(html).toContain('data-passport-session-clear-contract="angular-token-service-clear-on-passport-entry"');
+    expect(html).toContain('data-passport-session-clear-enabled="true"');
+    expect(html).toContain('data-passport-session-clear-owner="hertzbeat-ui-passport-session-clear"');
+    expect(html).toContain('data-hz-passport-session-clear-lifecycle="angular-token-service-clear-on-passport-entry"');
+    expect(html).toContain('data-hz-passport-session-clear-scope="client-marker-user-snapshot"');
+    expect(html).toContain('data-hz-passport-session-clear-boundary="no-api-logout-on-entry"');
     expect(html).toContain('data-passport-shell-spacing="angular-reference"');
     expect(html).toContain('data-passport-brand-lockup="angular-lowered"');
     expect(html).toContain('data-passport-content-alignment="angular-centered"');
@@ -76,7 +83,32 @@ describe('PassportShell', () => {
     expect(html).toContain('data-passport-footer-band="angular-raised"');
     expect(html).toContain('/assets/bg.png');
     expect(html).toContain('Apache HertzBeat™ v1.8.0');
-    expect(html).toContain('Licensed under the Apache License, Version 2.0');
+    expect(html).toContain('开源私有化企业运维可观测平台');
+    expect(html).toContain('采集器、监控模板、实体、指标、日志和链路');
+    expect(html).toContain('处理告警并关闭问题');
+    expect(html).toContain('通过采集器接入应用、数据库、操作系统、中间件和网络设备指标，数据留在私有化部署内。');
+    expect(html).toContain('按网络区域扩展 Collector 集群，支撑私有化、隔离采集和状态页。');
+    expect(html).not.toContain('遵循 Apache License, Version 2.0 授权');
+    expect(html).not.toContain('Apache License, Version 2.0');
+  });
+
+  it('can preserve the active session for the Angular lock route', () => {
+    const html = renderToStaticMarkup(
+      <PassportShell panelClassName="max-w-[712px]" sessionLifecycle="preserve-on-lock">
+        <PassportPanel title="Unlock">
+          <form data-passport-lock-form="true">
+            <input />
+          </form>
+        </PassportPanel>
+      </PassportShell>
+    );
+
+    expect(html).toContain('data-passport-session-clear-contract="angular-lock-preserve-session"');
+    expect(html).toContain('data-passport-session-clear-enabled="false"');
+    expect(html).toContain('data-hz-passport-session-clear-lifecycle="angular-lock-preserve-session"');
+    expect(html).toContain('data-hz-passport-session-clear-scope="client-marker-user-snapshot-preserved"');
+    expect(html).toContain('data-hz-passport-session-clear-boundary="no-session-clear-on-lock"');
+    expect(html).toContain('data-passport-lock-form="true"');
   });
 
   it('removes the remaining bright auth shell residue and adopts ops tokens', () => {
@@ -104,9 +136,16 @@ describe('PassportShell', () => {
     expect(source).toContain('text-[var(--ops-text-secondary)]');
     expect(source).toContain('text-[var(--ops-primary)]');
     expect(source).toContain("from '../workbench/primitives'");
+    expect(source).toContain("import { HzPassportSessionClearFrame } from '@hertzbeat/ui';");
+    expect(source).toContain("import { clearClientSessionMarker, clearClientSessionUserSnapshot } from '../../lib/session-client';");
+    expect(source).toContain('clearClientSessionMarker();');
+    expect(source).toContain('clearClientSessionUserSnapshot();');
+    expect(source).not.toContain('clearClientSession();');
     expect(source).toContain('WorkbenchPanel');
     expect(source).toContain('data-passport-locale-trigger="globe"');
     expect(source).toContain('data-passport-locale-tone="angular-magenta"');
+    expect(source).toContain("aria-label={t('app.passport.language-switch')}");
+    expect(source).not.toContain('aria-label="Switch language"');
     expect(source).toContain('text-[#d11ce6]');
     expect(source).toContain('data-passport-background-overlay="angular-light"');
     expect(source).toContain('data-passport-intro-list="angular-single-column"');

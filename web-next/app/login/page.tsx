@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { buildCompatRedirectTarget, type SearchParamsRecord } from '../../lib/compat/search-params';
+import { buildLoginCompatRouteUrl, type SearchParamsRecord } from '../../lib/passport-login/controller';
 
 export default async function LoginAliasPage({
   searchParams
@@ -7,5 +7,5 @@ export default async function LoginAliasPage({
   searchParams?: Promise<SearchParamsRecord>;
 }) {
   const resolvedSearchParams = await searchParams;
-  redirect(buildCompatRedirectTarget('/passport/login', resolvedSearchParams));
+  redirect(buildLoginCompatRouteUrl(resolvedSearchParams));
 }
