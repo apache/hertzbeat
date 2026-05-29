@@ -8216,6 +8216,9 @@ export default function HertzBeatUiLabPage() {
             meta="Preparing threshold import"
             variant="embedded"
             data-hz-ui-lab-alert-setting-import-feedback="shared"
+            data-hz-ui-lab-alert-setting-import-lifecycle="angular-success-refresh-failure-stays"
+            data-alert-setting-import-refresh-contract="angular-success-refresh"
+            data-alert-setting-import-failure-refresh-contract="angular-failure-no-refresh"
             data-alert-setting-action-feedback-owner="hertzbeat-ui-inline-feedback"
           />
           <HzInlineFeedback
@@ -8311,8 +8314,12 @@ export default function HertzBeatUiLabPage() {
           />
           <HzFileInput
             aria-label="Import threshold rules file"
+            multiple={false}
             data-hz-ui-lab-alert-setting-import-input="shared"
+            data-hz-ui-lab-alert-setting-import-upload="angular-nz-upload-limit-one-no-list"
             data-alert-setting-import-input-owner="hertzbeat-ui-file-input"
+            data-alert-setting-import-upload-contract="angular-nz-upload-limit-one-no-list"
+            data-alert-setting-import-show-list="false"
           />
           <HzExportTypeDialog
             open={alertSettingExportDialogOpen}

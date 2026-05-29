@@ -322,6 +322,19 @@ describe('alert setting page', () => {
     expect(source).not.toContain("return t('common.notify.import-success-detail'");
   });
 
+  it('keeps threshold import upload lifecycle on the Angular single-file reload contract', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
+
+    expect(source).toContain('if (pendingActionId) return;');
+    expect(source).toContain('multiple={false}');
+    expect(source).toContain('data-alert-setting-import-upload-contract="angular-nz-upload-limit-one-no-list"');
+    expect(source).toContain('data-alert-setting-import-show-list="false"');
+    expect(source).toContain('data-alert-setting-import-refresh-contract="angular-success-refresh"');
+    expect(source).toContain('data-alert-setting-import-failure-refresh-contract="angular-failure-no-refresh"');
+    expect(source).toContain('setRefreshKey(value => value + 1)');
+    expect(source).not.toContain('multiple={true}');
+  });
+
   it('keeps threshold export success silent while mapping failures to the Angular notify title', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
 

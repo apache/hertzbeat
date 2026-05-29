@@ -323,6 +323,7 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
   }
 
   function handleImportClick() {
+    if (pendingActionId) return;
     importInputRef.current?.click();
   }
 
@@ -330,6 +331,7 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    if (pendingActionId) return;
     await runSettingAction(
       'import',
       t('common.notify.import-submitted', { taskName: file.name }),
@@ -424,8 +426,13 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
             <HzFileInput
               ref={importInputRef}
               aria-label={t('alert.setting.import.input')}
+              multiple={false}
               data-alert-setting-import-input-owner="hertzbeat-ui-file-input"
               data-alert-setting-import-file-input="true"
+              data-alert-setting-import-upload-contract="angular-nz-upload-limit-one-no-list"
+              data-alert-setting-import-show-list="false"
+              data-alert-setting-import-refresh-contract="angular-success-refresh"
+              data-alert-setting-import-failure-refresh-contract="angular-failure-no-refresh"
               onChange={event => void handleImportChange(event)}
             />
             <AlertSettingCreateDialog
