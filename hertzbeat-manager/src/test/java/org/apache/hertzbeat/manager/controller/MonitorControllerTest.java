@@ -109,6 +109,49 @@ class MonitorControllerTest {
     }
 
     @Test
+    void modifyMonitorKeepsLegacyPathIdAlias() throws Exception {
+        MonitorDto monitorDto = dataTest();
+        Monitor submittedMonitor = monitorDto.getMonitor();
+        submittedMonitor.setId(null);
+        monitorDto.setMonitor(submittedMonitor);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.put("/api/monitor/{id}", 6565463543L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(monitorDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+
+        Mockito.verify(monitorService).validate(Mockito.argThat(
+                submitted -> Long.valueOf(6565463543L).equals(submitted.getMonitor().getId())), Mockito.eq(true));
+        Mockito.verify(monitorService).modifyMonitor(Mockito.argThat(
+                        monitor -> Long.valueOf(6565463543L).equals(monitor.getId())),
+                Mockito.eq(monitorDto.getParams()), Mockito.isNull(), Mockito.isNull());
+    }
+
+    @Test
+    void modifyMonitorKeepsLegacyQueryIdAlias() throws Exception {
+        MonitorDto monitorDto = dataTest();
+        Monitor submittedMonitor = monitorDto.getMonitor();
+        submittedMonitor.setId(null);
+        monitorDto.setMonitor(submittedMonitor);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.put("/api/monitor")
+                        .param("id", "6565463543")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(monitorDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+
+        Mockito.verify(monitorService).validate(Mockito.argThat(
+                submitted -> Long.valueOf(6565463543L).equals(submitted.getMonitor().getId())), Mockito.eq(true));
+        Mockito.verify(monitorService).modifyMonitor(Mockito.argThat(
+                        monitor -> Long.valueOf(6565463543L).equals(monitor.getId())),
+                Mockito.eq(monitorDto.getParams()), Mockito.isNull(), Mockito.isNull());
+    }
+
+    @Test
     void getMonitor() throws Exception {
         Monitor monitor = new Monitor();
         monitor.setId(87584674384L);
@@ -135,6 +178,22 @@ class MonitorControllerTest {
     }
 
     @Test
+    void getMonitorKeepsLegacyQueryIdAlias() throws Exception {
+        MonitorDto monitorDto = dataTest();
+
+        Mockito.when(monitorService.getMonitorDto(6565463543L))
+                .thenReturn(monitorDto);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitor")
+                        .param("id", "6565463543"))
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Mockito.verify(monitorService).getMonitorDto(6565463543L);
+    }
+
+    @Test
     void deleteMonitor() throws Exception {
 
         Monitor monitor = new Monitor();
@@ -156,6 +215,37 @@ class MonitorControllerTest {
                 .andExpect(jsonPath("$.msg").value("Delete success"))
                 .andExpect(status().isOk())
                 .andReturn();
+    }
+
+    @Test
+    void deleteMonitorKeepsLegacyQueryIdAlias() throws Exception {
+        Monitor monitor = new Monitor();
+        monitor.setId(6565463543L);
+        monitor.setName("legacy-delete");
+
+        Mockito.when(monitorService.getMonitor(6565463543L))
+                .thenReturn(monitor);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/monitor")
+                        .param("id", "6565463543"))
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("Delete success"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Mockito.verify(monitorService).deleteMonitor(6565463543L);
+    }
+
+    @Test
+    void copyMonitorKeepsLegacyQueryIdAlias() throws Exception {
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/copy")
+                        .param("id", "6565463543"))
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("Copy monitor success"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Mockito.verify(monitorService).copyMonitor(6565463543L);
     }
 
     @Test

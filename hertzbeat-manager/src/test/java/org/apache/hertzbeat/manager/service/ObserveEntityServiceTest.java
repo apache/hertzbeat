@@ -57,6 +57,7 @@ import org.apache.hertzbeat.common.entity.manager.EntityOwnerRef;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
 import org.apache.hertzbeat.manager.dao.EntityMonitorBindDao;
@@ -67,8 +68,10 @@ import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ObserveEntityDao;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDiscoveryGovernanceActivityInfo;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDiscoveryGovernancePresetInfo;
+import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionWorkspaceActivityInfo;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionRequest;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionWorkspaceResumeInfo;
+import org.apache.hertzbeat.manager.pojo.dto.EntityDefinitionWorkspaceTemplateInfo;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDetailDto;
 import org.apache.hertzbeat.manager.pojo.dto.EntityDto;
 import org.apache.hertzbeat.manager.pojo.dto.EntityInfo;
@@ -81,7 +84,64 @@ import org.apache.hertzbeat.observability.shared.service.impl.EntityObservabilit
 import org.apache.hertzbeat.observability.shared.service.impl.TelemetryIntakeServiceImpl;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.manager.service.impl.ObserveEntityServiceImpl;
+import org.apache.hertzbeat.manager.service.entity.EntityActivityQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityActivityReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityActivityRecordWriteModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityActivityWriteModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityAlertEvidenceQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityAlertEvidenceReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityCatalogQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityCatalogProfileService;
+import org.apache.hertzbeat.manager.service.entity.EntityCoreWriteModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityDeletionWriteModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionDocumentFieldNormalizationService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionDocumentParserService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionDocumentRendererService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionDraftService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionExportService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionExtensionNormalizationService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionHertzbeatNormalizationService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionMetadataNormalizationService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionMappingService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionNormalizationService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionRelationNormalizationService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionSpecNormalizationService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionTelemetryNormalizationService;
+import org.apache.hertzbeat.manager.service.entity.EntityDefinitionTypeResolverService;
+import org.apache.hertzbeat.manager.service.entity.EntityDetailObservabilityReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityDetailReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityEvidenceReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityGovernanceStateQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityGovernanceStateService;
+import org.apache.hertzbeat.manager.service.entity.EntityGovernanceStateWriteModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityGovernanceWorkflowService;
+import org.apache.hertzbeat.manager.service.entity.EntityIdentityQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityIdentityReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityIdentityResolutionService;
+import org.apache.hertzbeat.manager.service.entity.EntityIdentityWriteModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityIntegrationHintService;
+import org.apache.hertzbeat.manager.service.entity.EntityListReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityMonitorBindQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityMonitorBindService;
+import org.apache.hertzbeat.manager.service.entity.EntityMonitorBindWriteModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityMonitorEvidenceReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityMonitorQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityMutationWorkflowService;
+import org.apache.hertzbeat.manager.service.entity.EntityNoiseControlReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityNoiseControlRuleQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityRelationQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityRelationService;
+import org.apache.hertzbeat.manager.service.entity.EntityRelationWriteModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityResponseHandoffReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityRuntimeHealthService;
+import org.apache.hertzbeat.manager.service.entity.EntityRuntimeHealthWriteModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityStatusRefreshService;
+import org.apache.hertzbeat.manager.service.entity.EntitySummaryReadModelService;
+import org.apache.hertzbeat.manager.service.entity.EntityValidationService;
+import org.apache.hertzbeat.manager.service.entity.EntityWorkspaceAccessService;
+import org.apache.hertzbeat.manager.service.entity.EntityWorkspaceQueryService;
 import org.apache.hertzbeat.warehouse.repository.LogQueryRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -91,6 +151,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -142,19 +203,205 @@ class ObserveEntityServiceTest {
 
     private TelemetryIntakeServiceImpl telemetryIntakeService;
     private EntityObservabilityGateway entityObservabilityGateway;
+    private EntityActivityQueryService entityActivityQueryService;
+    private EntityActivityReadModelService entityActivityReadModelService;
+    private EntityActivityRecordWriteModelService entityActivityRecordWriteModelService;
+    private EntityActivityWriteModelService entityActivityWriteModelService;
+    private EntityAlertEvidenceQueryService entityAlertEvidenceQueryService;
+    private EntityAlertEvidenceReadModelService entityAlertEvidenceReadModelService;
+    private EntityCatalogQueryService entityCatalogQueryService;
+    private EntityCatalogProfileService entityCatalogProfileService;
+    private EntityCoreWriteModelService entityCoreWriteModelService;
+    private EntityDeletionWriteModelService entityDeletionWriteModelService;
+    private EntityDefinitionDocumentParserService entityDefinitionDocumentParserService;
+    private EntityDefinitionDocumentRendererService entityDefinitionDocumentRendererService;
+    private EntityDefinitionDraftService entityDefinitionDraftService;
+    private EntityDefinitionExportService entityDefinitionExportService;
+    private EntityDefinitionMappingService entityDefinitionMappingService;
+    private EntityDefinitionNormalizationService entityDefinitionNormalizationService;
+    private EntityDetailObservabilityReadModelService entityDetailObservabilityReadModelService;
+    private EntityDetailReadModelService entityDetailReadModelService;
+    private EntityEvidenceReadModelService entityEvidenceReadModelService;
+    private EntityGovernanceStateQueryService entityGovernanceStateQueryService;
+    private EntityGovernanceStateWriteModelService entityGovernanceStateWriteModelService;
+    private EntityGovernanceStateService entityGovernanceStateService;
+    private EntityGovernanceWorkflowService entityGovernanceWorkflowService;
+    private EntityIdentityQueryService entityIdentityQueryService;
+    private EntityIdentityReadModelService entityIdentityReadModelService;
+    private EntityIdentityResolutionService entityIdentityResolutionService;
+    private EntityIdentityWriteModelService entityIdentityWriteModelService;
+    private EntityIntegrationHintService entityIntegrationHintService;
+    private EntityListReadModelService entityListReadModelService;
+    private EntityMonitorBindQueryService entityMonitorBindQueryService;
+    private EntityMonitorBindService entityMonitorBindService;
+    private EntityMonitorBindWriteModelService entityMonitorBindWriteModelService;
+    private EntityMonitorEvidenceReadModelService entityMonitorEvidenceReadModelService;
+    private EntityMonitorQueryService entityMonitorQueryService;
+    private EntityMutationWorkflowService entityMutationWorkflowService;
+    private EntityNoiseControlRuleQueryService entityNoiseControlRuleQueryService;
+    private EntityNoiseControlReadModelService entityNoiseControlReadModelService;
+    private EntityRelationQueryService entityRelationQueryService;
+    private EntityRelationService entityRelationService;
+    private EntityRelationWriteModelService entityRelationWriteModelService;
+    private EntityResponseHandoffReadModelService entityResponseHandoffReadModelService;
+    private EntityRuntimeHealthService entityRuntimeHealthService;
+    private EntityStatusRefreshService entityStatusRefreshService;
+    private EntitySummaryReadModelService entitySummaryReadModelService;
+    private EntityValidationService entityValidationService;
+    private EntityWorkspaceAccessService entityWorkspaceAccessService;
+    private EntityWorkspaceQueryService entityWorkspaceQueryService;
 
     @BeforeEach
     void setUpNoiseControlDefaults() {
         telemetryIntakeService = org.mockito.Mockito.spy(new TelemetryIntakeServiceImpl(logQueryRepository));
         entityObservabilityGateway = org.mockito.Mockito.spy(
                 new EntityObservabilityGatewayImpl(telemetryIntakeService, entityTraceQueryService));
-        ReflectionTestUtils.setField(observeEntityService, "entityObservabilityGateway", entityObservabilityGateway);
+        entityWorkspaceQueryService = new EntityWorkspaceQueryService(observeEntityDao);
+        entityWorkspaceAccessService = new EntityWorkspaceAccessService(entityWorkspaceQueryService);
+        entityActivityQueryService = new EntityActivityQueryService(
+                entityDefinitionActivityDao, entityWorkspaceAccessService);
+        entityActivityReadModelService = new EntityActivityReadModelService(entityActivityQueryService);
+        ReflectionTestUtils.setField(
+                observeEntityService, "entityActivityReadModelService", entityActivityReadModelService);
+        entityAlertEvidenceQueryService = new EntityAlertEvidenceQueryService(
+                singleAlertDao, entityWorkspaceAccessService);
+        entityAlertEvidenceReadModelService = new EntityAlertEvidenceReadModelService(entityAlertEvidenceQueryService);
+        entityCatalogQueryService = new EntityCatalogQueryService(
+                entityWorkspaceQueryService, entityWorkspaceAccessService);
+        entityCatalogProfileService = new EntityCatalogProfileService(entityWorkspaceAccessService);
+        ReflectionTestUtils.setField(
+                observeEntityService, "entityCatalogProfileService", entityCatalogProfileService);
+        entityDefinitionDocumentParserService = new EntityDefinitionDocumentParserService();
+        entityDefinitionDocumentRendererService = new EntityDefinitionDocumentRendererService();
+        entityCoreWriteModelService = new EntityCoreWriteModelService(entityWorkspaceAccessService, observeEntityDao);
+        entityMonitorQueryService = new EntityMonitorQueryService(monitorDao);
+        entityMonitorBindQueryService = new EntityMonitorBindQueryService(entityMonitorBindDao);
+        entityMonitorBindWriteModelService = new EntityMonitorBindWriteModelService(entityMonitorBindDao);
+        entityMonitorBindService = new EntityMonitorBindService(
+                entityMonitorBindQueryService, entityMonitorQueryService, entityMonitorBindWriteModelService);
+        entityActivityRecordWriteModelService = new EntityActivityRecordWriteModelService(
+                entityDefinitionActivityDao, entityWorkspaceAccessService);
+        entityActivityWriteModelService = new EntityActivityWriteModelService(
+                entityActivityRecordWriteModelService, entityMonitorBindService);
+        entityRelationQueryService = new EntityRelationQueryService(entityRelationDao);
+        entityRelationWriteModelService = new EntityRelationWriteModelService(entityRelationDao);
+        entityRelationService = new EntityRelationService(
+                entityWorkspaceAccessService, entityRelationQueryService, entityRelationWriteModelService);
+        entityIdentityQueryService = new EntityIdentityQueryService(entityIdentityDao);
+        entityIdentityReadModelService = new EntityIdentityReadModelService(entityIdentityQueryService);
+        entityDetailReadModelService = new EntityDetailReadModelService(
+                entityIdentityReadModelService, entityMonitorBindService, entityRelationService,
+                entityWorkspaceAccessService);
+        ReflectionTestUtils.setField(observeEntityService, "entityDetailReadModelService", entityDetailReadModelService);
+        entityGovernanceStateQueryService = new EntityGovernanceStateQueryService(
+                entityGovernanceStateDao, entityWorkspaceAccessService);
+        entityGovernanceStateWriteModelService = new EntityGovernanceStateWriteModelService(
+                entityGovernanceStateDao, entityWorkspaceAccessService);
+        entityGovernanceStateService = new EntityGovernanceStateService(
+                entityGovernanceStateQueryService, entityGovernanceStateWriteModelService);
+        entityGovernanceWorkflowService = new EntityGovernanceWorkflowService(entityGovernanceStateService);
+        ReflectionTestUtils.setField(
+                observeEntityService, "entityGovernanceWorkflowService", entityGovernanceWorkflowService);
+        entityIdentityResolutionService = new EntityIdentityResolutionService(
+                entityIdentityReadModelService, entityMonitorBindService, entityWorkspaceAccessService);
+        entityIdentityWriteModelService = new EntityIdentityWriteModelService(
+                entityIdentityDao, entityIdentityResolutionService);
+        entityIntegrationHintService = new EntityIntegrationHintService(
+                entityMonitorQueryService, entityIdentityResolutionService);
+        ReflectionTestUtils.setField(
+                observeEntityService, "entityIntegrationHintService", entityIntegrationHintService);
+        entityDeletionWriteModelService = new EntityDeletionWriteModelService(
+                entityWorkspaceAccessService,
+                entityIdentityWriteModelService,
+                entityMonitorBindService,
+                entityRelationService,
+                entityCoreWriteModelService);
+        ReflectionTestUtils.setField(
+                observeEntityService, "entityDeletionWriteModelService", entityDeletionWriteModelService);
+        entityMonitorEvidenceReadModelService = new EntityMonitorEvidenceReadModelService();
+        entityEvidenceReadModelService = new EntityEvidenceReadModelService(
+                entityWorkspaceAccessService,
+                entityMonitorBindService,
+                entityAlertEvidenceReadModelService,
+                entityMonitorEvidenceReadModelService);
+        ReflectionTestUtils.setField(observeEntityService, "entityEvidenceReadModelService", entityEvidenceReadModelService);
+        entityNoiseControlRuleQueryService = new EntityNoiseControlRuleQueryService(alertSilenceDao, alertInhibitDao);
+        entityNoiseControlReadModelService = new EntityNoiseControlReadModelService(
+                entityNoiseControlRuleQueryService, entityWorkspaceAccessService);
+        entityDefinitionMappingService = new EntityDefinitionMappingService(
+                entityRelationService, entityWorkspaceAccessService);
+        entityDefinitionExportService = new EntityDefinitionExportService(
+                entityDetailReadModelService,
+                entityDefinitionMappingService,
+                entityDefinitionDocumentRendererService);
+        ReflectionTestUtils.setField(
+                observeEntityService, "entityDefinitionExportService", entityDefinitionExportService);
+        entityDefinitionNormalizationService = new EntityDefinitionNormalizationService(
+                new EntityDefinitionDocumentFieldNormalizationService(),
+                new EntityDefinitionMetadataNormalizationService(),
+                new EntityDefinitionSpecNormalizationService(),
+                new EntityDefinitionExtensionNormalizationService(),
+                new EntityDefinitionTypeResolverService(),
+                new EntityDefinitionTelemetryNormalizationService(),
+                new EntityDefinitionRelationNormalizationService(entityRelationService),
+                new EntityDefinitionHertzbeatNormalizationService());
+        entityDefinitionDraftService = new EntityDefinitionDraftService(
+                entityDefinitionDocumentParserService,
+                entityDefinitionNormalizationService,
+                entityDefinitionMappingService);
+        ReflectionTestUtils.setField(
+                observeEntityService, "entityDefinitionDraftService", entityDefinitionDraftService);
+        entityResponseHandoffReadModelService = new EntityResponseHandoffReadModelService(entityObservabilityGateway);
+        EntityRuntimeHealthWriteModelService entityRuntimeHealthWriteModelService =
+                new EntityRuntimeHealthWriteModelService(entityCoreWriteModelService);
+        entityRuntimeHealthService = new EntityRuntimeHealthService(entityRuntimeHealthWriteModelService);
+        entityStatusRefreshService = new EntityStatusRefreshService(
+                entityMonitorBindService, entityAlertEvidenceReadModelService,
+                entityRuntimeHealthService);
+        entityValidationService = new EntityValidationService();
+        ReflectionTestUtils.setField(observeEntityService, "entityValidationService", entityValidationService);
+        entityMutationWorkflowService = new EntityMutationWorkflowService(
+                entityCoreWriteModelService,
+                entityIdentityWriteModelService,
+                entityMonitorBindService,
+                entityRelationService,
+                entityStatusRefreshService,
+                entityActivityWriteModelService,
+                entityDefinitionDraftService,
+                entityValidationService,
+                entityWorkspaceAccessService);
+        ReflectionTestUtils.setField(observeEntityService, "entityMutationWorkflowService", entityMutationWorkflowService);
+        entityDetailObservabilityReadModelService = new EntityDetailObservabilityReadModelService(
+                entityDetailReadModelService,
+                entityStatusRefreshService,
+                entityObservabilityGateway,
+                entityResponseHandoffReadModelService,
+                entityNoiseControlReadModelService,
+                entityActivityReadModelService);
+        ReflectionTestUtils.setField(
+                observeEntityService, "entityDetailObservabilityReadModelService", entityDetailObservabilityReadModelService);
+        entitySummaryReadModelService = new EntitySummaryReadModelService(
+                entityActivityReadModelService,
+                entityIdentityReadModelService,
+                entityMonitorBindService,
+                entityRelationService,
+                entityObservabilityGateway);
+        entityListReadModelService = new EntityListReadModelService(
+                entityCatalogQueryService,
+                entityStatusRefreshService,
+                entitySummaryReadModelService);
+        ReflectionTestUtils.setField(observeEntityService, "entityListReadModelService", entityListReadModelService);
         lenient().when(alertSilenceDao.findAll()).thenReturn(Collections.emptyList());
         lenient().when(alertInhibitDao.findAll()).thenReturn(Collections.emptyList());
         lenient().when(entityTraceQueryService.buildEntityTraceSummary(any()))
                 .thenReturn(new EntityTraceSummaryDto(0, 0, null, false, null));
         lenient().when(entityTraceQueryService.buildEntityTraceQueryHints(any()))
                 .thenReturn(Collections.emptyList());
+    }
+
+    @AfterEach
+    void tearDownRequestContext() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
@@ -272,6 +519,251 @@ class ObserveEntityServiceTest {
         assertEquals(1, candidates.size());
         assertTrue(candidates.getFirst().getMatchedIdentities().containsKey("container.name"));
         assertTrue(candidates.getFirst().getMatchedIdentities().containsKey("cloud.region"));
+    }
+
+    @Test
+    void getMonitorBindingCandidatesFilterByRequestWorkspace() {
+        Monitor monitor = new Monitor();
+        monitor.setId(105L);
+        monitor.setApp("springboot3");
+        monitor.setName("checkout-api");
+        monitor.setLabels(Map.of("service.name", "checkout-api"));
+        when(monitorDao.findById(105L)).thenReturn(Optional.of(monitor));
+
+        EntityIdentity teamAlphaIdentity = EntityIdentity.builder()
+                .entityId(5L)
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .normalizedValue("checkout-api")
+                .priority(90)
+                .primaryIdentity(true)
+                .build();
+        EntityIdentity teamBetaIdentity = EntityIdentity.builder()
+                .entityId(6L)
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .normalizedValue("checkout-api")
+                .priority(90)
+                .primaryIdentity(true)
+                .build();
+        when(entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(any(Set.class), any(Set.class)))
+                .thenReturn(List.of(teamAlphaIdentity, teamBetaIdentity));
+        when(entityMonitorBindDao.findAllByMonitorId(105L)).thenReturn(Collections.emptyList());
+
+        ObserveEntity teamAlphaEntity = ObserveEntity.builder()
+                .id(5L)
+                .type("service")
+                .name("checkout-api")
+                .displayName("Checkout API")
+                .status("unknown")
+                .source("otel_resource")
+                .workspaceId("team-a")
+                .build();
+        ObserveEntity teamBetaEntity = ObserveEntity.builder()
+                .id(6L)
+                .type("service")
+                .name("checkout-api")
+                .displayName("Checkout API Shadow")
+                .status("unknown")
+                .source("otel_resource")
+                .workspaceId("team-b")
+                .build();
+        when(observeEntityDao.findAllById(Set.of(5L, 6L))).thenReturn(List.of(teamAlphaEntity, teamBetaEntity));
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        List<EntityMonitorBindingCandidate> candidates = observeEntityService.getMonitorBindingCandidates(105L);
+
+        assertEquals(1, candidates.size());
+        assertEquals(5L, candidates.getFirst().getEntityId());
+        assertEquals("Checkout API", candidates.getFirst().getEntityName());
+    }
+
+    @Test
+    void governanceStateReadsUseRequestWorkspaceBoundary() {
+        EntityGovernanceState template = EntityGovernanceState.builder()
+                .stateScope("definition")
+                .stateKind("template")
+                .stateKey("team-a-template")
+                .stateName("Team A template")
+                .status("telemetry")
+                .content(JsonUtil.fromJson("""
+                        {
+                          "format":"yaml",
+                          "content":"kind: service",
+                          "summary":"team-a",
+                          "source":"telemetry",
+                          "kind":"service"
+                        }
+                        """))
+                .workspaceId("team-a")
+                .gmtUpdate(LocalDateTime.of(2026, 5, 10, 9, 0))
+                .build();
+        EntityGovernanceState activity = EntityGovernanceState.builder()
+                .stateScope("definition")
+                .stateKind("activity")
+                .stateKey("definition-activity-a")
+                .stateName("Imported team-a")
+                .status("success")
+                .content(JsonUtil.fromJson("""
+                        {
+                          "format":"yaml",
+                          "summary":"Imported team-a",
+                          "detail":"1 entity",
+                          "entityId":101,
+                          "entityName":"checkout-api"
+                        }
+                        """))
+                .workspaceId("team-a")
+                .gmtUpdate(LocalDateTime.of(2026, 5, 10, 9, 1))
+                .build();
+        EntityGovernanceState resume = EntityGovernanceState.builder()
+                .stateScope("definition")
+                .stateKind("resume")
+                .stateKey("resume-a")
+                .stateName("telemetry")
+                .status("yaml")
+                .content(JsonUtil.fromJson("""
+                        {
+                          "content":"kind: service",
+                          "format":"yaml",
+                          "source":"telemetry",
+                          "count":1,
+                          "queryParams":{"format":"yaml"}
+                        }
+                        """))
+                .workspaceId("team-a")
+                .gmtUpdate(LocalDateTime.of(2026, 5, 10, 9, 2))
+                .build();
+        EntityGovernanceState preset = EntityGovernanceState.builder()
+                .stateScope("discovery")
+                .stateKind("preset")
+                .stateKey("preset-a")
+                .stateName("Team A governance")
+                .status("healthy")
+                .content(JsonUtil.fromJson("""
+                        {
+                          "owner":"catalog-oncall",
+                          "system":"commerce",
+                          "source":"telemetry",
+                          "environment":"prod",
+                          "status":"healthy"
+                        }
+                        """))
+                .workspaceId("team-a")
+                .gmtUpdate(LocalDateTime.of(2026, 5, 10, 9, 3))
+                .build();
+        EntityGovernanceState discoveryActivity = EntityGovernanceState.builder()
+                .stateScope("discovery")
+                .stateKind("activity")
+                .stateKey("discovery-activity-a")
+                .stateName("Bulk adopt team-a")
+                .status("success")
+                .content(JsonUtil.fromJson("""
+                        {
+                          "action":"bulk-adopt-definition",
+                          "summary":"Adopted team-a",
+                          "detail":"1 row seeded",
+                          "workspacePath":"/entities/import?format=yaml&seedActivity=discovery-activity-a",
+                          "seedDefinitionSource":"telemetry",
+                          "seedDefinitionCount":1
+                        }
+                        """))
+                .workspaceId("team-a")
+                .gmtUpdate(LocalDateTime.of(2026, 5, 10, 9, 4))
+                .build();
+        when(entityGovernanceStateDao.findAllByStateScopeAndStateKindAndWorkspaceIdOrderByGmtUpdateDescIdDesc(
+                "definition", "template", "team-a", PageRequest.of(0, 8))).thenReturn(List.of(template));
+        when(entityGovernanceStateDao.findAllByStateScopeAndStateKindAndWorkspaceIdOrderByGmtUpdateDescIdDesc(
+                "definition", "activity", "team-a", PageRequest.of(0, 8))).thenReturn(List.of(activity));
+        when(entityGovernanceStateDao.findByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+                "definition", "resume", "resume-a", "team-a")).thenReturn(Optional.of(resume));
+        when(entityGovernanceStateDao.findAllByStateScopeAndStateKindAndWorkspaceIdOrderByGmtUpdateDescIdDesc(
+                "discovery", "preset", "team-a", PageRequest.of(0, 8))).thenReturn(List.of(preset));
+        when(entityGovernanceStateDao.findByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+                "discovery", "activity", "discovery-activity-a", "team-a")).thenReturn(Optional.of(discoveryActivity));
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        assertEquals("team-a-template", observeEntityService.getDefinitionWorkspaceTemplates(null, 8).getFirst().getId());
+        assertEquals("definition-activity-a", observeEntityService.getDefinitionWorkspaceActivities(null, 8).getFirst().getId());
+        assertEquals("resume-a", observeEntityService.getDefinitionWorkspaceResume("resume-a").getToken());
+        assertEquals("preset-a", observeEntityService.getDiscoveryGovernancePresets(8).getFirst().getId());
+        assertEquals("discovery-activity-a",
+                observeEntityService.getDiscoveryGovernanceActivities("discovery-activity-a", 8).getFirst().getId());
+    }
+
+    @Test
+    void governanceStateWritesUseRequestWorkspaceBoundary() {
+        EntityDefinitionWorkspaceTemplateInfo templateInfo = new EntityDefinitionWorkspaceTemplateInfo();
+        templateInfo.setId("team-template");
+        templateInfo.setName("Team template");
+        templateInfo.setFormat("yaml");
+        templateInfo.setContent("kind: service");
+        templateInfo.setSource("telemetry");
+        templateInfo.setKind("service");
+        EntityDefinitionWorkspaceActivityInfo activityInfo = new EntityDefinitionWorkspaceActivityInfo();
+        activityInfo.setId("team-definition-activity");
+        activityInfo.setStatus("success");
+        activityInfo.setFormat("yaml");
+        activityInfo.setSummary("Imported team definition");
+        EntityDefinitionWorkspaceResumeInfo resumeInfo = new EntityDefinitionWorkspaceResumeInfo();
+        resumeInfo.setToken("team-resume");
+        resumeInfo.setContent("kind: service");
+        resumeInfo.setFormat("yaml");
+        resumeInfo.setSource("telemetry");
+        EntityDiscoveryGovernancePresetInfo presetInfo = new EntityDiscoveryGovernancePresetInfo();
+        presetInfo.setId("team-preset");
+        presetInfo.setName("Team preset");
+        presetInfo.setStatus("healthy");
+        EntityDiscoveryGovernanceActivityInfo discoveryActivityInfo = new EntityDiscoveryGovernanceActivityInfo();
+        discoveryActivityInfo.setId("team-discovery-activity");
+        discoveryActivityInfo.setStatus("success");
+        discoveryActivityInfo.setAction("bulk-adopt-definition");
+        discoveryActivityInfo.setSummary("Adopted team definition");
+
+        when(entityGovernanceStateDao.findByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+                "definition", "template", "team-template", "team-a")).thenReturn(Optional.empty());
+        when(entityGovernanceStateDao.findByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+                "definition", "activity", "team-definition-activity", "team-a")).thenReturn(Optional.empty());
+        when(entityGovernanceStateDao.findByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+                "definition", "resume", "team-resume", "team-a")).thenReturn(Optional.empty());
+        when(entityGovernanceStateDao.findByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+                "discovery", "preset", "team-preset", "team-a")).thenReturn(Optional.empty());
+        when(entityGovernanceStateDao.findByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+                "discovery", "activity", "team-discovery-activity", "team-a")).thenReturn(Optional.empty());
+        when(entityGovernanceStateDao.saveAndFlush(any(EntityGovernanceState.class))).thenAnswer(invocation -> {
+            EntityGovernanceState state = invocation.getArgument(0);
+            state.setGmtUpdate(LocalDateTime.of(2026, 5, 10, 10, 0));
+            return state;
+        });
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        observeEntityService.saveDefinitionWorkspaceTemplate(templateInfo);
+        observeEntityService.saveDefinitionWorkspaceActivity(activityInfo);
+        observeEntityService.saveDefinitionWorkspaceResume(resumeInfo);
+        observeEntityService.saveDiscoveryGovernancePreset(presetInfo);
+        observeEntityService.saveDiscoveryGovernanceActivity(discoveryActivityInfo);
+        observeEntityService.deleteDefinitionWorkspaceTemplate("team-template");
+        observeEntityService.deleteDefinitionWorkspaceResume("team-resume");
+        observeEntityService.deleteDiscoveryGovernancePreset("team-preset");
+
+        ArgumentCaptor<EntityGovernanceState> captor = ArgumentCaptor.forClass(EntityGovernanceState.class);
+        verify(entityGovernanceStateDao, times(5)).saveAndFlush(captor.capture());
+        assertTrue(captor.getAllValues().stream().allMatch(state -> "team-a".equals(state.getWorkspaceId())));
+        verify(entityGovernanceStateDao).deleteByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+                "definition", "template", "team-template", "team-a");
+        verify(entityGovernanceStateDao).deleteByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+                "definition", "resume", "team-resume", "team-a");
+        verify(entityGovernanceStateDao).deleteByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+                "discovery", "preset", "team-preset", "team-a");
+        verify(entityGovernanceStateDao, times(0)).deleteByStateScopeAndStateKindAndStateKey(
+                "definition", "template", "team-template");
+        verify(entityGovernanceStateDao, times(0)).deleteByStateScopeAndStateKindAndStateKey(
+                "definition", "resume", "team-resume");
+        verify(entityGovernanceStateDao, times(0)).deleteByStateScopeAndStateKindAndStateKey(
+                "discovery", "preset", "team-preset");
     }
 
     @Test
@@ -596,6 +1088,138 @@ class ObserveEntityServiceTest {
     }
 
     @Test
+    void getEntityDetailFiltersActiveAlertsByRequestWorkspaceLabels() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(73L)
+                .type("service")
+                .name("checkout-api")
+                .workspaceId("team-a")
+                .build();
+        when(observeEntityDao.findById(73L)).thenReturn(Optional.of(entity));
+        when(observeEntityDao.save(any(ObserveEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(entityIdentityDao.findAllByEntityIdOrderByPriorityDescIdAsc(73L)).thenReturn(Collections.emptyList());
+        when(entityRelationDao.findBySourceEntityIdOrTargetEntityId(73L, 73L)).thenReturn(Collections.emptyList());
+        when(entityDefinitionActivityDao.findAllByEntityId(anyLong(), any(Pageable.class)))
+                .thenReturn(Collections.emptyList());
+
+        EntityMonitorBind bind = EntityMonitorBind.builder()
+                .entityId(73L)
+                .monitorId(7301L)
+                .bindType("manual")
+                .bindSource("manual")
+                .status("active")
+                .score(100)
+                .build();
+        when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(73L)).thenReturn(List.of(bind));
+
+        Monitor monitor = Monitor.builder()
+                .id(7301L)
+                .name("checkout-api")
+                .app("springboot3")
+                .instance("checkout.default.svc.cluster.local")
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+        when(monitorDao.findMonitorsByIdIn(Set.of(7301L))).thenReturn(List.of(monitor));
+
+        SingleAlert teamBetaAlert = SingleAlert.builder()
+                .id(7302L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .content("checkout-api latency high")
+                .labels(Map.of("workspace_id", "team-b", "severity", "critical"))
+                .build();
+        SingleAlert teamAlphaAlert = SingleAlert.builder()
+                .id(7303L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .content("checkout-api error burst")
+                .labels(Map.of("hertzbeat.workspace_id", "team-a", "severity", "warning"))
+                .build();
+        when(singleAlertDao.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(teamBetaAlert, teamAlphaAlert)));
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        EntityDetailDto detail = observeEntityService.getEntityDetail(73L);
+
+        assertEquals(1, detail.getActiveAlerts().size());
+        assertEquals(7303L, detail.getActiveAlerts().getFirst().getId());
+        assertEquals(1, detail.getStatus().getActiveAlertCount());
+    }
+
+    @Test
+    void getEntityDetailAndDefinitionReturnNullForDifferentRequestWorkspace() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(71L)
+                .type("service")
+                .name("checkout-api")
+                .status("unknown")
+                .source("manual")
+                .workspaceId("team-b")
+                .build();
+        when(observeEntityDao.findById(71L)).thenReturn(Optional.of(entity));
+        lenient().when(entityIdentityDao.findAllByEntityIdOrderByPriorityDescIdAsc(71L))
+                .thenReturn(Collections.emptyList());
+        lenient().when(entityRelationDao.findBySourceEntityIdOrTargetEntityId(71L, 71L))
+                .thenReturn(Collections.emptyList());
+        lenient().when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(71L))
+                .thenReturn(Collections.emptyList());
+        lenient().when(entityDefinitionActivityDao.findAllByEntityId(anyLong(), any(Pageable.class)))
+                .thenReturn(Collections.emptyList());
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        assertNull(observeEntityService.getEntityDetail(71L));
+        assertNull(observeEntityService.getEntityDefinition(71L, "yaml"));
+        verify(entityIdentityDao, times(0)).findAllByEntityIdOrderByPriorityDescIdAsc(71L);
+        verify(entityMonitorBindDao, times(0)).findAllByEntityIdOrderByIdAsc(71L);
+    }
+
+    @Test
+    void entityEvidenceEndpointsReturnEmptyForDifferentRequestWorkspace() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(72L)
+                .type("service")
+                .name("checkout-api")
+                .status("unknown")
+                .source("manual")
+                .workspaceId("team-b")
+                .build();
+        when(observeEntityDao.findById(72L)).thenReturn(Optional.of(entity));
+        EntityMonitorBind bind = EntityMonitorBind.builder()
+                .entityId(72L)
+                .monitorId(7201L)
+                .build();
+        lenient().when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(72L)).thenReturn(List.of(bind));
+        Monitor monitor = Monitor.builder()
+                .id(7201L)
+                .name("checkout-api")
+                .app("springboot3")
+                .status(CommonConstants.MONITOR_DOWN_CODE)
+                .build();
+        lenient().when(monitorDao.findMonitorsByIdIn(Set.of(7201L))).thenReturn(List.of(monitor));
+        SingleAlert alert = SingleAlert.builder()
+                .id(7202L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .content("checkout-api latency high")
+                .build();
+        lenient().when(singleAlertDao.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(alert));
+        EntityDefinitionActivity activity = EntityDefinitionActivity.builder()
+                .id(7203L)
+                .entityId(72L)
+                .activityType("definition_update")
+                .status("success")
+                .summary("Updated definition")
+                .build();
+        lenient().when(entityDefinitionActivityDao.findAllByEntityId(anyLong(), any(Pageable.class)))
+                .thenReturn(List.of(activity));
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        assertTrue(observeEntityService.getEntityAlerts(72L, null, null, 0, 10).isEmpty());
+        assertTrue(observeEntityService.getEntityMonitors(72L, null, null, 0, 10).isEmpty());
+        assertTrue(observeEntityService.getDefinitionActivities(72L, 10).isEmpty());
+    }
+
+    @Test
     void getEntityDetailNormalizesLegacyApiEndpointType() {
         ObserveEntity entity = ObserveEntity.builder()
                 .id(9L)
@@ -809,6 +1433,118 @@ class ObserveEntityServiceTest {
         assertEquals("silence", detail.getNoiseControlSummary().getActiveSilences().getFirst().getType());
         assertEquals("noise-control-api inhibit", detail.getNoiseControlSummary().getMatchingInhibits().getFirst().getName());
         assertEquals("inhibit", detail.getNoiseControlSummary().getMatchingInhibits().getFirst().getType());
+    }
+
+    @Test
+    void getEntityDetailFiltersNoiseControlRulesByRequestWorkspace() {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(141L)
+                .type("service")
+                .name("noise-control-api")
+                .environment("prod")
+                .status("unknown")
+                .source("manual")
+                .workspaceId("team-a")
+                .build();
+        when(observeEntityDao.findById(141L)).thenReturn(Optional.of(entity));
+        when(observeEntityDao.save(any(ObserveEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(entityDefinitionActivityDao.findAllByEntityId(anyLong(), any(Pageable.class)))
+                .thenReturn(Collections.emptyList());
+        when(entityIdentityDao.findAllByEntityIdOrderByPriorityDescIdAsc(141L)).thenReturn(Collections.emptyList());
+        when(entityRelationDao.findBySourceEntityIdOrTargetEntityId(141L, 141L)).thenReturn(Collections.emptyList());
+
+        EntityMonitorBind bind = EntityMonitorBind.builder()
+                .entityId(141L)
+                .monitorId(1401L)
+                .bindType("manual")
+                .bindSource("manual")
+                .status("active")
+                .score(100)
+                .build();
+        when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(141L)).thenReturn(List.of(bind));
+
+        Monitor monitor = Monitor.builder()
+                .id(1401L)
+                .name("noise-control-api")
+                .app("springboot3")
+                .instance("noise-control-api.default.svc.cluster.local")
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .labels(Map.of("hertzbeat.workspace_id", "team-a"))
+                .build();
+        when(monitorDao.findMonitorsByIdIn(Set.of(1401L))).thenReturn(List.of(monitor));
+        when(singleAlertDao.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        AlertSilence globalMatchAll = AlertSilence.builder()
+                .id(910L)
+                .name("global silence")
+                .enable(true)
+                .matchAll(true)
+                .type((byte) 0)
+                .gmtUpdate(LocalDateTime.of(2026, 4, 1, 10, 0))
+                .build();
+        AlertSilence teamBetaSilence = AlertSilence.builder()
+                .id(911L)
+                .name("team-b silence")
+                .enable(true)
+                .matchAll(false)
+                .type((byte) 0)
+                .labels(Map.of(
+                        "hertzbeat.workspace_id", "team-b",
+                        CommonConstants.LABEL_INSTANCE, "noise-control-api.default.svc.cluster.local"))
+                .gmtUpdate(LocalDateTime.of(2026, 4, 1, 10, 5))
+                .build();
+        AlertSilence teamAlphaSilence = AlertSilence.builder()
+                .id(912L)
+                .name("team-a silence")
+                .enable(true)
+                .matchAll(false)
+                .type((byte) 0)
+                .labels(Map.of(
+                        "hertzbeat.workspace_id", "team-a",
+                        CommonConstants.LABEL_INSTANCE, "noise-control-api.default.svc.cluster.local"))
+                .gmtUpdate(LocalDateTime.of(2026, 4, 1, 10, 10))
+                .build();
+        AlertInhibit genericInhibit = AlertInhibit.builder()
+                .id(920L)
+                .name("generic inhibit")
+                .enable(true)
+                .targetLabels(Map.of(CommonConstants.LABEL_INSTANCE, "noise-control-api.default.svc.cluster.local"))
+                .equalLabels(List.of(CommonConstants.LABEL_INSTANCE))
+                .gmtUpdate(LocalDateTime.of(2026, 4, 1, 10, 15))
+                .build();
+        AlertInhibit teamBetaInhibit = AlertInhibit.builder()
+                .id(921L)
+                .name("team-b inhibit")
+                .enable(true)
+                .targetLabels(Map.of(
+                        "hertzbeat.workspace_id", "team-b",
+                        CommonConstants.LABEL_INSTANCE, "noise-control-api.default.svc.cluster.local"))
+                .equalLabels(List.of(CommonConstants.LABEL_INSTANCE))
+                .gmtUpdate(LocalDateTime.of(2026, 4, 1, 10, 20))
+                .build();
+        AlertInhibit teamAlphaInhibit = AlertInhibit.builder()
+                .id(922L)
+                .name("team-a inhibit")
+                .enable(true)
+                .targetLabels(Map.of(
+                        "hertzbeat.workspace_id", "team-a",
+                        CommonConstants.LABEL_INSTANCE, "noise-control-api.default.svc.cluster.local"))
+                .equalLabels(List.of(CommonConstants.LABEL_INSTANCE))
+                .gmtUpdate(LocalDateTime.of(2026, 4, 1, 10, 25))
+                .build();
+        when(alertSilenceDao.findAll()).thenReturn(List.of(globalMatchAll, teamBetaSilence, teamAlphaSilence));
+        when(alertInhibitDao.findAll()).thenReturn(List.of(genericInhibit, teamBetaInhibit, teamAlphaInhibit));
+
+        EntityDetailDto detail = observeEntityService.getEntityDetail(141L);
+
+        assertNotNull(detail.getNoiseControlSummary());
+        assertEquals(1, detail.getNoiseControlSummary().getActiveSilenceCount());
+        assertEquals("team-a silence", detail.getNoiseControlSummary().getActiveSilences().getFirst().getName());
+        assertEquals(1, detail.getNoiseControlSummary().getMatchingInhibitCount());
+        assertEquals("team-a inhibit", detail.getNoiseControlSummary().getMatchingInhibits().getFirst().getName());
+        assertTrue(detail.getNoiseControlSummary().isPossibleAlertSuppression());
     }
 
     @Test
@@ -1349,6 +2085,63 @@ class ObserveEntityServiceTest {
     }
 
     @Test
+    void getEntityAlertsFilterByRequestWorkspaceLabels() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(47L)
+                .type("service")
+                .name("checkout-api")
+                .workspaceId("team-a")
+                .build();
+        when(observeEntityDao.findById(47L)).thenReturn(Optional.of(entity));
+        EntityMonitorBind bind = EntityMonitorBind.builder()
+                .entityId(47L)
+                .monitorId(407L)
+                .bindType("manual")
+                .bindSource("manual")
+                .status("active")
+                .score(100)
+                .build();
+        when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(47L)).thenReturn(List.of(bind));
+
+        Monitor monitor = Monitor.builder()
+                .id(407L)
+                .name("checkout-api")
+                .app("springboot3")
+                .instance("checkout.default.svc.cluster.local")
+                .status(CommonConstants.MONITOR_DOWN_CODE)
+                .build();
+        when(monitorDao.findMonitorsByIdIn(Set.of(407L))).thenReturn(List.of(monitor));
+
+        SingleAlert teamBetaAlert = SingleAlert.builder()
+                .id(621L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .labels(Map.of("workspace_id", "team-b", "severity", "critical"))
+                .content("checkout-api latency high")
+                .build();
+        SingleAlert legacyDefaultAlert = SingleAlert.builder()
+                .id(622L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .labels(Map.of("severity", "warning"))
+                .content("checkout-api warning")
+                .build();
+        SingleAlert teamAlphaAlert = SingleAlert.builder()
+                .id(623L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .labels(Map.of("workspace_id", "team-a", "severity", "critical"))
+                .content("checkout-api error burst")
+                .build();
+        when(singleAlertDao.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(teamBetaAlert, legacyDefaultAlert, teamAlphaAlert));
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        var page = observeEntityService.getEntityAlerts(47L, null, null, 0, 10);
+
+        assertEquals(1, page.getTotalElements());
+        assertEquals(623L, page.getContent().getFirst().getId());
+    }
+
+    @Test
     void getEntityAlertsReturnsEmptyPageWhenNoMonitorsBound() {
         when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(42L)).thenReturn(Collections.emptyList());
 
@@ -1622,6 +2415,32 @@ class ObserveEntityServiceTest {
     }
 
     @Test
+    void getDefinitionActivitiesUsesRequestWorkspaceForCatalogLevelRows() {
+        EntityDefinitionActivity activity = EntityDefinitionActivity.builder()
+                .id(12L)
+                .entityId(10L)
+                .workspaceId("team-a")
+                .activityType("definition_update")
+                .format("yaml")
+                .status("success")
+                .summary("Definition updated")
+                .detail("service: checkout")
+                .creator("admin")
+                .build();
+        PageRequest pageRequest = PageRequest.of(0, 8, Sort.by(Sort.Order.desc("gmtCreate"), Sort.Order.desc("id")));
+        when(entityDefinitionActivityDao.findAllByWorkspaceId("team-a", pageRequest)).thenReturn(List.of(activity));
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        var activities = observeEntityService.getDefinitionActivities(null, 8);
+
+        assertEquals(1, activities.size());
+        assertEquals(10L, activities.getFirst().getEntityId());
+        assertEquals("definition_update", activities.getFirst().getActivityType());
+        verify(entityDefinitionActivityDao, times(0)).findAll(any(Pageable.class));
+    }
+
+    @Test
     void getCatalogSuggestionsAggregatesOwnersSystemsAndReferences() {
         ObserveEntity checkoutApi = ObserveEntity.builder()
                 .id(21L)
@@ -1668,6 +2487,41 @@ class ObserveEntityServiceTest {
         assertTrue(suggestions.getEntityRefs().contains("datastore:data/order-db"));
         assertTrue(suggestions.getLanguages().contains("java"));
         assertTrue(suggestions.getLinkProviders().contains("github"));
+    }
+
+    @Test
+    void getCatalogSuggestionsUseRequestWorkspaceBoundary() {
+        ObserveEntity teamAlphaService = ObserveEntity.builder()
+                .id(23L)
+                .type("service")
+                .name("checkout-api")
+                .namespace("commerce")
+                .environment("prod")
+                .owner("team-a-owner")
+                .additionalOwners(List.of(new EntityOwnerRef("team-a-oncall", "team")))
+                .system("team-a-system")
+                .lifecycle("production")
+                .tier("tier1")
+                .inheritFrom("service:commerce/base-service")
+                .languages(List.of("java"))
+                .links(List.of(new EntityCatalogLink("Repository", "repository", "github", "https://github.com/acme/checkout")))
+                .workspaceId("team-a")
+                .build();
+        when(observeEntityDao.findAllByWorkspaceId("team-a", Sort.by(Sort.Order.desc("gmtUpdate"), Sort.Order.desc("id"))))
+                .thenReturn(List.of(teamAlphaService));
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        EntityCatalogSuggestionsInfo suggestions = observeEntityService.getCatalogSuggestions(12);
+
+        assertEquals(List.of("team-a-owner", "team-a-oncall"), suggestions.getOwners());
+        assertEquals(List.of("commerce"), suggestions.getNamespaces());
+        assertEquals(List.of("team-a-system"), suggestions.getSystems());
+        assertEquals(List.of("service:commerce/base-service"), suggestions.getInheritFromRefs());
+        assertEquals(List.of("service:commerce/checkout-api"), suggestions.getEntityRefs());
+        assertEquals(List.of("java"), suggestions.getLanguages());
+        assertEquals(List.of("github"), suggestions.getLinkProviders());
+        verify(observeEntityDao, times(0)).findAll(any(Sort.class));
     }
 
     @Test
@@ -1751,9 +2605,33 @@ class ObserveEntityServiceTest {
         verify(entityDefinitionActivityDao).saveAndFlush(activityCaptor.capture());
         EntityDefinitionActivity activity = activityCaptor.getValue();
         assertEquals(entityId, activity.getEntityId());
+        assertEquals("default", activity.getWorkspaceId());
         assertEquals("definition_import", activity.getActivityType());
         assertEquals("yaml", activity.getFormat());
         assertEquals("success", activity.getStatus());
+    }
+
+    @Test
+    void addEntityByDefinitionRecordsRequestWorkspaceOnActivity() {
+        when(observeEntityDao.save(any(ObserveEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EntityDefinitionRequest definitionRequest = new EntityDefinitionRequest();
+        definitionRequest.setFormat("yaml");
+        definitionRequest.setContent("""
+                apiVersion: hertzbeat/v1
+                kind: service
+                metadata:
+                  name: checkout-api
+                  namespace: commerce
+                """);
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        observeEntityService.addEntityByDefinition(definitionRequest);
+
+        ArgumentCaptor<EntityDefinitionActivity> activityCaptor = ArgumentCaptor.forClass(EntityDefinitionActivity.class);
+        verify(entityDefinitionActivityDao).saveAndFlush(activityCaptor.capture());
+        assertEquals("team-a", activityCaptor.getValue().getWorkspaceId());
     }
 
     @Test
@@ -1863,6 +2741,78 @@ class ObserveEntityServiceTest {
         assertEquals("service.name", savedRows.getFirst().getIdentityKey());
         assertEquals("payment-service", savedRows.getFirst().getIdentityValue());
         assertEquals("payment-service", savedRows.getFirst().getNormalizedValue());
+    }
+
+    @Test
+    void modifyAndDeleteEntityRejectDifferentRequestWorkspaceBeforeSideEffects() {
+        ObserveEntity teamBetaEntity = ObserveEntity.builder()
+                .id(81L)
+                .type("service")
+                .name("checkout-api")
+                .status("unknown")
+                .source("manual")
+                .workspaceId("team-b")
+                .build();
+        when(observeEntityDao.findById(81L)).thenReturn(Optional.of(teamBetaEntity));
+        lenient().when(observeEntityDao.existsById(81L)).thenReturn(true);
+        lenient().when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(81L)).thenReturn(Collections.emptyList());
+
+        ObserveEntity update = ObserveEntity.builder()
+                .id(81L)
+                .type("service")
+                .name("checkout-api-renamed")
+                .status("unknown")
+                .source("manual")
+                .workspaceId("team-b")
+                .build();
+        EntityDto entityDto = new EntityDto();
+        entityDto.setEntity(update);
+        entityDto.setIdentities(Collections.emptyList());
+        entityDto.setMonitorBinds(Collections.emptyList());
+        entityDto.setRelations(Collections.emptyList());
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> observeEntityService.modifyEntity(entityDto));
+        assertEquals("Entity not exist.", exception.getMessage());
+        observeEntityService.deleteEntity(81L);
+
+        verify(observeEntityDao, times(0)).save(any(ObserveEntity.class));
+        verify(entityIdentityDao, times(0)).deleteAllByEntityId(81L);
+        verify(entityMonitorBindDao, times(0)).deleteAllByEntityId(81L);
+        verify(entityRelationDao, times(0)).deleteAllBySourceEntityIdOrTargetEntityId(81L, 81L);
+        verify(observeEntityDao, times(0)).deleteById(81L);
+    }
+
+    @Test
+    void modifyEntityByDefinitionRejectsDifferentRequestWorkspaceWithoutActivity() {
+        ObserveEntity teamBetaEntity = ObserveEntity.builder()
+                .id(82L)
+                .type("service")
+                .name("checkout-api")
+                .status("unknown")
+                .source("manual")
+                .workspaceId("team-b")
+                .build();
+        when(observeEntityDao.findById(82L)).thenReturn(Optional.of(teamBetaEntity));
+        EntityDefinitionRequest definitionRequest = new EntityDefinitionRequest();
+        definitionRequest.setFormat("yaml");
+        definitionRequest.setContent("""
+                kind: service
+                metadata:
+                  name: checkout-api
+                spec:
+                  type: service
+                """);
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> observeEntityService.modifyEntityByDefinition(82L, definitionRequest));
+        assertEquals("Entity not exist.", exception.getMessage());
+        verify(observeEntityDao, times(0)).save(any(ObserveEntity.class));
+        verify(entityDefinitionActivityDao, times(0)).saveAndFlush(any(EntityDefinitionActivity.class));
     }
 
     @Test
@@ -1992,6 +2942,41 @@ class ObserveEntityServiceTest {
         assertFalse(summary.getOpsSummary().isTelemetryReady());
         assertEquals("complete_owner", summary.getNextAction().getActionType());
         assertEquals(0, summary.getOpsSummary().getReadinessScore());
+    }
+
+    @Test
+    void getEntitiesFiltersByRequestWorkspace() {
+        ObserveEntity teamAlpha = ObserveEntity.builder()
+                .id(31L)
+                .type("service")
+                .name("checkout")
+                .status("unknown")
+                .source("manual")
+                .workspaceId("team-a")
+                .build();
+        ObserveEntity teamBeta = ObserveEntity.builder()
+                .id(32L)
+                .type("service")
+                .name("payments")
+                .status("unknown")
+                .source("manual")
+                .workspaceId("team-b")
+                .build();
+        when(observeEntityDao.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(teamAlpha, teamBeta)));
+        when(entityIdentityDao.countByEntityId(anyLong())).thenReturn(0L);
+        when(entityRelationDao.countBySourceEntityIdOrTargetEntityId(anyLong(), anyLong())).thenReturn(0L);
+        when(entityMonitorBindDao.findAllByEntityIdOrderByIdAsc(anyLong())).thenReturn(Collections.emptyList());
+        when(entityDefinitionActivityDao.findAllByEntityIdIn(any(), any(Sort.class))).thenReturn(Collections.emptyList());
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        var page = observeEntityService.getEntities(null, null, null, null, null, null,
+                null, null, null, null, "gmtUpdate", "desc", 0, 8);
+
+        assertEquals(1, page.getContent().size());
+        assertEquals(1, page.getTotalElements());
+        assertEquals(31L, page.getContent().getFirst().getEntity().getId());
+        assertEquals("team-a", page.getContent().getFirst().getEntity().getWorkspaceId());
     }
 
     @Test
@@ -2607,6 +3592,53 @@ class ObserveEntityServiceTest {
         assertEquals(1, entityDto.getRelations().size());
         assertEquals("service:commerce/payments-api", entityDto.getRelations().getFirst().getTargetRef());
         assertEquals(null, entityDto.getRelations().getFirst().getTargetEntityId());
+    }
+
+    @Test
+    void parseEntityDefinitionResolvesRelationsInsideRequestWorkspaceOnly() {
+        EntityDefinitionRequest request = new EntityDefinitionRequest();
+        request.setFormat("yaml");
+        request.setContent("""
+                apiVersion: hertzbeat/v1
+                kind: service
+                metadata:
+                  name: checkout-api
+                  namespace: commerce
+                spec:
+                  dependsOn:
+                    - service:commerce/payments-api
+                    - id: 902
+                      ref: "902"
+                """);
+        ObserveEntity teamAlphaTarget = ObserveEntity.builder()
+                .id(901L)
+                .type("service")
+                .namespace("commerce")
+                .name("payments-api")
+                .workspaceId("team-a")
+                .build();
+        ObserveEntity teamBetaDirectTarget = ObserveEntity.builder()
+                .id(902L)
+                .type("database")
+                .namespace("commerce")
+                .name("orders-db")
+                .workspaceId("team-b")
+                .build();
+        when(observeEntityDao.findFirstByWorkspaceIdAndTypeAndNamespaceAndName(
+                "team-a", "service", "commerce", "payments-api")).thenReturn(Optional.of(teamAlphaTarget));
+        when(observeEntityDao.findById(902L)).thenReturn(Optional.of(teamBetaDirectTarget));
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        EntityDto entityDto = observeEntityService.parseEntityDefinition(request, null);
+
+        assertEquals(2, entityDto.getRelations().size());
+        assertEquals(901L, entityDto.getRelations().get(0).getTargetEntityId());
+        assertEquals("service:commerce/payments-api", entityDto.getRelations().get(0).getTargetRef());
+        assertNull(entityDto.getRelations().get(1).getTargetEntityId());
+        assertEquals("902", entityDto.getRelations().get(1).getTargetRef());
+        verify(observeEntityDao, times(0)).findFirstByTypeAndNamespaceAndName(any(String.class), any(String.class), any(String.class));
+        verify(observeEntityDao, times(0)).findFirstByTypeAndName(any(String.class), any(String.class));
     }
 
     @Test

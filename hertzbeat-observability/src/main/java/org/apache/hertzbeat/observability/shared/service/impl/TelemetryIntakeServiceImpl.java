@@ -665,7 +665,7 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
         if (!results.isEmpty()) {
             return results;
         }
-        if (preferredHint == null && logSummary == null) {
+        if (preferredHint == null && !hasLogSummaryQuerySignal(logSummary)) {
             return Collections.emptyList();
         }
         Map<String, String> resource = preferredHint == null || preferredHint.getResourceFilters() == null
@@ -701,6 +701,15 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                 resource,
                 searchTerms
         ));
+    }
+
+    private boolean hasLogSummaryQuerySignal(EntityLogSummaryInfo logSummary) {
+        return logSummary != null
+                && (logSummary.getHintCount() > 0
+                || StringUtils.hasText(logSummary.getPreferredQueryTitle())
+                || StringUtils.hasText(logSummary.getFallbackSearchTerm())
+                || !CollectionUtils.isEmpty(logSummary.getPreferredResourceFilters())
+                || !CollectionUtils.isEmpty(logSummary.getPreferredSearchTerms()));
     }
 
     private List<LogEvidence> buildStoredLogEvidence(ObservedEntityContext entityContext,

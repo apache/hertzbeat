@@ -28,59 +28,55 @@ import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
-import org.apache.hertzbeat.manager.dao.CollectorDao;
-import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
-import org.apache.hertzbeat.manager.dao.EntityMonitorBindDao;
-import org.apache.hertzbeat.manager.dao.MonitorDao;
-import org.apache.hertzbeat.manager.dao.ObserveEntityDao;
+import org.apache.hertzbeat.manager.service.entity.EntityIdentityQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityMonitorBindQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityWorkspaceQueryService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 /**
  * Manager-backed observability workspace read gateway.
  *
- * <p>This bridge intentionally remains in the manager module because it is backed by
- * manager-owned DAOs. Moving it into the observability module would invert the dependency
- * direction and force observability to depend on manager internals.
+ * <p>This gateway remains in the manager module while entity lookups pass through the
+ * manager entity query boundaries instead of exposing raw entity DAOs to observability.
  */
 @Component
 @RequiredArgsConstructor
 public class ManagerObservabilityWorkspaceQueryGateway implements ObservabilityWorkspaceQueryGateway {
 
-    private final EntityIdentityDao entityIdentityDao;
-    private final ObserveEntityDao observeEntityDao;
-    private final EntityMonitorBindDao entityMonitorBindDao;
-    private final MonitorDao monitorDao;
-    private final CollectorDao collectorDao;
+    private final EntityIdentityQueryService entityIdentityQueryService;
+    private final EntityWorkspaceQueryService entityWorkspaceQueryService;
+    private final EntityMonitorBindQueryService entityMonitorBindQueryService;
+    private final ManagerObservabilityInventoryQueryService inventoryQueryService;
 
     @Override
     public long countMonitors() {
-        return monitorDao.count();
+        return inventoryQueryService.countMonitors();
     }
 
     @Override
     public long countCollectors() {
-        return collectorDao.count();
+        return inventoryQueryService.countCollectors();
     }
 
     @Override
     public long countCollectorsByStatus(byte status) {
-        return collectorDao.countByStatus(status);
+        return inventoryQueryService.countCollectorsByStatus(status);
     }
 
     @Override
     public Optional<Monitor> findLatestMonitor() {
-        return monitorDao.findFirstByOrderByGmtUpdateDesc();
+        return inventoryQueryService.findLatestMonitor();
     }
 
     @Override
     public long countDistinctBoundEntityIdsByIdentityKeys(Set<String> identityKeys) {
-        return entityIdentityDao.countDistinctEntityIdsByIdentityKeyIn(identityKeys);
+        return entityIdentityQueryService.countDistinctEntityIdsByIdentityKeys(identityKeys);
     }
 
     @Override
     public List<EntityIdentity> findIdentitiesByKeysAndNormalizedValues(Set<String> identityKeys, Set<String> normalizedValues) {
-        return entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(identityKeys, normalizedValues);
+        return entityIdentityQueryService.findMatchingIdentities(identityKeys, normalizedValues);
     }
 
     @Override
@@ -88,22 +84,22 @@ public class ManagerObservabilityWorkspaceQueryGateway implements ObservabilityW
         if (CollectionUtils.isEmpty(entityIds)) {
             return Collections.emptyMap();
         }
-        return observeEntityDao.findAllById(entityIds).stream()
+        return entityWorkspaceQueryService.findEntitiesByIds(entityIds).stream()
                 .collect(LinkedHashMap::new, (map, entity) -> map.put(entity.getId(), entity), Map::putAll);
     }
 
     @Override
     public long countMonitorBindsByEntityId(Long entityId) {
-        return entityMonitorBindDao.countByEntityId(entityId);
+        return entityMonitorBindQueryService.countMonitorBinds(entityId);
     }
 
     @Override
     public Optional<ObserveEntity> findEntityById(Long entityId) {
-        return observeEntityDao.findById(entityId);
+        return entityWorkspaceQueryService.findEntityById(entityId);
     }
 
     @Override
     public List<EntityIdentity> findIdentitiesByEntityId(Long entityId) {
-        return entityIdentityDao.findAllByEntityIdOrderByPriorityDescIdAsc(entityId);
+        return entityIdentityQueryService.findIdentities(entityId);
     }
 }

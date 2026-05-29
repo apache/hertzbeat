@@ -590,9 +590,13 @@ public class AppServiceImpl implements AppService, InitializingBean {
                 for (var resource : resources) {
                     try (var inputStream = resource.getInputStream()) {
                         var app = yaml.loadAs(inputStream, Job.class);
+                        if (app == null || StringUtils.isBlank(app.getApp())) {
+                            log.warn("skip invalid internal app define resource: {}", resource.getDescription());
+                            continue;
+                        }
                         appDefines.put(app.getApp().toLowerCase(), app);
-                    } catch (IOException e) {
-                        log.error(e.getMessage(), e);
+                    } catch (IOException | RuntimeException e) {
+                        log.error("load internal app define failed: {}", resource.getDescription(), e);
                     }
                 }
                 return true;

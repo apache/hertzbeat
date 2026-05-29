@@ -19,7 +19,6 @@ package org.apache.hertzbeat.manager.gateway.observability;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,11 +31,9 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
-import org.apache.hertzbeat.manager.dao.CollectorDao;
-import org.apache.hertzbeat.manager.dao.EntityIdentityDao;
-import org.apache.hertzbeat.manager.dao.EntityMonitorBindDao;
-import org.apache.hertzbeat.manager.dao.MonitorDao;
-import org.apache.hertzbeat.manager.dao.ObserveEntityDao;
+import org.apache.hertzbeat.manager.service.entity.EntityIdentityQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityMonitorBindQueryService;
+import org.apache.hertzbeat.manager.service.entity.EntityWorkspaceQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,51 +44,47 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ManagerObservabilityWorkspaceQueryGatewayTest {
 
     @Mock
-    private EntityIdentityDao entityIdentityDao;
+    private EntityIdentityQueryService entityIdentityQueryService;
 
     @Mock
-    private ObserveEntityDao observeEntityDao;
+    private EntityWorkspaceQueryService entityWorkspaceQueryService;
 
     @Mock
-    private EntityMonitorBindDao entityMonitorBindDao;
+    private EntityMonitorBindQueryService entityMonitorBindQueryService;
 
     @Mock
-    private MonitorDao monitorDao;
-
-    @Mock
-    private CollectorDao collectorDao;
+    private ManagerObservabilityInventoryQueryService inventoryQueryService;
 
     private ManagerObservabilityWorkspaceQueryGateway gateway;
 
     @BeforeEach
     void setUp() {
         gateway = new ManagerObservabilityWorkspaceQueryGateway(
-                entityIdentityDao,
-                observeEntityDao,
-                entityMonitorBindDao,
-                monitorDao,
-                collectorDao
+                entityIdentityQueryService,
+                entityWorkspaceQueryService,
+                entityMonitorBindQueryService,
+                inventoryQueryService
         );
     }
 
     @Test
-    void delegatesWorkspaceQueriesToDaos() {
+    void delegatesWorkspaceQueriesToBoundaries() {
         Monitor latestMonitor = Monitor.builder().id(1L).name("checkout").gmtUpdate(LocalDateTime.now()).build();
         EntityIdentity identity = EntityIdentity.builder().id(11L).entityId(7L).identityKey("service.name").identityValue("checkout").build();
         ObserveEntity entity = ObserveEntity.builder().id(7L).name("checkout").build();
         Set<String> identityKeys = Set.of("service.name", "service.namespace");
         Set<String> normalizedValues = Set.of("checkout");
 
-        when(monitorDao.count()).thenReturn(3L);
-        when(collectorDao.count()).thenReturn(4L);
-        when(collectorDao.countByStatus(CommonConstants.COLLECTOR_STATUS_ONLINE)).thenReturn(2L);
-        when(monitorDao.findFirstByOrderByGmtUpdateDesc()).thenReturn(Optional.of(latestMonitor));
-        when(entityIdentityDao.countDistinctEntityIdsByIdentityKeyIn(identityKeys)).thenReturn(2L);
-        when(entityIdentityDao.findAllByIdentityKeyInAndNormalizedValueIn(identityKeys, normalizedValues)).thenReturn(List.of(identity));
-        when(observeEntityDao.findAllById(anyCollection())).thenReturn(List.of(entity));
-        when(entityMonitorBindDao.countByEntityId(7L)).thenReturn(5L);
-        when(observeEntityDao.findById(7L)).thenReturn(Optional.of(entity));
-        when(entityIdentityDao.findAllByEntityIdOrderByPriorityDescIdAsc(7L)).thenReturn(List.of(identity));
+        when(inventoryQueryService.countMonitors()).thenReturn(3L);
+        when(inventoryQueryService.countCollectors()).thenReturn(4L);
+        when(inventoryQueryService.countCollectorsByStatus(CommonConstants.COLLECTOR_STATUS_ONLINE)).thenReturn(2L);
+        when(inventoryQueryService.findLatestMonitor()).thenReturn(Optional.of(latestMonitor));
+        when(entityIdentityQueryService.countDistinctEntityIdsByIdentityKeys(identityKeys)).thenReturn(2L);
+        when(entityIdentityQueryService.findMatchingIdentities(identityKeys, normalizedValues)).thenReturn(List.of(identity));
+        when(entityWorkspaceQueryService.findEntitiesByIds(Set.of(7L))).thenReturn(List.of(entity));
+        when(entityMonitorBindQueryService.countMonitorBinds(7L)).thenReturn(5L);
+        when(entityWorkspaceQueryService.findEntityById(7L)).thenReturn(Optional.of(entity));
+        when(entityIdentityQueryService.findIdentities(7L)).thenReturn(List.of(identity));
 
         assertEquals(3L, gateway.countMonitors());
         assertEquals(4L, gateway.countCollectors());
@@ -104,21 +97,21 @@ class ManagerObservabilityWorkspaceQueryGatewayTest {
         assertEquals(Optional.of(entity), gateway.findEntityById(7L));
         assertEquals(List.of(identity), gateway.findIdentitiesByEntityId(7L));
 
-        verify(monitorDao).count();
-        verify(collectorDao).count();
-        verify(collectorDao).countByStatus(CommonConstants.COLLECTOR_STATUS_ONLINE);
-        verify(monitorDao).findFirstByOrderByGmtUpdateDesc();
-        verify(entityIdentityDao).countDistinctEntityIdsByIdentityKeyIn(identityKeys);
-        verify(entityIdentityDao).findAllByIdentityKeyInAndNormalizedValueIn(identityKeys, normalizedValues);
-        verify(observeEntityDao).findAllById(anyCollection());
-        verify(entityMonitorBindDao).countByEntityId(7L);
-        verify(observeEntityDao).findById(7L);
-        verify(entityIdentityDao).findAllByEntityIdOrderByPriorityDescIdAsc(7L);
+        verify(inventoryQueryService).countMonitors();
+        verify(inventoryQueryService).countCollectors();
+        verify(inventoryQueryService).countCollectorsByStatus(CommonConstants.COLLECTOR_STATUS_ONLINE);
+        verify(inventoryQueryService).findLatestMonitor();
+        verify(entityIdentityQueryService).countDistinctEntityIdsByIdentityKeys(identityKeys);
+        verify(entityIdentityQueryService).findMatchingIdentities(identityKeys, normalizedValues);
+        verify(entityWorkspaceQueryService).findEntitiesByIds(Set.of(7L));
+        verify(entityMonitorBindQueryService).countMonitorBinds(7L);
+        verify(entityWorkspaceQueryService).findEntityById(7L);
+        verify(entityIdentityQueryService).findIdentities(7L);
     }
 
     @Test
     void returnsEmptyEntityMapWhenIdsAreEmpty() {
         assertTrue(gateway.findEntitiesByIds(Set.of()).isEmpty());
-        verify(observeEntityDao, org.mockito.Mockito.never()).findAllById(anyCollection());
+        verify(entityWorkspaceQueryService, org.mockito.Mockito.never()).findEntitiesByIds(org.mockito.Mockito.anyCollection());
     }
 }

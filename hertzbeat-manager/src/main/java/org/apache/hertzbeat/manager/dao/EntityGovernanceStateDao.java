@@ -31,8 +31,17 @@ public interface EntityGovernanceStateDao extends JpaRepository<EntityGovernance
     List<EntityGovernanceState> findAllByStateScopeAndStateKindOrderByGmtUpdateDescIdDesc(
             String stateScope, String stateKind, Pageable pageable);
 
+    List<EntityGovernanceState> findAllByStateScopeAndStateKindAndWorkspaceIdOrderByGmtUpdateDescIdDesc(
+            String stateScope, String stateKind, String workspaceId, Pageable pageable);
+
     Optional<EntityGovernanceState> findByStateScopeAndStateKindAndStateKey(
             String stateScope, String stateKind, String stateKey);
 
+    Optional<EntityGovernanceState> findByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+            String stateScope, String stateKind, String stateKey, String workspaceId);
+
     void deleteByStateScopeAndStateKindAndStateKey(String stateScope, String stateKind, String stateKey);
+
+    void deleteByStateScopeAndStateKindAndStateKeyAndWorkspaceId(
+            String stateScope, String stateKind, String stateKey, String workspaceId);
 }

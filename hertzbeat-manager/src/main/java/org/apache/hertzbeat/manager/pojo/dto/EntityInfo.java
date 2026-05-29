@@ -116,6 +116,9 @@ public class EntityInfo {
 
     private List<String> tags;
 
+    @Size(max = 64)
+    private String workspaceId;
+
     private String creator;
 
     private String modifier;
@@ -159,6 +162,7 @@ public class EntityInfo {
         info.setDescription(entity.getDescription());
         info.setLabels(entity.getLabels());
         info.setTags(entity.getTags());
+        info.setWorkspaceId(entity.getWorkspaceId());
         info.setCreator(entity.getCreator());
         info.setModifier(entity.getModifier());
         info.setGmtCreate(entity.getGmtCreate());
@@ -213,6 +217,7 @@ public class EntityInfo {
         entity.setDescription(description);
         entity.setLabels(labels);
         entity.setTags(tags);
+        entity.setWorkspaceId(workspaceId);
         entity.setCreator(creator);
         entity.setModifier(modifier);
         entity.setGmtCreate(gmtCreate);

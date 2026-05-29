@@ -17,8 +17,10 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -30,4 +32,11 @@ public interface ObserveEntityDao extends JpaRepository<ObserveEntity, Long>, Jp
     Optional<ObserveEntity> findFirstByTypeAndNamespaceAndName(String type, String namespace, String name);
 
     Optional<ObserveEntity> findFirstByTypeAndName(String type, String name);
+
+    Optional<ObserveEntity> findFirstByWorkspaceIdAndTypeAndNamespaceAndName(
+            String workspaceId, String type, String namespace, String name);
+
+    Optional<ObserveEntity> findFirstByWorkspaceIdAndTypeAndName(String workspaceId, String type, String name);
+
+    List<ObserveEntity> findAllByWorkspaceId(String workspaceId, Sort sort);
 }

@@ -31,5 +31,7 @@ public interface EntityDefinitionActivityDao extends JpaRepository<EntityDefinit
 
     List<EntityDefinitionActivity> findAllByEntityId(Long entityId, Pageable pageable);
 
+    List<EntityDefinitionActivity> findAllByWorkspaceId(String workspaceId, Pageable pageable);
+
     List<EntityDefinitionActivity> findAllByEntityIdIn(Collection<Long> entityIds, Sort sort);
 }
