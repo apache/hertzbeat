@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import java.net.URLDecoder;
@@ -33,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
@@ -68,7 +70,8 @@ class GreptimeTraceQueryRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        repository = new GreptimeTraceQueryRepository(greptimeSqlQueryExecutorProvider, greptimeProperties, restTemplate);
+        repository = new GreptimeTraceQueryRepository(
+                greptimeSqlQueryExecutorProvider, greptimeProperties, restTemplate);
     }
 
     @Test
@@ -104,6 +107,190 @@ class GreptimeTraceQueryRepositoryTest {
     }
 
     @Test
+    void queryRecentTraceRowsPushesTimeWindowIntoGreptimeSql() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+
+        List<Map<String, Object>> rows = repository.queryRecentTraceRows(
+                50, 1710000000000L, 1710003600000L, "checkout", "prod", true);
+
+        assertNotNull(rows);
+        assertEquals(1, rows.size());
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        String sql = sqlCaptor.getValue();
+        assertTraceSqlProjectsAttribution(sql);
+        assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
+        assertTrue(sql.contains("timestamp <= to_timestamp_millis(1710003600000)"));
+        assertTrue(sql.contains("service_name = 'checkout'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') "
+                + "= 'prod'"));
+        assertTrue(sql.contains("LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
+        assertTrue(sql.endsWith("ORDER BY timestamp DESC LIMIT 50"));
+    }
+
+    @Test
+    void queryRecentTraceRowsPushesWorkspaceAndEntityScopeIntoGreptimeSql() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+
+        List<Map<String, Object>> rows = repository.queryRecentTraceRows(
+                75,
+                1710000000000L,
+                1710003600000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "team-a",
+                Map.of(
+                        "service.name", Set.of("checkout"),
+                        "service.namespace", Set.of("commerce"),
+                        "host.name", Set.of("checkout-1", "checkout-2")
+                ),
+                true);
+
+        assertNotNull(rows);
+        assertEquals(1, rows.size());
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        String sql = sqlCaptor.getValue();
+        assertTraceSqlProjectsAttribution(sql);
+        assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
+        assertTrue(sql.contains("timestamp <= to_timestamp_millis(1710003600000)"));
+        assertTrue(sql.contains("service_name = 'checkout'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') "
+                + "= 'prod'"));
+        assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a' "
+                + "OR json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a')"));
+        assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-1' "
+                + "OR json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-2')"));
+        assertTrue(sql.contains("LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
+        assertTrue(sql.endsWith("ORDER BY timestamp DESC LIMIT 75"));
+    }
+
+    @Test
+    void queryTraceListRowsPushesGroupingPaginationAndTotalCountIntoGreptimeSql() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of(
+                "trace_id", "trace-1",
+                "total_count", 42L)));
+
+        List<Map<String, Object>> rows = repository.queryTraceListRows(
+                1710000000000L,
+                1710003600000L,
+                false,
+                "checkout",
+                "commerce",
+                "prod",
+                "team-a",
+                Map.of("host.name", Set.of("checkout-1", "checkout-2")),
+                true,
+                40,
+                20);
+
+        assertNotNull(rows);
+        assertEquals(1, rows.size());
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        String sql = sqlCaptor.getValue();
+        assertTrue(sql.contains("COUNT(*) OVER () AS total_count"));
+        assertTrue(sql.contains("FROM (SELECT trace_id"));
+        assertTrue(sql.contains("SUM(CASE WHEN span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
+                + "THEN 1 ELSE 0 END) AS error_span_count"));
+        assertTrue(sql.contains("FROM hzb_traces WHERE timestamp >= to_timestamp_millis(1710000000000)"));
+        assertTrue(sql.contains("timestamp <= to_timestamp_millis(1710003600000)"));
+        assertTrue(sql.contains("service_name = 'checkout'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') = 'commerce'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') "
+                + "= 'prod'"));
+        assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a' "
+                + "OR json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a')"));
+        assertTrue(sql.contains("(json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-1' "
+                + "OR json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-2')"));
+        assertTrue(sql.contains("LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
+        assertTrue(sql.contains("GROUP BY trace_id"));
+        assertTrue(sql.endsWith("ORDER BY timestamp DESC LIMIT 20 OFFSET 40"));
+    }
+
+    @Test
+    void queryTraceServiceGraphRowsPushesServiceGraphRedAggregationIntoGreptimeSql() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of(
+                "source_service_name", "checkout-api",
+                "target_service_name", "payment-api",
+                "request_count", 2L)));
+
+        List<Map<String, Object>> rows = repository.queryTraceServiceGraphRows(
+                100, 1710000000000L, 1710003600000L, "prod", List.of("checkout-api", "payment-api"), true);
+
+        assertNotNull(rows);
+        assertEquals(1, rows.size());
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        String sql = sqlCaptor.getValue();
+        assertTrue(sql.startsWith("SELECT parent.service_name AS source_service_name, "
+                + "child.service_name AS target_service_name"));
+        assertTrue(sql.contains("COUNT(*) AS request_count"));
+        assertTrue(sql.contains("SUM(CASE WHEN child.span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
+                + "THEN 1 ELSE 0 END) AS error_count"));
+        assertTrue(sql.contains("COALESCE(SUM(child.duration_nano), 0) AS duration_sum_nano"));
+        assertTrue(sql.contains("COUNT(child.duration_nano) AS duration_count"));
+        assertTrue(!sql.contains("AS duration_sketch"));
+        assertTrue(sql.contains("uddsketch_calc(0.95, uddsketch_state(128, 0.01, child.duration_nano)) "
+                + "/ 1000000.0 AS latency_p95_ms"));
+        assertTrue(sql.contains("COALESCE(SUM(child.duration_nano), 0) "
+                + "/ NULLIF(COUNT(child.duration_nano), 0) / 1000000.0 AS latency_avg_ms"));
+        assertTrue(sql.contains("MAX(child.span_id) AS sample_span_id"));
+        assertTrue(sql.contains("MIN(child.timestamp) AS first_seen"));
+        assertTrue(sql.contains("MAX(child.timestamp) AS last_seen"));
+        assertTrue(sql.contains("FROM hzb_traces child JOIN hzb_traces parent"));
+        assertTrue(sql.contains("child.trace_id = parent.trace_id"));
+        assertTrue(sql.contains("child.parent_span_id = parent.span_id"));
+        assertTrue(sql.contains("child.timestamp >= to_timestamp_millis(1710000000000)"));
+        assertTrue(sql.contains("child.timestamp <= to_timestamp_millis(1710003600000)"));
+        assertTrue(sql.contains("json_get_string(child.resource_attributes, '$[\"deployment.environment.name\"]') "
+                + "= 'prod'"));
+        assertTrue(sql.contains("((child.service_name = 'checkout-api' OR child.service_name = 'payment-api') "
+                + "OR (parent.service_name = 'checkout-api' OR parent.service_name = 'payment-api'))"));
+        assertTrue(sql.contains("LOWER(child.service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
+        assertTrue(sql.contains("LOWER(parent.service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
+        assertTrue(sql.contains("LOWER(child.service_name) != LOWER(parent.service_name)"));
+        assertTrue(sql.contains("GROUP BY parent.service_name, child.service_name"));
+        assertTrue(sql.endsWith("ORDER BY request_count DESC LIMIT 100"));
+    }
+
+    @Test
+    void queryTraceServiceGraphRowsUsesFlattenedResourceAttributeColumnsWhenGreptimeSchemaHasNoJsonColumn() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.execute(anyString())).thenAnswer(invocation -> {
+            String sql = invocation.getArgument(0);
+            if (sql.startsWith("DESC hzb_traces")) {
+                return List.of(
+                        Map.of("Column", "timestamp"),
+                        Map.of("Column", "service_name"),
+                        Map.of("Column", "resource_attributes.deployment.environment.name"),
+                        Map.of("Column", "resource_attributes.host.name")
+                );
+            }
+            return List.of(Map.of(
+                    "source_service_name", "checkout-api",
+                    "target_service_name", "payment-api",
+                    "request_count", 2L));
+        });
+
+        repository.queryTraceServiceGraphRows(100, 1710000000000L, 1710003600000L, "prod", true);
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        String sql = sqlCaptor.getAllValues().get(1);
+        assertTrue(sql.contains("child.\"resource_attributes.deployment.environment.name\" = 'prod'"));
+        assertTrue(sql.contains("LOWER(child.service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
+        assertTrue(sql.contains("LOWER(parent.service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
+        assertTrue(!sql.contains("json_get_string(child.resource_attributes"));
+    }
+
+    @Test
     void queryTraceRowsFallsBackToGreptimeHttpWhenExecutorUnavailable() {
         when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(null);
         when(greptimeProperties.httpEndpoint()).thenReturn("http://127.0.0.1:4000");
@@ -125,7 +312,8 @@ class GreptimeTraceQueryRepositoryTest {
 
         ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).exchange(urlCaptor.capture(), eq(HttpMethod.POST), entityCaptor.capture(), eq(GreptimeSqlQueryContent.class));
+        verify(restTemplate).exchange(
+                urlCaptor.capture(), eq(HttpMethod.POST), entityCaptor.capture(), eq(GreptimeSqlQueryContent.class));
         assertEquals("http://127.0.0.1:4000/v1/sql?db=public", urlCaptor.getValue());
         String requestBody = entityCaptor.getValue().getBody().toString();
         assertTrue(requestBody.startsWith("sql="));
@@ -145,6 +333,44 @@ class GreptimeTraceQueryRepositoryTest {
         verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
         String sql = sqlCaptor.getValue();
         assertTraceSqlProjectsAttribution(sql);
+    }
+
+    @Test
+    void queryTraceRowsPushesRouteFiltersIntoGreptimeSql() {
+        when(greptimeSqlQueryExecutorProvider.getIfAvailable()).thenReturn(greptimeSqlQueryExecutor);
+        when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("trace_id", "trace-1")));
+
+        repository.queryTraceRows(
+                "trace-'1",
+                25,
+                1710000000000L,
+                1710003600000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "team-a",
+                Map.of("host.name", Set.of("checkout-1"), "service.name", Set.of("checkout")),
+                true
+        );
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(greptimeSqlQueryExecutor, times(2)).execute(sqlCaptor.capture());
+        String sql = sqlCaptor.getAllValues().get(1);
+        assertTraceSqlProjectsAttribution(sql);
+        assertTrue(sql.contains("trace_id = 'trace-''1'"));
+        assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
+        assertTrue(sql.contains("timestamp <= to_timestamp_millis(1710003600000)"));
+        assertTrue(sql.contains("service_name = 'checkout'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"service.namespace\"]') "
+                + "= 'commerce'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"deployment.environment.name\"]') "
+                + "= 'prod'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') "
+                + "= 'team-a'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a'"));
+        assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"host.name\"]') = 'checkout-1'"));
+        assertTrue(sql.contains("LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')"));
+        assertTrue(sql.endsWith("ORDER BY timestamp ASC LIMIT 25"));
     }
 
     private void assertTraceSqlProjectsAttribution(String sql) {

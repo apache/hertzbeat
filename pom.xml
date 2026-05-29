@@ -80,6 +80,7 @@
     <modules>
         <module>hertzbeat-startup</module>
         <module>hertzbeat-manager</module>
+        <module>hertzbeat-observability</module>
         <module>hertzbeat-alerter</module>
         <module>hertzbeat-common-core</module>
         <module>hertzbeat-common-spring</module>
@@ -211,6 +212,12 @@
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-manager</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- observability -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-observability</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- ai -->
@@ -611,6 +618,15 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

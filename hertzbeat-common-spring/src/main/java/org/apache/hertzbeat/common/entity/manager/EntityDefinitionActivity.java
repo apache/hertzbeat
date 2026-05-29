@@ -64,6 +64,12 @@ public class EntityDefinitionActivity {
     @Column(name = "entity_id", nullable = false)
     private Long entityId;
 
+    @Schema(title = "Workspace ID", example = "default", accessMode = READ_WRITE)
+    @Size(max = 64)
+    @Builder.Default
+    @Column(name = "workspace_id", length = 64)
+    private String workspaceId = "default";
+
     @Schema(title = "Activity type", example = "definition_import", accessMode = READ_WRITE)
     @Size(max = 32)
     @Column(name = "activity_type", length = 32, nullable = false)

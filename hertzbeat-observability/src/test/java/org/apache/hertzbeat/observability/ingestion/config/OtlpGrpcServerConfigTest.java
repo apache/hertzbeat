@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.observability.ingestion.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -31,6 +32,8 @@ import io.grpc.Status;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilityAccessTokenGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +50,8 @@ class OtlpGrpcServerConfigTest {
 
     private static final Metadata.Key<String> AUTHORIZATION =
             Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER);
+    private static final Metadata.Key<String> WORKSPACE_ID =
+            Metadata.Key.of(AuthTokenScopes.WORKSPACE_ID_HEADER.toLowerCase(), Metadata.ASCII_STRING_MARSHALLER);
 
     @Mock
     private ObservabilityAccessTokenGateway accessTokenGateway;
@@ -69,7 +74,7 @@ class OtlpGrpcServerConfigTest {
     void shouldAllowManagedApiToken() {
         String token = issueManagedToken();
         Metadata headers = bearerHeaders(token);
-        when(accessTokenGateway.checkTokenStatus(token)).thenReturn(null);
+        when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
         when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
         when(next.startCall(any(), any())).thenReturn(new ServerCall.Listener<>() {
         });
@@ -77,9 +82,48 @@ class OtlpGrpcServerConfigTest {
         interceptor.interceptCall(call, headers, next);
 
         verify(next).startCall(call, headers);
-        verify(accessTokenGateway).checkTokenStatus(token);
+        verify(accessTokenGateway).checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST);
         verify(accessTokenGateway).checkManagedTokenAccess("admin", List.of("admin"));
         verify(accessTokenGateway).touchTokenLastUsedTime(token);
+    }
+
+    @Test
+    void shouldValidateWorkspaceBoundManagedApiToken() {
+        String token = issueManagedToken();
+        Metadata headers = bearerHeaders(token);
+        headers.put(WORKSPACE_ID, "prod-west");
+        when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST, "prod-west")).thenReturn(null);
+        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(next.startCall(any(), any())).thenReturn(new ServerCall.Listener<>() {
+        });
+
+        interceptor.interceptCall(call, headers, next);
+
+        verify(next).startCall(call, headers);
+        verify(accessTokenGateway).checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST, "prod-west");
+    }
+
+    @Test
+    void shouldBindWorkspaceContextAcrossGrpcCallLifecycle() {
+        AuthTokenRequestContext.clear();
+        String token = issueManagedToken();
+        Metadata headers = bearerHeaders(token);
+        headers.put(WORKSPACE_ID, " prod-west ");
+        when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST, "prod-west")).thenReturn(null);
+        when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin"))).thenReturn(null);
+        when(next.startCall(any(), any())).thenAnswer(invocation -> {
+            assertEquals("prod-west", AuthTokenRequestContext.currentWorkspaceId());
+            return new ServerCall.Listener<>() {
+            };
+        });
+
+        ServerCall.Listener<Object> listener = interceptor.interceptCall(call, headers, next);
+
+        assertNull(AuthTokenRequestContext.currentWorkspaceId());
+        listener.onHalfClose();
+        assertNull(AuthTokenRequestContext.currentWorkspaceId());
+        listener.onComplete();
+        assertNull(AuthTokenRequestContext.currentWorkspaceId());
     }
 
     @Test
@@ -113,14 +157,14 @@ class OtlpGrpcServerConfigTest {
     void shouldRejectRevokedManagedToken() {
         String token = issueManagedToken();
         Metadata headers = bearerHeaders(token);
-        when(accessTokenGateway.checkTokenStatus(token)).thenReturn("Token has been revoked");
+        when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST)).thenReturn("Token has been revoked");
 
         interceptor.interceptCall(call, headers, next);
 
         ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
         verify(call).close(statusCaptor.capture(), any(Metadata.class));
         verify(next, never()).startCall(any(), any());
-        verify(accessTokenGateway).checkTokenStatus(token);
+        verify(accessTokenGateway).checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST);
         verify(accessTokenGateway, never()).checkManagedTokenAccess(any(), any());
         verify(accessTokenGateway, never()).touchTokenLastUsedTime(any());
         assertEquals(Status.Code.UNAUTHENTICATED, statusCaptor.getValue().getCode());
@@ -130,7 +174,7 @@ class OtlpGrpcServerConfigTest {
     void shouldRejectManagedTokenWhoseOwnerNoLongerHasRequiredAccess() {
         String token = issueManagedToken();
         Metadata headers = bearerHeaders(token);
-        when(accessTokenGateway.checkTokenStatus(token)).thenReturn(null);
+        when(accessTokenGateway.checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST)).thenReturn(null);
         when(accessTokenGateway.checkManagedTokenAccess("admin", List.of("admin")))
                 .thenReturn("Token owner account is no longer valid");
 
@@ -139,7 +183,7 @@ class OtlpGrpcServerConfigTest {
         ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
         verify(call).close(statusCaptor.capture(), any(Metadata.class));
         verify(next, never()).startCall(any(), any());
-        verify(accessTokenGateway).checkTokenStatus(token);
+        verify(accessTokenGateway).checkTokenStatus(token, AuthTokenScopes.OTLP_INGEST);
         verify(accessTokenGateway).checkManagedTokenAccess("admin", List.of("admin"));
         verify(accessTokenGateway, never()).touchTokenLastUsedTime(any());
         assertEquals(Status.Code.UNAUTHENTICATED, statusCaptor.getValue().getCode());

@@ -23,12 +23,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest;
+import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.logs.v1.LogRecord;
 import io.opentelemetry.proto.logs.v1.ResourceLogs;
 import io.opentelemetry.proto.logs.v1.ScopeLogs;
+import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import io.opentelemetry.proto.resource.v1.Resource;
 import io.opentelemetry.proto.trace.v1.ResourceSpans;
 import java.io.ByteArrayInputStream;
@@ -44,6 +46,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -57,8 +60,8 @@ public class OtlpCorrelationEnricher {
     public static final String EVENT_ID_ATTRIBUTE = "hertzbeat.event_id";
     public static final String LOG_RECORD_UID_ATTRIBUTE = "log.record.uid";
     public static final String INGEST_ID_ATTRIBUTE = "hertzbeat.ingest_id";
-    public static final String ENTITY_ID_ATTRIBUTE = "hertzbeat.entity_id";
-    public static final String WORKSPACE_ID_ATTRIBUTE = "hertzbeat.workspace_id";
+    public static final String ENTITY_ID_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID;
+    public static final String WORKSPACE_ID_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID;
 
     private static final String CONTENT_ENCODING_GZIP = "gzip";
     private static final Set<String> OTLP_HEX_ID_FIELDS = Set.of("traceId", "spanId", "parentSpanId");
@@ -66,7 +69,7 @@ public class OtlpCorrelationEnricher {
 
     public byte[] enrichLogsHttp(byte[] content, HttpHeaders requestHeaders, OtlpCorrelationContext context) {
         MediaType contentType = requestHeaders == null ? null : requestHeaders.getContentType();
-        byte[] normalizedContent = maybeDecompress(content, requestHeaders);
+        byte[] normalizedContent = maybeDecompress(safeContent(content), requestHeaders, "logs");
         try {
             ExportLogsServiceRequest request;
             if (contentType != null && MediaType.APPLICATION_JSON.includes(contentType)) {
@@ -113,9 +116,26 @@ public class OtlpCorrelationEnricher {
         return requestBuilder.build();
     }
 
+    public ExportMetricsServiceRequest enrichMetrics(ExportMetricsServiceRequest request,
+                                                     OtlpCorrelationContext context) {
+        ExportMetricsServiceRequest source =
+                request == null ? ExportMetricsServiceRequest.getDefaultInstance() : request;
+        OtlpCorrelationContext resolvedContext = context == null ? OtlpCorrelationContext.empty() : context;
+        if (StringUtils.isBlank(resolvedContext.entityId()) && StringUtils.isBlank(resolvedContext.workspaceId())) {
+            return source;
+        }
+        ExportMetricsServiceRequest.Builder requestBuilder = source.toBuilder().clearResourceMetrics();
+        for (ResourceMetrics resourceMetrics : source.getResourceMetricsList()) {
+            ResourceMetrics.Builder resourceBuilder = resourceMetrics.toBuilder();
+            resourceBuilder.setResource(enrichMetricResource(resourceMetrics.getResource(), resolvedContext));
+            requestBuilder.addResourceMetrics(resourceBuilder.build());
+        }
+        return requestBuilder.build();
+    }
+
     public byte[] enrichTracesHttp(byte[] content, HttpHeaders requestHeaders, OtlpCorrelationContext context) {
         MediaType contentType = requestHeaders == null ? null : requestHeaders.getContentType();
-        byte[] normalizedContent = maybeDecompress(content, requestHeaders);
+        byte[] normalizedContent = maybeDecompress(safeContent(content), requestHeaders, "trace");
         try {
             ExportTraceServiceRequest request;
             if (contentType != null && MediaType.APPLICATION_JSON.includes(contentType)) {
@@ -166,10 +186,20 @@ public class OtlpCorrelationEnricher {
                 .build();
     }
 
+    private Resource enrichMetricResource(Resource resource, OtlpCorrelationContext context) {
+        List<KeyValue> attributes = new ArrayList<>(resource.getAttributesList());
+        upsertStringAttributeIfPresent(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
+        upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
+        return resource.toBuilder()
+                .clearAttributes()
+                .addAllAttributes(attributes)
+                .build();
+    }
+
     private Resource enrichTraceResource(Resource resource, OtlpCorrelationContext context) {
         List<KeyValue> attributes = new ArrayList<>(resource.getAttributesList());
         addStringAttributeIfMissing(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
-        addStringAttributeIfMissing(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
+        upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
         return resource.toBuilder()
                 .clearAttributes()
                 .addAllAttributes(attributes)
@@ -287,12 +317,11 @@ public class OtlpCorrelationEnricher {
                 .build();
     }
 
-    private byte[] maybeDecompress(byte[] content, HttpHeaders headers) {
+    private byte[] maybeDecompress(byte[] content, HttpHeaders headers, String signal) {
         if (content == null || content.length == 0 || headers == null) {
             return content;
         }
-        String contentEncoding = headers.getFirst(HttpHeaders.CONTENT_ENCODING);
-        if (!StringUtils.equalsIgnoreCase(contentEncoding, CONTENT_ENCODING_GZIP)) {
+        if (!isGzipEncoded(headers)) {
             return content;
         }
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(content);
@@ -301,10 +330,33 @@ public class OtlpCorrelationEnricher {
             gzipInputStream.transferTo(outputStream);
             return outputStream.toByteArray();
         } catch (Exception ex) {
-            throw io.grpc.Status.INVALID_ARGUMENT.withDescription("Malformed gzip-compressed OTLP logs payload.")
+            throw io.grpc.Status.INVALID_ARGUMENT.withDescription("Malformed gzip-compressed OTLP "
+                            + signal + " payload.")
                     .withCause(ex)
                     .asRuntimeException();
         }
+    }
+
+    private boolean isGzipContentEncoding(String contentEncoding) {
+        String[] encodings = StringUtils.split(contentEncoding, ',');
+        if (encodings == null || encodings.length == 0) {
+            return false;
+        }
+        for (String encoding : encodings) {
+            if (StringUtils.equalsIgnoreCase(StringUtils.trimToEmpty(encoding), CONTENT_ENCODING_GZIP)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isGzipEncoded(HttpHeaders headers) {
+        List<String> contentEncodings = headers == null ? null : headers.get(HttpHeaders.CONTENT_ENCODING);
+        return contentEncodings != null && contentEncodings.stream().anyMatch(this::isGzipContentEncoding);
+    }
+
+    private byte[] safeContent(byte[] content) {
+        return content == null ? new byte[0] : content;
     }
 
     private String normalizeOtlpJson(String content) throws InvalidProtocolBufferException {

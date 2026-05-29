@@ -21,15 +21,19 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.protobuf.ByteString;
+import io.grpc.StatusRuntimeException;
 import io.opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest;
+import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.logs.v1.LogRecord;
 import io.opentelemetry.proto.logs.v1.ResourceLogs;
 import io.opentelemetry.proto.logs.v1.ScopeLogs;
+import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import io.opentelemetry.proto.resource.v1.Resource;
 import io.opentelemetry.proto.trace.v1.ResourceSpans;
 import io.opentelemetry.proto.trace.v1.ScopeSpans;
@@ -114,6 +118,24 @@ class OtlpCorrelationEnricherTest {
     }
 
     @Test
+    void trimsCorrelationContextValuesBeforePromotingGreptimeResourceDimensionsAcrossSignals() {
+        OtlpCorrelationContext context = new OtlpCorrelationContext(
+                " ingest-1 ", " entity-1 ", " workspace-1 ");
+
+        ExportLogsServiceRequest logs = enricher.enrichLogs(logsRequest(List.of(logRecord("body-one"))), context);
+        ExportMetricsServiceRequest metrics = enricher.enrichMetrics(metricsRequest(), context);
+        ExportTraceServiceRequest traces = enricher.enrichTraces(traceRequest(), context);
+
+        assertEquals("ingest-1", logAttributes(logs, 0).get("hertzbeat.ingest_id"));
+        assertEquals("entity-1", resourceAttributes(logs).get("hertzbeat.entity_id"));
+        assertEquals("workspace-1", resourceAttributes(logs).get("hertzbeat.workspace_id"));
+        assertEquals("entity-1", metricResourceAttributes(metrics).get("hertzbeat.entity_id"));
+        assertEquals("workspace-1", metricResourceAttributes(metrics).get("hertzbeat.workspace_id"));
+        assertEquals("entity-1", traceResourceAttributes(traces).get("hertzbeat.entity_id"));
+        assertEquals("workspace-1", traceResourceAttributes(traces).get("hertzbeat.workspace_id"));
+    }
+
+    @Test
     void normalizesGzipJsonAndProtobufPayloadsBeforeEnrichment() throws Exception {
         String jsonPayload = """
                 {
@@ -156,6 +178,80 @@ class OtlpCorrelationEnricherTest {
     }
 
     @Test
+    void logsHttpGzipContentEncodingWithOptionalWhitespaceStillDecodesBeforeEnrichment() throws Exception {
+        ExportLogsServiceRequest request = logsRequest(List.of(logRecord("protobuf-body")));
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.setContentType(MediaType.parseMediaType("application/x-protobuf"));
+        requestHeaders.set(HttpHeaders.CONTENT_ENCODING, " gzip ");
+
+        byte[] enriched = enricher.enrichLogsHttp(gzip(request.toByteArray()), requestHeaders,
+                new OtlpCorrelationContext("ingest-whitespace", null, null));
+        Map<String, String> attributes = logAttributes(ExportLogsServiceRequest.parseFrom(enriched), 0);
+
+        assertEquals("ingest-whitespace", attributes.get("hertzbeat.ingest_id"));
+        assertFalse(attributes.get("hertzbeat.event_id").isBlank());
+    }
+
+    @Test
+    void logsHttpGzipContentEncodingWithBlankFirstValueStillDecodesBeforeEnrichment() throws Exception {
+        ExportLogsServiceRequest request = logsRequest(List.of(logRecord("protobuf-body")));
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.setContentType(MediaType.parseMediaType("application/x-protobuf"));
+        requestHeaders.add(HttpHeaders.CONTENT_ENCODING, " ");
+        requestHeaders.add(HttpHeaders.CONTENT_ENCODING, "gzip");
+
+        byte[] enriched = enricher.enrichLogsHttp(gzip(request.toByteArray()), requestHeaders,
+                new OtlpCorrelationContext("ingest-multi-value", null, null));
+        Map<String, String> attributes = logAttributes(ExportLogsServiceRequest.parseFrom(enriched), 0);
+
+        assertEquals("ingest-multi-value", attributes.get("hertzbeat.ingest_id"));
+        assertFalse(attributes.get("hertzbeat.event_id").isBlank());
+    }
+
+    @Test
+    void logsHttpGzipContentEncodingWithCommaSeparatedBlankValueStillDecodesBeforeEnrichment() throws Exception {
+        ExportLogsServiceRequest request = logsRequest(List.of(logRecord("protobuf-body")));
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.setContentType(MediaType.parseMediaType("application/x-protobuf"));
+        requestHeaders.add(HttpHeaders.CONTENT_ENCODING, " , gzip ");
+
+        byte[] enriched = enricher.enrichLogsHttp(gzip(request.toByteArray()), requestHeaders,
+                new OtlpCorrelationContext("ingest-comma", null, null));
+        Map<String, String> attributes = logAttributes(ExportLogsServiceRequest.parseFrom(enriched), 0);
+
+        assertEquals("ingest-comma", attributes.get("hertzbeat.ingest_id"));
+        assertFalse(attributes.get("hertzbeat.event_id").isBlank());
+    }
+
+    @Test
+    void httpEnrichmentWithNullBodiesUsesEmptyProtobufRequests() throws Exception {
+        HttpHeaders requestHeaders = new HttpHeaders();
+        byte[] logsEnriched = enricher.enrichLogsHttp(null, requestHeaders,
+                new OtlpCorrelationContext("ingest-empty", "entity-empty", "workspace-empty"));
+        byte[] tracesEnriched = enricher.enrichTracesHttp(null, requestHeaders,
+                new OtlpCorrelationContext("ignored-for-traces", "entity-empty", "workspace-empty"));
+
+        assertEquals(ExportLogsServiceRequest.getDefaultInstance(),
+                ExportLogsServiceRequest.parseFrom(logsEnriched));
+        assertEquals(ExportTraceServiceRequest.getDefaultInstance(),
+                ExportTraceServiceRequest.parseFrom(tracesEnriched));
+    }
+
+    @Test
+    void malformedGzipTraceHttpPayloadReportsTraceSignal() {
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.setContentType(MediaType.parseMediaType("application/x-protobuf"));
+        requestHeaders.set(HttpHeaders.CONTENT_ENCODING, "gzip");
+
+        StatusRuntimeException exception = assertThrows(StatusRuntimeException.class,
+                () -> enricher.enrichTracesHttp("not-gzip".getBytes(StandardCharsets.UTF_8), requestHeaders,
+                        OtlpCorrelationContext.empty()));
+
+        assertEquals(io.grpc.Status.Code.INVALID_ARGUMENT, exception.getStatus().getCode());
+        assertEquals("Malformed gzip-compressed OTLP trace payload.", exception.getStatus().getDescription());
+    }
+
+    @Test
     void injectsWorkspaceAndEntityIntoTraceResourceAttributesWithoutOverwritingExistingValues() {
         ExportTraceServiceRequest request = traceRequest(
                 stringAttribute("service.name", "checkout"),
@@ -170,6 +266,36 @@ class OtlpCorrelationEnricherTest {
         assertEquals("workspace-1", resourceAttributes.get("hertzbeat.workspace_id"));
         assertFalse(traceSpanAttributes(enriched).containsKey("hertzbeat.entity_id"));
         assertFalse(traceSpanAttributes(enriched).containsKey("hertzbeat.workspace_id"));
+    }
+
+    @Test
+    void upsertsAuthenticatedWorkspaceIntoTraceResourceAttributesWithoutOverwritingEntity() {
+        ExportTraceServiceRequest request = traceRequest(
+                stringAttribute("service.name", "checkout"),
+                stringAttribute("hertzbeat.entity_id", "upstream-entity"),
+                stringAttribute("hertzbeat.workspace_id", "spoofed"));
+
+        ExportTraceServiceRequest enriched = enricher.enrichTraces(request,
+                new OtlpCorrelationContext("ignored-for-traces", "entity-1", "workspace-1"));
+
+        Map<String, String> resourceAttributes = traceResourceAttributes(enriched);
+        assertEquals("upstream-entity", resourceAttributes.get("hertzbeat.entity_id"));
+        assertEquals("workspace-1", resourceAttributes.get("hertzbeat.workspace_id"));
+    }
+
+    @Test
+    void upsertsWorkspaceAndEntityIntoMetricResourceAttributes() {
+        ExportMetricsServiceRequest request = metricsRequest(
+                stringAttribute("service.name", "checkout"),
+                stringAttribute("hertzbeat.workspace_id", "spoofed"));
+
+        ExportMetricsServiceRequest enriched = enricher.enrichMetrics(request,
+                new OtlpCorrelationContext("ignored-for-metrics", "entity-1", "workspace-1"));
+
+        Map<String, String> resourceAttributes = metricResourceAttributes(enriched);
+        assertEquals("checkout", resourceAttributes.get("service.name"));
+        assertEquals("entity-1", resourceAttributes.get("hertzbeat.entity_id"));
+        assertEquals("workspace-1", resourceAttributes.get("hertzbeat.workspace_id"));
     }
 
     @Test
@@ -240,6 +366,14 @@ class OtlpCorrelationEnricherTest {
                 .build();
     }
 
+    private ExportMetricsServiceRequest metricsRequest(KeyValue... resourceAttributes) {
+        return ExportMetricsServiceRequest.newBuilder()
+                .addResourceMetrics(ResourceMetrics.newBuilder()
+                        .setResource(Resource.newBuilder().addAllAttributes(List.of(resourceAttributes)).build())
+                        .build())
+                .build();
+    }
+
     private ExportTraceServiceRequest traceRequest(KeyValue... resourceAttributes) {
         return ExportTraceServiceRequest.newBuilder()
                 .addResourceSpans(ResourceSpans.newBuilder()
@@ -293,6 +427,19 @@ class OtlpCorrelationEnricherTest {
 
     private Map<String, String> resourceAttributes(ExportLogsServiceRequest request) {
         return request.getResourceLogs(0)
+                .getResource()
+                .getAttributesList()
+                .stream()
+                .filter(attribute -> attribute.hasValue()
+                        && attribute.getValue().getValueCase() == AnyValue.ValueCase.STRING_VALUE)
+                .collect(java.util.stream.Collectors.toMap(
+                        KeyValue::getKey,
+                        attribute -> attribute.getValue().getStringValue(),
+                        (left, right) -> right));
+    }
+
+    private Map<String, String> metricResourceAttributes(ExportMetricsServiceRequest request) {
+        return request.getResourceMetrics(0)
                 .getResource()
                 .getAttributesList()
                 .stream()

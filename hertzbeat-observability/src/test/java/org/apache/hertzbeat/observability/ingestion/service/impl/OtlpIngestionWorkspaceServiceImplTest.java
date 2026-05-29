@@ -70,6 +70,9 @@ import org.springframework.mock.web.MockHttpServletRequest;
 @ExtendWith(MockitoExtension.class)
 class OtlpIngestionWorkspaceServiceImplTest {
 
+    private static final String METRIC_PROMQL_GROUP_BY = "sum by (__name__, service_name, service_namespace, "
+            + "deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ";
+
     private OtlpIngestionWorkspaceServiceImpl otlpIngestionWorkspaceService;
 
     @Mock
@@ -118,6 +121,10 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 anyLong(),
                 anyString()
         )).thenReturn(promqlSuccess(queryData));
+    }
+
+    private static String groupedMetricPromql(String filter) {
+        return METRIC_PROMQL_GROUP_BY + "({" + filter + "})";
     }
 
     @Test
@@ -278,6 +285,48 @@ class OtlpIngestionWorkspaceServiceImplTest {
     }
 
     @Test
+    void guideUsesBracketedIpv6ForwardedHostWithoutDuplicatingPorts() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setServerPort(8080);
+        request.addHeader("Forwarded", "proto=https;host=\"[2001:db8::1]:8443\"");
+
+        OtlpIngestionGuideDto guide = otlpIngestionWorkspaceService.getGuide(request);
+
+        assertEquals("[2001:db8::1]:4317", guide.getGrpcAuthorityExample());
+        assertTrue(guide.getSignals().stream().anyMatch(signal -> "metrics".equals(signal.getSignal())
+                && "http".equals(signal.getProtocol())
+                && "https://[2001:db8::1]:8443/api/otlp/v1/metrics".equals(signal.getEndpoint())));
+        assertTrue(guide.getSignals().stream().filter(signal -> "grpc".equals(signal.getProtocol()))
+                .allMatch(signal -> "[2001:db8::1]:4317".equals(signal.getEndpoint())));
+        assertTrue(guide.getSnippets().stream().anyMatch(snippet -> "collector-http".equals(snippet.getKey())
+                && snippet.getContent().contains("endpoint: https://[2001:db8::1]:8443/api/otlp")));
+        assertTrue(guide.getSnippets().stream().anyMatch(snippet -> "collector-grpc".equals(snippet.getKey())
+                && snippet.getContent().contains("endpoint: [2001:db8::1]:4317")));
+    }
+
+    @Test
+    void guideBracketsBareIpv6ForwardedHostBeforeAppendingPorts() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setServerPort(8080);
+        request.addHeader("X-Forwarded-Proto", "https");
+        request.addHeader("X-Forwarded-Host", "2001:db8::2");
+        request.addHeader("X-Forwarded-Port", "8443");
+
+        OtlpIngestionGuideDto guide = otlpIngestionWorkspaceService.getGuide(request);
+
+        assertEquals("[2001:db8::2]:4317", guide.getGrpcAuthorityExample());
+        assertTrue(guide.getSignals().stream().anyMatch(signal -> "logs".equals(signal.getSignal())
+                && "http".equals(signal.getProtocol())
+                && "https://[2001:db8::2]:8443/api/otlp/v1/logs".equals(signal.getEndpoint())));
+        assertTrue(guide.getSignals().stream().filter(signal -> "grpc".equals(signal.getProtocol()))
+                .allMatch(signal -> "[2001:db8::2]:4317".equals(signal.getEndpoint())));
+        assertTrue(guide.getSnippets().stream().anyMatch(snippet -> "collector-http".equals(snippet.getKey())
+                && snippet.getContent().contains("endpoint: https://[2001:db8::2]:8443/api/otlp")));
+        assertTrue(guide.getSnippets().stream().anyMatch(snippet -> "collector-grpc".equals(snippet.getKey())
+                && snippet.getContent().contains("endpoint: [2001:db8::2]:4317")));
+    }
+
+    @Test
     void bindingSummaryCombinesRecentSamplesAndBoundEntities() {
         LogEntry logEntry = LogEntry.builder()
                 .resource(Map.of("service.name", "checkout", "service.namespace", "commerce"))
@@ -322,6 +371,59 @@ class OtlpIngestionWorkspaceServiceImplTest {
         assertFalse(summary.getRecentIdentitySamples().isEmpty());
         assertEquals(1, summary.getRecentBoundEntities().size());
         assertEquals("checkout", summary.getRecentBoundEntities().getFirst().getPrimaryIdentityValue());
+    }
+
+    @Test
+    void bindingSummarySurfacesUnboundOtlpServiceAsEntityCandidate() {
+        long now = System.currentTimeMillis();
+        LogEntry logEntry = LogEntry.builder()
+                .timeUnixNano(now * 1_000_000L)
+                .resource(Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ))
+                .build();
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                now,
+                "checkout_request_latency",
+                "gauge",
+                "ms",
+                42.5,
+                Map.of("route", "/checkout")
+        );
+
+        stubRecentLogs(logEntry);
+        when(entityTraceQueryService.queryTraceList(org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
+                org.mockito.ArgumentMatchers.anySet(), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(List.of());
+        when(workspaceQueryGateway.findEntitiesByIds(org.mockito.ArgumentMatchers.anySet())).thenReturn(Map.of());
+
+        OtlpEntityBindingSummaryDto summary = otlpIngestionWorkspaceService.getBindingSummary();
+
+        assertTrue(summary.getRecentBoundEntities().isEmpty());
+        assertEquals(1, summary.getRecentUnboundCandidates().size());
+        OtlpEntityBindingSummaryDto.UnboundEntityCandidate candidate =
+                summary.getRecentUnboundCandidates().getFirst();
+        assertEquals("checkout", candidate.getSuggestedName());
+        assertEquals("service", candidate.getSuggestedType());
+        assertEquals("commerce", candidate.getNamespace());
+        assertEquals("prod", candidate.getEnvironment());
+        assertEquals("service.name", candidate.getPrimaryIdentityKey());
+        assertEquals("checkout", candidate.getPrimaryIdentityValue());
+        assertEquals(List.of("logs", "metrics"), candidate.getSignals());
+        assertEquals("checkout", candidate.getCanonicalIdentities().get("service.name"));
+        assertEquals("commerce", candidate.getCanonicalIdentities().get("service.namespace"));
     }
 
     @Test
@@ -473,7 +575,9 @@ class OtlpIngestionWorkspaceServiceImplTest {
 
         when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.of(entity));
         when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of(serviceName, serviceNamespace));
-        stubPromqlQuery("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\"})",
+        String checkoutQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\"");
+        stubPromqlQuery(checkoutQuery,
                 new DatasourceQueryData(
                         "otlp-metrics-console",
                         200,
@@ -509,8 +613,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
         assertEquals("commerce", console.getContext().getServiceNamespace());
         assertEquals("Greptime-promql", console.getDatasource());
         assertEquals("promql", console.getQueryMode());
-        assertEquals("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\"})",
-                console.getQuery());
+        assertEquals(checkoutQuery, console.getQuery());
         assertEquals(1, console.getStats().getTotalSeries());
         assertEquals(2000L, console.getStats().getLatestObservedAt());
         assertNotNull(console.getResults());
@@ -539,7 +642,9 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 Map.of("http.route", "/flagd.evaluation.v1.Service/ResolveBoolean")
         );
 
-        stubPromqlQuery("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"flagd\", service_namespace=\"opentelemetry-demo\", deployment_environment_name=\"demo\"})",
+        String flagdQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"flagd\", service_namespace=\"opentelemetry-demo\", deployment_environment_name=\"demo\"");
+        stubPromqlQuery(flagdQuery,
                 new DatasourceQueryData(
                         "otlp-metrics-console",
                         200,
@@ -575,8 +680,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
         assertEquals("flagd", console.getContext().getServiceName());
         assertEquals("opentelemetry-demo", console.getContext().getServiceNamespace());
         assertEquals("demo", console.getContext().getEnvironment());
-        assertEquals("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"flagd\", service_namespace=\"opentelemetry-demo\", deployment_environment_name=\"demo\"})",
-                console.getQuery());
+        assertEquals(flagdQuery, console.getQuery());
         assertEquals(1, console.getStats().getTotalSeries());
     }
 
@@ -601,14 +705,24 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 Map.of("http.route", "/flagd.evaluation.v1.Service/ResolveBoolean")
         );
 
-        stubPromqlQuery("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"otel_logs_log_processor_logs\", service_name=\"quote\", service_namespace=\"opentelemetry-demo\"})",
+        stubPromqlQuery(groupedMetricPromql("service_name=\"quote\", service_namespace=\"opentelemetry-demo\""),
                 new DatasourceQueryData(
                         "otlp-metrics-console",
                         200,
                         null,
                         List.of()
                 ));
-        stubPromqlQuery("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"flagd\", service_namespace=\"opentelemetry-demo\"})",
+        stubPromqlQuery(groupedMetricPromql("__name__=\"otel_logs_log_processor_logs\", "
+                        + "service_name=\"quote\", service_namespace=\"opentelemetry-demo\""),
+                new DatasourceQueryData(
+                        "otlp-metrics-console",
+                        200,
+                        null,
+                        List.of()
+                ));
+        String flagdQueryableQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"flagd\", service_namespace=\"opentelemetry-demo\"");
+        stubPromqlQuery(flagdQueryableQuery,
                 new DatasourceQueryData(
                         "otlp-metrics-console",
                         200,
@@ -642,8 +756,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
 
         assertNotNull(console.getContext());
         assertEquals("flagd", console.getContext().getServiceName());
-        assertEquals("sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", service_name=\"flagd\", service_namespace=\"opentelemetry-demo\"})",
-                console.getQuery());
+        assertEquals(flagdQueryableQuery, console.getQuery());
         assertEquals(1, console.getStats().getTotalSeries());
     }
 
@@ -674,9 +787,9 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(20)))
                 .thenReturn(new PageImpl<>(List.of(traceItem), PageRequest.of(0, 20), 1));
-        String frontendQuery = "sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", "
+        String frontendQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
                 + "service_name=\"frontend\", service_namespace=\"opentelemetry-demo\", "
-                + "deployment_environment_name=\"demo\"})";
+                + "deployment_environment_name=\"demo\"");
         stubPromqlQuery(frontendQuery,
                 new DatasourceQueryData(
                         "otlp-metrics-console",
@@ -742,9 +855,9 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 Map.of()
         );
 
-        String expectedFlagdQuery = "sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"http_server_request_duration_count\", "
+        String expectedFlagdQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
                 + "service_name=\"flagd\", service_namespace=\"opentelemetry-demo\", "
-                + "deployment_environment_name=\"demo\"})";
+                + "deployment_environment_name=\"demo\"");
         stubPromqlQuery(expectedFlagdQuery,
                 new DatasourceQueryData(
                         "otlp-metrics-console",
@@ -870,9 +983,9 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 Map.of()
         );
 
-        String rpcQuery = "sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"rpc_server_duration_milliseconds\", "
+        String rpcQuery = groupedMetricPromql("__name__=\"rpc_server_duration_milliseconds\", "
                 + "service_name=\"checkout\", service_namespace=\"hertzbeat-demo\", "
-                + "deployment_environment_name=\"demo\"})";
+                + "deployment_environment_name=\"demo\"");
         DatasourceQueryData emptyQueryData = new DatasourceQueryData(
                 "otlp-metrics-console",
                 200,
@@ -1038,9 +1151,9 @@ class OtlpIngestionWorkspaceServiceImplTest {
             );
         }
 
-        String demoQuery = "sum by (__name__, service_name, service_namespace, deployment_environment_name, hertzbeat_entity_id, hertzbeat_entity_name) ({__name__=\"hertzbeat_demo_checkout_latency_ms_milliseconds\", "
+        String demoQuery = groupedMetricPromql("__name__=\"hertzbeat_demo_checkout_latency_ms_milliseconds\", "
                 + "service_name=\"checkout\", service_namespace=\"storefront\", "
-                + "deployment_environment_name=\"demo\"})";
+                + "deployment_environment_name=\"demo\"");
         DatasourceQueryData emptyQueryData = new DatasourceQueryData(
                 "otlp-metrics-console",
                 200,

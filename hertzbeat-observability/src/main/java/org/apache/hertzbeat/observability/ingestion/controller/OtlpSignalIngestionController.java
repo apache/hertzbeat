@@ -40,13 +40,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class OtlpSignalIngestionController {
 
     private static final String CONTENT_TYPE_PROTOBUF = "application/x-protobuf";
+    private static final String CONTENT_TYPE_PROTOBUF_ALT = "application/protobuf";
     private final OtlpGrpcIngestionService otlpGrpcIngestionService;
 
     @Operation(summary = "Ingest OTLP metrics through unified HertzBeat gateway")
     @PostMapping(
             value = "/v1/metrics",
-            consumes = {MediaType.APPLICATION_JSON_VALUE, CONTENT_TYPE_PROTOBUF},
-            produces = {MediaType.APPLICATION_JSON_VALUE, CONTENT_TYPE_PROTOBUF}
+            consumes = {MediaType.APPLICATION_JSON_VALUE, CONTENT_TYPE_PROTOBUF, CONTENT_TYPE_PROTOBUF_ALT},
+            produces = {MediaType.APPLICATION_JSON_VALUE, CONTENT_TYPE_PROTOBUF, CONTENT_TYPE_PROTOBUF_ALT}
     )
     public ResponseEntity<byte[]> ingestMetrics(@RequestBody byte[] content, @RequestHeader HttpHeaders requestHeaders) {
         return otlpGrpcIngestionService.ingestMetricsHttp(content, requestHeaders);
@@ -55,8 +56,8 @@ public class OtlpSignalIngestionController {
     @Operation(summary = "Ingest OTLP traces through unified HertzBeat gateway")
     @PostMapping(
             value = "/v1/traces",
-            consumes = {MediaType.APPLICATION_JSON_VALUE, CONTENT_TYPE_PROTOBUF},
-            produces = {MediaType.APPLICATION_JSON_VALUE, CONTENT_TYPE_PROTOBUF}
+            consumes = {MediaType.APPLICATION_JSON_VALUE, CONTENT_TYPE_PROTOBUF, CONTENT_TYPE_PROTOBUF_ALT},
+            produces = {MediaType.APPLICATION_JSON_VALUE, CONTENT_TYPE_PROTOBUF, CONTENT_TYPE_PROTOBUF_ALT}
     )
     public ResponseEntity<byte[]> ingestTraces(@RequestBody byte[] content, @RequestHeader HttpHeaders requestHeaders) {
         return otlpGrpcIngestionService.ingestTracesHttp(content, requestHeaders);

@@ -70,7 +70,11 @@ class OtlpWorkspaceDtoMigrationTest {
                 List.of("service.name"),
                 List.of("checkout"),
                 List.of(new OtlpEntityBindingSummaryDto.CanonicalIdentitySample("service.name", "checkout", "logs")),
-                List.of(new OtlpEntityBindingSummaryDto.BoundEntity(1L, "service", "checkout", "Checkout", "commerce", "service.name", "checkout", 2L))
+                List.of(new OtlpEntityBindingSummaryDto.BoundEntity(1L, "service", "checkout", "Checkout",
+                        "commerce", "service.name", "checkout", 2L)),
+                List.of(new OtlpEntityBindingSummaryDto.UnboundEntityCandidate(
+                        "billing", "service", "commerce", "prod", "service.name", "billing",
+                        List.of("metrics"), Map.of("service.name", "billing"), 2000L))
         );
         TelemetryIdentitySnapshot identitySnapshot = new TelemetryIdentitySnapshot(
                 "otlp",

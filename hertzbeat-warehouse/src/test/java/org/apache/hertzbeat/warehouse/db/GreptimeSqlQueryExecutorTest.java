@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.net.URLEncoder;
@@ -41,6 +42,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -109,6 +111,64 @@ class GreptimeSqlQueryExecutorTest {
     }
 
     @Test
+    void testExecuteReturnsEmptyWhenGreptimeSqlReturnsNullResponse() {
+        when(restTemplate.exchange(
+            any(String.class),
+            eq(HttpMethod.POST),
+            any(HttpEntity.class),
+            eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(null);
+
+        List<Map<String, Object>> result = greptimeSqlQueryExecutor.execute(
+                "SELECT * FROM hertzbeat_otlp_ingest_red");
+
+        assertEquals(List.of(), result);
+    }
+
+    @Test
+    void testExecuteSkipsNullOutputsAndRowsInGreptimeSqlResponse() {
+        GreptimeSqlQueryContent mockResponse = createMockResponseWithNullOutputAndRow();
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity =
+            new ResponseEntity<>(mockResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+            any(String.class),
+            eq(HttpMethod.POST),
+            any(HttpEntity.class),
+            eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(responseEntity);
+
+        List<Map<String, Object>> result = greptimeSqlQueryExecutor.execute(
+                "SELECT * FROM hertzbeat_otlp_ingest_red");
+
+        assertEquals(1, result.size());
+        assertEquals("cpu", result.getFirst().get("metric_name"));
+        assertEquals(85.5, result.getFirst().get("value"));
+    }
+
+    @Test
+    void testExecuteUsesSyntheticColumnNamesForMissingGreptimeSqlSchemaColumns() {
+        GreptimeSqlQueryContent mockResponse = createMockResponseWithPartialSchema();
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity =
+            new ResponseEntity<>(mockResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+            any(String.class),
+            eq(HttpMethod.POST),
+            any(HttpEntity.class),
+            eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(responseEntity);
+
+        List<Map<String, Object>> result = greptimeSqlQueryExecutor.execute(
+                "SELECT * FROM hertzbeat_otlp_ingest_red");
+
+        assertEquals(1, result.size());
+        assertEquals("cpu", result.getFirst().get("metric_name"));
+        assertEquals(85.5, result.getFirst().get("col_1"));
+        assertEquals("ok", result.getFirst().get("col_2"));
+    }
+
+    @Test
     void testExecuteEncodesSqlInFormBody() {
         GreptimeSqlQueryContent mockResponse = createMockResponse();
         ResponseEntity<GreptimeSqlQueryContent> responseEntity =
@@ -137,6 +197,39 @@ class GreptimeSqlQueryExecutorTest {
         );
     }
 
+    @Test
+    void testExecuteTrimsEndpointDatabaseAndCredentialsBeforeReadback() {
+        when(greptimeProperties.httpEndpoint()).thenReturn("  http://127.0.0.1:4000///  ");
+        when(greptimeProperties.database()).thenReturn(" red audit ");
+        when(greptimeProperties.username()).thenReturn(" demo ");
+        when(greptimeProperties.password()).thenReturn(" secret ");
+        GreptimeSqlQueryContent mockResponse = createMockResponse();
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity =
+            new ResponseEntity<>(mockResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+            any(String.class),
+            eq(HttpMethod.POST),
+            any(HttpEntity.class),
+            eq(GreptimeSqlQueryContent.class)
+        )).thenReturn(responseEntity);
+
+        greptimeSqlQueryExecutor.execute("SELECT * FROM hertzbeat_otlp_ingest_red");
+
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<HttpEntity> httpEntityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).exchange(
+            urlCaptor.capture(),
+            eq(HttpMethod.POST),
+            httpEntityCaptor.capture(),
+            eq(GreptimeSqlQueryContent.class)
+        );
+        assertEquals("http://127.0.0.1:4000/v1/sql?db=red%20audit", urlCaptor.getValue());
+        assertEquals("Basic " + Base64.getEncoder()
+                        .encodeToString("demo:secret".getBytes(StandardCharsets.UTF_8)),
+                httpEntityCaptor.getValue().getHeaders().getFirst(HttpHeaders.AUTHORIZATION));
+    }
+
     private GreptimeSqlQueryContent createMockResponse() {
         GreptimeSqlQueryContent response = new GreptimeSqlQueryContent();
         response.setCode(0);
@@ -155,6 +248,65 @@ class GreptimeSqlQueryExecutorTest {
         rows.add(List.of("cpu", 85.5));
 
         // Build response structure
+        GreptimeSqlQueryContent.Output.Records records =
+            new GreptimeSqlQueryContent.Output.Records();
+        records.setSchema(schema);
+        records.setRows(rows);
+
+        GreptimeSqlQueryContent.Output output = new GreptimeSqlQueryContent.Output();
+        output.setRecords(records);
+
+        response.setOutput(List.of(output));
+        return response;
+    }
+
+    private GreptimeSqlQueryContent createMockResponseWithNullOutputAndRow() {
+        GreptimeSqlQueryContent response = new GreptimeSqlQueryContent();
+        response.setCode(0);
+
+        List<GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema> columnSchemas = new ArrayList<>();
+        columnSchemas.add(new GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema("metric_name", "String"));
+        columnSchemas.add(new GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema("value", "Float64"));
+
+        GreptimeSqlQueryContent.Output.Records.Schema schema =
+            new GreptimeSqlQueryContent.Output.Records.Schema();
+        schema.setColumnSchemas(columnSchemas);
+
+        List<List<Object>> rows = new ArrayList<>();
+        rows.add(null);
+        rows.add(List.of("cpu", 85.5));
+
+        GreptimeSqlQueryContent.Output.Records records =
+            new GreptimeSqlQueryContent.Output.Records();
+        records.setSchema(schema);
+        records.setRows(rows);
+
+        GreptimeSqlQueryContent.Output output = new GreptimeSqlQueryContent.Output();
+        output.setRecords(records);
+
+        List<GreptimeSqlQueryContent.Output> outputs = new ArrayList<>();
+        outputs.add(null);
+        outputs.add(output);
+        response.setOutput(outputs);
+        return response;
+    }
+
+    private GreptimeSqlQueryContent createMockResponseWithPartialSchema() {
+        GreptimeSqlQueryContent response = new GreptimeSqlQueryContent();
+        response.setCode(0);
+
+        List<GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema> columnSchemas = new ArrayList<>();
+        columnSchemas.add(new GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema("metric_name", "String"));
+        columnSchemas.add(null);
+        columnSchemas.add(new GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema(" ", "String"));
+
+        GreptimeSqlQueryContent.Output.Records.Schema schema =
+            new GreptimeSqlQueryContent.Output.Records.Schema();
+        schema.setColumnSchemas(columnSchemas);
+
+        List<List<Object>> rows = new ArrayList<>();
+        rows.add(List.of("cpu", 85.5, "ok"));
+
         GreptimeSqlQueryContent.Output.Records records =
             new GreptimeSqlQueryContent.Output.Records();
         records.setSchema(schema);

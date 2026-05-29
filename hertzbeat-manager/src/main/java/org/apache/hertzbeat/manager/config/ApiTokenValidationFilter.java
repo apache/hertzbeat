@@ -30,8 +30,11 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.AccountService;
 import org.apache.hertzbeat.manager.service.impl.AccountServiceImpl;
@@ -73,7 +76,9 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler)
         throws IOException {
+        AuthTokenRequestContext.clear();
         SubjectSum subject = SurenessContextHolder.getBindSubject();
+        bindRequestedWorkspace(request, subject);
         if (subject == null || !isManagedToken(subject)) {
             return true;
         }
@@ -83,7 +88,11 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
             String token = authorization.substring(DispatchConstants.BEARER.length()).trim();
             if (!token.isEmpty()) {
                 try {
-                    String rejectReason = checkManagedToken(subject, token);
+                    String rejectReason = checkManagedToken(
+                            subject,
+                            token,
+                            resolveRequiredScope(request),
+                            AuthTokenRequestContext.currentWorkspaceId());
                     if (rejectReason != null) {
                         return writeError(response, HttpStatus.UNAUTHORIZED, rejectReason);
                     }
@@ -97,6 +106,12 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
         return true;
     }
 
+    @Override
+    public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+                                @NonNull Object handler, Exception ex) {
+        AuthTokenRequestContext.clear();
+    }
+
     /**
      * Check if a managed token should be rejected.
      * <p>
@@ -108,8 +123,10 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
      * If the token is valid, updates the last used time.
      * </p>
      */
-    private String checkManagedToken(SubjectSum subject, String token) {
-        String rejectReason = accountService.checkTokenStatus(token);
+    private String checkManagedToken(SubjectSum subject, String token, String requiredScope, String workspaceId) {
+        String rejectReason = StringUtils.isBlank(workspaceId)
+                ? accountService.checkTokenStatus(token, requiredScope)
+                : accountService.checkTokenStatus(token, requiredScope, workspaceId);
         if (rejectReason != null) {
             return rejectReason;
         }
@@ -154,6 +171,50 @@ public class ApiTokenValidationFilter implements HandlerInterceptor {
     private String getCurrentUserId(SubjectSum subject) {
         Object principal = subject.getPrincipal();
         return principal == null ? null : String.valueOf(principal);
+    }
+
+    private String resolveRequiredScope(HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
+        if (requestUri != null
+            && (requestUri.startsWith("/api/otlp/") || requestUri.startsWith("/api/logs/otlp"))) {
+            return AuthTokenScopes.OTLP_INGEST;
+        }
+        String method = request.getMethod();
+        if ("GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method) || "OPTIONS".equalsIgnoreCase(method)) {
+            return AuthTokenScopes.READONLY_QUERY;
+        }
+        return AuthTokenScopes.API_ADMIN;
+    }
+
+    private void bindRequestedWorkspace(HttpServletRequest request, SubjectSum subject) {
+        String workspaceId = resolveRequestedWorkspaceId(request, subject);
+        if (workspaceId != null) {
+            AuthTokenRequestContext.bindWorkspaceId(workspaceId);
+        }
+    }
+
+    private String resolveRequestedWorkspaceId(HttpServletRequest request, SubjectSum subject) {
+        String workspaceId = StringUtils.trimToNull(request.getHeader(AuthTokenScopes.WORKSPACE_ID_HEADER));
+        if (workspaceId != null) {
+            return workspaceId;
+        }
+        workspaceId = StringUtils.trimToNull(request.getParameter("workspaceId"));
+        if (workspaceId != null) {
+            return workspaceId;
+        }
+        workspaceId = StringUtils.trimToNull(request.getParameter("workspace_id"));
+        if (workspaceId != null) {
+            return workspaceId;
+        }
+        return resolveSubjectWorkspaceId(subject);
+    }
+
+    private String resolveSubjectWorkspaceId(SubjectSum subject) {
+        if (subject == null || subject.getPrincipalMap() == null) {
+            return null;
+        }
+        Object workspaceId = subject.getPrincipalMap().getPrincipal(AuthTokenScopes.CLAIM_WORKSPACE_ID);
+        return workspaceId == null ? null : StringUtils.trimToNull(String.valueOf(workspaceId));
     }
 
     private boolean writeError(HttpServletResponse response, HttpStatus status, String message) throws IOException {

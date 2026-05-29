@@ -33,7 +33,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.observability.TelemetryIntakeSignalEvent;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.observability.ingestion.redaction.OtlpIngestionRedactionService;
 import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -63,19 +65,31 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     private static final String PROTOCOL_NAME = "otlp";
     private static final String CONTENT_ENCODING = "Content-Encoding";
     private static final String CONTENT_ENCODING_GZIP = "gzip";
+    private static final int OTLP_TRACE_ID_BYTES = 16;
+    private static final int OTLP_SPAN_ID_BYTES = 8;
     private static final Set<String> OTLP_HEX_ID_FIELDS = Set.of("traceId", "spanId");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final CommonDataQueue commonDataQueue;
     private final LogSseManager logSseManager;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final OtlpIngestionRedactionService redactionService;
+
+    @Autowired
+    public OtlpLogProtocolAdapter(CommonDataQueue commonDataQueue,
+                                  LogSseManager logSseManager,
+                                  ApplicationEventPublisher applicationEventPublisher,
+                                  OtlpIngestionRedactionService redactionService) {
+        this.commonDataQueue = commonDataQueue;
+        this.logSseManager = logSseManager;
+        this.applicationEventPublisher = applicationEventPublisher;
+        this.redactionService = redactionService;
+    }
 
     public OtlpLogProtocolAdapter(CommonDataQueue commonDataQueue,
                                   LogSseManager logSseManager,
                                   ApplicationEventPublisher applicationEventPublisher) {
-        this.commonDataQueue = commonDataQueue;
-        this.logSseManager = logSseManager;
-        this.applicationEventPublisher = applicationEventPublisher;
+        this(commonDataQueue, logSseManager, applicationEventPublisher, new OtlpIngestionRedactionService());
     }
 
     @Override
@@ -141,11 +155,27 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
         if (content == null || content.length == 0 || requestHeaders == null) {
             return content;
         }
-        String contentEncoding = requestHeaders.getFirst(CONTENT_ENCODING);
-        if (contentEncoding == null || !CONTENT_ENCODING_GZIP.equalsIgnoreCase(contentEncoding)) {
+        if (!isGzipEncoded(requestHeaders)) {
             return content;
         }
         return decompressGzip(content);
+    }
+
+    private boolean isGzipContentEncoding(String contentEncoding) {
+        if (contentEncoding == null || contentEncoding.isBlank()) {
+            return false;
+        }
+        for (String encoding : contentEncoding.split(",")) {
+            if (CONTENT_ENCODING_GZIP.equalsIgnoreCase(encoding.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isGzipEncoded(HttpHeaders requestHeaders) {
+        List<String> contentEncodings = requestHeaders == null ? null : requestHeaders.get(CONTENT_ENCODING);
+        return contentEncodings != null && contentEncodings.stream().anyMatch(this::isGzipContentEncoding);
     }
 
     private byte[] decompressGzip(byte[] content) {
@@ -213,8 +243,8 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             .body(extractBody(logRecord.getBody()))
             .attributes(extractAttributes(logRecord.getAttributesList()))
             .droppedAttributesCount(logRecord.getDroppedAttributesCount())
-            .traceId(bytesToHex(logRecord.getTraceId().toByteArray()))
-            .spanId(bytesToHex(logRecord.getSpanId().toByteArray()))
+            .traceId(bytesToOtlpIdHex(logRecord.getTraceId().toByteArray(), OTLP_TRACE_ID_BYTES))
+            .spanId(bytesToOtlpIdHex(logRecord.getSpanId().toByteArray(), OTLP_SPAN_ID_BYTES))
             .traceFlags(logRecord.getFlags())
             .resource(resourceAttributes)
             .resourceSchemaUrl(emptyToNull(resourceSchemaUrl))
@@ -302,7 +332,8 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             Map<String, Object> resultMap = new HashMap<>();
             for (Map.Entry<?, ?> entry : genericMap.entrySet()) {
                 if (entry.getKey() instanceof String) {
-                    resultMap.put((String) entry.getKey(), entry.getValue());
+                    String key = (String) entry.getKey();
+                    resultMap.put(key, redactionService.redactObject(key, entry.getValue()));
                 }
             }
             return resultMap;
@@ -315,7 +346,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
      * Extract body content from AnyValue.
      */
     private Object extractBody(AnyValue body) {
-        return extractAnyValue(body);
+        return redactionService.redactObject(null, extractAnyValue(body));
     }
 
     /**
@@ -340,7 +371,9 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             case KVLIST_VALUE:
                 Map<String, Object> kvMap = new HashMap<>();
                 for (KeyValue kv : anyValue.getKvlistValue().getValuesList()) {
-                    kvMap.put(normalizeKey(kv.getKey()), extractAnyValue(kv.getValue()));
+                    String normalizedKey = normalizeKey(kv.getKey());
+                    kvMap.put(normalizedKey, redactionService.redactObject(normalizedKey,
+                            extractAnyValue(kv.getValue())));
                 }
                 return kvMap;
             case BYTES_VALUE:
@@ -374,6 +407,13 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     /**
      * Convert byte array to hex string.
      */
+    private String bytesToOtlpIdHex(byte[] bytes, int expectedLength) {
+        if (bytes == null || bytes.length != expectedLength || isAllZero(bytes)) {
+            return null;
+        }
+        return bytesToHex(bytes);
+    }
+
     private String bytesToHex(byte[] bytes) {
         if (bytes == null || bytes.length == 0) {
             return null;
@@ -387,6 +427,15 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             hexString.append(hex);
         }
         return hexString.toString();
+    }
+
+    private boolean isAllZero(byte[] bytes) {
+        for (byte value : bytes) {
+            if (value != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String normalizeOtlpJson(String content) throws InvalidProtocolBufferException {

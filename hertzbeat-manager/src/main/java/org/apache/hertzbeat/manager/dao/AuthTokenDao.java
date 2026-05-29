@@ -26,6 +26,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -44,9 +45,47 @@ public interface AuthTokenDao extends JpaRepository<AuthToken, Long>, JpaSpecifi
     List<AuthToken> findByStatusAndCreator(Byte status, String creator);
 
     /**
+     * Find active tokens inside one workspace.
+     */
+    List<AuthToken> findByStatusAndWorkspaceId(Byte status, String workspaceId);
+
+    /**
+     * Find active tokens created by the given user inside one workspace.
+     */
+    List<AuthToken> findByStatusAndCreatorAndWorkspaceId(Byte status, String creator, String workspaceId);
+
+    /**
      * Check if an active token exists with the given hash
      */
     boolean existsByTokenHashAndStatus(String tokenHash, Byte status);
+
+    /**
+     * Check if an active token exists with the given hash and one of the allowed scopes
+     */
+    boolean existsByTokenHashAndStatusAndTokenScopeIn(String tokenHash, Byte status, Collection<String> tokenScopes);
+
+    /**
+     * Check if an active token exists with the given hash, scope, and workspace boundary.
+     */
+    boolean existsByTokenHashAndStatusAndTokenScopeInAndWorkspaceId(
+            String tokenHash,
+            Byte status,
+            Collection<String> tokenScopes,
+            String workspaceId);
+
+    /**
+     * Count active tokens created by the given user for one scope.
+     */
+    long countByStatusAndCreatorAndTokenScope(Byte status, String creator, String tokenScope);
+
+    /**
+     * Count active tokens created by the given user for one scope and workspace.
+     */
+    long countByStatusAndCreatorAndTokenScopeAndWorkspaceId(
+            Byte status,
+            String creator,
+            String tokenScope,
+            String workspaceId);
 
     /**
      * Update last used time for a token identified by its hash

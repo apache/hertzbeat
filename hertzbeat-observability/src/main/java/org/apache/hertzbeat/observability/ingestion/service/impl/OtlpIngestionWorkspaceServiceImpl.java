@@ -88,6 +88,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     private static final String DEFAULT_METRICS_AGGREGATION = "sum";
     private static final String METRICS_CONSOLE_REF_ID = "otlp-metrics-console";
     private static final int DEFAULT_RECENT_SERVICE_LIMIT = 6;
+    private static final int DEFAULT_RECENT_UNBOUND_CANDIDATE_LIMIT = 6;
     private static final int DEFAULT_RECENT_METRIC_NAME_LIMIT = 64;
     private static final int DEFAULT_METRICS_QUERY_CANDIDATE_LIMIT = 64;
     private static final Set<String> WORKSPACE_INFRA_SERVICE_NAMES = Set.of(
@@ -585,6 +586,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         List<String> recentServices = collectRecentServices(identitySnapshots, DEFAULT_RECENT_SERVICE_LIMIT);
 
         Map<Long, List<EntityIdentity>> entityIdentityMap = collectRecentBoundEntityIdentities(identitySnapshots);
+        Set<String> boundIdentityMatches = boundIdentityMatchKeys(entityIdentityMap);
+        List<OtlpEntityBindingSummaryDto.UnboundEntityCandidate> unboundCandidates =
+                buildUnboundEntityCandidates(identitySnapshots, boundIdentityMatches);
 
         Map<Long, ObserveEntity> entityMap = workspaceQueryGateway.findEntitiesByIds(entityIdentityMap.keySet());
         List<OtlpEntityBindingSummaryDto.BoundEntity> boundEntities = new ArrayList<>();
@@ -618,7 +622,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 EntityCanonicalIdentityRegistry.CANONICAL_OTEL_RESOURCE_KEYS,
                 recentServices,
                 samples,
-                boundEntities
+                boundEntities,
+                unboundCandidates
         );
     }
 
@@ -889,6 +894,95 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return StringUtils.hasText(value) ? value.trim().toLowerCase(Locale.ROOT) : null;
     }
 
+    private Set<String> boundIdentityMatchKeys(Map<Long, List<EntityIdentity>> entityIdentityMap) {
+        if (CollectionUtils.isEmpty(entityIdentityMap)) {
+            return Collections.emptySet();
+        }
+        Set<String> matches = new LinkedHashSet<>();
+        for (List<EntityIdentity> identities : entityIdentityMap.values()) {
+            if (CollectionUtils.isEmpty(identities)) {
+                continue;
+            }
+            for (EntityIdentity identity : identities) {
+                if (identity == null || !StringUtils.hasText(identity.getIdentityKey())) {
+                    continue;
+                }
+                String normalizedValue = normalizeIdentityValue(
+                        defaultText(identity.getNormalizedValue(), identity.getIdentityValue())
+                );
+                if (!StringUtils.hasText(normalizedValue)) {
+                    continue;
+                }
+                matches.add(identity.getIdentityKey() + "\u0000" + normalizedValue);
+            }
+        }
+        return matches;
+    }
+
+    private List<OtlpEntityBindingSummaryDto.UnboundEntityCandidate> buildUnboundEntityCandidates(
+            List<TelemetryIdentitySnapshot> snapshots, Set<String> boundIdentityMatches) {
+        if (CollectionUtils.isEmpty(snapshots)) {
+            return Collections.emptyList();
+        }
+        Map<String, CandidateAccumulator> candidates = new LinkedHashMap<>();
+        for (TelemetryIdentitySnapshot snapshot : snapshots) {
+            if (snapshot == null || CollectionUtils.isEmpty(snapshot.getCanonicalIdentities())) {
+                continue;
+            }
+            if (matchesKnownEntityIdentity(snapshot.getCanonicalIdentities(), boundIdentityMatches)) {
+                continue;
+            }
+            String serviceName = trimToNull(firstText(
+                    snapshot.getServiceName(),
+                    snapshot.getCanonicalIdentities().get("service.name")
+            ));
+            if (!StringUtils.hasText(serviceName) || isWorkspaceNoiseService(serviceName)) {
+                continue;
+            }
+            String namespace = trimToNull(firstText(
+                    snapshot.getServiceNamespace(),
+                    snapshot.getCanonicalIdentities().get("service.namespace")
+            ));
+            String environment = trimToNull(firstText(
+                    snapshot.getEnvironmentName(),
+                    snapshot.getCanonicalIdentities().get("deployment.environment.name")
+            ));
+            String candidateKey = normalizeIdentityValue(serviceName) + "|"
+                    + defaultText(normalizeIdentityValue(namespace), "") + "|"
+                    + defaultText(normalizeIdentityValue(environment), "");
+            CandidateAccumulator accumulator = candidates.computeIfAbsent(candidateKey,
+                    ignored -> new CandidateAccumulator(serviceName, namespace, environment,
+                            snapshot.getCanonicalIdentities()));
+            accumulator.add(snapshot.getSignal(), snapshot.getObservedAt(), snapshot.getCanonicalIdentities());
+        }
+        return candidates.values().stream()
+                .sorted(Comparator.comparing(
+                        CandidateAccumulator::latestObservedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                ))
+                .limit(DEFAULT_RECENT_UNBOUND_CANDIDATE_LIMIT)
+                .map(CandidateAccumulator::toDto)
+                .toList();
+    }
+
+    private boolean matchesKnownEntityIdentity(Map<String, String> canonicalIdentities, Set<String> boundIdentityMatches) {
+        if (CollectionUtils.isEmpty(canonicalIdentities) || CollectionUtils.isEmpty(boundIdentityMatches)) {
+            return false;
+        }
+        Set<String> identityKeys = canonicalIdentityKeySet();
+        for (Map.Entry<String, String> entry : canonicalIdentities.entrySet()) {
+            if (!identityKeys.contains(entry.getKey())) {
+                continue;
+            }
+            String normalizedValue = normalizeIdentityValue(entry.getValue());
+            if (StringUtils.hasText(normalizedValue)
+                    && boundIdentityMatches.contains(entry.getKey() + "\u0000" + normalizedValue)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private String truncateLogBody(Object body) {
         if (body == null) {
             return null;
@@ -1030,11 +1124,14 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         }
         String trimmed = host.trim();
         if (trimmed.startsWith("[") && trimmed.contains("]")) {
-            return trimmed;
+            return trimmed.substring(0, trimmed.indexOf(']') + 1);
         }
         int colonIndex = trimmed.lastIndexOf(':');
         if (colonIndex > 0 && trimmed.indexOf(':') == colonIndex) {
             return trimmed.substring(0, colonIndex);
+        }
+        if (colonIndex > 0 && trimmed.indexOf(':') != colonIndex) {
+            return "[" + trimmed + "]";
         }
         return trimmed;
     }
@@ -1621,6 +1718,65 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
 
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private final class CandidateAccumulator {
+        private final String suggestedName;
+        private final String namespace;
+        private final String environment;
+        private final LinkedHashSet<String> signals = new LinkedHashSet<>();
+        private final LinkedHashMap<String, String> canonicalIdentities = new LinkedHashMap<>();
+        private Long latestObservedAt;
+
+        private CandidateAccumulator(String suggestedName, String namespace, String environment,
+                                     Map<String, String> canonicalIdentities) {
+            this.suggestedName = suggestedName;
+            this.namespace = namespace;
+            this.environment = environment;
+            mergeCanonicalIdentities(canonicalIdentities);
+        }
+
+        private void add(String signal, Long observedAt, Map<String, String> canonicalIdentities) {
+            String normalizedSignal = trimToNull(signal);
+            if (StringUtils.hasText(normalizedSignal)) {
+                signals.add(normalizedSignal);
+            }
+            if (observedAt != null && (latestObservedAt == null || observedAt > latestObservedAt)) {
+                latestObservedAt = observedAt;
+            }
+            mergeCanonicalIdentities(canonicalIdentities);
+        }
+
+        private Long latestObservedAt() {
+            return latestObservedAt;
+        }
+
+        private OtlpEntityBindingSummaryDto.UnboundEntityCandidate toDto() {
+            String primaryIdentityValue = firstText(canonicalIdentities.get("service.name"), suggestedName);
+            return new OtlpEntityBindingSummaryDto.UnboundEntityCandidate(
+                    suggestedName,
+                    "service",
+                    namespace,
+                    environment,
+                    "service.name",
+                    primaryIdentityValue,
+                    List.copyOf(signals),
+                    new LinkedHashMap<>(canonicalIdentities),
+                    latestObservedAt
+            );
+        }
+
+        private void mergeCanonicalIdentities(Map<String, String> identities) {
+            if (CollectionUtils.isEmpty(identities)) {
+                return;
+            }
+            for (String key : EntityCanonicalIdentityRegistry.CANONICAL_OTEL_RESOURCE_KEYS) {
+                String value = trimToNull(identities.get(key));
+                if (StringUtils.hasText(value)) {
+                    canonicalIdentities.putIfAbsent(key, value);
+                }
+            }
+        }
     }
 
     private record MetricsQueryExecution(String datasource,

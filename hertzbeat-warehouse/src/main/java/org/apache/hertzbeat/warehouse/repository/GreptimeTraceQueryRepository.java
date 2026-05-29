@@ -20,11 +20,14 @@
 package org.apache.hertzbeat.warehouse.repository;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
@@ -55,25 +58,73 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
     private static final String TRACE_SELECT_COLUMNS = "*";
     private static final String SELF_TELEMETRY_SERVICE_FILTER =
             "LOWER(service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')";
-
+    private static final String RESOURCE_ATTRIBUTES_COLUMN = "resource_attributes";
     private final ObjectProvider<GreptimeSqlQueryExecutor> greptimeSqlQueryExecutorProvider;
     private final GreptimeProperties greptimeProperties;
     private final RestTemplate restTemplate;
+    private volatile Set<String> traceTableColumns;
 
     @Override
     public List<Map<String, Object>> queryRecentTraceRows(int limit) {
-        return queryRecentTraceRows(limit, null, false);
+        return queryRecentTraceRows(limit, null, null, null, null, null, null, null, false);
     }
 
     @Override
     public List<Map<String, Object>> queryRecentTraceRows(int limit, String serviceName, Boolean hideInternal) {
+        return queryRecentTraceRows(limit, null, null, serviceName, null, null, null, null, hideInternal);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryRecentTraceRows(int limit,
+                                                          Long start,
+                                                          Long end,
+                                                          String serviceName,
+                                                          String environment,
+                                                          Boolean hideInternal) {
+        return queryRecentTraceRows(limit, start, end, serviceName, null, environment, null, null, hideInternal);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryRecentTraceRows(int limit,
+                                                          Long start,
+                                                          Long end,
+                                                          String serviceName,
+                                                          String serviceNamespace,
+                                                          String environment,
+                                                          String workspaceId,
+                                                          Map<String, Set<String>> resourceIdentityFilters,
+                                                          Boolean hideInternal) {
         StringBuilder sql = new StringBuilder("SELECT ")
                 .append(TRACE_SELECT_COLUMNS)
                 .append(" FROM ")
                 .append(TRACE_TABLE);
         List<String> filters = new LinkedList<>();
+        if (start != null) {
+            filters.add("timestamp >= to_timestamp_millis(" + start + ")");
+        }
+        if (end != null) {
+            filters.add("timestamp <= to_timestamp_millis(" + end + ")");
+        }
         if (StringUtils.hasText(serviceName)) {
             filters.add("service_name = '" + escapeSql(serviceName) + "'");
+        }
+        if (StringUtils.hasText(serviceNamespace)) {
+            filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
+        }
+        if (StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())) {
+            String filter = environmentFilter(null, environment);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            String filter = workspaceFilter(null, workspaceId);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (!CollectionUtils.isEmpty(resourceIdentityFilters)) {
+            addResourceIdentityFilters(filters, null, resourceIdentityFilters, serviceName, serviceNamespace);
         }
         if (Boolean.TRUE.equals(hideInternal)) {
             filters.add(SELF_TELEMETRY_SERVICE_FILTER);
@@ -86,10 +137,250 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
     }
 
     @Override
+    public boolean supportsTraceListRows() {
+        return true;
+    }
+
+    @Override
+    public List<Map<String, Object>> queryTraceListRows(Long start,
+                                                        Long end,
+                                                        Boolean errorOnly,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        String workspaceId,
+                                                        Map<String, Set<String>> resourceIdentityFilters,
+                                                        Boolean hideInternal,
+                                                        int offset,
+                                                        int limit) {
+        String errorExpression = "SUM(CASE WHEN span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
+                + "THEN 1 ELSE 0 END)";
+        String serviceNamespaceExpression = resourceAttributeExpression(null, "service.namespace");
+        String serviceNamespaceProjection = StringUtils.hasText(serviceNamespaceExpression)
+                ? "MAX(" + serviceNamespaceExpression + ")"
+                : "NULL";
+        String resourceAttributesProjection = traceTableColumns().contains(RESOURCE_ATTRIBUTES_COLUMN)
+                ? "MAX(" + RESOURCE_ATTRIBUTES_COLUMN + ")"
+                : "NULL";
+        StringBuilder innerSql = new StringBuilder("SELECT ")
+                .append("trace_id, ")
+                .append("MAX(span_id) AS root_span_id, ")
+                .append("MAX(service_name) AS service_name, ")
+                .append(serviceNamespaceProjection)
+                .append(" AS service_namespace, ")
+                .append("MAX(span_name) AS root_span_name, ")
+                .append("MAX(duration_nano) AS duration_nano, ")
+                .append("CASE WHEN ")
+                .append(errorExpression)
+                .append(" > 0 THEN 'ERROR' ELSE 'OK' END AS span_status_code, ")
+                .append("MIN(timestamp) AS timestamp, ")
+                .append(errorExpression)
+                .append(" AS error_span_count, ")
+                .append(resourceAttributesProjection)
+                .append(" AS resource_attributes ")
+                .append("FROM ")
+                .append(TRACE_TABLE);
+        List<String> filters = new LinkedList<>();
+        if (start != null) {
+            filters.add("timestamp >= to_timestamp_millis(" + start + ")");
+        }
+        if (end != null) {
+            filters.add("timestamp <= to_timestamp_millis(" + end + ")");
+        }
+        if (StringUtils.hasText(serviceName)) {
+            filters.add("service_name = '" + escapeSql(serviceName) + "'");
+        }
+        if (StringUtils.hasText(serviceNamespace)) {
+            filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
+        }
+        if (StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())) {
+            String filter = environmentFilter(null, environment);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            String filter = workspaceFilter(null, workspaceId);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (!CollectionUtils.isEmpty(resourceIdentityFilters)) {
+            addResourceIdentityFilters(filters, null, resourceIdentityFilters, serviceName, serviceNamespace);
+        }
+        if (Boolean.TRUE.equals(hideInternal)) {
+            filters.add(SELF_TELEMETRY_SERVICE_FILTER);
+        }
+        if (!filters.isEmpty()) {
+            innerSql.append(" WHERE ").append(String.join(" AND ", filters));
+        }
+        innerSql.append(" GROUP BY trace_id");
+        if (Boolean.TRUE.equals(errorOnly)) {
+            innerSql.append(" HAVING ").append(errorExpression).append(" > 0");
+        }
+        String sql = "SELECT *, COUNT(*) OVER () AS total_count FROM ("
+                + innerSql
+                + ") trace_list ORDER BY timestamp DESC LIMIT "
+                + Math.max(limit, 1)
+                + " OFFSET "
+                + Math.max(offset, 0);
+        return queryRows(sql);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryTraceServiceGraphRows(int limit,
+                                                                Long start,
+                                                                Long end,
+                                                                String environment,
+                                                                Boolean hideInternal) {
+        return queryTraceServiceGraphRows(limit, start, end, environment, Collections.emptyList(), hideInternal);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryTraceServiceGraphRows(int limit,
+                                                                Long start,
+                                                                Long end,
+                                                                String environment,
+                                                                Collection<String> serviceNames,
+                                                                Boolean hideInternal) {
+        StringBuilder sql = new StringBuilder("SELECT ")
+                .append("parent.service_name AS source_service_name, ")
+                .append("child.service_name AS target_service_name, ")
+                .append("COUNT(*) AS request_count, ")
+                .append("SUM(CASE WHEN child.span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') ")
+                .append("THEN 1 ELSE 0 END) AS error_count, ")
+                .append("COALESCE(SUM(child.duration_nano), 0) AS duration_sum_nano, ")
+                .append("COUNT(child.duration_nano) AS duration_count, ")
+                .append("uddsketch_calc(0.95, uddsketch_state(128, 0.01, child.duration_nano)) ")
+                .append("/ 1000000.0 AS latency_p95_ms, ")
+                .append("COALESCE(SUM(child.duration_nano), 0) ")
+                .append("/ NULLIF(COUNT(child.duration_nano), 0) / 1000000.0 AS latency_avg_ms, ")
+                .append("MAX(child.trace_id) AS sample_trace_id, ")
+                .append("MAX(child.span_id) AS sample_span_id, ")
+                .append("MAX(child.span_name) AS sample_span_name, ")
+                .append("MAX(child.span_status_code) AS sample_status_code, ")
+                .append("MIN(child.timestamp) AS first_seen, ")
+                .append("MAX(child.timestamp) AS last_seen ")
+                .append("FROM ")
+                .append(TRACE_TABLE)
+                .append(" child JOIN ")
+                .append(TRACE_TABLE)
+                .append(" parent ON child.trace_id = parent.trace_id ")
+                .append("AND child.parent_span_id = parent.span_id");
+        List<String> filters = new LinkedList<>();
+        filters.add("child.trace_id IS NOT NULL");
+        filters.add("child.parent_span_id IS NOT NULL");
+        filters.add("child.service_name IS NOT NULL AND child.service_name != ''");
+        filters.add("parent.service_name IS NOT NULL AND parent.service_name != ''");
+        filters.add("LOWER(child.service_name) != LOWER(parent.service_name)");
+        if (start != null) {
+            filters.add("child.timestamp >= to_timestamp_millis(" + start + ")");
+        }
+        if (end != null) {
+            filters.add("child.timestamp <= to_timestamp_millis(" + end + ")");
+        }
+        if (StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())) {
+            String filter = environmentFilter("child", environment);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        String serviceScopeFilter = serviceGraphServiceScopeFilter(serviceNames);
+        if (StringUtils.hasText(serviceScopeFilter)) {
+            filters.add(serviceScopeFilter);
+        }
+        if (Boolean.TRUE.equals(hideInternal)) {
+            filters.add(internalServiceFilter("child"));
+            filters.add(internalServiceFilter("parent"));
+        }
+        sql.append(" WHERE ").append(String.join(" AND ", filters));
+        sql.append(" GROUP BY parent.service_name, child.service_name");
+        sql.append(" ORDER BY request_count DESC LIMIT ").append(Math.max(limit, 1));
+        return queryRows(sql.toString());
+    }
+
+    private String serviceGraphServiceScopeFilter(Collection<String> serviceNames) {
+        if (serviceNames == null) {
+            return null;
+        }
+        Set<String> normalizedServices = new LinkedHashSet<>();
+        serviceNames.forEach(serviceName -> {
+            if (StringUtils.hasText(serviceName)) {
+                normalizedServices.add(serviceName.trim());
+            }
+        });
+        if (normalizedServices.isEmpty()) {
+            return null;
+        }
+        String childFilter = serviceNameAnyFilter("child", normalizedServices);
+        String parentFilter = serviceNameAnyFilter("parent", normalizedServices);
+        if (!StringUtils.hasText(childFilter)) {
+            return parentFilter;
+        }
+        if (!StringUtils.hasText(parentFilter)) {
+            return childFilter;
+        }
+        return "(" + childFilter + " OR " + parentFilter + ")";
+    }
+
+    @Override
     public List<Map<String, Object>> queryTraceRows(String traceId, int limit) {
-        return queryRows("SELECT " + TRACE_SELECT_COLUMNS + " FROM " + TRACE_TABLE
-                + " WHERE trace_id = '" + escapeSql(traceId)
-                + "' ORDER BY timestamp ASC LIMIT " + Math.max(limit, 1));
+        return queryTraceRows(traceId, limit, null, null, null, null, null, null, null, false);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryTraceRows(String traceId,
+                                                    int limit,
+                                                    Long start,
+                                                    Long end,
+                                                    String serviceName,
+                                                    String serviceNamespace,
+                                                    String environment,
+                                                    String workspaceId,
+                                                    Map<String, Set<String>> resourceIdentityFilters,
+                                                    Boolean hideInternal) {
+        if (!StringUtils.hasText(traceId)) {
+            return Collections.emptyList();
+        }
+        StringBuilder sql = new StringBuilder("SELECT ")
+                .append(TRACE_SELECT_COLUMNS)
+                .append(" FROM ")
+                .append(TRACE_TABLE);
+        List<String> filters = new LinkedList<>();
+        filters.add("trace_id = '" + escapeSql(traceId) + "'");
+        if (start != null) {
+            filters.add("timestamp >= to_timestamp_millis(" + start + ")");
+        }
+        if (end != null) {
+            filters.add("timestamp <= to_timestamp_millis(" + end + ")");
+        }
+        if (StringUtils.hasText(serviceName)) {
+            filters.add("service_name = '" + escapeSql(serviceName) + "'");
+        }
+        if (StringUtils.hasText(serviceNamespace)) {
+            filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
+        }
+        if (StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())) {
+            String filter = environmentFilter(null, environment);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            String filter = workspaceFilter(null, workspaceId);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (!CollectionUtils.isEmpty(resourceIdentityFilters)) {
+            addResourceIdentityFilters(filters, null, resourceIdentityFilters, serviceName, serviceNamespace);
+        }
+        if (Boolean.TRUE.equals(hideInternal)) {
+            filters.add(SELF_TELEMETRY_SERVICE_FILTER);
+        }
+        sql.append(" WHERE ").append(String.join(" AND ", filters));
+        sql.append(" ORDER BY timestamp ASC LIMIT ").append(Math.max(limit, 1));
+        return queryRows(sql.toString());
     }
 
     private List<Map<String, Object>> queryRows(String sql) {
@@ -120,8 +411,12 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            if (StringUtils.hasText(greptimeProperties.username()) && StringUtils.hasText(greptimeProperties.password())) {
-                headers.setBasicAuth(greptimeProperties.username(), greptimeProperties.password(), StandardCharsets.UTF_8);
+            if (StringUtils.hasText(greptimeProperties.username())
+                    && StringUtils.hasText(greptimeProperties.password())) {
+                headers.setBasicAuth(
+                        greptimeProperties.username(),
+                        greptimeProperties.password(),
+                        StandardCharsets.UTF_8);
             }
             HttpEntity<String> httpEntity = new HttpEntity<>(
                     "sql=" + UriUtils.encodeQueryParam(sql, StandardCharsets.UTF_8),
@@ -136,7 +431,9 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             }
             List<Map<String, Object>> results = new LinkedList<>();
             for (GreptimeSqlQueryContent.Output output : responseEntity.getBody().getOutput()) {
-                if (output == null || output.getRecords() == null || CollectionUtils.isEmpty(output.getRecords().getRows())) {
+                if (output == null
+                        || output.getRecords() == null
+                        || CollectionUtils.isEmpty(output.getRecords().getRows())) {
                     continue;
                 }
                 GreptimeSqlQueryContent.Output.Records.Schema schema = output.getRecords().getSchema();
@@ -165,5 +462,161 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
 
     private String escapeSql(String value) {
         return value == null ? "" : value.replace("'", "''");
+    }
+
+    private String internalServiceFilter(String alias) {
+        return "LOWER(" + alias + ".service_name) NOT IN ('hertzbeat', 'apache-hertzbeat')";
+    }
+
+    private String environmentFilter(String alias, String environment) {
+        return resourceAttributeFilter(alias, "deployment.environment.name", environment);
+    }
+
+    private void addResourceIdentityFilters(List<String> filters,
+                                            String alias,
+                                            Map<String, Set<String>> resourceIdentityFilters,
+                                            String serviceName,
+                                            String serviceNamespace) {
+        resourceIdentityFilters.entrySet().stream()
+                .filter(entry -> StringUtils.hasText(entry.getKey()) && !CollectionUtils.isEmpty(entry.getValue()))
+                .forEach(entry -> {
+                    String key = entry.getKey().trim();
+                    if ("service.name".equals(key) && StringUtils.hasText(serviceName)) {
+                        return;
+                    }
+                    if ("service.namespace".equals(key) && StringUtils.hasText(serviceNamespace)) {
+                        return;
+                    }
+                    String filter = resourceAttributeAnyFilter(alias, key, entry.getValue());
+                    if (StringUtils.hasText(filter)) {
+                        filters.add(filter);
+                    }
+                });
+    }
+
+    private String workspaceFilter(String alias, String workspaceId) {
+        String normalizedWorkspaceId = workspaceId.trim();
+        List<String> workspaceFilters = new LinkedList<>();
+        String hertzbeatWorkspaceFilter = resourceAttributeFilter(alias, "hertzbeat.workspace_id",
+                normalizedWorkspaceId);
+        if (StringUtils.hasText(hertzbeatWorkspaceFilter)) {
+            workspaceFilters.add(hertzbeatWorkspaceFilter);
+        }
+        String workspaceIdFilter = resourceAttributeFilter(alias, "workspace.id", normalizedWorkspaceId);
+        if (StringUtils.hasText(workspaceIdFilter)) {
+            workspaceFilters.add(workspaceIdFilter);
+        }
+        if (workspaceFilters.isEmpty()) {
+            return null;
+        }
+        if (workspaceFilters.size() == 1) {
+            return workspaceFilters.getFirst();
+        }
+        return "(" + String.join(" OR ", workspaceFilters) + ")";
+    }
+
+    private String resourceAttributeAnyFilter(String alias, String key, Collection<String> values) {
+        if ("service.name".equals(key)) {
+            return serviceNameAnyFilter(alias, values);
+        }
+        List<String> valueFilters = values.stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .distinct()
+                .sorted()
+                .map(value -> resourceAttributeFilter(alias, key, value))
+                .filter(StringUtils::hasText)
+                .toList();
+        if (valueFilters.isEmpty()) {
+            return null;
+        }
+        if (valueFilters.size() == 1) {
+            return valueFilters.getFirst();
+        }
+        return "(" + String.join(" OR ", valueFilters) + ")";
+    }
+
+    private String serviceNameAnyFilter(String alias, Collection<String> values) {
+        String column = StringUtils.hasText(alias) ? alias + ".service_name" : "service_name";
+        List<String> valueFilters = values.stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .distinct()
+                .sorted()
+                .map(value -> column + " = '" + escapeSql(value) + "'")
+                .toList();
+        if (valueFilters.isEmpty()) {
+            return null;
+        }
+        if (valueFilters.size() == 1) {
+            return valueFilters.getFirst();
+        }
+        return "(" + String.join(" OR ", valueFilters) + ")";
+    }
+
+    private String resourceAttributeFilter(String alias, String key, String value) {
+        String expression = resourceAttributeExpression(alias, key);
+        if (!StringUtils.hasText(expression)) {
+            return null;
+        }
+        return expression + " = '"
+                + escapeSql(value.trim()) + "'";
+    }
+
+    private String resourceAttributeExpression(String alias, String key) {
+        Set<String> columns = traceTableColumns();
+        String normalizedKey = key.trim();
+        String flattenedColumn = RESOURCE_ATTRIBUTES_COLUMN + "." + normalizedKey;
+        if (columns.contains(flattenedColumn)) {
+            return qualifiedColumn(alias, flattenedColumn);
+        }
+        if (columns.contains(RESOURCE_ATTRIBUTES_COLUMN)) {
+            String column = StringUtils.hasText(alias)
+                    ? alias + "." + RESOURCE_ATTRIBUTES_COLUMN
+                    : RESOURCE_ATTRIBUTES_COLUMN;
+            return "json_get_string(" + column + ", '$[\"" + escapeJsonPathKey(normalizedKey) + "\"]')";
+        }
+        return null;
+    }
+
+    private String qualifiedColumn(String alias, String column) {
+        String quotedColumn = quoteIdentifier(column);
+        return StringUtils.hasText(alias) ? alias + "." + quotedColumn : quotedColumn;
+    }
+
+    private String quoteIdentifier(String column) {
+        return "\"" + column.replace("\"", "\"\"") + "\"";
+    }
+
+    private Set<String> traceTableColumns() {
+        Set<String> cachedColumns = traceTableColumns;
+        if (cachedColumns != null) {
+            return cachedColumns;
+        }
+        Set<String> discoveredColumns = new LinkedHashSet<>();
+        for (Map<String, Object> row : queryRows("DESC " + TRACE_TABLE)) {
+            String column = readText(row, "Column");
+            if (StringUtils.hasText(column)) {
+                discoveredColumns.add(column);
+            }
+        }
+        if (discoveredColumns.isEmpty()) {
+            discoveredColumns.add(RESOURCE_ATTRIBUTES_COLUMN);
+        }
+        Set<String> immutableColumns = Collections.unmodifiableSet(discoveredColumns);
+        traceTableColumns = immutableColumns;
+        return immutableColumns;
+    }
+
+    private String readText(Map<String, Object> row, String key) {
+        if (row == null || !row.containsKey(key)) {
+            return null;
+        }
+        String value = String.valueOf(row.get(key)).trim();
+        return StringUtils.hasText(value) ? value : null;
+    }
+
+    private String escapeJsonPathKey(String key) {
+        return key.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

@@ -23,8 +23,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.observability.ingestion.retry.OtlpIngestionRetryService;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -58,16 +60,25 @@ public class GreptimeLogPipelineInitializer {
 
     private final RestTemplate restTemplate;
     private final ObjectProvider<GreptimeProperties> greptimePropertiesProvider;
+    private final OtlpIngestionRetryService retryService;
 
     public GreptimeLogPipelineInitializer(RestTemplate restTemplate,
                                           ObjectProvider<GreptimeProperties> greptimePropertiesProvider) {
+        this(restTemplate, greptimePropertiesProvider, new OtlpIngestionRetryService());
+    }
+
+    @Autowired
+    public GreptimeLogPipelineInitializer(RestTemplate restTemplate,
+                                          ObjectProvider<GreptimeProperties> greptimePropertiesProvider,
+                                          OtlpIngestionRetryService retryService) {
         this.restTemplate = restTemplate;
         this.greptimePropertiesProvider = greptimePropertiesProvider;
+        this.retryService = retryService == null ? new OtlpIngestionRetryService() : retryService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void initialize() {
-        GreptimeProperties greptimeProperties = greptimePropertiesProvider.getIfAvailable();
+        GreptimeProperties greptimeProperties = greptimePropertiesOrNull();
         if (greptimeProperties == null || !greptimeProperties.enabled()
                 || StringUtils.isBlank(greptimeProperties.httpEndpoint())) {
             log.debug("[observability greptime-log] skip pipeline upload because Greptime is disabled.");
@@ -80,12 +91,19 @@ public class GreptimeLogPipelineInitializer {
                         GreptimeOtlpForwarder.LOG_PIPELINE_NAME);
                 return;
             }
-            ResponseEntity<String> response = restTemplate.exchange(
-                    endpoint(greptimeProperties.httpEndpoint()),
-                    HttpMethod.POST,
-                    pipelineUploadRequest(greptimeProperties, pipeline),
-                    String.class
-            );
+            ResponseEntity<String> response = retryService.execute(() -> restTemplate.exchange(
+                            endpoint(greptimeProperties.httpEndpoint()),
+                            HttpMethod.POST,
+                            pipelineUploadRequest(greptimeProperties, pipeline),
+                            String.class
+                    ),
+                    retryableResponse -> retryableResponse == null
+                            || retryService.isRetryableStatus(retryableResponse.getStatusCode()));
+            if (response == null) {
+                log.warn("[observability greptime-log] Greptime returned no response while uploading log pipeline {}.",
+                        GreptimeOtlpForwarder.LOG_PIPELINE_NAME);
+                return;
+            }
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("[observability greptime-log] uploaded Greptime log pipeline {}.",
                         GreptimeOtlpForwarder.LOG_PIPELINE_NAME);
@@ -93,20 +111,34 @@ public class GreptimeLogPipelineInitializer {
             }
             log.warn("[observability greptime-log] failed to upload Greptime log pipeline {}, status {}.",
                     GreptimeOtlpForwarder.LOG_PIPELINE_NAME, response.getStatusCode());
-        } catch (IOException | RestClientException ex) {
+        } catch (IOException | RuntimeException ex) {
             log.warn("[observability greptime-log] failed to upload Greptime log pipeline {}: {}",
                     GreptimeOtlpForwarder.LOG_PIPELINE_NAME, ex.getMessage(), ex);
         }
     }
 
+    private GreptimeProperties greptimePropertiesOrNull() {
+        try {
+            return greptimePropertiesProvider.getIfAvailable();
+        } catch (RuntimeException ex) {
+            log.warn("[observability greptime-log] failed to resolve Greptime properties: {}", ex.getMessage(), ex);
+            return null;
+        }
+    }
+
     private boolean latestPipelineMatches(GreptimeProperties greptimeProperties, String bundledPipeline) {
         try {
-            ResponseEntity<String> response = restTemplate.exchange(
-                    endpoint(greptimeProperties.httpEndpoint()),
-                    HttpMethod.GET,
-                    new HttpEntity<Void>(headers(greptimeProperties)),
-                    String.class
-            );
+            ResponseEntity<String> response = retryService.execute(() -> restTemplate.exchange(
+                            endpoint(greptimeProperties.httpEndpoint()),
+                            HttpMethod.GET,
+                            new HttpEntity<Void>(headers(greptimeProperties)),
+                            String.class
+                    ),
+                    retryableResponse -> retryableResponse == null
+                            || retryService.isRetryableStatus(retryableResponse.getStatusCode()));
+            if (response == null) {
+                return false;
+            }
             if (!response.getStatusCode().is2xxSuccessful() || StringUtils.isBlank(response.getBody())) {
                 return false;
             }
@@ -166,13 +198,15 @@ public class GreptimeLogPipelineInitializer {
     }
 
     private void addAuthenticationHeader(HttpHeaders headers, GreptimeProperties greptimeProperties) {
-        if (StringUtils.isBlank(greptimeProperties.username()) || StringUtils.isBlank(greptimeProperties.password())) {
+        String username = StringUtils.trimToNull(greptimeProperties.username());
+        String password = StringUtils.trimToNull(greptimeProperties.password());
+        if (username == null || password == null) {
             return;
         }
-        headers.setBasicAuth(greptimeProperties.username(), greptimeProperties.password(), StandardCharsets.UTF_8);
+        headers.setBasicAuth(username, password, StandardCharsets.UTF_8);
     }
 
     private String endpoint(String baseEndpoint) {
-        return StringUtils.removeEnd(baseEndpoint, "/") + LOG_PIPELINE_PATH;
+        return StringUtils.stripEnd(StringUtils.trim(baseEndpoint), "/") + LOG_PIPELINE_PATH;
     }
 }

@@ -32,7 +32,30 @@ public interface ObservabilityAccessTokenGateway {
      * @param tokenValue raw token value
      * @return null when token is valid, otherwise rejection reason
      */
-    String checkTokenStatus(String tokenValue);
+    default String checkTokenStatus(String tokenValue) {
+        return checkTokenStatus(tokenValue, AuthTokenScopes.API_ADMIN);
+    }
+
+    /**
+     * Check the status of a managed token for a required scope.
+     *
+     * @param tokenValue raw token value
+     * @param requiredScope required access boundary
+     * @return null when token is valid for the required scope, otherwise rejection reason
+     */
+    String checkTokenStatus(String tokenValue, String requiredScope);
+
+    /**
+     * Check the status of a managed token for a required scope and workspace boundary.
+     *
+     * @param tokenValue raw token value
+     * @param requiredScope required access boundary
+     * @param workspaceId requested workspace boundary
+     * @return null when token is valid for the required scope/workspace, otherwise rejection reason
+     */
+    default String checkTokenStatus(String tokenValue, String requiredScope, String workspaceId) {
+        return checkTokenStatus(tokenValue, requiredScope);
+    }
 
     /**
      * Check whether the owner behind a managed token is still allowed.

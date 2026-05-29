@@ -19,13 +19,17 @@
 
 package org.apache.hertzbeat.observability.logs.sse;
 
+import java.util.Map;
+import java.util.Set;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.util.StringUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 
 /**
  * Log filtering criteria for SSE (Server-Sent Events) log streaming
@@ -35,6 +39,13 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @NoArgsConstructor
 @Schema(description = "Log filtering criteria for SSE (Server-Sent Events) log streaming")
 public class LogSseFilterCriteria {
+
+    private static final Set<String> WORKSPACE_RESOURCE_KEYS = Set.of(
+            "hertzbeat.workspace_id",
+            AuthTokenScopes.CLAIM_WORKSPACE_ID,
+            "workspace.id"
+    );
+
     /**
      * Numerical value of the severity.
      * Smaller numerical values correspond to less severe events (such as debug events),
@@ -71,6 +82,20 @@ public class LogSseFilterCriteria {
     @Schema(description = "A unique identifier for a span.", example = "1234567890", accessMode = READ_WRITE)
     private String spanId;
 
+    /**
+     * Workspace boundary captured from the authenticated request.
+     */
+    @Schema(description = "Server-bound workspace boundary.", accessMode = READ_ONLY)
+    private String workspaceId;
+
+    public LogSseFilterCriteria(Integer severityNumber, String severityText, String logContent, String traceId,
+                                String spanId) {
+        this.severityNumber = severityNumber;
+        this.severityText = severityText;
+        this.logContent = logContent;
+        this.traceId = traceId;
+        this.spanId = spanId;
+    }
 
     /**
      * Core filtering logic to determine if a log entry matches the criteria
@@ -79,6 +104,9 @@ public class LogSseFilterCriteria {
      */
     public boolean matches(LogEntry log) {
         if (log == null) return false;
+        if (!matchesWorkspace(log)) {
+            return false;
+        }
         // Check severity text match
         if (StringUtils.hasText(severityText) && !severityText.equalsIgnoreCase(log.getSeverityText())) {
             return false;
@@ -112,5 +140,30 @@ public class LogSseFilterCriteria {
             return false;
         }
         return true;
+    }
+
+    private boolean matchesWorkspace(LogEntry log) {
+        if (!StringUtils.hasText(workspaceId)) {
+            return true;
+        }
+        String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(workspaceId);
+        String logWorkspaceId = resolveWorkspaceId(log.getResource());
+        if (!StringUtils.hasText(logWorkspaceId)) {
+            return AuthTokenScopes.DEFAULT_WORKSPACE_ID.equals(normalizedWorkspaceId);
+        }
+        return normalizedWorkspaceId.equals(AuthTokenScopes.normalizeWorkspaceId(logWorkspaceId));
+    }
+
+    private String resolveWorkspaceId(Map<String, Object> resource) {
+        if (resource == null || resource.isEmpty()) {
+            return null;
+        }
+        for (String key : WORKSPACE_RESOURCE_KEYS) {
+            Object value = resource.get(key);
+            if (value != null && StringUtils.hasText(String.valueOf(value))) {
+                return String.valueOf(value);
+            }
+        }
+        return null;
     }
 }

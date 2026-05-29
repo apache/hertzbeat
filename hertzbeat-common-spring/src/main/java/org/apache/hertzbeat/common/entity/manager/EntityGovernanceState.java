@@ -37,6 +37,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -49,11 +50,13 @@ import tools.jackson.databind.JsonNode;
 @Entity
 @Table(name = "hzb_entity_governance_state",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_hzb_entity_governance_state_scope_kind_key",
-                        columnNames = {"state_scope", "state_kind", "state_key"})
+                @UniqueConstraint(name = "uk_hzb_entity_governance_state_scope_kind_workspace_key",
+                        columnNames = {"state_scope", "state_kind", "workspace_id", "state_key"})
         },
         indexes = {
                 @Index(name = "idx_hzb_entity_governance_state_scope_kind", columnList = "state_scope,state_kind"),
+                @Index(name = "idx_hzb_entity_governance_state_scope_kind_workspace",
+                        columnList = "state_scope,state_kind,workspace_id"),
                 @Index(name = "idx_hzb_entity_governance_state_update", columnList = "gmt_update"),
                 @Index(name = "idx_hzb_entity_governance_state_creator", columnList = "creator")
         })
@@ -79,6 +82,12 @@ public class EntityGovernanceState {
     @Size(max = 32)
     @Column(name = "state_kind", length = 32, nullable = false)
     private String stateKind;
+
+    @Schema(title = "Workspace ID", example = "default", accessMode = READ_WRITE)
+    @Size(max = 64)
+    @Column(name = "workspace_id", length = 64)
+    @Builder.Default
+    private String workspaceId = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
 
     @Schema(title = "State key", example = "preset-1710000000", accessMode = READ_WRITE)
     @Size(max = 128)

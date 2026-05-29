@@ -46,6 +46,7 @@ CREATE TABLE hzb_entity (
     description VARCHAR(512) COMMENT 'Entity description',
     labels VARCHAR(4096) COMMENT 'Entity labels json',
     tags TEXT COMMENT 'Entity catalog tags json',
+    workspace_id VARCHAR(64) NOT NULL DEFAULT 'default' COMMENT 'Entity workspace boundary',
     creator VARCHAR(64) COMMENT 'Creator',
     modifier VARCHAR(64) COMMENT 'Modifier',
     gmt_create DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
@@ -53,7 +54,8 @@ CREATE TABLE hzb_entity (
     INDEX idx_hzb_entity_type (entity_type),
     INDEX idx_hzb_entity_status (status),
     INDEX idx_hzb_entity_name (name),
-    INDEX idx_hzb_entity_owner (owner)
+    INDEX idx_hzb_entity_owner (owner),
+    INDEX idx_hzb_entity_workspace (workspace_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE hzb_entity_identity (
@@ -116,6 +118,7 @@ CREATE TABLE hzb_entity_relation (
 CREATE TABLE hzb_entity_definition_activity (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     entity_id BIGINT NOT NULL COMMENT 'Entity ID',
+    workspace_id VARCHAR(64) NOT NULL DEFAULT 'default' COMMENT 'Workspace ID',
     activity_type VARCHAR(32) NOT NULL COMMENT 'Definition activity type',
     format VARCHAR(16) NOT NULL COMMENT 'Definition format',
     status VARCHAR(16) NOT NULL COMMENT 'Activity status',
@@ -124,6 +127,7 @@ CREATE TABLE hzb_entity_definition_activity (
     creator VARCHAR(64) COMMENT 'Creator',
     gmt_create DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
     INDEX idx_hzb_entity_definition_activity_entity (entity_id),
+    INDEX idx_hzb_entity_definition_activity_workspace_time (workspace_id, gmt_create),
     INDEX idx_hzb_entity_definition_activity_time (gmt_create)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -131,6 +135,7 @@ CREATE TABLE hzb_entity_governance_state (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     state_scope VARCHAR(32) NOT NULL COMMENT 'Governance scope, such as discovery',
     state_kind VARCHAR(32) NOT NULL COMMENT 'State kind, such as preset or activity',
+    workspace_id VARCHAR(64) NOT NULL DEFAULT 'default' COMMENT 'Workspace ID',
     state_key VARCHAR(128) NOT NULL COMMENT 'Stable state key',
     state_name VARCHAR(128) COMMENT 'State display name',
     status VARCHAR(32) COMMENT 'State status',
@@ -138,8 +143,9 @@ CREATE TABLE hzb_entity_governance_state (
     creator VARCHAR(64) COMMENT 'Creator',
     gmt_create DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
     gmt_update DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
-    UNIQUE KEY uk_hzb_entity_governance_state_scope_kind_key (state_scope, state_kind, state_key),
+    UNIQUE KEY uk_hzb_entity_governance_state_scope_kind_workspace_key (state_scope, state_kind, workspace_id, state_key),
     INDEX idx_hzb_entity_governance_state_scope_kind (state_scope, state_kind),
+    INDEX idx_hzb_entity_governance_state_scope_kind_workspace (state_scope, state_kind, workspace_id),
     INDEX idx_hzb_entity_governance_state_update (gmt_update),
     INDEX idx_hzb_entity_governance_state_creator (creator)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -149,12 +155,20 @@ CREATE TABLE hzb_auth_token (
     name VARCHAR(255) COMMENT 'API token name',
     token_hash VARCHAR(128) NOT NULL COMMENT 'SHA-256 hash of token value',
     token_mask VARCHAR(64) COMMENT 'Masked token value for display',
+    token_scope VARCHAR(32) NOT NULL DEFAULT 'api-admin' COMMENT 'Token access scope',
+    workspace_id VARCHAR(64) NOT NULL DEFAULT 'default' COMMENT 'Token workspace boundary',
     status TINYINT NOT NULL DEFAULT 0 COMMENT 'Token status, 0 means active',
     creator VARCHAR(64) COMMENT 'Token creator',
     gmt_create DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
     expire_time DATETIME NULL COMMENT 'Expire time, null means long-lived',
     last_used_time DATETIME NULL COMMENT 'Last used time',
+    revoked_time DATETIME NULL COMMENT 'Token revoked time',
+    revoked_by VARCHAR(64) COMMENT 'Token revoker',
     UNIQUE KEY uk_hzb_auth_token_hash (token_hash),
     INDEX idx_hzb_auth_token_creator (creator),
-    INDEX idx_hzb_auth_token_status (status)
+    INDEX idx_hzb_auth_token_scope (token_scope),
+    INDEX idx_hzb_auth_token_workspace (workspace_id),
+    INDEX idx_hzb_auth_token_scope_workspace (token_scope, workspace_id),
+    INDEX idx_hzb_auth_token_status (status),
+    INDEX idx_hzb_auth_token_revoked_by (revoked_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

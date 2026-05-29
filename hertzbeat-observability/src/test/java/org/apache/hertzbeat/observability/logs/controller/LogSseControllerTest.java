@@ -23,10 +23,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Map;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.observability.logs.sse.LogSseFilterCriteria;
 import org.apache.hertzbeat.observability.logs.sse.LogSseManager;
 import org.apache.hertzbeat.observability.logs.service.impl.LogSseServiceImpl;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +61,11 @@ class LogSseControllerTest {
     void setUp() {
         LogSseController logSseController = new LogSseController(new LogSseServiceImpl(emitterManager));
         this.mockMvc = MockMvcBuilders.standaloneSetup(logSseController).build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
@@ -110,6 +119,26 @@ class LogSseControllerTest {
         Assertions.assertEquals(capturedCriteria.getSeverityNumber(), Integer.parseInt(severityNumber));
         Assertions.assertEquals(capturedCriteria.getTraceId(), traceId);
         Assertions.assertEquals(capturedCriteria.getSpanId(), spanId);
+    }
+
+    @Test
+    void subscribeBindsRequestWorkspaceToLiveLogCriteria() throws Exception {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+
+        mockMvc.perform(get("/api/logs/sse/subscribe")
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andExpect(status().isOk());
+
+        verify(emitterManager).createEmitter(anyLong(), filterCriteriaCaptor.capture());
+        LogSseFilterCriteria capturedCriteria = filterCriteriaCaptor.getValue();
+
+        Assertions.assertEquals("team-a", capturedCriteria.getWorkspaceId());
+        Assertions.assertTrue(capturedCriteria.matches(LogEntry.builder()
+                .resource(Map.of("hertzbeat.workspace_id", "team-a"))
+                .build()));
+        Assertions.assertFalse(capturedCriteria.matches(LogEntry.builder()
+                .resource(Map.of("hertzbeat.workspace_id", "team-b"))
+                .build()));
     }
 
     @Test

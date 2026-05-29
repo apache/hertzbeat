@@ -16,19 +16,31 @@
 ## -- sureness.yml account source -- ##
 
 # config the resource restful api that need auth protection, base rbac
-# rule: api===method===role 
+# rule: api===method===role
 # eg: /api/v1/source1===get===[admin] means /api/v2/host===post support role[admin] access.
 # eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
   - /api/apps/**===get===[admin,user,guest]
+  - /api/monitor===get===[admin,user,guest]
   - /api/monitor/**===get===[admin,user,guest]
+  - /api/monitor===post===[admin,user]
   - /api/monitor/**===post===[admin,user]
+  - /api/monitor===put===[admin,user]
   - /api/monitor/**===put===[admin,user]
-  - /api/monitor/**===delete==[admin]
+  - /api/monitor===delete===[admin]
+  - /api/monitor/**===delete===[admin]
+  - /api/monitors===get===[admin,user,guest]
+  - /api/monitors/export===get===[admin]
+  - /api/monitors/export/all===get===[admin]
+  - /api/monitors/manage===get===[admin,user,guest]
+  - /api/monitors/manage===post===[admin,user]
+  - /api/monitors/manage===put===[admin,user]
   - /api/monitors/**===get===[admin,user,guest]
   - /api/monitors/**===post===[admin,user]
   - /api/monitors/**===put===[admin,user]
+  - /api/monitors===delete===[admin]
+  - /api/monitors/manage===delete===[admin]
   - /api/monitors/**===delete===[admin]
   - /api/alert/**===get===[admin,user,guest]
   - /api/alert/**===post===[admin,user]
@@ -62,6 +74,8 @@ resourceRole:
   - /api/grafana/**===post===[admin,user]
   - /api/grafana/**===put===[admin,user]
   - /api/grafana/**===delete===[admin]
+  - /api/otlp/**===post===[admin,user]
+  - /api/logs/otlp/**===post===[admin,user]
   - /api/bulletin/**===get===[admin,user,guest]
   - /api/bulletin/**===post===[admin,user]
   - /api/bulletin/**===put===[admin,user]
@@ -73,7 +87,7 @@ resourceRole:
   - /api/logs/ingest/**===post===[admin,user]
 
 # config the resource restful api that need bypass auth protection
-# rule: api===method 
+# rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
   - /api/alert/sse/**===*

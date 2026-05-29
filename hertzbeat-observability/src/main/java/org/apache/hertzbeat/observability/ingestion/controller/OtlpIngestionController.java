@@ -25,7 +25,9 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.observability.dto.binding.OtlpEntityBindingSummaryDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuideDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
+import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionRedSummaryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +45,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class OtlpIngestionController {
 
     private final OtlpIngestionWorkspaceService otlpIngestionWorkspaceService;
+    private final OtlpIngestionRedSummaryService otlpIngestionRedSummaryService;
 
     @GetMapping("/overview")
     @Operation(summary = "Unified OTLP ingestion overview")
@@ -60,6 +63,14 @@ public class OtlpIngestionController {
     @Operation(summary = "Canonical identity and entity binding summary")
     public ResponseEntity<Message<OtlpEntityBindingSummaryDto>> bindings() {
         return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getBindingSummary()));
+    }
+
+    @GetMapping("/intake/red")
+    @Operation(summary = "Recent OTLP ingest request, error, and duration summary")
+    public ResponseEntity<Message<OtlpIngestionRedSummaryDto>> intakeRedSummary(
+            @RequestParam(value = "start", required = false) Long start,
+            @RequestParam(value = "end", required = false) Long end) {
+        return ResponseEntity.ok(Message.success(otlpIngestionRedSummaryService.getSummary(start, end)));
     }
 
     @GetMapping("/metrics/console")

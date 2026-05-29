@@ -40,6 +40,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 class OtlpSignalIngestionControllerTest {
 
     private static final String CONTENT_TYPE_PROTOBUF = "application/x-protobuf";
+    private static final String CONTENT_TYPE_PROTOBUF_ALT = "application/protobuf";
 
     private MockMvc mockMvc;
 
@@ -77,6 +78,30 @@ class OtlpSignalIngestionControllerTest {
                         .contentType(CONTENT_TYPE_PROTOBUF)
                         .content(new byte[] {0x01, 0x02}))
                 .andExpect(status().isServiceUnavailable())
+                .andExpect(content().contentType(CONTENT_TYPE_PROTOBUF));
+    }
+
+    @Test
+    void shouldAcceptAlternateProtobufMediaTypeForMetricsAndTraces() throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(CONTENT_TYPE_PROTOBUF));
+        when(otlpGrpcIngestionService.ingestMetricsHttp(any(byte[].class), any(HttpHeaders.class)))
+                .thenReturn(new ResponseEntity<>(new byte[] {0x00}, headers, HttpStatus.OK));
+        when(otlpGrpcIngestionService.ingestTracesHttp(any(byte[].class), any(HttpHeaders.class)))
+                .thenReturn(new ResponseEntity<>(new byte[] {0x00}, headers, HttpStatus.OK));
+
+        mockMvc.perform(post("/api/otlp/v1/metrics")
+                        .contentType(CONTENT_TYPE_PROTOBUF_ALT)
+                        .accept(CONTENT_TYPE_PROTOBUF_ALT)
+                        .content(new byte[] {0x00}))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE_PROTOBUF));
+
+        mockMvc.perform(post("/api/otlp/v1/traces")
+                        .contentType(CONTENT_TYPE_PROTOBUF_ALT)
+                        .accept(CONTENT_TYPE_PROTOBUF_ALT)
+                        .content(new byte[] {0x00}))
+                .andExpect(status().isOk())
                 .andExpect(content().contentType(CONTENT_TYPE_PROTOBUF));
     }
 }

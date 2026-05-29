@@ -33,9 +33,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
+import lombok.Builder.Default;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.entity.alerter.JsonMapAttributeConverter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -52,7 +54,8 @@ import tools.jackson.databind.JsonNode;
         @Index(name = "idx_hzb_entity_type", columnList = "entity_type"),
         @Index(name = "idx_hzb_entity_status", columnList = "status"),
         @Index(name = "idx_hzb_entity_name", columnList = "name"),
-        @Index(name = "idx_hzb_entity_owner", columnList = "owner")
+        @Index(name = "idx_hzb_entity_owner", columnList = "owner"),
+        @Index(name = "idx_hzb_entity_workspace", columnList = "workspace_id")
 })
 @Data
 @Builder
@@ -210,6 +213,12 @@ public class ObserveEntity {
     @Convert(converter = JsonStringListAttributeConverter.class)
     @Column(columnDefinition = "TEXT")
     private List<String> tags;
+
+    @Schema(title = "Entity workspace boundary", example = "default", accessMode = READ_WRITE)
+    @Size(max = 64)
+    @Column(name = "workspace_id", length = 64)
+    @Default
+    private String workspaceId = AuthTokenScopes.DEFAULT_WORKSPACE_ID;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy

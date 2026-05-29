@@ -26,6 +26,7 @@ import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporterBuilder;
 import io.opentelemetry.sdk.autoconfigure.spi.AutoConfigurationCustomizerProvider;
 import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor;
 import io.opentelemetry.sdk.resources.Resource;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.observability.ingestion.forwarder.GreptimeOtlpForwarder;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -51,14 +53,19 @@ public class OpenTelemetryConfig {
     private static final String DEFAULT_TRACES_TABLE_NAME = "hzb_traces";
     private static final String GREPTIME_DB_NAME_HEADER = "X-Greptime-DB-Name";
     private static final String GREPTIME_LOG_TABLE_NAME_HEADER = "X-Greptime-Log-Table-Name";
+    private static final String GREPTIME_LOG_PIPELINE_NAME_HEADER = "X-Greptime-Log-Pipeline-Name";
     private static final String GREPTIME_TRACE_TABLE_NAME_HEADER = "X-Greptime-Trace-Table-Name";
     private static final String GREPTIME_PIPELINE_NAME_HEADER = "X-Greptime-Pipeline-Name";
+    private static final String GREPTIME_LOGS_PATH = "/v1/otlp/v1/logs";
+    private static final String GREPTIME_TRACES_PATH = "/v1/otlp/v1/traces";
 
     private void addAuthenticationHeaders(Map<String, String> headers, GreptimeProperties greptimeProps) {
-        if (greptimeProps != null && StringUtils.isNotBlank(greptimeProps.username())
-                && StringUtils.isNotBlank(greptimeProps.password())) {
-            String credentials = greptimeProps.username() + ":" + greptimeProps.password();
-            String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
+        String username = greptimeProps == null ? null : StringUtils.trimToNull(greptimeProps.username());
+        String password = greptimeProps == null ? null : StringUtils.trimToNull(greptimeProps.password());
+        if (username != null && password != null) {
+            String credentials = username + ":" + password;
+            String encodedCredentials = Base64.getEncoder()
+                    .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
             headers.put("Authorization", "Basic " + encodedCredentials);
             log.debug("Added Basic Authentication header for GreptimeDB.");
         } else {
@@ -68,20 +75,32 @@ public class OpenTelemetryConfig {
 
     private Map<String, String> buildGreptimeOtlpLogHeaders(GreptimeProperties greptimeProps) {
         Map<String, String> headers = new HashMap<>();
-        headers.put(GREPTIME_DB_NAME_HEADER, DEFAULT_GREPTIME_DB_NAME);
+        headers.put(GREPTIME_DB_NAME_HEADER, database(greptimeProps));
         headers.put(GREPTIME_LOG_TABLE_NAME_HEADER, WarehouseConstants.LOG_TABLE_NAME);
+        headers.put(GREPTIME_LOG_PIPELINE_NAME_HEADER, GreptimeOtlpForwarder.LOG_PIPELINE_NAME);
         addAuthenticationHeaders(headers, greptimeProps);
         return Collections.unmodifiableMap(headers);
     }
 
     private Map<String, String> buildGreptimeOtlpTraceHeaders(GreptimeProperties greptimeProps) {
         Map<String, String> headers = new HashMap<>();
-        headers.put(GREPTIME_DB_NAME_HEADER, DEFAULT_GREPTIME_DB_NAME);
+        headers.put(GREPTIME_DB_NAME_HEADER, database(greptimeProps));
         headers.put(GREPTIME_TRACE_TABLE_NAME_HEADER, DEFAULT_TRACES_TABLE_NAME);
         headers.put(CONTENT_TYPE, "application/x-protobuf");
         headers.put(GREPTIME_PIPELINE_NAME_HEADER, "greptime_trace_v1");
         addAuthenticationHeaders(headers, greptimeProps);
         return Collections.unmodifiableMap(headers);
+    }
+
+    private String database(GreptimeProperties greptimeProps) {
+        return greptimeProps == null
+                ? DEFAULT_GREPTIME_DB_NAME
+                : StringUtils.defaultIfBlank(StringUtils.trim(greptimeProps.database()), DEFAULT_GREPTIME_DB_NAME);
+    }
+
+    private String greptimeOtlpEndpoint(GreptimeProperties greptimeProps, String path) {
+        String endpoint = greptimeProps == null ? null : greptimeProps.httpEndpoint();
+        return StringUtils.stripEnd(StringUtils.trimToEmpty(endpoint), "/") + path;
     }
 
     @Bean
@@ -113,7 +132,7 @@ public class OpenTelemetryConfig {
                     return newProperties;
                 })
                 .addSpanExporterCustomizer((originalSpanExporter, configProperties) -> {
-                    String traceEndpoint = greptimeProperties.httpEndpoint() + "/v1/otlp/v1/traces";
+                    String traceEndpoint = greptimeOtlpEndpoint(greptimeProperties, GREPTIME_TRACES_PATH);
                     log.info("Configuring OtlpHttpSpanExporter for GreptimeDB. Endpoint: {}", traceEndpoint);
                     OtlpHttpSpanExporterBuilder httpExporterBuilder = OtlpHttpSpanExporter.builder()
                             .setEndpoint(traceEndpoint)
@@ -124,7 +143,7 @@ public class OpenTelemetryConfig {
                 .addLoggerProviderCustomizer((sdkLoggerProviderBuilder, configProperties) -> {
                     log.info("Customizing SdkLoggerProviderBuilder for GreptimeDB logs.");
                     OtlpHttpLogRecordExporter logExporter = OtlpHttpLogRecordExporter.builder()
-                            .setEndpoint(greptimeProperties.httpEndpoint() + "/v1/otlp/v1/logs")
+                            .setEndpoint(greptimeOtlpEndpoint(greptimeProperties, GREPTIME_LOGS_PATH))
                             .setHeaders(() -> buildGreptimeOtlpLogHeaders(greptimeProperties))
                             .setTimeout(10000, TimeUnit.MILLISECONDS)
                             .build();

@@ -27,6 +27,8 @@ import com.usthe.sureness.util.SurenessContextHolder;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.MalformedJwtException;
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.dao.AuthTokenDao;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
@@ -44,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -53,6 +56,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -116,6 +120,9 @@ class AccountServiceTest {
         assertNotNull(response.get("refreshToken"));
         assertNotNull(response.get("role"));
         assertEquals(JsonUtil.toJson(roles), response.get("role"));
+        Claims accessClaims = JsonWebTokenUtil.parseJwt(response.get("token"));
+        assertEquals(AuthTokenScopes.UI_SESSION, accessClaims.get(AuthTokenScopes.CLAIM_TOKEN_SCOPE, String.class));
+        assertEquals(AuthTokenScopes.DEFAULT_WORKSPACE_ID, accessClaims.get(AuthTokenScopes.CLAIM_WORKSPACE_ID, String.class));
 
     }
 
@@ -160,6 +167,8 @@ class AccountServiceTest {
         Claims accessClaims = JsonWebTokenUtil.parseJwt(response.getToken());
         Claims refreshClaims = JsonWebTokenUtil.parseJwt(response.getRefreshToken());
         assertNull(accessClaims.get("refresh", Boolean.class));
+        assertEquals(AuthTokenScopes.UI_SESSION, accessClaims.get(AuthTokenScopes.CLAIM_TOKEN_SCOPE, String.class));
+        assertEquals(AuthTokenScopes.DEFAULT_WORKSPACE_ID, accessClaims.get(AuthTokenScopes.CLAIM_WORKSPACE_ID, String.class));
         assertEquals(Boolean.TRUE, refreshClaims.get("refresh", Boolean.class));
     }
 
@@ -277,7 +286,78 @@ class AccountServiceTest {
             assertNotNull(saved.getTokenMask());
             assertEquals((byte) 0, saved.getStatus());
             assertEquals(identifier, saved.getCreator());
+            assertEquals(AuthTokenScopes.API_ADMIN, saved.getTokenScope());
             assertNull(saved.getExpireTime());
+        }
+    }
+
+    @Test
+    void testGenerateTokenPersistsRequestedScope() throws Exception {
+        SurenessAccount account = buildActiveAccount();
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        when(authTokenDao.save(any(AuthToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        SubjectSum subjectSum = mockAdminSubject(identifier);
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            String token = accountService.generateToken("OTLP ingest", null, AuthTokenScopes.OTLP_INGEST);
+
+            Claims claims = JsonWebTokenUtil.parseJwt(token);
+            assertEquals(AuthTokenScopes.OTLP_INGEST, claims.get(AuthTokenScopes.CLAIM_TOKEN_SCOPE, String.class));
+            ArgumentCaptor<AuthToken> captor = ArgumentCaptor.forClass(AuthToken.class);
+            verify(authTokenDao).save(captor.capture());
+            assertEquals(AuthTokenScopes.OTLP_INGEST, captor.getValue().getTokenScope());
+        }
+    }
+
+    @Test
+    void testGenerateTokenPersistsWorkspaceBoundary() throws Exception {
+        SurenessAccount account = buildActiveAccount();
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        when(authTokenDao.save(any(AuthToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        SubjectSum subjectSum = mockAdminSubject(identifier);
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            String token = accountService.generateToken(
+                    "prod ingest",
+                    null,
+                    AuthTokenScopes.OTLP_INGEST,
+                    "prod-west"
+            );
+
+            Claims claims = JsonWebTokenUtil.parseJwt(token);
+            assertEquals("prod-west", claims.get(AuthTokenScopes.CLAIM_WORKSPACE_ID, String.class));
+            ArgumentCaptor<AuthToken> captor = ArgumentCaptor.forClass(AuthToken.class);
+            verify(authTokenDao).save(captor.capture());
+            assertEquals("prod-west", captor.getValue().getWorkspaceId());
+        }
+    }
+
+    @Test
+    void testGenerateTokenRejectsScopeQuotaExceeded() {
+        SurenessAccount account = buildActiveAccount();
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        when(authTokenDao.countByStatusAndCreatorAndTokenScopeAndWorkspaceId(
+                eq((byte) 0),
+                eq(identifier),
+                eq(AuthTokenScopes.OTLP_INGEST),
+                eq(AuthTokenScopes.DEFAULT_WORKSPACE_ID)))
+                .thenReturn(20L);
+        SubjectSum subjectSum = mockAdminSubject(identifier);
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            AuthenticationException exception = Assertions.assertThrows(
+                    AuthenticationException.class,
+                    () -> accountService.generateToken("extra-otlp", null, AuthTokenScopes.OTLP_INGEST)
+            );
+
+            assertEquals("Token quota exceeded", exception.getMessage());
+            verify(authTokenDao, never()).save(any(AuthToken.class));
         }
     }
 
@@ -376,6 +456,52 @@ class AccountServiceTest {
     }
 
     @Test
+    void testListTokensForAdminUsesWorkspaceContext() {
+        List<AuthToken> expected = List.of(
+                AuthToken.builder().id(1L).name("Token1").workspaceId("team-a").build()
+        );
+        when(authTokenDao.findByStatusAndWorkspaceId((byte) 0, "team-a")).thenReturn(expected);
+        SubjectSum subjectSum = mockAdminSubject(identifier);
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            List<AuthToken> result = accountService.listTokens();
+
+            assertEquals(1, result.size());
+            assertEquals("Token1", result.get(0).getName());
+            verify(authTokenDao).findByStatusAndWorkspaceId((byte) 0, "team-a");
+            verify(authTokenDao, never()).findByStatus((byte) 0);
+        } finally {
+            AuthTokenRequestContext.clear();
+        }
+    }
+
+    @Test
+    void testListTokensForCurrentUserUsesWorkspaceContext() {
+        List<AuthToken> expected = List.of(
+                AuthToken.builder().id(1L).name("Token1").creator("tom").workspaceId("team-a").build()
+        );
+        when(authTokenDao.findByStatusAndCreatorAndWorkspaceId((byte) 0, "tom", "team-a")).thenReturn(expected);
+        SubjectSum subjectSum = mockUserSubject("tom");
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            List<AuthToken> result = accountService.listTokens();
+
+            assertEquals(1, result.size());
+            assertEquals("Token1", result.get(0).getName());
+            verify(authTokenDao).findByStatusAndCreatorAndWorkspaceId((byte) 0, "tom", "team-a");
+            verify(authTokenDao, never()).findByStatusAndCreator((byte) 0, "tom");
+        } finally {
+            AuthTokenRequestContext.clear();
+        }
+    }
+
+    @Test
     void testDeleteTokenInvalidatesCache() throws Exception {
         AuthToken token = AuthToken.builder().id(1L).tokenHash("hash123").creator(identifier).build();
         when(authTokenDao.findById(1L)).thenReturn(Optional.of(token));
@@ -387,7 +513,13 @@ class AccountServiceTest {
             accountService.deleteToken(1L);
         }
 
-        verify(authTokenDao).deleteById(1L);
+        ArgumentCaptor<AuthToken> captor = ArgumentCaptor.forClass(AuthToken.class);
+        verify(authTokenDao).save(captor.capture());
+        AuthToken revoked = captor.getValue();
+        assertEquals((byte) 1, revoked.getStatus());
+        assertEquals(identifier, revoked.getRevokedBy());
+        assertNotNull(revoked.getRevokedTime());
+        verify(authTokenDao, never()).deleteById(1L);
     }
 
     @Test
@@ -404,6 +536,29 @@ class AccountServiceTest {
     }
 
     @Test
+    void testDeleteTokenRejectsWorkspaceMismatch() {
+        AuthToken token = AuthToken.builder()
+                .id(1L)
+                .tokenHash("hash123")
+                .creator(identifier)
+                .workspaceId("team-b")
+                .status((byte) 0)
+                .build();
+        when(authTokenDao.findById(1L)).thenReturn(Optional.of(token));
+        SubjectSum subjectSum = mockAdminSubject(identifier);
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+
+            Assertions.assertThrows(AuthenticationException.class, () -> accountService.deleteToken(1L));
+            verify(authTokenDao, never()).save(any(AuthToken.class));
+        } finally {
+            AuthTokenRequestContext.clear();
+        }
+    }
+
+    @Test
     void testCheckTokenStatusActive() throws Exception {
         SurenessAccount account = buildActiveAccount();
         when(accountProvider.loadAccount(identifier)).thenReturn(account);
@@ -415,12 +570,49 @@ class AccountServiceTest {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
 
             String token = accountService.generateToken("test", null);
-            when(authTokenDao.existsByTokenHashAndStatus(any(String.class), eq((byte) 0))).thenReturn(true);
+            when(authTokenDao.existsByTokenHashAndStatusAndTokenScopeIn(
+                    any(String.class),
+                    eq((byte) 0),
+                    eq(Set.of(AuthTokenScopes.API_ADMIN))))
+                    .thenReturn(true);
 
-            String result = accountService.checkTokenStatus(token);
+            String result = accountService.checkTokenStatus(token, AuthTokenScopes.API_ADMIN);
 
             assertNull(result);
         }
+    }
+
+    @Test
+    void testCheckTokenStatusRejectsScopeMismatch() {
+        when(authTokenDao.existsByTokenHashAndStatusAndTokenScopeIn(
+                any(String.class),
+                eq((byte) 0),
+                eq(Set.of(AuthTokenScopes.API_ADMIN, AuthTokenScopes.READONLY_QUERY))))
+                .thenReturn(false);
+        when(authTokenDao.existsByTokenHashAndStatus(any(String.class), eq((byte) 0))).thenReturn(true);
+
+        String result = accountService.checkTokenStatus("readonly-token", AuthTokenScopes.READONLY_QUERY);
+
+        assertEquals("Token scope is not allowed", result);
+    }
+
+    @Test
+    void testCheckTokenStatusRejectsWorkspaceMismatch() {
+        when(authTokenDao.existsByTokenHashAndStatusAndTokenScopeInAndWorkspaceId(
+                any(String.class),
+                eq((byte) 0),
+                eq(Set.of(AuthTokenScopes.API_ADMIN, AuthTokenScopes.OTLP_INGEST)),
+                eq("prod-west")))
+                .thenReturn(false);
+        when(authTokenDao.existsByTokenHashAndStatusAndTokenScopeIn(
+                any(String.class),
+                eq((byte) 0),
+                eq(Set.of(AuthTokenScopes.API_ADMIN, AuthTokenScopes.OTLP_INGEST))))
+                .thenReturn(true);
+
+        String result = accountService.checkTokenStatus("prod-token", AuthTokenScopes.OTLP_INGEST, "prod-west");
+
+        assertEquals("Token workspace is not allowed", result);
     }
 
     @Test
@@ -529,7 +721,12 @@ class AccountServiceTest {
         // After revoke, the next check should hit DB again (cache invalidated for that hash)
         // Note: the tokenHash in DB differs from sha256(tokenValue), so this tests cache invalidation path
         verify(authTokenDao).findById(1L);
-        verify(authTokenDao).deleteById(1L);
+        ArgumentCaptor<AuthToken> captor = ArgumentCaptor.forClass(AuthToken.class);
+        verify(authTokenDao).save(captor.capture());
+        assertEquals((byte) 1, captor.getValue().getStatus());
+        assertEquals(identifier, captor.getValue().getRevokedBy());
+        assertNotNull(captor.getValue().getRevokedTime());
+        verify(authTokenDao, never()).deleteById(1L);
     }
 
     private SurenessAccount buildActiveAccount() {

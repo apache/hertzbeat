@@ -28,8 +28,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.manager.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -57,7 +59,9 @@ public class AuthTokenController {
     @Operation(summary = "Generate a new API token", description = "Generate a new API token for integrations, optionally with expiration")
     public ResponseEntity<Message<Map<String, String>>> generateToken(
             @RequestParam(value = "name", required = false) @Parameter(description = "Token name/description") String name,
-            @RequestParam(value = "expireSeconds", required = false) @Parameter(description = "Expiration time in seconds, null means never expire") Long expireSeconds) {
+            @RequestParam(value = "expireSeconds", required = false) @Parameter(description = "Expiration time in seconds, null means never expire") Long expireSeconds,
+            @RequestParam(value = "scope", required = false, defaultValue = AuthTokenScopes.API_ADMIN) @Parameter(description = "Token access scope") String scope,
+            @RequestParam(value = "workspaceId", required = false) @Parameter(description = "Token workspace boundary") String workspaceId) {
         SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
         if (subjectSum == null) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No login user"));
@@ -66,7 +70,9 @@ public class AuthTokenController {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "No permission"));
         }
         try {
-            String token = accountService.generateToken(name, expireSeconds);
+            String token = StringUtils.isBlank(workspaceId)
+                    ? accountService.generateToken(name, expireSeconds, scope)
+                    : accountService.generateToken(name, expireSeconds, scope, workspaceId);
             Map<String, String> rep = Collections.singletonMap("token", token);
             return ResponseEntity.ok(Message.success(rep));
         } catch (Exception e) {

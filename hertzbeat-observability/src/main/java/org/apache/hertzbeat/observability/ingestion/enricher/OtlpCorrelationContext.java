@@ -25,6 +25,12 @@ import org.apache.commons.lang3.StringUtils;
  */
 public record OtlpCorrelationContext(String ingestId, String entityId, String workspaceId) {
 
+    public OtlpCorrelationContext {
+        ingestId = StringUtils.trimToNull(ingestId);
+        entityId = StringUtils.trimToNull(entityId);
+        workspaceId = StringUtils.trimToNull(workspaceId);
+    }
+
     public static OtlpCorrelationContext empty() {
         return new OtlpCorrelationContext(null, null, null);
     }

@@ -34,6 +34,8 @@ public interface OtlpGrpcIngestionService {
 
     ResponseEntity<byte[]> ingestMetricsHttp(byte[] content, HttpHeaders requestHeaders);
 
+    ResponseEntity<byte[]> ingestLogsHttp(byte[] content, HttpHeaders requestHeaders);
+
     ResponseEntity<byte[]> ingestTracesHttp(byte[] content, HttpHeaders requestHeaders);
 
     ExportMetricsServiceResponse ingestMetricsGrpc(ExportMetricsServiceRequest request);

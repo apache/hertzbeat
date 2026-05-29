@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.common.observability.dto.binding;
 
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,6 +38,8 @@ public class OtlpEntityBindingSummaryDto {
     private List<CanonicalIdentitySample> recentIdentitySamples;
 
     private List<BoundEntity> recentBoundEntities;
+
+    private List<UnboundEntityCandidate> recentUnboundCandidates;
 
     /**
      * Recent canonical identity sample derived from telemetry intake.
@@ -65,5 +68,23 @@ public class OtlpEntityBindingSummaryDto {
         private String primaryIdentityKey;
         private String primaryIdentityValue;
         private long monitorBindCount;
+    }
+
+    /**
+     * Recent telemetry identity that has not been confirmed as a HertzBeat entity.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UnboundEntityCandidate {
+        private String suggestedName;
+        private String suggestedType;
+        private String namespace;
+        private String environment;
+        private String primaryIdentityKey;
+        private String primaryIdentityValue;
+        private List<String> signals;
+        private Map<String, String> canonicalIdentities;
+        private Long latestObservedAt;
     }
 }

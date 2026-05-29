@@ -30,7 +30,9 @@ import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import org.apache.hertzbeat.common.observability.dto.binding.OtlpEntityBindingSummaryDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuideDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
+import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionRedSummaryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,9 +50,13 @@ class OtlpIngestionControllerTest {
     @Mock
     private OtlpIngestionWorkspaceService otlpIngestionWorkspaceService;
 
+    @Mock
+    private OtlpIngestionRedSummaryService otlpIngestionRedSummaryService;
+
     @BeforeEach
     void setUp() {
-        OtlpIngestionController controller = new OtlpIngestionController(otlpIngestionWorkspaceService);
+        OtlpIngestionController controller = new OtlpIngestionController(
+                otlpIngestionWorkspaceService, otlpIngestionRedSummaryService);
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
@@ -117,7 +123,9 @@ class OtlpIngestionControllerTest {
                 List.of("service.name"),
                 List.of("checkout"),
                 List.of(new OtlpEntityBindingSummaryDto.CanonicalIdentitySample("service.name", "checkout", "logs")),
-                List.of(new OtlpEntityBindingSummaryDto.BoundEntity(1L, "service", "checkout", "Checkout", "commerce", "service.name", "checkout", 2L))
+                List.of(new OtlpEntityBindingSummaryDto.BoundEntity(1L, "service", "checkout", "Checkout",
+                        "commerce", "service.name", "checkout", 2L)),
+                List.of()
         );
         when(otlpIngestionWorkspaceService.getBindingSummary()).thenReturn(summary);
 
@@ -129,6 +137,65 @@ class OtlpIngestionControllerTest {
                 .andExpect(jsonPath("$.data.recentBoundEntities[0].primaryIdentityValue").value("checkout"));
 
         verify(otlpIngestionWorkspaceService).getBindingSummary();
+    }
+
+    @Test
+    void shouldReturnWrappedIngestRedSummaryPayload() throws Exception {
+        OtlpIngestionRedSummaryDto summary = new OtlpIngestionRedSummaryDto(
+                "team-a",
+                2L,
+                2D,
+                1L,
+                0.5D,
+                400L,
+                6L,
+                3L,
+                4L,
+                15L,
+                18L,
+                1_710_000_000_100L,
+                List.of(new OtlpIngestionRedSummaryDto.SignalRedMetric(
+                        "logs",
+                        "http",
+                        2L,
+                        2D,
+                        1L,
+                        0.5D,
+                        400L,
+                        6L,
+                        3L,
+                        4L,
+                        15L,
+                        18L,
+                        "RESOURCE_EXHAUSTED",
+                        "quota exceeded",
+                        1_710_000_000_100L
+                ))
+        );
+        when(otlpIngestionRedSummaryService.getSummary(1_710_000_000_000L, 1_710_000_060_000L))
+                .thenReturn(summary);
+
+        mockMvc.perform(get("/api/ingestion/otlp/intake/red")
+                        .param("start", "1710000000000")
+                        .param("end", "1710000060000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.workspaceId").value("team-a"))
+                .andExpect(jsonPath("$.data.requestCount").value(2))
+                .andExpect(jsonPath("$.data.requestRatePerMinute").value(2D))
+                .andExpect(jsonPath("$.data.errorCount").value(1))
+                .andExpect(jsonPath("$.data.errorRate").value(0.5D))
+                .andExpect(jsonPath("$.data.signalItems").value(6))
+                .andExpect(jsonPath("$.data.averageSignalItems").value(3))
+                .andExpect(jsonPath("$.data.maxSignalItems").value(4))
+                .andExpect(jsonPath("$.data.averageDurationMillis").value(15))
+                .andExpect(jsonPath("$.data.signals[0].signal").value("logs"))
+                .andExpect(jsonPath("$.data.signals[0].protocol").value("http"))
+                .andExpect(jsonPath("$.data.signals[0].requestRatePerMinute").value(2D))
+                .andExpect(jsonPath("$.data.signals[0].signalItems").value(6))
+                .andExpect(jsonPath("$.data.signals[0].latestStatusCode").value("RESOURCE_EXHAUSTED"));
+
+        verify(otlpIngestionRedSummaryService).getSummary(1_710_000_000_000L, 1_710_000_060_000L);
     }
 
     @Test

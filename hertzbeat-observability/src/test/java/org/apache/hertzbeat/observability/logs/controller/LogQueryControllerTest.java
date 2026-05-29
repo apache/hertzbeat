@@ -35,8 +35,10 @@ import java.util.List;
 
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.observability.logs.service.impl.LogQueryServiceImpl;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,6 +68,11 @@ class LogQueryControllerTest {
     void setUp() {
         this.logQueryController = new LogQueryController(new LogQueryServiceImpl(List.of(historyDataReader)));
         this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        AuthTokenRequestContext.clear();
     }
 
     @Test
@@ -235,6 +242,94 @@ class LogQueryControllerTest {
                 .andExpect(jsonPath("$.data.content[0].spanId").value("span-checkout"));
         verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
                 any(), any(), any(), any());
+    }
+
+    @Test
+    void testListLogsUsesRequestWorkspaceContext() throws Exception {
+        LogEntry teamAlphaLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("team-a checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "hertzbeat.workspace_id", "team-a")))
+                .build();
+        LogEntry teamBetaLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityText("ERROR")
+                .body("team-b payment log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "payment",
+                        "hertzbeat.workspace_id", "team-b")))
+                .build();
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any()))
+                .thenReturn(List.of(teamAlphaLog, teamBetaLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("team-a checkout log"));
+        verify(historyDataReader, never()).countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testListLogsDoesNotLeakUnscopedTotalWhenWorkspacePageAlreadyMatches() throws Exception {
+        LogEntry teamAlphaLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("team-a checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "hertzbeat.workspace_id", "team-a")))
+                .build();
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any()))
+                .thenReturn(List.of(teamAlphaLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("team-a checkout log"));
+        verify(historyDataReader, never()).countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testOverviewStatsUsesRequestWorkspaceContext() throws Exception {
+        List<LogEntry> mockLogs = Arrays.asList(
+                LogEntry.builder()
+                        .severityNumber(9)
+                        .resource(new HashMap<>(java.util.Map.of("hertzbeat.workspace_id", "team-a")))
+                        .build(),
+                LogEntry.builder()
+                        .severityNumber(17)
+                        .resource(new HashMap<>(java.util.Map.of("hertzbeat.workspace_id", "team-b")))
+                        .build()
+        );
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(mockLogs);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(1))
+                .andExpect(jsonPath("$.data.infoCount").value(1))
+                .andExpect(jsonPath("$.data.errorCount").value(0));
+
+        verify(historyDataReader, never()).countLogsBySeverityBuckets(any(), any(), any(), any(),
+                any(), any(), any(), anySet(), eq(false));
     }
 
     @Test

@@ -35,9 +35,11 @@ import org.apache.hertzbeat.common.observability.dto.entity.EntityUnifiedEvidenc
 import org.apache.hertzbeat.common.observability.dto.binding.TelemetryIdentitySnapshot;
 import org.apache.hertzbeat.common.observability.dto.evidence.LogEvidence;
 import org.apache.hertzbeat.common.observability.dto.evidence.MetricEvidence;
+import org.apache.hertzbeat.common.observability.dto.evidence.TraceEvidence;
 import org.apache.hertzbeat.common.observability.dto.log.EntityLogQueryHint;
 import org.apache.hertzbeat.common.observability.dto.log.EntityLogSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.metrics.MetricCorrelationHint;
+import org.apache.hertzbeat.common.observability.dto.trace.EntityTraceSummaryDto;
 import org.apache.hertzbeat.common.observability.model.CodeNavigationHint;
 import org.apache.hertzbeat.common.observability.model.ObservedEntityContext;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -402,6 +404,119 @@ class TelemetryIntakeServiceImplTest {
         assertTrue(evidence.getFirst().getBindingResult().isBound());
         assertEquals(3, evidence.getFirst().getBindingResult().getMatchedIdentityCount());
         verify(logQueryRepository).queryLogs(1000L, 2000L, "trace-1", "span-1", 20);
+    }
+
+    @Test
+    void recordOtlpLogIntakeCanonicalizesNormalizedResourceKeysForEvidenceMatching() {
+        ObservedEntityContext entityContext = ObservedEntityContext.from(
+                ObserveEntity.builder().id(88L).type("service").name("checkout").build(),
+                List.of(
+                        EntityIdentity.builder().entityId(88L).identityKey("service.name").identityValue("checkout").build(),
+                        EntityIdentity.builder().entityId(88L).identityKey("service.namespace").identityValue("commerce").build(),
+                        EntityIdentity.builder().entityId(88L).identityKey("deployment.environment.name").identityValue("prod").build()
+                )
+        );
+        telemetryIntakeService.recordOtlpLogIntake(
+                Map.of(
+                        "service_name", "checkout",
+                        "service_namespace", "commerce",
+                        "deployment_environment_name", "prod",
+                        "hertzbeat_workspace_id", "team-a"
+                ),
+                1_710_000_000_000L,
+                "checkout failed",
+                "ERROR",
+                "trace-1",
+                "span-1",
+                Map.of("code.function", "CheckoutController")
+        );
+
+        List<LogEvidence> evidence = telemetryIntakeService.buildLogEvidence(
+                entityContext,
+                null,
+                Collections.emptyList()
+        );
+
+        assertEquals(1, evidence.size());
+        assertEquals("checkout", evidence.getFirst().getIdentitySnapshot().getServiceName());
+        assertEquals("commerce", evidence.getFirst().getIdentitySnapshot().getServiceNamespace());
+        assertEquals("prod", evidence.getFirst().getIdentitySnapshot().getEnvironmentName());
+        assertTrue(evidence.getFirst().getBindingResult().isBound());
+        assertEquals(3, evidence.getFirst().getBindingResult().getMatchedIdentityCount());
+    }
+
+    @Test
+    void explicitHertzBeatEntityIdKeepsThreeSignalEvidenceWhenCanonicalIdentityIsMissing() {
+        ObservedEntityContext entityContext = ObservedEntityContext.from(
+                ObserveEntity.builder().id(88L).type("service").name("checkout").build(),
+                Collections.emptyList()
+        );
+        telemetryIntakeService.recordOtlpMetricIntake(
+                Map.of("hertzbeat.entity_id", "88", "hertzbeat.workspace_id", "team-a"),
+                1_710_000_000_000L,
+                "checkout_request_latency",
+                "gauge",
+                "ms",
+                41.0,
+                Map.of("route", "/checkout")
+        );
+        telemetryIntakeService.recordOtlpLogIntake(
+                Map.of("hertzbeat_entity_id", "88", "hertzbeat_workspace_id", "team-a"),
+                1_710_000_000_500L,
+                "checkout failed",
+                "ERROR",
+                "trace-explicit",
+                "span-explicit",
+                Map.of("code.function", "CheckoutController")
+        );
+        telemetryIntakeService.recordOtlpTraceIntake(
+                Map.of("hertzbeat.entity_id", "88", "hertzbeat.workspace_id", "team-a"),
+                1_710_000_001_000L,
+                "trace-explicit",
+                "span-explicit",
+                "POST /checkout",
+                "error",
+                Map.of("http.route", "/checkout")
+        );
+
+        List<MetricEvidence> metricEvidence =
+                telemetryIntakeService.buildMetricEvidence(entityContext, null, Collections.emptyList());
+        List<LogEvidence> logEvidence =
+                telemetryIntakeService.buildLogEvidence(entityContext, null, Collections.emptyList());
+        EntityTraceSummaryDto traceSummary = telemetryIntakeService.buildTraceSummary(entityContext);
+        var traceQueryHints = telemetryIntakeService.buildTraceQueryHints(entityContext);
+        List<TraceEvidence> traceEvidence =
+                telemetryIntakeService.buildTraceEvidence(entityContext, traceSummary, traceQueryHints);
+        EntityUnifiedEvidenceSummary summary = telemetryIntakeService.buildUnifiedEvidenceSummary(
+                null,
+                null,
+                null,
+                traceSummary,
+                metricEvidence,
+                logEvidence,
+                traceEvidence
+        );
+
+        assertEquals(1, metricEvidence.size());
+        assertEquals(88L, metricEvidence.getFirst().getEntityId());
+        assertEquals("88", metricEvidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_id"));
+        assertEquals("team-a", metricEvidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.workspace_id"));
+        assertEquals(1, logEvidence.size());
+        assertEquals(88L, logEvidence.getFirst().getEntityId());
+        assertEquals("checkout failed", logEvidence.getFirst().getBody());
+        assertEquals("team-a", logEvidence.getFirst().getResource().get("hertzbeat_workspace_id"));
+        assertEquals(1, traceSummary.getRecentTraceCount());
+        assertEquals(1, traceSummary.getRecentErrorTraceCount());
+        assertEquals(1, traceQueryHints.size());
+        assertEquals("team-a", traceQueryHints.getFirst().getResourceFilters().get("hertzbeat.workspace_id"));
+        assertEquals(1, traceEvidence.size());
+        assertEquals("trace-explicit", traceEvidence.getFirst().getTraceId());
+        assertEquals(3, summary.getActiveSignalCount());
+        assertEquals(1, summary.getMetricEvidenceCount());
+        assertEquals(1, summary.getLogEvidenceCount());
+        assertEquals(1, summary.getTraceEvidenceCount());
     }
 
     @Test

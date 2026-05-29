@@ -56,6 +56,7 @@ import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.model.CodeNavigationHint;
 import org.apache.hertzbeat.common.observability.model.EntityCanonicalIdentityRegistry;
 import org.apache.hertzbeat.common.observability.model.ObservedEntityContext;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.warehouse.repository.LogQueryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
@@ -93,6 +94,8 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
     private static final String OTLP_METRIC_SUMMARY_QUANTILES = "otlp.metric.summary.quantiles";
     private static final String OTLP_METRIC_HISTOGRAM_BUCKET_COUNTS = "otlp.metric.histogram.bucket_counts";
     private static final String OTLP_METRIC_HISTOGRAM_EXPLICIT_BOUNDS = "otlp.metric.histogram.explicit_bounds";
+    private static final String HERTZBEAT_ENTITY_ID = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID;
+    private static final String HERTZBEAT_WORKSPACE_ID = OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID;
     private static final Set<String> WORKSPACE_INFRA_SERVICE_NAMES = Set.of(
             "otelcol-contrib",
             "otel-collector",
@@ -604,22 +607,17 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
     @Override
     public List<LogEvidence> buildLogEvidence(ObservedEntityContext entityContext, EntityLogSummaryInfo logSummary,
                                               List<EntityLogQueryHint> logQueryHints) {
-        if (entityContext == null || CollectionUtils.isEmpty(entityContext.getIdentities())) {
+        long entityId = entityId(entityContext);
+        if (entityContext == null || entityId == 0L) {
             return Collections.emptyList();
         }
-        long entityId = entityContext == null || entityContext.getEntity() == null || entityContext.getEntity().getId() == null
-                ? 0L
-                : entityContext.getEntity().getId();
         Set<String> entityIdentityKeys = entityIdentityKeySet(entityContext);
         Map<String, String> entityIdentityValues = entityIdentityValueMap(entityContext);
-        if (entityIdentityKeys.isEmpty()) {
-            return Collections.emptyList();
-        }
         EntityLogQueryHint preferredHint = CollectionUtils.isEmpty(logQueryHints) ? null : logQueryHints.getFirst();
         TelemetryBindingResult bindingResult = buildBindingResult(entityContext, SOURCE_OTLP, SIGNAL_LOGS);
         List<LogEvidence> results = new ArrayList<>();
         for (RecentLogSignal signal : recentLogSignals) {
-            if (!matchesEntityIdentities(signal.canonicalIdentities(), entityIdentityKeys, entityIdentityValues)) {
+            if (!matchesEntitySignal(signal.canonicalIdentities(), entityIdentityKeys, entityIdentityValues, entityId)) {
                 continue;
             }
             TelemetryIdentitySnapshot identitySnapshot = new TelemetryIdentitySnapshot(
@@ -727,7 +725,7 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
         List<LogEvidence> results = new ArrayList<>();
         for (LogEntry log : storedLogs) {
             Map<String, String> canonicalIdentities = extractCanonicalStringMap(log == null ? null : log.getResource());
-            if (!matchesEntityIdentities(canonicalIdentities, entityIdentityKeys, entityIdentityValues)) {
+            if (!matchesEntitySignal(canonicalIdentities, entityIdentityKeys, entityIdentityValues, entityId)) {
                 continue;
             }
             Map<String, String> resource = extractStringMap(log == null ? null : log.getResource());
@@ -773,20 +771,18 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
 
     @Override
     public EntityTraceSummaryDto buildTraceSummary(ObservedEntityContext entityContext) {
-        if (entityContext == null || CollectionUtils.isEmpty(entityContext.getIdentities())) {
+        long entityId = entityId(entityContext);
+        if (entityContext == null || entityId == 0L) {
             return new EntityTraceSummaryDto(0, 0, null, false, null);
         }
         Set<String> entityIdentityKeys = entityIdentityKeySet(entityContext);
         Map<String, String> entityIdentityValues = entityIdentityValueMap(entityContext);
-        if (entityIdentityKeys.isEmpty()) {
-            return new EntityTraceSummaryDto(0, 0, null, false, null);
-        }
         int recentTraceCount = 0;
         int recentErrorTraceCount = 0;
         Long latestObservedAt = null;
         String latestTraceId = null;
         for (RecentTraceSignal signal : recentTraceSignals) {
-            if (!matchesEntityIdentities(signal.canonicalIdentities(), entityIdentityKeys, entityIdentityValues)) {
+            if (!matchesEntitySignal(signal.canonicalIdentities(), entityIdentityKeys, entityIdentityValues, entityId)) {
                 continue;
             }
             recentTraceCount++;
@@ -811,17 +807,15 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
 
     @Override
     public List<EntityTraceQueryHintDto> buildTraceQueryHints(ObservedEntityContext entityContext) {
-        if (entityContext == null || CollectionUtils.isEmpty(entityContext.getIdentities())) {
+        long entityId = entityId(entityContext);
+        if (entityContext == null || entityId == 0L) {
             return Collections.emptyList();
         }
         Set<String> entityIdentityKeys = entityIdentityKeySet(entityContext);
         Map<String, String> entityIdentityValues = entityIdentityValueMap(entityContext);
-        if (entityIdentityKeys.isEmpty()) {
-            return Collections.emptyList();
-        }
         RecentTraceSignal preferredSignal = null;
         for (RecentTraceSignal signal : recentTraceSignals) {
-            if (!matchesEntityIdentities(signal.canonicalIdentities(), entityIdentityKeys, entityIdentityValues)) {
+            if (!matchesEntitySignal(signal.canonicalIdentities(), entityIdentityKeys, entityIdentityValues, entityId)) {
                 continue;
             }
             if (preferredSignal == null
@@ -936,7 +930,8 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                 logsActive,
                 tracesActive,
                 metricEvidence == null ? 0 : metricEvidence.size(),
-                logSummary == null ? 0 : logSummary.getHintCount(),
+                Math.max(logSummary == null ? 0 : logSummary.getHintCount(),
+                        logEvidence == null ? 0 : logEvidence.size()),
                 traceSummary == null ? 0 : traceSummary.getRecentTraceCount(),
                 latestObservedAt,
                 activeSignals
@@ -1091,6 +1086,16 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                         .ifPresent(value -> canonicalIdentities.put(key, value));
             }
         }
+        long entityId = entityId(entityContext);
+        if (entityId > 0) {
+            canonicalIdentities.putIfAbsent(HERTZBEAT_ENTITY_ID, String.valueOf(entityId));
+        }
+        String workspaceId = entityContext == null || entityContext.getEntity() == null
+                ? null
+                : trimToNull(entityContext.getEntity().getWorkspaceId());
+        if (workspaceId != null) {
+            canonicalIdentities.putIfAbsent(HERTZBEAT_WORKSPACE_ID, workspaceId);
+        }
         return new TelemetryIdentitySnapshot(
                 source,
                 signal,
@@ -1141,7 +1146,7 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
         }
         Map<String, String> canonical = new LinkedHashMap<>();
         for (String key : EntityCanonicalIdentityRegistry.CANONICAL_OTEL_RESOURCE_KEYS) {
-            Object value = values.get(key);
+            Object value = canonicalResourceValue(values, key);
             if (value == null) {
                 continue;
             }
@@ -1150,21 +1155,43 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                 canonical.put(key, normalized);
             }
         }
+        putCanonicalResourceValue(canonical, values, HERTZBEAT_ENTITY_ID);
+        putCanonicalResourceValue(canonical, values, HERTZBEAT_WORKSPACE_ID);
         return canonical;
     }
 
+    private void putCanonicalResourceValue(Map<String, String> canonical, Map<?, ?> values, String key) {
+        Object value = canonicalResourceValue(values, key);
+        if (value == null) {
+            return;
+        }
+        String normalized = trimToNull(String.valueOf(value));
+        if (normalized != null) {
+            canonical.put(key, normalized);
+        }
+    }
+
+    private Object canonicalResourceValue(Map<?, ?> values, String key) {
+        Object value = values.get(key);
+        if (value != null) {
+            return value;
+        }
+        return values.get(normalizeOtelResourceStorageKey(key));
+    }
+
+    private String normalizeOtelResourceStorageKey(String key) {
+        return key == null ? null : key.replace(".", "_");
+    }
+
     private List<MetricEvidence> buildOtlpMetricEvidence(ObservedEntityContext entityContext, long entityId) {
-        if (entityContext == null || CollectionUtils.isEmpty(entityContext.getIdentities()) || recentMetricSignals.isEmpty()) {
+        if (entityContext == null || entityId == 0L || recentMetricSignals.isEmpty()) {
             return Collections.emptyList();
         }
         List<MetricEvidence> result = new ArrayList<>();
         Set<String> entityIdentityKeys = entityIdentityKeySet(entityContext);
         Map<String, String> entityIdentityValues = entityIdentityValueMap(entityContext);
-        if (entityIdentityKeys.isEmpty()) {
-            return Collections.emptyList();
-        }
         for (RecentMetricSignal signal : recentMetricSignals) {
-            if (!matchesEntityIdentities(signal.canonicalIdentities(), entityIdentityKeys, entityIdentityValues)) {
+            if (!matchesEntitySignal(signal.canonicalIdentities(), entityIdentityKeys, entityIdentityValues, entityId)) {
                 continue;
             }
             TelemetryIdentitySnapshot snapshot = new TelemetryIdentitySnapshot(
@@ -1265,6 +1292,23 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
         return String.join("；", segments);
     }
 
+    private boolean matchesEntitySignal(Map<String, String> canonicalIdentities,
+                                        Set<String> entityIdentityKeys,
+                                        Map<String, String> entityIdentityValues,
+                                        long entityId) {
+        if (matchesExplicitEntityId(canonicalIdentities, entityId)) {
+            return true;
+        }
+        return matchesEntityIdentities(canonicalIdentities, entityIdentityKeys, entityIdentityValues);
+    }
+
+    private boolean matchesExplicitEntityId(Map<String, String> canonicalIdentities, long entityId) {
+        if (entityId <= 0 || CollectionUtils.isEmpty(canonicalIdentities)) {
+            return false;
+        }
+        return Objects.equals(String.valueOf(entityId), trimToNull(canonicalIdentities.get(HERTZBEAT_ENTITY_ID)));
+    }
+
     private boolean matchesEntityIdentities(Map<String, String> canonicalIdentities,
                                             Set<String> entityIdentityKeys,
                                             Map<String, String> entityIdentityValues) {
@@ -1297,6 +1341,12 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
             }
         }
         return matched;
+    }
+
+    private long entityId(ObservedEntityContext entityContext) {
+        return entityContext == null || entityContext.getEntity() == null || entityContext.getEntity().getId() == null
+                ? 0L
+                : entityContext.getEntity().getId();
     }
 
     private Set<String> entityIdentityKeySet(ObservedEntityContext entityContext) {

@@ -58,6 +58,28 @@ public interface AccountService extends ObservabilityAccessTokenGateway {
     String generateToken(String tokenName, Long expireSeconds) throws AuthenticationException;
 
     /**
+     * Generate a managed API token with a specific access scope.
+     *
+     * @param tokenName     optional name/description for the token
+     * @param expireSeconds optional expiration time in seconds, null means never expire
+     * @param tokenScope    token access scope
+     * @return token string
+     */
+    String generateToken(String tokenName, Long expireSeconds, String tokenScope) throws AuthenticationException;
+
+    /**
+     * Generate a managed API token with a specific access scope and workspace boundary.
+     *
+     * @param tokenName     optional name/description for the token
+     * @param expireSeconds optional expiration time in seconds, null means never expire
+     * @param tokenScope    token access scope
+     * @param workspaceId   token workspace boundary
+     * @return token string
+     */
+    String generateToken(String tokenName, Long expireSeconds, String tokenScope, String workspaceId)
+            throws AuthenticationException;
+
+    /**
      * List all API tokens
      *
      * @return list of auth tokens

@@ -46,6 +46,7 @@ CREATE TABLE hzb_entity (
     description VARCHAR(512),
     labels VARCHAR(4096),
     tags TEXT,
+    workspace_id VARCHAR(64) NOT NULL DEFAULT 'default',
     creator VARCHAR(64),
     modifier VARCHAR(64),
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -56,6 +57,7 @@ CREATE INDEX idx_hzb_entity_type ON hzb_entity(entity_type);
 CREATE INDEX idx_hzb_entity_status ON hzb_entity(status);
 CREATE INDEX idx_hzb_entity_name ON hzb_entity(name);
 CREATE INDEX idx_hzb_entity_owner ON hzb_entity(owner);
+CREATE INDEX idx_hzb_entity_workspace ON hzb_entity(workspace_id);
 
 CREATE TABLE hzb_entity_identity (
     id BIGSERIAL PRIMARY KEY,
@@ -120,6 +122,7 @@ CREATE INDEX idx_hzb_entity_relation_target_ref ON hzb_entity_relation(target_re
 CREATE TABLE hzb_entity_definition_activity (
     id BIGSERIAL PRIMARY KEY,
     entity_id BIGINT NOT NULL,
+    workspace_id VARCHAR(64) NOT NULL DEFAULT 'default',
     activity_type VARCHAR(32) NOT NULL,
     format VARCHAR(16) NOT NULL,
     status VARCHAR(16) NOT NULL,
@@ -132,6 +135,9 @@ CREATE TABLE hzb_entity_definition_activity (
 CREATE INDEX idx_hzb_entity_definition_activity_entity
     ON hzb_entity_definition_activity(entity_id);
 
+CREATE INDEX idx_hzb_entity_definition_activity_workspace_time
+    ON hzb_entity_definition_activity(workspace_id, gmt_create);
+
 CREATE INDEX idx_hzb_entity_definition_activity_time
     ON hzb_entity_definition_activity(gmt_create);
 
@@ -139,6 +145,7 @@ CREATE TABLE hzb_entity_governance_state (
     id BIGSERIAL PRIMARY KEY,
     state_scope VARCHAR(32) NOT NULL,
     state_kind VARCHAR(32) NOT NULL,
+    workspace_id VARCHAR(64) NOT NULL DEFAULT 'default',
     state_key VARCHAR(128) NOT NULL,
     state_name VARCHAR(128),
     status VARCHAR(32),
@@ -148,11 +155,14 @@ CREATE TABLE hzb_entity_governance_state (
     gmt_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX uk_hzb_entity_governance_state_scope_kind_key
-    ON hzb_entity_governance_state(state_scope, state_kind, state_key);
+CREATE UNIQUE INDEX uk_hzb_entity_governance_state_scope_kind_workspace_key
+    ON hzb_entity_governance_state(state_scope, state_kind, workspace_id, state_key);
 
 CREATE INDEX idx_hzb_entity_governance_state_scope_kind
     ON hzb_entity_governance_state(state_scope, state_kind);
+
+CREATE INDEX idx_hzb_entity_governance_state_scope_kind_workspace
+    ON hzb_entity_governance_state(state_scope, state_kind, workspace_id);
 
 CREATE INDEX idx_hzb_entity_governance_state_update
     ON hzb_entity_governance_state(gmt_update);
@@ -165,13 +175,21 @@ CREATE TABLE hzb_auth_token (
     name VARCHAR(255),
     token_hash VARCHAR(128) NOT NULL,
     token_mask VARCHAR(64),
+    token_scope VARCHAR(32) NOT NULL DEFAULT 'api-admin',
+    workspace_id VARCHAR(64) NOT NULL DEFAULT 'default',
     status SMALLINT NOT NULL DEFAULT 0,
     creator VARCHAR(64),
     gmt_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expire_time TIMESTAMP NULL,
-    last_used_time TIMESTAMP NULL
+    last_used_time TIMESTAMP NULL,
+    revoked_time TIMESTAMP NULL,
+    revoked_by VARCHAR(64)
 );
 
 CREATE UNIQUE INDEX uk_hzb_auth_token_hash ON hzb_auth_token(token_hash);
 CREATE INDEX idx_hzb_auth_token_creator ON hzb_auth_token(creator);
+CREATE INDEX idx_hzb_auth_token_scope ON hzb_auth_token(token_scope);
+CREATE INDEX idx_hzb_auth_token_workspace ON hzb_auth_token(workspace_id);
+CREATE INDEX idx_hzb_auth_token_scope_workspace ON hzb_auth_token(token_scope, workspace_id);
 CREATE INDEX idx_hzb_auth_token_status ON hzb_auth_token(status);
+CREATE INDEX idx_hzb_auth_token_revoked_by ON hzb_auth_token(revoked_by);

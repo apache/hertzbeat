@@ -41,6 +41,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriUtils;
 
 /**
  * query executor for GreptimeDB SQL
@@ -57,8 +58,8 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
 
 
     public GreptimeSqlQueryExecutor(GreptimeProperties greptimeProperties, RestTemplate restTemplate) {
-        super(restTemplate, new SqlQueryExecutor.HttpSqlProperties(greptimeProperties.httpEndpoint() + QUERY_PATH,
-                greptimeProperties.username(), greptimeProperties.password()));
+        super(restTemplate, new SqlQueryExecutor.HttpSqlProperties(sqlEndpoint(greptimeProperties.httpEndpoint()),
+                trimmed(greptimeProperties.username()), trimmed(greptimeProperties.password())));
         this.greptimeProperties = greptimeProperties;
     }
 
@@ -69,9 +70,10 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        if (StringUtils.hasText(greptimeProperties.username())
-                && StringUtils.hasText(greptimeProperties.password())) {
-            String authStr = greptimeProperties.username() + ":" + greptimeProperties.password();
+        String username = trimmed(greptimeProperties.username());
+        String password = trimmed(greptimeProperties.password());
+        if (StringUtils.hasText(username) && StringUtils.hasText(password)) {
+            String authStr = username + ":" + password;
             String encodedAuth = Base64Util.encode(authStr);
             headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
         }
@@ -79,9 +81,10 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
         String requestBody = "sql=" + URLEncoder.encode(queryString, StandardCharsets.UTF_8);
         HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
 
-        String url = greptimeProperties.httpEndpoint() + QUERY_PATH;
-        if (StringUtils.hasText(greptimeProperties.database())) {
-            url += "?db=" + greptimeProperties.database();
+        String url = sqlEndpoint(greptimeProperties.httpEndpoint());
+        String database = trimmed(greptimeProperties.database());
+        if (StringUtils.hasText(database)) {
+            url += "?db=" + UriUtils.encodeQueryParam(database, StandardCharsets.UTF_8);
         }
 
         ResponseEntity<GreptimeSqlQueryContent> responseEntity;
@@ -93,6 +96,11 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
             throw new RuntimeException("Failed to execute GreptimeDB SQL query", e);
         }
 
+        if (responseEntity == null) {
+            log.error("query metrics data from greptime failed. null response");
+            return results;
+        }
+
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
             GreptimeSqlQueryContent responseBody = responseEntity.getBody();
             // GreptimeDB SQL HTTP API may not return 'code' field in successful response
@@ -100,22 +108,19 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
             if (responseBody != null && responseBody.getOutput() != null && !responseBody.getOutput().isEmpty()) {
 
                 for (GreptimeSqlQueryContent.Output output : responseBody.getOutput()) {
-                    if (output.getRecords() != null && output.getRecords().getRows() != null) {
+                    if (output != null && output.getRecords() != null && output.getRecords().getRows() != null) {
                         GreptimeSqlQueryContent.Output.Records.Schema schema = output.getRecords().getSchema();
                         List<List<Object>> rows = output.getRecords().getRows();
 
                         for (List<Object> row : rows) {
+                            if (row == null) {
+                                continue;
+                            }
                             Map<String, Object> rowMap = new HashMap<>();
-                            if (schema != null && schema.getColumnSchemas() != null) {
-                                for (int i = 0; i < Math.min(schema.getColumnSchemas().size(), row.size()); i++) {
-                                    String columnName = schema.getColumnSchemas().get(i).getName();
-                                    Object value = row.get(i);
-                                    rowMap.put(columnName, value);
-                                }
-                            } else {
-                                for (int i = 0; i < row.size(); i++) {
-                                    rowMap.put("col_" + i, row.get(i));
-                                }
+                            List<GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema> columnSchemas =
+                                    schema == null ? null : schema.getColumnSchemas();
+                            for (int i = 0; i < row.size(); i++) {
+                                rowMap.put(columnName(columnSchemas, i), row.get(i));
                             }
                             results.add(rowMap);
                         }
@@ -131,5 +136,37 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
     @Override
     public String getDatasource() {
         return DATASOURCE;
+    }
+
+    private static String sqlEndpoint(String httpEndpoint) {
+        String endpoint = stripTrailingSlashes(trimmed(httpEndpoint));
+        return endpoint + QUERY_PATH;
+    }
+
+    private static String trimmed(String value) {
+        return StringUtils.trimWhitespace(value);
+    }
+
+    private static String stripTrailingSlashes(String value) {
+        if (!StringUtils.hasText(value)) {
+            return "";
+        }
+        int end = value.length();
+        while (end > 0 && value.charAt(end - 1) == '/') {
+            end--;
+        }
+        return value.substring(0, end);
+    }
+
+    private static String columnName(
+            List<GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema> columnSchemas, int index) {
+        if (columnSchemas == null || index >= columnSchemas.size()) {
+            return "col_" + index;
+        }
+        GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema columnSchema = columnSchemas.get(index);
+        if (columnSchema == null || !StringUtils.hasText(columnSchema.getName())) {
+            return "col_" + index;
+        }
+        return columnSchema.getName();
     }
 }

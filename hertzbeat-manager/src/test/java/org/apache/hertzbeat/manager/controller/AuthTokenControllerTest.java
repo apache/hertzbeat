@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.AuthToken;
+import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.manager.service.AccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,7 +70,8 @@ class AuthTokenControllerTest {
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-            when(accountService.generateToken(eq("my-token"), eq(3600L))).thenReturn("generated-jwt-token");
+            when(accountService.generateToken(eq("my-token"), eq(3600L), eq(AuthTokenScopes.API_ADMIN)))
+                    .thenReturn("generated-jwt-token");
 
             this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/token/generate")
                             .param("name", "my-token")
@@ -86,9 +88,53 @@ class AuthTokenControllerTest {
 
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-            when(accountService.generateToken(any(), any())).thenReturn("generated-jwt-token");
+            when(accountService.generateToken(any(), any(), eq(AuthTokenScopes.API_ADMIN)))
+                    .thenReturn("generated-jwt-token");
 
             this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/token/generate"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                    .andExpect(jsonPath("$.data.token").value("generated-jwt-token"));
+        }
+    }
+
+    @Test
+    void testGenerateTokenWithScope() throws Exception {
+        SubjectSum subjectSum = mockAdminSubject();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+            when(accountService.generateToken(eq("otlp"), eq(3600L), eq(AuthTokenScopes.OTLP_INGEST)))
+                    .thenReturn("generated-jwt-token");
+
+            this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/token/generate")
+                            .param("name", "otlp")
+                            .param("expireSeconds", "3600")
+                            .param("scope", AuthTokenScopes.OTLP_INGEST))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                    .andExpect(jsonPath("$.data.token").value("generated-jwt-token"));
+        }
+    }
+
+    @Test
+    void testGenerateTokenWithWorkspaceBoundary() throws Exception {
+        SubjectSum subjectSum = mockAdminSubject();
+
+        try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
+            mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
+            when(accountService.generateToken(
+                    eq("otlp"),
+                    eq(3600L),
+                    eq(AuthTokenScopes.OTLP_INGEST),
+                    eq("prod-west")))
+                    .thenReturn("generated-jwt-token");
+
+            this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/token/generate")
+                            .param("name", "otlp")
+                            .param("expireSeconds", "3600")
+                            .param("scope", AuthTokenScopes.OTLP_INGEST)
+                            .param("workspaceId", "prod-west"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                     .andExpect(jsonPath("$.data.token").value("generated-jwt-token"));

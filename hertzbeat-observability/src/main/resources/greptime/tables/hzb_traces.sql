@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS hzb_traces (
+  "timestamp" TIMESTAMP(9) TIME INDEX,
+  "timestamp_end" TIMESTAMP(9) NULL,
+  "duration_nano" BIGINT UNSIGNED NULL,
+  "trace_id" STRING NULL SKIPPING INDEX WITH(granularity = '10240', type = 'BLOOM'),
+  "span_id" STRING NULL,
+  "parent_span_id" STRING NULL,
+  "span_kind" STRING NULL,
+  "span_name" STRING NULL,
+  "span_status_code" STRING NULL,
+  "span_status_message" STRING NULL,
+  "trace_state" STRING NULL,
+  "scope_name" STRING NULL,
+  "scope_version" STRING NULL,
+  "service_name" STRING NULL,
+  "resource_attributes" JSON NULL,
+  "span_attributes" JSON NULL,
+  "span_events" JSON NULL,
+  "span_links" JSON NULL,
+  PRIMARY KEY("service_name")
+) WITH (append_mode = true, table_data_model = 'greptime_trace_v1');
