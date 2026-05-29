@@ -41,6 +41,11 @@
             <artifactId>hertzbeat-collector-basic</artifactId>
             <version>${hertzbeat.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-collector-mysql-r2dbc</artifactId>
+            <version>${hertzbeat.version}</version>
+        </dependency>
 
         <!-- collector-kafka -->
         <dependency>
