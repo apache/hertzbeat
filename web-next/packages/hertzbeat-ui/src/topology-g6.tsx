@@ -2210,7 +2210,7 @@ export function HzTopologyG6Canvas({
           data-hz-topology-g6-action="fit-view"
           data-hz-topology-g6-action-owner="hertzbeat-ui-g6-action"
           data-hz-topology-g6-action-state="ready"
-          data-hz-topology-g6-action-behavior="fit-and-center"
+          data-hz-topology-g6-action-behavior="overflow-fit-and-center"
           data-hz-topology-g6-action-target="viewport"
           onClick={fitView}
         >
@@ -2224,7 +2224,7 @@ export function HzTopologyG6Canvas({
           data-hz-topology-g6-action="reset-view"
           data-hz-topology-g6-action-owner="hertzbeat-ui-g6-action"
           data-hz-topology-g6-action-state="ready"
-          data-hz-topology-g6-action-behavior="zoom-fit-center"
+          data-hz-topology-g6-action-behavior="zoom-one-overflow-fit-center"
           data-hz-topology-g6-action-target="viewport"
           onClick={resetView}
         >
