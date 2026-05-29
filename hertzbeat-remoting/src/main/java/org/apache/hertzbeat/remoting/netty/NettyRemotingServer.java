@@ -44,13 +44,13 @@ import io.netty.handler.timeout.IdleStateHandler;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.concurrent.BackgroundTaskExecutor;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.RemotingServer;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 
 /**
- * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingServer 
+ * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingServer
  * netty server
  * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRemotingServer.java">NettyRemotingServer</a>
  */
@@ -59,7 +59,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     private final NettyServerConfig nettyServerConfig;
 
-    private final CommonThreadPool threadPool;
+    private final BackgroundTaskExecutor threadPool;
 
     private EventLoopGroup bossGroup;
 
@@ -69,7 +69,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     public NettyRemotingServer(final NettyServerConfig nettyServerConfig,
                                final NettyEventListener nettyEventListener,
-                               final CommonThreadPool threadPool) {
+                               final BackgroundTaskExecutor threadPool) {
         super(nettyEventListener);
         this.nettyServerConfig = nettyServerConfig;
         this.threadPool = threadPool;
