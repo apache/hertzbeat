@@ -10520,6 +10520,12 @@ const topologyLegendBoundaryClassName: Record<HzTopologyLegendBoundary, string> 
   flush: 'border-y border-[var(--hz-ui-line-soft)] border-x-0'
 };
 
+const topologyLegendVisualSourceLabel: Record<NonNullable<HzTopologyLegendItem['visualSource']>, string> = {
+  'hertzbeat-status-token': 'status token',
+  'hertzbeat-interaction-token': 'interaction token',
+  'hertzbeat-edge-token': 'edge token'
+};
+
 export type HzTopologyHoverTooltipKind = 'node' | 'edge';
 export type HzTopologyHoverTooltipVisibility = 'preview' | 'hover';
 export type HzTopologyHoverTooltipTrigger = 'preview' | 'live-edge-hover';
@@ -11270,16 +11276,20 @@ export function HzTopologyLegend({
                 const pattern = item.pattern ?? 'solid';
                 const color = item.color ?? chartToneColor[tone].stroke;
                 const fill = item.fill ?? chartToneColor[tone].soft;
-                const swatch = item.swatch ?? 'line';
                 const visualSource =
                   item.visualSource ??
-                  (item.id.includes('edge') ? 'hertzbeat-edge-token' : item.id.includes('selected') ? 'hertzbeat-interaction-token' : 'hertzbeat-status-token');
+                  (item.id.includes('edge') || pattern !== 'solid'
+                    ? 'hertzbeat-edge-token'
+                    : item.id.includes('selected')
+                      ? 'hertzbeat-interaction-token'
+                      : 'hertzbeat-status-token');
+                const sourceLabel = topologyLegendVisualSourceLabel[visualSource];
                 return (
                   <div
                     key={item.id}
                     className={cn(
                       'grid min-w-0 items-center text-[11px]',
-                      isCanvasDock ? 'min-h-4 grid-cols-[18px_auto] gap-1' : 'min-h-5 grid-cols-[32px_minmax(0,1fr)_auto] gap-2'
+                      isCanvasDock ? 'min-h-4 grid-cols-[auto] gap-1' : 'min-h-5 grid-cols-[minmax(0,1fr)_auto] gap-2'
                     )}
                     data-hz-topology-legend-item={item.id}
                     data-hz-topology-legend-item-owner="hertzbeat-ui-legend-item"
@@ -11287,27 +11297,11 @@ export function HzTopologyLegend({
                     data-hz-topology-legend-pattern={pattern}
                     data-hz-topology-legend-color={color}
                     data-hz-topology-legend-fill={fill}
-                    data-hz-topology-legend-swatch-shape={swatch}
                     data-hz-topology-legend-visual-source={visualSource}
+                    data-hz-topology-legend-visual-mode="source-backed-text"
+                    data-hz-topology-legend-source-label={sourceLabel}
                     data-hz-topology-legend-no-handdrawn-icon="true"
                   >
-                    <span
-                      className={cn(
-                        'shrink-0',
-                        'h-px',
-                        isCanvasDock ? 'w-4' : 'w-7'
-                      )}
-                      style={{
-                        borderTop: pattern === 'dashed' ? `1px dashed ${color}` : undefined,
-                        backgroundColor: pattern === 'dashed' ? 'transparent' : color,
-                        opacity: pattern === 'muted' ? 0.45 : 1
-                      }}
-                      aria-hidden="true"
-                      data-hz-topology-legend-swatch-owner="hertzbeat-ui-legend-swatch"
-                      data-hz-topology-legend-swatch-shape={swatch}
-                      data-hz-topology-legend-swatch-source={visualSource}
-                      data-hz-topology-legend-swatch-no-handdrawn-icon="true"
-                    />
                     <span
                       className="min-w-0 truncate text-[#cbd3df]"
                       data-hz-topology-legend-item-label-owner="hertzbeat-ui-legend-item-label"
