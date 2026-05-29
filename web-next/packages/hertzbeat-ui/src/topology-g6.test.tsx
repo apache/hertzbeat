@@ -1,4 +1,5 @@
 import React from 'react';
+import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {
@@ -17,6 +18,8 @@ import {
   HZ_TOPOLOGY_G6_NODE_ICON_CATALOG,
   HzTopologyG6Canvas
 } from './topology-g6';
+
+const topologyG6Source = readFileSync(new URL('./topology-g6.tsx', import.meta.url), 'utf8');
 
 describe('@hertzbeat/ui topology G6 canvas', () => {
   const graph = {
@@ -351,30 +354,37 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-topology-node-focus-href="/topology?entityId=501&amp;depth=1"');
   });
 
-  it('schedules a post-render fit view pass so the real graph is framed on first paint', () => {
-    const source = String(HzTopologyG6Canvas);
+  it('schedules a post-render overflow-only fit pass so small graphs are not magnified on first paint', () => {
+    const source = topologyG6Source;
     const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={graph} />);
 
     expect(source).toContain('scheduleInitialFitView');
     expect(source).toContain('fitAndCenterG6Viewport');
+    expect(source).toContain("fitAndCenterG6Viewport(runtimeGraph, { when: 'overflow' }, false)");
+    expect(source).toContain("fitAndCenterG6Viewport(runtimeGraph, { when: 'overflow' }, { duration: 120 })");
+    expect(source).not.toContain("fitAndCenterG6Viewport(runtimeGraph, { when: 'always' }, false)");
+    expect(source).not.toContain("fitAndCenterG6Viewport(runtimeGraph, { when: 'always' }, { duration: 120 })");
     expect(source).not.toContain("runtimeGraph.fitView?.({ when: 'always' }, false);\n        await runtimeGraph.fitCenter?.(false);");
     expect(html).toContain('data-hz-topology-g6-auto-fit-zoom-bounds="0.18-1.35"');
     expect(html).toContain('data-hz-topology-g6-auto-fit-max-zoom="1.35"');
+    expect(html).toContain('data-hz-topology-g6-auto-fit-growth="no-magnify-small-graphs"');
+    expect(html).toContain('data-hz-topology-g6-fit-mode="overflow-only-center"');
     expect(clampHzTopologyG6AutoFitZoom(4.8)).toBe(HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM);
     expect(clampHzTopologyG6AutoFitZoom(0.72)).toBe(0.72);
   });
 
   it('centers the shared G6 canvas after fit and reset view actions', () => {
-    const source = String(HzTopologyG6Canvas);
+    const source = topologyG6Source;
     const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={buildHzTopologyG6ScaleFixture(8)} />);
 
     expect(source).toContain('centerGraphView');
     expect(source).toContain('centerGraphView("fit-view")');
     expect(source).toContain('centerGraphView("reset-view")');
-    expect(source).toContain('fitAndCenterG6Viewport(graphRef.current, { when: "always" }, { duration: 180 })');
+    expect(source).toContain("fitAndCenterG6Viewport(graphRef.current, { when: 'overflow' }, { duration: 180 })");
+    expect(source).not.toContain("fitAndCenterG6Viewport(graphRef.current, { when: 'always' }, { duration: 180 })");
     expect(html).toContain('data-hz-topology-g6-viewport-owner="hertzbeat-ui-g6-viewport"');
-    expect(html).toContain('data-hz-topology-g6-fit-behavior="fit-and-center"');
-    expect(html).toContain('data-hz-topology-g6-reset-behavior="zoom-fit-center"');
+    expect(html).toContain('data-hz-topology-g6-fit-behavior="overflow-fit-and-center"');
+    expect(html).toContain('data-hz-topology-g6-reset-behavior="zoom-one-overflow-fit-center"');
   });
 
   it('preserves operator wheel and pan zoom while hover or selection styling updates redraw the G6 graph', () => {

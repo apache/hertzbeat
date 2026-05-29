@@ -1141,7 +1141,7 @@ async function fitAndCenterG6Viewport(
 function scheduleInitialFitView(runtimeGraph: G6GraphRuntime, shouldRun: () => boolean) {
   return window.setTimeout(() => {
     if (!shouldRun()) return;
-    void fitAndCenterG6Viewport(runtimeGraph, { when: 'always' }, { duration: 120 });
+    void fitAndCenterG6Viewport(runtimeGraph, { when: 'overflow' }, { duration: 120 });
   }, 180);
 }
 
@@ -1592,7 +1592,7 @@ export function HzTopologyG6Canvas({
           clearSharedHover();
         });
         await runtimeGraph.render();
-        await fitAndCenterG6Viewport(runtimeGraph, { when: 'always' }, false);
+        await fitAndCenterG6Viewport(runtimeGraph, { when: 'overflow' }, false);
         lastFitStructureKeyRef.current = graphStructureKey;
         lastDrawGraphKeyRef.current = latestG6RenderKeyRef.current;
         initialFitTimerRef.current = scheduleInitialFitView(runtimeGraph, () => !hasUserViewportInteractedRef.current);
@@ -1698,7 +1698,7 @@ export function HzTopologyG6Canvas({
 
   const centerGraphView = React.useCallback(async (action: 'fit-view' | 'reset-view') => {
     if (action === 'reset-view') await graphRef.current?.zoomTo?.(1, { duration: 180 });
-    await fitAndCenterG6Viewport(graphRef.current, { when: 'always' }, { duration: 180 });
+    await fitAndCenterG6Viewport(graphRef.current, { when: 'overflow' }, { duration: 180 });
   }, []);
 
   const fitView = React.useCallback(() => {
@@ -1830,6 +1830,8 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-auto-fit-owner="hertzbeat-ui-g6-auto-fit"
       data-hz-topology-g6-auto-fit-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM}`}
       data-hz-topology-g6-auto-fit-max-zoom={HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM}
+      data-hz-topology-g6-auto-fit-growth="no-magnify-small-graphs"
+      data-hz-topology-g6-fit-mode="overflow-only-center"
       data-hz-topology-g6-viewport-interaction-state={viewportInteractionState}
       data-hz-topology-g6-viewport-interaction-owner="hertzbeat-ui-g6-viewport-interaction"
       data-hz-topology-g6-viewport-preservation="clamped-wheel-pan-zoom"
@@ -1877,8 +1879,8 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-style-redraw-behavior="no-auto-fit"
       data-hz-topology-g6-style-redraw-skip="identical-render-key"
       data-hz-topology-g6-blank-hover-clear="no-op-without-hover"
-      data-hz-topology-g6-fit-behavior="fit-and-center"
-      data-hz-topology-g6-reset-behavior="zoom-fit-center"
+      data-hz-topology-g6-fit-behavior="overflow-fit-and-center"
+      data-hz-topology-g6-reset-behavior="zoom-one-overflow-fit-center"
       data-hz-topology-g6-node-selection={selectionMode}
       data-hz-topology-g6-edge-selection={selectionMode}
       data-hz-topology-g6-edge-hit-target="wide-pointer-band"
