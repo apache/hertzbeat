@@ -209,6 +209,7 @@ import {
   buildHzTopologyG6RenderWindow,
   buildHzTopologyG6ScaleFixture,
   buildHzTopologyG6ScaleProfile,
+  getHzTopologyG6NodeIcon,
   type HzTopologyG6GraphInput
 } from '@hertzbeat/ui/topology-g6';
 import { AlertNoticeRuleSwitch } from '../../components/pages/alert-notice-rule-fields';
@@ -495,7 +496,12 @@ const topologyG6LargeGraphStrategy500 = buildHzTopologyG6LargeGraphStrategy(topo
 const topologyG6ScaleLabRenderWindow500 = buildHzTopologyG6RenderWindow(topologyG6ScaleLabGraph500, topologyG6LargeGraphStrategy500, {
   priorityNodeIds: ['scale-svc-420']
 });
-const topologyG6NodeTypeLegendItems = HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(icon => icon.kind !== 'unknown').map(icon => ({
+const topologyG6LabVisibleNodeKinds = new Set(
+  topologyG6LabGraph.nodes.map(node => getHzTopologyG6NodeIcon(node.entityType).kind).filter(kind => kind !== 'unknown')
+);
+const topologyG6NodeTypeLegendItems = HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(icon =>
+  topologyG6LabVisibleNodeKinds.has(icon.kind)
+).map(icon => ({
   id: `node-type-${icon.kind}`,
   label: icon.label,
   value: icon.iconName,

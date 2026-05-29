@@ -45,6 +45,7 @@ import {
   HZ_TOPOLOGY_G6_NODE_ICON_CATALOG,
   buildHzTopologyG6LargeGraphStrategy,
   buildHzTopologyG6RenderWindow,
+  getHzTopologyG6NodeIcon,
   type HzTopologyG6GraphInput,
   type HzTopologyG6HoverAnchor
 } from '@hertzbeat/ui/topology-g6';
@@ -70,6 +71,13 @@ function findNode(nodes: TopologyServiceNode[], id: string) {
 
 function findEdge(edges: TopologyServiceEdge[], id: string) {
   return edges.find(edge => edge.id === id);
+}
+
+function resolveTopologyG6EntityType(node: Pick<TopologyServiceNode, 'entityType' | 'id' | 'label' | 'source'>) {
+  const directIcon = getHzTopologyG6NodeIcon(node.entityType);
+  if (directIcon.kind !== 'unknown') return directIcon.kind;
+  const inferredIcon = getHzTopologyG6NodeIcon(`${node.label} ${node.source} ${node.id}`);
+  return inferredIcon.kind === 'unknown' ? node.entityType : inferredIcon.kind;
 }
 
 function formatTimeRange(timeRange: string, t: (key: string) => string) {
@@ -738,7 +746,7 @@ export default function TopologyPage({
     nodes: topologyCanvasNodes.map(node => ({
       id: node.id,
       label: node.label,
-      entityType: node.entityType,
+      entityType: resolveTopologyG6EntityType(node),
       health: node.health,
       tone: node.tone,
       focus: node.focus,
@@ -1124,8 +1132,13 @@ export default function TopologyPage({
       ? t('topology.degraded.api.source')
       : 'API';
   const topologyLegendNodeTypeItems = React.useMemo(
-    () =>
-      HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(icon => icon.kind !== 'unknown').map(icon => ({
+    () => {
+      const visibleNodeKinds = new Set(
+        topologyG6Graph.nodes
+          .map(node => getHzTopologyG6NodeIcon(node.entityType).kind)
+          .filter(kind => kind !== 'unknown')
+      );
+      return HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(icon => visibleNodeKinds.has(icon.kind)).map(icon => ({
         id: `node-type-${icon.kind}`,
         label: t(`topology.legend.node-type.${icon.kind}`),
         value: icon.iconName,
@@ -1135,8 +1148,9 @@ export default function TopologyPage({
         iconName: icon.iconName,
         iconSource: icon.iconSource,
         visualSource: 'lucide-react' as const
-      })),
-    [t]
+      }));
+    },
+    [topologyG6Graph.nodes, t]
   );
   const topologyLegendSections = React.useMemo(
     () => [

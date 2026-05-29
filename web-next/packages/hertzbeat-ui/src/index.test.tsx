@@ -5262,6 +5262,29 @@ describe('@hertzbeat/ui', () => {
     expect(html).not.toContain('2 groups');
   });
 
+  it('omits empty topology legend sections so graph-scoped legends do not advertise absent node types', () => {
+    const html = renderToStaticMarkup(
+      <HzTopologyLegend
+        title="Legend"
+        boundary="flush"
+        density="canvas-dock"
+        sections={[
+          { id: 'node-type', label: 'Node type', items: [] },
+          {
+            id: 'status',
+            label: 'Status',
+            items: [{ id: 'healthy-node', label: 'Healthy', value: 'healthy', visualSource: 'hertzbeat-status-token' }]
+          }
+        ]}
+      />
+    );
+
+    expect(html).not.toContain('data-hz-topology-legend-section="node-type"');
+    expect(html).not.toContain('Node type');
+    expect(html).toContain('data-hz-topology-legend-section="status"');
+    expect(html).toContain('data-hz-topology-legend-item="healthy-node"');
+  });
+
   it('renders a topology detail drawer for edge evidence and cross-signal handoffs', () => {
     const html = renderToStaticMarkup(
       <HzTopologyDetailDrawer

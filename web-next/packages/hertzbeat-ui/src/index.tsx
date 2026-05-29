@@ -11204,6 +11204,7 @@ export function HzTopologyLegend({
   ...props
 }: HzTopologyLegendProps) {
   const isCanvasDock = density === 'canvas-dock';
+  const visibleSections = sections.filter(section => section.items.length > 0);
 
   return (
     <section
@@ -11247,7 +11248,7 @@ export function HzTopologyLegend({
             className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#727b8c]"
             data-hz-topology-legend-summary-owner="hertzbeat-ui-legend-summary"
           >
-            {summaryLabel ?? `${sections.length} groups`}
+            {summaryLabel ?? `${visibleSections.length} groups`}
           </span>
         ) : null}
       </header>
@@ -11257,7 +11258,7 @@ export function HzTopologyLegend({
           isCanvasDock ? 'flex flex-wrap gap-x-3 gap-y-1 px-2 py-1.5' : 'grid divide-y divide-[var(--hz-ui-line-faint)]'
         )}
       >
-        {sections.map(section => (
+        {visibleSections.map(section => (
           <div
             key={section.id}
             className={cn(
