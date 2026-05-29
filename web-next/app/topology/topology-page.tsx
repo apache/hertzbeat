@@ -42,6 +42,7 @@ import {
 } from '@hertzbeat/ui';
 import {
   HzTopologyG6Canvas,
+  HZ_TOPOLOGY_G6_NODE_ICON_CATALOG,
   buildHzTopologyG6LargeGraphStrategy,
   buildHzTopologyG6RenderWindow,
   type HzTopologyG6GraphInput,
@@ -1122,8 +1123,28 @@ export default function TopologyPage({
     : topologyEmptyStateKind === 'degraded'
       ? t('topology.degraded.api.source')
       : 'API';
+  const topologyLegendNodeTypeItems = React.useMemo(
+    () =>
+      HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(icon => icon.kind !== 'unknown').map(icon => ({
+        id: `node-type-${icon.kind}`,
+        label: t(`topology.legend.node-type.${icon.kind}`),
+        value: icon.iconName,
+        iconSrc: icon.iconSrc,
+        iconAlt: '',
+        iconLibrary: icon.iconLibrary,
+        iconName: icon.iconName,
+        iconSource: icon.iconSource,
+        visualSource: 'lucide-react' as const
+      })),
+    [t]
+  );
   const topologyLegendSections = React.useMemo(
     () => [
+      {
+        id: 'node-type',
+        label: t('topology.legend.node-type'),
+        items: topologyLegendNodeTypeItems
+      },
       {
         id: 'status',
         label: t('topology.legend.status'),
@@ -1181,7 +1202,7 @@ export default function TopologyPage({
         ]
       }
     ],
-    [t]
+    [t, topologyLegendNodeTypeItems]
   );
   const topologyEdgeIds = React.useMemo(
     () => new Set(map.edges.map(edge => edge.id)),

@@ -5202,11 +5202,20 @@ describe('@hertzbeat/ui', () => {
           {
             id: 'status',
             label: 'Status',
-            items: [
-              { id: 'healthy-node', label: 'Healthy node', color: '#22c55e', visualSource: 'hertzbeat-status-token' },
-              { id: 'critical-node', label: 'Critical node', color: '#ef4444', visualSource: 'hertzbeat-status-token' }
-            ]
-          },
+	            items: [
+	              {
+	                id: 'service-node',
+	                label: 'Service node',
+	                iconSrc: 'data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%3E%3C/svg%3E',
+	                iconLibrary: 'lucide-react',
+	                iconName: 'blocks',
+	                iconSource: 'entity-type-catalog',
+	                visualSource: 'lucide-react'
+	              },
+	              { id: 'healthy-node', label: 'Healthy node', color: '#22c55e', visualSource: 'hertzbeat-status-token' },
+	              { id: 'critical-node', label: 'Critical node', color: '#ef4444', visualSource: 'hertzbeat-status-token' }
+	            ]
+	          },
           {
             id: 'interaction',
             label: 'Interaction',
@@ -5227,10 +5236,17 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-legend-summary-visibility="hidden"');
     expect(html).toContain('data-hz-topology-legend-section="status"');
     expect(html).toContain('data-hz-topology-legend-section="interaction"');
-    expect(html).toContain('data-hz-topology-legend-visual-mode="source-backed-text"');
-    expect(html).toContain('data-hz-topology-legend-visual-source="hertzbeat-status-token"');
-    expect(html).toContain('data-hz-topology-legend-visual-source="hertzbeat-interaction-token"');
-    expect(html).toContain('data-hz-topology-legend-visual-source="hertzbeat-edge-token"');
+	    expect(html).toContain('data-hz-topology-legend-visual-mode="source-backed-text"');
+	    expect(html).toContain('data-hz-topology-legend-visual-source="lucide-react"');
+	    expect(html).toContain('data-hz-topology-legend-source-label="lucide-react"');
+	    expect(html).toContain('data-hz-topology-legend-icon-owner="hertzbeat-ui-legend-source-icon"');
+	    expect(html).toContain('data-hz-topology-legend-icon-library="lucide-react"');
+	    expect(html).toContain('data-hz-topology-legend-icon-name="blocks"');
+	    expect(html).toContain('data-hz-topology-legend-icon-source="entity-type-catalog"');
+	    expect(html).toContain('data-hz-topology-legend-icon-no-handdrawn="true"');
+	    expect(html).toContain('data-hz-topology-legend-visual-source="hertzbeat-status-token"');
+	    expect(html).toContain('data-hz-topology-legend-visual-source="hertzbeat-interaction-token"');
+	    expect(html).toContain('data-hz-topology-legend-visual-source="hertzbeat-edge-token"');
     expect(html).toContain('data-hz-topology-legend-source-label="status token"');
     expect(html).toContain('data-hz-topology-legend-source-label="interaction token"');
     expect(html).toContain('data-hz-topology-legend-source-label="edge token"');

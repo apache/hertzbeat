@@ -204,6 +204,7 @@ import {
 } from '@hertzbeat/ui';
 import {
   HzTopologyG6Canvas,
+  HZ_TOPOLOGY_G6_NODE_ICON_CATALOG,
   buildHzTopologyG6LargeGraphStrategy,
   buildHzTopologyG6RenderWindow,
   buildHzTopologyG6ScaleFixture,
@@ -494,6 +495,17 @@ const topologyG6LargeGraphStrategy500 = buildHzTopologyG6LargeGraphStrategy(topo
 const topologyG6ScaleLabRenderWindow500 = buildHzTopologyG6RenderWindow(topologyG6ScaleLabGraph500, topologyG6LargeGraphStrategy500, {
   priorityNodeIds: ['scale-svc-420']
 });
+const topologyG6NodeTypeLegendItems = HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(icon => icon.kind !== 'unknown').map(icon => ({
+  id: `node-type-${icon.kind}`,
+  label: icon.label,
+  value: icon.iconName,
+  iconSrc: icon.iconSrc,
+  iconAlt: '',
+  iconLibrary: icon.iconLibrary,
+  iconName: icon.iconName,
+  iconSource: icon.iconSource,
+  visualSource: 'lucide-react' as const
+}));
 
 const monitorRows = [
   { name: 'mysql-prod-01', app: 'MySQL', collector: 'collector-a', signal: 'metrics', status: '可用', latency: '38 ms', tone: 'success' as const },
@@ -7001,6 +7013,11 @@ export default function HertzBeatUiLabPage() {
                   density="canvas-dock"
                   sections={[
                         {
+                          id: 'node-type',
+                          label: 'Node type',
+                          items: topologyG6NodeTypeLegendItems
+                        },
+                        {
                           id: 'status',
                           label: 'Status',
                           items: [
@@ -7262,9 +7279,14 @@ export default function HertzBeatUiLabPage() {
                   <HzTopologyLegend
                     data-hz-ui-lab-topology-legend="shared"
                     title="Topology legend"
-                    summaryLabel="2 groups"
+                    summaryLabel="3 groups"
                     boundary="flush"
                     sections={[
+                      {
+                        id: 'node-type',
+                        label: 'Node type',
+                        items: topologyG6NodeTypeLegendItems
+                      },
                       {
                         id: 'status',
                         label: 'Status',

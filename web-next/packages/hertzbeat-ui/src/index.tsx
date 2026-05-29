@@ -10493,7 +10493,12 @@ export type HzTopologyLegendItem = {
   color?: string;
   fill?: string;
   swatch?: 'line';
-  visualSource?: 'hertzbeat-status-token' | 'hertzbeat-interaction-token' | 'hertzbeat-edge-token';
+  visualSource?: 'hertzbeat-status-token' | 'hertzbeat-interaction-token' | 'hertzbeat-edge-token' | 'lucide-react';
+  iconSrc?: string;
+  iconAlt?: string;
+  iconLibrary?: 'lucide-react';
+  iconName?: string;
+  iconSource?: 'entity-type-catalog';
 };
 
 export type HzTopologyLegendSection = {
@@ -10523,7 +10528,8 @@ const topologyLegendBoundaryClassName: Record<HzTopologyLegendBoundary, string> 
 const topologyLegendVisualSourceLabel: Record<NonNullable<HzTopologyLegendItem['visualSource']>, string> = {
   'hertzbeat-status-token': 'status token',
   'hertzbeat-interaction-token': 'interaction token',
-  'hertzbeat-edge-token': 'edge token'
+  'hertzbeat-edge-token': 'edge token',
+  'lucide-react': 'lucide-react'
 };
 
 export type HzTopologyHoverTooltipKind = 'node' | 'edge';
@@ -11288,8 +11294,8 @@ export function HzTopologyLegend({
                   <div
                     key={item.id}
                     className={cn(
-                      'grid min-w-0 items-center text-[11px]',
-                      isCanvasDock ? 'min-h-4 grid-cols-[auto] gap-1' : 'min-h-5 grid-cols-[minmax(0,1fr)_auto] gap-2'
+                      'flex min-w-0 items-center text-[11px]',
+                      isCanvasDock ? 'min-h-4 gap-1' : 'min-h-5 gap-2'
                     )}
                     data-hz-topology-legend-item={item.id}
                     data-hz-topology-legend-item-owner="hertzbeat-ui-legend-item"
@@ -11302,6 +11308,22 @@ export function HzTopologyLegend({
                     data-hz-topology-legend-source-label={sourceLabel}
                     data-hz-topology-legend-no-handdrawn-icon="true"
                   >
+                    {item.iconSrc ? (
+                      <span
+                        aria-label={item.iconAlt}
+                        role={item.iconAlt ? 'img' : undefined}
+                        className={cn(
+                          'h-3.5 w-3.5 shrink-0 bg-contain bg-center bg-no-repeat opacity-80',
+                          isCanvasDock ? 'mr-1 inline-block' : 'mr-1.5 inline-block'
+                        )}
+                        style={{ backgroundImage: `url("${item.iconSrc}")` }}
+                        data-hz-topology-legend-icon-owner="hertzbeat-ui-legend-source-icon"
+                        data-hz-topology-legend-icon-library={item.iconLibrary}
+                        data-hz-topology-legend-icon-name={item.iconName}
+                        data-hz-topology-legend-icon-source={item.iconSource}
+                        data-hz-topology-legend-icon-no-handdrawn="true"
+                      />
+                    ) : null}
                     <span
                       className="min-w-0 truncate text-[#cbd3df]"
                       data-hz-topology-legend-item-label-owner="hertzbeat-ui-legend-item-label"
