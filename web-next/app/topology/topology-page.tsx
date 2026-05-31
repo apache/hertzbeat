@@ -1360,6 +1360,8 @@ export default function TopologyPage({
             data-topology-scope-bar-boundary-owner="hertzbeat-ui-scope-bar-boundary"
             data-topology-refresh-action="refresh"
             boundary="none"
+            summaryVisibility="assistive"
+            summaryDedupedBy="topology-toolbar"
             items={[
               {
                 id: 'environment',

@@ -5618,6 +5618,26 @@ describe('@hertzbeat/ui', () => {
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
+
+    const actionOnlyHtml = renderToStaticMarkup(
+      <HzTopologyScopeBar
+        summaryVisibility="assistive"
+        summaryDedupedBy="topology-toolbar"
+        items={[
+          { id: 'environment', label: 'Environment', value: 'prod' },
+          { id: 'time-range', label: 'Time range', value: 'last 1 hour' }
+        ]}
+        actions={[
+          { id: 'refresh', label: 'Refresh topology', emphasis: 'neutral' }
+        ]}
+      />
+    );
+
+    expect(actionOnlyHtml).toContain('data-hz-topology-scope-summary-visibility="assistive"');
+    expect(actionOnlyHtml).toContain('data-hz-topology-scope-summary-deduped-by="topology-toolbar"');
+    expect(actionOnlyHtml).toContain('data-hz-topology-scope-item-visibility="assistive"');
+    expect(actionOnlyHtml).toContain('class="sr-only"');
+    expect(actionOnlyHtml).toContain('data-hz-topology-scope-action="refresh"');
   });
 
   it('renders a compact topology focus trail for focused graph context and filters', () => {

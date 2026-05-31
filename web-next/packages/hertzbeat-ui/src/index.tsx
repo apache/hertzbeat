@@ -10838,6 +10838,8 @@ export type HzTopologyScopeBarProps = React.HTMLAttributes<HTMLElement> & {
   items: HzTopologyScopeBarItem[];
   actions?: HzTopologyScopeBarAction[];
   boundary?: HzTopologyScopeBarBoundary;
+  summaryVisibility?: 'visible' | 'assistive';
+  summaryDedupedBy?: string;
 };
 
 export type HzTopologyNodeProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'children'> & {
@@ -12304,6 +12306,8 @@ export function HzTopologyScopeBar({
   items,
   actions = [],
   boundary = 'none',
+  summaryVisibility = 'visible',
+  summaryDedupedBy,
   className,
   ...props
 }: HzTopologyScopeBarProps) {
@@ -12320,6 +12324,8 @@ export function HzTopologyScopeBar({
       data-hz-topology-scope-bar-density="compact"
       data-hz-topology-scope-bar-boundary={boundary}
       data-hz-topology-scope-bar-boundary-owner="hertzbeat-ui-scope-bar-boundary"
+      data-hz-topology-scope-summary-visibility={summaryVisibility}
+      data-hz-topology-scope-summary-deduped-by={summaryDedupedBy}
     >
       {items.map(item => {
         const { id, label, value, className: itemClassName, ...itemProps } = item;
@@ -12328,11 +12334,14 @@ export function HzTopologyScopeBar({
             key={id}
             {...itemProps}
             className={cn(
-              'inline-flex h-7 min-w-0 items-center gap-1 rounded-[3px] border border-[#252832] bg-[#151821] px-2 text-[#9ca3b4]',
+              summaryVisibility === 'assistive'
+                ? 'sr-only'
+                : 'inline-flex h-7 min-w-0 items-center gap-1 rounded-[3px] border border-[#252832] bg-[#151821] px-2 text-[#9ca3b4]',
               itemClassName
             )}
             data-hz-topology-scope-item={id}
             data-hz-topology-scope-item-owner="hertzbeat-ui-scope-item"
+            data-hz-topology-scope-item-visibility={summaryVisibility}
           >
             {label ? (
               <span className="truncate text-[#727b8c]" data-hz-topology-scope-item-label-owner="hertzbeat-ui-scope-item-label">
