@@ -684,6 +684,7 @@ export default function TopologyPage({
     [apiOwnedEmptyGraph, loadedApiGraph, routeContext, t]
   );
   const topologyEffectiveSearchQuery = topologySearchQuery ?? map.filterContext.search;
+  const topologyG6SearchQuery = topologySearchQuery ?? '';
   const topologyIsPending = loadedApiGraph === undefined;
   const topologyTraceCallScope = map.filterContext.sourceKind === 'otlp-trace-call' || map.filterContext.viewMode === 'service-call';
   const topologyTraceCallMissingEdges =
@@ -1003,19 +1004,13 @@ export default function TopologyPage({
     ? undefined
     : map.selectedEdgeId ?? topologyDetailEdge?.id ?? topologyMetricRows[0]?.id;
   const topologySearchPriorityNodeId = React.useMemo(() => {
-    const query = map.filterContext.search.trim().toLowerCase();
+    const query = (topologySearchQuery ?? '').trim().toLowerCase();
     if (!query) return undefined;
     return topologyG6Graph.nodes.find(node => node.label.toLowerCase().includes(query) || node.id.toLowerCase().includes(query))?.id;
-  }, [map.filterContext.search, topologyG6Graph.nodes]);
+  }, [topologyG6Graph.nodes, topologySearchQuery]);
   const topologyRenderWindowPriorityNodeIds = React.useMemo(
-    () =>
-      [
-        topologySearchPriorityNodeId,
-        topologyTraceCallMissingEdges ? undefined : primaryNode?.id,
-        topologyDetailEdge?.from,
-        topologyDetailEdge?.to
-      ].filter((nodeId): nodeId is string => Boolean(nodeId)),
-    [primaryNode?.id, topologyDetailEdge?.from, topologyDetailEdge?.to, topologySearchPriorityNodeId, topologyTraceCallMissingEdges]
+    () => [topologySearchPriorityNodeId].filter((nodeId): nodeId is string => Boolean(nodeId)),
+    [topologySearchPriorityNodeId]
   );
   const topologyRenderWindowCompanion = React.useMemo(() => {
     const strategy = buildHzTopologyG6LargeGraphStrategy(topologyG6Graph);
@@ -1497,12 +1492,12 @@ export default function TopologyPage({
             selectedEdgeId={topologyCanvasSelectedEdgeId}
             hoveredNodeId={topologyG6HoveredNodeId}
             hoveredEdgeId={topologyG6HoveredEdgeId}
-            searchQuery={topologyEffectiveSearchQuery}
+            searchQuery={topologyG6SearchQuery}
             filterScope={{
               environment: map.filterContext.environment,
               sourceKind: map.filterContext.sourceKind ?? 'all',
               groupBy: map.filterContext.groupBy,
-              searchQuery: topologyEffectiveSearchQuery
+              searchQuery: topologyG6SearchQuery
             }}
             filterControls={[
               {

@@ -303,7 +303,8 @@ describe('topology page', () => {
     expect(source).toContain('overlayMode="non-occluding"');
     expect(source).toContain('const topologyLiveHoverEdge = topologyHoveredDetailEdge;');
     expect(source).toContain('topologyHoveredDetailEdge ?? topologyDetailEdge');
-    expect(source).toContain('searchQuery={topologyEffectiveSearchQuery}');
+    expect(source).toContain("const topologyG6SearchQuery = topologySearchQuery ?? '';");
+    expect(source).toContain('searchQuery={topologyG6SearchQuery}');
     expect(source).toContain('topologyNodeIds');
     expect(source).not.toContain('const topologyNodeHrefById');
     expect(source).toContain('topologyNodeFocusHrefById');
@@ -463,7 +464,7 @@ describe('topology page', () => {
     expect(source).toContain('searchValue={topologyEffectiveSearchQuery}');
     expect(source).toContain("layout={topologyLayout}");
     expect(source).toContain("layout={topologyG6Layout}");
-    expect(source).toContain('searchQuery={topologyEffectiveSearchQuery}');
+    expect(source).toContain('searchQuery={topologyG6SearchQuery}');
     expect(source).not.toContain('setLoadedApiGraph(undefined);');
   });
 
@@ -844,6 +845,7 @@ describe('topology page', () => {
     expect(html).toContain(
       'data-hz-topology-g6-render-window-priority-behavior="search-only-no-selection-reorder"'
     );
+    expect(html).toContain('data-hz-topology-g6-render-window-priority-node-ids="none"');
     expect(html).toContain('data-hz-topology-g6-minimap="viewport-overview"');
     expect(html).toContain('data-hz-topology-g6-minimap-owner="hertzbeat-ui-g6-minimap"');
     expect(html).toContain('data-hz-topology-g6-minimap-visibility="assistive"');
@@ -854,14 +856,14 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-g6-node-selection="drawer-sync"');
     expect(html).toContain('data-hz-topology-g6-edge-selection="drawer-sync"');
     expect(html).toContain('data-hz-topology-g6-hover-owner="hertzbeat-ui-g6-hover"');
-    expect(html).toContain('data-hz-topology-g6-hover-source="none"');
+    expect(html).toContain('data-hz-topology-g6-hover-source="selection"');
     expect(html).toContain('data-hz-topology-g6-hovered-node="none"');
     expect(html).toContain('data-hz-topology-g6-hovered-edge="none"');
-    expect(html).toContain('data-hz-topology-g6-active-focus-source="search-node"');
+    expect(html).toContain('data-hz-topology-g6-active-focus-source="selection"');
     expect(html).toContain('data-hz-topology-g6-search-owner="hertzbeat-ui-g6-search"');
-    expect(html).toContain('data-hz-topology-g6-search-query="checkout-api"');
-    expect(html).toContain('data-hz-topology-g6-search-match-count="1"');
-    expect(html).toContain('data-hz-topology-g6-search-first-match="svc-checkout"');
+    expect(html).toContain('data-hz-topology-g6-search-query="none"');
+    expect(html).toContain('data-hz-topology-g6-search-match-count="0"');
+    expect(html).toContain('data-hz-topology-g6-search-first-match="none"');
     expect(html).toContain('data-hz-topology-g6-selected-focus-owner="hertzbeat-ui-g6-selected-focus"');
     expect(html).toContain('data-hz-topology-g6-selected-focus-target="svc-checkout"');
     expect(html).toContain('data-hz-topology-g6-selected-focus-status="ready"');
@@ -878,7 +880,7 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-g6-filter-owner="hertzbeat-ui-g6-filter"');
     expect(html).toContain('data-hz-topology-g6-filter-environment="prod"');
     expect(html).toContain('data-hz-topology-g6-filter-source-kind="all"');
-    expect(html).toContain('data-hz-topology-g6-filter-search-query="checkout-api"');
+    expect(html).toContain('data-hz-topology-g6-filter-search-query="none"');
     expect(html).toContain('data-hz-topology-g6-filter-group-by="none"');
     expect(html).toContain('data-hz-topology-g6-filter-visible-node-count="7"');
     expect(html).toContain('data-hz-topology-g6-filter-visible-edge-count="7"');
@@ -1509,7 +1511,7 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-metric-table-render-window-owner="hertzbeat-ui-metric-table-render-window"');
     expect(html).toContain('data-hz-topology-metric-table-render-window-mode="direct"');
     expect(html).toContain('data-hz-topology-metric-table-hidden-node-companion="inactive"');
-    expect(html).toContain('data-hz-topology-metric-table-priority-node-ids="entity-501 entity-502"');
+    expect(html).toContain('data-hz-topology-metric-table-priority-node-ids="none"');
     expect(html).toContain('data-hz-topology-metric-table-visible-row-count="1"');
     expect(html).toContain('data-hz-topology-metric-table-partial-row-count="0"');
     expect(html).toContain('data-hz-topology-metric-table-hidden-row-count="0"');
