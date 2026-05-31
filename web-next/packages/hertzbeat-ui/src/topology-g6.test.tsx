@@ -365,12 +365,17 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(source).not.toContain("fitAndCenterG6Viewport(runtimeGraph, { when: 'always' }, false)");
     expect(source).not.toContain("fitAndCenterG6Viewport(runtimeGraph, { when: 'always' }, { duration: 120 })");
     expect(source).not.toContain("runtimeGraph.fitView?.({ when: 'always' }, false);\n        await runtimeGraph.fitCenter?.(false);");
-    expect(html).toContain('data-hz-topology-g6-auto-fit-zoom-bounds="0.18-1.35"');
-    expect(html).toContain('data-hz-topology-g6-auto-fit-max-zoom="1.35"');
+    expect(html).toContain('data-hz-topology-g6-auto-fit-zoom-bounds="0.18-1"');
+    expect(html).toContain('data-hz-topology-g6-auto-fit-max-zoom="1"');
     expect(html).toContain('data-hz-topology-g6-auto-fit-growth="no-magnify-small-graphs"');
+    expect(html).toContain('data-hz-topology-g6-auto-fit-zoom-range-owner="hertzbeat-ui-g6-auto-fit-zoom-range"');
+    expect(html).toContain('data-hz-topology-g6-operator-zoom-bounds="0.18-4.8"');
     expect(html).toContain('data-hz-topology-g6-fit-mode="overflow-only-center"');
     expect(clampHzTopologyG6AutoFitZoom(4.8)).toBe(HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM);
     expect(clampHzTopologyG6AutoFitZoom(0.72)).toBe(0.72);
+    expect(source).toContain('withG6AutoFitZoomRange(runtimeGraph, async () => {');
+    expect(source).toContain('runtimeGraph.setZoomRange?.([HZ_TOPOLOGY_G6_MIN_ZOOM, HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM])');
+    expect(source).toContain('runtimeGraph.setZoomRange?.([HZ_TOPOLOGY_G6_MIN_ZOOM, HZ_TOPOLOGY_G6_MAX_ZOOM])');
   });
 
   it('centers the shared G6 canvas after fit and reset view actions', () => {

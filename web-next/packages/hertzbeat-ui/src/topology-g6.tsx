@@ -222,6 +222,8 @@ type G6GraphRuntime = {
   fitCenter?: (animation?: Record<string, unknown> | boolean) => Promise<void>;
   zoomBy?: (scale: number, animation?: Record<string, unknown> | boolean) => Promise<void>;
   zoomTo?: (scale: number, animation?: Record<string, unknown> | boolean, origin?: number[]) => Promise<void>;
+  setZoomRange?: (zoomRange: [number, number]) => void;
+  getZoomRange?: () => [number, number];
   getZoom?: () => number;
   getPosition?: () => number[];
   translateTo?: (position: number[], animation?: Record<string, unknown> | boolean) => Promise<void>;
@@ -232,7 +234,7 @@ type G6GraphRuntime = {
 
 export const HZ_TOPOLOGY_G6_MIN_ZOOM = 0.18;
 export const HZ_TOPOLOGY_G6_MAX_ZOOM = 4.8;
-export const HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM = 1.35;
+export const HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM = 1;
 
 type HzTopologyG6ViewportSnapshot = {
   zoom: number;
@@ -1128,13 +1130,24 @@ async function fitAndCenterG6Viewport(
   animation: Record<string, unknown> | boolean
 ) {
   if (!runtimeGraph) return;
-  await runtimeGraph.fitView?.(fitOptions, animation);
-  await runtimeGraph.fitCenter?.(animation);
-  const currentZoom = runtimeGraph.getZoom?.();
-  const clampedZoom = clampHzTopologyG6AutoFitZoom(currentZoom);
-  if (clampedZoom !== undefined && currentZoom !== undefined && clampedZoom < currentZoom) {
-    await runtimeGraph.zoomTo?.(clampedZoom, false);
-    await runtimeGraph.fitCenter?.(false);
+  await withG6AutoFitZoomRange(runtimeGraph, async () => {
+    await runtimeGraph.fitView?.(fitOptions, animation);
+    await runtimeGraph.fitCenter?.(animation);
+    const currentZoom = runtimeGraph.getZoom?.();
+    const clampedZoom = clampHzTopologyG6AutoFitZoom(currentZoom);
+    if (clampedZoom !== undefined && currentZoom !== undefined && clampedZoom < currentZoom) {
+      await runtimeGraph.zoomTo?.(clampedZoom, false);
+      await runtimeGraph.fitCenter?.(false);
+    }
+  });
+}
+
+async function withG6AutoFitZoomRange(runtimeGraph: G6GraphRuntime, action: () => Promise<void>) {
+  runtimeGraph.setZoomRange?.([HZ_TOPOLOGY_G6_MIN_ZOOM, HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM]);
+  try {
+    await action();
+  } finally {
+    runtimeGraph.setZoomRange?.([HZ_TOPOLOGY_G6_MIN_ZOOM, HZ_TOPOLOGY_G6_MAX_ZOOM]);
   }
 }
 
@@ -1531,6 +1544,7 @@ export function HzTopologyG6Canvas({
           width,
           height: graphHeight,
           autoFit: false,
+          zoomRange: [HZ_TOPOLOGY_G6_MIN_ZOOM, HZ_TOPOLOGY_G6_MAX_ZOOM],
           background: '#08090c',
           animation: false,
           data: initialGraphData,
@@ -1831,6 +1845,8 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-auto-fit-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM}`}
       data-hz-topology-g6-auto-fit-max-zoom={HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM}
       data-hz-topology-g6-auto-fit-growth="no-magnify-small-graphs"
+      data-hz-topology-g6-auto-fit-zoom-range-owner="hertzbeat-ui-g6-auto-fit-zoom-range"
+      data-hz-topology-g6-operator-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${HZ_TOPOLOGY_G6_MAX_ZOOM}`}
       data-hz-topology-g6-fit-mode="overflow-only-center"
       data-hz-topology-g6-viewport-interaction-state={viewportInteractionState}
       data-hz-topology-g6-viewport-interaction-owner="hertzbeat-ui-g6-viewport-interaction"
