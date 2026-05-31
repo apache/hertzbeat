@@ -303,7 +303,8 @@ describe('topology page', () => {
     expect(source).toContain('overlayMode="non-occluding"');
     expect(source).toContain('const topologyLiveHoverEdge = topologyHoveredDetailEdge;');
     expect(source).toContain('topologyHoveredDetailEdge ?? topologyDetailEdge');
-    expect(source).toContain("const topologyG6SearchQuery = topologySearchQuery ?? '';");
+    expect(source).toContain("const topologyToolbarSearchQuery = topologySearchQuery ?? '';");
+    expect(source).toContain('const topologyG6SearchQuery = topologyToolbarSearchQuery;');
     expect(source).toContain('searchQuery={topologyG6SearchQuery}');
     expect(source).toContain('topologyNodeIds');
     expect(source).not.toContain('const topologyNodeHrefById');
@@ -427,6 +428,8 @@ describe('topology page', () => {
     expect(source).not.toContain('setTopologyLayout(value as TopologyLayoutMode);');
     expect(source).toContain('const [topologySearchQuery, setTopologySearchQuery] = React.useState<string | undefined>(undefined);');
     expect(source).toContain('const topologyEffectiveSearchQuery = topologySearchQuery ?? map.filterContext.search;');
+    expect(source).toContain("const topologyToolbarSearchQuery = topologySearchQuery ?? '';");
+    expect(source).toContain('const topologyG6SearchQuery = topologyToolbarSearchQuery;');
     expect(source).toContain('const handleTopologySearchChange = React.useCallback');
     expect(source).toContain('setTopologySearchQuery(event.currentTarget.value);');
     expect(source).toContain('data-topology-layout-navigation="in-page-g6-layout"');
@@ -461,10 +464,11 @@ describe('topology page', () => {
     expect(source).toContain('onSearchChange={handleTopologySearchChange}');
     expect(source).toContain('onReset={handleTopologyResetScope}');
     expect(source).not.toContain('layoutValue={topologyLayout}');
-    expect(source).toContain('searchValue={topologyEffectiveSearchQuery}');
+    expect(source).toContain('searchValue={topologyToolbarSearchQuery}');
     expect(source).toContain("layout={topologyLayout}");
     expect(source).toContain("layout={topologyG6Layout}");
     expect(source).toContain('searchQuery={topologyG6SearchQuery}');
+    expect(source).toContain("if (topologyToolbarSearchQuery) topologyG6SearchParams.set('search', topologyToolbarSearchQuery);");
     expect(source).not.toContain('setLoadedApiGraph(undefined);');
   });
 
@@ -895,7 +899,8 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-g6-filter-control-value="none"');
     expect(html).toContain('data-hz-topology-g6-filter-control="search"');
     expect(html).toContain('data-hz-topology-g6-filter-control-kind="search"');
-    expect(html).toContain('data-hz-topology-g6-filter-control-value="checkout-api"');
+    expect(html).not.toContain('data-hz-topology-g6-filter-control-value="checkout-api"');
+    expect(html).not.toContain('value="checkout-api"');
     expect(html).toContain('data-hz-topology-g6-filter-control="reset"');
     expect(html).toContain('data-hz-topology-g6-filter-control-kind="reset"');
     expect(html).toContain('data-hz-topology-g6-overlay-mode="non-occluding"');
@@ -1874,7 +1879,7 @@ describe('topology page', () => {
     expect(html).toMatch(/data-topology-node-id="svc-checkout"[^>]+data-topology-node-focus="active"/);
     expect(html).toMatch(/data-topology-edge-source="database-middleware-connection"[^>]+data-topology-edge-focus="active-path"/);
     expect(html).toContain('data-topology-view-mode-active="service-call"');
-    expect(html).toContain('value="checkout-api"');
+    expect(html).not.toContain('value="checkout-api"');
     expect(html).toContain('last-30m');
     expect(html).toContain('timeRange=last-30m');
     expect(html).toContain('当前筛选');

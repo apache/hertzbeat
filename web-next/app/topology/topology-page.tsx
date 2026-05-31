@@ -684,7 +684,8 @@ export default function TopologyPage({
     [apiOwnedEmptyGraph, loadedApiGraph, routeContext, t]
   );
   const topologyEffectiveSearchQuery = topologySearchQuery ?? map.filterContext.search;
-  const topologyG6SearchQuery = topologySearchQuery ?? '';
+  const topologyToolbarSearchQuery = topologySearchQuery ?? '';
+  const topologyG6SearchQuery = topologyToolbarSearchQuery;
   const topologyIsPending = loadedApiGraph === undefined;
   const topologyTraceCallScope = map.filterContext.sourceKind === 'otlp-trace-call' || map.filterContext.viewMode === 'service-call';
   const topologyTraceCallMissingEdges =
@@ -847,7 +848,7 @@ export default function TopologyPage({
   const topologyG6GroupParams = new URLSearchParams(topologyG6ResetParams);
   topologyG6GroupParams.set('groupBy', 'source-kind');
   const topologyG6SearchParams = new URLSearchParams(topologyG6ResetParams);
-  if (topologyEffectiveSearchQuery) topologyG6SearchParams.set('search', topologyEffectiveSearchQuery);
+  if (topologyToolbarSearchQuery) topologyG6SearchParams.set('search', topologyToolbarSearchQuery);
   if (map.filterContext.groupBy !== 'none') topologyG6SearchParams.set('groupBy', map.filterContext.groupBy);
   const handleTopologyEnvironmentChange = React.useCallback(
     (value: string) => {
@@ -1423,7 +1424,7 @@ export default function TopologyPage({
         ]}
         searchLabel={t('topology.search.aria')}
         searchPlaceholder={t('topology.search.placeholder')}
-        searchValue={topologyEffectiveSearchQuery}
+        searchValue={topologyToolbarSearchQuery}
         sourceKindLabel={t('topology.focus-trail.filter.source')}
         sourceKindValue={map.filterContext.sourceKind ?? 'all'}
         sourceKindOptions={[
@@ -1520,7 +1521,7 @@ export default function TopologyPage({
                 id: 'search',
                 kind: 'search',
                 label: t('topology.state.focus'),
-                value: topologyEffectiveSearchQuery || t('topology.all-entities'),
+                value: topologyToolbarSearchQuery || t('topology.all-entities'),
                 href: `/topology?${topologyG6SearchParams.toString()}`
               },
               {
