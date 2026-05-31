@@ -142,6 +142,8 @@ export type HzTopologyG6LargeGraphStrategy = {
   visibleNodeBudget: number;
 };
 
+export type HzTopologyG6InitialFitStrategy = 'center-only' | 'overflow-fit';
+
 export type HzTopologyG6RenderWindow = {
   graph: HzTopologyG6GraphInput;
   mode: 'direct' | 'windowed';
@@ -722,6 +724,12 @@ export function buildHzTopologyG6LargeGraphStrategy(input: HzTopologyG6GraphInpu
   };
 }
 
+export function buildHzTopologyG6InitialFitStrategy(input: HzTopologyG6GraphInput): HzTopologyG6InitialFitStrategy {
+  const nodeCount = input.nodes.length;
+  const edgeCount = input.edges.length;
+  return nodeCount > 0 && nodeCount <= 12 && edgeCount <= 18 ? 'center-only' : 'overflow-fit';
+}
+
 export function buildHzTopologyG6RenderWindow(
   input: HzTopologyG6GraphInput,
   strategy: HzTopologyG6LargeGraphStrategy = buildHzTopologyG6LargeGraphStrategy(input),
@@ -1150,6 +1158,15 @@ async function fitAndCenterG6Viewport(
   });
 }
 
+async function centerOnlyG6Viewport(
+  runtimeGraph: G6GraphRuntime | null | undefined,
+  animation: Record<string, unknown> | boolean
+) {
+  if (!runtimeGraph) return;
+  await runtimeGraph.zoomTo?.(HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM, animation);
+  await runtimeGraph.fitCenter?.(animation);
+}
+
 async function withG6AutoFitZoomRange(runtimeGraph: G6GraphRuntime, action: () => Promise<void>) {
   runtimeGraph.setZoomRange?.([HZ_TOPOLOGY_G6_MIN_ZOOM, HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM]);
   try {
@@ -1159,9 +1176,17 @@ async function withG6AutoFitZoomRange(runtimeGraph: G6GraphRuntime, action: () =
   }
 }
 
-function scheduleInitialFitView(runtimeGraph: G6GraphRuntime, shouldRun: () => boolean) {
+function scheduleInitialFitView(
+  runtimeGraph: G6GraphRuntime,
+  initialFitStrategy: HzTopologyG6InitialFitStrategy,
+  shouldRun: () => boolean
+) {
   return window.setTimeout(() => {
     if (!shouldRun()) return;
+    if (initialFitStrategy === "center-only") {
+      void centerOnlyG6Viewport(runtimeGraph, { duration: 120 });
+      return;
+    }
     void fitAndCenterG6Viewport(runtimeGraph, { when: 'overflow' }, { duration: 120 });
   }, 180);
 }
@@ -1398,6 +1423,7 @@ export function HzTopologyG6Canvas({
     () => buildHzTopologyG6RenderWindow(canvasGraph, largeGraphStrategy, { priorityNodeIds: renderWindowPriorityNodeIds }),
     [canvasGraph, largeGraphStrategy, renderWindowPriorityNodeIds]
   );
+  const initialFitStrategy = React.useMemo(() => buildHzTopologyG6InitialFitStrategy(renderWindow.graph), [renderWindow.graph]);
   const g6Graph = React.useMemo(() => buildHzTopologyG6Graph(renderWindow.graph), [renderWindow.graph]);
   const g6RenderKey = React.useMemo(() => buildHzTopologyG6RenderKey(g6Graph), [g6Graph]);
   latestG6GraphRef.current = g6Graph;
@@ -1614,10 +1640,14 @@ export function HzTopologyG6Canvas({
           clearSharedHover();
         });
         await runtimeGraph.render();
-        await fitAndCenterG6Viewport(runtimeGraph, { when: 'overflow' }, false);
+        if (initialFitStrategy === "center-only") {
+          await centerOnlyG6Viewport(runtimeGraph, false);
+        } else {
+          await fitAndCenterG6Viewport(runtimeGraph, { when: 'overflow' }, false);
+        }
         lastFitStructureKeyRef.current = graphStructureKey;
         lastDrawGraphKeyRef.current = latestG6RenderKeyRef.current;
-        initialFitTimerRef.current = scheduleInitialFitView(runtimeGraph, () => !hasUserViewportInteractedRef.current);
+        initialFitTimerRef.current = scheduleInitialFitView(runtimeGraph, initialFitStrategy, () => !hasUserViewportInteractedRef.current);
         publishViewportTelemetry("initial-fit");
         if (!disposed) setRenderState('ready');
         handleG6WheelViewportControl = event => {
@@ -1667,7 +1697,7 @@ export function HzTopologyG6Canvas({
     // The mount lifecycle intentionally excludes g6Graph so hover/selection style redraws do not destroy and refit the operator viewport.
     // Graph data updates flow through the setData/draw effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cancelPendingInitialFitView, clearSharedHover, graphStructureKey, handleG6EdgeSelect, handleG6NodeFocus, handleG6NodeSelect, height, layout, markUserViewportInteraction, publishViewportTelemetry]);
+  }, [cancelPendingInitialFitView, clearSharedHover, graphStructureKey, handleG6EdgeSelect, handleG6NodeFocus, handleG6NodeSelect, height, initialFitStrategy, layout, markUserViewportInteraction, publishViewportTelemetry]);
 
   React.useEffect(() => {
     const runtimeGraph = graphRef.current;
@@ -1681,7 +1711,11 @@ export function HzTopologyG6Canvas({
       if (shouldFitAfterDataChange) {
         lastFitStructureKeyRef.current = graphStructureKey;
         lastDrawGraphKeyRef.current = g6RenderKey;
-        void fitAndCenterG6Viewport(runtimeGraph, { when: "overflow" }, false);
+        if (initialFitStrategy === "center-only") {
+          void centerOnlyG6Viewport(runtimeGraph, false);
+        } else {
+          void fitAndCenterG6Viewport(runtimeGraph, { when: "overflow" }, false);
+        }
       } else {
         await restoreG6ViewportSnapshot(runtimeGraph, snapshot);
         publishViewportTelemetry("redraw-restore");
@@ -1691,7 +1725,7 @@ export function HzTopologyG6Canvas({
     }).catch(error => {
       console.warn('HzTopologyG6Canvas failed to update AntV G6 data.', error);
     });
-  }, [g6Graph, g6RenderKey, graphStructureKey, publishViewportTelemetry, renderState]);
+  }, [g6Graph, g6RenderKey, graphStructureKey, initialFitStrategy, publishViewportTelemetry, renderState]);
 
   React.useEffect(() => {
     const runtimeGraph = graphRef.current;
@@ -1854,6 +1888,8 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-auto-fit-max-zoom={HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM}
       data-hz-topology-g6-auto-fit-growth="no-magnify-small-graphs"
       data-hz-topology-g6-auto-fit-zoom-range-owner="hertzbeat-ui-g6-auto-fit-zoom-range"
+      data-hz-topology-g6-initial-fit-strategy={initialFitStrategy}
+      data-hz-topology-g6-initial-fit-strategy-owner="hertzbeat-ui-g6-initial-fit-strategy"
       data-hz-topology-g6-operator-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${HZ_TOPOLOGY_G6_MAX_ZOOM}`}
       data-hz-topology-g6-operator-zoom-growth="bounded-readable-nodes"
       data-hz-topology-g6-fit-mode="overflow-only-center"

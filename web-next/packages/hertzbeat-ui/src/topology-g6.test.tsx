@@ -6,6 +6,7 @@ import {
   buildHzTopologyG6Graph,
   buildHzTopologyG6FilterScope,
   buildHzTopologyG6GroupSummary,
+  buildHzTopologyG6InitialFitStrategy,
   buildHzTopologyG6LargeGraphStrategy,
   buildHzTopologyG6NeighborFocus,
   buildHzTopologyG6RenderWindow,
@@ -363,6 +364,9 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     const source = topologyG6Source;
     const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={graph} />);
 
+    expect(source).toContain('buildHzTopologyG6InitialFitStrategy');
+    expect(source).toContain('initialFitStrategy === "center-only"');
+    expect(source).toContain('centerOnlyG6Viewport');
     expect(source).toContain('scheduleInitialFitView');
     expect(source).toContain('fitAndCenterG6Viewport');
     expect(source).toContain("fitAndCenterG6Viewport(runtimeGraph, { when: 'overflow' }, false)");
@@ -374,6 +378,8 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-auto-fit-max-zoom="1"');
     expect(html).toContain('data-hz-topology-g6-auto-fit-growth="no-magnify-small-graphs"');
     expect(html).toContain('data-hz-topology-g6-auto-fit-zoom-range-owner="hertzbeat-ui-g6-auto-fit-zoom-range"');
+    expect(html).toContain('data-hz-topology-g6-initial-fit-strategy="center-only"');
+    expect(html).toContain('data-hz-topology-g6-initial-fit-strategy-owner="hertzbeat-ui-g6-initial-fit-strategy"');
     expect(html).toContain('data-hz-topology-g6-operator-zoom-bounds="0.18-2.2"');
     expect(html).toContain('data-hz-topology-g6-operator-zoom-growth="bounded-readable-nodes"');
     expect(html).toContain('data-hz-topology-g6-fit-mode="overflow-only-center"');
@@ -382,6 +388,18 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(source).toContain('withG6AutoFitZoomRange(runtimeGraph, async () => {');
     expect(source).toContain('runtimeGraph.setZoomRange?.([HZ_TOPOLOGY_G6_MIN_ZOOM, HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM])');
     expect(source).toContain('runtimeGraph.setZoomRange?.([HZ_TOPOLOGY_G6_MIN_ZOOM, HZ_TOPOLOGY_G6_MAX_ZOOM])');
+  });
+
+  it('keeps compact service graphs at readable one-to-one scale instead of fitting them to fill wide canvases', () => {
+    const compactGraph = buildHzTopologyG6ScaleFixture(7);
+    const denseGraph = buildHzTopologyG6ScaleFixture(50);
+    const compactHtml = renderToStaticMarkup(<HzTopologyG6Canvas graph={compactGraph} />);
+    const denseHtml = renderToStaticMarkup(<HzTopologyG6Canvas graph={denseGraph} />);
+
+    expect(buildHzTopologyG6InitialFitStrategy(compactGraph)).toBe('center-only');
+    expect(buildHzTopologyG6InitialFitStrategy(denseGraph)).toBe('overflow-fit');
+    expect(compactHtml).toContain('data-hz-topology-g6-initial-fit-strategy="center-only"');
+    expect(denseHtml).toContain('data-hz-topology-g6-initial-fit-strategy="overflow-fit"');
   });
 
   it('centers the shared G6 canvas after fit and reset view actions', () => {
@@ -1121,7 +1139,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(source).toContain('initialFitTimerRef.current');
     expect(source).toContain('cancelPendingInitialFitView();');
     expect(source).toContain('if (source === "initial-fit" && hasUserViewportInteractedRef.current) return;');
-    expect(source).toContain('scheduleInitialFitView(runtimeGraph, () => !hasUserViewportInteractedRef.current)');
+    expect(source).toContain('scheduleInitialFitView(runtimeGraph, initialFitStrategy, () => !hasUserViewportInteractedRef.current)');
     expect(source).toContain('publishViewportTelemetryAfterViewportAction("wheel"');
     expect(source).toContain('publishViewportTelemetry("pointer-pan")');
     expect(source).toContain('publishViewportTelemetry("redraw-restore")');
