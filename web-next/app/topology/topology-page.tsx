@@ -1017,6 +1017,31 @@ export default function TopologyPage({
     const strategy = buildHzTopologyG6LargeGraphStrategy(topologyG6Graph);
     return buildHzTopologyG6RenderWindow(topologyG6Graph, strategy, { priorityNodeIds: topologyRenderWindowPriorityNodeIds });
   }, [topologyG6Graph, topologyRenderWindowPriorityNodeIds]);
+  const topologyMetricRenderWindowCompanion = React.useMemo(() => ({
+    mode: topologyRenderWindowCompanion.mode,
+    totalNodeCount: topologyRenderWindowCompanion.totalNodeCount,
+    renderedNodeCount: topologyRenderWindowCompanion.renderedNodeCount,
+    hiddenNodeCount: topologyRenderWindowCompanion.hiddenNodeCount,
+    visibleNodeBudget: topologyRenderWindowCompanion.visibleNodeBudget,
+    tableCompanion: topologyRenderWindowCompanion.tableCompanion,
+    priorityNodeIds: topologyRenderWindowCompanion.priorityNodeIds,
+    renderedNodeIds: topologyRenderWindowCompanion.graph.nodes.map(node => node.id)
+  }), [topologyRenderWindowCompanion]);
+  const topologyShouldShowRenderWindowMetricTable =
+    topologyRenderWindowCompanion.mode === 'windowed' || topologyRenderWindowCompanion.tableCompanion === 'required';
+  const topologyMetricTableLabels = React.useMemo(() => ({
+    edgeCount: t('topology.metric-table.edge-count', { count: topologyMetricRows.length }),
+    requestRate: t('topology.metric-table.request-rate-unit'),
+    errorRate: t('topology.metric-table.error-rate-unit'),
+    latencyP95: t('topology.metric-table.latency-p95-unit'),
+    rowAction: t('topology.metric-table.row-action'),
+    renderWindowFilterAll: t('topology.metric-table.filter.all'),
+    renderWindowFilterVisible: t('topology.metric-table.filter.visible'),
+    renderWindowFilterPartial: t('topology.metric-table.filter.partial'),
+    renderWindowFilterHidden: t('topology.metric-table.filter.hidden'),
+    renderWindowFilterUnknown: t('topology.metric-table.filter.unknown'),
+    rowAriaLabel: (row: HzTopologyMetricRow) => t('topology.metric-table.open-edge-aria', { edge: String(row.id) })
+  }), [t, topologyMetricRows.length]);
   const topologyHoveredDetailEdge = topologyG6HoveredEdgeId ? findEdge(map.edges, topologyG6HoveredEdgeId) : undefined;
   const topologyLiveHoverEdge = topologyHoveredDetailEdge;
   const topologyInvestigationEdge = topologyHoveredDetailEdge ?? topologyDetailEdge;
@@ -1738,30 +1763,9 @@ export default function TopologyPage({
               selectedRowId={topologyMetricSelectedRowId}
               renderWindowFilter={topologyMetricWindowFilter}
               onRenderWindowFilterChange={setTopologyMetricWindowFilter}
-              renderWindowCompanion={{
-                mode: topologyRenderWindowCompanion.mode,
-                totalNodeCount: topologyRenderWindowCompanion.totalNodeCount,
-                renderedNodeCount: topologyRenderWindowCompanion.renderedNodeCount,
-                hiddenNodeCount: topologyRenderWindowCompanion.hiddenNodeCount,
-                visibleNodeBudget: topologyRenderWindowCompanion.visibleNodeBudget,
-                tableCompanion: topologyRenderWindowCompanion.tableCompanion,
-                priorityNodeIds: topologyRenderWindowCompanion.priorityNodeIds,
-                renderedNodeIds: topologyRenderWindowCompanion.graph.nodes.map(node => node.id)
-              }}
+              renderWindowCompanion={topologyMetricRenderWindowCompanion}
               emptyLabel={t('topology.metric-table.empty')}
-              labels={{
-                edgeCount: t('topology.metric-table.edge-count', { count: topologyMetricRows.length }),
-                requestRate: t('topology.metric-table.request-rate-unit'),
-                errorRate: t('topology.metric-table.error-rate-unit'),
-                latencyP95: t('topology.metric-table.latency-p95-unit'),
-                rowAction: t('topology.metric-table.row-action'),
-                renderWindowFilterAll: t('topology.metric-table.filter.all'),
-                renderWindowFilterVisible: t('topology.metric-table.filter.visible'),
-                renderWindowFilterPartial: t('topology.metric-table.filter.partial'),
-                renderWindowFilterHidden: t('topology.metric-table.filter.hidden'),
-                renderWindowFilterUnknown: t('topology.metric-table.filter.unknown'),
-                rowAriaLabel: row => t('topology.metric-table.open-edge-aria', { edge: String(row.id) })
-              }}
+              labels={topologyMetricTableLabels}
               onRowSelect={handleTopologyMetricRowSelect}
               boundary="framed"
             />
@@ -1900,6 +1904,31 @@ export default function TopologyPage({
         </HzTopologyCompanionRail>
         </HzTopologyWorkbenchSlot>
       </HzTopologyWorkbenchGrid>
+
+      {topologyShouldShowRenderWindowMetricTable && topologyMetricRows.length > 0 ? (
+        <HzTopologyMetricTable
+          id="topology-metric-table"
+          data-topology-metric-table-owner="hertzbeat-ui"
+          data-topology-metric-table-placement="graph-bottom"
+          data-topology-metric-table-visibility="render-window-companion"
+          data-topology-metric-table-scope="edge-red-render-window"
+          data-topology-metric-table-boundary-owner="hertzbeat-ui-metric-table-boundary"
+          data-topology-metric-table-interaction-owner="hertzbeat-ui-metric-table-interaction"
+          data-topology-metric-table-selection-clear-owner="hertzbeat-ui-g6-hover-clear"
+          data-topology-metric-table-filter-behavior="in-page-no-route-change"
+          title={t('topology.metric-table.title')}
+          density="graph-first"
+          rows={topologyMetricRows}
+          selectedRowId={topologyMetricSelectedRowId}
+          renderWindowFilter={topologyMetricWindowFilter}
+          onRenderWindowFilterChange={setTopologyMetricWindowFilter}
+          renderWindowCompanion={topologyMetricRenderWindowCompanion}
+          emptyLabel={t('topology.metric-table.empty')}
+          labels={topologyMetricTableLabels}
+          onRowSelect={handleTopologyMetricRowSelect}
+          boundary="framed"
+        />
+      ) : null}
 
       {map.faultContextRows.length > 0 ? (
         <HzTopologyEvidenceList

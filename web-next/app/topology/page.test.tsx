@@ -181,6 +181,54 @@ describe('topology page', () => {
     };
   }
 
+  function buildLargeApiTopologyFixture() {
+    const nodes = Array.from({ length: 230 }, (_, index) => {
+      const padded = String(index).padStart(3, '0');
+      return {
+        id: `scale-svc-${padded}`,
+        entityId: `service:scale/${padded}`,
+        entityName: `Scale API ${padded}`,
+        entityType: index % 20 === 0 && index > 0 ? 'database' : 'service',
+        namespace: 'scale',
+        environment: 'prod',
+        health: index % 17 === 0 ? 'critical' : index % 7 === 0 ? 'warning' : 'healthy',
+        evidenceBadges: ['entity-relation', 'otlp-trace-call'],
+        redMetrics: {
+          requestRatePerSecond: 4 + (index % 23),
+          errorRate: Number((((index % 11) + 1) / 1000).toFixed(3)),
+          latencyP95Ms: 40 + (index % 13) * 8
+        }
+      };
+    });
+    const edges = Array.from({ length: 229 }, (_, index) => {
+      const from = String(index).padStart(3, '0');
+      const to = String(index + 1).padStart(3, '0');
+      return {
+        sourceNodeId: `scale-svc-${from}`,
+        targetNodeId: `scale-svc-${to}`,
+        relationType: 'HTTP call',
+        relationSource: 'otlp-trace-call',
+        status: index % 17 === 0 ? 'critical' : index % 7 === 0 ? 'warning' : 'active',
+        score: 80 - (index % 12),
+        evidenceBadges: ['entity-relation', 'otlp-trace-call'],
+        redMetrics: {
+          requestRatePerSecond: 5 + (index % 29),
+          errorRate: Number((((index % 13) + 1) / 1000).toFixed(3)),
+          latencyP95Ms: 45 + (index % 19) * 7
+        }
+      };
+    });
+
+    return {
+      apiBacked: true,
+      focusEntityId: 'service:scale/000',
+      depth: 2,
+      sourceKinds: ['entity-relation', 'otlp-trace-call'],
+      nodes,
+      edges
+    };
+  }
+
   it('keeps topology on the HertzBeat entity relationship surface instead of copied service-map chrome', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/topology/topology-page.tsx'), 'utf8');
 
@@ -1549,6 +1597,40 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-error-rate="0.021"');
     expect(html).toContain('data-hz-topology-latency-p95-ms="123"');
     expect(html).toContain('边指标排行');
+  }, 60000);
+
+  it('surfaces the render-window RED table below the graph when a real API topology is windowed', async () => {
+    const routeContext = {
+      environment: 'prod',
+      timeRange: 'last-1h',
+      sourceKind: 'otlp-trace-call',
+      viewMode: 'service-call',
+      groupBy: 'source-kind',
+      depth: '2'
+    };
+    const { default: TopologyPage } = await import('./topology-page');
+    const source = readFileSync(resolve(process.cwd(), 'app/topology/topology-page.tsx'), 'utf8');
+    const html = renderToStaticMarkup(<TopologyPage routeContext={routeContext} apiGraph={buildLargeApiTopologyFixture()} />);
+
+    expect(source).toContain('const topologyShouldShowRenderWindowMetricTable =');
+    expect(source).toContain("topologyRenderWindowCompanion.mode === 'windowed'");
+    expect(source).toContain("topologyRenderWindowCompanion.tableCompanion === 'required'");
+    expect(html).toContain('data-hz-topology-g6-render-window-mode="windowed"');
+    expect(html).toContain('data-hz-topology-g6-render-window-total-node-count="230"');
+    expect(html).toContain('data-hz-topology-g6-render-window-hidden-node-count="30"');
+    expect(html).toContain('data-topology-metric-table-placement="graph-bottom"');
+    expect(html).toContain('data-topology-metric-table-visibility="render-window-companion"');
+    expect(html).toContain('data-topology-metric-table-scope="edge-red-render-window"');
+    expect(html).toContain('data-hz-topology-metric-table-render-window-mode="windowed"');
+    expect(html).toContain('data-hz-topology-metric-table-render-window-total-node-count="230"');
+    expect(html).toContain('data-hz-topology-metric-table-render-window-hidden-node-count="30"');
+    expect(html).toContain('data-hz-topology-metric-table-render-window-table-companion="required"');
+    expect(html).toContain('data-hz-topology-metric-table-hidden-node-companion="required"');
+    expect(html).toContain('data-hz-topology-metric-table-filter-control="hidden"');
+    expect(html).toContain('data-hz-topology-edge-row-render-window-visibility="hidden"');
+    expect(html.indexOf('data-topology-g6-canvas-owner="hertzbeat-ui-g6-canvas"')).toBeLessThan(
+      html.indexOf('data-topology-metric-table-placement="graph-bottom"')
+    );
   }, 60000);
 
   it('renders API-backed impact timeline evidence when topology returns change events', async () => {
