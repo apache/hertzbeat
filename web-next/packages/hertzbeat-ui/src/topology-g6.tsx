@@ -239,7 +239,7 @@ type G6GraphRuntime = {
 };
 
 export const HZ_TOPOLOGY_G6_MIN_ZOOM = 0.18;
-export const HZ_TOPOLOGY_G6_MAX_ZOOM = 4.8;
+export const HZ_TOPOLOGY_G6_MAX_ZOOM = 2.2;
 export const HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM = 1;
 
 type HzTopologyG6ViewportSnapshot = {
@@ -1855,6 +1855,7 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-auto-fit-growth="no-magnify-small-graphs"
       data-hz-topology-g6-auto-fit-zoom-range-owner="hertzbeat-ui-g6-auto-fit-zoom-range"
       data-hz-topology-g6-operator-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${HZ_TOPOLOGY_G6_MAX_ZOOM}`}
+      data-hz-topology-g6-operator-zoom-growth="bounded-readable-nodes"
       data-hz-topology-g6-fit-mode="overflow-only-center"
       data-hz-topology-g6-viewport-interaction-state={viewportInteractionState}
       data-hz-topology-g6-viewport-interaction-owner="hertzbeat-ui-g6-viewport-interaction"
@@ -1882,7 +1883,7 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-wheel-owner="hertzbeat-ui-g6-wheel"
       data-hz-topology-g6-wheel-listener-passive="false-control"
       data-hz-topology-g6-wheel-origin="pointer-clamped"
-      data-hz-topology-g6-wheel-zoom-bounds="0.18-4.8"
+      data-hz-topology-g6-wheel-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${HZ_TOPOLOGY_G6_MAX_ZOOM}`}
       data-hz-topology-g6-node-motion="locked-layout"
       data-hz-topology-g6-node-motion-owner="hertzbeat-ui-g6-node-motion"
       data-hz-topology-g6-selection-engine="hertzbeat-controlled"

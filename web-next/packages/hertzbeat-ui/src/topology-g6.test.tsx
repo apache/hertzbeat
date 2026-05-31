@@ -15,6 +15,7 @@ import {
   clampHzTopologyG6AutoFitZoom,
   getHzTopologyG6NodeIcon,
   HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM,
+  HZ_TOPOLOGY_G6_MAX_ZOOM,
   HZ_TOPOLOGY_G6_NODE_ICON_CATALOG,
   HzTopologyG6Canvas
 } from './topology-g6';
@@ -373,7 +374,8 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-auto-fit-max-zoom="1"');
     expect(html).toContain('data-hz-topology-g6-auto-fit-growth="no-magnify-small-graphs"');
     expect(html).toContain('data-hz-topology-g6-auto-fit-zoom-range-owner="hertzbeat-ui-g6-auto-fit-zoom-range"');
-    expect(html).toContain('data-hz-topology-g6-operator-zoom-bounds="0.18-4.8"');
+    expect(html).toContain('data-hz-topology-g6-operator-zoom-bounds="0.18-2.2"');
+    expect(html).toContain('data-hz-topology-g6-operator-zoom-growth="bounded-readable-nodes"');
     expect(html).toContain('data-hz-topology-g6-fit-mode="overflow-only-center"');
     expect(clampHzTopologyG6AutoFitZoom(4.8)).toBe(HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM);
     expect(clampHzTopologyG6AutoFitZoom(0.72)).toBe(0.72);
@@ -394,6 +396,15 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-viewport-owner="hertzbeat-ui-g6-viewport"');
     expect(html).toContain('data-hz-topology-g6-fit-behavior="overflow-fit-and-center"');
     expect(html).toContain('data-hz-topology-g6-reset-behavior="zoom-one-overflow-fit-center"');
+  });
+
+  it('keeps operator zoom below the giant-node range that can make a small graph fill wide browsers', () => {
+    const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={graph} />);
+
+    expect(html).toContain('data-hz-topology-g6-operator-zoom-bounds="0.18-2.2"');
+    expect(html).toContain('data-hz-topology-g6-wheel-zoom-bounds="0.18-2.2"');
+    expect(html).toContain('data-hz-topology-g6-operator-zoom-growth="bounded-readable-nodes"');
+    expect(HZ_TOPOLOGY_G6_MAX_ZOOM).toBe(2.2);
   });
 
   it('preserves operator wheel and pan zoom while hover or selection styling updates redraw the G6 graph', () => {
@@ -1060,7 +1071,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-wheel-owner="hertzbeat-ui-g6-wheel"');
     expect(html).toContain('data-hz-topology-g6-wheel-listener-passive="false-control"');
     expect(html).toContain('data-hz-topology-g6-wheel-origin="pointer-clamped"');
-    expect(html).toContain('data-hz-topology-g6-wheel-zoom-bounds="0.18-4.8"');
+    expect(html).toContain('data-hz-topology-g6-wheel-zoom-bounds="0.18-2.2"');
     expect(html).toContain('data-hz-topology-g6-keyboard-shortcuts="plus-minus-zero-fit"');
     expect(html).toContain('data-hz-topology-g6-keyboard-shortcuts-owner="hertzbeat-ui-g6-keyboard"');
     expect(html).toContain('data-hz-topology-g6-keyboard-actions="zoom-in zoom-out reset-view fit-view"');

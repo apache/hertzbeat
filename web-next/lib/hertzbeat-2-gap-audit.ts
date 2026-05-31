@@ -340,6 +340,7 @@ const functionalGaps: HertzBeat2Gap[] = [
       '/topology reuses HzTopologyMetricTable header, row, route, RED cell, badge, and action ownership for edge ranking',
       '/topology reuses HzTopologyMetricTable graph-first density for compact companion RED ranking',
       '/topology wires HzTopologyMetricTable render-window companion metadata from the same G6 graph so hidden nodes keep table investigation context',
+      '/topology exposes windowed API graph RED rankings as a graph-bottom HzTopologyMetricTable so hidden render-window edges stay inspectable after the right rail is removed',
       '/topology marks HzTopologyMetricTable rows with source and target visibility from the current G6 render window instead of losing hidden-edge context',
       '/topology exposes HzTopologyMetricTable render-window row count summaries for future visible, partial, and hidden relationship filters',
       '/topology reuses HzTopologyMetricTable in-page render-window filters so ordinary RED table filtering does not navigate or remount the G6 canvas',
