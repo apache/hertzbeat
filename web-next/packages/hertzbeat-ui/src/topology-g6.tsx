@@ -1163,8 +1163,8 @@ async function centerOnlyG6Viewport(
   animation: Record<string, unknown> | boolean
 ) {
   if (!runtimeGraph) return;
-  await runtimeGraph.zoomTo?.(HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM, animation);
   await runtimeGraph.fitCenter?.(animation);
+  await runtimeGraph.zoomTo?.(HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM, animation);
 }
 
 async function withG6AutoFitZoomRange(runtimeGraph: G6GraphRuntime, action: () => Promise<void>) {
@@ -1890,6 +1890,7 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-auto-fit-zoom-range-owner="hertzbeat-ui-g6-auto-fit-zoom-range"
       data-hz-topology-g6-initial-fit-strategy={initialFitStrategy}
       data-hz-topology-g6-initial-fit-strategy-owner="hertzbeat-ui-g6-initial-fit-strategy"
+      data-hz-topology-g6-compact-final-zoom-clamp="true"
       data-hz-topology-g6-operator-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${HZ_TOPOLOGY_G6_MAX_ZOOM}`}
       data-hz-topology-g6-operator-zoom-growth="bounded-readable-nodes"
       data-hz-topology-g6-fit-mode="overflow-only-center"

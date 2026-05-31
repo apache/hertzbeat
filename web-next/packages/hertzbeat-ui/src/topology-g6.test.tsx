@@ -402,6 +402,17 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(denseHtml).toContain('data-hz-topology-g6-initial-fit-strategy="overflow-fit"');
   });
 
+  it('keeps the compact center-only path ending with a hard 1x zoom clamp', () => {
+    const source = topologyG6Source;
+    const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={buildHzTopologyG6ScaleFixture(7)} />);
+    const centerOnlyMatch = source.match(/async function centerOnlyG6Viewport[\s\S]*?\n}/);
+
+    expect(html).toContain('data-hz-topology-g6-compact-final-zoom-clamp="true"');
+    expect(centerOnlyMatch?.[0].indexOf('fitCenter')).toBeGreaterThanOrEqual(0);
+    expect(centerOnlyMatch?.[0].indexOf('zoomTo')).toBeGreaterThan(centerOnlyMatch?.[0].indexOf('fitCenter') ?? -1);
+    expect(centerOnlyMatch?.[0]).toContain('HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM');
+  });
+
   it('centers the shared G6 canvas after fit and reset view actions', () => {
     const source = topologyG6Source;
     const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={buildHzTopologyG6ScaleFixture(8)} />);
