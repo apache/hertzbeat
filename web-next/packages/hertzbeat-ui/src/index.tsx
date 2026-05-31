@@ -11843,7 +11843,7 @@ export function HzTopologyFocusTrail({
             ? 'flex min-w-0 flex-wrap items-center gap-1.5 bg-[var(--hz-ui-surface)] text-[12px]'
             : 'grid min-w-0 gap-2 bg-[var(--hz-ui-surface)] text-[12px] lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center',
         isGraphDock && boundary === 'section'
-          ? 'border-t border-[var(--hz-ui-line-soft)] px-4 py-1'
+          ? 'border-t border-[var(--hz-ui-line-soft)] py-1'
           : isRail && boundary === 'section'
           ? 'border-t border-[var(--hz-ui-line-soft)] px-3 py-1'
           : topologyFocusTrailBoundaryClassName[boundary],
@@ -11864,7 +11864,7 @@ export function HzTopologyFocusTrail({
       data-hz-topology-focus-trail-position-contract={isGraphDock ? 'document-flow' : undefined}
       data-hz-topology-focus-trail-priority={isGraphDock ? 'canvas' : undefined}
       data-hz-topology-focus-trail-alignment={isGraphDock ? 'shared-control-grid' : undefined}
-      data-hz-topology-focus-trail-inset={isGraphDock ? '16px' : undefined}
+      data-hz-topology-focus-trail-inset={isGraphDock ? '0px' : undefined}
       data-hz-topology-focus-trail-control-height={isGraphDock ? '28px' : undefined}
       data-hz-topology-focus-trail-visual-weight={isGraphDock ? 'low-interruption' : undefined}
       data-hz-topology-focus-trail-visual-weight-owner={isGraphDock ? 'hertzbeat-ui-focus-trail-visual-weight' : undefined}
@@ -11934,9 +11934,12 @@ export function HzTopologyFocusTrail({
           <div
             className={cn(
               'flex min-w-0 items-center gap-1 overflow-x-auto',
-              isGraphDock ? 'flex-nowrap' : isRail ? 'flex-wrap overflow-x-visible' : 'flex-nowrap'
+              isGraphDock ? 'sr-only flex-nowrap' : isRail ? 'flex-wrap overflow-x-visible' : 'flex-nowrap'
             )}
             data-hz-topology-focus-filters-owner="hertzbeat-ui-focus-trail-filters"
+            data-hz-topology-focus-filter-visibility={isGraphDock ? 'assistive' : 'visible'}
+            data-hz-topology-focus-filter-visibility-owner="hertzbeat-ui-focus-trail-filter-visibility"
+            data-hz-topology-focus-filter-deduped-by={isGraphDock ? 'topology-toolbar' : undefined}
           >
             {filters.map(filter => {
               const { id, label: filterLabel, value, className: filterClassName, ...filterProps } = filter;

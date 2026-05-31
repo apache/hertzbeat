@@ -5739,10 +5739,14 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-focus-trail-position-contract="document-flow"');
     expect(html).toContain('data-hz-topology-focus-trail-priority="canvas"');
     expect(html).toContain('data-hz-topology-focus-trail-alignment="shared-control-grid"');
-    expect(html).toContain('data-hz-topology-focus-trail-inset="16px"');
+    expect(html).toContain('data-hz-topology-focus-trail-inset="0px"');
     expect(html).toContain('data-hz-topology-focus-trail-control-height="28px"');
     expect(html).toContain('data-hz-topology-focus-trail-visual-weight="low-interruption"');
     expect(html).toContain('data-hz-topology-focus-trail-visual-weight-owner="hertzbeat-ui-focus-trail-visual-weight"');
+    expect(html).toContain('data-hz-topology-focus-filter-visibility="assistive"');
+    expect(html).toContain('data-hz-topology-focus-filter-visibility-owner="hertzbeat-ui-focus-trail-filter-visibility"');
+    expect(html).toContain('data-hz-topology-focus-filter-deduped-by="topology-toolbar"');
+    expect(html).toContain('sr-only');
     expect(html).toContain('py-1');
     expect(html).toContain('h-6');
     expect(html).not.toContain('absolute');
