@@ -11206,6 +11206,10 @@ export function HzTopologyLegend({
   const isCanvasDock = density === 'canvas-dock';
   const visibleSections = sections.filter(section => section.items.length > 0);
 
+  if (visibleSections.length === 0) {
+    return null;
+  }
+
   return (
     <section
       {...props}

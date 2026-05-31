@@ -1677,6 +1677,9 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-empty-meta-owner="hertzbeat-ui-empty-meta"');
     expect(html).toContain('data-hz-topology-empty-source-owner="hertzbeat-ui-empty-source"');
     expect(html).toContain('data-hz-topology-empty-time-scope-owner="hertzbeat-ui-empty-time-scope"');
+    expect(html).not.toContain('data-topology-g6-legend-owner="hertzbeat-ui-g6-legend-dock"');
+    expect(html).not.toContain('data-hz-ui="topology-legend"');
+    expect(html).not.toContain('data-hz-topology-legend-section=');
     expect(html).not.toContain('data-topology-node-id="svc-checkout"');
     expect(html).not.toContain('checkout-api');
     expect(html).not.toContain('redis');

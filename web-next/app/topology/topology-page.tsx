@@ -1152,71 +1152,80 @@ export default function TopologyPage({
     },
     [topologyG6Graph.nodes, t]
   );
+  const topologyHasVisibleNodes = topologyG6Graph.nodes.length > 0;
+  const topologyHasVisibleGraphEvidence = topologyHasVisibleNodes || topologyG6Graph.edges.length > 0;
   const topologyLegendSections = React.useMemo(
-    () => [
-      {
-        id: 'node-type',
-        label: t('topology.legend.node-type'),
-        items: topologyLegendNodeTypeItems
-      },
-      {
-        id: 'status',
-        label: t('topology.legend.status'),
-        items: [
-          {
-            id: 'healthy-node',
-            label: t('topology.legend.status.healthy'),
-            color: '#22c55e',
-            visualSource: 'hertzbeat-status-token' as const,
-            value: t('topology.legend.status.healthy-value')
-          },
-          {
-            id: 'warning-node',
-            label: t('topology.legend.status.warning'),
-            color: '#f59e0b',
-            visualSource: 'hertzbeat-status-token' as const,
-            value: t('topology.legend.status.warning-value')
-          },
-          {
-            id: 'critical-node',
-            label: t('topology.legend.status.critical'),
-            color: '#ef4444',
-            visualSource: 'hertzbeat-status-token' as const,
-            value: t('topology.legend.status.critical-value')
-          }
-        ]
-      },
-      {
-        id: 'interaction',
-        label: t('topology.legend.interaction'),
-        items: [
-          {
-            id: 'selected-node',
-            label: t('topology.legend.interaction.selected-node'),
-            color: '#e5edf8',
-            visualSource: 'hertzbeat-interaction-token' as const,
-            value: t('topology.legend.interaction.selected-node-value')
-          },
-          {
-            id: 'directional-edge',
-            label: t('topology.legend.interaction.directional-edge'),
-            color: '#94a3b8',
-            pattern: 'solid' as const,
-            visualSource: 'hertzbeat-edge-token' as const,
-            value: t('topology.legend.interaction.directional-edge-value')
-          },
-          {
-            id: 'dimmed-edge',
-            label: t('topology.legend.interaction.dimmed-edge'),
-            color: '#94a3b8',
-            pattern: 'muted' as const,
-            visualSource: 'hertzbeat-edge-token' as const,
-            value: t('topology.legend.interaction.dimmed-edge-value')
-          }
-        ]
+    () => {
+      const sections = [
+        {
+          id: 'node-type',
+          label: t('topology.legend.node-type'),
+          items: topologyLegendNodeTypeItems
+        }
+      ];
+      if (topologyHasVisibleNodes) {
+        sections.push({
+          id: 'status',
+          label: t('topology.legend.status'),
+          items: [
+            {
+              id: 'healthy-node',
+              label: t('topology.legend.status.healthy'),
+              color: '#22c55e',
+              visualSource: 'hertzbeat-status-token' as const,
+              value: t('topology.legend.status.healthy-value')
+            },
+            {
+              id: 'warning-node',
+              label: t('topology.legend.status.warning'),
+              color: '#f59e0b',
+              visualSource: 'hertzbeat-status-token' as const,
+              value: t('topology.legend.status.warning-value')
+            },
+            {
+              id: 'critical-node',
+              label: t('topology.legend.status.critical'),
+              color: '#ef4444',
+              visualSource: 'hertzbeat-status-token' as const,
+              value: t('topology.legend.status.critical-value')
+            }
+          ]
+        });
       }
-    ],
-    [t, topologyLegendNodeTypeItems]
+      if (topologyHasVisibleGraphEvidence) {
+        sections.push({
+          id: 'interaction',
+          label: t('topology.legend.interaction'),
+          items: [
+            {
+              id: 'selected-node',
+              label: t('topology.legend.interaction.selected-node'),
+              color: '#e5edf8',
+              visualSource: 'hertzbeat-interaction-token' as const,
+              value: t('topology.legend.interaction.selected-node-value')
+            },
+            {
+              id: 'directional-edge',
+              label: t('topology.legend.interaction.directional-edge'),
+              color: '#94a3b8',
+              pattern: 'solid' as const,
+              visualSource: 'hertzbeat-edge-token' as const,
+              value: t('topology.legend.interaction.directional-edge-value')
+            },
+            {
+              id: 'dimmed-edge',
+              label: t('topology.legend.interaction.dimmed-edge'),
+              color: '#94a3b8',
+              pattern: 'muted' as const,
+              visualSource: 'hertzbeat-edge-token' as const,
+              value: t('topology.legend.interaction.dimmed-edge-value')
+            }
+          ]
+        });
+      }
+      return sections;
+    },
+    [t, topologyHasVisibleGraphEvidence, topologyHasVisibleNodes, topologyLegendNodeTypeItems]
   );
   const topologyEdgeIds = React.useMemo(
     () => new Set(map.edges.map(edge => edge.id)),

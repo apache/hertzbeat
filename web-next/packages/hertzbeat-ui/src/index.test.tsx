@@ -5285,6 +5285,19 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-legend-item="healthy-node"');
   });
 
+  it('does not render a topology legend shell when every section is empty', () => {
+    const html = renderToStaticMarkup(
+      <HzTopologyLegend
+        title="Legend"
+        boundary="flush"
+        density="canvas-dock"
+        sections={[{ id: 'node-type', label: 'Node type', items: [] }]}
+      />
+    );
+
+    expect(html).toBe('');
+  });
+
   it('renders a topology detail drawer for edge evidence and cross-signal handoffs', () => {
     const html = renderToStaticMarkup(
       <HzTopologyDetailDrawer
