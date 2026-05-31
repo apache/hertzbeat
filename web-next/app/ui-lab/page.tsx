@@ -361,7 +361,7 @@ const topologyG6LabGraph: HzTopologyG6GraphInput = {
     {
       id: 'queue-events',
       label: 'Events Queue',
-      entityType: 'middleware',
+      entityType: 'queue',
       health: 'healthy',
       tone: 'blue',
       focus: 'normal',
@@ -383,7 +383,7 @@ const topologyG6LabGraph: HzTopologyG6GraphInput = {
     {
       id: 'cache-cart',
       label: 'Cart Cache',
-      entityType: 'middleware',
+      entityType: 'cache',
       health: 'warning',
       tone: 'orange',
       focus: 'normal',

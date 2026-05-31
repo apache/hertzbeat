@@ -79,7 +79,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
         entityType: 'service',
         iconLibrary: 'lucide-react',
         iconLabel: 'Service',
-        iconName: 'blocks',
+        iconName: 'component',
         iconSource: 'entity-type-catalog',
         nodeShape: 'circle-icon-label',
         requestRatePerSecond: 12.34,
@@ -127,8 +127,10 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
   it('uses a shared Lucide node icon catalog for supported topology entity types', () => {
     expect(HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.map(item => [item.kind, item.iconName, item.label])).toEqual([
       ['application', 'app-window', 'Application'],
-      ['service', 'blocks', 'Service'],
+      ['service', 'component', 'Service'],
       ['database', 'database', 'Database'],
+      ['cache', 'memory-stick', 'Cache'],
+      ['queue', 'inbox', 'Queue'],
       ['middleware', 'workflow', 'Middleware'],
       ['k8s-workload', 'container', 'Workload'],
       ['monitor', 'activity', 'Monitor'],
@@ -137,10 +139,12 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
       ['unknown', 'circle-help', 'Unknown']
     ]);
 
-    expect(getHzTopologyG6NodeIcon('service')).toMatchObject({ kind: 'service', iconName: 'blocks' });
-    expect(getHzTopologyG6NodeIcon('payment-api')).toMatchObject({ kind: 'service', iconName: 'blocks' });
+    expect(getHzTopologyG6NodeIcon('service')).toMatchObject({ kind: 'service', iconName: 'component' });
+    expect(getHzTopologyG6NodeIcon('payment-api')).toMatchObject({ kind: 'service', iconName: 'component' });
     expect(getHzTopologyG6NodeIcon('orders-db')).toMatchObject({ kind: 'database', iconName: 'database' });
-    expect(getHzTopologyG6NodeIcon('redis-cache')).toMatchObject({ kind: 'middleware', iconName: 'workflow' });
+    expect(getHzTopologyG6NodeIcon('redis-cache')).toMatchObject({ kind: 'cache', iconName: 'memory-stick' });
+    expect(getHzTopologyG6NodeIcon('kafka-events-queue')).toMatchObject({ kind: 'queue', iconName: 'inbox' });
+    expect(getHzTopologyG6NodeIcon('middleware')).toMatchObject({ kind: 'middleware', iconName: 'workflow' });
     expect(getHzTopologyG6NodeIcon('k8s-workload')).toMatchObject({ kind: 'k8s-workload', iconName: 'container' });
     expect(getHzTopologyG6NodeIcon('monitor-bind')).toMatchObject({ kind: 'monitor', iconName: 'activity' });
     expect(getHzTopologyG6NodeIcon('linux-host')).toMatchObject({ kind: 'resource', iconName: 'server' });

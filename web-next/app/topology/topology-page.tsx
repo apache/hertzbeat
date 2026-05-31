@@ -74,9 +74,10 @@ function findEdge(edges: TopologyServiceEdge[], id: string) {
 }
 
 function resolveTopologyG6EntityType(node: Pick<TopologyServiceNode, 'entityType' | 'id' | 'label' | 'source'>) {
+  const inferredIcon = getHzTopologyG6NodeIcon(`${node.entityType} ${node.label} ${node.source} ${node.id}`);
+  if (inferredIcon.kind === 'cache' || inferredIcon.kind === 'queue') return inferredIcon.kind;
   const directIcon = getHzTopologyG6NodeIcon(node.entityType);
   if (directIcon.kind !== 'unknown') return directIcon.kind;
-  const inferredIcon = getHzTopologyG6NodeIcon(`${node.label} ${node.source} ${node.id}`);
   return inferredIcon.kind === 'unknown' ? node.entityType : inferredIcon.kind;
 }
 

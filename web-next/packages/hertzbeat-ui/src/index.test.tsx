@@ -5208,7 +5208,7 @@ describe('@hertzbeat/ui', () => {
 	                label: 'Service node',
 	                iconSrc: 'data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%3E%3C/svg%3E',
 	                iconLibrary: 'lucide-react',
-	                iconName: 'blocks',
+	                iconName: 'component',
 	                iconSource: 'entity-type-catalog',
 	                visualSource: 'lucide-react'
 	              },
@@ -5241,7 +5241,7 @@ describe('@hertzbeat/ui', () => {
 	    expect(html).toContain('data-hz-topology-legend-source-label="lucide-react"');
 	    expect(html).toContain('data-hz-topology-legend-icon-owner="hertzbeat-ui-legend-source-icon"');
 	    expect(html).toContain('data-hz-topology-legend-icon-library="lucide-react"');
-	    expect(html).toContain('data-hz-topology-legend-icon-name="blocks"');
+	    expect(html).toContain('data-hz-topology-legend-icon-name="component"');
 	    expect(html).toContain('data-hz-topology-legend-icon-source="entity-type-catalog"');
 	    expect(html).toContain('data-hz-topology-legend-icon-no-handdrawn="true"');
 	    expect(html).toContain('data-hz-topology-legend-visual-source="hertzbeat-status-token"');

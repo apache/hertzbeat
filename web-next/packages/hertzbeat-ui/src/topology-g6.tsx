@@ -4,10 +4,12 @@ import * as React from 'react';
 import { Crosshair, Maximize2, RotateCcw, Search, ZoomIn, ZoomOut } from 'lucide-react';
 import { __iconNode as activityIconNode } from 'lucide-react/dist/esm/icons/activity.js';
 import { __iconNode as appWindowIconNode } from 'lucide-react/dist/esm/icons/app-window.js';
-import { __iconNode as blocksIconNode } from 'lucide-react/dist/esm/icons/blocks.js';
 import { __iconNode as circleHelpIconNode } from 'lucide-react/dist/esm/icons/circle-help.js';
+import { __iconNode as componentIconNode } from 'lucide-react/dist/esm/icons/component.js';
 import { __iconNode as containerIconNode } from 'lucide-react/dist/esm/icons/container.js';
 import { __iconNode as databaseIconNode } from 'lucide-react/dist/esm/icons/database.js';
+import { __iconNode as inboxIconNode } from 'lucide-react/dist/esm/icons/inbox.js';
+import { __iconNode as memoryStickIconNode } from 'lucide-react/dist/esm/icons/memory-stick.js';
 import { __iconNode as serverIconNode } from 'lucide-react/dist/esm/icons/server.js';
 import { __iconNode as triangleAlertIconNode } from 'lucide-react/dist/esm/icons/triangle-alert.js';
 import { __iconNode as workflowIconNode } from 'lucide-react/dist/esm/icons/workflow.js';
@@ -79,6 +81,8 @@ export type HzTopologyG6NodeIconKind =
   | 'application'
   | 'service'
   | 'database'
+  | 'cache'
+  | 'queue'
   | 'middleware'
   | 'k8s-workload'
   | 'monitor'
@@ -88,8 +92,10 @@ export type HzTopologyG6NodeIconKind =
 
 export type HzTopologyG6NodeIconName =
   | 'app-window'
-  | 'blocks'
+  | 'component'
   | 'database'
+  | 'memory-stick'
+  | 'inbox'
   | 'workflow'
   | 'container'
   | 'activity'
@@ -360,13 +366,15 @@ function topologyNodeIconSpec(
 
 export const HZ_TOPOLOGY_G6_NODE_ICON_CATALOG: readonly HzTopologyG6NodeIconSpec[] = [
   topologyNodeIconSpec('application', 'Application', 'app-window', ['application', 'app'], appWindowIconNode),
-  topologyNodeIconSpec('service', 'Service', 'blocks', ['service', 'api', 'endpoint'], blocksIconNode),
+  topologyNodeIconSpec('service', 'Service', 'component', ['service', 'api', 'endpoint'], componentIconNode),
   topologyNodeIconSpec('database', 'Database', 'database', ['database', 'db', 'mysql', 'postgres', 'postgresql', 'mongo'], databaseIconNode),
+  topologyNodeIconSpec('cache', 'Cache', 'memory-stick', ['cache', 'redis', 'memcached'], memoryStickIconNode),
+  topologyNodeIconSpec('queue', 'Queue', 'inbox', ['queue', 'mq', 'broker', 'topic', 'messaging', 'kafka', 'rabbit'], inboxIconNode),
   topologyNodeIconSpec(
     'middleware',
     'Middleware',
     'workflow',
-    ['middleware', 'queue', 'mq', 'broker', 'topic', 'messaging', 'cache', 'redis', 'kafka', 'rabbit'],
+    ['middleware'],
     workflowIconNode
   ),
   topologyNodeIconSpec(
