@@ -12963,7 +12963,7 @@ export function HzTopologyToolbar({
   const secondaryVisibility = graphFirst ? 'assistive' : 'visible';
   const controlStripLayout = graphFirst ? 'inline-overflow' : 'stacked-grid';
   const chrome = graphFirst && boundary === 'none' ? 'frameless' : 'surface';
-  const selectTriggerClassName = graphFirst ? 'h-7 !pl-2 !pr-1.5' : 'h-8';
+  const selectTriggerClassName = graphFirst ? 'h-7 !gap-1.5 !pl-1 !pr-1.5' : 'h-8';
 
   return (
     <section
@@ -12988,6 +12988,9 @@ export function HzTopologyToolbar({
       data-hz-topology-toolbar-alignment={graphFirst ? 'flush-control-grid' : 'stacked-grid'}
       data-hz-topology-toolbar-inset={graphFirst ? '0px' : '16px'}
       data-hz-topology-toolbar-control-height={graphFirst ? '28px' : '32px'}
+      data-hz-topology-toolbar-select-padding={graphFirst ? 'compact-flush' : 'default'}
+      data-hz-topology-toolbar-row-separator={graphFirst ? 'none' : 'soft'}
+      data-hz-topology-toolbar-control-gap={graphFirst ? '6px' : '8px'}
       data-hz-topology-toolbar-visual-weight={graphFirst ? 'low-interruption' : 'balanced'}
       data-hz-topology-toolbar-visual-weight-owner="hertzbeat-ui-toolbar-visual-weight"
       data-hz-topology-toolbar-secondary-visibility={secondaryVisibility}
@@ -13164,7 +13167,7 @@ export function HzTopologyToolbar({
           className={cn(
             'flex min-w-0 flex-wrap items-center gap-2 border-t border-[var(--hz-ui-line-faint)] pt-2 text-[11px]',
             graphFirst ? '' : 'lg:col-span-4',
-            graphFirst ? 'sr-only' : ''
+            graphFirst ? 'sr-only border-0 pt-0' : ''
           )}
           data-hz-topology-toolbar-state={stateItems.map(item => item.id).join('-')}
           data-hz-topology-toolbar-state-visibility={secondaryVisibility}

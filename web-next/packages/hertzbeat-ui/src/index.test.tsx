@@ -6074,10 +6074,14 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-toolbar-alignment="flush-control-grid"');
     expect(html).toContain('data-hz-topology-toolbar-inset="0px"');
     expect(html).toContain('data-hz-topology-toolbar-control-height="28px"');
+    expect(html).toContain('data-hz-topology-toolbar-select-padding="compact-flush"');
+    expect(html).toContain('data-hz-topology-toolbar-row-separator="none"');
+    expect(html).toContain('data-hz-topology-toolbar-control-gap="6px"');
     expect(html).toContain('[grid-template-columns:132px_minmax(220px,1fr)_132px_auto]');
     expect(html).not.toContain('overflow-x-auto px-4 py-1');
     expect(html).toContain('overflow-x-auto px-0 py-1');
-    expect(html).toContain('h-7 !pl-2 !pr-1.5');
+    expect(html).toContain('h-7 !gap-1.5 !pl-1 !pr-1.5');
+    expect(html).not.toContain('h-7 !pl-2 !pr-1.5');
     expect(html).toContain('data-hz-topology-toolbar-action-policy="scope-controls-only"');
     expect(html).toContain('data-hz-topology-toolbar-canvas-action-policy="in-canvas-g6-toolbar"');
     expect(html).toContain('data-hz-topology-toolbar-chrome="frameless"');
