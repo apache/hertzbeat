@@ -175,6 +175,22 @@ public interface HistoryDataReader {
     }
 
     /**
+     * Query logs with pagination, workspace scope, and storage-side noise filters when the backend supports them.
+     *
+     * @param workspaceId normalized workspace id that should own the returned logs
+     * @return filtered log entries with pagination
+     */
+    default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                       String spanId, Integer severityNumber,
+                                                                       String severityText, String searchContent,
+                                                                       Integer offset, Integer limit,
+                                                                       Set<String> excludedServiceNames,
+                                                                       boolean requireServiceName,
+                                                                       String workspaceId) {
+        throw new UnsupportedOperationException("query workspace logs with pagination is not supported");
+    }
+
+    /**
      * Count logs with multiple filter conditions (Legacy)
      */
     default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
@@ -217,6 +233,21 @@ public interface HistoryDataReader {
     }
 
     /**
+     * Count logs with workspace scope and storage-side noise filters when the backend supports them.
+     *
+     * @param workspaceId normalized workspace id that should own the counted logs
+     * @return count of matching log entries
+     */
+    default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                               String spanId, Integer severityNumber,
+                                               String severityText, String searchContent,
+                                               Set<String> excludedServiceNames,
+                                               boolean requireServiceName,
+                                               String workspaceId) {
+        throw new UnsupportedOperationException("count workspace logs is not supported");
+    }
+
+    /**
      * Aggregate log severity buckets in the storage engine when supported.
      *
      * @return a map with totalCount, fatalCount, errorCount, warnCount, infoCount, debugCount, traceCount
@@ -227,6 +258,21 @@ public interface HistoryDataReader {
                                                          Set<String> excludedServiceNames,
                                                          boolean requireServiceName) {
         throw new UnsupportedOperationException("count log severity buckets is not supported");
+    }
+
+    /**
+     * Aggregate log severity buckets with workspace scope in the storage engine when supported.
+     *
+     * @param workspaceId normalized workspace id that should own the aggregated logs
+     * @return a map with totalCount, fatalCount, errorCount, warnCount, infoCount, debugCount, traceCount
+     */
+    default Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                         String spanId, Integer severityNumber,
+                                                         String severityText, String searchContent,
+                                                         Set<String> excludedServiceNames,
+                                                         boolean requireServiceName,
+                                                         String workspaceId) {
+        throw new UnsupportedOperationException("count workspace log severity buckets is not supported");
     }
 
     /**
@@ -243,6 +289,21 @@ public interface HistoryDataReader {
     }
 
     /**
+     * Aggregate log trace coverage with workspace scope in the storage engine when supported.
+     *
+     * @param workspaceId normalized workspace id that should own the aggregated logs
+     * @return a map with withTrace, withoutTrace, withSpan, withBothTraceAndSpan
+     */
+    default Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                    String spanId, Integer severityNumber,
+                                                    String severityText, String searchContent,
+                                                    Set<String> excludedServiceNames,
+                                                    boolean requireServiceName,
+                                                    String workspaceId) {
+        throw new UnsupportedOperationException("count workspace log trace coverage is not supported");
+    }
+
+    /**
      * Aggregate log counts by hour in the storage engine when supported.
      *
      * @return a map keyed by yyyy-MM-dd HH:00
@@ -253,5 +314,20 @@ public interface HistoryDataReader {
                                              Set<String> excludedServiceNames,
                                              boolean requireServiceName) {
         throw new UnsupportedOperationException("count logs by hour is not supported");
+    }
+
+    /**
+     * Aggregate log counts by hour with workspace scope in the storage engine when supported.
+     *
+     * @param workspaceId normalized workspace id that should own the aggregated logs
+     * @return a map keyed by yyyy-MM-dd HH:00
+     */
+    default Map<String, Long> countLogsByHour(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId) {
+        throw new UnsupportedOperationException("count workspace logs by hour is not supported");
     }
 }

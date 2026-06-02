@@ -102,14 +102,30 @@ public class TraceCallTopologyQueryService {
         if (CollectionUtils.isEmpty(seedEntities)) {
             return TraceCallTopologyReadModel.empty();
         }
+        return findTraceCallEdges(seedEntities, environment, start, end, hideInternal, true);
+    }
+
+    public TraceCallTopologyReadModel findTraceCallEdgesForOverview(String environment,
+                                                                    Long start,
+                                                                    Long end,
+                                                                    Boolean hideInternal) {
+        return findTraceCallEdges(Collections.emptyList(), environment, start, end, hideInternal, false);
+    }
+
+    private TraceCallTopologyReadModel findTraceCallEdges(Collection<ObserveEntity> seedEntities,
+                                                         String environment,
+                                                         Long start,
+                                                         Long end,
+                                                         Boolean hideInternal,
+                                                         boolean scopeToSeedEntities) {
         boolean shouldHideInternal = hideInternal == null || hideInternal;
         TraceCallTopologyReadModel serviceGraphReadModel =
-                findServiceGraphReadModel(seedEntities, environment, start, end, shouldHideInternal);
+                findServiceGraphReadModel(seedEntities, environment, start, end, shouldHideInternal,
+                        scopeToSeedEntities);
         if (!serviceGraphReadModel.edges().isEmpty()) {
             return serviceGraphReadModel;
         }
-        List<TraceSpanRow> spans = safeList(traceQueryRepository.queryRecentTraceRows(
-                        TRACE_ROW_LIMIT, start, end, null, environment, shouldHideInternal))
+        List<TraceSpanRow> spans = queryRecentTraceRows(start, end, environment, shouldHideInternal)
                 .stream()
                 .map(this::toTraceSpanRow)
                 .filter(Objects::nonNull)
@@ -128,7 +144,7 @@ public class TraceCallTopologyQueryService {
         Map<Long, ObserveEntity> entityById = new LinkedHashMap<>();
         entityByService.values().forEach(entity -> entityById.putIfAbsent(entity.getId(), entity));
         List<TraceCallTopologyEdgeInfo> edges = buildTraceCallEdgesFromSpans(
-                spans, entityByService, seedEntities, start, end);
+                spans, entityByService, seedEntities, start, end, scopeToSeedEntities);
         return new TraceCallTopologyReadModel(entityById, edges);
     }
 
@@ -136,8 +152,9 @@ public class TraceCallTopologyQueryService {
                                                                  String environment,
                                                                  Long start,
                                                                  Long end,
-                                                                 Boolean hideInternal) {
-        Set<String> seedServiceNames = seedServiceNames(seedEntities);
+                                                                 Boolean hideInternal,
+                                                                 boolean scopeToSeedEntities) {
+        Set<String> seedServiceNames = scopeToSeedEntities ? seedServiceNames(seedEntities) : Collections.emptySet();
         List<TraceServiceGraphRow> serviceGraphRows = queryServiceGraphRows(
                 start, end, environment, seedServiceNames, hideInternal);
         if (serviceGraphRows.isEmpty()) {
@@ -151,7 +168,7 @@ public class TraceCallTopologyQueryService {
         Map<String, ObserveEntity> entityByService = resolveEntityByService(seedEntities, observedServices,
                 environment);
         List<TraceCallTopologyEdgeInfo> edges = buildTraceCallEdgesFromServiceGraphRows(
-                serviceGraphRows, entityByService, seedEntities, start, end);
+                serviceGraphRows, entityByService, seedEntities, start, end, scopeToSeedEntities);
         Map<Long, ObserveEntity> entityById = new LinkedHashMap<>();
         for (TraceCallTopologyEdgeInfo edge : edges) {
             ObserveEntity source = findEntityById(entityByService.values(), edge.sourceEntityId());
@@ -179,6 +196,22 @@ public class TraceCallTopologyQueryService {
                     .map(this::toTraceServiceGraphRow)
                     .filter(Objects::nonNull)
                     .toList();
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return Collections.emptyList();
+        } catch (ExecutionException | TimeoutException | RuntimeException ex) {
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Map<String, Object>> queryRecentTraceRows(Long start,
+                                                           Long end,
+                                                           String environment,
+                                                           Boolean hideInternal) {
+        try {
+            return CompletableFuture.supplyAsync(() -> safeList(traceQueryRepository.queryRecentTraceRows(
+                            TRACE_ROW_LIMIT, start, end, null, environment, hideInternal)))
+                    .get(serviceGraphQueryTimeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             return Collections.emptyList();
@@ -305,7 +338,8 @@ public class TraceCallTopologyQueryService {
                                                                          Map<String, ObserveEntity> entityByService,
                                                                          Collection<ObserveEntity> seedEntities,
                                                                          Long start,
-                                                                         Long end) {
+                                                                         Long end,
+                                                                         boolean scopeToSeedEntities) {
         Map<String, TraceSpanRow> spanByTraceAndSpan = new LinkedHashMap<>();
         for (TraceSpanRow span : spans) {
             spanByTraceAndSpan.put(spanKey(span.traceId(), span.spanId()), span);
@@ -329,7 +363,9 @@ public class TraceCallTopologyQueryService {
             if (source == null || target == null || Objects.equals(source.getId(), target.getId())) {
                 continue;
             }
-            if (!seedEntityIds.contains(source.getId()) && !seedEntityIds.contains(target.getId())) {
+            if (scopeToSeedEntities
+                    && !seedEntityIds.contains(source.getId())
+                    && !seedEntityIds.contains(target.getId())) {
                 continue;
             }
             String edgeKey = source.getId() + ":" + target.getId();
@@ -346,7 +382,8 @@ public class TraceCallTopologyQueryService {
             Map<String, ObserveEntity> entityByService,
             Collection<ObserveEntity> seedEntities,
             Long start,
-            Long end) {
+            Long end,
+            boolean scopeToSeedEntities) {
         Set<Long> seedEntityIds = seedEntities.stream()
                 .filter(Objects::nonNull)
                 .map(ObserveEntity::getId)
@@ -359,7 +396,9 @@ public class TraceCallTopologyQueryService {
             if (source == null || target == null || Objects.equals(source.getId(), target.getId())) {
                 continue;
             }
-            if (!seedEntityIds.contains(source.getId()) && !seedEntityIds.contains(target.getId())) {
+            if (scopeToSeedEntities
+                    && !seedEntityIds.contains(source.getId())
+                    && !seedEntityIds.contains(target.getId())) {
                 continue;
             }
             edges.add(toServiceGraphEdge(row, source.getId(), target.getId(), start, end));

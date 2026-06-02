@@ -133,6 +133,36 @@ describe('HertzBeat unified entity contract', () => {
     });
   });
 
+  it('prefers shared signal evidence over stale entity detail signal fields', () => {
+    expect(
+      buildEntityContractFromDetail({
+        entity: {
+          entity: {
+            id: 8,
+            name: 'payment',
+            type: 'service'
+          }
+        },
+        evidenceSummary: {
+          logHintCount: 1,
+          lastEvidenceAt: 'stale-evidence'
+        },
+        logSummary: { hintCount: 1 },
+        traceSummary: { recentTraceCount: 1, recentErrorTraceCount: 0, latestObservedAt: 'stale-trace', active: false },
+        signalEvidence: {
+          logSummary: { hintCount: 6 },
+          traceSummary: { recentTraceCount: 9, recentErrorTraceCount: 3, latestObservedAt: 'shared-trace', active: true }
+        }
+      })
+    ).toMatchObject({
+      signals: {
+        logs: { present: true, count: 6 },
+        traces: { present: true, count: 9, errorCount: 3 }
+      },
+      lastSeen: 'shared-trace'
+    });
+  });
+
   it('normalizes OTLP bound entities and monitor objects as first-class entity sources', () => {
     expect(
       buildEntityContractFromOtlpBinding({

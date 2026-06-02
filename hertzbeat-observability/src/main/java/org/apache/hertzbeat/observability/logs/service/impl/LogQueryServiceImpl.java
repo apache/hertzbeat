@@ -192,14 +192,22 @@ public class LogQueryServiceImpl implements LogQueryService {
     private Map<String, Long> readSeverityBuckets(Long start, Long end, String traceId, String spanId,
                                                   Integer severityNumber, String severityText, String search,
                                                   boolean hideInternal, boolean hideNoise) {
-        if (hasWorkspaceContext()) {
-            return null;
-        }
+        String normalizedWorkspaceId = hasWorkspaceContext()
+                ? AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId())
+                : null;
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
-                Map<String, Long> aggregate = historyDataReader.countLogsBySeverityBuckets(
-                        start, end, traceId, spanId, severityNumber, severityText, search,
-                        hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                Map<String, Long> aggregate;
+                if (StringUtils.hasText(normalizedWorkspaceId)) {
+                    aggregate = historyDataReader.countLogsBySeverityBuckets(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise), normalizedWorkspaceId);
+                } else {
+                    aggregate = historyDataReader.countLogsBySeverityBuckets(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                }
                 if (aggregate != null && !aggregate.isEmpty()) {
                     return aggregate;
                 }
@@ -213,14 +221,22 @@ public class LogQueryServiceImpl implements LogQueryService {
     private Map<String, Long> readTraceCoverage(Long start, Long end, String traceId, String spanId,
                                                 Integer severityNumber, String severityText, String search,
                                                 boolean hideInternal, boolean hideNoise) {
-        if (hasWorkspaceContext()) {
-            return null;
-        }
+        String normalizedWorkspaceId = hasWorkspaceContext()
+                ? AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId())
+                : null;
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
-                Map<String, Long> aggregate = historyDataReader.countLogTraceCoverage(
-                        start, end, traceId, spanId, severityNumber, severityText, search,
-                        hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                Map<String, Long> aggregate;
+                if (StringUtils.hasText(normalizedWorkspaceId)) {
+                    aggregate = historyDataReader.countLogTraceCoverage(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise), normalizedWorkspaceId);
+                } else {
+                    aggregate = historyDataReader.countLogTraceCoverage(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                }
                 if (aggregate != null && !aggregate.isEmpty()) {
                     return aggregate;
                 }
@@ -234,14 +250,22 @@ public class LogQueryServiceImpl implements LogQueryService {
     private Map<String, Long> readHourlyStats(Long start, Long end, String traceId, String spanId,
                                               Integer severityNumber, String severityText, String search,
                                               boolean hideInternal, boolean hideNoise) {
-        if (hasWorkspaceContext()) {
-            return null;
-        }
+        String normalizedWorkspaceId = hasWorkspaceContext()
+                ? AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId())
+                : null;
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
-                Map<String, Long> aggregate = historyDataReader.countLogsByHour(
-                        start, end, traceId, spanId, severityNumber, severityText, search,
-                        hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                Map<String, Long> aggregate;
+                if (StringUtils.hasText(normalizedWorkspaceId)) {
+                    aggregate = historyDataReader.countLogsByHour(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise), normalizedWorkspaceId);
+                } else {
+                    aggregate = historyDataReader.countLogsByHour(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                }
                 if (aggregate != null && !aggregate.isEmpty()) {
                     return aggregate;
                 }
@@ -331,6 +355,30 @@ public class LogQueryServiceImpl implements LogQueryService {
                                                  Integer severityNumber, String severityText, String search,
                                                  PageRequest pageRequest, int offset, int pageSize,
                                                  boolean hideInternal, boolean hideNoise) {
+        String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId());
+        Set<String> hiddenServiceNames = hiddenServiceNames(hideInternal, hideNoise);
+        boolean requireServiceName = shouldRequireServiceName(hideInternal, hideNoise);
+        for (HistoryDataReader historyDataReader : historyDataReaders) {
+            try {
+                long totalElements = historyDataReader.countLogsByMultipleConditions(
+                        start, end, traceId, spanId, severityNumber, severityText, search,
+                        hiddenServiceNames, requireServiceName, normalizedWorkspaceId);
+                if (totalElements <= 0) {
+                    continue;
+                }
+                List<LogEntry> pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                        start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize,
+                        hiddenServiceNames, requireServiceName, normalizedWorkspaceId);
+                List<LogEntry> guardedLogs = filterQueryLogs(pagedLogs, hideInternal, hideNoise);
+                long safeTotal = guardedLogs.size() < (pagedLogs == null ? 0 : pagedLogs.size())
+                        ? offset + guardedLogs.size()
+                        : totalElements;
+                return new PageImpl<>(guardedLogs, pageRequest, safeTotal);
+            } catch (UnsupportedOperationException ex) {
+                // Fall back to row-based workspace filtering for history stores without native workspace predicates.
+            }
+        }
+
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
                 List<LogEntry> logs;

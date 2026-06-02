@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.dao;
 import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -39,4 +40,6 @@ public interface ObserveEntityDao extends JpaRepository<ObserveEntity, Long>, Jp
     Optional<ObserveEntity> findFirstByWorkspaceIdAndTypeAndName(String workspaceId, String type, String name);
 
     List<ObserveEntity> findAllByWorkspaceId(String workspaceId, Sort sort);
+
+    List<ObserveEntity> findAllByWorkspaceId(String workspaceId, Pageable pageable);
 }

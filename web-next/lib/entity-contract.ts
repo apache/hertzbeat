@@ -69,6 +69,14 @@ function compactAttributes(values: Record<string, unknown>) {
   );
 }
 
+function detailLogSummary(detail: Pick<EntityDetailDto, 'signalEvidence' | 'logSummary'>) {
+  return detail.signalEvidence?.logSummary || detail.logSummary;
+}
+
+function detailTraceSummary(detail: Pick<EntityDetailDto, 'signalEvidence' | 'traceSummary'>) {
+  return detail.signalEvidence?.traceSummary || detail.traceSummary;
+}
+
 function normalizeSource(source: unknown): HertzBeatEntitySourceKind {
   const value = String(source || '').toLowerCase();
 
@@ -172,8 +180,10 @@ export function buildEntityContractFromDetail(detail: EntityDetailDto): HertzBea
   const monitorBinds = entityDto.monitorBinds ?? [];
   const relations = entityDto.relations ?? [];
   const activeAlertCount = detail.evidenceSummary?.activeAlertCount ?? detail.activeAlerts?.length ?? 0;
-  const traceCount = detail.traceSummary?.recentTraceCount ?? 0;
-  const logCount = detail.logSummary?.hintCount ?? detail.evidenceSummary?.logHintCount ?? 0;
+  const traceSummary = detailTraceSummary(detail);
+  const logSummary = detailLogSummary(detail);
+  const traceCount = traceSummary?.recentTraceCount ?? 0;
+  const logCount = logSummary?.hintCount ?? detail.evidenceSummary?.logHintCount ?? 0;
   const monitorCount = detail.monitorSummary?.totalBoundMonitors ?? monitorBinds.length;
 
   return {
@@ -195,9 +205,9 @@ export function buildEntityContractFromDetail(detail: EntityDetailDto): HertzBea
       metrics: { present: monitorCount > 0, count: monitorCount },
       logs: { present: logCount > 0, count: logCount },
       traces: {
-        present: Boolean(detail.traceSummary?.active || traceCount > 0),
+        present: Boolean(traceSummary?.active || traceCount > 0),
         count: traceCount,
-        errorCount: detail.traceSummary?.recentErrorTraceCount ?? 0
+        errorCount: traceSummary?.recentErrorTraceCount ?? 0
       },
       alerts: { present: activeAlertCount > 0, count: activeAlertCount }
     },
@@ -207,7 +217,7 @@ export function buildEntityContractFromDetail(detail: EntityDetailDto): HertzBea
       downMonitorCount: detail.evidenceSummary?.downMonitorCount,
       healthyMonitorCount: detail.evidenceSummary?.healthyMonitorCount
     },
-    lastSeen: detail.traceSummary?.latestObservedAt ?? detail.evidenceSummary?.lastEvidenceAt ?? null
+    lastSeen: traceSummary?.latestObservedAt ?? detail.evidenceSummary?.lastEvidenceAt ?? null
   };
 }
 

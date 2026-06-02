@@ -33,15 +33,19 @@ import {
   type HzTopologyDetailDrawerAction,
   type HzTopologyDetailDrawerFact,
   type HzTopologyGroupPanelItem,
+  type HzTopologyLegendItem,
+  type HzTopologyLegendSection,
   type HzTopologyPathSummaryMetric,
   type HzTopologyHoverTooltipFact,
   type HzTopologyHoverTooltipMetric,
   type HzTopologyMetricRow,
+  type HzTopologyMetricRowWindowVisibility,
   type HzTopologyMetricTableRenderWindowFilter,
   type HzTopologyToolbarStateItem
-} from '@hertzbeat/ui';
+} from '@hertzbeat/ui/topology';
 import {
   HzTopologyG6Canvas,
+  HZ_TOPOLOGY_G6_EDGE_DENSITY_VISIBLE_EDGE_LIMIT,
   HZ_TOPOLOGY_G6_NODE_ICON_CATALOG,
   buildHzTopologyG6LargeGraphStrategy,
   buildHzTopologyG6RenderWindow,
@@ -51,7 +55,17 @@ import {
 } from '@hertzbeat/ui/topology-g6';
 import { useI18n } from '../../components/providers/i18n-provider';
 import { api } from '../../lib/api-facade';
-import { buildTopologyApiUrl, loadTopologyGraph, resolveTopologyRelationType } from '../../lib/topology-surface/controller';
+import {
+  buildTopologyApiUrl,
+  hasUnresolvableTopologyFocusEntity,
+  loadTopologyGraph,
+  resolveTopologyApiTimeoutMs,
+  resolveTopologyRelationType,
+  resolveTopologyScaleProofApiPolicy,
+  resolveTopologyScaleProofFocusEntityId,
+  resolveTopologyScaleProofTimeWindow,
+  shouldPreservePreviousTopologyGraphDuringLoad
+} from '../../lib/topology-surface/controller';
 import {
   buildTopologyServiceMapFromApiGraph,
   type EntityTopologyApiGraph,
@@ -64,6 +78,12 @@ import {
 
 type TopologyLocalSelectionSource = 'none' | 'node-click' | 'edge-click' | 'table-row-click';
 type TopologyLayoutMode = 'layered-service' | 'force' | 'grid-table';
+type TopologyApiLoadError = {
+  status?: number;
+  code?: number;
+  message?: string;
+};
+type TopologyApiErrorState = 'none' | 'unauthorized' | 'api-error' | 'unknown';
 
 function findNode(nodes: TopologyServiceNode[], id: string) {
   return nodes.find(node => node.id === id);
@@ -71,6 +91,27 @@ function findNode(nodes: TopologyServiceNode[], id: string) {
 
 function findEdge(edges: TopologyServiceEdge[], id: string) {
   return edges.find(edge => edge.id === id);
+}
+
+function topologyEdgeMatchesCanvasView(edge: TopologyServiceEdge, viewMode: TopologyFilterContext['viewMode']) {
+  if (viewMode === 'application') return true;
+  if (viewMode === 'service-call') return edge.relationshipType === 'trace-call';
+  if (viewMode === 'alert-impact') return edge.alertImpact !== 'none' || edge.source === 'alert-impact';
+  return (
+    edge.relationshipType === 'template-dependency' ||
+    edge.relationshipType === 'k8s-ownership' ||
+    edge.relationshipType === 'database-connection' ||
+    edge.relationshipType === 'middleware-connection'
+  );
+}
+
+function topologyEdgeMatchesCanvasSource(edge: TopologyServiceEdge, sourceKind: TopologyFilterContext['sourceKind']) {
+  if (!sourceKind) return true;
+  return edge.source === sourceKind;
+}
+
+function topologyEdgeMatchesCanvasScope(edge: TopologyServiceEdge, filterContext: TopologyFilterContext) {
+  return topologyEdgeMatchesCanvasView(edge, filterContext.viewMode) && topologyEdgeMatchesCanvasSource(edge, filterContext.sourceKind);
 }
 
 function resolveTopologyG6EntityType(node: Pick<TopologyServiceNode, 'entityType' | 'id' | 'label' | 'source'>) {
@@ -345,8 +386,9 @@ function hasTraceRedMetrics(edge: TopologyServiceEdge) {
   ].some(value => typeof value === 'number' && Number.isFinite(value));
 }
 
-function pickTopologyDetailEdge(map: ReturnType<typeof buildTopologyServiceMapFromApiGraph>) {
-  return map.selectedEdge ?? map.edges.find(hasTraceRedMetrics) ?? map.edges[0];
+function pickTopologyDetailEdge(map: ReturnType<typeof buildTopologyServiceMapFromApiGraph>, edges: TopologyServiceEdge[] = map.edges) {
+  const selectedEdge = map.selectedEdge ? edges.find(edge => edge.id === map.selectedEdge?.id) : undefined;
+  return selectedEdge ?? edges.find(hasTraceRedMetrics) ?? edges[0];
 }
 
 function appendTopologySelectionParam(params: URLSearchParams, key: string, value: string | undefined) {
@@ -417,11 +459,76 @@ const TOPOLOGY_EDGE_FACT_IDS = [
   'last-seen'
 ];
 
+type TopologyEdgeRenderWindowContext = {
+  visibility: HzTopologyMetricRowWindowVisibility;
+  sourceVisible: 'true' | 'false' | 'unknown';
+  targetVisible: 'true' | 'false' | 'unknown';
+};
+
+function resolveTopologyEdgeEndpointRenderWindowVisibility(
+  nodeId: string | undefined,
+  renderedNodeIds: Set<string> | undefined
+): 'true' | 'false' | 'unknown' {
+  if (!nodeId || !renderedNodeIds) return 'unknown';
+  return renderedNodeIds.has(nodeId) ? 'true' : 'false';
+}
+
+function resolveTopologyEdgeRenderWindowVisibility(
+  sourceVisible: TopologyEdgeRenderWindowContext['sourceVisible'],
+  targetVisible: TopologyEdgeRenderWindowContext['targetVisible']
+): HzTopologyMetricRowWindowVisibility {
+  if (sourceVisible === 'unknown' || targetVisible === 'unknown') return 'unknown';
+  if (sourceVisible === 'true' && targetVisible === 'true') return 'visible';
+  if (sourceVisible === 'false' && targetVisible === 'false') return 'hidden';
+  return 'partial';
+}
+
+function buildTopologyEdgeRenderWindowContext(
+  edge: TopologyServiceEdge | undefined,
+  renderWindowMode: 'direct' | 'windowed',
+  renderedNodeIds: string[] | undefined
+): TopologyEdgeRenderWindowContext | undefined {
+  if (!edge || renderWindowMode !== 'windowed') return undefined;
+  const renderedNodeIdSet = renderedNodeIds?.length ? new Set(renderedNodeIds) : undefined;
+  const sourceVisible = resolveTopologyEdgeEndpointRenderWindowVisibility(edge.from, renderedNodeIdSet);
+  const targetVisible = resolveTopologyEdgeEndpointRenderWindowVisibility(edge.to, renderedNodeIdSet);
+  return {
+    visibility: resolveTopologyEdgeRenderWindowVisibility(sourceVisible, targetVisible),
+    sourceVisible,
+    targetVisible
+  };
+}
+
+function resolveTopologyEdgeRenderWindowLabel(
+  visibility: HzTopologyMetricRowWindowVisibility,
+  t: (key: string) => string
+) {
+  if (visibility === 'visible') return t('topology.metric-table.filter.visible');
+  if (visibility === 'partial') return t('topology.metric-table.filter.partial');
+  if (visibility === 'hidden') return t('topology.metric-table.filter.hidden');
+  return t('topology.metric-table.filter.unknown');
+}
+
 function buildTopologyEdgeDetailFacts(
   edge: TopologyServiceEdge,
-  t: (key: string) => string
+  t: (key: string) => string,
+  renderWindowContext?: TopologyEdgeRenderWindowContext
 ): HzTopologyDetailDrawerFact[] {
   return [
+    ...(renderWindowContext
+      ? [{
+          id: 'render-window-context',
+          label: t('topology.edge.render-window.label'),
+          value: resolveTopologyEdgeRenderWindowLabel(renderWindowContext.visibility, t),
+          tone: renderWindowContext.visibility === 'visible' ? 'info' as const : 'warning' as const,
+          factProps: {
+            'data-topology-edge-render-window-fact': renderWindowContext.visibility,
+            'data-topology-edge-render-window-fact-owner': 'hertzbeat-ui-detail-render-window-context',
+            'data-topology-edge-render-window-source-visible': renderWindowContext.sourceVisible,
+            'data-topology-edge-render-window-target-visible': renderWindowContext.targetVisible
+          } as React.HTMLAttributes<HTMLDivElement>
+        }]
+      : []),
     ...edge.evidence.rows.map((row, index) => ({
       id: TOPOLOGY_EDGE_FACT_IDS[index] ?? `evidence-${index + 1}`,
       label: row.label,
@@ -636,48 +743,105 @@ function buildApiOwnedEmptyGraph(routeContext?: TopologyRouteContext): EntityTop
   };
 }
 
-const TRACE_CALL_TOPOLOGY_API_TIMEOUT_MS = 60000;
-const DEFAULT_TOPOLOGY_API_TIMEOUT_MS = 30000;
+function normalizeTopologyApiLoadError(error: unknown): TopologyApiLoadError | null {
+  if (!error || typeof error !== 'object') return null;
+  const candidate = error as { status?: unknown; code?: unknown; message?: unknown };
+  const status = typeof candidate.status === 'number' ? candidate.status : undefined;
+  const code = typeof candidate.code === 'number' ? candidate.code : undefined;
+  const message = typeof candidate.message === 'string' ? candidate.message : undefined;
+  return { status, code, message };
+}
 
-function resolveTopologyApiTimeoutMs(routeContext?: TopologyRouteContext) {
-  if (routeContext?.sourceKind === 'otlp-trace-call' || routeContext?.viewMode === 'service-call') {
-    return TRACE_CALL_TOPOLOGY_API_TIMEOUT_MS;
-  }
-  return DEFAULT_TOPOLOGY_API_TIMEOUT_MS;
+function resolveTopologyApiErrorState(error: TopologyApiLoadError | null | undefined): TopologyApiErrorState {
+  if (!error) return 'none';
+  if (error.status === 401 || error.code === 401) return 'unauthorized';
+  if (error.status || error.code) return 'api-error';
+  return 'unknown';
+}
+
+function resolveTopologyApiErrorResolution(state: TopologyApiErrorState) {
+  if (state === 'none') return 'none';
+  if (state === 'unauthorized') return 'login-required';
+  return 'retry-or-check-api';
 }
 
 export default function TopologyPage({
   routeContext,
-  apiGraph
+  apiGraph,
+  apiGraphLoadError
 }: {
   routeContext?: TopologyRouteContext;
   apiGraph?: EntityTopologyApiGraph | null;
+  apiGraphLoadError?: TopologyApiLoadError | null;
 } = {}) {
   const topologyRouter = useRouter();
   const { t } = useI18n();
   const routeContextKey = React.useMemo(() => JSON.stringify(routeContext ?? {}), [routeContext]);
-  const [loadedApiGraph, setLoadedApiGraph] = React.useState<EntityTopologyApiGraph | null | undefined>(apiGraph);
-  const [topologyLayout] = React.useState<TopologyLayoutMode>('layered-service');
-  const [topologySearchQuery, setTopologySearchQuery] = React.useState<string | undefined>(undefined);
   const apiOwnedEmptyGraph = React.useMemo(() => buildApiOwnedEmptyGraph(routeContext), [routeContext]);
+  const topologyHasUnresolvableFocusEntity = React.useMemo(
+    () => hasUnresolvableTopologyFocusEntity(routeContext),
+    [routeContext]
+  );
+  const [loadedApiGraph, setLoadedApiGraph] = React.useState<EntityTopologyApiGraph | null | undefined>(() =>
+    apiGraph !== undefined ? apiGraph : topologyHasUnresolvableFocusEntity ? apiOwnedEmptyGraph : undefined
+  );
+  const [loadedApiGraphError, setLoadedApiGraphError] = React.useState<TopologyApiLoadError | null>(() =>
+    apiGraph === null ? (apiGraphLoadError ?? {}) : null
+  );
+  const [topologyLayout] = React.useState<TopologyLayoutMode>('layered-service');
+  const [topologySearchQuery, setTopologySearchQuery] = React.useState<string | undefined>(routeContext?.search);
+  const [topologyManualRefreshSequence, setTopologyManualRefreshSequence] = React.useState(0);
+
+  const handleTopologyRefresh = React.useCallback(() => {
+    setTopologyManualRefreshSequence(sequence => sequence + 1);
+  }, []);
 
   React.useEffect(() => {
-    if (apiGraph !== undefined) {
+    if (apiGraph !== undefined && topologyManualRefreshSequence === 0) {
       setLoadedApiGraph(apiGraph);
+      setLoadedApiGraphError(apiGraph === null ? (apiGraphLoadError ?? {}) : null);
+      return undefined;
+    }
+    if (topologyHasUnresolvableFocusEntity) {
+      setLoadedApiGraph(apiOwnedEmptyGraph);
+      setLoadedApiGraphError(null);
       return undefined;
     }
     let mounted = true;
-    void loadTopologyGraph(api.topology.request, routeContext ?? {}, { timeoutMs: resolveTopologyApiTimeoutMs(routeContext) })
+    const topologyShouldPreservePreviousGraphDuringLoad =
+      topologyManualRefreshSequence === 0 && shouldPreservePreviousTopologyGraphDuringLoad(routeContext ?? {});
+    if (!topologyShouldPreservePreviousGraphDuringLoad) {
+      setLoadedApiGraph(undefined);
+      setLoadedApiGraphError(null);
+    }
+    void loadTopologyGraph(api.topology.request, routeContext ?? {}, {
+      timeoutMs: resolveTopologyApiTimeoutMs(routeContext),
+      ...(topologyManualRefreshSequence > 0 ? { cacheBust: () => `manual-${topologyManualRefreshSequence}` } : {})
+    })
       .then(graph => {
-        if (mounted) setLoadedApiGraph(graph);
+        if (mounted) {
+          setLoadedApiGraph(graph);
+          setLoadedApiGraphError(null);
+        }
       })
-      .catch(() => {
-        if (mounted) setLoadedApiGraph(null);
+      .catch(error => {
+        if (mounted) {
+          setLoadedApiGraph(null);
+          setLoadedApiGraphError(normalizeTopologyApiLoadError(error) ?? {});
+        }
       });
     return () => {
       mounted = false;
     };
-  }, [apiGraph, apiOwnedEmptyGraph, routeContext, routeContextKey]);
+  }, [
+    apiGraph,
+    apiGraphLoadError,
+    apiOwnedEmptyGraph,
+    routeContext,
+    routeContextKey,
+    topologyHasUnresolvableFocusEntity,
+    topologyManualRefreshSequence
+  ]);
 
   const map = React.useMemo(
     () => buildTopologyServiceMapFromApiGraph(loadedApiGraph ?? apiOwnedEmptyGraph, routeContext, t),
@@ -694,13 +858,50 @@ export default function TopologyPage({
     loadedApiGraph !== null &&
     map.filterContext.sourceKind === 'otlp-trace-call' &&
     map.edges.length === 0;
+  const topologyHasExplicitCanvasScope = Boolean(routeContext?.sourceKind || routeContext?.viewMode || routeContext?.edgeId);
+  const topologyScopedCanvasEdges = React.useMemo(
+    () => (topologyHasExplicitCanvasScope && map.edges.length > 0 ? map.edges.filter(edge => topologyEdgeMatchesCanvasScope(edge, map.filterContext)) : map.edges),
+    [map.edges, map.filterContext, topologyHasExplicitCanvasScope]
+  );
+  const topologyFilteredEvidenceMissing =
+    map.dataSource === 'api' &&
+    !topologyIsPending &&
+    loadedApiGraph !== null &&
+    topologyHasExplicitCanvasScope &&
+    map.edges.length > 0 &&
+    topologyScopedCanvasEdges.length === 0;
+  const topologyRelationGap =
+    map.dataSource === 'api' &&
+    !topologyIsPending &&
+    loadedApiGraph !== null &&
+    map.nodes.length > 0 &&
+    map.edges.length === 0 &&
+    !topologyTraceCallMissingEdges &&
+    !topologyFilteredEvidenceMissing;
   const topologyCanvasNodes = React.useMemo(
-    () => (topologyTraceCallMissingEdges ? [] : map.nodes),
-    [map.nodes, topologyTraceCallMissingEdges]
+    () => {
+      if (topologyTraceCallMissingEdges || topologyFilteredEvidenceMissing || topologyRelationGap) return [];
+      if (!topologyHasExplicitCanvasScope || map.edges.length === 0) return map.nodes;
+      const visibleNodeIds = new Set<string>();
+      topologyScopedCanvasEdges.forEach(edge => {
+        visibleNodeIds.add(edge.from);
+        visibleNodeIds.add(edge.to);
+      });
+      return map.nodes.filter(node => visibleNodeIds.has(node.id));
+    },
+    [
+      map.edges.length,
+      map.nodes,
+      topologyFilteredEvidenceMissing,
+      topologyHasExplicitCanvasScope,
+      topologyRelationGap,
+      topologyScopedCanvasEdges,
+      topologyTraceCallMissingEdges
+    ]
   );
   const topologyCanvasEdges = React.useMemo(
-    () => (topologyTraceCallMissingEdges ? [] : map.edges),
-    [map.edges, topologyTraceCallMissingEdges]
+    () => (topologyTraceCallMissingEdges || topologyFilteredEvidenceMissing ? [] : topologyScopedCanvasEdges),
+    [topologyFilteredEvidenceMissing, topologyScopedCanvasEdges, topologyTraceCallMissingEdges]
   );
   const topologyTraceCallEdges = map.edges.filter(edge => edge.source === 'otlp-trace-call' || edge.relationshipType === 'trace-call');
   const topologyTraceCallRedEdgeCount = topologyTraceCallEdges.filter(edge =>
@@ -715,9 +916,11 @@ export default function TopologyPage({
     Boolean(edge.evidence.sampleTraceId || edge.evidence.sampleSpanId)
   ).length;
   const topologyTraceCallState =
-    topologyIsPending && topologyTraceCallScope
+    !topologyTraceCallScope
+      ? 'none'
+      : topologyIsPending
       ? 'pending'
-      : loadedApiGraph === null && topologyTraceCallScope
+      : loadedApiGraph === null
         ? 'degraded'
         : topologyTraceCallMissingEdges
           ? 'missing-edges'
@@ -734,9 +937,36 @@ export default function TopologyPage({
       : topologyTraceCallRedEdgeCount === topologyTraceCallEdges.length
         ? 'ready'
         : 'partial';
+  const topologyApiSettleState = topologyIsPending ? 'pending' : loadedApiGraph === null ? 'degraded' : 'ready';
+  const topologyApiErrorState = topologyIsPending || loadedApiGraph !== null
+    ? 'none'
+    : resolveTopologyApiErrorState(loadedApiGraphError);
+  const topologyApiErrorStatus = topologyApiErrorState === 'none'
+    ? 'none'
+    : loadedApiGraphError?.status ?? loadedApiGraphError?.code ?? 'unknown';
+  const topologyApiErrorResolution = resolveTopologyApiErrorResolution(topologyApiErrorState);
+  const topologyRelationGapState = topologyIsPending ? 'api-pending' : topologyRelationGap ? 'nodes-without-edges' : 'none';
+  const topologyRelationGapVisual = topologyIsPending ? 'loading-state' : topologyRelationGap ? 'canvas-annotation' : 'none';
+  const topologyRelationGapCanvasPolicy = topologyIsPending ? 'loading-overlay' : topologyRelationGap ? 'hide-isolated-node-only-graph' : 'render-graph';
+  const topologyHasRouteEntityFocus = Boolean(
+    routeContext?.entityId?.trim() ||
+    routeContext?.entityName?.trim() ||
+    routeContext?.serviceName?.trim() ||
+    routeContext?.monitorId?.trim() ||
+    routeContext?.monitorName?.trim() ||
+    routeContext?.traceId?.trim() ||
+    routeContext?.spanId?.trim()
+  );
+  const topologyCanShowApiFocus = routeContext === undefined || topologyHasRouteEntityFocus;
+  const topologyVisibleActiveNodeId = topologyCanShowApiFocus ? map.activeNodeId : undefined;
+  const topologyVisibleFocusQuery = topologyCanShowApiFocus ? topologyEffectiveSearchQuery : topologyToolbarSearchQuery;
   const topologyApiRequestPath = buildTopologyApiUrl(routeContext ?? {});
   const topologyApiRequestTimeoutMs = resolveTopologyApiTimeoutMs(routeContext);
   const topologyApiScopeRelationType = resolveTopologyRelationType(routeContext ?? {}) ?? 'all';
+  const topologyScaleProof = routeContext?.scaleProof?.trim();
+  const topologyScaleProofFocusEntityId = resolveTopologyScaleProofFocusEntityId(routeContext ?? {});
+  const topologyScaleProofApiPolicy = resolveTopologyScaleProofApiPolicy(routeContext ?? {});
+  const topologyScaleProofTimeWindow = resolveTopologyScaleProofTimeWindow(routeContext ?? {});
   const topologyG6Layout = topologyLayout === 'force' ? 'force' : 'layered-service';
   const topologyLayoutLabel =
     topologyLayout === 'force'
@@ -752,11 +982,10 @@ export default function TopologyPage({
       entityType: resolveTopologyG6EntityType(node),
       health: node.health,
       tone: node.tone,
-      focus: node.focus,
+      focus: topologyCanShowApiFocus ? node.focus : 'normal',
       source: node.source,
       evidenceBadges: node.evidenceBadges,
       redMetrics: node.redMetrics,
-      href: buildTopologyNodeSelectionHref(node, map, routeContext),
       focusHref: buildTopologyNodeSelectionHref(node, map, routeContext, { depth: 1 }),
       entityHref: node.links.entityHref
     })),
@@ -774,14 +1003,20 @@ export default function TopologyPage({
       redMetrics: edge.redMetrics,
       href: edge.drilldownHref
     }))
-  }), [map, routeContext, topologyCanvasEdges, topologyCanvasNodes]);
+  }), [map, routeContext, topologyCanShowApiFocus, topologyCanvasEdges, topologyCanvasNodes]);
+  const topologyHasRenderableGraph = topologyG6Graph.nodes.length > 0 || topologyG6Graph.edges.length > 0;
   React.useEffect(() => {
     setTopologyLocalSelection({ source: 'none' });
   }, [routeContextKey]);
   React.useEffect(() => {
-    setTopologySearchQuery(undefined);
-  }, [routeContextKey]);
-  const topologyRoutePrimaryNode = map.nodes.find(node => node.id === map.activeNodeId) ?? map.nodes.find(node => node.id === 'svc-checkout') ?? map.nodes[0];
+    setTopologySearchQuery(routeContext?.search);
+  }, [routeContext?.search, routeContextKey]);
+  const topologyRoutePrimaryNode =
+    topologyVisibleActiveNodeId
+      ? map.nodes.find(node => node.id === topologyVisibleActiveNodeId)
+      : topologyCanShowApiFocus
+        ? map.nodes.find(node => node.id === 'svc-checkout') ?? map.nodes[0]
+        : undefined;
   const topologyLocalSelectedNode = topologyLocalSelection.nodeId ? findNode(map.nodes, topologyLocalSelection.nodeId) : undefined;
   const primaryNode = topologyLocalSelectedNode ?? topologyRoutePrimaryNode;
   const activeViewModeLabel = map.viewModes.find(mode => mode.active)?.label;
@@ -795,12 +1030,15 @@ export default function TopologyPage({
     map.filterContext.groupBy === 'source-kind'
       ? Object.fromEntries(map.sources.map(source => [source.kind, withTopologyGroupByHref(source.href, 'source-kind')]))
       : {};
+  const topologyRouteDepth = Number(routeContext?.depth);
+  const topologyRouteDepthValue = Number.isFinite(topologyRouteDepth) ? Math.max(0, Math.floor(topologyRouteDepth)) : undefined;
+  const topologyScopedDepth = topologyRouteDepthValue ?? map.apiDepth;
   const topologyG6ResetParams = React.useMemo(() => {
     const params = new URLSearchParams();
     params.set('environment', map.filterContext.environment);
     params.set('timeRange', map.filterContext.timeRange);
     params.set('viewMode', map.filterContext.viewMode);
-    if (typeof map.apiDepth === 'number') params.set('depth', String(map.apiDepth));
+    if (typeof topologyScopedDepth === 'number') params.set('depth', String(topologyScopedDepth));
     appendTopologySelectionParam(params, 'start', routeContext?.start);
     appendTopologySelectionParam(params, 'end', routeContext?.end);
     appendTopologySelectionParam(params, 'refresh', routeContext?.refresh);
@@ -809,10 +1047,9 @@ export default function TopologyPage({
     appendTopologySelectionParam(params, 'relationType', routeContext?.relationType);
     appendTopologySelectionParam(params, 'hideInternal', routeContext?.hideInternal);
     if (map.filterContext.sourceKind) params.set('sourceKind', map.filterContext.sourceKind);
-    if (map.filterContext.groupBy !== 'none') params.set('groupBy', map.filterContext.groupBy);
+    if (topologyHasRenderableGraph && map.filterContext.groupBy !== 'none') params.set('groupBy', map.filterContext.groupBy);
     return params;
   }, [
-    map.apiDepth,
     map.filterContext.environment,
     map.filterContext.groupBy,
     map.filterContext.sourceKind,
@@ -824,16 +1061,19 @@ export default function TopologyPage({
     routeContext?.refresh,
     routeContext?.relationType,
     routeContext?.start,
-    routeContext?.tz
+    routeContext?.tz,
+    topologyHasRenderableGraph,
+    topologyScopedDepth
   ]);
   const topologyG6FilterResetParams = new URLSearchParams(topologyG6ResetParams);
   topologyG6FilterResetParams.delete('groupBy');
   const topologyG6ResetHref = `/topology?${topologyG6FilterResetParams.toString()}`;
+  const topologyGlobalScopeHref = `/topology?${topologyG6ResetParams.toString()}`;
   const topologyFocusExitParams = new URLSearchParams();
   topologyFocusExitParams.set('environment', map.filterContext.environment);
   topologyFocusExitParams.set('timeRange', map.filterContext.timeRange);
   topologyFocusExitParams.set('viewMode', map.filterContext.viewMode);
-  topologyFocusExitParams.set('depth', '2');
+  topologyFocusExitParams.set('depth', String(topologyScopedDepth ?? 2));
   appendTopologySelectionParam(topologyFocusExitParams, 'start', routeContext?.start);
   appendTopologySelectionParam(topologyFocusExitParams, 'end', routeContext?.end);
   appendTopologySelectionParam(topologyFocusExitParams, 'refresh', routeContext?.refresh);
@@ -843,13 +1083,13 @@ export default function TopologyPage({
   appendTopologySelectionParam(topologyFocusExitParams, 'hideInternal', routeContext?.hideInternal);
   appendTopologySelectionParam(topologyFocusExitParams, 'edgeId', map.selectedEdgeId ?? routeContext?.edgeId);
   if (map.filterContext.sourceKind) topologyFocusExitParams.set('sourceKind', map.filterContext.sourceKind);
-  if (map.filterContext.groupBy !== 'none') topologyFocusExitParams.set('groupBy', map.filterContext.groupBy);
+  if (topologyHasRenderableGraph && map.filterContext.groupBy !== 'none') topologyFocusExitParams.set('groupBy', map.filterContext.groupBy);
   const topologyFocusExitHref = `/topology?${topologyFocusExitParams.toString()}`;
   const topologyG6GroupParams = new URLSearchParams(topologyG6ResetParams);
   topologyG6GroupParams.set('groupBy', 'source-kind');
   const topologyG6SearchParams = new URLSearchParams(topologyG6ResetParams);
   if (topologyToolbarSearchQuery) topologyG6SearchParams.set('search', topologyToolbarSearchQuery);
-  if (map.filterContext.groupBy !== 'none') topologyG6SearchParams.set('groupBy', map.filterContext.groupBy);
+  if (topologyHasRenderableGraph && map.filterContext.groupBy !== 'none') topologyG6SearchParams.set('groupBy', map.filterContext.groupBy);
   const handleTopologyEnvironmentChange = React.useCallback(
     (value: string) => {
       navigateTopologyFocus(buildTopologyScopeHref(topologyG6ResetParams, { environment: value }), topologyRouter.push);
@@ -884,44 +1124,54 @@ export default function TopologyPage({
     },
     [topologyRouter.push]
   );
+  const handleTopologyGlobalScope = React.useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+      navigateTopologyFocus(topologyGlobalScopeHref, topologyRouter.push);
+    },
+    [topologyGlobalScopeHref, topologyRouter.push]
+  );
   const topologyToolbarSummaryItems = [
-    topologyEffectiveSearchQuery || t('topology.all-entities'),
+    topologyVisibleFocusQuery || t('topology.all-entities'),
     map.filterContext.environment,
     map.filterContext.timeRange,
     activeViewModeLabel,
     activeSourceLabel
   ].filter((item): item is string => Boolean(item));
-  const topologyFocusState = map.activeNodeId ?? (topologyEffectiveSearchQuery ? 'incoming-context' : 'all');
-  const routeFocusDepth = Number(routeContext?.depth);
-  const topologyFocusTrailDepth = Number.isFinite(routeFocusDepth) ? Math.max(0, Math.floor(routeFocusDepth)) : map.apiDepth ?? 2;
-  const topologyFocusTrailMode = primaryNode || topologyEffectiveSearchQuery || map.apiDepth === 1 ? 'focused' : 'overview';
+  const topologyFocusState = topologyVisibleActiveNodeId ?? (topologyVisibleFocusQuery ? 'incoming-context' : 'all');
+  const topologyFocusTrailDepth = topologyScopedDepth ?? 2;
+  const topologyFocusTrailMode = primaryNode || topologyVisibleFocusQuery || map.apiDepth === 1 ? 'focused' : 'overview';
   const topologyFocusTrailEntityId = primaryNode?.id ?? topologyFocusState;
+  const topologyShouldShowFocusExit = topologyFocusTrailMode === 'focused' && topologyFocusTrailEntityId !== 'all';
   const topologyToolbarStateItems: HzTopologyToolbarStateItem[] = [
     {
       id: 'focus',
       label: t('topology.state.focus'),
-      value: (primaryNode?.label ?? topologyEffectiveSearchQuery) || t('topology.all-entities'),
+      value: (primaryNode?.label ?? topologyVisibleFocusQuery) || t('topology.all-entities'),
       tone: primaryNode ? topologyNodeHealthTone(primaryNode) : 'neutral',
       'data-topology-focus-state': topologyFocusState
     },
     {
       id: 'depth',
       label: t('topology.state.depth'),
-      value: formatTopologyDepth(map.apiDepth, t),
-      'data-topology-depth-state': map.apiDepth ?? 'none'
-    },
-    {
+      value: formatTopologyDepth(topologyScopedDepth, t),
+      'data-topology-depth-state': topologyScopedDepth ?? 'none'
+    }
+  ];
+  if (topologyHasRenderableGraph) {
+    topologyToolbarStateItems.push({
       id: 'group',
       label: t('topology.state.group'),
       value: t(`topology.state.group.${map.filterContext.groupBy}`),
       'data-topology-group-state': map.filterContext.groupBy
-    }
-  ];
+    });
+  }
   const topologyApiNodeCount = loadedApiGraph?.nodes?.length ?? map.nodes.length;
-  const topologyHiddenCount = Math.max(0, topologyApiNodeCount - map.nodes.length);
+  const topologyHiddenCount = Math.max(0, topologyApiNodeCount - topologyCanvasNodes.length);
+  const topologyToolbarGroupControlVisibility = topologyHasRenderableGraph ? 'visible' : 'hidden-empty-graph';
   const topologyGroupPanelItems = buildTopologyGroupPanelItems({
-    nodes: map.nodes,
-    edges: map.edges,
+    nodes: topologyCanvasNodes,
+    edges: topologyCanvasEdges,
     activeSourceLabel,
     primaryNode,
     hiddenCount: topologyHiddenCount,
@@ -939,15 +1189,15 @@ export default function TopologyPage({
           id: 'active-entity',
           href: primaryNode.links.entityHref,
           label: primaryNode.label,
-          value: formatTopologyDepth(map.apiDepth, t),
+          value: formatTopologyDepth(topologyScopedDepth, t),
           active: true,
           'data-topology-focus-crumb': primaryNode.id
         }
       : {
           id: 'active-entity',
           href: '/topology',
-          label: topologyEffectiveSearchQuery || t('topology.all-entities'),
-          value: formatTopologyDepth(map.apiDepth, t),
+          label: topologyVisibleFocusQuery || t('topology.all-entities'),
+          value: formatTopologyDepth(topologyScopedDepth, t),
           active: true,
           'data-topology-focus-crumb': topologyFocusState
         }
@@ -978,7 +1228,7 @@ export default function TopologyPage({
       'data-topology-focus-filter-view': map.filterContext.viewMode
     }
   ];
-  const topologyMetricRows = React.useMemo(() => buildTopologyMetricRows(map.edges, map.nodes), [map.edges, map.nodes]);
+  const topologyMetricRows = React.useMemo(() => buildTopologyMetricRows(topologyCanvasEdges, map.nodes), [map.nodes, topologyCanvasEdges]);
   const [topologyMetricWindowFilter, setTopologyMetricWindowFilter] = React.useState<HzTopologyMetricTableRenderWindowFilter>('all');
   React.useEffect(() => {
     setTopologyMetricWindowFilter('all');
@@ -997,10 +1247,10 @@ export default function TopologyPage({
     setTopologyCompanionCollapsedSections(current => ({ ...current, [sectionId]: collapsed }));
   }, []);
   const topologyLocalSelectedEdge = topologyLocalSelection.edgeId ? findEdge(map.edges, topologyLocalSelection.edgeId) : undefined;
-  const topologyDetailEdge = topologyLocalSelection.nodeId ? undefined : topologyLocalSelectedEdge ?? pickTopologyDetailEdge(map);
+  const topologyDetailEdge = topologyLocalSelection.nodeId ? undefined : topologyLocalSelectedEdge ?? pickTopologyDetailEdge(map, topologyCanvasEdges);
   const topologyCanvasSelectedEdgeId = topologyLocalSelection.nodeId
     ? undefined
-    : topologyLocalSelectedEdge?.id ?? map.selectedEdgeId ?? topologyDetailEdge?.id;
+    : topologyLocalSelectedEdge?.id ?? map.selectedEdgeId;
   const topologyMetricSelectedRowId = topologyLocalSelection.nodeId
     ? undefined
     : map.selectedEdgeId ?? topologyDetailEdge?.id ?? topologyMetricRows[0]?.id;
@@ -1017,18 +1267,43 @@ export default function TopologyPage({
     const strategy = buildHzTopologyG6LargeGraphStrategy(topologyG6Graph);
     return buildHzTopologyG6RenderWindow(topologyG6Graph, strategy, { priorityNodeIds: topologyRenderWindowPriorityNodeIds });
   }, [topologyG6Graph, topologyRenderWindowPriorityNodeIds]);
+  const topologyG6RenderedEdgeCount = topologyRenderWindowCompanion.mode === 'windowed'
+    ? Math.min(topologyRenderWindowCompanion.renderedEdgeCount, HZ_TOPOLOGY_G6_EDGE_DENSITY_VISIBLE_EDGE_LIMIT)
+    : topologyG6Graph.edges.length;
+  const topologyG6HiddenEdgeCount = Math.max(0, topologyG6Graph.edges.length - topologyG6RenderedEdgeCount);
+  const topologyG6SummaryLabel = topologyRenderWindowCompanion.mode === 'windowed'
+    ? `${t('topology.g6.summary.rendered-node-count', {
+        rendered: topologyRenderWindowCompanion.renderedNodeCount,
+        total: topologyG6Graph.nodes.length
+      })} · ${t('topology.g6.summary.rendered-edge-count', {
+        rendered: topologyG6RenderedEdgeCount,
+        total: topologyG6Graph.edges.length
+      })}`
+    : `${t('topology.group-panel.node-count', { count: topologyG6Graph.nodes.length })} · ${t('topology.group-panel.edge-count', { count: topologyG6Graph.edges.length })}`;
+  const topologyG6SummaryCountPolicy = topologyRenderWindowCompanion.mode === 'windowed' ? 'windowed-rendered-vs-total' : 'direct-total';
   const topologyMetricRenderWindowCompanion = React.useMemo(() => ({
     mode: topologyRenderWindowCompanion.mode,
     totalNodeCount: topologyRenderWindowCompanion.totalNodeCount,
     renderedNodeCount: topologyRenderWindowCompanion.renderedNodeCount,
     hiddenNodeCount: topologyRenderWindowCompanion.hiddenNodeCount,
+    totalEdgeCount: topologyG6Graph.edges.length,
+    renderedEdgeCount: topologyG6RenderedEdgeCount,
     visibleNodeBudget: topologyRenderWindowCompanion.visibleNodeBudget,
     tableCompanion: topologyRenderWindowCompanion.tableCompanion,
     priorityNodeIds: topologyRenderWindowCompanion.priorityNodeIds,
     renderedNodeIds: topologyRenderWindowCompanion.graph.nodes.map(node => node.id)
-  }), [topologyRenderWindowCompanion]);
+  }), [topologyG6Graph.edges.length, topologyG6RenderedEdgeCount, topologyRenderWindowCompanion]);
+  const topologyDetailEdgeRenderWindowContext = React.useMemo(
+    () => buildTopologyEdgeRenderWindowContext(
+      topologyDetailEdge,
+      topologyMetricRenderWindowCompanion.mode,
+      topologyMetricRenderWindowCompanion.renderedNodeIds
+    ),
+    [topologyDetailEdge, topologyMetricRenderWindowCompanion.mode, topologyMetricRenderWindowCompanion.renderedNodeIds]
+  );
   const topologyShouldShowRenderWindowMetricTable =
     topologyRenderWindowCompanion.mode === 'windowed' || topologyRenderWindowCompanion.tableCompanion === 'required';
+  const topologyShouldRenderCompanionMetricTable = !topologyShouldShowRenderWindowMetricTable;
   const topologyMetricTableLabels = React.useMemo(() => ({
     edgeCount: t('topology.metric-table.edge-count', { count: topologyMetricRows.length }),
     requestRate: t('topology.metric-table.request-rate-unit'),
@@ -1040,13 +1315,30 @@ export default function TopologyPage({
     renderWindowFilterPartial: t('topology.metric-table.filter.partial'),
     renderWindowFilterHidden: t('topology.metric-table.filter.hidden'),
     renderWindowFilterUnknown: t('topology.metric-table.filter.unknown'),
+    renderWindowEdgeSummary: t('topology.metric-table.edge-summary', {
+      rendered: topologyG6RenderedEdgeCount,
+      total: topologyG6Graph.edges.length
+    }),
+    renderWindowRowSummary: (rendered: number, total: number) => t('topology.metric-table.row-render-summary', { rendered, total }),
+    renderWindowShowMore: (next: number, total: number) => t('topology.metric-table.row-render-show-more', { next, total }),
     rowAriaLabel: (row: HzTopologyMetricRow) => t('topology.metric-table.open-edge-aria', { edge: String(row.id) })
-  }), [t, topologyMetricRows.length]);
+  }), [t, topologyG6Graph.edges.length, topologyG6RenderedEdgeCount, topologyMetricRows.length]);
   const topologyHoveredDetailEdge = topologyG6HoveredEdgeId ? findEdge(map.edges, topologyG6HoveredEdgeId) : undefined;
   const topologyLiveHoverEdge = topologyHoveredDetailEdge;
-  const topologyInvestigationEdge = topologyHoveredDetailEdge ?? topologyDetailEdge;
+  const topologySelectedPathSummaryEdge = topologyCanvasSelectedEdgeId ? findEdge(map.edges, topologyCanvasSelectedEdgeId) : undefined;
+  const topologyInvestigationEdge = topologySelectedPathSummaryEdge ?? topologyHoveredDetailEdge ?? topologyDetailEdge;
   const topologyHoverFromNode = topologyInvestigationEdge ? findNode(map.nodes, topologyInvestigationEdge.from) : undefined;
   const topologyHoverToNode = topologyInvestigationEdge ? findNode(map.nodes, topologyInvestigationEdge.to) : undefined;
+  const topologyPathSummaryInteractionState = topologyCanvasSelectedEdgeId
+    ? 'selected'
+    : topologyG6HoveredEdgeId
+      ? 'hovered'
+      : 'preview';
+  const topologyPathSummaryTitle = topologyPathSummaryInteractionState === 'selected'
+    ? t('topology.path-summary.title.selected')
+    : topologyPathSummaryInteractionState === 'hovered'
+      ? t('topology.path-summary.title.hovered')
+      : t('topology.path-summary.title.preview');
   const topologyLiveHoverFromNode = topologyLiveHoverEdge ? findNode(map.nodes, topologyLiveHoverEdge.from) : undefined;
   const topologyLiveHoverToNode = topologyLiveHoverEdge ? findNode(map.nodes, topologyLiveHoverEdge.to) : undefined;
   const topologyCanvasDrawerMode: HzTopologyCanvasDrawerMode = topologyDetailEdge && primaryNode
@@ -1056,7 +1348,18 @@ export default function TopologyPage({
       : primaryNode
         ? 'node'
         : 'none';
+  const topologyShouldShowCompanionRail = Boolean(primaryNode || topologyDetailEdge);
+  const topologyWorkbenchLayout = topologyShouldShowCompanionRail ? 'canvas-companion' : 'canvas-only';
+  const topologyCompanionRailVisibility = topologyShouldShowCompanionRail ? 'visible-side-rail' : 'hidden-from-layout';
   const topologyCompanionJumpActiveId = topologyDetailEdge ? 'edge-detail' : primaryNode ? 'current-node' : 'view-mode';
+  const topologyCompanionJumpActiveResetKey = [
+    topologyCompanionJumpActiveId,
+    primaryNode?.id ?? 'none',
+    topologyDetailEdge?.id ?? 'none'
+  ].join(':');
+  const topologyCompanionSelectionResetKey = topologyLocalSelection.source === 'none'
+    ? undefined
+    : topologyCompanionJumpActiveResetKey;
   const topologyCompanionJumpItems = [
     {
       id: 'view-mode',
@@ -1070,12 +1373,16 @@ export default function TopologyPage({
       label: t('topology.companion.jump.legend'),
       active: topologyCompanionJumpActiveId === 'legend'
     },
-    {
-      id: 'edge-red',
-      href: '#topology-companion-edge-red',
-      label: t('topology.companion.jump.red'),
-      active: topologyCompanionJumpActiveId === 'edge-red'
-    },
+    ...(topologyShouldRenderCompanionMetricTable
+      ? [
+          {
+            id: 'edge-red',
+            href: '#topology-companion-edge-red',
+            label: t('topology.companion.jump.red'),
+            active: topologyCompanionJumpActiveId === 'edge-red'
+          }
+        ]
+      : []),
     ...(map.impactTimeline.length > 0
       ? [
           {
@@ -1117,8 +1424,29 @@ export default function TopologyPage({
   const topologyLoadingEvidenceSources = ['api', 'greptime', 'trace', 'relation'];
   const topologyTraceCallUnavailable = loadedApiGraph === null && topologyTraceCallScope;
   const topologyShouldShowEmptyState =
-    map.dataSource === 'api' && !topologyIsPending && (map.nodes.length === 0 || topologyTraceCallMissingEdges);
-  const topologyEmptyStateKind = loadedApiGraph === null ? 'degraded' : topologyTraceCallMissingEdges ? 'filtered-empty' : 'api-empty';
+    map.dataSource === 'api' && !topologyIsPending && (map.nodes.length === 0 || topologyTraceCallMissingEdges || topologyFilteredEvidenceMissing);
+  const topologyRelationGapApiSourceKinds =
+    loadedApiGraph?.sourceKinds && loadedApiGraph.sourceKinds.length > 0
+      ? loadedApiGraph.sourceKinds.join(' ')
+      : 'none';
+  const topologyRelationGapTraceCallParams = new URLSearchParams(topologyG6ResetParams);
+  topologyRelationGapTraceCallParams.set('viewMode', 'service-call');
+  topologyRelationGapTraceCallParams.set('sourceKind', 'otlp-trace-call');
+  topologyRelationGapTraceCallParams.set('relationType', 'trace-call');
+  const topologyRelationGapTraceCallHref = `/topology?${topologyRelationGapTraceCallParams.toString()}`;
+  const handleTopologyRelationGapTraceCall = React.useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+      topologyRouter.push(topologyRelationGapTraceCallHref);
+    },
+    [topologyRelationGapTraceCallHref, topologyRouter]
+  );
+  const topologyEmptyStateKind =
+    loadedApiGraph === null
+      ? 'degraded'
+      : topologyTraceCallMissingEdges || topologyFilteredEvidenceMissing
+        ? 'filtered-empty'
+        : 'api-empty';
   const topologyEmptyStateDataKind = topologyTraceCallUnavailable
     ? 'trace-call-degraded'
     : topologyTraceCallMissingEdges
@@ -1131,6 +1459,8 @@ export default function TopologyPage({
       ? ['api', 'unavailable']
       : topologyTraceCallMissingEdges
         ? ['otlp-trace-call', 'greptime', 'trace']
+        : topologyFilteredEvidenceMissing
+          ? [map.filterContext.sourceKind ?? map.filterContext.viewMode]
         : topologyEvidenceSources;
   const topologyEmptyStateTitle = topologyTraceCallMissingEdges
     ? t('topology.empty.trace-call.title')
@@ -1152,7 +1482,9 @@ export default function TopologyPage({
       ? t('topology.degraded.trace-call.source')
     : topologyEmptyStateKind === 'degraded'
       ? t('topology.degraded.api.source')
-      : 'API';
+      : topologyFilteredEvidenceMissing
+        ? (activeSourceLabel ?? activeViewModeLabel ?? 'API')
+        : 'API';
   const topologyLegendNodeTypeItems = React.useMemo(
     () => {
       const visibleNodeKinds = new Set(
@@ -1163,7 +1495,6 @@ export default function TopologyPage({
       return HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(icon => visibleNodeKinds.has(icon.kind)).map(icon => ({
         id: `node-type-${icon.kind}`,
         label: t(`topology.legend.node-type.${icon.kind}`),
-        value: icon.iconName,
         iconSrc: icon.iconSrc,
         iconAlt: '',
         iconLibrary: icon.iconLibrary,
@@ -1174,80 +1505,18 @@ export default function TopologyPage({
     },
     [topologyG6Graph.nodes, t]
   );
-  const topologyHasVisibleNodes = topologyG6Graph.nodes.length > 0;
-  const topologyHasVisibleGraphEvidence = topologyHasVisibleNodes || topologyG6Graph.edges.length > 0;
   const topologyLegendSections = React.useMemo(
     () => {
-      const sections = [
+      const sections: HzTopologyLegendSection[] = [
         {
           id: 'node-type',
           label: t('topology.legend.node-type'),
           items: topologyLegendNodeTypeItems
         }
       ];
-      if (topologyHasVisibleNodes) {
-        sections.push({
-          id: 'status',
-          label: t('topology.legend.status'),
-          items: [
-            {
-              id: 'healthy-node',
-              label: t('topology.legend.status.healthy'),
-              color: '#22c55e',
-              visualSource: 'hertzbeat-status-token' as const,
-              value: t('topology.legend.status.healthy-value')
-            },
-            {
-              id: 'warning-node',
-              label: t('topology.legend.status.warning'),
-              color: '#f59e0b',
-              visualSource: 'hertzbeat-status-token' as const,
-              value: t('topology.legend.status.warning-value')
-            },
-            {
-              id: 'critical-node',
-              label: t('topology.legend.status.critical'),
-              color: '#ef4444',
-              visualSource: 'hertzbeat-status-token' as const,
-              value: t('topology.legend.status.critical-value')
-            }
-          ]
-        });
-      }
-      if (topologyHasVisibleGraphEvidence) {
-        sections.push({
-          id: 'interaction',
-          label: t('topology.legend.interaction'),
-          items: [
-            {
-              id: 'selected-node',
-              label: t('topology.legend.interaction.selected-node'),
-              color: '#e5edf8',
-              visualSource: 'hertzbeat-interaction-token' as const,
-              value: t('topology.legend.interaction.selected-node-value')
-            },
-            {
-              id: 'directional-edge',
-              label: t('topology.legend.interaction.directional-edge'),
-              color: '#94a3b8',
-              pattern: 'solid' as const,
-              visualSource: 'hertzbeat-edge-token' as const,
-              value: t('topology.legend.interaction.directional-edge-value')
-            },
-            {
-              id: 'dimmed-edge',
-              label: t('topology.legend.interaction.dimmed-edge'),
-              color: '#94a3b8',
-              pattern: 'muted' as const,
-              visualSource: 'hertzbeat-edge-token' as const,
-              value: t('topology.legend.interaction.dimmed-edge-value')
-            }
-          ]
-        });
-      }
       return sections;
     },
-    [t, topologyHasVisibleGraphEvidence, topologyHasVisibleNodes, topologyLegendNodeTypeItems]
+    [t, topologyLegendNodeTypeItems]
   );
   const topologyEdgeIds = React.useMemo(
     () => new Set(map.edges.map(edge => edge.id)),
@@ -1325,14 +1594,21 @@ export default function TopologyPage({
     <HzTopologyWorkbenchFrame
       as="main"
       data-topology-route="hertzbeat-entity-topology"
+      data-hz-topology-frame="workbench"
       data-topology-data-source={map.dataSource}
       data-topology-incoming-context={map.filterContext.hasIncomingContext ? 'entity-filter' : 'none'}
-      data-topology-active-node-id={map.activeNodeId ?? 'none'}
+      data-topology-active-node-id={topologyVisibleActiveNodeId ?? 'none'}
       data-topology-active-edge-id={map.selectedEdgeId ?? 'none'}
       data-topology-selection-behavior="in-page-drawer"
       data-topology-selection-source={topologyLocalSelection.source}
       data-topology-selection-node-id={topologyLocalSelection.nodeId ?? 'none'}
       data-topology-selection-edge-id={topologyLocalSelection.edgeId ?? 'none'}
+      data-topology-live-interaction-proof="wheel-hover-click-preserve-url-viewport"
+      data-topology-live-interaction-proof-owner="hertzbeat-ui-g6-live-interaction"
+      data-topology-normal-browser-giant-node-proof="compact-1x-no-fill"
+      data-topology-normal-browser-giant-node-proof-owner="hertzbeat-ui-g6-viewport"
+      data-topology-ordinary-inspection-proof="api-current-window-no-stale-empty-gap"
+      data-topology-ordinary-inspection-proof-owner="hertzbeat-ui-workbench-frame"
       data-topology-focus-navigation="explicit-soft-route"
       data-topology-focus-navigation-owner="hertzbeat-ui-g6-focus-entry"
       data-topology-focus-navigation-trigger="double-click-node"
@@ -1350,6 +1626,13 @@ export default function TopologyPage({
       data-topology-search-navigation-url-policy="preserve-current-url"
       data-topology-active-view-mode={map.filterContext.viewMode}
       data-topology-active-source-kind={map.filterContext.sourceKind ?? 'all'}
+      data-topology-api-settle-state={topologyApiSettleState}
+      data-hz-topology-api-state={topologyApiSettleState}
+      data-topology-api-settle-state-owner="hertzbeat-ui-workbench-frame"
+      data-topology-api-error-state={topologyApiErrorState}
+      data-topology-api-error-status={topologyApiErrorStatus}
+      data-topology-api-error-resolution={topologyApiErrorResolution}
+      data-topology-api-error-owner="hertzbeat-ui-workbench-frame"
       data-topology-trace-call-state={topologyTraceCallState}
       data-topology-trace-call-proof-owner="hertzbeat-ui-workbench-frame"
       data-topology-trace-call-edge-count={topologyTraceCallEdges.length}
@@ -1357,13 +1640,32 @@ export default function TopologyPage({
       data-topology-trace-call-window-edge-count={topologyTraceCallWindowEdgeCount}
       data-topology-trace-call-sample-edge-count={topologyTraceCallSampleEdgeCount}
       data-topology-trace-call-red-state={topologyTraceCallRedState}
+      data-topology-relation-gap-state={topologyRelationGapState}
+      data-topology-relation-gap-owner="hertzbeat-ui-relation-gap"
+      data-topology-relation-gap-node-count={map.nodes.length}
+      data-topology-relation-gap-edge-count={map.edges.length}
+      data-topology-relation-gap-source-kind={map.filterContext.sourceKind ?? 'all'}
+      data-topology-relation-gap-api-source-kinds={topologyRelationGapApiSourceKinds}
+      data-topology-relation-gap-view-mode={map.filterContext.viewMode}
+      data-topology-relation-gap-visual={topologyRelationGapVisual}
+      data-topology-relation-gap-canvas-policy={topologyRelationGapCanvasPolicy}
+      data-topology-empty-state={topologyShouldShowEmptyState ? topologyEmptyStateDataKind : 'none'}
       data-topology-api-depth={map.apiDepth ?? 'none'}
       data-topology-api-scope-owner="hertzbeat-ui-workbench-frame"
       data-topology-api-request-path={topologyApiRequestPath}
       data-topology-api-scope-source-kind={map.filterContext.sourceKind ?? 'all'}
       data-topology-api-scope-relation-type={topologyApiScopeRelationType}
       data-topology-api-scope-view-mode={map.filterContext.viewMode}
+      data-topology-api-focus-resolution={topologyHasUnresolvableFocusEntity ? 'unresolvable-client-focus' : 'api-compatible'}
+      data-topology-api-focus-resolution-owner="topology-route-api-scope"
       data-topology-api-timeout-ms={topologyApiRequestTimeoutMs}
+      data-topology-scale-proof={topologyScaleProof || undefined}
+      data-topology-scale-proof-owner={topologyScaleProof ? 'topology-route-api-scope' : undefined}
+      data-topology-scale-proof-focus-entity-id={topologyScaleProofFocusEntityId}
+      data-topology-scale-proof-api-policy={topologyScaleProofApiPolicy}
+      data-topology-scale-proof-time-policy={topologyScaleProofTimeWindow?.policy}
+      data-topology-scale-proof-window-start={topologyScaleProofTimeWindow?.start}
+      data-topology-scale-proof-window-end={topologyScaleProofTimeWindow?.end}
       data-topology-workbench-frame-owner="hertzbeat-ui-workbench-frame"
       data-topology-workbench-frame-boundary-owner="hertzbeat-ui-workbench-frame-boundary"
       density="compact"
@@ -1400,7 +1702,9 @@ export default function TopologyPage({
               {
                 id: 'refresh',
                 label: t('topology.refresh'),
-                'data-topology-refresh-action': 'refresh'
+                onClick: handleTopologyRefresh,
+                'data-topology-refresh-action': 'refresh',
+                'data-topology-refresh-action-behavior': 'in-page-api-reload'
               }
             ]}
           />
@@ -1418,25 +1722,46 @@ export default function TopologyPage({
         label={t('topology.focus-trail.label')}
         crumbs={topologyFocusTrailCrumbs}
         filters={topologyFocusTrailFilters}
-        hiddenCountLabel={t('topology.focus-trail.hidden-count', { count: topologyHiddenCount })}
+        hiddenCountLabel={topologyHiddenCount > 0 ? t('topology.focus-trail.hidden-count', { count: topologyHiddenCount }) : undefined}
         hiddenCountProps={{
           'data-topology-focus-trail-hidden-count-owner': 'hertzbeat-ui-focus-trail-hidden-count'
         } as React.HTMLAttributes<HTMLSpanElement>}
-        exitAction={{
-          href: topologyFocusExitHref,
-          label: t('topology.focus-trail.exit'),
-          onClick: handleTopologyFocusExit,
-          'data-topology-focus-trail-exit-owner': 'hertzbeat-ui-focus-trail-exit'
-        } as React.AnchorHTMLAttributes<HTMLAnchorElement> & { label: React.ReactNode }}
+        exitAction={
+          topologyShouldShowFocusExit
+            ? ({
+                href: topologyFocusExitHref,
+                label: t('topology.focus-trail.exit'),
+                onClick: handleTopologyFocusExit,
+                'data-topology-focus-trail-exit-owner': 'hertzbeat-ui-focus-trail-exit'
+              } as React.AnchorHTMLAttributes<HTMLAnchorElement> & { label: React.ReactNode })
+            : undefined
+        }
         boundary="none"
         density="graph-dock"
       />
+
+      {topologyHasRouteEntityFocus ? (
+        <HzTopologyActionLink
+          data-topology-view-scope="focused-adjacency"
+          data-topology-view-scope-owner="hertzbeat-ui-focus-scope-guide"
+          data-topology-view-scope-global-action="open-global-topology"
+          data-topology-view-scope-global-href={topologyGlobalScopeHref}
+          id="focused-adjacency-global-scope"
+          href={topologyGlobalScopeHref}
+          label={t('topology.view-scope.focused-adjacency')}
+          copy={t('topology.view-scope.focused-adjacency.copy')}
+          spacing="none"
+          onClick={handleTopologyGlobalScope}
+          className="mx-0 -mt-1 mb-1 w-full border-transparent bg-transparent px-0 py-0 text-[11px] text-[#9ca3b4] hover:border-transparent hover:bg-transparent"
+        />
+      ) : null}
 
       <HzTopologyToolbar
         data-topology-controls="hertzbeat-topology-controls"
         data-topology-controls-owner="hertzbeat-ui-toolbar"
         data-topology-toolbar-boundary-owner="hertzbeat-ui-toolbar-boundary"
         data-topology-toolbar-state-owner="hertzbeat-ui-toolbar-state"
+        data-topology-toolbar-group-control-visibility={topologyToolbarGroupControlVisibility}
         data-topology-filter-summary="incoming-context"
         density="graph-first"
         boundary="none"
@@ -1457,7 +1782,7 @@ export default function TopologyPage({
           ...map.sources.map(source => ({ value: source.kind, label: source.label }))
         ]}
         depthLabel={t('topology.state.depth')}
-        depthValue={String(map.apiDepth ?? 2)}
+        depthValue={String(topologyScopedDepth ?? 2)}
         depthOptions={[
           { value: '1', label: t('topology.state.depth.one-hop') },
           { value: '2', label: t('topology.state.depth.two-hop') },
@@ -1465,12 +1790,16 @@ export default function TopologyPage({
         ]}
         groupByLabel={t('topology.state.group')}
         groupByValue={map.filterContext.groupBy}
-        groupByOptions={[
-          { value: 'none', label: t('topology.state.group.none') },
-          { value: 'environment', label: t('topology.state.group.environment') },
-          { value: 'source-kind', label: t('topology.state.group.source-kind') },
-          { value: 'entity-type', label: t('topology.state.group.entity-type') }
-        ]}
+        groupByOptions={
+          topologyHasRenderableGraph
+            ? [
+                { value: 'none', label: t('topology.state.group.none') },
+                { value: 'environment', label: t('topology.state.group.environment') },
+                { value: 'source-kind', label: t('topology.state.group.source-kind') },
+                { value: 'entity-type', label: t('topology.state.group.entity-type') }
+              ]
+            : []
+        }
         resetLabel={t('topology.toolbar.reset')}
         resetHref="/topology"
         onEnvironmentChange={handleTopologyEnvironmentChange}
@@ -1485,7 +1814,7 @@ export default function TopologyPage({
         stateItems={topologyToolbarStateItems}
       />
 
-      <HzTopologyWorkbenchGrid data-topology-workbench-grid-owner="hertzbeat-ui-workbench-grid" layout="canvas-only">
+      <HzTopologyWorkbenchGrid data-topology-workbench-grid-owner="hertzbeat-ui-workbench-grid" layout={topologyWorkbenchLayout}>
         <HzTopologyWorkbenchSlot
           data-topology-canvas-slot-owner="hertzbeat-ui-workbench-slot"
           kind="canvas"
@@ -1497,6 +1826,15 @@ export default function TopologyPage({
             data-topology-canvas-interaction-owner="hertzbeat-ui-canvas-interaction"
             data-topology-canvas-interaction-scope-owner="hertzbeat-ui-canvas-interaction-scope"
             data-topology-canvas-boundary-owner="hertzbeat-ui-canvas-boundary"
+            data-topology-g6-render-proof-owner="hertzbeat-topology-page-g6-proof"
+            data-topology-g6-render-window-mode={topologyRenderWindowCompanion.mode}
+            data-topology-g6-render-window-total-node-count={topologyRenderWindowCompanion.totalNodeCount}
+            data-topology-g6-render-window-rendered-node-count={topologyRenderWindowCompanion.renderedNodeCount}
+            data-topology-g6-render-window-hidden-node-count={topologyRenderWindowCompanion.hiddenNodeCount}
+            data-topology-g6-render-window-total-edge-count={topologyRenderWindowCompanion.totalEdgeCount}
+            data-topology-g6-render-window-rendered-edge-count={topologyG6RenderedEdgeCount}
+            data-topology-g6-render-window-hidden-edge-count={topologyG6HiddenEdgeCount}
+            data-topology-g6-summary-count-policy={topologyG6SummaryCountPolicy}
             layout={topologyLayout}
             interactionMode="inspect"
             interactionScope="hover-group"
@@ -1509,9 +1847,44 @@ export default function TopologyPage({
           <HzTopologyCanvasAnnotation
             data-topology-canvas-annotation-owner="hertzbeat-ui-canvas-annotation"
             title={topologyLayoutLabel}
-            copy={`${formatTopologyDepth(map.apiDepth, t)} · ${formatTimeRange(map.filterContext.timeRange, t)}`}
+            copy={`${formatTopologyDepth(topologyScopedDepth, t)} · ${formatTimeRange(map.filterContext.timeRange, t)}`}
             visibility="assistive"
           />
+          {topologyRelationGap ? (
+            <HzTopologyCanvasAnnotation
+              data-topology-relation-gap-state="nodes-without-edges"
+              data-topology-relation-gap-owner="hertzbeat-ui-relation-gap"
+              data-topology-relation-gap-node-count={map.nodes.length}
+              data-topology-relation-gap-edge-count={map.edges.length}
+              data-topology-relation-gap-source-kind={map.filterContext.sourceKind ?? 'all'}
+              data-topology-relation-gap-api-source-kinds={topologyRelationGapApiSourceKinds}
+              data-topology-relation-gap-view-mode={map.filterContext.viewMode}
+              data-topology-relation-gap-visual="canvas-annotation"
+              data-topology-relation-gap-canvas-policy="hide-isolated-node-only-graph"
+              title={t('topology.relation-gap.title')}
+              copy={t('topology.relation-gap.copy')}
+              placement="top-left"
+              visibility="visible"
+              className="border-transparent bg-[#08090c]/82"
+            />
+          ) : null}
+          {topologyRelationGap ? (
+            <HzTopologyActionLink
+              data-topology-relation-gap-action="otlp-trace-call"
+              data-topology-relation-gap-action-owner="hertzbeat-ui-action-link"
+              data-topology-relation-gap-action-source-kind="otlp-trace-call"
+              data-topology-relation-gap-action-view-mode="service-call"
+              data-topology-relation-gap-action-href={topologyRelationGapTraceCallHref}
+              id="relation-gap-trace-call"
+              href={topologyRelationGapTraceCallHref}
+              label={t('topology.relation-gap.action.trace-call')}
+              copy={t('topology.relation-gap.action.trace-call.copy')}
+              emphasis="primary"
+              spacing="none"
+              onClick={handleTopologyRelationGapTraceCall}
+              className="pointer-events-auto absolute left-3 top-[76px] z-10 w-[220px] border-[#252832] bg-[#0b0c0f]/92 px-2.5 py-1.5 shadow-[0_10px_28px_rgba(0,0,0,0.24)] backdrop-blur sm:left-4 sm:top-[80px]"
+            />
+          ) : null}
           <HzTopologyG6Canvas
             graph={topologyG6Graph}
             selectedNodeId={topologyTraceCallMissingEdges ? undefined : primaryNode?.id}
@@ -1573,12 +1946,18 @@ export default function TopologyPage({
             layout={topologyG6Layout}
             height="workbench"
             overlayMode="non-occluding"
-            summaryLabel={`${t('topology.group-panel.node-count', { count: map.nodes.length })} · ${t('topology.group-panel.edge-count', { count: map.edges.length })}`}
+            summaryLabel={topologyG6SummaryLabel}
+            nodeOnlyExplanationLabel={t('topology.node-only.explanation')}
             fitViewLabel={t('topology.view.fit')}
             resetViewLabel={t('topology.toolbar.reset')}
             zoomInLabel={t('topology.view.zoom-in')}
             zoomOutLabel={t('topology.view.zoom-out')}
             selectedFocusLabel={t('topology.view.focus-selected')}
+            edgeDensityDrilldownLabel={t('topology.edge-density.open-table')}
+            edgeDensityDrilldownDetailLabel={t('topology.edge-density.hidden-in-table', {
+              count: Math.max(0, topologyG6Graph.edges.length - topologyG6RenderedEdgeCount)
+            })}
+            edgeDensityDrilldownTargetId="topology-metric-table"
             onNodeSelect={handleTopologyG6NodeSelect}
             onNodeFocus={handleTopologyG6NodeFocus}
             onEdgeSelect={handleTopologyG6EdgeSelect}
@@ -1631,9 +2010,10 @@ export default function TopologyPage({
               relationType={topologyApiScopeRelationType}
               focusEntityId={routeContext?.entityId ?? 'none'}
               depth={map.apiDepth}
-              resultCount={topologyTraceCallMissingEdges ? 0 : map.nodes.length}
+              resultCount={topologyTraceCallMissingEdges || topologyFilteredEvidenceMissing ? 0 : map.nodes.length}
               evidenceSources={topologyEmptyStateEvidenceSources}
               kind={topologyEmptyStateKind}
+              copyVisibility="assistive"
               placement="canvas-center"
               boundary="canvas"
             />
@@ -1657,14 +2037,15 @@ export default function TopologyPage({
         ) : null}
           </HzTopologyCanvas>
         </HzTopologyWorkbenchSlot>
-        <HzTopologyWorkbenchSlot
-          data-topology-companion-slot-owner="hertzbeat-ui-workbench-slot"
-          data-topology-companion-rail-visibility="hidden-from-layout"
-          kind="companion"
-          surface="content"
-          className="hidden"
-          aria-hidden="true"
-        >
+        {topologyHasRenderableGraph ? (
+          <HzTopologyWorkbenchSlot
+            data-topology-companion-slot-owner="hertzbeat-ui-workbench-slot"
+            data-topology-companion-rail-visibility={topologyCompanionRailVisibility}
+            kind="companion"
+            surface="content"
+            className={topologyShouldShowCompanionRail ? undefined : 'hidden'}
+            aria-hidden={topologyShouldShowCompanionRail ? undefined : true}
+          >
         <HzTopologyCompanionRail
           data-topology-companion-rail-owner="hertzbeat-ui-companion-rail"
           data-topology-companion-rail-boundary-owner="hertzbeat-ui-companion-rail-boundary"
@@ -1681,8 +2062,115 @@ export default function TopologyPage({
             ariaLabel={t('topology.companion.jump.aria')}
             density="graph-first"
             activeMode="contained-rail-scroll"
+            activeResetKey={topologyCompanionSelectionResetKey}
             items={topologyCompanionJumpItems}
           />
+          {topologyDetailEdge ? (
+            <HzTopologyCompanionSection
+              data-topology-companion-section="edge-detail"
+              data-topology-companion-section-collapsible="edge-detail"
+              sectionId="edge-detail"
+              anchorId="topology-companion-edge-detail"
+              density="graph-first"
+              collapsible
+              collapsed={topologyCompanionCollapsedSections['edge-detail'] ?? false}
+              collapseLabel={t('topology.companion.section.collapse')}
+              expandLabel={t('topology.companion.section.expand')}
+              onCollapsedChange={collapsed => handleTopologyCompanionCollapsedChange('edge-detail', collapsed)}
+            >
+              <HzTopologyDetailDrawer
+                data-topology-edge-evidence-panel={topologyDetailEdge.id}
+                data-topology-edge-evidence-window-owner="hertzbeat-ui-detail-drawer"
+                data-topology-edge-evidence-first-seen={topologyDetailEdge.evidence.firstSeen || 'none'}
+                data-topology-edge-evidence-last-seen={topologyDetailEdge.evidence.lastSeen || 'none'}
+                data-topology-edge-evidence-sample-trace-id={topologyDetailEdge.evidence.sampleTraceId || 'none'}
+                data-topology-edge-evidence-sample-span-id={topologyDetailEdge.evidence.sampleSpanId || 'none'}
+                data-topology-edge-render-window-visibility={topologyDetailEdgeRenderWindowContext?.visibility ?? 'direct'}
+                data-topology-edge-render-window-source-visible={topologyDetailEdgeRenderWindowContext?.sourceVisible ?? 'unknown'}
+                data-topology-edge-render-window-target-visible={topologyDetailEdgeRenderWindowContext?.targetVisible ?? 'unknown'}
+                data-topology-detail-drawer-owner="hertzbeat-ui-detail-drawer"
+                data-topology-detail-drawer-surface-owner="hertzbeat-ui-detail-surface"
+                kind="edge"
+                density="graph-first"
+                subjectId={topologyDetailEdge.id}
+                sourceId={topologyDetailEdge.from}
+                targetId={topologyDetailEdge.to}
+                relationType={topologyDetailEdge.relationshipType}
+                sourceKind={topologyDetailEdge.source}
+                surface="framed"
+                eyebrow={t('topology.edge.evidence.title')}
+                title={topologyDetailEdge.evidence.title}
+                subtitle={`${topologyDetailEdge.evidence.sourceLabel} · ${topologyDetailEdge.evidence.collectedBy}`}
+                boundary={topologyDetailEdge.evidence.boundary}
+                boundaryProps={{
+                  'data-topology-edge-evidence-boundary': 'roadmap-boundary',
+                  'data-topology-detail-boundary-owner': 'hertzbeat-ui-detail-boundary'
+                } as React.HTMLAttributes<HTMLDivElement>}
+                facts={buildTopologyEdgeDetailFacts(topologyDetailEdge, t, topologyDetailEdgeRenderWindowContext)}
+                actions={buildTopologyEdgeDetailActions(topologyDetailEdge, t)}
+                signalActions={buildTopologyEdgeSignalActions(topologyDetailEdge, t)}
+              />
+            </HzTopologyCompanionSection>
+          ) : null}
+          {primaryNode ? (
+            <HzTopologyCompanionSection
+              data-topology-companion-section="current-node"
+              data-topology-companion-section-collapsible="current-node"
+              sectionId="current-node"
+              anchorId="topology-companion-current-node"
+              density="graph-first"
+              collapsible
+              collapsed={topologyCompanionCollapsedSections['current-node'] ?? false}
+              collapseLabel={t('topology.companion.section.collapse')}
+              expandLabel={t('topology.companion.section.expand')}
+              onCollapsedChange={collapsed => handleTopologyCompanionCollapsedChange('current-node', collapsed)}
+            >
+              <HzTopologyDetailDrawer
+                data-topology-current-entity-panel={primaryNode.id}
+                data-topology-current-entity-panel-owner="hertzbeat-ui-detail-drawer"
+                data-topology-current-entity-panel-surface-owner="hertzbeat-ui-detail-surface"
+                data-topology-current-entity-panel-hover-continuity="selected-node-survives-edge-hover"
+                data-topology-current-entity-panel-hover-invariants="selected-node-detail edge-hover-path-summary-temporary pointer-leave-clears-hover no-url-change no-remount no-refit viewport-preserved render-key-stable"
+                data-topology-current-entity-panel-rail-scroll-continuity="selected-node-retakes-companion-first-viewport"
+                data-topology-current-entity-panel-rail-scroll-invariants="manual-active-resets-scroll-active active-section-scroll collapse-state-preserved no-url-change no-remount no-refit viewport-preserved render-key-stable"
+                data-topology-current-entity-panel-rail-fit="compact-side-rail"
+                data-topology-current-entity-panel-rail-fit-invariants="bounded-block internal-scroll no-page-scroll no-rail-overflow scan-first-viewport"
+                data-topology-current-entity-panel-signal-entry="header-dock"
+                data-topology-current-entity-panel-signal-entry-invariants="metrics-logs-traces-before-long-evidence sticky-with-node-context no-extra-navigation"
+                data-topology-current-entity-panel-scroll-reset="identity-change"
+                data-topology-current-entity-panel-scroll-reset-invariants="identity-change scroll-top-zero no-page-scroll no-rail-scroll no-url-change"
+                data-topology-current-entity-neighbor-owner="hertzbeat-ui-detail-neighbor-evidence"
+                data-topology-current-entity-upstream-count={currentNodeNeighborEvidence?.upstreamNodeIds.length ?? 0}
+                data-topology-current-entity-downstream-count={currentNodeNeighborEvidence?.downstreamNodeIds.length ?? 0}
+                data-topology-current-entity-upstream-node-ids={currentNodeNeighborEvidence?.upstreamNodeIds.join(' ') || 'none'}
+                data-topology-current-entity-downstream-node-ids={currentNodeNeighborEvidence?.downstreamNodeIds.join(' ') || 'none'}
+                data-topology-current-entity-group-by={map.filterContext.groupBy}
+                data-topology-current-entity-source-kind={map.filterContext.sourceKind ?? 'all'}
+                data-topology-current-entity-view-mode={map.filterContext.viewMode}
+                kind="node"
+                density="graph-first"
+                subjectId={primaryNode.id}
+                entityType={primaryNode.entityType}
+                sourceKind={primaryNode.source}
+                surface="framed"
+                eyebrow={t('topology.current-entity')}
+                title={primaryNode.label}
+                subtitle={`${primaryNode.entityId} · ${primaryNode.namespace} / ${primaryNode.environment}`}
+                boundary={t('topology.current-entity.boundary')}
+                boundaryProps={{
+                  'data-topology-current-entity-boundary-owner': 'hertzbeat-ui-detail-boundary'
+                } as React.HTMLAttributes<HTMLDivElement>}
+                facts={buildTopologyNodeDetailFacts(
+                  primaryNode,
+                  currentNodeNeighborEvidence ?? buildTopologyNodeNeighborEvidence(primaryNode, map.nodes, map.edges),
+                  t
+                )}
+                actions={buildTopologyNodeDetailActions(primaryNode, map.filterContext, map.apiDepth, t)}
+                signalActions={buildTopologyNodeSignalActions(primaryNode, map.filterContext, map.apiDepth, t)}
+                signalActionsLabel={t('topology.context-link.signals')}
+              />
+            </HzTopologyCompanionSection>
+          ) : null}
           <HzTopologyCompanionSection
             data-topology-companion-section="view-mode"
             sectionId="view-mode"
@@ -1738,38 +2226,41 @@ export default function TopologyPage({
             />
           </HzTopologyCompanionSection>
 
-          <HzTopologyCompanionSection
-            data-topology-companion-section="edge-red"
-            data-topology-companion-section-collapsible="edge-red"
-            sectionId="edge-red"
-            anchorId="topology-companion-edge-red"
-            density="graph-first"
-            collapsible
-            collapsed={topologyCompanionCollapsedSections['edge-red'] ?? false}
-            collapseLabel={t('topology.companion.section.collapse')}
-            expandLabel={t('topology.companion.section.expand')}
-            onCollapsedChange={collapsed => handleTopologyCompanionCollapsedChange('edge-red', collapsed)}
-          >
-            <HzTopologyMetricTable
-              data-topology-metric-table-owner="hertzbeat-ui"
-              data-topology-metric-table-scope="edge-red-companion"
-              data-topology-metric-table-boundary-owner="hertzbeat-ui-metric-table-boundary"
-              data-topology-metric-table-interaction-owner="hertzbeat-ui-metric-table-interaction"
-              data-topology-metric-table-selection-clear-owner="hertzbeat-ui-g6-hover-clear"
-              data-topology-metric-table-filter-behavior="in-page-no-route-change"
-              title={t('topology.metric-table.title')}
+          {topologyShouldRenderCompanionMetricTable ? (
+            <HzTopologyCompanionSection
+              data-topology-companion-section="edge-red"
+              data-topology-companion-section-collapsible="edge-red"
+              sectionId="edge-red"
+              anchorId="topology-companion-edge-red"
               density="graph-first"
-              rows={topologyMetricRows}
-              selectedRowId={topologyMetricSelectedRowId}
-              renderWindowFilter={topologyMetricWindowFilter}
-              onRenderWindowFilterChange={setTopologyMetricWindowFilter}
-              renderWindowCompanion={topologyMetricRenderWindowCompanion}
-              emptyLabel={t('topology.metric-table.empty')}
-              labels={topologyMetricTableLabels}
-              onRowSelect={handleTopologyMetricRowSelect}
-              boundary="framed"
-            />
-          </HzTopologyCompanionSection>
+              collapsible
+              collapsed={topologyCompanionCollapsedSections['edge-red'] ?? false}
+              collapseLabel={t('topology.companion.section.collapse')}
+              expandLabel={t('topology.companion.section.expand')}
+              onCollapsedChange={collapsed => handleTopologyCompanionCollapsedChange('edge-red', collapsed)}
+            >
+              <HzTopologyMetricTable
+                data-topology-metric-table-owner="hertzbeat-ui"
+                data-topology-metric-table-scope="edge-red-companion"
+                data-topology-metric-table-boundary-owner="hertzbeat-ui-metric-table-boundary"
+                data-topology-metric-table-interaction-owner="hertzbeat-ui-metric-table-interaction"
+                data-topology-metric-table-selection-clear-owner="hertzbeat-ui-g6-hover-clear"
+                data-topology-metric-table-filter-behavior="in-page-no-route-change"
+                title={t('topology.metric-table.title')}
+                density="graph-first"
+                rows={topologyMetricRows}
+                selectedRowId={topologyMetricSelectedRowId}
+                selectionSource={topologyLocalSelection.source}
+                renderWindowFilter={topologyMetricWindowFilter}
+                onRenderWindowFilterChange={setTopologyMetricWindowFilter}
+                renderWindowCompanion={topologyMetricRenderWindowCompanion}
+                emptyLabel={t('topology.metric-table.empty')}
+                labels={topologyMetricTableLabels}
+                onRowSelect={handleTopologyMetricRowSelect}
+                boundary="framed"
+              />
+            </HzTopologyCompanionSection>
+          ) : null}
 
           {map.impactTimeline.length > 0 ? (
             <HzTopologyCompanionSection
@@ -1807,102 +2298,9 @@ export default function TopologyPage({
             </HzTopologyCompanionSection>
           ) : null}
 
-          {topologyDetailEdge ? (
-            <HzTopologyCompanionSection
-              data-topology-companion-section="edge-detail"
-              data-topology-companion-section-collapsible="edge-detail"
-              sectionId="edge-detail"
-              anchorId="topology-companion-edge-detail"
-              density="graph-first"
-              collapsible
-              collapsed={topologyCompanionCollapsedSections['edge-detail'] ?? false}
-              collapseLabel={t('topology.companion.section.collapse')}
-              expandLabel={t('topology.companion.section.expand')}
-              onCollapsedChange={collapsed => handleTopologyCompanionCollapsedChange('edge-detail', collapsed)}
-            >
-              <HzTopologyDetailDrawer
-                data-topology-edge-evidence-panel={topologyDetailEdge.id}
-                data-topology-edge-evidence-window-owner="hertzbeat-ui-detail-drawer"
-                data-topology-edge-evidence-first-seen={topologyDetailEdge.evidence.firstSeen || 'none'}
-                data-topology-edge-evidence-last-seen={topologyDetailEdge.evidence.lastSeen || 'none'}
-                data-topology-edge-evidence-sample-trace-id={topologyDetailEdge.evidence.sampleTraceId || 'none'}
-                data-topology-edge-evidence-sample-span-id={topologyDetailEdge.evidence.sampleSpanId || 'none'}
-                data-topology-detail-drawer-owner="hertzbeat-ui-detail-drawer"
-                data-topology-detail-drawer-surface-owner="hertzbeat-ui-detail-surface"
-                kind="edge"
-                density="graph-first"
-                subjectId={topologyDetailEdge.id}
-                sourceId={topologyDetailEdge.from}
-                targetId={topologyDetailEdge.to}
-                relationType={topologyDetailEdge.relationshipType}
-                sourceKind={topologyDetailEdge.source}
-                surface="framed"
-                eyebrow={t('topology.edge.evidence.title')}
-                title={topologyDetailEdge.evidence.title}
-                subtitle={`${topologyDetailEdge.evidence.sourceLabel} · ${topologyDetailEdge.evidence.collectedBy}`}
-                boundary={topologyDetailEdge.evidence.boundary}
-                boundaryProps={{
-                  'data-topology-edge-evidence-boundary': 'roadmap-boundary',
-                  'data-topology-detail-boundary-owner': 'hertzbeat-ui-detail-boundary'
-                } as React.HTMLAttributes<HTMLDivElement>}
-                facts={buildTopologyEdgeDetailFacts(topologyDetailEdge, t)}
-                actions={buildTopologyEdgeDetailActions(topologyDetailEdge, t)}
-                signalActions={buildTopologyEdgeSignalActions(topologyDetailEdge, t)}
-              />
-            </HzTopologyCompanionSection>
-          ) : null}
-
-          {primaryNode ? (
-            <HzTopologyCompanionSection
-              data-topology-companion-section="current-node"
-              data-topology-companion-section-collapsible="current-node"
-              sectionId="current-node"
-              anchorId="topology-companion-current-node"
-              density="graph-first"
-              collapsible
-              collapsed={topologyCompanionCollapsedSections['current-node'] ?? false}
-              collapseLabel={t('topology.companion.section.collapse')}
-              expandLabel={t('topology.companion.section.expand')}
-              onCollapsedChange={collapsed => handleTopologyCompanionCollapsedChange('current-node', collapsed)}
-            >
-              <HzTopologyDetailDrawer
-                data-topology-current-entity-panel={primaryNode.id}
-                data-topology-current-entity-panel-owner="hertzbeat-ui-detail-drawer"
-                data-topology-current-entity-panel-surface-owner="hertzbeat-ui-detail-surface"
-                data-topology-current-entity-neighbor-owner="hertzbeat-ui-detail-neighbor-evidence"
-                data-topology-current-entity-upstream-count={currentNodeNeighborEvidence?.upstreamNodeIds.length ?? 0}
-                data-topology-current-entity-downstream-count={currentNodeNeighborEvidence?.downstreamNodeIds.length ?? 0}
-                data-topology-current-entity-upstream-node-ids={currentNodeNeighborEvidence?.upstreamNodeIds.join(' ') || 'none'}
-                data-topology-current-entity-downstream-node-ids={currentNodeNeighborEvidence?.downstreamNodeIds.join(' ') || 'none'}
-                data-topology-current-entity-group-by={map.filterContext.groupBy}
-                data-topology-current-entity-source-kind={map.filterContext.sourceKind ?? 'all'}
-                data-topology-current-entity-view-mode={map.filterContext.viewMode}
-                kind="node"
-                density="graph-first"
-                subjectId={primaryNode.id}
-                entityType={primaryNode.entityType}
-                sourceKind={primaryNode.source}
-                surface="framed"
-                eyebrow={t('topology.current-entity')}
-                title={primaryNode.label}
-                subtitle={`${primaryNode.entityId} · ${primaryNode.namespace} / ${primaryNode.environment}`}
-                boundary={t('topology.current-entity.boundary')}
-                boundaryProps={{
-                  'data-topology-current-entity-boundary-owner': 'hertzbeat-ui-detail-boundary'
-                } as React.HTMLAttributes<HTMLDivElement>}
-                facts={buildTopologyNodeDetailFacts(
-                  primaryNode,
-                  currentNodeNeighborEvidence ?? buildTopologyNodeNeighborEvidence(primaryNode, map.nodes, map.edges),
-                  t
-                )}
-                actions={buildTopologyNodeDetailActions(primaryNode, map.filterContext, map.apiDepth, t)}
-                signalActions={buildTopologyNodeSignalActions(primaryNode, map.filterContext, map.apiDepth, t)}
-                signalActionsLabel={t('topology.context-link.signals')}
-              />
-            </HzTopologyCompanionSection>
-          ) : null}
         </HzTopologyCompanionRail>
-        </HzTopologyWorkbenchSlot>
+          </HzTopologyWorkbenchSlot>
+        ) : null}
       </HzTopologyWorkbenchGrid>
 
       {topologyShouldShowRenderWindowMetricTable && topologyMetricRows.length > 0 ? (
@@ -1912,6 +2310,7 @@ export default function TopologyPage({
           data-topology-metric-table-placement="graph-bottom"
           data-topology-metric-table-visibility="render-window-companion"
           data-topology-metric-table-scope="edge-red-render-window"
+          data-topology-metric-table-dom-policy="single-interactive-table"
           data-topology-metric-table-boundary-owner="hertzbeat-ui-metric-table-boundary"
           data-topology-metric-table-interaction-owner="hertzbeat-ui-metric-table-interaction"
           data-topology-metric-table-selection-clear-owner="hertzbeat-ui-g6-hover-clear"
@@ -1920,6 +2319,7 @@ export default function TopologyPage({
           density="graph-first"
           rows={topologyMetricRows}
           selectedRowId={topologyMetricSelectedRowId}
+          selectionSource={topologyLocalSelection.source}
           renderWindowFilter={topologyMetricWindowFilter}
           onRenderWindowFilterChange={setTopologyMetricWindowFilter}
           renderWindowCompanion={topologyMetricRenderWindowCompanion}
@@ -1930,7 +2330,7 @@ export default function TopologyPage({
         />
       ) : null}
 
-      {map.faultContextRows.length > 0 ? (
+      {topologyHasRenderableGraph && map.faultContextRows.length > 0 ? (
         <HzTopologyEvidenceList
           data-topology-fault-context="incoming-evidence"
           data-topology-fault-context-owner="hertzbeat-ui-evidence-list"
@@ -1950,30 +2350,33 @@ export default function TopologyPage({
         />
       ) : null}
 
-      <HzTopologyGroupPanel
-        data-topology-group-panel="large-graph-grouping"
-        data-topology-group-panel-owner="hertzbeat-ui-group-panel"
-        data-topology-group-panel-boundary-owner="hertzbeat-ui-group-panel-boundary"
-        title={t('topology.group-panel.title')}
-        copy={t('topology.group-panel.copy')}
-        groupByLabel={t('topology.group-panel.group-by')}
-        boundary="framed"
-        items={topologyGroupPanelItems}
-        actions={[
-          { id: 'clear-group', href: '/topology', label: t('topology.group-panel.clear-group') },
-          { id: 'open-table', href: '#topology-metric-table', label: t('topology.group-panel.open-table') }
-        ]}
-      />
+      {topologyHasRenderableGraph ? (
+        <HzTopologyGroupPanel
+          data-topology-group-panel="large-graph-grouping"
+          data-topology-group-panel-owner="hertzbeat-ui-group-panel"
+          data-topology-group-panel-boundary-owner="hertzbeat-ui-group-panel-boundary"
+          title={t('topology.group-panel.title')}
+          copy={t('topology.group-panel.copy')}
+          groupByLabel={t('topology.group-panel.group-by')}
+          boundary="framed"
+          items={topologyGroupPanelItems}
+          actions={[
+            { id: 'clear-group', href: '/topology', label: t('topology.group-panel.clear-group') },
+            { id: 'open-table', href: '#topology-metric-table', label: t('topology.group-panel.open-table') }
+          ]}
+        />
+      ) : null}
 
       {topologyInvestigationEdge && topologyHoverFromNode && topologyHoverToNode ? (
         <HzTopologyPathSummary
           data-topology-path-summary="selected-edge-context"
           data-topology-path-summary-owner="hertzbeat-ui-path-summary"
           data-topology-path-summary-boundary-owner="hertzbeat-ui-path-summary-boundary"
-          title={t('topology.path-summary.title')}
+          title={topologyPathSummaryTitle}
           boundary="section"
-          selectedEdgeId={topologyInvestigationEdge.id}
-          hoveredEdgeId={topologyInvestigationEdge.id}
+          interactionState={topologyPathSummaryInteractionState}
+          selectedEdgeId={topologyCanvasSelectedEdgeId}
+          hoveredEdgeId={topologyG6HoveredEdgeId}
           sourceId={topologyHoverFromNode.id}
           targetId={topologyHoverToNode.id}
           relationType={topologyInvestigationEdge.relationshipType}

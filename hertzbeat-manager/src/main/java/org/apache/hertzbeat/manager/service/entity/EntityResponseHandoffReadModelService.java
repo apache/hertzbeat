@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityOpsSummaryInfo;
+import org.apache.hertzbeat.common.observability.dto.entity.EntitySignalEvidenceBundle;
 import org.apache.hertzbeat.common.observability.dto.evidence.LogEvidence;
 import org.apache.hertzbeat.common.observability.dto.evidence.MetricEvidence;
 import org.apache.hertzbeat.common.observability.dto.evidence.TraceEvidence;
@@ -49,13 +50,11 @@ public class EntityResponseHandoffReadModelService {
                                                             ObservedEntityContext entityContext,
                                                             List<SingleAlert> activeAlerts,
                                                             List<Monitor> monitors,
-                                                            EntityLogSummaryInfo logSummary,
-                                                            EntityTraceSummaryDto traceSummary,
-                                                            List<MetricEvidence> metricEvidence,
-                                                            List<LogEvidence> logEvidence,
-                                                            List<TraceEvidence> traceEvidence,
-                                                            List<EntityTraceQueryHintDto> traceQueryHints,
+                                                            EntitySignalEvidenceBundle signalEvidence,
                                                             EntityOpsSummaryInfo opsSummary) {
+        EntitySignalEvidenceBundle safeEvidence = signalEvidence == null
+                ? new EntitySignalEvidenceBundle()
+                : signalEvidence;
         return entityObservabilityGateway.buildEntityResponseHandoffs(new EntityResponseHandoffsRequest(
                 "/entities/" + entityId,
                 entityObservabilityGateway.buildEntityReturnLabel(entityContext),
@@ -67,16 +66,34 @@ public class EntityResponseHandoffReadModelService {
                 entityContext,
                 activeAlerts,
                 monitors,
-                logSummary,
-                traceSummary,
-                metricEvidence,
-                logEvidence,
-                traceEvidence,
-                traceQueryHints,
+                safeEvidence.getLogSummary(),
+                safeEvidence.getTraceSummary(),
+                safeEvidence.getMetricEvidence(),
+                safeEvidence.getLogEvidence(),
+                safeEvidence.getTraceEvidence(),
+                safeEvidence.getTraceQueryHints(),
+                safeEvidence,
                 opsSummary != null && opsSummary.isOwnerReady(),
                 opsSummary != null && opsSummary.isRunbookReady(),
                 opsSummary != null && opsSummary.isRelationReady(),
                 opsSummary != null && opsSummary.isTelemetryReady()
         ));
+    }
+
+    public EntityResponseHandoffsInfo buildResponseHandoffs(long entityId,
+                                                            ObservedEntityContext entityContext,
+                                                            List<SingleAlert> activeAlerts,
+                                                            List<Monitor> monitors,
+                                                            EntityLogSummaryInfo logSummary,
+                                                            EntityTraceSummaryDto traceSummary,
+                                                            List<MetricEvidence> metricEvidence,
+                                                            List<LogEvidence> logEvidence,
+                                                            List<TraceEvidence> traceEvidence,
+                                                            List<EntityTraceQueryHintDto> traceQueryHints,
+                                                            EntityOpsSummaryInfo opsSummary) {
+        return buildResponseHandoffs(entityId, entityContext, activeAlerts, monitors,
+                new EntitySignalEvidenceBundle(logSummary, traceSummary, metricEvidence, logEvidence, traceEvidence,
+                        null, traceQueryHints, null, null),
+                opsSummary);
     }
 }

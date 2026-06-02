@@ -27,6 +27,7 @@ import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -77,8 +78,18 @@ public class EntityWorkspaceAccessService {
         return filterEntitiesByRequestWorkspace(entities, normalizedWorkspaceId);
     }
 
+    public List<ObserveEntity> findAccessibleEntities(String requestWorkspaceId, Pageable pageable) {
+        String normalizedWorkspaceId = normalizeWorkspaceId(requestWorkspaceId);
+        List<ObserveEntity> entities = entityWorkspaceQueryService.findEntities(normalizedWorkspaceId, pageable);
+        return filterEntitiesByRequestWorkspace(entities, normalizedWorkspaceId);
+    }
+
     public List<ObserveEntity> findAccessibleEntitiesForRequestWorkspace(Sort sort) {
         return findAccessibleEntities(currentRequestWorkspaceId(), sort);
+    }
+
+    public List<ObserveEntity> findAccessibleEntitiesForRequestWorkspace(Pageable pageable) {
+        return findAccessibleEntities(currentRequestWorkspaceId(), pageable);
     }
 
     public Optional<ObserveEntity> findEntityById(long entityId) {

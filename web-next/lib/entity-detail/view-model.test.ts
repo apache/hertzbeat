@@ -64,6 +64,50 @@ describe('entity detail view model', () => {
     ]);
   });
 
+  it('prefers the shared signal evidence bundle over scattered signal fields', () => {
+    const detail = {
+      evidenceSummary: { downMonitorCount: 0 },
+      monitorSummary: { totalBoundMonitors: 1 },
+      logSummary: { hintCount: 1, preferredQueryTitle: 'stale log context' },
+      traceSummary: { recentTraceCount: 1, recentErrorTraceCount: 0, latestTraceId: 'stale-trace' },
+      unifiedEvidenceSummary: {
+        activeSignalCount: 1,
+        metricsActive: true,
+        logsActive: false,
+        tracesActive: false,
+        metricEvidenceCount: 1,
+        logEvidenceCount: 0,
+        traceEvidenceCount: 0
+      },
+      signalEvidence: {
+        logSummary: { hintCount: 5, preferredQueryTitle: 'shared log context' },
+        traceSummary: { recentTraceCount: 8, recentErrorTraceCount: 2, latestTraceId: 'shared-trace' },
+        unifiedEvidenceSummary: {
+          activeSignalCount: 3,
+          metricsActive: true,
+          logsActive: true,
+          tracesActive: true,
+          metricEvidenceCount: 2,
+          logEvidenceCount: 5,
+          traceEvidenceCount: 8
+        }
+      }
+    } as any;
+
+    expect(buildSummaryRows(detail)).toEqual([
+      { title: 'Related metrics', copy: '1 bound monitors', meta: 'No abnormal monitors', tone: 'success' },
+      { title: 'Related logs', copy: '5 query hints available', meta: 'shared log context', tone: 'warning' },
+      { title: 'Related traces', copy: '8 recent traces', meta: '2 error traces', tone: 'danger' }
+    ]);
+    expect(buildUnifiedEvidenceRows(detail)[3]).toEqual({
+      title: 'Traces / RED',
+      copy: '8 recent traces',
+      meta: '2 error traces',
+      tone: 'danger'
+    });
+    expect(buildEntityContextHandoffLinks(detail, 'last-1h')[1].copy).toContain('traceId=shared-trace');
+  });
+
   it('builds the lightweight HertzBeat service health model without heavy SLO authoring', () => {
     expect(
       buildEntityHealthModel({

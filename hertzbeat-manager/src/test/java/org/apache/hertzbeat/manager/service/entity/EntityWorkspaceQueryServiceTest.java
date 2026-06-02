@@ -89,6 +89,32 @@ class EntityWorkspaceQueryServiceTest {
     }
 
     @Test
+    void findEntitiesRoutesWorkspaceAndUnscopedPagedLookup() {
+        PageRequest pageable = PageRequest.of(0, 12, Sort.by(Sort.Order.desc("gmtUpdate"), Sort.Order.desc("id")));
+        ObserveEntity checkout = ObserveEntity.builder()
+                .id(411L)
+                .name("checkout")
+                .workspaceId("team-a")
+                .build();
+        ObserveEntity billing = ObserveEntity.builder()
+                .id(412L)
+                .name("billing")
+                .workspaceId("team-b")
+                .build();
+        Page<ObserveEntity> persistedPage = new PageImpl<>(List.of(checkout, billing), pageable, 2);
+        when(observeEntityDao.findAllByWorkspaceId("team-a", pageable)).thenReturn(List.of(checkout));
+        when(observeEntityDao.findAll(pageable)).thenReturn(persistedPage);
+
+        List<ObserveEntity> teamEntities = entityWorkspaceQueryService.findEntities("team-a", pageable);
+        List<ObserveEntity> allEntities = entityWorkspaceQueryService.findEntities(null, pageable);
+
+        assertEquals(List.of(checkout), teamEntities);
+        assertEquals(List.of(checkout, billing), allEntities);
+        verify(observeEntityDao).findAllByWorkspaceId("team-a", pageable);
+        verify(observeEntityDao).findAll(pageable);
+    }
+
+    @Test
     void findEntityPageUsesPersistedCatalogRows() {
         PageRequest pageable = PageRequest.of(0, 8, Sort.by(Sort.Order.desc("gmtUpdate")));
         Specification<ObserveEntity> specification = (root, query, criteriaBuilder) -> query.where().getRestriction();

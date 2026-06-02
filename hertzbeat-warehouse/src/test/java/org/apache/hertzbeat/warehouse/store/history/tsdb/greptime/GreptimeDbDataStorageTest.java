@@ -353,6 +353,51 @@ class GreptimeDbDataStorageTest {
     }
 
     @Test
+    void testQueryLogsCanPushDownWorkspaceScopeWithPagination() {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
+            when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(createNativeLogRows());
+
+            greptimeDbDataStorage.queryLogsByMultipleConditionsWithPagination(
+                    1710000000000L, 1710000060000L, null, null, null, null, "checkout", 40, 20,
+                    Set.of("otelcol-contrib"), true, "team-a");
+
+            ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
+            String sql = sqlCaptor.getValue();
+            assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
+            assertTrue(sql.contains("timestamp <= to_timestamp_millis(1710000060000)"));
+            assertTrue(sql.contains("matches_term(body, 'checkout')"));
+            assertTrue(sql.contains("LOWER(service_name) NOT IN ('otelcol-contrib')"));
+            assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a'"));
+            assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a'"));
+            assertTrue(sql.contains("ORDER BY timestamp DESC LIMIT 20 OFFSET 40"));
+        }
+    }
+
+    @Test
+    void testCountLogsCanPushDownWorkspaceScope() {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
+            when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(List.of(Map.of("count", 7L)));
+
+            long count = greptimeDbDataStorage.countLogsByMultipleConditions(
+                    1710000000000L, 1710000060000L, null, null, null, null, null,
+                    Set.of(), false, "team-a");
+
+            assertEquals(7L, count);
+            ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
+            String sql = sqlCaptor.getValue();
+            assertTrue(sql.contains("SELECT COUNT(*) as count FROM hertzbeat_logs"));
+            assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a'"));
+            assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a'"));
+        }
+    }
+
+    @Test
     void testLogStatsUseGreptimeAggregates() {
         try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
             mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
@@ -384,6 +429,42 @@ class GreptimeDbDataStorageTest {
     }
 
     @Test
+    void testLogStatsCanPushDownWorkspaceScope() {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
+            when(greptimeSqlQueryExecutor.execute(anyString()))
+                    .thenReturn(List.of(Map.of(
+                            "totalcount", 9L,
+                            "fatalcount", 0L,
+                            "errorcount", 1L,
+                            "warncount", 2L,
+                            "infocount", 6L,
+                            "debugcount", 0L,
+                            "tracecount", 0L)));
+
+            Map<String, Long> result = greptimeDbDataStorage.countLogsBySeverityBuckets(
+                    1710000000000L, 1710000060000L, null, null, null, null, "checkout",
+                    Set.of("otelcol-contrib"), true, "team-a");
+
+            assertEquals(9L, result.get("totalCount"));
+            assertEquals(1L, result.get("errorCount"));
+            ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
+            String sql = sqlCaptor.getValue();
+            assertTrue(sql.contains("COUNT(*) as totalCount"));
+            assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
+            assertTrue(sql.contains("timestamp <= to_timestamp_millis(1710000060000)"));
+            assertTrue(sql.contains("matches_term(body, 'checkout')"));
+            assertTrue(sql.contains("service_name IS NOT NULL"));
+            assertTrue(sql.contains("LOWER(service_name) NOT IN ('otelcol-contrib')"));
+            assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a'"));
+            assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a'"));
+            assertFalse(sql.contains("ORDER BY"));
+        }
+    }
+
+    @Test
     void testLogTraceCoverageUsesGreptimeAggregates() {
         try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
             mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
@@ -411,6 +492,38 @@ class GreptimeDbDataStorageTest {
     }
 
     @Test
+    void testLogTraceCoverageCanPushDownWorkspaceScope() {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
+            when(greptimeSqlQueryExecutor.execute(anyString()))
+                    .thenReturn(List.of(Map.of(
+                            "totalcount", 12L,
+                            "withtrace", 7L,
+                            "withspan", 6L,
+                            "withbothtraceandspan", 5L)));
+
+            Map<String, Long> result = greptimeDbDataStorage.countLogTraceCoverage(
+                    1710000000000L, 1710000060000L, null, null, null, null, "checkout",
+                    Set.of("otelcol-contrib"), true, "team-a");
+
+            assertEquals(7L, result.get("withTrace"));
+            assertEquals(5L, result.get("withoutTrace"));
+            assertEquals(5L, result.get("withBothTraceAndSpan"));
+            ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
+            String sql = sqlCaptor.getValue();
+            assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
+            assertTrue(sql.contains("timestamp <= to_timestamp_millis(1710000060000)"));
+            assertTrue(sql.contains("matches_term(body, 'checkout')"));
+            assertTrue(sql.contains("LOWER(service_name) NOT IN ('otelcol-contrib')"));
+            assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a'"));
+            assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a'"));
+            assertFalse(sql.contains("ORDER BY timestamp DESC"));
+        }
+    }
+
+    @Test
     void testLogTrendUsesGreptimeHourAggregate() {
         try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
             mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
@@ -428,6 +541,34 @@ class GreptimeDbDataStorageTest {
             assertTrue(sqlCaptor.getValue().contains("date_bin('1 hour', timestamp) as hour"));
             assertTrue(sqlCaptor.getValue().contains("GROUP BY hour"));
             assertFalse(sqlCaptor.getValue().contains("SELECT timestamp, trace_id"));
+        }
+    }
+
+    @Test
+    void testLogTrendCanPushDownWorkspaceScope() {
+        try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
+            mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
+            greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
+            when(greptimeSqlQueryExecutor.execute(anyString()))
+                    .thenReturn(List.of(Map.of("hour", 1777467600000000000L, "count", 12L)));
+
+            Map<String, Long> result = greptimeDbDataStorage.countLogsByHour(
+                    1710000000000L, 1710000060000L, null, null, null, null, "checkout",
+                    Set.of("otelcol-contrib"), true, "team-a");
+
+            assertEquals(12L, result.values().iterator().next());
+            ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
+            String sql = sqlCaptor.getValue();
+            assertTrue(sql.contains("date_bin('1 hour', timestamp) as hour"));
+            assertTrue(sql.contains("timestamp >= to_timestamp_millis(1710000000000)"));
+            assertTrue(sql.contains("timestamp <= to_timestamp_millis(1710000060000)"));
+            assertTrue(sql.contains("matches_term(body, 'checkout')"));
+            assertTrue(sql.contains("LOWER(service_name) NOT IN ('otelcol-contrib')"));
+            assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]') = 'team-a'"));
+            assertTrue(sql.contains("json_get_string(resource_attributes, '$[\"workspace.id\"]') = 'team-a'"));
+            assertTrue(sql.contains("GROUP BY hour ORDER BY hour ASC"));
+            assertFalse(sql.contains("SELECT timestamp, trace_id"));
         }
     }
 

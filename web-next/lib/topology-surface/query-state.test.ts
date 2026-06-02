@@ -24,6 +24,8 @@ describe('topology query state', () => {
         viewMode: ['resource-dependency', 'service-call'],
         sourceKind: ['database-middleware-connection', 'alert-impact'],
         groupBy: ['source-kind', 'environment'],
+        scaleProof: ['greptime-real', 'ignored-scale-proof'],
+        search: ['Service 420', 'ignored-search'],
         edgeId: ['svc-checkout--res-orders-db', 'ignored-edge'],
         returnTo: ['/alert?status=firing&returnLabel=告警']
       })
@@ -47,6 +49,8 @@ describe('topology query state', () => {
       viewMode: 'resource-dependency',
       sourceKind: 'database-middleware-connection',
       groupBy: 'source-kind',
+      scaleProof: 'greptime-real',
+      search: 'Service 420',
       edgeId: 'svc-checkout--res-orders-db',
       returnTo: '/alert?status=firing'
     });

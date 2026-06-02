@@ -98,6 +98,9 @@
 
 ## 🐕 Quick Start   
 
+- Community alpha preview users can start from [docs/alpha-preview.md](docs/alpha-preview.md) for the current
+  Next.js frontend, entity-centered observability, local smoke, and known alpha limitations.
+
 - If you wish to deploy HertzBeat locally, please refer to the following Deployment Documentation for instructions.
 
 ### 🍞 Install HertzBeat   

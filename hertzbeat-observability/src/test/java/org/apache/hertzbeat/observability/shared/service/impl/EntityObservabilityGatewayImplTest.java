@@ -41,6 +41,7 @@ import org.apache.hertzbeat.common.observability.dto.entity.EntityMonitorSummary
 import org.apache.hertzbeat.common.observability.dto.entity.EntityNextActionInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityObservabilityDetailBundle;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityOpsSummaryInfo;
+import org.apache.hertzbeat.common.observability.dto.entity.EntitySignalEvidenceBundle;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusPageSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityTriageRecommendation;
@@ -731,5 +732,58 @@ class EntityObservabilityGatewayImplTest {
         assertEquals("trace-1", handoffs.getTraces().getSearch());
         assertEquals("checkout-system", handoffs.getDiscovery().getSystem());
         assertEquals("ownership", handoffs.getEditor().getFocus());
+    }
+
+    @Test
+    void buildEntityResponseHandoffsShouldPreferSharedSignalEvidenceBundle() {
+        ObserveEntity entity = new ObserveEntity();
+        entity.setName("checkout");
+        EntityIdentity identity = EntityIdentity.builder()
+                .identityKey("service.name")
+                .identityValue("checkout")
+                .build();
+        ObservedEntityContext entityContext = ObservedEntityContext.from(entity, List.of(identity));
+        EntityTraceSummaryDto staleTraceSummary = new EntityTraceSummaryDto(1, 0, 10L, true, "stale-trace");
+        EntityTraceSummaryDto bundleTraceSummary = new EntityTraceSummaryDto(2, 1, 20L, true, "bundle-trace");
+        EntitySignalEvidenceBundle signalEvidence = new EntitySignalEvidenceBundle(
+                new EntityLogSummaryInfo(1, "bundle", "resource", Map.of(), List.of("bundle-log"), "bundle-log"),
+                bundleTraceSummary,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                null,
+                null
+        );
+        EntityResponseHandoffsRequest request = new EntityResponseHandoffsRequest(
+                "/entities/1",
+                "结账服务",
+                "team-a",
+                "checkout-system",
+                "prod",
+                "manual",
+                entityContext,
+                List.of(),
+                List.of(),
+                new EntityLogSummaryInfo(1, "stale", "resource", Map.of(), List.of("stale-log"), "stale-log"),
+                staleTraceSummary,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                signalEvidence,
+                true,
+                true,
+                true,
+                true
+        );
+
+        EntityResponseHandoffsInfo handoffs = gateway.buildEntityResponseHandoffs(request);
+
+        assertEquals("bundle-trace", handoffs.getLogs().getTraceId());
+        assertEquals("bundle-trace", handoffs.getLogs().getSearch());
+        assertEquals("bundle-trace", handoffs.getTraces().getTraceId());
+        assertEquals("bundle-trace", handoffs.getTraces().getSearch());
     }
 }

@@ -670,7 +670,8 @@ describe('topology surface config', () => {
       focus: 'context-muted'
     });
     expect(model.nodes.find(node => node.id === 'svc-checkout')).toMatchObject({ focus: 'related' });
-    expect(model.nodes.find(node => node.id === 'svc-frontend')).toMatchObject({ focus: 'related' });
+    expect(model.nodes.find(node => node.id === 'res-orders-db')).toMatchObject({ focus: 'related' });
+    expect(model.nodes.find(node => node.id === 'svc-frontend')).toMatchObject({ focus: 'dimmed' });
     expect(model.nodes.find(node => node.id === 'k8s-checkout-workload')).toMatchObject({ focus: 'dimmed' });
   });
 

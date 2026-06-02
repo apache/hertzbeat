@@ -250,6 +250,43 @@ class TraceCallTopologyQueryServiceTest {
     }
 
     @Test
+    void returnsEmptyWhenRawTraceFallbackTimesOutAfterServiceGraphHasNoEdges() throws InterruptedException {
+        TraceCallTopologyQueryService boundedService = new TraceCallTopologyQueryService(
+                traceQueryRepository,
+                entityIdentityQueryService,
+                entityWorkspaceAccessService,
+                Duration.ofMillis(25));
+        ObserveEntity checkout = entity(10L, "checkout-api", "commerce", "prod");
+        CountDownLatch releaseRawTraceQuery = new CountDownLatch(1);
+        when(entityIdentityQueryService.findIdentities(10L)).thenReturn(List.of(
+                identity(10L, "service.name", "checkout-api")));
+        when(traceQueryRepository.queryTraceServiceGraphRows(
+                eq(1500), eq(1710000000000L), eq(1710003600000L), eq("prod"),
+                argThat(serviceNames -> serviceNames != null && serviceNames.contains("checkout-api")),
+                eq(true)))
+                .thenReturn(List.of());
+        when(traceQueryRepository.queryRecentTraceRows(1500, 1710000000000L, 1710003600000L, null, "prod", true))
+                .thenAnswer(invocation -> {
+                    releaseRawTraceQuery.await(5, TimeUnit.SECONDS);
+                    return List.of(traceRow("trace-late", "root", null, "GET /checkout",
+                            "checkout-api", "STATUS_CODE_OK", 20D));
+                });
+
+        long startedAt = System.nanoTime();
+        TraceCallTopologyReadModel readModel;
+        try {
+            readModel = boundedService.findTraceCallEdges(
+                    List.of(checkout), "prod", 1710000000000L, 1710003600000L);
+        } finally {
+            releaseRawTraceQuery.countDown();
+        }
+
+        assertTrue(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt) < 1000);
+        assertTrue(readModel.entityById().isEmpty());
+        assertTrue(readModel.edges().isEmpty());
+    }
+
+    @Test
     void pushesSeedServiceScopeIntoGreptimeServiceGraphAggregation() {
         ObserveEntity checkout = entity(10L, "Checkout API", "commerce", "prod");
         ObserveEntity payment = entity(20L, "Payment API", "commerce", "prod");
@@ -323,6 +360,48 @@ class TraceCallTopologyQueryServiceTest {
                 eq(false));
         verify(traceQueryRepository, never()).queryRecentTraceRows(
                 1500, 1710000000000L, 1710003600000L, null, "prod", false);
+    }
+
+    @Test
+    void derivesDefaultOverviewServiceGraphWithoutSeedScope() {
+        ObserveEntity gateway = entity(10L, "edge-gateway", "scale-mix", "prod");
+        ObserveEntity domain = entity(20L, "domain-00", "scale-mix", "prod");
+        ObserveEntity service = entity(30L, "svc-00-000", "scale-mix", "prod");
+        when(traceQueryRepository.queryTraceServiceGraphRows(
+                eq(1500), eq(1710000000000L), eq(1710003600000L), eq("prod"),
+                argThat(serviceNames -> serviceNames != null && serviceNames.isEmpty()),
+                eq(true)))
+                .thenReturn(List.of(
+                        serviceGraphRow("edge-gateway", "domain-00", 12L, 0L, 75D, 42D,
+                                "trace-star", "span-domain", "GET /domain",
+                                "2026-05-20T04:01:00Z", "2026-05-20T04:08:00Z"),
+                        serviceGraphRow("domain-00", "svc-00-000", 124L, 1L, 95D, 54D,
+                                "trace-mesh", "span-service", "CALL svc-00-000",
+                                "2026-05-20T04:02:00Z", "2026-05-20T04:09:00Z")));
+        when(entityIdentityQueryService.findMatchingIdentities(argThat(keys ->
+                keys != null && keys.contains("service.name")), argThat(values ->
+                values != null && values.containsAll(Set.of("edge gateway", "domain 00", "svc 00 000")))))
+                .thenReturn(List.of(
+                        identity(10L, "service.name", "edge-gateway"),
+                        identity(20L, "service.name", "domain-00"),
+                        identity(30L, "service.name", "svc-00-000")));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
+                ids != null && ids.containsAll(Set.of(10L, 20L, 30L)))))
+                .thenReturn(List.of(gateway, domain, service));
+
+        TraceCallTopologyReadModel readModel = traceCallTopologyQueryService.findTraceCallEdgesForOverview(
+                "prod", 1710000000000L, 1710003600000L, true);
+
+        assertEquals(Set.of(10L, 20L, 30L), readModel.entityById().keySet());
+        assertEquals(2, readModel.edges().size());
+        assertEquals(10L, readModel.edges().get(0).sourceEntityId());
+        assertEquals(20L, readModel.edges().get(0).targetEntityId());
+        assertEquals(20L, readModel.edges().get(1).sourceEntityId());
+        assertEquals(30L, readModel.edges().get(1).targetEntityId());
+        assertEquals(124L, readModel.edges().get(1).redMetrics().requestCount());
+        assertEquals(1L, readModel.edges().get(1).redMetrics().errorCount());
+        verify(traceQueryRepository, never()).queryRecentTraceRows(
+                1500, 1710000000000L, 1710003600000L, null, "prod", true);
     }
 
     @Test

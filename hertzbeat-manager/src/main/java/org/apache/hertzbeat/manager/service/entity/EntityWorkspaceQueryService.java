@@ -52,6 +52,13 @@ public class EntityWorkspaceQueryService {
         return observeEntityDao.findAll(sort);
     }
 
+    public List<ObserveEntity> findEntities(String workspaceId, Pageable pageable) {
+        if (StringUtils.hasText(workspaceId)) {
+            return observeEntityDao.findAllByWorkspaceId(workspaceId, pageable);
+        }
+        return observeEntityDao.findAll(pageable).getContent();
+    }
+
     public Page<ObserveEntity> findEntityPage(Specification<ObserveEntity> specification, Pageable pageable) {
         return observeEntityDao.findAll(specification, pageable);
     }

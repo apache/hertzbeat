@@ -1,5 +1,5 @@
 import React from 'react';
-import { HzLocaleMenuOption } from '@hertzbeat/ui';
+import { HzLocaleMenuOption } from '@hertzbeat/ui/shell';
 import { useI18n } from '../providers/i18n-provider';
 import { cn } from '../../lib/utils';
 import type { LOCALES, LocaleCode } from '../../lib/i18n';

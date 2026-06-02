@@ -279,6 +279,41 @@ class LogQueryControllerTest {
     }
 
     @Test
+    void testListLogsPushesWorkspacePaginationIntoStorageWhenSupported() throws Exception {
+        LogEntry teamAlphaLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("team-a checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "hertzbeat.workspace_id", "team-a")))
+                .build();
+
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"))).thenReturn(41L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(40), eq(20), anySet(), eq(false), eq("team-a")))
+                .thenReturn(List.of(teamAlphaLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("pageIndex", "2")
+                        .param("pageSize", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(41))
+                .andExpect(jsonPath("$.data.content[0].body").value("team-a checkout log"));
+
+        verify(historyDataReader).countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"));
+        verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(40), eq(20), anySet(), eq(false), eq("team-a"));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
     void testListLogsDoesNotLeakUnscopedTotalWhenWorkspacePageAlreadyMatches() throws Exception {
         LogEntry teamAlphaLog = LogEntry.builder()
                 .timeUnixNano(1734005477630000000L)
@@ -301,6 +336,33 @@ class LogQueryControllerTest {
                 .andExpect(jsonPath("$.data.totalElements").value(1))
                 .andExpect(jsonPath("$.data.content[0].body").value("team-a checkout log"));
         verify(historyDataReader, never()).countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testOverviewStatsPushesWorkspaceAggregateIntoStorageWhenSupported() throws Exception {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"))).thenReturn(java.util.Map.of(
+                        "totalCount", 3L,
+                        "infoCount", 2L,
+                        "errorCount", 1L,
+                        "fatalCount", 0L,
+                        "warnCount", 0L,
+                        "debugCount", 0L,
+                        "traceCount", 0L
+                ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(3))
+                .andExpect(jsonPath("$.data.infoCount").value(2))
+                .andExpect(jsonPath("$.data.errorCount").value(1));
+
+        verify(historyDataReader).countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
                 any(), any(), any(), any());
     }
 
@@ -524,6 +586,30 @@ class LogQueryControllerTest {
     }
 
     @Test
+    void testTraceCoverageStatsPushesWorkspaceAggregateIntoStorageWhenSupported() throws Exception {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.countLogTraceCoverage(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"))).thenReturn(java.util.Map.of(
+                        "withTrace", 5L,
+                        "withoutTrace", 2L,
+                        "withSpan", 4L,
+                        "withBothTraceAndSpan", 3L
+                ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/trace-coverage"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.traceCoverage.withTrace").value(5))
+                .andExpect(jsonPath("$.data.traceCoverage.withoutTrace").value(2))
+                .andExpect(jsonPath("$.data.traceCoverage.withBothTraceAndSpan").value(3));
+
+        verify(historyDataReader).countLogTraceCoverage(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
     void testTrendStats() throws Exception {
         // Create logs with timestamps that fall into different hours
         List<LogEntry> mockLogs = Arrays.asList(
@@ -576,6 +662,24 @@ class LogQueryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.hourlyStats['2026-04-29 21:00']").value(12));
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void testTrendStatsPushesWorkspaceAggregateIntoStorageWhenSupported() throws Exception {
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        when(historyDataReader.countLogsByHour(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a")))
+                .thenReturn(java.util.Map.of("2026-04-29 21:00", 12L));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/trend"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.hourlyStats['2026-04-29 21:00']").value(12));
+
+        verify(historyDataReader).countLogsByHour(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq("team-a"));
         verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(),
                 any(), any(), any(), any());
     }

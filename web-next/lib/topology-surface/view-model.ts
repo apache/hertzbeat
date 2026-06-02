@@ -242,6 +242,8 @@ export type TopologyRouteContext = SignalRouteContext & {
   hideInternal?: string;
   pageIndex?: string;
   pageSize?: string;
+  scaleProof?: string;
+  search?: string;
 };
 
 type EntityTopologyApiRedMetrics = Partial<Record<keyof TopologyRedMetrics, number | string | null | undefined>>;
@@ -622,7 +624,7 @@ function edgeMatchesViewMode(edge: TopologyServiceEdgeSeed, viewMode: TopologyVi
 
 function edgeMatchesSource(edge: TopologyServiceEdgeSeed, sourceKind: TopologySourceKind | undefined) {
   if (!sourceKind) return true;
-  if (sourceKind === 'alert-impact') return edge.alertImpact !== 'none';
+  if (sourceKind === 'alert-impact') return edge.source === 'alert-impact' || (edge.source !== 'otlp-trace-call' && edge.alertImpact !== 'none');
   return edge.source === sourceKind;
 }
 

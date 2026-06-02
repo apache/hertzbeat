@@ -1,5 +1,6 @@
 import React from 'react';
-import TopologyPage from './topology-page';
+import TopologyRouteClient from './topology-route-client';
+import TopologyRouteShell from './topology-route-shell';
 import { readTopologyRouteContext, type TopologySearchParams } from '../../lib/topology-surface/query-state';
 
 export default async function TopologyRoutePage({
@@ -9,5 +10,12 @@ export default async function TopologyRoutePage({
 } = {}) {
   const resolvedSearchParams = await searchParams;
   const routeContext = readTopologyRouteContext(resolvedSearchParams);
-  return <TopologyPage routeContext={routeContext} />;
+  return (
+    <>
+      <div id="topology-route-deferred-shell">
+        <TopologyRouteShell />
+      </div>
+      <TopologyRouteClient routeContext={routeContext} shellElementId="topology-route-deferred-shell" />
+    </>
+  );
 }

@@ -228,6 +228,195 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
     }
 
     @Override
+    public boolean supportsTraceOverviewRows() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsTraceIdOverviewRows() {
+        return true;
+    }
+
+    @Override
+    public Map<String, Object> queryTraceOverviewRows(Long start,
+                                                      Long end,
+                                                      Boolean errorOnly,
+                                                      String serviceName,
+                                                      String serviceNamespace,
+                                                      String environment,
+                                                      String workspaceId,
+                                                      Map<String, Set<String>> resourceIdentityFilters,
+                                                      Boolean hideInternal) {
+        String errorExpression = "SUM(CASE WHEN span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
+                + "THEN 1 ELSE 0 END)";
+        StringBuilder innerSql = new StringBuilder("SELECT trace_id, ")
+                .append("MIN(timestamp) AS trace_start_time, ")
+                .append(errorExpression)
+                .append(" AS error_span_count FROM ")
+                .append(TRACE_TABLE);
+        List<String> filters = new LinkedList<>();
+        if (start != null) {
+            filters.add("timestamp >= to_timestamp_millis(" + start + ")");
+        }
+        if (end != null) {
+            filters.add("timestamp <= to_timestamp_millis(" + end + ")");
+        }
+        if (StringUtils.hasText(serviceName)) {
+            filters.add("service_name = '" + escapeSql(serviceName) + "'");
+        }
+        if (StringUtils.hasText(serviceNamespace)) {
+            filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
+        }
+        if (StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())) {
+            String filter = environmentFilter(null, environment);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            String filter = workspaceFilter(null, workspaceId);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (!CollectionUtils.isEmpty(resourceIdentityFilters)) {
+            addResourceIdentityFilters(filters, null, resourceIdentityFilters, serviceName, serviceNamespace);
+        }
+        if (Boolean.TRUE.equals(hideInternal)) {
+            filters.add(SELF_TELEMETRY_SERVICE_FILTER);
+        }
+        if (!filters.isEmpty()) {
+            innerSql.append(" WHERE ").append(String.join(" AND ", filters));
+        }
+        innerSql.append(" GROUP BY trace_id");
+        if (Boolean.TRUE.equals(errorOnly)) {
+            innerSql.append(" HAVING ").append(errorExpression).append(" > 0");
+        }
+        String sql = "SELECT COUNT(*) AS total_trace_count, "
+                + "SUM(CASE WHEN error_span_count > 0 THEN 1 ELSE 0 END) AS error_trace_count, "
+                + "MAX(trace_start_time) AS latest_observed_at FROM ("
+                + innerSql
+                + ") trace_overview";
+        List<Map<String, Object>> rows = queryRows(sql);
+        return rows.isEmpty() ? Map.of() : rows.getFirst();
+    }
+
+    @Override
+    public Map<String, Object> queryTraceIdOverviewRows(String traceId,
+                                                        Long start,
+                                                        Long end,
+                                                        Boolean errorOnly,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        String workspaceId,
+                                                        Map<String, Set<String>> resourceIdentityFilters,
+                                                        Boolean hideInternal) {
+        String errorExpression = "SUM(CASE WHEN span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
+                + "THEN 1 ELSE 0 END)";
+        StringBuilder innerSql = buildTraceGroupedSql(start, end, serviceName, serviceNamespace, environment,
+                workspaceId, resourceIdentityFilters, hideInternal, errorExpression, traceId);
+        if (Boolean.TRUE.equals(errorOnly)) {
+            innerSql.append(" HAVING ").append(errorExpression).append(" > 0");
+        }
+        String sql = "SELECT COUNT(*) AS total_trace_count, "
+                + "SUM(CASE WHEN error_span_count > 0 THEN 1 ELSE 0 END) AS error_trace_count, "
+                + "MAX(trace_start_time) AS latest_observed_at FROM ("
+                + innerSql
+                + ") trace_id_overview";
+        List<Map<String, Object>> rows = queryRows(sql);
+        return rows.isEmpty() ? Map.of() : rows.getFirst();
+    }
+
+    @Override
+    public boolean supportsTraceSummaryRows() {
+        return true;
+    }
+
+    @Override
+    public Map<String, Object> queryTraceSummaryRows(Long start,
+                                                     Long end,
+                                                     String serviceName,
+                                                     String serviceNamespace,
+                                                     String environment,
+                                                     String workspaceId,
+                                                     Map<String, Set<String>> resourceIdentityFilters,
+                                                     Boolean hideInternal) {
+        String errorExpression = "SUM(CASE WHEN span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
+                + "THEN 1 ELSE 0 END)";
+        String groupedSql = buildTraceGroupedSql(start, end, serviceName, serviceNamespace, environment,
+                workspaceId, resourceIdentityFilters, hideInternal, errorExpression, null).toString();
+        String sql = "SELECT summary.total_trace_count, summary.error_trace_count, "
+                + "latest.trace_start_time AS latest_observed_at, latest.trace_id AS latest_trace_id "
+                + "FROM (SELECT COUNT(*) AS total_trace_count, "
+                + "SUM(CASE WHEN error_span_count > 0 THEN 1 ELSE 0 END) AS error_trace_count "
+                + "FROM ("
+                + groupedSql
+                + ") entity_trace_summary) summary "
+                + "LEFT JOIN (SELECT trace_id, trace_start_time FROM ("
+                + groupedSql
+                + ") entity_trace_latest ORDER BY trace_start_time DESC LIMIT 1) latest ON TRUE";
+        List<Map<String, Object>> rows = queryRows(sql);
+        return rows.isEmpty() ? Map.of() : rows.getFirst();
+    }
+
+    private StringBuilder buildTraceGroupedSql(Long start,
+                                               Long end,
+                                               String serviceName,
+                                               String serviceNamespace,
+                                               String environment,
+                                               String workspaceId,
+                                               Map<String, Set<String>> resourceIdentityFilters,
+                                               Boolean hideInternal,
+                                               String errorExpression,
+                                               String traceId) {
+        StringBuilder innerSql = new StringBuilder("SELECT trace_id, ")
+                .append("MIN(timestamp) AS trace_start_time, ")
+                .append(errorExpression)
+                .append(" AS error_span_count FROM ")
+                .append(TRACE_TABLE);
+        List<String> filters = new LinkedList<>();
+        if (StringUtils.hasText(traceId)) {
+            filters.add("trace_id = '" + escapeSql(traceId) + "'");
+        }
+        if (start != null) {
+            filters.add("timestamp >= to_timestamp_millis(" + start + ")");
+        }
+        if (end != null) {
+            filters.add("timestamp <= to_timestamp_millis(" + end + ")");
+        }
+        if (StringUtils.hasText(serviceName)) {
+            filters.add("service_name = '" + escapeSql(serviceName) + "'");
+        }
+        if (StringUtils.hasText(serviceNamespace)) {
+            filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
+        }
+        if (StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())) {
+            String filter = environmentFilter(null, environment);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            String filter = workspaceFilter(null, workspaceId);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (!CollectionUtils.isEmpty(resourceIdentityFilters)) {
+            addResourceIdentityFilters(filters, null, resourceIdentityFilters, serviceName, serviceNamespace);
+        }
+        if (Boolean.TRUE.equals(hideInternal)) {
+            filters.add(SELF_TELEMETRY_SERVICE_FILTER);
+        }
+        if (!filters.isEmpty()) {
+            innerSql.append(" WHERE ").append(String.join(" AND ", filters));
+        }
+        innerSql.append(" GROUP BY trace_id");
+        return innerSql;
+    }
+
+    @Override
     public List<Map<String, Object>> queryTraceServiceGraphRows(int limit,
                                                                 Long start,
                                                                 Long end,
@@ -275,14 +464,20 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         filters.add("LOWER(child.service_name) != LOWER(parent.service_name)");
         if (start != null) {
             filters.add("child.timestamp >= to_timestamp_millis(" + start + ")");
+            filters.add("parent.timestamp >= to_timestamp_millis(" + start + ")");
         }
         if (end != null) {
             filters.add("child.timestamp <= to_timestamp_millis(" + end + ")");
+            filters.add("parent.timestamp <= to_timestamp_millis(" + end + ")");
         }
         if (StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())) {
             String filter = environmentFilter("child", environment);
             if (StringUtils.hasText(filter)) {
                 filters.add(filter);
+            }
+            String parentFilter = environmentFilter("parent", environment);
+            if (StringUtils.hasText(parentFilter)) {
+                filters.add(parentFilter);
             }
         }
         String serviceScopeFilter = serviceGraphServiceScopeFilter(serviceNames);

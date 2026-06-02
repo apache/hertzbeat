@@ -117,6 +117,51 @@ class EntityTraceQueryServiceImplTest {
     }
 
     @Test
+    void buildEntityTraceSummaryUsesGreptimeAggregateWhenRepositorySupportsIt() {
+        long now = System.currentTimeMillis();
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        ObservedEntityContext entityContext = ObservedEntityContext.from(
+                ObserveEntity.builder().id(1L).type("service").name("checkout-service").build(),
+                List.of(
+                        identity(1L, "service.name", "checkout-service", 100, true),
+                        identity(1L, "service.namespace", "commerce", 80, false),
+                        identity(1L, "host.name", "checkout-1", 50, false)
+                ));
+        when(traceQueryRepository.supportsTraceSummaryRows()).thenReturn(true);
+        when(traceQueryRepository.queryTraceSummaryRows(
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
+                eq("checkout-service"), eq("commerce"), org.mockito.ArgumentMatchers.isNull(),
+                eq("team-a"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(false)))
+                .thenReturn(Map.of(
+                        "total_trace_count", 7L,
+                        "error_trace_count", 2L,
+                        "latest_observed_at", now - 30_000,
+                        "latest_trace_id", "trace-latest"
+                ));
+
+        EntityTraceSummaryDto summary = entityTraceQueryService.buildEntityTraceSummary(entityContext);
+
+        assertEquals(7, summary.getRecentTraceCount());
+        assertEquals(2, summary.getRecentErrorTraceCount());
+        assertEquals("trace-latest", summary.getLatestTraceId());
+        assertEquals(now - 30_000, summary.getLatestObservedAt());
+        assertTrue(summary.isActive());
+        ArgumentCaptor<Map<String, Set<String>>> identityFilterCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(traceQueryRepository).queryTraceSummaryRows(
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
+                eq("checkout-service"), eq("commerce"), org.mockito.ArgumentMatchers.isNull(),
+                eq("team-a"), identityFilterCaptor.capture(), eq(false));
+        assertEquals(Set.of("checkout-service"), identityFilterCaptor.getValue().get("service.name"));
+        assertEquals(Set.of("commerce"), identityFilterCaptor.getValue().get("service.namespace"));
+        assertEquals(Set.of("checkout-1"), identityFilterCaptor.getValue().get("host.name"));
+        verify(traceQueryRepository, never()).queryRecentTraceRows(
+                eq(1500), org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
     void queryTraceListAndDetailRespectEntityBinding() {
         long now = System.currentTimeMillis();
         ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();
@@ -406,6 +451,98 @@ class EntityTraceQueryServiceImplTest {
         verify(traceQueryRepository, never()).queryRecentTraceRows(
                 eq(1500), eq(start), eq(end), eq("checkout-service"), eq("commerce"),
                 eq("prod"), eq("team-a"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(true));
+    }
+
+    @Test
+    void getTraceOverviewUsesGreptimeAggregateWhenRepositorySupportsIt() {
+        long now = System.currentTimeMillis();
+        long start = now - 120_000;
+        long end = now;
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();
+        when(workspaceQueryGateway.findEntityById(1L)).thenReturn(Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId(1L)).thenReturn(List.of(
+                identity(1L, "service.name", "checkout-service", 100, true),
+                identity(1L, "service.namespace", "commerce", 80, false)
+        ));
+        when(traceQueryRepository.supportsTraceOverviewRows()).thenReturn(true);
+        when(traceQueryRepository.queryTraceOverviewRows(
+                eq(start), eq(end), eq(true), eq("checkout-service"), eq("commerce"),
+                eq("prod"), eq("team-a"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(true))).thenReturn(Map.of(
+                "total_trace_count", 41L,
+                "error_trace_count", 41L,
+                "latest_observed_at", now - 30_000
+        ));
+
+        TraceOverviewDto overview = entityTraceQueryService.getTraceOverview(1L, start, end, null,
+                true, "checkout-service", "commerce", "prod", true);
+
+        assertEquals(41, overview.getTotalTraceCount());
+        assertEquals(41, overview.getErrorTraceCount());
+        assertEquals(now - 30_000, overview.getLatestObservedAt());
+        assertTrue(overview.isHasActiveTrace());
+        ArgumentCaptor<Map<String, Set<String>>> identityFilterCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(traceQueryRepository).queryTraceOverviewRows(
+                eq(start), eq(end), eq(true), eq("checkout-service"), eq("commerce"),
+                eq("prod"), eq("team-a"), identityFilterCaptor.capture(), eq(true));
+        assertEquals(Set.of("checkout-service"), identityFilterCaptor.getValue().get("service.name"));
+        assertEquals(Set.of("commerce"), identityFilterCaptor.getValue().get("service.namespace"));
+        verify(traceQueryRepository, never()).queryTraceListRows(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt());
+        verify(traceQueryRepository, never()).queryRecentTraceRows(
+                eq(1500), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void getTraceOverviewUsesGreptimeTraceIdAggregateWhenRepositorySupportsIt() {
+        long now = System.currentTimeMillis();
+        long start = now - 120_000;
+        long end = now;
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();
+        when(workspaceQueryGateway.findEntityById(1L)).thenReturn(Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId(1L)).thenReturn(List.of(
+                identity(1L, "service.name", "checkout-service", 100, true),
+                identity(1L, "service.namespace", "commerce", 80, false)
+        ));
+        when(traceQueryRepository.supportsTraceIdOverviewRows()).thenReturn(true);
+        when(traceQueryRepository.queryTraceIdOverviewRows(
+                eq("trace-filtered"), eq(start), eq(end), eq(true), eq("checkout-service"), eq("commerce"),
+                eq("prod"), eq("team-a"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(true))).thenReturn(Map.of(
+                "total_trace_count", 1L,
+                "error_trace_count", 1L,
+                "latest_observed_at", now - 30_000
+        ));
+
+        TraceOverviewDto overview = entityTraceQueryService.getTraceOverview(1L, start, end, "trace-filtered",
+                true, "checkout-service", "commerce", "prod", true);
+
+        assertEquals(1, overview.getTotalTraceCount());
+        assertEquals(1, overview.getErrorTraceCount());
+        assertEquals(now - 30_000, overview.getLatestObservedAt());
+        assertTrue(overview.isHasActiveTrace());
+        ArgumentCaptor<Map<String, Set<String>>> identityFilterCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(traceQueryRepository).queryTraceIdOverviewRows(
+                eq("trace-filtered"), eq(start), eq(end), eq(true), eq("checkout-service"), eq("commerce"),
+                eq("prod"), eq("team-a"), identityFilterCaptor.capture(), eq(true));
+        assertEquals(Set.of("checkout-service"), identityFilterCaptor.getValue().get("service.name"));
+        assertEquals(Set.of("commerce"), identityFilterCaptor.getValue().get("service.namespace"));
+        verify(traceQueryRepository, never()).queryTraceRows(
+                eq("trace-filtered"), eq(5000), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                org.mockito.ArgumentMatchers.any());
     }
 
     @Test

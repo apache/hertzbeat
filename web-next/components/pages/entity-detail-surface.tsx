@@ -93,7 +93,9 @@ function resolveTitle(detail: EntityDetailDto) {
 function resolveSubtitle(detail: EntityDetailDto) {
   const activeAlerts = detail.alertSummary?.totalActiveAlerts ?? detail.activeAlerts?.length ?? 0;
   const downMonitors = detail.evidenceSummary?.downMonitorCount ?? 0;
-  const hasEvidence = (detail.logSummary?.hintCount ?? 0) > 0 || (detail.traceSummary?.recentTraceCount ?? 0) > 0 || (detail.boundMonitors?.length ?? 0) > 0;
+  const logSummary = detail.signalEvidence?.logSummary || detail.logSummary;
+  const traceSummary = detail.signalEvidence?.traceSummary || detail.traceSummary;
+  const hasEvidence = (logSummary?.hintCount ?? 0) > 0 || (traceSummary?.recentTraceCount ?? 0) > 0 || (detail.boundMonitors?.length ?? 0) > 0;
 
   if (activeAlerts > 0) {
     return translateEntityDetail('entities.detail.subtitle.active-alerts');

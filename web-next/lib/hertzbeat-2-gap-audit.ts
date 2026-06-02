@@ -124,7 +124,7 @@ const functionalGaps: HertzBeat2Gap[] = [
       '/topology marks trace-call API degradation as Greptime trace graph unavailable instead of generic topology API empty evidence',
       'Topology edge signal drilldowns prefer the selected trace-call edge sample trace/span context and preserve it in returnTo links',
       'buildTopologyApiUrl forwards depth, relation type, hide-internal, and pagination scope into the topology API query',
-      'buildTopologyApiUrl defaults service-call and otlp-trace-call reads to relationType=trace-call so trace views do not fetch node-only relation graphs',
+      'buildTopologyApiUrl defaults service-call reads to relationType=trace-call while keeping application OTLP source filters on the mixed graph read',
       '/topology exposes Browser-readable topology API request scope metadata including resolved relationType=trace-call for service-call routes',
       '/topology passes resolved relationType=trace-call into shared loading and empty states for inferred service-call routes',
       'TopologyController and EntityTopologyQueryService accept backend relation type, hide-internal, and edge pagination scope for API-backed topology graphs',
@@ -189,6 +189,8 @@ const functionalGaps: HertzBeat2Gap[] = [
       '/topology exposes node-click, edge-click, and table-row-click selection source markers so Browser can distinguish real in-page inspection from route initial state',
       '/topology clears fallback selected-edge context during node-click inspection so the G6 canvas and drawer do not retain stale edge state after ordinary node selection',
       '/topology Browser-verifies real G6 edge click opens the relationship drawer in-page without URL navigation, remount, zoom reset, or viewport drift',
+      '/topology durable Playwright smoke verifies real G6 node inspection after wheel zoom keeps URL, zoom, position, render key, and drawer state in-page',
+      '/topology durable Playwright smoke verifies compact service-call graphs open at 1x in a 2048px fresh browser viewport instead of filling the canvas with oversized nodes',
       '/topology Browser-verifies the final M5 route matrix across default, focused, service-call, and empty routes with API-owned graph or empty states and no static fallback',
       '/topology forwards topology search context into HzTopologyG6Canvas search focus metadata',
       '/topology forwards environment, source, search, and group scope into HzTopologyG6Canvas filter-scope metadata',
@@ -448,9 +450,10 @@ const functionalGaps: HertzBeat2Gap[] = [
       'web-next/app/ui-lab/page.tsx',
       'web-next/lib/topology-surface/controller.ts',
       'web-next/lib/topology-surface/view-model.ts',
-      'web-next/app/topology/topology-page.tsx'
+      'web-next/app/topology/topology-page.tsx',
+      'web-next/scripts/topology-g6-browser-smoke.spec.ts'
     ],
-    nextStep: 'Move any remaining topology regression proof into durable browser fixtures and keep the live Greptime RED graph available for release smoke runs.'
+    nextStep: 'Keep the live Greptime RED graph and topology G6 browser smoke available for release regression runs while finishing the remaining cross-domain release gaps.'
   },
   {
     code: 'incident-workbench-domain',
@@ -492,7 +495,7 @@ const functionalGaps: HertzBeat2Gap[] = [
     page: '/trace/manage and /log/manage',
     backendApiStatus: 'partial',
     releaseBlocking: true,
-    currentState: 'Greptime trace and log reads exist, the topology trace-call path has timestamp, environment, seed service scope, and internal-service SQL predicates plus service graph RED aggregation, and trace list reads now pass time, service namespace, environment, workspace, canonical entity identity scope, grouping, total count, limit, and offset into the Greptime trace repository before Java fallback filtering. Trace-id list/detail reads now have a Greptime trace-row overload that pushes route/detail filters into SQL when context is present, and entity-scoped trace detail passes canonical entity identity into that path. Entity trace summary/hints now push the 24h lookback, service identity, namespace, environment, workspace, and canonical entity identity into recent-row storage reads before Java aggregation. Non-Greptime fallback paths still depend on bounded recent samples.',
+    currentState: 'Greptime trace and log reads exist, the topology trace-call path has timestamp, environment, seed service scope, and internal-service SQL predicates plus service graph RED aggregation, and trace list reads now pass time, service namespace, environment, workspace, canonical entity identity scope, grouping, total count, limit, and offset into the Greptime trace repository before Java fallback filtering. Trace overview now uses Greptime-side trace grouping for total/error/latest activity counts when available instead of counting a bounded trace-list sample, and explicit trace-id overview also uses a Greptime trace-id aggregate before falling back to span-row reads. Entity trace summary/hints now use Greptime-side entity trace summary aggregation with latest trace id when available, scoped by 24h lookback, service identity, namespace, environment, workspace, and canonical entity identity. Trace-id list/detail reads now have a Greptime trace-row overload that pushes route/detail filters into SQL when context is present, and entity-scoped trace detail passes canonical entity identity into that path. Log list reads now push workspace scope, noise service filters, search, count, pagination, and timestamp-desc sorting into Greptime SQL when the backend supports the workspace-aware log query overload; log overview severity buckets, trace coverage, and hourly trend now also push workspace scope, search, and noise filters into Greptime aggregate SQL before Java fallback aggregation. Non-Greptime fallback paths still depend on bounded recent samples.',
     requiredClosure: [
       'Push time, workspace, entity, service, environment, trace id, pagination, and sorting into Greptime SQL.',
       'Promote frequently filtered OTLP attributes to queryable columns or tags where benchmarks require it.'
@@ -502,13 +505,21 @@ const functionalGaps: HertzBeat2Gap[] = [
       'GreptimeTraceQueryRepository owns service, service namespace, environment, workspace, entity identity, internal, and timestamp predicates for recent trace rows',
       'GreptimeTraceQueryRepository owns service-to-service trace graph RED SQL aggregation with seed service source/target scope for topology',
       'GreptimeTraceQueryRepository owns grouped trace-list SQL with total_count, LIMIT, and OFFSET for paged list views',
+      'GreptimeTraceQueryRepository owns trace overview total/error/latest activity aggregate SQL with workspace, entity, service, environment, and internal-service filters',
+      'GreptimeTraceQueryRepository owns explicit trace-id overview total/error/latest aggregate SQL with trace id, workspace, entity, service, environment, and internal-service filters',
+      'GreptimeTraceQueryRepository owns entity trace summary total/error/latest/latest-trace aggregate SQL with workspace, entity, service, environment, and internal-service filters',
       'GreptimeTraceQueryRepository owns trace-id row SQL with time, service, environment, workspace, entity identity, and internal-service filters when route/detail context is present',
       'EntityTraceQueryServiceImpl pushes canonical entity identity into trace detail row reads before Java span aggregation',
-      'EntityTraceQueryServiceImpl consumes storage-owned trace-list pages before falling back to bounded Java samples'
+      'EntityTraceQueryServiceImpl consumes storage-owned trace-list pages before falling back to bounded Java samples',
+      'GreptimeDbDataStorage owns workspace-scoped log list count/page SQL with search, noise filters, LIMIT/OFFSET, and timestamp-desc sorting',
+      'GreptimeDbDataStorage owns workspace-scoped log overview severity-bucket aggregate SQL with search and noise filters',
+      'GreptimeDbDataStorage owns workspace-scoped log trace-coverage and hourly-trend aggregate SQL with search and noise filters'
     ],
     sourceFiles: [
       'hertzbeat-observability/src/main/java/org/apache/hertzbeat/observability/traces/service/impl/EntityTraceQueryServiceImpl.java',
-      'hertzbeat-warehouse/src/main/java/org/apache/hertzbeat/warehouse/repository/GreptimeTraceQueryRepository.java'
+      'hertzbeat-observability/src/main/java/org/apache/hertzbeat/observability/logs/service/impl/LogQueryServiceImpl.java',
+      'hertzbeat-warehouse/src/main/java/org/apache/hertzbeat/warehouse/repository/GreptimeTraceQueryRepository.java',
+      'hertzbeat-warehouse/src/main/java/org/apache/hertzbeat/warehouse/store/history/tsdb/greptime/GreptimeDbDataStorage.java'
     ],
     nextStep: 'Move remaining non-Greptime fallback semantics away from bounded Java samples where feasible, then re-run live trace list/detail smoke after the warehouse compile blocker is cleared.'
   },
@@ -520,21 +531,36 @@ const functionalGaps: HertzBeat2Gap[] = [
     route: '/entities/[entityId]',
     backendApiStatus: 'partial',
     releaseBlocking: true,
-    currentState: 'Entity relations and detail APIs exist, but topology, incident, and signal workspaces do not share one evidence contract.',
+    currentState: 'Entity relations and detail APIs exist, entity detail now builds and returns a shared signal evidence bundle for response handoffs instead of threading log, trace, and metric evidence as separate route-context fragments, and the entity detail frontend plus unified entity contract prefer that bundle when rendering signal summaries, RED evidence, page context, and log/trace handoff context. Topology, incident, and the remaining signal workspaces still need to consume the same evidence contract.',
     requiredClosure: [
       'Return metrics, logs, traces, alerts, relations, and handoffs through one entity evidence read model.',
       'Make signal workspaces consume that contract instead of rebuilding route context locally.'
     ],
     evidence: [
       'EntityRelation has DAO and service coverage',
+      'EntitySignalEvidenceBundle carries log summary, trace summary, metric evidence, log evidence, trace evidence, log hints, trace hints, unified evidence, and triage recommendation through one shared signal evidence response',
+      'EntityDetailDto exposes EntitySignalEvidenceBundle so entity detail clients can consume the shared evidence response directly',
+      'EntityDetailObservabilityReadModelService passes EntitySignalEvidenceBundle into EntityResponseHandoffReadModelService for response handoff assembly',
+      'EntityObservabilityGatewayImpl prefers EntityResponseHandoffsRequest.signalEvidence when deriving log and trace handoff context',
+      'Entity detail frontend view-model prefers EntitySignalEvidenceBundle for log summary, trace summary, unified RED evidence, and trace handoff IDs before falling back to scattered fields',
+      'EntityDetailSurface subtitle and buildEntityContractFromDetail now prefer EntitySignalEvidenceBundle for signal presence/count/last-seen context',
       'signal workspaces still keep page-specific query and handoff builders'
     ],
     sourceFiles: [
       'hertzbeat-common-spring/src/main/java/org/apache/hertzbeat/common/entity/manager/EntityRelation.java',
+      'hertzbeat-common-spring/src/main/java/org/apache/hertzbeat/common/observability/dto/entity/EntitySignalEvidenceBundle.java',
+      'hertzbeat-common-spring/src/main/java/org/apache/hertzbeat/common/observability/dto/handoff/EntityResponseHandoffsRequest.java',
       'hertzbeat-manager/src/main/java/org/apache/hertzbeat/manager/controller/EntityController.java',
+      'hertzbeat-manager/src/main/java/org/apache/hertzbeat/manager/pojo/dto/EntityDetailDto.java',
+      'hertzbeat-manager/src/main/java/org/apache/hertzbeat/manager/service/entity/EntityDetailObservabilityReadModelService.java',
+      'hertzbeat-manager/src/main/java/org/apache/hertzbeat/manager/service/entity/EntityResponseHandoffReadModelService.java',
+      'hertzbeat-observability/src/main/java/org/apache/hertzbeat/observability/shared/service/impl/EntityObservabilityGatewayImpl.java',
+      'web-next/components/pages/entity-detail-surface.tsx',
+      'web-next/lib/entity-contract.ts',
+      'web-next/lib/entity-detail/view-model.ts',
       'web-next/lib/signal-route-context.ts'
     ],
-    nextStep: 'Define the shared evidence response and migrate one signal handoff at a time.'
+    nextStep: 'Migrate topology, incident, and the remaining signal workbench handoffs to consume EntitySignalEvidenceBundle instead of rebuilding page-local query context.'
   },
   {
     code: 'ui-i18n-reuse-sweep',

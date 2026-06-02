@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isActiveRoute, isStandaloneRoute, shouldLoadHeaderState } from './app-frame-state';
+import { isActiveRoute, isStandaloneRoute, shouldLoadHeaderRealtime, shouldLoadHeaderState } from './app-frame-state';
 
 describe('app frame state', () => {
   it('recognizes standalone routes', () => {
@@ -34,5 +34,14 @@ describe('app frame state', () => {
     expect(shouldLoadHeaderState('/monitors/new')).toBe(false);
     expect(shouldLoadHeaderState('/monitors/42')).toBe(false);
     expect(shouldLoadHeaderState('/monitors/42/edit')).toBe(false);
+  });
+
+  it('does not let header state or SSE streams compete with topology first-canvas inspection', () => {
+    expect(shouldLoadHeaderState('/topology')).toBe(false);
+    expect(shouldLoadHeaderState('/topology?sourceKind=cmdb-manual-label')).toBe(false);
+    expect(shouldLoadHeaderRealtime('/topology')).toBe(false);
+    expect(shouldLoadHeaderRealtime('/topology?sourceKind=cmdb-manual-label')).toBe(false);
+    expect(shouldLoadHeaderState('/overview')).toBe(true);
+    expect(shouldLoadHeaderRealtime('/overview')).toBe(true);
   });
 });

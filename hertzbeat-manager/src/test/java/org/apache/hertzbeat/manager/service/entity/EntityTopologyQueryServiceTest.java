@@ -45,6 +45,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 /**
@@ -188,7 +189,7 @@ class EntityTopologyQueryServiceTest {
                 .status((byte) 1)
                 .build();
 
-        lenient().when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Sort.class)))
+        lenient().when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Pageable.class)))
                 .thenReturn(List.of(checkout, payment));
         lenient().when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
                 ids != null && ids.containsAll(List.of(10L, 20L))))).thenReturn(List.of(checkout, payment));
@@ -217,7 +218,83 @@ class EntityTopologyQueryServiceTest {
                 Long.valueOf(501L).equals(edge.getRelationId())
                         && "10".equals(edge.getSourceNodeId())
                         && "monitor:701".equals(edge.getTargetNodeId())));
-        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(any(Sort.class));
+        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(argThat((Pageable pageable) ->
+                pageable != null
+                        && pageable.isPaged()
+                        && pageable.getPageSize() == 64
+                        && pageable.getSort().getOrderFor("gmtUpdate") != null
+                        && pageable.getSort().getOrderFor("id") != null));
+        verify(entityWorkspaceAccessService, never()).findAccessibleEntitiesForRequestWorkspace(any(Sort.class));
+    }
+
+    @Test
+    void queriesDefaultTraceOverviewWithoutSeedScopeSoLargeGraphsAreNotTruncated() {
+        List<ObserveEntity> seeds = new java.util.ArrayList<>();
+        seeds.add(entity(1L, "service", "hb-mix-1780329856-edge-gateway", "scale-mix", "prod", "unknown"));
+        for (int index = 0; index < 12; index++) {
+            seeds.add(entity(100L + index, "service",
+                    "hb-mix-1780329856-domain-%02d".formatted(index), "scale-mix", "prod", "unknown"));
+        }
+        TraceCallTopologyEdgeInfo traceEdge = new TraceCallTopologyEdgeInfo(
+                "trace-call:100:200:trace-domain-00",
+                100L,
+                200L,
+                "trace-domain-00",
+                "span-domain-00",
+                "CALL hb-mix-1780329856-svc-00-000",
+                "2026-05-20T03:01:00Z",
+                "2026-05-20T03:08:00Z",
+                "ok",
+                100,
+                new TraceCallTopologyEdgeInfo.RedMetrics(1D / 3600D, 1L, 0D, 0L, 42D, 21D)
+        );
+        ObserveEntity leaf = entity(200L, "service", "hb-mix-1780329856-svc-00-000",
+                "scale-mix", "prod", "healthy");
+
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Pageable.class)))
+                .thenReturn(seeds);
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
+                ids != null && ids.contains(1L) && ids.contains(100L) && ids.contains(111L))))
+                .thenReturn(seeds);
+        when(traceCallTopologyQueryService.findTraceCallEdgesForOverview(
+                eq("prod"), eq(1710000000000L), eq(1710003600000L), eq(true))).thenReturn(
+                        new TraceCallTopologyReadModel(Map.of(200L, leaf), List.of(traceEdge)));
+
+        EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
+                null, 2, "prod", "otlp-trace-call", 1710000000000L, 1710003600000L);
+
+        assertEquals(1, graph.getEdges().size());
+        assertTrue(graph.getSourceKinds().contains("otlp-trace-call"));
+        assertTrue(graph.getNodes().stream().anyMatch(node ->
+                "hb-mix-1780329856-svc-00-000".equals(node.getEntityName())));
+        verify(entityWorkspaceAccessService).findAccessibleEntitiesForRequestWorkspace(argThat((Pageable pageable) ->
+                pageable != null
+                        && pageable.isPaged()
+                        && pageable.getPageSize() == 64
+                        && pageable.getSort().getOrderFor("gmtUpdate") != null
+                        && pageable.getSort().getOrderFor("id") != null));
+        verify(traceCallTopologyQueryService, never()).findTraceCallEdges(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void leavesSourceKindsEmptyWhenDefaultTopologyHasOnlyIsolatedNodes() {
+        ObserveEntity checkout = entity(10L, "service", "checkout-api", "commerce", "prod", "warning");
+        ObserveEntity payment = entity(20L, "service", "payment-api", "commerce", "prod", "healthy");
+
+        when(entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(any(Pageable.class)))
+                .thenReturn(List.of(checkout, payment));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
+                ids != null && ids.containsAll(List.of(10L, 20L))))).thenReturn(List.of(checkout, payment));
+        when(entityRelationQueryService.findEntityRelations(10L)).thenReturn(List.of());
+        when(entityRelationQueryService.findEntityRelations(20L)).thenReturn(List.of());
+
+        EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
+                null, 1, "prod", "entity-relation");
+
+        assertEquals(List.of(), graph.getSourceKinds());
+        assertEquals(List.of(10L, 20L),
+                graph.getNodes().stream().map(EntityTopologyGraphInfo.Node::getEntityId).toList());
+        assertEquals(List.of(), graph.getEdges());
     }
 
     @Test
@@ -423,7 +500,8 @@ class EntityTopologyQueryServiceTest {
         EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
                 10L, 1, "prod", "monitor-bind", 1710000000000L, 1710003600000L);
 
-        assertEquals(List.of("monitor-bind"), graph.getSourceKinds());
+        assertEquals(List.of(), graph.getSourceKinds());
+        assertEquals(List.of(), graph.getEdges());
         verify(traceCallTopologyQueryService, never()).findTraceCallEdges(any(), any(), any(), any(), any());
     }
 

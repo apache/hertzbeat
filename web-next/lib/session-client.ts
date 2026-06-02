@@ -64,6 +64,16 @@ export function clearClientSessionMarker() {
   document.cookie = 'hb_ui_session=; Max-Age=0; path=/; SameSite=Lax';
 }
 
+export function hasClientSessionMarker() {
+  if (typeof document === 'undefined') return false;
+  return document.cookie
+    .split(';')
+    .some(segment => {
+      const trimmed = segment.trim();
+      return trimmed.startsWith('hb_ui_session=') && trimmed !== 'hb_ui_session=';
+    });
+}
+
 export async function readClientSessionState(): Promise<ClientSessionState> {
   try {
     const response = await fetch('/api/account/session', {

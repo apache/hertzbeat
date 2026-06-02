@@ -204,6 +204,7 @@ import {
 } from '@hertzbeat/ui';
 import {
   HzTopologyG6Canvas,
+  HZ_TOPOLOGY_G6_EDGE_DENSITY_VISIBLE_EDGE_LIMIT,
   HZ_TOPOLOGY_G6_NODE_ICON_CATALOG,
   buildHzTopologyG6LargeGraphStrategy,
   buildHzTopologyG6RenderWindow,
@@ -359,6 +360,17 @@ const topologyG6LabGraph: HzTopologyG6GraphInput = {
       redMetrics: { requestRatePerSecond: 7.1, errorRate: 0.012, latencyP95Ms: 92 }
     },
     {
+      id: 'endpoint-checkout',
+      label: '/api/checkout',
+      entityType: 'endpoint',
+      health: 'healthy',
+      tone: 'blue',
+      focus: 'normal',
+      source: 'otlp-trace-call',
+      evidenceBadges: ['endpoint'],
+      redMetrics: { requestRatePerSecond: 10.4, errorRate: 0.006, latencyP95Ms: 38 }
+    },
+    {
       id: 'queue-events',
       label: 'Events Queue',
       entityType: 'queue',
@@ -404,6 +416,18 @@ const topologyG6LabGraph: HzTopologyG6GraphInput = {
     }
   ],
   edges: [
+    {
+      id: 'web-endpoint',
+      from: 'svc-web',
+      to: 'endpoint-checkout',
+      label: 'HTTP route',
+      relationshipType: 'trace-call',
+      source: 'otlp-trace-call',
+      tone: 'blue',
+      focus: 'context-muted',
+      evidenceBadges: ['trace'],
+      redMetrics: { requestRatePerSecond: 10.4, errorRate: 0.006, latencyP95Ms: 38 }
+    },
     {
       id: 'web-checkout',
       from: 'svc-web',
@@ -478,6 +502,39 @@ const topologyG6LabGraph: HzTopologyG6GraphInput = {
   ]
 };
 
+const topologyG6NodeOnlyLabGraph: HzTopologyG6GraphInput = {
+  nodes: [
+    {
+      id: 'node-only-payment',
+      label: 'Payment API',
+      entityType: 'service',
+      health: 'warning',
+      tone: 'warning',
+      source: 'cmdb-manual-label',
+      evidenceBadges: ['cmdb']
+    },
+    {
+      id: 'node-only-checkout',
+      label: 'Checkout API',
+      entityType: 'service',
+      health: 'healthy',
+      tone: 'success',
+      source: 'cmdb-manual-label',
+      evidenceBadges: ['cmdb']
+    },
+    {
+      id: 'node-only-orders',
+      label: 'Orders DB',
+      entityType: 'database',
+      health: 'healthy',
+      tone: 'blue',
+      source: 'cmdb-manual-label',
+      evidenceBadges: ['cmdb']
+    }
+  ],
+  edges: []
+};
+
 const topologyG6ScaleLabGraph = buildHzTopologyG6ScaleFixture(50, {
   environment: 'prod',
   namespace: 'commerce',
@@ -488,14 +545,30 @@ const topologyG6ScaleLabGraph500 = buildHzTopologyG6ScaleFixture(500, {
   namespace: 'commerce',
   prefix: 'scale'
 });
+const topologyG6ScaleLabGraphOverflow = buildHzTopologyG6ScaleFixture(650, {
+  environment: 'prod',
+  namespace: 'commerce',
+  prefix: 'scale'
+});
 const topologyG6ScaleLabProfile50 = buildHzTopologyG6ScaleProfile(topologyG6ScaleLabGraph);
 const topologyG6ScaleLabProfile200 = buildHzTopologyG6ScaleProfile(buildHzTopologyG6ScaleFixture(200));
 const topologyG6ScaleLabProfile500 = buildHzTopologyG6ScaleProfile(topologyG6ScaleLabGraph500);
+const topologyG6ScaleLabProfileOverflow = buildHzTopologyG6ScaleProfile(topologyG6ScaleLabGraphOverflow);
 const topologyG6LargeGraphStrategy200 = buildHzTopologyG6LargeGraphStrategy(buildHzTopologyG6ScaleFixture(200));
 const topologyG6LargeGraphStrategy500 = buildHzTopologyG6LargeGraphStrategy(topologyG6ScaleLabGraph500);
+const topologyG6LargeGraphStrategyOverflow = buildHzTopologyG6LargeGraphStrategy(topologyG6ScaleLabGraphOverflow);
 const topologyG6ScaleLabRenderWindow500 = buildHzTopologyG6RenderWindow(topologyG6ScaleLabGraph500, topologyG6LargeGraphStrategy500, {
   priorityNodeIds: ['scale-svc-420']
 });
+const topologyG6ScaleLabRenderedEdgeCount500 = Math.min(
+  topologyG6ScaleLabRenderWindow500.renderedEdgeCount,
+  HZ_TOPOLOGY_G6_EDGE_DENSITY_VISIBLE_EDGE_LIMIT
+);
+const topologyG6ScaleLabSummary500 = `${topologyG6ScaleLabRenderWindow500.renderedNodeCount}/${topologyG6ScaleLabRenderWindow500.totalNodeCount} nodes rendered · ${topologyG6ScaleLabRenderedEdgeCount500}/${topologyG6ScaleLabRenderWindow500.totalEdgeCount} edges rendered`;
+const topologyG6ScaleLabRenderWindowOverflow = buildHzTopologyG6RenderWindow(
+  topologyG6ScaleLabGraphOverflow,
+  topologyG6LargeGraphStrategyOverflow
+);
 const topologyG6LabVisibleNodeKinds = new Set(
   topologyG6LabGraph.nodes.map(node => getHzTopologyG6NodeIcon(node.entityType).kind).filter(kind => kind !== 'unknown')
 );
@@ -1520,6 +1593,9 @@ function findTemplate(categories: HzTemplateCategory[], id: string) {
   return categories.flatMap(category => category.items).find(item => item.id === id) || categories[0]?.items[0];
 }
 
+const uiLabStaticConfirmDialogPreviewClassName =
+  'pointer-events-none relative inset-auto z-0 min-w-[360px] bg-transparent p-0';
+
 export default function HertzBeatUiLabPage() {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = React.useState('monitors');
@@ -2189,6 +2265,7 @@ export default function HertzBeatUiLabPage() {
               </HzActionGroup>
               <HzConfirmDialog
                 open
+                className={uiLabStaticConfirmDialogPreviewClassName}
                 tone="critical"
                 kicker="Monitor center"
                 title="Please confirm whether to cancel monitor!"
@@ -2206,6 +2283,7 @@ export default function HertzBeatUiLabPage() {
                 data-monitor-row-response-confirm-target="checkout-api"
                 data-monitor-row-response-confirm-closable="angular-nz-closable-false"
                 data-monitor-row-response-confirm-ok="angular-nz-ok-danger-primary"
+                data-hz-ui-lab-static-confirm-preview="non-blocking-inline"
               >
                 <div data-monitor-row-response-confirm-body="angular-single-row-confirm">
                   <HzInlineFeedback
@@ -7014,7 +7092,7 @@ export default function HertzBeatUiLabPage() {
                 <HzTopologyLegend
                   data-hz-ui-lab-topology-g6-legend-dock="shared"
                   title="Legend"
-                  summaryLabel="In canvas"
+                  summaryLabel="Node types"
                   boundary="flush"
                   density="canvas-dock"
                   sections={[
@@ -7022,24 +7100,6 @@ export default function HertzBeatUiLabPage() {
                           id: 'node-type',
                           label: 'Node type',
                           items: topologyG6NodeTypeLegendItems
-                        },
-                        {
-                          id: 'status',
-                          label: 'Status',
-                          items: [
-                            { id: 'healthy-node', label: 'Healthy', color: '#22c55e', visualSource: 'hertzbeat-status-token', value: 'healthy' },
-                            { id: 'warning-node', label: 'Warning', color: '#f59e0b', visualSource: 'hertzbeat-status-token', value: 'warning' },
-                            { id: 'critical-node', label: 'Critical', color: '#ef4444', visualSource: 'hertzbeat-status-token', value: 'critical' }
-                          ]
-                        },
-                        {
-                          id: 'interaction',
-                          label: 'Interaction',
-                          items: [
-                            { id: 'selected-node', label: 'Selected', color: '#e5edf8', visualSource: 'hertzbeat-interaction-token', value: 'selected' },
-                            { id: 'directional-edge', label: 'Edge', color: '#94a3b8', pattern: 'solid', visualSource: 'hertzbeat-edge-token', value: 'direction' },
-                            { id: 'dimmed-edge', label: 'Dimmed', color: '#94a3b8', pattern: 'muted', visualSource: 'hertzbeat-edge-token', value: 'context' }
-                          ]
                         }
                       ]}
                     />
@@ -7060,14 +7120,48 @@ export default function HertzBeatUiLabPage() {
                 />
               </HzTopologyCanvas>
               <HzTopologyCanvas
+                data-hz-ui-lab-topology-g6-node-only-relation-state="shared"
+                layout="layered-service"
+                interactionMode="inspect"
+                interactionScope="hover-group"
+                hoverMode="neighbor-highlight"
+                drawerMode="node-edge"
+                focusDepth="2-hop"
+                minHeight="compact"
+                boundary="section"
+              >
+                <HzTopologyCanvasAnnotation
+                  title="Node-only relation state"
+                  copy="Entities are visible while the current filter has no relation edges."
+                  visibility="assistive"
+                />
+                <HzTopologyG6Canvas
+                  graph={topologyG6NodeOnlyLabGraph}
+                  layout="layered-service"
+                  height="compact"
+                  summaryLabel="3 nodes · 0 edges"
+                  fitViewLabel="Fit view"
+                  resetViewLabel="Reset view"
+                  zoomInLabel="Zoom in"
+                  zoomOutLabel="Zoom out"
+                />
+              </HzTopologyCanvas>
+              <HzTopologyCanvas
                 data-hz-ui-lab-topology-g6-scale-contract="50-200-500"
                 data-hz-ui-lab-topology-g6-scale-50={topologyG6ScaleLabProfile50.nodeCount}
                 data-hz-ui-lab-topology-g6-scale-200={topologyG6ScaleLabProfile200.nodeCount}
                 data-hz-ui-lab-topology-g6-scale-500={topologyG6ScaleLabProfile500.nodeCount}
+                data-hz-ui-lab-topology-g6-scale-overflow={topologyG6ScaleLabProfileOverflow.nodeCount}
                 data-hz-ui-lab-topology-g6-large-graph-200-strategy={topologyG6LargeGraphStrategy200.strategy}
                 data-hz-ui-lab-topology-g6-large-graph-500-strategy={topologyG6LargeGraphStrategy500.strategy}
                 data-hz-ui-lab-topology-g6-large-graph-500-filtering={topologyG6LargeGraphStrategy500.filtering}
                 data-hz-ui-lab-topology-g6-large-graph-500-table-companion={topologyG6LargeGraphStrategy500.tableCompanion}
+                data-hz-ui-lab-topology-g6-large-graph-overflow-strategy={topologyG6LargeGraphStrategyOverflow.strategy}
+                data-hz-ui-lab-topology-g6-large-graph-overflow-policy="filter-first-before-expanded-render"
+                data-hz-ui-lab-topology-g6-render-window-overflow-rendered={
+                  topologyG6ScaleLabRenderWindowOverflow.renderedNodeCount
+                }
+                data-hz-ui-lab-topology-g6-render-window-overflow-hidden={topologyG6ScaleLabRenderWindowOverflow.hiddenNodeCount}
                 data-hz-ui-lab-topology-g6-render-window="500-node-windowed-shared"
                 data-hz-ui-lab-topology-g6-render-window-mode={topologyG6ScaleLabRenderWindow500.mode}
                 data-hz-ui-lab-topology-g6-render-window-rendered={topologyG6ScaleLabRenderWindow500.renderedNodeCount}
@@ -7134,7 +7228,7 @@ export default function HertzBeatUiLabPage() {
                       href: '/topology?environment=prod'
                     }
                   ]}
-                  summaryLabel={`${topologyG6ScaleLabProfile500.nodeCount} nodes · ${topologyG6ScaleLabProfile500.edgeCount} edges`}
+                  summaryLabel={topologyG6ScaleLabSummary500}
                   fitViewLabel="Fit view"
                   resetViewLabel="Reset view"
                   zoomInLabel="Zoom in"
@@ -7285,31 +7379,13 @@ export default function HertzBeatUiLabPage() {
                   <HzTopologyLegend
                     data-hz-ui-lab-topology-legend="shared"
                     title="Topology legend"
-                    summaryLabel="3 groups"
+                    summaryLabel="Node types"
                     boundary="flush"
                     sections={[
                       {
                         id: 'node-type',
                         label: 'Node type',
                         items: topologyG6NodeTypeLegendItems
-                      },
-                      {
-                        id: 'status',
-                        label: 'Status',
-                        items: [
-                          { id: 'healthy-node', label: 'Healthy', color: '#22c55e', visualSource: 'hertzbeat-status-token', value: 'healthy' },
-                          { id: 'warning-node', label: 'Warning', color: '#f59e0b', visualSource: 'hertzbeat-status-token', value: 'warning' },
-                          { id: 'critical-node', label: 'Critical', color: '#ef4444', visualSource: 'hertzbeat-status-token', value: 'critical' }
-                        ]
-                      },
-                      {
-                        id: 'interaction',
-                        label: 'Interaction',
-                        items: [
-                          { id: 'selected-node', label: 'Selected node', color: '#e5edf8', visualSource: 'hertzbeat-interaction-token', value: 'selected' },
-                          { id: 'directional-edge', label: 'Directional edge', color: '#94a3b8', pattern: 'solid', visualSource: 'hertzbeat-edge-token', value: 'arrow direction' },
-                          { id: 'dimmed-edge', label: 'Dimmed edge', color: '#94a3b8', pattern: 'muted', visualSource: 'hertzbeat-edge-token', value: 'outside selection' }
-                        ]
                       }
                     ]}
                   />
@@ -7475,7 +7551,8 @@ export default function HertzBeatUiLabPage() {
                   depth={2}
                   resultCount={0}
                   evidenceSources={['trace', 'relation', 'monitor', 'incident']}
-                  boundary="flush"
+                  copyVisibility="assistive"
+                  boundary="canvas"
                 />
                 <HzTopologyEmptyState
                   data-hz-ui-lab-topology-degraded-state="shared"
@@ -7491,6 +7568,7 @@ export default function HertzBeatUiLabPage() {
                   resultCount={0}
                   evidenceSources={['api', 'greptime', 'trace', 'relation']}
                   kind="degraded"
+                  copyVisibility="assistive"
                   boundary="flush"
                 />
                 <HzTopologyLoadingState
@@ -10866,6 +10944,7 @@ export default function HertzBeatUiLabPage() {
                   </HzConfirmDialog>
                   <HzConfirmDialog
                     open
+                    className={uiLabStaticConfirmDialogPreviewClassName}
                     tone="critical"
                     kicker="Monitor center"
                     title="Please confirm whether to cancel monitor in batches!"
@@ -10883,6 +10962,7 @@ export default function HertzBeatUiLabPage() {
                     data-monitor-batch-response-confirm-count="2"
                     data-monitor-batch-response-confirm-closable="angular-nz-closable-false"
                     data-monitor-batch-response-confirm-ok="angular-nz-ok-danger-primary"
+                    data-hz-ui-lab-static-confirm-preview="non-blocking-inline"
                   >
                     <div data-monitor-batch-response-confirm-body="angular-batch-confirm">
                       <HzInlineFeedback

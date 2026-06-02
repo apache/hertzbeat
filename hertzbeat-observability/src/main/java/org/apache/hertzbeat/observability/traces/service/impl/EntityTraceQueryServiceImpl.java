@@ -100,6 +100,22 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             return new EntityTraceSummaryDto(0, 0, null, false, null);
         }
         long now = System.currentTimeMillis();
+        if (traceQueryRepository.supportsTraceSummaryRows()) {
+            Map<String, Object> row = traceQueryRepository.queryTraceSummaryRows(
+                    Math.max(0L, now - DEFAULT_LOOKBACK_MILLIS),
+                    now,
+                    preferredIdentityValue(identityValues, "service.name"),
+                    preferredIdentityValue(identityValues, "service.namespace"),
+                    preferredIdentityValue(identityValues, "deployment.environment.name"),
+                    AuthTokenRequestContext.currentWorkspaceId(),
+                    identityValues,
+                    false
+            );
+            EntityTraceSummaryDto summary = toEntityTraceSummary(row);
+            if (summary != null) {
+                return summary;
+            }
+        }
         List<TraceAggregate> traces = aggregateTraceRows(queryRecentRows(identityValues, now))
                 .stream()
                 .filter(trace -> matchesEntity(trace, identityValues))
@@ -229,6 +245,42 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
     @Override
     public TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
                                              String serviceName, String serviceNamespace, String environment, Boolean hideInternal) {
+        Map<String, Set<String>> identityValues = entityId == null ? Collections.emptyMap() : canonicalIdentityValues(loadEntityContext(entityId));
+        if (StringUtils.hasText(traceId) && traceQueryRepository.supportsTraceIdOverviewRows()) {
+            Map<String, Object> row = traceQueryRepository.queryTraceIdOverviewRows(
+                    traceId,
+                    start,
+                    end,
+                    errorOnly,
+                    serviceName,
+                    serviceNamespace,
+                    environment,
+                    AuthTokenRequestContext.currentWorkspaceId(),
+                    identityValues,
+                    hideInternal
+            );
+            TraceOverviewDto overview = toTraceOverview(row);
+            if (overview != null) {
+                return overview;
+            }
+        }
+        if (!StringUtils.hasText(traceId) && traceQueryRepository.supportsTraceOverviewRows()) {
+            Map<String, Object> row = traceQueryRepository.queryTraceOverviewRows(
+                    start,
+                    end,
+                    errorOnly,
+                    serviceName,
+                    serviceNamespace,
+                    environment,
+                    AuthTokenRequestContext.currentWorkspaceId(),
+                    identityValues,
+                    hideInternal
+            );
+            TraceOverviewDto overview = toTraceOverview(row);
+            if (overview != null) {
+                return overview;
+            }
+        }
         Page<TraceListItemDto> result = queryTraceList(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment, 0,
                 TRACE_LIST_SAMPLE_LIMIT, hideInternal);
         Long latestObservedAt = result.getContent().stream()
@@ -239,6 +291,42 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         int errorTraceCount = (int) result.getContent().stream().filter(item -> isErrorStatus(item.getStatus())).count();
         boolean active = latestObservedAt != null && latestObservedAt >= System.currentTimeMillis() - ACTIVE_TRACE_WINDOW_MILLIS;
         return new TraceOverviewDto((int) result.getTotalElements(), errorTraceCount, latestObservedAt, active);
+    }
+
+    private TraceOverviewDto toTraceOverview(Map<String, Object> row) {
+        if (CollectionUtils.isEmpty(row)) {
+            return null;
+        }
+        int totalTraceCount = Optional.ofNullable(readIntValue(row, "total_trace_count", "totalTraceCount"))
+                .orElse(0);
+        int errorTraceCount = Optional.ofNullable(readIntValue(row, "error_trace_count", "errorTraceCount"))
+                .orElse(0);
+        Long latestObservedAt = readTimestamp(row, "latest_observed_at");
+        if (latestObservedAt == null) {
+            latestObservedAt = readTimestamp(row, "latestObservedAt");
+        }
+        boolean active = latestObservedAt != null
+                && latestObservedAt >= System.currentTimeMillis() - ACTIVE_TRACE_WINDOW_MILLIS;
+        return new TraceOverviewDto(totalTraceCount, errorTraceCount, latestObservedAt, active);
+    }
+
+    private EntityTraceSummaryDto toEntityTraceSummary(Map<String, Object> row) {
+        if (CollectionUtils.isEmpty(row)) {
+            return null;
+        }
+        int totalTraceCount = Optional.ofNullable(readIntValue(row, "total_trace_count", "totalTraceCount"))
+                .orElse(0);
+        int errorTraceCount = Optional.ofNullable(readIntValue(row, "error_trace_count", "errorTraceCount"))
+                .orElse(0);
+        Long latestObservedAt = readTimestamp(row, "latest_observed_at");
+        if (latestObservedAt == null) {
+            latestObservedAt = readTimestamp(row, "latestObservedAt");
+        }
+        String latestTraceId = defaultText(readTextValue(row, "latest_trace_id"),
+                readTextValue(row, "latestTraceId"));
+        boolean active = latestObservedAt != null
+                && latestObservedAt >= System.currentTimeMillis() - ACTIVE_TRACE_WINDOW_MILLIS;
+        return new EntityTraceSummaryDto(totalTraceCount, errorTraceCount, latestObservedAt, active, latestTraceId);
     }
 
     private ObservedEntityContext loadEntityContext(Long entityId) {

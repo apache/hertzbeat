@@ -7,6 +7,8 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
+      '@hertzbeat/ui/shell': resolve(rootDir, 'packages/hertzbeat-ui/src/shell'),
+      '@hertzbeat/ui/topology': resolve(rootDir, 'packages/hertzbeat-ui/src/topology'),
       '@hertzbeat/ui/topology-g6': resolve(rootDir, 'packages/hertzbeat-ui/src/topology-g6'),
       '@hertzbeat/ui': resolve(rootDir, 'packages/hertzbeat-ui/src'),
       '@': resolve(rootDir, '.')

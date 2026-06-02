@@ -36,6 +36,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 /**
@@ -195,6 +196,29 @@ class EntityWorkspaceAccessServiceTest {
         AuthTokenRequestContext.bindWorkspaceId(" team-a ");
 
         List<ObserveEntity> entities = workspaceAccessService.findAccessibleEntitiesForRequestWorkspace(sort);
+
+        assertEquals(List.of(teamAlphaEntity), entities);
+    }
+
+    @Test
+    void findAccessibleEntitiesForRequestWorkspacePreservesPageableLimit() {
+        Sort sort = Sort.by(Sort.Order.desc("gmtUpdate"), Sort.Order.desc("id"));
+        PageRequest pageable = PageRequest.of(0, 12, sort);
+        ObserveEntity teamAlphaEntity = ObserveEntity.builder()
+                .id(421L)
+                .name("checkout")
+                .workspaceId("team-a")
+                .build();
+        ObserveEntity teamBetaEntity = ObserveEntity.builder()
+                .id(422L)
+                .name("billing")
+                .workspaceId("team-b")
+                .build();
+        when(entityWorkspaceQueryService.findEntities("team-a", pageable))
+                .thenReturn(List.of(teamAlphaEntity, teamBetaEntity));
+        AuthTokenRequestContext.bindWorkspaceId(" team-a ");
+
+        List<ObserveEntity> entities = workspaceAccessService.findAccessibleEntitiesForRequestWorkspace(pageable);
 
         assertEquals(List.of(teamAlphaEntity), entities);
     }

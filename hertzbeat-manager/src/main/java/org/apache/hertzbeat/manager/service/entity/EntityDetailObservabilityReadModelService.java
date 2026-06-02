@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.observability.dto.entity.EntityMonitorSummary
 import org.apache.hertzbeat.common.observability.dto.entity.EntityNextActionInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityObservabilityDetailBundle;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityOpsSummaryInfo;
+import org.apache.hertzbeat.common.observability.dto.entity.EntitySignalEvidenceBundle;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusPageSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityTriageRecommendation;
@@ -130,6 +131,7 @@ public class EntityDetailObservabilityReadModelService {
         EntityLogSummaryInfo logSummary = entityObservabilityGateway.buildEntityLogSummary(logQueryHints);
         EntityObservabilityDetailBundle observabilityDetail = entityObservabilityGateway.resolveEntityDetailBundle(
                 entityContext, statusInfo, evidenceSummary, monitorSummary, logSummary, monitors, logQueryHints);
+        EntitySignalEvidenceBundle signalEvidence = EntitySignalEvidenceBundle.from(observabilityDetail);
         logSummary = observabilityDetail.getLogSummary();
         logQueryHints = observabilityDetail.getLogQueryHints();
         EntityTraceSummaryDto traceSummary = observabilityDetail.getTraceSummary();
@@ -147,10 +149,8 @@ public class EntityDetailObservabilityReadModelService {
                         entityDto.getEntity(), evidenceSummary, logSummary, opsSummary);
         EntityStatusPageSummaryInfo statusPageSummary =
                 entityObservabilityGateway.buildEntityStatusPageSummary(entity, opsSummary);
-        EntityResponseHandoffsInfo responseHandoffs =
-                entityResponseHandoffReadModelService.buildResponseHandoffs(
-                        entityId, entityContext, activeAlerts, monitors, logSummary, traceSummary,
-                        metricEvidence, logEvidence, traceEvidence, traceQueryHints, opsSummary);
+        EntityResponseHandoffsInfo responseHandoffs = entityResponseHandoffReadModelService.buildResponseHandoffs(
+                entityId, entityContext, activeAlerts, monitors, signalEvidence, opsSummary);
         EntityDetailDto.EntityNoiseControlSummaryInfo noiseControlSummary =
                 resolveRequestWorkspaceAtEvidenceBoundaries
                         ? entityNoiseControlReadModelService.buildNoiseControlSummary(entityDto, monitors, activeAlerts)
@@ -161,7 +161,7 @@ public class EntityDetailObservabilityReadModelService {
                         ? entityActivityReadModelService.getDefinitionActivities(entityId, 12)
                         : entityActivityReadModelService.getDefinitionActivities(entityId, 12, requestWorkspaceId);
         return new EntityDetailDto(entityDto, statusInfo, evidenceSummary, alertSummary, monitorSummary, logSummary,
-                traceSummary, metricEvidence, logEvidence, traceEvidence, unifiedEvidenceSummary,
+                traceSummary, metricEvidence, logEvidence, traceEvidence, signalEvidence, unifiedEvidenceSummary,
                 triageRecommendation, opsSummary, nextActions, statusPageSummary, responseHandoffs,
                 noiseControlSummary, boundMonitors, activeAlerts, logQueryHints, traceQueryHints,
                 definitionActivities);

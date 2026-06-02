@@ -55,6 +55,7 @@ vi.mock('@/lib/api-client', () => ({
 
 vi.mock('@/lib/app-frame-state', () => ({
   isStandaloneRoute: () => false,
+  shouldLoadHeaderRealtime: () => false,
   shouldLoadHeaderState: () => false
 }));
 
@@ -86,6 +87,20 @@ const emptySetupState = {
 };
 
 describe('app frame chrome', () => {
+  it('loads header shell primitives from a lightweight UI subpath instead of the full UI barrel', () => {
+    const source = readFileSync(resolve(__dirname, 'app-frame.tsx'), 'utf8');
+
+    expect(source).toContain("from '@hertzbeat/ui/shell'");
+    expect(source).not.toContain("from '@hertzbeat/ui'");
+  });
+
+  it('keeps locale menu chrome on the lightweight shell UI subpath', () => {
+    const source = readFileSync(resolve(__dirname, 'locale-option-list.tsx'), 'utf8');
+
+    expect(source).toContain("from '@hertzbeat/ui/shell'");
+    expect(source).not.toContain("from '@hertzbeat/ui'");
+  });
+
   it('does not keep the startup baseline once live header setup state resolves empty', async () => {
     const { buildSetupSummary } = await import('./app-frame');
     const summary = buildSetupSummary(emptySetupState, setupT);

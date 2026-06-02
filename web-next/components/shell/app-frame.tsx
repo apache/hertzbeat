@@ -38,7 +38,7 @@ import {
   type HzAiChatScheduleDeleteStatus,
   type HzAiChatScheduleRow,
   type HzAiChatScheduleStatus
-} from '@hertzbeat/ui';
+} from '@hertzbeat/ui/shell';
 import { useI18n } from '@/components/providers/i18n-provider';
 import { LocaleOptionList } from '@/components/shell/locale-option-list';
 import { AuthGate } from '@/components/shell/auth-gate';
@@ -46,7 +46,7 @@ import { AppSidebar } from '@/components/shell/app-sidebar';
 import { PlatformCopyrightFooter } from './platform-copyright-footer';
 import { Input } from '../ui/input';
 import { apiGet } from '@/lib/api-client';
-import { isStandaloneRoute, shouldLoadHeaderState } from '@/lib/app-frame-state';
+import { isStandaloneRoute, shouldLoadHeaderRealtime, shouldLoadHeaderState } from '@/lib/app-frame-state';
 import { buildAlertListUrl } from '@/lib/alert-manage/query-state';
 import {
   AI_CHAT_CONVERSATION_STATUS_LABEL_KEYS,
@@ -1132,7 +1132,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
   }, [locale, pathname, standaloneRoute, t]);
 
   useEffect(() => {
-    if (!shouldLoadHeaderState(pathname)) {
+    if (!shouldLoadHeaderRealtime(pathname)) {
       setHeaderRealtimeStatus('idle');
       setHeaderRealtimeNotice(null);
       return undefined;

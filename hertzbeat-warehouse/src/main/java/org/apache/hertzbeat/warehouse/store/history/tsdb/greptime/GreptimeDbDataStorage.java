@@ -661,11 +661,23 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                                                       Integer offset, Integer limit,
                                                                       Set<String> excludedServiceNames,
                                                                       boolean requireServiceName) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName, null);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId) {
         try {
             StringBuilder sql = new StringBuilder("SELECT ").append(NATIVE_LOG_SELECT_COLUMNS)
                     .append(" FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId);
             sql.append(" ORDER BY timestamp DESC");
 
             // Add pagination
@@ -698,10 +710,21 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                              String severityText, String searchContent,
                                              Set<String> excludedServiceNames,
                                              boolean requireServiceName) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, null);
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId) {
         try {
             StringBuilder sql = new StringBuilder("SELECT COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId);
 
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows != null && !rows.isEmpty()) {
@@ -723,6 +746,17 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                                         String severityText, String searchContent,
                                                         Set<String> excludedServiceNames,
                                                         boolean requireServiceName) {
+        return countLogsBySeverityBuckets(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId) {
         try {
             StringBuilder sql = new StringBuilder("SELECT ")
                     .append("COUNT(*) as totalCount, ")
@@ -734,7 +768,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .append("SUM(CASE WHEN severity_number >= 1 AND severity_number <= 4 THEN 1 ELSE 0 END) as traceCount ")
                     .append("FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId);
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows == null || rows.isEmpty()) {
                 return Map.of();
@@ -761,6 +795,17 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                                    String severityText, String searchContent,
                                                    Set<String> excludedServiceNames,
                                                    boolean requireServiceName) {
+        return countLogTraceCoverage(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                   String spanId, Integer severityNumber,
+                                                   String severityText, String searchContent,
+                                                   Set<String> excludedServiceNames,
+                                                   boolean requireServiceName,
+                                                   String workspaceId) {
         try {
             StringBuilder sql = new StringBuilder("SELECT ")
                     .append("COUNT(*) as totalCount, ")
@@ -770,7 +815,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .append("AND span_id IS NOT NULL AND span_id != '' THEN 1 ELSE 0 END) as withBothTraceAndSpan ")
                     .append("FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId);
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows == null || rows.isEmpty()) {
                 return Map.of();
@@ -796,11 +841,22 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                              String severityText, String searchContent,
                                              Set<String> excludedServiceNames,
                                              boolean requireServiceName) {
+        return countLogsByHour(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogsByHour(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId) {
         try {
             StringBuilder sql = new StringBuilder("SELECT date_bin('1 hour', timestamp) as hour, ")
                     .append("COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId);
             sql.append(" GROUP BY hour ORDER BY hour ASC");
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows == null || rows.isEmpty()) {
@@ -891,6 +947,14 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
                                      String spanId, Integer severityNumber, String severityText, String searchContent,
                                      Set<String> excludedServiceNames, boolean requireServiceName) {
+        buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, null);
+    }
+
+    private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String searchContent,
+                                     Set<String> excludedServiceNames, boolean requireServiceName,
+                                     String workspaceId) {
         List<String> conditions = new ArrayList<>();
 
         if (startTime != null && endTime != null) {
@@ -939,10 +1003,32 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             }
         }
 
+        String workspaceCondition = workspaceCondition(workspaceId);
+        if (StringUtils.hasText(workspaceCondition)) {
+            conditions.add(workspaceCondition);
+        }
+
         // Add WHERE clause if there are conditions
         if (!conditions.isEmpty()) {
             sql.append(" WHERE ").append(String.join(" AND ", conditions));
         }
+    }
+
+    private String workspaceCondition(String workspaceId) {
+        if (!StringUtils.hasText(workspaceId)) {
+            return null;
+        }
+        String normalizedWorkspaceId = safeString(workspaceId.trim());
+        String hertzbeatWorkspace = "json_get_string(resource_attributes, '$[\"hertzbeat.workspace_id\"]')";
+        String workspace = "json_get_string(resource_attributes, '$[\"workspace.id\"]')";
+        List<String> predicates = new ArrayList<>();
+        predicates.add(hertzbeatWorkspace + " = '" + normalizedWorkspaceId + "'");
+        predicates.add(workspace + " = '" + normalizedWorkspaceId + "'");
+        if ("default".equals(normalizedWorkspaceId)) {
+            predicates.add("((" + hertzbeatWorkspace + " IS NULL OR " + hertzbeatWorkspace + " = '')"
+                    + " AND (" + workspace + " IS NULL OR " + workspace + " = ''))");
+        }
+        return "(" + String.join(" OR ", predicates) + ")";
     }
 
     private List<LogEntry> mapRowsToLogEntries(List<Map<String, Object>> rows) {

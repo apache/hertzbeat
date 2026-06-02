@@ -38,6 +38,7 @@ import org.apache.hertzbeat.common.observability.dto.entity.EntityMonitorSummary
 import org.apache.hertzbeat.common.observability.dto.entity.EntityNextActionInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityObservabilityDetailBundle;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityOpsSummaryInfo;
+import org.apache.hertzbeat.common.observability.dto.entity.EntitySignalEvidenceBundle;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusPageSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityTriageRecommendation;
@@ -581,20 +582,29 @@ public class EntityObservabilityGatewayImpl implements EntityObservabilityGatewa
         if (request == null) {
             return new EntityResponseHandoffsInfo();
         }
+        EntitySignalEvidenceBundle signalEvidence = request.getSignalEvidence();
+        EntityLogSummaryInfo logSummary = signalEvidence == null ? request.getLogSummary() : signalEvidence.getLogSummary();
+        EntityTraceSummaryDto traceSummary = signalEvidence == null ? request.getTraceSummary() : signalEvidence.getTraceSummary();
+        List<MetricEvidence> metricEvidence = signalEvidence == null ? request.getMetricEvidence() : signalEvidence.getMetricEvidence();
+        List<LogEvidence> logEvidence = signalEvidence == null ? request.getLogEvidence() : signalEvidence.getLogEvidence();
+        List<TraceEvidence> traceEvidence = signalEvidence == null ? request.getTraceEvidence() : signalEvidence.getTraceEvidence();
+        List<EntityTraceQueryHintDto> traceQueryHints = signalEvidence == null
+                ? request.getTraceQueryHints()
+                : signalEvidence.getTraceQueryHints();
         String alertSearchToken = buildEntityAlertSearchToken(request.getEntityContext(), request.getActiveAlerts());
-        String logSearchToken = buildEntityLogSearchToken(request.getEntityContext(), request.getLogSummary());
-        String traceSearchToken = buildEntityTraceSearchToken(request.getEntityContext(), request.getTraceSummary());
+        String logSearchToken = buildEntityLogSearchToken(request.getEntityContext(), logSummary);
+        String traceSearchToken = buildEntityTraceSearchToken(request.getEntityContext(), traceSummary);
         String fallbackSearchToken = defaultText(
                 trimToNull(request.getEntityContext() == null || request.getEntityContext().getEntity() == null
                         ? null : request.getEntityContext().getEntity().getName()),
                 trimToNull(request.getEntityContext() == null || request.getEntityContext().getEntity() == null
                         ? null : request.getEntityContext().getEntity().getDisplayName()));
         MetricEvidence preferredMetricEvidence =
-                CollectionUtils.isEmpty(request.getMetricEvidence()) ? null : request.getMetricEvidence().getFirst();
+                CollectionUtils.isEmpty(metricEvidence) ? null : metricEvidence.getFirst();
         LogEvidence preferredLogEvidence =
-                CollectionUtils.isEmpty(request.getLogEvidence()) ? null : request.getLogEvidence().getFirst();
+                CollectionUtils.isEmpty(logEvidence) ? null : logEvidence.getFirst();
         TraceEvidence preferredTraceEvidence =
-                CollectionUtils.isEmpty(request.getTraceEvidence()) ? null : request.getTraceEvidence().getFirst();
+                CollectionUtils.isEmpty(traceEvidence) ? null : traceEvidence.getFirst();
         return new EntityResponseHandoffsInfo(
                 buildEntityAlertHandoff(request.getReturnTo(), request.getReturnLabel(),
                         request.getEntityContext(), request.getActiveAlerts()),
@@ -602,9 +612,9 @@ public class EntityObservabilityGatewayImpl implements EntityObservabilityGatewa
                         request.getMonitors(), fallbackSearchToken, preferredMetricEvidence),
                 buildEntityLogHandoff(request.getReturnTo(), request.getReturnLabel(),
                         logSearchToken, request.getActiveAlerts(), preferredLogEvidence,
-                        request.getTraceSummary(), preferredTraceEvidence, request.getTraceQueryHints()),
+                        traceSummary, preferredTraceEvidence, traceQueryHints),
                 buildEntityTraceHandoff(request.getReturnTo(), request.getReturnLabel(),
-                        traceSearchToken, request.getTraceSummary(), preferredTraceEvidence),
+                        traceSearchToken, traceSummary, preferredTraceEvidence),
                 buildEntityDiscoveryHandoff(request.getReturnTo(), request.getReturnLabel(),
                         request.getEntityOwner(), request.getEntitySystem(),
                         request.getEntityEnvironment(), request.getEntitySource(),

@@ -510,10 +510,23 @@ export interface EntityDetailDto {
   logSummary?: EntityLogSummary;
   traceSummary?: EntityTraceSummary;
   unifiedEvidenceSummary?: EntityUnifiedEvidenceSummary;
+  signalEvidence?: EntitySignalEvidenceBundle;
   boundMonitors?: Monitor[];
   activeAlerts?: unknown[];
   nextActions?: EntityNextAction[];
   noiseControlSummary?: EntityNoiseControlSummary;
+}
+
+export interface EntitySignalEvidenceBundle {
+  logSummary?: EntityLogSummary;
+  traceSummary?: EntityTraceSummary & { latestSpanId?: string | null };
+  metricEvidence?: unknown[];
+  logEvidence?: unknown[];
+  traceEvidence?: unknown[];
+  logQueryHints?: unknown[];
+  traceQueryHints?: unknown[];
+  unifiedEvidenceSummary?: EntityUnifiedEvidenceSummary;
+  triageRecommendation?: unknown;
 }
 
 export interface EntityUnifiedEvidenceSummary {

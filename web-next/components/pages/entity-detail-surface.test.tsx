@@ -257,6 +257,41 @@ describe('EntityDetailSurface', () => {
     expect(html).not.toContain('data-drawer-section');
   }, 30000);
 
+  it('uses shared signal evidence when deciding whether the entity has investigation context', () => {
+    const html = renderToStaticMarkup(
+      <EntityDetailSurface
+        detail={{
+          entity: {
+            entity: {
+              id: 77,
+              name: 'payment-api',
+              displayName: 'Payment API',
+              type: 'service',
+              status: 'healthy'
+            }
+          },
+          evidenceSummary: {
+            downMonitorCount: 0
+          },
+          alertSummary: {
+            totalActiveAlerts: 0
+          },
+          signalEvidence: {
+            logSummary: { hintCount: 2 },
+            traceSummary: { recentTraceCount: 3 }
+          }
+        } as any}
+        actionError={null}
+        isPending={false}
+        onDelete={() => undefined}
+        onRefresh={() => undefined}
+      />
+    );
+
+    expect(html).toContain('Logs, traces, or monitor evidence are linked and ready for investigation.');
+    expect(html).not.toContain('Add owner, definition, and telemetry binding so this entity becomes usable.');
+  });
+
   it('renders entity context handoff links with inherited time and monitor context', () => {
     const html = renderToStaticMarkup(
       <EntityDetailSurface

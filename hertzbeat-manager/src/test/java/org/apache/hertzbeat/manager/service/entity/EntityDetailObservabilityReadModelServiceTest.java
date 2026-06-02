@@ -42,6 +42,7 @@ import org.apache.hertzbeat.common.observability.dto.entity.EntityMonitorSummary
 import org.apache.hertzbeat.common.observability.dto.entity.EntityNextActionInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityObservabilityDetailBundle;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityOpsSummaryInfo;
+import org.apache.hertzbeat.common.observability.dto.entity.EntitySignalEvidenceBundle;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusPageSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityTriageRecommendation;
@@ -206,8 +207,7 @@ class EntityDetailObservabilityReadModelServiceTest {
                 .thenReturn(statusPageSummary);
         when(entityResponseHandoffReadModelService.buildResponseHandoffs(
                 eq(501L), any(ObservedEntityContext.class), same(activeAlerts), same(monitors),
-                same(enrichedLogSummary), same(traceSummary), same(metricEvidence), same(logEvidence),
-                same(traceEvidence), same(traceQueryHints), same(opsSummary))).thenReturn(handoffs);
+                any(EntitySignalEvidenceBundle.class), same(opsSummary))).thenReturn(handoffs);
         when(entityNoiseControlReadModelService.buildNoiseControlSummary(
                 same(entityDto), same(monitors), same(activeAlerts), eq("team-a")))
                 .thenReturn(noiseSummary);
@@ -223,6 +223,8 @@ class EntityDetailObservabilityReadModelServiceTest {
         assertSame(monitorSummary, detail.getMonitorSummary());
         assertSame(enrichedLogSummary, detail.getLogSummary());
         assertSame(traceSummary, detail.getTraceSummary());
+        assertEquals(enrichedLogSummary, detail.getSignalEvidence().getLogSummary());
+        assertEquals(traceSummary, detail.getSignalEvidence().getTraceSummary());
         assertSame(unifiedSummary, detail.getUnifiedEvidenceSummary());
         assertSame(triage, detail.getTriageRecommendation());
         assertSame(opsSummary, detail.getOpsSummary());
@@ -235,6 +237,20 @@ class EntityDetailObservabilityReadModelServiceTest {
         assertSame(enrichedLogHints, detail.getLogQueryHints());
         assertSame(traceQueryHints, detail.getTraceQueryHints());
         assertSame(definitionActivities, detail.getDefinitionActivities());
+        verify(entityResponseHandoffReadModelService).buildResponseHandoffs(
+                eq(501L), any(ObservedEntityContext.class), same(activeAlerts), same(monitors),
+                org.mockito.ArgumentMatchers.argThat(bundle ->
+                        bundle != null
+                                && bundle.getLogSummary() == enrichedLogSummary
+                                && bundle.getTraceSummary() == traceSummary
+                                && bundle.getMetricEvidence() == metricEvidence
+                                && bundle.getLogEvidence() == logEvidence
+                                && bundle.getTraceEvidence() == traceEvidence
+                                && bundle.getLogQueryHints() == enrichedLogHints
+                                && bundle.getTraceQueryHints() == traceQueryHints
+                                && bundle.getUnifiedEvidenceSummary() == unifiedSummary
+                                && bundle.getTriageRecommendation() == triage),
+                same(opsSummary));
     }
 
     @Test

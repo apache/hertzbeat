@@ -5,11 +5,12 @@ import { Crosshair, Maximize2, RotateCcw, Search, ZoomIn, ZoomOut } from 'lucide
 import { __iconNode as activityIconNode } from 'lucide-react/dist/esm/icons/activity.js';
 import { __iconNode as appWindowIconNode } from 'lucide-react/dist/esm/icons/app-window.js';
 import { __iconNode as circleHelpIconNode } from 'lucide-react/dist/esm/icons/circle-help.js';
-import { __iconNode as componentIconNode } from 'lucide-react/dist/esm/icons/component.js';
 import { __iconNode as containerIconNode } from 'lucide-react/dist/esm/icons/container.js';
 import { __iconNode as databaseIconNode } from 'lucide-react/dist/esm/icons/database.js';
 import { __iconNode as inboxIconNode } from 'lucide-react/dist/esm/icons/inbox.js';
 import { __iconNode as memoryStickIconNode } from 'lucide-react/dist/esm/icons/memory-stick.js';
+import { __iconNode as routeIconNode } from 'lucide-react/dist/esm/icons/route.js';
+import { __iconNode as serverCogIconNode } from 'lucide-react/dist/esm/icons/server-cog.js';
 import { __iconNode as serverIconNode } from 'lucide-react/dist/esm/icons/server.js';
 import { __iconNode as triangleAlertIconNode } from 'lucide-react/dist/esm/icons/triangle-alert.js';
 import { __iconNode as workflowIconNode } from 'lucide-react/dist/esm/icons/workflow.js';
@@ -80,6 +81,7 @@ type HzTopologyLucideIconNode = readonly [string, Record<string, string>][];
 export type HzTopologyG6NodeIconKind =
   | 'application'
   | 'service'
+  | 'endpoint'
   | 'database'
   | 'cache'
   | 'queue'
@@ -92,7 +94,8 @@ export type HzTopologyG6NodeIconKind =
 
 export type HzTopologyG6NodeIconName =
   | 'app-window'
-  | 'component'
+  | 'server-cog'
+  | 'route'
   | 'database'
   | 'memory-stick'
   | 'inbox'
@@ -122,6 +125,16 @@ export type HzTopologyG6ScaleProfile = {
   layoutHint: 'layered-service' | 'force';
 };
 
+export type HzTopologyG6ShapeKind = 'empty' | 'node-only' | 'chain' | 'single-star' | 'mesh' | 'mixed-star-mesh';
+
+export type HzTopologyG6ShapeProfile = {
+  shape: HzTopologyG6ShapeKind;
+  hubNodeCount: number;
+  starEdgeCount: number;
+  meshEdgeCount: number;
+  evidence: 'degree-derived';
+};
+
 export type HzTopologyG6LargeGraphRequirement = 'optional' | 'recommended' | 'required';
 
 export type HzTopologyG6LargeGraphStrategyName =
@@ -143,6 +156,52 @@ export type HzTopologyG6LargeGraphStrategy = {
 };
 
 export type HzTopologyG6InitialFitStrategy = 'center-only' | 'overflow-fit';
+
+export type HzTopologyG6EdgeLabelPolicy = 'visible' | 'hidden-large-graph';
+export type HzTopologyG6NodeLabelPolicy = 'visible' | 'hub-only-large-graph';
+
+export type HzTopologyG6GraphBuildOptions = {
+  edgeLabelPolicy?: HzTopologyG6EdgeLabelPolicy;
+  nodeLabelPolicy?: HzTopologyG6NodeLabelPolicy;
+  edgeReadabilityProfile?: HzTopologyG6EdgeReadabilityProfile;
+};
+
+export type HzTopologyG6NodeLabelCounts = {
+  policy: HzTopologyG6NodeLabelPolicy;
+  visibleCount: number;
+  hiddenCount: number;
+};
+
+export type HzTopologyG6EdgeDensityPolicy = 'all-visible' | 'reduced-large-graph';
+
+export type HzTopologyG6EdgeReadabilityPolicy = 'standard' | 'attenuated-large-graph';
+
+export type HzTopologyG6EdgeReadabilityProfile = {
+  policy: HzTopologyG6EdgeReadabilityPolicy;
+  evidence: 'density-derived';
+  rankingPolicy: 'red-priority-stable-render-order';
+  stability: 'selection-hover-invariant';
+  maxProminentEdgeCount: number;
+  prominentEdgeCount: number;
+  attenuatedEdgeCount: number;
+  minimumOpacity: number;
+  prominentEdgeIds: string[];
+  attenuatedEdgeIds: string[];
+};
+
+export type HzTopologyG6EdgeDensityWindow = {
+  graph: HzTopologyG6GraphInput;
+  policy: HzTopologyG6EdgeDensityPolicy;
+  totalEdgeCount: number;
+  renderedEdgeCount: number;
+  hiddenEdgeCount: number;
+  maxVisibleEdgeCount: number;
+};
+
+export type HzTopologyG6EdgeDensityWindowOptions = {
+  mode?: HzTopologyG6RenderWindow['mode'];
+  maxVisibleEdgeCount?: number;
+};
 
 export type HzTopologyG6RenderWindow = {
   graph: HzTopologyG6GraphInput;
@@ -209,6 +268,30 @@ export type HzTopologyG6GroupSummary = {
   items: HzTopologyG6GroupSummaryItem[];
 };
 
+export type HzTopologyG6SemanticClusterPolicy = 'none' | 'hub-fanout-summary';
+
+export type HzTopologyG6SemanticClusterItem = {
+  id: string;
+  rank: number;
+  role: 'hub';
+  nodeId: string;
+  label: string;
+  entityType: string;
+  incomingEdgeCount: number;
+  outgoingEdgeCount: number;
+  totalEdgeCount: number;
+  leafNodeCount: number;
+};
+
+export type HzTopologyG6SemanticClusterSummary = {
+  policy: HzTopologyG6SemanticClusterPolicy;
+  itemCount: number;
+  hiddenNodeCount: number;
+  hiddenEdgeCount: number;
+  tableCompanion: HzTopologyG6LargeGraphRequirement;
+  items: HzTopologyG6SemanticClusterItem[];
+};
+
 export type HzTopologyG6FilterControlKind = 'source-kind' | 'group-by' | 'search' | 'reset';
 
 export type HzTopologyG6FilterControl = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'children' | 'id'> & {
@@ -235,6 +318,7 @@ type G6GraphRuntime = {
   getZoom?: () => number;
   getPosition?: () => number[];
   translateTo?: (position: number[], animation?: Record<string, unknown> | boolean) => Promise<void>;
+  translateBy?: (offset: number[], animation?: Record<string, unknown> | boolean) => Promise<void>;
   focusElement?: (id: string | string[], animation?: Record<string, unknown> | boolean) => Promise<void>;
   setElementState?: (state: Record<string, string | string[]>, animation?: boolean) => Promise<void>;
   on?: (eventName: string, handler: (event: HzTopologyG6PointerEvent) => void) => void;
@@ -242,7 +326,16 @@ type G6GraphRuntime = {
 
 export const HZ_TOPOLOGY_G6_MIN_ZOOM = 0.18;
 export const HZ_TOPOLOGY_G6_MAX_ZOOM = 2.2;
+export const HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM = 1.35;
 export const HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM = 1;
+export const HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM = 1;
+const HZ_TOPOLOGY_G6_POINTER_PAN_SELECTION_SUPPRESS_MS = 350;
+export const HZ_TOPOLOGY_G6_VIEWPORT_RUNTIME_VERSION = "compact-viewport-guard-v3";
+export const HZ_TOPOLOGY_G6_EDGE_LABEL_VISIBLE_EDGE_LIMIT = 120;
+export const HZ_TOPOLOGY_G6_EDGE_DENSITY_VISIBLE_EDGE_LIMIT = 180;
+export const HZ_TOPOLOGY_G6_EDGE_READABILITY_PROMINENT_EDGE_LIMIT = 72;
+export const HZ_TOPOLOGY_G6_EDGE_READABILITY_MIN_OPACITY = 0.2;
+export const HZ_TOPOLOGY_G6_WINDOWED_LANE_MAX_ROWS = 18;
 
 type HzTopologyG6ViewportSnapshot = {
   zoom: number;
@@ -259,7 +352,8 @@ type HzTopologyG6ViewportTelemetrySource =
   | 'reset-view'
   | 'focus-element'
   | 'redraw-restore'
-  | 'resize-restore';
+  | 'resize-restore'
+  | 'runtime-zoom-guard';
 
 type HzTopologyG6ViewportCommandAction = 'zoom-in' | 'zoom-out' | 'fit-view' | 'reset-view';
 
@@ -267,6 +361,15 @@ type HzTopologyG6ViewportTelemetry = {
   source: HzTopologyG6ViewportTelemetrySource;
   zoom?: number;
   position?: number[];
+};
+
+type HzTopologyG6PointerPanState = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  lastX: number;
+  lastY: number;
+  active: boolean;
 };
 
 type HzTopologyG6FocusActionTelemetrySource = 'none' | 'search-result' | 'selected-node';
@@ -368,7 +471,8 @@ function topologyNodeIconSpec(
 
 export const HZ_TOPOLOGY_G6_NODE_ICON_CATALOG: readonly HzTopologyG6NodeIconSpec[] = [
   topologyNodeIconSpec('application', 'Application', 'app-window', ['application', 'app'], appWindowIconNode),
-  topologyNodeIconSpec('service', 'Service', 'component', ['service', 'api', 'endpoint'], componentIconNode),
+  topologyNodeIconSpec('service', 'Service', 'server-cog', ['service', 'api'], serverCogIconNode),
+  topologyNodeIconSpec('endpoint', 'Endpoint', 'route', ['endpoint', 'route', 'path', 'url', '/api/'], routeIconNode),
   topologyNodeIconSpec('database', 'Database', 'database', ['database', 'db', 'mysql', 'postgres', 'postgresql', 'mongo'], databaseIconNode),
   topologyNodeIconSpec('cache', 'Cache', 'memory-stick', ['cache', 'redis', 'memcached'], memoryStickIconNode),
   topologyNodeIconSpec('queue', 'Queue', 'inbox', ['queue', 'mq', 'broker', 'topic', 'messaging', 'kafka', 'rabbit'], inboxIconNode),
@@ -392,8 +496,16 @@ export const HZ_TOPOLOGY_G6_NODE_ICON_CATALOG: readonly HzTopologyG6NodeIconSpec
   topologyNodeIconSpec('unknown', 'Unknown', 'circle-help', [], circleHelpIconNode)
 ];
 
+export const HZ_TOPOLOGY_G6_NODE_ICON_CATALOG_SUMMARY = HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.map(
+  icon => `${icon.kind}:${icon.iconName}`
+).join(' ');
+
 export function getHzTopologyG6NodeIcon(entityType: string | undefined): HzTopologyG6NodeIconSpec {
   const normalized = (entityType ?? '').toLowerCase();
+  if (normalized.startsWith('/') || normalized.includes('/api/')) {
+    return HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.find(icon => icon.kind === 'endpoint')
+      ?? HZ_TOPOLOGY_G6_NODE_ICON_CATALOG[HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.length - 1];
+  }
   const matchedIcon = HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.find(
     icon => icon.kind !== 'unknown' && icon.aliases.some(alias => normalized.includes(alias))
   );
@@ -523,42 +635,55 @@ export function buildHzTopologyG6GroupSummary(
   const groups = new Map<
     string,
     {
-      nodeCount: number;
+      nodeIds: Set<string>;
       edgeCount: number;
       severity: number;
     }
   >();
+  const nodesById = new Map(input.nodes.map(node => [node.id, node]));
 
   const ensureGroup = (value: string) => {
     const existing = groups.get(value);
     if (existing) return existing;
-    const group = { nodeCount: 0, edgeCount: 0, severity: 0 };
+    const group = { nodeIds: new Set<string>(), edgeCount: 0, severity: 0 };
     groups.set(value, group);
     return group;
   };
 
+  const addNodeToGroup = (group: { nodeIds: Set<string>; edgeCount: number; severity: number }, node: HzTopologyG6NodeInput | undefined) => {
+    if (!node) return;
+    group.nodeIds.add(node.id);
+    group.severity = Math.max(group.severity, toneSeverity(node.tone), toneSeverity(node.health));
+  };
+
   input.nodes.forEach(node => {
     const group = ensureGroup(groupValueForNode(node, groupBy, activeFilterScope.environment));
-    group.nodeCount += 1;
-    group.severity = Math.max(group.severity, toneSeverity(node.tone), toneSeverity(node.health));
+    addNodeToGroup(group, node);
   });
 
   input.edges.forEach(edge => {
     const group = ensureGroup(groupValueForEdge(edge, groupBy, activeFilterScope.environment));
     group.edgeCount += 1;
     group.severity = Math.max(group.severity, toneSeverity(edge.tone));
+    if (groupBy === 'source-kind') {
+      addNodeToGroup(group, nodesById.get(edge.from));
+      addNodeToGroup(group, nodesById.get(edge.to));
+    }
   });
 
   const items = [...groups.entries()]
-    .map(([id, group]) => ({
-      id,
-      label: groupItemLabel(id),
-      nodeCount: group.nodeCount,
-      edgeCount: group.edgeCount,
-      collapsedNodeCount: Math.max(0, group.nodeCount - 1),
-      worstTone: summaryToneFromSeverity(group.severity),
-      active: groupBy === 'source-kind' ? activeFilterScope.sourceKind !== 'all' && id === activeFilterScope.sourceKind : false
-    }))
+    .map(([id, group]) => {
+      const nodeCount = group.nodeIds.size;
+      return {
+        id,
+        label: groupItemLabel(id),
+        nodeCount,
+        edgeCount: group.edgeCount,
+        collapsedNodeCount: Math.max(0, nodeCount - 1),
+        worstTone: summaryToneFromSeverity(group.severity),
+        active: groupBy === 'source-kind' ? activeFilterScope.sourceKind !== 'all' && id === activeFilterScope.sourceKind : false
+      };
+    })
     .sort((left, right) => right.nodeCount - left.nodeCount || right.edgeCount - left.edgeCount || left.id.localeCompare(right.id));
 
   return {
@@ -592,6 +717,99 @@ function scaleMetrics(index: number): HzTopologyG6RedMetrics {
     requestRatePerSecond: Number((4 + (index % 23) * 0.71).toFixed(2)),
     errorRate: Number((((index % 17) + 1) / 1000).toFixed(3)),
     latencyP95Ms: 32 + (index % 19) * 9
+  };
+}
+
+export function buildHzTopologyG6SemanticClusterSummary(
+  input: HzTopologyG6GraphInput,
+  renderWindow: Pick<HzTopologyG6RenderWindow, 'mode' | 'hiddenNodeCount' | 'hiddenEdgeCount' | 'tableCompanion'>
+): HzTopologyG6SemanticClusterSummary {
+  if (renderWindow.mode !== 'windowed' || input.nodes.length === 0 || input.edges.length === 0) {
+    return {
+      policy: 'none',
+      itemCount: 0,
+      hiddenNodeCount: renderWindow.hiddenNodeCount,
+      hiddenEdgeCount: renderWindow.hiddenEdgeCount,
+      tableCompanion: renderWindow.tableCompanion,
+      items: []
+    };
+  }
+
+  const nodesById = new Map(input.nodes.map(node => [node.id, node]));
+  const degreeByNodeId = new Map<
+    string,
+    {
+      incomingEdgeCount: number;
+      outgoingEdgeCount: number;
+      leafNodeIds: Set<string>;
+    }
+  >();
+  const ensureDegree = (nodeId: string) => {
+    const existing = degreeByNodeId.get(nodeId);
+    if (existing) return existing;
+    const next = { incomingEdgeCount: 0, outgoingEdgeCount: 0, leafNodeIds: new Set<string>() };
+    degreeByNodeId.set(nodeId, next);
+    return next;
+  };
+
+  input.nodes.forEach(node => ensureDegree(node.id));
+  input.edges.forEach(edge => {
+    const source = ensureDegree(edge.from);
+    const target = ensureDegree(edge.to);
+    source.outgoingEdgeCount += 1;
+    target.incomingEdgeCount += 1;
+  });
+  input.edges.forEach(edge => {
+    const source = ensureDegree(edge.from);
+    const target = ensureDegree(edge.to);
+    if (target.outgoingEdgeCount === 0) source.leafNodeIds.add(edge.to);
+  });
+
+  const items = input.nodes
+    .map((node, index) => {
+      const degree = ensureDegree(node.id);
+      const totalEdgeCount = degree.incomingEdgeCount + degree.outgoingEdgeCount;
+      return {
+        node,
+        index,
+        totalEdgeCount,
+        incomingEdgeCount: degree.incomingEdgeCount,
+        outgoingEdgeCount: degree.outgoingEdgeCount,
+        leafNodeCount: degree.leafNodeIds.size
+      };
+    })
+    .filter(item => item.totalEdgeCount > 1 && (item.outgoingEdgeCount >= 2 || item.leafNodeCount > 0))
+    .sort(
+      (left, right) =>
+        right.leafNodeCount - left.leafNodeCount ||
+        right.outgoingEdgeCount - left.outgoingEdgeCount ||
+        right.totalEdgeCount - left.totalEdgeCount ||
+        left.index - right.index
+    )
+    .slice(0, 4)
+    .map((item, index): HzTopologyG6SemanticClusterItem => {
+      const node = nodesById.get(item.node.id) ?? item.node;
+      return {
+        id: `hub-${node.id}`,
+        rank: index + 1,
+        role: 'hub',
+        nodeId: node.id,
+        label: node.label,
+        entityType: node.entityType,
+        incomingEdgeCount: item.incomingEdgeCount,
+        outgoingEdgeCount: item.outgoingEdgeCount,
+        totalEdgeCount: item.totalEdgeCount,
+        leafNodeCount: item.leafNodeCount
+      };
+    });
+
+  return {
+    policy: items.length > 0 ? 'hub-fanout-summary' : 'none',
+    itemCount: items.length,
+    hiddenNodeCount: renderWindow.hiddenNodeCount,
+    hiddenEdgeCount: renderWindow.hiddenEdgeCount,
+    tableCompanion: renderWindow.tableCompanion,
+    items
   };
 }
 
@@ -730,6 +948,18 @@ export function buildHzTopologyG6InitialFitStrategy(input: HzTopologyG6GraphInpu
   return nodeCount > 0 && nodeCount <= 12 && edgeCount <= 18 ? 'center-only' : 'overflow-fit';
 }
 
+export function buildHzTopologyG6OperatorMaxZoom(initialFitStrategy: HzTopologyG6InitialFitStrategy) {
+  return initialFitStrategy === 'center-only' ? HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM : HZ_TOPOLOGY_G6_MAX_ZOOM;
+}
+
+export function buildHzTopologyG6RuntimeMaxZoom(
+  initialFitStrategy: HzTopologyG6InitialFitStrategy,
+  hasUserViewportInteracted: boolean
+) {
+  if (initialFitStrategy === 'center-only' && !hasUserViewportInteracted) return HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM;
+  return buildHzTopologyG6OperatorMaxZoom(initialFitStrategy);
+}
+
 export function buildHzTopologyG6RenderWindow(
   input: HzTopologyG6GraphInput,
   strategy: HzTopologyG6LargeGraphStrategy = buildHzTopologyG6LargeGraphStrategy(input),
@@ -790,6 +1020,112 @@ export function buildHzTopologyG6RenderWindow(
     tableCompanion: strategy.tableCompanion,
     priorityNodeIds,
     priorityNodeCount: priorityNodeIds.length
+  };
+}
+
+function scoreHzTopologyG6EdgeForDensity(edge: HzTopologyG6EdgeInput, index: number) {
+  const metrics = edge.redMetrics;
+  const requestWeight = metrics?.requestRatePerSecond ?? metrics?.requestCount ?? 0;
+  const errorWeight = (metrics?.errorRate ?? 0) * 1000 + (metrics?.errorCount ?? 0) * 8;
+  const latencyWeight = (metrics?.latencyP95Ms ?? metrics?.latencyAvgMs ?? 0) / 10;
+  const focusWeight = edge.selected || edge.focus === 'active-path' ? 1_000_000 : edge.focus === 'context-muted' ? -10_000 : 0;
+  const severityWeight = edge.tone === 'danger' || edge.tone === 'red' ? 20_000 : edge.tone === 'warning' || edge.tone === 'orange' ? 8_000 : 0;
+  const sourceWeight = edge.source === 'otlp-trace-call' || edge.relationshipType === 'trace-call' ? 500 : 0;
+
+  return focusWeight + severityWeight + requestWeight + errorWeight + latencyWeight + sourceWeight - index / 10_000;
+}
+
+export function buildHzTopologyG6EdgeDensityWindow(
+  input: HzTopologyG6GraphInput,
+  options: HzTopologyG6EdgeDensityWindowOptions = {}
+): HzTopologyG6EdgeDensityWindow {
+  const maxVisibleEdgeCount = options.maxVisibleEdgeCount ?? HZ_TOPOLOGY_G6_EDGE_DENSITY_VISIBLE_EDGE_LIMIT;
+  const shouldReduce = options.mode === 'windowed' && input.edges.length > maxVisibleEdgeCount;
+
+  if (!shouldReduce) {
+    return {
+      graph: input,
+      policy: 'all-visible',
+      totalEdgeCount: input.edges.length,
+      renderedEdgeCount: input.edges.length,
+      hiddenEdgeCount: 0,
+      maxVisibleEdgeCount
+    };
+  }
+
+  const rankedEdges = input.edges
+    .map((edge, index) => ({
+      edge,
+      index,
+      score: scoreHzTopologyG6EdgeForDensity(edge, index)
+    }))
+    .sort((left, right) => right.score - left.score || left.index - right.index)
+    .slice(0, maxVisibleEdgeCount)
+    .sort((left, right) => left.index - right.index)
+    .map(item => item.edge);
+
+  return {
+    graph: {
+      nodes: input.nodes,
+      edges: rankedEdges
+    },
+    policy: 'reduced-large-graph',
+    totalEdgeCount: input.edges.length,
+    renderedEdgeCount: rankedEdges.length,
+    hiddenEdgeCount: Math.max(0, input.edges.length - rankedEdges.length),
+    maxVisibleEdgeCount
+  };
+}
+
+export function buildHzTopologyG6EdgeReadabilityProfile(
+  input: HzTopologyG6GraphInput,
+  densityPolicy: HzTopologyG6EdgeDensityPolicy = 'all-visible',
+  options: { maxProminentEdgeCount?: number; minimumOpacity?: number } = {}
+): HzTopologyG6EdgeReadabilityProfile {
+  const maxProminentEdgeCount = options.maxProminentEdgeCount ?? HZ_TOPOLOGY_G6_EDGE_READABILITY_PROMINENT_EDGE_LIMIT;
+  const minimumOpacity = options.minimumOpacity ?? HZ_TOPOLOGY_G6_EDGE_READABILITY_MIN_OPACITY;
+  const shouldAttenuate = densityPolicy === 'reduced-large-graph' && input.edges.length > maxProminentEdgeCount;
+
+  if (!shouldAttenuate) {
+    return {
+      policy: 'standard',
+      evidence: 'density-derived',
+      rankingPolicy: 'red-priority-stable-render-order',
+      stability: 'selection-hover-invariant',
+      maxProminentEdgeCount,
+      prominentEdgeCount: input.edges.length,
+      attenuatedEdgeCount: 0,
+      minimumOpacity,
+      prominentEdgeIds: input.edges.map(edge => edge.id),
+      attenuatedEdgeIds: []
+    };
+  }
+
+  const prominentEdgeIdSet = new Set(
+    input.edges
+      .map((edge, index) => ({
+        edge,
+        index,
+        score: scoreHzTopologyG6EdgeForDensity(edge, index)
+      }))
+      .sort((left, right) => right.score - left.score || left.index - right.index)
+      .slice(0, maxProminentEdgeCount)
+      .map(item => item.edge.id)
+  );
+  const prominentEdgeIds = input.edges.map(edge => edge.id).filter(edgeId => prominentEdgeIdSet.has(edgeId));
+  const attenuatedEdgeIds = input.edges.map(edge => edge.id).filter(edgeId => !prominentEdgeIdSet.has(edgeId));
+
+  return {
+    policy: 'attenuated-large-graph',
+    evidence: 'density-derived',
+    rankingPolicy: 'red-priority-stable-render-order',
+    stability: 'selection-hover-invariant',
+    maxProminentEdgeCount,
+    prominentEdgeCount: prominentEdgeIds.length,
+    attenuatedEdgeCount: attenuatedEdgeIds.length,
+    minimumOpacity,
+    prominentEdgeIds,
+    attenuatedEdgeIds
   };
 }
 
@@ -937,11 +1273,122 @@ export function buildHzTopologyG6NeighborFocus(
   };
 }
 
-export function buildHzTopologyG6Graph(input: HzTopologyG6GraphInput): HzTopologyG6GraphData {
+function buildHzTopologyG6NodeDegrees(input: HzTopologyG6GraphInput) {
+  const degrees = new Map<string, { incoming: number; outgoing: number; total: number }>();
+  input.nodes.forEach(node => degrees.set(node.id, { incoming: 0, outgoing: 0, total: 0 }));
+  input.edges.forEach(edge => {
+    const from = degrees.get(edge.from);
+    if (from) {
+      from.outgoing += 1;
+      from.total += 1;
+    }
+    const to = degrees.get(edge.to);
+    if (to) {
+      to.incoming += 1;
+      to.total += 1;
+    }
+  });
+  return degrees;
+}
+
+function buildHzTopologyG6NodeLabelVisibility(input: HzTopologyG6GraphInput, policy: HzTopologyG6NodeLabelPolicy) {
+  const visibleNodeIds = new Set<string>();
+  if (policy === 'visible') {
+    input.nodes.forEach(node => visibleNodeIds.add(node.id));
+    return { visibleNodeIds };
+  }
+
+  const degrees = buildHzTopologyG6NodeDegrees(input);
+  input.nodes.forEach(node => {
+    const degree = degrees.get(node.id) ?? { incoming: 0, outgoing: 0, total: 0 };
+    const isFocused = node.focus === 'active' || node.focus === 'related';
+    const isHub = degree.outgoing >= 2 || degree.incoming >= 3 || degree.total >= 4;
+    const isRoot = degree.incoming === 0 && degree.outgoing > 0;
+    if (isFocused || isHub || isRoot) {
+      visibleNodeIds.add(node.id);
+    }
+  });
+
+  if (visibleNodeIds.size === 0) {
+    input.nodes.slice(0, 12).forEach(node => visibleNodeIds.add(node.id));
+  }
+
+  return { visibleNodeIds };
+}
+
+export function buildHzTopologyG6NodeLabelCounts(
+  input: HzTopologyG6GraphInput,
+  policy: HzTopologyG6NodeLabelPolicy = 'visible'
+): HzTopologyG6NodeLabelCounts {
+  const visibility = buildHzTopologyG6NodeLabelVisibility(input, policy);
+  return {
+    policy,
+    visibleCount: visibility.visibleNodeIds.size,
+    hiddenCount: Math.max(0, input.nodes.length - visibility.visibleNodeIds.size)
+  };
+}
+
+export function buildHzTopologyG6ShapeProfile(input: HzTopologyG6GraphInput): HzTopologyG6ShapeProfile {
+  if (input.nodes.length === 0) {
+    return { shape: 'empty', hubNodeCount: 0, starEdgeCount: 0, meshEdgeCount: 0, evidence: 'degree-derived' };
+  }
+  if (input.edges.length === 0) {
+    return { shape: 'node-only', hubNodeCount: 0, starEdgeCount: 0, meshEdgeCount: 0, evidence: 'degree-derived' };
+  }
+
+  const degrees = buildHzTopologyG6NodeDegrees(input);
+  const hubNodeIds = new Set<string>();
+  input.nodes.forEach(node => {
+    const degree = degrees.get(node.id) ?? { incoming: 0, outgoing: 0, total: 0 };
+    if (degree.outgoing >= 8 || degree.incoming >= 8 || degree.total >= 12) {
+      hubNodeIds.add(node.id);
+    }
+  });
+
+  let starEdgeCount = 0;
+  let meshEdgeCount = 0;
+  input.edges.forEach(edge => {
+    const fromDegree = degrees.get(edge.from) ?? { incoming: 0, outgoing: 0, total: 0 };
+    const toDegree = degrees.get(edge.to) ?? { incoming: 0, outgoing: 0, total: 0 };
+    const touchesHub = hubNodeIds.has(edge.from) || hubNodeIds.has(edge.to);
+    const touchesLeaf = fromDegree.total <= 2 || toDegree.total <= 2;
+
+    if (touchesHub && touchesLeaf) {
+      starEdgeCount += 1;
+    } else if (fromDegree.total >= 2 && toDegree.total >= 2) {
+      meshEdgeCount += 1;
+    }
+  });
+
+  const shape: HzTopologyG6ShapeKind =
+    starEdgeCount > 0 && meshEdgeCount > 0
+      ? 'mixed-star-mesh'
+      : meshEdgeCount > 0
+        ? 'mesh'
+        : starEdgeCount > 0
+          ? 'single-star'
+          : 'chain';
+
+  return {
+    shape,
+    hubNodeCount: hubNodeIds.size,
+    starEdgeCount,
+    meshEdgeCount,
+    evidence: 'degree-derived'
+  };
+}
+
+export function buildHzTopologyG6Graph(input: HzTopologyG6GraphInput, options: HzTopologyG6GraphBuildOptions = {}): HzTopologyG6GraphData {
+  const showEdgeLabels = options.edgeLabelPolicy !== 'hidden-large-graph';
+  const nodeLabelVisibility = buildHzTopologyG6NodeLabelVisibility(input, options.nodeLabelPolicy ?? 'visible');
+  const attenuatedEdgeIds = new Set(options.edgeReadabilityProfile?.attenuatedEdgeIds ?? []);
+  const edgeReadabilityMinimumOpacity =
+    options.edgeReadabilityProfile?.minimumOpacity ?? HZ_TOPOLOGY_G6_EDGE_READABILITY_MIN_OPACITY;
   return {
     nodes: input.nodes.map(node => {
       const stroke = toneStroke(node.tone, node.health);
       const icon = getHzTopologyG6NodeIcon(node.entityType);
+      const showNodeLabel = nodeLabelVisibility.visibleNodeIds.has(node.id);
       return {
         id: node.id,
         type: 'circle',
@@ -965,7 +1412,6 @@ export function buildHzTopologyG6Graph(input: HzTopologyG6GraphInput): HzTopolog
           requestRatePerSecond: node.redMetrics?.requestRatePerSecond,
           errorRate: node.redMetrics?.errorRate,
           latencyP95Ms: node.redMetrics?.latencyP95Ms,
-          href: node.href,
           focusHref: node.focusHref
         },
         style: {
@@ -981,7 +1427,7 @@ export function buildHzTopologyG6Graph(input: HzTopologyG6GraphInput): HzTopolog
           iconWidth: 18,
           iconHeight: 18,
           iconOpacity: node.focus === 'dimmed' ? 0.62 : 0.94,
-          labelText: node.label,
+          labelText: showNodeLabel ? node.label : '',
           labelFill: '#e5edf8',
           labelFontFamily: 'Inter, ui-sans-serif, system-ui',
           labelFontSize: 12,
@@ -1002,6 +1448,22 @@ export function buildHzTopologyG6Graph(input: HzTopologyG6GraphInput): HzTopolog
     }),
     edges: input.edges.map(edge => {
       const stroke = toneStroke(edge.tone);
+      const isReadabilityAttenuated = attenuatedEdgeIds.has(edge.id);
+      const edgeOpacity = isReadabilityAttenuated ? edgeReadabilityMinimumOpacity : edge.focus === 'context-muted' ? 0.28 : 0.92;
+      const labelStyle = showEdgeLabels
+        ? {
+            labelText: edgeLabel(edge),
+            labelFill: '#cbd5e1',
+            labelFontFamily: 'Inter, ui-sans-serif, system-ui',
+            labelFontSize: 10,
+            labelBackground: true,
+            labelBackgroundFill: '#080b10',
+            labelBackgroundStroke: '#1d2738',
+            labelBackgroundRadius: 3
+          }
+        : {
+            labelText: ''
+          };
       return {
         id: edge.id,
         source: edge.from,
@@ -1024,19 +1486,126 @@ export function buildHzTopologyG6Graph(input: HzTopologyG6GraphInput): HzTopolog
         },
         style: {
           stroke,
-          lineWidth: edge.selected ? edgeWidth(edge.redMetrics) + 1.2 : edgeWidth(edge.redMetrics),
+          lineWidth: isReadabilityAttenuated
+            ? Math.min(edgeWidth(edge.redMetrics), 1.1)
+            : edge.selected
+              ? edgeWidth(edge.redMetrics) + 1.2
+              : edgeWidth(edge.redMetrics),
           increasedLineWidthForHitTesting: 16,
-          opacity: edge.focus === 'context-muted' ? 0.28 : 0.92,
+          opacity: edgeOpacity,
           radius: 16,
           endArrow: true,
-          labelText: edgeLabel(edge),
-          labelFill: '#cbd5e1',
-          labelFontFamily: 'Inter, ui-sans-serif, system-ui',
-          labelFontSize: 10,
-          labelBackground: true,
-          labelBackgroundFill: '#080b10',
-          labelBackgroundStroke: '#1d2738',
-          labelBackgroundRadius: 3
+          ...labelStyle
+        }
+      };
+    })
+  };
+}
+
+type HzTopologyG6WindowedLaneRole = 'root' | 'hub' | 'leaf' | 'isolated';
+
+type HzTopologyG6WindowedLaneConfig = {
+  baseX: number;
+  columnGap: number;
+  rowGap: number;
+  maxRows: number;
+};
+
+const hzTopologyG6WindowedLaneConfigs: Record<HzTopologyG6WindowedLaneRole, HzTopologyG6WindowedLaneConfig> = {
+  root: { baseX: -420, columnGap: 112, rowGap: 74, maxRows: HZ_TOPOLOGY_G6_WINDOWED_LANE_MAX_ROWS },
+  hub: { baseX: -84, columnGap: 112, rowGap: 74, maxRows: HZ_TOPOLOGY_G6_WINDOWED_LANE_MAX_ROWS },
+  leaf: { baseX: 260, columnGap: 96, rowGap: 74, maxRows: HZ_TOPOLOGY_G6_WINDOWED_LANE_MAX_ROWS },
+  isolated: { baseX: 560, columnGap: 96, rowGap: 74, maxRows: HZ_TOPOLOGY_G6_WINDOWED_LANE_MAX_ROWS }
+};
+
+function windowedLaneRole(inDegree: number, outDegree: number, totalDegree: number): HzTopologyG6WindowedLaneRole {
+  if (totalDegree === 0) return 'isolated';
+  if (inDegree === 0 && outDegree > 0) return 'root';
+  if (outDegree >= 3 || (inDegree > 0 && outDegree > 0) || totalDegree >= 8) return 'hub';
+  return 'leaf';
+}
+
+export function buildHzTopologyG6WindowedLaneGraph(input: HzTopologyG6GraphData): HzTopologyG6GraphData {
+  if (input.nodes.length === 0 || input.edges.length === 0) return input;
+
+  const degreeByNodeId = new Map<string, { inDegree: number; outDegree: number }>();
+  const ensureDegree = (nodeId: string) => {
+    const existing = degreeByNodeId.get(nodeId);
+    if (existing) return existing;
+    const next = { inDegree: 0, outDegree: 0 };
+    degreeByNodeId.set(nodeId, next);
+    return next;
+  };
+
+  input.nodes.forEach(node => ensureDegree(node.id));
+  input.edges.forEach(edge => {
+    if (edge.source) ensureDegree(edge.source).outDegree += 1;
+    if (edge.target) ensureDegree(edge.target).inDegree += 1;
+  });
+
+  const indexedNodes = input.nodes.map((node, index) => {
+    const degree = ensureDegree(node.id);
+    const totalDegree = degree.inDegree + degree.outDegree;
+    return {
+      node,
+      index,
+      totalDegree,
+      role: windowedLaneRole(degree.inDegree, degree.outDegree, totalDegree)
+    };
+  });
+
+  const positions = new Map<string, { x: number; y: number }>();
+  (['root', 'hub', 'leaf', 'isolated'] as HzTopologyG6WindowedLaneRole[]).forEach(role => {
+    const config = hzTopologyG6WindowedLaneConfigs[role];
+    const roleNodes = indexedNodes
+      .filter(item => item.role === role)
+      .sort((a, b) => b.totalDegree - a.totalDegree || a.index - b.index);
+
+    roleNodes.forEach((item, roleIndex) => {
+      const laneColumn = Math.floor(roleIndex / config.maxRows);
+      const laneRow = roleIndex % config.maxRows;
+      positions.set(item.node.id, {
+        x: config.baseX + laneColumn * config.columnGap,
+        y: (laneRow - (config.maxRows - 1) / 2) * config.rowGap
+      });
+    });
+  });
+
+  return {
+    ...input,
+    nodes: input.nodes.map(node => {
+      const position = positions.get(node.id);
+      if (!position) return node;
+      return {
+        ...node,
+        style: {
+          ...node.style,
+          x: position.x,
+          y: position.y
+        }
+      };
+    })
+  };
+}
+
+export function buildHzTopologyG6NodeOnlyGridGraph(input: HzTopologyG6GraphData): HzTopologyG6GraphData {
+  const nodeCount = input.nodes.length;
+  if (nodeCount === 0 || input.edges.length > 0) return input;
+  const cols = Math.max(1, Math.ceil(Math.sqrt(nodeCount)));
+  const columnGap = 144;
+  const rowGap = 126;
+  const gridWidth = (Math.min(cols, nodeCount) - 1) * columnGap;
+  return {
+    ...input,
+    nodes: input.nodes.map((node, index) => {
+      const column = index % cols;
+      const row = Math.floor(index / cols);
+      return {
+        ...node,
+        style: {
+          ...node.style,
+          x: column * columnGap - gridWidth / 2,
+          y: row * rowGap
         }
       };
     })
@@ -1059,6 +1628,15 @@ function buildHzTopologyG6RenderKey(input: HzTopologyG6GraphData) {
   return `${nodes}::${edges}`;
 }
 
+function buildHzTopologyG6LifecycleKeyFingerprint(value: string) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `g6k-${(hash >>> 0).toString(16).padStart(8, '0')}`;
+}
+
 export type HzTopologyG6CanvasProps = React.HTMLAttributes<HTMLDivElement> & {
   graph: HzTopologyG6GraphInput;
   selectedNodeId?: string;
@@ -1075,12 +1653,17 @@ export type HzTopologyG6CanvasProps = React.HTMLAttributes<HTMLDivElement> & {
   groupItemHrefs?: Record<string, string>;
   legendSlot?: React.ReactNode;
   summaryLabel?: string;
+  nodeOnlyExplanationLabel?: string;
   fitViewLabel?: string;
   resetViewLabel?: string;
   selectedFocusLabel?: string;
   searchFocusLabel?: string;
   zoomInLabel?: string;
   zoomOutLabel?: string;
+  edgeDensityDrilldownLabel?: string;
+  edgeDensityDrilldownDetailLabel?: string;
+  edgeDensityDrilldownTargetId?: string;
+  onEdgeDensityDrilldown?: () => void;
   onNodeSelect?: (nodeId: string) => void;
   onNodeFocus?: (nodeId: string) => void;
   onEdgeSelect?: (edgeId: string) => void;
@@ -1118,6 +1701,11 @@ function clampG6HoverCoordinate(value: number, min: number, max: number) {
 export function clampHzTopologyG6AutoFitZoom(value: number | undefined) {
   if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
   return Math.max(HZ_TOPOLOGY_G6_MIN_ZOOM, Math.min(HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM, value));
+}
+
+export function clampHzTopologyG6OperatorZoom(value: number | undefined, maxZoom: number) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  return Math.max(HZ_TOPOLOGY_G6_MIN_ZOOM, Math.min(maxZoom, value));
 }
 
 function readG6EventAnchor(event: HzTopologyG6PointerEvent, stage: HTMLElement): HzTopologyG6HoverAnchor {
@@ -1163,8 +1751,10 @@ async function centerOnlyG6Viewport(
   animation: Record<string, unknown> | boolean
 ) {
   if (!runtimeGraph) return;
+  await runtimeGraph.zoomTo?.(HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM, false);
   await runtimeGraph.fitCenter?.(animation);
-  await runtimeGraph.zoomTo?.(HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM, animation);
+  await runtimeGraph.zoomTo?.(HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM, animation);
+  await runtimeGraph.fitCenter?.(false);
 }
 
 async function withG6AutoFitZoomRange(runtimeGraph: G6GraphRuntime, action: () => Promise<void>) {
@@ -1200,10 +1790,34 @@ function captureG6ViewportSnapshot(runtimeGraph: G6GraphRuntime): HzTopologyG6Vi
   return { zoom, position: [x, y] };
 }
 
-async function restoreG6ViewportSnapshot(runtimeGraph: G6GraphRuntime, snapshot: HzTopologyG6ViewportSnapshot | undefined) {
+async function restoreG6ViewportSnapshot(
+  runtimeGraph: G6GraphRuntime,
+  snapshot: HzTopologyG6ViewportSnapshot | undefined,
+  maxZoom: number
+) {
   if (!snapshot) return;
-  await runtimeGraph.zoomTo?.(snapshot.zoom, false);
+  const clampedZoom = clampHzTopologyG6OperatorZoom(snapshot.zoom, maxZoom);
+  if (clampedZoom !== undefined) await runtimeGraph.zoomTo?.(clampedZoom, false);
   await runtimeGraph.translateTo?.(snapshot.position, false);
+}
+
+export function buildHzTopologyG6PointerPanDelta(delta: { x: number; y: number }) {
+  const x = Number.isFinite(delta.x) ? delta.x : 0;
+  const y = Number.isFinite(delta.y) ? delta.y : 0;
+  return [Math.round(x), Math.round(y)];
+}
+
+async function enforceG6OperatorZoomBounds(
+  runtimeGraph: G6GraphRuntime | null | undefined,
+  maxZoom: number
+) {
+  if (!runtimeGraph) return false;
+  runtimeGraph.setZoomRange?.([HZ_TOPOLOGY_G6_MIN_ZOOM, maxZoom]);
+  const currentZoom = runtimeGraph.getZoom?.();
+  const clampedZoom = clampHzTopologyG6OperatorZoom(currentZoom, maxZoom);
+  if (currentZoom === undefined || clampedZoom === undefined || clampedZoom === currentZoom) return false;
+  await runtimeGraph.zoomTo?.(clampedZoom, false);
+  return true;
 }
 
 function formatG6ViewportZoom(value: number | undefined) {
@@ -1246,12 +1860,17 @@ export function HzTopologyG6Canvas({
   groupItemHrefs = {},
   legendSlot,
   summaryLabel,
+  nodeOnlyExplanationLabel = 'Entities only · no relation edges',
   fitViewLabel = 'Fit view',
   resetViewLabel = 'Reset view',
   selectedFocusLabel = 'Focus selected node',
   searchFocusLabel = 'Focus search result',
   zoomInLabel = 'Zoom in',
   zoomOutLabel = 'Zoom out',
+  edgeDensityDrilldownLabel = 'Open edge table',
+  edgeDensityDrilldownDetailLabel,
+  edgeDensityDrilldownTargetId = 'topology-metric-table',
+  onEdgeDensityDrilldown,
   onNodeSelect,
   onNodeFocus,
   onEdgeSelect,
@@ -1268,6 +1887,8 @@ export function HzTopologyG6Canvas({
   const lastFitStructureKeyRef = React.useRef<string | undefined>(undefined);
   const lastDrawGraphKeyRef = React.useRef<string | undefined>(undefined);
   const hasUserViewportInteractedRef = React.useRef(false);
+  const pointerPanStateRef = React.useRef<HzTopologyG6PointerPanState | undefined>(undefined);
+  const pointerPanSelectionSuppressedUntilRef = React.useRef(0);
   const initialFitTimerRef = React.useRef<number | undefined>(undefined);
   const latestG6GraphRef = React.useRef<HzTopologyG6GraphData | undefined>(undefined);
   const latestG6RenderKeyRef = React.useRef<string | undefined>(undefined);
@@ -1321,8 +1942,7 @@ export function HzTopologyG6Canvas({
       : selectedNodeId || selectedEdgeId
         ? 'selection'
         : 'none';
-  const shouldFocusViewportElement = activeFocusSource === "search-node";
-  const shouldAutoFocusSearchResult = shouldFocusViewportElement && !hasUserViewportInteractedRef.current;
+  const shouldAutoFocusSearchResult = false;
   const g6StyleFocusNodeId = activeSearchNodeId;
   const g6StyleFocusEdgeId = undefined;
   const neighborFocus = React.useMemo(
@@ -1415,6 +2035,8 @@ export function HzTopologyG6Canvas({
   const graphStructureKey = React.useMemo(() => buildHzTopologyG6StructureKey(graph), [graph]);
   const scaleProfile = React.useMemo(() => buildHzTopologyG6ScaleProfile(graph), [graph]);
   const largeGraphStrategy = React.useMemo(() => buildHzTopologyG6LargeGraphStrategy(graph), [graph]);
+  const largeGraphOverflowPolicy =
+    largeGraphStrategy.scaleTier === 'overflow' ? 'filter-first-before-expanded-render' : 'not-overflow';
   const renderWindowPriorityNodeIds = React.useMemo(
     () => [activeSearchNodeId].filter((nodeId): nodeId is string => Boolean(nodeId)),
     [activeSearchNodeId]
@@ -1423,10 +2045,96 @@ export function HzTopologyG6Canvas({
     () => buildHzTopologyG6RenderWindow(canvasGraph, largeGraphStrategy, { priorityNodeIds: renderWindowPriorityNodeIds }),
     [canvasGraph, largeGraphStrategy, renderWindowPriorityNodeIds]
   );
+  const semanticClusterSummary = React.useMemo(
+    () => buildHzTopologyG6SemanticClusterSummary(renderWindow.graph, renderWindow),
+    [renderWindow]
+  );
+  const shapeProfile = React.useMemo(() => buildHzTopologyG6ShapeProfile(renderWindow.graph), [renderWindow.graph]);
+  const edgeLabelPolicy: HzTopologyG6EdgeLabelPolicy =
+    renderWindow.mode === 'windowed' || renderWindow.renderedEdgeCount > HZ_TOPOLOGY_G6_EDGE_LABEL_VISIBLE_EDGE_LIMIT
+      ? 'hidden-large-graph'
+      : 'visible';
+  const edgeDensityWindow = React.useMemo(
+    () => buildHzTopologyG6EdgeDensityWindow(renderWindow.graph, { mode: renderWindow.mode }),
+    [renderWindow.graph, renderWindow.mode]
+  );
+  const renderWindowRenderedEdgeCount = edgeDensityWindow.renderedEdgeCount;
+  const renderWindowHiddenEdgeCount = Math.max(0, renderWindow.totalEdgeCount - renderWindowRenderedEdgeCount);
+  const nodeLabelPolicy: HzTopologyG6NodeLabelPolicy = renderWindow.mode === 'windowed' ? 'hub-only-large-graph' : 'visible';
+  const nodeLabelCounts = React.useMemo(
+    () => buildHzTopologyG6NodeLabelCounts(edgeDensityWindow.graph, nodeLabelPolicy),
+    [edgeDensityWindow.graph, nodeLabelPolicy]
+  );
+  const edgeReadabilityProfile = React.useMemo(
+    () => buildHzTopologyG6EdgeReadabilityProfile(edgeDensityWindow.graph, edgeDensityWindow.policy),
+    [edgeDensityWindow.graph, edgeDensityWindow.policy]
+  );
+  const edgeLabelVisibleCount = edgeLabelPolicy === 'visible' ? edgeDensityWindow.renderedEdgeCount : 0;
+  const edgeLabelHiddenCount = edgeLabelPolicy === 'hidden-large-graph' ? edgeDensityWindow.renderedEdgeCount : 0;
   const initialFitStrategy = React.useMemo(() => buildHzTopologyG6InitialFitStrategy(renderWindow.graph), [renderWindow.graph]);
-  const g6Graph = React.useMemo(() => buildHzTopologyG6Graph(renderWindow.graph), [renderWindow.graph]);
-  const g6RenderKey = React.useMemo(() => buildHzTopologyG6RenderKey(g6Graph), [g6Graph]);
-  latestG6GraphRef.current = g6Graph;
+  const operatorMaxZoom = buildHzTopologyG6OperatorMaxZoom(initialFitStrategy);
+  const operatorZoomTier = initialFitStrategy === 'center-only' ? 'compact-readable' : 'full-canvas';
+  const viewportRuntimeVersion = HZ_TOPOLOGY_G6_VIEWPORT_RUNTIME_VERSION;
+  const nodeCount = graph.nodes.length;
+  const edgeCount = graph.edges.length;
+  const shouldUseWindowedLaneLayout = renderWindow.mode === 'windowed' && renderWindow.renderedNodeCount > 0;
+  const windowedLayoutPolicy = shouldUseWindowedLaneLayout ? 'packed-lanes' : 'g6-managed';
+  const g6LayoutMode = edgeCount === 0 && nodeCount > 0 ? 'node-only-grid' : shouldUseWindowedLaneLayout ? 'windowed-lanes' : layout;
+  const shouldFastPaintNodeOnlyGraph = g6LayoutMode === 'node-only-grid';
+  const relationState = shouldFastPaintNodeOnlyGraph ? 'entities-without-relation-edges' : 'relation-edges-present-or-empty';
+  const nodeOnlyExplanationVisibility = shouldFastPaintNodeOnlyGraph ? 'visible' : 'hidden';
+  const g6Graph = React.useMemo(
+    () => buildHzTopologyG6Graph(edgeDensityWindow.graph, { edgeLabelPolicy, nodeLabelPolicy, edgeReadabilityProfile }),
+    [edgeDensityWindow.graph, edgeLabelPolicy, edgeReadabilityProfile, nodeLabelPolicy]
+  );
+  const windowedLaneG6Graph = React.useMemo(
+    () => (shouldUseWindowedLaneLayout ? buildHzTopologyG6WindowedLaneGraph(g6Graph) : g6Graph),
+    [g6Graph, shouldUseWindowedLaneLayout]
+  );
+  const runtimeG6Graph = React.useMemo(
+    () => (shouldFastPaintNodeOnlyGraph ? buildHzTopologyG6NodeOnlyGridGraph(g6Graph) : windowedLaneG6Graph),
+    [g6Graph, shouldFastPaintNodeOnlyGraph, windowedLaneG6Graph]
+  );
+  const renderedG6ElementIds = React.useMemo(
+    () => ({
+      nodeIds: new Set(runtimeG6Graph.nodes.map(node => node.id)),
+      edgeIds: new Set(runtimeG6Graph.edges.map(edge => edge.id))
+    }),
+    [runtimeG6Graph]
+  );
+  const renderedSelectionState = React.useMemo(
+    () => ({
+      nodeId:
+        selectedFocusNodeId && renderedG6ElementIds.nodeIds.has(selectedFocusNodeId)
+          ? selectedFocusNodeId
+          : undefined,
+      edgeId:
+        selectedEdgeId && renderedG6ElementIds.edgeIds.has(selectedEdgeId)
+          ? selectedEdgeId
+          : undefined
+    }),
+    [renderedG6ElementIds, selectedEdgeId, selectedFocusNodeId]
+  );
+  const selectionStateSelectedNodeRendered = selectedFocusNodeId
+    ? renderedG6ElementIds.nodeIds.has(selectedFocusNodeId)
+      ? 'true'
+      : 'false'
+    : 'none';
+  const selectionStateSelectedEdgeRendered = selectedEdgeId
+    ? renderedG6ElementIds.edgeIds.has(selectedEdgeId)
+      ? 'true'
+      : 'false'
+    : 'none';
+  const selectionStateSkippedTargetCount =
+    (selectedFocusNodeId && !renderedG6ElementIds.nodeIds.has(selectedFocusNodeId) ? 1 : 0) +
+    (selectedEdgeId && !renderedG6ElementIds.edgeIds.has(selectedEdgeId) ? 1 : 0);
+  const g6RenderKey = React.useMemo(() => buildHzTopologyG6RenderKey(runtimeG6Graph), [runtimeG6Graph]);
+  const graphStructureKeyFingerprint = React.useMemo(
+    () => buildHzTopologyG6LifecycleKeyFingerprint(graphStructureKey),
+    [graphStructureKey]
+  );
+  const g6RenderKeyFingerprint = React.useMemo(() => buildHzTopologyG6LifecycleKeyFingerprint(g6RenderKey), [g6RenderKey]);
+  latestG6GraphRef.current = runtimeG6Graph;
   latestG6RenderKeyRef.current = g6RenderKey;
   const filterEnvironment = filterScope?.environment;
   const filterSourceKind = filterScope?.sourceKind;
@@ -1452,17 +2160,40 @@ export function HzTopologyG6Canvas({
       }),
     [activeFilterScope.environment, activeFilterScope.groupBy, activeFilterScope.searchQuery, activeFilterScope.sourceKind, graph]
   );
-  const nodeCount = graph.nodes.length;
-  const edgeCount = graph.edges.length;
-  const canvasSummary = summaryLabel ?? `${nodeCount} nodes · ${edgeCount} edges`;
+  const summaryCountPolicy = renderWindow.mode === 'windowed' ? 'windowed-rendered-vs-total' : 'direct-total';
+  const canvasSummary = summaryLabel ?? (
+    renderWindow.mode === 'windowed'
+      ? `Showing ${renderWindow.renderedNodeCount}/${nodeCount} nodes · ${edgeDensityWindow.renderedEdgeCount}/${edgeCount} edges`
+      : `${nodeCount} nodes · ${edgeCount} edges`
+  );
   const activeFilterControlIds = filterControls.filter(control => control.active).map(control => control.id);
   const activeGroupActionCount = groupSummary.items.filter(item => groupItemHrefs[item.id]).length;
   const nonOccludingOverlay = overlayMode === 'non-occluding';
-  const summaryVisibility = nonOccludingOverlay ? 'assistive' : 'visible';
-  const groupSurfaceVisibility = nonOccludingOverlay ? 'assistive' : 'visible';
-  const filterControlSurfaceVisibility = nonOccludingOverlay ? 'assistive' : 'visible';
-  const minimapVisibility = nonOccludingOverlay ? 'assistive' : 'visible';
-  const minimapOcclusion = nonOccludingOverlay ? 'none' : 'low-interruption';
+  const hasViewportTarget = nodeCount > 0 || edgeCount > 0;
+  const isViewportFitPending =
+    hasViewportTarget && !hasUserViewportInteractedRef.current && graphStructureKey !== lastFitStructureKeyRef.current;
+  const viewportFitState = isViewportFitPending ? 'pending' : 'settled';
+  const initialPaintVisibility = renderState === 'idle' || isViewportFitPending ? 'hidden-until-fit' : 'visible-after-fit';
+  const nodeOnlyPrepaintVisibility = shouldFastPaintNodeOnlyGraph && renderState === 'idle' ? 'visible-until-g6-ready' : 'hidden-after-g6-ready';
+  const runtimeLoadingVisibility =
+    hasViewportTarget && !shouldFastPaintNodeOnlyGraph && renderState === 'idle'
+      ? 'visible-until-g6-ready'
+      : 'hidden-after-g6-ready';
+  const viewportToolbarVisibility = hasViewportTarget ? 'visible' : 'hidden-empty-graph';
+  const summaryVisibility = hasViewportTarget ? (nonOccludingOverlay ? 'assistive' : 'visible') : 'hidden-empty-graph';
+  const groupSurfaceVisibility = hasViewportTarget ? (nonOccludingOverlay ? 'assistive' : 'visible') : 'hidden-empty-graph';
+  const filterControlSurfaceVisibility = hasViewportTarget ? (nonOccludingOverlay ? 'assistive' : 'visible') : 'hidden-empty-graph';
+  const minimapVisibility = hasViewportTarget ? (nonOccludingOverlay ? 'assistive' : 'visible') : 'hidden-empty-graph';
+  const minimapOcclusion = hasViewportTarget ? (nonOccludingOverlay ? 'none' : 'low-interruption') : 'none';
+  const edgeDensityAffordanceVisible = hasViewportTarget && edgeDensityWindow.hiddenEdgeCount > 0;
+  const edgeDensityAffordanceTotalEdgeCount = edgeCount;
+  const edgeDensityAffordanceTotalHiddenEdgeCount = Math.max(0, edgeDensityAffordanceTotalEdgeCount - edgeDensityWindow.renderedEdgeCount);
+  const edgeDensityAffordanceDetailLabel =
+    edgeDensityDrilldownDetailLabel ?? `${edgeDensityAffordanceTotalHiddenEdgeCount} more in table`;
+  const semanticClusterVisibility =
+    hasViewportTarget && semanticClusterSummary.policy === 'hub-fanout-summary' && semanticClusterSummary.itemCount > 0
+      ? 'visible'
+      : 'hidden';
   const minimapZoom = formatG6ViewportZoom(viewportTelemetry.zoom);
   const minimapPosition = formatG6ViewportPosition(viewportTelemetry.position);
   const publishViewportTelemetry = React.useCallback((source: HzTopologyG6ViewportTelemetrySource) => {
@@ -1489,6 +2220,11 @@ export function HzTopologyG6Canvas({
     },
     [publishViewportTelemetry]
   );
+  const shouldSuppressG6SelectionAfterPointerPan = React.useCallback(() => {
+    if (pointerPanStateRef.current?.active) return true;
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    return pointerPanSelectionSuppressedUntilRef.current > now;
+  }, []);
   const cancelPendingInitialFitView = React.useCallback(() => {
     if (typeof window === 'undefined' || initialFitTimerRef.current === undefined) return;
     window.clearTimeout(initialFitTimerRef.current);
@@ -1511,6 +2247,26 @@ export function HzTopologyG6Canvas({
     setHoveredElement({});
     onHoverClearRef.current?.();
   }, []);
+  const handleG6DocumentPointerMoveHoverBoundary = React.useCallback(
+    (event: PointerEvent) => {
+      const hasSharedHover = Boolean(
+        hoveredElementRef.current.nodeId
+          || hoveredElementRef.current.edgeId
+          || hoveredNodeIdRef.current
+          || hoveredEdgeIdRef.current
+      );
+      if (!hasSharedHover) return;
+      const canvasRect = rootRef.current?.getBoundingClientRect();
+      if (!canvasRect) return;
+      const isInsideCanvas =
+        event.clientX >= canvasRect.left
+        && event.clientX <= canvasRect.right
+        && event.clientY >= canvasRect.top
+        && event.clientY <= canvasRect.bottom;
+      if (!isInsideCanvas) clearSharedHover();
+    },
+    [clearSharedHover]
+  );
   const handleG6CanvasPointerLeave = React.useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       clearSharedHover();
@@ -1518,6 +2274,12 @@ export function HzTopologyG6Canvas({
     },
     [clearSharedHover, onPointerLeave]
   );
+  React.useEffect(() => {
+    document.addEventListener("pointermove", handleG6DocumentPointerMoveHoverBoundary);
+    return () => {
+      document.removeEventListener("pointermove", handleG6DocumentPointerMoveHoverBoundary);
+    };
+  }, [handleG6DocumentPointerMoveHoverBoundary]);
   const handleG6NodeSelect = React.useCallback(
     (nodeId: string) => {
       clearSharedHover();
@@ -1553,13 +2315,22 @@ export function HzTopologyG6Canvas({
     },
     [handleG6EdgeSelect]
   );
+  const handleEdgeDensityDrilldown = React.useCallback(() => {
+    onEdgeDensityDrilldown?.();
+    document.getElementById(edgeDensityDrilldownTargetId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }, [edgeDensityDrilldownTargetId, onEdgeDensityDrilldown]);
 
   React.useEffect(() => {
     let disposed = false;
     let resizeObserver: ResizeObserver | undefined;
     let observedStage: HTMLDivElement | undefined;
     let handleG6WheelViewportControl: ((event: WheelEvent) => void) | undefined;
-    let handleG6PointerViewportTelemetry: (() => void) | undefined;
+    let handleG6PointerPanStart: ((event: PointerEvent) => void) | undefined;
+    let handleG6PointerPanMove: ((event: PointerEvent) => void) | undefined;
+    let handleG6PointerPanEnd: ((event: PointerEvent) => void) | undefined;
 
     async function mountGraph() {
       const stage = stageRef.current;
@@ -1578,12 +2349,16 @@ export function HzTopologyG6Canvas({
           width,
           height: graphHeight,
           autoFit: false,
-          zoomRange: [HZ_TOPOLOGY_G6_MIN_ZOOM, HZ_TOPOLOGY_G6_MAX_ZOOM],
+          zoomRange: [HZ_TOPOLOGY_G6_MIN_ZOOM, operatorMaxZoom],
           background: '#08090c',
           animation: false,
           data: initialGraphData,
           layout:
-            layout === 'force'
+            g6LayoutMode === 'node-only-grid'
+              ? undefined
+              : g6LayoutMode === 'windowed-lanes'
+              ? undefined
+              : g6LayoutMode === 'force'
               ? { type: 'force', preventOverlap: true, nodeSize: 72, linkDistance: 146 }
               : { type: 'dagre', rankdir: 'LR', nodesep: 58, ranksep: 122 },
           node: {
@@ -1594,13 +2369,12 @@ export function HzTopologyG6Canvas({
             type: datum => String(datum.type ?? 'cubic-horizontal'),
             style: datum => ({ ...datum.style })
           },
-          behaviors: [
-            { type: 'drag-canvas', key: 'drag-canvas' }
-          ],
+          behaviors: [],
           theme: 'dark'
         }) as G6GraphRuntime;
         graphRef.current = runtimeGraph;
         runtimeGraph.on?.('node:click', event => {
+          if (shouldSuppressG6SelectionAfterPointerPan()) return;
           const id = readG6EventId(event);
           if (id) handleG6NodeSelect(String(id));
         });
@@ -1609,6 +2383,7 @@ export function HzTopologyG6Canvas({
           if (id) handleG6NodeFocus(String(id));
         });
         runtimeGraph.on?.('edge:click', event => {
+          if (shouldSuppressG6SelectionAfterPointerPan()) return;
           const id = readG6EventId(event);
           if (id) handleG6EdgeSelect(String(id));
         });
@@ -1639,16 +2414,33 @@ export function HzTopologyG6Canvas({
         runtimeGraph.on?.('canvas:pointerover', () => {
           clearSharedHover();
         });
+        let runtimeMaxZoom = buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current);
+        if (shouldFastPaintNodeOnlyGraph && !disposed) {
+          setRenderState('ready');
+        }
         await runtimeGraph.render();
-        if (initialFitStrategy === "center-only") {
+        if (shouldFastPaintNodeOnlyGraph && !disposed) {
+          window.requestAnimationFrame(() => {
+            void centerOnlyG6Viewport(runtimeGraph, false).then(async () => {
+              runtimeMaxZoom = buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current);
+              await enforceG6OperatorZoomBounds(runtimeGraph, runtimeMaxZoom);
+              publishViewportTelemetry("initial-fit");
+            });
+          });
+        } else if (initialFitStrategy === "center-only") {
           await centerOnlyG6Viewport(runtimeGraph, false);
+          runtimeMaxZoom = buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current);
+          await enforceG6OperatorZoomBounds(runtimeGraph, runtimeMaxZoom);
+          publishViewportTelemetry("initial-fit");
         } else {
           await fitAndCenterG6Viewport(runtimeGraph, { when: 'overflow' }, false);
+          runtimeMaxZoom = buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current);
+          await enforceG6OperatorZoomBounds(runtimeGraph, runtimeMaxZoom);
+          publishViewportTelemetry("initial-fit");
         }
         lastFitStructureKeyRef.current = graphStructureKey;
         lastDrawGraphKeyRef.current = latestG6RenderKeyRef.current;
         initialFitTimerRef.current = scheduleInitialFitView(runtimeGraph, initialFitStrategy, () => !hasUserViewportInteractedRef.current);
-        publishViewportTelemetry("initial-fit");
         if (!disposed) setRenderState('ready');
         handleG6WheelViewportControl = event => {
           event.preventDefault();
@@ -1657,23 +2449,65 @@ export function HzTopologyG6Canvas({
           const clampedDelta = Math.max(-260, Math.min(260, rawDelta));
           const wheelScale = Math.exp(-clampedDelta / 650);
           const currentZoom = runtimeGraph.getZoom?.() ?? 1;
-          const nextZoom = Math.max(HZ_TOPOLOGY_G6_MIN_ZOOM, Math.min(HZ_TOPOLOGY_G6_MAX_ZOOM, currentZoom * wheelScale));
+          const nextZoom = Math.max(HZ_TOPOLOGY_G6_MIN_ZOOM, Math.min(operatorMaxZoom, currentZoom * wheelScale));
           const origin = readG6WheelViewportOrigin(event, stage);
+          runtimeGraph.setZoomRange?.([HZ_TOPOLOGY_G6_MIN_ZOOM, operatorMaxZoom]);
           publishViewportTelemetryAfterViewportAction("wheel", () => runtimeGraph.zoomTo?.(nextZoom, { duration: 80 }, origin));
         };
-        handleG6PointerViewportTelemetry = () => {
+        handleG6PointerPanStart = event => {
+          if (event.button !== 0) return;
+          const snapshot = captureG6ViewportSnapshot(runtimeGraph);
+          if (!snapshot) return;
+          pointerPanStateRef.current = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            lastX: event.clientX,
+            lastY: event.clientY,
+            active: false
+          };
+          stage.setPointerCapture?.(event.pointerId);
+        };
+        handleG6PointerPanMove = event => {
+          const state = pointerPanStateRef.current;
+          if (!state || state.pointerId !== event.pointerId) return;
+          const delta = { x: event.clientX - state.startX, y: event.clientY - state.startY };
+          if (!state.active && Math.hypot(delta.x, delta.y) < 4) return;
+          const panDelta = buildHzTopologyG6PointerPanDelta({ x: event.clientX - state.lastX, y: event.clientY - state.lastY });
+          state.lastX = event.clientX;
+          state.lastY = event.clientY;
+          if (panDelta[0] === 0 && panDelta[1] === 0) return;
+          state.active = true;
+          event.preventDefault();
           markUserViewportInteraction();
-          publishViewportTelemetry("pointer-pan");
+          publishViewportTelemetryAfterViewportAction("pointer-pan", () => runtimeGraph.translateBy?.(panDelta, false));
+        };
+        handleG6PointerPanEnd = event => {
+          const state = pointerPanStateRef.current;
+          if (!state || state.pointerId !== event.pointerId) return;
+          pointerPanStateRef.current = undefined;
+          stage.releasePointerCapture?.(event.pointerId);
+          if (state.active) {
+            const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+            pointerPanSelectionSuppressedUntilRef.current = now + HZ_TOPOLOGY_G6_POINTER_PAN_SELECTION_SUPPRESS_MS;
+            publishViewportTelemetry("pointer-pan");
+          }
         };
         stage.addEventListener("wheel", handleG6WheelViewportControl, { passive: false });
-        stage.addEventListener("pointerdown", handleG6PointerViewportTelemetry);
+        stage.addEventListener("pointerdown", handleG6PointerPanStart);
+        stage.addEventListener("pointermove", handleG6PointerPanMove);
+        stage.addEventListener("pointerup", handleG6PointerPanEnd);
+        stage.addEventListener("pointercancel", handleG6PointerPanEnd);
         resizeObserver = new ResizeObserver(entries => {
           const entry = entries[0];
           if (!entry || disposed) return;
           const resizeSnapshot = hasUserViewportInteractedRef.current ? captureG6ViewportSnapshot(runtimeGraph) : undefined;
           runtimeGraph.resize(Math.floor(entry.contentRect.width), Math.floor(entry.contentRect.height));
-          void restoreG6ViewportSnapshot(runtimeGraph, resizeSnapshot).then(() => {
-            if (resizeSnapshot) publishViewportTelemetry("resize-restore");
+          runtimeMaxZoom = buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current);
+          void restoreG6ViewportSnapshot(runtimeGraph, resizeSnapshot, runtimeMaxZoom).then(() => {
+            void enforceG6OperatorZoomBounds(runtimeGraph, runtimeMaxZoom).then(clamped => {
+              if (resizeSnapshot) publishViewportTelemetry(clamped ? "runtime-zoom-guard" : "resize-restore");
+            });
           });
         });
         resizeObserver.observe(stage);
@@ -1690,14 +2524,19 @@ export function HzTopologyG6Canvas({
       cancelPendingInitialFitView();
       resizeObserver?.disconnect();
       if (handleG6WheelViewportControl) observedStage?.removeEventListener("wheel", handleG6WheelViewportControl);
-      if (handleG6PointerViewportTelemetry) observedStage?.removeEventListener("pointerdown", handleG6PointerViewportTelemetry);
+      if (handleG6PointerPanStart) observedStage?.removeEventListener("pointerdown", handleG6PointerPanStart);
+      if (handleG6PointerPanMove) observedStage?.removeEventListener("pointermove", handleG6PointerPanMove);
+      if (handleG6PointerPanEnd) {
+        observedStage?.removeEventListener("pointerup", handleG6PointerPanEnd);
+        observedStage?.removeEventListener("pointercancel", handleG6PointerPanEnd);
+      }
       graphRef.current?.destroy();
       graphRef.current = null;
     };
     // The mount lifecycle intentionally excludes g6Graph so hover/selection style redraws do not destroy and refit the operator viewport.
     // Graph data updates flow through the setData/draw effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cancelPendingInitialFitView, clearSharedHover, graphStructureKey, handleG6EdgeSelect, handleG6NodeFocus, handleG6NodeSelect, height, initialFitStrategy, layout, markUserViewportInteraction, publishViewportTelemetry]);
+  }, [cancelPendingInitialFitView, clearSharedHover, g6LayoutMode, graphStructureKey, handleG6EdgeSelect, handleG6NodeFocus, handleG6NodeSelect, height, initialFitStrategy, markUserViewportInteraction, nodeCount, operatorMaxZoom, publishViewportTelemetry, shouldSuppressG6SelectionAfterPointerPan, viewportRuntimeVersion]);
 
   React.useEffect(() => {
     const runtimeGraph = graphRef.current;
@@ -1706,37 +2545,67 @@ export function HzTopologyG6Canvas({
     const shouldFitAfterDataChange = graphStructureKey !== lastFitStructureKeyRef.current && !hasUserViewportInteractedRef.current;
     const shouldPreserveViewportAfterRedraw = !shouldFitAfterDataChange;
     const snapshot = shouldPreserveViewportAfterRedraw ? captureG6ViewportSnapshot(runtimeGraph) : undefined;
-    runtimeGraph.setData(g6Graph);
+    runtimeGraph.setData(runtimeG6Graph);
     runtimeGraph.draw().then(async () => {
       if (shouldFitAfterDataChange) {
-        lastFitStructureKeyRef.current = graphStructureKey;
         lastDrawGraphKeyRef.current = g6RenderKey;
         if (initialFitStrategy === "center-only") {
-          void centerOnlyG6Viewport(runtimeGraph, false);
+          await centerOnlyG6Viewport(runtimeGraph, false);
         } else {
-          void fitAndCenterG6Viewport(runtimeGraph, { when: "overflow" }, false);
+          await fitAndCenterG6Viewport(runtimeGraph, { when: "overflow" }, false);
         }
+        const runtimeMaxZoom = buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current);
+        const clamped = await enforceG6OperatorZoomBounds(runtimeGraph, runtimeMaxZoom);
+        lastFitStructureKeyRef.current = graphStructureKey;
+        publishViewportTelemetry(clamped ? "runtime-zoom-guard" : "initial-fit");
       } else {
-        await restoreG6ViewportSnapshot(runtimeGraph, snapshot);
-        publishViewportTelemetry("redraw-restore");
+        const runtimeMaxZoom = buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current);
+        await restoreG6ViewportSnapshot(runtimeGraph, snapshot, runtimeMaxZoom);
+        const clamped = await enforceG6OperatorZoomBounds(runtimeGraph, runtimeMaxZoom);
+        publishViewportTelemetry(clamped ? "runtime-zoom-guard" : "redraw-restore");
         lastFitStructureKeyRef.current = graphStructureKey;
         lastDrawGraphKeyRef.current = g6RenderKey;
       }
     }).catch(error => {
       console.warn('HzTopologyG6Canvas failed to update AntV G6 data.', error);
     });
-  }, [g6Graph, g6RenderKey, graphStructureKey, initialFitStrategy, publishViewportTelemetry, renderState]);
+  }, [g6RenderKey, graphStructureKey, initialFitStrategy, operatorMaxZoom, publishViewportTelemetry, renderState, runtimeG6Graph]);
 
   React.useEffect(() => {
     const runtimeGraph = graphRef.current;
     if (!runtimeGraph || renderState !== 'ready') return;
-    if (shouldAutoFocusSearchResult && activeFocusNodeId) runtimeGraph.focusElement?.(activeFocusNodeId, { duration: 180 });
-  }, [activeFocusNodeId, renderState, shouldAutoFocusSearchResult]);
+    const runtimeMaxZoom = buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current);
+    void enforceG6OperatorZoomBounds(runtimeGraph, runtimeMaxZoom).then(clamped => {
+      if (clamped) publishViewportTelemetry("runtime-zoom-guard");
+    });
+  }, [initialFitStrategy, publishViewportTelemetry, renderState]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
+
+    const handleBrowserResumeZoomGuard = () => {
+      if (document.visibilityState === 'hidden') return;
+      const runtimeGraph = graphRef.current;
+      if (!runtimeGraph || renderState !== 'ready') return;
+      const runtimeMaxZoom = buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current);
+      void enforceG6OperatorZoomBounds(runtimeGraph, runtimeMaxZoom).then(clamped => {
+        if (clamped) publishViewportTelemetry("runtime-zoom-guard");
+      });
+    };
+
+    document.addEventListener("visibilitychange", handleBrowserResumeZoomGuard);
+    window.addEventListener("focus", handleBrowserResumeZoomGuard);
+    handleBrowserResumeZoomGuard();
+    return () => {
+      document.removeEventListener("visibilitychange", handleBrowserResumeZoomGuard);
+      window.removeEventListener("focus", handleBrowserResumeZoomGuard);
+    };
+  }, [initialFitStrategy, publishViewportTelemetry, renderState, viewportRuntimeVersion]);
 
   React.useEffect(() => {
     const runtimeGraph = graphRef.current;
     if (!runtimeGraph || renderState !== 'ready') return;
-    const nextState = { nodeId: selectedFocusNodeId, edgeId: selectedEdgeId };
+    const nextState = renderedSelectionState;
     const previousState = selectedElementStateRef.current;
     const selectionStatePatch: Record<string, string[]> = {};
 
@@ -1750,12 +2619,16 @@ export function HzTopologyG6Canvas({
     runtimeGraph.setElementState?.(selectionStatePatch, false).catch(error => {
       console.warn('HzTopologyG6Canvas failed to update AntV G6 selection state.', error);
     });
-  }, [renderState, selectedEdgeId, selectedFocusNodeId]);
+  }, [renderState, renderedSelectionState]);
 
   const centerGraphView = React.useCallback(async (action: 'fit-view' | 'reset-view') => {
+    if (initialFitStrategy === "center-only") {
+      await centerOnlyG6Viewport(graphRef.current, { duration: 180 });
+      return;
+    }
     if (action === 'reset-view') await graphRef.current?.zoomTo?.(1, { duration: 180 });
     await fitAndCenterG6Viewport(graphRef.current, { when: 'overflow' }, { duration: 180 });
-  }, []);
+  }, [initialFitStrategy]);
 
   const fitView = React.useCallback(() => {
     publishViewportTelemetryAfterViewportAction("fit-view", () => centerGraphView("fit-view"));
@@ -1768,9 +2641,10 @@ export function HzTopologyG6Canvas({
   const zoomBy = React.useCallback((scale: number, origin = centerG6ViewportOrigin(stageRef.current)) => {
     markUserViewportInteraction();
     const currentZoom = graphRef.current?.getZoom?.() ?? 1;
-    const nextZoom = Math.max(HZ_TOPOLOGY_G6_MIN_ZOOM, Math.min(HZ_TOPOLOGY_G6_MAX_ZOOM, currentZoom * scale));
+    const nextZoom = Math.max(HZ_TOPOLOGY_G6_MIN_ZOOM, Math.min(operatorMaxZoom, currentZoom * scale));
+    graphRef.current?.setZoomRange?.([HZ_TOPOLOGY_G6_MIN_ZOOM, operatorMaxZoom]);
     publishViewportTelemetryAfterViewportAction("zoom-control", () => graphRef.current?.zoomTo?.(nextZoom, { duration: 120 }, origin));
-  }, [markUserViewportInteraction, publishViewportTelemetryAfterViewportAction]);
+  }, [markUserViewportInteraction, operatorMaxZoom, publishViewportTelemetryAfterViewportAction]);
 
   const executeViewportCommandAction = React.useCallback(
     (commandAction: string | null | undefined) => {
@@ -1857,6 +2731,13 @@ export function HzTopologyG6Canvas({
     focusGraphElement('selected-node', selectedFocusNodeId);
   }, [focusGraphElement, selectedFocusNodeId]);
 
+  const scalePerformancePolicy =
+    renderWindow.mode === 'windowed' ? 'windowed-interactive-budget' : 'direct-interactive-budget';
+  const scalePerformanceInvariants =
+    renderWindow.mode === 'windowed'
+      ? 'windowed-render pan-zoom-no-url-change no-remount no-refit viewport-preserved render-key-stable table-companion'
+      : 'direct-render pan-zoom-no-url-change no-remount no-refit viewport-preserved render-key-stable';
+
   return (
     <div
       {...props}
@@ -1879,6 +2760,10 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-node-icon-source="lucide-entity-type-catalog"
       data-hz-topology-g6-node-icon-library="lucide-react"
       data-hz-topology-g6-node-icon-no-handdrawn="true"
+      data-hz-topology-g6-no-handdrawn-icons="true"
+      data-hz-topology-g6-icon-source-proof="lucide-react:entity-type-catalog"
+      data-hz-topology-g6-node-icon-catalog-owner="lucide-react-entity-type-catalog"
+      data-hz-topology-g6-node-icon-catalog={HZ_TOPOLOGY_G6_NODE_ICON_CATALOG_SUMMARY}
       data-hz-topology-g6-engine="antv-g6"
       data-hz-topology-g6-interaction-owner="hertzbeat-ui-g6-interaction"
       data-hz-topology-g6-viewport-owner="hertzbeat-ui-g6-viewport"
@@ -1888,17 +2773,55 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-auto-fit-max-zoom={HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM}
       data-hz-topology-g6-auto-fit-growth="no-magnify-small-graphs"
       data-hz-topology-g6-auto-fit-zoom-range-owner="hertzbeat-ui-g6-auto-fit-zoom-range"
+      data-hz-topology-g6-initial-paint-policy="hide-stage-until-fit-ready"
       data-hz-topology-g6-initial-fit-strategy={initialFitStrategy}
       data-hz-topology-g6-initial-fit-strategy-owner="hertzbeat-ui-g6-initial-fit-strategy"
+      data-hz-topology-g6-viewport-fit-state={viewportFitState}
+      data-hz-topology-g6-viewport-fit-state-owner="hertzbeat-ui-g6-fit-settle-state"
+      data-hz-topology-g6-node-only-first-paint={shouldFastPaintNodeOnlyGraph ? 'render-before-center' : 'fit-ready'}
+      data-hz-topology-g6-node-only-first-paint-owner="hertzbeat-ui-g6-node-only-first-paint"
+      data-hz-topology-g6-node-only-prepaint={shouldFastPaintNodeOnlyGraph ? 'source-backed-node-overlay' : 'none'}
+      data-hz-topology-g6-node-only-prepaint-owner="hertzbeat-ui-g6-node-only-prepaint"
+      data-hz-topology-g6-node-only-prepaint-visibility={nodeOnlyPrepaintVisibility}
+      data-hz-topology-g6-node-only-prepaint-icon-source="lucide-react:entity-type-catalog"
       data-hz-topology-g6-compact-final-zoom-clamp="true"
-      data-hz-topology-g6-operator-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${HZ_TOPOLOGY_G6_MAX_ZOOM}`}
+      data-hz-topology-g6-compact-fit-mode="center-1x-no-fill"
+      data-hz-topology-g6-compact-initial-zoom={HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM}
+      data-hz-topology-g6-normal-browser-stale-fit-guard="compact-1x-before-center"
+      data-hz-topology-g6-preinteraction-zoom-guard="compact-1x"
+      data-hz-topology-g6-preinteraction-zoom-guard-owner="hertzbeat-ui-g6-preinteraction-zoom-guard"
+      data-hz-topology-g6-operator-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${operatorMaxZoom}`}
       data-hz-topology-g6-operator-zoom-growth="bounded-readable-nodes"
+      data-hz-topology-g6-operator-zoom-tier={operatorZoomTier}
       data-hz-topology-g6-fit-mode="overflow-only-center"
       data-hz-topology-g6-viewport-interaction-state={viewportInteractionState}
       data-hz-topology-g6-viewport-interaction-owner="hertzbeat-ui-g6-viewport-interaction"
       data-hz-topology-g6-viewport-preservation="clamped-wheel-pan-zoom"
+      data-hz-topology-g6-pan-mode="manual-stage-drag-fallback"
+      data-hz-topology-g6-pan-owner="hertzbeat-ui-g6-pan"
+      data-hz-topology-g6-pan-runtime="manual-only-no-antv-double-pan"
+      data-hz-topology-g6-pan-telemetry="pointer-drag-translateBy"
+      data-hz-topology-g6-pan-selection-guard="drag-pan-suppresses-click-selection"
+      data-hz-topology-g6-pan-selection-guard-owner="hertzbeat-ui-g6-pan-selection-guard"
+      data-hz-topology-g6-live-interaction-owner="hertzbeat-ui-g6-live-interaction"
+      data-hz-topology-g6-live-interaction-invariants="no-url-change no-remount no-refit viewport-preserved render-key-stable"
+      data-hz-topology-g6-edge-live-interaction-owner="hertzbeat-ui-g6-edge-live-interaction"
+      data-hz-topology-g6-edge-live-interaction-invariants="edge-click-drawer no-url-change no-remount no-refit viewport-preserved render-key-stable"
+      data-hz-topology-g6-scale-performance-owner="hertzbeat-ui-g6-scale-performance"
+      data-hz-topology-g6-scale-performance-policy={scalePerformancePolicy}
+      data-hz-topology-g6-scale-performance-invariants={scalePerformanceInvariants}
+      data-hz-topology-g6-scale-performance-rendered-node-budget={renderWindow.visibleNodeBudget}
+      data-hz-topology-g6-scale-performance-rendered-edge-budget={edgeDensityWindow.maxVisibleEdgeCount}
+      data-hz-topology-g6-scale-performance-rendered-node-count={renderWindow.renderedNodeCount}
+      data-hz-topology-g6-scale-performance-rendered-edge-count={edgeDensityWindow.renderedEdgeCount}
       data-hz-topology-g6-viewport-redraw-preservation="zoom-position"
       data-hz-topology-g6-viewport-redraw-preservation-owner="hertzbeat-ui-g6-viewport-redraw-preservation"
+      data-hz-topology-g6-viewport-restore-clamp="operator-max"
+      data-hz-topology-g6-live-zoom-guard="operator-max"
+      data-hz-topology-g6-live-zoom-guard-owner="hertzbeat-ui-g6-live-zoom-guard"
+      data-hz-topology-g6-runtime-version={viewportRuntimeVersion}
+      data-hz-topology-g6-runtime-version-owner="hertzbeat-ui-g6-runtime-version"
+      data-hz-topology-g6-browser-resume-zoom-guard="operator-max"
       data-hz-topology-g6-resize-preservation="operator-viewport-snapshot"
       data-hz-topology-g6-resize-preservation-owner="hertzbeat-ui-g6-resize-preservation"
       data-hz-topology-g6-viewport-telemetry="live"
@@ -1914,19 +2837,31 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-mount-lifecycle-owner="hertzbeat-ui-g6-mount-lifecycle"
       data-hz-topology-g6-mount-lifecycle-policy="structure-layout-height-only"
       data-hz-topology-g6-mount-lifecycle-redraw-policy="setData-draw-preserve-viewport"
-      data-hz-topology-g6-mount-lifecycle-structure-key={graphStructureKey}
-      data-hz-topology-g6-mount-lifecycle-render-key={g6RenderKey}
+      data-hz-topology-g6-mount-lifecycle-structure-key={graphStructureKeyFingerprint}
+      data-hz-topology-g6-mount-lifecycle-structure-key-owner="hertzbeat-ui-g6-structure-key-fingerprint"
+      data-hz-topology-g6-mount-lifecycle-structure-key-policy="short-fingerprint"
+      data-hz-topology-g6-mount-lifecycle-structure-key-length={graphStructureKey.length}
+      data-hz-topology-g6-mount-lifecycle-render-key={g6RenderKeyFingerprint}
+      data-hz-topology-g6-mount-lifecycle-render-key-owner="hertzbeat-ui-g6-render-key-fingerprint"
+      data-hz-topology-g6-mount-lifecycle-render-key-policy="short-fingerprint"
+      data-hz-topology-g6-mount-lifecycle-render-key-length={g6RenderKey.length}
       data-hz-topology-g6-wheel-mode="manual-clamped-g6-zoom"
       data-hz-topology-g6-wheel-owner="hertzbeat-ui-g6-wheel"
       data-hz-topology-g6-wheel-listener-passive="false-control"
       data-hz-topology-g6-wheel-origin="pointer-clamped"
-      data-hz-topology-g6-wheel-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${HZ_TOPOLOGY_G6_MAX_ZOOM}`}
+      data-hz-topology-g6-wheel-zoom-bounds={`${HZ_TOPOLOGY_G6_MIN_ZOOM}-${operatorMaxZoom}`}
       data-hz-topology-g6-node-motion="locked-layout"
       data-hz-topology-g6-node-motion-owner="hertzbeat-ui-g6-node-motion"
       data-hz-topology-g6-selection-engine="hertzbeat-controlled"
       data-hz-topology-g6-selection-engine-owner="hertzbeat-ui-g6-selection-engine"
       data-hz-topology-g6-selection-redraw-behavior="element-state-no-data-redraw"
       data-hz-topology-g6-selection-state-owner="hertzbeat-ui-g6-selection-state"
+      data-hz-topology-g6-selection-state-policy="rendered-elements-only"
+      data-hz-topology-g6-selected-node-rendered={selectionStateSelectedNodeRendered}
+      data-hz-topology-g6-selected-edge-rendered={selectionStateSelectedEdgeRendered}
+      data-hz-topology-g6-selection-state-selected-node-rendered={selectionStateSelectedNodeRendered}
+      data-hz-topology-g6-selection-state-selected-edge-rendered={selectionStateSelectedEdgeRendered}
+      data-hz-topology-g6-selection-state-skipped-target-count={selectionStateSkippedTargetCount}
       data-hz-topology-g6-keyboard-shortcuts="plus-minus-zero-fit"
       data-hz-topology-g6-keyboard-shortcuts-owner="hertzbeat-ui-g6-keyboard"
       data-hz-topology-g6-keyboard-actions="zoom-in zoom-out reset-view fit-view"
@@ -1951,18 +2886,30 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-focus-entry-owner="hertzbeat-ui-g6-focus-entry"
       data-hz-topology-g6-focus-depth-target="1-hop"
       data-hz-topology-g6-selection-clear="hover"
+      data-hz-topology-g6-edge-to-edge-selection-continuity="adjacent-edge-click-updates-selection-and-summary"
+      data-hz-topology-g6-edge-to-edge-selection-invariants="edge-click edge-click no-stale-hover summary-selected-match no-url-change no-remount no-refit viewport-preserved render-key-stable"
+      data-hz-topology-g6-node-edge-selection-continuity="node-click-clears-edge edge-click-clears-node"
+      data-hz-topology-g6-node-edge-selection-invariants="edge-node node-edge clear-opposite-selection clear-stale-hover no-url-change no-remount no-refit viewport-preserved render-key-stable"
+      data-hz-topology-g6-selected-edge-node-hover-continuity="selected-edge-survives-node-hover"
+      data-hz-topology-g6-selected-edge-node-hover-invariants="selected-edge path-summary-selected node-hover-no-summary-overwrite pointer-leave-clears-hover no-url-change no-remount no-refit viewport-preserved render-key-stable"
+      data-hz-topology-g6-selected-node-edge-hover-continuity="selected-node-survives-edge-hover"
+      data-hz-topology-g6-selected-node-edge-hover-invariants="selected-node edge-hover-no-node-overwrite edge-hover-no-url-change pointer-leave-clears-hover no-remount no-refit viewport-preserved render-key-stable"
       data-hz-topology-g6-neighbor-highlight="metadata-only"
       data-hz-topology-g6-hover-state-engine="metadata-only-no-g6-state"
       data-hz-topology-g6-hover-owner="hertzbeat-ui-g6-hover"
       data-hz-topology-g6-hover-clear="canvas-boundary"
+      data-hz-topology-g6-hover-clear-fallback="document-boundary-pointermove"
+      data-hz-topology-g6-hover-clear-selection-continuity="next-edge-click-selects-rendered-edge"
+      data-hz-topology-g6-hover-clear-selection-invariants="cleared-hover next-edge-click no-url-change no-remount no-refit viewport-preserved render-key-stable"
       data-hz-topology-g6-hover-source={activeHoveredNodeId ? 'node' : activeHoveredEdgeId ? 'edge' : activeFocusSource === 'selection' ? 'selection' : 'none'}
       data-hz-topology-g6-hover-viewport-behavior="highlight-only"
       data-hz-topology-g6-hover-viewport-owner="hertzbeat-ui-g6-hover-viewport"
       data-hz-topology-g6-hover-redraw-behavior="metadata-only"
       data-hz-topology-g6-hover-redraw-owner="hertzbeat-ui-g6-hover-redraw"
-      data-hz-topology-g6-search-auto-focus="initial-before-operator-interaction"
+      data-hz-topology-g6-search-auto-focus="explicit-action-only"
       data-hz-topology-g6-search-auto-focus-owner="hertzbeat-ui-g6-search-auto-focus"
       data-hz-topology-g6-search-auto-focus-guard="operator-viewport-interaction"
+      data-hz-topology-g6-search-viewport-behavior="highlight-only"
       data-hz-topology-g6-selection-auto-focus="explicit-action-only"
       data-hz-topology-g6-selection-auto-focus-owner="hertzbeat-ui-g6-selection-auto-focus"
       data-hz-topology-g6-hovered-node={activeHoveredNodeId ?? 'none'}
@@ -1991,20 +2938,62 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-large-graph-filtering={largeGraphStrategy.filtering}
       data-hz-topology-g6-large-graph-table-companion={largeGraphStrategy.tableCompanion}
       data-hz-topology-g6-large-graph-visible-node-budget={largeGraphStrategy.visibleNodeBudget}
+      data-hz-topology-g6-large-graph-overflow-policy={largeGraphOverflowPolicy}
+      data-hz-topology-g6-large-graph-overflow-policy-owner="hertzbeat-ui-g6-large-graph-overflow"
       data-hz-topology-g6-render-window-owner="hertzbeat-ui-g6-render-window"
       data-hz-topology-g6-render-window-mode={renderWindow.mode}
       data-hz-topology-g6-render-window-total-node-count={renderWindow.totalNodeCount}
       data-hz-topology-g6-render-window-total-edge-count={renderWindow.totalEdgeCount}
       data-hz-topology-g6-render-window-visible-node-budget={renderWindow.visibleNodeBudget}
       data-hz-topology-g6-render-window-rendered-node-count={renderWindow.renderedNodeCount}
-      data-hz-topology-g6-render-window-rendered-edge-count={renderWindow.renderedEdgeCount}
+      data-hz-topology-g6-render-window-rendered-edge-count={renderWindowRenderedEdgeCount}
+      data-hz-topology-g6-render-window-rendered-edge-count-owner="hertzbeat-ui-g6-edge-density"
+      data-hz-topology-g6-render-window-candidate-edge-count={renderWindow.renderedEdgeCount}
+      data-hz-topology-g6-rendered-node-count={renderWindow.renderedNodeCount}
+      data-hz-topology-g6-rendered-edge-count={edgeDensityWindow.renderedEdgeCount}
+      data-hz-topology-g6-rendered-edge-owner="hertzbeat-ui-g6-rendered-edge-proof"
       data-hz-topology-g6-render-window-hidden-node-count={renderWindow.hiddenNodeCount}
-      data-hz-topology-g6-render-window-hidden-edge-count={renderWindow.hiddenEdgeCount}
+      data-hz-topology-g6-render-window-hidden-edge-count={renderWindowHiddenEdgeCount}
       data-hz-topology-g6-render-window-table-companion={renderWindow.tableCompanion}
       data-hz-topology-g6-render-window-priority-behavior="search-only-no-selection-reorder"
       data-hz-topology-g6-render-window-priority-owner="hertzbeat-ui-g6-render-window-priority"
       data-hz-topology-g6-render-window-priority-node-count={renderWindow.priorityNodeCount}
       data-hz-topology-g6-render-window-priority-node-ids={renderWindow.priorityNodeIds.join(' ') || 'none'}
+      data-hz-topology-g6-edge-label-owner="hertzbeat-ui-g6-edge-label"
+      data-hz-topology-g6-edge-label-policy={edgeLabelPolicy}
+      data-hz-topology-g6-edge-label-visible-count={edgeLabelVisibleCount}
+      data-hz-topology-g6-edge-label-hidden-count={edgeLabelHiddenCount}
+      data-hz-topology-g6-edge-label-large-graph-threshold={HZ_TOPOLOGY_G6_EDGE_LABEL_VISIBLE_EDGE_LIMIT}
+      data-hz-topology-g6-node-label-owner="hertzbeat-ui-g6-node-label"
+      data-hz-topology-g6-node-label-policy={nodeLabelPolicy}
+      data-hz-topology-g6-node-label-visible-count={nodeLabelCounts.visibleCount}
+      data-hz-topology-g6-node-label-hidden-count={nodeLabelCounts.hiddenCount}
+      data-hz-topology-g6-node-label-metadata-policy="preserve-data-label"
+      data-hz-topology-g6-shape-profile-owner="hertzbeat-ui-g6-shape-profile"
+      data-hz-topology-g6-shape-profile={shapeProfile.shape}
+      data-hz-topology-g6-shape-profile-evidence={shapeProfile.evidence}
+      data-hz-topology-g6-shape-profile-hub-node-count={shapeProfile.hubNodeCount}
+      data-hz-topology-g6-shape-profile-star-edge-count={shapeProfile.starEdgeCount}
+      data-hz-topology-g6-shape-profile-mesh-edge-count={shapeProfile.meshEdgeCount}
+      data-hz-topology-g6-edge-density-owner="hertzbeat-ui-g6-edge-density"
+      data-hz-topology-g6-edge-density-policy={edgeDensityWindow.policy}
+      data-hz-topology-g6-edge-density-total-edge-count={edgeDensityWindow.totalEdgeCount}
+      data-hz-topology-g6-edge-density-rendered-edge-count={edgeDensityWindow.renderedEdgeCount}
+      data-hz-topology-g6-edge-density-hidden-edge-count={edgeDensityWindow.hiddenEdgeCount}
+      data-hz-topology-g6-edge-density-max-visible={edgeDensityWindow.maxVisibleEdgeCount}
+      data-hz-topology-g6-edge-readability-owner="hertzbeat-ui-g6-edge-readability"
+      data-hz-topology-g6-edge-readability-policy={edgeReadabilityProfile.policy}
+      data-hz-topology-g6-edge-readability-evidence={edgeReadabilityProfile.evidence}
+      data-hz-topology-g6-edge-readability-ranking-policy={edgeReadabilityProfile.rankingPolicy}
+      data-hz-topology-g6-edge-readability-stability={edgeReadabilityProfile.stability}
+      data-hz-topology-g6-edge-readability-max-prominent-edge-count={edgeReadabilityProfile.maxProminentEdgeCount}
+      data-hz-topology-g6-edge-readability-prominent-edge-count={edgeReadabilityProfile.prominentEdgeCount}
+      data-hz-topology-g6-edge-readability-attenuated-edge-count={edgeReadabilityProfile.attenuatedEdgeCount}
+      data-hz-topology-g6-edge-readability-minimum-opacity={edgeReadabilityProfile.minimumOpacity}
+      data-hz-topology-g6-windowed-layout-owner="hertzbeat-ui-g6-windowed-layout"
+      data-hz-topology-g6-windowed-layout-policy={windowedLayoutPolicy}
+      data-hz-topology-g6-windowed-layout-max-lane-rows={HZ_TOPOLOGY_G6_WINDOWED_LANE_MAX_ROWS}
+      data-hz-topology-g6-windowed-layout-rendered-node-count={renderWindow.renderedNodeCount}
       data-hz-topology-g6-filter-owner="hertzbeat-ui-g6-filter"
       data-hz-topology-g6-filter-environment={activeFilterScope.environment}
       data-hz-topology-g6-filter-source-kind={activeFilterScope.sourceKind}
@@ -2017,7 +3006,7 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-filter-control-owner="hertzbeat-ui-g6-filter-control"
       data-hz-topology-g6-filter-control-count={filterControls.length}
       data-hz-topology-g6-filter-control-active={activeFilterControlIds.join(' ') || 'none'}
-      data-hz-topology-g6-legend-dock={legendSlot ? 'in-canvas' : 'none'}
+      data-hz-topology-g6-legend-dock-state={legendSlot ? 'in-canvas' : 'none'}
       data-hz-topology-g6-legend-dock-owner="hertzbeat-ui-g6-legend-dock"
       data-hz-topology-g6-group-owner="hertzbeat-ui-g6-group"
       data-hz-topology-g6-group-by={groupSummary.groupBy}
@@ -2025,6 +3014,14 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-group-item-count={groupSummary.itemCount}
       data-hz-topology-g6-group-collapsed-node-count={groupSummary.totalCollapsedNodeCount}
       data-hz-topology-g6-group-action-count={activeGroupActionCount}
+      data-hz-topology-g6-group-surface-visibility={groupSurfaceVisibility}
+      data-hz-topology-g6-semantic-cluster-owner="hertzbeat-ui-g6-semantic-cluster"
+      data-hz-topology-g6-semantic-cluster-policy={semanticClusterSummary.policy}
+      data-hz-topology-g6-semantic-cluster-visibility={semanticClusterVisibility}
+      data-hz-topology-g6-semantic-cluster-item-count={semanticClusterSummary.itemCount}
+      data-hz-topology-g6-semantic-cluster-hidden-node-count={semanticClusterSummary.hiddenNodeCount}
+      data-hz-topology-g6-semantic-cluster-hidden-edge-count={semanticClusterSummary.hiddenEdgeCount}
+      data-hz-topology-g6-semantic-cluster-table-companion={semanticClusterSummary.tableCompanion}
       data-hz-topology-g6-search-owner="hertzbeat-ui-g6-search"
       data-hz-topology-g6-search-query={searchFocus.query || 'none'}
       data-hz-topology-g6-search-status={searchFocus.status}
@@ -2041,8 +3038,17 @@ export function HzTopologyG6Canvas({
       data-hz-topology-g6-focus-action-behavior="explicit-toolbar-recenter"
       data-hz-topology-g6-focus-action-source={focusActionTelemetry.source}
       data-hz-topology-g6-focus-action-target={focusActionTelemetry.targetId ?? 'none'}
+      data-hz-topology-g6-toolbar-visibility={viewportToolbarVisibility}
+      data-hz-topology-g6-minimap-visibility={minimapVisibility}
+      data-hz-topology-g6-summary-visibility={summaryVisibility}
+      data-hz-topology-g6-filter-control-surface-visibility={filterControlSurfaceVisibility}
       data-hz-topology-g6-render-state={renderState}
-      data-hz-topology-g6-layout={layout}
+      data-hz-topology-g6-layout={g6LayoutMode}
+      data-hz-topology-g6-layout-mode={g6LayoutMode}
+      data-hz-topology-g6-node-only-layout={g6LayoutMode === 'node-only-grid' ? 'grid' : 'none'}
+      data-hz-topology-g6-relation-state={relationState}
+      data-hz-topology-g6-relation-state-owner="hertzbeat-ui-g6-relation-state"
+      data-hz-topology-g6-node-only-explanation={nodeOnlyExplanationVisibility}
       data-hz-topology-g6-overlay-mode={overlayMode}
       data-hz-topology-g6-node-count={nodeCount}
       data-hz-topology-g6-edge-count={edgeCount}
@@ -2051,10 +3057,134 @@ export function HzTopologyG6Canvas({
     >
       <div
         ref={stageRef}
-        className="absolute inset-0"
+        className={[
+          'absolute inset-0 transition-opacity duration-75',
+          initialPaintVisibility === 'hidden-until-fit' ? 'opacity-0' : 'opacity-100'
+        ].join(' ')}
         data-hz-topology-g6-stage="antv-g6-stage"
         data-hz-topology-g6-stage-owner="hertzbeat-ui-g6-stage"
+        data-hz-topology-g6-stage-initial-paint={initialPaintVisibility}
       />
+      {hasViewportTarget && !shouldFastPaintNodeOnlyGraph ? (
+        <div
+          className={[
+            'pointer-events-none absolute inset-0 grid place-items-center transition-opacity duration-75',
+            runtimeLoadingVisibility === 'visible-until-g6-ready' ? 'opacity-100' : 'opacity-0'
+          ].join(' ')}
+          data-hz-topology-g6-runtime-loading-layer={runtimeLoadingVisibility}
+          data-hz-topology-g6-runtime-loading-owner="hertzbeat-ui-g6-runtime-loading"
+          data-hz-topology-g6-runtime-loading-node-count={nodeCount}
+          data-hz-topology-g6-runtime-loading-edge-count={edgeCount}
+          data-hz-topology-g6-runtime-loading-icon-policy="none"
+          data-hz-topology-g6-runtime-loading-no-handdrawn-icon="true"
+        >
+          <div className="min-w-[220px] rounded-[3px] bg-[#08090c]/88 px-3 py-2 text-[11px] text-[#aebbd0] shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
+            <div className="font-mono text-[#d6e2f2]">{canvasSummary}</div>
+            <div className="mt-2 h-1 overflow-hidden rounded-full bg-[#151922]">
+              <div className="h-full w-1/2 rounded-full bg-[#45c16f]/70" />
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {edgeDensityAffordanceVisible ? (
+        <button
+          type="button"
+          className="pointer-events-auto absolute left-3 top-3 z-20 flex max-w-[min(360px,calc(100%-1.5rem))] items-center gap-2 rounded-[3px] border border-[#253149] bg-[#08090c]/92 px-2.5 py-1.5 text-left text-[10px] font-medium text-[#c9d5e8] shadow-[0_14px_40px_rgba(0,0,0,0.22)] transition hover:border-[#334155] hover:bg-[#111827] hover:text-white"
+          data-hz-topology-g6-edge-density-affordance-owner="hertzbeat-ui-g6-edge-density-affordance"
+          data-hz-topology-g6-edge-density-affordance-visibility="visible"
+          data-hz-topology-g6-edge-density-affordance-action="scroll-edge-table"
+          data-hz-topology-g6-edge-density-affordance-target={edgeDensityDrilldownTargetId}
+          data-hz-topology-g6-edge-density-affordance-url-policy="preserve-current-url"
+          data-hz-topology-g6-edge-density-affordance-live-owner="hertzbeat-ui-g6-edge-density-affordance"
+          data-hz-topology-g6-edge-density-affordance-invariants="table-scroll no-url-change no-remount no-refit viewport-preserved render-key-stable"
+          data-hz-topology-g6-edge-density-affordance-hidden-edge-count={edgeDensityAffordanceTotalHiddenEdgeCount}
+          data-hz-topology-g6-edge-density-affordance-window-edge-count={edgeDensityWindow.totalEdgeCount}
+          data-hz-topology-g6-edge-density-affordance-total-edge-count={edgeDensityAffordanceTotalEdgeCount}
+          data-hz-topology-g6-edge-density-affordance-total-hidden-edge-count={edgeDensityAffordanceTotalHiddenEdgeCount}
+          data-hz-topology-g6-edge-density-affordance-rendered-edge-count={edgeDensityWindow.renderedEdgeCount}
+          data-hz-topology-g6-edge-density-affordance-table-companion={renderWindow.tableCompanion}
+          data-hz-topology-g6-edge-density-affordance-explanation-policy="render-window-not-missing-edges"
+          data-hz-topology-g6-edge-density-affordance-detail-label={edgeDensityAffordanceDetailLabel}
+          onClick={handleEdgeDensityDrilldown}
+        >
+          <span className="grid min-w-0 gap-0.5">
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="truncate">{edgeDensityDrilldownLabel}</span>
+              <span className="shrink-0 font-mono text-[#718096]">
+                {edgeDensityWindow.renderedEdgeCount}/{edgeDensityAffordanceTotalEdgeCount}
+              </span>
+            </span>
+            <span className="truncate text-[9px] font-normal text-[#7f8da3]">{edgeDensityAffordanceDetailLabel}</span>
+          </span>
+        </button>
+      ) : null}
+      {semanticClusterVisibility === 'visible' ? (
+        <section
+          className="pointer-events-none absolute left-3 top-12 z-10 grid max-w-[min(420px,calc(100%-1.5rem))] gap-1 rounded-[3px] bg-[#08090c]/82 px-2.5 py-2 text-[10px] text-[#9fb2ca] shadow-[0_14px_40px_rgba(0,0,0,0.16)]"
+          data-hz-topology-g6-semantic-cluster-surface="canvas-hub-summary"
+          data-hz-topology-g6-semantic-cluster-surface-owner="hertzbeat-ui-g6-semantic-cluster"
+        >
+          <div className="font-mono text-[#718096]">hub clusters</div>
+          <div className="flex flex-wrap gap-1">
+            {semanticClusterSummary.items.map(item => (
+              <span
+                key={item.id}
+                className="grid min-h-6 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 rounded-[3px] bg-[#0b111d]/86 px-2 py-1"
+                data-hz-topology-g6-semantic-cluster-item={item.nodeId}
+                data-hz-topology-g6-semantic-cluster-item-rank={item.rank}
+                data-hz-topology-g6-semantic-cluster-item-role={item.role}
+                data-hz-topology-g6-semantic-cluster-item-entity-type={item.entityType}
+                data-hz-topology-g6-semantic-cluster-item-incoming-edge-count={item.incomingEdgeCount}
+                data-hz-topology-g6-semantic-cluster-item-outgoing-edge-count={item.outgoingEdgeCount}
+                data-hz-topology-g6-semantic-cluster-item-total-edge-count={item.totalEdgeCount}
+                data-hz-topology-g6-semantic-cluster-item-leaf-node-count={item.leafNodeCount}
+              >
+                <span className="max-w-[150px] truncate text-[#c9d5e8]">{item.label}</span>
+                <span className="font-mono text-[#718096]">{item.totalEdgeCount}</span>
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
+      {shouldFastPaintNodeOnlyGraph ? (
+        <div
+          className={[
+            'pointer-events-none absolute inset-0 grid place-items-center transition-opacity duration-75',
+            nodeOnlyPrepaintVisibility === 'visible-until-g6-ready' ? 'opacity-100' : 'opacity-0'
+          ].join(' ')}
+          data-hz-topology-g6-node-only-prepaint-layer="source-backed-node-overlay"
+          data-hz-topology-g6-node-only-prepaint-visibility={nodeOnlyPrepaintVisibility}
+          data-hz-topology-g6-node-only-prepaint-node-count={renderWindow.graph.nodes.length}
+        >
+          <div className="grid max-w-[560px] grid-cols-2 gap-x-16 gap-y-10">
+            {renderWindow.graph.nodes.map(node => {
+              const icon = getHzTopologyG6NodeIcon(node.entityType);
+              return (
+                <div
+                  key={node.id}
+                  className="grid min-w-[120px] place-items-center gap-2 text-center"
+                  data-hz-topology-g6-node-only-prepaint-node={node.id}
+                  data-hz-topology-g6-node-only-prepaint-node-label={node.label}
+                  data-hz-topology-g6-node-only-prepaint-node-icon-source={`${icon.iconLibrary}:${icon.iconSource}`}
+                  data-hz-topology-g6-node-only-prepaint-node-icon-name={icon.iconName}
+                  data-hz-topology-g6-node-only-prepaint-node-icon-no-handdrawn="true"
+                >
+                  <span
+                    className="grid h-14 w-14 place-items-center rounded-full border border-[#8b5e09]/80 bg-[#3a2507]/90 shadow-[0_0_0_2px_rgba(245,158,11,0.18)]"
+                    aria-hidden="true"
+                  >
+                    <span
+                      className="h-5 w-5 bg-contain bg-center bg-no-repeat opacity-90"
+                      style={{ backgroundImage: `url("${icon.iconSrc}")` }}
+                    />
+                  </span>
+                  <span className="max-w-[160px] truncate text-[13px] font-semibold text-[#cbd5e1]">{node.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(148,163,184,0.035),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.018),transparent_34%)]"
         data-hz-topology-g6-theme-overlay="neutral-graphite"
@@ -2063,6 +3193,8 @@ export function HzTopologyG6Canvas({
         <div
           className="absolute bottom-3 left-3 z-10 max-w-[min(420px,calc(100%-1.5rem))] rounded-[3px] bg-[#07101c]/86 p-2 text-[10px] text-[#aebbd0] shadow-[0_14px_40px_rgba(0,0,0,0.18)]"
           data-hz-topology-g6-legend-dock="in-canvas"
+          data-hz-topology-g6-legend-dock-container="true"
+          data-hz-topology-g6-legend-dock-selector="container-only"
           data-hz-topology-g6-legend-dock-owner="hertzbeat-ui-g6-legend-dock"
           data-hz-topology-g6-legend-dock-placement="canvas-bottom-left"
           data-hz-topology-g6-legend-dock-occlusion="inside-canvas-low-interruption"
@@ -2071,47 +3203,65 @@ export function HzTopologyG6Canvas({
           {legendSlot}
         </div>
       ) : null}
-      <div
-        className={
-          nonOccludingOverlay
-            ? 'sr-only'
-            : 'pointer-events-none absolute bottom-3 right-3 w-[172px] rounded-[3px] border border-[#253149] bg-[#07101c]/88 p-2 text-[10px] text-[#aebbd0] shadow-[0_14px_40px_rgba(0,0,0,0.22)]'
-        }
-        data-hz-topology-g6-minimap="viewport-overview"
-        data-hz-topology-g6-minimap-owner="hertzbeat-ui-g6-minimap"
-        data-hz-topology-g6-minimap-visibility={minimapVisibility}
-        data-hz-topology-g6-minimap-occlusion={minimapOcclusion}
-        data-hz-topology-g6-minimap-node-count={nodeCount}
-        data-hz-topology-g6-minimap-edge-count={edgeCount}
-        data-hz-topology-g6-minimap-scale-tier={scaleProfile.scaleTier}
-        data-hz-topology-g6-minimap-layout-hint={scaleProfile.layoutHint}
-        data-hz-topology-g6-minimap-viewport-source={viewportTelemetry.source}
-        data-hz-topology-g6-minimap-viewport-zoom={minimapZoom}
-        data-hz-topology-g6-minimap-viewport-position={minimapPosition}
-      >
-        <div className="mb-1 flex items-center justify-between gap-2">
-          <span className="truncate uppercase tracking-[0.08em] text-[#718096]">viewport</span>
-          <span className="font-mono text-[#d6e2f2]">{scaleProfile.scaleTier}</span>
+      {hasViewportTarget ? (
+        <div
+          className={
+            nonOccludingOverlay
+              ? 'sr-only'
+              : 'pointer-events-none absolute bottom-3 right-3 w-[172px] rounded-[3px] border border-[#253149] bg-[#07101c]/88 p-2 text-[10px] text-[#aebbd0] shadow-[0_14px_40px_rgba(0,0,0,0.22)]'
+          }
+          data-hz-topology-g6-minimap="viewport-overview"
+          data-hz-topology-g6-minimap-owner="hertzbeat-ui-g6-minimap"
+          data-hz-topology-g6-minimap-visibility={minimapVisibility}
+          data-hz-topology-g6-minimap-occlusion={minimapOcclusion}
+          data-hz-topology-g6-minimap-node-count={nodeCount}
+          data-hz-topology-g6-minimap-edge-count={edgeCount}
+          data-hz-topology-g6-minimap-scale-tier={scaleProfile.scaleTier}
+          data-hz-topology-g6-minimap-layout-hint={scaleProfile.layoutHint}
+          data-hz-topology-g6-minimap-viewport-source={viewportTelemetry.source}
+          data-hz-topology-g6-minimap-viewport-zoom={minimapZoom}
+          data-hz-topology-g6-minimap-viewport-position={minimapPosition}
+        >
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="truncate uppercase tracking-[0.08em] text-[#718096]">viewport</span>
+            <span className="font-mono text-[#d6e2f2]">{scaleProfile.scaleTier}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1">
+            <span className="rounded-[2px] bg-[#0f1b2d] px-1.5 py-1 font-mono text-[#dbeafe]">{nodeCount}n</span>
+            <span className="rounded-[2px] bg-[#0f1b2d] px-1.5 py-1 font-mono text-[#dbeafe]">{edgeCount}e</span>
+            <span className="rounded-[2px] bg-[#101827] px-1.5 py-1 font-mono text-[#9fb2ca]">z {minimapZoom}</span>
+            <span className="truncate rounded-[2px] bg-[#101827] px-1.5 py-1 font-mono text-[#9fb2ca]">{minimapPosition}</span>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-1">
-          <span className="rounded-[2px] bg-[#0f1b2d] px-1.5 py-1 font-mono text-[#dbeafe]">{nodeCount}n</span>
-          <span className="rounded-[2px] bg-[#0f1b2d] px-1.5 py-1 font-mono text-[#dbeafe]">{edgeCount}e</span>
-          <span className="rounded-[2px] bg-[#101827] px-1.5 py-1 font-mono text-[#9fb2ca]">z {minimapZoom}</span>
-          <span className="truncate rounded-[2px] bg-[#101827] px-1.5 py-1 font-mono text-[#9fb2ca]">{minimapPosition}</span>
+      ) : null}
+      {hasViewportTarget ? (
+        <div
+          className={
+            nonOccludingOverlay
+              ? 'sr-only'
+              : 'pointer-events-none absolute left-3 top-3 rounded-[3px] border border-[#253149] bg-[#07101c]/90 px-2 py-1 text-[11px] font-medium text-[#b8c7dd]'
+          }
+          data-hz-topology-g6-summary-owner="hertzbeat-ui-g6-summary"
+          data-hz-topology-g6-summary-visibility={summaryVisibility}
+          data-hz-topology-g6-summary-count-policy={summaryCountPolicy}
+          data-hz-topology-g6-summary-rendered-node-count={renderWindow.renderedNodeCount}
+          data-hz-topology-g6-summary-total-node-count={nodeCount}
+          data-hz-topology-g6-summary-rendered-edge-count={edgeDensityWindow.renderedEdgeCount}
+          data-hz-topology-g6-summary-total-edge-count={edgeCount}
+        >
+          {canvasSummary}
         </div>
-      </div>
-      <div
-        className={
-          nonOccludingOverlay
-            ? 'sr-only'
-            : 'pointer-events-none absolute left-3 top-3 rounded-[3px] border border-[#253149] bg-[#07101c]/90 px-2 py-1 text-[11px] font-medium text-[#b8c7dd]'
-        }
-        data-hz-topology-g6-summary-owner="hertzbeat-ui-g6-summary"
-        data-hz-topology-g6-summary-visibility={summaryVisibility}
-      >
-        {canvasSummary}
-      </div>
-      {groupSummary.active ? (
+      ) : null}
+      {shouldFastPaintNodeOnlyGraph ? (
+        <div
+          className="pointer-events-none absolute left-3 top-12 rounded-[3px] bg-[#07101c]/88 px-2 py-1 text-[10px] font-medium text-[#9fb2ca] shadow-[0_14px_40px_rgba(0,0,0,0.18)]"
+          data-hz-topology-g6-node-only-explanation-owner="hertzbeat-ui-g6-node-only-explanation"
+          data-hz-topology-g6-node-only-explanation-reason="current-filter-has-nodes-no-edges"
+        >
+          {nodeOnlyExplanationLabel}
+        </div>
+      ) : null}
+      {hasViewportTarget && groupSummary.active ? (
         <div
           className={
             nonOccludingOverlay
@@ -2186,7 +3336,7 @@ export function HzTopologyG6Canvas({
           ) : null}
         </div>
       ) : null}
-      {filterControls.length > 0 ? (
+      {hasViewportTarget && filterControls.length > 0 ? (
         <div
           className={
             nonOccludingOverlay
@@ -2231,11 +3381,15 @@ export function HzTopologyG6Canvas({
           })}
         </div>
       ) : null}
-      <div
-        className="absolute right-3 top-3 flex items-center gap-1 rounded-[3px] border border-[#253149] bg-[#07101c]/92 p-1 shadow-[0_14px_40px_rgba(0,0,0,0.24)]"
-        data-hz-topology-g6-toolbar-owner="hertzbeat-ui-g6-toolbar"
-        data-hz-topology-g6-toolbar-visibility="visible"
-      >
+      {hasViewportTarget ? (
+        <div
+          className="absolute right-3 top-3 flex items-center gap-1 rounded-[3px] border border-[#253149] bg-[#07101c]/92 p-1 shadow-[0_14px_40px_rgba(0,0,0,0.24)]"
+          data-hz-topology-g6-toolbar-owner="hertzbeat-ui-g6-toolbar"
+          data-hz-topology-g6-toolbar-visibility={viewportToolbarVisibility}
+          data-hz-topology-g6-toolbar-action-count="4"
+          data-hz-topology-g6-toolbar-visible-actions="zoom-out zoom-in fit-view reset-view"
+          data-hz-topology-g6-toolbar-focus-actions-visibility="assistive"
+        >
         <button
           type="button"
           className="grid h-7 w-7 place-items-center rounded-[3px] text-[#c9d5e8] transition hover:bg-[#162136] hover:text-white"
@@ -2292,9 +3446,17 @@ export function HzTopologyG6Canvas({
         >
           <RotateCcw size={14} aria-hidden="true" />
         </button>
+        </div>
+      ) : null}
+      <div
+        className="sr-only"
+        data-hz-topology-g6-focus-toolbar-owner="hertzbeat-ui-g6-focus-toolbar"
+        data-hz-topology-g6-toolbar-focus-actions-visibility="assistive"
+        data-hz-topology-g6-toolbar-assistive-actions="focus-selected-node focus-search-result"
+      >
         <button
           type="button"
-          className="grid h-7 w-7 place-items-center rounded-[3px] text-[#c9d5e8] transition hover:bg-[#162136] hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+          className="sr-only"
           title={selectedFocusLabel}
           aria-label={selectedFocusLabel}
           data-hz-topology-g6-action="focus-selected-node"
@@ -2309,7 +3471,7 @@ export function HzTopologyG6Canvas({
         </button>
         <button
           type="button"
-          className="grid h-7 w-7 place-items-center rounded-[3px] text-[#c9d5e8] transition hover:bg-[#162136] hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+          className="sr-only"
           title={searchFocusLabel}
           aria-label={searchFocusLabel}
           data-hz-topology-g6-action="focus-search-result"
@@ -2358,6 +3520,11 @@ export function HzTopologyG6Canvas({
             data-topology-node-focus={node.focus ?? 'normal'}
             data-topology-node-active={node.focus === 'active' ? 'true' : 'false'}
             data-topology-node-entity-type={node.entityType}
+            data-hz-topology-node-icon-library={getHzTopologyG6NodeIcon(node.entityType).iconLibrary}
+            data-hz-topology-node-icon-name={getHzTopologyG6NodeIcon(node.entityType).iconName}
+            data-hz-topology-node-icon-kind={getHzTopologyG6NodeIcon(node.entityType).kind}
+            data-hz-topology-node-icon-source={getHzTopologyG6NodeIcon(node.entityType).iconSource}
+            data-hz-topology-node-icon-no-handdrawn="true"
             data-topology-node-icon-library={getHzTopologyG6NodeIcon(node.entityType).iconLibrary}
             data-topology-node-icon-name={getHzTopologyG6NodeIcon(node.entityType).iconName}
             data-topology-node-icon-kind={getHzTopologyG6NodeIcon(node.entityType).kind}
@@ -2370,7 +3537,8 @@ export function HzTopologyG6Canvas({
             data-topology-node-error-rate={formatMetric(node.redMetrics?.errorRate)}
             data-topology-node-latency-p95-ms={formatMetric(node.redMetrics?.latencyP95Ms)}
             data-topology-node-health-affordance="lightweight-service-health"
-            data-topology-node-select-href={node.href}
+            data-topology-node-select-mode="in-page-drawer"
+            data-topology-node-select-url-policy="preserve-current-url"
             data-topology-node-focus-href={node.focusHref ?? node.href}
             data-topology-node-entity-href={node.entityHref ?? node.href}
           >

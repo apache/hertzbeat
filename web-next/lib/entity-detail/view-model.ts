@@ -12,6 +12,18 @@ export function translateEntityDetailViewModel(key: string, params?: Translation
   return interpolate(template, params);
 }
 
+function getSignalLogSummary(detail: Pick<EntityDetailDto, 'signalEvidence' | 'logSummary'>) {
+  return detail.signalEvidence?.logSummary || detail.logSummary;
+}
+
+function getSignalTraceSummary(detail: Pick<EntityDetailDto, 'signalEvidence' | 'traceSummary'>) {
+  return detail.signalEvidence?.traceSummary || detail.traceSummary;
+}
+
+function getSignalUnifiedEvidenceSummary(detail: Pick<EntityDetailDto, 'signalEvidence' | 'unifiedEvidenceSummary'>) {
+  return detail.signalEvidence?.unifiedEvidenceSummary || detail.unifiedEvidenceSummary;
+}
+
 type DetailRow = {
   title: string;
   copy: string;
@@ -164,14 +176,16 @@ function localizeActionText(
 }
 
 export function buildSummaryRows(
-  detail: Pick<EntityDetailDto, 'evidenceSummary' | 'monitorSummary' | 'logSummary' | 'traceSummary' | 'boundMonitors'>,
+  detail: Pick<EntityDetailDto, 'evidenceSummary' | 'monitorSummary' | 'logSummary' | 'traceSummary' | 'signalEvidence' | 'boundMonitors'>,
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ) {
   const boundMonitorCount = detail.monitorSummary?.totalBoundMonitors ?? detail.boundMonitors?.length ?? 0;
   const downMonitorCount = detail.evidenceSummary?.downMonitorCount ?? 0;
-  const logHintCount = detail.logSummary?.hintCount ?? 0;
-  const traceCount = detail.traceSummary?.recentTraceCount ?? 0;
-  const errorTraceCount = detail.traceSummary?.recentErrorTraceCount ?? 0;
+  const logSummary = getSignalLogSummary(detail);
+  const traceSummary = getSignalTraceSummary(detail);
+  const logHintCount = logSummary?.hintCount ?? 0;
+  const traceCount = traceSummary?.recentTraceCount ?? 0;
+  const errorTraceCount = traceSummary?.recentErrorTraceCount ?? 0;
 
   return [
     {
@@ -189,7 +203,7 @@ export function buildSummaryRows(
         logHintCount > 0
           ? t('entities.detail.summary.logs.available', { count: formatCount(logHintCount, t('entities.detail.summary.logs.hints')) })
           : t('entities.detail.summary.logs.no-hints'),
-      meta: detail.logSummary?.preferredQueryTitle || detail.logSummary?.fallbackSearchTerm || '-',
+      meta: logSummary?.preferredQueryTitle || logSummary?.fallbackSearchTerm || '-',
       tone: logHintCount > 0 ? 'warning' : 'neutral'
     },
     {
@@ -293,6 +307,8 @@ export function buildEntityHealthModel(
   detail: EntityDetailDto,
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ): DetailRow[] {
+  const logSummary = getSignalLogSummary(detail);
+  const traceSummary = getSignalTraceSummary(detail);
   const totalBoundMonitors = finiteNumber(
     detail.monitorSummary?.totalBoundMonitors ?? detail.boundMonitors?.length ?? detail.entity?.monitorBinds?.length,
     0
@@ -302,17 +318,17 @@ export function buildEntityHealthModel(
     0,
     Math.min(totalBoundMonitors, finiteNumber(detail.evidenceSummary?.healthyMonitorCount, totalBoundMonitors - downMonitorCount))
   );
-  const recentTraceCount = finiteNumber(detail.traceSummary?.recentTraceCount, 0);
-  const recentErrorTraceCount = finiteNumber(detail.traceSummary?.recentErrorTraceCount, 0);
+  const recentTraceCount = finiteNumber(traceSummary?.recentTraceCount, 0);
+  const recentErrorTraceCount = finiteNumber(traceSummary?.recentErrorTraceCount, 0);
   const activeAlertCount = finiteNumber(
     detail.alertSummary?.totalActiveAlerts ?? detail.activeAlerts?.length ?? detail.evidenceSummary?.activeAlertCount,
     0
   );
-  const logHintCount = finiteNumber(detail.logSummary?.hintCount ?? detail.evidenceSummary?.logHintCount, 0);
+  const logHintCount = finiteNumber(logSummary?.hintCount ?? detail.evidenceSummary?.logHintCount, 0);
   const availabilityRatio = totalBoundMonitors > 0 ? healthyMonitorCount / totalBoundMonitors : 0;
   const errorRate = recentTraceCount > 0 ? recentErrorTraceCount / recentTraceCount : 0;
   const recentAnomalyCount = downMonitorCount + recentErrorTraceCount + logHintCount;
-  const latency = formatLatency(detail.traceSummary, t);
+  const latency = formatLatency(traceSummary, t);
   const collectorEvidence = buildCollectorHealthEvidence({
     healthyMonitorCount,
     lastEvidenceLabel: detail.evidenceSummary?.lastEvidenceAt == null ? null : String(detail.evidenceSummary.lastEvidenceAt),
@@ -381,10 +397,10 @@ export function buildEntityHealthModel(
 }
 
 export function buildUnifiedEvidenceRows(
-  detail: Pick<EntityDetailDto, 'unifiedEvidenceSummary' | 'traceSummary'>,
+  detail: Pick<EntityDetailDto, 'unifiedEvidenceSummary' | 'traceSummary' | 'signalEvidence'>,
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ): DetailRow[] {
-  const summary = detail.unifiedEvidenceSummary;
+  const summary = getSignalUnifiedEvidenceSummary(detail);
   if (!summary) {
     return [
       {
@@ -401,7 +417,7 @@ export function buildUnifiedEvidenceRows(
   const metricEvidenceCount = finiteNumber(summary.metricEvidenceCount, 0);
   const logEvidenceCount = finiteNumber(summary.logEvidenceCount, 0);
   const traceEvidenceCount = finiteNumber(summary.traceEvidenceCount, 0);
-  const traceErrorCount = finiteNumber(detail.traceSummary?.recentErrorTraceCount, 0);
+  const traceErrorCount = finiteNumber(getSignalTraceSummary(detail)?.recentErrorTraceCount, 0);
 
   return [
     {
@@ -573,7 +589,7 @@ function buildContextParams(
   const entityId = entity.id != null ? String(entity.id) : '';
   const entityName = entity.displayName || entity.name || '';
   const serviceName = normalizeContextText(routeContext.serviceName) || entity.name || entity.displayName || '';
-  const traceSummary = detail.traceSummary as (EntityDetailDto['traceSummary'] & { latestSpanId?: string | null }) | undefined;
+  const traceSummary = getSignalTraceSummary(detail);
   const timeRange = normalizeContextText(routeContext.timeRange) || 'last-1h';
   const params = new URLSearchParams();
 

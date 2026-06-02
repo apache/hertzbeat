@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.observability.dto.entity.EntityEvidenceSummar
 import org.apache.hertzbeat.common.observability.dto.entity.EntityMonitorSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityNextActionInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityOpsSummaryInfo;
+import org.apache.hertzbeat.common.observability.dto.entity.EntitySignalEvidenceBundle;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusPageSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityStatusInfo;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityTriageRecommendation;
@@ -68,6 +69,8 @@ public class EntityDetailDto {
     private List<LogEvidence> logEvidence;
 
     private List<TraceEvidence> traceEvidence;
+
+    private EntitySignalEvidenceBundle signalEvidence;
 
     private EntityUnifiedEvidenceSummary unifiedEvidenceSummary;
 

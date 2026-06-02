@@ -4,18 +4,31 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {
   buildHzTopologyG6Graph,
+  buildHzTopologyG6EdgeDensityWindow,
+  buildHzTopologyG6EdgeReadabilityProfile,
   buildHzTopologyG6FilterScope,
   buildHzTopologyG6GroupSummary,
   buildHzTopologyG6InitialFitStrategy,
   buildHzTopologyG6LargeGraphStrategy,
   buildHzTopologyG6NeighborFocus,
+  buildHzTopologyG6NodeLabelCounts,
+  buildHzTopologyG6NodeOnlyGridGraph,
+  buildHzTopologyG6OperatorMaxZoom,
+  buildHzTopologyG6PointerPanDelta,
+  buildHzTopologyG6RuntimeMaxZoom,
   buildHzTopologyG6RenderWindow,
   buildHzTopologyG6ScaleFixture,
   buildHzTopologyG6ScaleProfile,
   buildHzTopologyG6SearchFocus,
+  buildHzTopologyG6SemanticClusterSummary,
+  buildHzTopologyG6ShapeProfile,
+  buildHzTopologyG6WindowedLaneGraph,
   clampHzTopologyG6AutoFitZoom,
+  clampHzTopologyG6OperatorZoom,
   getHzTopologyG6NodeIcon,
   HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM,
+  HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM,
+  HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM,
   HZ_TOPOLOGY_G6_MAX_ZOOM,
   HZ_TOPOLOGY_G6_NODE_ICON_CATALOG,
   HzTopologyG6Canvas
@@ -81,7 +94,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
         entityType: 'service',
         iconLibrary: 'lucide-react',
         iconLabel: 'Service',
-        iconName: 'component',
+        iconName: 'server-cog',
         iconSource: 'entity-type-catalog',
         nodeShape: 'circle-icon-label',
         requestRatePerSecond: 12.34,
@@ -96,6 +109,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
       stroke: '#f59e0b'
     });
     expect(g6Graph.nodes[0].style).not.toHaveProperty('iconText');
+    expect(g6Graph.edges[0].style?.labelText).toContain('/s');
     expect(g6Graph.nodes[1]).toMatchObject({
       type: 'circle',
       data: expect.objectContaining({
@@ -129,7 +143,8 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
   it('uses a shared Lucide node icon catalog for supported topology entity types', () => {
     expect(HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.map(item => [item.kind, item.iconName, item.label])).toEqual([
       ['application', 'app-window', 'Application'],
-      ['service', 'component', 'Service'],
+      ['service', 'server-cog', 'Service'],
+      ['endpoint', 'route', 'Endpoint'],
       ['database', 'database', 'Database'],
       ['cache', 'memory-stick', 'Cache'],
       ['queue', 'inbox', 'Queue'],
@@ -141,8 +156,10 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
       ['unknown', 'circle-help', 'Unknown']
     ]);
 
-    expect(getHzTopologyG6NodeIcon('service')).toMatchObject({ kind: 'service', iconName: 'component' });
-    expect(getHzTopologyG6NodeIcon('payment-api')).toMatchObject({ kind: 'service', iconName: 'component' });
+    expect(getHzTopologyG6NodeIcon('service')).toMatchObject({ kind: 'service', iconName: 'server-cog' });
+    expect(getHzTopologyG6NodeIcon('payment-api')).toMatchObject({ kind: 'service', iconName: 'server-cog' });
+    expect(getHzTopologyG6NodeIcon('http-endpoint')).toMatchObject({ kind: 'endpoint', iconName: 'route' });
+    expect(getHzTopologyG6NodeIcon('/api/checkout')).toMatchObject({ kind: 'endpoint', iconName: 'route' });
     expect(getHzTopologyG6NodeIcon('orders-db')).toMatchObject({ kind: 'database', iconName: 'database' });
     expect(getHzTopologyG6NodeIcon('redis-cache')).toMatchObject({ kind: 'cache', iconName: 'memory-stick' });
     expect(getHzTopologyG6NodeIcon('kafka-events-queue')).toMatchObject({ kind: 'queue', iconName: 'inbox' });
@@ -254,6 +271,9 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
 
     expect(html).toContain('data-hz-topology-g6-edge-hit-target="wide-pointer-band"');
     expect(html).toContain('data-hz-topology-g6-edge-hit-target-owner="hertzbeat-ui-g6-edge-hit-target"');
+    expect(html).toContain('data-hz-topology-g6-rendered-node-count="2"');
+    expect(html).toContain('data-hz-topology-g6-rendered-edge-count="1"');
+    expect(html).toContain('data-hz-topology-g6-rendered-edge-owner="hertzbeat-ui-g6-rendered-edge-proof"');
     expect(source).toContain('increasedLineWidthForHitTesting');
     expect(source).toContain('readG6EventId(event)');
     expect(graphData.edges[0]?.style).toMatchObject({ increasedLineWidthForHitTesting: expect.any(Number) });
@@ -265,8 +285,15 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
 
     expect(source).toContain('clearSharedHover');
     expect(source).toContain('handleG6CanvasPointerLeave');
+    expect(source).toContain('handleG6DocumentPointerMoveHoverBoundary');
+    expect(source).toContain('document.addEventListener("pointermove", handleG6DocumentPointerMoveHoverBoundary)');
+    expect(source).toContain('document.removeEventListener("pointermove", handleG6DocumentPointerMoveHoverBoundary)');
+    expect(source).toContain('rootRef.current?.getBoundingClientRect()');
     expect(source).toContain('onPointerLeave: handleG6CanvasPointerLeave');
     expect(source).toContain('"data-hz-topology-g6-hover-clear": "canvas-boundary"');
+    expect(source).toContain('"data-hz-topology-g6-hover-clear-fallback": "document-boundary-pointermove"');
+    expect(source).toContain('"data-hz-topology-g6-hover-clear-selection-continuity": "next-edge-click-selects-rendered-edge"');
+    expect(source).toContain('"data-hz-topology-g6-hover-clear-selection-invariants": "cleared-hover next-edge-click no-url-change no-remount no-refit viewport-preserved render-key-stable"');
   });
 
   it('clears stale hover evidence before node or edge drawer selection', () => {
@@ -276,6 +303,14 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     );
 
     expect(html).toContain('data-hz-topology-g6-selection-clear="hover"');
+    expect(html).toContain('data-hz-topology-g6-edge-to-edge-selection-continuity="adjacent-edge-click-updates-selection-and-summary"');
+    expect(html).toContain('data-hz-topology-g6-edge-to-edge-selection-invariants="edge-click edge-click no-stale-hover summary-selected-match no-url-change no-remount no-refit viewport-preserved render-key-stable"');
+    expect(html).toContain('data-hz-topology-g6-node-edge-selection-continuity="node-click-clears-edge edge-click-clears-node"');
+    expect(html).toContain('data-hz-topology-g6-node-edge-selection-invariants="edge-node node-edge clear-opposite-selection clear-stale-hover no-url-change no-remount no-refit viewport-preserved render-key-stable"');
+    expect(html).toContain('data-hz-topology-g6-selected-edge-node-hover-continuity="selected-edge-survives-node-hover"');
+    expect(html).toContain('data-hz-topology-g6-selected-edge-node-hover-invariants="selected-edge path-summary-selected node-hover-no-summary-overwrite pointer-leave-clears-hover no-url-change no-remount no-refit viewport-preserved render-key-stable"');
+    expect(html).toContain('data-hz-topology-g6-selected-node-edge-hover-continuity="selected-node-survives-edge-hover"');
+    expect(html).toContain('data-hz-topology-g6-selected-node-edge-hover-invariants="selected-node edge-hover-no-node-overwrite edge-hover-no-url-change pointer-leave-clears-hover no-remount no-refit viewport-preserved render-key-stable"');
     expect(source).toContain('handleG6NodeSelect');
     expect(source).toContain('handleG6EdgeSelect');
     expect(source).toContain('handleG6NodeSelect(String(id))');
@@ -328,6 +363,9 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-metadata-click-behavior="in-page-select"');
     expect(html).toContain('data-hz-topology-g6-metadata-click-target="node"');
     expect(html).toContain('data-hz-topology-g6-metadata-click-target="edge"');
+    expect(html).toContain('data-topology-node-select-mode="in-page-drawer"');
+    expect(html).toContain('data-topology-node-select-url-policy="preserve-current-url"');
+    expect(html).not.toContain('data-topology-node-select-href=');
   });
 
   it('registers node double click as the shared focused 1-hop entry without replacing drawer click selection', () => {
@@ -356,7 +394,9 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-focus-entry-owner="hertzbeat-ui-g6-focus-entry"');
     expect(html).toContain('data-hz-topology-g6-focus-depth-target="1-hop"');
     expect(html).toContain('data-hz-topology-g6-node-focus-owner="hertzbeat-ui-g6-node-focus"');
-    expect(html).toContain('data-topology-node-select-href="/topology?entityId=501&amp;depth=2"');
+    expect(html).toContain('data-topology-node-select-mode="in-page-drawer"');
+    expect(html).toContain('data-topology-node-select-url-policy="preserve-current-url"');
+    expect(html).not.toContain('data-topology-node-select-href=');
     expect(html).toContain('data-topology-node-focus-href="/topology?entityId=501&amp;depth=1"');
   });
 
@@ -380,7 +420,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-auto-fit-zoom-range-owner="hertzbeat-ui-g6-auto-fit-zoom-range"');
     expect(html).toContain('data-hz-topology-g6-initial-fit-strategy="center-only"');
     expect(html).toContain('data-hz-topology-g6-initial-fit-strategy-owner="hertzbeat-ui-g6-initial-fit-strategy"');
-    expect(html).toContain('data-hz-topology-g6-operator-zoom-bounds="0.18-2.2"');
+    expect(html).toContain(`data-hz-topology-g6-operator-zoom-bounds="0.18-${HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM}"`);
     expect(html).toContain('data-hz-topology-g6-operator-zoom-growth="bounded-readable-nodes"');
     expect(html).toContain('data-hz-topology-g6-fit-mode="overflow-only-center"');
     expect(clampHzTopologyG6AutoFitZoom(4.8)).toBe(HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM);
@@ -402,15 +442,122 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(denseHtml).toContain('data-hz-topology-g6-initial-fit-strategy="overflow-fit"');
   });
 
+  it('caps compact service graph operator zoom below the wide-browser giant-node range', () => {
+    const source = topologyG6Source;
+    const compactGraph = buildHzTopologyG6ScaleFixture(7);
+    const denseGraph = buildHzTopologyG6ScaleFixture(50);
+    const compactHtml = renderToStaticMarkup(<HzTopologyG6Canvas graph={compactGraph} />);
+    const denseHtml = renderToStaticMarkup(<HzTopologyG6Canvas graph={denseGraph} />);
+
+    expect(HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM).toBeLessThan(HZ_TOPOLOGY_G6_MAX_ZOOM);
+    expect(buildHzTopologyG6OperatorMaxZoom('center-only')).toBe(HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM);
+    expect(buildHzTopologyG6OperatorMaxZoom('overflow-fit')).toBe(HZ_TOPOLOGY_G6_MAX_ZOOM);
+    expect(compactHtml).toContain(`data-hz-topology-g6-operator-zoom-bounds="0.18-${HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM}"`);
+    expect(compactHtml).toContain('data-hz-topology-g6-operator-zoom-tier="compact-readable"');
+    expect(compactHtml).toContain(`data-hz-topology-g6-wheel-zoom-bounds="0.18-${HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM}"`);
+    expect(denseHtml).toContain(`data-hz-topology-g6-operator-zoom-bounds="0.18-${HZ_TOPOLOGY_G6_MAX_ZOOM}"`);
+    expect(denseHtml).toContain('data-hz-topology-g6-operator-zoom-tier="full-canvas"');
+    expect(source).toContain('const operatorMaxZoom = buildHzTopologyG6OperatorMaxZoom(initialFitStrategy)');
+    expect(source).toContain('Math.min(operatorMaxZoom, currentZoom * wheelScale)');
+    expect(source).toContain('Math.min(operatorMaxZoom, currentZoom * scale)');
+  });
+
+  it('clamps restored compact viewport snapshots so stale wide-browser zoom cannot survive redraw or resize', () => {
+    const source = topologyG6Source;
+    const compactGraph = buildHzTopologyG6ScaleFixture(7);
+    const compactHtml = renderToStaticMarkup(<HzTopologyG6Canvas graph={compactGraph} />);
+
+    expect(clampHzTopologyG6OperatorZoom(4.8, HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM)).toBe(HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM);
+    expect(clampHzTopologyG6OperatorZoom(0.12, HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM)).toBe(0.18);
+    expect(clampHzTopologyG6OperatorZoom(1.12, HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM)).toBe(1.12);
+    expect(compactHtml).toContain('data-hz-topology-g6-viewport-restore-clamp="operator-max"');
+    expect(source).toContain('restoreG6ViewportSnapshot(runtimeGraph, resizeSnapshot, runtimeMaxZoom)');
+    expect(source).toContain('restoreG6ViewportSnapshot(runtimeGraph, snapshot, runtimeMaxZoom)');
+    expect(source).toContain('const clampedZoom = clampHzTopologyG6OperatorZoom(snapshot.zoom, maxZoom)');
+    expect(source).not.toContain('await runtimeGraph.zoomTo?.(snapshot.zoom, false)');
+  });
+
+  it('clamps an already-mounted compact runtime zoom so stale normal-browser zoom cannot keep giant nodes visible', () => {
+    const source = topologyG6Source;
+    const compactHtml = renderToStaticMarkup(<HzTopologyG6Canvas graph={buildHzTopologyG6ScaleFixture(7)} />);
+
+    expect(compactHtml).toContain('data-hz-topology-g6-live-zoom-guard="operator-max"');
+    expect(compactHtml).toContain('data-hz-topology-g6-live-zoom-guard-owner="hertzbeat-ui-g6-live-zoom-guard"');
+    expect(source).toContain('async function enforceG6OperatorZoomBounds');
+    expect(source).toContain('const runtimeMaxZoom = buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current)');
+    expect(source).toContain('enforceG6OperatorZoomBounds(runtimeGraph, runtimeMaxZoom)');
+    expect(source).toContain('const runtimeGraph = graphRef.current;');
+  });
+
+  it('keeps compact graphs at 1x before the operator intentionally zooms', () => {
+    const source = topologyG6Source;
+    const compactHtml = renderToStaticMarkup(<HzTopologyG6Canvas graph={buildHzTopologyG6ScaleFixture(7)} />);
+
+    expect(buildHzTopologyG6RuntimeMaxZoom('center-only', false)).toBe(HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM);
+    expect(buildHzTopologyG6RuntimeMaxZoom('center-only', true)).toBe(HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM);
+    expect(buildHzTopologyG6RuntimeMaxZoom('overflow-fit', false)).toBe(HZ_TOPOLOGY_G6_MAX_ZOOM);
+    expect(compactHtml).toContain('data-hz-topology-g6-preinteraction-zoom-guard="compact-1x"');
+    expect(compactHtml).toContain('data-hz-topology-g6-preinteraction-zoom-guard-owner="hertzbeat-ui-g6-preinteraction-zoom-guard"');
+    expect(source).toContain('buildHzTopologyG6RuntimeMaxZoom(initialFitStrategy, hasUserViewportInteractedRef.current)');
+    expect(source).toContain('enforceG6OperatorZoomBounds(runtimeGraph, runtimeMaxZoom)');
+  });
+
+  it('rechecks compact runtime zoom when a normal browser tab returns from stale focus or hot reload state', () => {
+    const source = topologyG6Source;
+    const compactHtml = renderToStaticMarkup(<HzTopologyG6Canvas graph={buildHzTopologyG6ScaleFixture(7)} />);
+
+    expect(compactHtml).toContain('data-hz-topology-g6-runtime-version="compact-viewport-guard-v3"');
+    expect(compactHtml).toContain('data-hz-topology-g6-runtime-version-owner="hertzbeat-ui-g6-runtime-version"');
+    expect(compactHtml).toContain('data-hz-topology-g6-browser-resume-zoom-guard="operator-max"');
+    expect(source).toContain('const HZ_TOPOLOGY_G6_VIEWPORT_RUNTIME_VERSION = "compact-viewport-guard-v3"');
+    expect(source).toContain('const viewportRuntimeVersion = HZ_TOPOLOGY_G6_VIEWPORT_RUNTIME_VERSION');
+    expect(source).toContain('document.addEventListener("visibilitychange", handleBrowserResumeZoomGuard)');
+    expect(source).toContain('window.addEventListener("focus", handleBrowserResumeZoomGuard)');
+    expect(source).toContain('document.removeEventListener("visibilitychange", handleBrowserResumeZoomGuard)');
+    expect(source).toContain('window.removeEventListener("focus", handleBrowserResumeZoomGuard)');
+  });
+
   it('keeps the compact center-only path ending with a hard 1x zoom clamp', () => {
     const source = topologyG6Source;
     const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={buildHzTopologyG6ScaleFixture(7)} />);
     const centerOnlyMatch = source.match(/async function centerOnlyG6Viewport[\s\S]*?\n}/);
 
     expect(html).toContain('data-hz-topology-g6-compact-final-zoom-clamp="true"');
-    expect(centerOnlyMatch?.[0].indexOf('fitCenter')).toBeGreaterThanOrEqual(0);
-    expect(centerOnlyMatch?.[0].indexOf('zoomTo')).toBeGreaterThan(centerOnlyMatch?.[0].indexOf('fitCenter') ?? -1);
-    expect(centerOnlyMatch?.[0]).toContain('HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM');
+    expect(html).toContain('data-hz-topology-g6-compact-fit-mode="center-1x-no-fill"');
+    expect(html).toContain('data-hz-topology-g6-compact-initial-zoom="1"');
+    expect(html).toContain('data-hz-topology-g6-normal-browser-stale-fit-guard="compact-1x-before-center"');
+    expect(centerOnlyMatch?.[0]).toContain('HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM');
+    expect(centerOnlyMatch?.[0]).toContain('runtimeGraph.zoomTo?.(HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM, false)');
+    expect(centerOnlyMatch?.[0]).toContain('runtimeGraph.fitCenter?.(animation)');
+    expect(centerOnlyMatch?.[0]).toContain('runtimeGraph.zoomTo?.(HZ_TOPOLOGY_G6_COMPACT_INITIAL_ZOOM, animation)');
+    expect(centerOnlyMatch?.[0]).not.toContain('HZ_TOPOLOGY_G6_AUTO_FIT_MAX_ZOOM');
+  });
+
+  it('hides the AntV stage until the initial compact fit has completed so wide browsers never show giant pre-fit nodes', () => {
+    const source = topologyG6Source;
+    const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={buildHzTopologyG6ScaleFixture(7)} />);
+
+    expect(html).toContain('data-hz-topology-g6-initial-paint-policy="hide-stage-until-fit-ready"');
+    expect(html).toContain('data-hz-topology-g6-stage-initial-paint="hidden-until-fit"');
+    expect(html).toContain('data-hz-topology-g6-viewport-fit-state="pending"');
+    expect(html).toContain('data-hz-topology-g6-viewport-fit-state-owner="hertzbeat-ui-g6-fit-settle-state"');
+    expect(html).toContain('opacity-0');
+    expect(source).toContain('const isViewportFitPending =');
+    expect(source).toContain("const initialPaintVisibility = renderState === 'idle' || isViewportFitPending ? 'hidden-until-fit' : 'visible-after-fit'");
+    expect(source).toContain("initialPaintVisibility === 'hidden-until-fit' ? 'opacity-0' : 'opacity-100'");
+    expect(source).toContain("if (!disposed) setRenderState('ready');");
+  });
+
+  it('keeps a shared nonblank runtime loading layer visible while AntV G6 chunks are still loading', () => {
+    const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={graph} />);
+
+    expect(html).toContain('data-hz-topology-g6-runtime-loading-layer="visible-until-g6-ready"');
+    expect(html).toContain('data-hz-topology-g6-runtime-loading-owner="hertzbeat-ui-g6-runtime-loading"');
+    expect(html).toContain('data-hz-topology-g6-runtime-loading-node-count="2"');
+    expect(html).toContain('data-hz-topology-g6-runtime-loading-edge-count="1"');
+    expect(html).toContain('data-hz-topology-g6-runtime-loading-icon-policy="none"');
+    expect(html).toContain('data-hz-topology-g6-runtime-loading-no-handdrawn-icon="true"');
+    expect(html).toContain('2 nodes · 1 edges');
   });
 
   it('centers the shared G6 canvas after fit and reset view actions', () => {
@@ -418,6 +565,8 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={buildHzTopologyG6ScaleFixture(8)} />);
 
     expect(source).toContain('centerGraphView');
+    expect(source).toContain('if (initialFitStrategy === "center-only")');
+    expect(source).toContain('centerOnlyG6Viewport(graphRef.current, { duration: 180 })');
     expect(source).toContain('centerGraphView("fit-view")');
     expect(source).toContain('centerGraphView("reset-view")');
     expect(source).toContain("fitAndCenterG6Viewport(graphRef.current, { when: 'overflow' }, { duration: 180 })");
@@ -430,8 +579,9 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
   it('keeps operator zoom below the giant-node range that can make a small graph fill wide browsers', () => {
     const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={graph} />);
 
-    expect(html).toContain('data-hz-topology-g6-operator-zoom-bounds="0.18-2.2"');
-    expect(html).toContain('data-hz-topology-g6-wheel-zoom-bounds="0.18-2.2"');
+    expect(html).toContain(`data-hz-topology-g6-operator-zoom-bounds="0.18-${HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM}"`);
+    expect(html).toContain(`data-hz-topology-g6-wheel-zoom-bounds="0.18-${HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM}"`);
+    expect(html).toContain('data-hz-topology-g6-operator-zoom-tier="compact-readable"');
     expect(html).toContain('data-hz-topology-g6-operator-zoom-growth="bounded-readable-nodes"');
     expect(HZ_TOPOLOGY_G6_MAX_ZOOM).toBe(2.2);
   });
@@ -452,8 +602,9 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(source).toContain('lastFitStructureKeyRef');
     expect(source).toContain('markUserViewportInteraction');
     expect(source).toContain('stage.addEventListener("wheel", handleG6WheelViewportControl, { passive: false })');
-    expect(source).toContain('stage.addEventListener("pointerdown", handleG6PointerViewportTelemetry)');
-    expect(source).toContain('restoreG6ViewportSnapshot(runtimeGraph, resizeSnapshot)');
+    expect(source).toContain('stage.addEventListener("pointerdown", handleG6PointerPanStart)');
+    expect(source).toContain('stage.addEventListener("pointermove", handleG6PointerPanMove)');
+    expect(source).toContain('restoreG6ViewportSnapshot(runtimeGraph, resizeSnapshot, runtimeMaxZoom)');
     expect(source).not.toContain("{ type: 'drag-element', key: 'drag-element' }");
     expect(source).not.toContain("{ type: 'click-select', key: 'click-select' }");
     expect(source).not.toContain("{ type: 'zoom-canvas', key: 'zoom-canvas'");
@@ -462,6 +613,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(source).toContain('const shouldFitAfterDataChange = graphStructureKey !== lastFitStructureKeyRef.current && !hasUserViewportInteractedRef.current;');
     expect(source).toContain('if (shouldFitAfterDataChange) {');
     expect(source).toContain('fitAndCenterG6Viewport(runtimeGraph, { when: "overflow" }, false)');
+    expect(source).toContain('publishViewportTelemetry(clamped ? "runtime-zoom-guard" : "initial-fit")');
     expect(source).toContain('lastFitStructureKeyRef.current = graphStructureKey;');
     expect(source).toContain('autoFit: false');
     expect(source).not.toContain("autoFit: 'view'");
@@ -470,12 +622,41 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-viewport-interaction-state="pristine"');
     expect(html).toContain('data-hz-topology-g6-viewport-interaction-owner="hertzbeat-ui-g6-viewport-interaction"');
     expect(html).toContain('data-hz-topology-g6-viewport-preservation="clamped-wheel-pan-zoom"');
+    expect(html).toContain('data-hz-topology-g6-live-interaction-owner="hertzbeat-ui-g6-live-interaction"');
+    expect(html).toContain('data-hz-topology-g6-live-interaction-invariants="no-url-change no-remount no-refit viewport-preserved render-key-stable"');
+    expect(html).toContain('data-hz-topology-g6-edge-live-interaction-owner="hertzbeat-ui-g6-edge-live-interaction"');
+    expect(html).toContain('data-hz-topology-g6-edge-live-interaction-invariants="edge-click-drawer no-url-change no-remount no-refit viewport-preserved render-key-stable"');
     expect(html).toContain('data-hz-topology-g6-style-redraw-behavior="no-auto-fit"');
     expect(html).toContain('data-hz-topology-g6-style-redraw-skip="identical-render-key"');
     expect(html).toContain('data-hz-topology-g6-blank-hover-clear="no-op-without-hover"');
     expect(html).toContain('data-hz-topology-g6-resize-preservation="operator-viewport-snapshot"');
     expect(html).toContain('data-hz-topology-g6-node-motion="locked-layout"');
     expect(html).toContain('data-hz-topology-g6-selection-engine="hertzbeat-controlled"');
+  });
+
+  it('keeps large graph pan under one manual owner so AntV drag-canvas cannot double-apply pointer movement', () => {
+    const source = topologyG6Source;
+    const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={buildHzTopologyG6ScaleFixture(500)} />);
+
+    expect(buildHzTopologyG6PointerPanDelta({ x: -320.4, y: 165.6 })).toEqual([-320, 166]);
+    expect(html).toContain('data-hz-topology-g6-pan-mode="manual-stage-drag-fallback"');
+    expect(html).toContain('data-hz-topology-g6-pan-owner="hertzbeat-ui-g6-pan"');
+    expect(html).toContain('data-hz-topology-g6-pan-runtime="manual-only-no-antv-double-pan"');
+    expect(html).toContain('data-hz-topology-g6-pan-telemetry="pointer-drag-translateBy"');
+    expect(html).toContain('data-hz-topology-g6-pan-selection-guard="drag-pan-suppresses-click-selection"');
+    expect(html).toContain('data-hz-topology-g6-pan-selection-guard-owner="hertzbeat-ui-g6-pan-selection-guard"');
+    expect(source).toContain('handleG6PointerPanStart');
+    expect(source).toContain('handleG6PointerPanMove');
+    expect(source).toContain('handleG6PointerPanEnd');
+    expect(source).toContain('buildHzTopologyG6PointerPanDelta');
+    expect(source).toContain('shouldSuppressG6SelectionAfterPointerPan');
+    expect(source).toContain('pointerPanSelectionSuppressedUntilRef');
+    expect(source).toContain('if (shouldSuppressG6SelectionAfterPointerPan()) return;');
+    expect(source).toContain('runtimeGraph.translateBy?.(panDelta, false)');
+    expect(source).not.toContain("{ type: 'drag-canvas', key: 'drag-canvas' }");
+    expect(source).toContain('stage.addEventListener("pointermove", handleG6PointerPanMove)');
+    expect(source).toContain('stage.addEventListener("pointerup", handleG6PointerPanEnd)');
+    expect(source).toContain('stage.addEventListener("pointercancel", handleG6PointerPanEnd)');
   });
 
   it('builds deterministic 50, 200, and 500 node G6 scale fixtures with RED evidence', () => {
@@ -512,6 +693,49 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
         errorRate: expect.any(Number),
         latencyP95Ms: expect.any(Number)
       })
+    });
+  });
+
+  it('classifies mixed star and mesh topology shape so scale proofs do not masquerade as a single relation', () => {
+    const mixedShapeGraph = {
+      nodes: [
+        { id: 'gateway', label: 'Gateway', entityType: 'service', source: 'otlp-trace-call' },
+        ...Array.from({ length: 10 }, (_, index) => ({
+          id: `leaf-${index}`,
+          label: `Leaf ${index}`,
+          entityType: 'service',
+          source: 'otlp-trace-call'
+        })),
+        ...Array.from({ length: 4 }, (_, index) => ({
+          id: `mesh-${index}`,
+          label: `Mesh ${index}`,
+          entityType: 'service',
+          source: 'otlp-trace-call'
+        }))
+      ],
+      edges: [
+        ...Array.from({ length: 10 }, (_, index) => ({
+          id: `gateway-leaf-${index}`,
+          from: 'gateway',
+          to: `leaf-${index}`,
+          relationshipType: 'trace-call',
+          source: 'otlp-trace-call'
+        })),
+        { id: 'mesh-0-1', from: 'mesh-0', to: 'mesh-1', relationshipType: 'trace-call', source: 'otlp-trace-call' },
+        { id: 'mesh-1-2', from: 'mesh-1', to: 'mesh-2', relationshipType: 'trace-call', source: 'otlp-trace-call' },
+        { id: 'mesh-2-3', from: 'mesh-2', to: 'mesh-3', relationshipType: 'trace-call', source: 'otlp-trace-call' },
+        { id: 'mesh-3-0', from: 'mesh-3', to: 'mesh-0', relationshipType: 'trace-call', source: 'otlp-trace-call' }
+      ]
+    };
+
+    const shapeProfile = buildHzTopologyG6ShapeProfile(mixedShapeGraph);
+
+    expect(shapeProfile).toMatchObject({
+      shape: 'mixed-star-mesh',
+      hubNodeCount: 1,
+      starEdgeCount: 10,
+      meshEdgeCount: 4,
+      evidence: 'degree-derived'
     });
   });
 
@@ -581,11 +805,63 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-large-graph-visible-node-budget="200"');
   });
 
+  it('exposes overflow large-graph policy before a 500+ node graph enters G6 rendering', () => {
+    const overflowGraph = buildHzTopologyG6ScaleFixture(650);
+    const overflowStrategy = buildHzTopologyG6LargeGraphStrategy(overflowGraph);
+    const renderWindow = buildHzTopologyG6RenderWindow(overflowGraph, overflowStrategy);
+    const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={overflowGraph} layout="force" height="compact" />);
+
+    expect(overflowStrategy).toMatchObject({
+      nodeCount: 650,
+      scaleTier: 'overflow',
+      strategy: 'filter-first',
+      recommendedLayout: 'force',
+      grouping: 'required',
+      filtering: 'required',
+      tableCompanion: 'required',
+      visibleNodeBudget: 200
+    });
+    expect(renderWindow).toMatchObject({
+      mode: 'windowed',
+      totalNodeCount: 650,
+      renderedNodeCount: 200,
+      hiddenNodeCount: 450
+    });
+    expect(html).toContain('data-hz-topology-g6-large-graph-overflow-policy="filter-first-before-expanded-render"');
+    expect(html).toContain('data-hz-topology-g6-large-graph-overflow-policy-owner="hertzbeat-ui-g6-large-graph-overflow"');
+    expect(html).toContain('data-hz-topology-g6-render-window-total-node-count="650"');
+    expect(html).toContain('data-hz-topology-g6-render-window-rendered-node-count="200"');
+    expect(html).toContain('data-hz-topology-g6-render-window-hidden-node-count="450"');
+    expect(html).toContain('data-hz-topology-g6-summary-count-policy="windowed-rendered-vs-total"');
+    expect(html).toContain('data-hz-topology-g6-summary-rendered-node-count="200"');
+    expect(html).toContain('data-hz-topology-g6-summary-total-node-count="650"');
+    expect(html).toContain('Showing 200/650 nodes');
+    expect(html).not.toContain('>650 nodes ·');
+  });
+
   it('windows stress scale graphs before they enter the G6 render data path', () => {
     const stressGraph = buildHzTopologyG6ScaleFixture(500);
     const renderWindow = buildHzTopologyG6RenderWindow(stressGraph);
+    const edgeDensityWindow = buildHzTopologyG6EdgeDensityWindow(renderWindow.graph, { mode: renderWindow.mode });
+    const semanticClusterSummary = buildHzTopologyG6SemanticClusterSummary(renderWindow.graph, renderWindow);
+    const nodeLabelCounts = buildHzTopologyG6NodeLabelCounts(edgeDensityWindow.graph, 'hub-only-large-graph');
+    const shapeProfile = buildHzTopologyG6ShapeProfile(renderWindow.graph);
+    const edgeReadabilityProfile = buildHzTopologyG6EdgeReadabilityProfile(edgeDensityWindow.graph, edgeDensityWindow.policy);
+    const windowedG6Graph = buildHzTopologyG6Graph(edgeDensityWindow.graph, {
+      edgeLabelPolicy: 'hidden-large-graph',
+      nodeLabelPolicy: 'hub-only-large-graph',
+      edgeReadabilityProfile
+    });
+    const windowedLaneGraph = buildHzTopologyG6WindowedLaneGraph(windowedG6Graph);
     const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={stressGraph} height="compact" />);
     const source = String(HzTopologyG6Canvas);
+    const laneNodePositions = windowedLaneGraph.nodes.map(node => ({
+      x: Number(node.style?.x ?? 0),
+      y: Number(node.style?.y ?? 0)
+    }));
+    const laneXValues = new Set(laneNodePositions.map(position => position.x));
+    const laneYValues = laneNodePositions.map(position => position.y);
+    const laneYSpread = Math.max(...laneYValues) - Math.min(...laneYValues);
 
     expect(renderWindow).toMatchObject({
       mode: 'windowed',
@@ -600,19 +876,216 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
         edge => renderWindow.graph.nodes.some(node => node.id === edge.from) && renderWindow.graph.nodes.some(node => node.id === edge.to)
       )
     ).toBe(true);
+    expect(edgeDensityWindow).toMatchObject({
+      policy: 'reduced-large-graph',
+      totalEdgeCount: renderWindow.graph.edges.length,
+      renderedEdgeCount: 180,
+      hiddenEdgeCount: renderWindow.graph.edges.length - 180,
+      maxVisibleEdgeCount: 180
+    });
+    expect(semanticClusterSummary).toMatchObject({
+      policy: 'hub-fanout-summary',
+      hiddenNodeCount: 300,
+      itemCount: 4
+    });
+    expect(semanticClusterSummary.items[0]).toMatchObject({
+      rank: 1,
+      nodeId: expect.any(String),
+      totalEdgeCount: expect.any(Number)
+    });
+    expect(semanticClusterSummary.items[0]?.totalEdgeCount).toBeGreaterThan(1);
+    expect(shapeProfile.shape).toMatch(/mesh|star/);
+    expect(shapeProfile.evidence).toBe('degree-derived');
+    expect(
+      edgeDensityWindow.graph.edges.every(
+        edge => edgeDensityWindow.graph.nodes.some(node => node.id === edge.from) && edgeDensityWindow.graph.nodes.some(node => node.id === edge.to)
+      )
+    ).toBe(true);
+    expect(windowedG6Graph.edges.length).toBeGreaterThan(0);
+    expect(windowedG6Graph.edges).toHaveLength(180);
+    expect(windowedG6Graph.edges.every(edge => edge.style?.labelText === '')).toBe(true);
+    expect(edgeReadabilityProfile).toMatchObject({
+      policy: 'attenuated-large-graph',
+      evidence: 'density-derived',
+      rankingPolicy: 'red-priority-stable-render-order',
+      maxProminentEdgeCount: 72,
+      prominentEdgeCount: 72,
+      attenuatedEdgeCount: 108,
+      minimumOpacity: 0.2
+    });
+    expect(windowedG6Graph.edges.filter(edge => edge.style?.opacity === 0.2)).toHaveLength(
+      edgeReadabilityProfile.attenuatedEdgeCount
+    );
+    expect(windowedG6Graph.edges.filter(edge => edge.style?.opacity === 0.92)).toHaveLength(
+      edgeReadabilityProfile.prominentEdgeCount
+    );
+    expect(nodeLabelCounts.hiddenCount).toBeGreaterThan(0);
+    expect(nodeLabelCounts.visibleCount).toBeLessThan(edgeDensityWindow.graph.nodes.length);
+    expect(windowedG6Graph.nodes.some(node => node.style?.labelText)).toBe(true);
+    expect(windowedG6Graph.nodes.filter(node => node.style?.labelText === '')).toHaveLength(nodeLabelCounts.hiddenCount);
+    expect(windowedG6Graph.nodes.find(node => node.style?.labelText === '')?.data?.label).toEqual(expect.any(String));
+    expect(windowedG6Graph.edges[0].data).toMatchObject({
+      relationshipType: 'trace-call',
+      source: 'otlp-trace-call'
+    });
+    expect(windowedLaneGraph.nodes.every(node => typeof node.style?.x === 'number' && typeof node.style?.y === 'number')).toBe(true);
+    expect(laneXValues.size).toBeGreaterThan(3);
+    expect(laneYSpread).toBeLessThanOrEqual(1258);
     expect(html).toContain('data-hz-topology-g6-render-window-owner="hertzbeat-ui-g6-render-window"');
     expect(html).toContain('data-hz-topology-g6-render-window-mode="windowed"');
     expect(html).toContain('data-hz-topology-g6-render-window-visible-node-budget="200"');
     expect(html).toContain('data-hz-topology-g6-render-window-rendered-node-count="200"');
+    expect(html).toContain('data-hz-topology-g6-render-window-rendered-edge-count="180"');
+    expect(html).toContain(
+      `data-hz-topology-g6-render-window-hidden-edge-count="${renderWindow.totalEdgeCount - edgeDensityWindow.renderedEdgeCount}"`
+    );
+    expect(html).toContain(
+      `data-hz-topology-g6-render-window-candidate-edge-count="${renderWindow.renderedEdgeCount}"`
+    );
+    expect(html).toContain(
+      'data-hz-topology-g6-render-window-rendered-edge-count-owner="hertzbeat-ui-g6-edge-density"'
+    );
     expect(html).toContain('data-hz-topology-g6-render-window-hidden-node-count="300"');
     expect(html).toContain('data-hz-topology-g6-render-window-table-companion="required"');
+    expect(html).toContain('data-hz-topology-g6-edge-label-owner="hertzbeat-ui-g6-edge-label"');
+    expect(html).toContain('data-hz-topology-g6-edge-label-policy="hidden-large-graph"');
+    expect(html).toContain('data-hz-topology-g6-edge-label-visible-count="0"');
+    expect(html).toContain('data-hz-topology-g6-edge-label-hidden-count=');
+    expect(html).toContain('data-hz-topology-g6-node-label-owner="hertzbeat-ui-g6-node-label"');
+    expect(html).toContain('data-hz-topology-g6-node-label-policy="hub-only-large-graph"');
+    expect(html).toContain('data-hz-topology-g6-node-label-visible-count=');
+    expect(html).toContain('data-hz-topology-g6-node-label-hidden-count=');
+    expect(html).toContain('data-hz-topology-g6-node-label-metadata-policy="preserve-data-label"');
+    expect(html).toContain('data-hz-topology-g6-shape-profile-owner="hertzbeat-ui-g6-shape-profile"');
+    expect(html).toContain('data-hz-topology-g6-shape-profile-evidence="degree-derived"');
+    expect(html).toContain('data-hz-topology-g6-shape-profile=');
+    expect(html).toContain('data-hz-topology-g6-shape-profile-hub-node-count=');
+    expect(html).toContain('data-hz-topology-g6-shape-profile-mesh-edge-count=');
+    expect(html).toContain('data-hz-topology-g6-shape-profile-star-edge-count=');
+    expect(html).toContain('data-hz-topology-g6-edge-density-owner="hertzbeat-ui-g6-edge-density"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-policy="reduced-large-graph"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-max-visible="180"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-rendered-edge-count="180"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-hidden-edge-count=');
+    expect(html).toContain('data-hz-topology-g6-edge-readability-owner="hertzbeat-ui-g6-edge-readability"');
+    expect(html).toContain('data-hz-topology-g6-edge-readability-policy="attenuated-large-graph"');
+    expect(html).toContain('data-hz-topology-g6-edge-readability-evidence="density-derived"');
+    expect(html).toContain('data-hz-topology-g6-edge-readability-ranking-policy="red-priority-stable-render-order"');
+    expect(html).toContain('data-hz-topology-g6-edge-readability-stability="selection-hover-invariant"');
+    expect(html).toContain('data-hz-topology-g6-edge-readability-max-prominent-edge-count="72"');
+    expect(html).toContain('data-hz-topology-g6-edge-readability-prominent-edge-count="72"');
+    expect(html).toContain('data-hz-topology-g6-edge-readability-attenuated-edge-count="108"');
+    expect(html).toContain('data-hz-topology-g6-edge-readability-minimum-opacity="0.2"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-affordance-owner="hertzbeat-ui-g6-edge-density-affordance"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-affordance-visibility="visible"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-affordance-action="scroll-edge-table"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-affordance-target="topology-metric-table"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-affordance-url-policy="preserve-current-url"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-affordance-live-owner="hertzbeat-ui-g6-edge-density-affordance"');
+    expect(html).toContain('data-hz-topology-g6-edge-density-affordance-invariants="table-scroll no-url-change no-remount no-refit viewport-preserved render-key-stable"');
+    expect(html).toContain(
+      `data-hz-topology-g6-edge-density-affordance-hidden-edge-count="${stressGraph.edges.length - edgeDensityWindow.renderedEdgeCount}"`
+    );
+    expect(html).toContain(`data-hz-topology-g6-edge-density-affordance-window-edge-count="${edgeDensityWindow.totalEdgeCount}"`);
+    expect(html).toContain(`data-hz-topology-g6-edge-density-affordance-total-edge-count="${stressGraph.edges.length}"`);
+    expect(html).toContain(
+      `data-hz-topology-g6-edge-density-affordance-total-hidden-edge-count="${stressGraph.edges.length - edgeDensityWindow.renderedEdgeCount}"`
+    );
+    expect(html).toContain('data-hz-topology-g6-edge-density-affordance-explanation-policy="render-window-not-missing-edges"');
+    expect(html).toContain(
+      `data-hz-topology-g6-edge-density-affordance-detail-label="${stressGraph.edges.length - edgeDensityWindow.renderedEdgeCount} more in table"`
+    );
+    expect(html).toContain(`${edgeDensityWindow.renderedEdgeCount}/${stressGraph.edges.length}`);
+    expect(html).toContain(`${stressGraph.edges.length - edgeDensityWindow.renderedEdgeCount} more in table`);
+    expect(html).not.toContain(`${edgeDensityWindow.renderedEdgeCount}/${edgeDensityWindow.totalEdgeCount}</span>`);
+    expect(html).toContain('data-hz-topology-g6-edge-density-affordance-table-companion="required"');
+    expect(html).toContain('data-hz-topology-g6-semantic-cluster-owner="hertzbeat-ui-g6-semantic-cluster"');
+    expect(html).toContain('data-hz-topology-g6-semantic-cluster-policy="hub-fanout-summary"');
+    expect(html).toContain('data-hz-topology-g6-semantic-cluster-item-count="4"');
+    expect(html).toContain('data-hz-topology-g6-semantic-cluster-hidden-node-count="300"');
+    expect(html).toContain('data-hz-topology-g6-semantic-cluster-table-companion="required"');
+    expect(html).toContain('data-hz-topology-g6-semantic-cluster-item-rank="1"');
+    expect(html).toContain('data-hz-topology-g6-semantic-cluster-item-role="hub"');
+    expect(html).toContain('data-hz-topology-g6-windowed-layout-owner="hertzbeat-ui-g6-windowed-layout"');
+    expect(html).toContain('data-hz-topology-g6-windowed-layout-policy="packed-lanes"');
+    expect(html).toContain('data-hz-topology-g6-windowed-layout-max-lane-rows="18"');
     expect(html).toContain('data-hz-topology-g6-mount-lifecycle-owner="hertzbeat-ui-g6-mount-lifecycle"');
     expect(html).toContain('data-hz-topology-g6-mount-lifecycle-policy="structure-layout-height-only"');
     expect(html).toContain('data-hz-topology-g6-mount-lifecycle-redraw-policy="setData-draw-preserve-viewport"');
     expect(html).toContain('data-hz-topology-g6-mount-lifecycle-structure-key=');
-    expect(source).toContain('buildHzTopologyG6Graph(renderWindow.graph)');
+    expect(html).toContain('data-hz-topology-g6-mount-lifecycle-structure-key-owner="hertzbeat-ui-g6-structure-key-fingerprint"');
+    expect(html).toContain('data-hz-topology-g6-mount-lifecycle-structure-key-policy="short-fingerprint"');
+    expect(html).toContain('data-hz-topology-g6-mount-lifecycle-structure-key-length=');
+    expect(html).not.toContain('scale-svc-000:service|');
+    expect(html).toContain('data-hz-topology-g6-mount-lifecycle-render-key-owner="hertzbeat-ui-g6-render-key-fingerprint"');
+    expect(html).toContain('data-hz-topology-g6-mount-lifecycle-render-key-policy="short-fingerprint"');
+    expect(html).toContain('data-hz-topology-g6-mount-lifecycle-render-key-length=');
+    expect(html).not.toContain('scale-svc-000::#');
+    expect(html).toContain('data-hz-topology-g6-viewport-fit-state="pending"');
+    expect(html).toContain('data-hz-topology-g6-stage-initial-paint="hidden-until-fit"');
+    expect(html).toContain('data-hz-topology-g6-scale-performance-owner="hertzbeat-ui-g6-scale-performance"');
+    expect(html).toContain('data-hz-topology-g6-scale-performance-policy="windowed-interactive-budget"');
+    expect(html).toContain(
+      'data-hz-topology-g6-scale-performance-invariants="windowed-render pan-zoom-no-url-change no-remount no-refit viewport-preserved render-key-stable table-companion"'
+    );
+    expect(html).toContain('data-hz-topology-g6-scale-performance-rendered-node-budget="200"');
+    expect(html).toContain('data-hz-topology-g6-scale-performance-rendered-edge-budget="180"');
+    expect(html).toContain('data-hz-topology-g6-scale-performance-rendered-node-count="200"');
+    expect(html).toContain('data-hz-topology-g6-scale-performance-rendered-edge-count="180"');
+    expect(source).toContain('buildHzTopologyG6EdgeDensityWindow(renderWindow.graph, { mode: renderWindow.mode })');
+    expect(source).toContain('buildHzTopologyG6SemanticClusterSummary(renderWindow.graph, renderWindow)');
+    expect(source).toContain('buildHzTopologyG6ShapeProfile(renderWindow.graph)');
+    expect(source).toContain('buildHzTopologyG6NodeLabelCounts(edgeDensityWindow.graph, nodeLabelPolicy)');
+    expect(source).toContain('buildHzTopologyG6EdgeReadabilityProfile(edgeDensityWindow.graph, edgeDensityWindow.policy)');
+    expect(source).toContain('buildHzTopologyG6Graph(edgeDensityWindow.graph, { edgeLabelPolicy, nodeLabelPolicy, edgeReadabilityProfile })');
+    expect(source).toContain('handleEdgeDensityDrilldown');
+    expect(source).toContain('document.getElementById(edgeDensityDrilldownTargetId)?.scrollIntoView');
+    expect(source).toContain('buildHzTopologyG6WindowedLaneGraph(g6Graph)');
+    expect(source).toContain('g6LayoutMode === "windowed-lanes"');
     expect(source).not.toContain('buildHzTopologyG6Graph(canvasGraph)');
     expect(source).toContain('"data-hz-topology-g6-mount-lifecycle-policy": "structure-layout-height-only"');
+  });
+
+  it('keeps selected, severe, and high-RED edges prominent when large-graph edge readability attenuates context', () => {
+    const denseEdgeGraph = {
+      nodes: Array.from({ length: 8 }, (_, index) => ({
+        id: `readability-node-${index}`,
+        label: `Service ${index}`,
+        entityType: 'service'
+      })),
+      edges: Array.from({ length: 8 }, (_, index) => ({
+        id: `readability-edge-${index}`,
+        from: `readability-node-${index % 4}`,
+        to: `readability-node-${4 + (index % 4)}`,
+        label: `edge ${index}`,
+        relationshipType: 'trace-call',
+        source: 'otlp-trace-call',
+        tone: index === 7 ? 'danger' : 'neutral',
+        selected: index === 7,
+        redMetrics:
+          index === 7
+            ? { requestRatePerSecond: 1200, errorRate: 0.42, latencyP95Ms: 2500 }
+            : { requestRatePerSecond: 1, errorRate: 0, latencyP95Ms: 20 }
+      }))
+    };
+    const edgeReadabilityProfile = buildHzTopologyG6EdgeReadabilityProfile(denseEdgeGraph, 'reduced-large-graph', {
+      maxProminentEdgeCount: 2
+    });
+    const g6Graph = buildHzTopologyG6Graph(denseEdgeGraph, {
+      edgeReadabilityProfile
+    });
+
+    expect(edgeReadabilityProfile).toMatchObject({
+      policy: 'attenuated-large-graph',
+      rankingPolicy: 'red-priority-stable-render-order',
+      maxProminentEdgeCount: 2,
+      prominentEdgeCount: 2,
+      attenuatedEdgeCount: 6
+    });
+    expect(edgeReadabilityProfile.prominentEdgeIds).toContain('readability-edge-7');
+    expect(edgeReadabilityProfile.attenuatedEdgeIds).not.toContain('readability-edge-7');
+    expect(g6Graph.edges.find(edge => edge.id === 'readability-edge-7')?.style?.opacity).toBe(0.92);
+    expect(g6Graph.edges.find(edge => edge.id === 'readability-edge-1')?.style?.opacity).toBe(0.2);
   });
 
   it('keeps searched or selected stress-graph nodes inside the render window', () => {
@@ -832,15 +1305,15 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
       groupBy: 'source-kind',
       active: true,
       itemCount: 2,
-      totalCollapsedNodeCount: 0
+      totalCollapsedNodeCount: 1
     });
     expect(groupSummary.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'database-middleware-connection',
-          nodeCount: 1,
+          nodeCount: 2,
           edgeCount: 1,
-          collapsedNodeCount: 0,
+          collapsedNodeCount: 1,
           worstTone: 'danger',
           active: true
         }),
@@ -857,7 +1330,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-group-by="source-kind"');
     expect(html).toContain('data-hz-topology-g6-group-active="true"');
     expect(html).toContain('data-hz-topology-g6-group-item-count="2"');
-    expect(html).toContain('data-hz-topology-g6-group-collapsed-node-count="0"');
+    expect(html).toContain('data-hz-topology-g6-group-collapsed-node-count="1"');
     expect(html).toContain('data-hz-topology-g6-group-surface-owner="hertzbeat-ui-g6-group-surface"');
     expect(html).toContain('data-hz-topology-g6-group-item="database-middleware-connection"');
     expect(html).toContain('data-hz-topology-g6-group-item-active="true"');
@@ -868,6 +1341,67 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('href="/topology?sourceKind=database-middleware-connection&amp;groupBy=source-kind"');
     expect(html).toContain('data-hz-topology-g6-node-group="otlp-trace-call"');
     expect(html).toContain('data-hz-topology-g6-edge-group="database-middleware-connection"');
+  });
+
+  it('counts source-kind group nodes from edge endpoints so source filters never show edge-only 0/1 groups', () => {
+    const mixedSourceGraph = {
+      nodes: [
+        {
+          id: 'payment-api',
+          label: 'Payment API',
+          entityType: 'service',
+          health: 'warning',
+          tone: 'warning',
+          source: 'cmdb-manual-label'
+        },
+        {
+          id: 'checkout-api',
+          label: 'Checkout API',
+          entityType: 'service',
+          health: 'healthy',
+          tone: 'success',
+          source: 'cmdb-manual-label'
+        }
+      ],
+      edges: [
+        {
+          id: 'checkout-api--payment-api',
+          from: 'checkout-api',
+          to: 'payment-api',
+          relationshipType: 'trace-call',
+          source: 'otlp-trace-call',
+          tone: 'warning'
+        }
+      ]
+    };
+    const groupSummary = buildHzTopologyG6GroupSummary(mixedSourceGraph, {
+      environment: 'prod',
+      sourceKind: 'otlp-trace-call',
+      groupBy: 'source-kind'
+    });
+    const html = renderToStaticMarkup(
+      <HzTopologyG6Canvas
+        graph={mixedSourceGraph}
+        filterScope={{ environment: 'prod', sourceKind: 'otlp-trace-call', groupBy: 'source-kind' }}
+        height="compact"
+      />
+    );
+
+    expect(groupSummary.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'otlp-trace-call',
+          nodeCount: 2,
+          edgeCount: 1,
+          collapsedNodeCount: 1,
+          active: true
+        })
+      ])
+    );
+    expect(html).toContain('data-hz-topology-g6-group-item="otlp-trace-call"');
+    expect(html).toContain('data-hz-topology-g6-group-item-node-count="2"');
+    expect(html).toContain('data-hz-topology-g6-group-item-edge-count="1"');
+    expect(html).not.toContain('data-hz-topology-g6-group-item-node-count="0"');
   });
 
   it('renders an in-canvas legend dock so topology pages do not need a right companion rail for legend context', () => {
@@ -885,6 +1419,10 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     );
 
     expect(html).toContain('data-hz-topology-g6-legend-dock="in-canvas"');
+    expect(html.match(/data-hz-topology-g6-legend-dock="in-canvas"/g)).toHaveLength(1);
+    expect(html).toContain('data-hz-topology-g6-legend-dock-state="in-canvas"');
+    expect(html).toContain('data-hz-topology-g6-legend-dock-container="true"');
+    expect(html).toContain('data-hz-topology-g6-legend-dock-selector="container-only"');
     expect(html).toContain('data-hz-topology-g6-legend-dock-owner="hertzbeat-ui-g6-legend-dock"');
     expect(html).toContain('data-hz-topology-g6-legend-dock-placement="canvas-bottom-left"');
     expect(html).toContain('data-hz-topology-g6-legend-dock-occlusion="inside-canvas-low-interruption"');
@@ -919,6 +1457,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-search-focus-clear="hover"');
     expect(html).toContain('data-hz-topology-g6-active-focus-source="search-node"');
     expect(html).toContain('data-hz-topology-g6-focused-node="scale-svc-017"');
+    expect(html).toContain('data-hz-topology-g6-toolbar-focus-actions-visibility="assistive"');
     expect(html).toContain('data-hz-topology-g6-action="focus-search-result"');
     expect(html).toContain('data-hz-topology-g6-search-match="true"');
   });
@@ -939,6 +1478,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-focus-action-behavior="explicit-toolbar-recenter"');
     expect(html).toContain('data-hz-topology-g6-focus-action-source="none"');
     expect(html).toContain('data-hz-topology-g6-focus-action-target="none"');
+    expect(html).toContain('data-hz-topology-g6-toolbar-focus-actions-visibility="assistive"');
     expect(html).toContain('data-hz-topology-g6-action="focus-selected-node"');
     expect(source).toContain('focusGraphElement');
     expect(source).toContain('setFocusActionTelemetry');
@@ -960,6 +1500,9 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     );
 
     expect(html).toContain('data-hz-topology-g6-toolbar-owner="hertzbeat-ui-g6-toolbar"');
+    expect(html).toContain('data-hz-topology-g6-toolbar-action-count="4"');
+    expect(html).toContain('data-hz-topology-g6-toolbar-visible-actions="zoom-out zoom-in fit-view reset-view"');
+    expect(html).toContain('data-hz-topology-g6-toolbar-focus-actions-visibility="assistive"');
     expect(html).toContain('data-hz-topology-g6-action-owner="hertzbeat-ui-g6-action"');
     expect(html).toContain('data-hz-topology-g6-action="zoom-out"');
     expect(html).toContain('data-hz-topology-g6-action-state="ready"');
@@ -975,6 +1518,134 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-action-target="scale-svc-017"');
   });
 
+  it('hides viewport controls for empty G6 graphs because there is no graph to zoom or fit', () => {
+    const html = renderToStaticMarkup(
+      <HzTopologyG6Canvas
+        graph={{ nodes: [], edges: [] }}
+        height="compact"
+        filterScope={{ environment: 'prod', sourceKind: 'otlp-trace-call', groupBy: 'source-kind', searchQuery: 'Payment API' }}
+        filterControls={[
+          { id: 'source-kind', kind: 'source-kind', label: 'Source', value: 'otlp-trace-call', href: '/topology?sourceKind=otlp-trace-call', active: true },
+          { id: 'group-by', kind: 'group-by', label: 'Group', value: 'source-kind', href: '/topology?groupBy=source-kind', active: true },
+          { id: 'search', kind: 'search', label: 'Focus', value: 'Payment API', href: '/topology?entityName=Payment%20API' },
+          { id: 'reset', kind: 'reset', label: 'Reset', value: 'all', href: '/topology' }
+        ]}
+      />
+    );
+
+    expect(html).toContain('data-hz-topology-g6-node-count="0"');
+    expect(html).toContain('data-hz-topology-g6-edge-count="0"');
+    expect(html).toContain('data-hz-topology-g6-toolbar-visibility="hidden-empty-graph"');
+    expect(html).toContain('data-hz-topology-g6-minimap-visibility="hidden-empty-graph"');
+    expect(html).toContain('data-hz-topology-g6-summary-visibility="hidden-empty-graph"');
+    expect(html).toContain('data-hz-topology-g6-group-surface-visibility="hidden-empty-graph"');
+    expect(html).toContain('data-hz-topology-g6-filter-control-surface-visibility="hidden-empty-graph"');
+    expect(html).not.toContain('data-hz-topology-g6-toolbar-visible-actions="zoom-out zoom-in fit-view reset-view"');
+    expect(html).not.toContain('data-hz-topology-g6-action="zoom-out"');
+    expect(html).not.toContain('data-hz-topology-g6-action="fit-view"');
+    expect(html).not.toContain('data-hz-topology-g6-minimap="viewport-overview"');
+    expect(html).not.toContain('data-hz-topology-g6-summary-owner="hertzbeat-ui-g6-summary"');
+    expect(html).not.toContain('data-hz-topology-g6-group-surface-owner="hertzbeat-ui-g6-group-surface"');
+    expect(html).not.toContain('data-hz-topology-g6-filter-control-surface-owner="hertzbeat-ui-g6-filter-control-surface"');
+    expect(html).not.toContain('data-hz-topology-g6-filter-control="source-kind"');
+  });
+
+  it('uses a node-only layout for CMDB graphs that have entities but no dependency edges', () => {
+    const source = topologyG6Source;
+    const html = renderToStaticMarkup(
+      <HzTopologyG6Canvas
+        graph={{
+          nodes: [
+            { id: 'payment-api', label: 'Payment API', entityType: 'service', source: 'cmdb-manual-label' },
+            { id: 'checkout-api', label: 'Checkout API', entityType: 'service', source: 'cmdb-manual-label' },
+            { id: 'orders-db', label: 'Orders DB', entityType: 'database', source: 'cmdb-manual-label' }
+          ],
+          edges: []
+        }}
+        height="compact"
+      />
+    );
+
+    expect(html).toContain('data-hz-topology-g6-node-count="3"');
+    expect(html).toContain('data-hz-topology-g6-edge-count="0"');
+    expect(html).toContain('data-hz-topology-g6-toolbar-visibility="visible"');
+    expect(html).toContain('data-hz-topology-g6-node-only-layout="grid"');
+    expect(html).toContain('data-hz-topology-g6-layout-mode="node-only-grid"');
+    expect(html).toContain('data-hz-topology-g6-relation-state="entities-without-relation-edges"');
+    expect(html).toContain('data-hz-topology-g6-relation-state-owner="hertzbeat-ui-g6-relation-state"');
+    expect(html).toContain('data-hz-topology-g6-node-only-explanation="visible"');
+    expect(html).toContain('data-hz-topology-g6-node-only-explanation-owner="hertzbeat-ui-g6-node-only-explanation"');
+    expect(html).toContain('data-hz-topology-g6-node-only-explanation-reason="current-filter-has-nodes-no-edges"');
+    expect(html).toContain('Entities only · no relation edges');
+    expect(source).toContain('nodeOnlyExplanationLabel?: string;');
+    expect(source).toContain("nodeOnlyExplanationLabel = 'Entities only · no relation edges'");
+    expect(source).toContain('{nodeOnlyExplanationLabel}');
+    const localizedHtml = renderToStaticMarkup(
+      <HzTopologyG6Canvas
+        graph={{
+          nodes: [{ id: 'payment-api', label: 'Payment API', entityType: 'service', source: 'cmdb-manual-label' }],
+          edges: []
+        }}
+        height="compact"
+        nodeOnlyExplanationLabel="仅实体 · 暂无关系边"
+      />
+    );
+    expect(localizedHtml).toContain('仅实体 · 暂无关系边');
+    expect(localizedHtml).not.toContain('Entities only · no relation edges');
+    expect(buildHzTopologyG6NodeOnlyGridGraph(buildHzTopologyG6Graph({
+      nodes: [
+        { id: 'payment-api', label: 'Payment API', entityType: 'service', source: 'cmdb-manual-label' },
+        { id: 'checkout-api', label: 'Checkout API', entityType: 'service', source: 'cmdb-manual-label' },
+        { id: 'orders-db', label: 'Orders DB', entityType: 'database', source: 'cmdb-manual-label' }
+      ],
+      edges: []
+    })).nodes.map(node => [node.style?.x, node.style?.y])).toEqual([[-72, 0], [72, 0], [-72, 126]]);
+    expect(source).toContain(
+      "const g6LayoutMode = edgeCount === 0 && nodeCount > 0 ? 'node-only-grid' : shouldUseWindowedLaneLayout ? 'windowed-lanes' : layout;"
+    );
+    expect(source).toContain("g6LayoutMode === 'node-only-grid'");
+    expect(source).toContain('buildHzTopologyG6NodeOnlyGridGraph(g6Graph)');
+    expect(source).toContain("g6LayoutMode === 'node-only-grid'\n              ? undefined");
+    expect(source).not.toContain("layout === 'force' ? { type: 'force'");
+  });
+
+  it('does not keep node-only CMDB graphs hidden behind the compact fit pass', () => {
+    const source = topologyG6Source;
+    const html = renderToStaticMarkup(
+      <HzTopologyG6Canvas
+        graph={{
+          nodes: [
+            { id: 'payment-api', label: 'Payment API', entityType: 'service', source: 'cmdb-manual-label' },
+            { id: 'checkout-api', label: 'Checkout API', entityType: 'service', source: 'cmdb-manual-label' },
+            { id: 'orders-db', label: 'Orders DB', entityType: 'database', source: 'cmdb-manual-label' }
+          ],
+          edges: []
+        }}
+        height="compact"
+      />
+    );
+
+    expect(html).toContain('data-hz-topology-g6-node-only-first-paint="render-before-center"');
+    expect(html).toContain('data-hz-topology-g6-node-only-first-paint-owner="hertzbeat-ui-g6-node-only-first-paint"');
+    expect(html).toContain('data-hz-topology-g6-node-only-prepaint="source-backed-node-overlay"');
+    expect(html).toContain('data-hz-topology-g6-node-only-prepaint-owner="hertzbeat-ui-g6-node-only-prepaint"');
+    expect(html).toContain('data-hz-topology-g6-node-only-prepaint-visibility="visible-until-g6-ready"');
+    expect(html).toContain('data-hz-topology-g6-node-only-prepaint-node-count="3"');
+    expect(html).toContain('data-hz-topology-g6-node-only-prepaint-node-label="Payment API"');
+    expect(html).toContain('data-hz-topology-g6-node-only-prepaint-node-icon-source="lucide-react:entity-type-catalog"');
+    expect(html).toContain('data-hz-topology-g6-node-only-prepaint-node-icon-no-handdrawn="true"');
+    expect(source).toContain("const shouldFastPaintNodeOnlyGraph = g6LayoutMode === 'node-only-grid';");
+    expect(source).toContain("if (shouldFastPaintNodeOnlyGraph && !disposed) {");
+    expect(source).toContain("setRenderState('ready');");
+    expect(source).toContain('window.requestAnimationFrame(() => {');
+    expect(source.indexOf("setRenderState('ready');")).toBeLessThan(
+      source.indexOf('await runtimeGraph.render();')
+    );
+    expect(source.indexOf('await runtimeGraph.render();')).toBeLessThan(
+      source.indexOf('centerOnlyG6Viewport(runtimeGraph, false)')
+    );
+  });
+
   it('preserves the G6 viewport around structural graph data redraws', () => {
     const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={graph} selectedEdgeId="svc-checkout--db-orders" />);
     const source = String(HzTopologyG6Canvas);
@@ -984,8 +1655,9 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(source).toContain('captureG6ViewportSnapshot');
     expect(source).toContain('restoreG6ViewportSnapshot');
     expect(source).toContain('captureG6ViewportSnapshot(runtimeGraph)');
-    expect(source).toContain('restoreG6ViewportSnapshot(runtimeGraph, snapshot)');
+    expect(source).toContain('restoreG6ViewportSnapshot(runtimeGraph, snapshot, runtimeMaxZoom)');
     expect(source).toContain('shouldPreserveViewportAfterRedraw');
+    expect(source).toContain('publishViewportTelemetry(clamped ? "runtime-zoom-guard" : "initial-fit")');
   });
 
   it('keeps drawer selection out of the G6 data redraw path', () => {
@@ -1006,6 +1678,29 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(source).not.toContain('searchFocus.firstMatchedNodeId !== selectedNodeId');
   });
 
+  it('guards G6 selection state updates to rendered window elements only', () => {
+    const scaleGraph = buildHzTopologyG6ScaleFixture(501);
+    const html = renderToStaticMarkup(
+      <HzTopologyG6Canvas
+        graph={scaleGraph}
+        selectedNodeId="scale-svc-500"
+        selectedEdgeId="scale-edge-499-500"
+      />
+    );
+    const source = String(HzTopologyG6Canvas);
+
+    expect(html).toContain('data-hz-topology-g6-render-window-mode="windowed"');
+    expect(html).toContain('data-hz-topology-g6-selection-state-policy="rendered-elements-only"');
+    expect(html).toContain('data-hz-topology-g6-selected-node-rendered="false"');
+    expect(html).toContain('data-hz-topology-g6-selected-edge-rendered="false"');
+    expect(html).toContain('data-hz-topology-g6-selection-state-selected-node-rendered="false"');
+    expect(html).toContain('data-hz-topology-g6-selection-state-selected-edge-rendered="false"');
+    expect(html).toContain('data-hz-topology-g6-selection-state-skipped-target-count="2"');
+    expect(source).toContain('renderedG6ElementIds.nodeIds.has(selectedFocusNodeId)');
+    expect(source).toContain('renderedG6ElementIds.edgeIds.has(selectedEdgeId)');
+    expect(source).toContain('const nextState = renderedSelectionState');
+  });
+
   it('keeps node hover as highlight-only so it cannot recenter an operator-zoomed G6 viewport', () => {
     const html = renderToStaticMarkup(<HzTopologyG6Canvas graph={graph} hoveredNodeId="db-orders" selectedNodeId="svc-checkout" />);
     const source = String(HzTopologyG6Canvas);
@@ -1014,25 +1709,26 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-hover-viewport-owner="hertzbeat-ui-g6-hover-viewport"');
     expect(html).toContain('data-hz-topology-g6-selection-auto-focus="explicit-action-only"');
     expect(html).toContain('data-hz-topology-g6-selection-auto-focus-owner="hertzbeat-ui-g6-selection-auto-focus"');
-    expect(source).toContain('const shouldFocusViewportElement = activeFocusSource === "search-node";');
-    expect(source).toContain('const shouldAutoFocusSearchResult = shouldFocusViewportElement && !hasUserViewportInteractedRef.current;');
-    expect(source).toContain('if (shouldAutoFocusSearchResult && activeFocusNodeId) runtimeGraph.focusElement?.(activeFocusNodeId, { duration: 180 });');
-    expect(source).not.toContain('if (shouldFocusViewportElement && activeFocusNodeId) runtimeGraph.focusElement?.(activeFocusNodeId, { duration: 180 });');
+    expect(html).toContain('data-hz-topology-g6-search-viewport-behavior="highlight-only"');
+    expect(source).toContain('const shouldAutoFocusSearchResult = false;');
+    expect(source).not.toContain('if (shouldAutoFocusSearchResult && activeFocusNodeId) runtimeGraph.focusElement?.(activeFocusNodeId, { duration: 180 });');
     expect(source).not.toContain('const shouldFocusViewportElement = activeFocusSource === "search-node" || activeFocusSource === "selection";');
     expect(source).not.toContain('if (activeFocusNodeId) runtimeGraph.focusElement?.(activeFocusNodeId, { duration: 180 });');
   });
 
-  it('does not restore search focus after operator zoom when hover clears back to search-node focus', () => {
+  it('keeps search result matching as highlight-only until the operator explicitly focuses it', () => {
     const html = renderToStaticMarkup(
       <HzTopologyG6Canvas graph={graph} searchQuery="Checkout" hoveredNodeId="db-orders" selectedNodeId="svc-checkout" />
     );
-    const source = String(HzTopologyG6Canvas);
+    const source = topologyG6Source;
 
-    expect(html).toContain('data-hz-topology-g6-search-auto-focus="initial-before-operator-interaction"');
+    expect(html).toContain('data-hz-topology-g6-search-auto-focus="explicit-action-only"');
     expect(html).toContain('data-hz-topology-g6-search-auto-focus-owner="hertzbeat-ui-g6-search-auto-focus"');
     expect(html).toContain('data-hz-topology-g6-search-auto-focus-guard="operator-viewport-interaction"');
-    expect(source).toContain('const shouldAutoFocusSearchResult = shouldFocusViewportElement && !hasUserViewportInteractedRef.current;');
-    expect(source).toContain('[activeFocusNodeId, renderState, shouldAutoFocusSearchResult]');
+    expect(html).toContain('data-hz-topology-g6-search-viewport-behavior="highlight-only"');
+    expect(source).toContain('const shouldAutoFocusSearchResult = false;');
+    expect(source).not.toContain('if (shouldAutoFocusSearchResult && activeFocusNodeId) runtimeGraph.focusElement?.(activeFocusNodeId, { duration: 180 });');
+    expect(source).toContain("focusGraphElement('search-result', searchFocus.firstMatchedNodeId);");
     expect(source).not.toContain('[activeFocusNodeId, renderState, shouldFocusViewportElement]');
   });
 
@@ -1049,7 +1745,8 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(source).toContain('const g6NeighborFocus =');
     expect(source).toContain('useMemo(');
     expect(source).toContain('buildHzTopologyG6RenderWindow(canvasGraph');
-    expect(source).toContain('buildHzTopologyG6Graph(renderWindow.graph)');
+    expect(source).toContain('buildHzTopologyG6EdgeDensityWindow(renderWindow.graph, { mode: renderWindow.mode })');
+    expect(source).toContain('buildHzTopologyG6Graph(edgeDensityWindow.graph, { edgeLabelPolicy, nodeLabelPolicy, edgeReadabilityProfile })');
     expect(source).not.toContain('buildHzTopologyG6Graph(canvasGraph)');
     expect(source).not.toContain('activeHoveredNodeId ?? (activeHoveredEdgeId ? void 0 : activeSearchNodeId ?? selectedNodeId)');
   });
@@ -1100,7 +1797,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-wheel-owner="hertzbeat-ui-g6-wheel"');
     expect(html).toContain('data-hz-topology-g6-wheel-listener-passive="false-control"');
     expect(html).toContain('data-hz-topology-g6-wheel-origin="pointer-clamped"');
-    expect(html).toContain('data-hz-topology-g6-wheel-zoom-bounds="0.18-2.2"');
+    expect(html).toContain(`data-hz-topology-g6-wheel-zoom-bounds="0.18-${HZ_TOPOLOGY_G6_COMPACT_MAX_ZOOM}"`);
     expect(html).toContain('data-hz-topology-g6-keyboard-shortcuts="plus-minus-zero-fit"');
     expect(html).toContain('data-hz-topology-g6-keyboard-shortcuts-owner="hertzbeat-ui-g6-keyboard"');
     expect(html).toContain('data-hz-topology-g6-keyboard-actions="zoom-in zoom-out reset-view fit-view"');
@@ -1117,7 +1814,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(source).toContain('Promise.resolve(action()).then');
     expect(source).toContain('publishViewportTelemetryAfterViewportAction("zoom-control"');
     expect(source).toContain('const currentZoom = graphRef.current?.getZoom?.() ?? 1');
-    expect(source).toContain('const nextZoom = Math.max(HZ_TOPOLOGY_G6_MIN_ZOOM, Math.min(HZ_TOPOLOGY_G6_MAX_ZOOM, currentZoom * scale))');
+    expect(source).toContain('const nextZoom = Math.max(HZ_TOPOLOGY_G6_MIN_ZOOM, Math.min(operatorMaxZoom, currentZoom * scale))');
     expect(source).toContain('centerG6ViewportOrigin(stageRef.current)');
     expect(source).toContain('handleG6WheelViewportControl');
     expect(source).toContain('readG6WheelViewportOrigin(event, stage)');
@@ -1153,7 +1850,7 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(source).toContain('scheduleInitialFitView(runtimeGraph, initialFitStrategy, () => !hasUserViewportInteractedRef.current)');
     expect(source).toContain('publishViewportTelemetryAfterViewportAction("wheel"');
     expect(source).toContain('publishViewportTelemetry("pointer-pan")');
-    expect(source).toContain('publishViewportTelemetry("redraw-restore")');
+    expect(source).toContain('publishViewportTelemetry(clamped ? "runtime-zoom-guard" : "redraw-restore")');
   });
 
   it('renders a shared non-occluding viewport overview for scale and zoom orientation', () => {
@@ -1198,6 +1895,13 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
     expect(html).toContain('data-hz-topology-g6-node-icon-source="lucide-entity-type-catalog"');
     expect(html).toContain('data-hz-topology-g6-node-icon-library="lucide-react"');
     expect(html).toContain('data-hz-topology-g6-node-icon-no-handdrawn="true"');
+    expect(html).toContain('data-hz-topology-g6-no-handdrawn-icons="true"');
+    expect(html).toContain('data-hz-topology-g6-icon-source-proof="lucide-react:entity-type-catalog"');
+    expect(html).toContain('data-hz-topology-g6-node-icon-catalog-owner="lucide-react-entity-type-catalog"');
+    expect(html).toContain('data-hz-topology-g6-node-icon-catalog="application:app-window service:server-cog endpoint:route database:database cache:memory-stick queue:inbox middleware:workflow k8s-workload:container monitor:activity resource:server alert:triangle-alert unknown:circle-help"');
+    expect(html).toContain('data-hz-topology-node-icon-library="lucide-react"');
+    expect(html).toContain('data-hz-topology-node-icon-source="entity-type-catalog"');
+    expect(html).toContain('data-hz-topology-node-icon-no-handdrawn="true"');
     expect(html).toContain('data-hz-topology-g6-engine="antv-g6"');
     expect(html).toContain('data-hz-topology-g6-interaction-owner="hertzbeat-ui-g6-interaction"');
     expect(html).toContain('data-hz-topology-g6-node-selection="drawer-sync"');

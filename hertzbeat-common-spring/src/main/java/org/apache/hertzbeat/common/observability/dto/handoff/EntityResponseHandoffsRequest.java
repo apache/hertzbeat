@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.observability.dto.entity.EntitySignalEvidenceBundle;
 import org.apache.hertzbeat.common.observability.dto.evidence.LogEvidence;
 import org.apache.hertzbeat.common.observability.dto.evidence.MetricEvidence;
 import org.apache.hertzbeat.common.observability.dto.evidence.TraceEvidence;
@@ -69,6 +70,8 @@ public class EntityResponseHandoffsRequest {
 
     private List<EntityTraceQueryHintDto> traceQueryHints;
 
+    private EntitySignalEvidenceBundle signalEvidence;
+
     private boolean ownerReady;
 
     private boolean runbookReady;
@@ -76,4 +79,29 @@ public class EntityResponseHandoffsRequest {
     private boolean relationReady;
 
     private boolean telemetryReady;
+
+    public EntityResponseHandoffsRequest(String returnTo,
+                                         String returnLabel,
+                                         String entityOwner,
+                                         String entitySystem,
+                                         String entityEnvironment,
+                                         String entitySource,
+                                         ObservedEntityContext entityContext,
+                                         List<SingleAlert> activeAlerts,
+                                         List<Monitor> monitors,
+                                         EntityLogSummaryInfo logSummary,
+                                         EntityTraceSummaryDto traceSummary,
+                                         List<MetricEvidence> metricEvidence,
+                                         List<LogEvidence> logEvidence,
+                                         List<TraceEvidence> traceEvidence,
+                                         List<EntityTraceQueryHintDto> traceQueryHints,
+                                         boolean ownerReady,
+                                         boolean runbookReady,
+                                         boolean relationReady,
+                                         boolean telemetryReady) {
+        this(returnTo, returnLabel, entityOwner, entitySystem, entityEnvironment, entitySource,
+                entityContext, activeAlerts, monitors, logSummary, traceSummary, metricEvidence,
+                logEvidence, traceEvidence, traceQueryHints, null, ownerReady, runbookReady,
+                relationReady, telemetryReady);
+    }
 }

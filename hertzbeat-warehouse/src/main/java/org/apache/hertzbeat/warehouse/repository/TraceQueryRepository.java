@@ -135,6 +135,111 @@ public interface TraceQueryRepository {
     }
 
     /**
+     * Whether this repository can aggregate trace overview statistics in storage.
+     *
+     * @return true when storage-owned trace overview rows are supported
+     */
+    default boolean supportsTraceOverviewRows() {
+        return false;
+    }
+
+    /**
+     * Query trace overview statistics grouped in the storage layer.
+     *
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param errorOnly whether only error traces should be counted
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return row with total_trace_count, error_trace_count, and latest_observed_at
+     */
+    default Map<String, Object> queryTraceOverviewRows(Long start,
+                                                       Long end,
+                                                       Boolean errorOnly,
+                                                       String serviceName,
+                                                       String serviceNamespace,
+                                                       String environment,
+                                                       String workspaceId,
+                                                       Map<String, Set<String>> resourceIdentityFilters,
+                                                       Boolean hideInternal) {
+        return Map.of();
+    }
+
+    /**
+     * Whether this repository can aggregate a single trace-id overview in storage.
+     *
+     * @return true when storage-owned trace-id overview rows are supported
+     */
+    default boolean supportsTraceIdOverviewRows() {
+        return false;
+    }
+
+    /**
+     * Query trace overview statistics for a single trace id in the storage layer.
+     *
+     * @param traceId trace id
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param errorOnly whether only error traces should be counted
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return row with total_trace_count, error_trace_count, and latest_observed_at
+     */
+    default Map<String, Object> queryTraceIdOverviewRows(String traceId,
+                                                         Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal) {
+        return Map.of();
+    }
+
+    /**
+     * Whether this repository can aggregate entity trace summaries in storage.
+     *
+     * @return true when storage-owned entity trace summary rows are supported
+     */
+    default boolean supportsTraceSummaryRows() {
+        return false;
+    }
+
+    /**
+     * Query entity trace summary statistics in the storage layer.
+     *
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return row with total_trace_count, error_trace_count, latest_observed_at, and latest_trace_id
+     */
+    default Map<String, Object> queryTraceSummaryRows(Long start,
+                                                      Long end,
+                                                      String serviceName,
+                                                      String serviceNamespace,
+                                                      String environment,
+                                                      String workspaceId,
+                                                      Map<String, Set<String>> resourceIdentityFilters,
+                                                      Boolean hideInternal) {
+        return Map.of();
+    }
+
+    /**
      * Query service-to-service trace call graph rows with RED metrics aggregated by the storage layer.
      *
      * @param limit row limit

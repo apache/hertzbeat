@@ -4497,6 +4497,8 @@ describe('@hertzbeat/ui', () => {
           totalNodeCount: 500,
           renderedNodeCount: 200,
           hiddenNodeCount: 300,
+          totalEdgeCount: 2,
+          renderedEdgeCount: 1,
           visibleNodeBudget: 200,
           tableCompanion: 'required',
           priorityNodeIds: ['payment-api'],
@@ -4508,6 +4510,7 @@ describe('@hertzbeat/ui', () => {
           errorRate: 'error ratio',
           latencyP95: 'p95 latency',
           rowAction: 'Inspect edge',
+          renderWindowEdgeSummary: 'Canvas renders 1 of 2 table edges',
           rowAriaLabel: row => `Inspect relation ${row.id}`
         }}
         rows={[
@@ -4549,6 +4552,7 @@ describe('@hertzbeat/ui', () => {
 
     expect(html).toContain('data-hz-ui="topology-metric-table"');
     expect(html).toContain('data-hz-topology-primitive="metric-table"');
+    expect(html).toContain('data-hz-topology-metric-table-root="true"');
     expect(html).toContain('data-hz-topology-metric-table-density="graph-first"');
     expect(html).toContain('data-hz-topology-metric-table-density-owner="hertzbeat-ui-metric-table-density"');
     expect(html).toContain('data-hz-topology-metric-table-visual-weight="low-interruption"');
@@ -4559,12 +4563,24 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-metric-table-title-owner="hertzbeat-ui-metric-table-title"');
     expect(html).toContain('data-hz-topology-metric-table-count-owner="hertzbeat-ui-metric-table-count"');
     expect(html).toContain('data-hz-topology-metric-rows="2"');
+    expect(html).toContain('data-hz-topology-metric-table-total-rows="2"');
     expect(html).toContain('data-hz-topology-metric-table-interaction="row-select-detail"');
+    expect(html).toContain('data-hz-topology-metric-table-live-selection-owner="hertzbeat-ui-metric-table-selection"');
+    expect(html).toContain(
+      'data-hz-topology-metric-table-live-selection-invariants="row-click-drawer no-url-change no-remount no-refit viewport-preserved render-key-stable"'
+    );
     expect(html).toContain('data-hz-topology-metric-table-render-window-owner="hertzbeat-ui-metric-table-render-window"');
     expect(html).toContain('data-hz-topology-metric-table-render-window-mode="windowed"');
     expect(html).toContain('data-hz-topology-metric-table-render-window-total-node-count="500"');
     expect(html).toContain('data-hz-topology-metric-table-render-window-rendered-node-count="200"');
     expect(html).toContain('data-hz-topology-metric-table-render-window-hidden-node-count="300"');
+    expect(html).toContain('data-hz-topology-metric-table-render-window-total-edge-count="2"');
+    expect(html).toContain('data-hz-topology-metric-table-render-window-rendered-edge-count="1"');
+    expect(html).toContain('data-hz-topology-metric-table-edge-count-policy="canvas-rendered-vs-table-total"');
+    expect(html).toContain('data-hz-topology-metric-table-canvas-rendered-edge-count="1"');
+    expect(html).toContain('data-hz-topology-metric-table-table-edge-count="2"');
+    expect(html).toContain('data-hz-topology-metric-table-edge-summary-owner="hertzbeat-ui-metric-table-edge-summary"');
+    expect(html).toContain('Canvas renders 1 of 2 table edges');
     expect(html).toContain('data-hz-topology-metric-table-render-window-visible-node-budget="200"');
     expect(html).toContain('data-hz-topology-metric-table-render-window-visible-node-count="2"');
     expect(html).toContain('data-hz-topology-metric-table-hidden-node-companion="required"');
@@ -4575,16 +4591,24 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-metric-table-unknown-row-count="0"');
     expect(html).toContain('data-hz-topology-metric-table-render-window-filter-owner="hertzbeat-ui-metric-table-render-window-filter"');
     expect(html).toContain('data-hz-topology-metric-table-render-window-filter="all"');
+    expect(html).toContain('data-hz-topology-metric-table-filter-invariants="in-page no-url-change no-g6-remount viewport-preserved selection-preserved"');
+    expect(html).toContain('data-hz-topology-metric-table-filter-url-policy="preserve-current-url"');
     expect(html).toContain('data-hz-topology-metric-table-filtered-row-count="2"');
     expect(html).toContain('data-hz-topology-metric-table-filtered-out-row-count="0"');
     expect(html).toContain('data-hz-topology-metric-table-filter-control-owner="hertzbeat-ui-metric-table-filter-control"');
+    expect(html).toContain('data-hz-topology-metric-table-filter-control-url-policy="preserve-current-url"');
+    expect(html).toContain('data-hz-topology-metric-table-filter-control-selection-policy="preserve-selected-edge"');
     expect(html).toContain('data-hz-topology-metric-table-filter-control="all"');
     expect(html).toContain('data-hz-topology-metric-table-filter-control="visible"');
     expect(html).toContain('data-hz-topology-metric-table-filter-control="partial"');
     expect(html).toContain('data-hz-topology-metric-table-filter-control="hidden"');
     expect(html).toContain('data-hz-topology-metric-table-filter-active="true"');
+    expect(html).toContain('data-hz-topology-metric-table-filter-control-active="true"');
     expect(html).toContain('data-hz-topology-metric-table-filter-count="1"');
     expect(html).toContain('data-hz-topology-metric-table-row-owner="hertzbeat-ui-metric-table-row"');
+    expect(html).toContain('data-hz-topology-edge-row-selection-owner="hertzbeat-ui-metric-table-row-selection"');
+    expect(html).toContain('data-hz-topology-edge-row-selection-mode="table-row-click-drawer"');
+    expect(html).toContain('data-hz-topology-edge-row-selection-url-policy="preserve-current-url"');
     expect(html).toContain('data-hz-topology-edge-row="checkout-payment"');
     expect(html).toContain('data-hz-topology-edge-row-render-window-visibility="visible"');
     expect(html).toContain('data-hz-topology-edge-row-source-node-id="checkout-api"');
@@ -4595,6 +4619,9 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-edge-row-render-window-visibility="partial"');
     expect(html).toContain('data-hz-topology-edge-row-source-visible="true"');
     expect(html).toContain('data-hz-topology-edge-row-target-visible="false"');
+    expect(html).toContain('data-hz-topology-edge-row-window-context="partial"');
+    expect(html).toContain('data-hz-topology-edge-row-window-context-source-visible="true"');
+    expect(html).toContain('data-hz-topology-edge-row-window-context-target-visible="false"');
     expect(html).toContain('data-hz-topology-edge-selected="true"');
     expect(html).toContain('aria-current="true"');
     expect(html).toContain('data-hz-topology-metric-table-endpoints-owner="hertzbeat-ui-metric-table-endpoints"');
@@ -4632,6 +4659,7 @@ describe('@hertzbeat/ui', () => {
     const html = renderToStaticMarkup(
       <HzTopologyMetricTable
         title="Topology edges"
+        selectedRowId="payment-db"
         renderWindowFilter="partial"
         renderWindowCompanion={{
           mode: 'windowed',
@@ -4641,6 +4669,9 @@ describe('@hertzbeat/ui', () => {
           visibleNodeBudget: 200,
           tableCompanion: 'required',
           renderedNodeIds: ['checkout-api', 'payment-api']
+        }}
+        labels={{
+          renderWindowFilterPartial: 'One endpoint on canvas'
         }}
         rows={[
           {
@@ -4680,8 +4711,79 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-metric-table-filtered-out-row-count="1"');
     expect(html).toContain('data-hz-topology-metric-table-filter-control="partial"');
     expect(html).toMatch(/data-hz-topology-metric-table-filter-control="partial"[^>]+data-hz-topology-metric-table-filter-active="true"/);
+    expect(html).toMatch(/data-hz-topology-metric-table-filter-control="partial"[^>]+data-hz-topology-metric-table-filter-control-active="true"/);
     expect(html).toContain('data-hz-topology-edge-row="payment-db"');
+    expect(html).toContain('data-hz-topology-edge-selected="true"');
+    expect(html).toContain('data-hz-topology-edge-row-window-context-owner="hertzbeat-ui-metric-table-row-window-context"');
+    expect(html).toContain('data-hz-topology-edge-row-window-context="partial"');
+    expect(html).toContain('data-hz-topology-edge-row-window-context-source-visible="true"');
+    expect(html).toContain('data-hz-topology-edge-row-window-context-target-visible="false"');
+    expect(html).toContain('One endpoint on canvas');
     expect(html).not.toContain('data-hz-topology-edge-row="checkout-payment"');
+  });
+
+  it('budgets dense windowed topology metric table rows without losing counts or selected context', () => {
+    const rows = Array.from({ length: 150 }, (_, index) => ({
+      id: `edge-${index}`,
+      sourceNodeId: index % 2 === 0 ? `rendered-${index}` : `hidden-${index}`,
+      targetNodeId: `hidden-target-${index}`,
+      source: `source-${index}`,
+      target: `target-${index}`,
+      relationType: 'trace-call',
+      sourceKind: 'otlp-trace-call',
+      requestRatePerSecond: 1 + index,
+      requestCount: 10 + index,
+      errorRate: 0,
+      latencyP95Ms: 40 + index,
+      tone: 'neutral' as const
+    }));
+    const html = renderToStaticMarkup(
+      <HzTopologyMetricTable
+        title="Topology edges"
+        selectedRowId="edge-149"
+        rows={rows}
+        renderWindowCompanion={{
+          mode: 'windowed',
+          totalNodeCount: 500,
+          renderedNodeCount: 200,
+          hiddenNodeCount: 300,
+          totalEdgeCount: 150,
+          renderedEdgeCount: 80,
+          visibleNodeBudget: 200,
+          tableCompanion: 'required',
+          renderedNodeIds: rows.slice(0, 80).map(row => row.sourceNodeId ?? '')
+        }}
+      />
+    );
+
+    const renderedRows = html.match(/data-hz-topology-edge-row="/g) ?? [];
+    expect(html).toContain('data-hz-topology-metric-rows="150"');
+    expect(html).toContain('data-hz-topology-metric-table-filtered-row-count="150"');
+    expect(html).toContain('data-hz-topology-metric-table-row-render-policy="windowed-dom-budget"');
+    expect(html).toContain('data-hz-topology-metric-table-row-render-budget="120"');
+    expect(html).toContain('data-hz-topology-metric-table-row-render-page="1"');
+    expect(html).toContain('data-hz-topology-metric-table-row-render-next-count="150"');
+    expect(html).toContain('data-hz-topology-metric-table-row-render-can-show-more="true"');
+    expect(html).toContain('data-hz-topology-metric-table-hidden-row-count="70"');
+    expect(html).toContain('data-hz-topology-metric-table-hidden-row-proof-owner="hertzbeat-ui-metric-table-hidden-row-proof"');
+    expect(html).toContain('data-hz-topology-metric-table-hidden-row-proof="available"');
+    expect(html).toContain('data-hz-topology-metric-table-hidden-row-proof-filter="hidden"');
+    expect(html).toContain('data-hz-topology-metric-table-hidden-row-proof-count="70"');
+    expect(html).toContain('data-hz-topology-metric-table-rendered-row-count="121"');
+    expect(html).toContain('data-hz-topology-metric-table-rendered-hidden-row-count="29"');
+    expect(renderedRows).toHaveLength(121);
+    expect(html).toContain('data-hz-topology-edge-row="edge-0"');
+    expect(html).toContain('data-hz-topology-edge-row="edge-119"');
+    expect(html).not.toContain('data-hz-topology-edge-row="edge-120"');
+    expect(html).toContain('data-hz-topology-edge-row="edge-149"');
+    expect(html).toContain('data-hz-topology-edge-selected="true"');
+    expect(html).toContain('data-hz-topology-metric-table-row-render-summary-owner="hertzbeat-ui-metric-table-row-render-summary"');
+    expect(html).toContain('data-hz-topology-metric-table-row-render-action-owner="hertzbeat-ui-metric-table-row-render-action"');
+    expect(html).toContain('data-hz-topology-metric-table-row-render-action="show-more"');
+    expect(html).toContain('data-hz-topology-metric-table-row-render-action-url-policy="preserve-current-url"');
+    expect(html).toContain('data-hz-topology-metric-table-row-render-action-selection-policy="preserve-selected-edge"');
+    expect(html).toContain('Showing 121 of 150 rows');
+    expect(html).toContain('Show 150 of 150 rows');
   });
 
   it('renders a shared topology companion rail for table, timeline, and drawer layout ownership', () => {
@@ -4885,8 +4987,8 @@ describe('@hertzbeat/ui', () => {
           sourceSlot={<div data-demo-section="source">Sources</div>}
         />
         <HzTopologyWorkbenchGrid data-testid="topology-workbench-grid">
-          <section data-demo-section="canvas">Canvas</section>
-          <section data-demo-section="companion">Companion</section>
+          <HzTopologyWorkbenchSlot kind="canvas" data-demo-section="canvas">Canvas</HzTopologyWorkbenchSlot>
+          <HzTopologyWorkbenchSlot kind="companion" data-demo-section="companion">Companion</HzTopologyWorkbenchSlot>
         </HzTopologyWorkbenchGrid>
       </HzTopologyWorkbenchFrame>
     );
@@ -4924,6 +5026,9 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-primitive="workbench-grid"');
     expect(html).toContain('data-hz-topology-workbench-grid-owner="hertzbeat-ui-workbench-grid"');
     expect(html).toContain('data-hz-topology-workbench-grid-layout="canvas-companion"');
+    expect(html).toContain('lg:grid-cols-[minmax(0,1fr)_320px]');
+    expect(html).toContain('lg:sticky');
+    expect(html).toContain('lg:top-[64px]');
     expect(html).toContain('data-hz-topology-workbench-grid-canvas-stickiness="sticky-with-companion"');
     expect(html).toContain('data-hz-topology-workbench-grid-canvas-stickiness-owner="hertzbeat-ui-workbench-grid-canvas-stickiness"');
     expect(html).toContain('data-demo-section="canvas"');
@@ -5131,6 +5236,7 @@ describe('@hertzbeat/ui', () => {
   });
 
   it('renders a compact topology legend for health, source, confidence, and stale evidence semantics', () => {
+    const source = readFileSync(resolve(process.cwd(), 'packages/hertzbeat-ui/src/index.tsx'), 'utf8');
     const html = renderToStaticMarkup(
       <HzTopologyLegend
         title="Topology legend"
@@ -5187,6 +5293,8 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-legend-pattern="dashed"');
     expect(html).toContain('Topology legend');
     expect(html).toContain('Current evidence');
+    expect(source).not.toContain("swatch?: 'line'");
+    expect(source).not.toContain('data-hz-topology-legend-swatch-owner');
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
@@ -5208,7 +5316,7 @@ describe('@hertzbeat/ui', () => {
 	                label: 'Service node',
 	                iconSrc: 'data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2024%2024%22%3E%3C/svg%3E',
 	                iconLibrary: 'lucide-react',
-	                iconName: 'component',
+	                iconName: 'server-cog',
 	                iconSource: 'entity-type-catalog',
 	                visualSource: 'lucide-react'
 	              },
@@ -5241,7 +5349,7 @@ describe('@hertzbeat/ui', () => {
 	    expect(html).toContain('data-hz-topology-legend-source-label="lucide-react"');
 	    expect(html).toContain('data-hz-topology-legend-icon-owner="hertzbeat-ui-legend-source-icon"');
 	    expect(html).toContain('data-hz-topology-legend-icon-library="lucide-react"');
-	    expect(html).toContain('data-hz-topology-legend-icon-name="component"');
+	    expect(html).toContain('data-hz-topology-legend-icon-name="server-cog"');
 	    expect(html).toContain('data-hz-topology-legend-icon-source="entity-type-catalog"');
 	    expect(html).toContain('data-hz-topology-legend-icon-no-handdrawn="true"');
 	    expect(html).toContain('data-hz-topology-legend-visual-source="hertzbeat-status-token"');
@@ -5338,6 +5446,13 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-detail-density-owner="hertzbeat-ui-detail-density"');
     expect(html).toContain('data-hz-topology-detail-visual-weight="low-interruption"');
     expect(html).toContain('data-hz-topology-detail-fact-density="compressed"');
+    expect(html).toContain('data-hz-topology-detail-rail-fit="compact-side-rail"');
+    expect(html).toContain('data-hz-topology-detail-rail-fit-owner="hertzbeat-ui-detail-rail-fit"');
+    expect(html).toContain('data-hz-topology-detail-rail-max-block="bounded-560px"');
+    expect(html).toContain('data-hz-topology-detail-overflow-policy="internal-scroll"');
+    expect(html).toContain('data-hz-topology-detail-scroll-reset="identity-change"');
+    expect(html).toContain('data-hz-topology-detail-scroll-reset-owner="hertzbeat-ui-detail-scroll-reset"');
+    expect(html).toContain('data-hz-topology-detail-scroll-reset-key="edge:checkout-orders:svc-checkout:db-orders:trace-call:otlp-trace-call:unknown"');
     expect(html).toContain('data-hz-topology-detail-surface="framed"');
     expect(html).toContain('data-hz-topology-detail-surface-owner="hertzbeat-ui-detail-surface"');
     expect(html).toContain('data-hz-topology-detail-identity-owner="hertzbeat-ui-detail-identity"');
@@ -5414,6 +5529,16 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-detail-density="graph-first"');
     expect(html).toContain('data-hz-topology-detail-density-owner="hertzbeat-ui-detail-density"');
     expect(html).toContain('data-hz-topology-detail-visual-weight="low-interruption"');
+    expect(html).toContain('data-hz-topology-detail-rail-fit="compact-side-rail"');
+    expect(html).toContain('data-hz-topology-detail-rail-fit-owner="hertzbeat-ui-detail-rail-fit"');
+    expect(html).toContain('data-hz-topology-detail-rail-max-block="bounded-560px"');
+    expect(html).toContain('data-hz-topology-detail-overflow-policy="internal-scroll"');
+    expect(html).toContain('data-hz-topology-detail-scroll-reset="identity-change"');
+    expect(html).toContain('data-hz-topology-detail-scroll-reset-owner="hertzbeat-ui-detail-scroll-reset"');
+    expect(html).toContain('data-hz-topology-detail-scroll-reset-key="node:svc-checkout:none:none:unknown:otlp-trace-call:service"');
+    expect(html).toContain('data-hz-topology-detail-signal-action-placement="header-dock"');
+    expect(html).toContain('data-hz-topology-detail-signal-action-placement-owner="hertzbeat-ui-detail-signal-action-placement"');
+    expect(html).toContain('data-hz-topology-detail-signal-action-sticky="top-with-header-context"');
     expect(html).toContain('data-hz-topology-detail-surface="flush"');
     expect(html).toContain('data-hz-topology-detail-surface-owner="hertzbeat-ui-detail-surface"');
     expect(html).toContain('data-hz-topology-detail-identity-owner="hertzbeat-ui-detail-identity"');
@@ -5446,6 +5571,12 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-detail-signal-action="metrics"');
     expect(html).toContain('data-hz-topology-detail-signal-action="logs"');
     expect(html).toContain('data-hz-topology-detail-signal-action="traces"');
+    expect(html.indexOf('data-hz-topology-detail-actions="signals"')).toBeLessThan(
+      html.indexOf('data-hz-topology-detail-boundary="context"')
+    );
+    expect(html.indexOf('data-hz-topology-detail-actions="signals"')).toBeLessThan(
+      html.indexOf('data-hz-topology-detail-fact-group-owner="hertzbeat-ui-detail-fact-group"')
+    );
   });
 
   it('renders a compact topology filter strip for source and focus controls', () => {
@@ -5872,6 +6003,10 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-path-summary-boundary="section"');
     expect(html).toContain('data-hz-topology-path-summary-boundary-owner="hertzbeat-ui-path-summary-boundary"');
     expect(html).toContain('data-hz-topology-path-interaction-owner="hertzbeat-ui-path-summary-interaction"');
+    expect(html).toContain('data-topology-path-summary-interaction-state="selected"');
+    expect(html).toContain('data-hz-topology-path-summary-interaction-state="selected"');
+    expect(html).toContain('data-topology-path-summary-selected-edge-id="checkout-orders"');
+    expect(html).toContain('data-topology-path-summary-hovered-edge-id="checkout-orders"');
     expect(html).toContain('data-hz-topology-path-selected-edge="checkout-orders"');
     expect(html).toContain('data-hz-topology-path-hovered-edge="checkout-orders"');
     expect(html).toContain('data-hz-topology-path-source-id="svc-checkout"');
@@ -6004,6 +6139,26 @@ describe('@hertzbeat/ui', () => {
     expect(html).not.toContain('rounded-[12px]');
   });
 
+  it('renders canvas topology empty states without an extra framed card surface', () => {
+    const html = renderToStaticMarkup(
+      <HzTopologyEmptyState
+        title="No topology evidence"
+        copy="No trace edges were found."
+        sourceLabel="Greptime trace graph"
+        timeScope="last-1h"
+        boundary="canvas"
+        placement="canvas-center"
+        copyVisibility="assistive"
+      />
+    );
+
+    expect(html).toContain('data-hz-topology-empty-boundary="canvas"');
+    expect(html).toContain('data-hz-topology-empty-boundary-visual="frameless-canvas"');
+    expect(html).toContain('bg-transparent');
+    expect(html).toContain('shadow-none');
+    expect(html).not.toContain('border border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface)] shadow-[0_16px_48px_rgba(0,0,0,0.28)]');
+  });
+
   it('renders a compact topology loading state owned by the shared UI lab primitive', () => {
     const html = renderToStaticMarkup(
       <HzTopologyLoadingState
@@ -6101,11 +6256,13 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-toolbar-select-padding="compact-flush"');
     expect(html).toContain('data-hz-topology-toolbar-row-separator="none"');
     expect(html).toContain('data-hz-topology-toolbar-control-gap="6px"');
-    expect(html).toContain('[grid-template-columns:132px_minmax(220px,1fr)_132px_auto]');
+    expect(html).toContain('data-hz-topology-toolbar-control-flow="single-grid-row"');
+    expect(html).toContain('data-hz-topology-toolbar-empty-offset="none"');
+    expect(html).toContain('[grid-template-columns:112px_minmax(260px,1fr)_148px_88px_132px_auto]');
     expect(html).not.toContain('overflow-x-auto px-4 py-1');
     expect(html).toContain('overflow-x-auto px-0 py-1');
-    expect(html).toContain('h-7 !gap-1.5 !pl-1 !pr-1.5');
-    expect(html).not.toContain('h-7 !pl-2 !pr-1.5');
+    expect(html).toContain('h-7 !gap-1.5 !px-2');
+    expect(html).not.toContain('h-7 !gap-1.5 !pl-1 !pr-1.5');
     expect(html).toContain('data-hz-topology-toolbar-action-policy="scope-controls-only"');
     expect(html).toContain('data-hz-topology-toolbar-canvas-action-policy="in-canvas-g6-toolbar"');
     expect(html).toContain('data-hz-topology-toolbar-chrome="frameless"');
@@ -6128,6 +6285,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-topology-toolbar-control-strip="source-depth-group-reset"');
     expect(html).toContain('data-hz-topology-toolbar-control-strip-owner="hertzbeat-ui-toolbar-control-strip"');
     expect(html).toContain('data-hz-topology-toolbar-control-strip-layout="inline-overflow"');
+    expect(html).toContain('data-hz-topology-toolbar-control-strip-display="contents"');
     expect(html).toContain('data-hz-topology-toolbar-control-strip-layout-owner="hertzbeat-ui-toolbar-control-strip-layout"');
     expect(html).toContain('data-hz-topology-control="depth"');
     expect(html).toContain('data-hz-topology-control-depth-owner="hertzbeat-ui-toolbar-depth-control"');

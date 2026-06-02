@@ -12,5 +12,11 @@ export function isStandaloneRoute(pathname: string) {
 export function shouldLoadHeaderState(pathname: string) {
   const pathOnly = pathname.split('?')[0] || pathname;
   const isMonitorCrudRoute = pathOnly === '/monitors' || pathOnly.startsWith('/monitors/');
-  return !isStandaloneRoute(pathOnly) && !isMonitorCrudRoute;
+  const isTopologyRoute = pathOnly === '/topology' || pathOnly.startsWith('/topology/');
+  return !isStandaloneRoute(pathOnly) && !isMonitorCrudRoute && !isTopologyRoute;
+}
+
+export function shouldLoadHeaderRealtime(pathname: string) {
+  const pathOnly = pathname.split('?')[0] || pathname;
+  return shouldLoadHeaderState(pathOnly);
 }

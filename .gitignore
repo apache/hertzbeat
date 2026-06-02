@@ -50,6 +50,15 @@ node_modules
 .codex-artifacts/
 .playwright-mcp/
 web-next-*.png
+progress.md
+test-results/
+web-next/test-results/
+playwright-report/
+web-next/playwright-report/
+reports/
+screenshots/
+web-next/scripts/topology-scale-proof-seed-lib.mjs
+web-next/scripts/topology-scale-proof-seed-lib.test.ts
 
 # local temp runtime data
 .tmp/

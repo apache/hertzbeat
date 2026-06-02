@@ -33,6 +33,7 @@ import org.apache.hertzbeat.common.entity.manager.EntityRelation;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -45,7 +46,7 @@ public class EntityTopologyQueryService {
 
     private static final int DEFAULT_DEPTH = 1;
     private static final int MAX_DEPTH = 2;
-    private static final int DEFAULT_TOPOLOGY_ENTITY_LIMIT = 12;
+    private static final int DEFAULT_TOPOLOGY_ENTITY_LIMIT = 64;
     private static final int MAX_TOPOLOGY_EDGE_PAGE_SIZE = 200;
     private static final int IMPACT_TIMELINE_LIMIT = 12;
     private static final String SOURCE_KIND_ENTITY_RELATION = "entity-relation";
@@ -111,7 +112,7 @@ public class EntityTopologyQueryService {
         graph.setApiBacked(true);
         graph.setFocusEntityId(focusEntityId);
         graph.setDepth(depth);
-        graph.setSourceKinds(List.of(normalizedSourceKind));
+        graph.setSourceKinds(List.of());
         if (focusEntityId == null) {
             return buildDefaultTopologyGraph(graph, depth, environment, normalizedSourceKind,
                     sourceSelection, start, end, normalizedRelationType, hideInternal, pageIndex, pageSize);
@@ -145,10 +146,10 @@ public class EntityTopologyQueryService {
                 ? collectMonitorBinds(entityById.keySet())
                 : List.of();
         Map<Long, Monitor> monitorById = monitorMap(monitorBinds);
-        graph.setSourceKinds(buildSourceKinds(normalizedSourceKind, monitorBinds, traceCallEdges));
         List<EntityTopologyGraphInfo.Edge> visibleEdges = filterAndPageEdges(
                 buildEdges(relations, entityById.keySet(), monitorBinds, monitorById, traceCallEdges),
                 normalizedRelationType, hideInternal, pageIndex, pageSize);
+        graph.setSourceKinds(buildSourceKinds(normalizedSourceKind, visibleEdges));
         graph.setNodes(filterNodesByVisibleEdges(
                 buildNodes(entityById, monitorBinds, monitorById, focusEntityId, traceCallEdges),
                 visibleEdges, focusEntityId, normalizedRelationType, pageSize));
@@ -186,7 +187,7 @@ public class EntityTopologyQueryService {
         }
 
         TraceCallTopologyReadModel traceCallReadModel = sourceSelection.includeTraceCalls()
-                ? traceCallTopologyReadModel(entityById.values(), environment, start, end, hideInternal)
+                ? traceCallTopologyOverviewReadModel(environment, start, end, hideInternal)
                 : TraceCallTopologyReadModel.empty();
         Map<Long, ObserveEntity> traceEntityById = traceCallReadModel.entityById();
         List<TraceCallTopologyEdgeInfo> traceCallEdges = traceCallReadModel.edges();
@@ -200,10 +201,10 @@ public class EntityTopologyQueryService {
                 ? collectMonitorBinds(entityById.keySet())
                 : List.of();
         Map<Long, Monitor> monitorById = monitorMap(monitorBinds);
-        graph.setSourceKinds(buildSourceKinds(sourceKind, monitorBinds, traceCallEdges));
         List<EntityTopologyGraphInfo.Edge> visibleEdges = filterAndPageEdges(
                 buildEdges(relations, entityById.keySet(), monitorBinds, monitorById, traceCallEdges),
                 relationType, hideInternal, pageIndex, pageSize);
+        graph.setSourceKinds(buildSourceKinds(sourceKind, visibleEdges));
         graph.setNodes(filterNodesByVisibleEdges(
                 buildNodes(entityById, monitorBinds, monitorById, null, traceCallEdges),
                 visibleEdges, null, relationType, pageSize));
@@ -214,14 +215,14 @@ public class EntityTopologyQueryService {
 
     private List<ObserveEntity> defaultSeedEntities(String environment) {
         Sort sort = Sort.by(Sort.Order.desc("gmtUpdate"), Sort.Order.desc("id"));
-        List<ObserveEntity> entities = entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(sort);
+        List<ObserveEntity> entities = entityWorkspaceAccessService.findAccessibleEntitiesForRequestWorkspace(
+                PageRequest.of(0, DEFAULT_TOPOLOGY_ENTITY_LIMIT, sort));
         if (entities == null) {
             return List.of();
         }
         return entities.stream()
                 .filter(entity -> entity.getId() != null)
                 .filter(entity -> matchesEnvironment(entity, environment))
-                .limit(DEFAULT_TOPOLOGY_ENTITY_LIMIT)
                 .toList();
     }
 
@@ -232,6 +233,15 @@ public class EntityTopologyQueryService {
                                                                   Boolean hideInternal) {
         TraceCallTopologyReadModel readModel = traceCallTopologyQueryService.findTraceCallEdges(
                 seedEntities, environment, start, end, hideInternal == null || hideInternal);
+        return readModel == null ? TraceCallTopologyReadModel.empty() : readModel;
+    }
+
+    private TraceCallTopologyReadModel traceCallTopologyOverviewReadModel(String environment,
+                                                                          Long start,
+                                                                          Long end,
+                                                                          Boolean hideInternal) {
+        TraceCallTopologyReadModel readModel = traceCallTopologyQueryService.findTraceCallEdgesForOverview(
+                environment, start, end, hideInternal == null || hideInternal);
         return readModel == null ? TraceCallTopologyReadModel.empty() : readModel;
     }
 
@@ -329,17 +339,39 @@ public class EntityTopologyQueryService {
     }
 
     private List<String> buildSourceKinds(String requestedSourceKind,
-                                          Collection<EntityMonitorBind> monitorBinds,
-                                          Collection<TraceCallTopologyEdgeInfo> traceCallEdges) {
+                                          Collection<EntityTopologyGraphInfo.Edge> visibleEdges) {
+        if (visibleEdges == null || visibleEdges.isEmpty()) {
+            return List.of();
+        }
         Set<String> sourceKinds = new LinkedHashSet<>();
         sourceKinds.add(requestedSourceKind);
-        if (!monitorBinds.isEmpty()) {
-            sourceKinds.add(SOURCE_KIND_MONITOR_BIND);
-        }
-        if (!traceCallEdges.isEmpty()) {
-            sourceKinds.add(SOURCE_KIND_OTLP_TRACE_CALL);
+        for (EntityTopologyGraphInfo.Edge edge : visibleEdges) {
+            if (edge == null) {
+                continue;
+            }
+            addSourceKindsFromEdgeEvidence(sourceKinds, edge.getEvidenceBadges());
+            addSourceKindFromEdgeSource(sourceKinds, edge.getRelationSource());
         }
         return new ArrayList<>(sourceKinds);
+    }
+
+    private void addSourceKindsFromEdgeEvidence(Set<String> sourceKinds, Collection<String> evidenceBadges) {
+        if (evidenceBadges == null) {
+            return;
+        }
+        evidenceBadges.forEach(source -> addSourceKindFromEdgeSource(sourceKinds, source));
+    }
+
+    private void addSourceKindFromEdgeSource(Set<String> sourceKinds, String source) {
+        if (!StringUtils.hasText(source)) {
+            return;
+        }
+        String normalized = source.trim().toLowerCase();
+        if (SOURCE_KIND_ENTITY_RELATION.equals(normalized)
+                || SOURCE_KIND_MONITOR_BIND.equals(normalized)
+                || SOURCE_KIND_OTLP_TRACE_CALL.equals(normalized)) {
+            sourceKinds.add(normalized);
+        }
     }
 
     private Set<Long> collectEntityIds(Long focusEntityId, Collection<EntityRelation> relations) {

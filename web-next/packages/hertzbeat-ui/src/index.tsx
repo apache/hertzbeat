@@ -10492,7 +10492,6 @@ export type HzTopologyLegendItem = {
   pattern?: 'solid' | 'dashed' | 'muted';
   color?: string;
   fill?: string;
-  swatch?: 'line';
   visualSource?: 'hertzbeat-status-token' | 'hertzbeat-interaction-token' | 'hertzbeat-edge-token' | 'lucide-react';
   iconSrc?: string;
   iconAlt?: string;
@@ -10781,6 +10780,7 @@ export type HzTopologyPathSummaryAction = Omit<React.AnchorHTMLAttributes<HTMLAn
 };
 
 export type HzTopologyPathSummaryBoundary = 'none' | 'section' | 'framed' | 'flush';
+export type HzTopologyPathSummaryInteractionState = 'preview' | 'hovered' | 'selected';
 
 export type HzTopologyPathSummaryProps = React.HTMLAttributes<HTMLElement> & {
   title: React.ReactNode;
@@ -10792,6 +10792,7 @@ export type HzTopologyPathSummaryProps = React.HTMLAttributes<HTMLElement> & {
   evidenceBadges?: string[];
   actions?: HzTopologyPathSummaryAction[];
   boundary?: HzTopologyPathSummaryBoundary;
+  interactionState?: HzTopologyPathSummaryInteractionState;
   selectedEdgeId?: string;
   hoveredEdgeId?: string;
   sourceId?: string;
@@ -11450,13 +11451,58 @@ export function HzTopologyDetailDrawer({
 }: HzTopologyDetailDrawerProps) {
   const { className: boundaryClassName, ...boundaryRestProps } = boundaryProps ?? {};
   const graphFirst = density === 'graph-first';
+  const scrollResetKey = `${kind}:${subjectId ?? 'none'}:${sourceId ?? 'none'}:${targetId ?? 'none'}:${relationType ?? 'unknown'}:${sourceKind ?? 'unknown'}:${entityType ?? 'unknown'}`;
+  const drawerRef = React.useRef<HTMLElement | null>(null);
+  const previousScrollResetKeyRef = React.useRef(scrollResetKey);
+
+  React.useEffect(() => {
+    const drawer = drawerRef.current;
+
+    if (!drawer || previousScrollResetKeyRef.current === scrollResetKey) {
+      return;
+    }
+
+    drawer.scrollTop = 0;
+    previousScrollResetKeyRef.current = scrollResetKey;
+  }, [scrollResetKey]);
+
+  const signalActionGroup =
+    signalActions.length > 0 ? (
+      <div
+        className={cn(
+          'grid',
+          graphFirst
+            ? 'sticky top-0 z-10 -mx-2 mt-2 gap-1 border-y border-[#252832] bg-[#0b0c0f] px-2 py-2'
+            : 'mt-3 gap-2'
+        )}
+        data-hz-topology-detail-actions="signals"
+        data-hz-topology-detail-signal-action-group-owner="hertzbeat-ui-detail-signal-action-group"
+        data-hz-topology-detail-signal-action-placement={graphFirst ? 'header-dock' : 'footer'}
+        data-hz-topology-detail-signal-action-placement-owner="hertzbeat-ui-detail-signal-action-placement"
+        data-hz-topology-detail-signal-action-sticky={graphFirst ? 'top-with-header-context' : 'none'}
+      >
+        {signalActionsLabel ? (
+          <div
+            className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[#727b8c]"
+            data-hz-topology-detail-signal-label="signals"
+            data-hz-topology-detail-signal-label-owner="hertzbeat-ui-detail-signal-label"
+          >
+            {signalActionsLabel}
+          </div>
+        ) : null}
+        {signalActions.map(action => (
+          <HzTopologyDetailDrawerActionLink key={action.id} action={action} attributeName="data-hz-topology-detail-signal-action" />
+        ))}
+      </div>
+    ) : null;
 
   return (
     <section
       {...props}
+      ref={drawerRef}
       className={cn(
         'min-w-0',
-        graphFirst ? 'bg-[#0b0c0f] p-2 text-[12px]' : 'bg-[#101217] p-3',
+        graphFirst ? 'hb-scrollbar max-h-[560px] overflow-y-auto overscroll-contain bg-[#0b0c0f] p-2 text-[12px]' : 'bg-[#101217] p-3',
         topologyDetailDrawerSurfaceClassName[surface],
         className
       )}
@@ -11467,6 +11513,13 @@ export function HzTopologyDetailDrawer({
       data-hz-topology-detail-density-owner="hertzbeat-ui-detail-density"
       data-hz-topology-detail-visual-weight={graphFirst ? 'low-interruption' : 'balanced'}
       data-hz-topology-detail-visual-weight-owner="hertzbeat-ui-detail-visual-weight"
+      data-hz-topology-detail-rail-fit={graphFirst ? 'compact-side-rail' : 'standard'}
+      data-hz-topology-detail-rail-fit-owner="hertzbeat-ui-detail-rail-fit"
+      data-hz-topology-detail-rail-max-block={graphFirst ? 'bounded-560px' : 'unbounded'}
+      data-hz-topology-detail-overflow-policy={graphFirst ? 'internal-scroll' : 'document-flow'}
+      data-hz-topology-detail-scroll-reset={graphFirst ? 'identity-change' : 'none'}
+      data-hz-topology-detail-scroll-reset-owner="hertzbeat-ui-detail-scroll-reset"
+      data-hz-topology-detail-scroll-reset-key={scrollResetKey}
       data-hz-topology-detail-surface={surface}
       data-hz-topology-detail-surface-owner="hertzbeat-ui-detail-surface"
       data-hz-topology-detail-identity-owner="hertzbeat-ui-detail-identity"
@@ -11499,6 +11552,7 @@ export function HzTopologyDetailDrawer({
           </div>
         ) : null}
       </div>
+      {graphFirst ? signalActionGroup : null}
       {boundary ? (
         <div
           {...boundaryRestProps}
@@ -11569,26 +11623,7 @@ export function HzTopologyDetailDrawer({
           ))}
         </div>
       ) : null}
-      {signalActions.length > 0 ? (
-        <div
-          className={cn('grid', graphFirst ? 'mt-2 gap-1' : 'mt-3 gap-2')}
-          data-hz-topology-detail-actions="signals"
-          data-hz-topology-detail-signal-action-group-owner="hertzbeat-ui-detail-signal-action-group"
-        >
-          {signalActionsLabel ? (
-            <div
-              className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[#727b8c]"
-              data-hz-topology-detail-signal-label="signals"
-              data-hz-topology-detail-signal-label-owner="hertzbeat-ui-detail-signal-label"
-            >
-              {signalActionsLabel}
-            </div>
-          ) : null}
-          {signalActions.map(action => (
-            <HzTopologyDetailDrawerActionLink key={action.id} action={action} attributeName="data-hz-topology-detail-signal-action" />
-          ))}
-        </div>
-      ) : null}
+      {!graphFirst ? signalActionGroup : null}
     </section>
   );
 }
@@ -12179,6 +12214,7 @@ export function HzTopologyPathSummary({
   evidenceBadges = [],
   actions = [],
   boundary = 'none',
+  interactionState,
   selectedEdgeId,
   hoveredEdgeId,
   sourceId,
@@ -12188,6 +12224,9 @@ export function HzTopologyPathSummary({
   className,
   ...props
 }: HzTopologyPathSummaryProps) {
+  const resolvedInteractionState: HzTopologyPathSummaryInteractionState =
+    interactionState ?? (selectedEdgeId ? 'selected' : hoveredEdgeId ? 'hovered' : 'preview');
+
   return (
     <section
       {...props}
@@ -12202,6 +12241,11 @@ export function HzTopologyPathSummary({
       data-hz-topology-path-summary-boundary={boundary}
       data-hz-topology-path-summary-boundary-owner="hertzbeat-ui-path-summary-boundary"
       data-hz-topology-path-interaction-owner="hertzbeat-ui-path-summary-interaction"
+      data-topology-path-summary-interaction-state={resolvedInteractionState}
+      data-hz-topology-path-summary-interaction-state={resolvedInteractionState}
+      data-hz-topology-path-summary-interaction-state-owner="hertzbeat-ui-path-summary-interaction-state"
+      data-topology-path-summary-selected-edge-id={selectedEdgeId ?? 'none'}
+      data-topology-path-summary-hovered-edge-id={hoveredEdgeId ?? 'none'}
       data-hz-topology-path-selected-edge={selectedEdgeId ?? 'none'}
       data-hz-topology-path-hovered-edge={hoveredEdgeId ?? 'none'}
       data-hz-topology-path-source-id={sourceId ?? 'none'}
@@ -12662,7 +12706,7 @@ export function HzTopologyWorkbenchGrid({
       {...props}
       className={cn(
         'grid min-h-[760px] bg-[#08090c]',
-        layout === 'canvas-companion' ? 'xl:grid-cols-[minmax(0,1fr)_320px]' : '',
+        layout === 'canvas-companion' ? 'lg:grid-cols-[minmax(0,1fr)_320px]' : '',
         className
       )}
       data-hz-ui="topology-workbench-grid"
@@ -12683,7 +12727,7 @@ const topologyWorkbenchSlotSurfaceClassName: Record<HzTopologyWorkbenchSlotSurfa
 };
 
 const topologyWorkbenchSlotKindClassName: Record<HzTopologyWorkbenchSlotKind, string> = {
-  canvas: 'min-w-0 xl:sticky xl:top-[64px] xl:self-start',
+  canvas: 'min-w-0 lg:sticky lg:top-[64px] lg:self-start',
   companion: 'min-w-0'
 };
 
@@ -12974,8 +13018,9 @@ export function HzTopologyToolbar({
   const hasScopeControls = depthOptions.length > 0 || hasLayoutControl || groupByOptions.length > 0 || Boolean(resetLabel);
   const secondaryVisibility = graphFirst ? 'assistive' : 'visible';
   const controlStripLayout = graphFirst ? 'inline-overflow' : 'stacked-grid';
+  const controlStripDisplay = graphFirst ? 'contents' : 'grid';
   const chrome = graphFirst && boundary === 'none' ? 'frameless' : 'surface';
-  const selectTriggerClassName = graphFirst ? 'h-7 !gap-1.5 !pl-1 !pr-1.5' : 'h-8';
+  const selectTriggerClassName = graphFirst ? 'h-7 !gap-1.5 !px-2' : 'h-8';
 
   return (
     <section
@@ -12984,7 +13029,7 @@ export function HzTopologyToolbar({
         'min-w-0',
         chrome === 'frameless' ? 'bg-transparent' : 'bg-[var(--hz-ui-surface)]',
         graphFirst
-          ? 'grid items-center gap-1.5 overflow-x-auto px-0 py-1 [grid-template-columns:132px_minmax(220px,1fr)_132px_auto]'
+          ? 'grid items-center gap-1.5 overflow-x-auto px-0 py-1 [grid-template-columns:112px_minmax(260px,1fr)_148px_88px_132px_auto]'
           : 'grid gap-2 px-4 py-2 lg:grid-cols-[180px_minmax(0,1fr)_104px_104px]',
         topologyToolbarBoundaryClassName[boundary],
         className
@@ -13003,6 +13048,8 @@ export function HzTopologyToolbar({
       data-hz-topology-toolbar-select-padding={graphFirst ? 'compact-flush' : 'default'}
       data-hz-topology-toolbar-row-separator={graphFirst ? 'none' : 'soft'}
       data-hz-topology-toolbar-control-gap={graphFirst ? '6px' : '8px'}
+      data-hz-topology-toolbar-control-flow={graphFirst ? 'single-grid-row' : 'stacked-grid'}
+      data-hz-topology-toolbar-empty-offset={graphFirst ? 'none' : undefined}
       data-hz-topology-toolbar-visual-weight={graphFirst ? 'low-interruption' : 'balanced'}
       data-hz-topology-toolbar-visual-weight-owner="hertzbeat-ui-toolbar-visual-weight"
       data-hz-topology-toolbar-secondary-visibility={secondaryVisibility}
@@ -13021,7 +13068,7 @@ export function HzTopologyToolbar({
         options={environmentOptions}
         value={environmentValue}
         onChange={event => onEnvironmentChange?.(event.currentTarget.value)}
-        className={graphFirst ? 'w-[132px] min-w-0' : undefined}
+        className={graphFirst ? 'w-[112px] min-w-0' : undefined}
         triggerClassName={selectTriggerClassName}
       />
       <HzInput
@@ -13044,7 +13091,7 @@ export function HzTopologyToolbar({
           options={sourceKindOptions}
           value={sourceKindValue}
           onChange={event => onSourceKindChange?.(event.currentTarget.value)}
-          className={graphFirst ? 'w-[132px] shrink-0' : undefined}
+          className={graphFirst ? 'w-[148px] shrink-0' : undefined}
           triggerClassName={selectTriggerClassName}
         />
       ) : null}
@@ -13075,13 +13122,14 @@ export function HzTopologyToolbar({
         <div
           className={cn(
             graphFirst
-              ? 'flex min-w-0 shrink-0 items-center justify-end gap-1.5'
+              ? 'contents'
               : 'grid min-w-0 border-t border-[var(--hz-ui-line-faint)] sm:grid-cols-2 lg:col-span-4',
             graphFirst ? '' : 'gap-2 pt-2 xl:grid-cols-[120px_160px_160px_auto]'
           )}
           data-hz-topology-toolbar-control-strip={graphFirst ? 'source-depth-group-reset' : 'depth-layout-group-reset'}
           data-hz-topology-toolbar-control-strip-owner="hertzbeat-ui-toolbar-control-strip"
           data-hz-topology-toolbar-control-strip-layout={controlStripLayout}
+          data-hz-topology-toolbar-control-strip-display={controlStripDisplay}
           data-hz-topology-toolbar-control-strip-layout-owner="hertzbeat-ui-toolbar-control-strip-layout"
         >
           {depthOptions.length > 0 ? (
@@ -13238,11 +13286,12 @@ export function HzTopologyToolbar({
 }
 
 export type HzTopologyEmptyStateBoundary = 'default' | 'flush' | 'canvas';
+export type HzTopologyEmptyStateCopyVisibility = 'visible' | 'assistive';
 
 const topologyEmptyStateBoundaryClassNames: Record<HzTopologyEmptyStateBoundary, string> = {
   default: 'border border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface)] shadow-[0_16px_48px_rgba(0,0,0,0.28)]',
   flush: 'border-y border-x-0 border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface)] shadow-[0_16px_48px_rgba(0,0,0,0.28)]',
-  canvas: 'border border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface)] shadow-[0_16px_48px_rgba(0,0,0,0.28)]'
+  canvas: 'border-0 bg-transparent shadow-none'
 };
 
 export type HzTopologyEmptyStateProps = React.HTMLAttributes<HTMLElement> & {
@@ -13260,6 +13309,7 @@ export type HzTopologyEmptyStateProps = React.HTMLAttributes<HTMLElement> & {
   kind?: 'api-empty' | 'degraded' | 'filtered-empty';
   placement?: 'inline' | 'canvas-center';
   boundary?: HzTopologyEmptyStateBoundary;
+  copyVisibility?: HzTopologyEmptyStateCopyVisibility;
 };
 
 export function HzTopologyEmptyState({
@@ -13277,6 +13327,7 @@ export function HzTopologyEmptyState({
   kind = 'api-empty',
   placement = 'inline',
   boundary = 'default',
+  copyVisibility = 'visible',
   className,
   ...props
 }: HzTopologyEmptyStateProps) {
@@ -13298,6 +13349,7 @@ export function HzTopologyEmptyState({
       data-hz-topology-empty-kind={kind}
       data-hz-topology-empty-boundary={boundary}
       data-hz-topology-empty-boundary-owner="hertzbeat-ui-empty-boundary"
+      data-hz-topology-empty-boundary-visual={boundary === 'canvas' ? 'frameless-canvas' : 'surface'}
       data-hz-topology-empty-placement={placement}
       data-hz-topology-empty-source={sourceLabel}
       data-hz-topology-empty-time-scope={timeScope}
@@ -13309,11 +13361,17 @@ export function HzTopologyEmptyState({
       data-hz-topology-empty-depth={depth ?? 'unknown'}
       data-hz-topology-empty-result-count={typeof resultCount === 'number' ? resultCount : 'unknown'}
       data-hz-topology-empty-evidence-sources={normalizedEvidenceSources}
+      data-hz-topology-empty-copy-visibility={copyVisibility}
     >
       <div className="text-[13px] font-semibold text-[#f3f6fb]" data-hz-topology-empty-title-owner="hertzbeat-ui-empty-title">
         {title}
       </div>
-      <div className="mt-2 text-[12px] leading-5 text-[#8f99ab]" data-hz-topology-empty-copy-owner="hertzbeat-ui-empty-copy">
+      <div
+        className={cn(
+          copyVisibility === 'assistive' ? 'sr-only' : 'mt-2 text-[12px] leading-5 text-[#8f99ab]'
+        )}
+        data-hz-topology-empty-copy-owner="hertzbeat-ui-empty-copy"
+      >
         {copy}
       </div>
       {sourceLabel || timeScope ? (
@@ -13474,6 +13532,7 @@ export type HzTopologyCompanionJumpListProps = React.HTMLAttributes<HTMLElement>
   items: HzTopologyCompanionJumpListItem[];
   density?: HzTopologyCompanionJumpListDensity;
   activeMode?: HzTopologyCompanionJumpListActiveMode;
+  activeResetKey?: string | number;
   ariaLabel?: string;
 };
 
@@ -13580,14 +13639,44 @@ export function HzTopologyCompanionJumpList({
   items,
   density = 'compact',
   activeMode = 'manual',
+  activeResetKey,
   ariaLabel = 'Topology companion sections',
   className,
   ...rest
 }: HzTopologyCompanionJumpListProps) {
   const jumpListRef = React.useRef<HTMLElement | null>(null);
   const manualActiveId = React.useMemo(() => items.find(item => item.active)?.id, [items]);
+  const manualActiveHref = items.find(item => item.id === manualActiveId)?.href;
   const [scrollActiveId, setScrollActiveId] = React.useState<string | undefined>();
   const resolvedActiveId = activeMode === 'contained-rail-scroll' ? (scrollActiveId ?? manualActiveId) : manualActiveId;
+  const didRunSelectionSyncRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (activeMode !== 'contained-rail-scroll') {
+      didRunSelectionSyncRef.current = false;
+      return;
+    }
+    const shouldSyncLocation = didRunSelectionSyncRef.current && activeResetKey !== undefined;
+    didRunSelectionSyncRef.current = true;
+    setScrollActiveId(undefined);
+    if (!manualActiveHref?.startsWith('#') || typeof document === 'undefined') return;
+    const jumpList = jumpListRef.current;
+    const rail = jumpList?.closest<HTMLElement>('[data-hz-ui="topology-companion-rail"][data-hz-topology-companion-scroll="contained"]');
+    const target = document.getElementById(manualActiveHref.slice(1));
+    if (!jumpList || !rail || !target || !rail.contains(target)) return;
+    const railRect = rail.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const jumpListHeight = jumpList.getBoundingClientRect().height;
+    const targetTop = Math.max(0, rail.scrollTop + targetRect.top - railRect.top - jumpListHeight - 8);
+    if (typeof rail.scrollTo === 'function') {
+      rail.scrollTo({ top: targetTop, behavior: 'auto' });
+    } else {
+      rail.scrollTop = targetTop;
+    }
+    if (shouldSyncLocation && typeof window !== 'undefined' && window.history?.replaceState) {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${manualActiveHref}`);
+    }
+  }, [activeMode, activeResetKey, manualActiveHref, manualActiveId]);
 
   React.useEffect(() => {
     if (activeMode !== 'contained-rail-scroll' || typeof document === 'undefined') return undefined;
@@ -13636,7 +13725,6 @@ export function HzTopologyCompanionJumpList({
       if (nextActiveId) setScrollActiveId(current => (current === nextActiveId ? current : nextActiveId));
     };
 
-    updateActiveSection();
     rail.addEventListener('scroll', updateActiveSection, { passive: true });
     return () => rail.removeEventListener('scroll', updateActiveSection);
   }, [activeMode, items]);
@@ -13663,6 +13751,13 @@ export function HzTopologyCompanionJumpList({
       data-hz-topology-companion-jump-list-scroll-scope-owner="hertzbeat-ui-companion-jump-list-scroll-scope"
       data-hz-topology-companion-jump-list-active-mode={activeMode}
       data-hz-topology-companion-jump-list-active-mode-owner="hertzbeat-ui-companion-jump-list-active-mode"
+      data-hz-topology-companion-jump-list-selection-sync="manual-active-resets-scroll-active"
+      data-hz-topology-companion-jump-list-selection-sync-owner="hertzbeat-ui-companion-jump-list-selection-sync"
+      data-hz-topology-companion-jump-list-selection-scroll="active-section"
+      data-hz-topology-companion-jump-list-selection-scroll-owner="hertzbeat-ui-companion-jump-list-selection-scroll"
+      data-hz-topology-companion-jump-list-selection-url-policy="replace-active-section-hash"
+      data-hz-topology-companion-jump-list-selection-url-policy-owner="hertzbeat-ui-companion-jump-list-selection-url-policy"
+      data-hz-topology-companion-jump-list-active-reset-key={activeResetKey ?? manualActiveId ?? 'none'}
     >
       <div className="flex min-w-max items-center gap-1">
         {items.map(({ id, href, label, active = false, className: itemClassName, onClick, ...itemProps }) => {
@@ -13811,6 +13906,9 @@ export type HzTopologyMetricTableLabels = {
   renderWindowFilterPartial?: React.ReactNode;
   renderWindowFilterHidden?: React.ReactNode;
   renderWindowFilterUnknown?: React.ReactNode;
+  renderWindowEdgeSummary?: React.ReactNode;
+  renderWindowRowSummary?: (rendered: number, total: number) => React.ReactNode;
+  renderWindowShowMore?: (next: number, total: number) => React.ReactNode;
 };
 
 export type HzTopologyMetricTableRenderWindowCompanion = {
@@ -13818,6 +13916,8 @@ export type HzTopologyMetricTableRenderWindowCompanion = {
   totalNodeCount: number;
   renderedNodeCount: number;
   hiddenNodeCount: number;
+  totalEdgeCount?: number;
+  renderedEdgeCount?: number;
   visibleNodeBudget: number;
   tableCompanion?: 'optional' | 'recommended' | 'required';
   priorityNodeIds?: string[];
@@ -13828,6 +13928,7 @@ export type HzTopologyMetricTableBoundary = 'default' | 'framed' | 'flush';
 export type HzTopologyMetricTableDensity = 'compact' | 'graph-first';
 export type HzTopologyMetricRowWindowVisibility = 'visible' | 'partial' | 'hidden' | 'unknown';
 export type HzTopologyMetricTableRenderWindowFilter = 'all' | HzTopologyMetricRowWindowVisibility;
+const HZ_TOPOLOGY_METRIC_TABLE_ROW_RENDER_BUDGET = 120;
 
 const topologyMetricTableBoundaryClassName: Record<HzTopologyMetricTableBoundary, string> = {
   default: 'border-y border-[var(--hz-ui-line-soft)]',
@@ -13893,6 +13994,7 @@ export function HzTopologyMetricTable({
   title,
   rows,
   selectedRowId,
+  selectionSource = 'none',
   emptyLabel = 'No topology evidence',
   labels,
   renderWindowCompanion,
@@ -13907,6 +14009,7 @@ export function HzTopologyMetricTable({
   title: React.ReactNode;
   rows: HzTopologyMetricRow[];
   selectedRowId?: string;
+  selectionSource?: string;
   emptyLabel?: React.ReactNode;
   labels?: HzTopologyMetricTableLabels;
   renderWindowCompanion?: HzTopologyMetricTableRenderWindowCompanion;
@@ -13929,12 +14032,29 @@ export function HzTopologyMetricTable({
     : 'none';
   const renderedNodeIds = renderWindowCompanion?.renderedNodeIds;
   const renderedNodeIdSet = renderedNodeIds?.length ? new Set(renderedNodeIds) : undefined;
+  const tableEdgeCount = typeof renderWindowCompanion?.totalEdgeCount === 'number'
+    ? renderWindowCompanion.totalEdgeCount
+    : rows.length;
+  const canvasRenderedEdgeCount = typeof renderWindowCompanion?.renderedEdgeCount === 'number'
+    ? renderWindowCompanion.renderedEdgeCount
+    : tableEdgeCount;
+  const hasCanvasEdgeSummary =
+    renderWindowMode === 'windowed' &&
+    typeof renderWindowCompanion?.totalEdgeCount === 'number' &&
+    typeof renderWindowCompanion?.renderedEdgeCount === 'number';
+  const edgeCountPolicy = hasCanvasEdgeSummary ? 'canvas-rendered-vs-table-total' : 'row-window-visibility';
+  const renderWindowEdgeSummary =
+    labels?.renderWindowEdgeSummary ?? `${canvasRenderedEdgeCount}/${tableEdgeCount} rendered in canvas`;
   const rowsWithWindowVisibility = rows.map(row => {
     const sourceVisible = resolveTopologyMetricEndpointVisibility(row.sourceNodeId, renderWindowMode, renderedNodeIdSet);
     const targetVisible = resolveTopologyMetricEndpointVisibility(row.targetNodeId, renderWindowMode, renderedNodeIdSet);
     const rowWindowVisibility = resolveTopologyMetricRowWindowVisibility(sourceVisible, targetVisible);
     return { row, sourceVisible, targetVisible, rowWindowVisibility };
   });
+  const selectedRowWithWindowVisibility = selectedRowId
+    ? rowsWithWindowVisibility.find(({ row }) => row.id === selectedRowId)
+    : undefined;
+  const hasMetricTableSelection = Boolean(selectedRowId && selectionSource !== 'none');
   const renderWindowRowCounts = rowsWithWindowVisibility.reduce<Record<HzTopologyMetricRowWindowVisibility, number>>(
     (counts, row) => {
       counts[row.rowWindowVisibility] += 1;
@@ -13943,10 +14063,44 @@ export function HzTopologyMetricTable({
     { visible: 0, partial: 0, hidden: 0, unknown: 0 }
   );
   const activeRenderWindowFilter = normalizeTopologyMetricTableRenderWindowFilter(renderWindowFilter);
+  const [rowRenderPage, setRowRenderPage] = React.useState(1);
+  React.useEffect(() => {
+    setRowRenderPage(1);
+  }, [activeRenderWindowFilter, rows.length]);
   const filteredRowsWithWindowVisibility =
     activeRenderWindowFilter === 'all'
       ? rowsWithWindowVisibility
       : rowsWithWindowVisibility.filter(row => row.rowWindowVisibility === activeRenderWindowFilter);
+  const shouldBudgetRenderedRows =
+    renderWindowMode === 'windowed' &&
+    filteredRowsWithWindowVisibility.length > HZ_TOPOLOGY_METRIC_TABLE_ROW_RENDER_BUDGET;
+  const rowRenderBudget = shouldBudgetRenderedRows
+    ? Math.min(filteredRowsWithWindowVisibility.length, HZ_TOPOLOGY_METRIC_TABLE_ROW_RENDER_BUDGET * rowRenderPage)
+    : filteredRowsWithWindowVisibility.length;
+  const budgetedRowsWithWindowVisibility = shouldBudgetRenderedRows
+    ? filteredRowsWithWindowVisibility.slice(0, rowRenderBudget)
+    : filteredRowsWithWindowVisibility;
+  const selectedFilteredRowWithWindowVisibility = selectedRowId
+    ? filteredRowsWithWindowVisibility.find(({ row }) => row.id === selectedRowId)
+    : undefined;
+  const renderedRowsWithWindowVisibility =
+    shouldBudgetRenderedRows &&
+    selectedFilteredRowWithWindowVisibility &&
+    !budgetedRowsWithWindowVisibility.some(({ row }) => row.id === selectedFilteredRowWithWindowVisibility.row.id)
+      ? [...budgetedRowsWithWindowVisibility, selectedFilteredRowWithWindowVisibility]
+      : budgetedRowsWithWindowVisibility;
+  const hiddenRenderedRowCount = Math.max(0, filteredRowsWithWindowVisibility.length - renderedRowsWithWindowVisibility.length);
+  const nextRowRenderCount = shouldBudgetRenderedRows
+    ? Math.min(filteredRowsWithWindowVisibility.length, rowRenderBudget + HZ_TOPOLOGY_METRIC_TABLE_ROW_RENDER_BUDGET)
+    : filteredRowsWithWindowVisibility.length;
+  const canShowMoreRenderedRows = shouldBudgetRenderedRows && rowRenderBudget < filteredRowsWithWindowVisibility.length;
+  const rowRenderPolicy = shouldBudgetRenderedRows ? 'windowed-dom-budget' : 'all-filtered-rows';
+  const renderWindowRowSummary =
+    labels?.renderWindowRowSummary?.(renderedRowsWithWindowVisibility.length, filteredRowsWithWindowVisibility.length) ??
+    `Showing ${renderedRowsWithWindowVisibility.length} of ${filteredRowsWithWindowVisibility.length} rows`;
+  const renderWindowShowMore =
+    labels?.renderWindowShowMore?.(nextRowRenderCount, filteredRowsWithWindowVisibility.length) ??
+    `Show ${nextRowRenderCount} of ${filteredRowsWithWindowVisibility.length} rows`;
   const renderWindowFilterOptions: Array<{
     id: HzTopologyMetricTableRenderWindowFilter;
     label: React.ReactNode;
@@ -13969,6 +14123,7 @@ export function HzTopologyMetricTable({
       )}
       data-hz-ui="topology-metric-table"
       data-hz-topology-primitive="metric-table"
+      data-hz-topology-metric-table-root="true"
       data-hz-topology-metric-table-density={density}
       data-hz-topology-metric-table-density-owner="hertzbeat-ui-metric-table-density"
       data-hz-topology-metric-table-visual-weight={graphFirst ? 'low-interruption' : 'balanced'}
@@ -13977,12 +14132,33 @@ export function HzTopologyMetricTable({
       data-hz-topology-metric-table-boundary={boundary}
       data-hz-topology-metric-table-boundary-owner="hertzbeat-ui-metric-table-boundary"
       data-hz-topology-metric-rows={rows.length}
+      data-hz-topology-metric-table-total-rows={rows.length}
       data-hz-topology-metric-table-interaction="row-select-detail"
+      data-hz-topology-metric-table-live-selection-owner="hertzbeat-ui-metric-table-selection"
+      data-hz-topology-metric-table-selected-edge-id={hasMetricTableSelection ? selectedRowId : 'none'}
+      data-hz-topology-metric-table-selection-source={hasMetricTableSelection ? selectionSource : 'none'}
+      data-hz-topology-metric-table-selected-row-render-window-visibility={
+        hasMetricTableSelection ? selectedRowWithWindowVisibility?.rowWindowVisibility ?? 'unknown' : 'none'
+      }
+      data-hz-topology-metric-table-selected-row-source-visible={
+        hasMetricTableSelection && selectedRowWithWindowVisibility ? String(selectedRowWithWindowVisibility.sourceVisible) : 'unknown'
+      }
+      data-hz-topology-metric-table-selected-row-target-visible={
+        hasMetricTableSelection && selectedRowWithWindowVisibility ? String(selectedRowWithWindowVisibility.targetVisible) : 'unknown'
+      }
+      data-hz-topology-metric-table-live-selection-invariants="row-click-drawer no-url-change no-remount no-refit viewport-preserved render-key-stable"
+      data-hz-topology-metric-table-filter-invariants="in-page no-url-change no-g6-remount viewport-preserved selection-preserved"
+      data-hz-topology-metric-table-filter-url-policy="preserve-current-url"
       data-hz-topology-metric-table-render-window-owner="hertzbeat-ui-metric-table-render-window"
       data-hz-topology-metric-table-render-window-mode={renderWindowMode}
       data-hz-topology-metric-table-render-window-total-node-count={renderWindowCompanion?.totalNodeCount ?? 0}
       data-hz-topology-metric-table-render-window-rendered-node-count={renderWindowCompanion?.renderedNodeCount ?? rows.length}
       data-hz-topology-metric-table-render-window-hidden-node-count={renderWindowCompanion?.hiddenNodeCount ?? 0}
+      data-hz-topology-metric-table-render-window-total-edge-count={tableEdgeCount}
+      data-hz-topology-metric-table-render-window-rendered-edge-count={canvasRenderedEdgeCount}
+      data-hz-topology-metric-table-edge-count-policy={edgeCountPolicy}
+      data-hz-topology-metric-table-canvas-rendered-edge-count={canvasRenderedEdgeCount}
+      data-hz-topology-metric-table-table-edge-count={tableEdgeCount}
       data-hz-topology-metric-table-render-window-visible-node-budget={renderWindowCompanion?.visibleNodeBudget ?? rows.length}
       data-hz-topology-metric-table-render-window-visible-node-count={renderedNodeIds?.length ?? (renderWindowMode === 'direct' ? renderWindowCompanion?.renderedNodeCount ?? 0 : 0)}
       data-hz-topology-metric-table-render-window-table-companion={renderWindowTableCompanion}
@@ -13991,11 +14167,23 @@ export function HzTopologyMetricTable({
       data-hz-topology-metric-table-visible-row-count={renderWindowRowCounts.visible}
       data-hz-topology-metric-table-partial-row-count={renderWindowRowCounts.partial}
       data-hz-topology-metric-table-hidden-row-count={renderWindowRowCounts.hidden}
+      data-hz-topology-metric-table-hidden-row-proof-owner="hertzbeat-ui-metric-table-hidden-row-proof"
+      data-hz-topology-metric-table-hidden-row-proof={renderWindowRowCounts.hidden > 0 ? 'available' : 'none'}
+      data-hz-topology-metric-table-hidden-row-proof-filter="hidden"
+      data-hz-topology-metric-table-hidden-row-proof-count={renderWindowRowCounts.hidden}
       data-hz-topology-metric-table-unknown-row-count={renderWindowRowCounts.unknown}
       data-hz-topology-metric-table-render-window-filter-owner="hertzbeat-ui-metric-table-render-window-filter"
       data-hz-topology-metric-table-render-window-filter={activeRenderWindowFilter}
       data-hz-topology-metric-table-filtered-row-count={filteredRowsWithWindowVisibility.length}
       data-hz-topology-metric-table-filtered-out-row-count={rows.length - filteredRowsWithWindowVisibility.length}
+      data-hz-topology-metric-table-row-render-policy={rowRenderPolicy}
+      data-hz-topology-metric-table-row-render-reset-policy="filter-change-resets-budget-preserve-selected-row"
+      data-hz-topology-metric-table-row-render-budget={rowRenderBudget}
+      data-hz-topology-metric-table-row-render-page={rowRenderPage}
+      data-hz-topology-metric-table-row-render-next-count={nextRowRenderCount}
+      data-hz-topology-metric-table-row-render-can-show-more={canShowMoreRenderedRows ? 'true' : 'false'}
+      data-hz-topology-metric-table-rendered-row-count={renderedRowsWithWindowVisibility.length}
+      data-hz-topology-metric-table-rendered-hidden-row-count={hiddenRenderedRowCount}
     >
       <header
         className={cn(
@@ -14024,6 +14212,18 @@ export function HzTopologyMetricTable({
         )}
         data-hz-topology-metric-table-filter-controls-owner="hertzbeat-ui-metric-table-filter-controls"
       >
+        {hasCanvasEdgeSummary ? (
+          <span
+            className={cn(
+              'inline-flex min-h-7 items-center border border-[var(--hz-ui-line-soft)] bg-[#08090c] font-mono text-[#8f99ab]',
+              graphFirst ? 'px-2 text-[10px]' : 'px-2.5 text-[11px]'
+            )}
+            data-hz-topology-metric-table-edge-summary-owner="hertzbeat-ui-metric-table-edge-summary"
+            data-hz-topology-metric-table-edge-summary-policy={edgeCountPolicy}
+          >
+            {renderWindowEdgeSummary}
+          </span>
+        ) : null}
         {renderWindowFilterOptions.map(option => {
           const active = option.id === activeRenderWindowFilter;
           return (
@@ -14042,7 +14242,11 @@ export function HzTopologyMetricTable({
               data-hz-topology-metric-table-filter-control-owner="hertzbeat-ui-metric-table-filter-control"
               data-hz-topology-metric-table-filter-control={option.id}
               data-hz-topology-metric-table-filter-active={active ? 'true' : 'false'}
+              data-hz-topology-metric-table-filter-control-active={active ? 'true' : 'false'}
               data-hz-topology-metric-table-filter-count={option.count}
+              data-hz-topology-metric-table-filter-control-url-policy="preserve-current-url"
+              data-hz-topology-metric-table-filter-control-selection-policy="preserve-selected-edge"
+              data-hz-topology-metric-table-filter-row-render-reset-policy="reset-row-budget-preserve-selection"
             >
               <span>{option.label}</span>
               <span className="text-[#727b8c]">{option.count}</span>
@@ -14055,11 +14259,21 @@ export function HzTopologyMetricTable({
           {emptyLabel}
         </div>
       ) : (
+        <>
         <div className="grid min-w-0 divide-y divide-[var(--hz-ui-line-faint)]">
-          {filteredRowsWithWindowVisibility.map(({ row, sourceVisible, targetVisible, rowWindowVisibility }) => {
+          {renderedRowsWithWindowVisibility.map(({ row, sourceVisible, targetVisible, rowWindowVisibility }) => {
             const tone = row.tone || (row.errorRate && row.errorRate > 0 ? 'warning' : 'neutral');
             const selected = selectedRowId === row.id;
             const rowActionLabel = labels?.rowAction;
+            const rowWindowContextLabel =
+              rowWindowVisibility === 'visible'
+                ? labels?.renderWindowFilterVisible ?? 'Visible'
+                : rowWindowVisibility === 'partial'
+                  ? labels?.renderWindowFilterPartial ?? 'Partial'
+                  : rowWindowVisibility === 'hidden'
+                    ? labels?.renderWindowFilterHidden ?? 'Hidden'
+                    : labels?.renderWindowFilterUnknown ?? 'Unknown';
+            const showRowWindowContext = renderWindowMode === 'windowed' && (selected || rowWindowVisibility !== 'visible');
             return (
               <button
                 key={row.id}
@@ -14100,6 +14314,9 @@ export function HzTopologyMetricTable({
                 data-hz-topology-error-count={row.errorCount}
                 data-hz-topology-latency-p95-ms={row.latencyP95Ms}
                 data-hz-topology-metric-table-row-owner="hertzbeat-ui-metric-table-row"
+                data-hz-topology-edge-row-selection-owner="hertzbeat-ui-metric-table-row-selection"
+                data-hz-topology-edge-row-selection-mode="table-row-click-drawer"
+                data-hz-topology-edge-row-selection-url-policy="preserve-current-url"
               >
                 <span className="min-w-0" data-hz-topology-metric-table-endpoints-owner="hertzbeat-ui-metric-table-endpoints">
                   <span
@@ -14125,6 +14342,17 @@ export function HzTopologyMetricTable({
                     {row.sourceKind ? (
                       <span className="text-[#727b8c]" data-hz-topology-metric-table-source-kind-owner="hertzbeat-ui-metric-table-source-kind">
                         {row.sourceKind}
+                      </span>
+                    ) : null}
+                    {showRowWindowContext ? (
+                      <span
+                        className="border-l border-[var(--hz-ui-line-soft)] pl-1.5 font-semibold text-[#dbe4f0]"
+                        data-hz-topology-edge-row-window-context-owner="hertzbeat-ui-metric-table-row-window-context"
+                        data-hz-topology-edge-row-window-context={rowWindowVisibility}
+                        data-hz-topology-edge-row-window-context-source-visible={sourceVisible}
+                        data-hz-topology-edge-row-window-context-target-visible={targetVisible}
+                      >
+                        {rowWindowContextLabel}
                       </span>
                     ) : null}
                     {row.evidenceBadges?.map((badge, index) => (
@@ -14184,6 +14412,35 @@ export function HzTopologyMetricTable({
             );
           })}
         </div>
+        {hiddenRenderedRowCount > 0 ? (
+          <div
+            className={cn(
+              'flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-[var(--hz-ui-line-faint)] font-mono text-[#8f99ab]',
+              graphFirst ? 'px-2 py-2 text-[10px]' : 'px-3 py-2.5 text-[11px]'
+            )}
+            data-hz-topology-metric-table-row-render-summary-owner="hertzbeat-ui-metric-table-row-render-summary"
+          >
+            <span>{renderWindowRowSummary}</span>
+            {canShowMoreRenderedRows ? (
+              <button
+                type="button"
+                className="inline-flex min-h-7 items-center border border-[var(--hz-ui-line-soft)] bg-[#0b0c0f] px-2 font-semibold text-[#dbe4f0] transition-colors hover:border-[var(--hz-ui-line)]"
+                onClick={() => setRowRenderPage(page => page + 1)}
+                data-hz-topology-metric-table-row-render-action-owner="hertzbeat-ui-metric-table-row-render-action"
+                data-hz-topology-metric-table-row-render-action="show-more"
+                data-hz-topology-metric-table-row-render-action-invariants="append-rows-only no-url-change no-g6-remount viewport-preserved selection-preserved"
+                data-hz-topology-metric-table-row-render-action-effect="append-row-budget"
+                data-hz-topology-metric-table-row-render-action-filter-reset-policy="reset-row-budget-on-filter-change"
+                data-hz-topology-metric-table-row-render-action-url-policy="preserve-current-url"
+                data-hz-topology-metric-table-row-render-action-selection-policy="preserve-selected-edge"
+                data-hz-topology-metric-table-row-render-action-next-count={nextRowRenderCount}
+              >
+                {renderWindowShowMore}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        </>
       )}
     </section>
   );
