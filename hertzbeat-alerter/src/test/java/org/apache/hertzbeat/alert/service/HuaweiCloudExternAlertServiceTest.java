@@ -77,7 +77,10 @@ public class HuaweiCloudExternAlertServiceTest {
                 + "vaGePIRITakoynYyYr9zZIpdx9jXhQNlgF8np1+t0JxNeoIq0DYWgH52tsodwqOm+OnmkcHwCRo/1rFv85KrKAaX2gy3sNwX"
                 + "w1hKnAwAw0mJlxHHSf/N3+7j6GoxCNV7fN9K4CpJiLMGNvUa7zVmG0U9mPvt/7Lac155kPPQ9lYyeL7vVI0e4sfRbuQruz3E"
                 + "0ZP40TKx0afoeR0/Bx/IoZzRP1La7pKlbEISvkcM7TqW/IOGQTkhVsQ32RFRxZWO2snw==");
-        externAlert.setSubject("[华为云][紧急告警恢复]云监控通知：分布式缓存服务-DCS Redis实例 “dcs-h4tv” 的每秒并发操作数已恢复正常。");
+        externAlert.setSubject("[\u534e\u4e3a\u4e91][\u7d27\u6025\u544a\u8b66\u6062\u590d]"
+                + "\u4e91\u76d1\u63a7\u901a\u77e5：\u5206\u5e03\u5f0f\u7f13\u5b58\u670d\u52a1-DCS Redis"
+                + "\u5b9e\u4f8b “dcs-h4tv” \u7684\u6bcf\u79d2\u5e76\u53d1\u64cd\u4f5c\u6570"
+                + "\u5df2\u6062\u590d\u6b63\u5e38。");
         externAlert.setTopicUrn("urn:smn:cn-north-4:477a784601d744e4ab9ab83986502d31:CES_notification_group_bngJ2aMpX");
         externAlert.setMessageId("d3672d737bb742cf8c2aa3f0fd72d4d1");
         externAlert.setType("Notification");
@@ -94,15 +97,23 @@ public class HuaweiCloudExternAlertServiceTest {
         externAlert.setSignature("Igs0bBhzw0JGmlgBH+9ejw2xWfPTXjAatAEsKDkkWcC5bZ/jveckdRZdgp/S0JER9eiJfMF427YDABufIN0sv/vBRXaRQKfRBLTJYbSTl+AQpEbIW5yUfJSRLEG3HNEhUDjASolbrW7zdPCoGkkqjifE23FCvw"
                 + "+4tewMzqmHnfJHcFBq3W89CJzdPBjwO1UcY9C39moUZgqZk+qDVLpxb4bHSrEYAwPOSrOPR7TZpETJ30UOgFYajJydQk692edfs0NeVutHoQiOJ5/YC83ULHft0aXhichjtfZE4KF69nROAKez0ubk3l"
                 + "Ey/mBIM9Ylbxn5b84OIrzzZQrIWe8Syw==");
-        externAlert.setSubject("[华为云][紧急告警]云监控通知：分布式缓存服务-DCS Redis实例 “dcs-h4tv” 的每秒并发操作数已触发告警。");
+        externAlert.setSubject("[\u534e\u4e3a\u4e91][\u7d27\u6025\u544a\u8b66]"
+                + "\u4e91\u76d1\u63a7\u901a\u77e5：\u5206\u5e03\u5f0f\u7f13\u5b58\u670d\u52a1-DCS Redis"
+                + "\u5b9e\u4f8b “dcs-h4tv” \u7684\u6bcf\u79d2\u5e76\u53d1\u64cd\u4f5c\u6570"
+                + "\u5df2\u89e6\u53d1\u544a\u8b66。");
         externAlert.setTopicUrn("urn:smn:cn-north-4:477a784601d744e4ab9ab83986502d31:CES_notification_group_bngJ2aMpX");
         externAlert.setMessageId("1565df032a19494590d61e05f7b0dc0e");
         externAlert.setType("Notification");
-        externAlert.setMessage("{\"version\":\"v1\",\"data\":{\"AccountName\":\"hid_hk6tij5o1v-95zn\",\"Namespace\":\"分布式缓存服务\",\"DimensionName\":\"DCS Redis实例\",\"ResourceName\""
-                + ":\"dcs-h4tv\",\"MetricName\":\"每秒并发操作数\",\"IsAlarm\":true,\"AlarmLevel\":\"紧急\",\"Region\":\"华东-上海一\",\"RegionId\":\"cn-east-3\",\"ResourceId\":\"3dc7b9ea"
+        externAlert.setMessage("{\"version\":\"v1\",\"data\":{\"AccountName\":\"hid_hk6tij5o1v-95zn\","
+                + "\"Namespace\":\"\u5206\u5e03\u5f0f\u7f13\u5b58\u670d\u52a1\","
+                + "\"DimensionName\":\"DCS Redis\u5b9e\u4f8b\",\"ResourceName\""
+                + ":\"dcs-h4tv\",\"MetricName\":\"\u6bcf\u79d2\u5e76\u53d1\u64cd\u4f5c\u6570\","
+                + "\"IsAlarm\":true,\"AlarmLevel\":\"\u7d27\u6025\",\"Region\":\"\u534e\u4e1c-\u4e0a\u6d77\u4e00\","
+                + "\"RegionId\":\"cn-east-3\",\"ResourceId\":\"3dc7b9ea"
                 + "-70b4-4c38-942d-e2636e6d844c\",\"PrivateIp\":\"192.168.0.54\",\"CurrentData\":\"6.00 count\",\"AlarmTime\":\"2025/06/02 22:56:15 GMT+08:00\","
                 + "\"AlarmRecordID\":\"ah1748876175242njvndyzMZ\","
-                + "\"AlarmRuleName\":\"alarm-c5jj\",\"IsOriginalValue\":true,\"Filter\":\"原始值\",\"ComparisonOperator\":\"\\u003e\",\"Value\":\"5 count\",\"Unit\":\"count\",\"Count\":2}}");
+                + "\"AlarmRuleName\":\"alarm-c5jj\",\"IsOriginalValue\":true,\"Filter\":\"\u539f\u59cb\u503c\","
+                + "\"ComparisonOperator\":\"\\u003e\",\"Value\":\"5 count\",\"Unit\":\"count\",\"Count\":2}}");
         externAlert.setSigningCertUrl("https://smn.cn-north-4.myhuaweicloud.com/smn/SMN_cn-north-4_b98100ca131b4116ab8ee7ccedbaae99.pem");
         externAlert.setTimestamp("2025-06-02T14:56:17Z");
         externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
@@ -135,7 +146,10 @@ public class HuaweiCloudExternAlertServiceTest {
         externAlert.setSignature("TImrLoeb0tV1JZJSPyA0rpC9mNqH3MmhwQ4tgpuHHa+JztfGVZFvkU//OthKKhzpDAoYiXOYG9DbzXCLbvaGePIRITakoynYyYr9zZIpdx9jXhQNlgF8np"
                 + "1+t0JxNeoIq0DYWgH52tsodwqOm+OnmkcHwCRo/1rFv85KrKAaX2gy3sNwXw1hKnAwAw0mJlxHHSf/N3+7j6GoxCNV7fN9K4CpJiLMGNvUa7zVmG0U9mPvt/7Lac155kPPQ9l"
                 + "YyeL7vVI0e4sfRbuQruz3E0+ZP40TKx0afoeR0/Bx/IoZzRP1La7pKlbEISvkcM7TqW/IOGQTkhVsQ32RFRxZWO2snw==");
-        externAlert.setSubject("[华为云][紧急告警恢复]云监控通知：分布式缓存服务-DCS Redis实例 “dcs-h4tv” 的每秒并发操作数已恢复正常。");
+        externAlert.setSubject("[\u534e\u4e3a\u4e91][\u7d27\u6025\u544a\u8b66\u6062\u590d]"
+                + "\u4e91\u76d1\u63a7\u901a\u77e5：\u5206\u5e03\u5f0f\u7f13\u5b58\u670d\u52a1-DCS Redis"
+                + "\u5b9e\u4f8b “dcs-h4tv” \u7684\u6bcf\u79d2\u5e76\u53d1\u64cd\u4f5c\u6570"
+                + "\u5df2\u6062\u590d\u6b63\u5e38。");
         externAlert.setTopicUrn("urn:smn:cn-north-4:477a784601d744e4ab9ab83986502d31:CES_notification_group_bngJ2aMpX");
         externAlert.setMessageId("d3672d737bb742cf8c2aa3f0fd72d4d1");
         externAlert.setType("UnsubscribeConfirmation");

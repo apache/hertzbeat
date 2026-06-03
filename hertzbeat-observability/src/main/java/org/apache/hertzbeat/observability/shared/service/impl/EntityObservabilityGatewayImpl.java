@@ -265,80 +265,80 @@ public class EntityObservabilityGatewayImpl implements EntityObservabilityGatewa
         if (activeAlertCount > 0) {
             actions.add(new EntityNextActionInfo(
                     "review_alerts",
-                    "处理活跃告警",
-                    activeAlertCount + " 条活跃告警已经关联到当前实体，先确认影响范围和当前状态。",
-                    "查看活跃告警",
+                    ObservabilityMessages.get("observability.entity.next.review-alerts.title"),
+                    ObservabilityMessages.format("observability.entity.next.review-alerts.description", activeAlertCount),
+                    ObservabilityMessages.get("observability.entity.next.review-alerts.action"),
                     100
             ));
         }
         if (opsSummary != null && !opsSummary.isOwnerReady()) {
             actions.add(new EntityNextActionInfo(
                     "complete_owner",
-                    "补负责人",
-                    "当前实体还没有明确负责人，排障和治理动作缺少责任归属。",
-                    "补负责人",
+                    ObservabilityMessages.get("observability.entity.next.complete-owner.title"),
+                    ObservabilityMessages.get("observability.entity.next.complete-owner.description"),
+                    ObservabilityMessages.get("observability.entity.next.complete-owner.action"),
                     90
             ));
         }
         if (opsSummary != null && !opsSummary.isRunbookReady()) {
             actions.add(new EntityNextActionInfo(
                     "complete_runbook",
-                    "补处置手册",
-                    "先补一条 runbook 或处置入口，告警后才能直接推动恢复。",
-                    "补处置手册",
+                    ObservabilityMessages.get("observability.entity.next.complete-runbook.title"),
+                    ObservabilityMessages.get("observability.entity.next.complete-runbook.description"),
+                    ObservabilityMessages.get("observability.entity.next.complete-runbook.action"),
                     80
             ));
         }
         if (evidenceSummary != null && healthyMonitorCount + downMonitorCount == 0) {
             actions.add(new EntityNextActionInfo(
                     "bind_monitor",
-                    "补绑监控",
-                    "实体已经存在，但还没有绑定任何监控任务，当前状态只能停留在目录元数据层。",
-                    "关联监控",
+                    ObservabilityMessages.get("observability.entity.next.bind-monitor.title"),
+                    ObservabilityMessages.get("observability.entity.next.bind-monitor.description"),
+                    ObservabilityMessages.get("observability.entity.next.bind-monitor.action"),
                     75
             ));
         } else if (downMonitorCount > 0 && activeAlertCount == 0) {
             actions.add(new EntityNextActionInfo(
                     "bind_monitor",
-                    "查看异常监控",
-                    downMonitorCount + " 个监控当前异常，建议先确认哪个证据最值得继续排查。",
-                    "查看核心监控",
+                    ObservabilityMessages.get("observability.entity.next.abnormal-monitors.title"),
+                    ObservabilityMessages.format("observability.entity.next.abnormal-monitors.description", downMonitorCount),
+                    ObservabilityMessages.get("observability.entity.next.abnormal-monitors.action"),
                     74
             ));
         }
         if (opsSummary != null && !opsSummary.isTelemetryReady()) {
             actions.add(new EntityNextActionInfo(
                     "open_discovery",
-                    "归并证据到实体",
-                    "当前还没有形成足够的监控、身份或日志线索，建议先回到发现工作台归并证据。",
-                    "打开发现工作台",
+                    ObservabilityMessages.get("observability.entity.next.open-discovery.title"),
+                    ObservabilityMessages.get("observability.entity.next.open-discovery.description"),
+                    ObservabilityMessages.get("observability.entity.next.open-discovery.action"),
                     70
             ));
         }
         if (logSummary != null && logSummary.getHintCount() > 0 && activeAlertCount == 0) {
             actions.add(new EntityNextActionInfo(
                     "inspect_logs",
-                    "查看日志线索",
-                    "日志入口已经具备，先确认 OTel resource 或 fallback 查询是否能快速定位异常。",
-                    "查看日志线索",
+                    ObservabilityMessages.get("observability.entity.next.inspect-logs.title"),
+                    ObservabilityMessages.get("observability.entity.next.inspect-logs.description"),
+                    ObservabilityMessages.get("observability.entity.next.inspect-logs.action"),
                     60
             ));
         }
         if (opsSummary != null && !opsSummary.isRelationReady()) {
             actions.add(new EntityNextActionInfo(
                     "review_relations",
-                    "补关键关系",
-                    "关键上下游关系还不完整，建议先补齐最关键的依赖边界。",
-                    "查看关系",
+                    ObservabilityMessages.get("observability.entity.next.review-relations.title"),
+                    ObservabilityMessages.get("observability.entity.next.review-relations.description"),
+                    ObservabilityMessages.get("observability.entity.next.review-relations.action"),
                     50
             ));
         }
         if (actions.isEmpty()) {
             actions.add(new EntityNextActionInfo(
                     "inspect_logs",
-                    "继续排查当前实体",
-                    "目录归属和证据都已经具备，可以直接从日志或监控继续深入分析。",
-                    "查看日志线索",
+                    ObservabilityMessages.get("observability.entity.next.fallback.title"),
+                    ObservabilityMessages.get("observability.entity.next.fallback.description"),
+                    ObservabilityMessages.get("observability.entity.next.fallback.action"),
                     10
             ));
         }
@@ -366,11 +366,12 @@ public class EntityObservabilityGatewayImpl implements EntityObservabilityGatewa
     @Override
     public String buildEntityReturnLabel(ObservedEntityContext entityContext) {
         if (entityContext == null || entityContext.getEntity() == null) {
-            return "实体详情";
+            return ObservabilityMessages.get("observability.entity.return-label.fallback");
         }
         return defaultText(
                 trimToNull(entityContext.getEntity().getDisplayName()),
-                defaultText(trimToNull(entityContext.getEntity().getName()), "实体详情")
+                defaultText(trimToNull(entityContext.getEntity().getName()),
+                        ObservabilityMessages.get("observability.entity.return-label.fallback"))
         );
     }
 

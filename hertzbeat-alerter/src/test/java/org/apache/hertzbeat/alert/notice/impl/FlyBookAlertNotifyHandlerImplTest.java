@@ -18,11 +18,14 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.alert.AlerterProperties;
+import org.springframework.http.HttpEntity;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
@@ -31,6 +34,7 @@ import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,12 +46,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.regex.Pattern;
 
 /**
  * Test case for FlyBook Alert Notify
  */
 @ExtendWith(MockitoExtension.class)
 class FlyBookAlertNotifyHandlerImplTest {
+
+    private static final Pattern HAN_SCRIPT = Pattern.compile("\\p{IsHan}");
 
     @Mock
     private RestTemplate restTemplate;
@@ -87,6 +94,8 @@ class FlyBookAlertNotifyHandlerImplTest {
         template.setContent("test content");
         
         when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+        when(bundle.getString("alerter.notify.console")).thenReturn("Console Login");
+        flyBookAlertNotifyHandler.bundle = bundle;
     }
 
     @Test
@@ -101,14 +110,19 @@ class FlyBookAlertNotifyHandlerImplTest {
         successResp.setErrCode(0);
         ResponseEntity<CommonRobotNotifyResp> responseEntity = 
             new ResponseEntity<>(successResp, HttpStatus.OK);
+        ArgumentCaptor<HttpEntity<String>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
 
         when(restTemplate.postForEntity(
                 any(String.class),
-                any(),
+                requestCaptor.capture(),
                 eq(CommonRobotNotifyResp.class)
         )).thenReturn(responseEntity);
 
         flyBookAlertNotifyHandler.send(receiver, template, groupAlert);
+        String body = requestCaptor.getValue().getBody();
+        assertTrue(body.contains("\"content\": \"Alert Notification\""));
+        assertTrue(body.contains("\"content\": \"Console Login\""));
+        assertFalse(HAN_SCRIPT.matcher(body).find());
     }
 
     @Test

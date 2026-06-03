@@ -24,9 +24,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.regex.Pattern;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
@@ -44,6 +49,8 @@ import org.apache.hertzbeat.common.observability.model.CodeNavigationHint;
 import org.apache.hertzbeat.common.observability.model.ObservedEntityContext;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.warehouse.repository.LogQueryRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -51,9 +58,36 @@ import org.mockito.Mockito;
 
 class TelemetryIntakeServiceImplTest {
 
+    private static final Pattern HAN_SCRIPT = Pattern.compile("\\p{Script=Han}");
+    private static final Path TELEMETRY_INTAKE_SERVICE_IMPL = Path.of(
+            "src/main/java/org/apache/hertzbeat/observability/shared/service/impl/TelemetryIntakeServiceImpl.java");
+
     private final LogQueryRepository logQueryRepository = Mockito.mock(LogQueryRepository.class);
     private final TelemetryIntakeServiceImpl telemetryIntakeService =
             new TelemetryIntakeServiceImpl(logQueryRepository);
+
+    private Locale previousLocale;
+
+    @BeforeEach
+    void useEnglishCatalog() {
+        previousLocale = Locale.getDefault();
+        Locale.setDefault(Locale.US);
+        ResourceBundle.clearCache();
+    }
+
+    @AfterEach
+    void restoreLocale() {
+        Locale.setDefault(previousLocale);
+        ResourceBundle.clearCache();
+    }
+
+    @Test
+    void sourceShouldNotContainHanScriptUserFacingCopy() throws Exception {
+        String source = Files.readString(TELEMETRY_INTAKE_SERVICE_IMPL);
+
+        assertFalse(HAN_SCRIPT.matcher(source).find(),
+                "User-facing telemetry intake copy belongs in locale resources, not Java source");
+    }
 
     @Test
     void buildCodeNavigationHintUsesEntityCodeLocations() {
@@ -68,7 +102,7 @@ class TelemetryIntakeServiceImplTest {
                         "code.filepath", "hertzbeat-manager/src/main/java/org/apache/hertzbeat/manager/service/impl/ObserveEntityServiceImpl.java"
                 ),
                 List.of("localOtlpTraceIngest"),
-                "查看代码"
+                "View code"
         );
 
         assertNotNull(hint);
@@ -657,7 +691,7 @@ class TelemetryIntakeServiceImplTest {
                         "instance", "e2e",
                         "otlp.metric.compatibility", "partial",
                         "otlp.metric.compatibility.reason",
-                        "Summary quantiles 当前仅作为兼容元信息保留，尚未作为一等查询语义暴露。",
+                        "Summary quantiles are retained as compatibility metadata only.",
                         "otlp.metric.greptime.compatibility", "partial",
                         "otlp.metric.facade.compatibility", "partial",
                         "otlp.metric.summary.quantiles",
@@ -708,7 +742,7 @@ class TelemetryIntakeServiceImplTest {
         assertEquals("partial", metricEvidence.getAttributes().get("otlp.metric.compatibility"));
         assertTrue(metricEvidence.getAttributes().get("otlp.metric.summary.quantiles").contains("\"quantile\":0.95"));
         assertNotNull(metricEvidence.getOtelContext());
-        assertTrue(metricEvidence.getOtelContext().contains("部分支持"));
+        assertTrue(metricEvidence.getOtelContext().contains("partial support"));
         assertTrue(metricEvidence.getOtelContext().contains("Summary quantiles"));
     }
 

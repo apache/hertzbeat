@@ -71,7 +71,7 @@ class EvidenceDtoMigrationTest {
         EntityResponseHandoffInfo traceHandoff = new EntityResponseHandoffInfo(
                 "trace-1", "open", "critical", "checkout", "trace content", "trace-1", "span-1",
                 "checkout", "commerce", "ERROR", "trace_id='trace-1'", "platform", "checkout-system",
-                "prod", 1000L, 2000L, "otlp", "trace", codeNavigationHint, "/entities/1", "返回实体"
+                "prod", 1000L, 2000L, "otlp", "trace", codeNavigationHint, "/entities/1", "Back to entity"
         );
         EntityResponseHandoffsInfo handoffsInfo = new EntityResponseHandoffsInfo(
                 null, null, null, traceHandoff, null, null

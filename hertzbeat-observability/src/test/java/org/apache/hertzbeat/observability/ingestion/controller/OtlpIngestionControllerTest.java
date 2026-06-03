@@ -74,7 +74,8 @@ class OtlpIngestionControllerTest {
         );
         overview.setReadinessChecks(List.of(
                 new OtlpIngestionOverviewDto.ReadinessCheck(
-                        "collector", "Collector 集群", "success", "1 / 1 在线", "采集节点可接收任务", 1_710_000_000_100L)
+                        "collector", "Collector cluster", "success", "1 / 1 online",
+                        "Collector nodes can receive tasks.", 1_710_000_000_100L)
         ));
         when(otlpIngestionWorkspaceService.getOverview()).thenReturn(overview);
 
@@ -85,7 +86,7 @@ class OtlpIngestionControllerTest {
                 .andExpect(jsonPath("$.data.boundEntityCount").value(4))
                 .andExpect(jsonPath("$.data.logs.totalCount").value(5))
                 .andExpect(jsonPath("$.data.readinessChecks[0].key").value("collector"))
-                .andExpect(jsonPath("$.data.readinessChecks[0].summary").value("1 / 1 在线"));
+                .andExpect(jsonPath("$.data.readinessChecks[0].summary").value("1 / 1 online"));
 
         verify(otlpIngestionWorkspaceService).getOverview();
     }

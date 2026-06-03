@@ -62,7 +62,7 @@ class MonitorControllerTest {
         monitor.setName("TanCloud");
         monitor.setInstance("192.167.25.11:8989");
         monitor.setIntervals(600);
-        monitor.setDescription("对SAAS网站TanCloud的可用性监控");
+        monitor.setDescription("Availability monitoring for the TanCloud SaaS site");
         monitor.setCreator("tom");
         monitor.setModifier("tom");
 
@@ -160,7 +160,7 @@ class MonitorControllerTest {
         monitor.setName("TanCloud");
         monitor.setInstance("192.167.25.11:8989");
         monitor.setIntervals(600);
-        monitor.setDescription("对SAAS网站TanCloud的可用性监控");
+        monitor.setDescription("Availability monitoring for the TanCloud SaaS site");
         monitor.setCreator("tom");
         monitor.setModifier("tom");
 
@@ -203,7 +203,7 @@ class MonitorControllerTest {
         monitor.setName("TanCloud");
         monitor.setInstance("192.167.25.11:8989");
         monitor.setIntervals(600);
-        monitor.setDescription("对SAAS网站TanCloud的可用性监控");
+        monitor.setDescription("Availability monitoring for the TanCloud SaaS site");
         monitor.setCreator("tom");
         monitor.setModifier("tom");
 

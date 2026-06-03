@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Collections;
 import java.util.List;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -250,9 +251,12 @@ class ObserveEntityServiceTest {
     private EntityValidationService entityValidationService;
     private EntityWorkspaceAccessService entityWorkspaceAccessService;
     private EntityWorkspaceQueryService entityWorkspaceQueryService;
+    private Locale previousLocale;
 
     @BeforeEach
     void setUpNoiseControlDefaults() {
+        previousLocale = Locale.getDefault();
+        Locale.setDefault(Locale.US);
         telemetryIntakeService = org.mockito.Mockito.spy(new TelemetryIntakeServiceImpl(logQueryRepository));
         entityObservabilityGateway = org.mockito.Mockito.spy(
                 new EntityObservabilityGatewayImpl(telemetryIntakeService, entityTraceQueryService));
@@ -402,6 +406,7 @@ class ObserveEntityServiceTest {
     @AfterEach
     void tearDownRequestContext() {
         AuthTokenRequestContext.clear();
+        Locale.setDefault(previousLocale);
     }
 
     @Test
@@ -1330,7 +1335,7 @@ class ObserveEntityServiceTest {
         assertFalse(detail.getUnifiedEvidenceSummary().isTracesActive());
         assertNotNull(detail.getTriageRecommendation());
         assertEquals("metrics", detail.getTriageRecommendation().getRecommendedFocus());
-        assertEquals("查看监控", detail.getTriageRecommendation().getActionLabel());
+        assertEquals("View monitors", detail.getTriageRecommendation().getActionLabel());
         assertTrue(detail.getOpsSummary().isOwnerReady());
         assertTrue(detail.getOpsSummary().isRunbookReady());
         assertTrue(detail.getOpsSummary().isRelationReady());

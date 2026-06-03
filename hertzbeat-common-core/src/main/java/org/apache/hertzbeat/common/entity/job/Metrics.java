@@ -87,8 +87,7 @@ public class Metrics {
     private String name;
     /**
      * metrics name's i18n value
-     * zh-CN: CPU信息
-     * en-US: CPU Info
+     * Example: {"en-US": "CPU Info"}
      */
     private Map<String, String> i18n;
     /**

@@ -25,10 +25,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.regex.Pattern;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
@@ -59,15 +64,44 @@ import org.apache.hertzbeat.common.observability.dto.trace.EntityTraceQueryHintD
 import org.apache.hertzbeat.common.observability.dto.trace.EntityTraceSummaryDto;
 import org.apache.hertzbeat.common.observability.model.ObservedEntityContext;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 class EntityObservabilityGatewayImplTest {
 
+    private static final Pattern HAN_SCRIPT = Pattern.compile("\\p{Script=Han}");
+    private static final Path ENTITY_OBSERVABILITY_GATEWAY_IMPL = Path.of(
+            "src/main/java/org/apache/hertzbeat/observability/shared/service/impl/EntityObservabilityGatewayImpl.java");
+
     private final TelemetryIntakeServiceImpl telemetryIntakeService = Mockito.mock(TelemetryIntakeServiceImpl.class);
     private final EntityTraceQueryService entityTraceQueryService = Mockito.mock(EntityTraceQueryService.class);
     private final EntityObservabilityGatewayImpl gateway =
             new EntityObservabilityGatewayImpl(telemetryIntakeService, entityTraceQueryService);
+
+    private Locale previousLocale;
+
+    @BeforeEach
+    void useEnglishCatalog() {
+        previousLocale = Locale.getDefault();
+        Locale.setDefault(Locale.US);
+        ResourceBundle.clearCache();
+    }
+
+    @AfterEach
+    void restoreLocale() {
+        Locale.setDefault(previousLocale);
+        ResourceBundle.clearCache();
+    }
+
+    @Test
+    void sourceShouldNotContainHanScriptUserFacingCopy() throws Exception {
+        String source = Files.readString(ENTITY_OBSERVABILITY_GATEWAY_IMPL);
+
+        assertFalse(HAN_SCRIPT.matcher(source).find(),
+                "User-facing entity observability copy belongs in locale resources, not Java source");
+    }
 
     @Test
     void resolveEntityTraceSummaryShouldFallbackToQueryServiceWhenInactive() {
@@ -132,7 +166,7 @@ class EntityObservabilityGatewayImplTest {
         EntityUnifiedEvidenceSummary unifiedEvidenceSummary =
                 new EntityUnifiedEvidenceSummary(3, true, true, true, 1L, 1, 1, 12L, List.of("metrics", "logs", "traces"));
         EntityTriageRecommendation triageRecommendation =
-                new EntityTriageRecommendation("focus_logs", "logs", "处理日志", "查看日志", "high", "进入日志", 13L);
+                new EntityTriageRecommendation("focus_logs", "logs", "Handle logs", "Review logs", "high", "Open logs", 13L);
 
         when(telemetryIntakeService.buildMetricEvidence(any(), any(), any())).thenReturn(metricEvidence);
         when(telemetryIntakeService.buildLogEvidence(any(), any(), any())).thenReturn(logEvidence);
@@ -161,7 +195,7 @@ class EntityObservabilityGatewayImplTest {
     @Test
     void enrichEntityLogQueryHintsShouldPreferEvidenceAndTraceFallbacks() {
         EntityLogQueryHint originalHint = new EntityLogQueryHint();
-        originalHint.setTitle("原始日志");
+        originalHint.setTitle("Original logs");
         originalHint.setResourceFilters(Map.of());
         originalHint.setSearchTerms(List.of());
 
@@ -195,7 +229,7 @@ class EntityObservabilityGatewayImplTest {
 
         assertEquals(1, enriched.size());
         EntityLogQueryHint first = enriched.getFirst();
-        assertEquals("原始日志", first.getTitle());
+        assertEquals("Original logs", first.getTitle());
         assertEquals(Map.of("service.name", "checkout"), first.getResourceFilters());
         assertEquals(List.of("checkout", "error"), first.getSearchTerms());
         assertEquals("trace-1", first.getTraceId());
@@ -211,7 +245,7 @@ class EntityObservabilityGatewayImplTest {
     @Test
     void buildEntityLogSummaryShouldUsePreferredHintAsSummarySource() {
         EntityLogQueryHint hint = new EntityLogQueryHint(
-                "日志入口",
+                "Log entry",
                 Map.of("service.name", "checkout"),
                 List.of("checkout", "error"),
                 "trace-1",
@@ -226,8 +260,8 @@ class EntityObservabilityGatewayImplTest {
         EntityLogSummaryInfo summary = gateway.buildEntityLogSummary(List.of(hint));
 
         assertEquals(1, summary.getHintCount());
-        assertEquals("日志入口", summary.getPreferredQueryType());
-        assertEquals("日志入口", summary.getPreferredQueryTitle());
+        assertEquals("Log entry", summary.getPreferredQueryType());
+        assertEquals("Log entry", summary.getPreferredQueryTitle());
         assertEquals(Map.of("service.name", "checkout"), summary.getPreferredResourceFilters());
         assertEquals(List.of("checkout", "error"), summary.getPreferredSearchTerms());
         assertEquals("checkout", summary.getFallbackSearchTerm());
@@ -494,7 +528,7 @@ class EntityObservabilityGatewayImplTest {
 
         entity.setDisplayName(null);
         assertEquals("checkout-service", gateway.buildEntityReturnLabel(entityContext));
-        assertEquals("实体详情", gateway.buildEntityReturnLabel(ObservedEntityContext.from(null, Collections.emptyList())));
+        assertEquals("Entity detail", gateway.buildEntityReturnLabel(ObservedEntityContext.from(null, Collections.emptyList())));
     }
 
     @Test
@@ -654,7 +688,7 @@ class EntityObservabilityGatewayImplTest {
     void buildEntityDiscoveryHandoffShouldCarryEntityContextAndPreferAlertQuery() {
         EntityResponseHandoffInfo handoff = gateway.buildEntityDiscoveryHandoff(
                 "/entities/1",
-                "结账服务",
+                "Checkout service",
                 "team-a",
                 "checkout",
                 "prod",
@@ -665,7 +699,7 @@ class EntityObservabilityGatewayImplTest {
         );
 
         assertEquals("/entities/1", handoff.getReturnTo());
-        assertEquals("结账服务", handoff.getReturnLabel());
+        assertEquals("Checkout service", handoff.getReturnLabel());
         assertEquals("alert-token", handoff.getQuery());
         assertEquals("team-a", handoff.getOwner());
         assertEquals("checkout", handoff.getSystem());
@@ -676,13 +710,13 @@ class EntityObservabilityGatewayImplTest {
     @Test
     void buildEntityEditorHandoffShouldSelectFocusByReadinessPriority() {
         EntityResponseHandoffInfo ownershipHandoff =
-                gateway.buildEntityEditorHandoff("/entities/1", "结账服务", false, true, true, true);
+                gateway.buildEntityEditorHandoff("/entities/1", "Checkout service", false, true, true, true);
         EntityResponseHandoffInfo relationHandoff =
-                gateway.buildEntityEditorHandoff("/entities/1", "结账服务", true, true, false, true);
+                gateway.buildEntityEditorHandoff("/entities/1", "Checkout service", true, true, false, true);
         EntityResponseHandoffInfo monitorHandoff =
-                gateway.buildEntityEditorHandoff("/entities/1", "结账服务", true, true, true, false);
+                gateway.buildEntityEditorHandoff("/entities/1", "Checkout service", true, true, true, false);
         EntityResponseHandoffInfo defaultHandoff =
-                gateway.buildEntityEditorHandoff("/entities/1", "结账服务", true, true, true, true);
+                gateway.buildEntityEditorHandoff("/entities/1", "Checkout service", true, true, true, true);
 
         assertEquals("ownership", ownershipHandoff.getFocus());
         assertEquals("relations", relationHandoff.getFocus());
@@ -694,7 +728,7 @@ class EntityObservabilityGatewayImplTest {
     void buildEntityResponseHandoffsShouldAssembleAllTargetsFromRequest() {
         ObserveEntity entity = new ObserveEntity();
         entity.setName("checkout");
-        entity.setDisplayName("结账服务");
+        entity.setDisplayName("Checkout service");
         EntityIdentity identity = EntityIdentity.builder()
                 .identityKey("service.name")
                 .identityValue("checkout")
@@ -704,7 +738,7 @@ class EntityObservabilityGatewayImplTest {
         EntityTraceSummaryDto traceSummary = new EntityTraceSummaryDto(1, 1, 20L, true, "trace-1");
         EntityResponseHandoffsRequest request = new EntityResponseHandoffsRequest(
                 "/entities/1",
-                "结账服务",
+                "Checkout service",
                 "team-a",
                 "checkout-system",
                 "prod",
@@ -758,7 +792,7 @@ class EntityObservabilityGatewayImplTest {
         );
         EntityResponseHandoffsRequest request = new EntityResponseHandoffsRequest(
                 "/entities/1",
-                "结账服务",
+                "Checkout service",
                 "team-a",
                 "checkout-system",
                 "prod",

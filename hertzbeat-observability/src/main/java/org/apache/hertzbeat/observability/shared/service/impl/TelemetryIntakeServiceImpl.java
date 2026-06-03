@@ -591,7 +591,7 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                             preferredMonitor == null ? Collections.emptyList() : List.of(defaultText(preferredMonitor.getName(), preferredMonitor.getInstance())),
                             defaultText(preferredMonitor == null ? null : preferredMonitor.getName(), "monitor")),
                     "entity.monitor.availability",
-                    "实体监控状态",
+                    ObservabilityMessages.get("observability.telemetry.metric.entity-monitor-status"),
                     "summary",
                     "count",
                     (double) healthyCount,
@@ -965,21 +965,28 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                 && !"normal".equalsIgnoreCase(item.getSeverityOrHealth()));
         if (metricsRequireAttention) {
             String summary = activeAlerts > 0
-                    ? "当前已有活跃告警，建议先确认监控面是否正在持续异常。"
-                    : "当前监控面已经出现异常或波动，建议先从指标和监控状态入手。";
+                    ? ObservabilityMessages.get("observability.telemetry.triage.metrics.alert.summary")
+                    : ObservabilityMessages.get("observability.telemetry.triage.metrics.monitor.summary");
             String whyNow = activeAlerts > 0
-                    ? "活跃告警通常意味着影响已经明确，可先查看监控和告警上下文。"
-                    : "异常监控最能快速反映健康度变化，适合作为第一观察面。";
-            return new EntityTriageRecommendation("rule", FOCUS_METRICS, "优先查看监控", summary, whyNow, "查看监控", now);
+                    ? ObservabilityMessages.get("observability.telemetry.triage.metrics.alert.reason")
+                    : ObservabilityMessages.get("observability.telemetry.triage.metrics.monitor.reason");
+            return new EntityTriageRecommendation(
+                    "rule",
+                    FOCUS_METRICS,
+                    ObservabilityMessages.get("observability.telemetry.triage.metrics.title"),
+                    summary,
+                    whyNow,
+                    ObservabilityMessages.get("observability.telemetry.triage.metrics.action"),
+                    now);
         }
         if (traceSummary != null && traceSummary.getRecentErrorTraceCount() > 0 || !CollectionUtils.isEmpty(traceEvidence)) {
             return new EntityTriageRecommendation(
                     "rule",
                     FOCUS_TRACES,
-                    "优先查看链路",
-                    "当前链路侧已经出现错误或活跃调用，适合先查看调用路径和错误跨度。",
-                    "链路最容易帮助定位请求经过了哪些组件，以及失败发生在什么位置。",
-                    "查看链路",
+                    ObservabilityMessages.get("observability.telemetry.triage.traces.title"),
+                    ObservabilityMessages.get("observability.telemetry.triage.traces.summary"),
+                    ObservabilityMessages.get("observability.telemetry.triage.traces.reason"),
+                    ObservabilityMessages.get("observability.telemetry.triage.traces.action"),
                     now
             );
         }
@@ -987,20 +994,20 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
             return new EntityTriageRecommendation(
                     "rule",
                     FOCUS_LOGS,
-                    "优先查看日志",
-                    "当前已有可直接使用的日志检索线索，适合先查看最近错误文本和上下文。",
-                    "日志通常能最快补全异常细节，帮助确认具体报错和影响范围。",
-                    "查看日志",
+                    ObservabilityMessages.get("observability.telemetry.triage.logs.title"),
+                    ObservabilityMessages.get("observability.telemetry.triage.logs.summary"),
+                    ObservabilityMessages.get("observability.telemetry.triage.logs.reason"),
+                    ObservabilityMessages.get("observability.telemetry.triage.logs.action"),
                     now
             );
         }
         return new EntityTriageRecommendation(
                 "rule",
                 FOCUS_EVIDENCE,
-                "继续补充证据",
-                "当前还没有足够强的三信号线索，建议先确认接入状态或补充更多运行数据。",
-                "先确认最近是否已经收到指标、日志或链路数据，再继续定位。",
-                "查看证据",
+                ObservabilityMessages.get("observability.telemetry.triage.evidence.title"),
+                ObservabilityMessages.get("observability.telemetry.triage.evidence.summary"),
+                ObservabilityMessages.get("observability.telemetry.triage.evidence.reason"),
+                ObservabilityMessages.get("observability.telemetry.triage.evidence.action"),
                 now
         );
     }
@@ -1269,12 +1276,12 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
 
         List<String> segments = new ArrayList<>();
         if (StringUtils.hasText(compatibility)) {
-            segments.add("OTLP metrics 兼容性：" + switch (compatibility) {
-                case "supported" -> "支持";
-                case "partial" -> "部分支持";
-                case "unsupported" -> "不支持";
+            segments.add(ObservabilityMessages.format("observability.telemetry.metric.context.compatibility", switch (compatibility) {
+                case "supported" -> ObservabilityMessages.get("observability.telemetry.metric.context.supported");
+                case "partial" -> ObservabilityMessages.get("observability.telemetry.metric.context.partial");
+                case "unsupported" -> ObservabilityMessages.get("observability.telemetry.metric.context.unsupported");
                 default -> compatibility;
-            });
+            }));
         }
         if (StringUtils.hasText(greptimeCompatibility) || StringUtils.hasText(facadeCompatibility)) {
             segments.add("Greptime=" + defaultText(greptimeCompatibility, "unknown")
@@ -1287,10 +1294,10 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
             segments.add("monotonic=" + monotonic);
         }
         if ("summary".equals(metricType) && StringUtils.hasText(quantiles)) {
-            segments.add("Summary quantiles 已保留兼容元信息");
+            segments.add(ObservabilityMessages.get("observability.telemetry.metric.context.summary-quantiles"));
         }
         if ("histogram".equals(metricType) && StringUtils.hasText(histogramBuckets) && StringUtils.hasText(histogramBounds)) {
-            segments.add("Histogram buckets/bounds 已保留兼容元信息");
+            segments.add(ObservabilityMessages.get("observability.telemetry.metric.context.histogram-buckets"));
         }
         if (StringUtils.hasText(reason)) {
             segments.add(reason);

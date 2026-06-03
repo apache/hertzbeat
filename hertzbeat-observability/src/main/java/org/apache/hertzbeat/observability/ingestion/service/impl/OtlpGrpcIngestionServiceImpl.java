@@ -1633,7 +1633,7 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
             return observations;
         }
         return List.of(new MetricObservation("metric", null, null, baseMetricMetadata("unsupported", "unsupported",
-                "unsupported", "未知 OTLP metric 类型，当前未被 HertzBeat facade 识别。")));
+                "unsupported", OtlpIngestionMessages.get("observability.otlp.metric.compatibility.unknown-type"))));
     }
 
     private MetricObservation fromNumberDataPoint(String metricType,
@@ -1664,7 +1664,7 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
                 "partial",
                 "supported",
                 "partial",
-                "Histogram 指标已写入 Greptime，但 HertzBeat 当前 facade 仅保留代表值与 bucket/bounds 元信息，未提供完整 histogram 查询语义。"
+                OtlpIngestionMessages.get("observability.otlp.metric.compatibility.histogram.reason")
         );
         appendMetricTimeRange(metadata, point.getStartTimeUnixNano(), point.getTimeUnixNano());
         metadata.put(OTLP_METRIC_DATA_POINT_COUNT, String.valueOf(dataPointCount));
@@ -1692,7 +1692,7 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
                 "unsupported",
                 "unsupported",
                 "partial",
-                "Greptime 当前 OTLP metrics 数据模型不支持 ExponentialHistogram；HertzBeat 仅保留代表值与兼容性元信息。"
+                OtlpIngestionMessages.get("observability.otlp.metric.compatibility.exponential-histogram.reason")
         );
         appendMetricTimeRange(metadata, point.getStartTimeUnixNano(), point.getTimeUnixNano());
         metadata.put(OTLP_METRIC_DATA_POINT_COUNT, String.valueOf(dataPointCount));
@@ -1724,7 +1724,7 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
                 "partial",
                 "partial",
                 "partial",
-                "Summary quantiles 语义受 Greptime 数据模型与当前 HertzBeat facade 限制，当前仅保留 summary/quantiles 元信息。"
+                OtlpIngestionMessages.get("observability.otlp.metric.compatibility.summary.reason")
         );
         appendMetricTimeRange(metadata, point.getStartTimeUnixNano(), point.getTimeUnixNano());
         metadata.put(OTLP_METRIC_DATA_POINT_COUNT, String.valueOf(dataPointCount));
@@ -1802,18 +1802,24 @@ public class OtlpGrpcIngestionServiceImpl implements OtlpGrpcIngestionService {
             metadata.put(OTLP_METRIC_COMPATIBILITY_REASON, overallReason);
         }
         if ("supported".equals(greptimeCompatibility)) {
-            metadata.put(OTLP_METRIC_GREPTIME_REASON, "Greptime 当前 OTLP metrics 数据模型支持该类型。");
+            metadata.put(OTLP_METRIC_GREPTIME_REASON,
+                    OtlpIngestionMessages.get("observability.otlp.metric.greptime.reason.supported"));
         } else if ("partial".equals(greptimeCompatibility)) {
-            metadata.put(OTLP_METRIC_GREPTIME_REASON, "Greptime 当前 OTLP metrics 数据模型仅部分保留该类型语义。");
+            metadata.put(OTLP_METRIC_GREPTIME_REASON,
+                    OtlpIngestionMessages.get("observability.otlp.metric.greptime.reason.partial"));
         } else {
-            metadata.put(OTLP_METRIC_GREPTIME_REASON, "Greptime 当前 OTLP metrics 数据模型不支持该类型。");
+            metadata.put(OTLP_METRIC_GREPTIME_REASON,
+                    OtlpIngestionMessages.get("observability.otlp.metric.greptime.reason.unsupported"));
         }
         if ("supported".equals(facadeCompatibility)) {
-            metadata.put(OTLP_METRIC_FACADE_REASON, "HertzBeat 当前 facade 可直接消费该类型。");
+            metadata.put(OTLP_METRIC_FACADE_REASON,
+                    OtlpIngestionMessages.get("observability.otlp.metric.facade.reason.supported"));
         } else if ("partial".equals(facadeCompatibility)) {
-            metadata.put(OTLP_METRIC_FACADE_REASON, "HertzBeat 当前 facade 仅保留代表值与兼容元信息。");
+            metadata.put(OTLP_METRIC_FACADE_REASON,
+                    OtlpIngestionMessages.get("observability.otlp.metric.facade.reason.partial"));
         } else {
-            metadata.put(OTLP_METRIC_FACADE_REASON, "HertzBeat 当前 facade 不支持该类型。");
+            metadata.put(OTLP_METRIC_FACADE_REASON,
+                    OtlpIngestionMessages.get("observability.otlp.metric.facade.reason.unsupported"));
         }
         return metadata;
     }

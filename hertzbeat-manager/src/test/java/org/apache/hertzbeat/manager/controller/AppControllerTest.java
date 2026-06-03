@@ -71,7 +71,7 @@ class AppControllerTest {
         paramDefine.setField("port");
         paramDefine.setType("number");
         paramDefine.setDefaultValue("12");
-        paramDefine.setPlaceholder("请输出密码");
+        paramDefine.setPlaceholder("Enter password");
         paramDefine.setCreator("tom");
         paramDefine.setModifier("tom");
         paramDefines.add(paramDefine);
@@ -227,7 +227,7 @@ class AppControllerTest {
     void queryAppsHierarchy() throws Exception {
         // Data to make
         Hierarchy hierarchy = new Hierarchy();
-        hierarchy.setLabel("Linux系统");
+        hierarchy.setLabel("Linux system");
         hierarchy.setValue("linux");
         hierarchy.setCategory("os");
         List<Hierarchy> list = new ArrayList<>();

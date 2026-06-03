@@ -219,8 +219,10 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 || latestMetricSnapshot.getObservedAt() >= latestMonitorObservedAt)) {
             recentEvents.add(new OtlpIngestionOverviewDto.RecentSignalEvent(
                     "metrics",
-                    defaultText(latestMetricSnapshot.getServiceName(), "指标已接入"),
-                    defaultText(latestMetricSnapshot.getServiceNamespace(), "最近已收到指标数据"),
+                    defaultText(latestMetricSnapshot.getServiceName(),
+                            message("observability.otlp.overview.event.metrics.title")),
+                    defaultText(latestMetricSnapshot.getServiceNamespace(),
+                            message("observability.otlp.overview.event.metrics.copy")),
                     latestMetricSnapshot.getObservedAt()
             ));
         } else if (latestMonitor.isPresent()) {
@@ -254,7 +256,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                         monitorTotalCount + otlpMetricCount,
                         metricsLatestObservedAt,
                         metricsIntakeMode(monitorTotalCount, otlpMetricCount),
-                        metricsActive ? "最近已收到可查看的指标数据" : "最近 24 小时还没有指标数据"
+                        metricsActive
+                                ? message("observability.otlp.overview.metrics.active")
+                                : message("observability.otlp.overview.metrics.inactive")
                 ),
                 new OtlpIngestionOverviewDto.SignalOverview(
                         "logs",
@@ -262,7 +266,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                         logTotalCount,
                         logsLatestObservedAt,
                         "OTLP",
-                        logTotalCount > 0 ? "最近 24 小时已收到日志数据" : "最近 24 小时还没有日志数据"
+                        logTotalCount > 0
+                                ? message("observability.otlp.overview.logs.active")
+                                : message("observability.otlp.overview.logs.inactive")
                 ),
                 new OtlpIngestionOverviewDto.SignalOverview(
                         "traces",
@@ -270,7 +276,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                         traceOverview.getTotalTraceCount(),
                         traceOverview.getLatestObservedAt(),
                         "OTLP",
-                        traceOverview.getTotalTraceCount() > 0 ? "最近 24 小时已收到链路数据" : "最近 24 小时还没有链路数据"
+                        traceOverview.getTotalTraceCount() > 0
+                                ? message("observability.otlp.overview.traces.active")
+                                : message("observability.otlp.overview.traces.inactive")
                 ),
                 activeSignalCount,
                 latestObservedAt,
@@ -294,72 +302,90 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         long total = workspaceQueryGateway.countCollectors();
         long online = workspaceQueryGateway.countCollectorsByStatus(CommonConstants.COLLECTOR_STATUS_ONLINE);
         if (total <= 0) {
-            return readinessCheck("collector", "Collector 集群", "warning", "未注册 Collector",
-                    "先部署 Collector 或使用内置采集入口", checkedAt);
+            return readinessCheck("collector", message("observability.otlp.readiness.collector.title"), "warning",
+                    message("observability.otlp.readiness.collector.unregistered"),
+                    message("observability.otlp.readiness.collector.deploy"), checkedAt);
         }
         if (online >= total) {
-            return readinessCheck("collector", "Collector 集群", "success", online + " / " + total + " 在线",
-                    "采集节点可接收任务", checkedAt);
+            return readinessCheck("collector", message("observability.otlp.readiness.collector.title"), "success",
+                    message("observability.otlp.readiness.collector.online", online, total),
+                    message("observability.otlp.readiness.collector.accepting"), checkedAt);
         }
         if (online > 0) {
-            return readinessCheck("collector", "Collector 集群", "warning", online + " / " + total + " 在线",
-                    (total - online) + " 个采集节点离线", checkedAt);
+            return readinessCheck("collector", message("observability.otlp.readiness.collector.title"), "warning",
+                    message("observability.otlp.readiness.collector.online", online, total),
+                    message("observability.otlp.readiness.collector.offline", total - online), checkedAt);
         }
-        return readinessCheck("collector", "Collector 集群", "danger", "0 / " + total + " 在线",
-                "所有采集节点离线", checkedAt);
+        return readinessCheck("collector", message("observability.otlp.readiness.collector.title"), "danger",
+                message("observability.otlp.readiness.collector.online", 0, total),
+                message("observability.otlp.readiness.collector.all-offline"), checkedAt);
     }
 
     private OtlpIngestionOverviewDto.ReadinessCheck buildStorageReadiness(long checkedAt) {
         int total = historyDataReaders.size();
         long available = countAvailableHistoryReaders();
         if (total <= 0) {
-            return readinessCheck("storage", "历史存储", "warning", "未启用历史存储",
-                    "检查历史存储配置", checkedAt);
+            return readinessCheck("storage", message("observability.otlp.readiness.storage.title"), "warning",
+                    message("observability.otlp.readiness.storage.disabled"),
+                    message("observability.otlp.readiness.storage.check-config"), checkedAt);
         }
         if (available >= total) {
-            return readinessCheck("storage", "历史存储", "success", available + " / " + total + " 可用",
-                    "HistoryDataReader 可用", checkedAt);
+            return readinessCheck("storage", message("observability.otlp.readiness.storage.title"), "success",
+                    message("observability.otlp.readiness.storage.available", available, total),
+                    message("observability.otlp.readiness.storage.reader-available"), checkedAt);
         }
         if (available > 0) {
-            return readinessCheck("storage", "历史存储", "warning", available + " / " + total + " 可用",
-                    "部分历史存储不可用", checkedAt);
+            return readinessCheck("storage", message("observability.otlp.readiness.storage.title"), "warning",
+                    message("observability.otlp.readiness.storage.available", available, total),
+                    message("observability.otlp.readiness.storage.partial"), checkedAt);
         }
-        return readinessCheck("storage", "历史存储", "danger", "0 / " + total + " 可用",
-                "检查历史存储配置", checkedAt);
+        return readinessCheck("storage", message("observability.otlp.readiness.storage.title"), "danger",
+                message("observability.otlp.readiness.storage.available", 0, total),
+                message("observability.otlp.readiness.storage.check-config"), checkedAt);
     }
 
     private OtlpIngestionOverviewDto.ReadinessCheck buildQueryReadiness(long checkedAt) {
         boolean promqlAvailable = hasPromqlExecutor();
         boolean historyAvailable = countAvailableHistoryReaders() > 0;
         if (promqlAvailable && historyAvailable) {
-            return readinessCheck("query", "查询服务", "success", "指标、日志和链路查询可用",
-                    "PromQL 与历史查询可用", checkedAt);
+            return readinessCheck("query", message("observability.otlp.readiness.query.title"), "success",
+                    message("observability.otlp.readiness.query.available"),
+                    message("observability.otlp.readiness.query.promql-history"), checkedAt);
         }
         if (promqlAvailable || historyAvailable) {
-            return readinessCheck("query", "查询服务", "warning", "部分查询能力可用",
-                    promqlAvailable ? "PromQL 可用，历史查询待检查" : "历史查询可用，PromQL 待检查", checkedAt);
+            return readinessCheck("query", message("observability.otlp.readiness.query.title"), "warning",
+                    message("observability.otlp.readiness.query.partial"),
+                    promqlAvailable
+                            ? message("observability.otlp.readiness.query.promql-only")
+                            : message("observability.otlp.readiness.query.history-only"), checkedAt);
         }
-        return readinessCheck("query", "查询服务", "danger", "查询服务不可用",
-                "检查 PromQL 与历史查询配置", checkedAt);
+        return readinessCheck("query", message("observability.otlp.readiness.query.title"), "danger",
+                message("observability.otlp.readiness.query.unavailable"),
+                message("observability.otlp.readiness.query.check-config"), checkedAt);
     }
 
     private OtlpIngestionOverviewDto.ReadinessCheck buildGreptimeReadiness(long checkedAt) {
         boolean greptimeEnabled = greptimeProperties.stream().anyMatch(GreptimeProperties::enabled);
         if (!greptimeEnabled) {
-            return readinessCheck("greptime", "GreptimeDB", "neutral", "未启用 GreptimeDB",
-                    "当前使用其他历史存储或尚未配置", checkedAt);
+            return readinessCheck("greptime", "GreptimeDB", "neutral",
+                    message("observability.otlp.readiness.greptime.disabled"),
+                    message("observability.otlp.readiness.greptime.other-storage"), checkedAt);
         }
         if (greptimeSqlQueryExecutors.isEmpty()) {
-            return readinessCheck("greptime", "GreptimeDB", "warning", "GreptimeDB 已启用，SQL 执行器未就绪",
-                    "检查 GreptimeDB HTTP 配置", checkedAt);
+            return readinessCheck("greptime", "GreptimeDB", "warning",
+                    message("observability.otlp.readiness.greptime.sql-not-ready"),
+                    message("observability.otlp.readiness.greptime.check-http"), checkedAt);
         }
         try {
             greptimeSqlQueryExecutors.getFirst().execute("SELECT 1");
-            return readinessCheck("greptime", "GreptimeDB", "success", "SQL 自检通过",
-                    "SELECT 1 成功", checkedAt);
+            return readinessCheck("greptime", "GreptimeDB", "success",
+                    message("observability.otlp.readiness.greptime.sql-ok"),
+                    message("observability.otlp.readiness.greptime.select-ok"), checkedAt);
         } catch (RuntimeException exception) {
-            return readinessCheck("greptime", "GreptimeDB", "danger", "SQL 自检失败",
-                    defaultText(exception.getMessage(), "检查 GreptimeDB 连接"), checkedAt);
+            return readinessCheck("greptime", "GreptimeDB", "danger",
+                    message("observability.otlp.readiness.greptime.sql-failed"),
+                    defaultText(exception.getMessage(),
+                            message("observability.otlp.readiness.greptime.check-connection")), checkedAt);
         }
     }
 
@@ -483,9 +509,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     "deployment.environment.name": "prod",
                 })
 
-                # 所有 signals 统一发送到 HertzBeat OTLP HTTP 入口：
                 # %s
-                """.formatted(unifiedBaseEndpoint);
+                # %s
+                """.formatted(message("observability.otlp.guide.snippet.python.http.comment"), unifiedBaseEndpoint);
         String pythonGrpcSnippet = """
                 from opentelemetry.sdk.resources import Resource
                 resource = Resource.create({
@@ -494,9 +520,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     "deployment.environment.name": "prod",
                 })
 
-                # 所有 signals 统一发送到 HertzBeat OTLP gRPC 入口：
                 # %s
-                """.formatted(grpcEndpoint);
+                # %s
+                """.formatted(message("observability.otlp.guide.snippet.python.grpc.comment"), grpcEndpoint);
 
         return new OtlpIngestionGuideDto(
                 "OTLP HTTP",
@@ -510,57 +536,61 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                 "http",
                                 "OTLP HTTP",
                                 metricsEndpoint,
-                                "把指标数据发送到这个 OTLP HTTP 地址。收到数据后，可直接在监控和实体详情中继续查看。",
-                                "如果已经配置了监控任务，数据会继续显示在对应的监控项中。"
+                                message("observability.otlp.guide.metrics.http.description"),
+                                message("observability.otlp.guide.metrics.http.note")
                         ),
                         new OtlpIngestionGuideDto.SignalGuide(
                                 "logs",
                                 "http",
                                 "OTLP HTTP",
                                 logsEndpoint,
-                                "把日志数据发送到这个 OTLP HTTP 地址。收到数据后，可直接前往日志管理查看。",
-                                "使用接入令牌即可完成认证。"
+                                message("observability.otlp.guide.logs.http.description"),
+                                message("observability.otlp.guide.logs.http.note")
                         ),
                         new OtlpIngestionGuideDto.SignalGuide(
                                 "traces",
                                 "http",
                                 "OTLP HTTP",
                                 traceEndpoint,
-                                "把链路数据发送到这个 OTLP HTTP 地址。收到数据后，可直接前往链路管理查看。",
-                                "系统会根据服务信息自动尝试关联到实体。"
+                                message("observability.otlp.guide.traces.http.description"),
+                                message("observability.otlp.guide.traces.http.note")
                         ),
                         new OtlpIngestionGuideDto.SignalGuide(
                                 "metrics",
                                 "grpc",
                                 "OTLP gRPC",
                                 grpcEndpoint,
-                                "把指标数据发送到这个 OTLP gRPC 地址，适合已经使用 OpenTelemetry Collector 或语言 SDK 的服务。",
-                                "收到数据后，可直接在监控和实体详情中继续查看。"
+                                message("observability.otlp.guide.metrics.grpc.description"),
+                                message("observability.otlp.guide.metrics.grpc.note")
                         ),
                         new OtlpIngestionGuideDto.SignalGuide(
                                 "logs",
                                 "grpc",
                                 "OTLP gRPC",
                                 grpcEndpoint,
-                                "把日志数据发送到这个 OTLP gRPC 地址。收到数据后，可直接前往日志管理查看。",
-                                "使用 Authorization Bearer 接入令牌即可完成认证。"
+                                message("observability.otlp.guide.logs.grpc.description"),
+                                message("observability.otlp.guide.logs.grpc.note")
                         ),
                         new OtlpIngestionGuideDto.SignalGuide(
                                 "traces",
                                 "grpc",
                                 "OTLP gRPC",
                                 grpcEndpoint,
-                                "把链路数据发送到这个 OTLP gRPC 地址。收到数据后，可直接前往链路管理查看。",
-                                "系统会根据服务信息自动尝试关联到实体。"
+                                message("observability.otlp.guide.traces.grpc.description"),
+                                message("observability.otlp.guide.traces.grpc.note")
                         )
                 ),
                 List.of(
                         new OtlpIngestionGuideDto.Snippet("collector-http", "http", "OpenTelemetry Collector", "yaml", collectorSnippet),
-                        new OtlpIngestionGuideDto.Snippet("java-http", "http", "Java 环境变量", "bash", javaSnippet),
-                        new OtlpIngestionGuideDto.Snippet("python-http", "http", "Python 资源属性", "python", pythonSnippet),
+                        new OtlpIngestionGuideDto.Snippet("java-http", "http",
+                                message("observability.otlp.guide.snippet.java-env"), "bash", javaSnippet),
+                        new OtlpIngestionGuideDto.Snippet("python-http", "http",
+                                message("observability.otlp.guide.snippet.python-resource"), "python", pythonSnippet),
                         new OtlpIngestionGuideDto.Snippet("collector-grpc", "grpc", "OpenTelemetry Collector", "yaml", collectorGrpcSnippet),
-                        new OtlpIngestionGuideDto.Snippet("java-grpc", "grpc", "Java 环境变量", "bash", javaGrpcSnippet),
-                        new OtlpIngestionGuideDto.Snippet("python-grpc", "grpc", "Python 资源属性", "python", pythonGrpcSnippet)
+                        new OtlpIngestionGuideDto.Snippet("java-grpc", "grpc",
+                                message("observability.otlp.guide.snippet.java-env"), "bash", javaGrpcSnippet),
+                        new OtlpIngestionGuideDto.Snippet("python-grpc", "grpc",
+                                message("observability.otlp.guide.snippet.python-resource"), "python", pythonGrpcSnippet)
                 )
         );
     }
@@ -666,7 +696,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     null,
                     new OtlpMetricsConsoleDto.Stats(0, 0, null),
                     "no_context",
-                    "缺少可用于构建 OTLP 指标查询的服务上下文。"
+                    message("observability.otlp.metrics-console.no-context")
             );
         }
         if (!metricQueryRepository.hasPromqlExecutor()) {
@@ -678,7 +708,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     null,
                     new OtlpMetricsConsoleDto.Stats(0, 0, null),
                     "load_failed",
-                    "当前环境未配置可用的 PromQL 指标查询执行器。"
+                    message("observability.otlp.metrics-console.promql-unavailable")
             );
         }
         MetricsQueryExecution execution = executeMetricsConsoleQuery(resolvedQuery, resolvedStart, resolvedEnd);
@@ -1166,12 +1196,20 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
 
     private String metricsIntakeMode(long monitorTotalCount, long otlpMetricCount) {
         if (monitorTotalCount > 0 && otlpMetricCount > 0) {
-            return "OTLP + 实体监控";
+            return message("observability.otlp.overview.metrics.mode.mixed");
         }
         if (otlpMetricCount > 0) {
             return "OTLP";
         }
-        return "实体监控";
+        return message("observability.otlp.overview.metrics.mode.monitor");
+    }
+
+    private static String message(String key) {
+        return OtlpIngestionMessages.get(key);
+    }
+
+    private static String message(String key, Object... args) {
+        return OtlpIngestionMessages.format(key, args);
     }
 
     private String defaultText(String primary, String fallback) {

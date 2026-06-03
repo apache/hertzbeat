@@ -153,7 +153,7 @@ class EntityDetailObservabilityReadModelServiceTest {
         EntityUnifiedEvidenceSummary unifiedSummary = new EntityUnifiedEvidenceSummary(
                 2, true, true, false, 1, 1, 0, 987L, List.of("metrics", "logs"));
         EntityTriageRecommendation triage = new EntityTriageRecommendation(
-                "evidence", "metrics", "Metrics first", "Down monitor", "active alert", "查看监控", 987L);
+                "evidence", "metrics", "Metrics first", "Down monitor", "active alert", "View monitors", 987L);
         List<org.apache.hertzbeat.common.observability.dto.evidence.MetricEvidence> metricEvidence =
                 Collections.emptyList();
         List<org.apache.hertzbeat.common.observability.dto.evidence.LogEvidence> logEvidence =

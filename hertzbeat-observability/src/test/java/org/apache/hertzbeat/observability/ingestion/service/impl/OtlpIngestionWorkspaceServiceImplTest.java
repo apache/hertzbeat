@@ -36,6 +36,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
@@ -58,6 +59,7 @@ import org.apache.hertzbeat.warehouse.repository.MetricQueryRepository;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -89,8 +91,12 @@ class OtlpIngestionWorkspaceServiceImplTest {
 
     private ObservabilitySignalIntakeGateway observabilitySignalIntakeGateway;
 
+    private Locale previousLocale;
+
     @BeforeEach
     void setUp() {
+        previousLocale = Locale.getDefault();
+        Locale.setDefault(Locale.US);
         observabilitySignalIntakeGateway = new InMemoryObservabilitySignalIntakeGateway();
         otlpIngestionWorkspaceService = new OtlpIngestionWorkspaceServiceImpl(
                 entityTraceQueryService,
@@ -102,6 +108,11 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 List.of(),
                 List.of()
         );
+    }
+
+    @AfterEach
+    void restoreLocale() {
+        Locale.setDefault(previousLocale);
     }
 
     private void stubRecentLogs(LogEntry... logs) {
@@ -208,16 +219,16 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 overview.getReadinessChecks().stream().map(OtlpIngestionOverviewDto.ReadinessCheck::getKey).toList());
         assertTrue(overview.getReadinessChecks().stream().anyMatch(check -> "collector".equals(check.getKey())
                 && "warning".equals(check.getStatus())
-                && check.getSummary().contains("2 / 3 在线")));
+                && check.getSummary().contains("2 / 3 online")));
         assertTrue(overview.getReadinessChecks().stream().anyMatch(check -> "storage".equals(check.getKey())
                 && "success".equals(check.getStatus())
-                && check.getSummary().contains("1 / 1 可用")));
+                && check.getSummary().contains("1 / 1 available")));
         assertTrue(overview.getReadinessChecks().stream().anyMatch(check -> "query".equals(check.getKey())
                 && "success".equals(check.getStatus())
-                && check.getSummary().contains("指标、日志和链路查询可用")));
+                && check.getSummary().contains("Metrics, logs, and traces queries are available.")));
         assertTrue(overview.getReadinessChecks().stream().anyMatch(check -> "greptime".equals(check.getKey())
                 && "success".equals(check.getStatus())
-                && check.getSummary().contains("SQL 自检通过")));
+                && check.getSummary().contains("SQL self-check passed.")));
     }
 
     @Test
@@ -280,7 +291,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 && snippet.getContent().contains("endpoint: demo.hertzbeat.apache.org:4317")
                 && snippet.getContent().contains("Authorization: \"Bearer <api-token>\"")));
         assertTrue(guide.getSignals().stream().filter(signal -> "grpc".equals(signal.getProtocol()))
-                .allMatch(signal -> signal.getNote() == null || !signal.getNote().contains("登录 token")));
+                .allMatch(signal -> signal.getNote() == null || !signal.getNote().contains("login token")));
         assertFalse(guide.getSnippets().isEmpty());
     }
 

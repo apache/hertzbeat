@@ -51,7 +51,8 @@ class EntityObservabilityDtoMigrationTest {
         EntityUnifiedEvidenceSummary unifiedSummary = new EntityUnifiedEvidenceSummary(3, true, true, false,
                 2L, 3, 0, 8L, List.of("metrics", "logs"));
         EntityTriageRecommendation recommendation = new EntityTriageRecommendation(
-                "rule", "metrics", "优先查看监控", "监控异常最多", "down monitors", "查看监控", 9L
+                "rule", "metrics", "Review monitors first", "Most monitors are abnormal", "down monitors",
+                "View monitors", 9L
         );
 
         assertEquals("checkout-http", abnormalMonitor.getName());
