@@ -79,7 +79,7 @@ home:
 webapp:
   - changed-files:
       - any-glob-to-any-file:
-          - "web-app/**/*"
+          - "web-next/**/*"
 
 e2e:
   - changed-files:

@@ -1,9 +1,0 @@
-<div class="platform-drawer-facts">
-  <div class="platform-drawer-fact-card" *ngFor="let item of items">
-    <span class="platform-drawer-fact-label">{{ item.label }}</span>
-    <div class="platform-drawer-fact-value" [class.is-monospace]="item.monospace">
-      <nz-tag *ngIf="item.tagColor; else plainValue" [nzColor]="item.tagColor">{{ item.value }}</nz-tag>
-      <ng-template #plainValue>{{ item.value }}</ng-template>
-    </div>
-  </div>
-</div>

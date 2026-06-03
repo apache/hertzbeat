@@ -27,7 +27,7 @@ Even small corrections to typos are very welcome :)
 ### Getting HertzBeat up and running   
 
 > To get HertzBeat code running on your development tools, and able to debug with breakpoints.
-> This is a front-end and back-end separation project. To start the local code, the back-end [startup](hertzbeat-startup) and the front-end [web-app](web-app) must be started separately.  
+> This is a front-end and back-end separation project. To start the local code, the back-end [startup](hertzbeat-startup) and the front-end [web-next](web-next) must be started separately.
 
 
 #### Backend start
@@ -44,17 +44,15 @@ Even small corrections to typos are very welcome :)
 
 #### Frontend start
 
-1. Need `Node pnpm` Environment, Make sure `Node.js >= 18`
+1. Need `Node.js >= 22` and `npm`
 
-2. Cd to the `web-app` directory: `cd web-app`
+2. Cd to the `web-next` directory: `cd web-next`
 
-3. Install pnpm if not existed `npm install -g pnpm`
+3. Install dependencies: `npm ci`
 
-4. Install Dependencies: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
+4. After the local backend is started, start the local frontend in the `web-next` directory: `npm run dev`
 
-5. After the local backend is started, start the local frontend in the web-app directory: `pnpm start`
-
-6. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
+5. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
 
 
 ### Find tasks   
@@ -88,6 +86,16 @@ Of course, if you have a good idea, you can also propose it directly on GitHub D
 7. Then you can initiate a new PR (Pull Request) on GitHub.  
 
 Please note that the title of the PR needs to conform to our spec, and write the necessary description in the PR to facilitate code review by Committers and other contributors.   
+
+### AI-assisted contributions
+
+AI-assisted code is welcome when it is reviewed and owned by a human contributor. Please follow [AI-Assisted Development Guidelines](AGENTS.md):
+
+1. Treat AI output as a draft and keep each PR narrowly scoped.
+2. Do not include proprietary, private, license-incompatible, or secret material from AI prompts or outputs.
+3. Do not invent product behavior, API responses, topology data, metrics, health states, screenshots, or release claims.
+4. Write or update the smallest useful test/contract first for risky changes, then include the validation commands and results in the PR description.
+5. If AI helped, add a short PR note: `AI assistance`, `Human validation`, and `Risk notes`.
 
 ### Wait for the code to be merged   
 
@@ -168,7 +176,7 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 ### 让 HertzBeat 运行起来   
 
 > 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。   
-> 此为前后端分离项目，本地代码启动需将后端[hertzbeat-startup](hertzbeat-startup)和前端[web-app](web-app)分别启动生效。
+> 此为前后端分离项目，本地代码启动需将后端[hertzbeat-startup](hertzbeat-startup)和前端[web-next](web-next)分别启动生效。
 
 #### 后端启动
 
@@ -185,17 +193,15 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 #### 前端启动
 
-1. 需要 `nodejs pnpm` 环境, Make sure `Node.js >= 18`
+1. 需要 `Node.js >= 22` 和 `npm`
 
-2. 进入 `web-app` 目录: `cd web-app`
+2. 进入 `web-next` 目录: `cd web-next`
 
-3. 安装pnpm: `npm install -g pnpm`
+3. 安装依赖: `npm ci`
 
-4. 在前端工程目录 `web-app` 下执行: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
+4. 待本地后端启动后，在 `web-next` 目录下启动本地前端: `npm run dev`
 
-5. 待本地后端启动后，在web-app目录下启动本地前端 `pnpm start`
-
-6. 浏览器访问 localhost:4200 即可开始，默认账号密码 *admin/hertzbeat*
+5. 浏览器访问 localhost:4200 即可开始，默认账号密码 *admin/hertzbeat*
 
 ### 寻找任务  
 
@@ -228,6 +234,16 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 7. 然后您就可以在 GitHub 上发起新的 PR (Pull Request)。
 
 请注意 PR 的标题需要符合我们的规范，并且在 PR 中写上必要的说明，来方便 Committer 和其他贡献者进行代码审查。 
+
+### AI 辅助贡献
+
+欢迎使用 AI 辅助写代码，但 PR 必须由人类贡献者负责、审查和验证。请遵循 [AI-Assisted Development Guidelines](AGENTS.md)：
+
+1. 把 AI 输出当作草稿，每个 PR 保持清晰、收敛的范围。
+2. 不要提交来自 AI 提示词或输出中的私有、专有、许可证不兼容内容，也不要包含密钥或凭据。
+3. 不要编造产品行为、API 响应、拓扑数据、指标、健康状态、截图或发布结论。
+4. 对高风险或用户可见改动，先写或更新最小测试/合约，再在 PR 描述中写明验证命令和结果。
+5. 如果使用了 AI，请在 PR 描述中简短说明：`AI assistance`、`Human validation`、`Risk notes`。
 
 ### 等待PR代码被合并  
 

@@ -31,17 +31,12 @@ Write-Host "Cleaning up the 'dist' directory..."
 Remove-Item -Recurse -Force $distPath\* -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $distPath -Force
 
-# Clean up the 'web-app/dist' directory
-Write-Host "Cleaning up the 'web-app/dist' directory..."
-$webAppDistPath = "$projectPath\web-app\dist"
-Remove-Item -Recurse -Force $webAppDistPath\* -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Path $webAppDistPath -Force
 Push-Location -Path $projectPath
 
-Write-Host "Installing dependencies and packaging web-app..."
-Push-Location -Path "web-app"
-yarn install
-yarn package
+Write-Host "Installing dependencies and building web-next..."
+Push-Location -Path "web-next"
+npm ci
+npm run build
 Pop-Location
 
 Write-Host "Building project with Maven..."

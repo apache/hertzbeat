@@ -22,19 +22,19 @@ name: Backend CI
 
 on:
   push:
-    branches: [ master, dev, action* ]
+    branches: [ master, dev, action*, '2.*' ]
     paths-ignore:
       - '**.md'
       - 'home/**'
-      - 'web-app/**'
+      - 'web-next/**'
       - 'script/**'
       - 'material/**'
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, '2.*' ]
     paths-ignore:
       - '**.md'
       - 'home/**'
-      - 'web-app/**'
+      - 'web-next/**'
       - 'script/**'
       - 'material/**'
 
@@ -80,4 +80,3 @@ jobs:
           path: |
             e2e/logs/
             e2e/report/
-

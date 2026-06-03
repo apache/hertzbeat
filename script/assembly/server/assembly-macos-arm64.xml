@@ -77,12 +77,6 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             </includes>
         </fileSet>
 
-        <!-- Pack the static resources of the web app into the directory-->
-        <fileSet>
-            <directory>../web-app/dist</directory>
-            <outputDirectory>dist</outputDirectory>
-        </fileSet>
-        
         <!-- copy jdk -->
         <fileSet>
             <directory>../jdk/macos-arm64</directory>
