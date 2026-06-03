@@ -78,12 +78,12 @@ class ReleaseReadinessRuntimeAssemblyTest {
     }
 
     @Test
-    void entityGovernanceStateWorkspaceBackfillIsExplicitForLegacyDatabases() throws IOException {
+    void entityGovernanceStateWorkspaceBoundaryLivesInV200Baseline() throws IOException {
         for (String database : List.of("mysql", "postgresql", "h2")) {
             String migration = readRepoFile(
                     "hertzbeat-startup/src/main/resources/db/migration/"
                             + database
-                            + "/V213__backfill_entity_governance_workspace.sql"
+                            + "/V200__create_entity_foundation.sql"
             ).toLowerCase();
 
             assertThat(migration)
