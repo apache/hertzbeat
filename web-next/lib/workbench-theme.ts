@@ -7,7 +7,7 @@ type DocumentLike = Pick<Document, 'documentElement' | 'body'>;
 type LocationLike = Pick<Location, 'reload'>;
 
 export function normalizeWorkbenchTheme(theme?: string | null): WorkbenchTheme {
-  if (theme === 'light-ops' || theme === 'default') {
+  if (theme === 'light-ops') {
     return 'light-ops';
   }
   if (theme === 'compact') {

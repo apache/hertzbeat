@@ -100,12 +100,12 @@ describe('setting config view model', () => {
     expect(normalizeSystemConfigLocale('zh-CN')).toBe('zh_CN');
     expect(normalizeSystemConfigLocale('ja-JP')).toBe('ja_JP');
     expect(normalizeSystemConfigTheme('dark')).toBe('dark-ops');
-    expect(normalizeSystemConfigTheme('default')).toBe('light-ops');
+    expect(normalizeSystemConfigTheme('default')).toBe('dark-ops');
     expect(normalizeSystemConfigTheme('compact')).toBe('compact');
   });
 
   it('resolves translated locale and theme labels for supported values', () => {
     expect(resolveSystemLocaleLabel('pt-BR', t)).toBe('Portuguese(pt_BR)');
-    expect(resolveSystemThemeLabel('default', t)).toBe('Default theme');
+    expect(resolveSystemThemeLabel('default', t)).toBe('Dark theme');
   });
 });

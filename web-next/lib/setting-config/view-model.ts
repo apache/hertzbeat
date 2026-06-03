@@ -34,7 +34,7 @@ export function normalizeSystemConfigLocale(locale?: string | null) {
 
 export function normalizeSystemConfigTheme(theme?: string | null) {
   if (!theme) return 'dark-ops';
-  if (theme === 'light-ops' || theme === 'default') return 'light-ops';
+  if (theme === 'light-ops') return 'light-ops';
   if (theme === 'compact') return 'compact';
   return 'dark-ops';
 }

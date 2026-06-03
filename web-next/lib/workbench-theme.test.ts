@@ -11,15 +11,15 @@ describe('workbench theme helpers', () => {
   it('normalizes supported theme aliases into the shared theme set', () => {
     expect(normalizeWorkbenchTheme('dark-ops')).toBe('dark-ops');
     expect(normalizeWorkbenchTheme('light-ops')).toBe('light-ops');
-    expect(normalizeWorkbenchTheme('default')).toBe('light-ops');
+    expect(normalizeWorkbenchTheme('default')).toBe('dark-ops');
     expect(normalizeWorkbenchTheme('compact')).toBe('compact');
     expect(normalizeWorkbenchTheme('unknown')).toBe('dark-ops');
     expect(normalizeWorkbenchTheme(null)).toBe('dark-ops');
   });
 
-  it('reads the stored theme with a dark-ops fallback', () => {
+  it('treats legacy default storage as the dark workbench fallback', () => {
     expect(readWorkbenchTheme({ getItem: () => 'compact' })).toBe('compact');
-    expect(readWorkbenchTheme({ getItem: () => 'default' })).toBe('light-ops');
+    expect(readWorkbenchTheme({ getItem: () => 'default' })).toBe('dark-ops');
     expect(readWorkbenchTheme({ getItem: () => null })).toBe('dark-ops');
   });
 
@@ -34,9 +34,9 @@ describe('workbench theme helpers', () => {
       storage
     });
 
-    expect(theme).toBe('light-ops');
-    expect(setAttribute).toHaveBeenCalledWith('data-theme', 'light-ops');
-    expect(storage.setItem).toHaveBeenCalledWith('theme', 'light-ops');
+    expect(theme).toBe('dark-ops');
+    expect(setAttribute).toHaveBeenCalledWith('data-theme', 'dark-ops');
+    expect(storage.setItem).toHaveBeenCalledWith('theme', 'dark-ops');
   });
 
   it('bootstraps the stored theme into the current document', () => {
