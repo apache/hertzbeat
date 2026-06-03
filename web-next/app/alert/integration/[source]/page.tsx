@@ -30,7 +30,7 @@ export default async function AlertIntegrationPage({ params }: { params: Promise
   const t = createAlertIntegrationTranslator(locale);
   const selectedSourceName = getIntegrationSourceName(selectedSource, t);
   const sourceRailLabel = t('alert.integration.sources');
-  const baseDir = path.join(process.cwd(), '..', 'web-app', 'src', 'assets', 'doc', 'alert-integration');
+  const baseDir = path.join(process.cwd(), 'public', 'assets', 'doc', 'alert-integration');
   const doc = await loadIntegrationDoc(baseDir, selectedSource.id, locale);
   const fallbackDocCopy = getAlertIntegrationFallbackDocCopy(locale);
 

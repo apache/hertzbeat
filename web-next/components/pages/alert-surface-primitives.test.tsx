@@ -23,7 +23,7 @@ describe('alert surface primitives', () => {
           <AlertSurfaceTable>
             <AlertSurfaceTableHead>
               <tr>
-                <th>策略名称</th>
+                <th>Rule name</th>
               </tr>
             </AlertSurfaceTableHead>
             <tbody>
@@ -33,9 +33,9 @@ describe('alert surface primitives', () => {
             </tbody>
           </AlertSurfaceTable>
         </AlertSurfaceTableShell>
-        <AlertSurfaceActionButton>搜索</AlertSurfaceActionButton>
-        <AlertSurfaceActionLink href="/alert/silence">查看</AlertSurfaceActionLink>
-        <AlertSurfaceValuePill>一次性静默</AlertSurfaceValuePill>
+        <AlertSurfaceActionButton>Search</AlertSurfaceActionButton>
+        <AlertSurfaceActionLink href="/alert/silence">View</AlertSurfaceActionLink>
+        <AlertSurfaceValuePill>One-time silence</AlertSurfaceValuePill>
       </div>
     );
 

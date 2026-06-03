@@ -1,3 +1,6 @@
+import { normalizeLocale } from '../i18n';
+import { SUPPLEMENTAL_MESSAGES } from '../i18n-runtime-messages';
+
 type ApiGetter = <T>(url: string) => Promise<T>;
 type ApiPoster = <T>(url: string, payload: unknown) => Promise<T>;
 type ApiPutter = <T>(url: string, payload: unknown) => Promise<T>;
@@ -34,13 +37,17 @@ export interface SettingDefinePageData {
 
 const FILTERED_TEMPLATE_VALUES = new Set(['prometheus']);
 const FILTERED_TEMPLATE_CATEGORIES = new Set(['__system__']);
-const NEW_TEMPLATE_CODE_BY_LOCALE: Record<string, string> = {
-  'zh-CN': '# 请在此通过编写YML内容来定义新的监控类型, 参考文档: https://hertzbeat.apache.org/docs/advanced/extend-point ',
-  'en-US': '# Please define a new monitoring type by writing YML content here, refer to the document: https://hertzbeat.apache.org/docs/advanced/extend-point '
-};
+const NEW_TEMPLATE_COMMENT_KEY = 'setting.define.new-template.comment';
+const NEW_TEMPLATE_FALLBACK_COMMENT =
+  '# Please define a new monitoring type by writing YML content here, refer to the document: https://hertzbeat.apache.org/docs/advanced/extend-point ';
 
-function normalizeDraftLocale(lang = 'zh-CN') {
-  return lang.toLowerCase().startsWith('en') ? 'en-US' : 'zh-CN';
+function resolveNewTemplateComment(lang = 'zh-CN') {
+  const locale = normalizeLocale(lang);
+  return (
+    SUPPLEMENTAL_MESSAGES[locale]?.[NEW_TEMPLATE_COMMENT_KEY] ||
+    SUPPLEMENTAL_MESSAGES['en-US']?.[NEW_TEMPLATE_COMMENT_KEY] ||
+    NEW_TEMPLATE_FALLBACK_COMMENT
+  );
 }
 
 function normalizeStartupLang(lang: string | null | undefined, fallback = 'zh-CN') {
@@ -49,7 +56,7 @@ function normalizeStartupLang(lang: string | null | undefined, fallback = 'zh-CN
 }
 
 export function buildNewTemplateDraft(lang = 'zh-CN') {
-  const originalYaml = NEW_TEMPLATE_CODE_BY_LOCALE[normalizeDraftLocale(lang)];
+  const originalYaml = resolveNewTemplateComment(lang);
   return {
     yaml: `${originalYaml}\n\n\n\n\n`,
     originalYaml

@@ -9,10 +9,10 @@ describe('ColdConfirmDialog', () => {
     const idleHtml = renderToStaticMarkup(
       <ColdConfirmDialog
         open
-        title="确认删除"
-        copy="删除后不可恢复。"
-        confirmLabel="确认"
-        cancelLabel="取消"
+        title="Confirm delete"
+        copy="This action cannot be undone."
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
         onCancel={() => undefined}
         onConfirm={() => undefined}
       />
@@ -20,18 +20,18 @@ describe('ColdConfirmDialog', () => {
 
     expect(idleHtml).toContain('data-cold-confirm-dialog="cold-confirm-dialog"');
     expect(idleHtml).toContain('Confirm operation');
-    expect(idleHtml).toContain('确认删除');
-    expect(idleHtml).toContain('删除后不可恢复。');
-    expect(idleHtml).toContain('确认');
-    expect(idleHtml).toContain('取消');
+    expect(idleHtml).toContain('Confirm delete');
+    expect(idleHtml).toContain('This action cannot be undone.');
+    expect(idleHtml).toContain('Confirm');
+    expect(idleHtml).toContain('Cancel');
 
     const pendingHtml = renderToStaticMarkup(
       <ColdConfirmDialog
         open
-        title="确认删除"
-        copy="删除后不可恢复。"
-        confirmLabel="确认"
-        cancelLabel="取消"
+        title="Confirm delete"
+        copy="This action cannot be undone."
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
         pending
         onCancel={() => undefined}
         onConfirm={() => undefined}

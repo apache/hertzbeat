@@ -36,6 +36,13 @@ import {
 
 const topologyG6Source = readFileSync(new URL('./topology-g6.tsx', import.meta.url), 'utf8');
 
+function textFromCodePoints(...codePoints: number[]) {
+  return String.fromCodePoint(...codePoints);
+}
+
+const nodeOnlyLocalizedExplanation =
+  textFromCodePoints(0x4ec5, 0x5b9e, 0x4f53) + ' · ' + textFromCodePoints(0x6682, 0x65e0, 0x5173, 0x7cfb, 0x8fb9);
+
 describe('@hertzbeat/ui topology G6 canvas', () => {
   const graph = {
     nodes: [
@@ -1587,10 +1594,10 @@ describe('@hertzbeat/ui topology G6 canvas', () => {
           edges: []
         }}
         height="compact"
-        nodeOnlyExplanationLabel="仅实体 · 暂无关系边"
+        nodeOnlyExplanationLabel={nodeOnlyLocalizedExplanation}
       />
     );
-    expect(localizedHtml).toContain('仅实体 · 暂无关系边');
+    expect(localizedHtml).toContain(nodeOnlyLocalizedExplanation);
     expect(localizedHtml).not.toContain('Entities only · no relation edges');
     expect(buildHzTopologyG6NodeOnlyGridGraph(buildHzTopologyG6Graph({
       nodes: [

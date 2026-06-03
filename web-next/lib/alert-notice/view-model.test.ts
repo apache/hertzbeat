@@ -2,29 +2,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildAlertNoticeEvidenceContext, buildNoticeFacts, buildNoticeLaneRows, buildNoticeMetrics, buildNoticeReceiverDraft, buildNoticeReceiverRows, buildNoticeRuleRows, buildNoticeTemplateDraft, buildNoticeTemplateRows, getNoticeReceiverVisibleFieldKeys, validateNoticeReceiverDraft, validateNoticeRuleDraft, validateNoticeTemplateDraft } from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
-const t = createTranslatorMock({
-  overrides: {
-    'alert.notice.receivers.title': 'Receivers',
-    'alert.notice.rules.title': 'Rules',
-    'alert.notice.templates.title': 'Templates',
-    'alert.notice.lanes.receivers.title': 'Receivers',
-    'alert.notice.lanes.rules.title': 'Rules',
-    'alert.notice.lanes.templates.title': 'Templates',
-    'alert.notice.template.validation.type': 'Notice type is required'
-  }
-});
-const zhT = createTranslatorMock({
-  locale: 'zh-CN',
-  overrides: {
-    'alert.notice.receivers.title': '接收人',
-    'alert.notice.rules.title': '规则',
-    'alert.notice.templates.title': '模板',
-    'alert.notice.lanes.receivers.title': '接收人',
-    'alert.notice.lanes.rules.title': '规则',
-    'alert.notice.lanes.templates.title': '模板',
-    'alert.notice.template.validation.type': '通知方式为必填项'
-  }
-});
+const t = createTranslatorMock();
+const zhT = createTranslatorMock({ locale: 'zh-CN' });
+
+function noticeEvidenceTitle(translator: typeof t, signal: 'logs' | 'traces' | 'metrics') {
+  return translator('alert.rule.evidence.notice.title', { signal: translator(`alert.rule.signal.${signal}`) });
+}
 
 describe('alert notice view model', () => {
   it('builds notice facts', () => {
@@ -69,9 +52,9 @@ describe('alert notice view model', () => {
         'zh-CN'
       )
     ).toEqual([
-      { label: '当前接收对象', value: '2' },
-      { label: '当前通知策略', value: '1' },
-      { label: '预置模板', value: '1', tone: 'success' }
+      { label: zhT('alert.notice.metrics.visible-receivers'), value: '2' },
+      { label: zhT('alert.notice.metrics.visible-rules'), value: '1' },
+      { label: zhT('alert.notice.metrics.preset-templates'), value: '1', tone: 'success' }
     ]);
 
     expect(
@@ -83,9 +66,9 @@ describe('alert notice view model', () => {
         'zh-CN'
       )
     ).toEqual([
-      { title: '接收人', copy: '管理告警发往哪些接收对象。', meta: '共 3 个 · 当前 2 个' },
-      { title: '规则', copy: '按标签、时间段和模板自动路由通知。', meta: '共 4 个 · 当前 1 个' },
-      { title: '模板', copy: '以纯文本摘要预览模板，不暴露原始 HTML 或模板源码。', meta: '共 5 个 · 当前 1 个' }
+      { title: zhT('alert.notice.lanes.receivers.title'), copy: zhT('alert.notice.lanes.receivers.copy'), meta: zhT('alert.notice.lanes.count-meta', { total: 3, visible: 2 }) },
+      { title: zhT('alert.notice.lanes.rules.title'), copy: zhT('alert.notice.lanes.rules.copy'), meta: zhT('alert.notice.lanes.count-meta', { total: 4, visible: 1 }) },
+      { title: zhT('alert.notice.lanes.templates.title'), copy: zhT('alert.notice.lanes.templates.copy'), meta: zhT('alert.notice.lanes.count-meta', { total: 5, visible: 1 }) }
     ]);
   });
 
@@ -143,7 +126,7 @@ describe('alert notice view model', () => {
         'zh-CN'
       )
     ).toEqual([
-      { key: '8', title: 'empty receiver', copy: '无', meta: 'Telegram 机器人 · 更新时间 2026-04-10 18:00:00' }
+      { key: '8', title: 'empty receiver', copy: zhT('common.none'), meta: `${zhT('alert.notice.type.telegram-bot')} · ${zhT('alert.notice.row.updated')} 2026-04-10 18:00:00` }
     ]);
   });
 
@@ -164,7 +147,7 @@ describe('alert notice view model', () => {
         'zh-CN'
       )
     ).toEqual([
-      { key: '9', title: 'receiver without type', copy: 'ops@example.com', meta: '无 · 更新时间 2026-04-10 18:00:00' }
+      { key: '9', title: 'receiver without type', copy: 'ops@example.com', meta: `${zhT('common.none')} · ${zhT('alert.notice.row.updated')} 2026-04-10 18:00:00` }
     ]);
   });
 
@@ -284,7 +267,7 @@ describe('alert notice view model', () => {
       content: '   ',
       gmtUpdate: 1712730000000
     }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')).toEqual([
-      { key: '12', title: 'Empty template', copy: '无', meta: '用户自定义模版 · 更新时间 2026-04-10 18:00:00' }
+      { key: '12', title: 'Empty template', copy: zhT('common.none'), meta: `${zhT('alert.notice.template.preset.false')} · ${zhT('alert.notice.row.updated')} 2026-04-10 18:00:00` }
     ]);
   });
 
@@ -339,18 +322,18 @@ describe('alert notice view model', () => {
   });
 
   it('localizes alert notice validation and default row labels for chinese workspaces', () => {
-    expect(validateNoticeReceiverDraft(buildNoticeReceiverDraft(null), zhT)).toBe('接收人名称为必填项');
-    expect(validateNoticeTemplateDraft(buildNoticeTemplateDraft(null), zhT)).toBe('模板名称为必填项');
-    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: '邮件模板' }, zhT)).toBe('通知方式为必填项');
-    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: '邮件模板', type: '1' }, zhT)).toBe('模板内容为必填项');
-    expect(validateNoticeRuleDraft({ name: '', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBe('规则名称为必填项');
-    expect(validateNoticeRuleDraft({ name: '关键通知', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBe('接收人为必填项');
-    expect(validateNoticeRuleDraft({ name: '关键通知', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: false, labelsText: '', daysText: '1,2,3,4,5', periodStart: '09:00', periodEnd: '18:00' }, zhT)).toBe('匹配标签为必填项');
-    expect(validateNoticeRuleDraft({ name: '关键通知', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBeNull();
+    expect(validateNoticeReceiverDraft(buildNoticeReceiverDraft(null), zhT)).toBe(zhT('alert.notice.validation.name'));
+    expect(validateNoticeTemplateDraft(buildNoticeTemplateDraft(null), zhT)).toBe(zhT('alert.notice.template.validation.name'));
+    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: 'mail-template' }, zhT)).toBe(zhT('alert.notice.template.validation.type'));
+    expect(validateNoticeTemplateDraft({ ...buildNoticeTemplateDraft(null), name: 'mail-template', type: '1' }, zhT)).toBe(zhT('alert.notice.template.validation.content'));
+    expect(validateNoticeRuleDraft({ name: '', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBe(zhT('alert.notice.rule.validation.name'));
+    expect(validateNoticeRuleDraft({ name: 'critical notice', receiverIdsText: '', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBe(zhT('alert.notice.rule.validation.receivers'));
+    expect(validateNoticeRuleDraft({ name: 'critical notice', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: false, labelsText: '', daysText: '1,2,3,4,5', periodStart: '09:00', periodEnd: '18:00' }, zhT)).toBe(zhT('alert.notice.rule.validation.labels'));
+    expect(validateNoticeRuleDraft({ name: 'critical notice', receiverIdsText: '1', templateId: '-1', enable: true, filterAll: true, labelsText: '', daysText: '', periodStart: '', periodEnd: '' }, zhT)).toBeNull();
 
-    expect(buildNoticeReceiverRows([{ id: 8, name: '', type: 1, email: '', gmtUpdate: 1712730000000 }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')[0].title).toBe('接收人');
-    expect(buildNoticeTemplateRows([{ id: 9, name: '', preset: false, content: '', gmtUpdate: 1712730000000 }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')[0].title).toBe('模板');
-    expect(buildNoticeRuleRows([{ id: 10, name: '', enable: false, receiverName: [], templateName: '', gmtUpdate: 1712730000000 }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')[0].title).toBe('规则');
+    expect(buildNoticeReceiverRows([{ id: 8, name: '', type: 1, email: '', gmtUpdate: 1712730000000 }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')[0].title).toBe(zhT('alert.notice.receivers.default'));
+    expect(buildNoticeTemplateRows([{ id: 9, name: '', preset: false, content: '', gmtUpdate: 1712730000000 }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')[0].title).toBe(zhT('alert.notice.templates.default'));
+    expect(buildNoticeRuleRows([{ id: 10, name: '', enable: false, receiverName: [], templateName: '', gmtUpdate: 1712730000000 }] as any, zhT, () => '2026-04-10 18:00:00', 'zh-CN')[0].title).toBe(zhT('alert.notice.rules.default'));
   });
 
   it('builds notice-policy evidence context from a three-signal handoff route', () => {
@@ -375,7 +358,7 @@ describe('alert notice view model', () => {
 
     expect(context).toMatchObject({
       signal: 'logs',
-      title: '来自日志的通知策略上下文',
+      title: noticeEvidenceTitle(zhT, 'logs'),
       returnHref: '/log/manage?traceId=trace-123',
       labelsText:
         'hertzbeat.signal:logs, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot',
@@ -385,7 +368,7 @@ describe('alert notice view model', () => {
           'hertzbeat.signal:logs, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot'
       }
     });
-    expect(context?.rows.map(row => row.label)).toContain('链路上下文');
+    expect(context?.rows.map(row => row.label)).toContain(zhT('signal.context.trace.label'));
   });
 
   it('localizes notice-policy evidence context outside zh-CN', () => {
@@ -405,8 +388,8 @@ describe('alert notice view model', () => {
       title: 'Notification policy context from logs',
       copy: 'New notification policies match the current entity, service, environment, and trace labels; validation returns to the original troubleshooting context.'
     });
-    expect(`${context?.title} ${context?.copy}`).not.toMatch(/[来自日志链路指标三信号排障上下文]/);
-    expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[一-龥]/);
+    expect(`${context?.title} ${context?.copy}`).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[\u4e00-\u9fff]/);
     expect(context?.rows.map(row => row.label)).toContain('Current entity');
   });
 });

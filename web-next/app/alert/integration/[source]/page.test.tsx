@@ -19,10 +19,10 @@ Use this provider.
 
 \`\`\`mermaid
 graph LR
-  A[外部系统告警] --> B[Webhook]
+  A[External alert] --> B[Webhook]
 \`\`\`
 
-1. 检查配置
+1. Check configuration
     \`\`\`bash
     curl http://localhost:9090/api/v1/rules
     \`\`\`
@@ -87,45 +87,45 @@ vi.mock('@/lib/utils', () => ({
 
 vi.mock('@/lib/alert-integration/controller', () => ({
   fallbackDocCopy: 'No integration guide is available for this provider yet.',
-  getAlertIntegrationFallbackDocCopy: () => '当前告警源暂未提供集成指南。',
+  getAlertIntegrationFallbackDocCopy: () => 'No integration guide is available for this alert source yet.',
   loadIntegrationDoc: mockLoadIntegrationDoc
 }));
 
 vi.mock('@/lib/alert-integration/view-model', () => ({
   DATA_SOURCES: [
-    { id: 'webhook', name: '默认Webhook', icon: '/assets/logo.svg' },
+    { id: 'webhook', name: 'Default Webhook', icon: '/assets/logo.svg' },
     { id: 'prometheus', name: 'Prometheus', icon: '/assets/img/integration/prometheus.svg' }
   ],
   buildAlertIntegrationSourceHref: (source: any) => `/alert/integration/${source.id}`,
   getIntegrationSource: (source: string) =>
     [
-      { id: 'webhook', name: '默认Webhook', icon: '/assets/logo.svg' },
+      { id: 'webhook', name: 'Default Webhook', icon: '/assets/logo.svg' },
       { id: 'prometheus', name: 'Prometheus', icon: '/assets/img/integration/prometheus.svg' }
-    ].find(item => item.id === source) ?? { id: 'webhook', name: '默认Webhook', icon: '/assets/logo.svg' },
+    ].find(item => item.id === source) ?? { id: 'webhook', name: 'Default Webhook', icon: '/assets/logo.svg' },
   createAlertIntegrationTranslator: () => (key: string) =>
     ({
-      'alert.integration.kicker': '集成接入',
-      'alert.integration.sources': '集成告警源',
-      'alert.integration.token.manage': '管理令牌'
+      'alert.integration.kicker': 'Alert integration',
+      'alert.integration.sources': 'Integration alert sources',
+      'alert.integration.token.manage': 'Manage tokens'
     })[key] ?? key,
   getIntegrationSourceName: (item: any) => item.name ?? item.id,
   translateAlertIntegration: (key: string) =>
     ({
-      'alert.integration.kicker': '集成接入',
-      'alert.integration.sources': '集成告警源',
-      'alert.integration.token.manage': '管理令牌'
+      'alert.integration.kicker': 'Alert integration',
+      'alert.integration.sources': 'Integration alert sources',
+      'alert.integration.token.manage': 'Manage tokens'
     })[key] ?? key,
   buildIntegrationFacts: (source: string, hasDoc: boolean) => [
-    { label: '集成接入', value: `alert/integration/${source}` },
-    { label: '集成告警源', value: source },
-    { label: '文档状态', value: hasDoc ? '已加载' : '回退文案' }
+    { label: 'Alert integration', value: `alert/integration/${source}` },
+    { label: 'Integration alert sources', value: source },
+    { label: 'Document status', value: hasDoc ? 'Loaded' : 'Fallback copy' }
   ],
   buildIntegrationSourceRows: (source: string) => [
-    { title: '默认Webhook', copy: 'webhook', meta: source === 'webhook' ? 'selected' : '/alert/integration/webhook' },
+    { title: 'Default Webhook', copy: 'webhook', meta: source === 'webhook' ? 'selected' : '/alert/integration/webhook' },
     { title: 'Prometheus', copy: 'prometheus', meta: source === 'prometheus' ? 'selected' : '/alert/integration/prometheus' }
   ],
   buildIntegrationPostureRows: (source: string, hasDoc: boolean) => [
-    { title: 'doc source', copy: `web-app/src/assets/doc/alert-integration/${source}.*.md`, meta: 'existing asset' },
+    { title: 'doc source', copy: `web-next/public/assets/doc/alert-integration/${source}.*.md`, meta: 'existing asset' },
     { title: 'fallback behavior', copy: hasDoc ? 'provider doc loaded' : 'show fallback copy when no provider doc exists', meta: 'behavior preserved' },
     { title: 'token management', copy: 'Continue to use the current token management entry point.', meta: '/setting/settings/token' }
   ]
@@ -157,10 +157,10 @@ describe('alert integration page', () => {
     expect(html).toContain('data-alert-integration-code-block="json"');
     expect(html).toContain('data-alert-integration-code-block="bash"');
     expect(html).toContain('data-alert-integration-mermaid="pending"');
-    expect(html).toContain('集成接入');
-    expect(html).toContain('集成告警源');
-    expect(html).toContain('默认Webhook');
-    expect(html).toContain('管理令牌');
+    expect(html).toContain('Alert integration');
+    expect(html).toContain('Integration alert sources');
+    expect(html).toContain('Default Webhook');
+    expect(html).toContain('Manage tokens');
     expect(html).toContain('Webhook guide');
     expect(html).toContain('curl http://localhost:9090/api/v1/rules');
     expect(mockLoadIntegrationDoc).toHaveBeenLastCalledWith(expect.stringContaining('alert-integration'), 'webhook', 'zh-CN');

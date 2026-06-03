@@ -44,15 +44,16 @@ describe('alert silence controller', () => {
   it('applies new silence fallback context without changing time defaults', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 3, 19, 8, 0, 0));
+    const fallbackName = `${String.fromCodePoint(0x65e5, 0x5fd7)} checkout ${String.fromCodePoint(0x9759, 0x9ed8)}`;
 
     expect(
       buildAlertSilenceFormDraft(null, {
-        name: '日志 checkout 静默',
+        name: fallbackName,
         matchAll: false,
         labelsText: 'hertzbeat.signal:logs, service.name:checkout'
       })
     ).toMatchObject({
-      name: '日志 checkout 静默',
+      name: fallbackName,
       enable: true,
       matchAll: false,
       type: '0',

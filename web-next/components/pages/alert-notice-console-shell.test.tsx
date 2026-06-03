@@ -30,9 +30,9 @@ describe('AlertNoticeConsoleShell', () => {
     expect(html).toContain('data-tab="rule"');
     expect(html).toContain('data-tab="template"');
     expect(html).toContain('data-selected-tab="rule"');
-    expect(html).toContain('通知媒介');
-    expect(html).toContain('通知策略');
-    expect(html).toContain('通知模板');
+    expect(html).toContain(t('alert.notice.receiver'));
+    expect(html).toContain(t('alert.notice.rule'));
+    expect(html).toContain(t('alert.notice.template'));
     expect(html).toContain('data-alert-notice-console-panel="true"');
     expect(html).toContain('data-panel-tab="rule"');
     expect(html).toContain('role="tabpanel"');

@@ -8,34 +8,42 @@ describe('incidents domain model', () => {
   it('builds an incident-centered workspace snapshot', () => {
     const model = buildIncidentsDomainModel(t);
 
-    expect(model.title).toBe('故障事件');
-    expect(model.tags).toEqual(['事件入口外壳', '响应时间线', '责任人优先']);
+    expect(model.title).toBe(t('incidents.entry.title'));
+    expect(model.tags).toEqual([
+      t('incidents.tag.shell'),
+      t('incidents.tag.timeline'),
+      t('incidents.tag.owner-first')
+    ]);
     expect(model.incidents).toHaveLength(3);
     expect(model.incidents[0]?.severity).toBe('critical');
     expect(model.incidents[0]).toMatchObject({
-      title: 'checkout 在 prod-ap 出现延迟突增',
-      service: 'checkout',
-      owner: 'checkout-oncall',
-      blastRadius: '2 个区域'
+      title: t('incidents.row.checkout.title'),
+      service: t('incidents.row.checkout.service'),
+      owner: t('incidents.row.checkout.owner'),
+      blastRadius: t('incidents.row.checkout.blast-radius')
     });
     expect(model.timeline).toHaveLength(3);
     expect(model.timeline[0]).toEqual({
-      title: '09:08 开始缓解',
-      copy: '回滚和重启动作已从告警证据包打开。',
-      meta: 'checkout 延迟事件'
+      title: t('incidents.timeline.checkout.title'),
+      copy: t('incidents.timeline.checkout.copy'),
+      meta: t('incidents.timeline.checkout.meta')
     });
     expect(model.ownership[0]).toEqual({
-      owner: 'checkout-oncall',
-      queue: '主响应人',
-      copy: '保持告警、链路和发布上下文绑定到当前缓解线程。',
-      meta: '2 个活跃交接'
+      owner: t('incidents.ownership.checkout.owner'),
+      queue: t('incidents.ownership.checkout.queue'),
+      copy: t('incidents.ownership.checkout.copy'),
+      meta: t('incidents.ownership.checkout.meta')
     });
     expect(model.metrics).toEqual([
-      { label: '打开事件', value: '3' },
-      { label: '严重事件', value: '1' },
-      { label: '缓解中', value: '1' },
-      { label: '责任队列', value: '3' }
+      { label: t('incidents.metric.open'), value: '3' },
+      { label: t('incidents.metric.critical'), value: '1' },
+      { label: t('incidents.metric.mitigating'), value: '1' },
+      { label: t('incidents.metric.ownership-queues'), value: '3' }
     ]);
-    expect(model.checklist.map(item => item.meta)).toEqual(['已完成', '下一步', '预留']);
+    expect(model.checklist.map(item => item.meta)).toEqual([
+      t('incidents.checklist.shell.meta'),
+      t('incidents.checklist.adapter.meta'),
+      t('incidents.checklist.drilldown.meta')
+    ]);
   });
 });

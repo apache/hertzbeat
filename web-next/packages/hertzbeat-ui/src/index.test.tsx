@@ -242,10 +242,36 @@ import {
   type HzTemplateCategory
 } from './index';
 
+function textFromCodePoints(...codePoints: number[]) {
+  return String.fromCodePoint(...codePoints);
+}
+
+const localizedFixtures = {
+  dbMonitor: textFromCodePoints(0x6570, 0x636e, 0x5e93, 0x76d1, 0x63a7),
+  osMonitor: textFromCodePoints(0x64cd, 0x4f5c, 0x7cfb, 0x7edf, 0x76d1, 0x63a7),
+  normalStatus: textFromCodePoints(0x6b63, 0x5e38),
+  newMonitor: textFromCodePoints(0x65b0, 0x589e, 0x76d1, 0x63a7),
+  chooseExportType: textFromCodePoints(0x9009, 0x62e9, 0x5bfc, 0x51fa, 0x7c7b, 0x578b),
+  chooseTemplateByResource: textFromCodePoints(0x6309, 0x8d44, 0x6e90, 0x7c7b, 0x578b, 0x9009, 0x62e9, 0x6a21, 0x677f),
+  close: textFromCodePoints(0x5173, 0x95ed),
+  catalogTitle: textFromCodePoints(0x7c7b, 0x578b, 0x76ee, 0x5f55),
+  itemUnit: textFromCodePoints(0x9879),
+  searchVisibleName: textFromCodePoints(0x641c, 0x7d22, 0x53ef, 0x89c1, 0x540d, 0x79f0),
+  noMatches: textFromCodePoints(0x6ca1, 0x6709, 0x5339, 0x914d, 0x9879),
+  newTemplateDraft: textFromCodePoints(0x65b0, 0x589e, 0x6a21, 0x677f, 0x8349, 0x7a3f),
+  definition: textFromCodePoints(0x5b9a, 0x4e49),
+  search: textFromCodePoints(0x641c, 0x7d22),
+  noTemplateMatches: textFromCodePoints(0x6ca1, 0x6709, 0x5339, 0x914d, 0x7684, 0x6a21, 0x677f)
+};
+
+function localizedItemCount(total: number) {
+  return `${total} ${localizedFixtures.itemUnit}`;
+}
+
 const categories: HzTemplateCategory[] = [
   {
     id: 'db',
-    label: '数据库监控',
+    label: localizedFixtures.dbMonitor,
     items: [
       { id: 'mysql', label: 'MySQL', description: 'JDBC + availability', meta: 'yml' },
       { id: 'postgresql', label: 'PostgreSQL', description: 'JDBC + connections', meta: 'yml' }
@@ -253,7 +279,7 @@ const categories: HzTemplateCategory[] = [
   },
   {
     id: 'os',
-    label: '操作系统监控',
+    label: localizedFixtures.osMonitor,
     items: [
       { id: 'linux', label: 'Linux', description: 'SSH + process', meta: 'yml' }
     ]
@@ -853,7 +879,7 @@ describe('@hertzbeat/ui', () => {
     expect(filterHzTemplateCategories(categories, 'linux')).toEqual([
       {
         id: 'os',
-        label: '操作系统监控',
+        label: localizedFixtures.osMonitor,
         items: [
           { id: 'linux', label: 'Linux', description: 'SSH + process', meta: 'yml' }
         ]
@@ -3687,7 +3713,7 @@ describe('@hertzbeat/ui', () => {
         statusValue="1"
         statusOptions={[
           { value: '', label: 'All status' },
-          { value: '1', label: '正常' }
+          { value: '1', label: localizedFixtures.normalStatus }
         ]}
         applyLabel="Apply"
         clearLabel="Clear"
@@ -3724,7 +3750,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('Label filter');
     expect(html).toContain('team=platform');
     expect(html).toContain('MySQL');
-    expect(html).toContain('正常');
+    expect(html).toContain(localizedFixtures.normalStatus);
     expect(html).toContain('Apply');
     expect(html).toContain('Clear');
     expect(html).not.toContain('<select');
@@ -8178,8 +8204,8 @@ describe('@hertzbeat/ui', () => {
     const html = renderToStaticMarkup(
       <HzTypePickerDialog
         open
-        title="新增监控"
-        description="按资源类型选择模板"
+        title={localizedFixtures.newMonitor}
+        description={localizedFixtures.chooseTemplateByResource}
         categories={categories}
         search=""
         onSearchChange={vi.fn()}
@@ -8190,12 +8216,12 @@ describe('@hertzbeat/ui', () => {
           'data-monitor-app-picker-search-action': 'filter'
         } as React.ComponentProps<typeof HzTypePickerDialog>['searchInputProps']}
         labels={{
-          close: '关闭',
-          catalogTitle: '类型目录',
+          close: localizedFixtures.close,
+          catalogTitle: localizedFixtures.catalogTitle,
           templatePicker: {
-            itemCount: total => `${total} 项`,
-            searchPlaceholder: '搜索可见名称',
-            empty: '没有匹配项'
+            itemCount: localizedItemCount,
+            searchPlaceholder: localizedFixtures.searchVisibleName,
+            empty: localizedFixtures.noMatches
           }
         }}
       />
@@ -8206,16 +8232,16 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-template-search-owner="hertzbeat-ui-input"');
     expect(html).toContain('data-monitor-app-picker-search-owner="hertzbeat-ui-input"');
     expect(html).toContain('data-monitor-app-picker-search-action="filter"');
-    expect(html).toContain('类型目录');
-    expect(html).toContain('数据库监控');
-    expect(html).toContain('操作系统监控');
+    expect(html).toContain(localizedFixtures.catalogTitle);
+    expect(html).toContain(localizedFixtures.dbMonitor);
+    expect(html).toContain(localizedFixtures.osMonitor);
   });
 
   it('filters monitor type picker categories by visible label like the old Angular select menu', () => {
     const html = renderToStaticMarkup(
       <HzTypePickerDialog
         open
-        title="新增监控"
+        title={localizedFixtures.newMonitor}
         categories={categories}
         search="linux"
         onSearchChange={vi.fn()}
@@ -8235,12 +8261,12 @@ describe('@hertzbeat/ui', () => {
     const html = renderToStaticMarkup(
       <HzTypePickerDialog
         open
-        title="新增监控"
-        description="按资源类型选择模板"
+        title={localizedFixtures.newMonitor}
+        description={localizedFixtures.chooseTemplateByResource}
         categories={[
           {
             id: 'db',
-            label: '数据库监控',
+            label: localizedFixtures.dbMonitor,
             items: [
               { id: 'mysql', label: 'MySQL', meta: 'legacy-app-mysql-yml', status: <span>LEGACY_HIDDEN_STATUS</span>, icon: <span>db</span> },
               { id: 'postgresql', label: 'PostgreSQL', meta: 'legacy-app-postgresql-yml', status: <span>LEGACY_SHOWN_STATUS</span> },
@@ -8255,12 +8281,12 @@ describe('@hertzbeat/ui', () => {
         onClose={vi.fn()}
         onSelect={vi.fn()}
         labels={{
-          close: '关闭',
-          catalogTitle: '类型目录',
+          close: localizedFixtures.close,
+          catalogTitle: localizedFixtures.catalogTitle,
           templatePicker: {
-            itemCount: total => `${total} 项`,
-            searchPlaceholder: '搜索可见名称',
-            empty: '没有匹配项'
+            itemCount: localizedItemCount,
+            searchPlaceholder: localizedFixtures.searchVisibleName,
+            empty: localizedFixtures.noMatches
           }
         }}
       />
@@ -8279,7 +8305,7 @@ describe('@hertzbeat/ui', () => {
     const html = renderToStaticMarkup(
       <HzExportTypeDialog
         open
-        title="选择导出类型"
+        title={localizedFixtures.chooseExportType}
         scope="selected"
         selectedCount={2}
         jsonDescription="Export selected monitors as JSON"
@@ -8343,7 +8369,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('No matched labels');
     expect(html).not.toContain('data-hz-template-item="postgresql"');
     expect(html).not.toContain('PostgreSQL');
-    expect(html).not.toContain('数据库监控');
+    expect(html).not.toContain(localizedFixtures.dbMonitor);
   });
 
   it('renders Angular monitor-select-list loading through the shared template picker', () => {
@@ -8433,23 +8459,23 @@ describe('@hertzbeat/ui', () => {
         selectedId={undefined}
         search="linux"
         onSearchChange={vi.fn()}
-        title="新增模板草稿"
+        title={localizedFixtures.newTemplateDraft}
         filename="app-custom.yml"
         code="app: custom"
         templatePickerLabels={{
-          defaultTitle: '定义',
-          itemCount: total => `${total} 项`,
-          searchPlaceholder: '搜索',
-          empty: '没有匹配的模板'
+          defaultTitle: localizedFixtures.definition,
+          itemCount: localizedItemCount,
+          searchPlaceholder: localizedFixtures.search,
+          empty: localizedFixtures.noTemplateMatches
         }}
       />
     );
 
     expect(html).toContain('data-hz-ui="yaml-workspace"');
-    expect(html).toContain('定义');
-    expect(html).toContain('0 项');
-    expect(html).toContain('placeholder="搜索"');
-    expect(html).toContain('没有匹配的模板');
+    expect(html).toContain(localizedFixtures.definition);
+    expect(html).toContain(localizedItemCount(0));
+    expect(html).toContain(`placeholder="${localizedFixtures.search}"`);
+    expect(html).toContain(localizedFixtures.noTemplateMatches);
     expect(html).not.toContain('YML definitions');
     expect(html).not.toContain('No matches');
     expect(html).not.toContain('Search visible names');

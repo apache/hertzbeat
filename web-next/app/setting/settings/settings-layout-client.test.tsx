@@ -58,15 +58,15 @@ describe('settings settings layout client', () => {
     );
 
     expect(html).toContain('data-active-href="/setting/settings/config"');
-    expect(html).toContain('设置');
-    expect(html).toContain('系统设置');
-    expect(html).toContain('在同一控制台配置系统、消息服务、对象存储和令牌。');
-    expect(html).toContain('aria-label="设置分区"');
-    expect(html).toContain('aria-label="设置内容"');
-    expect(html).toContain('系统配置');
-    expect(html).toContain('消息服务配置');
-    expect(html).toContain('文件服务配置');
-    expect(html).toContain('令牌管理');
+    expect(html).toContain(t('settings.console.kicker'));
+    expect(html).toContain(t('settings.console.title'));
+    expect(html).toContain(t('settings.console.copy'));
+    expect(html).toContain(`aria-label="${t('settings.console.navigation')}"`);
+    expect(html).toContain(`aria-label="${t('settings.console.content')}"`);
+    expect(html).toContain(t('settings.system-config'));
+    expect(html).toContain(t('settings.server'));
+    expect(html).toContain(t('settings.object-store'));
+    expect(html).toContain(t('settings.token'));
     expect(html).toContain('content');
     expect(html).not.toContain('settings.console.');
   });

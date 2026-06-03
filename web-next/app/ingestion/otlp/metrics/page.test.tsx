@@ -7,7 +7,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../../test/i18n-test-helper';
-import { SUPPLEMENTAL_MESSAGES } from '../../../../lib/i18n-runtime-messages';
+import type { TranslationParams } from '../../../../lib/i18n';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -30,6 +30,11 @@ const mockState = vi.hoisted(() => ({
 
 const apiMessageGet = vi.fn();
 const loadOtlpMetricsConsole = vi.fn();
+const zhT = createTranslatorMock({ locale: 'zh-CN' });
+
+function tZh(key: string, params?: TranslationParams) {
+  return zhT(key, params);
+}
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>
@@ -47,7 +52,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock({ overrides: SUPPLEMENTAL_MESSAGES['zh-CN'] })
+    t: zhT
   })
 }));
 
@@ -133,11 +138,11 @@ vi.mock('@/lib/otlp-metrics/controller', () => ({
 
 vi.mock('@/lib/signal-route-context', () => ({
   buildSignalEntityContextRows: () => [
-    { label: '当前实体', value: 'checkout', meta: 'entityId 7' },
-    { label: '当前服务', value: 'checkout', meta: 'payments' },
-    { label: '当前环境', value: 'prod', meta: '环境' },
-    { label: '时间范围', value: 'last-1h', meta: '查询窗口' },
-    { label: '采集来源', value: 'OTLP', meta: 'HertzBeat OTLP 接入' }
+    { label: tZh('signal.context.entity.label'), value: 'checkout', meta: 'entityId 7' },
+    { label: tZh('signal.context.service.label'), value: 'checkout', meta: 'payments' },
+    { label: tZh('signal.context.environment.label'), value: 'prod', meta: tZh('signal.context.environment.meta') },
+    { label: tZh('signal.context.time.label'), value: 'last-1h', meta: tZh('signal.context.time.meta.default') },
+    { label: tZh('signal.context.source.label'), value: 'OTLP', meta: tZh('signal.context.source.otlp.meta') }
   ],
   readEpochMillisRouteParam: (value: string | null | undefined) => {
     const trimmed = value?.trim();
@@ -168,67 +173,67 @@ vi.mock('@/lib/signal-route-context', () => ({
 
 vi.mock('@/lib/otlp-metrics/view-model', () => ({
   buildMetricsExplorerState: () => ({
-    chartLabel: `${mockState.metricSeries.length} 条有数据序列`,
+    chartLabel: tZh('otlp.metrics.explorer.chart-label', { count: mockState.metricSeries.length }),
     hasSeries: mockState.metricSeries.length > 0,
-    emptyTitle: '暂无指标序列',
-    noMetricsTitle: '确认时间范围、实体归因、采集器和监控模板后再查看指标。',
-    sendMetricsLabel: '等待 OTLP 指标写入',
-    seriesCountLabel: `${mockState.metricSeries.length} 条序列`
+    emptyTitle: tZh('otlp.metrics.explorer.empty-title'),
+    noMetricsTitle: tZh('otlp.metrics.explorer.no-metrics-title'),
+    sendMetricsLabel: tZh('otlp.metrics.explorer.waiting-ingest'),
+    seriesCountLabel: tZh('otlp.metrics.explorer.series-count', { count: mockState.metricSeries.length })
   }),
   buildConsoleFacts: () => [
-    { label: '指标序列', value: '0' },
-    { label: '有数据序列', value: '0' },
-    { label: '存储来源', value: 'prometheus' },
-    { label: '最近上报', value: '-' }
+    { label: tZh('otlp.metrics.stats.total-series'), value: '0' },
+    { label: tZh('otlp.metrics.stats.non-empty-series'), value: '0' },
+    { label: tZh('otlp.metrics.stats.datasource'), value: 'prometheus' },
+    { label: tZh('otlp.metrics.stats.latest-observed'), value: '-' }
   ],
   buildConsoleMetrics: () => [
-    { label: '有数据序列', value: '0' },
-    { label: '序列总数', value: '0' },
-    { label: '接入状态', value: '空' }
+    { label: tZh('otlp.metrics.stats.non-empty-series'), value: '0' },
+    { label: tZh('otlp.metrics.stats.series-total'), value: '0' },
+    { label: tZh('otlp.metrics.stats.intake-state'), value: tZh('common.empty') }
   ],
   buildContextRows: () => [
-    { title: '当前服务', copy: 'checkout', meta: 'payments' },
-    { title: '时间范围', copy: '2026-04-12 20:00:00 → 2026-04-12 20:00:00', meta: 'ok' }
+    { title: tZh('otlp.metrics.context.current-service'), copy: 'checkout', meta: 'payments' },
+    { title: tZh('otlp.metrics.context.time-range'), copy: '2026-04-12 20:00:00 → 2026-04-12 20:00:00', meta: 'ok' }
   ],
   buildMetricSeriesContextRows: (series: any) => series
     ? [
-        { label: '指标名称', value: series.name, meta: '当前选中序列' },
-        { label: '关联实体', value: series.labels['hertzbeat.entity_name'] || '-', meta: `entityId ${series.labels['hertzbeat.entity_id'] || '-'}` },
-        { label: '当前服务', value: series.labels['service.name'] || series.labels.service_name || '-', meta: series.labels['service.namespace'] || series.labels.service_namespace || '-' },
-        { label: '采集模板', value: series.labels['hertzbeat.template'] || '-', meta: `采集器 ${series.labels['hertzbeat.collector'] || '-'}` },
-        { label: '当前环境', value: series.labels['deployment.environment.name'] || series.labels.deployment_environment_name || '-', meta: '部署环境' }
+        { label: tZh('otlp.metrics.series.context.metric-name'), value: series.name, meta: tZh('otlp.metrics.series.context.selected-series') },
+        { label: tZh('otlp.metrics.series.context.entity'), value: series.labels['hertzbeat.entity_name'] || '-', meta: tZh('otlp.metrics.series.entity-id', { entityId: series.labels['hertzbeat.entity_id'] || '-' }) },
+        { label: tZh('otlp.metrics.series.context.service'), value: series.labels['service.name'] || series.labels.service_name || '-', meta: series.labels['service.namespace'] || series.labels.service_namespace || '-' },
+        { label: tZh('otlp.metrics.series.context.template'), value: series.labels['hertzbeat.template'] || '-', meta: tZh('otlp.metrics.series.context.collector', { collector: series.labels['hertzbeat.collector'] || '-' }) },
+        { label: tZh('otlp.metrics.series.context.environment'), value: series.labels['deployment.environment.name'] || series.labels.deployment_environment_name || '-', meta: tZh('otlp.metrics.series.context.deployment-environment') }
       ]
     : [],
   buildMetricSeriesEvidenceRows: (series: any) => series
     ? [
-        { label: '采样点', value: String((series.points || []).length), meta: '真实采样点' },
-        { label: '最新值', value: String(series.latestValue ?? '-'), meta: '最近采样' },
-        { label: '值域', value: '12 - 20', meta: '平均 16' },
-        { label: '采样窗口', value: 'T1000 → T2000', meta: '真实采样时间' },
-        { label: '关联链路', value: series.labels.trace_id || '-', meta: series.labels.span_id || '-' }
+        { label: tZh('otlp.metrics.evidence.samples'), value: String((series.points || []).length), meta: tZh('otlp.metrics.evidence.real-samples') },
+        { label: tZh('otlp.metrics.evidence.latest-value'), value: String(series.latestValue ?? '-'), meta: 'Recent sample' },
+        { label: tZh('otlp.metrics.evidence.value-range'), value: '12 - 20', meta: tZh('otlp.metrics.evidence.average', { average: 16 }) },
+        { label: tZh('otlp.metrics.evidence.sample-window'), value: 'T1000 → T2000', meta: tZh('otlp.metrics.evidence.real-sample-time') },
+        { label: tZh('otlp.metrics.evidence.linked-trace'), value: series.labels.trace_id || '-', meta: series.labels.span_id || '-' }
       ]
     : [],
   buildMetricSeriesLinkedRecordRows: (series: any, handoffLinks: any) => series
     ? [
         {
           key: 'logs',
-          label: '历史日志',
-          value: series.labels.trace_id ? '按链路查看' : '按服务查看',
-          meta: series.labels.span_id ? '历史日志会定位到当前 span' : '缺少链路 ID 时按服务筛选',
+          label: tZh('otlp.metrics.handoff.logs'),
+          value: series.labels.trace_id ? tZh('otlp.metrics.handoff.logs-by-trace') : tZh('otlp.metrics.handoff.logs-by-service'),
+          meta: series.labels.span_id ? tZh('otlp.metrics.handoff.logs-current-span') : tZh('otlp.metrics.handoff.logs-service-filter'),
           href: handoffLinks.logsHref
         },
         {
           key: 'traces',
-          label: '链路瀑布图',
-          value: series.labels.trace_id ? '可打开' : '等待链路 ID',
-          meta: series.labels.span_id ? '打开完整链路并保留当前 span' : '指标没有链路 ID，暂不能定位链路',
+          label: tZh('otlp.metrics.handoff.traces'),
+          value: series.labels.trace_id ? tZh('otlp.metrics.handoff.trace-open') : tZh('otlp.metrics.handoff.trace-waiting-id'),
+          meta: series.labels.span_id ? tZh('otlp.metrics.handoff.trace-full-current-span') : tZh('otlp.metrics.handoff.trace-missing-id'),
           href: handoffLinks.tracesHref
         },
         {
           key: 'alerts',
-          label: '告警处理',
-          value: series.labels['hertzbeat.entity_id'] ? '带实体处理' : '按服务处理',
-          meta: series.labels['hertzbeat.entity_id'] ? '按实体、服务和指标进入告警' : '缺少实体 ID 时按服务进入告警',
+          label: tZh('otlp.metrics.handoff.alerts'),
+          value: series.labels['hertzbeat.entity_id'] ? tZh('otlp.metrics.handoff.alerts-by-entity') : tZh('otlp.metrics.handoff.alerts-by-service'),
+          meta: series.labels['hertzbeat.entity_id'] ? tZh('otlp.metrics.handoff.alerts-by-entity-meta') : tZh('otlp.metrics.handoff.alerts-by-service-meta'),
           href: handoffLinks.alertHandlingHref
         }
       ]
@@ -243,11 +248,11 @@ vi.mock('@/lib/otlp-metrics/view-model', () => ({
       meta
     });
     return [
-      row('hertzbeat.entity_id', series.labels['hertzbeat.entity_id'], series.labels['hertzbeat.entity_id'] ? '可打开实体详情' : '缺少实体 ID，实体详情会保持禁用'),
-      row('hertzbeat.entity_name', series.labels['hertzbeat.entity_name'], '用于展示实体名称'),
-      row('hertzbeat.workspace_id', series.labels['hertzbeat.workspace_id'], '缺少工作区字段时使用当前部署上下文'),
-      row('hertzbeat.collector', series.labels['hertzbeat.collector'], '采集器来源'),
-      row('hertzbeat.template', series.labels['hertzbeat.template'], '监控模板归属')
+      row('hertzbeat.entity_id', series.labels['hertzbeat.entity_id'], series.labels['hertzbeat.entity_id'] ? tZh('otlp.metrics.attribution.entity-id.present') : tZh('otlp.metrics.attribution.entity-id.missing')),
+      row('hertzbeat.entity_name', series.labels['hertzbeat.entity_name'], tZh('otlp.metrics.attribution.entity-name')),
+      row('hertzbeat.workspace_id', series.labels['hertzbeat.workspace_id'], tZh('otlp.metrics.attribution.workspace-id')),
+      row('hertzbeat.collector', series.labels['hertzbeat.collector'], tZh('otlp.metrics.attribution.collector')),
+      row('hertzbeat.template', series.labels['hertzbeat.template'], tZh('otlp.metrics.attribution.template'))
     ];
   },
   buildMetricSeriesViews: () => mockState.metricSeries,
@@ -268,7 +273,9 @@ vi.mock('@/lib/otlp-metrics/view-model', () => ({
     copy: series.labels['service.name'] || series.labels.service_name || '-',
     meta: series.latestValue == null ? '-' : String(series.latestValue),
     entityLabel: series.labels['hertzbeat.entity_name'] || series.labels.hertzbeat_entity_name || '-',
-    entityMeta: series.labels['hertzbeat.entity_id'] || series.labels.hertzbeat_entity_id ? `entityId ${series.labels['hertzbeat.entity_id'] || series.labels.hertzbeat_entity_id}` : '等待实体归因',
+    entityMeta: series.labels['hertzbeat.entity_id'] || series.labels.hertzbeat_entity_id
+      ? tZh('otlp.metrics.series.entity-id', { entityId: series.labels['hertzbeat.entity_id'] || series.labels.hertzbeat_entity_id })
+      : tZh('otlp.metrics.series.entity-missing'),
     entityState: series.labels['hertzbeat.entity_id'] || series.labels.hertzbeat_entity_id ? 'present' : 'missing'
   })),
   buildMetricTrendBars: () => [],
@@ -480,10 +487,7 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('<span className="shrink-0 font-semibold text-[#7f8a9d]">{pill.label}</span>');
     expect(source).not.toContain('<span className="truncate font-semibold text-[#dbe5f3]">{pill.value}</span>');
     expect(source).not.toContain('data-otlp-metrics-header-copy="operator-query-copy"');
-    expect(source).not.toContain('查询指标序列，按服务、命名空间、环境或标签分组。');
-    expect(source).not.toContain('按当前查询条件展示');
     expect(source).not.toContain('mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-6 py-6');
-    expect(source).not.toContain('按 OTLP 上下文、时间范围和指标表达式查看序列，并把采集集群、监控模板和阈值规则接到同一条排障链路里。');
     expect(source).not.toContain('xl:grid-cols-[minmax(0,1fr)_auto]');
     expect(source).toContain('data-otlp-metrics-time-toolbar="top-right-corner"');
     expect(source).toContain('data-otlp-metrics-time-toolbar-owner="hertzbeat-ui-workbench-layout"');
@@ -516,7 +520,6 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('className={`${panelClass} px-4 py-3`}');
     expect(source).not.toContain("'border-[var(--ops-primary)] px-3'");
     expect(source).not.toContain('data-otlp-metrics-action-row="aligned-context-actions"');
-    expect(source).not.toContain('返回 OTLP 接入');
     expect(source).not.toContain('href="/setting/collector"');
     expect(source).not.toContain('href="/setting/define"');
     expect(source).toContain('variant="narrow-rail"');
@@ -658,7 +661,7 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-series-table-header-owner="hertzbeat-ui-panel-header"');
     expect(source).toContain('chrome="transparent-topless"');
     expect(source).not.toContain('className="border-x-0 border-t-0 bg-transparent"');
-    expect(source).toContain('title="序列集合"');
+    expect(source).toContain("title={t('otlp.metrics.series.collection.title')}");
     expect(source).toContain('data-otlp-metrics-series-table-summary-owner="hertzbeat-ui-status-badge"');
     expect(source).toContain('data-otlp-metrics-series-table-empty-state="shared-empty-state"');
     expect(source).toContain('data-otlp-metrics-series-table-empty-state-owner="hertzbeat-ui-empty-state"');
@@ -752,21 +755,19 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('className="rounded-none border-0 bg-transparent"');
     expect(source).toContain('attributionDiagnosticRows');
     expect(source).toContain("'data-otlp-metrics-attribution-diagnostic-state': row.state");
-    expect(source).toContain('当前选中序列');
-    expect(source).toContain('指标证据');
-    expect(source).toContain('关联记录');
-    expect(source).toContain('历史日志');
-    expect(source).toContain('链路瀑布图');
-    expect(source).toContain('采样窗口');
-    expect(source).toContain('归因诊断');
-    expect(source).toContain('hertzbeat.entity_id');
-    expect(source).toContain('采集模板');
-    expect(source).not.toContain('<p className="text-[11px] font-semibold text-[#8792a5]">当前选中序列</p>');
-    expect(source).not.toContain('<p className="text-[11px] font-semibold text-[#8792a5]">指标证据</p>');
+    expect(source).toContain("t('otlp.metrics.series.context.selected-series')");
+    expect(source).toContain("t('otlp.metrics.detail.evidence.heading')");
+    expect(source).toContain("t('otlp.metrics.linked-records.title')");
+    expect(source).toContain("t('otlp.metrics.handoff.logs.action')");
+    expect(source).toContain("t('otlp.metrics.handoff.traces.action')");
+    expect(source).toContain("t('otlp.metrics.attribution.diagnostics.title')");
+    expect(source).toContain('namespaceLabel="hertzbeat.*"');
+    expect(source).toContain("t('otlp.metrics.detail.selected-series.aria')");
+    expect(source).not.toContain('<p className="text-[11px] font-semibold text-[#8792a5]">');
     expect(source).not.toContain('grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-[#252b35] bg-[#252b35]');
     expect(source).not.toContain('className="col-span-2 min-w-0 bg-[#10141b] px-3 py-2"');
     expect(source).not.toContain('className="grid grid-cols-[minmax(0,1fr)_52px] gap-2 text-[11px]"');
-    expect(source).not.toContain("row.state === 'present' ? '已提供' : '缺失'}</span>");
+    expect(source).toContain("stateLabel: row.state === 'present' ? t('otlp.metrics.attribution.state.present')");
     expect(source).not.toContain('className="grid grid-cols-[72px_minmax(0,1fr)] gap-2 text-[11px]"');
     expect(source).not.toContain('hover:border-[#344052] hover:bg-[#121823]');
     expect(source).not.toContain('<table className="w-full border-collapse text-left text-[12px]">');
@@ -777,10 +778,10 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('<Database className="h-8 w-8 text-[#7d8798]" aria-hidden="true" />');
     expect(source).not.toContain('<summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-2 text-[11px] font-semibold text-[#8792a5]">');
     expect(source).not.toContain('className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 py-1 text-[11px] font-semibold text-[#9ca7ba]"');
-    expect(source).not.toContain('<p className="text-[12px] font-semibold text-[#8792a5]">详情面板</p>');
+    expect(source).not.toContain('<p className="text-[12px] font-semibold text-[#8792a5]">');
     expect(source).not.toContain('<h2 className="mt-2 truncate text-[18px] font-semibold text-[#f2f6fb]">{firstSeries.title}</h2>');
     expect(source).not.toContain('className="flex h-full min-w-0 flex-1 items-center justify-center rounded-[3px] border border-dashed border-[#2a303a] bg-[#0c1016] px-3 text-center"');
-    expect(source).not.toContain('<p className="text-[12px] font-semibold text-[#a7b0bf]">暂无指标趋势</p>');
+    expect(source).not.toContain('<p className="text-[12px] font-semibold text-[#a7b0bf]">');
     expect(source).not.toContain('<span>{workbenchState.seriesCountLabel}</span>');
     expect(source).toContain('data-otlp-metrics-workbench-grid="series-detail-split"');
     expect(source).toContain('data-otlp-metrics-workbench-grid-owner="hertzbeat-ui-workbench-layout"');
@@ -797,10 +798,9 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-series-set-summary-owner="hertzbeat-ui-stat-strip"');
     expect(source).toContain('data-otlp-metrics-series-set-summary="service-entity-scope"');
     expect(source).toContain('seriesSetScopeRows.map');
-    expect(source).toContain('序列集合');
-    expect(source).not.toContain('<p className="text-[12px] font-semibold text-[#8792a5]">序列集合</p>');
+    expect(source).toContain("t('otlp.metrics.series.collection.title')");
+    expect(source).not.toContain('<p className="text-[12px] font-semibold text-[#8792a5]">');
     expect(source).not.toContain('className="flex min-w-0 items-center justify-between gap-3"');
-    expect(source).not.toContain('最近序列');
     expect(source).toContain('data-otlp-metrics-detail-panel="cold-detail-panel"');
     expect(source).toContain('data-otlp-metrics-detail-panel-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('data-otlp-metrics-detail-panel-priority="secondary-inspector"');
@@ -842,27 +842,19 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('data-otlp-metrics-entities-action="true" className="w-full px-2"');
     expect(source).not.toContain('className="grid grid-cols-2 gap-2 border-t border-[#252b35] px-4 py-3"');
     expect(source).toContain('data-otlp-metrics-entity-context="hertzbeat-signal-entity-context"');
-    expect(source).toContain('aria-label="实体上下文 当前实体 监控实例 当前服务 链路上下文 当前环境 时间范围 采集来源"');
+    expect(source).toContain("aria-label={t('otlp.metrics.entity-context.aria')}");
     expect(source).not.toContain('data-otlp-metrics-hertzbeat-loop="collector-template-alert-loop"');
     expect(source).toContain("t('otlp.metrics.title')");
     expect(source).toContain("t('otlp.metrics.query.run')");
     expect(source).not.toContain('data-otlp-metrics-action-row="aligned-context-actions"');
-    expect(source).not.toContain('返回 OTLP 接入');
     expect(source).not.toContain('href="/setting/collector"');
     expect(source).not.toContain('href="/setting/define"');
-    expect(source).not.toContain('接入质量');
-    expect(source).not.toContain('HertzBeat 采集闭环');
-    expect(source).not.toContain('>采集闭环<');
-    expect(source).not.toContain('从接入健康、采集节点、模板归属到告警处理，保留 HertzBeat 自己的运维闭环。');
-    expect(source).toContain('实体上下文');
-    expect(source).toContain('采集来源');
-    expect(source).toContain('实体详情');
-    expect(source).toContain('告警处理');
+    expect(source).toContain("t('otlp.metrics.entity-context.title')");
+    expect(source).toContain("t('topology.context-link.entity')");
+    expect(source).toContain("t('otlp.metrics.handoff.alerts')");
     expect(source).toContain('href={handoffLinks.alertHandlingHref}');
     expect(source).not.toContain('data-otlp-metrics-alert-context-hint="entity-trace-alert-handoff"');
-    expect(source).not.toContain('按当前实体、服务和已带入的链路上下文查看相关告警');
     expect(source).not.toContain('data-otlp-metrics-signal-handoff-hint="metric-log-trace-context"');
-    expect(source).not.toContain('当前指标序列的实体、服务和链路标签会带入日志与链路工作台');
     expect(source).toContain('data-otlp-metrics-entity-action="true"');
     expect(source).toContain('data-otlp-metrics-alert-handling-action="true"');
     expect(source).toContain('data-otlp-metrics-logs-action="true"');
@@ -883,7 +875,6 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('data-otlp-metrics-entity-action-disabled="missing-entity-id"\n                            size="md"\n                            className="w-full px-2"');
     expect(source).toContain('title={missingEntityHandoffTitle}');
     expect(source).toContain('buildOtlpMetricsRoute');
-    expect(source).not.toContain('告警规则');
     expect(source).not.toContain('returnLabel=');
     expect(source).not.toContain('signoz-metrics-explorer');
     expect(source).not.toContain('signoz-query-builder');
@@ -1082,12 +1073,12 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-hz-state-variant="hint"');
     expect(html).toContain('data-hz-state-frame="trend-empty"');
     expect(html).toContain('data-hz-state-hint-owner="hertzbeat-ui-state-notice"');
-    expect(html).toContain('暂无指标趋势');
-    expect(html).toContain('运行查询后展示真实采样点。');
+    expect(html).toContain(tZh('otlp.metrics.trend.empty.title'));
+    expect(html).toContain(tZh('otlp.metrics.trend.empty.copy'));
     expect(html).toContain('data-otlp-metrics-empty-guidance="operator-no-data-guidance"');
     expect(html).toContain('data-otlp-metrics-empty-state="honest-no-series"');
     expect(html).toContain('data-otlp-metrics-empty-state-context="applied-query-visible"');
-    expect(html).toContain('确认时间范围、实体归因、采集器和监控模板后再查看指标。');
+    expect(html).toContain(tZh('otlp.metrics.explorer.no-metrics-title'));
     expect(html).not.toContain('data-otlp-metrics-trend-bar="empty-series-placeholder"');
     expect(html).toContain('data-otlp-metrics-workbench-grid="series-detail-split"');
     expect(html).toContain('data-otlp-metrics-workbench-grid-owner="hertzbeat-ui-workbench-layout"');
@@ -1140,42 +1131,23 @@ describe('otlp metrics page', () => {
     expect(html).not.toContain('data-otlp-metrics-handoff-actions="compact-context-actions"');
     expect(html).not.toContain('data-otlp-metrics-entity-context="hertzbeat-signal-entity-context"');
     expect(html).not.toContain('data-otlp-metrics-hertzbeat-loop="collector-template-alert-loop"');
-    expect(html).toContain('指标工作台');
-    expect(html).not.toContain('查询指标序列，按服务、命名空间、环境或标签分组。');
-    expect(html).not.toContain('按当前查询条件展示');
-    expect(html).toContain('服务');
+    expect(html).toContain(tZh('otlp.metrics.title'));
+    expect(html).toContain(tZh('otlp.metrics.field.service'));
     expect(html).toContain('checkout');
-    expect(html).toContain('命名空间');
+    expect(html).toContain(tZh('otlp.metrics.field.namespace'));
     expect(html).toContain('payments');
-    expect(html).not.toContain('按 OTLP 上下文、时间范围和指标表达式查看序列，并把采集集群、监控模板和阈值规则接到同一条排障链路里。');
-    expect(html).toContain('指标查询');
-    expect(html).toContain('分组');
-    expect(html).toContain('聚合方式');
-    expect(html).toContain('趋势带');
-    expect(html).toContain('序列集合');
-    expect(html).toContain('服务范围');
-    expect(html).toContain('命名空间');
-    expect(html).toContain('序列');
-    expect(html).not.toContain('最近序列');
-    expect(html).not.toContain('详情面板');
-    expect(html).toContain('时间范围');
-    expect(html).toContain('运行查询');
+    expect(html).toContain(tZh('otlp.metrics.query.aria'));
+    expect(html).toContain(tZh('otlp.metrics.field.group-by'));
+    expect(html).toContain(tZh('otlp.metrics.aggregation.aria'));
+    expect(html).toContain(tZh('otlp.metrics.trend.title'));
+    expect(html).toContain(tZh('otlp.metrics.series.collection.title'));
+    expect(html).toContain(tZh('otlp.metrics.scope.service'));
+    expect(html).toContain(tZh('otlp.metrics.scope.series'));
+    expect(html).toContain(tZh('otlp.metrics.context.time-range'));
+    expect(html).toContain(tZh('otlp.metrics.query.run'));
     expect(html).toContain('data-otlp-metrics-header-actions="removed"');
     expect(html).not.toContain('data-otlp-metrics-action-row="aligned-context-actions"');
-    expect(html).not.toContain('返回 OTLP 接入');
-    expect(html).not.toContain('采集集群');
-    expect(html).not.toContain('阈值规则');
-    expect(html).not.toContain('HertzBeat 采集闭环');
-    expect(html).not.toContain('采集闭环');
-    expect(html).not.toContain('接入质量');
-    expect(html).not.toContain('从接入健康、采集节点、模板归属到告警处理，保留 HertzBeat 自己的运维闭环。');
-    expect(html).not.toContain('实体上下文');
-    expect(html).not.toContain('当前实体');
-    expect(html).not.toContain('采集来源');
-    expect(html).not.toContain('实体详情');
-    expect(html).not.toContain('告警处理');
     expect(html).not.toContain('status=firing');
-    expect(html).not.toContain('告警规则');
     expect(html).not.toContain('Summary');
     expect(html).not.toContain('Explorer');
     expect(html).not.toContain('Views');
@@ -1184,13 +1156,7 @@ describe('otlp metrics page', () => {
     expect(html).not.toContain('Create an Alert');
     expect(html).not.toContain('Add to Dashboard');
     expect(html).not.toContain('Sending metrics to SigNoZ');
-    expect(html).not.toContain('保存视图');
-    expect(html).not.toContain('>数据源<');
-    expect(html).not.toContain('>查询模式<');
-    expect(html).not.toContain('>查询状态<');
     expect(html).not.toContain('>service.name<');
-    expect(html).not.toContain('>时间窗口<');
-    expect(html).not.toContain('1 个查询');
   });
 
   it('renders a shared return action when metrics inherit a trace return path', async () => {
@@ -1208,7 +1174,7 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-otlp-metrics-header-action-icon="return-source"');
     expect(html).toContain('data-otlp-metrics-header-action-icon-owner="hertzbeat-ui-button-icon"');
     expect(html).toContain('href="/trace/manage?traceId=trace-123&amp;spanId=span-456&amp;serviceName=checkout"');
-    expect(html).toContain('返回来源');
+    expect(html).toContain(tZh('otlp.metrics.route.action.return-source'));
   });
 
   it('does not show fake zero metric cards or a selected-series inspector when no real series exists', async () => {
@@ -1230,9 +1196,7 @@ describe('otlp metrics page', () => {
     expect(html).not.toContain('data-otlp-metrics-detail-panel-body="compact-evidence-stack"');
     expect(html).not.toContain('data-otlp-metrics-handoff-actions="compact-context-actions"');
     expect(html).not.toContain('data-otlp-metrics-entity-action-disabled="missing-entity-id"');
-    expect(html).not.toContain('接入状态</p><p');
-    expect(html).not.toContain('就绪');
-    expect(html).not.toContain('空</p>');
+    expect(html).not.toContain('data-otlp-metrics-facts-grid="inline-summary-strip"');
   });
 
   it('renders OTLP metrics chart zoom as local observation with an explicit disabled apply action until zoomed', async () => {
@@ -1282,7 +1246,7 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-hz-status-badge-part="value"');
     expect(html).not.toContain('data-otlp-metrics-facts-grid="inline-summary-strip"');
     expect(html).toContain('disabled=""');
-    expect(html).toContain('应用为查询时间');
+    expect(html).toContain(tZh('time.context.zoom.apply'));
   });
 
   it('applies OTLP metric chart zoom to the route only after the explicit apply action', async () => {
@@ -1720,15 +1684,15 @@ describe('otlp metrics page', () => {
     expect(evidencePanel?.getAttribute('data-otlp-metrics-selected-series-evidence-owner')).toBe('hertzbeat-ui-detail-rows');
     expect(evidencePanel?.getAttribute('data-hz-detail-rows-owner')).toBe('hertzbeat-ui-detail-rows');
     expect(evidencePanel?.getAttribute('data-hz-detail-rows-boundary')).toBe('top');
-    expect(evidencePanel?.textContent).toContain('指标证据');
-    expect(evidencePanel?.textContent).toContain('采样窗口');
+    expect(evidencePanel?.textContent).toContain(tZh('otlp.metrics.detail.evidence.heading'));
+    expect(evidencePanel?.textContent).toContain(tZh('otlp.metrics.evidence.sample-window'));
     const detailBody = interactionContainer.querySelector('[data-otlp-metrics-detail-panel-body="compact-evidence-stack"]') as HTMLElement | null;
     expect(detailBody).not.toBeNull();
     expect(detailBody?.getAttribute('data-otlp-metrics-detail-panel-body-owner')).toBe('hertzbeat-ui-panel-section');
     expect(detailBody?.getAttribute('data-hz-panel-section-owner')).toBe('hertzbeat-ui-panel-section');
     expect(detailBody?.getAttribute('data-hz-panel-section-divider')).toBe('none');
-    expect(evidencePanel?.textContent).toContain('真实采样时间');
-    expect(evidencePanel?.textContent).toContain('关联链路');
+    expect(evidencePanel?.textContent).toContain(tZh('otlp.metrics.evidence.real-sample-time'));
+    expect(evidencePanel?.textContent).toContain(tZh('otlp.metrics.evidence.linked-trace'));
     expect(evidencePanel?.textContent).toContain('trace-inventory');
     const sampleHelper = interactionContainer.querySelector('[data-otlp-metrics-trend-sample-helper="real-sample-count"]') as HTMLElement | null;
     expect(sampleHelper).not.toBeNull();
@@ -1740,7 +1704,7 @@ describe('otlp metrics page', () => {
     expect(selectedContextPanel?.getAttribute('data-otlp-metrics-selected-series-context-owner')).toBe('hertzbeat-ui-detail-rows');
     expect(selectedContextPanel?.getAttribute('data-hz-detail-rows-owner')).toBe('hertzbeat-ui-detail-rows');
     expect(selectedContextPanel?.getAttribute('data-hz-detail-rows-boundary')).toBe('top');
-    expect(selectedContextPanel?.textContent).toContain('当前选中序列');
+    expect(selectedContextPanel?.textContent).toContain(tZh('otlp.metrics.series.context.selected-series'));
     expect(selectedContextPanel?.textContent).toContain('fastapi');
     const detailPanelHeader = interactionContainer.querySelector('[data-otlp-metrics-detail-panel-header="shared-panel-header"]') as HTMLElement | null;
     const detailPanel = interactionContainer.querySelector('[data-otlp-metrics-detail-panel="cold-detail-panel"]') as HTMLElement | null;
@@ -1757,7 +1721,7 @@ describe('otlp metrics page', () => {
     expect(detailPanelHeader?.getAttribute('data-hz-ui')).toBe('panel-header');
     expect(detailPanelHeader?.getAttribute('data-hz-panel-header-owner')).toBe('hertzbeat-ui-panel-header');
     expect(detailPanelHeader?.getAttribute('data-hz-panel-header-chrome')).toBe('transparent');
-    expect(detailPanelHeader?.textContent).toContain('详情面板');
+    expect(detailPanelHeader?.textContent).toContain(tZh('otlp.metrics.detail.eyebrow'));
     expect(detailPanelHeader?.textContent).toContain('db.client.duration');
     const detailSummaryStats = interactionContainer.querySelector('[data-otlp-metrics-detail-summary-stats="shared-stat-strip"]') as HTMLElement | null;
     expect(detailSummaryStats?.getAttribute('data-otlp-metrics-detail-summary-stats-owner')).toBe('hertzbeat-ui-stat-strip');
@@ -1769,11 +1733,11 @@ describe('otlp metrics page', () => {
     expect(detailContextRows?.getAttribute('data-otlp-metrics-detail-context-rows-owner')).toBe('hertzbeat-ui-detail-rows');
     expect(detailContextRows?.getAttribute('data-hz-detail-rows-owner')).toBe('hertzbeat-ui-detail-rows');
     expect(detailContextRows?.getAttribute('data-hz-detail-rows-offset')).toBe('top');
-    expect(detailContextRows?.textContent).toContain('查询上下文');
+    expect(detailContextRows?.textContent).toContain(tZh('otlp.metrics.detail.query-context'));
     const entityContextRows = interactionContainer.querySelector('[data-otlp-metrics-entity-context="hertzbeat-signal-entity-context"] [data-otlp-metrics-entity-context-owner="hertzbeat-ui-detail-rows"]') as HTMLElement | null;
     expect(entityContextRows?.getAttribute('data-hz-detail-rows-owner')).toBe('hertzbeat-ui-detail-rows');
     expect(entityContextRows?.getAttribute('data-hz-detail-rows-padding')).toBe('compact-y');
-    expect(entityContextRows?.textContent).toContain('实体上下文');
+    expect(entityContextRows?.textContent).toContain(tZh('otlp.metrics.entity-context.title'));
 
     const logHref = (interactionContainer.querySelector('[data-otlp-metrics-logs-action="true"]') as HTMLAnchorElement | null)?.href;
     const traceHref = (interactionContainer.querySelector('[data-otlp-metrics-traces-action="true"]') as HTMLAnchorElement | null)?.href;
@@ -1913,15 +1877,15 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-hz-ui="context-handoff"');
     expect(html).toContain('data-hz-context-handoff-owner="hertzbeat-ui-context-handoff"');
     expect(html).toContain('data-hz-context-handoff-frame="flush"');
-    expect(html).toContain('关联记录');
-    expect(html).toContain('证据跳转');
-    expect(html).toContain('历史日志');
-    expect(html).toContain('按链路查看');
-    expect(html).toContain('历史日志会定位到当前 span');
-    expect(html).toContain('链路瀑布图');
-    expect(html).toContain('打开完整链路并保留当前 span');
-    expect(html).toContain('告警处理');
-    expect(html).toContain('按实体、服务和指标进入告警');
+    expect(html).toContain(tZh('otlp.metrics.linked-records.title'));
+    expect(html).toContain(tZh('otlp.metrics.linked-records.handoff.title'));
+    expect(html).toContain(tZh('otlp.metrics.handoff.logs'));
+    expect(html).toContain(tZh('otlp.metrics.handoff.logs-by-trace'));
+    expect(html).toContain(tZh('otlp.metrics.handoff.logs-current-span'));
+    expect(html).toContain(tZh('otlp.metrics.handoff.traces'));
+    expect(html).toContain(tZh('otlp.metrics.handoff.trace-full-current-span'));
+    expect(html).toContain(tZh('otlp.metrics.handoff.alerts'));
+    expect(html).toContain(tZh('otlp.metrics.handoff.alerts-by-entity-meta'));
     expect(html).toContain('data-otlp-metrics-linked-record-action="logs"');
     expect(html).toContain('data-otlp-metrics-linked-record-action="traces"');
     expect(html).toContain('data-otlp-metrics-linked-record-action="alerts"');
@@ -1965,15 +1929,15 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-hz-attribute-diagnostics-frame="embedded"');
     expect(html).toContain('data-hz-attribute-diagnostic-row="true"');
     expect(html).toContain('data-hz-attribute-diagnostic-badge="true"');
-    expect(html).toContain('归因诊断');
+    expect(html).toContain(tZh('otlp.metrics.attribution.diagnostics.title'));
     expect(html).toContain('hertzbeat.entity_id');
-    expect(html).toContain('缺少实体 ID，实体详情会保持禁用');
+    expect(html).toContain(tZh('otlp.metrics.attribution.entity-id.missing'));
     expect(html).toContain('hertzbeat.collector');
     expect(html).toContain('collector-local');
     expect(html).toContain('hertzbeat.template');
     expect(html).toContain('jvm');
-    expect(html).toContain('title="缺少实体 ID，暂时不能打开实体详情。"');
-    expect(html).toContain('aria-label="缺少实体 ID，暂时不能打开实体详情。"');
+    expect(html).toContain(`title="${tZh('otlp.metrics.handoff.entity-disabled')}"`);
+    expect(html).toContain(`aria-label="${tZh('otlp.metrics.handoff.entity-disabled')}"`);
     expect(html).not.toContain('data-otlp-metrics-entity-action="true" href="/entities/');
     expect(html).toContain('/entities?search=self-monitor');
   });

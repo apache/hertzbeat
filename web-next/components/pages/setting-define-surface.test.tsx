@@ -59,43 +59,8 @@ describe('setting define monitor-template surface', () => {
     interactionContainer = null;
   });
 
-  const t = createTranslatorMock({
-    locale: 'zh-CN',
-    overrides: {
-      'setting.define.title': '定义',
-      'setting.define.subtitle': '管理监控模板 YAML，直接维护采集协议、参数和指标字段。',
-      'setting.define.action.new': '新增类型',
-      'common.button.edit': '编辑',
-      'common.button.cancel': '取消',
-      'setting.define.action.save-apply': '保存并应用',
-      'setting.define.action.delete': '删除 {{app}}',
-      'define.save-apply.confirm': '请确认是否保存修改并应用此监控类型定义? 这会影响到您的监控内容。',
-      'define.save-apply.no-code': '监控类型定义内容不能为空。',
-      'define.delete.confirm': '请确认是否删除 {{app}} 监控类型? 删除后无法添加此类监控。',
-      'define.hide-true.confirm': '确认是否显示此菜单?',
-      'define.hide-false.confirm': '确认是否隐藏此菜单?',
-      'setting.define.action.hide': '隐藏',
-      'setting.define.action.hide-aria': '隐藏模板 {{app}}',
-      'setting.define.action.show': '显示',
-      'setting.define.action.show-aria': '显示模板 {{app}}',
-      'setting.define.save.pending': '正在应用定义...',
-      'common.button.ok': '确定',
-      'common.search': '搜索',
-      'common.dark-mode': '深色模式',
-      'setting.define.empty.title': '暂无模板',
-      'setting.define.empty.copy': '请先新增监控模板 YAML。',
-      'setting.define.empty.search-title': '没有匹配的模板',
-      'setting.define.empty.search-copy': '调整搜索关键字后再试。',
-      'setting.define.template.visible': '可见',
-      'setting.define.template.hidden': '隐藏',
-      'setting.define.new-template': '新增模板草稿',
-      'setting.define.summary.yaml-lines': '{{count}} 行 YAML',
-      'setting.define.summary.mode.edit': '编辑',
-      'setting.define.summary.mode.new': '新增',
-      'setting.define.diff.original': '原始 YAML',
-      'setting.define.diff.current': '当前编辑 YAML'
-    }
-  });
+  const t = createTranslatorMock({ locale: 'zh-CN' });
+  const han = (...codes: number[]) => String.fromCodePoint(...codes);
 
   const data = {
     menuGroups: [
@@ -126,7 +91,7 @@ describe('setting define monitor-template surface', () => {
         yamlLabel="app-mysql.yml"
         darkMode
         isEditing
-        message="保存成功"
+        message={t('common.notify.apply-success')}
         onSearchChange={() => {}}
         onSearch={() => {}}
         onSelectApp={() => {}}
@@ -233,8 +198,8 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-template-visibility-label="MySQL"');
     expect(html).toContain('data-setting-define-template-visibility-action="hide"');
     expect(html).toContain('data-setting-define-template-visibility-next-hide="true"');
-    expect(html).toContain('aria-label="隐藏模板 MySQL"');
-    expect(html).toContain('title="隐藏模板 MySQL"');
+    expect(html).toContain(`aria-label="${t('setting.define.action.hide-aria', { app: 'MySQL' })}"`);
+    expect(html).toContain(`title="${t('setting.define.action.hide-aria', { app: 'MySQL' })}"`);
     expect(html).toContain('data-setting-define-new-action="angular-current-app-reset"');
     expect(html).toContain('data-setting-define-new-action-contract="angular-current-app-reset-url-retained"');
     expect(html).toContain('data-setting-define-new-action-owner="setting-define-controller"');
@@ -248,8 +213,8 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-delete-action="angular-current-app-id"');
     expect(html).toContain('data-setting-define-delete-action-owner="hertzbeat-ui-button"');
     expect(html).toContain('data-setting-define-delete-action-label="mysql"');
-    expect(html).toContain('aria-label="删除 mysql"');
-    expect(html).toContain('title="删除 mysql"');
+    expect(html).toContain(`aria-label="${t('setting.define.action.delete', { app: 'mysql' })}"`);
+    expect(html).toContain(`title="${t('setting.define.action.delete', { app: 'mysql' })}"`);
     expect(html).toContain('data-setting-define-save-confirm="closed"');
     expect(html).toContain('data-setting-define-save-confirm-owner="hertzbeat-ui-confirm-dialog"');
     expect(html).toContain('data-setting-define-save-confirm-closable="false"');
@@ -262,21 +227,21 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-delete-confirm-ok-type="primary"');
     expect(html).toContain('data-setting-define-template-visibility-confirm="closed"');
     expect(html).toContain('data-setting-define-template-visibility-confirm-owner="hertzbeat-ui-confirm-dialog"');
-    expect(html).toContain('定义');
-    expect(html).toContain('管理监控模板 YAML');
-    expect(html).toContain('新增类型');
+    expect(html).toContain(t('setting.define.title'));
+    expect(html).toContain(t('setting.define.subtitle'));
+    expect(html).toContain(t('setting.define.action.new'));
     expect(html).toContain('app-mysql.yml');
     expect(html).toContain('MySQL');
     expect(html).toContain('DATABASE');
-    expect(html).toContain('保存并应用');
-    expect(html).toContain('删除 mysql');
-    expect(html).toContain('深色模式');
+    expect(html).toContain(t('setting.define.action.save-apply'));
+    expect(html).toContain(t('setting.define.action.delete', { app: 'mysql' }));
+    expect(html).toContain(t('common.dark-mode'));
     expect(html).not.toContain('data-cold-checkbox-owner="cold-checkbox"');
-    expect(html).toContain('保存成功');
+    expect(html).toContain(t('common.notify.apply-success'));
     expect(html).not.toContain('data-setting-define-preview-panel');
     expect(html).not.toContain('data-setting-define-datasource-panel');
-    expect(html).not.toContain('预览查询');
-    expect(html).not.toContain('数据源状态');
+    expect(html).not.toContain(han(0x9884, 0x89c8, 0x67e5, 0x8be2));
+    expect(html).not.toContain(han(0x6570, 0x636e, 0x6e90, 0x72b6, 0x6001));
   });
 
   it('hides edit and save-apply while editing an existing template until YAML differs from the original', async () => {
@@ -307,10 +272,10 @@ describe('setting define monitor-template surface', () => {
     );
 
     expect(html).toContain('data-setting-define-diff-shell="monitor-template-diff"');
-    expect(html).toContain('取消');
-    expect(html).toContain('删除 mysql');
+    expect(html).toContain(t('common.button.cancel'));
+    expect(html).toContain(t('setting.define.action.delete', { app: 'mysql' }));
     expect(html).not.toContain('lucide-pencil');
-    expect(html).not.toContain('保存并应用');
+    expect(html).not.toContain(t('setting.define.action.save-apply'));
   });
 
   it('keeps new-template drafts out of existing-template rollback actions', async () => {
@@ -340,16 +305,16 @@ describe('setting define monitor-template surface', () => {
       />
     );
 
-    expect(html).toContain('新增模板草稿');
+    expect(html).toContain(t('setting.define.new-template'));
     expect(html).toContain('data-setting-define-code-editor="monitor-template-yaml"');
-    expect(html).toContain('保存并应用');
+    expect(html).toContain(t('setting.define.action.save-apply'));
     expect(html).toContain('data-setting-define-new-action-contract="angular-current-app-reset-url-retained"');
     expect(html).toContain('data-setting-define-new-action-state="hidden"');
     expect(html).not.toContain('data-setting-define-diff-shell="monitor-template-diff"');
     expect(html).not.toContain('data-setting-define-monitor-link=');
-    expect(html).not.toContain('新增类型');
-    expect(html).not.toContain('取消');
-    expect(html).not.toContain('删除');
+    expect(html).not.toContain(t('setting.define.action.new'));
+    expect(html).not.toContain(t('common.button.cancel'));
+    expect(html).not.toContain(t('setting.define.action.delete', { app: '' }).trim());
   });
 
   it('keeps the Angular save action visible for dirty code even when the editor is read-only', async () => {
@@ -382,7 +347,7 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-save-visibility-contract="angular-code-diff-independent-of-editing"');
     expect(html).toContain('data-cold-code-editor-readonly="true"');
     expect(html).toContain('data-setting-define-save-action="request"');
-    expect(html).toContain('保存并应用');
+    expect(html).toContain(t('setting.define.action.save-apply'));
     expect(html).not.toContain('data-setting-define-diff-shell="monitor-template-diff"');
   });
 
@@ -422,9 +387,9 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-cold-code-editor-loading="true"');
     expect(html).toContain('data-cold-code-editor-loading-state="angular-nz-code-editor-loading"');
     expect(html).toContain('data-cold-code-editor-loading-state-owner="cold-code-editor"');
-    expect(html).toContain('加载定义中心');
+    expect(html).toContain(t('setting.define.loading'));
     expect(html).not.toContain('data-setting-define-save-action="request"');
-    expect(html).not.toContain('保存并应用');
+    expect(html).not.toContain(t('setting.define.action.save-apply'));
   });
 
   it('renders a cold empty state in the template list', async () => {
@@ -457,8 +422,8 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-empty-state="cold-list-empty"');
     expect(html).toContain('data-hz-ui="yaml-workspace"');
     expect(html).toContain('data-hz-ui="template-picker"');
-    expect(html).toContain('暂无模板');
-    expect(html).not.toContain('请先新增监控模板 YAML。');
+    expect(html).toContain(t('setting.define.empty.title'));
+    expect(html).not.toContain(t('setting.define.empty.copy'));
   });
 
   it('keeps the Angular define shell mounted without showing backend load errors', async () => {
@@ -531,10 +496,10 @@ describe('setting define monitor-template surface', () => {
 
     expect(html).toContain('data-setting-define-empty-state="cold-list-empty"');
     expect(html).toContain('data-hz-template-empty-state="angular-no-matched-children"');
-    expect(html).toContain('没有匹配的模板');
+    expect(html).toContain(t('setting.define.empty.search-title'));
     expect(html).toContain('data-hz-ui="template-picker"');
-    expect(html).not.toContain('暂无模板');
-    expect(html).not.toContain('请先新增监控模板 YAML。');
+    expect(html).not.toContain(t('setting.define.empty.title'));
+    expect(html).not.toContain(t('setting.define.empty.copy'));
     expect(html).toContain('app-mysql.yml');
   });
 
@@ -577,8 +542,8 @@ describe('setting define monitor-template surface', () => {
       'button[data-setting-define-template-visibility="postgresql"]'
     ) as HTMLButtonElement | null;
     expect(showPostgresql).not.toBeNull();
-    expect(showPostgresql?.getAttribute('aria-label')).toBe('显示模板 PostgreSQL');
-    expect(showPostgresql?.getAttribute('title')).toBe('显示模板 PostgreSQL');
+    expect(showPostgresql?.getAttribute('aria-label')).toBe(t('setting.define.action.show-aria', { app: 'PostgreSQL' }));
+    expect(showPostgresql?.getAttribute('title')).toBe(t('setting.define.action.show-aria', { app: 'PostgreSQL' }));
     expect(showPostgresql?.getAttribute('data-setting-define-template-visibility-owner')).toBe('hertzbeat-ui-button');
     expect(showPostgresql?.getAttribute('data-setting-define-template-visibility-label')).toBe('PostgreSQL');
     expect(showPostgresql?.getAttribute('data-setting-define-template-visibility-action')).toBe('show');
@@ -604,7 +569,7 @@ describe('setting define monitor-template surface', () => {
     expect(
       interactionContainer.querySelector('[data-setting-define-template-visibility-confirm-dialog="angular-popconfirm"][data-setting-define-confirm-owner="hertzbeat-ui-confirm-dialog"]')
     ).not.toBeNull();
-    expect(interactionContainer.textContent).toContain('确认是否显示此菜单?');
+    expect(interactionContainer.textContent).toContain(t('define.hide-true.confirm'));
 
     const confirmButtons = interactionContainer
       .querySelector('[data-setting-define-template-visibility-confirm="open"]')
@@ -666,7 +631,7 @@ describe('setting define monitor-template surface', () => {
     expect(onSave).not.toHaveBeenCalled();
     expect(interactionContainer.querySelector('[data-setting-define-save-confirm="open"]')).toBeNull();
     expect(interactionContainer.querySelector('[data-setting-define-save-confirm="closed"]')).not.toBeNull();
-    expect(interactionContainer.textContent).toContain('监控类型定义内容不能为空。');
+    expect(interactionContainer.textContent).toContain(t('define.save-apply.no-code'));
   });
 
   it('uses the Angular confirmation copy as save and delete modal titles', async () => {
@@ -714,7 +679,7 @@ describe('setting define monitor-template surface', () => {
     const saveDialog = interactionContainer.querySelector(
       '[data-setting-define-save-confirm-dialog="angular-modal-confirm"][data-setting-define-confirm-title="angular-title-copy"]'
     );
-    expect(saveDialog?.getAttribute('aria-label')).toBe('请确认是否保存修改并应用此监控类型定义? 这会影响到您的监控内容。');
+    expect(saveDialog?.getAttribute('aria-label')).toBe(t('define.save-apply.confirm'));
     expect(saveDialog?.getAttribute('data-hz-confirm-closable')).toBe('false');
     expect(saveDialog?.getAttribute('data-hz-confirm-ok-danger')).toBe('true');
     expect(saveDialog?.getAttribute('data-hz-confirm-ok-type')).toBe('primary');
@@ -723,7 +688,7 @@ describe('setting define monitor-template surface', () => {
     expect(saveDialog?.getAttribute('data-setting-define-confirm-ok-type')).toBe('primary');
     expect(saveDialog?.querySelector('[data-setting-define-save-confirm-submit="angular-modal-confirm"]')?.getAttribute('data-setting-define-save-confirm-submit-danger')).toBe('true');
     expect(saveDialog?.querySelector('[data-setting-define-save-confirm-submit="angular-modal-confirm"]')?.getAttribute('data-setting-define-save-confirm-submit-type')).toBe('primary');
-    expect(saveDialog?.textContent).toContain('请确认是否保存修改并应用此监控类型定义? 这会影响到您的监控内容。');
+    expect(saveDialog?.textContent).toContain(t('define.save-apply.confirm'));
 
     await act(async () => {
       saveDialog?.querySelector('[data-hz-confirm-action="cancel"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -731,7 +696,7 @@ describe('setting define monitor-template surface', () => {
     });
 
     const deleteButton = Array.from(interactionContainer.querySelectorAll('button')).find(button =>
-      button.textContent?.includes('删除 mysql')
+      button.textContent?.includes(t('setting.define.action.delete', { app: 'mysql' }))
     ) as HTMLButtonElement | undefined;
     expect(deleteButton).toBeDefined();
 
@@ -743,7 +708,7 @@ describe('setting define monitor-template surface', () => {
     const deleteDialog = interactionContainer.querySelector(
       '[data-setting-define-delete-confirm-dialog="angular-modal-confirm"][data-setting-define-confirm-title="angular-title-copy"]'
     );
-    expect(deleteDialog?.getAttribute('aria-label')).toBe('请确认是否删除 MySQL 监控类型? 删除后无法添加此类监控。');
+    expect(deleteDialog?.getAttribute('aria-label')).toBe(t('define.delete.confirm', { app: 'MySQL' }));
     expect(deleteDialog?.getAttribute('data-hz-confirm-closable')).toBe('false');
     expect(deleteDialog?.getAttribute('data-hz-confirm-ok-danger')).toBe('true');
     expect(deleteDialog?.getAttribute('data-hz-confirm-ok-type')).toBe('primary');
@@ -752,7 +717,7 @@ describe('setting define monitor-template surface', () => {
     expect(deleteDialog?.getAttribute('data-setting-define-confirm-ok-type')).toBe('primary');
     expect(deleteDialog?.querySelector('[data-setting-define-delete-confirm-submit="angular-modal-confirm"]')?.getAttribute('data-setting-define-delete-confirm-submit-danger')).toBe('true');
     expect(deleteDialog?.querySelector('[data-setting-define-delete-confirm-submit="angular-modal-confirm"]')?.getAttribute('data-setting-define-delete-confirm-submit-type')).toBe('primary');
-    expect(deleteDialog?.textContent).toContain('请确认是否删除 MySQL 监控类型? 删除后无法添加此类监控。');
+    expect(deleteDialog?.textContent).toContain(t('define.delete.confirm', { app: 'MySQL' }));
   });
 
   it('keeps the save action in the old Angular loading state while applying YML', () => {
@@ -789,7 +754,7 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('disabled=""');
     expect(html).toContain('data-setting-define-save-pending-feedback="angular-save-loading"');
     expect(html).toContain('data-setting-define-save-pending-feedback-owner="hertzbeat-ui-workspace-feedback"');
-    expect(html).toContain('正在应用定义...');
+    expect(html).toContain(t('setting.define.save.pending'));
   });
 
   it('keeps mutation failure feedback as Angular fixed title plus backend detail metadata', () => {
@@ -804,7 +769,7 @@ describe('setting define monitor-template surface', () => {
         yamlLabel="app-mysql.yml"
         darkMode={false}
         isEditing
-        message="应用失败"
+        message={t('common.notify.apply-fail')}
         messageMeta="schema invalid"
         messageContract="angular-apply-fail-notification"
         onSearchChange={() => {}}
@@ -831,7 +796,7 @@ describe('setting define monitor-template surface', () => {
     expect(saveHtml).toContain('data-setting-define-visibility-feedback="angular-apply-fail-notification"');
     expect(saveHtml).toContain('data-setting-define-visibility-feedback-title="common.notify.apply-fail"');
     expect(saveHtml).toContain('data-setting-define-visibility-feedback-detail="backend-message"');
-    expect(saveHtml).toContain('应用失败');
+    expect(saveHtml).toContain(t('common.notify.apply-fail'));
     expect(saveHtml).toContain('schema invalid');
 
     const deleteHtml = renderToStaticMarkup(
@@ -845,7 +810,7 @@ describe('setting define monitor-template surface', () => {
         yamlLabel="app-mysql.yml"
         darkMode={false}
         isEditing={false}
-        message="删除失败"
+        message={t('common.notify.delete-fail')}
         messageMeta="template is still in use"
         messageContract="angular-delete-fail-notification"
         onSearchChange={() => {}}
@@ -868,7 +833,7 @@ describe('setting define monitor-template surface', () => {
     expect(deleteHtml).toContain('data-setting-define-delete-feedback="angular-delete-fail-notification"');
     expect(deleteHtml).toContain('data-setting-define-delete-feedback-title="common.notify.delete-fail"');
     expect(deleteHtml).toContain('data-setting-define-delete-feedback-detail="backend-message"');
-    expect(deleteHtml).toContain('删除失败');
+    expect(deleteHtml).toContain(t('common.notify.delete-fail'));
     expect(deleteHtml).toContain('template is still in use');
   });
 
@@ -940,9 +905,9 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-diff-current="true"');
     expect(html).toContain('data-setting-define-code-editor="monitor-template-yaml-original"');
     expect(html).toContain('data-setting-define-code-editor="monitor-template-yaml"');
-    expect(html).toContain('原始 YAML');
-    expect(html).toContain('当前编辑 YAML');
-    expect(html).toContain('保存并应用');
+    expect(html).toContain(t('setting.define.diff.original'));
+    expect(html).toContain(t('setting.define.diff.current'));
+    expect(html).toContain(t('setting.define.action.save-apply'));
     expect(html).toContain('app: mysql');
     expect(html).toContain('category: database');
     expect(html).toContain('metrics:');

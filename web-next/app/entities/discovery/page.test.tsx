@@ -26,6 +26,8 @@ vi.mock('@/components/providers/i18n-provider', () => ({
   })
 }));
 
+const expectedT = createTranslatorMock({ locale: 'zh-CN' });
+
 vi.mock('next/navigation', () => ({
   useSearchParams: () =>
     new URLSearchParams(
@@ -108,7 +110,7 @@ describe('EntityDiscoveryPage', () => {
     const html = renderToStaticMarkup(<EntityDiscoveryPage />);
 
     expect(html).toContain('data-entity-discovery-surface="otlp-cold-discovery-console"');
-    expect(html).toContain('data-loading-copy="遥测发现"');
+    expect(html).toContain(`data-loading-copy="${expectedT('entities.discovery.loading')}"`);
     expect(html).toContain(
       'data-cache-key="entity-discovery:/entities/discovery/governance-presets?limit=8:/entities/discovery/governance-activities?limit=8:/entities/catalog-suggestions?limit=120"'
     );

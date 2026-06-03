@@ -23,7 +23,7 @@ vi.mock('../providers/i18n-provider', () => ({
 }));
 
 describe('ExceptionCenterSurface', () => {
-  it('renders a HertzBeat-native Chinese exception explorer without English shell copy', () => {
+  it('renders a HertzBeat-native localized exception explorer without English shell copy', () => {
     const html = renderToStaticMarkup(<ExceptionCenterSurface type="500" />);
 
     expect(html).toContain('data-exception-center-surface="hertzbeat-exceptions"');
@@ -31,18 +31,18 @@ describe('ExceptionCenterSurface', () => {
     expect(html).toContain('data-exception-filter-sidebar="hertzbeat-exception-filters"');
     expect(html).toContain('data-exception-query-bar="hertzbeat-error-query"');
     expect(html).toContain('data-exception-table="hertzbeat-exception-list"');
-    expect(html).toContain('异常中心');
-    expect(html).toContain('筛选');
-    expect(html).toContain('aria-label="刷新筛选"');
-    expect(html).toContain('部署环境');
-    expect(html).toContain('服务');
-    expect(html).toContain('最近 7 天');
-    expect(html).toContain('运行查询');
-    expect(html).toContain('异常类型');
-    expect(html).toContain('错误信息');
-    expect(html).toContain('次数');
-    expect(html).toContain('最后出现');
-    expect(html).toContain('应用');
+    expect(html).toContain(t('exception.chrome.title'));
+    expect(html).toContain(t('exception.chrome.filter-title'));
+    expect(html).toContain(`aria-label="${t('exception.chrome.refresh-filters')}"`);
+    expect(html).toContain(t('exception.filters.deployment-environment'));
+    expect(html).toContain(t('exception.filters.service'));
+    expect(html).toContain(t('exception.time.last-7d'));
+    expect(html).toContain(t('exception.action.run-query'));
+    expect(html).toContain(t('exception.table.type'));
+    expect(html).toContain(t('exception.table.message'));
+    expect(html).toContain(t('exception.table.count'));
+    expect(html).toContain(t('exception.table.last-seen'));
+    expect(html).toContain(t('exception.table.application'));
     expect(html).toContain('ECONNRESET');
     expect(html).toContain('href="/exception/500?error=econnreset-browser-frontend"');
     expect(html).toContain('href="/exception/500?error=payment-402-checkout"');
@@ -67,9 +67,9 @@ describe('ExceptionCenterSurface', () => {
     expect(html).toContain('href="/overview"');
     expect(html).toContain('href="/log/manage"');
     expect(html).toContain('href="/trace/manage"');
-    expect(html).toContain('打开总览');
-    expect(html).toContain('日志工作台');
-    expect(html).toContain('链路工作台');
+    expect(html).toContain(t('menu.dashboard.back'));
+    expect(html).toContain(t('menu.log.manage'));
+    expect(html).toContain(t('menu.trace.manage'));
   });
 
   it('does not keep old workbench/card owners inside the HertzBeat exception explorer', () => {

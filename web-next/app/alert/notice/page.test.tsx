@@ -121,16 +121,7 @@ vi.mock('next/link', () => ({
 vi.mock('../../../components/providers/i18n-provider', () => ({
   useI18n: () => ({
     t: createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'alert.notice.receivers.title': '接收人',
-        'alert.notice.rules.title': '规则',
-        'alert.notice.templates.title': '模板',
-        'alert.notice.receiver.type': '通知方式',
-        'alert.notice.lanes.receivers.title': '接收人',
-        'alert.notice.lanes.rules.title': '规则',
-        'alert.notice.lanes.templates.title': '模板'
-      }
+      locale: 'zh-CN'
     }),
     locale: 'zh-CN'
   })
@@ -262,7 +253,7 @@ vi.mock('../../../lib/alert-notice/controller', () => ({
     periodEnd: '18:00'
   }),
   buildNoticeRuleDisplayNames: vi.fn(() => ({
-    receiverName: ['Receiver page 0-邮箱'],
+    receiverName: ['Receiver page 0-Email'],
     templateName: 'WebhookTemplate'
   })),
   createNoticeReceiver: vi.fn(),
@@ -359,16 +350,13 @@ describe('alert notice page', () => {
   });
 
   it('renders the OTLP cold notice tab shell with the receiver console selected by default', async () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
     const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
     const html = await renderAlertNoticePage();
 
-    expect(html).toContain('消息通知');
-    expect(html).not.toContain('工作区:alert/notice');
-    expect(html).not.toContain('接收人:17');
-    expect(html).not.toContain('规则:17');
-    expect(html).not.toContain('模板:4');
+    expect(html).toContain(t('alert.notice.title'));
     expect(html).toContain('data-alert-notice-console="true"');
-    expect(html).toContain('data-loading-copy="正在加载通知中心"');
+    expect(html).toContain(`data-loading-copy="${t('alert.notice.loading')}"`);
     expect(html).toContain('data-selected-tab="receiver"');
     expect(html).toContain('data-tab="receiver"');
     expect(html).toContain('data-tab="rule"');
@@ -403,28 +391,24 @@ describe('alert notice page', () => {
     expect(html).toContain('data-hz-pagination-page-jump="number-input"');
     expect(html).toContain('data-alert-notice-pagination-page-size-owner="hertzbeat-ui-select"');
     expect(html).toContain('data-alert-notice-pagination-page-jump-owner="hertzbeat-ui-input"');
-    expect(html).toContain('第 1 / 3 页 · 1-1 / 17');
-    expect(html).toContain('每页条数');
-    expect(html).toContain('页码');
+    expect(html).toContain(t('alert.notice.pagination.summary', { page: 1, totalPages: 3, from: 1, to: 1, total: 17 }));
+    expect(html).toContain(t('alert.notice.pagination.page-size'));
+    expect(html).toContain(t('alert.notice.pagination.page'));
     expect(html).toContain('data-alert-notice-receiver-row="7"');
-    expect(html).toContain('新增接收对象');
-    expect(html).toContain('接收对象名称');
-    expect(html).toContain('接收对象');
-    expect(html).toContain('通知方式');
-    expect(html).toContain('配置');
-    expect(html).toContain('更新时间');
-    expect(html).toContain('操作');
+    expect(html).toContain(t('alert.notice.receiver.new'));
+    expect(html).toContain(t('alert.notice.receiver.people.name'));
+    expect(html).toContain(t('alert.notice.receiver.people'));
+    expect(html).toContain(t('alert.notice.receiver.type'));
+    expect(html).toContain(t('alert.notice.receiver.setting'));
+    expect(html).toContain(t('common.edit-time'));
+    expect(html).toContain(t('common.edit'));
     expect(html).toContain('Receiver page 0');
-    expect(html).toContain('邮箱');
+    expect(html).toContain(t('alert.notice.type.email'));
     expect(html).toContain('ops@example.com');
     expect(html).toContain('2026-04-10 18:00:00');
-    expect(html).not.toContain('data-stage-section="接收人"');
+    expect(html).not.toContain(`data-stage-section="${t('alert.notice.receivers.title')}"`);
     expect(html).not.toContain('data-evidence-list="true"');
-    expect(html).not.toContain('Receiver page 0||ops@example.com||邮箱 · 更新时间 2026-04-10 18:00:00');
-    expect(html).not.toContain('Rule page 0||已启用 · 发送到 Receiver page||WebhookTemplate · 更新时间 2026-04-10 18:00:00');
     expect(html).not.toContain('WebhookTemplate||');
-    expect(html).not.toContain('当前接收对象:1');
-    expect(html).not.toContain('管理告警发往哪些接收对象。');
     expect(html).not.toContain('data-workbench-page="true"');
     expect(html).not.toContain('data-tone="operator"');
     expect(html).not.toContain('notice/receivers');
@@ -522,9 +506,10 @@ describe('alert notice page', () => {
 
     try {
       const html = await renderAlertNoticePage();
+      const t = createTranslatorMock({ locale: 'zh-CN' });
 
       expect(html).toContain('Receiver missing setting');
-      expect(html).toContain('title="无"');
+      expect(html).toContain(`title="${t('common.none')}"`);
       expect(html).not.toContain('title="-"');
     } finally {
       mockState.renderData = originalRenderData;
@@ -566,10 +551,11 @@ describe('alert notice page', () => {
 
     try {
       const html = await renderAlertNoticePage();
+      const t = createTranslatorMock({ locale: 'zh-CN' });
       const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
 
       expect(html).toContain('Receiver missing type');
-      expect(html).toContain('>无</span>');
+      expect(html).toContain(`>${t('common.none')}</span>`);
       expect(html).not.toContain('>-</span>');
       expect(source).toContain('getNoticeTemplateTypeLabel(template.type, t, emptyValue)');
     } finally {
@@ -724,6 +710,7 @@ describe('alert notice page', () => {
     };
 
     try {
+      const t = createTranslatorMock({ locale: 'zh-CN' });
       const html = await renderAlertNoticePage({
         signal: 'metrics',
         signalContext: {}
@@ -731,8 +718,8 @@ describe('alert notice page', () => {
 
       expect(html).toContain('data-selected-tab="rule"');
       expect(html).toContain('Rule without receivers');
-      expect(html).toContain('未绑定接收对象');
-      expect(html).toContain('系统内置模版');
+      expect(html).toContain(t('alert.notice.row.no-receiver'));
+      expect(html).toContain(t('alert.notice.template.preset.true'));
       expect(html).not.toContain('<td class="px-3 py-3 text-center">-</td>');
     } finally {
       mockState.renderData = originalRenderData;
@@ -762,6 +749,7 @@ describe('alert notice page', () => {
     };
 
     try {
+      const t = createTranslatorMock({ locale: 'zh-CN' });
       const html = await renderAlertNoticePage({
         signal: 'metrics',
         signalContext: {}
@@ -769,7 +757,7 @@ describe('alert notice page', () => {
 
       expect(html).toContain('data-alert-notice-rule-template-display="angular-template-id-fallback"');
       expect(html).toContain('Preset template rule');
-      expect(html).toContain('系统内置模版');
+      expect(html).toContain(t('alert.notice.template.preset.true'));
       expect(html).not.toContain('Stale template');
     } finally {
       mockState.renderData = originalRenderData;
@@ -1181,8 +1169,12 @@ describe('alert notice page', () => {
     expect(html).toContain('hertzbeat.entity.id:7');
     expect(html).toContain('service.name:checkout');
     expect(html).toContain('trace_id:trace-123');
-    expect(html).toContain('来自日志的通知策略上下文');
-    expect(html).toContain('新建通知策略时会按当前实体、服务、环境和链路标签做匹配');
+    expect(html).toContain(
+      createTranslatorMock({ locale: 'zh-CN' })('alert.rule.evidence.notice.title', {
+        signal: createTranslatorMock({ locale: 'zh-CN' })('alert.rule.signal.logs')
+      })
+    );
+    expect(html).toContain(createTranslatorMock({ locale: 'zh-CN' })('alert.rule.evidence.notice.copy'));
     expect(html).toContain('data-alert-notice-evidence-return="true"');
     expect(html).toContain('href="/log/manage?traceId=trace-123"');
     expect(source).not.toContain('useSearchParams');
@@ -1206,7 +1198,7 @@ describe('alert notice page', () => {
     expect(html).toContain('data-alert-notice-evidence-context="signal-route"');
     expect(html).toContain('data-alert-notice-prefill-labels=""');
     expect(html).toContain('data-alert-notice-evidence-labels="generated-labels"');
-    expect(html).toContain('>无</div>');
+    expect(html).toContain(`>${createTranslatorMock({ locale: 'zh-CN' })('common.none')}</div>`);
     expect(html).not.toContain('data-alert-notice-prefill-labels="-"');
     expect(html).not.toContain('>-</div>');
   }, 30_000);
@@ -1225,11 +1217,11 @@ describe('alert notice page', () => {
 
     try {
       const html = await renderAlertNoticePage();
+      const t = createTranslatorMock({ locale: 'zh-CN' });
 
       expect(html).toContain('data-alert-notice-receiver-empty-state="cold-empty-state"');
       expect(html).toContain('data-alert-notice-receiver-empty-icon="cold-empty-icon"');
-      expect(html).toContain('暂无数据');
-      expect(html).not.toContain('总量 0');
+      expect(html).toContain(t('common.no-data'));
     } finally {
       mockState.renderData = previousData;
     }

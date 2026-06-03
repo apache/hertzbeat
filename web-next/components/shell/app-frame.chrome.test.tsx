@@ -76,6 +76,8 @@ vi.mock('@/lib/utils', () => ({
 }));
 
 const setupT = createTranslatorMock({ locale: 'zh-CN' });
+const setupHeadline = (percent: number) => setupT('layout.setup.progress.headline', { percent });
+const srOnlyMarkup = (label: string) => `class="sr-only">${label}</span>`;
 
 const emptySetupState = {
   monitorTotal: 0,
@@ -107,7 +109,7 @@ describe('app frame chrome', () => {
 
     expect(summary.completedCount).toBe(0);
     expect(summary.progressPercent).toBe(0);
-    expect(summary.headline).toBe('你已完成 0% 的平台配置');
+    expect(summary.headline).toBe(setupHeadline(0));
   }, 15000);
 
   it('keeps the startup setup baseline on the entity create route when the live setup state is empty', async () => {
@@ -116,7 +118,7 @@ describe('app frame chrome', () => {
 
     expect(summary.completedCount).toBe(5);
     expect(summary.progressPercent).toBe(83);
-    expect(summary.headline).toBe('你已完成 83% 的平台配置');
+    expect(summary.headline).toBe(setupHeadline(83));
   }, 15000);
 
   it('keeps the startup setup baseline on the entity import route when the live setup state is empty', async () => {
@@ -125,7 +127,7 @@ describe('app frame chrome', () => {
 
     expect(summary.completedCount).toBe(5);
     expect(summary.progressPercent).toBe(83);
-    expect(summary.headline).toBe('你已完成 83% 的平台配置');
+    expect(summary.headline).toBe(setupHeadline(83));
   });
 
   it('keeps the startup setup baseline on the entity discovery route when the live setup state is empty', async () => {
@@ -134,7 +136,7 @@ describe('app frame chrome', () => {
 
     expect(summary.completedCount).toBe(5);
     expect(summary.progressPercent).toBe(83);
-    expect(summary.headline).toBe('你已完成 83% 的平台配置');
+    expect(summary.headline).toBe(setupHeadline(83));
   });
 
   it('keeps the startup setup baseline on overview routes when the live setup state is empty', async () => {
@@ -145,7 +147,7 @@ describe('app frame chrome', () => {
 
       expect(summary.completedCount).toBe(5);
       expect(summary.progressPercent).toBe(83);
-      expect(summary.headline).toBe('你已完成 83% 的平台配置');
+      expect(summary.headline).toBe(setupHeadline(83));
     }
   });
 
@@ -157,7 +159,7 @@ describe('app frame chrome', () => {
 
       expect(summary.completedCount).toBe(5);
       expect(summary.progressPercent).toBe(83);
-      expect(summary.headline).toBe('你已完成 83% 的平台配置');
+      expect(summary.headline).toBe(setupHeadline(83));
     }
   });
 
@@ -167,7 +169,7 @@ describe('app frame chrome', () => {
 
     expect(summary.completedCount).toBe(5);
     expect(summary.progressPercent).toBe(83);
-    expect(summary.headline).toBe('你已完成 83% 的平台配置');
+    expect(summary.headline).toBe(setupHeadline(83));
   });
 
   it('keeps the startup setup baseline on the OTLP intake route when the live setup state is empty', async () => {
@@ -176,7 +178,7 @@ describe('app frame chrome', () => {
 
     expect(summary.completedCount).toBe(5);
     expect(summary.progressPercent).toBe(83);
-    expect(summary.headline).toBe('你已完成 83% 的平台配置');
+    expect(summary.headline).toBe(setupHeadline(83));
   });
 
   it('keeps the startup setup baseline on entity definition routes when the live setup state is empty', async () => {
@@ -185,7 +187,7 @@ describe('app frame chrome', () => {
 
     expect(summary.completedCount).toBe(5);
     expect(summary.progressPercent).toBe(83);
-    expect(summary.headline).toBe('你已完成 83% 的平台配置');
+    expect(summary.headline).toBe(setupHeadline(83));
   });
 
   it('keeps the live empty setup state on the entity edit route', async () => {
@@ -194,7 +196,7 @@ describe('app frame chrome', () => {
 
     expect(summary.completedCount).toBe(0);
     expect(summary.progressPercent).toBe(0);
-    expect(summary.headline).toBe('你已完成 0% 的平台配置');
+    expect(summary.headline).toBe(setupHeadline(0));
   });
 
   it('renders shared header utility triggers with icon-only parity chrome on ops routes', async () => {
@@ -234,7 +236,7 @@ describe('app frame chrome', () => {
     expect(html).toContain('data-app-frame-glyph="mute-megaphone"');
     expect(html).toContain('data-app-frame-glyph="settings-gear"');
     expect(html).toContain('data-app-frame-user-avatar="angular-circle"');
-    expect(html).toContain('开始使用');
+    expect(html).toContain(setupT('layout.setup.title'));
     expect(html).toContain('data-app-frame-setup-progress="angular-reference"');
     expect(html).toContain('style="width:83%"');
     expect(html).not.toContain('common.setup');
@@ -243,19 +245,19 @@ describe('app frame chrome', () => {
     expect(html).toContain('data-platform-main-scroll="content-flow"');
     expect(html).toContain('data-platform-footer-placement="flow-end-or-viewport-bottom"');
     expect(html).toContain('Apache HertzBeat™ v1.8.0');
-    expect(html).not.toContain('遵循 Apache License, Version 2.0 授权');
+    expect(html).not.toContain(setupT('platform.footer.license'));
     expect(html).not.toContain('Apache License, Version 2.0');
     expect(html).toContain('data-shell-ai-chat-launcher="angular-ai-chat"');
-    expect(html).toContain('class="sr-only">打开 AI 助手</span>');
-    expect(html).toContain('class="sr-only">GitHub</span>');
-    expect(html).toContain('class="sr-only">菜单</span>');
-    expect(html).toContain('class="sr-only">通知</span>');
-    expect(html).toContain('class="sr-only">取消静音</span>');
-    expect(html).toContain('class="sr-only">锁屏</span>');
-    expect(html).toContain('class="sr-only">设置</span>');
-    expect(html).toContain('class="sr-only">用户菜单：admin</span>');
-    expect(html).toContain('placeholder="询问助手"');
-    expect(html).toContain('aria-label="发送提示"');
+    expect(html).toContain(srOnlyMarkup(setupT('ai.chat.launch')));
+    expect(html).toContain(srOnlyMarkup(setupT('app.frame.utility.github')));
+    expect(html).toContain(srOnlyMarkup(setupT('app.frame.utility.menu')));
+    expect(html).toContain(srOnlyMarkup(setupT('common.notify')));
+    expect(html).toContain(srOnlyMarkup(setupT('common.unmute')));
+    expect(html).toContain(srOnlyMarkup(setupT('common.lock')));
+    expect(html).toContain(srOnlyMarkup(setupT('menu.settings')));
+    expect(html).toContain(srOnlyMarkup(setupT('app.frame.utility.user', { user: 'admin' })));
+    expect(html).toContain(`placeholder="${setupT('ai.chat.input.placeholder')}"`);
+    expect(html).toContain(`aria-label="${setupT('ai.chat.submit')}"`);
     expect(html).toContain('overview-body');
   });
 

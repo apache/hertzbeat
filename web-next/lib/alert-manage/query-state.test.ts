@@ -135,6 +135,7 @@ describe('alert query state codec', () => {
   it('receives topology alert-impact context and turns it into an alert filter', () => {
     const returnTo =
       '/topology?viewMode=resource-dependency&sourceKind=database-middleware-connection&edgeId=svc-checkout--res-orders-db&environment=prod&timeRange=last-1h';
+    const returnLabel = `HertzBeat ${String.fromCodePoint(0x4f01, 0x4e1a, 0x8fd0, 0x7ef4, 0x62d3, 0x6251)}`;
     const params = new URLSearchParams({
       source: 'topology',
       viewMode: 'resource-dependency',
@@ -147,7 +148,7 @@ describe('alert query state codec', () => {
       environment: 'prod',
       timeRange: 'last-1h',
       returnTo: `${returnTo}&returnLabel=HertzBeat%20%E4%BC%81%E4%B8%9A%E8%BF%90%E7%BB%B4%E6%8B%93%E6%89%91`,
-      returnLabel: 'HertzBeat 企业运维拓扑'
+      returnLabel
     });
 
     const query = queryStateFromParams({

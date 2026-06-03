@@ -9,9 +9,9 @@ describe('AlertIntegrationMarkdown', () => {
   it('renders fenced code, indented fenced code, links, and mermaid diagrams without exposing raw fences', () => {
     const html = renderToStaticMarkup(
       <AlertIntegrationMarkdown
-        content={`# 指南
+        content={`# Guide
 
-请查看 [Prometheus 文档](https://prometheus.io/docs/alerting/latest/configuration/)。
+Read the [Prometheus docs](https://prometheus.io/docs/alerting/latest/configuration/).
 
 \`\`\`json
 {"status":"ok"}
@@ -19,10 +19,10 @@ describe('AlertIntegrationMarkdown', () => {
 
 \`\`\`mermaid
 graph LR
-  A[外部系统告警] --> B[Webhook]
+  A[External alert] --> B[Webhook]
 \`\`\`
 
-1. 检查配置
+1. Check configuration
     \`\`\`bash
     curl http://localhost:9090/api/v1/rules
     \`\`\`
@@ -47,12 +47,12 @@ graph LR
   it('renders provider markdown headings, emphasis, blockquotes, and pipe tables instead of leaking raw syntax', () => {
     const html = renderToStaticMarkup(
       <AlertIntegrationMarkdown
-        content={`>将 Zabbix 的告警通过 Webhook 方式发送到 HertzBeat 告警平台。
+        content={`>Send Zabbix alerts to the HertzBeat alert platform through Webhook.
 
-#### 进入通知模板配置
-2. 进入 **告警管理** > **告警配置** > **通知模板**
+#### Open notification template settings
+2. Open **Alert management** > **Alert settings** > **Notification templates**
 
-| 名称 | 值 |
+| Name | Value |
 |-----|-----|
 | URL | http://your-hertzbeat-server:1157/api/alerts/report/zabbix |
 | TriggerSeverity | {TRIGGER.SEVERITY} |
@@ -64,22 +64,22 @@ graph LR
     expect(html).toContain('data-alert-integration-markdown-quote="true"');
     expect(html).toContain('data-alert-integration-markdown-table="true"');
     expect(html).toContain('<strong');
-    expect(html).toContain('告警管理');
+    expect(html).toContain('Alert management');
     expect(html).toContain('<table');
     expect(html).toContain('<th');
     expect(html).toContain('<td');
     expect(html).toContain('TriggerSeverity');
     expect(html).not.toContain('####');
-    expect(html).not.toContain('**告警管理**');
-    expect(html).not.toContain('| 名称 | 值 |');
+    expect(html).not.toContain('**Alert management**');
+    expect(html).not.toContain('| Name | Value |');
     expect(html).not.toContain('|-----|-----|');
-    expect(html).not.toContain('&gt;将 Zabbix');
+    expect(html).not.toContain('&gt;Send Zabbix');
   });
 
   it('renders the real alert integration provider docs without leaking heading, emphasis, table, or fence syntax', () => {
     const docs = ['tencent', 'zabbix', 'prometheus'].map(source => ({
       source,
-      content: readFileSync(resolve(process.cwd(), '..', 'web-app', 'src', 'assets', 'doc', 'alert-integration', `${source}.zh-CN.md`), 'utf8')
+      content: readFileSync(resolve(process.cwd(), 'public', 'assets', 'doc', 'alert-integration', `${source}.zh-CN.md`), 'utf8')
     }));
 
     for (const { source, content } of docs) {
@@ -91,13 +91,13 @@ graph LR
         expect(html, source).toContain('data-alert-integration-markdown-strong="true"');
       }
       expect(html, source).not.toContain('####');
-      expect(html, source).not.toContain('**告警');
+      expect(html, source).not.toMatch(/\*\*[\u4e00-\u9fff]/);
       expect(html, source).not.toContain('```');
     }
 
     const zabbixHtml = renderToStaticMarkup(<AlertIntegrationMarkdown content={docs.find(doc => doc.source === 'zabbix')!.content} />);
     expect(zabbixHtml).toContain('data-alert-integration-markdown-table="true"');
-    expect(zabbixHtml).not.toContain('| 名称 | 值 |');
+    expect(zabbixHtml).not.toMatch(/\| \u540d\u79f0 \| \u503c \|/);
 
     const prometheusHtml = renderToStaticMarkup(<AlertIntegrationMarkdown content={docs.find(doc => doc.source === 'prometheus')!.content} />);
     expect(prometheusHtml).toContain('data-alert-integration-code-block="bash"');

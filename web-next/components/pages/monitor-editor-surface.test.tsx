@@ -77,8 +77,8 @@ vi.mock('../ui/number-stepper', () => ({
   NumberStepper: ({ value, onValueChange: _onValueChange, ...props }: any) => (
     <span data-cold-number-stepper-owner="cold-number-stepper">
       <input type="text" data-cold-number-stepper-input="true" value={value} readOnly {...props} />
-      <button type="button" data-cold-number-stepper-action="decrement">减少</button>
-      <button type="button" data-cold-number-stepper-action="increment">增加</button>
+      <button type="button" data-cold-number-stepper-action="decrement">Decrease</button>
+      <button type="button" data-cold-number-stepper-action="increment">Increase</button>
     </span>
   )
 }));
@@ -217,6 +217,8 @@ vi.mock('@/lib/utils', () => ({
 }));
 
 describe('MonitorEditorSurface', () => {
+  const zhT = createTranslatorMock({ locale: 'zh-CN' });
+
   it('renders structured label and annotation rows instead of raw JSON textareas', () => {
     const html = renderToStaticMarkup(
       <MonitorEditorSurface
@@ -303,8 +305,8 @@ describe('MonitorEditorSurface', () => {
         />
       );
 
-      expect(html).toContain('添加标签');
-      expect(html).toContain('添加注解');
+      expect(html).toContain(zhT('monitor.editor.labels.add'));
+      expect(html).toContain(zhT('monitor.editor.annotations.add'));
       expect(html).not.toContain('Add label');
       expect(html).not.toContain('Add annotation');
     } finally {
@@ -333,7 +335,7 @@ describe('MonitorEditorSurface', () => {
             collector: '',
             grafanaDashboard: { enabled: false },
             params: [{ field: 'host', paramValue: '127.0.0.1' }],
-            paramDefines: [{ field: 'host', type: 'text', name: '目标Host', required: true }],
+            paramDefines: [{ field: 'host', type: 'text', name: 'Target Host', required: true }],
             advancedParams: [],
             advancedParamDefines: [],
             scrapeParams: [],
@@ -345,11 +347,11 @@ describe('MonitorEditorSurface', () => {
         />
       );
 
-      expect(html).toContain('默认系统调度');
+      expect(html).toContain(zhT('monitor.collector.system.default'));
       expect(html).toContain('data-monitor-editor-collector-selection="angular-collectors-selection-tags"');
       expect(html).toContain('data-monitor-editor-collector-tags="angular-status-ip-mode-tags"');
       expect(html).toContain('data-monitor-editor-collector-tag="system-default"');
-      expect(html).not.toContain('<option value="" selected="">无</option>');
+      expect(html).not.toMatch(/<option value="" selected="">\u65e0<\/option>/);
     } finally {
       i18nMockState.locale = 'en-US';
     }
@@ -376,7 +378,7 @@ describe('MonitorEditorSurface', () => {
             collector: 'edge-a',
             grafanaDashboard: { enabled: false },
             params: [{ field: 'host', paramValue: '127.0.0.1' }],
-            paramDefines: [{ field: 'host', type: 'text', name: '目标Host', required: true }],
+            paramDefines: [{ field: 'host', type: 'text', name: 'Target Host', required: true }],
             advancedParams: [],
             advancedParamDefines: [],
             scrapeParams: [],

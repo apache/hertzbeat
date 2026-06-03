@@ -558,11 +558,11 @@ describe('monitor history chart grid', () => {
       />
     );
 
-    expect(chartHtml).toContain('61 个采样点');
+    expect(chartHtml).toContain(`61 ${zhT('monitor.detail.history-series.search.count')}`);
     expect(chartHtml).not.toContain('61 samples');
     expect(chartHtml).not.toContain('monitor.detail.history-series.search.count');
-    expect(emptyHtml).toContain('历史未就绪');
-    expect(emptyHtml).toContain('历史查询还没有返回可用序列。');
+    expect(emptyHtml).toContain(zhT('monitor.detail.history.blocker.title'));
+    expect(emptyHtml).toContain(zhT('monitor.detail.history.blocker.copy'));
     expect(emptyHtml).not.toContain('History store has not returned series yet.');
   });
 });

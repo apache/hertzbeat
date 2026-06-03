@@ -206,7 +206,7 @@ describe('alert inhibit page', () => {
     expect(html).toContain('&quot;sourceKind&quot;:&quot;database-middleware-connection&quot;');
     expect(html).toContain('&quot;returnTo&quot;:&quot;/topology?viewMode=resource-dependency&amp;sourceKind=database-middleware-connection&amp;edgeId=svc-checkout--res-orders-db');
     expect(html).not.toContain('returnLabel=');
-    expect(html).not.toContain('HertzBeat 企业运维拓扑');
+    expect(html).not.toContain('HertzBeat operations topology');
   });
 
   it('preserves three-signal evidence context into new inhibit authoring', async () => {

@@ -3,26 +3,28 @@ import { buildBulletinCurrentQueryLabel, buildBulletinFacts, buildBulletinFormDr
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
+const formattedAt = '2026-04-10 18:00:00';
+const formatAt = () => formattedAt;
 
 describe('bulletin view model', () => {
   it('builds facts from list state and selection', () => {
     expect(buildBulletinFacts({ totalElements: 8, content: [1, 2] } as any, { name: 'Ops board' } as any, t)).toEqual([
-      { label: '工作区', value: 'bulletin' },
-      { label: '总量', value: '8' },
-      { label: '当前页', value: '2' },
-      { label: '当前选中', value: 'Ops board' }
+      { label: t('common.workspace'), value: 'bulletin' },
+      { label: t('common.total'), value: '8' },
+      { label: t('common.current-page-count'), value: '2' },
+      { label: t('bulletin.facts.selected'), value: 'Ops board' }
     ]);
   });
 
   it('renders missing selected fact name with the localized empty fallback', () => {
     expect(buildBulletinFacts({ totalElements: 8, content: [] } as any, { name: ' ' } as any, t)).toContainEqual({
-      label: '当前选中',
-      value: '无'
+      label: t('bulletin.facts.selected'),
+      value: t('common.none')
     });
 
     expect(buildBulletinFacts({ totalElements: 8, content: [] } as any, null, t)).toContainEqual({
-      label: '当前选中',
-      value: '无'
+      label: t('bulletin.facts.selected'),
+      value: t('common.none')
     });
   });
 
@@ -33,14 +35,14 @@ describe('bulletin view model', () => {
           { id: 7, name: 'Ops board', app: 'checkout', monitorIds: [1, 2], creator: 'ops', gmtUpdate: 1712730000000 }
         ] as any,
         t,
-        () => '2026-04-10 18:00:00'
+        formatAt
       )
     ).toEqual([
       {
         key: '7',
         title: 'Ops board',
-        copy: 'checkout · 监控对象 2',
-        meta: '2026-04-10 18:00:00 · 创建人 ops'
+        copy: `checkout · ${t('bulletin.list.monitors')} 2`,
+        meta: `${formattedAt} · ${t('bulletin.list.creator')} ops`
       }
     ]);
   });
@@ -50,11 +52,11 @@ describe('bulletin view model', () => {
       buildBulletinSelectionRows(
         { id: 7, name: 'Ops board', app: 'checkout', monitorIds: [1, 2], fields: { a: 1 }, gmtUpdate: 1712730000000 } as any,
         t,
-        () => '2026-04-10 18:00:00'
+        formatAt
       )
     ).toEqual([
-      { title: 'Ops board', copy: 'checkout · 监控对象 2', meta: 'id 7' },
-      { title: '字段', copy: '1', meta: '更新时间 2026-04-10 18:00:00' }
+      { title: 'Ops board', copy: `checkout · ${t('bulletin.list.monitors')} 2`, meta: 'id 7' },
+      { title: t('bulletin.selected.fields'), copy: '1', meta: `${t('common.updated')} ${formattedAt}` }
     ]);
   });
 
@@ -63,14 +65,14 @@ describe('bulletin view model', () => {
       buildBulletinRows(
         [{ id: 9, name: 'Fallback board', app: ' ', monitorIds: [], creator: '' }] as any,
         t,
-        () => '2026-04-10 18:00:00'
+        formatAt
       )
     ).toEqual([
       {
         key: '9',
         title: 'Fallback board',
-        copy: '无 · 监控对象 0',
-        meta: '2026-04-10 18:00:00 · 创建人 无'
+        copy: `${t('common.none')} · ${t('bulletin.list.monitors')} 0`,
+        meta: `${formattedAt} · ${t('bulletin.list.creator')} ${t('common.none')}`
       }
     ]);
 
@@ -78,14 +80,14 @@ describe('bulletin view model', () => {
       buildBulletinSelectionRows(
         { id: 9, name: 'Fallback board', app: ' ', monitorIds: [], fields: {} } as any,
         t,
-        () => '2026-04-10 18:00:00'
+        formatAt
       )[0]
-    ).toEqual({ title: 'Fallback board', copy: '无 · 监控对象 0', meta: 'id 9' });
+    ).toEqual({ title: 'Fallback board', copy: `${t('common.none')} · ${t('bulletin.list.monitors')} 0`, meta: 'id 9' });
 
-    expect(buildBulletinSelectionRows(null, t, () => '2026-04-10 18:00:00')[0]).toEqual({
-      title: '未选择公告',
-      copy: '从公告列表选择一个看板后查看指标上下文。',
-      meta: '无'
+    expect(buildBulletinSelectionRows(null, t, formatAt)[0]).toEqual({
+      title: t('bulletin.selected.empty.title'),
+      copy: t('bulletin.selected.empty.copy'),
+      meta: t('common.none')
     });
   });
 
@@ -94,17 +96,17 @@ describe('bulletin view model', () => {
       buildBulletinRows(
         [{ id: 9, name: ' ', app: 'checkout', monitorIds: [], creator: 'ops' }] as any,
         t,
-        () => '2026-04-10 18:00:00'
+        formatAt
       )[0].title
-    ).toBe('无');
+    ).toBe(t('common.none'));
 
     expect(
       buildBulletinSelectionRows(
         { id: 9, name: '', app: 'checkout', monitorIds: [], fields: {} } as any,
         t,
-        () => '2026-04-10 18:00:00'
+        formatAt
       )[0].title
-    ).toBe('无');
+    ).toBe(t('common.none'));
   });
 
   it('picks the explicit selection and falls back to the first row', () => {
@@ -114,7 +116,7 @@ describe('bulletin view model', () => {
   });
 
   it('builds the current query label and selected bulletin json', () => {
-    expect(buildBulletinCurrentQueryLabel('  ', t)).toBe('全部公告');
+    expect(buildBulletinCurrentQueryLabel('  ', t)).toBe(t('bulletin.search.all'));
     expect(buildBulletinCurrentQueryLabel('checkout', t)).toBe('checkout');
     expect(buildSelectedBulletinJson({ id: 7, name: 'Ops board' } as any)).toBe('{\n  "id": 7,\n  "name": "Ops board"\n}');
     expect(buildSelectedBulletinJson(null)).toBeNull();
@@ -145,14 +147,14 @@ describe('bulletin view model', () => {
 
     expect(buildBulletinMetricsState(null, null, t)).toEqual({
       kind: 'empty',
-      title: '暂无指标',
-      copy: '暂无可用指标。',
+      title: t('bulletin.metrics.empty.title'),
+      copy: t('bulletin.metrics.empty.copy'),
       tone: 'default'
     });
 
     expect(buildBulletinMetricsState(null, 'boom', t)).toEqual({
       kind: 'empty',
-      title: '指标不可用',
+      title: t('bulletin.metrics.error.title'),
       copy: 'boom',
       tone: 'danger'
     });
@@ -216,10 +218,10 @@ describe('bulletin view model', () => {
       fieldsJson: '{\n  "cpu": [\n    "usage"\n  ]\n}'
     });
 
-    expect(validateBulletinForm({ name: '', app: '', monitorIdsText: '', fieldsJson: '{}' }, t)).toBe('公告看板名称为必填项');
-    expect(validateBulletinForm({ name: 'Ops', app: '', monitorIdsText: '', fieldsJson: '{}' }, t)).toBe('应用为必填项');
-    expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '', fieldsJson: '{}' }, t)).toBe('至少需要填写一个监控 ID');
-    expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '1,2', fieldsJson: '{oops' }, t)).toBe('指标字段 JSON 格式不正确');
+    expect(validateBulletinForm({ name: '', app: '', monitorIdsText: '', fieldsJson: '{}' }, t)).toBe(t('bulletin.validation.name'));
+    expect(validateBulletinForm({ name: 'Ops', app: '', monitorIdsText: '', fieldsJson: '{}' }, t)).toBe(t('bulletin.validation.app'));
+    expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '', fieldsJson: '{}' }, t)).toBe(t('bulletin.validation.monitors'));
+    expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '1,2', fieldsJson: '{oops' }, t)).toBe(t('bulletin.validation.fields'));
     expect(validateBulletinForm({ name: 'Ops', app: 'mysql', monitorIdsText: '1,2', fieldsJson: '{}' }, t)).toBeNull();
   });
 });

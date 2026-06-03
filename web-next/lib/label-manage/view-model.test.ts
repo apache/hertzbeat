@@ -7,17 +7,17 @@ const t = createTranslatorMock({ locale: 'zh-CN' });
 describe('label view model', () => {
   it('builds label facts', () => {
     expect(buildLabelFacts({ totalElements: 8, content: [1, 2, 3] } as any, t)).toEqual([
-      { label: '工作区', value: 'setting/labels' },
-      { label: '总量', value: '8' },
-      { label: '当前页', value: '3' }
+      { label: t('common.workspace'), value: 'setting/labels' },
+      { label: t('common.total'), value: '8' },
+      { label: t('common.current-page-count'), value: '3' }
     ]);
   });
 
   it('builds metrics', () => {
     expect(buildLabelMetrics([{ type: 0 }, { type: 1 }, { type: 2 }, { type: 1 }] as any, t)).toEqual([
-      { label: '自动标签/当前页', value: '1' },
-      { label: '用户标签/当前页', value: '2', tone: 'success' },
-      { label: '预置标签/当前页', value: '1', tone: 'warning' }
+      { label: t('setting.labels.metric.auto-page'), value: '1' },
+      { label: t('setting.labels.metric.user-page'), value: '2', tone: 'success' },
+      { label: t('setting.labels.metric.preset-page'), value: '1', tone: 'warning' }
     ]);
   });
 

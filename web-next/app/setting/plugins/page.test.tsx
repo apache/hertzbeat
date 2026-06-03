@@ -180,10 +180,10 @@ vi.mock('@/components/pages/plugin-manage-surface', () => ({
       data-plugin-pagination-contract="angular-search-pagination"
     >
       <section data-plugin-admin-layout="full-width-admin-list">
-        <span>插件表格</span>
+        <span>Plugin table</span>
       </section>
       <span data-plugin-test-row-count="true">{data.list.content.length}</span>
-      <span>插件管理</span>
+      <span>Plugin management</span>
       <span>{search}</span>
       <span>{draftPlugin ? draftPlugin.name : 'no-draft'}</span>
       <span>{isUploadDialogOpen ? 'upload-dialog-open' : 'upload-dialog-closed'}</span>
@@ -369,9 +369,7 @@ describe('setting plugins page', () => {
     expect(html).toContain('data-plugin-pagination-contract="angular-search-pagination"');
     expect(html).toContain('data-plugin-admin-layout="full-width-admin-list"');
     expect(html).not.toContain('data-plugin-summary-rail=');
-    expect(html).not.toContain('插件摘要');
-    expect(html).not.toContain('当前插件');
-    expect(html).toContain('插件管理');
+    expect(html).toContain('Plugin management');
     expect(html).toContain('no-draft');
     expect(html).toContain('upload-dialog-closed');
     expect(html).toContain('no-param-draft');
@@ -404,7 +402,7 @@ describe('setting plugins page', () => {
     expect(html).toContain('data-plugin-load-failure-owner="plugin-route-controller"');
     expect(html).toContain('data-plugin-load-failure="angular-console-only-shell"');
     expect(html).toContain('data-plugin-test-row-count="true">0');
-    expect(html).toContain('插件表格');
+    expect(html).toContain('Plugin table');
     expect(html).not.toContain('backend refused plugin load');
     expect(html).not.toContain('common.load-failed');
     expect(html).not.toContain('data-observability-status');

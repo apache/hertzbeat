@@ -53,6 +53,9 @@ vi.mock('../ui/button', () => ({
 
 describe('AlertSettingSurface', () => {
   const t = createTranslatorMock({ locale: 'zh-CN' });
+  const alertSettingEvidenceTitle = (signal: 'logs' | 'traces' | 'metrics') =>
+    t('alert.rule.evidence.setting.title', { signal: t(`alert.rule.signal.${signal}`) });
+
   const data = {
     list: {
       content: [
@@ -136,25 +139,24 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('data-alert-setting-pagination-action="previous"');
     expect(html).toContain('data-alert-setting-pagination-action="next"');
     expect(html).toContain('data-hz-ui="pagination-bar"');
-    expect(html).toContain('导出');
-    expect(html).toContain('导入');
+    expect(html).toContain(t('common.button.export'));
+    expect(html).toContain(t('common.button.import'));
     expect(html).toContain('data-alert-setting-select-all="cold-checkbox"');
     expect(html).toContain('data-alert-setting-row-checkbox="cold-checkbox"');
     expect(html).toContain('data-alert-setting-enable-checkbox="cold-checkbox"');
     expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(3);
-    expect(html).toContain('阈值规则');
-    expect(html).toContain('刷新');
-    expect(html).toContain('新增阈值');
-    expect(html).toContain('批量删除');
-    expect(html).toContain('搜索');
-    expect(html).not.toContain('当前阈值');
-    expect(html).toContain('阈值名称');
-    expect(html).toContain('阈值类型');
-    expect(html).toContain('阈值表达式');
-    expect(html).toContain('告警内容');
-    expect(html).toContain('绑定标签');
+    expect(html).toContain(t('menu.alert.setting'));
+    expect(html).toContain(t('common.refresh'));
+    expect(html).toContain(t('alert.setting.action.new'));
+    expect(html).toContain(t('common.button.delete-batch'));
+    expect(html).toContain(t('common.search'));
+    expect(html).toContain(t('alert.setting.name'));
+    expect(html).toContain(t('alert.setting.type'));
+    expect(html).toContain(t('alert.setting.expr'));
+    expect(html).toContain(t('alert.setting.content'));
+    expect(html).toContain(t('alert.setting.bind-labels'));
     expect(html).toContain('cpu threshold');
-    expect(html).toContain('指标实时');
+    expect(html).toContain(t('alert.setting.type.realtime.metric'));
     expect(html).toContain('severity:warning');
     expect(html).toContain('team:core');
     expect(html).not.toContain('data-workbench-page="true"');
@@ -210,7 +212,7 @@ describe('AlertSettingSurface', () => {
         onDelete={vi.fn()}
         onCheckedIdsChange={vi.fn()}
         pendingActionId="import"
-        actionFeedback={{ tone: 'info', title: '已提交导入 [rules.json]' }}
+        actionFeedback={{ tone: 'info', title: t('common.notify.import-submitted', { taskName: 'rules.json' }) }}
       />
     );
 
@@ -218,7 +220,7 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('data-alert-setting-action-feedback-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('data-hz-ui="inline-feedback"');
     expect(html).toContain('data-hz-feedback-tone="info"');
-    expect(html).toContain('已提交导入 [rules.json]');
+    expect(html).toContain(t('common.notify.import-submitted', { taskName: 'rules.json' }));
   });
 
   it('renders Angular import success and failure notification markers', () => {
@@ -490,7 +492,7 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('data-alert-setting-table-shell="cold-dense-table"');
     expect(html).toContain('data-alert-setting-empty-state="cold-table-empty"');
     expect(html).toContain('data-alert-setting-empty-icon="cold-empty-box"');
-    expect(html).toContain('还没有阈值规则');
+    expect(html).toContain(t('alert.setting.empty.title'));
   });
 
   it('shows three-signal evidence context before alert-rule authoring', () => {
@@ -503,13 +505,13 @@ describe('AlertSettingSurface', () => {
         formatTime={() => '2026-04-20 00:20:00'}
         evidenceContext={{
           signal: 'traces',
-          title: '来自链路的阈值上下文',
-          copy: '新建阈值时会预填当前实体、服务、环境和链路标签，返回链接仍指向原排障上下文。',
+          title: alertSettingEvidenceTitle('traces'),
+          copy: t('alert.rule.evidence.setting.copy'),
           labelsText: 'hertzbeat.signal:traces, service.name:checkout',
           returnHref: '/trace/manage?traceId=trace-123',
           rows: [
-            { label: '当前实体', value: 'Checkout API', meta: 'entityId 7' },
-            { label: '链路上下文', value: 'trace-123', meta: 'spanId span-456' }
+            { label: t('signal.context.entity.label'), value: 'Checkout API', meta: 'entityId 7' },
+            { label: t('signal.context.trace.label'), value: 'trace-123', meta: 'spanId span-456' }
           ]
         }}
         onSearchChange={vi.fn()}
@@ -530,12 +532,12 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('data-alert-setting-evidence-context="signal-route"');
     expect(html).toContain('data-alert-setting-evidence-signal="traces"');
     expect(html).toContain('data-alert-setting-prefill-labels="hertzbeat.signal:traces, service.name:checkout"');
-    expect(html).toContain('来自链路的阈值上下文');
-    expect(html).toContain('新建阈值时会预填当前实体、服务、环境和链路标签，返回链接仍指向原排障上下文。');
+    expect(html).toContain(alertSettingEvidenceTitle('traces'));
+    expect(html).toContain(t('alert.rule.evidence.setting.copy'));
     expect(html).toContain('data-alert-setting-evidence-return="true"');
     expect(html).toContain('href="/trace/manage?traceId=trace-123"');
-    expect(html).toContain('当前实体');
-    expect(html).toContain('链路上下文');
+    expect(html).toContain(t('signal.context.entity.label'));
+    expect(html).toContain(t('signal.context.trace.label'));
   });
 
   it('renders alert setting evidence and row label gaps with the localized empty fallback', () => {
@@ -570,8 +572,8 @@ describe('AlertSettingSurface', () => {
         formatTime={() => '2026-04-20 00:20:00'}
         evidenceContext={{
           signal: 'metrics',
-          title: '来自指标的阈值上下文',
-          copy: '新建阈值时会预填当前实体、服务、环境和指标标签。',
+          title: alertSettingEvidenceTitle('metrics'),
+          copy: t('alert.rule.evidence.setting.copy'),
           labelsText: '',
           rows: []
         }}
@@ -592,8 +594,8 @@ describe('AlertSettingSurface', () => {
 
     expect(html).toContain('data-alert-setting-evidence-labels="localized-fallback"');
     expect(html).toContain('data-alert-setting-empty-labels="localized-fallback"');
-    expect(html).toContain('>无</div>');
-    expect(html).toContain('>无</span>');
+    expect(html).toContain(`>${t('common.none')}</div>`);
+    expect(html).toContain(`>${t('common.none')}</span>`);
     expect(html).not.toContain('>-</div>');
     expect(html).not.toContain('>-</span>');
   });

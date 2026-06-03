@@ -140,7 +140,7 @@
         },
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "primarySelectors": [
           "[data-workspace-shell=\"true\"]",
           "[data-overview-status-grid=\"true\"]",
@@ -150,14 +150,14 @@
           "aside"
         ],
         "textSnippets": [
-          "总览",
-          "工作区状态",
-          "下一步：先接入一条可用信号链路",
-          "你已完成 83% 的平台配置"
+          "Overview",
+          "Workspace status",
+          "Next step: connect one usable signal path first",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "刷新",
-          "查看告警"
+          "Refresh",
+          "View alerts"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/overview/page.test.tsx lib/overview/navigation.test.ts lib/overview/view-model.test.ts"
       },
@@ -183,17 +183,17 @@
           "a"
         ],
         "textSnippets": [
-          "日志工作台",
-          "严重级别",
-          "趋势带",
-          "最近日志",
-          "运行查询"
+          "Log workbench",
+          "Severity",
+          "Trend band",
+          "Recent logs",
+          "Run query"
         ],
         "actionLabels": [
-          "运行查询",
-          "保存视图",
-          "创建告警",
-          "加入仪表盘"
+          "Run query",
+          "Save view",
+          "Create alert",
+          "Add to dashboard"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/log/manage/page.test.tsx lib/log-manage/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -227,20 +227,20 @@
         "referenceApiStubKey": "trace-rich-demo",
         "referenceReadySelectors": [
           "text=checkout-service",
-          "button:has-text(\"搜索\")"
+          "button:has-text(\"Search\")"
         ],
         "textSnippets": [
-          "链路工作台",
-          "服务名称",
-          "错误链路",
-          "最近链路",
-          "运行查询"
+          "Trace workbench",
+          "Service name",
+          "Error traces",
+          "Recent traces",
+          "Run query"
         ],
         "actionLabels": [
-          "运行查询",
-          "保存视图",
-          "创建告警",
-          "加入仪表盘"
+          "Run query",
+          "Save view",
+          "Create alert",
+          "Add to dashboard"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/trace/manage/page.test.tsx lib/trace-manage/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -250,7 +250,7 @@
         "referenceRoute": "/ingestion/otlp",
         "nextPagePath": "web-next/app/ingestion/otlp/page.tsx",
         "routeTestPath": "web-next/app/ingestion/otlp/page.test.tsx",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "routeParitySpec": {
           "key": "otlp-center",
@@ -272,7 +272,7 @@
             {
               "key": "header",
               "expectation": "present",
-              "referenceHint": "OTLP 协议接入 hero and top action row stay above the catalog"
+              "referenceHint": "OTLP protocol intake hero and top action row stay above the catalog"
             },
             {
               "key": "factsStrip",
@@ -363,17 +363,17 @@
         ],
         "nextApiStubKey": "otlp-center",
         "textSnippets": [
-          "OTLP 接入",
-          "指标工作台",
-          "日志工作台",
-          "链路工作台",
-          "OTLP 协议接入",
-          "你已完成 83% 的平台配置"
+          "OTLP intake",
+          "Metric workbench",
+          "Log workbench",
+          "Trace workbench",
+          "OTLP protocol intake",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "管理令牌",
-          "查看实体",
-          "进入遥测发现"
+          "Manage tokens",
+          "View entities",
+          "Open telemetry discovery"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/ingestion/otlp/page.test.tsx lib/otlp-center/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -399,18 +399,18 @@
           "a"
         ],
         "textSnippets": [
-          "指标工作台",
-          "指标查询",
-          "趋势带",
-          "最近序列",
-          "详情面板",
-          "运行查询"
+          "Metric workbench",
+          "Metric query",
+          "Trend band",
+          "Recent series",
+          "Detail panel",
+          "Run query"
         ],
         "actionLabels": [
-          "运行查询",
-          "采集集群",
-          "监控模板",
-          "阈值规则"
+          "Run query",
+          "Collector cluster",
+          "Monitor templates",
+          "Threshold rules"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/ingestion/otlp/metrics/page.test.tsx lib/otlp-metrics/view-model.test.ts lib/parity/route-manifest.test.ts"
       }
@@ -433,7 +433,7 @@
         "referenceRoute": "/log/stream",
         "nextPagePath": "web-next/app/log/stream/page.tsx",
         "routeTestPath": "web-next/app/log/stream/page.test.tsx",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -449,19 +449,19 @@
           "button"
         ],
         "textSnippets": [
-          "日志流",
-          "已连接",
-          "连接中...",
-          "0 条日志",
-          "日志级别编号",
-          "你已完成 83% 的平台配置"
+          "Log stream",
+          "Connected",
+          "Connecting...",
+          "0 logs",
+          "Log level number",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "隐藏过滤器",
-          "暂停",
-          "清除",
-          "应用过滤器",
-          "清除过滤器"
+          "Hide filters",
+          "Pause",
+          "Clear",
+          "Apply filters",
+          "Clear filters"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/log/stream/page.test.tsx app/log/manage/page.test.tsx"
       },
@@ -471,7 +471,7 @@
         "referenceRoute": "/log/integration",
         "nextPagePath": "web-next/app/log/integration/page.tsx",
         "routeTestPath": "web-next/app/log/integration/page.test.tsx",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -496,16 +496,16 @@
         ],
         "nextApiStubKey": "otlp-center",
         "textSnippets": [
-          "OTLP 接入",
-          "指标工作台",
-          "日志工作台",
-          "链路工作台",
-          "你已完成 83% 的平台配置"
+          "OTLP intake",
+          "Metric workbench",
+          "Log workbench",
+          "Trace workbench",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "管理令牌",
-          "查看实体",
-          "进入遥测发现"
+          "Manage tokens",
+          "View entities",
+          "Open telemetry discovery"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/log/integration/page.test.tsx lib/parity/route-manifest.test.ts"
       },
@@ -515,7 +515,7 @@
         "referenceRoute": "/log/integration/webhook",
         "nextPagePath": "web-next/app/log/integration/[source]/page.tsx",
         "routeTestPath": "web-next/app/log/integration/[source]/page.test.tsx",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -540,16 +540,16 @@
         ],
         "nextApiStubKey": "otlp-center",
         "textSnippets": [
-          "OTLP 接入",
-          "指标工作台",
-          "日志工作台",
-          "链路工作台",
-          "你已完成 83% 的平台配置"
+          "OTLP intake",
+          "Metric workbench",
+          "Log workbench",
+          "Trace workbench",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "管理令牌",
-          "查看实体",
-          "进入遥测发现"
+          "Manage tokens",
+          "View entities",
+          "Open telemetry discovery"
         ],
         "minimumVerificationCommand": "npm exec vitest run 'app/log/integration/[source]/page.test.tsx' lib/parity/route-manifest.test.ts"
       }
@@ -605,7 +605,7 @@
         "key": "monitor-detail-reported",
         "nextRoute": "/monitors/632051474676992?app=website&pageIndex=0&pageSize=8&returnTo=%2Fmonitors",
         "referenceRoute": "/monitors/632051474676992?app=website&pageIndex=0&pageSize=8&returnTo=%2Fmonitors",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "nextPagePath": "web-next/app/monitors/[monitorId]/page.tsx",
         "routeTestPath": "web-next/app/monitors/[monitorId]/page.test.tsx",
         "routeParitySpec": {
@@ -779,12 +779,12 @@
           ".cards.lists"
         ],
         "textSnippets": [
-          "监控列表",
-          "监控实时数据详情",
-          "监控历史图表详情"
+          "Monitor list",
+          "Monitor realtime data detail",
+          "Monitor historical chart detail"
         ],
         "actionLabels": [
-          "刷新"
+          "Refresh"
         ],
         "minimumVerificationCommand": "npm exec vitest run 'app/monitors/[monitorId]/page.test.tsx' components/monitor-detail/monitor-detail-sections.test.tsx components/monitor-detail/monitor-detail-console.test.tsx lib/parity/route-manifest.test.ts scripts/parity/harness-lib.test.ts && PARITY_FAMILY=monitor-family PARITY_ROUTE=monitor-detail-reported node ./scripts/parity/harness.mjs"
       },
@@ -840,7 +840,7 @@
         "referenceRoute": "/entities",
         "authState": "session",
         "seedState": "entity-fixture",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "primarySelectors": [
           "[data-entity-list-surface=\"otlp-cold-entity-console\"]",
@@ -861,17 +861,17 @@
           "a"
         ],
         "textSnippets": [
-          "对象目录",
-          "对象优先调查",
-          "围绕服务、资源与实体定位问题并进入调查",
-          "实体总数",
-          "对象",
-          "告警"
+          "Entity catalog",
+          "Entity-first investigation",
+          "Locate issues around services, resources, and entities, then start investigation",
+          "Total entities",
+          "Entities",
+          "Alerts"
         ],
         "actionLabels": [
-          "搜索",
-          "刷新",
-          "创建实体"
+          "Search",
+          "Refresh",
+          "Create entity"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/entities/page.test.tsx components/pages/entity-list-surface.test.tsx lib/entity-manage/controller.test.ts lib/entity-manage/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -880,7 +880,7 @@
         "nextRoute": "/entities/1",
         "referenceRoute": "/entities/1",
         "authState": "session",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "seedState": "entity-fixture",
         "primarySelectors": [
@@ -924,7 +924,7 @@
         "nextRoute": "/entities/new",
         "referenceRoute": "/entities/new",
         "authState": "session",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "seedState": "entity-fixture",
         "primarySelectors": [
@@ -954,15 +954,15 @@
           "button"
         ],
         "textSnippets": [
-          "新建实体",
-          "全部实体",
-          "实体元数据",
-          "页面录入",
-          "基本信息",
-          "你已完成 83% 的平台配置"
+          "New entity",
+          "All entities",
+          "Entity metadata",
+          "Page entry",
+          "Basic information",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "创建实体"
+          "Create entity"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/entities/new/page.test.tsx components/pages/entity-editor-surface.test.tsx lib/entity-editor/controller.test.ts lib/entity-editor/view-model.test.ts"
       },
@@ -971,7 +971,7 @@
         "nextRoute": "/entities/1/edit",
         "referenceRoute": "/entities/1/edit",
         "authState": "session",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "seedState": "entity-fixture",
         "nextApiStubKey": "entity-fixture",
@@ -1006,14 +1006,14 @@
           "button"
         ],
         "textSnippets": [
-          "编辑实体",
-          "全部实体",
-          "实体元数据",
-          "基本信息",
-          "你已完成 0% 的平台配置"
+          "Edit entity",
+          "All entities",
+          "Entity metadata",
+          "Basic information",
+          "You have completed 0% of platform setup"
         ],
         "actionLabels": [
-          "保存"
+          "Save"
         ],
         "minimumVerificationCommand": "npm exec vitest run 'app/entities/[entityId]/edit/page.test.tsx' components/pages/entity-editor-surface.test.tsx lib/entity-editor/controller.test.ts lib/entity-editor/view-model.test.ts"
       },
@@ -1021,7 +1021,7 @@
         "key": "entity-import",
         "nextRoute": "/entities/import",
         "referenceRoute": "/entities/import",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "entity-fixture",
@@ -1048,16 +1048,16 @@
           "button"
         ],
         "textSnippets": [
-          "对象优先调查",
-          "导入实体定义",
-          "可直接导入",
-          "模板与批量编辑",
-          "你已完成 83% 的平台配置"
+          "Entity-first investigation",
+          "Import entity definitions",
+          "Ready to import",
+          "Templates and bulk editing",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "清空草稿",
-          "预览定义",
-          "导入实体"
+          "Clear draft",
+          "Preview definition",
+          "Import entities"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/entities/import/page.test.tsx components/pages/entity-import-surface.test.tsx components/pages/entity-definition-workspace-surface.test.tsx lib/entity-import/controller.test.ts lib/entity-import/view-model.test.ts"
       },
@@ -1065,7 +1065,7 @@
         "key": "entity-discovery",
         "nextRoute": "/entities/discovery",
         "referenceRoute": "/entities/discovery",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "entity-fixture",
@@ -1092,18 +1092,18 @@
           "a"
         ],
         "textSnippets": [
-          "遥测发现",
-          "先搜索一组需要治理的监控线索",
-          "治理筛选与共享策略",
-          "线索",
-          "状态",
-          "你已完成 83% 的平台配置"
+          "Telemetry discovery",
+          "Search a set of monitor signals that need governance first",
+          "Governance filters and sharing policy",
+          "Signals",
+          "Status",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "搜索",
-          "清空",
-          "从定义创建",
-          "创建实体"
+          "Search",
+          "Clear all",
+          "Create from definition",
+          "Create entity"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/entities/discovery/page.test.tsx components/pages/entity-discovery-surface.test.tsx lib/entity-discovery/controller.test.ts lib/entity-discovery/search-state.test.ts lib/entity-discovery/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1113,7 +1113,7 @@
         "referenceRoute": "/entities/1/definition",
         "screenshotMode": "viewport",
         "authState": "session",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "seedState": "entity-fixture",
         "primarySelectors": [
           "[data-entity-definition-workspace=\"definition\"]",
@@ -1140,18 +1140,18 @@
           "aside"
         ],
         "textSnippets": [
-          "实体定义",
-          "编辑实体定义",
-          "导入格式",
-          "模板与批量编辑",
-          "粘贴 YAML 实体定义",
-          "实体不存在。",
-          "你已完成 83% 的平台配置"
+          "Entity definition",
+          "Edit entity definition",
+          "Import format",
+          "Templates and bulk editing",
+          "Paste YAML entity definition",
+          "Entity does not exist.",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "清空草稿",
-          "预览定义",
-          "保存定义"
+          "Clear draft",
+          "Preview definition",
+          "Save definition"
         ],
         "minimumVerificationCommand": "npm exec vitest run 'app/entities/[entityId]/definition/page.test.tsx' components/pages/entity-definition-workspace-surface.test.tsx lib/entity-definition/controller.test.ts lib/parity/route-manifest.test.ts"
       }
@@ -1170,7 +1170,7 @@
         "key": "alert-center",
         "nextRoute": "/alert",
         "referenceRoute": "/alert",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -1192,12 +1192,12 @@
           "button"
         ],
         "textSnippets": [
-          "告警中心",
-          "集中查看并处理当前告警",
-          "搜索告警"
+          "Alert center",
+          "Review and handle current alerts in one place",
+          "Search alerts"
         ],
         "actionLabels": [
-          "刷新"
+          "Refresh"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/alert/page.test.tsx components/pages/alert-center-surface.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-manage/query-state.test.ts lib/alert-manage/controller.test.ts lib/alert-manage/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1205,7 +1205,7 @@
         "key": "alert-group",
         "nextRoute": "/alert/group",
         "referenceRoute": "/alert/group",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "nextPagePath": "web-next/app/alert/group/page.tsx",
         "routeTestPath": "web-next/app/alert/group/page.test.tsx",
@@ -1293,15 +1293,15 @@
           "input"
         ],
         "textSnippets": [
-          "分组收敛",
-          "管理 Alertmanager 分组收敛规则",
-          "策略名称",
-          "分组标签"
+          "Group convergence",
+          "Manage Alertmanager group convergence rules",
+          "Policy name",
+          "Group labels"
         ],
         "actionLabels": [
-          "刷新",
-          "新增分组",
-          "搜索"
+          "Refresh",
+          "New group",
+          "Search"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/alert/group/page.test.tsx components/pages/alert-group-surface.test.tsx components/pages/alert-group-authoring-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-group/controller.test.ts lib/alert-group/query-state.test.ts lib/alert-group/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1309,7 +1309,7 @@
         "key": "alert-silence",
         "nextRoute": "/alert/silence",
         "referenceRoute": "/alert/silence",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -1331,16 +1331,16 @@
           "input"
         ],
         "textSnippets": [
-          "告警静默",
-          "策略名称",
-          "静默类型",
-          "已静默告警数"
+          "Alert silence",
+          "Policy name",
+          "Silence type",
+          "Silenced alerts"
         ],
         "actionLabels": [
-          "刷新",
-          "新增静默",
-          "批量删除",
-          "搜索"
+          "Refresh",
+          "New silence",
+          "Bulk delete",
+          "Search"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/alert/silence/page.test.tsx components/pages/alert-silence-surface.test.tsx components/pages/alert-silence-authoring-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-silence/controller.test.ts lib/alert-silence/query-state.test.ts lib/alert-silence/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1348,7 +1348,7 @@
         "key": "alert-inhibit",
         "nextRoute": "/alert/inhibit",
         "referenceRoute": "/alert/inhibit",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -1370,17 +1370,17 @@
           "input"
         ],
         "textSnippets": [
-          "告警抑制",
-          "抑制规则名称",
-          "源标签",
-          "目标标签",
-          "相等标签"
+          "Alert inhibit",
+          "Inhibit rule name",
+          "Source labels",
+          "Target labels",
+          "Equal labels"
         ],
         "actionLabels": [
-          "刷新",
-          "新增抑制",
-          "批量删除",
-          "搜索"
+          "Refresh",
+          "New inhibit rule",
+          "Bulk delete",
+          "Search"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/alert/inhibit/page.test.tsx components/pages/alert-inhibit-surface.test.tsx components/pages/alert-inhibit-authoring-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-inhibit/controller.test.ts lib/alert-inhibit/query-state.test.ts lib/alert-inhibit/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1388,7 +1388,7 @@
         "key": "alert-notice",
         "nextRoute": "/alert/notice",
         "referenceRoute": "/alert/notice",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -1410,18 +1410,18 @@
           "input"
         ],
         "textSnippets": [
-          "消息通知",
-          "通知媒介",
-          "通知策略",
-          "通知模板",
-          "接收对象",
-          "通知方式",
-          "配置"
+          "Notifications",
+          "Notification media",
+          "Notification policy",
+          "Notification template",
+          "Receivers",
+          "Notification method",
+          "Configure"
         ],
         "actionLabels": [
-          "刷新",
-          "新增接收对象",
-          "搜索"
+          "Refresh",
+          "New receiver",
+          "Search"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/alert/notice/page.test.tsx components/pages/alert-notice-console-shell.test.tsx components/pages/alert-notice-receiver-fields.test.tsx components/pages/alert-notice-rule-fields.test.tsx components/pages/alert-notice-template-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-notice/controller.test.ts lib/alert-notice/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1429,21 +1429,21 @@
         "key": "alert-notice-rule",
         "nextRoute": "/alert/notice",
         "referenceRoute": "/alert/notice",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
         "nextPostLoadActions": [
           {
             "kind": "click",
-            "selector": "text=通知策略",
+            "selector": "text=Notification policy",
             "waitAfterMs": 250
           }
         ],
         "referencePostLoadActions": [
           {
             "kind": "click",
-            "selector": "text=通知策略",
+            "selector": "text=Notification policy",
             "waitAfterMs": 250
           }
         ],
@@ -1462,18 +1462,18 @@
           "input"
         ],
         "textSnippets": [
-          "消息通知",
-          "通知策略",
-          "策略名称",
-          "接收对象",
-          "模板名称",
-          "转发所有",
-          "启用状态"
+          "Notifications",
+          "Notification policy",
+          "Policy name",
+          "Receivers",
+          "Template name",
+          "Forward all",
+          "Enabled status"
         ],
         "actionLabels": [
-          "刷新",
-          "新增通知策略",
-          "搜索"
+          "Refresh",
+          "New notification policy",
+          "Search"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/alert/notice/page.test.tsx components/pages/alert-notice-console-shell.test.tsx components/pages/alert-notice-rule-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-notice/controller.test.ts lib/alert-notice/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1481,21 +1481,21 @@
         "key": "alert-notice-template",
         "nextRoute": "/alert/notice",
         "referenceRoute": "/alert/notice",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
         "nextPostLoadActions": [
           {
             "kind": "click",
-            "selector": "text=通知模板",
+            "selector": "text=Notification template",
             "waitAfterMs": 250
           }
         ],
         "referencePostLoadActions": [
           {
             "kind": "click",
-            "selector": "text=通知模板",
+            "selector": "text=Notification template",
             "waitAfterMs": 250
           }
         ],
@@ -1517,19 +1517,19 @@
           "select"
         ],
         "textSnippets": [
-          "消息通知",
-          "通知模板",
-          "系统内置模版",
-          "模板名称",
-          "通知方式",
-          "模版类型",
-          "更新时间",
-          "操作"
+          "Notifications",
+          "Notification template",
+          "Built-in system template",
+          "Template name",
+          "Notification method",
+          "Template type",
+          "Updated time",
+          "Actions"
         ],
         "actionLabels": [
-          "刷新",
-          "新增通知模板",
-          "搜索"
+          "Refresh",
+          "New notification template",
+          "Search"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/alert/notice/page.test.tsx components/pages/alert-notice-console-shell.test.tsx components/pages/alert-notice-template-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-notice/controller.test.ts lib/alert-notice/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1537,7 +1537,7 @@
         "key": "alert-setting",
         "nextRoute": "/alert/setting",
         "referenceRoute": "/alert/setting",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -1559,17 +1559,17 @@
           "input"
         ],
         "textSnippets": [
-          "阈值规则",
-          "阈值名称",
-          "阈值类型",
-          "阈值表达式",
-          "告警内容"
+          "Threshold rules",
+          "Threshold name",
+          "Threshold type",
+          "Threshold expression",
+          "Alert content"
         ],
         "actionLabels": [
-          "刷新",
-          "新增阈值",
-          "批量删除",
-          "搜索"
+          "Refresh",
+          "New threshold",
+          "Bulk delete",
+          "Search"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/alert/setting/page.test.tsx components/pages/alert-setting-surface.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-setting/controller.test.ts lib/alert-setting/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1577,7 +1577,7 @@
         "key": "alert-integration",
         "nextRoute": "/alert/integration/webhook",
         "referenceRoute": "/alert/integration/webhook",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -1599,15 +1599,15 @@
           "button"
         ],
         "textSnippets": [
-          "集成接入",
-          "默认Webhook",
-          "集成告警源",
-          "管理令牌",
-          "接口端点",
-          "请求头"
+          "Integration onboarding",
+          "Default webhook",
+          "Integrated alert source",
+          "Manage tokens",
+          "Endpoint",
+          "Request headers"
         ],
         "actionLabels": [
-          "管理令牌"
+          "Manage tokens"
         ],
         "minimumVerificationCommand": "npm exec vitest run 'app/alert/integration/[source]/page.test.tsx' lib/alert-integration/view-model.test.ts components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/parity/route-manifest.test.ts"
       }
@@ -1626,7 +1626,7 @@
         "key": "setting-root",
         "nextRoute": "/setting",
         "referenceRoute": "/setting",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -1648,16 +1648,16 @@
           "button"
         ],
         "textSnippets": [
-          "设置",
-          "把系统配置、消息通道和接入凭证放在一起",
-          "系统配置",
-          "系统语言",
-          "系统时区",
-          "系统主题",
-          "确认更新"
+          "Settings",
+          "Keep system config, messaging channels, and access credentials together",
+          "System configuration",
+          "System language",
+          "System timezone",
+          "System theme",
+          "Confirm update"
         ],
         "actionLabels": [
-          "确认更新"
+          "Confirm update"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/page.test.ts app/setting/settings/page.test.ts app/setting/settings/config/page.test.tsx components/settings/settings-console-shell.test.tsx lib/setting-config/controller.test.ts lib/setting-config/view-model.test.ts lib/setting-settings-layout/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1665,7 +1665,7 @@
         "key": "setting-system-config",
         "nextRoute": "/setting/settings/config",
         "referenceRoute": "/setting/settings/config",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "nextPagePath": "web-next/app/setting/settings/config/page.tsx",
         "routeTestPath": "web-next/app/setting/settings/config/page.test.tsx",
@@ -1754,16 +1754,16 @@
           "button"
         ],
         "textSnippets": [
-          "设置",
-          "把系统配置、消息通道和接入凭证放在一起",
-          "系统配置",
-          "系统语言",
-          "系统时区",
-          "系统主题",
-          "确认更新"
+          "Settings",
+          "Keep system config, messaging channels, and access credentials together",
+          "System configuration",
+          "System language",
+          "System timezone",
+          "System theme",
+          "Confirm update"
         ],
         "actionLabels": [
-          "确认更新"
+          "Confirm update"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/settings/config/page.test.tsx components/settings/settings-console-shell.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/setting-config/controller.test.ts lib/setting-config/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1773,7 +1773,7 @@
         "referenceRoute": "/setting/settings/object-store",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "primarySelectors": [
           "[data-settings-console-surface=\"otlp-cold-settings-console\"]",
@@ -1793,15 +1793,15 @@
           "button"
         ],
         "textSnippets": [
-          "文件服务配置",
-          "文件服务提供商",
-          "本地数据库（默认）",
-          "本地文件",
-          "华为云OBS",
-          "确认更新"
+          "File service configuration",
+          "File service provider",
+          "Local database (default)",
+          "Local file",
+          "Huawei Cloud OBS",
+          "Confirm update"
         ],
         "actionLabels": [
-          "确认更新"
+          "Confirm update"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/settings/object-store/page.test.tsx components/settings/settings-console-shell.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/object-store/controller.test.ts lib/object-store/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1811,7 +1811,7 @@
         "referenceRoute": "/setting/settings/server",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "primarySelectors": [
           "[data-settings-console-surface=\"otlp-cold-settings-console\"]",
@@ -1835,17 +1835,17 @@
           "button"
         ],
         "textSnippets": [
-          "消息服务配置",
-          "邮件服务器",
-          "短信配置",
-          "邮箱服务器地址",
-          "是否启用SSL",
-          "短信类型",
-          "腾讯短信",
-          "启用状态"
+          "Message service configuration",
+          "Mail server",
+          "SMS configuration",
+          "Mail server address",
+          "SSL enabled",
+          "SMS type",
+          "Tencent SMS",
+          "Enabled status"
         ],
         "actionLabels": [
-          "配置"
+          "Configure"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/settings/server/page.test.tsx components/settings/settings-console-shell.test.tsx components/settings/settings-summary-list.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/setting-server/controller.test.ts lib/setting-server/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1855,7 +1855,7 @@
         "referenceRoute": "/setting/settings/token",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "primarySelectors": [
           "[data-settings-console-surface=\"otlp-cold-settings-console\"]",
@@ -1880,20 +1880,20 @@
           "table"
         ],
         "textSnippets": [
-          "令牌管理",
-          "API 密钥",
-          "统一管理遥测和自动化令牌",
-          "生成令牌",
-          "令牌总数",
-          "可用令牌",
-          "过期令牌",
-          "Token 名称",
-          "Token 值",
-          "创建者",
-          "操作"
+          "Token management",
+          "API key",
+          "Manage telemetry and automation tokens in one place",
+          "Generate token",
+          "Total tokens",
+          "Available tokens",
+          "Expired tokens",
+          "Token name",
+          "Token value",
+          "Creator",
+          "Actions"
         ],
         "actionLabels": [
-          "生成令牌"
+          "Generate token"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/settings/token/page.test.tsx components/settings/settings-console-shell.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/setting-token/controller.test.ts lib/setting-token/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1903,7 +1903,7 @@
         "referenceRoute": "/setting/collector",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "primarySelectors": [
           "main",
           "[data-collector-manage-surface=\"otlp-cold-collector-console\"]",
@@ -1919,22 +1919,22 @@
           "table"
         ],
         "textSnippets": [
-          "采集集群",
-          "采集器名称",
-          "运行状态",
-          "运行模式",
-          "总任务数量",
-          "固定任务",
-          "调度任务",
-          "操作"
+          "Collector cluster",
+          "Collector name",
+          "Run status",
+          "Run mode",
+          "Total tasks",
+          "Pinned tasks",
+          "Scheduled tasks",
+          "Actions"
         ],
         "actionLabels": [
-          "刷新",
-          "部署采集器",
-          "上线采集器",
-          "下线采集器",
-          "删除采集器",
-          "搜索"
+          "Refresh",
+          "Deploy collector",
+          "Bring collector online",
+          "Take collector offline",
+          "Delete collector",
+          "Search"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/collector/page.test.tsx components/pages/collector-manage-surface.test.tsx lib/collector-manage/controller.test.ts lib/collector-manage/query-state.test.ts lib/collector-manage/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1944,7 +1944,7 @@
         "referenceRoute": "/setting/define",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "primarySelectors": [
           "main",
@@ -1964,17 +1964,17 @@
           "input"
         ],
         "textSnippets": [
-          "定义",
-          "管理监控模板 YAML"
+          "Definitions",
+          "Manage monitor template YAML"
         ],
         "actionLabels": [
-          "新增类型",
-          "编辑",
-          "取消",
-          "保存并应用",
-          "搜索",
-          "隐藏",
-          "显示"
+          "New type",
+          "Edit",
+          "Cancel",
+          "Save and apply",
+          "Search",
+          "Hide",
+          "Show"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/define/page.test.tsx components/pages/setting-define-surface.test.tsx lib/setting-define/controller.test.ts lib/setting-define/query-state.test.ts lib/setting-define/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -1984,7 +1984,7 @@
         "referenceRoute": "/setting/labels",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "primarySelectors": [
           "[data-label-manage-surface=\"otlp-cold-label-console\"]",
@@ -2005,16 +2005,16 @@
           "a"
         ],
         "textSnippets": [
-          "标签管理",
-          "新增",
-          "搜索标签",
-          "标签名称",
-          "标签类型",
-          "标签描述"
+          "Label management",
+          "New",
+          "Search labels",
+          "Label name",
+          "Label type",
+          "Label description"
         ],
         "actionLabels": [
-          "新增",
-          "搜索"
+          "New",
+          "Search"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/labels/page.test.tsx components/pages/label-manage-surface.test.tsx lib/label-manage/controller.test.ts lib/label-manage/query-state.test.ts lib/label-manage/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -2024,7 +2024,7 @@
         "referenceRoute": "/setting/plugins",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "primarySelectors": [
           "[data-plugin-manage-surface=\"otlp-cold-plugin-console\"]",
@@ -2044,16 +2044,16 @@
           "table"
         ],
         "textSnippets": [
-          "插件管理",
-          "插件名称",
-          "插件类型",
-          "启用状态",
-          "操作",
-          "暂无数据"
+          "Plugin management",
+          "Plugin name",
+          "Plugin type",
+          "Enabled status",
+          "Actions",
+          "No data"
         ],
         "actionLabels": [
-          "上传插件",
-          "搜索"
+          "Upload plugin",
+          "Search"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/plugins/page.test.tsx components/pages/plugin-manage-surface.test.tsx lib/plugin-manage/controller.test.ts lib/plugin-manage/query-state.test.ts lib/plugin-manage/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -2063,7 +2063,7 @@
         "referenceRoute": "/setting/status",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "primarySelectors": [
           "[data-status-setting-surface=\"otlp-cold-status-console\"]",
@@ -2085,19 +2085,19 @@
           "a"
         ],
         "textSnippets": [
-          "状态页面",
-          "组织名称",
-          "组织介绍",
-          "服务组件",
-          "维护事件",
-          "组件状态",
-          "状态统计方式",
-          "匹配标签",
-          "操作"
+          "Status page",
+          "Organization name",
+          "Organization introduction",
+          "Service components",
+          "Maintenance events",
+          "Component status",
+          "Status aggregation method",
+          "Matching labels",
+          "Actions"
         ],
         "actionLabels": [
-          "确定",
-          "新增组件"
+          "OK",
+          "New component"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/setting/status/page.test.tsx components/pages/status-setting-surface.test.tsx lib/setting-status/controller.test.ts lib/setting-status/view-model.test.ts lib/parity/route-manifest.test.ts"
       }
@@ -2228,9 +2228,9 @@
           "403"
         ],
         "actionLabels": [
-          "返回概览",
-          "日志工作台",
-          "链路工作台"
+          "Back to overview",
+          "Log workbench",
+          "Trace workbench"
         ],
         "minimumVerificationCommand": "npm exec vitest run 'app/exception/[type]/page.test.tsx' components/pages/exception-center-surface.test.tsx lib/exception-center/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -2250,9 +2250,9 @@
           "404"
         ],
         "actionLabels": [
-          "返回概览",
-          "日志工作台",
-          "链路工作台"
+          "Back to overview",
+          "Log workbench",
+          "Trace workbench"
         ],
         "minimumVerificationCommand": "npm exec vitest run 'app/exception/[type]/page.test.tsx' components/pages/exception-center-surface.test.tsx lib/exception-center/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -2274,17 +2274,17 @@
           "a"
         ],
         "textSnippets": [
-          "异常中心",
-          "筛选",
-          "运行查询",
+          "Exception center",
+          "Filter",
+          "Run query",
           "ECONNRESET",
-          "应用"
+          "Apply"
         ],
         "actionLabels": [
-          "运行查询",
-          "返回概览",
-          "日志工作台",
-          "链路工作台"
+          "Run query",
+          "Back to overview",
+          "Log workbench",
+          "Trace workbench"
         ],
         "minimumVerificationCommand": "npm exec vitest run 'app/exception/[type]/page.test.tsx' components/pages/exception-center-surface.test.tsx lib/exception-center/view-model.test.ts lib/parity/route-manifest.test.ts"
       }
@@ -2308,7 +2308,7 @@
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "primarySelectors": [
           "[data-workspace-shell=\"true\"]",
           "[data-overview-status-grid=\"true\"]",
@@ -2318,13 +2318,13 @@
           "aside"
         ],
         "textSnippets": [
-          "总览",
-          "工作区状态",
-          "下一步：先接入一条可用信号链路",
-          "你已完成 83% 的平台配置"
+          "Overview",
+          "Workspace status",
+          "Next step: connect one usable signal path first",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "刷新"
+          "Refresh"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/dashboard/page.test.ts app/overview/page.test.tsx app/compatibility-entrypoints.chrome.test.ts lib/overview/navigation.test.ts lib/overview/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -2349,16 +2349,16 @@
           "button"
         ],
         "textSnippets": [
-          "日志工作台",
-          "严重级别",
-          "趋势带",
-          "运行查询"
+          "Log workbench",
+          "Severity",
+          "Trend band",
+          "Run query"
         ],
         "actionLabels": [
-          "运行查询",
-          "保存视图",
-          "创建告警",
-          "加入仪表盘"
+          "Run query",
+          "Save view",
+          "Create alert",
+          "Add to dashboard"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/events/page.test.ts app/log/manage/page.test.tsx app/compatibility-entrypoints.chrome.test.ts lib/log-manage/query-state.test.ts lib/log-manage/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -2368,7 +2368,7 @@
         "referenceRoute": "/alert",
         "nextPagePath": "web-next/app/alerts/page.tsx",
         "routeTestPath": "web-next/app/alerts/page.test.ts",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
@@ -2390,12 +2390,12 @@
           "button"
         ],
         "textSnippets": [
-          "告警中心",
-          "集中查看并处理当前告警",
-          "搜索告警"
+          "Alert center",
+          "Review and handle current alerts in one place",
+          "Search alerts"
         ],
         "actionLabels": [
-          "刷新"
+          "Refresh"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/alerts/page.test.ts app/alert/page.test.tsx components/pages/alert-center-surface.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-manage/query-state.test.ts lib/alert-manage/controller.test.ts lib/alert-manage/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -2408,7 +2408,7 @@
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "primarySelectors": [
           "[data-incidents-route=\"otlp-cold-ops-entry\"]",
           "[data-incidents-style-baseline=\"hertzbeat-cold-matte\"]",
@@ -2421,15 +2421,15 @@
           "a"
         ],
         "textSnippets": [
-          "故障事件",
-          "按 OTLP 工作台的冷色基线",
-          "冷色入口已接入",
-          "等待接入事件适配器",
-          "你已完成 83% 的平台配置"
+          "Incident events",
+          "cold baseline from the OTLP workbench",
+          "Cold entrypoint connected",
+          "Waiting for event adapter onboarding",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "打开概览",
-          "查看对象"
+          "Open overview",
+          "View entity"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/incidents/page.test.tsx lib/incidents-surface/view-model.test.ts lib/incidents-surface/model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -2442,7 +2442,7 @@
         "screenshotMode": "viewport",
         "authState": "session",
         "seedState": "none",
-        "locale": "zh-CN",
+        "locale": "en-US",
         "primarySelectors": [
           "[data-actions-route=\"otlp-cold-ops-entry\"]",
           "[data-actions-style-baseline=\"hertzbeat-cold-matte\"]",
@@ -2469,15 +2469,15 @@
           "a"
         ],
         "textSnippets": [
-          "自动化处置",
-          "按 OTLP 工作台的冷色基线",
-          "冷色入口已接入",
-          "等待接入执行适配器",
-          "你已完成 83% 的平台配置"
+          "Automation actions",
+          "cold baseline from the OTLP workbench",
+          "Cold entrypoint connected",
+          "Waiting for action adapter onboarding",
+          "You have completed 83% of platform setup"
         ],
         "actionLabels": [
-          "打开概览",
-          "查看对象"
+          "Open overview",
+          "View entity"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/actions/page.test.tsx app/api/actions/approval-drafts/route.test.ts app/api/actions/approval-drafts/[draftId]/decision/route.test.ts app/api/actions/catalog/route.test.ts lib/actions-surface/view-model.test.ts lib/actions-surface/model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -2502,14 +2502,14 @@
           "input"
         ],
         "textSnippets": [
-          "HertzBeat 企业运维拓扑",
-          "OTLP 调用关系",
-          "监控对象归属",
+          "HertzBeat enterprise operations topology",
+          "OTLP call relationships",
+          "Monitor entity ownership",
           "checkout-api"
         ],
         "actionLabels": [
-          "适配视图",
-          "刷新拓扑"
+          "Fit view",
+          "Refresh topology"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/topology/page.test.tsx lib/topology-surface/view-model.test.ts lib/parity/route-manifest.test.ts"
       },
@@ -2542,16 +2542,16 @@
           "a"
         ],
         "textSnippets": [
-          "查询工作台",
-          "信号类型",
-          "运行查询",
+          "Query workbench",
+          "Signal type",
+          "Run query",
           "checkout"
         ],
         "actionLabels": [
-          "运行查询",
-          "保存视图",
-          "创建告警",
-          "加入仪表盘"
+          "Run query",
+          "Save view",
+          "Create alert",
+          "Add to dashboard"
         ],
         "minimumVerificationCommand": "npm exec vitest run app/explorer/page.test.tsx lib/explorer-surface/controller.test.ts lib/explorer-surface/view-model.test.ts lib/otlp-metrics/controller.test.ts lib/otlp-metrics/view-model.test.ts lib/parity/route-manifest.test.ts"
       }

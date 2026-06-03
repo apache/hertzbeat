@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
+import type { TranslationParams } from '../../lib/i18n';
 
 const i18nState = vi.hoisted(() => ({
   locale: 'zh-CN' as 'zh-CN' | 'en-US'
@@ -24,6 +25,16 @@ vi.mock('next/navigation', () => ({
     push: vi.fn()
   })
 }));
+
+const zhT = createTranslatorMock({ locale: 'zh-CN' });
+
+function tZh(key: string, params?: TranslationParams) {
+  return zhT(key, params);
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 describe('topology page', () => {
   beforeEach(() => {
@@ -425,7 +436,7 @@ describe('topology page', () => {
     expect(source).toContain('HzTopologySectionLabel');
     expect(source).toContain('useI18n');
     expect(source).toContain("t('topology.search.placeholder')");
-    expect(source).not.toContain('搜索实体、服务、资源或标签');
+    expect(source).not.toContain(tZh('topology.search.placeholder'));
     expect(source).not.toContain('OpsSurfacePage');
     expect(source).not.toContain('buildTopologySurfaceConfig');
     expect(source).not.toContain('Monitor center');
@@ -622,8 +633,14 @@ describe('topology page', () => {
     expect(html).toContain('data-topology-path-summary-hovered-edge-id="none"');
     expect(html).toContain('data-hz-topology-path-selected-edge="none"');
     expect(html).toContain('data-hz-topology-path-hovered-edge="none"');
-    expect(html).toContain('路径预览');
-    expect(html).not.toMatch(/data-hz-topology-path-summary-title-owner="hertzbeat-ui-path-summary-title"[^>]*>选中路径</);
+    expect(html).toContain(tZh('topology.path-summary.title.preview'));
+    expect(html).not.toMatch(
+      new RegExp(
+        `data-hz-topology-path-summary-title-owner="hertzbeat-ui-path-summary-title"[^>]*>${escapeRegExp(
+          tZh('topology.path-summary.title.selected')
+        )}</`
+      )
+    );
     expect(html).toContain('data-topology-g6-mount-lifecycle-browser-regression="selection-preserve-viewport"');
     expect(html).toContain('data-topology-g6-mount-lifecycle-browser-regression-owner="hertzbeat-ui-g6-mount-lifecycle"');
     expect(html).toContain('data-topology-g6-mount-lifecycle-selection-policy="node-edge-table-drawer-only"');
@@ -742,7 +759,7 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-focus-filter="view"');
     expect(html).not.toContain('data-hz-topology-focus-hidden-count-owner="hertzbeat-ui-focus-trail-hidden-count"');
     expect(html).not.toContain('data-topology-focus-trail-hidden-count-owner="hertzbeat-ui-focus-trail-hidden-count"');
-    expect(html).not.toContain('当前范围隐藏 0 个');
+    expect(html).not.toContain(tZh('topology.focus-trail.hidden-count', { count: 0 }));
     expect(html).toContain('data-hz-topology-focus-exit-owner="hertzbeat-ui-focus-trail-exit"');
     expect(html).toContain('data-topology-focus-trail-exit-owner="hertzbeat-ui-focus-trail-exit"');
     expect(html).toMatch(
@@ -774,8 +791,14 @@ describe('topology page', () => {
     expect(html).toContain('data-topology-path-summary-hovered-edge-id="none"');
     expect(html).toContain('data-hz-topology-path-selected-edge="none"');
     expect(html).toContain('data-hz-topology-path-hovered-edge="none"');
-    expect(html).toContain('路径预览');
-    expect(html).not.toMatch(/data-hz-topology-path-summary-title-owner="hertzbeat-ui-path-summary-title"[^>]*>选中路径</);
+    expect(html).toContain(tZh('topology.path-summary.title.preview'));
+    expect(html).not.toMatch(
+      new RegExp(
+        `data-hz-topology-path-summary-title-owner="hertzbeat-ui-path-summary-title"[^>]*>${escapeRegExp(
+          tZh('topology.path-summary.title.selected')
+        )}</`
+      )
+    );
     expect(html).toContain('data-hz-topology-path-source-id="svc-frontend"');
     expect(html).toContain('data-hz-topology-path-target-id="svc-checkout"');
     expect(html).toContain('data-hz-topology-path-relation-type="trace-call"');
@@ -1242,22 +1265,22 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-detail-signal-action-link-owner="hertzbeat-ui-detail-signal-action-link"');
     expect(html).toContain('data-hz-topology-detail-signal-action-label-owner="hertzbeat-ui-detail-signal-action-label"');
     expect(html).toContain('data-hz-topology-detail-signal-action="metrics"');
-    expect(html).toContain('运维拓扑');
-    expect(html).not.toContain('HertzBeat 企业运维拓扑');
-    expect(html).toContain('应用拓扑');
-    expect(html).toContain('服务调用');
-    expect(html).toContain('资源依赖');
-    expect(html).toContain('告警影响面');
-    expect(html).toContain('OTLP 调用关系');
-    expect(html).toContain('监控对象归属');
-    expect(html).toContain('模板依赖');
-    expect(html).toContain('K8s 工作负载');
-    expect(html).toContain('数据库 / 中间件连接');
-    expect(html).toContain('CMDB / 手工标签');
+    expect(html).toContain(tZh('topology.identity'));
+    expect(html).not.toContain('HertzBeat enterprise operations topology');
+    expect(html).toContain(tZh('topology.view.application.label'));
+    expect(html).toContain(tZh('topology.view.service-call.label'));
+    expect(html).toContain(tZh('topology.view.resource-dependency.label'));
+    expect(html).toContain(tZh('topology.view.alert-impact.label'));
+    expect(html).toContain(tZh('topology.source.otlp-trace-call.label'));
+    expect(html).toContain(tZh('topology.source.monitor-ownership.label'));
+    expect(html).toContain(tZh('topology.source.template-dependency.label'));
+    expect(html).toContain(tZh('topology.source.k8s-workload.label'));
+    expect(html).toContain(tZh('topology.source.database-middleware-connection.label'));
+    expect(html).toContain(tZh('topology.source.cmdb-manual-label.label'));
     expect(html).toContain('checkout-api');
     expect(html).toContain('redis');
-    expect(html).toContain('刷新拓扑');
-    expect(html).toContain('适配视图');
+    expect(html).toContain(tZh('topology.refresh'));
+    expect(html).toContain(tZh('topology.view.fit'));
     expect(html).toContain('data-topology-alert-impact-link="alert-center"');
     expect(html).toContain('data-topology-alert-impact-link-owner="hertzbeat-ui-action-link"');
     expect(html).toContain('data-topology-alert-impact-link-spacing-owner="hertzbeat-ui-action-link-spacing"');
@@ -1269,8 +1292,8 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-action-link-spacing-owner="hertzbeat-ui-action-link-spacing"');
     expect(html).toContain('data-hz-topology-action-link-label-owner="hertzbeat-ui-action-link-label"');
     expect(html).toContain('data-hz-topology-action-link-copy-owner="hertzbeat-ui-action-link-copy"');
-    expect(html).toContain('查看实体详情');
-    expect(html).toContain('打开三信号');
+    expect(html).toContain(tZh('topology.context-link.entity'));
+    expect(html).toContain(tZh('topology.context-link.signals'));
     expect(html).toContain('data-topology-node-select-mode="in-page-drawer"');
     expect(html).toContain('data-topology-node-select-url-policy="preserve-current-url"');
     expect(html).not.toContain('data-topology-node-select-href=');
@@ -1281,7 +1304,7 @@ describe('topology page', () => {
     expect(html).toContain('data-topology-context-link="traces"');
     expect(html).toContain('data-topology-node-id="svc-checkout"');
     expect(html).toContain('checkout-api');
-    expect(html).toContain('健康评分 82');
+    expect(html).toContain(tZh('entity.health.label', { score: 82 }));
     expect(html).toContain('/ingestion/otlp/metrics?');
     expect(html).toContain('/log/manage?');
     expect(html).toContain('/trace/manage?');
@@ -1309,14 +1332,14 @@ describe('topology page', () => {
     expect(headerHtml).not.toContain('data-topology-source-strip-density="label-only"');
     expect(headerHtml).not.toContain('data-topology-source-strip-compactness="single-line-wrap"');
     expect(headerHtml).not.toContain('data-hz-topology-filter-strip-variant="source-rail"');
-    expect(headerHtml).toContain('运维拓扑');
-    expect(headerHtml).not.toContain('OTLP 调用关系');
-    expect(headerHtml).not.toContain('CMDB / 手工标签');
+    expect(headerHtml).toContain(tZh('topology.identity'));
+    expect(headerHtml).not.toContain(tZh('topology.source.otlp-trace-call.label'));
+    expect(headerHtml).not.toContain(tZh('topology.source.cmdb-manual-label.label'));
     expect(headerHtml).not.toContain('data-hz-topology-workbench-copy-owner="hertzbeat-ui-workbench-copy"');
-    expect(headerHtml).not.toContain('以实体中心为锚点');
-    expect(headerHtml).not.toContain('从 trace span 归并服务调用边');
-    expect(headerHtml).not.toContain('从 HertzBeat 监控对象绑定实体');
-    expect(headerHtml).not.toContain('从 CMDB 导入和手工标签补齐归属');
+    expect(headerHtml).not.toContain(tZh('topology.copy'));
+    expect(headerHtml).not.toContain(tZh('topology.source.otlp-trace-call.copy'));
+    expect(headerHtml).not.toContain(tZh('topology.source.monitor-ownership.copy'));
+    expect(headerHtml).not.toContain(tZh('topology.source.cmdb-manual-label.copy'));
   });
 
   it('renders API-backed topology graph data when the topology read API returns nodes and edges', async () => {
@@ -1411,10 +1434,18 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-focus-crumb-active="true"');
     expect(html).toContain('data-topology-depth-state="1"');
     expect(html).toMatch(
-      /<a(?=[^>]*data-hz-topology-focus-crumb="active-entity")[\s\S]*?<span[^>]*data-hz-topology-focus-crumb-value-owner="hertzbeat-ui-focus-trail-crumb-value">1 跳<\/span>/
+      new RegExp(
+        `<a(?=[^>]*data-hz-topology-focus-crumb="active-entity")[\\s\\S]*?<span[^>]*data-hz-topology-focus-crumb-value-owner="hertzbeat-ui-focus-trail-crumb-value">${escapeRegExp(
+          tZh('topology.state.depth.one-hop')
+        )}<\\/span>`
+      )
     );
     expect(html).not.toMatch(
-      /<a(?=[^>]*data-hz-topology-focus-crumb="active-entity")[\s\S]*?<span[^>]*data-hz-topology-focus-crumb-value-owner="hertzbeat-ui-focus-trail-crumb-value">2 跳<\/span>/
+      new RegExp(
+        `<a(?=[^>]*data-hz-topology-focus-crumb="active-entity")[\\s\\S]*?<span[^>]*data-hz-topology-focus-crumb-value-owner="hertzbeat-ui-focus-trail-crumb-value">${escapeRegExp(
+          tZh('topology.state.depth.two-hop')
+        )}<\\/span>`
+      )
     );
     expect(html).toContain('data-hz-topology-focus-filter="source"');
     expect(html).toContain('data-topology-focus-filter-source="cmdb-manual-label"');
@@ -1452,8 +1483,12 @@ describe('topology page', () => {
     expect(html).not.toContain('absolute left-3 top-12 flex');
     expect(html).toContain('data-hz-topology-g6-filter-visible-node-count="2"');
     expect(html).toContain('data-hz-topology-g6-filter-visible-edge-count="1"');
-    expect(html).toContain('2 个可见节点 · 1 条可见边');
-    expect(html).not.toContain('7 个可见节点 · 7 条可见边');
+    expect(html).toContain(
+      `${tZh('topology.group-panel.node-count', { count: 2 })} · ${tZh('topology.group-panel.edge-count', { count: 1 })}`
+    );
+    expect(html).not.toContain(
+      `${tZh('topology.group-panel.node-count', { count: 7 })} · ${tZh('topology.group-panel.edge-count', { count: 7 })}`
+    );
     expect(html).toContain('data-hz-topology-g6-group-item="otlp-trace-call"');
     expect(html).toContain('data-hz-topology-g6-group-item-action-owner="hertzbeat-ui-g6-group-item-action"');
     expect(html).toMatch(
@@ -1757,7 +1792,7 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-request-rate="7.25"');
     expect(html).toContain('data-hz-topology-error-rate="0.021"');
     expect(html).toContain('data-hz-topology-latency-p95-ms="123"');
-    expect(html).toContain('边指标排行');
+    expect(html).toContain(tZh('topology.metric-table.title'));
   }, 60000);
 
   it('surfaces the render-window RED table below the graph when a real API topology is windowed', async () => {
@@ -1818,8 +1853,17 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-g6-summary-total-node-count="230"');
     expect(html).toContain('data-hz-topology-g6-summary-rendered-edge-count="180"');
     expect(html).toContain('data-hz-topology-g6-summary-total-edge-count="229"');
-    expect(html).toContain('200/230 个节点已渲染 · 180/229 条边已渲染');
-    expect(html).not.toContain('230 个可见节点 · 229 条可见边');
+    expect(html).toContain(
+      `${tZh('topology.g6.summary.rendered-node-count', { rendered: 200, total: 230 })} · ${tZh(
+        'topology.g6.summary.rendered-edge-count',
+        { rendered: 180, total: 229 }
+      )}`
+    );
+    expect(html).not.toContain(
+      `${tZh('topology.group-panel.node-count', { count: 230 })} · ${tZh('topology.group-panel.edge-count', {
+        count: 229
+      })}`
+    );
     expect(html).toContain('data-topology-metric-table-placement="graph-bottom"');
     expect(html).toContain('data-topology-metric-table-visibility="render-window-companion"');
     expect(html).toContain('data-topology-metric-table-scope="edge-red-render-window"');
@@ -1846,7 +1890,7 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-metric-table-canvas-rendered-edge-count="180"');
     expect(html).toContain('data-hz-topology-metric-table-table-edge-count="229"');
     expect(html).toContain('data-hz-topology-metric-table-edge-summary-owner="hertzbeat-ui-metric-table-edge-summary"');
-    expect(html).toContain('画布 180 / 表格 229');
+    expect(html).toContain(tZh('topology.metric-table.edge-summary', { rendered: 180, total: 229 }));
     expect(readFileSync(resolve(process.cwd(), 'lib/i18n-runtime-messages.ts'), 'utf8')).toContain("'topology.metric-table.edge-summary'");
     expect(html).toContain('data-hz-topology-metric-table-render-window-table-companion="required"');
     expect(html).toContain('data-hz-topology-metric-table-hidden-node-companion="required"');
@@ -1855,15 +1899,15 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-metric-table-rendered-row-count="120"');
     expect(html).toContain('data-hz-topology-metric-table-rendered-hidden-row-count="109"');
     expect(html).toContain('data-hz-topology-metric-table-row-render-summary-owner="hertzbeat-ui-metric-table-row-render-summary"');
-    expect(html).toContain('显示 120 / 229 条关系');
+    expect(html).toContain(tZh('topology.metric-table.row-render-summary', { rendered: 120, total: 229 }));
     expect(html).toContain('data-hz-topology-metric-table-filter-control="visible"');
     expect(html).toContain('data-hz-topology-metric-table-filter-control="partial"');
     expect(html).toContain('data-hz-topology-metric-table-filter-control="hidden"');
-    expect(html).toContain('两端在画布');
-    expect(html).toContain('一端在画布');
-    expect(html).toContain('画布外');
-    expect(html).toContain('端点未知');
-    expect(html).not.toContain('半可见');
+    expect(html).toContain(tZh('topology.metric-table.filter.visible'));
+    expect(html).toContain(tZh('topology.metric-table.filter.partial'));
+    expect(html).toContain(tZh('topology.metric-table.filter.hidden'));
+    expect(html).toContain(tZh('topology.metric-table.filter.unknown'));
+    expect(html).not.toContain('semi-visible');
     const renderedMetricRows = html.match(/data-hz-topology-edge-row="/g) ?? [];
     const metricRowCountMatch = html.match(/data-hz-topology-metric-rows="(\d+)"/);
     const metricRenderedRowCountMatch = html.match(/data-hz-topology-metric-table-rendered-row-count="(\d+)"/);
@@ -1894,8 +1938,8 @@ describe('topology page', () => {
     expect(html).toContain('data-topology-edge-render-window-target-visible="false"');
     expect(html).toContain('data-topology-edge-render-window-fact="partial"');
     expect(html).toContain('data-topology-edge-render-window-fact-owner="hertzbeat-ui-detail-render-window-context"');
-    expect(html).toContain('画布窗口');
-    expect(html).toContain('一端在画布');
+    expect(html).toContain(tZh('topology.edge.render-window.label'));
+    expect(html).toContain(tZh('topology.metric-table.filter.partial'));
   }, 60000);
 
   it('does not turn an overview route into a focused graph when the API returns a default focus entity', async () => {
@@ -2026,8 +2070,8 @@ describe('topology page', () => {
     expect(html).toContain('viewMode=service-call');
     expect(html).toContain('relationType=trace-call');
     expect(html).toContain('data-topology-empty-state="none"');
-    expect(html).toContain('未返回关系边');
-    expect(html).toContain('查看调用关系');
+    expect(html).toContain(tZh('topology.relation-gap.title'));
+    expect(html).toContain(tZh('topology.relation-gap.action.trace-call'));
   }, 60000);
 
   it('renders API-backed impact timeline evidence when topology returns change events', async () => {
@@ -2197,9 +2241,9 @@ describe('topology page', () => {
     expect(html).not.toContain('data-hz-ui="topology-metric-table"');
     expect(html).not.toContain('data-hz-ui="topology-detail-drawer"');
     expect(html).not.toContain('data-topology-current-entity-panel=');
-    expect(html).toContain('暂无 trace 调用拓扑证据');
-    expect(html).toContain('当前窗口无 trace 调用边。');
-    expect(html).not.toContain('Greptime 在当前时间和环境下没有带 RED 指标的 OTLP trace 调用边。此视图会隐藏关系节点，避免把缺少 trace 证据的结果看成完整拓扑。');
+    expect(html).toContain(tZh('topology.empty.trace-call.title'));
+    expect(html).toContain(tZh('topology.empty.trace-call.copy'));
+    expect(html).not.toContain(tZh('topology.degraded.trace-call.copy'));
     expect(html).toContain('data-hz-topology-empty-title-owner="hertzbeat-ui-empty-title"');
     expect(html).toContain('data-hz-topology-empty-copy-owner="hertzbeat-ui-empty-copy"');
     expect(html).toContain('data-hz-topology-empty-meta-owner="hertzbeat-ui-empty-meta"');
@@ -2297,9 +2341,9 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-empty-relation-type="trace-call"');
     expect(html).toContain('data-hz-topology-empty-result-count="0"');
     expect(html).toContain('data-hz-topology-empty-evidence-sources="otlp-trace-call greptime trace"');
-    expect(html).toContain('暂无 trace 调用拓扑证据');
-    expect(html).toContain('当前窗口无 trace 调用边。');
-    expect(html).not.toContain('Greptime 在当前时间和环境下没有带 RED 指标的 OTLP trace 调用边。此视图会隐藏关系节点，避免把缺少 trace 证据的结果看成完整拓扑。');
+    expect(html).toContain(tZh('topology.empty.trace-call.title'));
+    expect(html).toContain(tZh('topology.empty.trace-call.copy'));
+    expect(html).not.toContain(tZh('topology.degraded.trace-call.copy'));
     expect(html).toContain('data-hz-topology-g6-node-count="0"');
     expect(html).toContain('data-hz-topology-g6-edge-count="0"');
     expect(html).not.toContain('data-hz-ui="topology-companion-rail"');
@@ -2532,7 +2576,7 @@ describe('topology page', () => {
     expect(pendingHtml).toContain('data-hz-topology-loading-source="API"');
     expect(pendingHtml).toContain('data-hz-topology-loading-time-scope="last-1h"');
     expect(pendingHtml).toContain('data-hz-topology-loading-evidence-sources="api greptime trace relation"');
-    expect(pendingHtml).toContain('正在加载拓扑证据');
+    expect(pendingHtml).toContain(tZh('topology.loading.api.title'));
     expect(pendingHtml).not.toContain('data-topology-empty-state="api-empty"');
     expect(pendingTraceCallHtml).toContain('data-topology-trace-call-state="pending"');
     expect(pendingTraceCallHtml).toContain('data-topology-trace-call-red-state="pending"');
@@ -2558,9 +2602,9 @@ describe('topology page', () => {
     expect(unavailableHtml).toContain('data-hz-topology-empty-copy-visibility="assistive"');
     expect(unavailableHtml).toContain('data-hz-topology-empty-meta-owner="hertzbeat-ui-empty-meta"');
     expect(unavailableHtml).toContain('data-hz-topology-empty-kind="degraded"');
-    expect(unavailableHtml).toContain('data-hz-topology-empty-source="拓扑 API 不可用"');
+    expect(unavailableHtml).toContain(`data-hz-topology-empty-source="${tZh('topology.degraded.api.source')}"`);
     expect(unavailableHtml).toContain('data-hz-topology-empty-evidence-sources="api unavailable"');
-    expect(unavailableHtml).toContain('拓扑 API 不可用');
+    expect(unavailableHtml).toContain(tZh('topology.degraded.api.title'));
     expect(traceCallUnavailableHtml).toContain('data-topology-trace-call-state="degraded"');
     expect(traceCallUnavailableHtml).toContain('data-topology-empty-state="trace-call-degraded"');
     expect(traceCallUnavailableHtml).toContain('data-hz-topology-empty-source="Greptime trace graph"');
@@ -2597,13 +2641,13 @@ describe('topology page', () => {
     expect(html).not.toContain('value="checkout-api"');
     expect(html).toContain('last-30m');
     expect(html).toContain('timeRange=last-30m');
-    expect(html).toContain('当前筛选');
+    expect(html).toContain(tZh('topology.current-filter'));
     expect(html).toContain('data-topology-view-scope="focused-adjacency"');
     expect(html).toContain('data-topology-view-scope-owner="hertzbeat-ui-focus-scope-guide"');
     expect(html).toContain('data-topology-view-scope-global-action="open-global-topology"');
     expect(html).toContain('data-topology-view-scope-global-href="/topology?');
-    expect(html).toContain('当前为局部聚焦视角');
-    expect(html).toContain('查看全局拓扑');
+    expect(html).toContain(tZh('topology.view-scope.focused-adjacency'));
+    expect(html).toContain(tZh('topology.view-scope.focused-adjacency.copy'));
     expect(html).not.toMatch(/data-topology-view-scope-global-href="[^"]*entityId=/);
     expect(html).not.toMatch(/data-topology-view-scope-global-href="[^"]*serviceName=/);
   }, 15000);
@@ -2747,20 +2791,20 @@ describe('topology page', () => {
     expect(html.indexOf('data-topology-edge-evidence-panel="svc-checkout--res-orders-db"')).toBeLessThan(
       html.indexOf('data-topology-companion-section="view-mode"')
     );
-    expect(html).toContain('关系证据');
+    expect(html).toContain(tZh('topology.edge.evidence.title'));
     expect(html).toContain('data-hz-topology-detail-density="graph-first"');
     expect(html).toContain('data-hz-topology-detail-density-owner="hertzbeat-ui-detail-density"');
     expect(html).toContain('data-hz-topology-detail-visual-weight="low-interruption"');
     expect(html).toContain('data-hz-topology-detail-fact-density="compressed"');
     expect(html).toContain('database connection');
-    expect(html).toContain('数据库 / 中间件连接');
-    expect(html).toContain('采集证据');
+    expect(html).toContain(tZh('topology.source.database-middleware-connection.label'));
+    expect(html).toContain(tZh('topology.evidence.row.source'));
     expect(html).toContain('checkout-api');
     expect(html).toContain('orders-db');
     expect(html).toContain('data-topology-edge-evidence-boundary="roadmap-boundary"');
-    expect(html).toContain('当前边仅基于已采集的关系证据；依赖自动发现和根因分析仍是 roadmap 能力。');
+    expect(html).toContain(tZh('topology.evidence.boundary'));
     expect(html).toContain('data-topology-edge-link-copy="alert-impact"');
-    expect(html).toContain('带当前边、实体和三信号上下文进入告警影响面。');
+    expect(html).toContain(tZh('topology.evidence.alert-impact.copy'));
     expect(html).toMatch(/data-topology-edge-link="metrics"[^>]+href="\/ingestion\/otlp\/metrics\?[^"]*viewMode=resource-dependency[^"]*sourceKind=database-middleware-connection[^"]*edgeId=svc-checkout--res-orders-db/);
     expect(html).toMatch(/data-topology-edge-link="logs"[^>]+href="\/log\/manage\?[^"]*viewMode=resource-dependency[^"]*sourceKind=database-middleware-connection[^"]*edgeId=svc-checkout--res-orders-db/);
     expect(html).toMatch(/data-topology-edge-link="traces"[^>]+href="\/trace\/manage\?[^"]*viewMode=resource-dependency[^"]*sourceKind=database-middleware-connection[^"]*edgeId=svc-checkout--res-orders-db/);
@@ -2975,19 +3019,21 @@ describe('topology page', () => {
     expect(html).toContain('data-hz-topology-evidence-title-owner="hertzbeat-ui-evidence-list-title"');
     expect(html).toContain('data-hz-topology-evidence-copy-owner="hertzbeat-ui-evidence-list-copy"');
     expect(html).toContain('data-hz-topology-evidence-count-owner="hertzbeat-ui-evidence-list-count"');
-    expect(html).toContain('data-topology-fault-context-row="当前实体"');
+    expect(html).toContain(`data-topology-fault-context-row="${tZh('signal.context.entity.label')}"`);
     expect(html).toContain('data-hz-topology-evidence-item-owner="hertzbeat-ui-evidence-list-item"');
     expect(html).toContain('data-hz-topology-evidence-item-label-owner="hertzbeat-ui-evidence-list-item-label"');
     expect(html).toContain('data-hz-topology-evidence-item-value-owner="hertzbeat-ui-evidence-list-item-value"');
     expect(html).toContain('data-hz-topology-evidence-item-meta-owner="hertzbeat-ui-evidence-list-item-meta"');
     expect(html).toContain('entityId service:commerce/checkout');
-    expect(html).toContain('data-topology-fault-context-row="当前服务"');
+    expect(html).toContain(`data-topology-fault-context-row="${tZh('signal.context.service.label')}"`);
     expect(html).toContain('checkout-api');
-    expect(html).toContain('data-topology-fault-context-row="链路上下文"');
+    expect(html).toContain(`data-topology-fault-context-row="${tZh('signal.context.trace.label')}"`);
     expect(html).toContain('trace-123');
     expect(html).toContain('spanId span-456');
-    expect(html).toContain('data-topology-fault-context-row="采集来源"');
-    expect(html).toContain('采集器 edge-collector-a · 模板 java-service');
+    expect(html).toContain(`data-topology-fault-context-row="${tZh('signal.context.source.label')}"`);
+    expect(html).toContain(
+      `${tZh('signal.context.collector.prefix')} edge-collector-a · ${tZh('signal.context.template.prefix')} java-service`
+    );
     expect(html).toContain('data-topology-active-node-id="svc-checkout"');
     expect(html).toContain('data-topology-active-edge-id="svc-checkout--res-orders-db"');
     expect(html).toContain('trace-123');
@@ -3032,7 +3078,7 @@ describe('topology page', () => {
     expect(html).toContain('Current service');
     expect(html).toContain('Trace context');
     expect(html).toContain('Source');
-    expect(html).not.toMatch(/[一-龥]/);
+    expect(html).not.toMatch(/[\u4e00-\u9fa5]/);
     expect(html).not.toContain('topology.');
     expect(html).not.toContain('signal.context.');
   });

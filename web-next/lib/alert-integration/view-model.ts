@@ -62,7 +62,7 @@ export function buildIntegrationPostureRows(source: string, hasDoc: boolean, t: 
   return [
     {
       title: t('alert.integration.posture.doc-source'),
-      copy: `web-app/src/assets/doc/alert-integration/${source}.*.md`,
+      copy: `web-next/public/assets/doc/alert-integration/${source}.*.md`,
       meta: t('alert.integration.posture.existing-asset')
     },
     {

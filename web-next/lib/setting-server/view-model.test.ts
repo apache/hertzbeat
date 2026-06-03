@@ -19,6 +19,7 @@ import {
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock();
+const zhT = createTranslatorMock({ locale: 'zh-CN' });
 
 describe('setting server view model', () => {
   it('normalizes email and sms senders into compatible defaults', () => {
@@ -88,57 +89,34 @@ describe('setting server view model', () => {
   });
 
   it('uses localized empty fallbacks for missing summary facts', () => {
-    const scopedT = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'common.none': '无消息配置值',
-        'common.enable': '启用',
-        'common.yes': '是',
-        'common.no': '否',
-        'settings.server.email': '邮件服务',
-        'settings.server.sms': '短信服务',
-        'alert.notice.sender.mail.host': '邮件服务器地址',
-        'alert.notice.sender.mail.username': '邮件账户',
-        'alert.notice.sender.mail.port': '邮件端口',
-        'alert.notice.sender.mail.ssl': '启用 SSL',
-        'alert.notice.sender.mail.starttls': '启用 STARTTLS',
-        'alert.notice.sender.mail.enable': '启用邮件配置',
-        'alert.notice.sender.sms.type': '短信类型',
-        'alert.notice.sender.sms.type.tencent': '腾讯云短信',
-        'alert.notice.sender.sms.tencent.appId': '腾讯云 App ID',
-        'alert.notice.sender.sms.tencent.signName': '短信签名',
-        'alert.notice.sender.sms.tencent.templateId': '短信模板'
-      }
-    });
-
     expect(
       buildMessageServerSummaryItems(
         { emailHost: '', emailUsername: '  ', emailPort: undefined, emailSsl: true, emailStarttls: false, enable: false } as any,
         { type: 'tencent', enable: false, tencent: { appId: '', signName: ' ', templateId: null } } as any,
-        scopedT
+        zhT
       )
     ).toEqual([
       {
         key: 'email',
-        title: '邮件服务',
+        title: zhT('settings.server.email'),
         lines: [
-          '邮件服务器地址: 无消息配置值',
-          '邮件账户: 无消息配置值',
-          '邮件端口: 无消息配置值',
-          '启用 SSL: 是',
-          '启用 STARTTLS: 否',
-          '启用邮件配置: 否'
+          `${zhT('alert.notice.sender.mail.host')}: ${zhT('common.none')}`,
+          `${zhT('alert.notice.sender.mail.username')}: ${zhT('common.none')}`,
+          `${zhT('alert.notice.sender.mail.port')}: ${zhT('common.none')}`,
+          `${zhT('alert.notice.sender.mail.ssl')}: ${zhT('common.yes')}`,
+          `${zhT('alert.notice.sender.mail.starttls')}: ${zhT('common.no')}`,
+          `${zhT('alert.notice.sender.mail.enable')}: ${zhT('common.no')}`
         ]
       },
       {
         key: 'sms',
-        title: '短信服务',
+        title: zhT('settings.server.sms'),
         lines: [
-          '短信类型: 腾讯云短信',
-          '腾讯云 App ID: 无消息配置值',
-          '短信签名: 无消息配置值',
-          '短信模板: 无消息配置值',
-          '启用: 否'
+          `${zhT('alert.notice.sender.sms.type')}: ${zhT('alert.notice.sender.sms.type.tencent')}`,
+          `${zhT('alert.notice.sender.sms.tencent.appId')}: ${zhT('common.none')}`,
+          `${zhT('alert.notice.sender.sms.tencent.signName')}: ${zhT('common.none')}`,
+          `${zhT('alert.notice.sender.sms.tencent.templateId')}: ${zhT('common.none')}`,
+          `${zhT('common.enable')}: ${zhT('common.no')}`
         ]
       }
     ]);

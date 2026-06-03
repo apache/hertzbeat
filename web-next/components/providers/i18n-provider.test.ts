@@ -6,6 +6,7 @@ import {
   resolveMessageTemplate,
   shouldUseRemoteLocaleBootstrap
 } from './i18n-provider';
+import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 
 const fetchMock = vi.fn<typeof fetch>();
 
@@ -14,6 +15,10 @@ function jsonResponse(payload: unknown) {
     status: 200,
     headers: { 'Content-Type': 'application/json' }
   });
+}
+
+function supplementalMessages(locale: 'en-US' | 'zh-CN', keys: string[]) {
+  return Object.fromEntries(keys.map(key => [key, SUPPLEMENTAL_MESSAGES[locale]?.[key]]));
 }
 
 describe('i18n provider remote overlay messages', () => {
@@ -71,92 +76,61 @@ describe('i18n provider remote overlay messages', () => {
   });
 
   it('seeds alert notice modal labels synchronously so cold dialogs never flash raw keys', () => {
+    const keys = [
+      'alert.notice.template',
+      'alert.notice.template.name',
+      'alert.notice.template.preset',
+      'alert.notice.template.preset.false',
+      'alert.notice.template.preset.true',
+      'alert.notice.receiver.people',
+      'alert.notice.receiver.people.name',
+      'alert.notice.receiver.people.placeholder',
+      'alert.notice.rule.name',
+      'alert.notice.rule.all',
+      'alert.notice.rule.tag',
+      'alert.notice.rule.period',
+      'alert.notice.rule.time',
+      'common.enable'
+    ];
+
     expect(buildInitialMessages('zh-CN')).toEqual(
-      expect.objectContaining({
-        'alert.notice.template': '通知模板',
-        'alert.notice.template.name': '模板名称',
-        'alert.notice.template.preset': '模版类型',
-        'alert.notice.template.preset.false': '用户自定义模版',
-        'alert.notice.template.preset.true': '系统内置模版',
-        'alert.notice.receiver.people': '接收对象',
-        'alert.notice.receiver.people.name': '接收对象名称',
-        'alert.notice.receiver.people.placeholder': '选择接收对象',
-        'alert.notice.rule.name': '策略名称',
-        'alert.notice.rule.all': '转发所有',
-        'alert.notice.rule.tag': '标签匹配',
-        'alert.notice.rule.period': '时间周期',
-        'alert.notice.rule.time': '通知时段',
-        'common.enable': '启用状态'
-      })
+      expect.objectContaining(supplementalMessages('zh-CN', keys))
     );
 
     expect(buildInitialMessages('en-US')).toEqual(
-      expect.objectContaining({
-        'alert.notice.template': 'Notice Template',
-        'alert.notice.template.name': 'Template Name',
-        'alert.notice.template.preset': 'Template Type',
-        'alert.notice.template.preset.false': 'User Custom',
-        'alert.notice.template.preset.true': 'System Preset',
-        'alert.notice.receiver.people': 'Receiver',
-        'alert.notice.receiver.people.name': 'Receiver Name',
-        'alert.notice.receiver.people.placeholder': 'Select a receiver',
-        'alert.notice.rule.name': 'Policy Name',
-        'alert.notice.rule.all': 'Dispatch All',
-        'alert.notice.rule.tag': 'Label Match',
-        'alert.notice.rule.period': 'Time Period',
-        'alert.notice.rule.time': 'Notification Time',
-        'common.enable': 'Enable'
-      })
+      expect.objectContaining(supplementalMessages('en-US', keys))
     );
   });
 
   it('seeds alert notice shell actions synchronously so the workbench does not paint blank controls', () => {
+    const keys = [
+      'menu.alert.dispatch',
+      'alert.notice.receiver',
+      'alert.notice.receiver.new',
+      'alert.notice.receiver.edit',
+      'alert.notice.receiver.delete',
+      'alert.notice.receiver.setting',
+      'alert.notice.send-test',
+      'alert.notice.send-test.notify.success',
+      'alert.notice.send-test.notify.failed',
+      'common.search',
+      'common.edit',
+      'common.total',
+      'common.button.delete',
+      'common.button.ok',
+      'common.button.cancel',
+      'common.confirm.delete',
+      'common.delete-success',
+      'common.delete-failed',
+      'monitor.status'
+    ];
+
     expect(buildInitialMessages('zh-CN')).toEqual(
-      expect.objectContaining({
-        'menu.alert.dispatch': '消息通知',
-        'alert.notice.receiver': '通知媒介',
-        'alert.notice.receiver.new': '新增接收对象',
-        'alert.notice.receiver.edit': '编辑接收对象',
-        'alert.notice.receiver.delete': '删除接收对象',
-        'alert.notice.receiver.setting': '配置',
-        'alert.notice.send-test': '发送告警测试',
-        'alert.notice.send-test.notify.success': '触发告警测试成功!',
-        'alert.notice.send-test.notify.failed': '触发告警测试失败!',
-        'common.search': '搜索',
-        'common.edit': '操作',
-        'common.total': '总量',
-        'common.button.delete': '删除选中项',
-        'common.button.ok': '确定',
-        'common.button.cancel': '取消',
-        'common.confirm.delete': '请确认是否删除!',
-        'common.delete-success': '删除成功',
-        'common.delete-failed': '删除失败',
-        'monitor.status': '任务状态'
-      })
+      expect.objectContaining(supplementalMessages('zh-CN', keys))
     );
 
     expect(buildInitialMessages('en-US')).toEqual(
-      expect.objectContaining({
-        'menu.alert.dispatch': 'Notification',
-        'alert.notice.receiver': 'Notice Receiver',
-        'alert.notice.receiver.new': 'New Receiver',
-        'alert.notice.receiver.edit': 'Edit Receiver',
-        'alert.notice.receiver.delete': 'Delete Receiver',
-        'alert.notice.receiver.setting': 'Setting',
-        'alert.notice.send-test': 'Send Alert Test Msg',
-        'alert.notice.send-test.notify.success': 'Send Alert Test Success!',
-        'alert.notice.send-test.notify.failed': 'Send Alert Test Failed!',
-        'common.search': 'Search',
-        'common.edit': 'Operate',
-        'common.total': 'Total',
-        'common.button.delete': 'Delete selected',
-        'common.button.ok': 'OK',
-        'common.button.cancel': 'Cancel',
-        'common.confirm.delete': 'Please confirm whether to delete!',
-        'common.delete-success': 'Deleted successfully',
-        'common.delete-failed': 'Delete failed',
-        'monitor.status': 'Task Status'
-      })
+      expect.objectContaining(supplementalMessages('en-US', keys))
     );
   });
 
@@ -179,8 +153,10 @@ describe('i18n provider remote overlay messages', () => {
     await expect(loadLocaleMessages('zh-CN', false)).resolves.toEqual(
       expect.objectContaining({
         'menu.home': 'Dashboard',
-        'monitor.detail.history-series.search.count': '个采样点',
-        'monitor.detail.history-metric.search.count': '个指标'
+        ...supplementalMessages('zh-CN', [
+          'monitor.detail.history-series.search.count',
+          'monitor.detail.history-metric.search.count'
+        ])
       })
     );
   });

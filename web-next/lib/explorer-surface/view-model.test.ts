@@ -8,24 +8,32 @@ const t = createTranslatorMock({ locale: 'zh-CN', overrides: SUPPLEMENTAL_MESSAG
 describe('explorer surface config', () => {
   it('builds explorer surface config', () => {
     const config = buildExplorerSurfaceConfig(t);
-    expect(config.title).toBe('查询工作台');
-    expect(config.tags).toEqual(['统一查询', '上下文保留', '跨信号检索']);
+    expect(config.title).toBe(t('explorer.title'));
+    expect(config.tags).toEqual([
+      t('explorer.tags.unified-query'),
+      t('explorer.tags.context-retention'),
+      t('explorer.tags.cross-signal-search')
+    ]);
     expect(config.actions).toHaveLength(3);
-    expect(config.checklist.map(item => item.meta)).toEqual(['已完成', '下一步', '预留']);
-    expect(config.lanes[0].meta).toBe('查询栏契约');
+    expect(config.checklist.map(item => item.meta)).toEqual([
+      t('explorer.checklist.entry.meta'),
+      t('explorer.checklist.adapters.meta'),
+      t('explorer.checklist.links.meta')
+    ]);
+    expect(config.lanes[0].meta).toBe(t('explorer.lanes.query.meta'));
   });
 
-  it('builds Chinese cold Workbench explorer rows', () => {
+  it('builds localized cold Workbench explorer rows', () => {
     expect(buildExplorerResultRows(t)).toEqual([
       {
         key: 'trace-checkout',
         signalKey: 'trace',
         signalTone: 'trace',
         href: '/trace/manage?serviceName=checkout',
-        signal: '链路',
+        signal: t('explorer.rows.trace.signal'),
         service: 'checkout',
         operation: 'POST /checkout',
-        status: '错误',
+        status: t('explorer.status.error'),
         duration: '1.25s',
         timestamp: '2026-03-30 11:50:57'
       },
@@ -34,10 +42,10 @@ describe('explorer surface config', () => {
         signalKey: 'log',
         signalTone: 'log',
         href: '/log/manage?search=payment',
-        signal: '日志',
+        signal: t('explorer.rows.log.signal'),
         service: 'payment',
-        operation: '支付失败：余额不足',
-        status: '错误',
+        operation: t('explorer.rows.log.operation'),
+        status: t('explorer.status.error'),
         duration: '-',
         timestamp: '2026-03-30 11:50:57'
       },
@@ -46,10 +54,10 @@ describe('explorer surface config', () => {
         signalKey: 'metric',
         signalTone: 'metric',
         href: '/ingestion/otlp/metrics?serviceName=frontend',
-        signal: '指标',
+        signal: t('explorer.rows.metric.signal'),
         service: 'frontend',
         operation: 'http.server.duration',
-        status: '正常',
+        status: t('explorer.status.normal'),
         duration: '0.88ms',
         timestamp: '2026-03-30 11:50:58'
       }
@@ -64,10 +72,18 @@ describe('explorer surface config', () => {
 
   it('builds quick filters for a cross-signal query surface', () => {
     expect(buildExplorerFilters(t)).toEqual([
-      { title: '信号类型', values: ['链路', '日志', '指标', '异常'] },
-      { title: '部署环境', values: ['demo', 'prod'] },
-      { title: '服务名称', values: ['checkout', 'frontend', 'payment', 'cart'] },
-      { title: '状态', values: ['错误', '正常'] }
+      {
+        title: t('explorer.filters.signal-type'),
+        values: [
+          t('explorer.rows.trace.signal'),
+          t('explorer.rows.log.signal'),
+          t('explorer.rows.metric.signal'),
+          t('explorer.rows.exception.signal')
+        ]
+      },
+      { title: t('explorer.filters.deployment-environment'), values: ['demo', 'prod'] },
+      { title: t('explorer.filters.service-name'), values: ['checkout', 'frontend', 'payment', 'cart'] },
+      { title: t('explorer.filters.status'), values: [t('explorer.status.error'), t('explorer.status.normal')] }
     ]);
   });
 });

@@ -37,10 +37,10 @@ vi.mock('../../components/workbench/client-workbench', () => ({
           signalKey: 'trace',
           signalTone: 'trace',
           href: '/trace/manage?traceId=trace-1',
-          signal: '链路',
+          signal: 'Trace',
           service: 'checkout',
           operation: 'POST /checkout',
-          status: '错误',
+          status: 'Error',
           duration: '1.25s',
           timestamp: '2026/03/30 11:50:57'
         },
@@ -49,7 +49,7 @@ vi.mock('../../components/workbench/client-workbench', () => ({
           signalKey: 'log',
           signalTone: 'log',
           href: '/log/manage?traceId=trace-1',
-          signal: '日志',
+          signal: 'Logs',
           service: 'payment',
           operation: 'payment failed',
           status: 'ERROR',
@@ -76,6 +76,7 @@ vi.mock('../../components/workbench/client-workbench', () => ({
 
 describe('explorer page', () => {
   it('renders the OTLP cold Workbench explorer baseline in Chinese', async () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
     const { default: ExplorerPage } = await import('./page');
     const html = renderToStaticMarkup(<ExplorerPage />);
 
@@ -100,15 +101,15 @@ describe('explorer page', () => {
     expect(html).toContain('data-explorer-signal-tone="log"');
     expect(html).toContain('href="/trace/manage?traceId=trace-1"');
     expect(html).toContain('href="/log/manage?traceId=trace-1"');
-    expect(html).toContain('查询工作台');
-    expect(html).toContain('运行查询');
-    expect(html).toContain('信号类型');
-    expect(html).toContain('服务');
-    expect(html).toContain('操作');
+    expect(html).toContain(t('explorer.title'));
+    expect(html).toContain(t('explorer.query.run'));
+    expect(html).toContain(t('explorer.signal.aria'));
+    expect(html).toContain(t('explorer.table.service'));
+    expect(html).toContain(t('explorer.table.operation'));
     expect(html).toContain('checkout');
-    expect(html).toContain('保存视图');
-    expect(html).toContain('创建告警');
-    expect(html).toContain('加入仪表盘');
+    expect(html).toContain(t('explorer.actions.save-view'));
+    expect(html).toContain(t('explorer.actions.create-alert'));
+    expect(html).toContain(t('explorer.actions.add-dashboard'));
     expect(html).toContain('data-explorer-query-input="url-owned"');
     expect(html).toContain('data-explorer-signal-select="url-owned"');
     expect(html).toContain('data-explorer-query-url="/explorer?q=checkout&amp;signal=trace"');

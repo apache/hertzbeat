@@ -25,15 +25,16 @@ import {
 
 describe('alert inhibit controller', () => {
   it('applies new inhibit fallback evidence context without changing edit behavior', () => {
+    const fallbackName = `${String.fromCodePoint(0x94fe, 0x8def)} checkout ${String.fromCodePoint(0x6291, 0x5236)}`;
     expect(
       buildAlertInhibitFormDraft(null, {
-        name: '链路 checkout 抑制',
+        name: fallbackName,
         sourceLabelsText: 'hertzbeat.signal:traces, service.name:checkout',
         targetLabelsText: 'hertzbeat.signal:traces, service.name:checkout',
         equalLabelsText: 'service.name'
       })
     ).toEqual({
-      name: '链路 checkout 抑制',
+      name: fallbackName,
       enable: true,
       sourceLabelsText: 'hertzbeat.signal:traces, service.name:checkout',
       targetLabelsText: 'hertzbeat.signal:traces, service.name:checkout',

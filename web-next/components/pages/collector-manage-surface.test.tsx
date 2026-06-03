@@ -8,34 +8,7 @@ import { CollectorManageSurface } from './collector-manage-surface';
 
 describe('collector manage surface', () => {
   it('renders the cold-matte collector toolbar and dense table shell', () => {
-    const t = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'menu.advanced.collector': '采集集群',
-        'collector.deploy': '部署采集器',
-        'collector.online': '上线采集器',
-        'collector.offline': '下线采集器',
-        'collector.delete': '删除采集器',
-        'collector.name': '采集器名称',
-        'collector.status': '运行状态',
-        'collector.mode': '运行模式',
-        'collector.task': '总任务数量',
-        'collector.pinned': '固定任务',
-        'collector.dispatched': '调度任务',
-        'collector.ip': 'IP地址',
-        'collector.version': '版本',
-        'collector.start-time': '启动时间',
-        'collector.mode.public': '公共集群模式',
-        'collector.mode.private': '私有云边模式',
-        'monitor.collector.status.online': '在线',
-        'monitor.collector.status.offline': '离线',
-        'common.refresh': '刷新',
-        'common.search': '搜索',
-        'common.edit': '操作',
-        'common.total': 'Total',
-        'common.current-page-count': 'Current page'
-      }
-    });
+    const t = createTranslatorMock({ locale: 'zh-CN' });
 
     const html = renderToStaticMarkup(
       <CollectorManageSurface
@@ -192,28 +165,28 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-status-tone="danger"');
     expect(html).not.toContain('data-cold-search-input-shell');
     expect(html).not.toContain('data-collector-summary-rail=');
-    expect(html).toContain('刷新');
-    expect(html).toContain('部署采集器');
-    expect(html).toContain('上线采集器');
-    expect(html).toContain('下线采集器');
-    expect(html).toContain('删除采集器');
-    expect(html).toContain('采集器 1 / 2 在线');
-    expect(html).toContain('任务 11 · 离线 1');
-    expect(html).toContain('最近上报 2026-04-10 18:00:00');
-    expect(html).toContain('第 2 / 3 页 · 9-10 / 18');
-    expect(html).toContain('每页条数');
-    expect(html).toContain('页码');
-    expect(html).toContain('搜索');
-    expect(html).toContain('采集集群');
-    expect(html).toContain('采集器名称');
-    expect(html).toContain('运行状态');
-    expect(html).toContain('运行模式');
-    expect(html).toContain('总任务数量');
-    expect(html).toContain('固定任务');
-    expect(html).toContain('调度任务');
-    expect(html).toContain('IP地址');
-    expect(html).toContain('版本');
-    expect(html).toContain('启动时间');
+    expect(html).toContain(t('common.refresh'));
+    expect(html).toContain(t('collector.deploy'));
+    expect(html).toContain(t('collector.online'));
+    expect(html).toContain(t('collector.offline'));
+    expect(html).toContain(t('collector.delete'));
+    expect(html).toContain(t('collector.health.cluster.copy', { online: 1, total: 2 }));
+    expect(html).toContain(t('collector.health.cluster.meta', { tasks: 11, offline: 1 }));
+    expect(html).toContain(t('collector.health.cluster.freshness', { time: '2026-04-10 18:00:00' }));
+    expect(html).toContain(t('collector.pagination.summary', { page: 2, totalPages: 3, from: 9, to: 10, total: 18 }));
+    expect(html).toContain(t('collector.pagination.page-size'));
+    expect(html).toContain(t('collector.pagination.page'));
+    expect(html).toContain(t('common.search'));
+    expect(html).toContain(t('menu.advanced.collector'));
+    expect(html).toContain(t('collector.name'));
+    expect(html).toContain(t('collector.status'));
+    expect(html).toContain(t('collector.mode'));
+    expect(html).toContain(t('collector.task'));
+    expect(html).toContain(t('collector.pinned'));
+    expect(html).toContain(t('collector.dispatched'));
+    expect(html).toContain(t('collector.ip'));
+    expect(html).toContain(t('collector.version'));
+    expect(html).toContain(t('collector.start-time'));
     expect(html).toContain('edge-a');
     expect(html).toContain('10.0.0.1');
     expect(html).toContain('1.0.0');
@@ -512,7 +485,7 @@ describe('collector manage surface', () => {
         }}
         search=""
         selectedCollectors={['edge-a']}
-        actionError="请先选择要删除的监控"
+        actionError={t('common.notify.no-select-delete')}
         actionTone="warning"
         deleteTarget={{
           collectors: ['edge-a'],
@@ -562,8 +535,8 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-row-delete-menu-owner="hertzbeat-ui-table-row-action-button"');
     expect(html).toContain('data-collector-row-delete-menu-panel-open="false"');
     expect(html).toContain('data-collector-delete-one="edge-a"');
-    expect(html).toContain('请先选择要删除的监控');
-    expect(html).toContain('请确认是否删除!');
+    expect(html).toContain(t('common.notify.no-select-delete'));
+    expect(html).toContain(t('common.confirm.delete'));
   });
 
   it('renders Angular collector delete and operate failure titles with backend detail metadata', () => {
@@ -581,7 +554,7 @@ describe('collector manage surface', () => {
           }
         }}
         search=""
-        actionError="删除失败!"
+        actionError={t('common.notify.delete-fail')}
         actionMeta="backend delete refused"
         actionTone="critical"
         actionFeedbackContract="angular-delete-fail"
@@ -603,7 +576,7 @@ describe('collector manage surface', () => {
     expect(deleteFailureHtml).toContain('data-collector-delete-feedback="angular-delete-fail"');
     expect(deleteFailureHtml).toContain('data-collector-delete-feedback-title="common.notify.delete-fail"');
     expect(deleteFailureHtml).toContain('data-collector-delete-feedback-detail="backend-message"');
-    expect(deleteFailureHtml).toContain('删除失败!');
+    expect(deleteFailureHtml).toContain(t('common.notify.delete-fail'));
     expect(deleteFailureHtml).toContain('backend delete refused');
 
     const operateFailureHtml = renderToStaticMarkup(
@@ -618,7 +591,7 @@ describe('collector manage surface', () => {
           }
         }}
         search=""
-        actionError="操作失败!"
+        actionError={t('common.notify.operate-fail')}
         actionMeta="backend operate refused"
         actionTone="critical"
         actionFeedbackContract="angular-operate-fail"
@@ -640,7 +613,7 @@ describe('collector manage surface', () => {
     expect(operateFailureHtml).toContain('data-collector-operate-feedback="angular-operate-fail"');
     expect(operateFailureHtml).toContain('data-collector-operate-feedback-title="common.notify.operate-fail"');
     expect(operateFailureHtml).toContain('data-collector-operate-feedback-detail="backend-message"');
-    expect(operateFailureHtml).toContain('操作失败!');
+    expect(operateFailureHtml).toContain(t('common.notify.operate-fail'));
     expect(operateFailureHtml).toContain('backend operate refused');
   });
 
@@ -673,7 +646,7 @@ describe('collector manage surface', () => {
         }}
         search=""
         selectedCollectors={['edge-a']}
-        actionError="未选中任何待下线项!"
+        actionError={t('collector.notify.no-select-offline')}
         actionTone="warning"
         actionFeedbackContract="angular-no-select-offline"
         deleteTarget={{
@@ -717,8 +690,8 @@ describe('collector manage surface', () => {
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('data-collector-delete-confirm-target="edge-a"');
     expect(html).toContain('data-collector-offline-one="edge-a"');
-    expect(html).toContain('未选中任何待下线项!');
-    expect(html).toContain('请确认是否下线此采集器!');
+    expect(html).toContain(t('collector.notify.no-select-offline'));
+    expect(html).toContain(t('collector.confirm.offline'));
   });
 
   it('keeps the Angular header select-all batch payload while the default row stays visually disabled', () => {
@@ -801,7 +774,7 @@ describe('collector manage surface', () => {
         deployHost="10.0.0.10"
         deployDockerShell="$ docker run -d -e IDENTITY=identity-123"
         deployPackageShell="identity: identity-123\nmanager-host: 10.0.0.10"
-        deployCopyMessage="复制成功!"
+        deployCopyMessage={t('common.notify.copy-success')}
         formatTime={() => '2026-04-10 18:00:00'}
         onSearchChange={() => {}}
         onSearch={() => {}}
@@ -857,8 +830,8 @@ describe('collector manage surface', () => {
     expect(html).toContain('target="_blank"');
     expect(html).toContain('identity-123');
     expect(html).toContain('10.0.0.10');
-    expect(html).toContain('通过 Docker 方式部署');
-    expect(html).toContain('通过安装包部署');
+    expect(html).toContain(t('collector.deploy.docker'));
+    expect(html).toContain(t('collector.deploy.package'));
   });
 
   it('keeps collector deploy required-name validation submit-triggered like Angular', () => {
@@ -926,7 +899,7 @@ describe('collector manage surface', () => {
     expect(dirtyHtml).toContain('data-collector-deploy-name-validation-state="dirty-invalid"');
     expect(dirtyHtml).toContain('data-collector-deploy-name-validation="validation.required"');
     expect(dirtyHtml).toContain('data-collector-deploy-name-validation-contract="angular-submit-marks-required"');
-    expect(dirtyHtml).toContain('请填充必填项!');
+    expect(dirtyHtml).toContain(t('validation.required').trim());
   });
 
   it('keeps collector deploy OK loading visible while identity generation is pending', () => {
@@ -963,7 +936,7 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-deploy-ok-loading-owner="angular-nz-ok-loading"');
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('disabled=""');
-    expect(html).toContain('加载中');
+    expect(html).toContain(t('common.loading'));
   });
 
   it('keeps collector deploy generate failures as Angular apply-fail notifications', () => {

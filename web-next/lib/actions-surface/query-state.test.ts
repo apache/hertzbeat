@@ -3,6 +3,7 @@ import { readActionsSuggestionContext } from './query-state';
 
 describe('actions query state', () => {
   it('normalizes multi-value URL search params into the first suggestion context value', () => {
+    const alertReturnLabel = String.fromCodePoint(0x544a, 0x8b66);
     expect(
       readActionsSuggestionContext({
         source: ['alert', 'ignored-source'],
@@ -26,7 +27,7 @@ describe('actions query state', () => {
         viewMode: ['evidence'],
         sourceKind: ['topology'],
         edgeId: ['edge-9'],
-        returnTo: ['/alert?status=firing&returnLabel=告警']
+        returnTo: [`/alert?status=firing&returnLabel=${alertReturnLabel}`]
       })
     ).toEqual({
       source: 'alert',
@@ -50,7 +51,7 @@ describe('actions query state', () => {
       viewMode: 'evidence',
       sourceKind: 'topology',
       edgeId: 'edge-9',
-      returnTo: '/alert?status=firing&returnLabel=告警'
+      returnTo: `/alert?status=firing&returnLabel=${alertReturnLabel}`
     });
   });
 });

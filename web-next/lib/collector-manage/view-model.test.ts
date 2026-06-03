@@ -31,14 +31,14 @@ describe('collector view model', () => {
         t
       )
     ).toEqual([
-      { label: '工作区', value: 'setting/collector' },
-      { label: '总量', value: '3' },
-      { label: '当前页', value: '1' },
+      { label: t('common.workspace'), value: 'setting/collector' },
+      { label: t('common.total'), value: '3' },
+      { label: t('common.current-page-count'), value: '1' },
       {
-        label: '采集集群健康',
-        value: '采集器 0 / 1 在线',
-        meta: '任务 7 · 离线 1',
-        freshness: '最近上报 2026-04-10T10:00:00Z',
+        label: t('collector.health.cluster.title'),
+        value: t('collector.health.cluster.copy', { online: 0, total: 1 }),
+        meta: t('collector.health.cluster.meta', { tasks: 7, offline: 1 }),
+        freshness: t('collector.health.cluster.freshness', { time: '2026-04-10T10:00:00Z' }),
         tone: 'danger'
       },
       { label: 'Pinned', value: '2' },
@@ -95,10 +95,10 @@ describe('collector view model', () => {
         version: '1.0.0',
         updatedAt: '2026-04-10 18:00:00',
         healthEvidence: {
-          title: '采集集群健康',
-          copy: '采集器 1 / 1 在线',
-          meta: '任务 7 · 离线 0',
-          freshness: '最近上报 2026-04-10 18:00:00',
+          title: t('collector.health.cluster.title'),
+          copy: t('collector.health.cluster.copy', { online: 1, total: 1 }),
+          meta: t('collector.health.cluster.meta', { tasks: 7, offline: 0 }),
+          freshness: t('collector.health.cluster.freshness', { time: '2026-04-10 18:00:00' }),
           tone: 'success'
         },
         canMutate: true,
@@ -114,13 +114,13 @@ describe('collector view model', () => {
         pinCount: '0',
         dispatchCount: '1',
         ip: '10.0.0.9',
-        version: '无',
+        version: t('common.none'),
         updatedAt: '2026-04-10 18:00:00',
         healthEvidence: {
-          title: '采集集群健康',
-          copy: '采集器 0 / 1 在线',
-          meta: '任务 1 · 离线 1',
-          freshness: '最近上报 -',
+          title: t('collector.health.cluster.title'),
+          copy: t('collector.health.cluster.copy', { online: 0, total: 1 }),
+          meta: t('collector.health.cluster.meta', { tasks: 1, offline: 1 }),
+          freshness: t('collector.health.cluster.freshness', { time: '-' }),
           tone: 'danger'
         },
         canMutate: false,
@@ -145,8 +145,8 @@ describe('collector view model', () => {
     ).toMatchObject({
       key: 'edge-empty',
       name: 'edge-empty',
-      ip: '无',
-      version: '无',
+      ip: t('common.none'),
+      version: t('common.none'),
       statusLabel: 'Online',
       statusTone: 'success'
     });

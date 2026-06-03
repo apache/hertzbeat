@@ -139,7 +139,7 @@ vi.mock('@/components/pages/setting-define-surface', () => ({
         data-setting-define-menu-select-query-contract="angular-replace-with-app-only"
         data-setting-define-menu-select-query-owner="setting-define-page-router"
       >
-        <span>定义</span>
+        <span>Define</span>
         <span>{selectedApp}</span>
         <span>{yamlLabel}</span>
         <span>{editorValue}</span>
@@ -463,6 +463,7 @@ describe('setting define page', () => {
   });
 
   it('keeps mutation success when the Angular startup refresh side effect fails', async () => {
+    const expectedT = createTranslatorMock({ locale: 'zh-CN' });
     window.history.pushState({}, '', '/setting/define?app=mysql');
     mockState.renderData = {
       menuGroups: [
@@ -502,7 +503,7 @@ describe('setting define page', () => {
       false
     );
     expect(reloadTemplateDefinitionStartupContext).toHaveBeenCalledWith(apiMessageGet, 'zh-CN');
-    expect(mockState.lastSurfaceProps?.message).toContain('应用成功');
+    expect(mockState.lastSurfaceProps?.message).toContain(expectedT('common.notify.apply-success'));
     expect(mockState.lastSurfaceProps?.message).not.toContain('startup refresh down');
 
     await act(async () => {
@@ -698,7 +699,7 @@ describe('setting define page', () => {
 
   it('preserves the old Angular edit flag when saving a direct new-template YML draft', async () => {
     const draftYaml = 'app: custom\ncategory: custom\n# still drafting';
-    const draftOriginalYaml = '# 请在此通过编写YML内容来定义新的监控类型';
+    const draftOriginalYaml = '# Define a new monitoring type by editing YML content here';
     mockState.renderData = {
       menuGroups: [
         {
@@ -747,6 +748,7 @@ describe('setting define page', () => {
   });
 
   it('keeps old Angular apply-fail title with backend detail when YML save fails', async () => {
+    const expectedT = createTranslatorMock({ locale: 'zh-CN' });
     window.history.pushState({}, '', '/setting/define?app=mysql');
     mockState.renderData = {
       menuGroups: [
@@ -785,7 +787,7 @@ describe('setting define page', () => {
       'app: mysql\ncategory: database\n# invalid',
       false
     );
-    expect(mockState.lastSurfaceProps?.message).toContain('应用失败');
+    expect(mockState.lastSurfaceProps?.message).toContain(expectedT('common.notify.apply-fail'));
     expect(mockState.lastSurfaceProps?.message).not.toContain('schema invalid');
     expect(mockState.lastSurfaceProps?.messageMeta).toBe('schema invalid');
     expect(mockState.lastSurfaceProps?.messageContract).toBe('angular-apply-fail-notification');
@@ -799,6 +801,7 @@ describe('setting define page', () => {
   });
 
   it('keeps old Angular delete-fail title with backend detail when YML delete fails', async () => {
+    const expectedT = createTranslatorMock({ locale: 'zh-CN' });
     window.history.pushState({}, '', '/setting/define?app=mysql');
     mockState.renderData = {
       menuGroups: [
@@ -832,7 +835,7 @@ describe('setting define page', () => {
     });
 
     expect(deleteTemplateDefine).toHaveBeenCalledWith(apiMessageDelete, 'mysql');
-    expect(mockState.lastSurfaceProps?.message).toContain('删除失败');
+    expect(mockState.lastSurfaceProps?.message).toContain(expectedT('common.notify.delete-fail'));
     expect(mockState.lastSurfaceProps?.message).not.toContain('template is still in use');
     expect(mockState.lastSurfaceProps?.messageMeta).toBe('template is still in use');
     expect(mockState.lastSurfaceProps?.messageContract).toBe('angular-delete-fail-notification');
@@ -849,6 +852,7 @@ describe('setting define page', () => {
   });
 
   it('keeps old Angular apply-fail title with backend detail when template visibility update fails', async () => {
+    const expectedT = createTranslatorMock({ locale: 'zh-CN' });
     window.history.pushState({}, '', '/setting/define?app=mysql');
     mockState.renderData = {
       menuGroups: [
@@ -882,7 +886,7 @@ describe('setting define page', () => {
     });
 
     expect(updateTemplateVisibility).toHaveBeenCalledWith(apiMessagePut, 'mysql', true);
-    expect(mockState.lastSurfaceProps?.message).toContain('应用失败');
+    expect(mockState.lastSurfaceProps?.message).toContain(expectedT('common.notify.apply-fail'));
     expect(mockState.lastSurfaceProps?.message).not.toContain('visibility locked by policy');
     expect(mockState.lastSurfaceProps?.messageMeta).toBe('visibility locked by policy');
     expect(mockState.lastSurfaceProps?.messageContract).toBe('angular-apply-fail-notification');

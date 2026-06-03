@@ -5,10 +5,22 @@ import { createTranslatorMock } from '../../test/i18n-test-helper';
 const t = createTranslatorMock({ locale: 'zh-CN' });
 const enT = createTranslatorMock({ locale: 'en-US' });
 
+function seconds(value: number) {
+  return t('common.duration.seconds', { value });
+}
+
+function groupEvidenceTitle(signal: 'logs' | 'traces' | 'metrics') {
+  return t('alert.rule.evidence.group.title', { signal: t(`alert.rule.signal.${signal}`) });
+}
+
+function groupEvidenceDraftName(signal: 'logs' | 'traces' | 'metrics', target: string) {
+  return t('alert.rule.evidence.group.draft-name', { signal: t(`alert.rule.signal.${signal}`), target });
+}
+
 describe('alert group view model', () => {
   it('builds facts from group list', () => {
     expect(buildAlertGroupFacts({ totalElements: 8, content: [1, 2, 3] } as any, t)).toEqual([
-      { label: '工作区', value: 'alert/group' },
+      { label: t('alert.setting.fact.workspace'), value: 'alert/group' },
       { label: t('common.total'), value: '8' },
       { label: t('common.current-page-count'), value: '3' }
     ]);
@@ -22,11 +34,11 @@ describe('alert group view model', () => {
           { enable: false, name: 'g-2' }
         ] as any,
         t
-    )
+      )
     ).toEqual([
-      { label: '当前页启用', value: '1', tone: 'success' },
-      { label: '当前页停用', value: '1', tone: 'warning' },
-      { label: '规则样例', value: 'g-1' }
+      { label: t('alert.rule.metric.current-page-enabled'), value: '1', tone: 'success' },
+      { label: t('alert.rule.metric.current-page-disabled'), value: '1', tone: 'warning' },
+      { label: t('alert.rule.metric.sample-rule'), value: 'g-1' }
     ]);
   });
 
@@ -43,8 +55,8 @@ describe('alert group view model', () => {
       {
         key: '7',
         title: 'cpu',
-        copy: '已启用 · 分组标签 service',
-        meta: `等待时间 30 秒 · ${t('common.updated')} 2026-04-10 18:00:00`
+        copy: `${t('common.enabled')} · ${t('alert.group.labels')} service`,
+        meta: `${t('alert.group.wait')} ${seconds(30)} · ${t('common.updated')} 2026-04-10 18:00:00`
       }
     ]);
   });
@@ -54,11 +66,15 @@ describe('alert group view model', () => {
       buildAlertGroupSelectedRows(
         { id: 7, name: 'cpu', enable: true, groupLabels: ['service'], groupWait: 30, groupInterval: 60, repeatInterval: 300 } as any,
         t
-    )
+      )
     ).toEqual([
-      { title: 'cpu', copy: '已启用', meta: '规则 ID 7' },
-      { title: t('alert.group.selected.labels'), copy: 'service', meta: '1 分组标签' },
-      { title: '时间窗口', copy: '等待时间 30 秒 · 间隔时间 60 秒', meta: '重复间隔 300 秒' }
+      { title: 'cpu', copy: t('common.enabled'), meta: t('alert.rule.selected.id-meta', { id: 7 }) },
+      { title: t('alert.group.selected.labels'), copy: 'service', meta: `1 ${t('alert.group.labels')}` },
+      {
+        title: t('alert.group.selected.timers'),
+        copy: `${t('alert.group.wait')} ${seconds(30)} · ${t('alert.group.interval')} ${seconds(60)}`,
+        meta: `${t('alert.group.repeat')} ${seconds(300)}`
+      }
     ]);
   });
 
@@ -67,7 +83,7 @@ describe('alert group view model', () => {
       {
         title: t('alert.group.selected.empty.title'),
         copy: t('alert.group.selected.empty.copy'),
-        meta: '无'
+        meta: t('common.none')
       }
     ]);
   });
@@ -84,7 +100,7 @@ describe('alert group view model', () => {
     ).toMatchObject({
       key: '8',
       title: 'empty grouping',
-      copy: '已停用 · 分组标签 无'
+      copy: `${t('common.disabled')} · ${t('alert.group.labels')} ${t('common.none')}`
     });
 
     expect(
@@ -94,15 +110,15 @@ describe('alert group view model', () => {
       )[1]
     ).toMatchObject({
       title: t('alert.group.selected.labels'),
-      copy: '无',
-      meta: '0 分组标签'
+      copy: t('common.none'),
+      meta: `0 ${t('alert.group.labels')}`
     });
   });
 
   it('builds notes rows', () => {
     expect(buildAlertGroupNoteRows(t)).toEqual([
-      { title: t('common.sorting'), copy: 'ID 倒序', meta: t('alert.group.notes.query') },
-      { title: t('common.search'), copy: '支持搜索', meta: t('common.behavior-preserved') }
+      { title: t('common.sorting'), copy: t('alert.rule.notes.sort-desc-copy'), meta: t('alert.group.notes.query') },
+      { title: t('common.search'), copy: t('alert.rule.notes.search-copy'), meta: t('common.behavior-preserved') }
     ]);
   });
 
@@ -126,15 +142,15 @@ describe('alert group view model', () => {
 
     expect(context).toMatchObject({
       signal: 'metrics',
-      title: '来自指标的分组上下文',
+      title: groupEvidenceTitle('metrics'),
       returnHref: '/metrics/manage?entityId=service%3Acommerce%2Fcheckout',
       groupLabelsText: 'hertzbeat.entity.id, service.name, service.namespace, deployment.environment',
       draftPatch: {
-        name: '指标 checkout 分组',
+        name: groupEvidenceDraftName('metrics', 'checkout'),
         groupLabelsText: 'hertzbeat.entity.id, service.name, service.namespace, deployment.environment'
       }
     });
-    expect(context?.rows.map(row => row.label)).toContain('链路上下文');
+    expect(context?.rows.map(row => row.label)).toContain(t('signal.context.trace.label'));
   });
 
   it('localizes group evidence context and page facts outside zh-CN', () => {
@@ -157,8 +173,8 @@ describe('alert group view model', () => {
         name: 'metrics checkout group'
       }
     });
-    expect(`${context?.title} ${context?.copy} ${context?.draftPatch.name}`).not.toMatch(/[来自指标日志链路三信号排障上下文]/);
-    expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[一-龥]/);
+    expect(`${context?.title} ${context?.copy} ${context?.draftPatch.name}`).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[\u4e00-\u9fff]/);
     expect(context?.rows.map(row => row.label)).toContain('Current entity');
     expect(buildAlertGroupFacts({ totalElements: 1, content: [] } as any, enT)[0]).toEqual({
       label: 'Workspace',
@@ -182,25 +198,25 @@ describe('alert group view model', () => {
       repeatInterval: '30'
     });
 
-    expect(validateAlertGroupForm(buildAlertGroupFormDraft(null), t)).toBe('规则名称为必填项');
-    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu' }, t)).toBe('分组标签为必填项');
-    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupWait: '' }, t)).toBe('等待时间为必填项');
-    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupInterval: '' }, t)).toBe('间隔时间为必填项');
-    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', repeatInterval: '' }, t)).toBe('重复间隔为必填项');
-    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupWait: '-1' }, t)).toBe('等待时间必须大于等于 0');
-    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupInterval: '-300' }, t)).toBe('间隔时间必须大于等于 0');
-    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', repeatInterval: 'abc' }, t)).toBe('重复间隔必须大于等于 0');
+    expect(validateAlertGroupForm(buildAlertGroupFormDraft(null), t)).toBe(t('alert.group.validation.name'));
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu' }, t)).toBe(t('alert.group.validation.labels'));
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupWait: '' }, t)).toBe(t('alert.group.validation.group-wait'));
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupInterval: '' }, t)).toBe(t('alert.group.validation.group-interval'));
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', repeatInterval: '' }, t)).toBe(t('alert.group.validation.repeat-interval'));
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupWait: '-1' }, t)).toBe(t('alert.group.validation.group-wait-non-negative'));
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', groupInterval: '-300' }, t)).toBe(t('alert.group.validation.group-interval-non-negative'));
+    expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service', repeatInterval: 'abc' }, t)).toBe(t('alert.group.validation.repeat-interval-non-negative'));
     expect(validateAlertGroupForm({ ...buildAlertGroupFormDraft(null), name: 'cpu', groupLabelsText: 'service' }, t)).toBeNull();
   });
 
   it('applies new group fallback context without changing edit behavior', () => {
     expect(
       buildAlertGroupFormDraft(null, {
-        name: '指标 checkout 分组',
+        name: groupEvidenceDraftName('metrics', 'checkout'),
         groupLabelsText: 'hertzbeat.entity.id, service.name'
       })
     ).toMatchObject({
-      name: '指标 checkout 分组',
+      name: groupEvidenceDraftName('metrics', 'checkout'),
       enable: true,
       groupLabelsText: 'hertzbeat.entity.id, service.name',
       groupWait: '30',

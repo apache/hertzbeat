@@ -3,6 +3,7 @@ import { readTopologyRouteContext } from './query-state';
 
 describe('topology query state', () => {
   it('normalizes multi-value URL search params into the first topology route context value', () => {
+    const alertReturnLabel = String.fromCodePoint(0x544a, 0x8b66);
     expect(
       readTopologyRouteContext({
         entityId: ['service:commerce/checkout', '3.2'],
@@ -27,7 +28,7 @@ describe('topology query state', () => {
         scaleProof: ['greptime-real', 'ignored-scale-proof'],
         search: ['Service 420', 'ignored-search'],
         edgeId: ['svc-checkout--res-orders-db', 'ignored-edge'],
-        returnTo: ['/alert?status=firing&returnLabel=告警']
+        returnTo: [`/alert?status=firing&returnLabel=${encodeURIComponent(alertReturnLabel)}`]
       })
     ).toEqual({
       entityId: 'service:commerce/checkout',

@@ -16,39 +16,39 @@ describe('exception view model', () => {
 
   it('builds 403 exception copy', () => {
     const copy = buildExceptionCopy('403', t);
-    expect(copy.title).toBe('403 无权限访问');
+    expect(copy.title).toBe(t('exception.403.title'));
     expect(copy.tone).toBe('danger');
-    expect(copy.facts[0]).toEqual({ label: '工作区', value: 'exception/403' });
-    expect(copy.rows.map(row => row.meta)).toEqual(['访问控制', '人工处置']);
+    expect(copy.facts[0]).toEqual({ label: t('common.workspace'), value: 'exception/403' });
+    expect(copy.rows.map(row => row.meta)).toEqual([t('exception.403.boundary.meta'), t('exception.next-step.meta')]);
   });
 
   it('falls back to 404 when type is unknown', () => {
     const copy = buildExceptionCopy('999', t);
-    expect(copy.title).toBe('404 路由不存在');
-    expect(copy.facts[1]).toEqual({ label: '状态', value: '路由缺失' });
-    expect(copy.rows.map(row => row.meta)).toEqual(['路由', '人工处置']);
+    expect(copy.title).toBe(t('exception.404.title'));
+    expect(copy.facts[1]).toEqual({ label: t('common.status'), value: t('exception.404.fact.status') });
+    expect(copy.rows.map(row => row.meta)).toEqual([t('exception.404.boundary.meta'), t('exception.next-step.meta')]);
   });
 
   it('builds 500 exception copy', () => {
     const copy = buildExceptionCopy('500', t);
-    expect(copy.title).toBe('500 运行时异常');
+    expect(copy.title).toBe(t('exception.500.title'));
     expect(copy.tone).toBe('danger');
-    expect(copy.facts[1]).toEqual({ label: '状态', value: '运行时故障' });
-    expect(copy.rows.map(row => row.meta)).toEqual(['运行时', '人工处置']);
+    expect(copy.facts[1]).toEqual({ label: t('common.status'), value: t('exception.500.fact.status') });
+    expect(copy.rows.map(row => row.meta)).toEqual([t('exception.500.boundary.meta'), t('exception.next-step.meta')]);
   });
 
   it('falls back to the default subtitle when a type subtitle key is missing', () => {
     const missingSubtitleT: typeof t = (key, params) => (key === 'exception.500.subtitle' ? key : t(key, params));
     const copy = buildExceptionCopy('500', missingSubtitleT);
 
-    expect(copy.subtitle).toBe('按服务、资源和时间聚合服务端异常事件，便于进入日志和链路排查。');
+    expect(copy.subtitle).toBe(t('exception.subtitle.default'));
   });
 
   it('builds recovery rows', () => {
     expect(buildRecoveryRows(t)).toEqual([
-      { title: '概览', copy: '返回主工作台并重新选择入口。', href: '/overview', label: '打开总览' },
-      { title: '日志', copy: '确认后端响应和错误日志。', href: '/log/manage', label: '日志工作台' },
-      { title: '链路', copy: '排查链路异常和请求级失败。', href: '/trace/manage', label: '链路工作台' }
+      { title: t('exception.rail.overview.title'), copy: t('exception.rail.overview.copy'), href: '/overview', label: t('menu.dashboard.back') },
+      { title: t('exception.rail.logs.title'), copy: t('exception.rail.logs.copy'), href: '/log/manage', label: t('menu.log.manage') },
+      { title: t('exception.rail.traces.title'), copy: t('exception.rail.traces.copy'), href: '/trace/manage', label: t('menu.trace.manage') }
     ]);
   });
 
@@ -118,14 +118,14 @@ describe('exception view model', () => {
     ]);
   });
 
-  it('builds Chinese quick filters for the HertzBeat exception sidebar', () => {
+  it('builds localized quick filters for the HertzBeat exception sidebar', () => {
     expect(buildExceptionFilters(t)).toEqual([
-      { title: '部署环境', values: ['demo'] },
-      { title: '服务', values: ['cart', 'product-catalog', 'quote-python', 'accounting', 'ad', 'browser-frontend', 'checkout', 'currency', 'email', 'fraud-detection'] },
-      { title: '主机', values: [] },
-      { title: 'K8s 集群', values: [] },
+      { title: t('exception.filters.deployment-environment'), values: ['demo'] },
+      { title: t('exception.filters.service'), values: ['cart', 'product-catalog', 'quote-python', 'accounting', 'ad', 'browser-frontend', 'checkout', 'currency', 'email', 'fraud-detection'] },
+      { title: t('exception.filters.host'), values: [] },
+      { title: t('exception.filters.k8s-cluster'), values: [] },
       { title: 'K8s Deployment', values: [] },
-      { title: 'K8s 命名空间', values: [] },
+      { title: t('exception.filters.k8s-namespace'), values: [] },
       { title: 'K8s Pod', values: [] }
     ]);
   });

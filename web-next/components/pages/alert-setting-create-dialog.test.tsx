@@ -45,7 +45,7 @@ describe('AlertSettingCreateDialog', () => {
   const t = createTranslatorMock({ locale: 'zh-CN' });
   const enT = createTranslatorMock({ locale: 'en-US' });
   const draft: AlertSettingCreateDraft = {
-    name: 'CPU 高负载',
+    name: 'CPU high load',
     kind: 'periodic',
     dataType: 'metric',
     datasource: 'promql',
@@ -79,9 +79,9 @@ describe('AlertSettingCreateDialog', () => {
     expect(html).toContain('data-alert-setting-create-option="realtime"');
     expect(html).toContain('data-alert-setting-create-option="periodic"');
     expect(html).toContain('data-alert-setting-create-periodic-disabled="false"');
-    expect(html).toContain('新增阈值');
-    expect(html).toContain('实时阈值');
-    expect(html).toContain('周期阈值');
+    expect(html).toContain(t('alert.setting.create.title.type'));
+    expect(html).toContain(t('alert.setting.create.realtime.title'));
+    expect(html).toContain(t('alert.setting.create.periodic.title'));
   });
 
   it('renders a cold single-column threshold authoring form with shared controls', () => {
@@ -126,9 +126,9 @@ describe('AlertSettingCreateDialog', () => {
     expect(source).toContain("t('alert.setting.validation.name')");
     expect(source).toContain("t('alert.setting.validation.expr')");
     expect(source).toContain("t('alert.setting.validation.template')");
-    expect(source).not.toContain("setValidationMessage('规则名称为必填项')");
-    expect(source).not.toContain("setValidationMessage('阈值表达式为必填项')");
-    expect(source).not.toContain("setValidationMessage('告警内容为必填项')");
+    expect(source).not.toMatch(/setValidationMessage\('\u89c4\u5219\u540d\u79f0\u4e3a\u5fc5\u586b\u9879'\)/);
+    expect(source).not.toMatch(/setValidationMessage\('\u9608\u503c\u8868\u8fbe\u5f0f\u4e3a\u5fc5\u586b\u9879'\)/);
+    expect(source).not.toMatch(/setValidationMessage\('\u544a\u8b66\u5185\u5bb9\u4e3a\u5fc5\u586b\u9879'\)/);
     expect(source).not.toContain('<textarea');
     expect(source).not.toContain('router.push');
   });
@@ -184,7 +184,7 @@ describe('AlertSettingCreateDialog', () => {
 
     expect(html).toContain('data-alert-setting-editor-return="evidence-context"');
     expect(html).toContain('href="/trace/manage?traceId=trace-123"');
-    expect(html).toContain('返回排障上下文');
+    expect(html).toContain(t('alert.rule.evidence.return'));
   });
 
   it('localizes visible threshold authoring copy outside zh-CN', () => {
@@ -232,7 +232,7 @@ describe('AlertSettingCreateDialog', () => {
     expect(authoringHtml).toContain('Threshold expression');
     expect(authoringHtml).toContain('Alert content');
     expect(authoringHtml).toContain('Return to troubleshooting context');
-    expect(`${typeHtml} ${authoringHtml}`).not.toMatch(/[一-龥]/);
+    expect(`${typeHtml} ${authoringHtml}`).not.toMatch(/[\u4e00-\u9fff]/);
     expect(`${typeHtml} ${authoringHtml}`).not.toContain('alert.setting.create');
   });
 
@@ -242,7 +242,7 @@ describe('AlertSettingCreateDialog', () => {
       kind: 'periodic',
       dataType: 'trace'
     })).toEqual({
-      name: 'CPU 高负载',
+      name: 'CPU high load',
       type: 'periodic_trace',
       datasource: 'promql',
       expr: 'cpu_usage > 80',

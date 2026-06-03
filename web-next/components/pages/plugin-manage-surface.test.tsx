@@ -8,13 +8,7 @@ import { createTranslatorMock } from '../../test/i18n-test-helper';
 describe('plugin manage surface', () => {
   it('renders the OTLP cold-matte plugin console, dense table, translated types, and upload dialog shell', async () => {
     const { PluginManageSurface } = await import('./plugin-manage-surface');
-    const t = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'common.none': '无类型',
-        'common.file.select': '选择文件'
-      }
-    });
+    const t = createTranslatorMock({ locale: 'zh-CN' });
 
     const html = renderToStaticMarkup(
       <PluginManageSurface
@@ -115,7 +109,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-table-fill-stage="viewport-fill-on-empty-or-short"');
     expect(html).toContain('data-plugin-manage-table="cold-plugin-table"');
     expect(html).toContain('data-plugin-table-columns="angular-five-column-edit-actions"');
-    expect(html).not.toContain('>参数</th>');
+    expect(html).not.toContain(`>${t('setting.plugins.table.params')}</th>`);
     expect(html).toContain('data-plugin-pagination="cold-dense-pagination"');
     expect(html).toContain('data-plugin-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(html).toContain('data-plugin-pagination-contract="angular-search-pagination"');
@@ -165,26 +159,26 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-row-action-label="smtp"');
     expect(html).not.toContain('data-plugin-summary-rail=');
     expect(html).not.toContain('data-cold-search-input-shell');
-    expect(html).toContain('插件管理');
-    expect(html).toContain('上传插件');
-    expect(html).toContain('搜索插件');
-    expect(html).toContain('插件名称');
-    expect(html).toContain('插件类型');
-    expect(html).toContain('启用状态');
-    expect(html).toContain('操作');
+    expect(html).toContain(t('menu.advanced.plugins'));
+    expect(html).toContain(t('plugin.upload'));
+    expect(html).toContain(t('plugin.search'));
+    expect(html).toContain(t('plugin.name'));
+    expect(html).toContain(t('plugin.type'));
+    expect(html).toContain(t('plugin.status'));
+    expect(html).toContain(t('common.edit'));
     expect(html).toContain('smtp');
     expect(html).toContain('slack');
-    expect(html).toContain('告警后');
-    expect(html).toContain('采集后');
-    expect(html).toContain('无类型');
-    expect(html).toContain('已启用');
-    expect(html).toContain('已停用');
-    expect(html).toContain('已选择');
-    expect(html).toContain('第 1 / 1 页 · 1-2 / 2');
+    expect(html).toContain(t('plugin.type.POST_ALERT'));
+    expect(html).toContain(t('plugin.type.POST_COLLECT'));
+    expect(html).toContain(t('common.none'));
+    expect(html).toContain(t('common.enabled'));
+    expect(html).toContain(t('common.disabled'));
+    expect(html).toContain(t('setting.plugins.selected-count', { count: 1 }));
+    expect(html).toContain(t('setting.plugins.pagination.summary', { page: 1, totalPages: 1, from: 1, to: 2, total: 2 }));
     expect(html).not.toContain('POST_ALERT');
     expect(html).not.toContain('POST_COLLECT');
-    expect(html).toContain('编辑插件参数 smtp');
-    expect(html).toContain('删除插件 smtp');
+    expect(html).toContain(t('setting.plugins.action.params-aria', { name: 'smtp' }));
+    expect(html).toContain(t('setting.plugins.action.delete-aria', { name: 'smtp' }));
     expect(html).toContain('data-overlay-dialog="true"');
     expect(html).toContain('data-overlay-dialog-mask-closable="false"');
     expect(html).toContain('data-plugin-upload-mask-closable="false"');
@@ -199,10 +193,10 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-upload-status-control-owner="hertzbeat-ui-switch"');
     expect(html).toContain('data-hz-ui="switch"');
     expect(html).toContain('role="switch"');
-    expect(html).toContain('Jar包');
-    expect(html).toContain('选择文件');
-    expect(html).toContain('取消');
-    expect(html).toContain('保存');
+    expect(html).toContain(t('plugin.jar.file'));
+    expect(html).toContain(t('common.file.select'));
+    expect(html).toContain(t('common.button.cancel'));
+    expect(html).toContain(t('common.button.save'));
     expect(html).not.toContain('data-plugin-manage-route="angular-plugin-table"');
     expect(html).not.toContain('data-plugin-manage-table="angular-nz-table"');
   });
@@ -248,7 +242,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('colSpan="5"');
     expect(html).toContain('data-plugin-manage-empty-state="cold-table-empty"');
     expect(html).toContain('data-plugin-manage-empty-icon="cold-empty-box"');
-    expect(html).toContain('暂无数据');
+    expect(html).toContain(t('common.no-data'));
   });
 
   it('keeps the Angular plugin management shell mounted without showing backend load errors', async () => {
@@ -292,7 +286,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-manage-toolbar="cold-table-toolbar"');
     expect(html).toContain('data-plugin-manage-table-shell="cold-dense-table"');
     expect(html).toContain('data-plugin-manage-empty-state="cold-table-empty"');
-    expect(html).toContain('插件管理');
+    expect(html).toContain(t('menu.advanced.plugins'));
     expect(html).not.toContain('backend refused plugin load');
     expect(html).not.toContain('data-observability-status');
   });
@@ -683,7 +677,7 @@ describe('plugin manage surface', () => {
         search=""
         selectedIds={[]}
         draftPlugin={null}
-        actionError="请先选择要删除的监控"
+        actionError={t('common.notify.no-select-delete')}
         actionTone="warning"
         actionKind="delete"
         deleteTarget={{
@@ -727,8 +721,8 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-delete-confirm-owner="hertzbeat-ui-confirm-dialog"');
     expect(html).toContain('data-plugin-delete-confirm-submit="angular-modal-confirm"');
     expect(html).toContain('data-plugin-delete-confirm-target="webhook"');
-    expect(html).toContain('请先选择要删除的监控');
-    expect(html).toContain('请确认是否删除!');
+    expect(html).toContain(t('common.notify.no-select-delete'));
+    expect(html).toContain(t('common.confirm.delete'));
   });
 
   it('renders Angular plugin upload required validation, jar file input, and save feedback contracts', async () => {
@@ -833,7 +827,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-upload-validation="name-required"');
     expect(html).toContain('data-plugin-upload-validation="jar-required"');
     expect(html).toContain('Add Success!');
-    expect(html).toContain('请填充必填项!');
+    expect(html).toContain(t('validation.required'));
   });
 
   it('renders Angular plugin upload failure title with backend detail', async () => {
@@ -877,7 +871,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-upload-feedback="angular-new-fail"');
     expect(html).toContain('data-plugin-upload-feedback-title="common.notify.new-fail"');
     expect(html).toContain('data-plugin-upload-feedback-detail="backend-message"');
-    expect(html).toContain('新增失败!');
+    expect(html).toContain(t('common.notify.new-fail'));
     expect(html).toContain('backend rejected duplicate plugin');
   });
 
@@ -899,7 +893,7 @@ describe('plugin manage surface', () => {
         search=""
         selectedIds={[]}
         draftPlugin={null}
-        actionError="删除失败!"
+        actionError={t('common.notify.delete-fail')}
         actionMeta="backend refused plugin delete"
         actionKind="delete"
         deleteTarget={null}
@@ -925,7 +919,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-delete-failure-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('data-plugin-delete-feedback-title="common.notify.delete-fail"');
     expect(html).toContain('data-plugin-delete-feedback-detail="backend-message"');
-    expect(html).toContain('删除失败!');
+    expect(html).toContain(t('common.notify.delete-fail'));
     expect(html).toContain('backend refused plugin delete');
   });
 
@@ -947,7 +941,7 @@ describe('plugin manage surface', () => {
         search=""
         selectedIds={[]}
         draftPlugin={null}
-        actionError="修改失败!"
+        actionError={t('common.notify.edit-fail')}
         actionMeta="backend refused plugin toggle"
         actionKind="enable"
         deleteTarget={null}
@@ -973,7 +967,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-enable-failure-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('data-plugin-enable-feedback-title="common.notify.edit-fail"');
     expect(html).toContain('data-plugin-enable-feedback-detail="backend-message"');
-    expect(html).toContain('修改失败!');
+    expect(html).toContain(t('common.notify.edit-fail'));
     expect(html).toContain('backend refused plugin toggle');
   });
 
@@ -1020,7 +1014,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-param-failure-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('data-plugin-param-feedback-title="common.notify.edit-fail"');
     expect(html).toContain('data-plugin-param-feedback-detail="backend-message"');
-    expect(html).toContain('修改失败!');
+    expect(html).toContain(t('common.notify.edit-fail'));
     expect(html).toContain('backend rejected plugin params');
   });
 
@@ -1053,15 +1047,15 @@ describe('plugin manage surface', () => {
         paramDraft={{
           plugin: { id: 31, name: 'webhook', enableStatus: true } as any,
           paramDefines: [
-            { field: 'endpoint', type: 'text', name: '端点', required: true },
-            { field: 'authType', type: 'radio', name: '认证类型', options: [{ label: 'Basic', value: 'basic' }, { label: 'Bearer', value: 'bearer' }] },
-            { field: 'script', type: 'textarea', name: '脚本' },
+            { field: 'endpoint', type: 'text', name: 'Endpoint', required: true },
+            { field: 'authType', type: 'radio', name: 'Authentication type', options: [{ label: 'Basic', value: 'basic' }, { label: 'Bearer', value: 'bearer' }] },
+            { field: 'script', type: 'textarea', name: 'Script' },
             { field: 'payload', type: 'json', name: 'JSON' },
-            { field: 'headers', type: 'key-value', name: '请求头' },
-            { field: 'labels', type: 'labels', name: '标签' },
-            { field: 'selector', type: 'label-selector', name: '标签选择器' },
-            { field: 'metrics', type: 'metrics-field', name: '指标字段' },
-            { field: 'recipients', type: 'array', name: '收件人' }
+            { field: 'headers', type: 'key-value', name: 'Request headers' },
+            { field: 'labels', type: 'labels', name: 'Labels' },
+            { field: 'selector', type: 'label-selector', name: 'Label selector' },
+            { field: 'metrics', type: 'metrics-field', name: 'Metric fields' },
+            { field: 'recipients', type: 'array', name: 'Recipients' }
           ],
           params: {
             endpoint: { pluginMetadataId: 31, type: 1, field: 'endpoint', paramValue: 'https://hooks.example' },
@@ -1241,13 +1235,7 @@ describe('plugin manage surface', () => {
 
   it('keeps the Angular plugin params modal open with an empty field set', async () => {
     const { PluginManageSurface } = await import('./plugin-manage-surface');
-    const t = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'common.no-data': '暂无数据',
-        'plugin.edit': '编辑插件'
-      }
-    });
+    const t = createTranslatorMock({ locale: 'zh-CN' });
 
     const html = renderToStaticMarkup(
       <PluginManageSurface
@@ -1289,7 +1277,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-param-form="angular-dynamic-form-field"');
     expect(html).toContain('data-plugin-param-empty="angular-empty-params-modal"');
     expect(html).toContain('data-plugin-param-empty-owner="hertzbeat-ui-monitor-editor-field-grid"');
-    expect(html).toContain('暂无数据');
+    expect(html).toContain(t('common.no-data'));
     expect(html).not.toContain('data-plugin-param-field=');
   });
 });

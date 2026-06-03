@@ -118,29 +118,29 @@ describe('status setting surface', () => {
     expect(html).toContain('data-status-incident-delete-menu-contract="angular-ellipsis-dropdown-delete"');
     expect(html).toContain('data-status-row-delete-menu-owner="hertzbeat-ui-table-row-action-button"');
     expect(html).not.toContain('data-status-summary-rail=');
-    expect(html).toContain('状态页面');
-    expect(html).toContain('组织名称');
-    expect(html).toContain('组织介绍');
-    expect(html).toContain('网站链接');
-    expect(html).toContain('标志图片');
-    expect(html).toContain('反馈地址');
-    expect(html).toContain('主题颜色');
-    expect(html).toContain('服务组件');
-    expect(html).toContain('维护事件');
+    expect(html).toContain(t('setting.status.title'));
+    expect(html).toContain(t('setting.status.org.name'));
+    expect(html).toContain(t('setting.status.org.description'));
+    expect(html).toContain(t('setting.status.org.home'));
+    expect(html).toContain(t('setting.status.org.logo'));
+    expect(html).toContain(t('setting.status.org.feedback'));
+    expect(html).toContain(t('setting.status.org.color'));
+    expect(html).toContain(t('setting.status.components.tab'));
+    expect(html).toContain(t('setting.status.incidents.tab'));
     expect(html).toContain('HB Status');
     expect(html).toContain('/status');
-    expect(html).toContain('公开状态页的组件说明');
-    expect(html).toContain('新增组件');
-    expect(html).toContain('组件状态');
-    expect(html).toContain('状态统计方式');
-    expect(html).toContain('匹配标签');
-    expect(html).toContain('更新时间');
-    expect(html).toContain('操作');
+    expect(html).toContain(t('setting.status.component.description.placeholder'));
+    expect(html).toContain(t('setting.status.components.new'));
+    expect(html).toContain(t('setting.status.components.state'));
+    expect(html).toContain(t('setting.status.components.method'));
+    expect(html).toContain(t('setting.status.components.labels'));
+    expect(html).toContain(t('common.edit-time'));
+    expect(html).toContain(t('common.edit'));
     expect(html).toContain('API');
-    expect(html).toContain('正常');
-    expect(html).toContain('手动设置');
+    expect(html).toContain(t('status.component.state.0'));
+    expect(html).toContain(t('setting.status.components.method.1'));
     expect(html).toContain('source:codex-smoke');
-    expect(html).toContain('确定');
+    expect(html).toContain(t('common.button.ok'));
   }, 15000);
 
   it('hides the public status link until Angular statusOrg id and name are both available', () => {
@@ -219,7 +219,7 @@ describe('status setting surface', () => {
     const t = createTranslatorMock({
       locale: 'zh-CN',
       overrides: {
-        'common.none': '无状态值'
+        'common.none': 'empty-status-value'
       }
     });
 
@@ -288,7 +288,7 @@ describe('status setting surface', () => {
 
     expect(html).toContain('data-status-component-row="1"');
     expect(html).toContain('data-status-incident-row="2"');
-    expect((html.match(/无状态值/g) ?? []).length).toBeGreaterThanOrEqual(5);
+    expect((html.match(/empty-status-value/g) ?? []).length).toBeGreaterThanOrEqual(5);
   }, 15000);
 
   it('renders Angular-style incident edit history in descending order with shared ownership', () => {
@@ -382,7 +382,7 @@ describe('status setting surface', () => {
     expect(html).toContain('data-status-incident-message-placeholder-contract="angular-state-placeholder"');
     expect(html).toContain('data-status-incident-message-placeholder="status.incident.message.tip.2"');
     expect(html).toContain('data-hz-ui="textarea"');
-    expect(html).toContain('我们正在监控该事件，观察处理效果');
+    expect(html).toContain(t('status.incident.message.tip.2'));
     expect(html).toContain('data-status-incident-component-picker="angular-checkbox-group"');
     expect(html).toContain('data-status-incident-component-picker-owner="hertzbeat-ui-checkbox"');
     expect(html).toContain('data-status-incident-component-option="1"');
@@ -392,9 +392,9 @@ describe('status setting surface', () => {
     expect(html).toContain('data-hz-ui="radio-button-group"');
     expect(html).toContain('data-hz-radio-button-option="2"');
     expect(html).toContain('data-hz-radio-button-checked="true"');
-    expect(html).toContain('事件历史');
-    expect(html).toContain('观察中');
-    expect(html).toContain('已确认');
+    expect(html).toContain(t('status.incident.history'));
+    expect(html).toContain(t('status.incident.state.2'));
+    expect(html).toContain(t('status.incident.state.1'));
   }, 15000);
 
   it('uses the shared cold visual owner instead of Workbench or alert primitives', () => {
@@ -472,14 +472,14 @@ describe('status setting surface', () => {
     expect(source).toContain("t('setting.status.delete.confirm')");
     expect(source).toContain("t('common.no-data')");
     expect(source).toContain("t('common.button.cancel')");
-    expect(source).not.toContain('确认删除组件');
-    expect(source).not.toContain('确认删除维护事件');
-    expect(source).not.toContain('确认删除');
-    expect(source).not.toContain('取消');
-    expect(source).not.toContain('暂无数据');
-    expect(source).not.toContain('管理公开状态页的组织档案');
-    expect(source).not.toContain('组织档案');
-    expect(source).not.toContain('公开状态页展示的组织信息和反馈入口。');
+    expect(source).not.toContain('\u786e\u8ba4\u5220\u9664\u7ec4\u4ef6');
+    expect(source).not.toContain('\u786e\u8ba4\u5220\u9664\u7ef4\u62a4\u4e8b\u4ef6');
+    expect(source).not.toContain('\u786e\u8ba4\u5220\u9664');
+    expect(source).not.toContain('\u53d6\u6d88');
+    expect(source).not.toContain('\u6682\u65e0\u6570\u636e');
+    expect(source).not.toContain('\u7ba1\u7406\u516c\u5f00\u72b6\u6001\u9875\u7684\u7ec4\u7ec7\u6863\u6848');
+    expect(source).not.toContain('\u7ec4\u7ec7\u6863\u6848');
+    expect(source).not.toContain('\u516c\u5f00\u72b6\u6001\u9875\u5c55\u793a\u7684\u7ec4\u7ec7\u4fe1\u606f\u548c\u53cd\u9988\u5165\u53e3\u3002');
     expect(source).not.toContain('data-status-summary-rail');
     expect(source).not.toContain('coldStatusVisual.layout.heroGrid');
     expect(source).not.toContain('coldStatusVisual.layout.railGrid');

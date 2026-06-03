@@ -118,7 +118,7 @@ export const ECOSYSTEM_ALIGNMENT: EcosystemAlignment = {
   positioning: {
     deploymentModel: 'open-source-private-deployable',
     statement:
-      'HertzBeat 是面向私有化部署的开源可观测平台，以采集器、监控模板、OTLP 三信号、实体中心、告警闭环和安全自动化形成企业运维闭环。',
+      'HertzBeat is an open-source private-deployable observability platform that forms an enterprise operations loop through collectors, monitor templates, OTLP three signals, entity catalog, alert closure, and safe automation.',
     coreLoop: ['collectors', 'monitor-templates', 'otlp-three-signals', 'entity-catalog', 'alert-closure', 'safe-automation']
   },
   sourcePlans: [
@@ -453,7 +453,7 @@ export function validateEcosystemCompletionGate(alignment: EcosystemAlignment = 
     issues.push('missing-private-deployable-positioning');
   }
 
-  if (!alignment.positioning.statement.includes('OTLP 三信号') || !alignment.positioning.statement.includes('实体中心')) {
+  if (!alignment.positioning.statement.includes('OTLP three signals') || !alignment.positioning.statement.includes('entity catalog')) {
     issues.push('missing-otel-entity-positioning');
   }
 

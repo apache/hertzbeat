@@ -136,11 +136,11 @@ vi.mock('@/lib/signal-route-context', () => ({
     return queryString ? `${path}?${queryString}` : path;
   },
   buildSignalEntityContextRows: () => [
-    { label: '当前实体', value: 'checkout', meta: 'entityId 7' },
-    { label: '当前服务', value: 'checkout', meta: 'payments' },
-    { label: '当前环境', value: 'prod', meta: '环境' },
-    { label: '时间范围', value: 'last-1h', meta: '查询窗口' },
-    { label: '采集来源', value: 'OTLP', meta: 'HertzBeat OTLP 接入' }
+    { label: 'Current entity', value: 'checkout', meta: 'entityId 7' },
+    { label: 'Current service', value: 'checkout', meta: 'payments' },
+    { label: 'Current environment', value: 'prod', meta: 'environment' },
+    { label: 'Time range', value: 'last-1h', meta: 'query window' },
+    { label: 'Collection source', value: 'OTLP', meta: 'HertzBeat OTLP intake' }
   ],
   readSignalRouteContext: () => ({
     entityId: mockState.searchParams.get('entityId') || undefined,
@@ -214,21 +214,21 @@ vi.mock('@/lib/trace-manage/view-model', () => ({
       label: 'hertzbeat.entity_id',
       value: routeContext?.entityId || '-',
       state: routeContext?.entityId ? 'present' : 'missing',
-      meta: routeContext?.entityId ? '可打开实体详情' : '缺少实体 ID，实体详情会保持禁用'
+      meta: routeContext?.entityId ? 'Entity detail available' : 'Missing entity ID keeps entity detail disabled'
     },
     {
       key: 'hertzbeat.collector',
       label: 'hertzbeat.collector',
       value: routeContext?.collector || 'collector-local',
       state: 'present',
-      meta: '采集器来源'
+      meta: 'Collector source'
     },
     {
       key: 'hertzbeat.template',
       label: 'hertzbeat.template',
       value: routeContext?.template || 'hertzbeat-self',
       state: 'present',
-      meta: '监控模板归属'
+      meta: 'Monitor template owner'
     }
   ],
   buildTraceExplorerRows: (items: any[], formatDurationNanos: any, formatTime: any) =>
@@ -452,11 +452,6 @@ describe('trace manage page', () => {
     expect(html).toContain('Recent traces');
     expect(html).toContain('Run query');
     expect(html).toContain('Filter traces by service, trace ID, span ID, and error state, then inspect trend, list, and detail evidence.');
-    expect(html).not.toContain('高密度工作面');
-    expect(html).not.toContain('HertzBeat 采集闭环');
-    expect(html).not.toContain('告警闭环');
-    expect(html).not.toContain('接入质量');
-    expect(html).not.toContain('链路查询继续保留接入质量、采集节点、模板归属和告警闭环上下文。');
     expect(html).toContain('/ingestion/otlp?signal=traces');
     expect(html).toContain('POST /checkout');
     expect(html).toContain('checkout');
@@ -468,9 +463,9 @@ describe('trace manage page', () => {
     expect(html).toContain('data-hz-ui="attribute-diagnostics"');
     expect(html).toContain('Attribution diagnostics');
     expect(html).toContain('hertzbeat.entity_id');
-    expect(html).toContain('缺少实体 ID，实体详情会保持禁用');
-    expect(html).toContain('当前实体');
-    expect(html).toContain('采集来源');
+    expect(html).toContain('Missing entity ID keeps entity detail disabled');
+    expect(html).toContain('Current entity');
+    expect(html).toContain('Collection source');
     expect(html).toContain('Entity detail');
     expect(html).toContain('Alert handling');
     expect(html).toContain('data-trace-manage-signal-handoff-hint="trace-log-metric-context"');
@@ -481,10 +476,6 @@ describe('trace manage page', () => {
     expect(html).toContain('Trace status');
     expect(html).toContain('Start time');
     expect(html).toContain('Latest observed');
-    expect(html).not.toContain('告警规则');
-    expect(html).not.toContain('保存视图');
-    expect(html).not.toContain('创建告警');
-    expect(html).not.toContain('加入仪表盘');
     expect(html).not.toContain('signoz-');
     expect(html).not.toContain('data-trace-manage-floating-actions');
     expect(html).not.toContain('Explorer');
@@ -632,9 +623,6 @@ describe('trace manage page', () => {
     expect(source).not.toContain('DrawerSection');
     expect(source).not.toContain('signoz-');
     expect(source).not.toContain('data-trace-manage-floating-actions');
-    expect(source).not.toContain('保存视图');
-    expect(source).not.toContain('创建告警');
-    expect(source).not.toContain('加入仪表盘');
     expect(source).toContain('data-trace-manage-entity-context="hertzbeat-signal-entity-context"');
     expect(source).toContain('data-trace-manage-entity-context-owner="hertzbeat-ui-detail-rows"');
     expect(source).toContain('data-trace-manage-selected-evidence-owner="hertzbeat-ui-detail-rows"');
@@ -652,9 +640,6 @@ describe('trace manage page', () => {
     expect(source).toContain("t('trace.manage.route.entity-context.title')");
     expect(source).toContain("aria-label={t('trace.manage.route.entity-context.aria')}");
     expect(source).not.toContain('data-trace-manage-hertzbeat-loop="collector-template-alert-loop"');
-    expect(source).not.toContain('HertzBeat 采集闭环');
-    expect(source).not.toContain('接入质量');
-    expect(source).not.toContain('链路查询继续保留接入质量、采集节点、模板归属和告警闭环上下文。');
     expect(source).toContain("t('trace.manage.route.action.collectors')");
     expect(source).toContain("t('trace.manage.route.action.templates')");
     expect(source).toContain("t('trace.manage.route.action.entity')");
@@ -731,8 +716,6 @@ describe('trace manage page', () => {
     expect(source).toContain("eyebrow={t('trace.manage.route.detail.title')}");
     expect(source).toContain('HzEmptyState');
     expect(source).toContain("t('trace.manage.route.empty.copy')");
-    expect(source).not.toContain('运行查询后会在这里展示最近链路。');
-    expect(source).not.toContain('告警规则');
     expect(source).not.toContain('className="flex flex-wrap items-center justify-end gap-2"');
     expect(source).not.toContain('className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_330px]"');
     expect(source).not.toContain('className="grid gap-3 lg:grid-cols-[repeat(4,minmax(0,160px))_minmax(0,1fr)]"');
@@ -803,6 +786,7 @@ describe('trace manage page', () => {
     expect(source).toContain("t('trace.manage.drawer.link-prefix')");
     expect(source).toContain("t('trace.manage.drawer.event-prefix')");
     expect(source).toContain('data-trace-manage-event-detail-copy="span-event-not-span"');
+    expect(source).toContain('data-trace-manage-event-detail-type="span-event"');
     expect(source).toContain('data-trace-manage-event-detail-owner="hertzbeat-ui-dialog-event-notice"');
     expect(source).toContain('HzDialogEventNotice');
     expect(source).toContain('HzDialogEventText');
@@ -817,8 +801,6 @@ describe('trace manage page', () => {
     expect(source).toContain("t('trace.manage.drawer.waterfall.span')");
     expect(source).toContain("t('trace.manage.drawer.waterfall.duration')");
     expect(source).toContain("t('trace.manage.drawer.waterfall.timeline')");
-    expect(source).not.toContain('个 Span');
-    expect(source).not.toContain("['事件', String((selectedSpan?.events || []).length)]");
     expect(source).not.toContain('Link ·');
     expect(source).not.toContain('<Button type="button" variant="subtle" onClick={onClose}>');
     expect(source).not.toContain('data-trace-manage-span-band="cold-span-band"');

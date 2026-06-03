@@ -75,12 +75,12 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).toContain('data-testid="notice-template-field-type"');
     expect(html).toContain('data-testid="notice-template-field-preset"');
     expect(html).toContain('data-testid="notice-template-field-content"');
-    expect(html).toContain('模版类型');
-    expect(html).toContain('用户自定义模版');
-    expect(html).toContain('邮箱');
+    expect(html).toContain(t('alert.notice.template.preset'));
+    expect(html).toContain(t('alert.notice.template.preset.false'));
+    expect(html).toContain(t('alert.notice.type.email'));
     expect(html).toContain('Webhook');
     expect(html).toContain('Telegram');
-    expect(html).not.toContain('Telegram 机器人');
+    expect(html).not.toContain(t('alert.notice.type.telegram-bot'));
     expect(html).toContain('value="9"');
     expect(html.indexOf('value="9"')).toBeLessThan(html.indexOf('value="8"'));
     expect(html.indexOf('value="8"')).toBeLessThan(html.indexOf('value="4"'));
@@ -101,7 +101,7 @@ describe('AlertNoticeTemplateFields', () => {
     expect(source).toContain('data-alert-notice-template-type-required="angular-required-select"');
     expect(source).toContain('data-alert-notice-template-type-required-owner="route-validation-contract"');
     expect(source).not.toContain("['3', 'alert.notice.type.wechat'");
-    expect(source).not.toContain("['0', 'alert.notice.type.sms', '短信']");
+    expect(source).not.toMatch(/\['0', 'alert\.notice\.type\.sms', '\u77ed\u4fe1'\]/);
     expect(source).toContain('data-alert-notice-template-type-selector="cold-select"');
     expect(source).toContain('data-alert-notice-template-preset-view="readonly-type-pill"');
     expect(source).toContain("draft.preset ? t('alert.notice.template.preset.true') : t('alert.notice.template.preset.false')");
@@ -132,7 +132,7 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).toContain('data-alert-notice-template-type-required-owner="route-validation-contract"');
     expect(html).toContain('<select');
     expect(html).toContain('value="" disabled=""');
-    expect(html).toContain('选择通知方式');
+    expect(html).toContain(t('alert.notice.receiver.type.placeholder'));
     expect(html).toContain('value="1"');
   });
 
@@ -145,7 +145,7 @@ describe('AlertNoticeTemplateFields', () => {
           name: 'EmailTemplate',
           type: '1',
           preset: true,
-          content: '系统内置模板正文'
+          content: 'System preset template body'
         }}
         onDraftChange={vi.fn()}
       />
@@ -156,7 +156,7 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).toContain('data-hz-code-editor-readonly="true"');
     expect(html).toContain('disabled=""');
     expect(html).toContain('data-alert-notice-template-form-row="preset"');
-    expect(html).toContain('系统内置模版');
-    expect(html).toContain('系统内置模板正文');
+    expect(html).toContain(t('alert.notice.template.preset.true'));
+    expect(html).toContain('System preset template body');
   });
 });

@@ -18,14 +18,14 @@ describe('settings console shell', () => {
     const html = renderToStaticMarkup(
       <SettingsConsoleShell
         activeHref="/setting/settings/config"
-        contentLabel="设置内容"
-        kicker="设置"
-        navigationLabel="设置分区"
-        title="把系统配置、消息通道和接入凭证放在一起"
-        subtitle="在同一页查看系统配置、服务器、对象存储和接入令牌。"
+        contentLabel="Settings content"
+        kicker="Settings"
+        navigationLabel="Settings sections"
+        title="Keep system configuration, message channels, and access credentials together"
+        subtitle="Review system configuration, servers, object storage, and access tokens on one page."
         items={[
-          { href: '/setting/settings/config', label: '系统配置' },
-          { href: '/setting/settings/server', label: '消息服务配置' }
+          { href: '/setting/settings/config', label: 'System configuration' },
+          { href: '/setting/settings/server', label: 'Message service configuration' }
         ]}
       >
         <div>content</div>
@@ -43,18 +43,18 @@ describe('settings console shell', () => {
     expect(html).toContain('data-settings-console-menu="cold-static-list"');
     expect(html).toContain('data-settings-console-menu-mode="angular-responsive-inline-horizontal"');
     expect(html).toContain('data-settings-console-content="cold-settings-content"');
-    expect(html).toContain('data-settings-console-active-title="系统配置"');
-    expect(html).toContain('data-settings-console-active-title-marker="系统配置"');
-    expect(html).toContain('aria-label="设置分区"');
-    expect(html).toContain('aria-label="设置内容"');
+    expect(html).toContain('data-settings-console-active-title="System configuration"');
+    expect(html).toContain('data-settings-console-active-title-marker="System configuration"');
+    expect(html).toContain('aria-label="Settings sections"');
+    expect(html).toContain('aria-label="Settings content"');
     expect(html).toContain('data-settings-console-menu-item="/setting/settings/config"');
     expect(html).toContain('data-settings-console-active="true"');
     expect(html).toContain('data-settings-console-selected-contract="angular-nz-selected"');
-    expect(html).toContain('设置');
-    expect(html).toContain('把系统配置、消息通道和接入凭证放在一起');
-    expect(html).toContain('在同一页查看系统配置、服务器、对象存储和接入令牌。');
-    expect(html).toContain('系统配置');
-    expect(html).toContain('消息服务配置');
+    expect(html).toContain('Settings');
+    expect(html).toContain('Keep system configuration, message channels, and access credentials together');
+    expect(html).toContain('Review system configuration, servers, object storage, and access tokens on one page.');
+    expect(html).toContain('System configuration');
+    expect(html).toContain('Message service configuration');
     expect(html).toContain('content');
     expect(html).toContain('href="/setting/settings/config"');
     expect(html).toContain('aria-current="page"');

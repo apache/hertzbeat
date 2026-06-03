@@ -9,7 +9,9 @@ const scriptFile = fileURLToPath(import.meta.url);
 const scriptDir = path.dirname(scriptFile);
 const webNextDir = path.resolve(scriptDir, '..', '..');
 const repoRoot = path.resolve(webNextDir, '..');
-const angularDistDir = path.join(repoRoot, 'web-app', 'dist');
+const legacyReferenceDistDir = process.env.LEGACY_REFERENCE_DIST_DIR
+  ? path.resolve(process.env.LEGACY_REFERENCE_DIST_DIR)
+  : path.join(repoRoot, '.tmp', 'legacy-web-reference-dist');
 const backendOrigin = process.env.BACKEND_ORIGIN || 'http://127.0.0.1:1157';
 
 function parsePort(argv) {
@@ -47,8 +49,8 @@ function contentType(filePath) {
 
 function safeJoinStaticPath(requestPath) {
   const pathname = decodeURIComponent(new URL(requestPath, 'http://127.0.0.1').pathname);
-  const normalized = path.normalize(path.join(angularDistDir, pathname));
-  if (!normalized.startsWith(angularDistDir)) {
+  const normalized = path.normalize(path.join(legacyReferenceDistDir, pathname));
+  if (!normalized.startsWith(legacyReferenceDistDir)) {
     return null;
   }
   return normalized;
@@ -110,6 +112,24 @@ function serveFile(filePath, res) {
   createReadStream(filePath).pipe(res);
 }
 
+function serveFallbackIndex(res) {
+  res.writeHead(200, {
+    'Content-Type': 'text/html; charset=utf-8'
+  });
+  res.end(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>HertzBeat legacy reference stub</title>
+  </head>
+  <body>
+    <main data-angular-reference-stub="legacy-web-removed">
+      HertzBeat legacy reference stub
+    </main>
+  </body>
+</html>`);
+}
+
 function acceptsHtmlNavigation(req) {
   const accept = req.headers.accept;
   return (
@@ -119,12 +139,8 @@ function acceptsHtmlNavigation(req) {
   );
 }
 
-if (!existsSync(path.join(angularDistDir, 'index.html'))) {
-  console.error(`angular reference dist is missing at ${angularDistDir}`);
-  process.exit(1);
-}
-
 const port = parsePort(process.argv.slice(2));
+const hasAngularDist = existsSync(path.join(legacyReferenceDistDir, 'index.html'));
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -146,8 +162,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const fallbackIndex = path.join(angularDistDir, 'index.html');
-    serveFile(fallbackIndex, res);
+    if (hasAngularDist) {
+      serveFile(path.join(legacyReferenceDistDir, 'index.html'), res);
+      return;
+    }
+
+    serveFallbackIndex(res);
   } catch (error) {
     res.writeHead(500, {
       'Content-Type': 'text/plain; charset=utf-8'
@@ -157,5 +177,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, '127.0.0.1', () => {
-  process.stdout.write(`angular reference server listening on http://127.0.0.1:${port}\n`);
+  const mode = hasAngularDist ? 'dist' : 'stub';
+  process.stdout.write(`angular reference server listening on http://127.0.0.1:${port} (${mode})\n`);
 });

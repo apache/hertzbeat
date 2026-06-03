@@ -44,13 +44,13 @@ describe('entity detail controller', () => {
     const t = createTranslatorMock({ locale: 'zh-CN' });
     const detail = buildFallbackEntityDetail('123', t);
 
-    expect(detail.entity.entity.displayName).toBe('实体 123');
-    expect(detail.entity.entity.description).toBe('后端实体详情暂不可用时展示的临时工作台。');
+    expect(detail.entity.entity.displayName).toBe(t('entities.detail.fallback.display-name', { id: 123 }));
+    expect(detail.entity.entity.description).toBe(t('entities.detail.fallback.description'));
     expect(detail.nextActions?.[0]).toEqual(
       expect.objectContaining({
-        title: '打开定义',
-        summary: '先检查定义工作台，再补齐归属和证据。',
-        actionLabel: '打开定义'
+        title: t('entities.detail.action-text.open-definition'),
+        summary: t('entities.detail.action-text.review-definition'),
+        actionLabel: t('entities.detail.action-text.open-definition')
       })
     );
   });

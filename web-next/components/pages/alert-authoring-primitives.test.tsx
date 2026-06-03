@@ -16,10 +16,10 @@ describe('alert authoring primitives', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-authoring-primitives.tsx'), 'utf8');
     const html = renderToStaticMarkup(
       <div>
-        <AlertAuthoringPanel heading="分组标签">panel-body</AlertAuthoringPanel>
-        <AlertAuthoringCallout title="提示" copy="短说明" warning="检查配置" />
+        <AlertAuthoringPanel heading="Group labels">panel-body</AlertAuthoringPanel>
+        <AlertAuthoringCallout title="Hint" copy="Short note" warning="Review config" />
         <AlertAuthoringToggleRow>inline-toggle</AlertAuthoringToggleRow>
-        <AlertAuthoringActionPill>操作</AlertAuthoringActionPill>
+        <AlertAuthoringActionPill>Action</AlertAuthoringActionPill>
         <AlertAuthoringValuePill>service:checkout</AlertAuthoringValuePill>
       </div>
     );

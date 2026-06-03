@@ -90,6 +90,10 @@ vi.mock('./alert-silence-authoring-fields', () => ({
 
 describe('AlertSilenceSurface', () => {
   const t = createTranslatorMock({ locale: 'zh-CN' });
+  const silenceEvidenceTitle = (signal: 'logs' | 'traces' | 'metrics') =>
+    t('alert.rule.evidence.silence.title', { signal: t(`alert.rule.signal.${signal}`) });
+  const silenceDraftName = (signal: 'logs' | 'traces' | 'metrics', target: string) =>
+    t('alert.rule.evidence.silence.draft-name', { signal: t(`alert.rule.signal.${signal}`), target });
   const data = {
     list: {
       content: [
@@ -127,8 +131,8 @@ describe('AlertSilenceSurface', () => {
         editorError={null}
         evidenceContext={{
           signal: 'logs',
-          title: '来自日志的静默上下文',
-          copy: '保存或取消后仍可回到原排障上下文。',
+          title: silenceEvidenceTitle('logs'),
+          copy: t('alert.rule.evidence.silence.copy'),
           labelsText: 'hertzbeat.signal:logs, service.name:checkout',
           returnHref: '/log/manage?view=list&traceId=trace-123',
           rows: [],
@@ -190,16 +194,16 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('data-alert-silence-row-checkbox="cold-checkbox"');
     expect(html).toContain('data-alert-silence-enable-checkbox="cold-checkbox"');
     expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(3);
-    expect(html).toContain('刷新');
-    expect(html).toContain('新增静默');
-    expect(html).toContain('批量删除');
-    expect(html).toContain('搜索');
-    expect(html).not.toContain('当前静默');
-    expect(html).toContain('策略名称');
-    expect(html).toContain('静默类型');
-    expect(html).toContain('已静默告警数');
+    expect(html).toContain(t('common.refresh'));
+    expect(html).toContain(t('alert.silence.action.new'));
+    expect(html).toContain(t('common.button.delete-batch'));
+    expect(html).toContain(t('common.search'));
+    expect(html).not.toContain(t('alert.silence.selected.empty.title'));
+    expect(html).toContain(t('alert.silence.name'));
+    expect(html).toContain(t('alert.silence.type'));
+    expect(html).toContain(t('alert.silence.times'));
     expect(html).toContain('weekday');
-    expect(html).toContain('周期性静默');
+    expect(html).toContain(t('alert.silence.type.cyc'));
     expect(html).toContain('data-overlay-dialog="true"');
     expect(html).toContain('data-alert-silence-authoring-fields="workspace"');
     expect(html).toContain('data-alert-silence-editor-return="evidence-context"');
@@ -252,7 +256,7 @@ describe('AlertSilenceSurface', () => {
         editorLoading={false}
         editorSaving={false}
         editorMessage={null}
-        editorError="请先选择要删除的监控"
+        editorError={t('common.notify.no-select-delete')}
         draft={{
           name: '',
           enable: true,
@@ -285,7 +289,7 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('data-alert-silence-action-feedback="warning"');
     expect(html).toContain('data-alert-silence-action-feedback-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('role="alert"');
-    expect(html).toContain('请先选择要删除的监控');
+    expect(html).toContain(t('common.notify.no-select-delete'));
   });
 
   it('renders Angular silence save failure title/detail through shared feedback', () => {
@@ -487,7 +491,7 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('data-alert-silence-compact-canvas="content-height"');
     expect(html).toContain('min-height:auto');
     expect(html).toContain('data-alert-silence-empty-icon="cold-empty-box"');
-    expect(html).toContain('还没有静默规则');
+    expect(html).toContain(t('alert.silence.empty.title'));
   });
 
   it('renders the topology return context when opened from alert impact silence closure', () => {
@@ -520,7 +524,7 @@ describe('AlertSilenceSurface', () => {
           sourceKind: 'database-middleware-connection',
           edgeId: 'svc-checkout--res-orders-db',
           returnTo,
-          returnLabel: 'HertzBeat 企业运维拓扑'
+          returnLabel: t('topology.identity')
         }}
         draft={{
           name: '',
@@ -553,7 +557,7 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('data-alert-silence-return-context="topology-edge"');
     expect(html).toContain('data-alert-silence-return-edge-id="svc-checkout--res-orders-db"');
     expect(html).toContain('href="/topology?viewMode=resource-dependency&amp;sourceKind=database-middleware-connection&amp;edgeId=svc-checkout--res-orders-db');
-    expect(html).not.toContain('HertzBeat 企业运维拓扑');
+    expect(html).not.toContain(t('topology.identity'));
     expect(html).not.toContain('returnLabel=');
     expect(html).toContain('checkout-api');
     expect(html).toContain('resource-dependency');
@@ -686,8 +690,8 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('data-alert-silence-created-outside-matched="angular-authoring-notice"');
     expect(html).toContain('data-alert-silence-created-outside-matched-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('data-alert-silence-created-outside-matched-action="view-all"');
-    expect(html).toContain('新规则已创建');
-    expect(html).toContain('当前视图不会自动显示这条新规则');
+    expect(html).toContain(t('entity.noise-controls.authoring.created-outside-matched.title'));
+    expect(html).toContain(t('entity.noise-controls.authoring.created-outside-matched.copy'));
   });
 
   it('renders three-signal evidence context before silence authoring', () => {
@@ -705,16 +709,16 @@ describe('AlertSilenceSurface', () => {
         editorError={null}
         evidenceContext={{
           signal: 'logs',
-          title: '来自日志的静默上下文',
-          copy: '新建静默时会按当前实体、服务、环境和链路标签做匹配。',
+          title: silenceEvidenceTitle('logs'),
+          copy: t('alert.rule.evidence.silence.copy'),
           labelsText: 'hertzbeat.signal:logs, service.name:checkout, trace_id:trace-123',
           returnHref: '/log/manage?view=list&traceId=trace-123',
           rows: [
-            { label: '当前实体', value: 'checkout', meta: 'entityId service:commerce/checkout' },
-            { label: '链路上下文', value: 'trace-123', meta: 'spanId span-456' }
+            { label: t('signal.context.entity.label'), value: 'checkout', meta: 'entityId service:commerce/checkout' },
+            { label: t('signal.context.trace.label'), value: 'trace-123', meta: 'spanId span-456' }
           ],
           draftPatch: {
-            name: '日志 checkout 静默',
+            name: silenceDraftName('logs', 'checkout'),
             matchAll: false,
             labelsText: 'hertzbeat.signal:logs, service.name:checkout, trace_id:trace-123'
           }
@@ -750,11 +754,11 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('data-alert-silence-evidence-context="signal-route"');
     expect(html).toContain('data-alert-silence-evidence-signal="logs"');
     expect(html).toContain('data-alert-silence-prefill-labels="hertzbeat.signal:logs, service.name:checkout, trace_id:trace-123"');
-    expect(html).toContain('来自日志的静默上下文');
-    expect(html).toContain('返回排障上下文');
+    expect(html).toContain(silenceEvidenceTitle('logs'));
+    expect(html).toContain(t('alert.rule.evidence.return'));
     expect(html).toContain('href="/log/manage?view=list&amp;traceId=trace-123"');
-    expect(html).toContain('当前实体');
-    expect(html).toContain('链路上下文');
+    expect(html).toContain(t('signal.context.entity.label'));
+    expect(html).toContain(t('signal.context.trace.label'));
   });
 
   it('renders Angular entity alert prefill copy inside the silence editor', () => {
@@ -814,9 +818,9 @@ describe('AlertSilenceSurface', () => {
     );
 
     expect(html).toContain('data-alert-silence-entity-prefill="angular-alert-common-labels"');
-    expect(html).toContain('data-alert-silence-authoring-prefill-title="为当前实体创建静默规则"');
-    expect(html).toContain('data-alert-silence-authoring-prefill-copy="已提取当前实体可见告警的共享标签，作为静默条件默认值。"');
-    expect(html).not.toContain('data-alert-silence-authoring-prefill-warning="当前没有稳定的共享告警标签，请手动填写静默条件。"');
+    expect(html).toContain(`data-alert-silence-authoring-prefill-title="${t('entity.noise-controls.authoring.silence.title')}"`);
+    expect(html).toContain(`data-alert-silence-authoring-prefill-copy="${t('entity.noise-controls.authoring.silence.prefill-success')}"`);
+    expect(html).not.toContain(`data-alert-silence-authoring-prefill-warning="${t('entity.noise-controls.authoring.silence.prefill-warning')}"`);
   });
 
   it('renders missing silence evidence labels with the localized empty fallback', () => {
@@ -834,8 +838,8 @@ describe('AlertSilenceSurface', () => {
         editorError={null}
         evidenceContext={{
           signal: 'metrics',
-          title: '来自指标的静默上下文',
-          copy: '按当前实体创建静默规则。',
+          title: silenceEvidenceTitle('metrics'),
+          copy: t('alert.rule.evidence.silence.copy'),
           labelsText: '',
           returnHref: '/ingestion/otlp/metrics?entityId=service-1',
           rows: [],
@@ -873,7 +877,7 @@ describe('AlertSilenceSurface', () => {
 
     expect(html).toContain('data-alert-silence-evidence-context="signal-route"');
     expect(html).toContain('data-alert-silence-evidence-labels="localized-fallback"');
-    expect(html).toContain('无');
+    expect(html).toContain(t('common.none'));
   });
 
   it('renders validation errors visibly inside the silence editor dialog', () => {
@@ -888,7 +892,7 @@ describe('AlertSilenceSurface', () => {
         editorLoading={false}
         editorSaving={false}
         editorMessage={null}
-        editorError="请填写策略名称"
+        editorError={t('alert.silence.validation.name')}
         draft={{
           name: '',
           enable: true,
@@ -919,6 +923,6 @@ describe('AlertSilenceSurface', () => {
 
     expect(html).toContain('data-alert-silence-editor-error-inline="cold-validation"');
     expect(html).toContain('role="alert"');
-    expect(html).toContain('请填写策略名称');
+    expect(html).toContain(t('alert.silence.validation.name'));
   });
 });

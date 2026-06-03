@@ -91,9 +91,9 @@ describe('TimeRangeControl', () => {
     expect(html).toContain('Last 30 minutes');
     expect(html).toContain('Last 1 hour');
     expect(html).toContain('Manual');
-    expect(html).not.toContain('近 30 分钟');
-    expect(html).not.toContain('相对');
-    expect(html).not.toContain('刷新');
+    expect(html).not.toMatch(/\u8fd1 30 \u5206\u949f/);
+    expect(html).not.toMatch(/\u76f8\u5bf9/);
+    expect(html).not.toMatch(/\u5237\u65b0/);
   });
 
   it('localizes provided preset values when a route passes custom preset options', () => {
@@ -125,8 +125,8 @@ describe('TimeRangeControl', () => {
         value={{ timeRange: 'last-1h', refresh: '', live: 'false', tz: '' }}
         labels={buildTimeRangeControlLabels(t)}
         presets={[
-          { value: 'last-30m', label: '近 30 分钟' },
-          { value: 'last-1h', label: '近 1 小时' }
+          { value: 'last-30m', label: '\u8fd1 30 \u5206\u949f' },
+          { value: 'last-1h', label: '\u8fd1 1 \u5c0f\u65f6' }
         ]}
         onApply={() => undefined}
       />
@@ -134,8 +134,8 @@ describe('TimeRangeControl', () => {
 
     expect(html).toContain('Last 30 minutes');
     expect(html).toContain('Last 1 hour');
-    expect(html).not.toContain('近 30 分钟');
-    expect(html).not.toContain('近 1 小时');
+    expect(html).not.toMatch(/\u8fd1 30 \u5206\u949f/);
+    expect(html).not.toMatch(/\u8fd1 1 \u5c0f\u65f6/);
   });
 
   it('renders the shared cold operator toolbar without becoming another card layer', () => {
@@ -319,7 +319,7 @@ describe('TimeRangeControl', () => {
     const html = renderToStaticMarkup(
       <TimeRangeControl
         value={{ timeRange: 'last-30m', refresh: '', live: 'false', tz: 'Asia/Shanghai' }}
-        labels={{ manualRefresh: '手动' }}
+        labels={{ manualRefresh: '\u624b\u52a8' }}
         showAbsoluteFields
         variant="narrow-rail"
         onApply={() => undefined}
@@ -331,7 +331,7 @@ describe('TimeRangeControl', () => {
     expect(source).toContain("const refreshSelectWidth = isNarrowRail ? 'w-[64px]' : 'w-[64px]'");
     expect(html).toContain('data-time-range-refresh-field-fit="full-manual-label"');
     expect(html).toContain('data-time-range-refresh-select="true"');
-    expect(html).toContain('手动');
+    expect(html).toContain('\u624b\u52a8');
     expect(html).toContain('w-[96px]');
     expect(html).toContain('w-[64px]');
     expect(html).not.toContain("const refreshFrameClass = isNarrowRail ? 'w-[82px]'");
@@ -343,7 +343,7 @@ describe('TimeRangeControl', () => {
     const html = renderToStaticMarkup(
       <TimeRangeControl
         value={{ timeRange: 'last-30m', refresh: '', live: 'false', tz: 'Asia/Shanghai' }}
-        labels={{ apply: '应用', applyAria: '应用时间范围' }}
+        labels={{ apply: '\u5e94\u7528', applyAria: '\u5e94\u7528\u65f6\u95f4\u8303\u56f4' }}
         showAbsoluteFields
         variant="narrow-rail"
         onApply={() => undefined}

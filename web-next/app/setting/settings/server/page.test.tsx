@@ -170,12 +170,13 @@ describe('setting server page', () => {
     apiMessagePost.mockReset();
   });
 
-  it('renders the cold Chinese summary list and message-server dialog wiring on the shared settings console contract', async () => {
+  it('renders the localized summary list and message-server dialog wiring on the shared settings console contract', async () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
     const { default: SettingServerPage } = await import('./page');
     const html = renderToStaticMarkup(<SettingServerPage />);
 
     expect(html).toContain('data-client-workbench="true"');
-    expect(html).toContain('data-loading-copy="正在加载消息服务配置。"');
+    expect(html).toContain(`data-loading-copy="${t('setting.settings.server.loading')}"`);
     expect(html).toContain('data-settings-console-title="true"');
     expect(html).toContain('data-settings-server-page="otlp-cold-message-server"');
     expect(html).toContain('data-settings-server-style-baseline="hertzbeat-cold-matte"');
@@ -192,19 +193,19 @@ describe('setting server page', () => {
     expect(html).toContain('data-settings-summary-action="email"');
     expect(html).toContain('data-settings-summary-action="sms"');
     expect(html).toContain('data-settings-summary-action-style="cold-compact-action"');
-    expect(html).toContain('aria-label="配置邮件服务器"');
-    expect(html).toContain('aria-label="配置短信配置"');
-    expect(html).toContain('消息服务配置');
-    expect(html).toContain('邮件服务器');
-    expect(html).toContain('短信配置');
-    expect(html).toContain('邮箱服务器地址: smtp.example.com');
-    expect(html).toContain('邮箱账号: ops');
-    expect(html).toContain('是否启用邮箱配置: 是');
-    expect(html).toContain('腾讯短信AppId: 10001');
-    expect(html).toContain('腾讯短信SignName: old-sign');
-    expect(html).toContain('启用状态: 否');
-    expect(html).toContain('data-overlay-dialog-title="配置邮件服务器"');
-    expect(html).toContain('data-overlay-dialog-title="配置短信参数"');
+    expect(html).toContain(`aria-label="${t('settings.server.summary.configure-action', { title: t('settings.server.email') })}"`);
+    expect(html).toContain(`aria-label="${t('settings.server.summary.configure-action', { title: t('settings.server.sms') })}"`);
+    expect(html).toContain(t('settings.server'));
+    expect(html).toContain(t('settings.server.email'));
+    expect(html).toContain(t('settings.server.sms'));
+    expect(html).toContain(`${t('alert.notice.sender.mail.host')}: smtp.example.com`);
+    expect(html).toContain(`${t('alert.notice.sender.mail.username')}: ops`);
+    expect(html).toContain(`${t('alert.notice.sender.mail.enable')}: ${t('common.yes')}`);
+    expect(html).toContain(`${t('alert.notice.sender.sms.tencent.appId')}: 10001`);
+    expect(html).toContain(`${t('alert.notice.sender.sms.tencent.signName')}: old-sign`);
+    expect(html).toContain(`${t('common.enable')}: ${t('common.no')}`);
+    expect(html).toContain(`data-overlay-dialog-title="${t('settings.server.email.setting')}"`);
+    expect(html).toContain(`data-overlay-dialog-title="${t('settings.server.sms.setting')}"`);
     expect(html).toContain('data-overlay-dialog-max-width="w-[min(92vw,520px)] md:w-[40vw] md:max-w-[40vw]"');
     expect(html).toContain('data-settings-server-email-dialog-width="angular-width-40-percent"');
     expect(html).toContain('data-settings-server-email-dialog-mask="angular-mask-closable-false"');
@@ -215,18 +216,16 @@ describe('setting server page', () => {
     expect(html).toContain('data-settings-dialog-control-span="12"');
     expect(html).toContain('data-settings-server-email-apply-contract="angular-apply-notify"');
     expect(html).toContain('data-settings-server-sms-apply-contract="angular-apply-notify"');
-    expect(html).toContain('邮箱密码');
-    expect(html).toContain('短信类型');
-    expect(html).toContain('腾讯短信');
+    expect(html).toContain(t('alert.notice.sender.mail.password'));
+    expect(html).toContain(t('alert.notice.sender.sms.type'));
+    expect(html).toContain(t('alert.notice.sender.sms.type.tencent'));
     expect(html).toContain('Twilio Sms');
-    expect(html).toContain('取消');
-    expect(html).toContain('保存');
-    expect(html).toContain('配置');
+    expect(html).toContain(t('common.button.cancel'));
+    expect(html).toContain(t('common.button.save'));
+    expect(html).toContain(t('common.button.setting'));
     expect(html).not.toContain('data-settings-server-page="angular-message-server"');
     expect(html).not.toContain('data-settings-server-summary-rail=');
     expect(html).not.toContain('data-settings-summary-list-style="angular-nz-list"');
-    expect(html).not.toContain('消息服务摘要');
-    expect(html).not.toContain('当前消息服务');
     expect(html).not.toContain('Message Server Setting');
     expect(html).not.toContain('Email Server Address');
     expect(html).not.toContain('Setting</button>');

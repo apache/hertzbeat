@@ -7,6 +7,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
+import type { TranslationParams } from '@/lib/i18n';
 import LogManagePage from './log-manage-page';
 import type { LogManageRouteState, LogQueryState, LogWorkbenchView } from '@/lib/log-manage/query-state';
 
@@ -206,13 +207,17 @@ vi.mock('@/lib/log-manage/query-state', () => ({
 }));
 
 vi.mock('@/lib/signal-route-context', () => ({
-  buildSignalEntityContextRows: () => [
-    { label: '当前实体', value: 'checkout', meta: 'entityId 7' },
-    { label: '当前服务', value: 'checkout', meta: 'payments' },
-    { label: '当前环境', value: 'prod', meta: '环境' },
-    { label: '时间范围', value: 'last-1h', meta: '查询窗口' },
-    { label: '采集来源', value: 'OTLP', meta: 'HertzBeat OTLP 接入' }
-  ],
+  buildSignalEntityContextRows: () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+
+    return [
+      { label: t('signal.context.entity.label'), value: 'checkout', meta: 'entityId 7' },
+      { label: t('signal.context.service.label'), value: 'checkout', meta: 'payments' },
+      { label: t('signal.context.environment.label'), value: 'prod', meta: t('signal.context.environment.meta') },
+      { label: t('signal.context.time.label'), value: 'last-1h', meta: t('signal.context.time.meta.default') },
+      { label: t('signal.context.source.label'), value: 'OTLP', meta: t('signal.context.source.otlp.meta') }
+    ];
+  },
   readSignalRouteContext: () => ({
     entityId: mockState.searchParams.get('entityId') || undefined,
     entityName: mockState.searchParams.get('entityName') || undefined,
@@ -233,46 +238,57 @@ vi.mock('@/lib/signal-route-context', () => ({
 }));
 
 vi.mock('@/lib/log-manage/view-model', () => ({
-  buildSelectedLogFacts: (entry: any) =>
-    entry
+  buildSelectedLogFacts: (entry: any) => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+
+    return entry
       ? [
-          { label: '严重级别', value: entry.severityText || 'LOG' },
-          { label: '链路 ID', value: entry.traceId || '-', monospace: true }
+          { label: t('log.manage.detail.severity'), value: entry.severityText || 'LOG' },
+          { label: t('log.manage.detail.trace-id'), value: entry.traceId || '-', monospace: true }
         ]
-      : [],
-  buildLogAttributionDiagnostics: (entry: any) =>
-    entry
+      : [];
+  },
+  buildLogAttributionDiagnostics: (entry: any) => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+
+    return entry
       ? [
           {
             key: 'hertzbeat.entity_id',
             label: 'hertzbeat.entity_id',
             value: entry.resource?.['hertzbeat.entity_id'] || '-',
             state: entry.resource?.['hertzbeat.entity_id'] ? 'present' : 'missing',
-            meta: entry.resource?.['hertzbeat.entity_id'] ? '可打开实体详情' : '缺少实体 ID，实体详情会保持禁用'
+            meta: entry.resource?.['hertzbeat.entity_id']
+              ? t('log.manage.attribution.entity-id.present')
+              : t('log.manage.attribution.entity-id.missing')
           },
           {
             key: 'hertzbeat.collector',
             label: 'hertzbeat.collector',
             value: entry.resource?.['hertzbeat.collector'] || '-',
             state: entry.resource?.['hertzbeat.collector'] ? 'present' : 'missing',
-            meta: '采集器来源'
+            meta: t('log.manage.attribution.collector')
           },
           {
             key: 'hertzbeat.template',
             label: 'hertzbeat.template',
             value: entry.resource?.['hertzbeat.template'] || '-',
             state: entry.resource?.['hertzbeat.template'] ? 'present' : 'missing',
-            meta: '监控模板归属'
+            meta: t('log.manage.attribution.template')
           }
         ]
-      : [],
-  buildSelectedLogRows: (entry: any) =>
-    entry
+      : [];
+  },
+  buildSelectedLogRows: (entry: any) => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+
+    return entry
       ? [
           { title: 'checkout', copy: String(entry.body), meta: entry.traceId },
-          { title: '资源', copy: '1', meta: 'attributes 1' }
+          { title: t('log.manage.selected.resource-keys'), copy: '1', meta: 'attributes 1' }
         ]
-      : [],
+      : [];
+  },
   buildLogCodeNavigationUrl: () => undefined,
   buildLogExplorerRows: (entries: any[]) =>
     entries.map(entry => ({
@@ -320,6 +336,12 @@ vi.mock('./route-state', () => ({
   },
   buildResetLogManageRoute: () => '/log/manage'
 }));
+
+const zhT = createTranslatorMock({ locale: 'zh-CN' });
+
+function tZh(key: string, params?: TranslationParams) {
+  return zhT(key, params);
+}
 
 function buildLogManageRouteState(): LogManageRouteState {
   const query: LogQueryState = {
@@ -476,9 +498,9 @@ describe('log manage page', () => {
     expect(source).toContain('HzAttributeDiagnostics');
     expect(source).toContain('data-log-manage-selected-attribution-diagnostics-owner="hertzbeat-ui-attribute-diagnostics"');
     expect(source).toContain("t('log.manage.context.entity.title')");
-    expect(source).not.toContain('HertzBeat 采集闭环');
-    expect(source).not.toContain('告警闭环');
-    expect(source).not.toContain('日志排查可返回接入总览、采集集群、监控模板和告警处理上下文。');
+    expect(source).not.toContain('HertzBeat collection loop');
+    expect(source).not.toContain('Alert loop');
+    expect(source).not.toContain('Log troubleshooting can return to intake overview, collector clusters, monitor templates, and alert handling context.');
     [
       'log.manage.route.action.collector',
       'log.manage.route.action.templates',
@@ -503,7 +525,7 @@ describe('log manage page', () => {
     expect(source).not.toContain('data-log-manage-header-action="alerts">\n                  <BellRing className="h-4 w-4"');
     expect(source).toContain('data-log-manage-alert-context-hint="entity-trace-alert-handoff"');
     expect(source).toContain("t('log.manage.handoff.alert-hint')");
-    expect(source).not.toContain('告警规则');
+    expect(source).not.toContain('Alert rules');
     expect(source).not.toContain('signoz-');
     expect(source).not.toContain('data-log-manage-floating-actions');
     expect(source).not.toContain('Run Query');
@@ -511,11 +533,11 @@ describe('log manage page', () => {
     expect(source).not.toContain('Create an Alert');
     expect(source).not.toContain('Add to Dashboard');
     expect(source).not.toContain('Logs Workbench');
-    expect(source).not.toContain("returnLabel: '日志工作台'");
-    expect(source).not.toContain("returnLabel: '链路工作台'");
-    expect(source).not.toContain('保存视图');
-    expect(source).not.toContain('创建告警');
-    expect(source).not.toContain('加入仪表盘');
+    expect(source).not.toContain("returnLabel: 'Logs Workbench'");
+    expect(source).not.toContain("returnLabel: 'Trace Workbench'");
+    expect(source).not.toContain('Save view');
+    expect(source).not.toContain('Create alert');
+    expect(source).not.toContain('Add to dashboard');
     expect(source).not.toContain('ThreeSignalDeskShell');
     expect(source).not.toContain('FactsStrip');
     expect(source).not.toContain('StageSection');
@@ -549,7 +571,7 @@ describe('log manage page', () => {
     expect(html).toContain('data-log-manage-header-action-icon="return-source"');
     expect(html).toContain('data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"');
     expect(html).toContain('href="/trace/manage?traceId=trace-123&amp;spanId=span-456&amp;serviceName=checkout"');
-    expect(html).toContain('返回来源');
+    expect(html).toContain(tZh('log.manage.route.action.return-source'));
   });
 
   it('keeps the Angular log-to-trace drilldown contract as drawer preview before route navigation', () => {
@@ -659,13 +681,13 @@ describe('log manage page', () => {
     expect(html).toContain('data-log-manage-stream-severity-tone="danger"');
     expect(html).toContain('checkout timeout');
     expect(html).not.toContain('data-log-manage-stream-empty-state="true"');
-    expect(html).toContain('日志流');
-    expect(html).toContain('历史检索');
-    expect(html).toContain('实时日志流');
-    expect(html).toContain('应用到日志流');
-    expect(html).toContain('选中日志');
-    expect(html).not.toContain('完整 JSON');
-    expect(html).not.toContain('运行查询');
+    expect(html).toContain(tZh('log.manage.stream.view.stream'));
+    expect(html).toContain(tZh('log.manage.stream.view.history'));
+    expect(html).toContain(tZh('log.manage.stream.stage.title'));
+    expect(html).toContain(tZh('log.manage.query.run.stream'));
+    expect(html).toContain(tZh('log.manage.stream.selected.title'));
+    expect(html).not.toContain('Full JSON');
+    expect(html).not.toContain(tZh('log.manage.query.run.history'));
     expect(html).not.toContain('/api/logs/sse/subscribe');
     expect(html).not.toContain('data-log-manage-log-list="cold-dense-log-list"');
   }, 30000);
@@ -676,8 +698,8 @@ describe('log manage page', () => {
     expect(source).toContain('streamSequenceRef');
     expect(source).toContain('buildStreamItemKey(entry, sequence)');
     expect(source).not.toContain('buildLogEntryKey(entry, nextIndex)');
-    expect(source).not.toContain('无法进入前端缓冲区');
-    expect(source).not.toContain('日志流过快');
+    expect(source).not.toContain('cannot enter frontend buffer');
+    expect(source).not.toContain('log stream too fast');
   });
 
   it('keeps no-log empty guidance operator-facing instead of generic storage copy', () => {
@@ -689,8 +711,8 @@ describe('log manage page', () => {
     expect(source).toContain('data-log-manage-stream-empty-owner="hertzbeat-ui-empty-state"');
     expect(source).toContain('HzEmptyState');
     expect(source).toContain("t('log.manage.empty.copy')");
-    expect(messagesSource).toContain("'log.manage.empty.copy': '确认时间范围、实体归因、采集器和监控模板后再查看日志。'");
-    expect(source).not.toContain('日志写入后会在这里按时间倒序展示。');
+    expect(messagesSource).toContain("'log.manage.empty.copy':");
+    expect(source).not.toContain('Logs appear here in reverse chronological order after writes.');
   });
 
   it('renders live log stream rows through a virtualized viewport backed by EventSource', () => {
@@ -728,8 +750,8 @@ describe('log manage page', () => {
     expect(source).not.toContain('className={`grid w-full grid-cols-[58px_minmax(0,112px)_minmax(0,1fr)]');
     expect(source).not.toContain('<aside className="border-l border-[#252b35] bg-[#0b0e13] px-4 py-4">');
     expect(source).not.toContain('<div className="mt-4 space-y-2">');
-    expect(source).not.toContain('日志流过快');
-    expect(source).not.toContain('前端已隐藏');
+    expect(source).not.toContain('log stream too fast');
+    expect(source).not.toContain('frontend has hidden');
     expect(source).not.toContain('shouldShowStreamBackpressureNotice');
     expect(source).not.toContain('streamItems.map(item =>');
   });
@@ -756,8 +778,8 @@ describe('log manage page', () => {
     expect(html).toContain('data-log-manage-stream-pause-notice-owner="hertzbeat-ui-state-notice"');
     expect(html).toContain('data-log-manage-stream-pause-notice="paused-buffer-visible"');
     expect(html).toContain('data-hz-ui="state-notice"');
-    expect(html).toContain('已暂停');
-    expect(html).toContain('继续');
+    expect(html).toContain(tZh('log.manage.stream.state.paused'));
+    expect(html).toContain(tZh('log.manage.stream.action.resume'));
   }, 15000);
 
   it('uses the shared narrow time rail in the top-right page header instead of the log query row', async () => {
@@ -806,7 +828,7 @@ describe('log manage page', () => {
     const html = renderLogManagePage();
 
     expect(html).toContain('data-log-manage-route="otlp-cold-log-workbench"');
-    expect(html).toContain('data-loading-copy="正在加载日志工作台"');
+    expect(html).toContain(`data-loading-copy="${tZh('log.manage.loading')}"`);
     expect(html).toContain('data-log-manage-style-baseline="hertzbeat-cold-matte"');
     expect(html).toContain('data-log-manage-query-bar="cold-query-row"');
     expect(html).toContain('data-log-manage-panel-surface-padding-owner="hertzbeat-ui-panel-surface"');
@@ -844,15 +866,15 @@ describe('log manage page', () => {
     expect(html).toContain('data-hz-panel-header-eyebrow="true"');
     expect(html).toContain('data-log-manage-row-detail-action="true"');
     expect(html).toContain('data-log-manage-severity-tone="danger"');
-    expect(html).toContain('查看日志');
+    expect(html).toContain(tZh('log.manage.stream.action.view-log'));
     expect(html).toContain('data-log-manage-selected-evidence="selected-log-evidence"');
     expect(html).toContain('data-log-manage-selected-evidence-owner="hertzbeat-ui-detail-rows"');
     expect(html).toContain('data-log-manage-detail-facts-owner="hertzbeat-ui-detail-rows"');
-    expect(html).toContain('日志证据');
-    expect(html).toContain('日志时间');
-    expect(html).toContain('日志级别');
-    expect(html).toContain('正文摘要');
-    expect(html).toContain('最近上报');
+    expect(html).toContain(tZh('log.manage.evidence.title'));
+    expect(html).toContain(tZh('log.manage.evidence.time.title'));
+    expect(html).toContain(tZh('log.manage.evidence.severity.title'));
+    expect(html).toContain(tZh('log.manage.evidence.body.title'));
+    expect(html).toContain(tZh('log.manage.evidence.latest.title'));
     expect(html).not.toContain('data-log-manage-hertzbeat-loop="collector-template-alert-loop"');
     expect(html).toContain('data-log-manage-entity-context="hertzbeat-signal-entity-context"');
     expect(html).toContain('data-log-manage-entity-context-owner="hertzbeat-ui-detail-rows"');
@@ -861,39 +883,39 @@ describe('log manage page', () => {
     expect(html).not.toContain('data-log-manage-intake-quality="logs-collector-quality"');
     expect(html).not.toContain('data-log-manage-intake-quality-row=');
     expect(html).toContain('data-log-manage-row-trace-detail-action="true"');
-    expect(html).toContain('日志工作台');
-    expect(html).toContain('围绕采集来源、实体、链路和告警处理筛选日志');
-    expect(html).not.toContain('日志排查可返回接入总览、采集集群、监控模板和告警处理上下文。');
-    expect(html).not.toContain('保留查询、趋势、列表和详情在一个高密度工作面中');
-    expect(html).not.toContain('日志查询继续保留');
-    expect(html).toContain('运行查询');
-    expect(html).toContain('严重级别');
-    expect(html).toContain('趋势带');
-    expect(html).toContain('最近日志');
-    expect(html).not.toContain('HertzBeat 采集闭环');
-    expect(html).not.toContain('告警闭环');
-    expect(html).not.toContain('接入质量');
-    expect(html).not.toContain('日志采集质量');
-    expect(html).not.toContain('接收量');
-    expect(html).not.toContain('解析失败');
-    expect(html).not.toContain('实体归并失败');
-    expect(html).not.toContain('Collector 节点');
+    expect(html).toContain(tZh('log.manage.route.title'));
+    expect(html).toContain(tZh('log.manage.route.subtitle'));
+    expect(html).not.toContain('Log troubleshooting can return to intake overview, collector clusters, monitor templates, and alert handling context.');
+    expect(html).not.toContain('Keep query, trend, list, and detail in one dense workbench');
+    expect(html).not.toContain('Log query continues to retain');
+    expect(html).toContain(tZh('log.manage.query.run.history'));
+    expect(html).toContain(tZh('log.manage.query.severity.aria'));
+    expect(html).toContain(tZh('log.manage.trend.title'));
+    expect(html).toContain(tZh('log.manage.list.title'));
+    expect(html).not.toContain('HertzBeat collection loop');
+    expect(html).not.toContain('Alert loop');
+    expect(html).not.toContain('Intake quality');
+    expect(html).not.toContain('Log collection quality');
+    expect(html).not.toContain('Received volume');
+    expect(html).not.toContain('Parse failures');
+    expect(html).not.toContain('Entity merge failures');
+    expect(html).not.toContain('Collector nodes');
     expect(html).toContain('/ingestion/otlp?signal=logs');
-    expect(html).toContain('实体上下文');
-    expect(html).toContain('当前实体');
-    expect(html).toContain('采集来源');
-    expect(html).toContain('实体详情');
-    expect(html).toContain('告警处理');
+    expect(html).toContain(tZh('log.manage.context.entity.title'));
+    expect(html).toContain(tZh('signal.context.entity.label'));
+    expect(html).toContain(tZh('signal.context.source.label'));
+    expect(html).toContain(tZh('log.manage.route.action.entity'));
+    expect(html).toContain(tZh('log.manage.route.action.alerts'));
     expect(html).toContain('data-log-manage-signal-handoff-hint="log-trace-metric-context"');
-    expect(html).toContain('当前日志的链路、跨度和服务上下文会带入链路与指标工作台');
-    expect(html).not.toContain('告警规则');
-    expect(html).not.toContain('保存视图');
-    expect(html).not.toContain('创建告警');
-    expect(html).not.toContain('加入仪表盘');
+    expect(html).toContain(tZh('log.manage.handoff.signal-hint'));
+    expect(html).not.toContain('Alert rules');
+    expect(html).not.toContain('Save view');
+    expect(html).not.toContain('Create alert');
+    expect(html).not.toContain('Add to dashboard');
     expect(html).toContain('checkout timeout');
     expect(html).toContain('checkout');
-    expect(html).toContain('查看链路');
-    expect(html).toContain('查看指标');
+    expect(html).toContain(tZh('log.manage.handoff.traces'));
+    expect(html).toContain(tZh('log.manage.handoff.metrics'));
     expect(html).toContain('/entities/7?entityId=7');
     expect(html).toContain('/alert?status=firing&amp;signal=logs');
     expect(html).not.toContain('signoz-');
@@ -1018,9 +1040,9 @@ describe('log manage page', () => {
 
       const detailDialog = interactionContainer.querySelector('[data-log-stream-detail-dialog="true"]');
       expect(detailDialog).not.toBeNull();
-      expect(detailDialog?.textContent).toContain('归因诊断');
+      expect(detailDialog?.textContent).toContain(tZh('log.manage.selected.attribution.title'));
       expect(detailDialog?.textContent).toContain('hertzbeat.entity_id');
-      expect(detailDialog?.textContent).toContain('缺少实体 ID，实体详情会保持禁用');
+      expect(detailDialog?.textContent).toContain(tZh('log.manage.attribution.entity-id.missing'));
       expect(detailDialog?.textContent).toContain('hertzbeat.collector');
       expect(detailDialog?.textContent).toContain('collector-local');
       expect(detailDialog?.textContent).toContain('hertzbeat.template');
@@ -1054,9 +1076,9 @@ describe('log manage page', () => {
       const html = renderLogManagePage();
 
       expect(html).toContain('data-log-manage-selected-attribution-diagnostics="hertzbeat-attribute-diagnostics"');
-      expect(html).toContain('归因诊断');
+      expect(html).toContain(tZh('log.manage.selected.attribution.title'));
       expect(html).toContain('hertzbeat.entity_id');
-      expect(html).toContain('缺少实体 ID，实体详情会保持禁用');
+      expect(html).toContain(tZh('log.manage.attribution.entity-id.missing'));
       expect(html).toContain('hertzbeat.collector');
       expect(html).toContain('collector-local');
       expect(html).toContain('hertzbeat.template');
@@ -1167,14 +1189,14 @@ describe('log manage page', () => {
     expect(apiMessageGet).toHaveBeenCalledWith('/traces/trace-123/spans');
     expect(relatedTraceDialog).not.toBeNull();
     expect(relatedTraceDialog?.textContent).toContain('POST /checkout');
-    expect(relatedTraceDialog?.textContent).toContain('链路预览');
-    expect(relatedTraceDialog?.textContent).toContain('2 个跨度');
-    expect(relatedTraceDialog?.textContent).toContain('2 个事件');
-    expect(relatedTraceDialog?.textContent).toContain('服务与命名空间');
-    expect(relatedTraceDialog?.textContent).toContain('暂无链路状态');
-    expect(relatedTraceDialog?.textContent).toContain('关联');
+    expect(relatedTraceDialog?.textContent).toContain(tZh('log.manage.related-trace.badge'));
+    expect(relatedTraceDialog?.textContent).toContain(tZh('log.manage.related-trace.spans-count', { count: 2 }));
+    expect(relatedTraceDialog?.textContent).toContain(tZh('log.manage.related-trace.fact.events'));
+    expect(relatedTraceDialog?.textContent).toContain(tZh('trace.manage.selected-span.service-namespace'));
+    expect(relatedTraceDialog?.textContent).toContain(tZh('trace.manage.trace-state-empty'));
+    expect(relatedTraceDialog?.textContent).toContain(tZh('log.manage.related-trace.fact.links'));
     const stageFacts = relatedTraceDialog?.querySelector('[data-log-related-trace-stage-facts="true"]');
-    expect(stageFacts?.textContent).toContain('事件');
+    expect(stageFacts?.textContent).toContain(tZh('log.manage.related-trace.fact.events'));
     expect(stageFacts?.textContent).toContain('2');
     expect(relatedTraceDialog?.querySelectorAll('[data-waterfall-event-marker="true"]')).toHaveLength(2);
     expect(relatedTraceDialog?.querySelectorAll('[data-waterfall-minimap-event-marker="true"]')).toHaveLength(2);

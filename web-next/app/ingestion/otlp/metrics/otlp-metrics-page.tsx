@@ -293,7 +293,7 @@ export default function OtlpMetricsPage() {
           value: row.value,
           meta: row.meta,
           state: row.state,
-          stateLabel: row.state === 'present' ? '已提供' : '缺失',
+          stateLabel: row.state === 'present' ? t('otlp.metrics.attribution.state.present') : t('otlp.metrics.attribution.state.missing'),
           tone: row.state === 'present' ? 'success' as const : 'critical' as const,
           rowProps: {
             'data-otlp-metrics-attribution-diagnostic-state': row.state
@@ -682,7 +682,7 @@ export default function OtlpMetricsPage() {
                         data-otlp-metrics-chart-title-label="shared-panel-title-label"
                         data-otlp-metrics-chart-title-label-owner="hertzbeat-ui-panel-title-label"
                       >
-                        趋势带
+                        {t('otlp.metrics.trend.title')}
                       </HzPanelTitleLabel>
                       <HzActionGroup
                         layout="end-wrap"
@@ -806,8 +806,8 @@ export default function OtlpMetricsPage() {
                             tone="info"
                             variant="hint"
                             frame="trend-empty"
-                            title="暂无指标趋势"
-                            description="运行查询后展示真实采样点。"
+                            title={t('otlp.metrics.trend.empty.title')}
+                            description={t('otlp.metrics.trend.empty.copy')}
                           />
                         )}
                       </HzTrendFrame>
@@ -820,7 +820,7 @@ export default function OtlpMetricsPage() {
                         casing="plain"
                         spacing="trend-helper"
                       >
-                        {trendBars.length ? `${trendBars.length} 个采样点` : '-'}
+                        {trendBars.length ? t('otlp.metrics.trend.sample-count', { count: trendBars.length }) : '-'}
                       </HzDataMetaText>
                     )}
                   </HzPanelSurface>
@@ -844,7 +844,7 @@ export default function OtlpMetricsPage() {
                     data-otlp-metrics-series-table-header="shared-panel-header"
                     data-otlp-metrics-series-table-header-owner="hertzbeat-ui-panel-header"
                     chrome="transparent-topless"
-                    title="序列集合"
+                    title={t('otlp.metrics.series.collection.title')}
                     meta={
                       <HzStatusBadge
                         data-otlp-metrics-series-table-summary="result-count"
@@ -852,7 +852,7 @@ export default function OtlpMetricsPage() {
                         tone="neutral"
                         size="xs"
                       >
-                        {seriesRows.length} 条
+                        {t('otlp.metrics.scope.series-count', { count: seriesRows.length })}
                       </HzStatusBadge>
                     }
                   />
@@ -910,17 +910,17 @@ export default function OtlpMetricsPage() {
                     columns={[
                       {
                         key: 'name',
-                        header: '指标名称',
+                        header: t('otlp.metrics.series.context.metric-name'),
                         render: row => <HzDataCellText variant="title" display="block">{row.title}</HzDataCellText>
                       },
                       {
                         key: 'service',
-                        header: '服务',
+                        header: t('otlp.metrics.field.service'),
                         render: row => <HzDataCellText variant="value">{row.copy}</HzDataCellText>
                       },
                       {
                         key: 'entity',
-                        header: '实体',
+                        header: t('otlp.metrics.series.context.entity'),
                         render: row => (
                           <HzDataCellStack
                             display="block"
@@ -953,17 +953,17 @@ export default function OtlpMetricsPage() {
                       },
                       {
                         key: 'latest',
-                        header: '最新值',
+                        header: t('otlp.metrics.evidence.latest-value'),
                         render: row => <HzDataCellText variant="value" font="mono" tone="bright" data-otlp-metrics-series-latest-owner="hertzbeat-ui-data-cell-text">{row.meta}</HzDataCellText>
                       },
                       {
                         key: 'points',
-                        header: '采样点',
+                        header: t('otlp.metrics.evidence.samples'),
                         render: row => <HzDataCellText variant="value">{row.pointCount}</HzDataCellText>
                       },
                       {
                         key: 'time',
-                        header: '最近时间',
+                        header: t('otlp.metrics.table.recent-time'),
                         render: () => <HzDataCellText variant="timestamp">{formatTime(latestObservedAt)}</HzDataCellText>
                       }
                     ]}
@@ -983,7 +983,7 @@ export default function OtlpMetricsPage() {
                     data-otlp-metrics-detail-panel-header="shared-panel-header"
                     data-otlp-metrics-detail-panel-header-owner="hertzbeat-ui-panel-header"
                     chrome="transparent"
-                    eyebrow="详情面板"
+                    eyebrow={t('otlp.metrics.detail.eyebrow')}
                     title={firstSeries.title}
                     subtitle={workbenchState.chartLabel}
                   />
@@ -1015,16 +1015,16 @@ export default function OtlpMetricsPage() {
                       data-otlp-metrics-detail-context-rows="shared-detail-rows"
                       data-otlp-metrics-detail-context-rows-owner="hertzbeat-ui-detail-rows"
                       offset="top"
-                      heading="查询上下文"
+                      heading={t('otlp.metrics.detail.query-context')}
                       rows={metricsDetailContextRows}
                     />
                     {selectedSeriesContextRows.length > 0 ? (
                       <HzDetailRows
                         data-otlp-metrics-selected-series-context="selected-series-attribution"
                         data-otlp-metrics-selected-series-context-owner="hertzbeat-ui-detail-rows"
-                        aria-label="当前选中序列 关联实体 当前服务 采集模板 当前环境"
+                        aria-label={t('otlp.metrics.detail.selected-series.aria')}
                         boundary="top"
-                        heading="当前选中序列"
+                        heading={t('otlp.metrics.series.context.selected-series')}
                         rows={selectedSeriesContextDetailRows}
                       />
                     ) : null}
@@ -1032,9 +1032,9 @@ export default function OtlpMetricsPage() {
                       <HzDetailRows
                         data-otlp-metrics-selected-series-evidence="real-sample-evidence"
                         data-otlp-metrics-selected-series-evidence-owner="hertzbeat-ui-detail-rows"
-                        aria-label="指标证据 采样点 最新值 值域 采样窗口 关联链路"
+                        aria-label={t('otlp.metrics.detail.evidence.aria')}
                         boundary="top"
-                        heading="指标证据"
+                        heading={t('otlp.metrics.detail.evidence.heading')}
                         rows={selectedSeriesEvidenceDetailRows}
                       />
                     ) : null}
@@ -1051,7 +1051,7 @@ export default function OtlpMetricsPage() {
                     >
                       {canOpenEntity ? (
                         <HzButtonLink component={Link} href={handoffLinks.entityHref} size="md" layout="full" data-otlp-metrics-entity-action="true">
-                          实体详情
+                          {t('topology.context-link.entity')}
                         </HzButtonLink>
                       ) : (
                         <HzDisabledActionShell
@@ -1067,21 +1067,21 @@ export default function OtlpMetricsPage() {
                             title={missingEntityHandoffTitle}
                             aria-label={missingEntityHandoffTitle}
                           >
-                            实体详情
+                            {t('topology.context-link.entity')}
                           </HzButton>
                         </HzDisabledActionShell>
                       )}
                       <HzButtonLink component={Link} href={handoffLinks.alertHandlingHref} size="md" layout="full" data-otlp-metrics-alert-handling-action="true">
-                        告警处理
+                        {t('otlp.metrics.handoff.alerts')}
                       </HzButtonLink>
                       <HzButtonLink component={Link} href={handoffLinks.logsHref} size="md" layout="full" data-otlp-metrics-logs-action="true">
-                        查看日志
+                        {t('otlp.metrics.handoff.logs.action')}
                       </HzButtonLink>
                       <HzButtonLink component={Link} href={handoffLinks.tracesHref} size="md" layout="full" data-otlp-metrics-traces-action="true">
-                        查看链路
+                        {t('otlp.metrics.handoff.traces.action')}
                       </HzButtonLink>
                       <HzButtonLink component={Link} href={handoffLinks.entitiesHref} size="md" layout="full" data-otlp-metrics-entities-action="true">
-                        对象目录
+                        {t('overview.lane.entities.title')}
                       </HzButtonLink>
                     </HzActionGroup>
                   </HzPanelSection>
@@ -1096,9 +1096,9 @@ export default function OtlpMetricsPage() {
                         data-otlp-metrics-linked-record-summary="log-trace-alert-links"
                         data-otlp-metrics-linked-record-summary-panel="collapsible"
                         data-otlp-metrics-linked-record-summary-owner="hertzbeat-ui-collapsible-section"
-                        aria-label="关联记录 历史日志 链路瀑布图 告警处理"
-                        title="关联记录"
-                        meta="日志 / 链路 / 告警"
+                        aria-label={t('otlp.metrics.linked-records.aria')}
+                        title={t('otlp.metrics.linked-records.title')}
+                        meta={t('otlp.metrics.linked-records.meta')}
                         surface="inset"
                       >
                         <div
@@ -1106,8 +1106,8 @@ export default function OtlpMetricsPage() {
                           data-otlp-metrics-linked-record-handoff-owner="hertzbeat-ui-context-handoff"
                         >
                           <HzContextHandoff
-                            title="证据跳转"
-                            context="日志 / 链路 / 告警"
+                            title={t('otlp.metrics.linked-records.handoff.title')}
+                            context={t('otlp.metrics.linked-records.meta')}
                             targets={linkedRecordHandoffTargets}
                             frame="flush"
                           />
@@ -1118,15 +1118,15 @@ export default function OtlpMetricsPage() {
                       <HzCollapsibleSection
                         data-otlp-metrics-attribution-diagnostics-panel="collapsible"
                         data-otlp-metrics-attribution-diagnostics-panel-owner="hertzbeat-ui-collapsible-section"
-                        aria-label="归因诊断 hertzbeat.entity_id hertzbeat.entity_name hertzbeat.workspace_id hertzbeat.collector hertzbeat.template"
-                        title="归因诊断"
+                        aria-label={t('otlp.metrics.attribution.diagnostics.aria')}
+                        title={t('otlp.metrics.attribution.diagnostics.title')}
                         meta="hertzbeat.*"
                         surface="inset"
                       >
                         <HzAttributeDiagnostics
                           data-otlp-metrics-attribution-diagnostics="hertzbeat-attribute-diagnostics"
                           data-otlp-metrics-attribution-diagnostics-owner="hertzbeat-ui-attribute-diagnostics"
-                          title="归因诊断"
+                          title={t('otlp.metrics.attribution.diagnostics.title')}
                           namespaceLabel="hertzbeat.*"
                           rows={attributionDiagnosticRows}
                           frame="embedded"
@@ -1137,14 +1137,14 @@ export default function OtlpMetricsPage() {
                       data-otlp-metrics-entity-context="hertzbeat-signal-entity-context"
                       data-otlp-metrics-entity-context-panel="collapsible"
                       data-otlp-metrics-entity-context-panel-owner="hertzbeat-ui-collapsible-section"
-                      aria-label="实体上下文 当前实体 监控实例 当前服务 链路上下文 当前环境 时间范围 采集来源"
-                      title="实体上下文"
-                      meta="当前窗口"
+                      aria-label={t('otlp.metrics.entity-context.aria')}
+                      title={t('otlp.metrics.entity-context.title')}
+                      meta={t('otlp.metrics.entity-context.current-window')}
                       surface="inset"
                     >
                       <HzDetailRows
                         data-otlp-metrics-entity-context-owner="hertzbeat-ui-detail-rows"
-                        heading="实体上下文"
+                        heading={t('otlp.metrics.entity-context.title')}
                         padding="compact-y"
                         rows={entityContextDetailRows}
                       />

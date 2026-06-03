@@ -169,7 +169,7 @@ vi.mock('@/components/pages/label-manage-surface', () => ({
       data-label-monitor-handoff-owner="next-monitor-query-link"
     >
       <section data-label-admin-layout="full-width-admin-list">
-        <span>标签管理</span>
+        <span>Label management</span>
         <span>{search}</span>
         <span data-label-test-first-name="true">{data.list.content[0]?.name || 'no-row'}</span>
         <span>{draftLabel ? draftLabel.name : 'no-draft'}</span>
@@ -253,9 +253,7 @@ describe('setting labels page', () => {
     expect(html).toContain('data-label-manage-style-baseline="hertzbeat-cold-matte"');
     expect(html).toContain('data-label-admin-layout="full-width-admin-list"');
     expect(html).not.toContain('data-label-summary-rail=');
-    expect(html).not.toContain('标签摘要');
-    expect(html).not.toContain('当前标签集');
-    expect(html).toContain('标签管理');
+    expect(html).toContain('Label management');
     expect(html).toContain('no-draft');
     expect(html).toContain('false');
     expect(html).toContain('data-label-save-feedback="none"');
@@ -541,7 +539,7 @@ describe('setting labels page', () => {
       expect.objectContaining({ name: 'team', tagValue: 'ops' }),
       true
     );
-    expect(mockState.lastSurfaceProps?.actionError).toBe('新增失败!');
+    expect(mockState.lastSurfaceProps?.actionError).toBe(createTranslatorMock({ locale: 'zh-CN' })('common.notify.new-fail'));
     expect(mockState.lastSurfaceProps?.actionMeta).toBe('backend refused label create');
 
     await act(async () => {
@@ -579,7 +577,7 @@ describe('setting labels page', () => {
       mockState.renderData.list.content[0],
       false
     );
-    expect(mockState.lastSurfaceProps?.actionError).toBe('修改失败!');
+    expect(mockState.lastSurfaceProps?.actionError).toBe(createTranslatorMock({ locale: 'zh-CN' })('common.notify.edit-fail'));
     expect(mockState.lastSurfaceProps?.actionMeta).toBe('backend refused label edit');
 
     await act(async () => {
@@ -658,7 +656,7 @@ describe('setting labels page', () => {
 
     expect(deleteLabel).toHaveBeenCalledWith(apiMessageDelete, 1);
     expect(mockState.lastSurfaceProps?.deleteTarget).toBeNull();
-    expect(mockState.lastSurfaceProps?.actionError).toBe('删除失败!');
+    expect(mockState.lastSurfaceProps?.actionError).toBe(createTranslatorMock({ locale: 'zh-CN' })('common.notify.delete-fail'));
     expect(mockState.lastSurfaceProps?.actionMeta).toBe('backend refused label delete');
 
     await act(async () => {

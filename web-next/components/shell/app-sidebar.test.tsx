@@ -21,23 +21,23 @@ describe('AppSidebar', () => {
     expect(html).toContain('data-app-sidebar="true"');
     expect(html).toContain('data-app-sidebar-nav="true"');
     expect(html).toContain('data-shell-nav-item="overview-home"');
-    expect(html).toContain('接入采集');
-    expect(html).toContain('对象资源');
-    expect(html).toContain('可观测排障');
-    expect(html).toContain('告警处置');
-    expect(html).toContain('仪表盘');
-    expect(html).toContain('平台设置');
+    expect(html).toContain(t('menu.section.ingestion'));
+    expect(html).toContain(t('menu.section.objects'));
+    expect(html).toContain(t('menu.section.observability'));
+    expect(html).toContain(t('menu.section.alerting'));
+    expect(html).toContain(t('menu.section.dashboards'));
+    expect(html).toContain(t('menu.section.settings'));
     expect(html).toContain('data-shell-nav-item="settings-mcp-server"');
-    expect(html).toContain('MCP服务器');
+    expect(html).toContain(t('menu.advanced.mcp-server'));
     expect(html).toContain('data-shell-nav-item="help-center"');
-    expect(html).toContain('帮助中心');
+    expect(html).toContain(t('menu.extras.help'));
     expect(html).not.toContain('data-shell-nav-item="incidents"');
     expect(html).not.toContain('data-shell-nav-item="actions"');
     expect(html).not.toContain('data-shell-nav-item="status-public"');
     expect(html).toContain('href="/overview"');
     expect(html).not.toContain('data-app-sidebar-operator="true"');
-    expect(html).not.toContain('操作员');
-    expect(html).not.toContain('已认证会话');
+    expect(html).not.toMatch(/\u64cd\u4f5c\u5458/);
+    expect(html).not.toMatch(/\u5df2\u8ba4\u8bc1\u4f1a\u8bdd/);
   });
 
   it('flattens shared nav rows so the sidebar no longer renders every item as a bordered card with a boxed icon', () => {

@@ -3,22 +3,14 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { SUPPLEMENTAL_MESSAGES } from '../lib/i18n-runtime-messages';
 import { buildLegacyFrontendParityAudit, validateLegacyFrontendParityGate } from '../lib/legacy-frontend-parity';
 import { cutoverHoldRoutes, placeholderRoutes, routeMatrixPaths } from '../lib/nav';
 
 const webNextRoot = resolve(__dirname, '..');
-const repoRoot = resolve(webNextRoot, '..');
 
 function readWebNext(path: string): string {
   return readFileSync(resolve(webNextRoot, path), 'utf8');
-}
-
-function readRepo(path: string): string {
-  return readFileSync(resolve(repoRoot, path), 'utf8');
-}
-
-function readJson(path: string): Record<string, unknown> {
-  return JSON.parse(readRepo(path));
 }
 
 describe('M10 frontend convergence contract', () => {
@@ -100,9 +92,9 @@ describe('M10 frontend convergence contract', () => {
     });
   });
 
-  it('keeps shared time-range and monitor operator copy available in both legacy catalogs', () => {
-    const enMessages = readJson('web-app/src/assets/i18n/en-US.json');
-    const zhMessages = readJson('web-app/src/assets/i18n/zh-CN.json');
+  it('keeps shared time-range and monitor operator copy available in Next runtime catalogs', () => {
+    const enMessages = SUPPLEMENTAL_MESSAGES['en-US'] ?? {};
+    const zhMessages = SUPPLEMENTAL_MESSAGES['zh-CN'] ?? {};
 
     [
       'time.range.preset',

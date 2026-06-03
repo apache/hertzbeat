@@ -62,7 +62,14 @@ describe('workspace navigation', () => {
     const ingestionTab = tabs.find(tab => tab.key === 'ingestion');
     const monitorsTab = tabs.find(tab => tab.key === 'monitors');
 
-    expect(tabs.map(tab => tab.label)).toEqual(['实体详情', '可观测接入', '指标工作台', '日志工作台', '链路工作台', '监控中心']);
+    expect(tabs.map(tab => tab.label)).toEqual([
+      t('entity.detail'),
+      t('otlp.title'),
+      t('ingestion.otlp.metrics.title'),
+      t('log.manage.console.title'),
+      t('trace.manage.workspace'),
+      t('menu.monitor.center')
+    ]);
     expect(logsTab?.href).toContain('/log/manage?');
     expect(logsTab?.href).toContain('traceId=trace-123');
     expect(logsTab?.href).toContain('severityText=ERROR');
@@ -141,7 +148,13 @@ describe('workspace navigation', () => {
     });
 
     expect(tabs.map(tab => tab.key)).toEqual(['entity', 'metrics', 'monitors', 'logs', 'traces']);
-    expect(tabs.map(tab => tab.label)).toEqual(['实体详情', '指标工作台', '监控中心', '日志工作台', '链路工作台']);
+    expect(tabs.map(tab => tab.label)).toEqual([
+      t('entity.detail'),
+      t('ingestion.otlp.metrics.title'),
+      t('menu.monitor.center'),
+      t('log.manage.console.title'),
+      t('trace.manage.workspace')
+    ]);
     expect(tabs[2]?.href).toContain('/monitors?');
     expect(tabs[2]?.href).toContain('entityId=7');
     expect(tabs[3]?.href).toContain('/log/manage?');
@@ -156,7 +169,12 @@ describe('workspace navigation', () => {
     });
 
     expect(tabs.map(tab => tab.key)).toEqual(['entity', 'monitors', 'logs', 'traces']);
-    expect(tabs.map(tab => tab.label)).toEqual(['实体详情', '监控中心', '日志工作台', '链路工作台']);
+    expect(tabs.map(tab => tab.label)).toEqual([
+      t('entity.detail'),
+      t('menu.monitor.center'),
+      t('log.manage.console.title'),
+      t('trace.manage.workspace')
+    ]);
     expect(tabs.find(tab => tab.key === 'entity')?.active).toBe(true);
     expect(tabs.find(tab => tab.key === 'monitors')?.disabled).toBe(true);
     expect(tabs.find(tab => tab.key === 'logs')?.disabled).toBe(true);

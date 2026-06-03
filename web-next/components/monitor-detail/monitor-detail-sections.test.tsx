@@ -250,7 +250,7 @@ describe('monitor detail sections', () => {
     expect(contextHtml).toBe('');
     expect(contextHtml).not.toContain('Pinned evidence');
     expect(realtimeHtml).not.toContain('Monitor Observation');
-    expect(realtimeHtml).toContain('Monitoring Basic');
+    expect(realtimeHtml).toContain(t('monitor.detail.basic'));
     expect(realtimeHtml).not.toContain('This card shows the base observation details and latest status for monitor instance 10.0.0.1.');
     expect(realtimeHtml).not.toContain('HertzBeat Collection');
     expect(realtimeHtml).toContain('data-hz-ui="monitor-basic-card"');
@@ -384,7 +384,7 @@ describe('monitor detail sections', () => {
     expect(realtimeHtml).not.toContain('data-monitor-detail-signal-selected-style="angular-neutral"');
     expect(realtimeHtml).toContain('data-hz-monitor-metric-table-row="metric-fields"');
     expect(realtimeHtml).toContain('data-monitor-detail-signal-row-title="true"');
-    expect(realtimeHtml).not.toMatch(/>\s*\d+\s+(?:Fields|字段)\s*</);
+    expect(realtimeHtml).not.toMatch(/>\s*\d+\s+(?:Fields|\u5b57\u6bb5)\s*</u);
     expect(realtimeHtml).not.toContain('data-monitor-detail-signal-card-table-row="source"');
     expect(realtimeHtml).not.toContain('Real-time Metric');
     expect(realtimeHtml).not.toContain('This card shows the latest sampled result for summary while keeping the native HertzBeat collection semantics.');

@@ -881,7 +881,7 @@ describe('topology surface config', () => {
     expect(model.faultContextRows.map(row => row.label)).toEqual(
       expect.arrayContaining(['Current entity', 'Current service', 'Trace context', 'Source'])
     );
-    expect(visibleModelText).not.toMatch(/[一-龥]/);
+    expect(visibleModelText).not.toMatch(/[\u4e00-\u9fa5]/u);
     expect(visibleModelText).not.toContain('topology.');
     expect(visibleModelText).not.toContain('signal.context.');
   });

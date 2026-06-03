@@ -27,8 +27,8 @@ describe('LocaleOptionList', () => {
       />
     );
 
-    expect(html).toContain('英语(en_US)');
-    expect(html).toContain('简体中文(zh_CN)');
+    expect(html).toContain(t('settings.system-config.locale.en_US'));
+    expect(html).toContain(t('settings.system-config.locale.zh_CN'));
     expect(html).toContain('✓');
     expect(html).toContain('data-hz-ui="locale-menu-option"');
     expect(html).toContain('data-hz-locale-menu-option-owner="hertzbeat-ui-locale-menu-option"');

@@ -47,15 +47,15 @@ describe('monitor detail console', () => {
       />
     );
 
-    expect(html).toContain('监控列表');
-    expect(html).toContain('监控详情');
-    expect(html).toContain('监控实时数据详情');
+    expect(html).toContain(zh('monitor.list'));
+    expect(html).toContain(zh('monitor.detail'));
+    expect(html).toContain(zh('monitor.detail.realtime'));
     expect(html).toContain('data-monitor-detail-header-mode="breadcrumb-only"');
     expect(html).toContain('data-monitor-detail-reference-source="apache-hertzbeat-master-monitor-detail"');
     expect(html).toContain('data-monitor-detail-context-mark="breadcrumb"');
     expect(html).toContain('data-monitor-detail-context-mark-owner="hertzbeat-ui-inline-context-mark"');
     expect(html).not.toContain('data-monitor-detail-app-chip="breadcrumb"');
-    expect(html).not.toContain('监控工作台');
+    expect(html).not.toMatch(/\u76d1\u63a7\u5de5\u4f5c\u53f0/);
     expect(html).not.toContain('Monitors');
     expect(html).not.toContain('Monitor detail');
   });

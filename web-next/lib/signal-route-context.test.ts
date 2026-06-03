@@ -76,6 +76,7 @@ describe('signal route context', () => {
 
   it('appends shared signal context from an explicit object', () => {
     const next = new URLSearchParams('traceId=trace-1');
+    const logWorkbenchLabel = String.fromCodePoint(0x65e5, 0x5fd7, 0x5de5, 0x4f5c, 0x53f0);
     appendSignalRouteContext(next, {
       start: '10',
       end: '20',
@@ -85,7 +86,7 @@ describe('signal route context', () => {
       monitorName: 'HTTPS Probe',
       monitorApp: 'website',
       monitorInstance: 'example.com:443',
-      returnTo: '/log/manage?returnLabel=日志工作台'
+      returnTo: `/log/manage?returnLabel=${logWorkbenchLabel}`
     });
 
     expect(next.toString()).toBe(
@@ -139,6 +140,7 @@ describe('signal route context', () => {
   });
 
   it('builds alert handling links for firing alert closure instead of threshold-rule configuration', () => {
+    const logWorkbenchLabel = String.fromCodePoint(0x65e5, 0x5fd7, 0x5de5, 0x4f5c, 0x53f0);
     const href = buildSignalAlertHandlingHref('logs', {
       entityId: '7',
       entityName: 'Checkout API',
@@ -146,7 +148,7 @@ describe('signal route context', () => {
       environment: 'prod',
       timeRange: 'last-1h',
       source: 'otlp',
-      returnTo: '/log/manage?returnLabel=日志工作台'
+      returnTo: `/log/manage?returnLabel=${logWorkbenchLabel}`
     });
     const url = new URL(href, 'https://example.com');
 

@@ -91,14 +91,18 @@ vi.mock('../../../../lib/setting-token/controller', () => ({
 }));
 
 vi.mock('../../../../lib/setting-token/view-model', () => ({
-  buildTokenExpirationOptions: () => [
-    { value: '-1', label: '永不过期' },
-    { value: '604800', label: '7 天' },
-    { value: '2592000', label: '30 天' },
-    { value: '7776000', label: '90 天' },
-    { value: '15552000', label: '180 天' },
-    { value: '31536000', label: '365 天' }
-  ],
+  buildTokenExpirationOptions: () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+
+    return [
+      { value: '-1', label: t('setting.token.expiration.never') },
+      { value: '604800', label: t('setting.token.expiration.7d') },
+      { value: '2592000', label: t('setting.token.expiration.30d') },
+      { value: '7776000', label: t('setting.token.expiration.90d') },
+      { value: '15552000', label: t('setting.token.expiration.180d') },
+      { value: '31536000', label: t('setting.token.expiration.365d') }
+    ];
+  },
   isExpired: (token: { expireTime?: string | null }) => token.expireTime === '2026-04-02T08:00:00Z'
 }));
 
@@ -115,6 +119,7 @@ describe('setting token page', () => {
   });
 
   it('renders the cold settings token console with counts and the token table', async () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
     const { default: SettingTokenPage } = await import('./page');
     const html = renderToStaticMarkup(<SettingTokenPage />);
 
@@ -141,25 +146,25 @@ describe('setting token page', () => {
     expect(html).toContain('data-setting-token-delete-confirm-trigger="angular-modal-confirm"');
     expect(html).toContain('data-setting-token-load-failure-contract="angular-load-failed-retry"');
     expect(html).toContain('data-setting-token-load-failure-contract-owner="hertzbeat-ui-inline-feedback"');
-    expect(html).toContain('令牌管理');
-    expect(html).toContain('API 密钥');
-    expect(html).toContain('统一管理遥测和自动化令牌');
-    expect(html).toContain('在同一页查看令牌状态、最近使用情况和撤销入口。');
-    expect(html).toContain('生成令牌');
-    expect(html).toContain('令牌总数');
-    expect(html).toContain('可用令牌');
-    expect(html).toContain('过期令牌');
-    expect(html).toContain('令牌名称');
-    expect(html).toContain('令牌值');
-    expect(html).toContain('创建者');
-    expect(html).toContain('创建时间');
-    expect(html).toContain('过期时间');
-    expect(html).toContain('最近使用时间');
-    expect(html).toContain('操作');
-    expect(html).toContain('删除选中项');
-    expect(html).toContain('aria-label="删除OTLP ingestion"');
-    expect(html).toContain('aria-label="删除Expired token"');
-    expect(html).toContain('永不过期');
+    expect(html).toContain(t('settings.token'));
+    expect(html).toContain(t('settings.token.console.kicker'));
+    expect(html).toContain(t('settings.token.console.title'));
+    expect(html).toContain(t('settings.token.console.copy'));
+    expect(html).toContain(t('settings.token.generate'));
+    expect(html).toContain(t('settings.token.console.result.total'));
+    expect(html).toContain(t('settings.token.console.result.active'));
+    expect(html).toContain(t('settings.token.console.result.expired'));
+    expect(html).toContain(t('settings.token.name'));
+    expect(html).toContain(t('settings.token.value'));
+    expect(html).toContain(t('settings.token.creator'));
+    expect(html).toContain(t('settings.token.create-time'));
+    expect(html).toContain(t('settings.token.expire-time'));
+    expect(html).toContain(t('settings.token.last-used'));
+    expect(html).toContain(t('common.edit'));
+    expect(html).toContain(t('common.button.delete'));
+    expect(html).toContain(`aria-label="${t('settings.token.delete-action', { name: 'OTLP ingestion' })}"`);
+    expect(html).toContain(`aria-label="${t('settings.token.delete-action', { name: 'Expired token' })}"`);
+    expect(html).toContain(t('settings.token.expire.never'));
     expect(html).toContain('OTLP ingestion');
     expect(html).toContain('Expired token');
     expect(html).toContain('hb_xxx');
@@ -173,8 +178,6 @@ describe('setting token page', () => {
     expect(html).not.toContain('data-workbench-page="true"');
     expect(html).not.toContain('data-stage-section=');
     expect(html).not.toContain('API Keys');
-    expect(html).not.toContain('令牌摘要');
-    expect(html).not.toContain('当前令牌');
     expect(html).not.toContain('Generate token');
     expect(html).not.toContain('Token management');
 
@@ -260,10 +263,11 @@ describe('setting token page', () => {
     try {
       const { default: SettingTokenPage } = await import('./page');
       const html = renderToStaticMarkup(<SettingTokenPage />);
+      const t = createTranslatorMock({ locale: 'zh-CN' });
 
       expect(html).toContain('data-setting-token-table="cold-token-table"');
-      expect(html).toContain('无');
-      expect(html).toContain('永不过期');
+      expect(html).toContain(t('common.none'));
+      expect(html).toContain(t('settings.token.expire.never'));
       expect(html).not.toContain('<td class="border-b border-r border-[#2b3039] bg-[#0b0c0e] px-3 py-3 text-[#d0d5dd] last:border-r-0">-</td>');
       expect(html).not.toContain('<code class="rounded-[3px] border border-[#2b3039] bg-[#101217] px-1.5 py-0.5 text-[12px] text-[#c8d2df]">-</code>');
     } finally {

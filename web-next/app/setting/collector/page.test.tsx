@@ -157,13 +157,13 @@ vi.mock('@/components/pages/collector-manage-surface', () => ({
         data-collector-pagination-owner="hertzbeat-ui-pagination-bar"
       >
         <section data-collector-admin-layout="full-width-admin-list">
-          <span>刷新</span>
-          <span>部署采集器</span>
-          <span>上线采集器</span>
-          <span>下线采集器</span>
-          <span>删除采集器</span>
-          <span>搜索</span>
-          <span>采集集群</span>
+          <span>Refresh</span>
+          <span>Deploy collector</span>
+          <span>Online collector</span>
+          <span>Offline collector</span>
+          <span>Delete collector</span>
+          <span>Search</span>
+          <span>Collector cluster</span>
           <span>{search}</span>
           <span>{selectedCollectors?.length ?? 0}</span>
           <span>{actionMessage ?? 'no-action-message'}</span>
@@ -303,15 +303,13 @@ describe('setting collector page', () => {
     expect(html).toContain('data-collector-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(html).toContain('data-collector-admin-layout="full-width-admin-list"');
     expect(html).not.toContain('data-collector-summary-rail=');
-    expect(html).not.toContain('当前采集集群');
-    expect(html).not.toContain('选中节点');
-    expect(html).toContain('刷新');
-    expect(html).toContain('部署采集器');
-    expect(html).toContain('上线采集器');
-    expect(html).toContain('下线采集器');
-    expect(html).toContain('删除采集器');
-    expect(html).toContain('搜索');
-    expect(html).toContain('采集集群');
+    expect(html).toContain('Refresh');
+    expect(html).toContain('Deploy collector');
+    expect(html).toContain('Online collector');
+    expect(html).toContain('Offline collector');
+    expect(html).toContain('Delete collector');
+    expect(html).toContain('Search');
+    expect(html).toContain('Collector cluster');
     expect(html).toContain('no-action-message');
     expect(html).toContain('no-action-error');
     expect(html).toContain('no-action-meta');

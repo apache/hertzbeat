@@ -5,7 +5,7 @@ import { Checkbox } from './checkbox';
 
 describe('Checkbox', () => {
   it('renders the shared cold checkbox owner instead of default checkbox chrome', () => {
-    const html = renderToStaticMarkup(<Checkbox name="enabled" checked readOnly label="启用状态" />);
+    const html = renderToStaticMarkup(<Checkbox name="enabled" checked readOnly label="Enabled state" />);
 
     expect(html).toContain('<label');
     expect(html).toContain('data-cold-checkbox-owner="cold-checkbox"');

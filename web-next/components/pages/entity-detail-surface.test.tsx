@@ -129,12 +129,12 @@ describe('EntityDetailSurface', () => {
     expect(source).toContain("translateEntityDetail('entities.detail.attribution.ready')");
     expect(source).toContain("translateEntityDetail('entities.detail.attribution.review')");
     expect(source).toContain("translateEntityDetail('entities.detail.attribution.missing')");
-    expect(source).not.toContain('title="确认删除实体"');
-    expect(source).not.toContain('kicker="对象目录"');
-    expect(source).not.toContain('删除后实体会从对象目录移除');
-    expect(source).not.toContain('已归因');
-    expect(source).not.toContain('待确认');
-    expect(source).not.toContain('缺失');
+    expect(source).not.toMatch(/title="\u786e\u8ba4\u5220\u9664\u5b9e\u4f53"/);
+    expect(source).not.toMatch(/kicker="\u5bf9\u8c61\u76ee\u5f55"/);
+    expect(source).not.toMatch(/\u5220\u9664\u540e\u5b9e\u4f53\u4f1a\u4ece\u5bf9\u8c61\u76ee\u5f55\u79fb\u9664/);
+    expect(source).not.toMatch(/\u5df2\u5f52\u56e0/);
+    expect(source).not.toMatch(/\u5f85\u786e\u8ba4/);
+    expect(source).not.toMatch(/\u7f3a\u5931/);
     expect(source).not.toContain('window.confirm');
     expect(source).not.toContain('confirm(');
     expect(source).toContain('buildEntityContextHandoffLinks');
@@ -250,8 +250,8 @@ describe('EntityDetailSurface', () => {
     expect(html).toContain('Inspect abnormal monitors first.');
     expect(html).not.toContain('Next steps');
     expect(html).not.toContain('Review the summary first');
-    expect(html).not.toContain('对象优先调查');
-    expect(html).not.toContain('关联指标');
+    expect(html).not.toMatch(/\u5bf9\u8c61\u4f18\u5148\u8c03\u67e5/);
+    expect(html).not.toMatch(/\u5173\u8054\u6307\u6807/);
     expect(html).not.toContain('definition workspace');
     expect(html).not.toContain('data-stage-section');
     expect(html).not.toContain('data-drawer-section');
@@ -331,7 +331,7 @@ describe('EntityDetailSurface', () => {
     expect(html).toContain('website · example.com:443 · monitorId 632051474676992');
     expect(html).toContain('data-entity-detail-inherited-context-row="Source"');
     expect(html).toContain('Traditional monitoring');
-    expect(html).not.toContain('0 个证据');
+    expect(html).not.toMatch(/0 \u4e2a\u8bc1\u636e/);
     expect(html).not.toContain('0 evidence');
   }, 30000);
 });

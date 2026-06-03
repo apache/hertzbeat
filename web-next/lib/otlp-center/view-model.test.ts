@@ -154,16 +154,16 @@ describe('otlp center view model', () => {
   it('builds backend-backed self-check rows for collector storage query and Greptime status', () => {
     expect(
       buildSelfCheckRows([
-        { key: 'collector', title: 'Collector 集群', status: 'warning', summary: '2 / 3 在线', detail: '1 个采集节点离线', checkedAt: 1775834700000 },
-        { key: 'storage', title: '历史存储', status: 'success', summary: '1 / 1 可用', detail: 'HistoryDataReader 可用', checkedAt: 1775834700000 },
-        { key: 'query', title: '查询服务', status: 'success', summary: '指标、日志和链路查询可用', detail: 'PromQL 与历史查询可用', checkedAt: 1775834700000 },
-        { key: 'greptime', title: 'GreptimeDB', status: 'success', summary: 'SQL 自检通过', detail: 'SELECT 1 成功', checkedAt: 1775834700000 }
+        { key: 'collector', title: 'Collector cluster', status: 'warning', summary: '2 / 3 online', detail: '1 collector node offline', checkedAt: 1775834700000 },
+        { key: 'storage', title: 'History storage', status: 'success', summary: '1 / 1 available', detail: 'HistoryDataReader available', checkedAt: 1775834700000 },
+        { key: 'query', title: 'Query service', status: 'success', summary: 'Metrics logs and traces are queryable', detail: 'PromQL and history query available', checkedAt: 1775834700000 },
+        { key: 'greptime', title: 'GreptimeDB', status: 'success', summary: 'SQL self-check passed', detail: 'SELECT 1 succeeded', checkedAt: 1775834700000 }
       ] as any)
     ).toEqual([
-      { key: 'collector', title: 'Collector 集群', copy: '2 / 3 在线', meta: '1 个采集节点离线', tone: 'warning' },
-      { key: 'storage', title: '历史存储', copy: '1 / 1 可用', meta: 'HistoryDataReader 可用', tone: 'success' },
-      { key: 'query', title: '查询服务', copy: '指标、日志和链路查询可用', meta: 'PromQL 与历史查询可用', tone: 'success' },
-      { key: 'greptime', title: 'GreptimeDB', copy: 'SQL 自检通过', meta: 'SELECT 1 成功', tone: 'success' }
+      { key: 'collector', title: 'Collector cluster', copy: '2 / 3 online', meta: '1 collector node offline', tone: 'warning' },
+      { key: 'storage', title: 'History storage', copy: '1 / 1 available', meta: 'HistoryDataReader available', tone: 'success' },
+      { key: 'query', title: 'Query service', copy: 'Metrics logs and traces are queryable', meta: 'PromQL and history query available', tone: 'success' },
+      { key: 'greptime', title: 'GreptimeDB', copy: 'SQL self-check passed', meta: 'SELECT 1 succeeded', tone: 'success' }
     ]);
   });
 

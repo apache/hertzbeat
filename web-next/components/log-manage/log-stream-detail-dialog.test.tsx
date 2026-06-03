@@ -12,6 +12,8 @@ vi.mock('@/components/providers/i18n-provider', () => ({
 
 describe('log stream detail dialog', () => {
   it('renders facts and toolbar actions for the selected stream log', () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+    const missingEntityCopy = 'Missing entity ID; entity detail remains disabled';
     const html = renderToStaticMarkup(
       <LogStreamDetailDialog
         open={true}
@@ -34,14 +36,14 @@ describe('log stream detail dialog', () => {
             label: 'hertzbeat.entity_id',
             value: '-',
             state: 'missing',
-            meta: '缺少实体 ID，实体详情会保持禁用'
+            meta: missingEntityCopy
           },
           {
             key: 'hertzbeat.collector',
             label: 'hertzbeat.collector',
             value: 'collector-local',
             state: 'present',
-            meta: '采集器来源'
+            meta: 'Collector source'
           }
         ]}
         actions={<button type="button">Open Related Trace</button>}
@@ -80,9 +82,9 @@ describe('log stream detail dialog', () => {
     expect(html).toContain('data-log-stream-detail-actions-owner="hertzbeat-ui-action-group"');
     expect(html).toContain('data-log-stream-detail-actions="dialog-actions"');
     expect(html).toContain('data-hz-ui="action-group"');
-    expect(html).toContain('归因诊断');
+    expect(html).toContain(t('log.manage.stream.detail.attribution-title'));
     expect(html).toContain('hertzbeat.entity_id');
-    expect(html).toContain('缺少实体 ID，实体详情会保持禁用');
+    expect(html).toContain(missingEntityCopy);
     expect(html).toContain('hertzbeat.collector');
     expect(html).toContain('collector-local');
     expect(html).toContain('Severity');

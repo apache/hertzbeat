@@ -14,7 +14,7 @@ describe('PlatformCopyrightFooter', () => {
     expect(html).toContain('Apache HertzBeat™ 1.0.0');
     expect(html).not.toContain('Licensed under the Apache License, Version 2.0');
     expect(html).not.toContain('Apache License, Version 2.0');
-    expect(html).not.toContain('授权');
+    expect(html).not.toMatch(/\u6388\u6743/u);
     expect(html).toContain('https://hertzbeat.apache.org');
   });
 });

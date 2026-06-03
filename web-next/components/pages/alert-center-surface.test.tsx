@@ -165,16 +165,16 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-alert-center-query-toolbar="single-query-form"');
     expect(html).toContain('data-alert-center-list-shell="cold-alert-list"');
     expect(html).not.toContain('data-alert-center-summary-rail=');
-    expect(html).toContain('告警中心');
-    expect(html).toContain('集中查看并处理当前告警');
-    expect(html).toContain('按时间、状态和对象筛选告警，并在这里完成确认、恢复或继续查看详情。');
-    expect(html).toContain('告警中');
-    expect(html).toContain('已确认');
-    expect(html).toContain('已恢复');
-    expect(html).toContain('搜索告警');
-    expect(html).toContain('告警状态');
-    expect(html).toContain('严重级别');
-    expect((html.match(/>刷新</g) ?? []).length).toBe(1);
+    expect(html).toContain(zh('alert.workbench.kicker'));
+    expect(html).toContain(zh('alert.workbench.title'));
+    expect(html).toContain(zh('alert.workbench.copy'));
+    expect(html).toContain(zh('alert.workbench.firing'));
+    expect(html).toContain(zh('alert.workbench.acknowledged'));
+    expect(html).toContain(zh('alert.workbench.resolved'));
+    expect(html).toContain(zh('alert.center.search'));
+    expect(html).toContain(zh('alert.center.filter-status'));
+    expect(html).toContain(zh('entity.response.context.severity'));
+    expect((html.match(new RegExp(`>${zh('alert.workbench.action.refresh')}<`, 'g')) ?? []).length).toBe(1);
     expect(html).not.toContain('alert.center.kicker');
     expect(html).not.toContain('alert.center.title');
     expect(html).not.toContain('Alert Center');
@@ -198,10 +198,10 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-alert-center-list-shell="cold-alert-list"');
     expect(html).toContain('data-alert-center-empty-state="cold-table-empty"');
     expect(html).toContain('data-alert-center-empty-icon="cold-empty-box"');
-    expect(html).toContain('当前范围内没有告警');
-    expect(html).toContain('当前时间范围和筛选条件下还没有可处理的告警。');
+    expect(html).toContain(zh('alert.workbench.empty.title'));
+    expect(html).toContain(zh('alert.workbench.empty.copy'));
     expect(html).not.toContain('data-alert-center-empty-action="refresh"');
-    expect(html).not.toContain('点击刷新');
+    expect(html).not.toContain('alert.center.empty.action');
     expect(html).not.toContain('data-alert-center-empty-state="angular-inline"');
     expect(html).not.toContain('alert.center.empty.title');
     expect(html).not.toContain('alert.center.empty.copy');
@@ -269,9 +269,9 @@ describe('AlertCenterSurface', () => {
       html.indexOf('data-cold-search-action="submit"')
     );
     expect(html).not.toContain('data-alert-center-refresh-slot="right"');
-    expect(html).not.toContain('<span>搜索告警</span>');
-    expect(html).not.toContain('<span>告警状态</span>');
-    expect(html).not.toContain('<span>严重级别</span>');
+    expect(html).not.toContain(`<span>${zh('alert.center.search')}</span>`);
+    expect(html).not.toContain(`<span>${zh('alert.center.filter-status')}</span>`);
+    expect(html).not.toContain(`<span>${zh('entity.response.context.severity')}</span>`);
     expect(source).toContain('rounded-[4px]');
     expect(source).toContain('rounded-[3px]');
     expect(source).toContain("from '../ui/search-row'");
@@ -303,9 +303,9 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-hz-pagination-page-jump="number-input"');
     expect(html).toContain('data-alert-center-pagination-page-size-owner="hertzbeat-ui-select"');
     expect(html).toContain('data-alert-center-pagination-page-jump-owner="hertzbeat-ui-input"');
-    expect(html).toContain('第 2 / 4 页 · 9-9 / 31');
-    expect(html).toContain('每页条数');
-    expect(html).toContain('页码');
+    expect(html).toContain(zh('alert.center.pagination.summary', { page: 2, totalPages: 4, from: 9, to: 9, total: 31 }));
+    expect(html).toContain(zh('alert.center.pagination.page-size'));
+    expect(html).toContain(zh('alert.center.pagination.page'));
     expect(source).toContain('HzPaginationBar');
     expect(source).toContain('data-alert-center-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(source).toContain('onPageIndexChange?.(Math.max(currentPageIndex - 1, 0))');
@@ -454,12 +454,12 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-alert-center-batch-action="inhibit-selected"');
     expect(html).toContain('data-alert-center-batch-dialog-source="selected-groups"');
     expect(html).toContain('data-hz-batch-selection-count="2"');
-    expect(html).toContain('条告警组已选择');
-    expect(html).toContain('确认 1 条');
-    expect(html).toContain('取消确认 1 条');
-    expect(html).toContain('恢复 1 条');
-    expect(html).toContain('创建静默 2 条');
-    expect(html).toContain('创建抑制 2 条');
+    expect(html).toContain(zh('alert.center.batch.selection-label'));
+    expect(html).toContain(zh('alert.center.batch.acknowledge-selected', { count: 1 }));
+    expect(html).toContain(zh('alert.center.batch.unacknowledge-selected', { count: 1 }));
+    expect(html).toContain(zh('alert.center.batch.resolve-selected', { count: 1 }));
+    expect(html).toContain(zh('alert.center.batch.silence-selected', { count: 2 }));
+    expect(html).toContain(zh('alert.center.batch.inhibit-selected', { count: 2 }));
     expect(source).toContain('HzBatchToolbar');
     expect(source).toContain('HzCheckbox');
     expect(source).toContain('SELECTED_BATCH_DIALOG_GROUP_KEY');
@@ -512,13 +512,13 @@ describe('AlertCenterSurface', () => {
     expect(silenceHtml).toContain('data-alert-rule-dialog="silence"');
     expect(silenceHtml).toContain('data-alert-rule-dialog-submit="silence"');
     expect(silenceHtml).toContain('data-alert-rule-dialog-submit-owner="alert-center-quick-dialog"');
-    expect(silenceHtml).toContain('将基于 2 条告警的共用标签预填静默规则');
+    expect(silenceHtml).toContain(zh('entity.alert.workbench.silence.selection', { count: 2 }));
     expect(silenceHtml).toContain('service:checkout');
     expect(silenceHtml).toContain('name="silence_labels" value="service:checkout"');
     expect(inhibitHtml).toContain('data-alert-rule-dialog="inhibit"');
     expect(inhibitHtml).toContain('data-alert-rule-dialog-submit="inhibit"');
     expect(inhibitHtml).toContain('data-alert-rule-dialog-submit-owner="alert-center-quick-dialog"');
-    expect(inhibitHtml).toContain('将基于 2 条告警的共用标签预填抑制规则');
+    expect(inhibitHtml).toContain(zh('entity.alert.workbench.inhibit.selection', { count: 2 }));
     expect(inhibitHtml).toContain('service:checkout');
     expect(inhibitHtml).toContain('name="inhibit_source_labels" value="service:checkout"');
     expect(inhibitHtml).toContain('name="inhibit_target_labels" value="service:checkout"');
@@ -608,7 +608,7 @@ describe('AlertCenterSurface', () => {
     expect(interactionContainer.querySelector('[data-alert-center-batch-status-confirm="angular-status-confirm"]')).not.toBeNull();
     expect(interactionContainer.querySelector('[data-alert-center-batch-status-confirm-action="acknowledge"]')).not.toBeNull();
     expect(interactionContainer.querySelector('[data-alert-center-batch-status-confirm-count="1"]')).not.toBeNull();
-    expect(interactionContainer.textContent).toContain('确认选中的告警？');
+    expect(interactionContainer.textContent).toContain(zh('entity.alert.workbench.confirm.acknowledge-selected'));
 
     await act(async () => {
       (interactionContainer.querySelector(
@@ -631,7 +631,7 @@ describe('AlertCenterSurface', () => {
       resolve?.click();
     });
     expect(interactionContainer.querySelector('[data-alert-center-batch-status-confirm-action="resolve"]')).not.toBeNull();
-    expect(interactionContainer.textContent).toContain('请确认是否批量标记已处理!');
+    expect(interactionContainer.textContent).toContain(zh('alert.center.confirm.mark-done-batch'));
 
     await act(async () => {
       (interactionContainer.querySelector(
@@ -643,7 +643,7 @@ describe('AlertCenterSurface', () => {
       reopen?.click();
     });
     expect(interactionContainer.querySelector('[data-alert-center-batch-status-confirm-action="reopen"]')).not.toBeNull();
-    expect(interactionContainer.textContent).toContain('请确认是否批量标记未处理!');
+    expect(interactionContainer.textContent).toContain(zh('alert.center.confirm.mark-no-batch'));
 
     await act(async () => {
       (interactionContainer.querySelector(
@@ -816,7 +816,9 @@ describe('AlertCenterSurface', () => {
 
     expect(onRuleQuickCreate).not.toHaveBeenCalled();
     expect(interactionContainer.querySelector('[data-alert-rule-dialog="silence"]')).not.toBeNull();
-    expect(interactionContainer.querySelector('[data-alert-rule-submit-error="true"]')?.textContent).toContain('规则名称为必填项');
+    expect(interactionContainer.querySelector('[data-alert-rule-submit-error="true"]')?.textContent).toContain(
+      zh('alert.silence.validation.name')
+    );
   });
 
   it('renders cold entity context and noise-control summary shells', () => {
@@ -926,22 +928,22 @@ describe('AlertCenterSurface', () => {
         viewMode: 'resource-dependency',
         sourceKind: 'database-middleware-connection',
         edgeId: 'svc-checkout--res-orders-db',
-        returnTo: `${returnTo}&returnLabel=HertzBeat%20%E4%BC%81%E4%B8%9A%E8%BF%90%E7%BB%B4%E6%8B%93%E6%89%91`,
-        returnLabel: 'HertzBeat 企业运维拓扑'
+        returnTo: `${returnTo}&returnLabel=${encodeURIComponent('HertzBeat enterprise topology')}`,
+        returnLabel: 'HertzBeat enterprise topology'
       }
     }, zh);
 
     expect(html).toContain('data-alert-topology-context="impact-filter-panel"');
-    expect(html).toContain('拓扑影响面');
+    expect(html).toContain(zh('alert.center.topology.context.kicker'));
     expect(html).toContain('checkout-api');
-    expect(html).toContain('资源依赖');
+    expect(html).toContain(zh('topology.view.resource-dependency.label'));
     expect(html).toContain('resource-dependency');
-    expect(html).toContain('数据库 / 中间件连接');
+    expect(html).toContain(zh('alert.center.topology.source.database-middleware-connection'));
     expect(html).toContain('svc-checkout--res-orders-db');
     expect(html).toContain('data-alert-topology-return="true"');
     expect(html).toContain('href="/topology?viewMode=resource-dependency&amp;sourceKind=database-middleware-connection&amp;edgeId=svc-checkout--res-orders-db');
     expect(html).not.toContain('returnLabel');
-    expect(html).not.toContain('HertzBeat 企业运维拓扑');
+    expect(html).not.toContain('HertzBeat enterprise topology');
   });
 
   it('renders unknown topology source kind as a localized fallback while preserving the route slug', () => {
@@ -963,7 +965,7 @@ describe('AlertCenterSurface', () => {
       }
     }, zh);
 
-    expect(html).toContain('未知关系来源 custom-edge-source');
+    expect(html).toContain(zh('alert.center.topology.source.unknown', { sourceKind: 'custom-edge-source' }));
     expect(html).toContain('data-alert-topology-source-kind="custom-edge-source"');
     expect(html).toContain('href="/topology?sourceKind=custom-edge-source"');
     expect(html).not.toContain('>custom-edge-source</span>');
@@ -988,7 +990,7 @@ describe('AlertCenterSurface', () => {
       }
     }, zh);
 
-    expect(html).toContain('未知拓扑视图 custom-impact-view');
+    expect(html).toContain(zh('alert.center.topology.view-mode.unknown', { viewMode: 'custom-impact-view' }));
     expect(html).toContain('data-alert-topology-view-mode="custom-impact-view"');
     expect(html).toContain('href="/topology?viewMode=custom-impact-view"');
     expect(html).not.toContain('>custom-impact-view</span>');
@@ -1017,15 +1019,31 @@ describe('AlertCenterSurface', () => {
     }, zh);
 
     expect(html).toContain('data-alert-evidence-closure="otlp-alert-evidence-workbench"');
-    expect(html).toContain('告警证据闭环');
-    expect(html).toContain('把实体、指标、日志、链路和拓扑证据放在同一个处理入口。');
+    expect(html).toContain(zh('alert.center.evidence.closure.kicker'));
+    expect(html).toContain(zh('alert.center.evidence.closure.copy'));
     expect(html).toContain('data-alert-closure-summary="evidence-and-actions"');
     expect(html).toContain('data-alert-evidence-summary="entity,metrics,logs,traces,topology"');
     expect(html).toContain('data-alert-operation-summary="acknowledge,recover,threshold,notice,group,silence,inhibit,automation,close"');
-    expect(html).toContain('证据范围');
-    expect(html).toContain('实体详情 / 指标证据 / 日志证据 / 链路证据 / 拓扑影响面');
-    expect(html).toContain('处理动作');
-    expect(html).toContain('确认告警 / 标记已恢复 / 创建阈值规则 / 配置通知策略 / 配置分组收敛 / 创建静默 / 创建抑制 / 建议自动化动作 / 关闭告警');
+    expect(html).toContain(zh('alert.center.evidence.closure.summary.evidence'));
+    expect(html).toContain([
+      zh('alert.center.evidence.entity.title'),
+      zh('alert.center.evidence.metrics.title'),
+      zh('alert.center.evidence.logs.title'),
+      zh('alert.center.evidence.traces.title'),
+      zh('alert.center.evidence.topology.title')
+    ].join(' / '));
+    expect(html).toContain(zh('alert.center.evidence.closure.summary.operations'));
+    expect(html).toContain([
+      zh('alert.center.operation.acknowledge.label'),
+      zh('alert.center.operation.recover.label'),
+      zh('alert.center.operation.threshold.label'),
+      zh('alert.center.operation.notice.label'),
+      zh('alert.center.operation.group.label'),
+      zh('alert.center.operation.silence.label'),
+      zh('alert.center.operation.inhibit.label'),
+      zh('alert.center.operation.automation.label'),
+      zh('alert.center.operation.close.label')
+    ].join(' / '));
     expect(html).toContain('data-alert-evidence-link="entity"');
     expect(html).toContain('data-alert-evidence-link="metrics"');
     expect(html).toContain('data-alert-evidence-link="logs"');
@@ -1045,17 +1063,17 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-alert-closure-action="inhibit"');
     expect(html).toContain('data-alert-closure-action="automation"');
     expect(html).toContain('data-alert-closure-action="close"');
-    expect(html).toContain('确认告警');
-    expect(html).toContain('标记已恢复');
-    expect(html).toContain('创建阈值规则');
-    expect(html).toContain('配置通知策略');
-    expect(html).toContain('配置分组收敛');
-    expect(html).toContain('创建静默');
-    expect(html).toContain('创建抑制');
-    expect(html).toContain('建议自动化动作');
+    expect(html).toContain(zh('alert.center.operation.acknowledge.label'));
+    expect(html).toContain(zh('alert.center.operation.recover.label'));
+    expect(html).toContain(zh('alert.center.operation.threshold.label'));
+    expect(html).toContain(zh('alert.center.operation.notice.label'));
+    expect(html).toContain(zh('alert.center.operation.group.label'));
+    expect(html).toContain(zh('alert.center.operation.silence.label'));
+    expect(html).toContain(zh('alert.center.operation.inhibit.label'));
+    expect(html).toContain(zh('alert.center.operation.automation.label'));
     expect(html).toContain('/actions?');
     expect(html).toContain('alertGroupId=7');
-    expect(html).toContain('关闭告警');
+    expect(html).toContain(zh('alert.center.operation.close.label'));
   });
 
   it('renders inherited time and monitor context inside the existing alert evidence panel', () => {
@@ -1087,19 +1105,19 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-alert-evidence-closure="otlp-alert-evidence-workbench"');
     expect(html).toContain('data-alert-evidence-context="inherited-time-context"');
     expect(html).toContain('data-alert-evidence-context-row="time"');
-    expect(html).toContain('时间范围');
+    expect(html).toContain(zh('alert.center.context.time.title'));
     expect(html).toContain('last-45m');
-    expect(html).toContain('2024/04/16 00:53:20 → 2024/04/16 01:38:20 · 已暂停 · Asia/Shanghai');
+    expect(html).toContain(`2024/04/16 00:53:20 → 2024/04/16 01:38:20 · ${zh('alert.center.context.time.paused')} · Asia/Shanghai`);
     expect(html).toContain('data-alert-evidence-context-row="monitor"');
-    expect(html).toContain('监控实例');
+    expect(html).toContain(zh('alert.center.context.monitor.title'));
     expect(html).toContain('checkout-http');
-    expect(html).toContain('website · example.com:443 · 监控 ID 632051474676992');
+    expect(html).toContain(`website · example.com:443 · ${zh('alert.center.context.monitor.id-meta', { monitorId: '632051474676992' })}`);
     expect(html).toContain('data-alert-evidence-context-row="source"');
-    expect(html).toContain('采集来源');
-    expect(html).toContain('传统监控');
-    expect(html).toContain('监控中心上下文');
-    expect(html).not.toContain('健康');
-    expect(html).not.toContain('0 个证据');
+    expect(html).toContain(zh('alert.center.context.source.title'));
+    expect(html).toContain(zh('alert.center.context.source.monitor.copy'));
+    expect(html).toContain(zh('alert.center.context.source.monitor.meta'));
+    expect(html).not.toContain(zh('topology.legend.health.healthy'));
+    expect(html).not.toContain('0 evidence');
     expect(html).not.toContain('fake');
   });
 
@@ -1107,21 +1125,21 @@ describe('AlertCenterSurface', () => {
     const successHtml = renderSurface({
       operationFeedback: {
         tone: 'success',
-        copy: '告警状态已更新，列表正在刷新。'
+        copy: zh('alert.center.operation.success')
       }
     }, zh);
     const failedHtml = renderSurface({
       operationFeedback: {
         tone: 'danger',
-        copy: '操作未完成，请稍后重试。'
+        copy: zh('alert.center.operation.failed', { reason: 'retry later' })
       }
     }, zh);
 
     expect(successHtml).toContain('data-alert-operation-feedback="success"');
     expect(successHtml).toContain('aria-live="polite"');
-    expect(successHtml).toContain('告警状态已更新，列表正在刷新。');
+    expect(successHtml).toContain(zh('alert.center.operation.success'));
     expect(failedHtml).toContain('data-alert-operation-feedback="danger"');
-    expect(failedHtml).toContain('操作未完成，请稍后重试。');
+    expect(failedHtml).toContain(zh('alert.center.operation.failed', { reason: 'retry later' }));
   });
 
   it('explains disabled direct closure actions with localized title and aria labels', () => {
@@ -1145,11 +1163,11 @@ describe('AlertCenterSurface', () => {
     }, zh);
 
     expect(html).toContain('data-alert-closure-action-disabled="missing-alert-group-id"');
-    expect(html).toContain('title="需要选择告警组后才能执行此操作"');
-    expect(html).toContain('aria-label="确认告警：需要选择告警组后才能执行此操作"');
-    expect(html).toContain('aria-label="标记已恢复：需要选择告警组后才能执行此操作"');
-    expect(html).toContain('aria-label="关闭告警：需要选择告警组后才能执行此操作"');
-    expect(html).not.toContain('missing-alert-group-id 需要');
+    expect(html).toContain(`title="${zh('alert.center.closure-action.disabled.no-group')}"`);
+    expect(html).toContain(`aria-label="${zh('alert.center.operation.acknowledge.label')}：${zh('alert.center.closure-action.disabled.no-group')}"`);
+    expect(html).toContain(`aria-label="${zh('alert.center.operation.recover.label')}：${zh('alert.center.closure-action.disabled.no-group')}"`);
+    expect(html).toContain(`aria-label="${zh('alert.center.operation.close.label')}：${zh('alert.center.closure-action.disabled.no-group')}"`);
+    expect(html).not.toContain('missing-alert-group-id ');
   });
 
   it('fires direct closure operation buttons with the primary group id while keeping silence and inhibit as rule links', async () => {
@@ -1360,7 +1378,7 @@ describe('AlertCenterSurface', () => {
     expect(onClosureAction).not.toHaveBeenCalled();
     expect(interactionContainer.querySelector('[data-alert-center-row-delete-confirm-dialog="angular-single-delete-confirm"]')).not.toBeNull();
     expect(interactionContainer.querySelector('[data-alert-center-row-delete-confirm-group-id="7"]')).not.toBeNull();
-    expect(interactionContainer.textContent).toContain('请确认是否删除!');
+    expect(interactionContainer.textContent).toContain(zh('common.confirm.delete'));
 
     await act(async () => {
       (interactionContainer.querySelector(
@@ -1447,9 +1465,9 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-overlay-dialog="true"');
     expect(html).toContain('data-alert-rule-dialog="silence"');
     expect(html).toContain('data-alert-rule-dialog-submit="silence"');
-    expect(html).toContain('Create alert silence');
+    expect(html).toContain(t('entity.alert.workbench.silence.title'));
     expect(html).toContain('Checkout API');
-    expect(html).toContain('Silence Strategy Name');
+    expect(html).toContain(t('alert.silence.name'));
     expect(html).toContain('service:checkout');
     expect(html).toContain('severity:critical');
   });
@@ -1471,14 +1489,14 @@ describe('AlertCenterSurface', () => {
 
     expect(html).toContain('data-alert-rule-dialog="inhibit"');
     expect(html).toContain('data-alert-rule-dialog-submit="inhibit"');
-    expect(html).toContain('Create alert inhibit');
-    expect(html).toContain('Copy source to target');
-    expect(html).toContain('Target without severity');
-    expect(html).toContain('Clear target');
-    expect(html).toContain('Clear equal labels');
-    expect(html).toContain('Source Labels');
-    expect(html).toContain('Target Labels');
-    expect(html).toContain('Equal Labels');
+    expect(html).toContain(t('entity.alert.workbench.inhibit.title'));
+    expect(html).toContain(t('entity.alert.workbench.inhibit.shortcut.copy-source'));
+    expect(html).toContain(t('entity.alert.workbench.inhibit.shortcut.drop-severity'));
+    expect(html).toContain(t('entity.alert.workbench.inhibit.shortcut.clear-target'));
+    expect(html).toContain(t('entity.alert.workbench.inhibit.shortcut.clear-equal'));
+    expect(html).toContain(t('alert.inhibit.source_labels'));
+    expect(html).toContain(t('alert.inhibit.target_labels'));
+    expect(html).toContain(t('alert.inhibit.equal_labels'));
   });
 
   it('pins the alert center shell to the shared cold visual owner instead of page-local primitives', () => {

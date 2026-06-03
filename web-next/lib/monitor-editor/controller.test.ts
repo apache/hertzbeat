@@ -487,13 +487,13 @@ describe('monitor editor controller', () => {
       scrapeParamDefines: []
     } as any;
 
-    expect(validateMonitorEditorDraft(draft, t)).toBe('请输入监控名称');
+    expect(validateMonitorEditorDraft(draft, t)).toBe(t('monitor.editor.validation.name'));
 
     draft.monitor.name = 'demo';
-    expect(validateMonitorEditorDraft(draft, t)).toBe('请填写 Host');
+    expect(validateMonitorEditorDraft(draft, t)).toBe(t('monitor.editor.validation.param-required', { field: 'Host' }));
 
     draft.params[0].paramValue = 'example.com';
-    expect(validateMonitorEditorDraft(draft, t)).toBe('Cron 表达式不合法');
+    expect(validateMonitorEditorDraft(draft, t)).toBe(t('monitor.editor.validation.cron'));
   });
 
   it('accepts common five-field and six-field cron expressions', () => {

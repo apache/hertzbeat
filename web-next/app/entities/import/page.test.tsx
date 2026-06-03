@@ -84,10 +84,11 @@ describe('EntityImportPage', () => {
   });
 
   it('loads shared import data and renders the shared import surface', async () => {
+    const expectedT = createTranslatorMock({ locale: 'zh-CN' });
     const html = renderToStaticMarkup(<EntityImportPage />);
 
     expect(html).toContain('data-entity-import-surface="true"');
-    expect(html).toContain('data-loading-copy="导入实体定义"');
+    expect(html).toContain(`data-loading-copy="${expectedT('entities.import.loading')}"`);
     expect(html).toContain(
       'data-cache-key="entity-import:/entities/definition/templates?limit=8:/entities/definition-activities?limit=8"'
     );

@@ -54,6 +54,8 @@ vi.mock('@/components/providers/i18n-provider', () => ({
   })
 }));
 
+const expectedT = createTranslatorMock({ locale: 'zh-CN' });
+
 vi.mock('@/components/workbench/client-workbench', () => ({
   ClientWorkbench: ({
     children,
@@ -226,8 +228,8 @@ describe('MonitorNewPage', () => {
     expect(html).toContain('data-monitor-editor-ssl-port-notice="angular-info-notification"');
     expect(html).toContain('data-monitor-editor-advanced-collapse="angular-ghost-collapse-dashed-trigger"');
     expect(html).toContain('data-monitor-editor-label-selector="angular-app-label-selector"');
-    expect(html).toContain('新建监控');
-    expect(html).toContain('确定');
+    expect(html).toContain(expectedT('monitor.new-monitor'));
+    expect(html).toContain(expectedT('common.button.ok'));
   });
 
   it('loads the new-monitor draft with the current app context', async () => {

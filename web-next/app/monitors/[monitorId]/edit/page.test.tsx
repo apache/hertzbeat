@@ -50,6 +50,8 @@ vi.mock('@/components/providers/i18n-provider', () => ({
   })
 }));
 
+const expectedT = createTranslatorMock({ locale: 'zh-CN' });
+
 vi.mock('@/components/workbench/client-workbench', () => ({
   ClientWorkbench: ({
     children,
@@ -223,7 +225,7 @@ describe('MonitorEditPage', () => {
     expect(html).toContain('data-monitor-editor-advanced-collapse="angular-ghost-collapse-dashed-trigger"');
     expect(html).toContain('data-monitor-editor-label-selector="angular-app-label-selector"');
     expect(html).toContain('checkout');
-    expect(html).toContain('确定');
+    expect(html).toContain(expectedT('common.button.ok'));
   });
 
   it('loads the edit-monitor draft with the current monitor id', async () => {

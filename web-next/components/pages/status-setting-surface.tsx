@@ -327,8 +327,8 @@ function StatusTabs({
       className="mb-4 inline-flex rounded-[3px] border border-[#2b3039] bg-[#101217] p-1"
     >
       {[
-        ['component', t('status.component')],
-        ['incident', t('status.incident')]
+        ['component', t('setting.status.components.tab')],
+        ['incident', t('setting.status.incidents.tab')]
       ].map(([key, label]) => {
         const mode = key as 'component' | 'incident';
         const active = activeMode === mode;
@@ -402,7 +402,7 @@ export function StatusSettingSurface({
   const components = data.components || [];
   const incidents = data.incidents?.content || [];
   const [openRowActionMenuId, setOpenRowActionMenuId] = React.useState<string | null>(null);
-  const publicStatusLabel = statusOrg.name ? `${statusOrg.name} ${t('menu.advanced.status')}` : t('menu.advanced.status');
+  const publicStatusLabel = statusOrg.name ? `${statusOrg.name} ${t('status.title')}` : t('status.title');
   const hasPublicStatusLink = statusOrg.id != null && statusOrg.name != null;
   const activeMode = mode === 'incident' ? 'incident' : 'component';
   const incidentTotalElements = Math.max(0, data.incidents?.totalElements ?? incidents.length);
@@ -489,7 +489,7 @@ export function StatusSettingSurface({
               <div data-status-header="cold-compact-header" className={coldStatusVisual.panel.hero}>
                 <div className="max-w-[840px]">
                   <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
-                    {t('menu.advanced.status')}
+                    {t('setting.status.title')}
                   </h1>
                   <p className="mt-4 max-w-[780px] text-[13px] leading-6 text-[#a9b0bb]">
                     {t('setting.status.subtitle')}
@@ -520,12 +520,12 @@ export function StatusSettingSurface({
                     </Button>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    <ColdField required label={t('status.org.name')} value={orgValues.name} placeholder={t('status.org.name.tip')} onChange={value => onOrgDraftChange({ name: value })} />
-                    <ColdField required label={t('status.org.desc')} value={orgValues.description} placeholder={t('status.org.desc.tip')} onChange={value => onOrgDraftChange({ description: value })} />
-                    <ColdField required label={t('status.org.home')} value={orgValues.home} placeholder={t('status.org.home.tip')} onChange={value => onOrgDraftChange({ home: value })} />
-                    <ColdField required label={t('status.org.logo')} value={orgValues.logo} placeholder={t('status.org.logo.tip')} onChange={value => onOrgDraftChange({ logo: value })} />
-                    <ColdField required label={t('status.org.feedback')} value={orgValues.feedback} placeholder={t('status.org.feedback.tip')} onChange={value => onOrgDraftChange({ feedback: value })} />
-                    <ColdField label={t('status.org.color')} value={orgValues.color} placeholder={t('status.org.color.tip')} onChange={value => onOrgDraftChange({ color: value })} />
+                    <ColdField required label={t('setting.status.org.name')} value={orgValues.name} placeholder={t('setting.status.org.name')} onChange={value => onOrgDraftChange({ name: value })} />
+                    <ColdField required label={t('setting.status.org.description')} value={orgValues.description} placeholder={t('setting.status.org.description')} onChange={value => onOrgDraftChange({ description: value })} />
+                    <ColdField required label={t('setting.status.org.home')} value={orgValues.home} placeholder={t('setting.status.org.home')} onChange={value => onOrgDraftChange({ home: value })} />
+                    <ColdField required label={t('setting.status.org.logo')} value={orgValues.logo} placeholder={t('setting.status.org.logo')} onChange={value => onOrgDraftChange({ logo: value })} />
+                    <ColdField required label={t('setting.status.org.feedback')} value={orgValues.feedback} placeholder={t('setting.status.org.feedback')} onChange={value => onOrgDraftChange({ feedback: value })} />
+                    <ColdField label={t('setting.status.org.color')} value={orgValues.color} placeholder={t('setting.status.org.color')} onChange={value => onOrgDraftChange({ color: value })} />
                   </div>
                   {orgMessage ? <div className="mt-3 text-[12px] text-[#a9b0bb]">{orgMessage}</div> : null}
                   {orgError ? <div className="mt-3 text-[12px] text-[#f87171]">{orgError}</div> : null}
@@ -536,7 +536,7 @@ export function StatusSettingSurface({
                 <div hidden={activeMode !== 'component'}>
                   <div data-status-component-toolbar="cold-table-toolbar" className={coldTableToolbarClassName}>
                     <div className="min-w-0 flex-1 text-[12px] font-semibold text-[#dbe4f0]">
-                      {t('status.component')} <span className="ml-2 text-[#6f7788]">{components.length}</span>
+                      {t('setting.status.components.tab')} <span className="ml-2 text-[#6f7788]">{components.length}</span>
                     </div>
                     <Button
                       size="sm"
@@ -550,7 +550,7 @@ export function StatusSettingSurface({
                     </Button>
                     <Button size="sm" variant="default" className={coldPrimaryButtonClassName} onClick={onNewComponent}>
                       <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                      {t('status.component.new')}
+                      {t('setting.status.components.new')}
                     </Button>
                     {hasPublicStatusLink ? (
                       <a
@@ -572,10 +572,10 @@ export function StatusSettingSurface({
                     <table data-status-component-table="cold-component-table" className="w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
                       <thead className="border-b border-[#252b34] bg-[#101217] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
                         <tr>
-                          <th className="w-[22%] px-3 py-2.5">{t('status.component.name')}</th>
-                          <th className="w-[14%] px-3 py-2.5">{t('status.component.state')}</th>
-                          <th className="w-[15%] px-3 py-2.5">{t('status.component.method')}</th>
-                          <th className="w-[25%] px-3 py-2.5">{t('status.component.tag')}</th>
+                          <th className="w-[22%] px-3 py-2.5">{t('setting.status.components.name')}</th>
+                          <th className="w-[14%] px-3 py-2.5">{t('setting.status.components.state')}</th>
+                          <th className="w-[15%] px-3 py-2.5">{t('setting.status.components.method')}</th>
+                          <th className="w-[25%] px-3 py-2.5">{t('setting.status.components.labels')}</th>
                           <th className="w-[16%] px-3 py-2.5">{t('common.edit-time')}</th>
                           <th className="w-[96px] px-3 py-2.5">{t('common.edit')}</th>
                         </tr>
@@ -597,7 +597,7 @@ export function StatusSettingSurface({
                                 <Tag className={tagClassName(settingStatusComponentTagTone(component.state))}>{t(`status.component.state.${Number(component.state ?? 0)}`)}</Tag>
                               </td>
                               <td className="px-3 py-2.5">
-                                <Tag className={tagClassName('neutral')}>{t(`status.component.method.${Number(component.method ?? 0)}`)}</Tag>
+                                <Tag className={tagClassName('neutral')}>{t(`setting.status.components.method.${Number(component.method ?? 0)}`)}</Tag>
                               </td>
                               <td className="px-3 py-2.5">
                                 <div className="flex flex-wrap gap-1.5">
@@ -615,14 +615,14 @@ export function StatusSettingSurface({
                                     size="icon"
                                     variant="default"
                                     className={coldIconButtonClassName}
-                                    title={t('status.component.edit')}
+                                    title={t('setting.status.components.edit')}
                                     onClick={() => {
                                       if (component.id != null) onSelectComponent(component.id);
                                       onEditComponent(component);
                                     }}
                                   >
                                     <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                                    <span className="sr-only">{t('status.component.edit')}</span>
+                                    <span className="sr-only">{t('setting.status.components.edit')}</span>
                                   </Button>
                                   <div
                                     className={statusActionMenuRootClassName}
@@ -665,7 +665,7 @@ export function StatusSettingSurface({
                                         className="w-full text-[#fecaca] hover:text-white"
                                       >
                                         <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                                        <span className="truncate">{t('status.component.delete')}</span>
+                                        <span className="truncate">{t('setting.status.components.delete')}</span>
                                       </HzTableRowActionButton>
                                     </div>
                                   </div>
@@ -688,7 +688,7 @@ export function StatusSettingSurface({
                     className="mb-3"
                     inputWidthClassName="w-[320px]"
                     value={incidentSearchInput}
-                    placeholder={t('status.incident.name')}
+                    placeholder={t('setting.status.incidents.name')}
                     searchLabel={t('common.search')}
                     clearLabel={t('common.reset')}
                     showClearWhenEmpty
@@ -709,7 +709,7 @@ export function StatusSettingSurface({
                         </Button>
                         <Button size="sm" variant="default" className={coldPrimaryButtonClassName} onClick={onNewIncident}>
                           <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                          {t('status.incident.new')}
+                          {t('setting.status.incidents.new')}
                         </Button>
                         {hasPublicStatusLink ? (
                           <a
@@ -733,10 +733,10 @@ export function StatusSettingSurface({
                     <table data-status-incident-table="cold-incident-table" className="w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
                       <thead className="border-b border-[#252b34] bg-[#101217] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
                         <tr>
-                          <th className="w-[18%] px-3 py-2.5">{t('status.incident.name')}</th>
-                          <th className="w-[14%] px-3 py-2.5">{t('status.incident.state')}</th>
-                          <th className="w-[28%] px-3 py-2.5">{t('status.incident.message-latest')}</th>
-                          <th className="w-[18%] px-3 py-2.5">{t('status.incident.component')}</th>
+                          <th className="w-[18%] px-3 py-2.5">{t('setting.status.incidents.name')}</th>
+                          <th className="w-[14%] px-3 py-2.5">{t('setting.status.incidents.state')}</th>
+                          <th className="w-[28%] px-3 py-2.5">{t('setting.status.incidents.message-latest')}</th>
+                          <th className="w-[18%] px-3 py-2.5">{t('setting.status.incidents.components')}</th>
                           <th className="w-[14%] px-3 py-2.5">{t('common.new-time')}</th>
                           <th className="w-[96px] px-3 py-2.5">{t('common.edit')}</th>
                         </tr>
@@ -777,14 +777,14 @@ export function StatusSettingSurface({
                                     size="icon"
                                     variant="default"
                                     className={coldIconButtonClassName}
-                                    title={t('status.incident.update')}
+                                    title={t('setting.status.incidents.update')}
                                     onClick={() => {
                                       if (incident.id != null) onSelectIncident(incident.id);
                                       onEditIncident(incident);
                                     }}
                                   >
                                     <RotateCw className="h-3.5 w-3.5" aria-hidden="true" />
-                                    <span className="sr-only">{t('status.incident.update')}</span>
+                                    <span className="sr-only">{t('setting.status.incidents.update')}</span>
                                   </Button>
                                   <div
                                     className={statusActionMenuRootClassName}
@@ -827,7 +827,7 @@ export function StatusSettingSurface({
                                         className="w-full text-[#fecaca] hover:text-white"
                                       >
                                         <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                                        <span className="truncate">{t('status.incident.delete')}</span>
+                                        <span className="truncate">{t('setting.status.incidents.delete')}</span>
                                       </HzTableRowActionButton>
                                     </div>
                                   </div>
@@ -884,8 +884,8 @@ export function StatusSettingSurface({
 
       <OverlayDialog
         open={editingComponent}
-        title={componentDraft.id ? t('status.component.edit') : t('status.component.new')}
-        kicker={t('status.component')}
+        title={componentDraft.id ? t('setting.status.components.edit') : t('setting.status.components.new')}
+        kicker={t('setting.status.components.tab')}
         maxWidthClassName="max-w-2xl"
         onClose={onCancelComponent}
         footer={
@@ -900,20 +900,20 @@ export function StatusSettingSurface({
         }
       >
         <div className="grid gap-3 md:grid-cols-2">
-          <DialogField label={t('status.component.name')} value={componentDraft.name} placeholder={t('status.component.name.tip')} onChange={value => onComponentDraftChange({ name: value })} />
-          <DialogField label={t('status.component.method')} value={componentDraft.method} placeholder={t('setting.status.component.method.placeholder')} onChange={value => onComponentDraftChange({ method: value })} />
-          <DialogField label={t('status.component.state')} value={componentDraft.state} placeholder={t('setting.status.component.state.placeholder')} onChange={value => onComponentDraftChange({ state: value })} />
-          <DialogField label={t('status.component.tag')} value={componentDraft.labelsText} placeholder={t('setting.status.component.labels.placeholder')} onChange={value => onComponentDraftChange({ labelsText: value })} />
+          <DialogField label={t('setting.status.components.name')} value={componentDraft.name} placeholder={t('setting.status.components.name')} onChange={value => onComponentDraftChange({ name: value })} />
+          <DialogField label={t('setting.status.components.method')} value={componentDraft.method} placeholder={t('setting.status.component.method.placeholder')} onChange={value => onComponentDraftChange({ method: value })} />
+          <DialogField label={t('setting.status.components.state')} value={componentDraft.state} placeholder={t('setting.status.component.state.placeholder')} onChange={value => onComponentDraftChange({ state: value })} />
+          <DialogField label={t('setting.status.components.labels')} value={componentDraft.labelsText} placeholder={t('setting.status.component.labels.placeholder')} onChange={value => onComponentDraftChange({ labelsText: value })} />
           <div className="md:col-span-2">
-            <DialogField label={t('status.org.desc')} value={componentDraft.description} placeholder={t('setting.status.component.description.placeholder')} onChange={value => onComponentDraftChange({ description: value })} />
+            <DialogField label={t('setting.status.org.description')} value={componentDraft.description} placeholder={t('setting.status.component.description.placeholder')} onChange={value => onComponentDraftChange({ description: value })} />
           </div>
         </div>
       </OverlayDialog>
 
       <OverlayDialog
         open={editingIncident}
-        title={incidentDraft.id ? t('status.incident.update') : t('status.incident.new')}
-        kicker={t('status.incident')}
+        title={incidentDraft.id ? t('setting.status.incidents.update') : t('setting.status.incidents.new')}
+        kicker={t('setting.status.incidents.tab')}
         maxWidthClassName="max-w-2xl"
         onClose={onCancelIncident}
         overlayProps={{
@@ -932,7 +932,7 @@ export function StatusSettingSurface({
         }
       >
         <div className="grid gap-3 md:grid-cols-2">
-          <DialogField label={t('status.incident.name')} value={incidentDraft.name} placeholder={t('status.incident.name.tip')} onChange={value => onIncidentDraftChange({ name: value })} />
+          <DialogField label={t('setting.status.incidents.name')} value={incidentDraft.name} placeholder={t('setting.status.incidents.name')} onChange={value => onIncidentDraftChange({ name: value })} />
           {incidentDraft.id ? (
             <div
               className="md:col-span-2"
@@ -948,14 +948,14 @@ export function StatusSettingSurface({
           ) : null}
           <div className="md:col-span-2">
             <DialogIncidentStateRadioGroup
-              label={t('status.incident.state')}
+              label={t('setting.status.incidents.state')}
               value={incidentDraft.state}
               t={t}
               onChange={value => onIncidentDraftChange({ state: value })}
             />
           </div>
           <DialogComponentCheckboxGroup
-            label={t('status.incident.component')}
+            label={t('setting.status.incidents.components')}
             components={components}
             value={incidentDraft.componentIdsText}
             emptyLabel={emptyCellText}
@@ -968,7 +968,7 @@ export function StatusSettingSurface({
             data-status-incident-message-placeholder-contract="angular-state-placeholder"
           >
             <DialogTextareaField
-              label={t('status.incident.message')}
+              label={t('setting.status.incidents.message')}
               value={incidentDraft.message}
               placeholder={incidentMessagePlaceholder}
               rows={2}
@@ -988,7 +988,7 @@ export function StatusSettingSurface({
           open={deleteDialog !== null}
           tone="critical"
           title={deleteDialogTitle}
-          kicker={t('menu.advanced.status')}
+          kicker={t('status.title')}
           cancelLabel={t('common.button.cancel')}
           confirmLabel={t('setting.status.delete.confirm')}
           onClose={() => setDeleteDialog(null)}

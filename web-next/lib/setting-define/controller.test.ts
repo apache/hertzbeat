@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { SUPPLEMENTAL_MESSAGES } from '../i18n-runtime-messages';
 import {
   buildTemplateMenuGroups,
   buildNewTemplateDraft,
@@ -80,24 +81,32 @@ describe('setting define controller', () => {
   it('keeps the new-template editor local when no app query is selected', async () => {
     const apiMessageGet = vi.fn().mockResolvedValueOnce([{ category: 'database', value: 'mysql', label: 'MySQL', hide: false }]);
     const oldAngularDraft = buildNewTemplateDraft('en-US');
+    const expectedDraftComment = SUPPLEMENTAL_MESSAGES['en-US']?.['setting.define.new-template.comment'];
 
     const result = await loadDefineCenterData(apiMessageGet as any, undefined, 'en-US');
 
     expect(apiMessageGet).toHaveBeenCalledTimes(1);
     expect(apiMessageGet).toHaveBeenCalledWith('/apps/hierarchy?lang=en-US');
     expect(result.selectedApp).toBeNull();
-    expect(oldAngularDraft.yaml).toBe(
-      '# Please define a new monitoring type by writing YML content here, refer to the document: https://hertzbeat.apache.org/docs/advanced/extend-point ' + '\n\n\n\n\n'
-    );
-    expect(oldAngularDraft.originalYaml).toBe(
-      '# Please define a new monitoring type by writing YML content here, refer to the document: https://hertzbeat.apache.org/docs/advanced/extend-point '
-    );
+    expect(oldAngularDraft.yaml).toBe(`${expectedDraftComment}\n\n\n\n\n`);
+    expect(oldAngularDraft.originalYaml).toBe(expectedDraftComment);
     expect(oldAngularDraft.yaml).toBe(buildNewTemplateYaml('en-US'));
     expect(result.yaml).toBe(oldAngularDraft.yaml);
     expect(result.originalYaml).toBe(oldAngularDraft.originalYaml);
     expect(result.yaml).not.toBe(result.originalYaml);
     expect(result.yaml).not.toContain('app: custom');
     expect(result.yaml).not.toContain('metrics:');
+  });
+
+  it('loads localized new-template comments from the runtime catalog', () => {
+    const zhCatalogComment = SUPPLEMENTAL_MESSAGES['zh-CN']?.['setting.define.new-template.comment'];
+    const zhDraft = buildNewTemplateDraft('zh-CN');
+
+    expect(zhDraft.originalYaml).toBe(zhCatalogComment);
+    expect(zhDraft.yaml).toBe(`${zhCatalogComment}\n\n\n\n\n`);
+    expect(buildNewTemplateDraft('ja-JP').originalYaml).toBe(
+      SUPPLEMENTAL_MESSAGES['en-US']?.['setting.define.new-template.comment']
+    );
   });
 
   it('writes monitor-template YML through the old save, delete, and hide endpoints', async () => {

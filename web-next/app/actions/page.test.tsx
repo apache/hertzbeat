@@ -63,26 +63,24 @@ describe('actions page', () => {
     expect(html).toContain('data-actions-approval-decision-execution-mode="manual-approval-draft-only"');
     expect(html).toContain('data-actions-approval-decision-execution-allowed="false"');
     expect(html).toContain('data-actions-empty-state="cold-ops-domain-adapter"');
-    expect(html).toContain('自动化处置');
-    expect(html).toContain('按 OTLP 工作台的冷色基线统一入口、上下文和审批语义。');
-    expect(html).toContain('冷色入口已接入');
-    expect(html).toContain('执行边界');
-    expect(html).toContain('roadmap 示例快照');
-    expect(html).toContain('不代表实时运行状态');
-    expect(html).toContain('告警上下文建议是当前证据生成的人工交接');
-    expect(html).toContain('工作流自动化');
-    expect(html).toContain('处置手册编排');
+    expect(html).toContain(t('actions.entry.title'));
+    expect(html).toContain(t('actions.entry.subtitle'));
+    expect(html).toContain(t('actions.entry.shell.eyebrow'));
+    expect(html).toContain(t('actions.adapter-boundary.label'));
+    expect(html).toContain(t('actions.adapter-boundary.copy'));
+    expect(html).toContain(t('actions.adapter-boundary.roadmap.workflow-automation'));
+    expect(html).toContain(t('actions.adapter-boundary.roadmap.runbook-orchestration'));
     expect(html).not.toContain('workflow-automation');
     expect(html).not.toContain('runbook-orchestration');
-    expect(html).toContain('等待接入执行适配器');
-    expect(html).toContain('打开概览');
-    expect(html).toContain('查看对象');
-    expect(html).toContain('自动化目录');
-    expect(html).toContain('风险动作');
-    expect(html).toContain('审批流');
-    expect(html).toContain('统一入口上下文');
-    expect(html).toContain('接入执行适配器');
-    expect(html).toContain('保留证据跳转');
+    expect(html).toContain(t('actions.entry.empty.title'));
+    expect(html).toContain(t('actions.entry.action.overview'));
+    expect(html).toContain(t('actions.entry.action.entities'));
+    expect(html).toContain(t('actions.entry.chip.catalog'));
+    expect(html).toContain(t('actions.entry.chip.risk'));
+    expect(html).toContain(t('actions.entry.chip.approval'));
+    expect(html).toContain(t('actions.entry.checklist.context.title'));
+    expect(html).toContain(t('actions.entry.checklist.adapter.title'));
+    expect(html).toContain(t('actions.entry.checklist.evidence.title'));
     expect(html).not.toContain('angular-dark-ops-placeholder');
     expect(html).not.toContain('DARK OPS');
     expect(html).not.toContain('V1 SHELL IS LIVE');
@@ -127,7 +125,7 @@ describe('actions page', () => {
           spanId: 'span-456',
           collector: 'edge-collector-a',
           template: 'java-service',
-          returnTo: '/alert?status=firing&returnLabel=告警'
+          returnTo: `/alert?status=firing&returnLabel=${encodeURIComponent(t('alert.center.default-title'))}`
         }}
       />
     );
@@ -135,25 +133,25 @@ describe('actions page', () => {
     expect(html).toContain('data-actions-suggested-remediation="alert-context-human-confirmation"');
     expect(html).toContain('data-hz-action-workbench-owner="hertzbeat-ui-action-workbench"');
     expect(html).toContain('data-actions-adapter-boundary="adapter-pending"');
-    expect(html).toContain('建议动作');
-    expect(html).toContain('只生成建议，不自动执行。');
+    expect(html).toContain(t('actions.entry.suggested.title'));
+    expect(html).toContain(t('actions.entry.suggested.copy'));
     expect(html).toContain('data-actions-suggested-action="suggest-restart-checkout"');
-    expect(html).toContain('建议重启 checkout-api');
-    expect(html).toContain('高风险 · 重启 checkout 部署');
-    expect(html).toContain('中风险 · 静默边缘饱和告警');
+    expect(html).toContain(t('actions.suggestion.restart.title', { target: 'checkout-api' }));
+    expect(html).toContain(`${t('actions.risk.high')} · ${t('actions.catalog.restart.name')}`);
+    expect(html).toContain(`${t('actions.risk.medium')} · ${t('actions.catalog.mute.name')}`);
     expect(html).not.toContain('high risk · restart-checkout');
     expect(html).not.toContain('medium risk · mute-edge-alerts');
-    expect(html).toContain('来源 告警中心');
-    expect(html).toContain('信号 链路');
-    expect(html).not.toContain('来源 alert');
-    expect(html).not.toContain('信号 traces');
+    expect(html).toContain(t('actions.suggestion.evidence.source', { value: t('actions.suggestion.source.alert') }));
+    expect(html).toContain(t('actions.suggestion.evidence.signal', { value: t('actions.suggestion.signal.traces') }));
+    expect(html).not.toContain(t('actions.suggestion.evidence.source', { value: 'alert' }));
+    expect(html).not.toContain(t('actions.suggestion.evidence.signal', { value: 'traces' }));
     expect(html).toContain('data-actions-suggested-action-confirm="manual-required"');
     expect(html).toContain('data-actions-approval-draft-state="ready"');
     expect(html).toContain('data-actions-approval-draft-status="ready"');
     expect(html).toContain('data-actions-approval-draft-request="preview"');
     expect(html).toContain('&quot;actionId&quot;:&quot;suggest-restart-checkout&quot;');
     expect(html).toContain('&quot;executionAllowed&quot;:false');
-    expect(html).toContain('人工确认后执行');
+    expect(html).toContain(t('actions.entry.suggested.confirm'));
     expect(html).toContain('data-actions-suggested-action-evidence="suggest-restart-checkout"');
     expect(html).toContain('/alert?status=firing');
     expect(html).toContain('traceId=trace-123');
@@ -168,13 +166,15 @@ describe('actions page', () => {
         suggestionContext={{
           entityId: 'service:commerce/checkout',
           source: 'entity',
-          returnTo: '/entities/service%3Acommerce%2Fcheckout?returnLabel=实体'
+          returnTo: `/entities/service%3Acommerce%2Fcheckout?returnLabel=${encodeURIComponent(t('actions.suggestion.source.entity'))}`
         }}
       />
     );
 
-    expect(html).toContain('建议重启 实体 service:commerce/checkout');
-    expect(html).not.toContain('建议重启 service:commerce/checkout');
+    expect(html).toContain(t('actions.suggestion.restart.title', {
+      target: t('actions.suggestion.target.entity-id', { entityId: 'service:commerce/checkout' })
+    }));
+    expect(html).not.toContain(t('actions.suggestion.restart.title', { target: 'service:commerce/checkout' }));
     expect(html).toContain('entityId=service%3Acommerce%2Fcheckout');
     expect(html).not.toContain('returnLabel=');
   });

@@ -61,10 +61,10 @@ describe('workbench page delegation', () => {
   it('delegates compact fact pills to the shared page header when requested', () => {
     const html = renderToStaticMarkup(
       <WorkbenchPage
-        kicker="告警中心"
-        title="集中查看并处理当前告警"
+        kicker="Alert center"
+        title="Review and handle current alerts"
         subtitle="Shared operator shell"
-        facts={[{ label: '全部告警组', value: '0' }]}
+        facts={[{ label: 'All alert groups', value: '0' }]}
         factsVariant="pills"
         tone="operator"
         main={<div>main-body</div>}
@@ -72,17 +72,17 @@ describe('workbench page delegation', () => {
     );
 
     expect(html).toContain('data-observability-stat-grid="pills"');
-    expect(html).toContain('全部告警组');
+    expect(html).toContain('All alert groups');
     expect(html).not.toContain('divide-x');
   });
 
   it('delegates the plain kicker variant for route headers', () => {
     const html = renderToStaticMarkup(
       <WorkbenchPage
-        kicker="对象优先调查"
+        kicker="Object-first investigation"
         kickerVariant="plain"
-        title="导入实体定义"
-        subtitle="支持一次导入多个定义。"
+        title="Import entity definitions"
+        subtitle="Import multiple definitions in one pass."
         facts={[]}
         tone="operator"
         main={<div>main-body</div>}
@@ -90,7 +90,7 @@ describe('workbench page delegation', () => {
     );
 
     expect(html).toContain('data-observability-kicker="plain"');
-    expect(html).toContain('对象优先调查');
+    expect(html).toContain('Object-first investigation');
     expect(html).not.toContain('data-badge');
   });
 

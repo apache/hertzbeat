@@ -7,55 +7,7 @@ import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'entities.discovery.workspace.kicker': '对象优先调查',
-        'entities.discovery.workspace.title': '遥测发现',
-        'entities.discovery.workspace.subtitle': '先搜索一组需要治理的监控线索，再决定归并、完善归属，还是送入定义工作台继续收口。',
-        'entities.discovery.action.import': '从定义创建',
-        'entities.discovery.action.create': '创建实体',
-        'entities.discovery.action.catalog': '对象目录',
-        'entities.discovery.action.search': '搜索',
-        'entities.discovery.action.clear': '清空',
-        'entities.discovery.search.placeholder': '搜索监控名称或实例',
-        'entities.discovery.search.error': '遥测发现查询失败',
-        'entities.discovery.candidate.title': 'OTLP 候选实体',
-        'entities.discovery.candidate.copy': '保留 OTLP 资源身份，确认后再写入对象目录。',
-        'entities.discovery.candidate.action.create': '创建实体草稿',
-        'entities.discovery.candidate.identity': '资源身份',
-        'entities.discovery.candidate.namespace': '命名空间',
-        'entities.discovery.candidate.environment': '环境',
-        'entities.discovery.policy.title': '治理筛选与共享策略',
-        'entities.discovery.policy.copy': '按已有负责人、系统和环境预设给线索完善上下文。',
-        'entities.discovery.policy.latest-activity': '最近活动 {{activity}}',
-        'entities.discovery.policy.empty': '暂无共享策略，先搜索一条监控线索。',
-        'entities.discovery.catalog.owner': '负责人',
-        'entities.discovery.catalog.system': '系统',
-        'entities.discovery.catalog.environment': '环境',
-        'entities.discovery.metric.clues': '线索',
-        'entities.discovery.metric.matched': '已匹配',
-        'entities.discovery.metric.create-suggested': '建议新建',
-        'entities.discovery.metric.catalog-sources': '目录来源',
-        'entities.discovery.table.title': '发现线索',
-        'entities.discovery.table.result-count': '{{count}} 条结果',
-        'entities.discovery.table.waiting': '等待搜索',
-        'entities.discovery.table.column.clue': '线索',
-        'entities.discovery.table.column.instance': '实例',
-        'entities.discovery.table.column.status': '状态',
-        'entities.discovery.table.column.owner': '归属',
-        'entities.discovery.table.column.system': '系统',
-        'entities.discovery.table.column.environment': '环境',
-        'entities.discovery.table.column.attribution': '归因',
-        'entities.discovery.table.column.action': '操作',
-        'entities.discovery.empty.title': '先搜索一组需要治理的监控线索',
-        'entities.discovery.empty.search.copy': '没有找到匹配的监控线索。',
-        'entities.discovery.empty.idle.copy': '先搜索一条监控，再把它转成实体草稿。',
-        'entities.discovery.activity.preset-synced': '预设已同步',
-        'entities.discovery.activity.shared-governance-updated': '共享治理已更新',
-        'entities.discovery.activity.empty': '暂无活动'
-      }
-    })
+    t: createTranslatorMock({ locale: 'zh-CN' })
   })
 }));
 
@@ -111,37 +63,45 @@ vi.mock('@/lib/entity-discovery/controller', () => ({
   searchDiscoveryMonitors: vi.fn()
 }));
 
-vi.mock('@/lib/entity-discovery/view-model', () => ({
-  buildCatalogRows: () => [],
-  buildDiscoveryBulkOverrideTags: () => [],
-  buildDiscoveryBulkSuggestionChips: () => ({ ownerChips: [], systemChips: [], presetActions: [] }),
-  buildDiscoveryBulkSummary: () => ({ totalCount: 0, selectedCount: 0, mergeReadyCount: 0, createReadyCount: 0, reviewCount: 0 }),
-  buildDiscoveryFacts: () => [],
-  buildDiscoveryGovernanceCards: () => [],
-  buildDiscoveryIntakeQueueGroups: () => [],
-  buildDiscoveryMetrics: () => [],
-  buildDiscoveryMonitorRows: () => [],
-  buildDiscoveryScopeOptions: () => [],
-  filterDiscoveryCardsByScope: (cards: any[]) => cards,
-  buildDiscoveryTableRows: (_monitors: any[], presets: any[]) =>
-    presets.map(preset => ({
-      key: `preset-${preset.id}`,
-      name: preset.name,
-      instance: preset.system,
-      status: preset.status,
-      owner: preset.owner,
-      system: preset.system,
-      environment: preset.environment,
-      activity: 'catalog preset',
-      href: `/entities/discovery?preset=${preset.id}`,
-      attributionState: 'preset',
-      attributionLabel: '目录预设',
-      attributionCopy: '可作为候选确认基线',
-      primaryActionLabel: '查看预设'
-    }))
-}));
+vi.mock('@/lib/entity-discovery/view-model', () => {
+  const t = createTranslatorMock({ locale: 'zh-CN' });
+
+  return {
+    buildCatalogRows: () => [],
+    buildDiscoveryBulkOverrideTags: () => [],
+    buildDiscoveryBulkSuggestionChips: () => ({ ownerChips: [], systemChips: [], presetActions: [] }),
+    buildDiscoveryBulkSummary: () => ({ totalCount: 0, selectedCount: 0, mergeReadyCount: 0, createReadyCount: 0, reviewCount: 0 }),
+    buildDiscoveryFacts: () => [],
+    buildDiscoveryGovernanceCards: () => [],
+    buildDiscoveryIntakeQueueGroups: () => [],
+    buildDiscoveryMetrics: () => [],
+    buildDiscoveryMonitorRows: () => [],
+    buildDiscoveryScopeOptions: () => [],
+    filterDiscoveryCardsByScope: (cards: any[]) => cards,
+    buildDiscoveryTableRows: (_monitors: any[], presets: any[]) =>
+      presets.map(preset => ({
+        key: `preset-${preset.id}`,
+        name: preset.name,
+        instance: preset.system,
+        status: preset.status,
+        owner: preset.owner,
+        system: preset.system,
+        environment: preset.environment,
+        activity: 'catalog preset',
+        href: `/entities/discovery?preset=${preset.id}`,
+        attributionState: 'preset',
+        attributionLabel: t('entities.discovery.row.attribution.preset.label'),
+        attributionCopy: t('entities.discovery.row.attribution.preset.copy'),
+        primaryActionLabel: t('entities.discovery.row.attribution.preset.action')
+      }))
+  };
+});
+
+const han = (...codes: number[]) => String.fromCodePoint(...codes);
 
 describe('EntityDiscoverySurface', () => {
+  const zh = createTranslatorMock({ locale: 'zh-CN' });
+
   it('keeps discovery on the cold full-width HertzBeat owner instead of the old rail contract', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/entity-discovery-surface.tsx'), 'utf8');
 
@@ -170,7 +130,7 @@ describe('EntityDiscoverySurface', () => {
     expect(source).not.toContain('data-entity-discovery-search-input-shell');
     expect(source).not.toContain('coldEntityDiscoveryVisual.search.input');
     expect(source).not.toContain("from '@/components/ui/input'");
-    expect(source).not.toContain('补齐');
+    expect(source).not.toContain(han(0x8865, 0x9f50));
     expect(source).not.toContain('data-entity-discovery-route="signoz-discovery-table"');
     expect(source).not.toContain('data-entity-discovery-rail="signoz-status-rail"');
     expect(source).not.toContain('data-entity-discovery-controls="signoz-filter-bar"');
@@ -184,8 +144,8 @@ describe('EntityDiscoverySurface', () => {
     expect(source).not.toContain('data-entity-discovery-primary-action-row="angular-inline"');
     expect(source).not.toContain('data-entity-discovery-table-shell="signoz-table-shell"');
     expect(source).not.toContain('data-entity-discovery-table="signoz-discovery-table"');
-    expect(source).not.toContain('原因');
-    expect(source).not.toContain('接着可做');
+    expect(source).not.toContain(han(0x539f, 0x56e0));
+    expect(source).not.toContain(han(0x63a5, 0x7740, 0x53ef, 0x505a));
     expect(source).not.toContain('WorkbenchPage');
     expect(source).not.toContain('SurfaceSection');
     expect(source).not.toContain('RailSection');
@@ -195,8 +155,8 @@ describe('EntityDiscoverySurface', () => {
     expect(source).not.toContain('RowList');
     expect(source).not.toContain('EntityDiscoveryGovernanceList');
     expect(source).not.toContain('EntityDiscoveryIntakeConsole');
-    expect(source).not.toContain('aria-label="范围"');
-    expect(source).not.toContain('全部来源');
+    expect(source).not.toContain(`aria-label="${han(0x8303, 0x56f4)}"`);
+    expect(source).not.toContain(han(0x5168, 0x90e8, 0x6765, 0x6e90));
   });
 
   it('renders a compact cold discovery console with Chinese object-directory copy and no right rail', async () => {
@@ -229,30 +189,30 @@ describe('EntityDiscoverySurface', () => {
     expect(html).toContain('data-entity-discovery-empty-state="cold-inline-empty"');
     expect(html).toContain('data-entity-discovery-table-shell="cold-dense-table"');
     expect(html).toContain('data-entity-discovery-table="cold-discovery-table"');
-    expect(html).toContain('归因');
-    expect(html).toContain('遥测发现');
-    expect(html).toContain('先搜索一组需要治理的监控线索');
-    expect(html).toContain('搜索监控名称或实例');
-    expect(html).toContain('先搜索一条监控，再把它转成实体草稿。');
-    expect(html).toContain('治理筛选与共享策略');
-    expect(html).toContain('完善上下文');
-    expect(html).toContain('从定义创建');
-    expect(html).toContain('创建实体');
-    expect(html).toContain('实体');
-    expect(html).toContain('负责人 · platform');
-    expect(html).toContain('系统 · checkout');
-    expect(html).toContain('环境 · prod');
+    expect(html).toContain(zh('entities.discovery.table.column.attribution'));
+    expect(html).toContain(zh('entities.discovery.workspace.title'));
+    expect(html).toContain(zh('entities.discovery.empty.title'));
+    expect(html).toContain(zh('entities.discovery.search.placeholder'));
+    expect(html).toContain(zh('entities.discovery.empty.idle.copy'));
+    expect(html).toContain(zh('entities.discovery.policy.title'));
+    expect(html).toContain(zh('entities.discovery.policy.copy'));
+    expect(html).toContain(zh('entities.discovery.action.import'));
+    expect(html).toContain(zh('entities.discovery.action.create'));
+    expect(html).toContain(zh('dashboard.home.status.entities'));
+    expect(html).toContain(`${zh('entities.discovery.catalog.owner')} · platform`);
+    expect(html).toContain(`${zh('entities.discovery.catalog.system')} · checkout`);
+    expect(html).toContain(`${zh('entities.discovery.catalog.environment')} · prod`);
     expect(html).not.toContain('checkout baseline');
     expect(html).not.toContain('data-entity-discovery-route="signoz-discovery-table"');
     expect(html).not.toContain('data-entity-discovery-rail="signoz-status-rail"');
     expect(html).not.toContain('data-entity-discovery-right-panel="angular-density"');
     expect(html).not.toContain('data-entity-discovery-table="signoz-discovery-table"');
     expect(html).not.toContain('data-entity-discovery-empty-canvas="angular-blank-canvas"');
-    expect(html).not.toContain('常用入口');
-    expect(html).not.toContain('原因');
-    expect(html).not.toContain('接着可做');
-    expect(html).not.toContain('全部来源');
-    expect(html).not.toContain('aria-label="范围"');
+    expect(html).not.toContain(han(0x5e38, 0x7528, 0x5165, 0x53e3));
+    expect(html).not.toContain(han(0x539f, 0x56e0));
+    expect(html).not.toContain(han(0x63a5, 0x7740, 0x53ef, 0x505a));
+    expect(html).not.toContain(han(0x5168, 0x90e8, 0x6765, 0x6e90));
+    expect(html).not.toContain(`aria-label="${han(0x8303, 0x56f4)}"`);
     expect(html).not.toContain('data-workbench-page');
     expect(html).not.toContain('Governance presets');
     expect(html).not.toContain('Catalog suggestions');
@@ -284,17 +244,17 @@ describe('EntityDiscoverySurface', () => {
     expect(html).toContain('data-entity-discovery-candidate-service="billing-api"');
     expect(html).toContain('data-entity-discovery-candidate-namespace="commerce"');
     expect(html).toContain('data-entity-discovery-candidate-environment="prod"');
-    expect(html).toContain('OTLP 候选实体');
+    expect(html).toContain(zh('entities.discovery.candidate.title'));
     expect(html).toContain('service.name = billing');
-    expect(html).toContain('命名空间 · commerce');
-    expect(html).toContain('环境 · prod');
+    expect(html).toContain(`${zh('entities.discovery.candidate.namespace')} · commerce`);
+    expect(html).toContain(`${zh('entities.discovery.candidate.environment')} · prod`);
     expect(html).toContain('value="billing-api"');
     expect(html).toContain('data-entity-discovery-candidate-action="create-draft"');
     expect(html).toContain(
       'href="/entities/new?source=otlp-candidate&amp;identityKey=service.name&amp;identityValue=billing&amp;serviceName=billing-api&amp;serviceNamespace=commerce&amp;environment=prod"'
     );
-    expect(html).not.toContain('已归属');
-    expect(html).not.toContain('健康正常');
-    expect(html).not.toContain('拓扑已确认');
+    expect(html).not.toContain(han(0x5df2, 0x5f52, 0x5c5e));
+    expect(html).not.toContain(han(0x5065, 0x5eb7, 0x6b63, 0x5e38));
+    expect(html).not.toContain(han(0x62d3, 0x6251, 0x5df2, 0x786e, 0x8ba4));
   }, 30000);
 });

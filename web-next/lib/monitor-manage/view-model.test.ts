@@ -22,9 +22,9 @@ describe('monitor view model', () => {
         t
       )
     ).toEqual([
-      { label: '当前页运行中', value: '2', tone: 'success' },
-      { label: '当前页异常', value: '1', tone: 'danger' },
-      { label: '当前页暂停', value: '1', tone: 'warning' }
+      { label: t('monitors.metric.up'), value: '2', tone: 'success' },
+      { label: t('monitors.metric.down'), value: '1', tone: 'danger' },
+      { label: t('monitors.metric.paused'), value: '1', tone: 'warning' }
     ]);
   });
 
@@ -41,11 +41,11 @@ describe('monitor view model', () => {
         } as any,
         t,
         () => '2026-04-10 18:00:00',
-        () => '异常'
+        () => t('monitor.detail.status.down')
       )
     ).toEqual([
-      { title: 'mysql-prod', copy: 'checkout · 10.0.0.1', meta: '异常' },
-      { title: '标签', copy: '1', meta: '更新时间 2026-04-10 18:00:00' }
+      { title: 'mysql-prod', copy: 'checkout · 10.0.0.1', meta: t('monitor.detail.status.down') },
+      { title: t('common.labels'), copy: '1', meta: t('monitors.updated-at', { time: '2026-04-10 18:00:00' }) }
     ]);
   });
 
@@ -55,9 +55,9 @@ describe('monitor view model', () => {
         null,
         t,
         () => '2026-04-10 18:00:00',
-        () => '异常'
+        () => t('monitor.detail.status.down')
       )
-    ).toEqual([{ title: '还未选择监控', copy: '从列表选择监控实例后，这里会显示操作和上下文。', meta: '无' }]);
+    ).toEqual([{ title: t('monitors.empty-selected.title'), copy: t('monitors.empty-selected.copy'), meta: t('common.none') }]);
   });
 
   it('uses localized fallback for missing selected monitor identity facts', () => {
@@ -73,11 +73,11 @@ describe('monitor view model', () => {
         } as any,
         t,
         () => '2026-04-10 18:00:00',
-        () => '正常'
+        () => t('monitor.status.up')
       )
     ).toEqual([
-      { title: 'orphan-monitor', copy: '无 · 无', meta: '正常' },
-      { title: '标签', copy: '0', meta: '更新时间 2026-04-10 18:00:00' }
+      { title: 'orphan-monitor', copy: `${t('common.none')} · ${t('common.none')}`, meta: t('monitor.status.up') },
+      { title: t('common.labels'), copy: '0', meta: t('monitors.updated-at', { time: '2026-04-10 18:00:00' }) }
     ]);
   });
 
@@ -93,7 +93,7 @@ describe('monitor view model', () => {
         },
         t
       )
-    ).toBe('当前没有关联监控，可回到遥测发现或编辑页补充监控。');
+    ).toBe(t('entity.monitor.workbench.copy.empty'));
 
     expect(
       buildMonitorWorkbenchNarrative(
@@ -106,7 +106,7 @@ describe('monitor view model', () => {
         },
         t
       )
-    ).toBe('当前没有异常监控，可继续核对已绑定监控的覆盖情况。');
+    ).toBe(t('entity.monitor.workbench.copy.healthy', { total: 3 }));
   });
 
   it('falls back from down-only entity workbench mode only when the first abnormal pass is empty', () => {

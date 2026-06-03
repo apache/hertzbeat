@@ -14,10 +14,10 @@ describe('settings dialog form controls', () => {
   it('renders dialog dropdowns through the shared cold custom select owner', () => {
     const html = renderToStaticMarkup(
       <SettingsDialogForm>
-        <SettingsDialogField label="短信类型" required>
+        <SettingsDialogField label="SMS type" required>
           <SettingsDialogSelect defaultValue="tencent" defaultOpen>
-            <option value="tencent">腾讯短信</option>
-            <option value="aliyun">阿里短信</option>
+            <option value="tencent">Tencent SMS</option>
+            <option value="aliyun">Aliyun SMS</option>
           </SettingsDialogSelect>
         </SettingsDialogField>
         <SettingsDialogField label="SecretId" required>
@@ -69,13 +69,13 @@ describe('settings dialog form controls', () => {
   it('supports the Angular vertical form layout used by token generation dialogs', () => {
     const html = renderToStaticMarkup(
       <SettingsDialogForm>
-        <SettingsDialogField label="令牌名称" required layout="vertical">
+        <SettingsDialogField label="Token name" required layout="vertical">
           <SettingsDialogInput value="ops-token" readOnly />
         </SettingsDialogField>
-        <SettingsDialogField label="过期时间" layout="vertical">
+        <SettingsDialogField label="Expiration time" layout="vertical">
           <SettingsDialogSelect defaultValue="-1" defaultOpen>
-            <option value="-1">永不过期</option>
-            <option value="604800">7 天</option>
+            <option value="-1">Never expires</option>
+            <option value="604800">7 days</option>
           </SettingsDialogSelect>
         </SettingsDialogField>
       </SettingsDialogForm>

@@ -17,10 +17,10 @@ describe('alert setting view model', () => {
         t
       )
     ).toEqual([
-      { label: '工作区', value: 'alert/setting' },
-      { label: '阈值总数', value: '12' },
-      { label: '当前页', value: '2' },
-      { label: '数据源', value: '就绪' }
+      { label: t('alert.setting.fact.workspace'), value: 'alert/setting' },
+      { label: t('alert.setting.fact.total'), value: '12' },
+      { label: t('common.current-page-count'), value: '2' },
+      { label: t('alert.setting.fact.datasource'), value: t('common.ready') }
     ]);
   });
 
@@ -51,7 +51,7 @@ describe('alert setting view model', () => {
         expr: 'cpu_usage > 80',
         template: 'OpsTemplate',
         labels: ['severity:warning', 'team:core'],
-        enabledLabel: '已启用',
+        enabledLabel: t('common.enabled'),
         updatedAt: '2026-04-20 00:20:00'
       }
     ]);
@@ -99,10 +99,10 @@ describe('alert setting view model', () => {
     ).toMatchObject({
       key: '8',
       name: 'empty threshold',
-      expr: '无',
-      template: '无',
+      expr: t('common.none'),
+      template: t('common.none'),
       labels: [],
-      enabledLabel: '已停用'
+      enabledLabel: t('common.disabled')
     });
   });
 
@@ -128,12 +128,12 @@ describe('alert setting view model', () => {
 
     expect(context).toMatchObject({
       signal: 'traces',
-      title: '来自链路的阈值上下文',
+      title: t('alert.rule.evidence.setting.title', { signal: t('alert.rule.signal.traces') }),
       returnHref: '/trace/manage?traceId=trace-123',
       labelsText:
         'hertzbeat.signal:traces, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot'
     });
-    expect(context?.rows.map(row => row.label)).toContain('链路上下文');
+    expect(context?.rows.map(row => row.label)).toContain(t('signal.context.trace.label'));
   });
 
   it('localizes threshold evidence context and inherited rows outside zh-CN', () => {
@@ -162,7 +162,7 @@ describe('alert setting view model', () => {
       copy: 'New threshold rules prefill the current entity, service, environment, and trace labels; validation returns to the original troubleshooting context.',
       returnHref: '/trace/manage?traceId=trace-123'
     });
-    expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[一-龥]/);
+    expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[\u4e00-\u9fff]/);
     expect(context?.rows.map(row => row.label)).toContain('Trace context');
   });
 });

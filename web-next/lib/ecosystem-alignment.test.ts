@@ -15,9 +15,9 @@ import { findForbiddenProductLanguage, isAllowedExternalProductReference } from 
 describe('HertzBeat ecosystem alignment contract', () => {
   it('anchors HertzBeat as OTel-first, private-deployable, and entity-centered', () => {
     expect(ECOSYSTEM_ALIGNMENT.positioning.deploymentModel).toBe('open-source-private-deployable');
-    expect(ECOSYSTEM_ALIGNMENT.positioning.statement).toContain('OTLP 三信号');
-    expect(ECOSYSTEM_ALIGNMENT.positioning.statement).toContain('实体中心');
-    expect(ECOSYSTEM_ALIGNMENT.positioning.statement).toContain('私有化部署');
+    expect(ECOSYSTEM_ALIGNMENT.positioning.statement).toContain('OTLP three signals');
+    expect(ECOSYSTEM_ALIGNMENT.positioning.statement).toContain('entity catalog');
+    expect(ECOSYSTEM_ALIGNMENT.positioning.statement).toContain('private-deployable');
     expect(ECOSYSTEM_ALIGNMENT.positioning.coreLoop).toEqual(
       expect.arrayContaining(['collectors', 'monitor-templates', 'otlp-three-signals', 'entity-catalog', 'alert-closure'])
     );

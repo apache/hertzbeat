@@ -41,9 +41,10 @@ describe('BulletinMetricsTable', () => {
   });
 
   it('renders missing metric values with the localized empty fallback', () => {
+    const emptyMetricValue = 'No metric value';
     const t = createTranslatorMock({
       overrides: {
-        'common.none': '无指标值'
+        'common.none': emptyMetricValue
       }
     });
     const html = renderToStaticMarkup(
@@ -77,14 +78,15 @@ describe('BulletinMetricsTable', () => {
     );
 
     expect(html).toContain('Cart probe');
-    expect(html).toContain('无指标值');
+    expect(html).toContain(emptyMetricValue);
     expect(t).toHaveBeenCalledWith('common.none');
   });
 
   it('renders missing monitor identity with the localized empty fallback', () => {
+    const missingMonitorIdentity = 'No monitor identity';
     const t = createTranslatorMock({
       overrides: {
-        'common.none': '无监控身份'
+        'common.none': missingMonitorIdentity
       }
     });
     const html = renderToStaticMarkup(
@@ -118,7 +120,7 @@ describe('BulletinMetricsTable', () => {
     );
 
     expect(html).toContain('Checkout probe');
-    expect((html.match(/无监控身份/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect((html.match(new RegExp(missingMonitorIdentity, 'g')) ?? []).length).toBeGreaterThanOrEqual(2);
     expect(t).toHaveBeenCalledWith('common.none');
   });
 });

@@ -10,9 +10,9 @@ describe('WeekdayPicker', () => {
         name="silence_days[]"
         value="7,1"
         options={[
-          { value: 7, label: '星期日' },
-          { value: 1, label: '星期一' },
-          { value: 2, label: '星期二' }
+          { value: 7, label: 'Sunday' },
+          { value: 1, label: 'Monday' },
+          { value: 2, label: 'Tuesday' }
         ]}
         onChange={() => {}}
       />

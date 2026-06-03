@@ -89,6 +89,7 @@ describe('setting object store page', () => {
   });
 
   it('renders the cold object store form on the shared settings console contract', async () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
     const { default: SettingObjectStorePage } = await import('./page');
     const html = renderToStaticMarkup(<SettingObjectStorePage />);
 
@@ -106,32 +107,30 @@ describe('setting object store page', () => {
     expect(html).toContain('data-setting-object-store-type-change="angular-reset-config-on-type-change"');
     expect(html).toContain('data-setting-object-store-obs-fields="cold-obs-fields"');
     expect(html).toContain('data-setting-object-store-actions="standard-equal-buttons"');
-    expect(html).toContain('文件服务配置');
+    expect(html).toContain(t('settings.object-store'));
     expect(html).toContain('data-settings-form-owner="cold-settings-form-owner"');
     expect(html).toContain('data-settings-form-control="cold-select-control"');
     expect(html).toContain('data-settings-form-control="cold-input-control"');
-    expect(html).toContain('文件服务提供商');
+    expect(html).toContain(t('settings.object-store.type'));
     expect(html).toContain('AccessKey');
     expect(html).toContain('SecretKey');
     expect(html).toContain('Bucket');
     expect(html).toContain('Endpoint');
-    expect(html).toContain('保存路径');
-    expect(html).toContain('placeholder="华为云 AccessKeyId"');
-    expect(html).toContain('placeholder="华为云 AccessKeySecret"');
-    expect(html).toContain('placeholder="华为云 OBS 中创建的 Bucket 名称"');
-    expect(html).toContain('placeholder="华为云 OBS 地域域名，不包括 Bucket 名"');
-    expect(html).toContain('placeholder="备份文件保存路径，默认是 hertzbeat"');
-    expect(html).toContain('本地数据库（默认）');
-    expect(html).toContain('本地文件');
-    expect(html).toContain('华为云 OBS');
-    expect(html).toContain('确认更新');
+    expect(html).toContain(t('settings.object-store.obs.savePath'));
+    expect(html).toContain(`placeholder="${t('settings.object-store.obs.accessKey.placeholder')}"`);
+    expect(html).toContain(`placeholder="${t('settings.object-store.obs.secretKey.placeholder')}"`);
+    expect(html).toContain(`placeholder="${t('settings.object-store.obs.bucketName.placeholder')}"`);
+    expect(html).toContain(`placeholder="${t('settings.object-store.obs.endpoint.placeholder')}"`);
+    expect(html).toContain(`placeholder="${t('settings.object-store.obs.savePath.placeholder')}"`);
+    expect(html).toContain(t('settings.object-store.type.database'));
+    expect(html).toContain(t('settings.object-store.type.file'));
+    expect(html).toContain(t('settings.object-store.type.obs'));
+    expect(html).toContain(t('settings.system-config.ok'));
     expect(html).not.toContain('data-setting-object-store-page="angular-object-store"');
     expect(html).not.toContain('data-setting-object-store-form="angular-vertical-form"');
     expect(html).not.toContain('data-setting-object-store-provider="angular-provider-select"');
     expect(html).not.toContain('data-setting-object-store-obs-fields="angular-obs-fields"');
     expect(html).not.toContain('data-setting-object-store-summary-rail=');
-    expect(html).not.toContain('文件服务摘要');
-    expect(html).not.toContain('当前文件服务');
     expect(html).not.toContain('File Server Configuration');
     expect(html).not.toContain('Store Type');
     expect(html).not.toContain('Save</button>');

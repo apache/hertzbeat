@@ -86,6 +86,7 @@ vi.mock('@/components/workbench/client-workbench', () => ({
 
 vi.mock('@/components/pages/entity-detail-surface', () => ({
   EntityDetailSurface: ({ detail, routeContext }: any) => {
+    const surfaceT = createTranslatorMock({ locale: 'zh-CN' });
     const entity = detail.entity?.entity || {};
     return (
       <main
@@ -96,22 +97,22 @@ vi.mock('@/components/pages/entity-detail-surface', () => ({
         data-entity-detail-route-time-range={routeContext?.timeRange || ''}
       >
         <header data-entity-detail-header="cold-compact-header">
-          实体详情
-          对象优先调查
+          {surfaceT('entities.detail.header.badge')}
+          {surfaceT('entities.detail.header.kicker')}
           <div data-entity-detail-command-row="standard-equal-buttons">
-            <span data-href="/entities">全部实体</span>
-            <button>刷新</button>
-            <span data-href={`/entities/${entity.id}/definition`}>编辑定义</span>
-            <button>删除</button>
-            <span data-href={`/entities/${entity.id}/edit`}>编辑</span>
+            <span data-href="/entities">{surfaceT('entities.detail.action.all-entities')}</span>
+            <button>{surfaceT('common.refresh')}</button>
+            <span data-href={`/entities/${entity.id}/definition`}>{surfaceT('entities.detail.action.edit-definition')}</span>
+            <button>{surfaceT('entities.detail.action.delete')}</button>
+            <span data-href={`/entities/${entity.id}/edit`}>{surfaceT('entities.detail.action.edit')}</span>
           </div>
         </header>
         <div data-entity-detail-count-strip="cold-inline-counts" />
         <div data-entity-detail-signal-grid="cold-detail-grid">
-          <section data-entity-detail-overview-panel="cold-overview-panel">上下文</section>
-          <section data-entity-detail-related-panel="cold-related-panel">相关信号</section>
-          <section data-entity-detail-next-panel="cold-next-panel">下一步</section>
-          <section data-entity-detail-drilldown-panel="cold-drilldown-panel">高级入口</section>
+          <section data-entity-detail-overview-panel="cold-overview-panel">{surfaceT('entities.detail.panel.overview.title')}</section>
+          <section data-entity-detail-related-panel="cold-related-panel">{surfaceT('entities.detail.panel.related.title')}</section>
+          <section data-entity-detail-next-panel="cold-next-panel">{surfaceT('entities.detail.panel.next.title')}</section>
+          <section data-entity-detail-drilldown-panel="cold-drilldown-panel">{surfaceT('entities.detail.panel.drilldown.title')}</section>
         </div>
       </main>
     );
@@ -152,6 +153,7 @@ describe('EntityDetailPage', () => {
   });
 
   it('renders the cold full-width entity detail workbench without old Workbench side panels', async () => {
+    const expectedT = createTranslatorMock({ locale: 'zh-CN' });
     const source = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/entity-detail-page.tsx'), 'utf8');
     const html = renderToStaticMarkup(<EntityDetailPage entityId="42" />);
 
@@ -166,12 +168,17 @@ describe('EntityDetailPage', () => {
     expect(html).toContain('data-entity-detail-related-panel="cold-related-panel"');
     expect(html).toContain('data-entity-detail-next-panel="cold-next-panel"');
     expect(html).toContain('data-entity-detail-drilldown-panel="cold-drilldown-panel"');
-    expect(html).toContain('实体详情');
-    expect(html).toContain('对象优先调查');
-    expect(html).toContain('刷新');
-    expect(html).toContain('编辑定义');
-    expect(html).toContain('删除');
-    expect(html).toContain('编辑');
+    expect(html).toContain(expectedT('entities.detail.header.badge'));
+    expect(html).toContain(expectedT('entities.detail.header.kicker'));
+    expect(html).toContain(expectedT('entities.detail.action.all-entities'));
+    expect(html).toContain(expectedT('common.refresh'));
+    expect(html).toContain(expectedT('entities.detail.action.edit-definition'));
+    expect(html).toContain(expectedT('entities.detail.action.delete'));
+    expect(html).toContain(expectedT('entities.detail.action.edit'));
+    expect(html).toContain(expectedT('entities.detail.panel.overview.title'));
+    expect(html).toContain(expectedT('entities.detail.panel.related.title'));
+    expect(html).toContain(expectedT('entities.detail.panel.next.title'));
+    expect(html).toContain(expectedT('entities.detail.panel.drilldown.title'));
     expect(html).toContain('/entities/42/definition');
     expect(html).not.toContain('Refresh');
     expect(html).not.toContain('Edit definition');

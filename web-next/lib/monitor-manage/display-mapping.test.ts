@@ -6,9 +6,9 @@ const t = createTranslatorMock({ locale: 'zh-CN' });
 
 describe('monitor display mapping', () => {
   it('maps status values to display labels', () => {
-    expect(statusLabel(1, t)).toBe('正常');
-    expect(statusLabel(2, t)).toBe('宕机');
-    expect(statusLabel(0, t)).toBe('暂停');
+    expect(statusLabel(1, t)).toBe(t('monitor.status.up'));
+    expect(statusLabel(2, t)).toBe(t('monitor.status.down'));
+    expect(statusLabel(0, t)).toBe(t('monitor.status.paused'));
   });
 
   it('uses runtime English fallbacks when no translator is supplied', () => {

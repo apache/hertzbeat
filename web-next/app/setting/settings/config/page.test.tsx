@@ -103,13 +103,14 @@ describe('setting config page', () => {
   });
 
   it('renders the constrained locale, timezone, and theme selectors on the shared settings console contract', async () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
     const { default: SettingConfigPage } = await import('./page');
     const html = renderToStaticMarkup(<SettingConfigPage />);
 
     expect(html).toContain('data-client-workbench="true"');
-    expect(html).toContain('data-loading-copy="正在加载系统配置。"');
+    expect(html).toContain(`data-loading-copy="${t('setting.settings.config.loading')}"`);
     expect(html).toContain('data-settings-console-title="true"');
-    expect(html).toContain('系统配置');
+    expect(html).toContain(t('settings.system-config'));
     expect(html).toContain('data-setting-config-surface="otlp-cold-system-config"');
     expect(html).toContain('data-setting-config-style-baseline="hertzbeat-cold-matte"');
     expect(html).toContain('data-setting-config-layout="full-width-settings-form"');
@@ -128,20 +129,18 @@ describe('setting config page', () => {
     expect(html).toContain('data-setting-config-select-kind="theme"');
     expect(html).toContain('data-setting-config-actions="standard-equal-buttons"');
     expect(html).toContain('data-settings-form-owner="cold-settings-form-owner"');
-    expect(html).toContain('系统语言');
-    expect(html).toContain('系统时区');
-    expect(html).toContain('系统主题');
-    expect(html).toContain('英语(en_US)');
-    expect(html).toContain('简体中文(zh_CN)');
-    expect(html).toContain('深色主题');
-    expect(html).toContain('紧凑主题');
+    expect(html).toContain(t('settings.system-config.locale'));
+    expect(html).toContain(t('settings.system-config.timezone'));
+    expect(html).toContain(t('settings.system-config.theme'));
+    expect(html).toContain(t('settings.system-config.locale.en_US'));
+    expect(html).toContain(t('settings.system-config.locale.zh_CN'));
+    expect(html).toContain(t('settings.system-config.theme.dark'));
+    expect(html).toContain(t('settings.system-config.theme.compact'));
     expect(html).toContain('Asia/Shanghai (+08:00) Shanghai');
-    expect(html).toContain('确认更新');
+    expect(html).toContain(t('settings.system-config.ok'));
     expect(html).not.toContain('data-setting-config-surface="angular-system-config"');
     expect(html).not.toContain('data-setting-config-form="angular-vertical-form"');
     expect(html).not.toContain('data-setting-config-summary-rail=');
-    expect(html).not.toContain('系统配置摘要');
-    expect(html).not.toContain('当前系统配置');
     expect(html).not.toContain('System Configuration');
     expect(html).not.toContain('System Language');
     expect(html).not.toContain('Save');

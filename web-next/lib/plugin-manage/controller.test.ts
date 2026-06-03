@@ -83,9 +83,10 @@ describe('plugin manage controller', () => {
   });
 
   it('loads, maps, edits, and saves plugin params like the Angular param define modal', async () => {
+    const endpointLabel = String.fromCodePoint(0x7aef, 0x70b9);
     const apiMessageGet = vi.fn().mockResolvedValue({
       paramDefines: [
-        { field: 'endpoint', type: 'text', name: { 'zh-CN': '端点', 'en-US': 'Endpoint' }, required: true },
+        { field: 'endpoint', type: 'text', name: { 'zh-CN': endpointLabel, 'en-US': 'Endpoint' }, required: true },
         { field: 'timeout', type: 'number', name: { 'en-US': 'Timeout' } },
         { field: 'payload', type: 'json', name: 'Payload' },
         { field: 'secret', type: 'password', name: 'Secret' }
@@ -102,7 +103,7 @@ describe('plugin manage controller', () => {
 
     const draft = await loadPluginParamDraft(apiMessageGet as any, plugin, 'zh-CN');
     expect(apiMessageGet).toHaveBeenCalledWith('/plugin/params/define?pluginMetadataId=7');
-    expect(draft.paramDefines.map(define => define.name)).toEqual(['端点', 'Timeout', 'Payload', 'Secret']);
+    expect(draft.paramDefines.map(define => define.name)).toEqual([endpointLabel, 'Timeout', 'Payload', 'Secret']);
     expect(draft.params).toEqual({
       endpoint: { pluginMetadataId: 7, type: 1, field: 'endpoint', paramValue: 'https://hooks.example' },
       timeout: { pluginMetadataId: 7, type: 0, field: 'timeout', paramValue: 30 },

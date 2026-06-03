@@ -46,6 +46,7 @@ vi.mock('../shell/platform-copyright-footer', () => ({
 
 describe('PassportShell', () => {
   it('renders the shared auth shell and panel structure on the cold-workbench baseline', () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
     const html = renderToStaticMarkup(
       <PassportShell panelClassName="max-w-[368px]">
         <PassportPanel title="Sign In HertzBeat">
@@ -83,12 +84,12 @@ describe('PassportShell', () => {
     expect(html).toContain('data-passport-footer-band="angular-raised"');
     expect(html).toContain('/assets/bg.png');
     expect(html).toContain('Apache HertzBeat™ v1.8.0');
-    expect(html).toContain('开源私有化企业运维可观测平台');
-    expect(html).toContain('采集器、监控模板、实体、指标、日志和链路');
-    expect(html).toContain('处理告警并关闭问题');
-    expect(html).toContain('通过采集器接入应用、数据库、操作系统、中间件和网络设备指标，数据留在私有化部署内。');
-    expect(html).toContain('按网络区域扩展 Collector 集群，支撑私有化、隔离采集和状态页。');
-    expect(html).not.toContain('遵循 Apache License, Version 2.0 授权');
+    expect(html).toContain(t('app.passport.desc'));
+    expect(html).toContain(t('app.passport.intro-1'));
+    expect(html).toContain(t('app.passport.intro-2'));
+    expect(html).toContain(t('about.point.1'));
+    expect(html).toContain(t('about.point.6'));
+    expect(html).not.toContain(t('platform.footer.license'));
     expect(html).not.toContain('Apache License, Version 2.0');
   });
 

@@ -105,6 +105,11 @@ vi.mock('./alert-inhibit-authoring-fields', () => ({
 
 describe('AlertInhibitSurface', () => {
   const t = createTranslatorMock({ locale: 'zh-CN' });
+  const inhibitEvidenceTitle = (signal: 'logs' | 'traces' | 'metrics') =>
+    t('alert.rule.evidence.inhibit.title', { signal: t(`alert.rule.signal.${signal}`) });
+  const inhibitDraftName = (signal: 'logs' | 'traces' | 'metrics', target: string) =>
+    t('alert.rule.evidence.inhibit.draft-name', { signal: t(`alert.rule.signal.${signal}`), target });
+
   const data = {
     list: {
       content: [
@@ -140,8 +145,8 @@ describe('AlertInhibitSurface', () => {
         editorError={null}
         evidenceContext={{
           signal: 'traces',
-          title: '来自链路的抑制上下文',
-          copy: '保存或取消后仍可回到原排障上下文。',
+          title: inhibitEvidenceTitle('traces'),
+          copy: t('alert.rule.evidence.inhibit.copy'),
           sourceLabelsText: 'hertzbeat.signal:traces, service.name:checkout',
           targetLabelsText: 'hertzbeat.signal:traces, service.name:checkout',
           equalLabelsText: 'service.name',
@@ -210,15 +215,14 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('data-alert-inhibit-row-checkbox="cold-checkbox"');
     expect(html).toContain('data-alert-inhibit-enable-checkbox="cold-checkbox"');
     expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(3);
-    expect(html).toContain('刷新');
-    expect(html).toContain('新增抑制');
-    expect(html).toContain('批量删除');
-    expect(html).toContain('搜索');
-    expect(html).not.toContain('当前抑制');
-    expect(html).toContain('抑制规则名称');
-    expect(html).toContain('源标签');
-    expect(html).toContain('目标标签');
-    expect(html).toContain('相等标签');
+    expect(html).toContain(t('common.refresh'));
+    expect(html).toContain(t('alert.inhibit.action.new'));
+    expect(html).toContain(t('common.button.delete-batch'));
+    expect(html).toContain(t('common.search'));
+    expect(html).toContain(t('alert.inhibit.name'));
+    expect(html).toContain(t('alert.inhibit.source_labels'));
+    expect(html).toContain(t('alert.inhibit.target_labels'));
+    expect(html).toContain(t('alert.inhibit.equal_labels'));
     expect(html).toContain('db-inhibit');
     expect(html).toContain('service:checkout');
     expect(html).toContain('data-overlay-dialog="true"');
@@ -312,7 +316,7 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('data-alert-inhibit-pagination="cold-dense-pagination"');
     expect(html).toContain('data-alert-inhibit-empty-state="cold-table-empty"');
     expect(html).toContain('data-alert-inhibit-empty-icon="cold-empty-box"');
-    expect(html).toContain('还没有抑制规则');
+    expect(html).toContain(t('alert.inhibit.empty.title'));
   });
 
   it('renders the topology return context when opened from alert impact inhibit closure', () => {
@@ -345,7 +349,7 @@ describe('AlertInhibitSurface', () => {
           sourceKind: 'database-middleware-connection',
           edgeId: 'svc-checkout--res-orders-db',
           returnTo,
-          returnLabel: 'HertzBeat 企业运维拓扑'
+          returnLabel: t('topology.identity')
         }}
         draft={{
           name: '',
@@ -379,7 +383,7 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('data-alert-inhibit-return-context="topology-edge"');
     expect(html).toContain('data-alert-inhibit-return-edge-id="svc-checkout--res-orders-db"');
     expect(html).toContain('href="/topology?viewMode=resource-dependency&amp;sourceKind=database-middleware-connection&amp;edgeId=svc-checkout--res-orders-db');
-    expect(html).not.toContain('HertzBeat 企业运维拓扑');
+    expect(html).not.toContain(t('topology.identity'));
     expect(html).not.toContain('returnLabel=');
     expect(html).toContain('checkout-api');
     expect(html).toContain('resource-dependency');
@@ -451,7 +455,7 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('data-alert-inhibit-match-action="view-all"');
     expect(html).toContain('data-alert-inhibit-entity-return="true"');
     expect(html).toContain('checkout-api');
-    expect(html).toContain('已有 1 条命中规则不可用或已不存在');
+    expect(html).toContain(t('entity.noise-controls.management.missing', { count: 1 }));
   });
 
   it('renders Angular created-outside-matched authoring notice', () => {
@@ -513,8 +517,8 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('data-alert-inhibit-created-outside-matched="angular-authoring-notice"');
     expect(html).toContain('data-alert-inhibit-created-outside-matched-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('data-alert-inhibit-created-outside-matched-action="view-all"');
-    expect(html).toContain('新规则已创建');
-    expect(html).toContain('当前视图不会自动显示这条新规则');
+    expect(html).toContain(t('entity.noise-controls.authoring.created-outside-matched.title'));
+    expect(html).toContain(t('entity.noise-controls.authoring.created-outside-matched.copy'));
   });
 
   it('renders three-signal evidence context before inhibit authoring', () => {
@@ -532,18 +536,18 @@ describe('AlertInhibitSurface', () => {
         editorError={null}
         evidenceContext={{
           signal: 'traces',
-          title: '来自链路的抑制上下文',
-          copy: '新建抑制时会按当前实体、服务、环境和链路标签做匹配。',
+          title: inhibitEvidenceTitle('traces'),
+          copy: t('alert.rule.evidence.inhibit.copy'),
           sourceLabelsText: 'hertzbeat.signal:traces, service.name:checkout, trace_id:trace-123',
           targetLabelsText: 'hertzbeat.signal:traces, service.name:checkout, trace_id:trace-123',
           equalLabelsText: 'service.name, deployment.environment',
           returnHref: '/trace/manage?traceId=trace-123',
           rows: [
-            { label: '当前实体', value: 'checkout', meta: 'entityId service:commerce/checkout' },
-            { label: '链路上下文', value: 'trace-123', meta: 'spanId span-456' }
+            { label: t('signal.context.entity.label'), value: 'checkout', meta: 'entityId service:commerce/checkout' },
+            { label: t('signal.context.trace.label'), value: 'trace-123', meta: 'spanId span-456' }
           ],
           draftPatch: {
-            name: '链路 checkout 抑制',
+            name: inhibitDraftName('traces', 'checkout'),
             sourceLabelsText: 'hertzbeat.signal:traces, service.name:checkout, trace_id:trace-123',
             targetLabelsText: 'hertzbeat.signal:traces, service.name:checkout, trace_id:trace-123',
             equalLabelsText: 'service.name, deployment.environment'
@@ -583,11 +587,11 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('data-alert-inhibit-prefill-source-labels="hertzbeat.signal:traces, service.name:checkout, trace_id:trace-123"');
     expect(html).toContain('data-alert-inhibit-prefill-target-labels="hertzbeat.signal:traces, service.name:checkout, trace_id:trace-123"');
     expect(html).toContain('data-alert-inhibit-prefill-equal-labels="service.name, deployment.environment"');
-    expect(html).toContain('来自链路的抑制上下文');
-    expect(html).toContain('返回排障上下文');
+    expect(html).toContain(inhibitEvidenceTitle('traces'));
+    expect(html).toContain(t('alert.rule.evidence.return'));
     expect(html).toContain('href="/trace/manage?traceId=trace-123"');
-    expect(html).toContain('当前实体');
-    expect(html).toContain('链路上下文');
+    expect(html).toContain(t('signal.context.entity.label'));
+    expect(html).toContain(t('signal.context.trace.label'));
   });
 
   it('renders missing inhibit evidence labels with the localized empty fallback', () => {
@@ -605,8 +609,8 @@ describe('AlertInhibitSurface', () => {
         editorError={null}
         evidenceContext={{
           signal: 'metrics',
-          title: '来自指标的抑制上下文',
-          copy: '按当前实体创建抑制规则。',
+          title: inhibitEvidenceTitle('metrics'),
+          copy: t('alert.rule.evidence.inhibit.copy'),
           sourceLabelsText: '',
           targetLabelsText: '',
           equalLabelsText: '',
@@ -651,7 +655,7 @@ describe('AlertInhibitSurface', () => {
     expect(html).toContain('data-alert-inhibit-source-labels="localized-fallback"');
     expect(html).toContain('data-alert-inhibit-target-labels="localized-fallback"');
     expect(html).toContain('data-alert-inhibit-equal-labels="localized-fallback"');
-    expect(html.match(/无/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(html.split(t('common.none')).length - 1).toBeGreaterThanOrEqual(3);
   });
 
   it('renders validation errors visibly inside the inhibit editor dialog', () => {
@@ -666,7 +670,7 @@ describe('AlertInhibitSurface', () => {
         editorLoading={false}
         editorSaving={false}
         editorMessage={null}
-        editorError="请填写抑制规则名称"
+        editorError={t('alert.inhibit.validation.name')}
         draft={{
           name: '',
           enable: true,
@@ -698,7 +702,7 @@ describe('AlertInhibitSurface', () => {
 
     expect(html).toContain('data-alert-inhibit-editor-error-inline="cold-validation"');
     expect(html).toContain('role="alert"');
-    expect(html).toContain('请填写抑制规则名称');
+    expect(html).toContain(t('alert.inhibit.validation.name'));
   });
 
   it('renders Angular inhibit save failure title/detail through shared feedback', () => {
@@ -911,8 +915,10 @@ describe('AlertInhibitSurface', () => {
     );
 
     expect(html).toContain('data-alert-inhibit-entity-prefill="angular-alert-common-labels"');
-    expect(html).toContain('data-alert-inhibit-authoring-prefill-title="为当前实体创建抑制规则"');
-    expect(html).toContain('data-alert-inhibit-authoring-prefill-copy="已提取当前实体可见告警的共享标签，并填入源条件、目标条件和相等标签。"');
-    expect(html).not.toContain('data-alert-inhibit-authoring-prefill-warning="当前没有稳定的共享告警标签，请手动填写抑制条件。"');
+    expect(html).toContain(`data-alert-inhibit-authoring-prefill-title="${t('entity.noise-controls.authoring.inhibit.title')}"`);
+    expect(html).toContain(`data-alert-inhibit-authoring-prefill-copy="${t('entity.noise-controls.authoring.inhibit.prefill-success')}"`);
+    expect(html).not.toContain(
+      `data-alert-inhibit-authoring-prefill-warning="${t('entity.noise-controls.authoring.inhibit.prefill-warning')}"`
+    );
   });
 });

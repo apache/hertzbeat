@@ -9,19 +9,28 @@ export type ForbiddenProductLanguageIssue =
   | 'generic-query-tool-actions';
 
 const surfaceVocabulary: Record<HertzBeatProductSurface, string[]> = {
-  otlp: ['采集闭环', '采集集群', '接入质量', '实体归并', '模板绑定', '最后上报时间'],
-  entities: ['实体中心', '实体归并', '采集来源', '上下游关系', '健康状态', '模板绑定'],
-  metrics: ['关联指标', '监控模板', '阈值规则', '采集来源', '服务健康'],
-  logs: ['关联日志', '采集来源', '异常定位', '实体上下文', '告警回溯'],
-  traces: ['关联链路', '服务调用', 'traceId/spanId', '上下游关系', '依赖影响'],
-  alerts: ['告警中心', '告警降噪', '静默', '抑制', '通知闭环', '分组收敛']
+  otlp: ['collection closure', 'collector fleet', 'ingest quality', 'entity merge', 'template binding', 'last report time'],
+  entities: ['entity catalog', 'entity merge', 'collection source', 'upstream/downstream relations', 'health state', 'template binding'],
+  metrics: ['related metrics', 'monitor template', 'threshold rule', 'collection source', 'service health'],
+  logs: ['related logs', 'collection source', 'exception localization', 'entity context', 'alert backtracking'],
+  traces: ['related traces', 'service calls', 'traceId/spanId', 'upstream/downstream relations', 'dependency impact'],
+  alerts: ['alert center', 'alert noise reduction', 'silence', 'inhibit', 'notification closure', 'group convergence']
 };
 
 export const HERTZBEAT_PRODUCT_LANGUAGE = {
-  positioning: '开源私有化的企业运维可观测平台',
-  identity: 'HertzBeat 面向私有化可观测和企业运维视角，优先表达采集、实体、模板、三信号和告警闭环。',
-  coreLoop: ['采集器', '监控模板', '实体中心', 'OTLP 三信号', '告警闭环'],
-  requiredVocabulary: ['采集闭环', '监控模板', '采集集群', '实体归并', '告警降噪', '私有化可观测', '企业运维视角'],
+  positioning: 'open-source private-deployable enterprise operations observability platform',
+  identity:
+    'HertzBeat is framed around private-deployable observability and enterprise operations: collectors, entities, templates, OTLP three signals, and alert closure.',
+  coreLoop: ['collectors', 'monitor templates', 'entity catalog', 'OTLP three signals', 'alert closure'],
+  requiredVocabulary: [
+    'collection closure',
+    'monitor template',
+    'collector fleet',
+    'entity merge',
+    'alert noise reduction',
+    'private-deployable observability',
+    'enterprise operations'
+  ],
   surfaceVocabulary,
   externalProductPolicy:
     'External product names are allowed only as source connector, migration source, or compatibility-note references; they must not define HertzBeat page identity, layout, or action language.',
@@ -34,7 +43,7 @@ export const HERTZBEAT_PRODUCT_LANGUAGE = {
 
 const externalProductPattern = /\b(?:SigNoZ|Datadog|Google Cloud Observability|Google Application Topology)\b/i;
 const externalStylePattern = /\b(?:SigNoZ|Datadog|Google Cloud Observability|Google Application Topology)(?:[-\s]?style|[-\s]?first)?\b/i;
-const genericApmPattern = /(?:单纯\s*)?APM\s*(?:平台|platform)/i;
+const genericApmPattern = /\b(?:only\s+)?APM\s+platform\b/i;
 const serviceMapPattern = /\bService Map\b|\bApplication Topology\b|Google\s+Application\s+Topology/i;
 const genericActionPattern = /\b(?:Save this view|Create an Alert|Add to Dashboard)\b/i;
 

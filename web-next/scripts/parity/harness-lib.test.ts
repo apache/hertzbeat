@@ -149,14 +149,14 @@ describe('parity harness helpers', () => {
     const contract = {
       primarySelectors: ['[data-workspace-shell="true"]', 'main', 'aside'],
       nextReadySelectors: ['[data-observability-stage-section="true"]'],
-      referenceReadySelectors: ['text=checkout-service', 'button:has-text("搜索")']
+      referenceReadySelectors: ['text=checkout-service', 'button:has-text("Search")']
     };
 
     expect(resolveSurfaceBrowserReadySelector(contract, 'next')).toBe('[data-observability-stage-section="true"]');
     expect(resolveSurfaceBrowserReadySelector(contract, 'reference')).toBe('text=checkout-service');
     expect(resolveSurfaceBrowserReadySelectors(contract, 'reference')).toEqual([
       'text=checkout-service',
-      'button:has-text("搜索")'
+      'button:has-text("Search")'
     ]);
   });
 

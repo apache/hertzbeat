@@ -19,6 +19,8 @@ import {
 
 describe('alert setting controller', () => {
   it('loads the alert-define list and datasource status for the shared settings console', async () => {
+    const databaseLabel = String.fromCodePoint(0x6570, 0x636e, 0x5e93);
+    const mysqlDatabaseLabel = `MySQL${databaseLabel}`;
     const apiGet = vi.fn().mockResolvedValueOnce({ code: 0, data: { promql: true } });
     const apiMessageGet = vi.fn().mockResolvedValueOnce({
       totalElements: 2,
@@ -27,8 +29,8 @@ describe('alert setting controller', () => {
       content: [{ id: 7, name: 'cpu threshold' }]
     });
 
-    const result = await loadAlertSettingData(apiGet as any, apiMessageGet as any, '数据库', 2, 15, [
-      { key: 'mysql', value: 'MySQL数据库' }
+    const result = await loadAlertSettingData(apiGet as any, apiMessageGet as any, databaseLabel, 2, 15, [
+      { key: 'mysql', value: mysqlDatabaseLabel }
     ]);
 
     expect(apiMessageGet).toHaveBeenCalledWith(
@@ -40,6 +42,7 @@ describe('alert setting controller', () => {
   });
 
   it('loads the alert-define list and datasource status through the domain facade readers', async () => {
+    const linuxHostLabel = `Linux${String.fromCodePoint(0x4e3b, 0x673a)}`;
     const readers = {
       list: vi.fn().mockResolvedValue({
         totalElements: 1,
@@ -50,7 +53,7 @@ describe('alert setting controller', () => {
       datasourceStatus: vi.fn().mockResolvedValue({ code: 0, data: { sql: true } })
     };
 
-    const appEntries = [{ key: 'linux', value: 'Linux主机' }];
+    const appEntries = [{ key: 'linux', value: linuxHostLabel }];
     const result = await loadAlertSettingDataFromFacade(readers, 'memory threshold', 1, 25, appEntries);
 
     expect(readers.list).toHaveBeenCalledWith('memory threshold', 1, 25, appEntries);

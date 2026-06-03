@@ -33,33 +33,33 @@ vi.mock('../../components/workbench/client-workbench', () => ({
           detailSource: 'status-page-incident-detail',
           detailId: '42',
           queryLabel: '/status/page/incident?pageIndex=0&pageSize=8',
-          title: '故障事件',
-          subtitle: '按 OTLP 工作台的冷色基线统一响应时间线、责任人和证据入口。',
-          kicker: '事件响应台',
+          title: 'Incidents',
+          subtitle: 'Align response timeline, owners, and evidence entry points with the OTLP cold baseline.',
+          kicker: 'Incident response desk',
           metrics: [
-            { label: '打开事件', value: '1', tone: 'warning' },
-            { label: '严重事件', value: '1', tone: 'critical' },
-            { label: '缓解中', value: '1', tone: 'info' },
-            { label: '责任队列', value: '1', tone: 'info' }
+            { label: 'Open incidents', value: '1', tone: 'warning' },
+            { label: 'Critical incidents', value: '1', tone: 'critical' },
+            { label: 'Mitigating', value: '1', tone: 'info' },
+            { label: 'Ownership queues', value: '1', tone: 'info' }
           ],
           incidents: [
             {
               id: '42',
-              title: 'API 延迟事件',
+              title: 'API latency incident',
               severity: 'critical',
-              stage: '调查中',
+              stage: 'Investigating',
               service: 'api-gateway',
               owner: 'platform-oncall',
               openedAt: '2026-04-10 18:00:00',
-              blastRadius: '1 组件'
+              blastRadius: '1 component'
             }
           ],
           timelineRows: [
             {
               id: 'incident-timeline-42-8',
-              title: '2026-04-10 18:05:00 · 已识别',
-              copy: '已开始回滚',
-              meta: 'API 延迟事件',
+              title: '2026-04-10 18:05:00 · Identified',
+              copy: 'Rollback started',
+              meta: 'API latency incident',
               tone: 'warning'
             }
           ],
@@ -67,20 +67,20 @@ vi.mock('../../components/workbench/client-workbench', () => ({
             {
               id: 'incident-owner-42',
               owner: 'platform-oncall',
-              queue: '调查中',
-              copy: 'API 延迟事件',
-              meta: '1 组件 · 2026-04-10 18:00:00',
+              queue: 'Investigating',
+              copy: 'API latency incident',
+              meta: '1 component · 2026-04-10 18:00:00',
               tone: 'critical'
             }
           ],
           nextHops: [
-            { label: '打开概览', href: '/overview', variant: 'subtle' },
-            { label: '查看日志', href: '/log/manage', variant: 'default' }
+            { label: 'Open overview', href: '/overview', variant: 'subtle' },
+            { label: 'View logs', href: '/log/manage', variant: 'default' }
           ],
           selectedIncidentId: '42',
           selectedIncident: {
             id: 42,
-            name: 'API 延迟事件',
+            name: 'API latency incident',
             state: 1,
             contents: []
           },
@@ -107,7 +107,7 @@ describe('incidents page', () => {
         content: [
           {
             id: 42,
-            title: 'API 延迟事件',
+            title: 'API latency incident',
             state: 0,
             startTime: 1712730000000,
             creator: 'platform-oncall',
@@ -121,12 +121,12 @@ describe('incidents page', () => {
       })
       .mockResolvedValueOnce({
         id: 42,
-        name: 'API 延迟事件详情',
+        name: 'API latency incident details',
         state: 1,
         startTime: 1712730000000,
         modifier: 'platform-oncall',
         components: [{ id: 7, name: 'api-gateway' }],
-        contents: [{ id: 8, state: 1, message: '详情已加载', timestamp: 1712730300000 }]
+        contents: [{ id: 8, state: 1, message: 'Detail loaded', timestamp: 1712730300000 }]
       });
     const routeSource = readFileSync(resolve(process.cwd(), 'app/incidents/page.tsx'), 'utf8');
     const source = readFileSync(resolve(process.cwd(), 'app/incidents/incidents-page.tsx'), 'utf8');
@@ -140,7 +140,7 @@ describe('incidents page', () => {
     expect(routeSource).toContain('const resolvedSearchParams = await searchParams');
     expect(routeSource).toContain('return <IncidentsPage initialQuery={initialQuery} />');
     expect(html).toContain('data-client-workbench="true"');
-    expect(html).toContain('data-loading-copy="正在准备页面数据，请稍等。"');
+    expect(html).toContain(`data-loading-copy="${t('common.workbench.loading.copy')}"`);
     expect(html).toContain('data-cache-key="incident-workbench::0:8:0"');
     expect(html).toContain('data-cache-ttl="10000"');
     expect(html).toContain('data-incidents-route="incident-workbench-api-ui-lab-shared"');
@@ -176,8 +176,8 @@ describe('incidents page', () => {
     expect(html).toContain('data-hz-ui="data-table"');
     expect(html).toContain('data-hz-incident-timeline-item="incident-timeline-42-8"');
     expect(html).toContain('data-hz-incident-owner-item="incident-owner-42"');
-    expect(html).toContain('故障事件');
-    expect(html).toContain('API 延迟事件');
+    expect(html).toContain('Incidents');
+    expect(html).toContain('API latency incident');
     expect(html).toContain('data-hz-row-selected="true"');
     expect(apiMessageGet).toHaveBeenNthCalledWith(1, '/status/page/incident?pageIndex=0&pageSize=8');
     expect(apiMessageGet).toHaveBeenNthCalledWith(2, '/status/page/incident/42');

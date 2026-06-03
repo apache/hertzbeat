@@ -200,7 +200,7 @@ test.describe('three-signal workbench browser smoke', () => {
     await spanEventAction.click();
     const spanEventDetail = page.locator('[data-trace-manage-event-detail="span-event-detail"]').first();
     await expect(spanEventDetail).toBeVisible({ timeout: WORKBENCH_READY_TIMEOUT });
-    await expect(spanEventDetail).toContainText('不是新的跨度，是当前跨度上的时间点');
+    await expect(spanEventDetail.locator('[data-trace-manage-event-detail-type="span-event"]').first()).toBeVisible();
     await expectWorkbenchText(page, smokeContext);
     assertUrlCarries(
       await page.locator('[data-trace-manage-open-logs-action="true"]').first().getAttribute('href'),

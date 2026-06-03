@@ -57,9 +57,9 @@ describe('navigation information architecture', () => {
     expect(navSections.find(section => section.key === 'dashboards')?.items.map(item => item.href)).toEqual(['/overview']);
     const dashboardSection = navSections.find(section => section.key === 'dashboards');
     expect(dashboardSection?.titleKey).toBe('menu.section.dashboards');
-    expect(t(dashboardSection?.titleKey || '')).toBe('仪表盘');
+    expect(t(dashboardSection?.titleKey || '')).toBe(t('menu.section.dashboards'));
     expect(dashboardSection?.items[0]?.labelKey).toBe('menu.overview');
-    expect(t(dashboardSection?.items[0]?.labelKey || '')).toBe('仪表盘');
+    expect(t(dashboardSection?.items[0]?.labelKey || '')).toBe(t('menu.overview'));
     expect(navSections.find(section => section.key === 'settings')?.items.map(item => item.href)).toEqual([
       '/setting/settings',
       '/setting/settings/mcp-server',
@@ -80,7 +80,14 @@ describe('navigation information architecture', () => {
       'menu.section.dashboards',
       'menu.section.settings'
     ]);
-    expect(navSections.map(section => t(section.titleKey))).toEqual(['接入采集', '对象资源', '可观测排障', '告警处置', '仪表盘', '平台设置']);
+    expect(navSections.map(section => t(section.titleKey))).toEqual([
+      t('menu.section.ingestion'),
+      t('menu.section.objects'),
+      t('menu.section.observability'),
+      t('menu.section.alerting'),
+      t('menu.section.dashboards'),
+      t('menu.section.settings')
+    ]);
   });
 
   it('tracks the completed M10 cutover groups without stale hold or placeholder routes', () => {
@@ -115,20 +122,20 @@ describe('navigation information architecture', () => {
 
 describe('routeLabel', () => {
   it('maps key routes to user-facing labels', () => {
-    expect(routeLabel('/overview', t)).toBe('仪表盘');
-    expect(routeLabel('/trace/manage?traceId=1', t)).toBe('链路工作台');
-    expect(routeLabel('/log/manage', t)).toBe('日志工作台');
-    expect(routeLabel('/monitors', t)).toBe('监控中心');
-    expect(routeLabel('/entities/123', t)).toBe('实体详情');
-    expect(routeLabel('/alert/setting', t)).toBe('阈值规则');
-    expect(routeLabel('/setting/status', t)).toBe('状态页面');
-    expect(routeLabel('/dashboard', t)).toBe('仪表盘');
-    expect(routeLabel('/alerts', t)).toBe('告警中心');
-    expect(routeLabel('/events', t)).toBe('日志工作台');
-    expect(routeLabel('/status/public', t)).toBe('状态页面');
+    expect(routeLabel('/overview', t)).toBe(t('menu.overview'));
+    expect(routeLabel('/trace/manage?traceId=1', t)).toBe(t('menu.trace.manage'));
+    expect(routeLabel('/log/manage', t)).toBe(t('menu.log.manage'));
+    expect(routeLabel('/monitors', t)).toBe(t('menu.monitor.center'));
+    expect(routeLabel('/entities/123', t)).toBe(t('entity.detail'));
+    expect(routeLabel('/alert/setting', t)).toBe(t('menu.alert.setting'));
+    expect(routeLabel('/setting/status', t)).toBe(t('menu.advanced.status'));
+    expect(routeLabel('/dashboard', t)).toBe(t('menu.overview'));
+    expect(routeLabel('/alerts', t)).toBe(t('menu.alert.center'));
+    expect(routeLabel('/events', t)).toBe(t('menu.log.manage'));
+    expect(routeLabel('/status/public', t)).toBe(t('menu.advanced.status'));
   });
 
   it('falls back to dashboard label for unknown routes', () => {
-    expect(routeLabel('/unknown', t)).toBe('总览');
+    expect(routeLabel('/unknown', t)).toBe(t('menu.dashboard'));
   });
 });

@@ -218,8 +218,8 @@ describe('alert center page', () => {
         serviceNamespace: 'commerce',
         environment: 'prod',
         timeRange: 'last-1h',
-        returnTo: `${returnTo}&returnLabel=HertzBeat%20%E4%BC%81%E4%B8%9A%E8%BF%90%E7%BB%B4%E6%8B%93%E6%89%91`,
-        returnLabel: 'HertzBeat 企业运维拓扑'
+        returnTo: `${returnTo}&returnLabel=HertzBeat%20operations%20topology`,
+        returnLabel: 'HertzBeat operations topology'
       })
     );
 

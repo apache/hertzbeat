@@ -226,19 +226,19 @@ import { TimeRangeControl } from '@/components/observability/time-range-control'
 const monitorTypeCategories: HzTemplateCategory[] = [
   {
     id: 'db',
-    label: '数据库监控',
+    label: 'Database monitoring',
     items: [
       {
         id: 'mysql',
         label: 'MySQL',
-        description: '连接、慢查询、可用性和复制状态',
+        description: 'Connections, slow queries, availability, and replication state',
         meta: 'JDBC',
         icon: <Database size={13} />
       },
       {
         id: 'postgresql',
         label: 'PostgreSQL',
-        description: '连接池、事务、锁等待和复制延迟',
+        description: 'Connection pools, transactions, lock waits, and replication lag',
         meta: 'JDBC',
         icon: <Database size={13} />
       }
@@ -246,19 +246,19 @@ const monitorTypeCategories: HzTemplateCategory[] = [
   },
   {
     id: 'os',
-    label: '操作系统监控',
+    label: 'Operating system monitoring',
     items: [
       {
         id: 'linux',
         label: 'Linux',
-        description: 'CPU、内存、磁盘、进程和端口',
+        description: 'CPU, memory, disk, processes, and ports',
         meta: 'SSH',
         icon: <Server size={13} />
       },
       {
         id: 'windows',
         label: 'Windows',
-        description: 'WMI、服务状态和性能计数器',
+        description: 'WMI, service state, and performance counters',
         meta: 'WMI',
         icon: <HardDrive size={13} />
       }
@@ -266,12 +266,12 @@ const monitorTypeCategories: HzTemplateCategory[] = [
   },
   {
     id: 'bigdata',
-    label: '大数据监控',
+    label: 'Big data monitoring',
     items: [
       {
         id: 'flink_on_yarn',
         label: 'Flink on Yarn',
-        description: 'Job、TaskManager、Checkpoint 和队列资源',
+        description: 'Jobs, TaskManagers, checkpoints, and queue resources',
         meta: 'REST',
         icon: <Activity size={13} />
       }
@@ -279,12 +279,12 @@ const monitorTypeCategories: HzTemplateCategory[] = [
   },
   {
     id: 'network',
-    label: '网络监控',
+    label: 'Network monitoring',
     items: [
       {
         id: 'snmp',
         label: 'SNMP Device',
-        description: '接口、流量、错误包和设备状态',
+        description: 'Interfaces, traffic, error packets, and device state',
         meta: 'SNMP',
         icon: <Network size={13} />
       }
@@ -587,10 +587,10 @@ const topologyG6NodeTypeLegendItems = HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(ic
 }));
 
 const monitorRows = [
-  { name: 'mysql-prod-01', app: 'MySQL', collector: 'collector-a', signal: 'metrics', status: '可用', latency: '38 ms', tone: 'success' as const },
-  { name: 'linux-edge-03', app: 'Linux', collector: 'collector-b', signal: 'metrics/logs', status: '采集中', latency: '72 ms', tone: 'info' as const },
-  { name: 'flink-yarn-main', app: 'Flink on Yarn', collector: 'collector-a', signal: 'metrics', status: '告警中', latency: '118 ms', tone: 'warning' as const },
-  { name: 'snmp-core-sw-02', app: 'SNMP Device', collector: 'collector-c', signal: 'metrics', status: '可用', latency: '45 ms', tone: 'success' as const }
+  { name: 'mysql-prod-01', app: 'MySQL', collector: 'collector-a', signal: 'metrics', status: 'Available', latency: '38 ms', tone: 'success' as const },
+  { name: 'linux-edge-03', app: 'Linux', collector: 'collector-b', signal: 'metrics/logs', status: 'Collecting', latency: '72 ms', tone: 'info' as const },
+  { name: 'flink-yarn-main', app: 'Flink on Yarn', collector: 'collector-a', signal: 'metrics', status: 'Alerting', latency: '118 ms', tone: 'warning' as const },
+  { name: 'snmp-core-sw-02', app: 'SNMP Device', collector: 'collector-c', signal: 'metrics', status: 'Available', latency: '45 ms', tone: 'success' as const }
 ];
 
 const filterGroups: HzFilterGroup[] = [
@@ -695,13 +695,13 @@ const savedFilterViewPresets: Array<{
   {
     id: 'baseline',
     label: 'Baseline',
-    description: '资源类型 + 非宕机基线',
+    description: 'Resource type plus non-down baseline',
     clauses: initialFilterClauses
   },
   {
     id: 'collector-latency',
     label: 'Collector latency',
-    description: '聚焦 collector-a 延迟',
+    description: 'Focus collector-a latency',
     clauses: [
       { id: 'collector-IN-collector-a', field: 'collector', operator: 'IN', value: 'collector-a' },
       { id: 'latency-gt-80ms', field: 'latency', operator: '>', value: '80ms' }
@@ -710,7 +710,7 @@ const savedFilterViewPresets: Array<{
   {
     id: 'open-alerts',
     label: 'Open alerts',
-    description: '只看告警与采集中资源',
+    description: 'Show only alerting and collecting resources',
     clauses: [{ id: 'status-IN-warning-collecting', field: 'status', operator: 'IN', value: 'warning, collecting' }]
   }
 ];
@@ -883,9 +883,9 @@ const monitorFilterTypeOptions = [
 
 const monitorFilterStatusOptions = [
   { value: '', label: 'All status' },
-  { value: '1', label: '正常' },
-  { value: '2', label: '宕机' },
-  { value: '0', label: '暂停' }
+  { value: '1', label: 'Normal' },
+  { value: '2', label: 'Down' },
+  { value: '0', label: 'Paused' }
 ];
 
 const initialResultColumns = [
@@ -1574,7 +1574,7 @@ function createFieldClause(field: string, value: string, operator: 'IN' | 'NOT_I
 
 const defaultYaml = `app: mysql
 name:
-  zh-CN: MySQL数据库
+  zh-CN: MySQL Database
   en-US: MySQL Database
 params:
   - field: host
@@ -1638,7 +1638,7 @@ export default function HertzBeatUiLabPage() {
   const [hiddenSignalSegmentIds, setHiddenSignalSegmentIds] = React.useState<string[]>([]);
   const [hiddenLatencySeriesIds, setHiddenLatencySeriesIds] = React.useState<string[]>([]);
   const [chartWindowSource, setChartWindowSource] = React.useState('signal-volume');
-  const [contextMessage, setContextMessage] = React.useState('上下文窗口: collector-a · 最近 15 分钟 · metrics/logs');
+  const [contextMessage, setContextMessage] = React.useState('Context window: collector-a · last 15 minutes · metrics/logs');
   const [topologyCompanionCollapsedSections, setTopologyCompanionCollapsedSections] = React.useState<Record<string, boolean>>({
     timeline: true
   });
@@ -1925,7 +1925,7 @@ export default function HertzBeatUiLabPage() {
     <HzExplorerFrame
       eyebrow="@hertzbeat/ui explorer"
       title="HertzBeat UI Lab"
-      description="统一查看监控资源、模板目录、采集状态与 YAML 定义。"
+      description="Review monitor resources, template catalog, collection state, and YAML definitions in one place."
       mainId="hz-ui-lab-main"
       mainLabel="HertzBeat UI Lab workbench"
       filterRailLabel="UI lab filters"
@@ -1948,11 +1948,11 @@ export default function HertzBeatUiLabPage() {
             data-monitor-app-picker-trigger-owner="hertzbeat-ui-button"
           >
             <Plus size={14} />
-            新增监控
+            New monitor
           </HzButton>
           <HzButton intent="primary">
             <CheckCircle2 size={14} />
-            UI 基线
+            UI baseline
           </HzButton>
         </>
       }
@@ -4965,12 +4965,12 @@ export default function HertzBeatUiLabPage() {
             onBucketSelect={bucket => {
               setSelectedSignalBucketId(bucket.id);
               setChartWindowSource('signal-volume');
-              setContextMessage(`图表窗口: ${bucket.id} · signal volume`);
+              setContextMessage(`Chart window: ${bucket.id} · signal volume`);
             }}
             onLegendToggle={segment => {
               const hidden = hiddenSignalSegmentIds.includes(segment.id);
               setHiddenSignalSegmentIds(previous => (hidden ? previous.filter(id => id !== segment.id) : [...previous, segment.id]));
-              setContextMessage(`图例: ${segment.id} ${hidden ? 'shown' : 'hidden'} · signal volume`);
+              setContextMessage(`Legend: ${segment.id} ${hidden ? 'shown' : 'hidden'} · signal volume`);
             }}
             className="border-x-0 border-t-0"
           />
@@ -4997,15 +4997,15 @@ export default function HertzBeatUiLabPage() {
               selectedPointId={selectedLatencyPointId}
               hiddenSeriesIds={hiddenLatencySeriesIds}
               onPointSelect={(point, series) => {
-                setSelectedLatencyPointId(`${series.id}:${point.label}`);
-                setSelectedSignalBucketId(point.label);
-                setChartWindowSource('collector-latency');
-                setContextMessage(`图表窗口: ${series.id} ${point.label} · ${point.value}ms`);
+              setSelectedLatencyPointId(`${series.id}:${point.label}`);
+              setSelectedSignalBucketId(point.label);
+              setChartWindowSource('collector-latency');
+                setContextMessage(`Chart window: ${series.id} ${point.label} · ${point.value}ms`);
               }}
               onLegendToggle={series => {
                 const hidden = hiddenLatencySeriesIds.includes(series.id);
                 setHiddenLatencySeriesIds(previous => (hidden ? previous.filter(id => id !== series.id) : [...previous, series.id]));
-                setContextMessage(`图例: ${series.id} ${hidden ? 'shown' : 'hidden'} · collector latency`);
+                setContextMessage(`Legend: ${series.id} ${hidden ? 'shown' : 'hidden'} · collector latency`);
               }}
               height={128}
               className="border-x-0 border-y-0 2xl:border-r 2xl:border-[var(--hz-ui-line-soft)]"
@@ -6439,7 +6439,7 @@ export default function HertzBeatUiLabPage() {
                 onTraceSelect={trace => {
                   setSelectedTraceId(trace.id);
                   setTraceDetailOpen(true);
-                  setContextMessage(`上下文窗口: ${trace.id} · ${trace.durationMs}ms · trace detail`);
+                  setContextMessage(`Context window: ${trace.id} · ${trace.durationMs}ms · trace detail`);
                 }}
                 className="border-x-0 border-t border-[var(--hz-ui-line-soft)]"
               />
@@ -7628,7 +7628,7 @@ export default function HertzBeatUiLabPage() {
                 criticalPathSpanIds={['api', 'collector']}
                 onSpanSelect={span => {
                   setSelectedTraceSpanId(span.id);
-                  setContextMessage(`上下文窗口: trace span ${span.id} · ${span.durationMs}ms · logs/traces`);
+                  setContextMessage(`Context window: trace span ${span.id} · ${span.durationMs}ms · logs/traces`);
                 }}
                 className="border-x-0 border-b-0 border-t border-[var(--hz-ui-line-soft)]"
               />
@@ -7755,7 +7755,7 @@ export default function HertzBeatUiLabPage() {
           <div className="flex min-h-10 items-center justify-between gap-2 border-b border-[var(--hz-ui-line-soft)] px-3 py-2">
             <div className="min-w-0">
               <div className="text-[13px] font-semibold text-[#f3f6fb]">Monitor results</div>
-              <div className="text-[11px] text-[#727b8c]">最近 15 分钟 · 按采集延迟降序</div>
+              <div className="text-[11px] text-[#727b8c]">Last 15 minutes · sorted by collection latency</div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <span className="font-mono text-[11px] text-[#8f99ab]">list view</span>
@@ -7777,7 +7777,7 @@ export default function HertzBeatUiLabPage() {
             selectedRowKey={selectedMonitor.name}
             onRowClick={row => {
               setSelectedMonitorName(row.name);
-              setContextMessage(`上下文窗口: ${row.name} · ${row.collector} · 最近 15 分钟`);
+              setContextMessage(`Context window: ${row.name} · ${row.collector} · last 15 minutes`);
               setInspectorOpen(true);
             }}
           />
@@ -7803,7 +7803,7 @@ export default function HertzBeatUiLabPage() {
                 id: 'enable',
                 label: 'Enable',
                 presentation: 'menu',
-                onSelect: () => setContextMessage('批量操作: enable only paused selected monitors'),
+                onSelect: () => setContextMessage('Batch action: enable only paused selected monitors'),
                 buttonProps: {
                   'data-monitor-batch-response-filter': 'angular-status-filtered-selection',
                   'data-monitor-batch-response-eligible-status': 'paused',
@@ -7815,7 +7815,7 @@ export default function HertzBeatUiLabPage() {
                 id: 'pause',
                 label: 'Pause',
                 presentation: 'menu',
-                onSelect: () => setContextMessage('批量操作: pause only active selected monitors'),
+                onSelect: () => setContextMessage('Batch action: pause only active selected monitors'),
                 buttonProps: {
                   'data-monitor-batch-response-filter': 'angular-status-filtered-selection',
                   'data-monitor-batch-response-eligible-status': 'active',
@@ -7851,7 +7851,7 @@ export default function HertzBeatUiLabPage() {
                 id: 'import',
                 label: 'Import',
                 presentation: 'menu',
-                onSelect: () => setContextMessage('批量操作: import monitors'),
+                onSelect: () => setContextMessage('Batch action: import monitors'),
                 buttonProps: {
                   'data-monitor-batch-more-menu-action': 'import'
                 }
@@ -7861,7 +7861,7 @@ export default function HertzBeatUiLabPage() {
                 label: 'Delete',
                 tone: 'critical',
                 presentation: 'menu',
-                onSelect: () => setContextMessage('批量操作: delete requires confirmation'),
+                onSelect: () => setContextMessage('Batch action: delete requires confirmation'),
                 buttonProps: {
                   'data-monitor-batch-more-menu-action': 'delete'
                 }
@@ -7894,7 +7894,7 @@ export default function HertzBeatUiLabPage() {
             data-monitor-unavailable-refresh-feedback-owner="hertzbeat-ui-inline-feedback"
           />
           <SearchRow
-            value="数据库"
+            value="Database"
             placeholder="Search threshold rules"
             searchLabel="Search"
             clearLabel="Clear"
@@ -10566,7 +10566,7 @@ export default function HertzBeatUiLabPage() {
             <AlertNoticeRuleSwitch
               row="filter-all"
               checked={noticeRuleFilterAllDemo}
-              label="转发所有"
+              label="Forward all"
               testId="ui-lab-alert-notice-rule-filter-all"
               onCheckedChange={setNoticeRuleFilterAllDemo}
             />
@@ -10798,7 +10798,7 @@ export default function HertzBeatUiLabPage() {
             field="collector"
             selectedValue={contextMessage}
             values={collectorFieldStats}
-            onShowContext={() => setContextMessage('上下文窗口: collector-a · logs/traces · 15m before/after')}
+            onShowContext={() => setContextMessage('Context window: collector-a · logs/traces · 15m before/after')}
             onDrilldown={() => addFilterClause(createFieldClause('collector', 'collector-a', 'IN'))}
           />
           <div className="grid min-w-0 border-t border-[var(--hz-ui-line-faint)] 2xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -10806,7 +10806,7 @@ export default function HertzBeatUiLabPage() {
               title="Query history"
               items={queryHistoryItems}
               onRestore={item => setQuery(stringifyFilterValue(item.query))}
-              onCompare={item => setContextMessage(`对比窗口: ${item.id} · ${stringifyFilterValue(item.query)}`)}
+              onCompare={item => setContextMessage(`Compare window: ${item.id} · ${stringifyFilterValue(item.query)}`)}
               actions={<HzButton size="sm" intent="ghost">Pin run</HzButton>}
               className="border-x-0 border-y-0 2xl:border-r 2xl:border-[var(--hz-ui-line-soft)]"
             />
@@ -10841,7 +10841,7 @@ export default function HertzBeatUiLabPage() {
               query="collector-a"
               placeholder="Search commands, pages, entities"
               items={commandPaletteItems}
-              onSelect={item => setContextMessage(`命令准备: ${item.id}`)}
+              onSelect={item => setContextMessage(`Command prepared: ${item.id}`)}
               actions={<HzButton size="sm" intent="ghost">Cmd K</HzButton>}
               className="border-x-0 border-y-0 2xl:border-r 2xl:border-[var(--hz-ui-line-soft)]"
             />
@@ -10849,7 +10849,7 @@ export default function HertzBeatUiLabPage() {
               title="Context handoff"
               context="mysql-prod-01 · collector-a · last 15m"
               targets={contextHandoffTargets}
-              onOpen={target => setContextMessage(`上下文跳转: ${target.id}`)}
+              onOpen={target => setContextMessage(`Context handoff: ${target.id}`)}
               actions={<HzButton size="sm" intent="ghost">Copy context</HzButton>}
               className="border-x-0 border-b-0 border-t border-[var(--hz-ui-line-soft)] 2xl:border-t-0"
             />
@@ -11247,8 +11247,8 @@ export default function HertzBeatUiLabPage() {
 
       <HzTypePickerDialog
         open={typePickerOpen}
-        title="新增监控"
-        description="选择资源类型后再进入对应表单，不让默认 app=mysql 偷偷决定用户流程。"
+        title="New monitor"
+        description="Choose the resource type before opening the matching form, so the default app=mysql never decides the flow for the operator."
         categories={monitorTypeCategories}
         selectedId={selectedType}
         search={typeSearch}

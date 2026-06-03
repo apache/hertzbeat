@@ -4,12 +4,132 @@ import {
   buildOverviewConsoleViewModel,
   buildOverviewMetrics
 } from './view-model';
+import { SUPPLEMENTAL_MESSAGES } from '../i18n-runtime-messages';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
 const enT = createTranslatorMock({ locale: 'en-US' });
 
+const overviewDashboardMessageKeys = [
+  'dashboard.darkops.kicker',
+  'dashboard.darkops.title',
+  'dashboard.darkops.subtitle',
+  'dashboard.darkops.action.refresh',
+  'dashboard.darkops.action.review-alerts',
+  'dashboard.home.status.title',
+  'dashboard.home.status.copy',
+  'dashboard.home.status.action.entities',
+  'dashboard.home.status.workspace',
+  'dashboard.home.status.ingestion',
+  'dashboard.home.status.entities',
+  'dashboard.home.status.alerts',
+  'dashboard.home.status.ready',
+  'dashboard.home.status.pending',
+  'dashboard.guidance.setup.headline',
+  'dashboard.guidance.ready.headline',
+  'dashboard.guidance.setup.description',
+  'dashboard.guidance.ready.description',
+  'dashboard.guidance.setup.action',
+  'dashboard.setup.status.logs',
+  'dashboard.setup.status.traces',
+  'dashboard.setup.status.metrics',
+  'dashboard.setup.status.pending',
+  'dashboard.empty.title',
+  'dashboard.empty.copy',
+  'dashboard.problem-focus.kicker',
+  'dashboard.problem-focus.entity',
+  'dashboard.problem-focus.owner',
+  'dashboard.problem-focus.open-context',
+  'dashboard.problem-focus.review-alerts',
+  'dashboard.problem-focus.empty.title',
+  'dashboard.problem-focus.empty.entity',
+  'dashboard.problem-focus.empty.owner',
+  'dashboard.problem-focus.empty.summary',
+  'dashboard.problem-focus.default-title',
+  'dashboard.problem-focus.default-entity',
+  'dashboard.problem-focus.default-summary',
+  'dashboard.summary.critical.label',
+  'dashboard.summary.critical.hint',
+  'dashboard.summary.critical.delta.active',
+  'dashboard.summary.critical.delta.idle',
+  'dashboard.summary.unassigned.label',
+  'dashboard.summary.unassigned.hint',
+  'dashboard.summary.unassigned.delta.active',
+  'dashboard.summary.unassigned.delta.idle',
+  'dashboard.summary.degraded.label',
+  'dashboard.summary.degraded.hint',
+  'dashboard.summary.degraded.delta.active',
+  'dashboard.summary.degraded.delta.idle',
+  'dashboard.summary.drawer-subtitle',
+  'dashboard.summary.value',
+  'dashboard.summary.delta',
+  'dashboard.workbench.fact.entities',
+  'dashboard.workbench.fact.alerts',
+  'dashboard.workbench.fact.unassigned',
+  'dashboard.setup.checklist.title',
+  'dashboard.setup.checklist.data-source',
+  'dashboard.setup.checklist.entities',
+  'dashboard.setup.checklist.logs',
+  'dashboard.setup.checklist.traces',
+  'dashboard.setup.checklist.metrics',
+  'dashboard.setup.checklist.alerts',
+  'dashboard.setup.checklist.dashboards',
+  'dashboard.trend.alert.label',
+  'dashboard.trend.alert.insight',
+  'dashboard.trend.availability.label',
+  'dashboard.trend.availability.insight',
+  'dashboard.trend.error.label',
+  'dashboard.trend.error.insight',
+  'dashboard.affected.kicker',
+  'dashboard.affected.title',
+  'dashboard.affected.browse-all',
+  'dashboard.affected.status.impacted',
+  'dashboard.affected.status.healthy',
+  'dashboard.affected.last-issue.healthy',
+  'dashboard.affected.drawer-subtitle',
+  'dashboard.affected.status-label',
+  'dashboard.activity.title',
+  'dashboard.activity.empty',
+  'dashboard.activity.default-title',
+  'dashboard.activity.pending-entity',
+  'dashboard.coverage.unknown',
+  'dashboard.coverage.total',
+  'dashboard.coverage.healthy',
+  'dashboard.coverage.abnormal',
+  'dashboard.coverage.clean',
+  'dashboard.quick-entry.kicker',
+  'dashboard.quick-entry.title',
+  'dashboard.quick-entry.entities',
+  'dashboard.quick-entry.entities.copy',
+  'dashboard.quick-entry.logs',
+  'dashboard.quick-entry.logs.copy',
+  'dashboard.quick-entry.traces',
+  'dashboard.quick-entry.traces.copy',
+  'dashboard.quick-entry.metrics',
+  'dashboard.quick-entry.metrics.copy',
+  'dashboard.quick-entry.dashboards',
+  'dashboard.quick-entry.dashboards.copy',
+  'dashboard.owner.unassigned',
+  'dashboard.severity.critical',
+  'dashboard.severity.warning',
+  'dashboard.severity.error',
+  'dashboard.severity.healthy'
+] as const;
+
+const runtimeLocales = ['en-US', 'zh-CN'] as const;
+
 describe('overview view model', () => {
+  it('resolves overview dashboard copy from i18n catalogs', () => {
+    for (const key of overviewDashboardMessageKeys) {
+      expect(t(key), key).not.toBe(key);
+      expect(enT(key), key).not.toBe(key);
+
+      for (const locale of runtimeLocales) {
+        expect(SUPPLEMENTAL_MESSAGES[locale]?.[key], `${locale}:${key}`).toBeTruthy();
+      }
+    }
+  });
+
   it('builds entity and alert metrics from app summary data', () => {
     expect(
       buildOverviewMetrics(
@@ -48,8 +168,12 @@ describe('overview view model', () => {
       t
     );
 
-    expect(lanes.find(item => item.href === '/trace/manage')?.stat).toBe('当前事件含链路 ID');
-    expect(lanes.find(item => item.href === '/log/manage')?.stat).toBe('无链路 ID 时优先');
+    expect(lanes.find(item => item.href === '/trace/manage')?.stat).toBe(
+      t('overview.lane.trace.stat.detected')
+    );
+    expect(lanes.find(item => item.href === '/log/manage')?.stat).toBe(
+      t('overview.lane.logs.stat.recommended')
+    );
   });
 
   it('localizes overview investigation lane titles, copy, stats, and actions', () => {
@@ -63,32 +187,32 @@ describe('overview view model', () => {
     );
 
     expect(lanes.find(item => item.href === '/entities')).toMatchObject({
-      title: '实体目录',
-      eyebrow: '实体优先',
-      copy: '先从监控实体和服务归属定位影响范围，再进入信号排查。',
-      stat: '已纳管 7 个实体',
-      action: '打开实体目录'
+      title: t('overview.lane.entities.title'),
+      eyebrow: t('overview.lane.entities.eyebrow'),
+      copy: t('overview.lane.entities.copy'),
+      stat: t('overview.lane.entities.stat', { count: 7 }),
+      action: t('overview.lane.entities.action')
     });
     expect(lanes.find(item => item.href === '/log/manage')).toMatchObject({
-      title: '日志',
-      eyebrow: '运行证据',
-      copy: '用相同服务、实体和时间上下文查看日志事件。',
-      stat: '日志可用',
-      action: '打开日志'
+      title: t('overview.lane.logs.title'),
+      eyebrow: t('overview.lane.logs.eyebrow'),
+      copy: t('overview.lane.logs.copy'),
+      stat: t('overview.lane.logs.stat.available'),
+      action: t('overview.lane.logs.action')
     });
     expect(lanes.find(item => item.href === '/trace/manage')).toMatchObject({
-      title: '链路',
-      eyebrow: '请求路径',
-      copy: '存在链路上下文时跟进跨度，再回到实体证据。',
-      stat: '分布式链路就绪',
-      action: '打开链路'
+      title: t('overview.lane.trace.title'),
+      eyebrow: t('overview.lane.trace.eyebrow'),
+      copy: t('overview.lane.trace.copy'),
+      stat: t('overview.lane.trace.stat.distributed'),
+      action: t('overview.lane.trace.action')
     });
     expect(lanes.find(item => item.href === '/ingestion/otlp/metrics')).toMatchObject({
-      title: 'OTLP 指标',
-      eyebrow: '三信号接入',
-      copy: '在私有部署的 HertzBeat 工作区查看进入的指标序列。',
-      stat: '已接入 2 个监控应用',
-      action: '打开指标'
+      title: t('overview.lane.otlp.title'),
+      eyebrow: t('overview.lane.otlp.eyebrow'),
+      copy: t('overview.lane.otlp.copy'),
+      stat: t('overview.lane.otlp.stat', { count: 2 }),
+      action: t('overview.lane.otlp.action')
     });
   });
 
@@ -137,7 +261,7 @@ describe('overview view model', () => {
     expect(viewModel.summaryCards).toHaveLength(3);
     expect(viewModel.summaryCards[0]).toMatchObject({
       key: 'critical',
-      label: '高优先级告警',
+      label: t('dashboard.summary.critical.label'),
       value: '1'
     });
     expect(viewModel.problemFocus).toMatchObject({
@@ -163,7 +287,7 @@ describe('overview view model', () => {
       '/log/manage',
       '/trace/manage'
     ]);
-    expect(viewModel.guidanceHeadline).toBe('下一步：先处理当前最值得关注的问题');
-    expect(viewModel.activityItems[0]?.tag).toBe('告警中');
+    expect(viewModel.guidanceHeadline).toBe(t('dashboard.guidance.ready.headline'));
+    expect(viewModel.activityItems[0]?.tag).toBe(t('alert.status.firing'));
   });
 });

@@ -45,15 +45,15 @@ describe('BulletinManageDialog', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/bulletin-manage-dialog.tsx'), 'utf8');
     const t = createTranslatorMock({
       overrides: {
-        'menu.monitor.bulletin': '公告',
-        'bulletin.new': '新增公告',
-        'bulletin.name': '公告名称',
-        'bulletin.monitor.type': '监控类型',
-        'bulletin.monitor.name': '监控对象',
-        'bulletin.monitor.metrics': '监控指标',
-        'common.cancel': '取消',
-        'common.save': '保存',
-        'common.saving': '保存中'
+        'menu.monitor.bulletin': 'Bulletin',
+        'bulletin.new': 'New bulletin',
+        'bulletin.name': 'Bulletin name',
+        'bulletin.monitor.type': 'Monitor type',
+        'bulletin.monitor.name': 'Monitor object',
+        'bulletin.monitor.metrics': 'Monitor metrics',
+        'common.cancel': 'Cancel',
+        'common.save': 'Save',
+        'common.saving': 'Saving'
       }
     });
 

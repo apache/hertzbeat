@@ -83,9 +83,9 @@ describe('trace view model', () => {
         t
       )
     ).toEqual([
-      ['错误链路占比', '40%'],
-      ['活动状态', '活跃'],
-      ['列表条数', '3']
+      [t('trace.manage.stat.error-ratio'), '40%'],
+      [t('trace.manage.stat.activity'), t('common.active')],
+      [t('trace.manage.stat.list-count'), '3']
     ]);
   });
 
@@ -222,8 +222,8 @@ describe('trace view model', () => {
         meta: 'time:1713200000030'
       },
       {
-        title: '未命名事件',
-        copy: '无属性',
+        title: t('trace.manage.event.fallback'),
+        copy: t('trace.manage.event.attributes.empty'),
         meta: 'time:1713200000040'
       }
     ]);
@@ -234,12 +234,12 @@ describe('trace view model', () => {
       {
         title: 'trace-linked',
         copy: 'span-linked',
-        meta: '关联链路'
+        meta: t('trace.manage.link.meta')
       },
       {
-        title: '关联链路',
+        title: t('trace.manage.link.fallback'),
         copy: '-',
-        meta: '关联链路'
+        meta: t('trace.manage.link.meta')
       }
     ]);
   });
@@ -263,7 +263,7 @@ describe('trace view model', () => {
       )
     ).toEqual([
       { title: 'db.query', copy: 'Span · OK', meta: '300ms' },
-      { title: '服务与命名空间', copy: 'checkout · payments', meta: '暂无链路状态' }
+      { title: t('trace.manage.selected-span.service-namespace'), copy: 'checkout · payments', meta: t('trace.manage.trace-state-empty') }
     ]);
   });
 
@@ -300,35 +300,35 @@ describe('trace view model', () => {
         label: 'hertzbeat.entity_id',
         value: '-',
         state: 'missing',
-        meta: '缺少实体 ID，实体详情会保持禁用'
+        meta: t('trace.manage.attribution-diagnostics.entity-id.missing')
       },
       {
         key: 'hertzbeat.entity_name',
         label: 'hertzbeat.entity_name',
         value: '-',
         state: 'missing',
-        meta: '缺少实体名称时使用服务名辅助检索'
+        meta: t('trace.manage.attribution-diagnostics.entity-name.missing')
       },
       {
         key: 'hertzbeat.workspace_id',
         label: 'hertzbeat.workspace_id',
         value: '-',
         state: 'missing',
-        meta: '缺少工作区字段时使用当前部署上下文'
+        meta: t('trace.manage.attribution-diagnostics.workspace-id.missing')
       },
       {
         key: 'hertzbeat.collector',
         label: 'hertzbeat.collector',
         value: 'collector-local',
         state: 'present',
-        meta: '采集器来源'
+        meta: t('trace.manage.attribution-diagnostics.collector.present')
       },
       {
         key: 'hertzbeat.template',
         label: 'hertzbeat.template',
         value: 'hertzbeat-self',
         state: 'present',
-        meta: '监控模板归属'
+        meta: t('trace.manage.attribution-diagnostics.template.present')
       }
     ]);
   });
@@ -525,6 +525,8 @@ describe('trace view model', () => {
   });
 
   it('lets the related-logs handoff override the return path back to the active trace workbench', () => {
+    const activeTraceReturnTo =
+      `/trace/manage?traceId=trace-1&spanId=span-1&serviceName=checkout&errorOnly=true&returnTo=%2Foverview&returnLabel=${encodeURIComponent(t('menu.trace.manage'))}`;
     const result = buildTraceHandoffLinks(
       {
         traceId: 'trace-1',
@@ -541,12 +543,10 @@ describe('trace view model', () => {
         environment: 'prod'
       },
       {
-        logsReturnTo:
-          '/trace/manage?traceId=trace-1&spanId=span-1&serviceName=checkout&errorOnly=true&returnTo=%2Foverview&returnLabel=链路工作台',
-        metricsReturnTo:
-          '/trace/manage?traceId=trace-1&spanId=span-1&serviceName=checkout&errorOnly=true&returnTo=%2Foverview&returnLabel=链路工作台',
-        logsReturnLabel: '日志工作台',
-        intakeReturnLabel: '链路接入'
+        logsReturnTo: activeTraceReturnTo,
+        metricsReturnTo: activeTraceReturnTo,
+        logsReturnLabel: t('menu.log.manage'),
+        intakeReturnLabel: t('trace.manage.route.action.intake')
       }
     );
 

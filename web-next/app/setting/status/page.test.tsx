@@ -47,7 +47,7 @@ vi.mock('@/components/pages/status-setting-surface', () => ({
   StatusSettingSurface: ({ publicStatusHref, mode }: any) => (
     <div data-status-setting-surface="otlp-cold-status-console" data-status-setting-style-baseline="hertzbeat-cold-matte">
       <section data-status-admin-layout="full-width-admin-list">
-        <span>状态页表格</span>
+        <span>Status page table</span>
       </section>
       <span>{publicStatusHref}</span>
       <span>{mode}</span>
@@ -179,8 +179,8 @@ describe('setting status page', () => {
     expect(html).toContain('data-status-setting-style-baseline="hertzbeat-cold-matte"');
     expect(html).toContain('data-status-admin-layout="full-width-admin-list"');
     expect(html).not.toContain('data-status-summary-rail=');
-    expect(html).not.toContain('状态页摘要');
-    expect(html).not.toContain('当前状态页');
+    expect(html).not.toContain('data-status-setting-route="angular-status-page"');
+    expect(html).not.toContain('data-status-header-public-link');
     expect(html).toContain('/status');
     expect(html).toContain('HB Status');
     expect(loadStatusManagementData).toHaveBeenCalledWith(apiMessageGet, {

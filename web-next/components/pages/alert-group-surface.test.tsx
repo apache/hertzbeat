@@ -78,6 +78,13 @@ vi.mock('./alert-group-authoring-fields', () => ({
 
 describe('AlertGroupSurface', () => {
   const t = createTranslatorMock({ locale: 'zh-CN' });
+  function groupEvidenceTitle(signal: 'logs' | 'traces' | 'metrics') {
+    return t('alert.rule.evidence.group.title', { signal: t(`alert.rule.signal.${signal}`) });
+  }
+  function groupEvidenceDraftName(signal: 'logs' | 'traces' | 'metrics', target: string) {
+    return t('alert.rule.evidence.group.draft-name', { signal: t(`alert.rule.signal.${signal}`), target });
+  }
+
   const data = {
     list: {
       content: [
@@ -114,8 +121,8 @@ describe('AlertGroupSurface', () => {
         editorError={null}
         evidenceContext={{
           signal: 'traces',
-          title: '来自链路的分组上下文',
-          copy: '保存或取消后仍可回到原排障上下文。',
+          title: groupEvidenceTitle('traces'),
+          copy: t('alert.rule.evidence.group.copy'),
           groupLabelsText: 'hertzbeat.entity.id, service.name',
           returnHref: '/trace/manage?traceId=trace-123',
           rows: [],
@@ -183,15 +190,15 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('data-alert-group-row-checkbox="cold-checkbox"');
     expect(html).toContain('data-alert-group-enable-checkbox="cold-checkbox"');
     expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(2);
-    expect(html).toContain('刷新');
-    expect(html).toContain('新增分组');
-    expect(html).toContain('搜索');
+    expect(html).toContain(t('common.refresh'));
+    expect(html).toContain(t('alert.group.action.new'));
+    expect(html).toContain(t('common.search'));
     expect(html).toContain('data-alert-group-delete-selected="toolbar"');
     expect(html).toContain('data-alert-group-delete-selected-owner="route-no-select-warning"');
-    expect(html).toContain('分组收敛');
-    expect(html).toContain('管理 Alertmanager 分组收敛规则');
-    expect(html).toContain('策略名称');
-    expect(html).toContain('分组标签');
+    expect(html).toContain(t('alert.group.title'));
+    expect(html).toContain(t('alert.group.copy'));
+    expect(html).toContain(t('alert.group-converge.name'));
+    expect(html).toContain(t('alert.group-converge.group-labels'));
     expect(html).toContain('ops-group');
     expect(html).toContain('alertname');
     expect(html).toContain('data-overlay-dialog="true"');
@@ -291,7 +298,7 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('data-alert-group-empty-copy="true"');
     expect(html).not.toContain('align-top');
     expect(html).not.toContain('pt-[54px]');
-    expect(html).toContain('还没有分组规则');
+    expect(html).toContain(t('alert.group.empty.title'));
   });
 
   it('renders three-signal evidence context before group authoring', () => {
@@ -309,16 +316,16 @@ describe('AlertGroupSurface', () => {
         editorError={null}
         evidenceContext={{
           signal: 'metrics',
-          title: '来自指标的分组上下文',
-          copy: '新建分组时会按当前实体、服务、命名空间和环境做收敛。',
+          title: groupEvidenceTitle('metrics'),
+          copy: t('alert.rule.evidence.group.copy'),
           groupLabelsText: 'hertzbeat.entity.id, service.name, service.namespace, deployment.environment',
           returnHref: '/metrics/manage?entityId=service%3Acommerce%2Fcheckout',
           rows: [
-            { label: '当前实体', value: 'checkout', meta: 'entityId service:commerce/checkout' },
-            { label: '链路上下文', value: 'trace-123', meta: 'spanId span-456' }
+            { label: t('signal.context.entity.label'), value: 'checkout', meta: 'entityId service:commerce/checkout' },
+            { label: t('signal.context.trace.label'), value: 'trace-123', meta: 'spanId span-456' }
           ],
           draftPatch: {
-            name: '指标 checkout 分组',
+            name: groupEvidenceDraftName('metrics', 'checkout'),
             groupLabelsText: 'hertzbeat.entity.id, service.name, service.namespace, deployment.environment'
           }
         }}
@@ -351,11 +358,11 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('data-alert-group-evidence-context="signal-route"');
     expect(html).toContain('data-alert-group-evidence-signal="metrics"');
     expect(html).toContain('data-alert-group-prefill-labels="hertzbeat.entity.id, service.name, service.namespace, deployment.environment"');
-    expect(html).toContain('来自指标的分组上下文');
-    expect(html).toContain('返回排障上下文');
+    expect(html).toContain(groupEvidenceTitle('metrics'));
+    expect(html).toContain(t('alert.rule.evidence.return'));
     expect(html).toContain('href="/metrics/manage?entityId=service%3Acommerce%2Fcheckout"');
-    expect(html).toContain('当前实体');
-    expect(html).toContain('链路上下文');
+    expect(html).toContain(t('signal.context.entity.label'));
+    expect(html).toContain(t('signal.context.trace.label'));
   });
 
   it('renders missing group evidence labels with the localized empty fallback', () => {
@@ -373,8 +380,8 @@ describe('AlertGroupSurface', () => {
         editorError={null}
         evidenceContext={{
           signal: 'logs',
-          title: '来自日志的分组上下文',
-          copy: '按当前实体创建分组规则。',
+          title: groupEvidenceTitle('logs'),
+          copy: t('alert.rule.evidence.group.copy'),
           groupLabelsText: '',
           returnHref: '/log/manage?entityId=service-1',
           rows: [],
@@ -410,7 +417,7 @@ describe('AlertGroupSurface', () => {
 
     expect(html).toContain('data-alert-group-evidence-context="signal-route"');
     expect(html).toContain('data-alert-group-evidence-labels="localized-fallback"');
-    expect(html).toContain('无');
+    expect(html).toContain(t('common.none'));
   });
 
   it('renders validation errors visibly inside the group editor dialog', () => {
@@ -425,7 +432,7 @@ describe('AlertGroupSurface', () => {
         editorLoading={false}
         editorSaving={false}
         editorMessage={null}
-        editorError="请填写策略名称"
+        editorError={t('alert.group.validation.name')}
         draft={{
           name: '',
           enable: true,
@@ -454,7 +461,7 @@ describe('AlertGroupSurface', () => {
 
     expect(html).toContain('data-alert-group-editor-error-inline="cold-validation"');
     expect(html).toContain('role="alert"');
-    expect(html).toContain('请填写策略名称');
+    expect(html).toContain(t('alert.group.validation.name'));
   });
 
   it('renders Angular alert group save failure title/detail through shared feedback', () => {
@@ -519,7 +526,7 @@ describe('AlertGroupSurface', () => {
         editorLoading={false}
         editorSaving={false}
         editorMessage={null}
-        editorError="请先选择要删除的监控"
+        editorError={t('common.notify.no-select-delete')}
         draft={{
           name: '',
           enable: true,
@@ -550,7 +557,7 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('data-alert-group-action-feedback="warning"');
     expect(html).toContain('data-hz-feedback-tone="warning"');
     expect(html).toContain('role="alert"');
-    expect(html).toContain('请先选择要删除的监控');
+    expect(html).toContain(t('common.notify.no-select-delete'));
   });
 
   it('renders Angular alert group enable failure title/detail outside the editor', () => {

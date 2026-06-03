@@ -135,9 +135,10 @@ test.describe('entity editor browser smoke', () => {
       const discoveryMonitor = await createDiscoveryMonitor(request, accessToken as string, discoveryMonitorName);
       createdMonitorId = discoveryMonitor.id;
 
-      const searchInput = page.getByPlaceholder(/Search monitor(?:s)? by name or instance|按名称或实例搜索监控/);
+      const discoverySearchRow = page.locator('[data-entity-discovery-toolbar="cold-search-row"]').first();
+      const searchInput = discoverySearchRow.locator('[data-cold-search-input="fixed-width-direct"]');
       await searchInput.fill(discoveryMonitorName);
-      await page.getByRole('button', { name: /Search|搜索/ }).first().click();
+      await discoverySearchRow.locator('[data-cold-search-action="submit"]').click();
 
       const discoveryLink = page.locator(`a[href="/entities/new?source=telemetry&monitorId=${discoveryMonitor.id}"]`).first();
       await expect(discoveryLink).toBeVisible();
@@ -162,22 +163,20 @@ test.describe('entity editor browser smoke', () => {
         .locator(`a[href="/entities/discovery?source=telemetry&monitorId=${discoveryMonitor.id}"]`)
         .last();
       await expect(telemetryDiscoveryLink).toBeVisible({ timeout: BROWSER_SMOKE_TIMEOUT });
-      await expect(page.getByRole('button', { name: /Evidence|证据关联/ })).toBeVisible({
-        timeout: BROWSER_SMOKE_TIMEOUT
-      });
-      await expect(page.getByRole('button', { name: /Relationships|关系信息/ })).toBeVisible({
-        timeout: BROWSER_SMOKE_TIMEOUT
-      });
+      const evidenceStageButton = page.locator('[data-entity-editor-stage="signals"]');
+      const relationshipsStageButton = page.locator('[data-entity-editor-stage="relations"]');
+      await expect(evidenceStageButton).toBeVisible({ timeout: BROWSER_SMOKE_TIMEOUT });
+      await expect(relationshipsStageButton).toBeVisible({ timeout: BROWSER_SMOKE_TIMEOUT });
 
-      const nameInput = page.getByRole('textbox', { name: /^Name$|^名称$/ });
-      const displayNameInput = page.getByRole('textbox', { name: /^Display Name$|^显示名称$/ });
-      const sourceInput = page.getByRole('textbox', { name: /^Source$|^来源$/ });
+      const nameInput = page.locator('[data-entity-editor-input="name"]');
+      const displayNameInput = page.locator('[data-entity-editor-input="display-name"]');
+      const sourceInput = page.locator('[data-entity-editor-input="source"]');
 
       await expect(nameInput).toHaveValue('example.com:443', { timeout: BROWSER_SMOKE_TIMEOUT });
       await expect(displayNameInput).toHaveValue(discoveryMonitorName, { timeout: BROWSER_SMOKE_TIMEOUT });
       await expect(sourceInput).toHaveValue('otel_resource', { timeout: BROWSER_SMOKE_TIMEOUT });
 
-      await page.getByRole('button', { name: /Evidence|证据关联/ }).click();
+      await evidenceStageButton.click();
       await expect(page.locator('[data-entity-editor-stage="signals"]')).toBeVisible();
 
       await nameInput.fill(createdEntityName);
@@ -207,13 +206,11 @@ test.describe('entity editor browser smoke', () => {
       await loginToProtectedRoute(page, editRoute);
 
       await expect(telemetryDiscoveryLink).toBeVisible({ timeout: BROWSER_SMOKE_TIMEOUT });
-      await expect(page.getByRole('button', { name: /Relationships|关系信息/ })).toBeVisible({
-        timeout: BROWSER_SMOKE_TIMEOUT
-      });
+      await expect(relationshipsStageButton).toBeVisible({ timeout: BROWSER_SMOKE_TIMEOUT });
       await expect(nameInput).toHaveValue(createdEntityName, { timeout: BROWSER_SMOKE_TIMEOUT });
       await expect(sourceInput).toHaveValue('otel_resource', { timeout: BROWSER_SMOKE_TIMEOUT });
 
-      await page.getByRole('button', { name: /Relationships|关系信息|Relationships/ }).click();
+      await relationshipsStageButton.click();
       await displayNameInput.fill(editedDisplayName);
 
       const updateResponsePromise = page.waitForResponse(response => {

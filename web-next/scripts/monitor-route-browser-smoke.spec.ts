@@ -127,10 +127,10 @@ test.describe('monitor route browser smoke', () => {
     const createdIds: Array<number | string> = [];
     const smokeName = buildWebsiteMonitorSmokeName(`browser-${Date.now()}`);
     const editedSmokeName = `${smokeName}-edited`;
-    const taskNameInput = page.getByRole('textbox', { name: /Task Name|任务名称/ });
-    const hostInput = page.getByRole('textbox', { name: /Target Host|目标Host/ });
-    const uriInput = page.getByRole('textbox', { name: /^URI$/ });
-    const portInput = page.getByRole('spinbutton', { name: /Port|端口/ });
+    const taskNameInput = page.locator('[data-monitor-editor-input="name"]');
+    const hostInput = page.locator('[data-monitor-param-input="host"]');
+    const uriInput = page.locator('[data-monitor-param-input="uri"]');
+    const portInput = page.locator('[data-monitor-param-number-stepper="port"]');
     const httpsCheckbox = page.getByRole('checkbox', { name: /HTTPS/ });
 
     try {
@@ -156,7 +156,7 @@ test.describe('monitor route browser smoke', () => {
       await clickAndAssertMessageCode(
         page,
         async () => {
-          await page.getByRole('button', { name: /Detect|测试/ }).click();
+          await page.locator('[data-monitor-editor-detect-action="true"]').click();
         },
         response => {
           const url = new URL(response.url());
@@ -186,7 +186,7 @@ test.describe('monitor route browser smoke', () => {
 
       const legacyReturnLabelDetailRoute = buildLegacyReturnLabelMonitorDetailRoute(createdMonitor.id);
       await page.goto(`${baseUrl}${legacyReturnLabelDetailRoute}`, { waitUntil: 'commit' });
-      const editMonitorLink = page.getByRole('link', { name: /Edit monitor|编辑监控/ });
+      const editMonitorLink = page.locator('[data-monitor-basic-edit-action="hertzbeat-ui-icon-action"]');
       await expect(editMonitorLink).toBeVisible({ timeout: BROWSER_SMOKE_TIMEOUT });
       const editRouteWait = page.waitForURL(
         new RegExp(
@@ -211,7 +211,7 @@ test.describe('monitor route browser smoke', () => {
       await clickAndAssertMessageCode(
         page,
         async () => {
-          await page.getByRole('button', { name: /Detect|测试/ }).click();
+          await page.locator('[data-monitor-editor-detect-action="true"]').click();
         },
         response => {
           const url = new URL(response.url());
@@ -262,7 +262,7 @@ test.describe('monitor route browser smoke', () => {
       const legacyReturnLabelDetailRoute = buildLegacyReturnLabelMonitorDetailRoute(createdMonitor.id);
       await page.goto(`${baseUrl}${legacyReturnLabelDetailRoute}`, { waitUntil: 'commit' });
 
-      const editMonitorLink = page.getByRole('link', { name: /Edit monitor|编辑监控/ });
+      const editMonitorLink = page.locator('[data-monitor-basic-edit-action="hertzbeat-ui-icon-action"]');
       await expect(editMonitorLink).toBeVisible({ timeout: BROWSER_SMOKE_TIMEOUT });
       const cancelEditHref = await editMonitorLink.getAttribute('href');
       expect(cancelEditHref).toBe(
@@ -341,10 +341,11 @@ test.describe('monitor route browser smoke', () => {
       expect(detailReturnUrl.searchParams.get('pageIndex')).toBe('0');
       expect(detailReturnUrl.searchParams.get('pageSize')).toBe('8');
 
-      await expect(page.locator('[data-monitor-detail-return-action="true"]')).toBeVisible({
+      const listReturnLink = page.locator('[data-monitor-detail-list-return="angular-app-filter"]');
+      await expect(listReturnLink).toBeVisible({
         timeout: BROWSER_SMOKE_TIMEOUT
       });
-      await expect(page.locator('[data-monitor-detail-return-action="true"]')).toContainText(/Monitors|监控/, {
+      await expect(listReturnLink).toHaveAttribute('data-monitor-detail-list-return-target', filteredListRoute, {
         timeout: BROWSER_SMOKE_TIMEOUT
       });
       const filteredListReturnWait = page.waitForURL(
@@ -362,7 +363,7 @@ test.describe('monitor route browser smoke', () => {
           waitUntil: 'commit'
         }
       );
-      await page.locator('[data-monitor-detail-return-action="true"]').click();
+      await listReturnLink.click();
       await filteredListReturnWait;
     } finally {
       for (const monitorId of createdIds) {

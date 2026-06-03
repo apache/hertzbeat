@@ -8,7 +8,7 @@ const enT = createTranslatorMock({ locale: 'en-US' });
 describe('alert silence view model', () => {
   it('builds facts from silence list', () => {
     expect(buildAlertSilenceFacts({ totalElements: 8, content: [1, 2, 3] } as any, t)).toEqual([
-      { label: '工作区', value: 'alert/silence' },
+      { label: t('alert.setting.fact.workspace'), value: 'alert/silence' },
       { label: t('common.total'), value: '8' },
       { label: t('common.current-page-count'), value: '3' }
     ]);
@@ -24,9 +24,9 @@ describe('alert silence view model', () => {
         t
     )
     ).toEqual([
-      { label: '当前页启用', value: '1', tone: 'success' },
-      { label: '匹配全部', value: '1', tone: 'warning' },
-      { label: '规则样例', value: 'silence-a' }
+      { label: t('alert.rule.metric.current-page-enabled'), value: '1', tone: 'success' },
+      { label: t('alert.silence.match-all'), value: '1', tone: 'warning' },
+      { label: t('alert.rule.metric.sample-rule'), value: 'silence-a' }
     ]);
   });
 
@@ -43,7 +43,7 @@ describe('alert silence view model', () => {
       {
         key: '7',
         title: 'silence-a',
-        copy: '已启用 · 匹配全部 是 · 匹配标签 1',
+        copy: `${t('common.enabled')} · ${t('alert.silence.match-all')} ${t('common.boolean.true')} · ${t('alert.silence.labels')} 1`,
         meta: `${t('alert.silence.times')} 2 · ${t('common.updated')} 2026-04-10 18:00:00`
       }
     ]);
@@ -61,7 +61,7 @@ describe('alert silence view model', () => {
     ).toMatchObject({
       key: '8',
       title: 'silence-b',
-      copy: '已停用 · 匹配全部 否 · 匹配标签 0'
+      copy: `${t('common.disabled')} · ${t('alert.silence.match-all')} ${t('common.boolean.false')} · ${t('alert.silence.labels')} 0`
     });
   });
 
@@ -70,11 +70,11 @@ describe('alert silence view model', () => {
       buildAlertSilenceSelectedRows(
         { id: 7, name: 'silence-a', enable: true, matchAll: true, type: 'label', labels: { service: 'checkout' }, days: ['MON'], times: 2 } as any,
         t
-      )
+    )
     ).toEqual([
-      { title: 'silence-a', copy: '已启用', meta: '规则 ID 7' },
-      { title: t('alert.silence.selected.strategy'), copy: t('alert.silence.selected.strategy.all'), meta: '类型 label' },
-      { title: '标签 / 周期', copy: '1 匹配标签', meta: '静默周期 MON' }
+      { title: 'silence-a', copy: t('common.enabled'), meta: t('alert.rule.selected.id-meta', { id: 7 }) },
+      { title: t('alert.silence.selected.strategy'), copy: t('alert.silence.selected.strategy.all'), meta: t('alert.silence.selected.type-meta', { type: 'label' }) },
+      { title: t('alert.silence.selected.labels-days'), copy: `1 ${t('alert.silence.labels')}`, meta: `${t('alert.silence.days')} MON` }
     ]);
   });
 
@@ -83,7 +83,7 @@ describe('alert silence view model', () => {
       {
         title: t('alert.silence.selected.empty.title'),
         copy: t('alert.silence.selected.empty.copy'),
-        meta: '无'
+        meta: t('common.none')
       }
     ]);
   });
@@ -97,7 +97,7 @@ describe('alert silence view model', () => {
     ).toMatchObject({
       title: t('alert.silence.selected.strategy'),
       copy: t('alert.silence.selected.strategy.any'),
-      meta: '类型 无'
+      meta: t('alert.silence.selected.type-meta', { type: t('common.none') })
     });
   });
 
@@ -117,16 +117,16 @@ describe('alert silence view model', () => {
         t
       )[2]
     ).toMatchObject({
-      title: '标签 / 周期',
-      copy: '1 匹配标签',
-      meta: '静默周期 无'
+      title: t('alert.silence.selected.labels-days'),
+      copy: `1 ${t('alert.silence.labels')}`,
+      meta: `${t('alert.silence.days')} ${t('common.none')}`
     });
   });
 
   it('builds notes rows', () => {
     expect(buildAlertSilenceNoteRows(t, 2)).toEqual([
-      { title: t('alert.silence.notes.times.title'), copy: '2', meta: '静默次数' },
-      { title: t('alert.silence.notes.query.title'), copy: '搜索 · ID 倒序', meta: t('alert.silence.notes.query.meta') }
+      { title: t('alert.silence.notes.times.title'), copy: '2', meta: t('alert.silence.notes.times.meta') },
+      { title: t('alert.silence.notes.query.title'), copy: t('alert.rule.notes.search-sort-copy'), meta: t('alert.silence.notes.query.meta') }
     ]);
   });
 
@@ -143,17 +143,17 @@ describe('alert silence view model', () => {
         source: 'otlp',
         collector: 'edge-collector-a',
         template: 'java-service',
-        returnTo: '/log/manage?view=list&traceId=trace-123&returnLabel=%E6%97%A5%E5%BF%97%E5%B7%A5%E4%BD%9C%E5%8F%B0'
+        returnTo: `/log/manage?view=list&traceId=trace-123&returnLabel=${encodeURIComponent(t('menu.log.manage'))}`
       },
       t
     );
 
     expect(context).toMatchObject({
       signal: 'logs',
-      title: '来自日志的静默上下文',
+      title: t('alert.rule.evidence.silence.title', { signal: t('alert.rule.signal.logs') }),
       returnHref: '/log/manage?view=list&traceId=trace-123',
       draftPatch: {
-        name: '日志 checkout 静默',
+        name: t('alert.rule.evidence.silence.draft-name', { signal: t('alert.rule.signal.logs'), target: 'checkout' }),
         matchAll: false
       }
     });
@@ -161,7 +161,7 @@ describe('alert silence view model', () => {
       'hertzbeat.signal:logs, hertzbeat.entity.id:service:commerce/checkout, service.name:checkout, service.namespace:commerce, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:edge-collector-a, hertzbeat.template:java-service'
     );
     expect(context?.draftPatch.labelsText).toBe(context?.labelsText);
-    expect(context?.rows.map(row => row.label)).toContain('链路上下文');
+    expect(context?.rows.map(row => row.label)).toContain(t('signal.context.trace.label'));
   });
 
   it('localizes silence evidence context and page facts outside zh-CN', () => {
@@ -183,8 +183,8 @@ describe('alert silence view model', () => {
         name: 'logs checkout silence'
       }
     });
-    expect(`${context?.title} ${context?.copy} ${context?.draftPatch.name}`).not.toMatch(/[来自日志链路指标三信号排障上下文]/);
-    expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[一-龥]/);
+    expect(`${context?.title} ${context?.copy} ${context?.draftPatch.name}`).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[\u4e00-\u9fff]/);
     expect(context?.rows.map(row => row.label)).toContain('Current entity');
     expect(buildAlertSilenceFacts({ totalElements: 1, content: [] } as any, enT)[0]).toEqual({
       label: 'Workspace',
@@ -211,7 +211,7 @@ describe('alert silence view model', () => {
         },
         t
       )
-    ).toBe('规则名称为必填项');
+    ).toBe(t('alert.silence.validation.name'));
 
     expect(
       validateAlertSilenceForm(
@@ -227,7 +227,7 @@ describe('alert silence view model', () => {
         },
         t
       )
-    ).toBe('匹配标签为必填项');
+    ).toBe(t('alert.silence.validation.labels'));
 
     expect(
       validateAlertSilenceForm(

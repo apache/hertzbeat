@@ -47,7 +47,7 @@ describe('shell sidebar helpers', () => {
       'dashboards',
       'settings'
     ]);
-    expect(ingestion?.title).toBe('接入采集');
+    expect(ingestion?.title).toBe(t('menu.section.ingestion'));
     expect(ingestion?.items.map(item => item.href)).toEqual([
       '/ingestion/otlp',
       '/monitors',
@@ -60,10 +60,10 @@ describe('shell sidebar helpers', () => {
       'collector',
       'monitor-template'
     ]);
-    expect(alerting?.title).toBe('告警处置');
+    expect(alerting?.title).toBe(t('menu.section.alerting'));
     expect(alerting?.items.some(item => item.href === '/alert' && item.active)).toBe(true);
     expect(alerting?.items.some(item => item.href === '/alert/setting' && item.active)).toBe(true);
-    expect(alerting?.items.find(item => item.href === '/alert/setting')?.title).toBe('阈值规则');
+    expect(alerting?.items.find(item => item.href === '/alert/setting')?.title).toBe(t('menu.alert.setting'));
     expect(alerting?.items.map(item => item.iconKey)).toEqual([
       'alert',
       'alert-setting',
@@ -76,8 +76,8 @@ describe('shell sidebar helpers', () => {
     ]);
     expect(alerting?.items.some(item => item.href === '/incidents')).toBe(false);
     expect(alerting?.items.some(item => item.href === '/actions')).toBe(false);
-    expect(settings?.items.find(item => item.key === 'settings-mcp-server')?.title).toBe('MCP服务器');
-    expect(settings?.items.find(item => item.key === 'help-center')?.title).toBe('帮助中心');
+    expect(settings?.items.find(item => item.key === 'settings-mcp-server')?.title).toBe(t('menu.advanced.mcp-server'));
+    expect(settings?.items.find(item => item.key === 'help-center')?.title).toBe(t('menu.extras.help'));
     expect(settings?.items.some(item => item.href === '/status')).toBe(false);
   });
 

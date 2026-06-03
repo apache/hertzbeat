@@ -1,5 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  incidentStateLabel,
+  orgStateLabel,
+  statusComponentsCountLabel,
+  statusComponentsLabel,
+  statusIncidentsCountLabel,
+  statusIncidentsLabel,
+  statusOrganizationCopy,
+  statusOrganizationLabel,
+  statusOrganizationStateLabel,
+  statusSettingLabel
+} from '../status-center/display';
+import {
   buildStatusComponentDraft,
   buildStatusComponentEvidenceRows,
   buildStatusComponentPayload,
@@ -21,44 +33,21 @@ import {
 } from './view-model';
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
-const t = createTranslatorMock({
-  overrides: {
-    'setting.status.title': 'Status page settings',
-    'setting.status.org.title': 'Org profile',
-    'setting.status.components.title': 'Components',
-    'setting.status.incidents.title': 'Incidents',
-    'setting.status.org.state': 'Org state',
-    'setting.status.org.copy': 'Configure the public org information shown on the status page.',
-    'setting.status.org.fallback': 'Unnamed status org',
-    'setting.status.org.feedback': 'Feedback'
-  }
-});
-
-const zhT = createTranslatorMock({
-  locale: 'zh-CN',
-  overrides: {
-    'setting.status.title': '状态页设置',
-    'setting.status.org.title': '组织档案',
-    'setting.status.components.title': '组件',
-    'setting.status.components.empty.title': '暂无组件',
-    'setting.status.components.empty.copy': '还没有公开状态组件。',
-    'setting.status.incidents.title': '事件',
-    'setting.status.incidents.empty.title': '暂无事件',
-    'setting.status.incidents.empty.copy': '还没有维护事件。',
-    'setting.status.incidents.item.fallback': '事件',
-    'setting.status.org.state': '组织状态',
-    'setting.status.org.copy': '配置公开状态页展示的组织信息。',
-    'setting.status.org.fallback': '未命名状态组织',
-    'setting.status.org.feedback': '反馈入口'
-  }
-});
+const t = createTranslatorMock();
+const zhT = createTranslatorMock({ locale: 'zh-CN' });
+const formattedAt = '2026-04-10 18:00:00';
+const componentMeta = (translator: typeof t, state: number) => `${stateLabel(state, translator)} · ${formattedAt}`;
+const incidentMeta = (translator: typeof t, state: number, componentCount: number) =>
+  `${incidentStateLabel(state, translator)} · ${statusComponentsLabel(translator)} ${componentCount} · ${formattedAt}`;
+const incidentFallbackTitle = (translator: typeof t) =>
+  `${translator('setting.status.incidents.item.fallback')} ${translator('common.none')}`;
 
 describe('setting status view model', () => {
   it('maps state labels', () => {
     expect(stateLabel(0, t)).toBe('Normal');
     expect(stateLabel(1, t)).toBe('Abnormal');
     expect(stateLabel(2, t)).toBe('Unknown');
-    expect(stateLabel(0, zhT)).toBe('正常');
+    expect(stateLabel(0, zhT)).toBe(zhT('status.component.state.0'));
     expect(stateLabel(undefined, t)).toBe('-');
   });
 
@@ -76,18 +65,18 @@ describe('setting status view model', () => {
 
   it('builds status facts', () => {
     expect(buildStatusFacts({ name: 'HB Status' } as any, [{}, {}] as any, { totalElements: 3 } as any, t)).toEqual([
-      { label: 'Workspace', value: 'Status page settings' },
-      { label: 'Org profile', value: 'HB Status' },
-      { label: 'Components', value: '2' },
-      { label: 'Incidents', value: '3' }
+      { label: t('common.workspace'), value: statusSettingLabel(t) },
+      { label: statusOrganizationLabel(t), value: 'HB Status' },
+      { label: statusComponentsCountLabel(t), value: '2' },
+      { label: statusIncidentsCountLabel(t), value: '3' }
     ]);
   });
 
   it('builds status metrics', () => {
     expect(buildStatusMetrics([{ id: 1 }, { id: 2 }] as any, { totalElements: 1 } as any, { state: 1 } as any, t)).toEqual([
-      { label: 'Components', value: '2', tone: 'success' },
-      { label: 'Incidents', value: '1', tone: 'warning' },
-      { label: 'Org state', value: 'Some Systems Abnormal' }
+      { label: statusComponentsLabel(t), value: '2', tone: 'success' },
+      { label: statusIncidentsLabel(t), value: '1', tone: 'warning' },
+      { label: statusOrganizationStateLabel(t), value: orgStateLabel(1, t) }
     ]);
   });
 
@@ -98,10 +87,10 @@ describe('setting status view model', () => {
         [{ name: 'API', description: 'public api', state: 0, gmtUpdate: 1712730000000 }] as any,
         { content: [] } as any,
         t,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
-      { title: 'API', copy: 'public api', meta: 'Normal · 2026-04-10 18:00:00' }
+      { title: 'API', copy: 'public api', meta: componentMeta(t, 0) }
     ]);
   });
 
@@ -112,10 +101,10 @@ describe('setting status view model', () => {
         [{ name: 'API', state: 1, gmtUpdate: 1712730000000 }] as any,
         { content: [] } as any,
         zhT,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
-      { title: 'API', copy: '无', meta: '异常 · 2026-04-10 18:00:00' }
+      { title: 'API', copy: zhT('common.none'), meta: componentMeta(zhT, 1) }
     ]);
   });
 
@@ -126,10 +115,10 @@ describe('setting status view model', () => {
         [],
         { content: [] } as any,
         zhT,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
-      { title: '暂无组件', copy: '还没有公开状态组件。', meta: '无' }
+      { title: zhT('setting.status.components.empty.title'), copy: zhT('setting.status.components.empty.copy'), meta: zhT('common.none') }
     ]);
 
     expect(
@@ -138,10 +127,10 @@ describe('setting status view model', () => {
         [],
         { content: [] } as any,
         zhT,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
-      { title: '暂无事件', copy: '还没有维护事件。', meta: '无' }
+      { title: zhT('setting.status.incidents.empty.title'), copy: zhT('setting.status.incidents.empty.copy'), meta: zhT('common.none') }
     ]);
   });
 
@@ -150,10 +139,10 @@ describe('setting status view model', () => {
       buildStatusComponentEvidenceRows(
         [{ id: 7, name: 'API', description: 'public api', state: 0, gmtUpdate: 1712730000000 }] as any,
         t,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
-      { key: '7', title: 'API', copy: 'public api', meta: 'Normal · 2026-04-10 18:00:00' }
+      { key: '7', title: 'API', copy: 'public api', meta: componentMeta(t, 0) }
     ]);
   });
 
@@ -162,10 +151,10 @@ describe('setting status view model', () => {
       buildStatusComponentEvidenceRows(
         [{ id: 8, name: 'Worker', state: 0, gmtUpdate: 1712730000000 }] as any,
         zhT,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
-      { key: '8', title: 'Worker', copy: '无', meta: '正常 · 2026-04-10 18:00:00' }
+      { key: '8', title: 'Worker', copy: zhT('common.none'), meta: componentMeta(zhT, 0) }
     ]);
   });
 
@@ -184,14 +173,14 @@ describe('setting status view model', () => {
           totalElements: 1
         } as any,
         t,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
       {
         key: '9',
         title: 'API degraded',
         copy: 'Investigating payment latency',
-        meta: 'Identified · Components 1 · 2026-04-10 18:00:00'
+        meta: incidentMeta(t, 1, 1)
       }
     ]);
 
@@ -239,9 +228,9 @@ describe('setting status view model', () => {
       contents: [{ message: 'Monitoring', state: 2 }]
     });
 
-    expect(validateStatusIncidentDraft({ name: '', state: '0', componentIdsText: '', message: '' }, t)).toBe('Incident name is required');
-    expect(validateStatusIncidentDraft({ name: 'API degraded', state: '0', componentIdsText: '', message: '' }, t)).toBe('At least one component id is required');
-    expect(validateStatusIncidentDraft({ name: 'API degraded', state: '0', componentIdsText: '7', message: '' }, t)).toBe('Incident message is required');
+    expect(validateStatusIncidentDraft({ name: '', state: '0', componentIdsText: '', message: '' }, t)).toBe(t('setting.status.validation.incident-name'));
+    expect(validateStatusIncidentDraft({ name: 'API degraded', state: '0', componentIdsText: '', message: '' }, t)).toBe(t('setting.status.validation.incident-components'));
+    expect(validateStatusIncidentDraft({ name: 'API degraded', state: '0', componentIdsText: '7', message: '' }, t)).toBe(t('setting.status.validation.incident-message'));
     expect(validateStatusIncidentDraft({ name: 'API degraded', state: '0', componentIdsText: '7', message: 'Investigating' }, t)).toBeNull();
   });
 
@@ -294,7 +283,7 @@ describe('setting status view model', () => {
     const incidentWithoutIdentity = {
       state: 1,
       components: [],
-      contents: [{ message: '正在排查', state: 1, timestamp: 10 }],
+      contents: [{ message: 'Investigating', state: 1, timestamp: 10 }],
       gmtUpdate: 1712730000000
     };
 
@@ -304,13 +293,13 @@ describe('setting status view model', () => {
         [],
         { content: [incidentWithoutIdentity] } as any,
         zhT,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
       {
-        title: '事件 无',
-        copy: '正在排查',
-        meta: '已确认 · 组件 0 · 2026-04-10 18:00:00'
+        title: incidentFallbackTitle(zhT),
+        copy: 'Investigating',
+        meta: incidentMeta(zhT, 1, 0)
       }
     ]);
 
@@ -318,14 +307,14 @@ describe('setting status view model', () => {
       buildStatusIncidentEvidenceRows(
         { content: [incidentWithoutIdentity], totalElements: 1 } as any,
         zhT,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
       {
         key: 'incident',
-        title: '事件 无',
-        copy: '正在排查',
-        meta: '已确认 · 组件 0 · 2026-04-10 18:00:00'
+        title: incidentFallbackTitle(zhT),
+        copy: 'Investigating',
+        meta: incidentMeta(zhT, 1, 0)
       }
     ]);
   });
@@ -342,32 +331,32 @@ describe('setting status view model', () => {
           gmtUpdate: 1712730000000
         } as any,
         t,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
       {
         title: 'HB Status',
-        copy: 'Configure the public org information shown on the status page.',
+        copy: statusOrganizationCopy(t),
         meta: 'All Systems Operational'
       },
       {
         title: 'Feedback',
         copy: 'https://hertzbeat.apache.org · mailto:ops@hertzbeat.apache.org',
-        meta: '2026-04-10 18:00:00'
+        meta: formattedAt
       }
     ]);
 
-    expect(buildStatusFacts({ name: 'HB 状态页' } as any, [{}] as any, { totalElements: 1 } as any, zhT)).toEqual([
-      { label: '工作区', value: '状态页设置' },
-      { label: '组织档案', value: 'HB 状态页' },
-      { label: '组件数', value: '1' },
-      { label: '事件数', value: '1' }
+    expect(buildStatusFacts({ name: 'HB Status' } as any, [{}] as any, { totalElements: 1 } as any, zhT)).toEqual([
+      { label: zhT('common.workspace'), value: statusSettingLabel(zhT) },
+      { label: statusOrganizationLabel(zhT), value: 'HB Status' },
+      { label: statusComponentsCountLabel(zhT), value: '1' },
+      { label: statusIncidentsCountLabel(zhT), value: '1' }
     ]);
 
     expect(buildStatusMetrics([{ id: 1 }] as any, { totalElements: 1 } as any, { state: 1 } as any, zhT)).toEqual([
-      { label: '组件', value: '1', tone: 'success' },
-      { label: '事件', value: '1', tone: 'warning' },
-      { label: '组织状态', value: '部分系统运行异常' }
+      { label: statusComponentsLabel(zhT), value: '1', tone: 'success' },
+      { label: statusIncidentsLabel(zhT), value: '1', tone: 'warning' },
+      { label: statusOrganizationStateLabel(zhT), value: orgStateLabel(1, zhT) }
     ]);
 
     expect(
@@ -375,23 +364,23 @@ describe('setting status view model', () => {
         {
           content: [{
             id: 9,
-            name: '支付接口抖动',
+            name: 'Payment API jitter',
             state: 1,
             components: [{ id: 7 }],
-            contents: [{ message: '正在排查', state: 1, timestamp: 10 }],
+            contents: [{ message: 'Investigating', state: 1, timestamp: 10 }],
             gmtUpdate: 1712730000000
           }],
           totalElements: 1
         } as any,
         zhT,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
       {
         key: '9',
-        title: '支付接口抖动',
-        copy: '正在排查',
-        meta: '已确认 · 组件 1 · 2026-04-10 18:00:00'
+        title: 'Payment API jitter',
+        copy: 'Investigating',
+        meta: incidentMeta(zhT, 1, 1)
       }
     ]);
   });
@@ -408,7 +397,7 @@ describe('setting status view model', () => {
           gmtUpdate: 1712730000000
         } as any,
         t,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
       {
@@ -419,7 +408,7 @@ describe('setting status view model', () => {
       {
         title: 'Feedback',
         copy: 'None · None',
-        meta: '2026-04-10 18:00:00'
+        meta: formattedAt
       }
     ]);
   });
@@ -447,8 +436,8 @@ describe('setting status view model', () => {
       color: ''
     });
 
-    expect(validateStatusOrgDraft(buildStatusOrgDraft(null), t)).toBe('Org name is required');
-    expect(validateStatusOrgDraft({ ...buildStatusOrgDraft(null), name: 'HB' }, t)).toBe('Org description is required');
+    expect(validateStatusOrgDraft(buildStatusOrgDraft(null), t)).toBe(t('setting.status.validation.name'));
+    expect(validateStatusOrgDraft({ ...buildStatusOrgDraft(null), name: 'HB' }, t)).toBe(t('setting.status.validation.description'));
     expect(validateStatusOrgDraft({ ...buildStatusOrgDraft(null), name: 'HB', description: 'desc' }, t)).toBeNull();
   });
 
@@ -497,8 +486,8 @@ describe('setting status view model', () => {
       state: 0
     });
 
-    expect(validateStatusComponentDraft(buildStatusComponentDraft(null), t)).toBe('Component name is required');
-    expect(validateStatusComponentDraft({ ...buildStatusComponentDraft(null), name: 'API' }, t)).toBe('Component description is required');
+    expect(validateStatusComponentDraft(buildStatusComponentDraft(null), t)).toBe(t('setting.status.validation.component-name'));
+    expect(validateStatusComponentDraft({ ...buildStatusComponentDraft(null), name: 'API' }, t)).toBe(t('setting.status.validation.component-description'));
     expect(validateStatusComponentDraft({ ...buildStatusComponentDraft(null), name: 'API', description: 'public api' }, t)).toBeNull();
   });
 });

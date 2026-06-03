@@ -7,14 +7,14 @@ const t = createTranslatorMock({ locale: 'zh-CN' });
 describe('passport lock view model', () => {
   it('builds lock page facts', () => {
     expect(buildLockFacts(t)).toEqual([
-      { label: '工作区', value: 'passport/lock' },
-      { label: '状态', value: '可解锁' },
-      { label: '下一步', value: '按需接入解锁校验' }
+      { label: t('common.workspace'), value: 'passport/lock' },
+      { label: t('common.status'), value: t('passport.lock.status.interactive') },
+      { label: t('common.next-step'), value: t('passport.lock.next-step') }
     ]);
   });
 
   it('requires a non-empty password', () => {
-    expect(validateUnlockPassword('', t)).toBe('请输入密码');
+    expect(validateUnlockPassword('', t)).toBe(t('passport.lock.error.required'));
     expect(validateUnlockPassword('   ', t)).toBeNull();
     expect(validateUnlockPassword('secret', t)).toBeNull();
   });

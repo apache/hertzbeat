@@ -15,16 +15,16 @@ describe('settings form controls', () => {
   it('renders cold-matte form controls with low-radius dense settings rhythm', () => {
     const html = renderToStaticMarkup(
       <SettingsForm data-setting-config-form="cold-settings-form">
-        <SettingsFormField label="系统语言">
+        <SettingsFormField label="System language">
           <SettingsFormSelect value="zh-CN" onChange={() => {}}>
-            <option value="zh-CN">简体中文</option>
+            <option value="zh-CN">Simplified Chinese</option>
           </SettingsFormSelect>
         </SettingsFormField>
-        <SettingsFormField label="访问密钥">
+        <SettingsFormField label="Access key">
           <SettingsFormInput value="ak" onChange={() => {}} />
         </SettingsFormField>
         <SettingsFormActions data-setting-config-actions="standard-equal-buttons">
-          <button type="submit">确认更新</button>
+          <button type="submit">Confirm update</button>
         </SettingsFormActions>
       </SettingsForm>
     );

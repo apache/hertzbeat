@@ -14,6 +14,7 @@ import {
 } from './view-model';
 import {
   componentStateLabel,
+  currentStatusViewLabel,
   incidentStateLabel,
   orgStateLabel,
   statusIncidentPublicStartAtLabel,
@@ -47,18 +48,13 @@ import {
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({
-  locale: 'zh-CN',
-  overrides: {
-    'status.incident.default-title': '事件',
-    'status.components.empty.title': '还没有组件',
-    'status.components.empty.copy': '配置完成后，公开状态页组件会显示在这里。',
-    'status.incidents.empty.title': '还没有事件',
-    'status.incidents.empty.copy': '发布事件更新后，公开事件历史会显示在这里。',
-    'status.incidents.view': '事件历史视图',
-    'status.incidents.copy': '查看最近的公开事件和恢复进展。',
-  }
+  locale: 'zh-CN'
 });
 const enT = createTranslatorMock({ locale: 'en-US' });
+const formattedAt = '2026-04-10 18:00:00';
+const statusMeta = (stateLabel: string) => `${stateLabel} · ${formattedAt}`;
+const incidentFallbackTitle = () => `${t('status.incident.default-title')} ${t('common.none')}`;
+const historyBlockTitle = (uptimeLabel: string) => `${formattedAt} · ${statusPublicUptimeLabel(t)} ${uptimeLabel}`;
 
 describe('status center view model', () => {
   it('maps component status to tone buckets', () => {
@@ -76,18 +72,18 @@ describe('status center view model', () => {
         t
       )
     ).toEqual([
-      { label: '组件数', value: '2', tone: 'success' },
-      { label: '正常', value: '1', tone: 'success' },
-      { label: '事件数', value: '1', tone: 'warning' }
+      { label: statusComponentsCountLabel(t), value: '2', tone: 'success' },
+      { label: componentStateLabel(0, t), value: '1', tone: 'success' },
+      { label: statusIncidentsCountLabel(t), value: '1', tone: 'warning' }
     ]);
   });
 
   it('builds status facts from the active mode', () => {
     expect(buildStatusFacts('incident', [{ id: 1 }] as any, [{ id: 7 }] as any, t as any)).toEqual([
-      { label: '工作区', value: '状态页面' },
-      { label: '组件数', value: '1' },
-      { label: '事件数', value: '1' },
-      { label: '当前视图', value: '事件历史视图' }
+      { label: t('common.workspace'), value: statusPageLabel(t) },
+      { label: statusComponentsCountLabel(t), value: '1' },
+      { label: statusIncidentsCountLabel(t), value: '1' },
+      { label: statusViewLabel(t), value: currentStatusViewLabel('incident', t) }
     ]);
   });
 
@@ -104,7 +100,7 @@ describe('status center view model', () => {
       {
         title: 'api',
         copy: '/health',
-        meta: '正常 · 2026-04-10 18:00:00'
+        meta: statusMeta(componentStateLabel(0, t))
       }
     ]);
   });
@@ -121,8 +117,8 @@ describe('status center view model', () => {
     ).toEqual([
       {
         title: 'queue',
-        copy: '无',
-        meta: '异常 · 2026-04-10 18:00:00'
+        copy: t('common.none'),
+        meta: statusMeta(componentStateLabel(1, t))
       }
     ]);
   });
@@ -137,16 +133,16 @@ describe('status center view model', () => {
           title: 'db outage',
           status: 2,
           updateTime: 1712730000000,
-          contents: [{ message: '数据库延迟升高', timestamp: 1712730000000 }]
+          contents: [{ message: 'Database latency increased', timestamp: 1712730000000 }]
         }] as any,
         t,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
       {
         title: 'db outage',
-        copy: '数据库延迟升高',
-        meta: '观察中 · 2026-04-10 18:00:00'
+        copy: 'Database latency increased',
+        meta: statusMeta(incidentStateLabel(2, t))
       }
     ]);
   });
@@ -166,9 +162,9 @@ describe('status center view model', () => {
       )
     ).toEqual([
       {
-        title: '事件 无',
+        title: incidentFallbackTitle(),
         copy: 'Checking gateway errors',
-        meta: '调查中 · 2026-04-10 18:00:00'
+        meta: statusMeta(incidentStateLabel(0, t))
       }
     ]);
   });
@@ -176,30 +172,30 @@ describe('status center view model', () => {
   it('uses runtime none fallback for status empty row meta', () => {
     expect(buildStatusRows('component', [], [], t, () => '2026-04-10 18:00:00')).toEqual([
       {
-        title: '还没有组件',
-        copy: '配置完成后，公开状态页组件会显示在这里。',
-        meta: '无'
+        title: t('status.components.empty.title'),
+        copy: t('status.components.empty.copy'),
+        meta: t('common.none')
       }
     ]);
 
     expect(buildStatusRows('incident', [], [], t, () => '2026-04-10 18:00:00')).toEqual([
       {
-        title: '还没有事件',
-        copy: '发布事件更新后，公开事件历史会显示在这里。',
-        meta: '无'
+        title: t('status.incidents.empty.title'),
+        copy: t('status.incidents.empty.copy'),
+        meta: t('common.none')
       }
     ]);
   });
 
   it('builds status org rows and public posture', () => {
     expect(buildStatusOrgRows('component', { name: 'Ops', description: 'Public board', state: 0 } as any, t)).toEqual([
-      { title: 'Ops', copy: 'Public board', meta: '所有系统正常运行' },
-      { title: '当前视图', copy: '组件健康视图', meta: '状态页面' }
+      { title: 'Ops', copy: 'Public board', meta: orgStateLabel(0, t) },
+      { title: statusViewLabel(t), copy: currentStatusViewLabel('component', t), meta: statusPageLabel(t) }
     ]);
 
     expect(buildStatusPosture('incident', [{ id: 7 }] as any, t)).toEqual({
-      title: '事件历史视图',
-      copy: '查看最近的公开事件和恢复进展。',
+      title: currentStatusViewLabel('incident', t),
+      copy: t('status.incidents.copy'),
       tone: 'danger'
     });
   });
@@ -284,22 +280,22 @@ describe('status center view model', () => {
       subtitle: 'Public board',
       logo: 'https://hertzbeat.apache.org/logo.svg',
       color: '#123456',
-      stateLabel: '部分系统运行异常',
+      stateLabel: orgStateLabel(1, t),
       stateColor: '#e56c23',
       homeHref: 'https://hertzbeat.apache.org',
       feedbackHref: 'mailto:ops@hertzbeat.apache.org',
-      homeLabel: '主页',
-      feedbackLabel: '问题反馈',
-      historyLabel: '历史',
-      uptimeLabel: '可用率',
-      updatedLabel: '更新于',
-      updatedAt: '2026-04-10 18:00:00'
+      homeLabel: statusPublicHomeLabel(t),
+      feedbackLabel: statusPublicFeedbackLabel(t),
+      historyLabel: statusPublicHistoryLabel(t),
+      uptimeLabel: statusPublicUptimeLabel(t),
+      updatedLabel: statusPublicUpdatedLabel(t),
+      updatedAt: formattedAt
     });
 
     expect(buildStatusIncidentYears(2026, t, 3)).toEqual([
-      { value: 2026, label: '年份 2026' },
-      { value: 2025, label: '年份 2025' },
-      { value: 2024, label: '年份 2024' }
+      { value: 2026, label: `${statusPublicYearLabel(t)} 2026` },
+      { value: 2025, label: `${statusPublicYearLabel(t)} 2025` },
+      { value: 2024, label: `${statusPublicYearLabel(t)} 2024` }
     ]);
 
     expect(clampStatusIncidentYear(2031, 2026)).toBe(2026);
@@ -324,7 +320,7 @@ describe('status center view model', () => {
           }
         ] as any,
         t,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
       {
@@ -333,26 +329,26 @@ describe('status center view model', () => {
         copy: 'public api',
         state: 0,
         tone: 'success',
-        statusLabel: '正常',
-        latestTimeLabel: '2026-04-10 18:00:00',
+        statusLabel: componentStateLabel(0, t),
+        latestTimeLabel: formattedAt,
         latestUptimeLabel: '99.00%',
-        historyLabel: '组件历史',
-        uptimeLabel: '可用率',
+        historyLabel: statusPublicComponentHistoryLabel(t),
+        uptimeLabel: statusPublicUptimeLabel(t),
         history: [
           { timestamp: 1712730000000, state: 0, uptime: 0.99, abnormal: 1, normal: 70, unknowing: 0 },
           { timestamp: 1712640000000, state: 1, uptime: 0.84, abnormal: 10, normal: 50, unknowing: 2 }
         ],
         blocks: [
           {
-            timestampLabel: '2026-04-10 18:00:00',
+            timestampLabel: formattedAt,
             uptimeLabel: '99.00%',
-            title: '2026-04-10 18:00:00 · 可用率 99.00%',
+            title: historyBlockTitle('99.00%'),
             color: '#28a745'
           },
           {
-            timestampLabel: '2026-04-10 18:00:00',
+            timestampLabel: formattedAt,
             uptimeLabel: '84.00%',
-            title: '2026-04-10 18:00:00 · 可用率 84.00%',
+            title: historyBlockTitle('84.00%'),
             color: 'rgb(255, 252, 0)'
           }
         ]
@@ -375,7 +371,7 @@ describe('status center view model', () => {
           }
         ] as any,
         t,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )
     ).toEqual([
       {
@@ -384,24 +380,24 @@ describe('status center view model', () => {
         copy: 'Monitoring progress',
         state: 1,
         tone: 'default',
-        stateLabel: '已确认',
+        stateLabel: incidentStateLabel(1, t),
         stateColor: '#e56c23',
-        meta: '已确认 · 2026-04-10 18:00:00',
-        rangeLabel: '事件范围 · 2026-04-10 18:00:00 → 2026-04-10 18:00:00',
-        startAtLabel: '2026-04-10 18:00:00',
-        updateAtLabel: '2026-04-10 18:00:00',
+        meta: statusMeta(incidentStateLabel(1, t)),
+        rangeLabel: `${statusPublicIncidentRangeLabel(t)} · ${formattedAt} → ${formattedAt}`,
+        startAtLabel: formattedAt,
+        updateAtLabel: formattedAt,
         contents: [
           {
-            timestampLabel: '2026-04-10 18:00:00',
-            stateLabel: '调查中',
+            timestampLabel: formattedAt,
+            stateLabel: incidentStateLabel(0, t),
             state: 0,
             tone: 'danger',
             stateColor: '#ff2f2f',
             message: 'Investigating payment latency'
           },
           {
-            timestampLabel: '2026-04-10 18:00:00',
-            stateLabel: '观察中',
+            timestampLabel: formattedAt,
+            stateLabel: incidentStateLabel(2, t),
             state: 2,
             tone: 'default',
             stateColor: '#19a7e7',
@@ -425,11 +421,11 @@ describe('status center view model', () => {
           }
         ] as any,
         t,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )[0].contents[0]
     ).toEqual({
-      timestampLabel: '2026-04-10 18:00:00',
-      stateLabel: '无',
+      timestampLabel: formattedAt,
+      stateLabel: t('common.none'),
       state: null,
       tone: 'default',
       stateColor: '#6b7280',
@@ -452,9 +448,9 @@ describe('status center view model', () => {
       )[0]
     ).toMatchObject({
       key: 'incident',
-      title: '事件 无',
+      title: incidentFallbackTitle(),
       copy: 'Checking public impact',
-      stateLabel: '调查中'
+      stateLabel: incidentStateLabel(0, t)
     });
   });
 
@@ -472,18 +468,18 @@ describe('status center view model', () => {
           }
         ] as any,
         t,
-        () => '2026-04-10 18:00:00'
+        () => formattedAt
       )[0]
     ).toMatchObject({
       key: '11',
       title: 'Gateway',
       copy: '/ready',
-      latestUptimeLabel: '无',
+      latestUptimeLabel: t('common.none'),
       blocks: [
         {
-          timestampLabel: '2026-04-10 18:00:00',
-          uptimeLabel: '无',
-          title: '2026-04-10 18:00:00 · 可用率 无'
+          timestampLabel: formattedAt,
+          uptimeLabel: t('common.none'),
+          title: historyBlockTitle(t('common.none'))
         }
       ]
     });
@@ -504,6 +500,6 @@ describe('status center view model', () => {
         t,
         () => '2026-04-10 18:00:00'
       )[0].copy
-    ).toBe('无');
+    ).toBe(t('common.none'));
   });
 });

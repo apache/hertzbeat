@@ -12,17 +12,27 @@ const t = createTranslatorMock({ locale: 'zh-CN' });
 
 describe('settings surface view model', () => {
   it('builds settings facts', () => {
-    expect(buildSettingsFacts('Token management', '生成令牌', t)).toEqual([
-      { label: '工作区', value: 'token management' },
-      { label: '模式', value: '设置' },
-      { label: '焦点', value: '生成令牌' }
+    const nextStep = 'Generate token';
+
+    expect(buildSettingsFacts('Token management', nextStep, t)).toEqual([
+      { label: t('common.workspace'), value: 'token management' },
+      { label: t('settings.surface.fact.mode-label'), value: t('settings.surface.fact.mode-value') },
+      { label: t('settings.surface.fact.focus-label'), value: nextStep }
     ]);
   });
 
   it('builds settings surface rows', () => {
     expect(buildSettingsRows(t)).toEqual([
-      { title: '设置导航', copy: '从这里进入状态页、采集器、标签、插件、令牌和系统配置。', meta: '路由契约' },
-      { title: '运维配置', copy: '统一维护采集器、标签、插件、令牌、状态页和通知通道。', meta: 'API 契约' }
+      {
+        title: t('settings.surface.route-contract.title'),
+        copy: t('settings.surface.route-contract.copy'),
+        meta: t('settings.surface.route-contract.meta')
+      },
+      {
+        title: t('settings.surface.api-contract.title'),
+        copy: t('settings.surface.api-contract.copy'),
+        meta: t('settings.surface.api-contract.meta')
+      }
     ]);
   });
 
@@ -88,22 +98,22 @@ describe('settings surface view model', () => {
       'future-roadmap-boundary'
     ]);
     expect(rows.find(row => row.key === 'api-access')).toMatchObject({
-      title: 'API 访问',
+      title: t('settings.surface.governance.group.api-access'),
       meta: '/setting/settings/token'
     });
     expect(rows.find(row => row.key === 'notifications')).toMatchObject({
-      title: '通知通道',
+      title: t('settings.surface.governance.group.notifications'),
       meta: '/alert/notice'
     });
     expect(rows.find(row => row.key === 'template-marketplace')?.meta).toBe('/setting/define · /setting/plugins');
 
     const futureBoundary = rows.find(row => row.key === 'future-roadmap-boundary');
     expect(futureBoundary).toMatchObject({
-      title: '未来大域边界',
-      meta: '仅规划'
+      title: t('settings.surface.governance.future.title'),
+      meta: t('settings.surface.governance.future.meta')
     });
-    expect(futureBoundary?.copy).toContain('安全治理');
-    expect(futureBoundary?.copy).toContain('路线图能力规划');
+    expect(futureBoundary?.copy).toContain(t('settings.surface.governance.future.security'));
+    expect(futureBoundary?.copy).toContain('/docs/roadmap/future-security');
     expect(futureBoundary?.copy).not.toContain('Data Observability');
     expect(futureBoundary?.copy).toContain('/docs/roadmap/future-security');
     expect(rows.map(row => row.meta).join(' ')).not.toContain('/security');

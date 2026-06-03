@@ -7,10 +7,10 @@ const t = createTranslatorMock({ locale: 'zh-CN' });
 describe('plugin view model', () => {
   it('builds plugin facts', () => {
     expect(buildPluginFacts({ totalElements: 8, content: [1, 2] } as any, { search: 'smtp' }, t)).toEqual([
-      { label: '工作区', value: 'setting/plugins' },
-      { label: '总量', value: '8' },
-      { label: '当前页', value: '2' },
-      { label: 'setting.plugins.fact.query', value: 'smtp' }
+      { label: t('common.workspace'), value: 'setting/plugins' },
+      { label: t('common.total'), value: '8' },
+      { label: t('common.current-page-count'), value: '2' },
+      { label: t('setting.plugins.fact.query'), value: 'smtp' }
     ]);
   });
 
@@ -24,9 +24,9 @@ describe('plugin view model', () => {
         t
     )
     ).toEqual([
-      { label: '当前页启用插件', value: '1', tone: 'success' },
-      { label: '当前页停用插件', value: '1', tone: 'warning' },
-      { label: '当前页参数项', value: '3' }
+      { label: t('setting.plugins.metric.enabled-page'), value: '1', tone: 'success' },
+      { label: t('setting.plugins.metric.disabled-page'), value: '1', tone: 'warning' },
+      { label: t('setting.plugins.metric.params-page'), value: '3' }
     ]);
   });
 
@@ -37,8 +37,8 @@ describe('plugin view model', () => {
         { name: 'slack', items: [], enableStatus: false, paramCount: 0 }
       ] as any, t)
     ).toEqual([
-      { title: 'smtp', copy: 'notice · email', meta: '已启用 · 参数 2' },
-      { title: 'slack', copy: '插件项 -', meta: '已停用 · 参数 0' }
+      { title: 'smtp', copy: 'notice · email', meta: `${t('common.enabled')} · ${t('setting.plugins.row.params', { count: 2 })}` },
+      { title: 'slack', copy: t('setting.plugins.row.item-fallback'), meta: `${t('common.disabled')} · ${t('setting.plugins.row.params', { count: 0 })}` }
     ]);
   });
 
@@ -54,7 +54,7 @@ describe('plugin view model', () => {
         key: '1',
         name: 'smtp',
         typeLabels: ['POST_ALERT', 'POST_COLLECT'],
-        statusLabel: '已启用',
+        statusLabel: t('common.enabled'),
         paramCount: 2,
         canEditParams: true
       },
@@ -62,7 +62,7 @@ describe('plugin view model', () => {
         key: '2',
         name: 'slack',
         typeLabels: ['POST_ALERT'],
-        statusLabel: '已停用',
+        statusLabel: t('common.disabled'),
         paramCount: 0,
         canEditParams: false
       },
@@ -70,7 +70,7 @@ describe('plugin view model', () => {
         key: '3',
         name: 'legacy',
         typeLabels: ['POST_COLLECT'],
-        statusLabel: '已启用',
+        statusLabel: t('common.enabled'),
         paramCount: 0,
         canEditParams: true
       }

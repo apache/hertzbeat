@@ -466,6 +466,7 @@ function TraceWaterfallDrawer({
                 {selectedTraceEvent ? (
                   <HzDialogEventNotice
                     data-trace-manage-event-detail="span-event-detail"
+                    data-trace-manage-event-detail-type="span-event"
                     data-trace-manage-event-detail-owner="hertzbeat-ui-dialog-event-notice"
                     title={selectedTraceEvent.event.label}
                     description={(

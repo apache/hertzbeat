@@ -4,6 +4,11 @@ import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
 const enT = createTranslatorMock({ locale: 'en-US' });
+const formattedAt = '2026-04-10 18:00:00';
+const zhServiceLabel = (type?: string | null) => (type === 'service' ? t('entities.list.type.service') : '-');
+const zhLocalEnvironmentLabel = (env?: string | null) => (env === 'local' ? t('entities.list.environment.local') : '-');
+const zhUnknownStatusLabel = (status?: string | null) => (status === 'unknown' ? t('entities.list.status.unknown') : '-');
+const formatAt = () => formattedAt;
 
 describe('entity view model', () => {
   it('builds entity metrics from current page data', () => {
@@ -16,9 +21,9 @@ describe('entity view model', () => {
         t
       )
     ).toEqual([
-      { label: '当前页告警', value: '2', tone: 'warning' },
-      { label: '当前页监控', value: '7', tone: 'success' },
-      { label: '当前页关系', value: '3' }
+      { label: t('entities.list.metric.alerts'), value: '2', tone: 'warning' },
+      { label: t('entities.list.metric.monitors'), value: '7', tone: 'success' },
+      { label: t('entities.list.metric.relations'), value: '3' }
     ]);
   });
 
@@ -39,17 +44,17 @@ describe('entity view model', () => {
         }
       ] as any,
       t,
-      (type?: string | null) => (type === 'service' ? '服务' : '-'),
-      (env?: string | null) => (env === 'local' ? '本地' : '-'),
-      () => '2026-04-10 18:00:00'
+      zhServiceLabel,
+      zhLocalEnvironmentLabel,
+      formatAt
     );
 
     expect(rows).toEqual([
       {
         key: '1',
         title: 'Checkout Service',
-        copy: '服务 · ops · 本地',
-        meta: '监控 4 · 告警 2 · 证据 2026-04-10 18:00:00'
+        copy: `${t('entities.list.type.service')} · ops · ${t('entities.list.environment.local')}`,
+        meta: t('entities.list.item.meta', { monitorCount: 4, alertCount: 2, time: formattedAt })
       }
     ]);
   });
@@ -71,12 +76,12 @@ describe('entity view model', () => {
         }
       ] as any,
       t,
-      (type?: string | null) => (type === 'service' ? '服务' : '-'),
-      (env?: string | null) => (env === 'local' ? '本地' : '-'),
-      () => '无'
+      zhServiceLabel,
+      zhLocalEnvironmentLabel,
+      () => t('common.none')
     );
 
-    expect(rows[0].copy).toBe('服务 · 无 · 本地');
+    expect(rows[0].copy).toBe(`${t('entities.list.type.service')} · ${t('common.none')} · ${t('entities.list.environment.local')}`);
   });
 
   it('builds HertzBeat-native entity table rows with lightweight health affordances', () => {
@@ -98,31 +103,31 @@ describe('entity view model', () => {
           }
         ] as any,
         t,
-        (type?: string | null) => (type === 'service' ? '服务' : '-'),
-        (env?: string | null) => (env === 'local' ? '本地' : '-'),
+        zhServiceLabel,
+        zhLocalEnvironmentLabel,
         (status?: string | null) => status || '-',
-        () => '2026-04-10 18:00:00'
+        formatAt
       )
     ).toEqual([
       {
         key: '1',
         name: 'Checkout Service',
-        type: '服务',
-        environment: '本地',
+        type: t('entities.list.type.service'),
+        environment: t('entities.list.environment.local'),
         status: 'healthy',
         statusTone: 'success',
         health: {
           score: 84,
           scoreText: '84 / 100',
-          label: '健康评分 84',
-          copy: '采集 4 / 4 健康',
-          meta: '告警 2 · 异常 0',
+          label: t('entity.health.label', { score: 84 }),
+          copy: t('entity.health.copy.collected', { healthy: 4, total: 4 }),
+          meta: t('entity.health.meta', { alerts: 2, anomalies: 0 }),
           tone: 'warning'
         },
         monitorCount: '4',
         activeAlertCount: '2',
         relationCount: '1',
-        updatedAt: '2026-04-10 18:00:00',
+        updatedAt: formattedAt,
         href: '/entities/1'
       }
     ]);
@@ -134,7 +139,7 @@ describe('entity view model', () => {
     expect(isEntityHealthyStatus('up')).toBe(true);
     expect(isEntityHealthyStatus('normal')).toBe(true);
     expect(isEntityHealthyStatus('unhealthy')).toBe(false);
-    expect(isEntityHealthyStatus('健康')).toBe(false);
+    expect(isEntityHealthyStatus(t('entities.list.status.healthy'))).toBe(false);
   });
 
   it('builds selected entity summary rows', () => {
@@ -147,14 +152,14 @@ describe('entity view model', () => {
           monitorCount: 4,
           relationCount: 1,
           definitionActivitySummary: null
-        } as any,
-        t,
-        (type?: string | null) => (type === 'service' ? '服务' : '-'),
-        (status?: string | null) => (status === 'unknown' ? '未知' : '-')
-      )
+      } as any,
+      t,
+      zhServiceLabel,
+      zhUnknownStatusLabel
+    )
     ).toEqual([
-      { title: 'Checkout Service', copy: '服务 · 未知', meta: '告警 2' },
-      { title: '身份 / 监控 / 关系', copy: '3 / 4 / 1', meta: '定义活动 -' }
+      { title: 'Checkout Service', copy: `${t('entities.list.type.service')} · ${t('entities.list.status.unknown')}`, meta: t('entities.list.selected.alerts', { count: 2 }) },
+      { title: t('entities.list.rail.identity-monitor-relation'), copy: '3 / 4 / 1', meta: t('entities.list.selected.definition-activity') }
     ]);
   });
 
@@ -163,10 +168,10 @@ describe('entity view model', () => {
       buildSelectedEntityRows(
         null,
         t,
-        (type?: string | null) => (type === 'service' ? '服务' : '-'),
-        (status?: string | null) => (status === 'unknown' ? '未知' : '-')
+        zhServiceLabel,
+        zhUnknownStatusLabel
       )
-    ).toEqual([{ title: '还未选择实体', copy: '从列表选择实体后，这里会显示证据和操作上下文。', meta: '无' }]);
+    ).toEqual([{ title: t('entities.list.unselected.title'), copy: t('entities.list.unselected.copy'), meta: t('common.none') }]);
   });
 
   it('builds English evidence summary copy without localized fallbacks', () => {

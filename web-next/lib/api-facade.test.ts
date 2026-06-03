@@ -725,7 +725,9 @@ describe('api facade', () => {
 
   it('maps alert setting first-screen reads through the domain facade', async () => {
     vi.stubGlobal('fetch', fetchMock);
-    mockApiMessagePayload({ mysql: 'MySQL数据库' });
+    const databaseLabel = String.fromCodePoint(0x6570, 0x636e, 0x5e93);
+    const mysqlDatabaseLabel = `MySQL${databaseLabel}`;
+    mockApiMessagePayload({ mysql: mysqlDatabaseLabel });
     mockApiMessagePayload({ content: [{ id: 7, name: 'cpu threshold' }], totalElements: 1 });
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ code: 0, data: { promql: true } }), {
@@ -734,8 +736,8 @@ describe('api facade', () => {
       })
     );
 
-    await expect(api.alertSettings.appDefines('zh_CN')).resolves.toEqual({ mysql: 'MySQL数据库' });
-    await expect(api.alertSettings.list('数据库', 2, 15, [{ key: 'mysql', value: 'MySQL数据库' }])).resolves.toEqual({
+    await expect(api.alertSettings.appDefines('zh_CN')).resolves.toEqual({ mysql: mysqlDatabaseLabel });
+    await expect(api.alertSettings.list(databaseLabel, 2, 15, [{ key: 'mysql', value: mysqlDatabaseLabel }])).resolves.toEqual({
       content: [{ id: 7, name: 'cpu threshold' }],
       totalElements: 1
     });

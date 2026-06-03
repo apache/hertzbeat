@@ -197,17 +197,17 @@ describe('observability waterfall', () => {
     expect(html).toContain('width:32px');
   });
 
-  it('uses Chinese count labels for the trace workbench waterfall timeline and row events', () => {
+  it('uses localized count labels for the trace workbench waterfall timeline and row events', () => {
     const html = renderToStaticMarkup(
       <ObservabilityWaterfall
-        spanLabel="跨度"
-        durationLabel="耗时"
-        timelineLabel="时间轴"
+        spanLabel="\u8de8\u5ea6"
+        durationLabel="\u8017\u65f6"
+        timelineLabel="\u65f6\u95f4\u8f74"
         waterfallCopy={{
-          overviewTitle: '时间轴总览',
-          spanCount: count => `${count} 个跨度`,
-          eventCount: count => `${count} 个事件`,
-          rowEventCount: count => `${count} 个事件`
+          overviewTitle: '\u65f6\u95f4\u8f74\u603b\u89c8',
+          spanCount: count => `${count} \u4e2a\u8de8\u5ea6`,
+          eventCount: count => `${count} \u4e2a\u4e8b\u4ef6`,
+          rowEventCount: count => `${count} \u4e2a\u4e8b\u4ef6`
         }}
         rows={[
           {
@@ -228,9 +228,9 @@ describe('observability waterfall', () => {
       />
     );
 
-    expect(html).toContain('时间轴总览');
-    expect(html).toContain('1 个跨度 · 2 个事件');
-    expect(html).toContain('2 个事件');
+    expect(html).toContain('\u65f6\u95f4\u8f74\u603b\u89c8');
+    expect(html).toContain('1 \u4e2a\u8de8\u5ea6 · 2 \u4e2a\u4e8b\u4ef6');
+    expect(html).toContain('2 \u4e2a\u4e8b\u4ef6');
     expect(html).not.toContain('1 spans');
     expect(html).not.toContain('2 events');
   });

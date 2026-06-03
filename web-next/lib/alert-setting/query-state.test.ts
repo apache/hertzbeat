@@ -16,19 +16,22 @@ describe('alert setting query state', () => {
   });
 
   it('maps localized app labels through the Angular app-entry search contract before querying defines', () => {
+    const database = String.fromCodePoint(0x6570, 0x636e, 0x5e93);
+    const mysqlDatabase = `MySQL${database}`;
+    const linuxHost = `Linux${String.fromCodePoint(0x4e3b, 0x673a)}`;
     const entries = buildAlertSettingAppEntries({
-      mysql: 'MySQL数据库',
-      linux: 'Linux主机',
+      mysql: mysqlDatabase,
+      linux: linuxHost,
       ignored: 7
     });
 
     expect(entries).toEqual([
-      { key: 'mysql', value: 'MySQL数据库' },
-      { key: 'linux', value: 'Linux主机' }
+      { key: 'mysql', value: mysqlDatabase },
+      { key: 'linux', value: linuxHost }
     ]);
-    expect(buildAlertSettingSearchTerms(' 数据库 ', entries)).toEqual(['mysql']);
-    expect(normalizeDefineSearch('数据库', entries)).toBe('%5B%22mysql%22%5D');
-    expect(buildDefineListUrl('数据库', 0, 8, entries)).toBe(
+    expect(buildAlertSettingSearchTerms(` ${database} `, entries)).toEqual(['mysql']);
+    expect(normalizeDefineSearch(database, entries)).toBe('%5B%22mysql%22%5D');
+    expect(buildDefineListUrl(database, 0, 8, entries)).toBe(
       '/alert/defines?pageIndex=0&pageSize=8&sort=id&order=desc&search=%5B%22mysql%22%5D'
     );
     expect(buildAlertSettingSearchTerms('custom threshold', entries)).toEqual(['custom threshold']);

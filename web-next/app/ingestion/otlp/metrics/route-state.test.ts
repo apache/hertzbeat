@@ -17,13 +17,16 @@
 
 import { describe, expect, it } from 'vitest';
 import { buildOtlpMetricsRoute, hasMetricsDisplayReturnLabel } from './route-state';
+import { createTranslatorMock } from '../../../../test/i18n-test-helper';
 
 describe('otlp metrics route state', () => {
   it('drops localized display labels from metrics workbench URLs', () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
+    const localizedReturnLabel = t('log.manage.route.title');
     const route = buildOtlpMetricsRoute({
       entityId: '7',
       entityName: 'checkout',
-      returnTo: '/log/manage?returnLabel=日志工作台',
+      returnTo: `/log/manage?returnLabel=${localizedReturnLabel}`,
       traceId: 'trace-123',
       spanId: 'span-456',
       query: 'http_server_duration_milliseconds_count',
@@ -43,7 +46,7 @@ describe('otlp metrics route state', () => {
       '/ingestion/otlp/metrics?entityId=7&entityName=checkout&returnTo=%2Flog%2Fmanage&traceId=trace-123&spanId=span-456&query=http_server_duration_milliseconds_count&aggregation=sum&groupBy=service_name&timeRange=last-1h&serviceName=checkout&serviceNamespace=payments&environment=prod&collector=collector-a&template=spring-boot&start=1712730000000&end=1712733600000'
     );
     expect(route).not.toContain('returnLabel=');
-    expect(route).not.toContain('%E6%97%A5%E5%BF%97%E5%B7%A5%E4%BD%9C%E5%8F%B0');
+    expect(route).not.toContain(encodeURIComponent(localizedReturnLabel));
   });
 
   it('detects legacy display labels in direct and nested return URLs', () => {

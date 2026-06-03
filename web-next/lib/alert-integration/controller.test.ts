@@ -32,8 +32,9 @@ describe('alert integration controller', () => {
   it('falls back when no guide exists', async () => {
     const readFile = vi.fn().mockRejectedValue(new Error('missing'));
     const doc = await loadIntegrationDoc('/docs', 'webhook', readFile as any);
-    expect(doc).toBe('当前告警源暂未提供集成指南。');
-    expect(fallbackDocCopy).toBe('当前告警源暂未提供集成指南。');
+    const zhFallbackCopy = getAlertIntegrationFallbackDocCopy('zh-CN');
+    expect(doc).toBe(zhFallbackCopy);
+    expect(fallbackDocCopy).toBe(zhFallbackCopy);
     expect(getAlertIntegrationFallbackDocCopy('en-US')).toBe('No integration guide is available for this alert source yet.');
 
     const source = readFileSync(resolve(process.cwd(), 'lib/alert-integration/controller.ts'), 'utf8');

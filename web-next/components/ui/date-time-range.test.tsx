@@ -30,7 +30,7 @@ describe('DateTimeRange', () => {
     expect(html.match(/data-cold-date-time-picker-library="react-datepicker"/g)).toHaveLength(2);
     expect(html).toContain('data-cold-date-time-picker-trigger="true"');
     expect(html).toContain('data-cold-date-time-picker-input="hidden-value"');
-    expect(html).not.toContain('今天');
+    expect(html).not.toMatch(/\u4eca\u5929/);
     expect(html).not.toContain('type="datetime-local"');
     expect(html).not.toContain('type="date"');
     expect(html).not.toContain('type="time"');
@@ -115,7 +115,7 @@ describe('DateTimeRange', () => {
     expect(html.match(/data-cold-date-time-picker-library="react-datepicker"/g)).toHaveLength(2);
     expect(html).toContain('09:00');
     expect(html).toContain('18:00');
-    expect(html).not.toContain('今天');
+    expect(html).not.toMatch(/\u4eca\u5929/);
     expect(html).not.toContain('type="time"');
   });
 
@@ -135,9 +135,9 @@ describe('DateTimeRange', () => {
     expect(html.match(/>Not set</g)).toHaveLength(2);
     expect(html).toContain('aria-label="Start"');
     expect(html).toContain('aria-label="End"');
-    expect(html).not.toContain('未设置');
-    expect(html).not.toContain('aria-label="开始"');
-    expect(html).not.toContain('aria-label="结束"');
+    expect(html).not.toMatch(/\u672a\u8bbe\u7f6e/);
+    expect(html).not.toMatch(/aria-label="\u5f00\u59cb"/);
+    expect(html).not.toMatch(/aria-label="\u7ed3\u675f"/);
   });
 
   it('keeps empty-state picker chrome caller-owned', () => {
@@ -165,6 +165,6 @@ describe('DateTimeRange', () => {
     expect(html.match(/Not set/g)).toHaveLength(2);
     expect(html).toContain('aria-label="Start time"');
     expect(html).toContain('aria-label="End time"');
-    expect(html).not.toContain('未设置');
+    expect(html).not.toMatch(/\u672a\u8bbe\u7f6e/);
   });
 });

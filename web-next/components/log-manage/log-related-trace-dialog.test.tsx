@@ -12,6 +12,7 @@ vi.mock('@/components/providers/i18n-provider', () => ({
 
 describe('log related trace dialog', () => {
   it('renders the preview toolbar, stage facts, and full-trace follow-up action', () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
     const html = renderToStaticMarkup(
       <LogRelatedTraceDialog
         open={true}
@@ -106,13 +107,13 @@ describe('log related trace dialog', () => {
     expect(html).toContain('data-log-related-trace-event-detail-meta="span-event-label"');
     expect(html).toContain('data-hz-ui="state-notice"');
     expect(html).toContain('data-hz-state-variant="hint"');
-    expect(html).toContain('跨度事件');
-    expect(html).toContain('不是新的跨度，是当前跨度上的时间点');
-    expect(html).toContain('所属跨度');
-    expect(html).toContain('事件位置');
+    expect(html).toContain(t('log.manage.related-trace.event-fact.title'));
+    expect(html).toContain(t('log.manage.related-trace.event-detail.copy'));
+    expect(html).toContain(t('log.manage.related-trace.event-fact.span'));
+    expect(html).toContain(t('log.manage.related-trace.event-fact.position'));
     expect(html).toContain('+72 ms');
     expect(html).toContain('exception.type=TimeoutError');
-    expect(html).toContain('查看跨度');
+    expect(html).toContain(t('log.manage.related-trace.event-detail.action.span'));
     expect(html).toContain('data-waterfall-minimap-event-marker="true"');
     expect(html).toContain('aria-label="exception"');
     expect(html).toContain('data-log-related-trace-stage-meta="true"');

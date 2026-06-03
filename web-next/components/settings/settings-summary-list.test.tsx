@@ -10,18 +10,18 @@ describe('SettingsSummaryList', () => {
         items={[
           {
             key: 'email',
-            title: '邮件服务器',
-            lines: ['邮箱服务器地址: -', '邮箱账号: -'],
-            actionLabel: '配置',
-            actionAriaLabel: '配置邮件服务器',
+            title: 'Email server',
+            lines: ['Email server address: -', 'Email account: -'],
+            actionLabel: 'Configure',
+            actionAriaLabel: 'Configure email server',
             onAction: vi.fn()
           },
           {
             key: 'sms',
-            title: '短信配置',
-            lines: ['短信类型: 腾讯短信', '启用状态: 否'],
-            actionLabel: '配置',
-            actionAriaLabel: '配置短信配置',
+            title: 'SMS settings',
+            lines: ['SMS type: Tencent SMS', 'Enabled: no'],
+            actionLabel: 'Configure',
+            actionAriaLabel: 'Configure SMS settings',
             onAction: vi.fn()
           }
         ]}
@@ -37,16 +37,16 @@ describe('SettingsSummaryList', () => {
     expect(html).toContain('data-settings-summary-action="email"');
     expect(html).toContain('data-settings-summary-action="sms"');
     expect(html).toContain('data-settings-summary-action-style="cold-compact-action"');
-    expect(html).toContain('aria-label="配置邮件服务器"');
-    expect(html).toContain('aria-label="配置短信配置"');
+    expect(html).toContain('aria-label="Configure email server"');
+    expect(html).toContain('aria-label="Configure SMS settings"');
     expect(html).toContain('rounded-[4px]');
     expect(html).toContain('border-[#2b3039]');
     expect(html).toContain('bg-[#0b0c0e]');
     expect(html).toContain('rounded-[3px]');
     expect(html).toContain('h-8');
-    expect(html).toContain('邮件服务器');
-    expect(html).toContain('短信配置');
-    expect(html).toContain('配置');
+    expect(html).toContain('Email server');
+    expect(html).toContain('SMS settings');
+    expect(html).toContain('Configure');
     expect(html).not.toContain('angular-nz-list');
     expect(html).not.toContain('border-[#d8dee9]');
   });

@@ -8,7 +8,7 @@ const enT = createTranslatorMock({ locale: 'en-US' });
 describe('alert inhibit view model', () => {
   it('builds facts from inhibit list', () => {
     expect(buildAlertInhibitFacts({ totalElements: 8, content: [1, 2, 3] } as any, t)).toEqual([
-      { label: '工作区', value: 'alert/inhibit' },
+      { label: t('alert.setting.fact.workspace'), value: 'alert/inhibit' },
       { label: t('common.total'), value: '8' },
       { label: t('common.current-page-count'), value: '3' }
     ]);
@@ -24,9 +24,9 @@ describe('alert inhibit view model', () => {
         t
     )
     ).toEqual([
-      { label: '当前页启用', value: '1', tone: 'success' },
-      { label: '相等标签', value: '3' },
-      { label: '规则样例', value: 'rule-a' }
+      { label: t('alert.rule.metric.current-page-enabled'), value: '1', tone: 'success' },
+      { label: t('alert.inhibit.equal'), value: '3' },
+      { label: t('alert.rule.metric.sample-rule'), value: 'rule-a' }
     ]);
   });
 
@@ -43,8 +43,8 @@ describe('alert inhibit view model', () => {
       {
         key: '7',
         title: 'rule-a',
-        copy: '已启用 · 源标签 1 · 目标标签 1',
-        meta: `相等标签 cluster · ${t('common.updated')} 2026-04-10 18:00:00`
+        copy: `${t('common.enabled')} · ${t('alert.inhibit.source')} 1 · ${t('alert.inhibit.target')} 1`,
+        meta: `${t('alert.inhibit.equal')} cluster · ${t('common.updated')} 2026-04-10 18:00:00`
       }
     ]);
   });
@@ -56,9 +56,9 @@ describe('alert inhibit view model', () => {
         t
     )
     ).toEqual([
-      { title: 'rule-a', copy: '已启用', meta: '规则 ID 7' },
-      { title: '源 / 目标', copy: '1 源标签 · 1 目标标签', meta: '标签选择器' },
-      { title: '相等标签', copy: 'cluster', meta: '1 共享标签' }
+      { title: 'rule-a', copy: t('common.enabled'), meta: t('alert.rule.selected.id-meta', { id: 7 }) },
+      { title: t('alert.inhibit.selected.source-target'), copy: `1 ${t('alert.inhibit.source')} · 1 ${t('alert.inhibit.target')}`, meta: t('alert.inhibit.selected.label-selectors') },
+      { title: t('alert.inhibit.selected.equal-labels'), copy: 'cluster', meta: `1 ${t('alert.inhibit.selected.shared-labels')}` }
     ]);
   });
 
@@ -67,7 +67,7 @@ describe('alert inhibit view model', () => {
       {
         title: t('alert.inhibit.selected.empty.title'),
         copy: t('alert.inhibit.selected.empty.copy'),
-        meta: '无'
+        meta: t('common.none')
       }
     ]);
   });
@@ -92,7 +92,7 @@ describe('alert inhibit view model', () => {
     ).toMatchObject({
       key: '8',
       title: 'empty inhibit',
-      meta: `相等标签 无 · ${t('common.updated')} 2026-04-10 18:00:00`
+      meta: `${t('alert.inhibit.equal')} ${t('common.none')} · ${t('common.updated')} 2026-04-10 18:00:00`
     });
 
     expect(
@@ -101,16 +101,16 @@ describe('alert inhibit view model', () => {
         t
       )[2]
     ).toMatchObject({
-      title: '相等标签',
-      copy: '无',
-      meta: '0 共享标签'
+      title: t('alert.inhibit.selected.equal-labels'),
+      copy: t('common.none'),
+      meta: `0 ${t('alert.inhibit.selected.shared-labels')}`
     });
   });
 
   it('builds notes rows', () => {
     expect(buildAlertInhibitNoteRows(t)).toEqual([
-      { title: t('common.sorting'), copy: 'ID 倒序', meta: t('alert.inhibit.notes.query') },
-      { title: t('common.search'), copy: '支持搜索', meta: t('common.behavior-preserved') }
+      { title: t('common.sorting'), copy: t('alert.rule.notes.sort-desc-copy'), meta: t('alert.inhibit.notes.query') },
+      { title: t('common.search'), copy: t('alert.rule.notes.search-copy'), meta: t('common.behavior-preserved') }
     ]);
   });
 
@@ -127,17 +127,17 @@ describe('alert inhibit view model', () => {
         source: 'otlp',
         collector: 'edge-collector-a',
         template: 'java-service',
-        returnTo: '/trace/manage?traceId=trace-123&returnLabel=%E9%93%BE%E8%B7%AF%E5%B7%A5%E4%BD%9C%E5%8F%B0'
+        returnTo: `/trace/manage?traceId=trace-123&returnLabel=${encodeURIComponent(t('menu.trace.manage'))}`
       },
       t
     );
 
     expect(context).toMatchObject({
       signal: 'traces',
-      title: '来自链路的抑制上下文',
+      title: t('alert.rule.evidence.inhibit.title', { signal: t('alert.rule.signal.traces') }),
       returnHref: '/trace/manage?traceId=trace-123',
       draftPatch: {
-        name: '链路 checkout 抑制',
+        name: t('alert.rule.evidence.inhibit.draft-name', { signal: t('alert.rule.signal.traces'), target: 'checkout' }),
         sourceLabelsText: expect.stringContaining('trace_id:trace-123'),
         targetLabelsText: expect.stringContaining('trace_id:trace-123'),
         equalLabelsText: 'hertzbeat.entity.id, service.name, service.namespace, deployment.environment'
@@ -147,7 +147,7 @@ describe('alert inhibit view model', () => {
     expect(context?.sourceLabelsText).toContain('hertzbeat.entity.id:service:commerce/checkout');
     expect(context?.sourceLabelsText).toContain('span_id:span-456');
     expect(context?.targetLabelsText).toBe(context?.sourceLabelsText);
-    expect(context?.rows.map(row => row.label)).toContain('链路上下文');
+    expect(context?.rows.map(row => row.label)).toContain(t('signal.context.trace.label'));
   });
 
   it('localizes inhibit evidence context and page facts outside zh-CN', () => {
@@ -169,8 +169,8 @@ describe('alert inhibit view model', () => {
         name: 'traces checkout inhibit'
       }
     });
-    expect(`${context?.title} ${context?.copy} ${context?.draftPatch.name}`).not.toMatch(/[来自日志链路指标三信号排障上下文]/);
-    expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[一-龥]/);
+    expect(`${context?.title} ${context?.copy} ${context?.draftPatch.name}`).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[\u4e00-\u9fff]/);
     expect(context?.rows.map(row => row.label)).toContain('Current entity');
     expect(buildAlertInhibitFacts({ totalElements: 1, content: [] } as any, enT)[0]).toEqual({
       label: 'Workspace',
@@ -189,13 +189,13 @@ describe('alert inhibit view model', () => {
         { name: '', enable: true, sourceLabelsText: '', targetLabelsText: '', equalLabelsText: '' },
         t
       )
-    ).toBe('规则名称为必填项');
+    ).toBe(t('alert.inhibit.validation.name'));
     expect(
       validateAlertInhibitForm(
         { name: 'db inhibit', enable: true, sourceLabelsText: 'service:checkout', targetLabelsText: '', equalLabelsText: '' },
         t
       )
-    ).toBe('目标标签为必填项');
+    ).toBe(t('alert.inhibit.validation.target'));
     expect(
       validateAlertInhibitForm(
         { name: 'db inhibit', enable: true, sourceLabelsText: 'service:checkout', targetLabelsText: 'service:db', equalLabelsText: 'severity' },

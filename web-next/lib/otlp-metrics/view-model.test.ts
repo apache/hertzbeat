@@ -33,12 +33,12 @@ describe('otlp metrics view model', () => {
         t
       )
     ).toEqual({
-      chartLabel: '0 条有数据序列',
+      chartLabel: t('otlp.metrics.explorer.chart-label', { count: 0 }),
       hasSeries: false,
-      emptyTitle: '暂无指标序列',
-      noMetricsTitle: '确认时间范围、实体归因、采集器和监控模板后再查看指标。',
-      sendMetricsLabel: '等待 OTLP 指标写入',
-      seriesCountLabel: '0 条序列'
+      emptyTitle: t('otlp.metrics.explorer.empty-title'),
+      noMetricsTitle: t('otlp.metrics.explorer.no-metrics-title'),
+      sendMetricsLabel: t('otlp.metrics.explorer.waiting-ingest'),
+      seriesCountLabel: t('otlp.metrics.explorer.series-count', { count: 0 })
     });
   });
 
@@ -54,10 +54,10 @@ describe('otlp metrics view model', () => {
         () => '2026-04-10 18:00:00'
       )
     ).toEqual([
-      { label: '指标序列', value: '4' },
-      { label: '有数据序列', value: '2' },
-      { label: '存储来源', value: 'prometheus' },
-      { label: '最近上报', value: '2026-04-10 18:00:00' }
+      { label: t('otlp.metrics.stats.total-series'), value: '4' },
+      { label: t('otlp.metrics.stats.non-empty-series'), value: '2' },
+      { label: t('otlp.metrics.stats.datasource'), value: 'prometheus' },
+      { label: t('otlp.metrics.stats.latest-observed'), value: '2026-04-10 18:00:00' }
     ]);
   });
 
@@ -72,9 +72,9 @@ describe('otlp metrics view model', () => {
         t
       )
     ).toEqual([
-      { label: '有数据序列', value: '2' },
-      { label: '序列总数', value: '4' },
-      { label: '接入状态', value: '就绪' }
+      { label: t('otlp.metrics.stats.non-empty-series'), value: '2' },
+      { label: t('otlp.metrics.stats.series-total'), value: '4' },
+      { label: t('otlp.metrics.stats.intake-state'), value: t('common.ready') }
     ]);
   });
 
@@ -89,8 +89,8 @@ describe('otlp metrics view model', () => {
         () => '2026-04-10 18:00:00'
       )
     ).toEqual([
-      { title: '当前服务', copy: 'checkout', meta: 'payments' },
-      { title: '时间范围', copy: '2026-04-10 18:00:00 → 2026-04-10 18:00:00', meta: 'ok' }
+      { title: t('otlp.metrics.context.current-service'), copy: 'checkout', meta: 'payments' },
+      { title: t('otlp.metrics.context.time-range'), copy: '2026-04-10 18:00:00 → 2026-04-10 18:00:00', meta: 'ok' }
     ]);
   });
 
@@ -105,8 +105,8 @@ describe('otlp metrics view model', () => {
         t
       )
     ).toEqual([
-      { title: '当前指标', copy: 'up', meta: '指标上下文已就绪' },
-      { title: '排障去向', copy: '关联实体、日志、链路和告警处理。', meta: '按服务、模板和时间范围继续定位' }
+      { title: t('otlp.metrics.context.current-metric'), copy: 'up', meta: t('otlp.metrics.query-ready') },
+      { title: t('otlp.metrics.context.handoff-destination'), copy: t('otlp.metrics.context.handoff-copy'), meta: t('otlp.metrics.context.handoff-meta') }
     ]);
   });
 
@@ -176,7 +176,7 @@ describe('otlp metrics view model', () => {
         copy: 'checkout',
         meta: '14',
         entityLabel: '-',
-        entityMeta: '等待实体归因',
+        entityMeta: t('otlp.metrics.series.entity-missing'),
         entityState: 'missing'
       }
     ]);
@@ -310,11 +310,11 @@ describe('otlp metrics view model', () => {
         t
       )
     ).toEqual([
-      { label: '指标名称', value: 'http.server.duration', meta: '当前选中序列' },
-      { label: '关联实体', value: 'Inventory API', meta: 'entityId 42' },
-      { label: '当前服务', value: 'inventory', meta: 'warehouse' },
-      { label: '采集模板', value: 'fastapi', meta: '采集器 collector-b' },
-      { label: '当前环境', value: 'prod-east', meta: '部署环境' }
+      { label: t('otlp.metrics.series.context.metric-name'), value: 'http.server.duration', meta: t('otlp.metrics.series.context.selected-series') },
+      { label: t('otlp.metrics.series.context.entity'), value: 'Inventory API', meta: t('otlp.metrics.series.entity-id', { entityId: '42' }) },
+      { label: t('otlp.metrics.series.context.service'), value: 'inventory', meta: 'warehouse' },
+      { label: t('otlp.metrics.series.context.template'), value: 'fastapi', meta: t('otlp.metrics.series.context.collector', { collector: 'collector-b' }) },
+      { label: t('otlp.metrics.series.context.environment'), value: 'prod-east', meta: t('otlp.metrics.series.context.deployment-environment') }
     ]);
   });
 
@@ -340,11 +340,11 @@ describe('otlp metrics view model', () => {
         t
       )
     ).toEqual([
-      { label: '采样点', value: '3', meta: '1 个空值已跳过' },
-      { label: '最新值', value: '18', meta: 'T4000' },
-      { label: '值域', value: '12 - 24', meta: '平均 18' },
-      { label: '采样窗口', value: 'T1000 → T4000', meta: '真实采样时间' },
-      { label: '关联链路', value: 'trace-series-42', meta: 'span-series-42' }
+      { label: t('otlp.metrics.evidence.samples'), value: '3', meta: t('otlp.metrics.evidence.empty-skipped', { count: 1 }) },
+      { label: t('otlp.metrics.evidence.latest-value'), value: '18', meta: 'T4000' },
+      { label: t('otlp.metrics.evidence.value-range'), value: '12 - 24', meta: t('otlp.metrics.evidence.average', { average: 18 }) },
+      { label: t('otlp.metrics.evidence.sample-window'), value: 'T1000 → T4000', meta: t('otlp.metrics.evidence.real-sample-time') },
+      { label: t('otlp.metrics.evidence.linked-trace'), value: 'trace-series-42', meta: 'span-series-42' }
     ]);
   });
 
@@ -370,23 +370,23 @@ describe('otlp metrics view model', () => {
     expect(buildMetricSeriesLinkedRecordRows(series, handoffLinks, t)).toEqual([
       {
         key: 'logs',
-        label: '历史日志',
-        value: '按链路查看',
-        meta: '历史日志会定位到当前 span',
+        label: t('otlp.metrics.handoff.logs'),
+        value: t('otlp.metrics.handoff.logs-by-trace'),
+        meta: t('otlp.metrics.handoff.logs-current-span'),
         href: handoffLinks.logsHref
       },
       {
         key: 'traces',
-        label: '链路瀑布图',
-        value: '可打开',
-        meta: '打开完整链路并保留当前 span',
+        label: t('otlp.metrics.handoff.traces'),
+        value: t('otlp.metrics.handoff.trace-open'),
+        meta: t('otlp.metrics.handoff.trace-full-current-span'),
         href: handoffLinks.tracesHref
       },
       {
         key: 'alerts',
-        label: '告警处理',
-        value: '带实体处理',
-        meta: '按实体、服务和指标进入告警',
+        label: t('otlp.metrics.handoff.alerts'),
+        value: t('otlp.metrics.handoff.alerts-by-entity'),
+        meta: t('otlp.metrics.handoff.alerts-by-entity-meta'),
         href: handoffLinks.alertHandlingHref
       }
     ]);
@@ -416,35 +416,35 @@ describe('otlp metrics view model', () => {
         label: 'hertzbeat.entity_id',
         value: '-',
         state: 'missing',
-        meta: '缺少实体 ID，实体详情会保持禁用'
+        meta: t('otlp.metrics.attribution.entity-id.missing')
       },
       {
         key: 'hertzbeat.entity_name',
         label: 'hertzbeat.entity_name',
         value: 'HertzBeat Self Monitor',
         state: 'present',
-        meta: '用于展示实体名称'
+        meta: t('otlp.metrics.attribution.entity-name')
       },
       {
         key: 'hertzbeat.workspace_id',
         label: 'hertzbeat.workspace_id',
         value: '-',
         state: 'missing',
-        meta: '缺少工作区字段时使用当前部署上下文'
+        meta: t('otlp.metrics.attribution.workspace-id')
       },
       {
         key: 'hertzbeat.collector',
         label: 'hertzbeat.collector',
         value: 'collector-local',
         state: 'present',
-        meta: '采集器来源'
+        meta: t('otlp.metrics.attribution.collector')
       },
       {
         key: 'hertzbeat.template',
         label: 'hertzbeat.template',
         value: 'jvm',
         state: 'present',
-        meta: '监控模板归属'
+        meta: t('otlp.metrics.attribution.template')
       }
     ]);
   });

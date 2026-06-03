@@ -30,8 +30,8 @@ describe('overlay dialog', () => {
 
     await act(async () => {
       root.render(
-        <OverlayDialog open={true} title="日志详情" placement="right" onClose={onClose}>
-          <button type="button">查看链路</button>
+        <OverlayDialog open={true} title="Log detail" placement="right" onClose={onClose}>
+          <button type="button">View trace</button>
         </OverlayDialog>
       );
       await Promise.resolve();
@@ -54,8 +54,8 @@ describe('overlay dialog', () => {
 
     await act(async () => {
       root.render(
-        <OverlayDialog open={true} title="链路详情" placement="right" onClose={onClose}>
-          <button type="button">查看日志</button>
+        <OverlayDialog open={true} title="Trace detail" placement="right" onClose={onClose}>
+          <button type="button">View logs</button>
         </OverlayDialog>
       );
       await Promise.resolve();
@@ -78,8 +78,8 @@ describe('overlay dialog', () => {
 
     await act(async () => {
       root.render(
-        <OverlayDialog open={true} title="配置通知" onClose={onClose}>
-          <input aria-label="通知名称" />
+        <OverlayDialog open={true} title="Configure notice" onClose={onClose}>
+          <input aria-label="Notice name" />
         </OverlayDialog>
       );
       await Promise.resolve();
@@ -104,12 +104,12 @@ describe('overlay dialog', () => {
       root.render(
         <OverlayDialog
           open={true}
-          title="标签管理"
+          title="Label management"
           onClose={onClose}
           maskClosable={false}
           overlayProps={{ 'data-label-dialog-mask-closable': 'false' }}
         >
-          <input aria-label="标签名称" />
+          <input aria-label="Label name" />
         </OverlayDialog>
       );
       await Promise.resolve();

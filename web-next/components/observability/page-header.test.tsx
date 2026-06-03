@@ -29,14 +29,14 @@ describe('observability page header', () => {
     const html = renderToStaticMarkup(
       <ObservabilityPageHeader
         tone="operator"
-        kicker="告警中心"
-        title="集中查看并处理当前告警"
-        subtitle="按时间、状态和对象筛选告警。"
+        kicker="Alert center"
+        title="Review and handle active alerts"
+        subtitle="Filter alerts by time, status, and entity."
         facts={[
-          { label: '全部告警组', value: '0' },
-          { label: '告警中', value: '0' },
-          { label: '已确认', value: '0' },
-          { label: '已恢复', value: '0' }
+          { label: 'All alert groups', value: '0' },
+          { label: 'Firing', value: '0' },
+          { label: 'Acknowledged', value: '0' },
+          { label: 'Recovered', value: '0' }
         ]}
         factsVariant="pills"
       />
@@ -44,8 +44,8 @@ describe('observability page header', () => {
 
     expect(html).toContain('data-observability-stat-grid="pills"');
     expect(html).toContain('rounded-[8px]');
-    expect(html).toContain('全部告警组');
-    expect(html).toContain('告警中');
+    expect(html).toContain('All alert groups');
+    expect(html).toContain('Firing');
     expect(html).not.toContain('divide-x');
     expect(html).not.toContain('border-y');
   });
@@ -55,14 +55,14 @@ describe('observability page header', () => {
       <ObservabilityPageHeader
         tone="operator"
         kickerVariant="plain"
-        kicker="对象优先调查"
-        title="导入实体定义"
-        subtitle="支持一次导入多个定义。"
+        kicker="Entity-first investigation"
+        title="Import entity definitions"
+        subtitle="Import multiple definitions at once."
       />
     );
 
     expect(html).toContain('data-observability-kicker="plain"');
-    expect(html).toContain('对象优先调查');
+    expect(html).toContain('Entity-first investigation');
     expect(html).toContain('border-b border-[var(--ops-border-color)]');
     expect(html).not.toContain('data-badge');
   });

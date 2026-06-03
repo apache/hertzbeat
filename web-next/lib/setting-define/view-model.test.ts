@@ -3,19 +3,7 @@ import { buildTemplateFacts, buildTemplateMenuView, buildTemplateSummaryRows } f
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 import type { SettingDefinePageData } from './controller';
 
-const t = createTranslatorMock({
-  locale: 'zh-CN',
-  overrides: {
-    'setting.define.fact.selected-template': '当前模板',
-    'setting.define.fact.hidden': '隐藏模板',
-    'setting.define.new-template': '新增模板草稿',
-    'setting.define.template.visible': '可见',
-    'setting.define.template.hidden': '隐藏',
-    'setting.define.summary.yaml-lines': '{{count}} 行 YAML',
-    'setting.define.summary.mode.new': '新增',
-    'setting.define.summary.mode.edit': '编辑'
-  }
-});
+const t = createTranslatorMock({ locale: 'zh-CN' });
 
 const data: SettingDefinePageData = {
   selectedApp: 'mysql',
@@ -42,10 +30,10 @@ const data: SettingDefinePageData = {
 describe('setting define monitor-template view model', () => {
   it('builds facts from template YML workspace data', () => {
     expect(buildTemplateFacts(data, t)).toEqual([
-      { label: '工作区', value: 'setting/define' },
-      { label: '总量', value: '2' },
-      { label: '当前模板', value: 'MySQL' },
-      { label: '隐藏模板', value: '1' }
+      { label: t('common.workspace'), value: 'setting/define' },
+      { label: t('common.total'), value: '2' },
+      { label: t('setting.define.fact.selected-template'), value: 'MySQL' },
+      { label: t('setting.define.fact.hidden'), value: '1' }
     ]);
   });
 
@@ -59,7 +47,7 @@ describe('setting define monitor-template view model', () => {
             key: 'mysql',
             title: 'MySQL',
             copy: 'database · mysql',
-            meta: '可见',
+            meta: t('setting.define.template.visible'),
             app: 'mysql',
             hidden: false
           }
@@ -67,13 +55,13 @@ describe('setting define monitor-template view model', () => {
       },
       {
         key: 'os',
-        label: '操作系统监控',
+        label: t('menu.monitor.os'),
         rows: [
           {
             key: 'linux',
             title: 'Linux',
             copy: 'os · linux',
-            meta: '隐藏',
+            meta: t('setting.define.template.hidden'),
             app: 'linux',
             hidden: true
           }
@@ -83,13 +71,7 @@ describe('setting define monitor-template view model', () => {
   });
 
   it('renders monitor-template category headers through old Angular menu.monitor translations', () => {
-    const translatedCategoryT = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'menu.monitor.db': '数据库监控',
-        'setting.define.template.visible': '可见'
-      }
-    });
+    const translatedCategoryT = createTranslatorMock({ locale: 'zh-CN' });
 
     expect(
       buildTemplateMenuView(
@@ -97,7 +79,7 @@ describe('setting define monitor-template view model', () => {
           {
             key: 'db',
             label: 'DB',
-            items: [{ category: 'db', value: 'mysql', label: 'Mysql数据库', hide: false }]
+            items: [{ category: 'db', value: 'mysql', label: 'Mysql Database', hide: false }]
           },
           {
             key: 'edge_device',
@@ -108,7 +90,7 @@ describe('setting define monitor-template view model', () => {
         '',
         translatedCategoryT
       ).map(group => group.label)
-    ).toEqual(['数据库监控', 'EDGE_DEVICE']);
+    ).toEqual([translatedCategoryT('menu.monitor.db'), 'EDGE_DEVICE']);
   });
 
   it('filters menu rows by visible template label like old Angular monitor-select-list', () => {
@@ -145,13 +127,13 @@ describe('setting define monitor-template view model', () => {
 
   it('builds compact editor summary rows for existing and new templates', () => {
     expect(buildTemplateSummaryRows('mysql', 'app: mysql\ncategory: database', t, 'MySQL')).toEqual([
-      { title: 'MySQL', copy: 'app-mysql.yml', meta: '编辑' },
-      { title: 'YAML', copy: '2 行 YAML', meta: 'setting/define' }
+      { title: 'MySQL', copy: 'app-mysql.yml', meta: t('setting.define.summary.mode.edit') },
+      { title: 'YAML', copy: t('setting.define.summary.yaml-lines', { count: 2 }), meta: 'setting/define' }
     ]);
 
     expect(buildTemplateSummaryRows(null, 'app: custom', t)).toEqual([
-      { title: '新增模板草稿', copy: 'app-custom.yml', meta: '新增' },
-      { title: 'YAML', copy: '1 行 YAML', meta: 'setting/define' }
+      { title: t('setting.define.new-template'), copy: 'app-custom.yml', meta: t('setting.define.summary.mode.new') },
+      { title: 'YAML', copy: t('setting.define.summary.yaml-lines', { count: 1 }), meta: 'setting/define' }
     ]);
   });
 });

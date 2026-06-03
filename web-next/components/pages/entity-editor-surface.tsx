@@ -778,6 +778,7 @@ export function EntityEditorSurface({
       value: string,
       placeholder: string,
       onChange: (value: string) => void,
+      fieldKey: string,
       extraClassName = '',
       ariaLabel = label
     ) => (
@@ -785,6 +786,7 @@ export function EntityEditorSurface({
         <span className={coldFieldLabelTextClassName}>{label}</span>
         <Input
           aria-label={ariaLabel}
+          data-entity-editor-input={fieldKey}
           className={coldInputClassName}
           value={value}
           placeholder={placeholder}
@@ -885,6 +887,7 @@ export function EntityEditorSurface({
                   <span className={coldFieldLabelTextClassName}>{entityNameLabel}</span>
                   <Input
                     aria-label={entityNameLabel}
+                    data-entity-editor-input="name"
                     className={coldNameInputClassName}
                     required
                     maxLength={128}
@@ -1125,13 +1128,13 @@ export function EntityEditorSurface({
                 {activeStage === 'basic' ? (
                   <>
                     <div className="grid gap-3 md:grid-cols-3">
-                      {renderField(t('entities.editor.field.display-name'), draft.entity.displayName || '', t('entities.editor.placeholder.display-name'), value => updateEntityField('displayName', value))}
-                      {renderField(t('entities.editor.field.namespace'), draft.entity.namespace || '', t('entities.editor.placeholder.namespace'), value => updateEntityField('namespace', value))}
-                      {renderField(t('entities.editor.field.environment'), draft.entity.environment || '', t('entities.editor.placeholder.environment'), value => updateEntityField('environment', value))}
-                      {renderField(t('entities.editor.field.subtype'), draft.entity.subtype || '', t('entities.editor.placeholder.subtype'), value => updateEntityField('subtype', value))}
-                      {renderField(t('entities.editor.field.owner'), draft.entity.owner || '', t('entities.editor.placeholder.owner'), value => updateEntityField('owner', value))}
-                      {renderField(t('entities.editor.field.system'), draft.entity.system || '', t('entities.editor.placeholder.system'), value => updateEntityField('system', value))}
-                      {renderField(t('entities.editor.field.source'), draft.entity.source || '', t('entities.editor.placeholder.source'), value => updateEntityField('source', value))}
+                      {renderField(t('entities.editor.field.display-name'), draft.entity.displayName || '', t('entities.editor.placeholder.display-name'), value => updateEntityField('displayName', value), 'display-name')}
+                      {renderField(t('entities.editor.field.namespace'), draft.entity.namespace || '', t('entities.editor.placeholder.namespace'), value => updateEntityField('namespace', value), 'namespace')}
+                      {renderField(t('entities.editor.field.environment'), draft.entity.environment || '', t('entities.editor.placeholder.environment'), value => updateEntityField('environment', value), 'environment')}
+                      {renderField(t('entities.editor.field.subtype'), draft.entity.subtype || '', t('entities.editor.placeholder.subtype'), value => updateEntityField('subtype', value), 'subtype')}
+                      {renderField(t('entities.editor.field.owner'), draft.entity.owner || '', t('entities.editor.placeholder.owner'), value => updateEntityField('owner', value), 'owner')}
+                      {renderField(t('entities.editor.field.system'), draft.entity.system || '', t('entities.editor.placeholder.system'), value => updateEntityField('system', value), 'system')}
+                      {renderField(t('entities.editor.field.source'), draft.entity.source || '', t('entities.editor.placeholder.source'), value => updateEntityField('source', value), 'source')}
                     </div>
                     <label className="grid gap-2">
                       <span className={coldFieldLabelTextClassName}>{t('entities.editor.field.description')}</span>
@@ -1148,8 +1151,8 @@ export function EntityEditorSurface({
 
                 {activeStage === 'ownership' ? (
                   <div className="grid gap-3 md:grid-cols-2">
-                    {renderField(t('entities.editor.field.owner'), draft.entity.owner || '', 'payments-team', value => updateEntityField('owner', value))}
-                    {renderField(t('entities.editor.field.runbook'), draft.entity.runbook || '', 'https://runbook.internal/...', value => updateEntityField('runbook', value))}
+                    {renderField(t('entities.editor.field.owner'), draft.entity.owner || '', 'payments-team', value => updateEntityField('owner', value), 'owner')}
+                    {renderField(t('entities.editor.field.runbook'), draft.entity.runbook || '', 'https://runbook.internal/...', value => updateEntityField('runbook', value), 'runbook')}
                     <ContactEditor
                       value={contacts}
                       onChange={setContacts}

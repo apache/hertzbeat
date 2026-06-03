@@ -6,18 +6,20 @@ const t = createTranslatorMock({ locale: 'zh-CN' });
 
 describe('ops surface view model', () => {
   it('builds ops facts', () => {
-    expect(buildOpsFacts('Actions', '入口工作台', ['workflow', 'queue'], t)).toEqual([
-      { label: '工作区', value: 'actions' },
-      { label: '焦点', value: '入口工作台' },
-      { label: '模式', value: '入口面' },
-      { label: '信号', value: '2' }
+    const focus = 'Entry workspace';
+
+    expect(buildOpsFacts('Actions', focus, ['workflow', 'queue'], t)).toEqual([
+      { label: t('common.workspace'), value: 'actions' },
+      { label: t('ops.surface.fact.focus-label'), value: focus },
+      { label: t('ops.surface.fact.mode-label'), value: t('ops.surface.fact.mode-entry') },
+      { label: t('ops.surface.fact.signals-label'), value: '2' }
     ]);
   });
 
   it('builds shared status rows', () => {
     expect(buildOpsStatusRows(t)).toEqual([
-      { title: '共享壳层', copy: '入口页沿用同一套壳层和信息层级。' },
-      { title: '聚焦范围', copy: '只承接导航、上下文和下一跳。' }
+      { title: t('ops.surface.shared-shell.title'), copy: t('ops.surface.shared-shell.copy') },
+      { title: t('ops.surface.focused-scope.title'), copy: t('ops.surface.focused-scope.copy') }
     ]);
   });
 });

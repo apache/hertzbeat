@@ -2,7 +2,13 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
-import { SUPPLEMENTAL_MESSAGES } from '../../../lib/i18n-runtime-messages';
+import type { TranslationParams } from '../../../lib/i18n';
+
+const zhT = createTranslatorMock({ locale: 'zh-CN' });
+
+function tZh(key: string, params?: TranslationParams) {
+  return zhT(key, params);
+}
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>
@@ -18,7 +24,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/components/providers/i18n-provider', () => ({
   useI18n: () => ({
     locale: 'zh-CN',
-    t: createTranslatorMock({ overrides: SUPPLEMENTAL_MESSAGES['zh-CN'] })
+    t: zhT
   })
 }));
 
@@ -67,19 +73,19 @@ vi.mock('@/lib/otlp-center/controller', () => ({
 vi.mock('@/lib/otlp-center/view-model', () => ({
   buildBindingRows: (items: any[]) => items.map(item => ({ title: item.name || item.displayName, copy: item.primaryIdentityValue || '-', meta: 'binds 1' })),
   buildCollectionLoopLinks: () => [
-    { key: 'otlp-intake', title: 'OTLP 三信号接入', copy: '接入 OpenTelemetry 指标、日志和链路，再进入对应工作台排查。', href: '/ingestion/otlp', meta: '三信号' },
-    { key: 'traditional-monitoring', title: '传统监控资源', copy: '继续保留主机、数据库、中间件、网络设备等模板化监控。', href: '/monitors', meta: '已有资源' },
-    { key: 'collector-cluster', title: '采集器集群', copy: '管理私有化部署中的采集节点、任务分发和接入状态。', href: '/setting/collector', meta: 'Collector' },
-    { key: 'monitoring-template', title: '监控模板', copy: '维护多协议采集模板，让传统监控和 OTLP 实体归到同一对象。', href: '/setting/define', meta: '模板' },
-    { key: 'service-discovery', title: '服务发现', copy: '把新发现的服务、资源和遥测身份确认到 HertzBeat 实体。', href: '/entities/discovery', meta: '发现' },
-    { key: 'object-directory', title: '对象目录', copy: '围绕实体查看资源、三信号、拓扑和告警处理上下文。', href: '/entities', meta: '实体' }
+    { key: 'otlp-intake', title: tZh('otlp.collection-loop.otlp-intake.title'), copy: tZh('otlp.collection-loop.otlp-intake.copy'), href: '/ingestion/otlp', meta: tZh('otlp.collection-loop.otlp-intake.meta') },
+    { key: 'traditional-monitoring', title: tZh('otlp.collection-loop.traditional-monitoring.title'), copy: tZh('otlp.collection-loop.traditional-monitoring.copy'), href: '/monitors', meta: tZh('otlp.collection-loop.traditional-monitoring.meta') },
+    { key: 'collector-cluster', title: tZh('otlp.collection-loop.collector-cluster.title'), copy: tZh('otlp.collection-loop.collector-cluster.copy'), href: '/setting/collector', meta: tZh('otlp.collection-loop.collector-cluster.meta') },
+    { key: 'monitoring-template', title: tZh('otlp.collection-loop.monitoring-template.title'), copy: tZh('otlp.collection-loop.monitoring-template.copy'), href: '/setting/define', meta: tZh('otlp.collection-loop.monitoring-template.meta') },
+    { key: 'service-discovery', title: tZh('otlp.collection-loop.service-discovery.title'), copy: tZh('otlp.collection-loop.service-discovery.copy'), href: '/entities/discovery', meta: tZh('otlp.collection-loop.service-discovery.meta') },
+    { key: 'object-directory', title: tZh('otlp.collection-loop.object-directory.title'), copy: tZh('otlp.collection-loop.object-directory.copy'), href: '/entities', meta: tZh('otlp.collection-loop.object-directory.meta') }
   ],
   buildGuideAuthRows: () => [],
   buildReadinessRows: () => [
-    { key: 'signals', title: '三信号接入', copy: '3 / 3 活跃', meta: 'Metrics 12 · Logs 9 · Traces 4', tone: 'success' },
-    { key: 'latest-report', title: '最近上报', copy: '2026-04-12 20:00:00', meta: '已收到遥测', tone: 'neutral' },
-    { key: 'entity-binding', title: '实体归因', copy: '1 个实体', meta: '对象目录', tone: 'success' },
-    { key: 'service-discovery', title: '服务发现', copy: '2 个服务', meta: '最近 24 小时', tone: 'success' }
+    { key: 'signals', title: tZh('otlp.readiness.signals.title'), copy: tZh('otlp.readiness.signals.copy', { active: 3, total: 3 }), meta: 'Metrics 12 · Logs 9 · Traces 4', tone: 'success' },
+    { key: 'latest-report', title: tZh('otlp.readiness.latest.title'), copy: '2026-04-12 20:00:00', meta: tZh('otlp.readiness.latest.received'), tone: 'neutral' },
+    { key: 'entity-binding', title: tZh('otlp.readiness.entity.title'), copy: tZh('otlp.readiness.entity.copy', { count: 1 }), meta: tZh('otlp.readiness.entity.meta'), tone: 'success' },
+    { key: 'service-discovery', title: tZh('otlp.readiness.discovery.title'), copy: tZh('otlp.readiness.discovery.copy', { count: 2 }), meta: tZh('otlp.readiness.discovery.meta'), tone: 'success' }
   ],
   buildSelfCheckRows: (checks: any[]) => checks.map(check => ({
     key: check.key,
@@ -121,10 +127,10 @@ vi.mock('@/components/workbench/client-workbench', () => ({
         traces: { signal: 'traces', totalCount: 4, summary: 'traces ready', active: true },
         recentEvents: [{ signal: 'metrics', title: 'metrics event', detail: 'metric batch', observedAt: 1712730000000 }],
         readinessChecks: [
-          { key: 'collector', title: 'Collector 集群', status: 'warning', summary: '2 / 3 在线', detail: '1 个采集节点离线' },
-          { key: 'storage', title: '历史存储', status: 'success', summary: '1 / 1 可用', detail: 'HistoryDataReader 可用' },
-          { key: 'query', title: '查询服务', status: 'success', summary: '指标、日志和链路查询可用', detail: 'PromQL 与历史查询可用' },
-          { key: 'greptime', title: 'GreptimeDB', status: 'success', summary: 'SQL 自检通过', detail: 'SELECT 1 成功' }
+          { key: 'collector', title: 'Collector cluster', status: 'warning', summary: '2 / 3 online', detail: '1 collector node offline' },
+          { key: 'storage', title: 'History storage', status: 'success', summary: '1 / 1 available', detail: 'HistoryDataReader available' },
+          { key: 'query', title: 'Query service', status: 'success', summary: 'Metrics, logs, and traces query available', detail: 'PromQL and history query available' },
+          { key: 'greptime', title: 'GreptimeDB', status: 'success', summary: 'SQL self-check passed', detail: 'SELECT 1 passed' }
         ]
       },
       guide: {
@@ -176,12 +182,12 @@ describe('otlp page', () => {
     const sections = [
       {
         key: 'migrate',
-        label: '现有接入',
+        label: 'Existing intake',
         items: [
           {
             key: 'open-telemetry',
-            label: '已有 OpenTelemetry',
-            description: '复用现有 OpenTelemetry Collector 或 SDK 管道。',
+            label: 'Existing OpenTelemetry',
+            description: 'Reuse an existing OpenTelemetry Collector or SDK pipeline.',
             href: '/entities/discovery',
             icon
           }
@@ -189,12 +195,12 @@ describe('otlp page', () => {
       },
       {
         key: 'apm-traces',
-        label: 'APM / 链路',
+        label: 'APM / traces',
         items: [
           {
             key: 'java',
             label: 'Java',
-            description: 'Java OpenTelemetry SDK 配置。',
+            description: 'Java OpenTelemetry SDK configuration.',
             href: '/trace/manage',
             icon
           }
@@ -215,13 +221,13 @@ describe('otlp page', () => {
     const sections = [
       {
         key: 'apm-traces',
-        label: 'APM / 链路',
+        label: 'APM / traces',
         items: [
-          { key: 'java', label: 'Java', description: 'Java OpenTelemetry SDK 配置。', href: '/trace/manage', icon },
-          { key: 'python', label: 'Python', description: 'Python OpenTelemetry SDK 配置。', href: '/trace/manage', icon },
-          { key: 'nodejs', label: 'JavaScript', description: 'Node.js 与浏览器链路配置。', href: '/trace/manage', icon },
-          { key: 'golang', label: 'Golang', description: 'Go 服务链路配置。', href: '/trace/manage', icon },
-          { key: 'php', label: 'PHP', description: 'PHP 应用链路配置。', href: '/trace/manage', icon }
+          { key: 'java', label: 'Java', description: 'Java OpenTelemetry SDK configuration.', href: '/trace/manage', icon },
+          { key: 'python', label: 'Python', description: 'Python OpenTelemetry SDK configuration.', href: '/trace/manage', icon },
+          { key: 'nodejs', label: 'JavaScript', description: 'Node.js and browser trace configuration.', href: '/trace/manage', icon },
+          { key: 'golang', label: 'Golang', description: 'Go service trace configuration.', href: '/trace/manage', icon },
+          { key: 'php', label: 'PHP', description: 'PHP application trace configuration.', href: '/trace/manage', icon }
         ]
       }
     ];
@@ -263,15 +269,14 @@ describe('otlp page', () => {
     expect(html).toContain('data-otlp-readiness-row="latest-report"');
     expect(html).toContain('data-otlp-readiness-row="entity-binding"');
     expect(html).toContain('data-otlp-readiness-row="service-discovery"');
-    expect(html).toContain('接入自检');
+    expect(html).toContain(tZh('otlp.section.readiness.kicker'));
     expect(html).not.toContain('Collector Quality');
-    expect(html).toContain('真实状态');
-    expect(html).toContain('展示已确认的三信号、实体归因和最近上报；未接入的健康项不显示为空指标。');
-    expect(html).not.toContain('再决定进入指标、日志、链路还是告警规则。');
-    expect(html).toContain('三信号接入');
-    expect(html).toContain('最近上报');
-    expect(html).toContain('实体归因');
-    expect(html).toContain('服务发现');
+    expect(html).toContain(tZh('otlp.section.readiness.title'));
+    expect(html).toContain(tZh('otlp.section.readiness.copy'));
+    expect(html).toContain(tZh('otlp.readiness.signals.title'));
+    expect(html).toContain(tZh('otlp.readiness.latest.title'));
+    expect(html).toContain(tZh('otlp.readiness.entity.title'));
+    expect(html).toContain(tZh('otlp.readiness.discovery.title'));
     expect(html).toContain('data-otlp-self-check-status="backend-backed"');
     expect(html).toContain('data-otlp-self-check-row="collector"');
     expect(html).toContain('data-otlp-self-check-row="storage"');
@@ -282,27 +287,18 @@ describe('otlp page', () => {
     expect(html).toContain('data-otlp-entity-candidate-row="service.name:billing:commerce:prod"');
     expect(html).toContain('data-otlp-entity-candidate-signals="logs,metrics"');
     expect(html).toContain('data-otlp-entity-candidate-identities="service.name=billing;service.namespace=commerce;deployment.environment.name=prod"');
-    expect(html).toContain('候选实体');
+    expect(html).toContain(tZh('otlp.section.candidates.title'));
     expect(html).toContain('billing');
     expect(html).toContain('service.name = billing');
     expect(html).toContain('commerce · prod · logs, metrics');
     expect(html).toContain('href="/entities/discovery?identityKey=service.name&amp;identityValue=billing&amp;serviceName=billing&amp;serviceNamespace=commerce&amp;environment=prod"');
-    expect(html).toContain('运行自检');
-    expect(html).toContain('Collector 集群');
-    expect(html).toContain('历史存储');
-    expect(html).toContain('查询服务');
+    expect(html).toContain(tZh('otlp.section.self-check.kicker'));
+    expect(html).toContain('Collector cluster');
+    expect(html).toContain('History storage');
+    expect(html).toContain('Query service');
     expect(html).toContain('GreptimeDB');
-    expect(html).toContain('SQL 自检通过');
-    expect(html).toContain('检查采集节点、历史存储、查询服务和 GreptimeDB 连接状态。');
-    expect(html).not.toContain('来自当前后端');
-    expect(html).not.toContain('只读检查');
-    expect(html).not.toContain('查询执行器');
-    expect(html).not.toContain('接收量');
-    expect(html).not.toContain('丢弃量');
-    expect(html).not.toContain('解析失败');
-    expect(html).not.toContain('实体归并失败');
-    expect(html).not.toContain('模板绑定');
-    expect(html).not.toContain('Collector 节点');
+    expect(html).toContain('SQL self-check passed');
+    expect(html).toContain(tZh('otlp.section.self-check.copy'));
     expect(html).toContain('data-otlp-center-stepper="hertzbeat-intake-steps"');
     expect(html).toContain('data-otlp-center-stepper-phase="source-selection"');
     expect(html).toContain('data-otlp-center-stepper-align="centered-860-balanced"');
@@ -390,60 +386,41 @@ describe('otlp page', () => {
     expect(html).toContain('/ingestion/otlp/metrics?');
     expect(html).toContain('traceId=trace-123');
     expect(html).toContain('spanId=span-456');
-    expect(html).toContain('OTLP 协议接入');
-    expect(html).toContain('选择 OTLP 数据源');
-    expect(html).toContain('配置协议与令牌');
-    expect(html).toContain('进入信号工作台');
-    expect(html).toContain('已有 OpenTelemetry');
-    expect(html).toContain('已有可观测平台');
-    expect(html).toContain('接入服务、日志和指标后，在对象目录和排障工作台继续处理。');
-    expect(html).not.toContain('商业可观测迁移');
-    expect(html).not.toContain('把已有服务、日志和指标流接入 HertzBeat 采集闭环。');
+    expect(html).toContain(tZh('otlp.hero.title'));
+    expect(html).toContain(tZh('otlp.stepper.source'));
+    expect(html).toContain(tZh('otlp.stepper.protocol'));
+    expect(html).toContain(tZh('otlp.stepper.workbench'));
+    expect(html).toContain(tZh('otlp.source.item.open-telemetry.label'));
+    expect(html).toContain(tZh('otlp.source.item.commercial-observability.label'));
+    expect(html).toContain(tZh('otlp.source.item.commercial-observability.description'));
     expect(html).toContain('Honeycomb');
-    expect(html).toContain('把链路数据接入链路工作台，并关联服务与日志。');
-    expect(html).toContain('自托管 OTLP 管道');
-    expect(html).toContain('复用内网或离线环境中的 OTLP Collector 管道。');
-    expect(html).not.toContain('自托管管道迁移');
-    expect(html).not.toContain('把链路优先的可观测流程迁移到统一查询台。');
-    expect(html).not.toContain('把自托管 OTLP 管道迁移到本页的采集接入流程。');
-    expect(html).toContain('APM / 链路');
+    expect(html).toContain(tZh('otlp.source.item.honeycomb.description'));
+    expect(html).toContain(tZh('otlp.source.item.self-hosted-observability.label'));
+    expect(html).toContain(tZh('otlp.source.item.self-hosted-observability.description'));
+    expect(html).toContain(tZh('otlp.source.section.apm-traces'));
     expect(html).toContain('.NET');
     expect(html).toContain('Deno');
-    expect(html).toContain('Kubernetes Pod 日志');
-    expect(html).toContain('Cloudflare 日志');
-    expect(html).toContain('筛选');
-    expect(html).toContain('全部');
+    expect(html).toContain(tZh('otlp.source.item.kubernetes-pod-logs.label'));
+    expect(html).toContain(tZh('otlp.source.item.cloudflare-logs.label'));
+    expect(html).toContain(tZh('otlp.source.search.label'));
+    expect(html).toContain(tZh('otlp.source.filter.all'));
     expect(html).toContain('37');
-    expect(html).toContain('快速开始 (1)');
-    expect(html).toContain('现有接入 (7)');
-    expect(html).not.toContain('迁移接入 (7)');
-    expect(html).toContain('APM / 链路 (13)');
-    expect(html).toContain('日志 (11)');
-    expect(html).toContain('指标 (5)');
-    expect(html).toContain('活跃信号');
-    expect(html).toContain('指标通道');
-    expect(html).toContain('日志通道');
-    expect(html).toContain('链路通道');
-    expect(html).toContain('搜索数据源、云服务、SDK 或运行时');
-    expect(html).toContain('进入遥测发现');
-    expect(html).not.toContain('APM / 链路 (18)');
-    expect(html).not.toContain('日志 (25)');
-    expect(html).not.toContain('指标 (19)');
-    expect(html).not.toContain('LLM 监控');
+    expect(html).toContain(`${tZh('otlp.source.section.quickstart')} (1)`);
+    expect(html).toContain(`${tZh('otlp.source.section.migrate')} (7)`);
+    expect(html).toContain(`${tZh('otlp.source.section.apm-traces')} (13)`);
+    expect(html).toContain(`${tZh('otlp.source.section.logs')} (11)`);
+    expect(html).toContain(`${tZh('otlp.source.section.metrics')} (5)`);
+    expect(html).toContain(tZh('otlp.ribbon.intake.detail'));
+    expect(html).toContain(tZh('otlp.ribbon.metrics.detail'));
+    expect(html).toContain(tZh('otlp.ribbon.logs.detail'));
+    expect(html).toContain(tZh('otlp.ribbon.traces.detail'));
+    expect(html).toContain(tZh('otlp.source.search.placeholder'));
+    expect(html).toContain(tZh('otlp.open-discovery'));
     expect(html).not.toContain('AWS');
     expect(html).not.toContain('AZURE');
     expect(html).not.toContain('GCP');
-    expect(html).not.toContain('接入中枢');
-    expect(html).not.toContain('高密度控制台');
-    expect(html).not.toContain('工作区已就绪');
-    expect(html).not.toContain('接入首条遥测链路');
-    expect(html).not.toContain('配置信号工作台');
-    expect(html).not.toContain('当前接入');
-    expect(html).not.toContain('从目录进入指标');
     expect(html).not.toContain('165');
     expect(html).not.toContain('HertzBeat Intake Cortex');
-    expect(html).not.toContain('HertzBeat OTLP 接入');
-    expect(html).not.toContain('HERTZBEAT OTLP 接入');
     expect(html).not.toContain('text-[20px]');
     expect(html).not.toContain('Intake Cortex');
     expect(html).not.toContain('Select a source');
@@ -490,22 +467,22 @@ describe('otlp page', () => {
       [
         {
           key: 'quickstart',
-          label: '快速开始',
-          items: [{ key: 'demo-data', label: '5 分钟内接入演示数据', description: '写入演示数据', href: '/overview', icon: vi.fn() as any }]
+          label: 'Quick start',
+          items: [{ key: 'demo-data', label: 'Ingest demo data in 5 minutes', description: 'Write demo data', href: '/overview', icon: vi.fn() as any }]
         },
         {
           key: 'migrate',
-          label: '现有接入',
+          label: 'Existing intake',
           items: [
-            { key: 'open-telemetry', label: '已有 OpenTelemetry', description: '复用 OpenTelemetry Collector', href: '/entities/discovery', icon: vi.fn() as any },
-            { key: 'grafana', label: 'Grafana', description: '接入 Grafana 信号', href: '/ingestion/otlp/metrics', icon: vi.fn() as any }
+            { key: 'open-telemetry', label: 'Existing OpenTelemetry', description: 'Reuse OpenTelemetry Collector', href: '/entities/discovery', icon: vi.fn() as any },
+            { key: 'grafana', label: 'Grafana', description: 'Ingest Grafana signals', href: '/ingestion/otlp/metrics', icon: vi.fn() as any }
           ]
         },
         {
           key: 'metrics',
-          label: '指标',
+          label: 'Metrics',
           items: [
-            { key: 'otel-metrics', label: 'OpenTelemetry 指标', description: '检查 OTLP 指标数据流', href: '/ingestion/otlp/metrics', icon: vi.fn() as any }
+            { key: 'otel-metrics', label: 'OpenTelemetry metrics', description: 'Inspect OTLP metric streams', href: '/ingestion/otlp/metrics', icon: vi.fn() as any }
           ]
         }
       ],
@@ -535,12 +512,12 @@ describe('otlp page', () => {
     expect(html).toContain('href="/setting/define"');
     expect(html).toContain('href="/entities/discovery"');
     expect(html).toContain('href="/entities"');
-    expect(html).toContain('OTLP 三信号接入');
-    expect(html).toContain('传统监控资源');
-    expect(html).toContain('采集器集群');
-    expect(html).toContain('监控模板');
-    expect(html).toContain('服务发现');
-    expect(html).toContain('对象目录');
+    expect(html).toContain(tZh('otlp.collection-loop.otlp-intake.title'));
+    expect(html).toContain(tZh('otlp.collection-loop.traditional-monitoring.title'));
+    expect(html).toContain(tZh('otlp.collection-loop.collector-cluster.title'));
+    expect(html).toContain(tZh('otlp.collection-loop.monitoring-template.title'));
+    expect(html).toContain(tZh('otlp.collection-loop.service-discovery.title'));
+    expect(html).toContain(tZh('otlp.collection-loop.object-directory.title'));
     expect(html).not.toContain('href="/observability-pipelines"');
     expect(html).not.toContain('href="/pipelines"');
     expect(html).not.toContain('href="/fleet"');
@@ -558,11 +535,6 @@ describe('otlp page', () => {
     expect(source).not.toContain('?? 19');
     expect(source).not.toContain('?? 18');
     expect(source).not.toContain('data-otlp-intake-quality');
-    expect(source).not.toContain('采集质量');
-    expect(source).not.toContain('丢弃量');
-    expect(source).not.toContain('解析失败');
-    expect(source).not.toContain('实体归并失败');
-    expect(source).not.toContain('Collector 节点');
     expect(source).toContain('data-otlp-self-check-status="backend-backed"');
   });
 });

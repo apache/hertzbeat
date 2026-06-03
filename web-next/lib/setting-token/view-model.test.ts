@@ -53,13 +53,15 @@ describe('setting token view model', () => {
   });
 
   it('uses localized empty fallbacks for missing token row facts', () => {
+    const emptyTokenValue = 'No token value';
+    const unnamedToken = 'Unnamed token';
     const scopedT = createTranslatorMock({
       locale: 'zh-CN',
       overrides: {
-        'common.none': '无令牌值',
-        'setting.token.item.fallback': '未命名令牌',
-        'setting.token.row.creator': '创建者 {{creator}}',
-        'setting.token.row.state.active': '有效'
+        'common.none': emptyTokenValue,
+        'setting.token.item.fallback': unnamedToken,
+        'setting.token.row.creator': 'creator {{creator}}',
+        'setting.token.row.state.active': 'active'
       }
     });
 
@@ -79,8 +81,8 @@ describe('setting token view model', () => {
     ).toEqual([
       {
         title: '   ',
-        copy: '无令牌值 · 创建者 无令牌值',
-        meta: '有效 · 2026-04-10 18:00:00'
+        copy: `${emptyTokenValue} · ${scopedT('setting.token.row.creator', { creator: emptyTokenValue })}`,
+        meta: `${scopedT('setting.token.row.state.active')} · 2026-04-10 18:00:00`
       }
     ]);
   });

@@ -1553,7 +1553,7 @@ describe('HertzBeat UI lab page', () => {
     expect(html).toContain('data-alert-notice-rule-template-active-type-owner="route-form-contract"');
     expect(html).toContain('data-hz-ui-lab-alert-notice-rule-single-switch-visual="unframed-switch"');
     expect(html).toContain('data-alert-notice-rule-switch="filter-all"');
-    expect(html).toContain('转发所有');
+    expect(html).toContain('Forward all');
     expect(html).toContain('data-hz-ui-lab-alert-notice-rule-table-switch-update="angular-edit-notify"');
     expect(html).toContain('data-alert-notice-rule-table-switch-update-owner="route-action-feedback-contract"');
     expect(html).toContain('data-hz-ui-lab-alert-notice-receiver-test-validation="angular-backend-owned"');
@@ -4089,12 +4089,12 @@ describe('HertzBeat UI lab page', () => {
     expect(html).toContain('data-setting-define-save-pending="true"');
     expect(html).toContain('data-cold-code-editor-license="codemirror-mit"');
     expect(html).toContain('data-mocked-codemirror="true"');
-    expect(html).not.toContain('连接、慢查询、可用性和复制状态');
-    expect(html).not.toContain('连接池、事务、锁等待和复制延迟');
-    expect(html).not.toContain('CPU、内存、磁盘、进程和端口');
+    expect(html).toContain('Review monitor resources, template catalog, collection state, and YAML definitions in one place.');
+    expect(html).toContain('Resource type plus non-down baseline');
+    expect(html).toContain('Show only alerting and collecting resources');
     expect(html).toContain('var(--hz-ui-line-soft)');
     expect(html).toContain('var(--hz-ui-line-faint)');
-    expect(html).toContain('新增监控');
+    expect(html).toContain('New monitor');
     expect(html).toContain('Monitor results');
     expect(html).toContain('2xl:grid-cols-[minmax(0,1fr)_520px]');
     expect((html.match(/data-hz-ui="status-badge"/g) || []).length).toBeGreaterThanOrEqual(6);

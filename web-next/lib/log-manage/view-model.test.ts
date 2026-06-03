@@ -12,13 +12,18 @@ import {
 import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 const t = createTranslatorMock({ locale: 'zh-CN' });
-const enT = createTranslatorMock({ locale: 'en-US' });
+const enT = createTranslatorMock({
+  locale: 'en-US',
+  overrides: {
+    'log.manage.trend.meta': 'Trend'
+  }
+});
 
 describe('log view model', () => {
   it('builds trend rows from hourly stats', () => {
     expect(buildTrendRows({ '10:00': 2, '11:00': 5 }, t)).toEqual([
-      { title: '10:00', copy: '日志 2', meta: '趋势' },
-      { title: '11:00', copy: '日志 5', meta: '趋势' }
+      { title: '10:00', copy: t('log.manage.trend.count', { count: 2 }), meta: t('log.manage.trend.meta') },
+      { title: '11:00', copy: t('log.manage.trend.count', { count: 5 }), meta: t('log.manage.trend.meta') }
     ]);
   });
 
@@ -50,10 +55,10 @@ describe('log view model', () => {
       )
     ).toEqual([
       { title: 'checkout', copy: 'timeout on db', meta: 'abc123' },
-      { title: '资源字段', copy: '1', meta: '日志属性 1' },
-      { title: '跨度与级别', copy: 'span123 · ERROR', meta: '2026-04-10 10:00:00' },
-      { title: '链路 ID', copy: 'abc123', meta: 'trace' },
-      { title: '跨度 ID', copy: 'span123', meta: 'span' }
+      { title: t('log.manage.selected.resource-keys'), copy: '1', meta: t('log.manage.selected.attributes', { count: 1 }) },
+      { title: t('log.manage.selected.span-severity'), copy: 'span123 · ERROR', meta: '2026-04-10 10:00:00' },
+      { title: t('log.manage.trace-id'), copy: 'abc123', meta: 'trace' },
+      { title: t('log.manage.span-id'), copy: 'span123', meta: 'span' }
     ]);
   });
 
@@ -168,49 +173,49 @@ describe('log view model', () => {
         label: 'hertzbeat.event_id',
         value: 'event-1',
         state: 'present',
-        meta: '用于定位一次日志接入事件'
+        meta: t('log.manage.attribution.event-id.present')
       },
       {
         key: 'hertzbeat.ingest_id',
         label: 'hertzbeat.ingest_id',
         value: 'ingest-1',
         state: 'present',
-        meta: '用于排查接入批次'
+        meta: t('log.manage.attribution.ingest-id.present')
       },
       {
         key: 'hertzbeat.entity_id',
         label: 'hertzbeat.entity_id',
         value: '-',
         state: 'missing',
-        meta: '缺少实体 ID，实体详情会保持禁用'
+        meta: t('log.manage.attribution.entity-id.missing')
       },
       {
         key: 'hertzbeat.entity_name',
         label: 'hertzbeat.entity_name',
         value: '-',
         state: 'missing',
-        meta: '缺少实体名称时使用服务名辅助检索'
+        meta: t('log.manage.attribution.entity-name.missing')
       },
       {
         key: 'hertzbeat.workspace_id',
         label: 'hertzbeat.workspace_id',
         value: '-',
         state: 'missing',
-        meta: '缺少工作区字段时使用当前部署上下文'
+        meta: t('log.manage.attribution.workspace-id.missing')
       },
       {
         key: 'hertzbeat.collector',
         label: 'hertzbeat.collector',
         value: 'collector-local',
         state: 'present',
-        meta: '采集器来源'
+        meta: t('log.manage.attribution.collector')
       },
       {
         key: 'hertzbeat.template',
         label: 'hertzbeat.template',
         value: 'hertzbeat-self',
         state: 'present',
-        meta: '监控模板归属'
+        meta: t('log.manage.attribution.template')
       }
     ]);
   });
@@ -363,7 +368,7 @@ describe('log view model', () => {
           'service.name': 'HertzBeat',
           'deployment.environment.name': 'prod',
           'hertzbeat.entity_id': '42',
-          'hertzbeat.entity_name': 'HertzBeat 自监控',
+          'hertzbeat.entity_name': 'HertzBeat self-monitoring',
           'hertzbeat.collector': 'collector-local',
           'hertzbeat.template': 'hertzbeat-self'
         }
@@ -376,7 +381,7 @@ describe('log view model', () => {
     const entityHref = new URL(result.entityHref, 'https://example.com');
     expect(entityHref.pathname).toBe('/entities/42');
     expect(entityHref.searchParams.get('entityId')).toBe('42');
-    expect(entityHref.searchParams.get('entityName')).toBe('HertzBeat 自监控');
+    expect(entityHref.searchParams.get('entityName')).toBe('HertzBeat self-monitoring');
     expect(entityHref.searchParams.get('serviceName')).toBe('HertzBeat');
     expect(entityHref.searchParams.get('environment')).toBe('prod');
     expect(entityHref.searchParams.get('collector')).toBe('collector-local');
@@ -384,12 +389,14 @@ describe('log view model', () => {
 
     const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
     expect(metricsParams.get('entityId')).toBe('42');
-    expect(metricsParams.get('entityName')).toBe('HertzBeat 自监控');
+    expect(metricsParams.get('entityName')).toBe('HertzBeat self-monitoring');
     expect(metricsParams.get('collector')).toBe('collector-local');
     expect(metricsParams.get('template')).toBe('hertzbeat-self');
   });
 
   it('can override the trace return path with the current log workspace route', () => {
+    const currentLogReturnTo =
+      `/log/manage?traceId=trace-1&spanId=span-1&view=stream&start=1709999100000&end=1710000060000&returnTo=%2Foverview&returnLabel=${encodeURIComponent(t('menu.log.manage'))}`;
     const result = buildLogHandoffLinks(
       {
         traceId: 'trace-1',
@@ -404,10 +411,9 @@ describe('log view model', () => {
         environment: 'prod'
       },
       {
-        traceReturnTo:
-          '/log/manage?traceId=trace-1&spanId=span-1&view=stream&start=1709999100000&end=1710000060000&returnTo=%2Foverview&returnLabel=日志工作台',
-        traceReturnLabel: '链路工作台',
-        intakeReturnLabel: '日志接入'
+        traceReturnTo: currentLogReturnTo,
+        traceReturnLabel: t('menu.trace.manage'),
+        intakeReturnLabel: t('log.manage.route.action.intake')
       }
     );
 

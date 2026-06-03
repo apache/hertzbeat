@@ -8,9 +8,9 @@ describe('SearchRow', () => {
     const html = renderToStaticMarkup(
       <SearchRow
         value="weekday"
-        placeholder="策略名称"
-        searchLabel="搜索"
-        clearLabel="清除"
+        placeholder="Policy name"
+        searchLabel="Search"
+        clearLabel="Clear"
         onValueChange={vi.fn()}
         onSearch={vi.fn()}
         onClear={vi.fn()}
@@ -39,12 +39,12 @@ describe('SearchRow', () => {
     const html = renderToStaticMarkup(
       <SearchRow
         value="checkout"
-        placeholder="搜索告警"
-        searchLabel="搜索"
-        clearLabel="清除"
+        placeholder="Search alerts"
+        searchLabel="Search"
+        clearLabel="Clear"
         onValueChange={vi.fn()}
         onSearch={vi.fn()}
-        filters={<select data-test-filter="status"><option>告警状态</option></select>}
+        filters={<select data-test-filter="status"><option>Alert status</option></select>}
       />
     );
 

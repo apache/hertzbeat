@@ -35,16 +35,16 @@ describe('EntityListSurface', () => {
           {
             key: '1',
             name: 'checkout-service',
-            type: '服务',
-            environment: '本地',
-            status: '健康',
+            type: 'Service',
+            environment: 'Local',
+            status: 'Healthy',
             statusTone: 'success',
             health: {
               score: 84,
               scoreText: '84 / 100',
-              label: '健康评分 84',
-              copy: '采集 4 / 4 健康',
-              meta: '告警 2 · 异常 0',
+              label: 'Health score 84',
+              copy: 'Collected 4 / 4 healthy',
+              meta: 'Alerts 2 · exceptions 0',
               tone: 'warning'
             },
             monitorCount: '1',
@@ -87,21 +87,21 @@ describe('EntityListSurface', () => {
     expect(html).toContain('data-entity-list-row-actions="cold-inline-actions"');
     expect(html).toContain('data-entity-list-health-affordance="lightweight-service-health"');
     expect(html).toContain('data-entity-health-score="84"');
-    expect(html).toContain('对象目录');
-    expect(html).toContain('对象优先调查');
-    expect(html).toContain('实体总数');
-    expect(html).toContain('活跃异常对象');
-    expect(html).toContain('搜索实体名称、命名空间、负责人');
-    expect(html).toContain('设置负责人');
-    expect(html).toContain('创建实体');
-    expect(html).toContain('从遥测发现');
-    expect(html).toContain('导入定义');
-    expect(html).toContain('显示 1-1 / 1');
+    expect(html).toContain(t('entities.list.title'));
+    expect(html).toContain(t('entities.list.kicker'));
+    expect(html).toContain(t('entities.list.metric.total'));
+    expect(html).toContain(t('entities.list.metric.abnormal'));
+    expect(html).toContain(t('entities.list.search.placeholder'));
+    expect(html).toContain(t('entities.list.row.action.owner'));
+    expect(html).toContain(t('entities.list.action.create'));
+    expect(html).toContain(t('entities.list.action.discovery'));
+    expect(html).toContain(t('entities.list.action.import'));
+    expect(html).toContain(t('entities.list.table.range', { from: 1, to: 1, total: 1 }));
     expect(html).toContain('checkout-service');
-    expect(html).toContain('健康评分 84');
-    expect(html).toContain('采集 4 / 4 健康');
-    expect(html).not.toContain('补负责人');
-    expect(html).not.toContain('选择环境 · 全部环境');
+    expect(html).toContain('Health score 84');
+    expect(html).toContain('Collected 4 / 4 healthy');
+    expect(html).not.toContain('\u8865\u8d1f\u8d23\u4eba');
+    expect(html).not.toContain('\u9009\u62e9\u73af\u5883 \u00b7 \u5168\u90e8\u73af\u5883');
     expect(html).not.toContain('data-cold-search-input-shell');
     expect(html).not.toContain('data-entity-list-rail=');
     expect(html).not.toContain('data-entity-list-action-panel=');
@@ -119,8 +119,8 @@ describe('EntityListSurface', () => {
     expect(source).not.toContain('data-cold-search-input-shell');
     expect(source).not.toContain('coldEntityVisual.search.row');
     expect(source).not.toContain('coldEntityVisual.search.input');
-    expect(source).not.toContain('补负责人');
-    expect(source).not.toContain('选择环境 ·');
+    expect(source).not.toContain('\u8865\u8d1f\u8d23\u4eba');
+    expect(source).not.toContain('\u9009\u62e9\u73af\u5883 \u00b7');
     expect(source).not.toContain('UserPlus');
     expect(source).not.toContain('WorkbenchPage');
     expect(source).not.toContain('from \'../workbench/primitives\'');

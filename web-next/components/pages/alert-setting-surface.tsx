@@ -327,7 +327,7 @@ export function AlertSettingSurface({
                         <th className="w-[17%] px-3 py-2.5">{t('alert.setting.name')}</th>
                         <th className="w-[12%] px-3 py-2.5">{t('alert.setting.type')}</th>
                         <th className="w-[19%] px-3 py-2.5">{t('alert.setting.expr')}</th>
-                        <th className="w-[16%] px-3 py-2.5">{t('alert.setting.template')}</th>
+                        <th className="w-[16%] px-3 py-2.5">{t('alert.setting.content')}</th>
                         <th className="w-[15%] px-3 py-2.5">{t('alert.setting.bind-labels')}</th>
                         <th className="w-[8%] px-3 py-2.5">{t('common.enable')}</th>
                         <th className="w-[13%] px-3 py-2.5">{t('common.edit-time')}</th>

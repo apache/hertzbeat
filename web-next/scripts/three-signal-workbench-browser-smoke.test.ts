@@ -14,6 +14,7 @@ describe('three-signal browser smoke coverage', () => {
       '[data-waterfall-event-marker="true"][data-waterfall-event-marker-action="select-span-event"]:not([data-waterfall-minimap-event-marker])'
     );
     expect(source).toContain('data-trace-manage-event-detail="span-event-detail"');
-    expect(source).toContain('不是新的跨度，是当前跨度上的时间点');
+    expect(source).toContain('data-trace-manage-event-detail-type="span-event"');
+    expect(source).not.toContain('spanEventDetail).toContainText');
   });
 });

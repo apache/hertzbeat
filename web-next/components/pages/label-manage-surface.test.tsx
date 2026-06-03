@@ -7,32 +7,11 @@ import { createTranslatorMock } from '../../test/i18n-test-helper';
 import { LabelManageSurface } from './label-manage-surface';
 
 describe('label manage surface', () => {
+  const zh = createTranslatorMock({ locale: 'zh-CN' });
+  const han = (...codes: number[]) => String.fromCodePoint(...codes);
+
   it('renders the OTLP cold-matte label console, Angular card grid, and authoring dialog shell', () => {
-    const t = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'menu.advanced.labels': '标签管理',
-        'common.refresh': '刷新',
-        'common.button.new': '新增',
-        'common.search': '搜索',
-        'common.clear': '清除',
-        'common.copy.button': '复制',
-        'common.button.edit': '编辑',
-        'common.button.delete': '删除选中项',
-        'common.button.cancel': '取消',
-        'common.button.save': '保存',
-        'common.none': '无标签预览',
-        'label.search': '搜索标签',
-        'label.new': '新增标签',
-        'label.edit': '编辑标签',
-        'label.name': '标签名',
-        'label.value': '标签值',
-        'label.description': '标签描述',
-        'label.display': '效果',
-        'setting.labels.empty.title': '暂无标签',
-        'setting.labels.empty.copy': '请先新增标签。'
-      }
-    });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -82,7 +61,7 @@ describe('label manage surface', () => {
         deleteTarget={null}
         isDeletePending={false}
         isSavePending
-        actionMessage="新增成功"
+        actionMessage={t('common.notify.new-success')}
         formatTime={() => '2026-04-10 18:00:00'}
         onSearchChange={() => {}}
         onSearch={() => {}}
@@ -201,7 +180,7 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-description-display-owner="label-manage-surface"');
     expect(html).toContain('data-hz-ui="inline-feedback"');
     expect(html).toContain('data-hz-feedback-tone="success"');
-    expect(html).toContain('新增成功');
+    expect(html).toContain(t('common.notify.new-success'));
     expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
     expect(html).toContain('data-cold-search-input="fixed-width-direct"');
     expect(html).toContain('data-cold-search-control="direct-input"');
@@ -231,42 +210,32 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-row-action-label="team:ops"');
     expect(html).not.toContain('data-label-summary-rail=');
     expect(html).not.toContain('data-cold-search-input-shell');
-    expect(html).toContain('标签管理');
-    expect(html).toContain('新增');
-    expect(html).toContain('搜索标签');
-    expect(html).toContain('搜索');
-    expect(html).toContain('aria-label="复制标签 team:ops"');
-    expect(html).toContain('aria-label="编辑标签 team:ops"');
-    expect(html).toContain('aria-label="删除标签 team:ops"');
+    expect(html).toContain(t('menu.advanced.labels'));
+    expect(html).toContain(t('common.button.new'));
+    expect(html).toContain(t('label.search'));
+    expect(html).toContain(t('common.search'));
+    expect(html).toContain(`aria-label="${t('setting.labels.action.copy-aria', { name: 'team:ops' })}"`);
+    expect(html).toContain(`aria-label="${t('setting.labels.action.edit-aria', { name: 'team:ops' })}"`);
+    expect(html).toContain(`aria-label="${t('setting.labels.action.delete-aria', { name: 'team:ops' })}"`);
     expect(html).toContain('href="/monitors?labels=team%3Aops"');
     expect(html).toContain('team:ops');
     expect(html).toContain('source:system');
     expect(html).toContain('ops team');
-    expect(html).not.toContain('用户标签');
+    expect(html).not.toContain(t('setting.labels.type.user'));
     expect(html).toContain('data-overlay-dialog="true"');
-    expect(html).toContain('新增标签');
-    expect(html).toContain('标签名');
-    expect(html).toContain('标签值');
-    expect(html).toContain('标签描述');
-    expect(html).toContain('效果');
-    expect(html).toContain('取消');
-    expect(html).toContain('保存');
+    expect(html).toContain(t('label.new'));
+    expect(html).toContain(t('label.name'));
+    expect(html).toContain(t('label.value'));
+    expect(html).toContain(t('label.description'));
+    expect(html).toContain(t('label.display'));
+    expect(html).toContain(t('common.button.cancel'));
+    expect(html).toContain(t('common.button.save'));
     expect(html).not.toContain('data-label-table="cold-label-table"');
     expect(html).not.toContain('setting.labels.subtitle');
   }, 30000);
 
   it('renders a cold card empty state with Chinese fallback copy when no labels exist', () => {
-    const t = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'menu.advanced.labels': '标签管理',
-        'common.refresh': '刷新',
-        'common.button.new': '新增',
-        'common.search': '搜索',
-        'common.clear': '清除',
-        'label.search': '搜索标签'
-      }
-    });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -303,14 +272,14 @@ describe('label manage surface', () => {
 
     expect(html).toContain('data-label-empty-state="cold-card-empty"');
     expect(html).toContain('data-label-empty-icon="cold-empty-box"');
-    expect(html).toContain('暂无标签');
-    expect(html).toContain('请先新增标签。');
+    expect(html).toContain(t('setting.labels.empty.title'));
+    expect(html).toContain(t('setting.labels.empty.copy'));
     expect(html).not.toContain('setting.labels.empty.title');
     expect(html).not.toContain('setting.labels.empty.copy');
   });
 
   it('keeps Angular formatLabelName raw tag value spacing for display, copy, and monitor handoff', () => {
-    const t = createTranslatorMock({ locale: 'zh-CN' });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -362,7 +331,7 @@ describe('label manage surface', () => {
   });
 
   it('renders whitespace-only descriptions because Angular only checks description truthiness', () => {
-    const t = createTranslatorMock({ locale: 'zh-CN' });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -414,27 +383,7 @@ describe('label manage surface', () => {
   });
 
   it('keeps the new-label dialog preview hidden until the Angular name-defined path runs', () => {
-    const t = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'menu.advanced.labels': '标签管理',
-        'common.refresh': '刷新',
-        'common.button.new': '新增',
-        'common.search': '搜索',
-        'common.button.cancel': '取消',
-        'common.button.save': '保存',
-        'common.none': '无标签预览',
-        'label.search': '搜索标签',
-        'label.new': '新增标签',
-        'label.edit': '编辑标签',
-        'label.name': '标签名',
-        'label.value': '标签值',
-        'label.description': '标签描述',
-        'label.display': '效果',
-        'setting.labels.empty.title': '暂无标签',
-        'setting.labels.empty.copy': '请先新增标签。'
-      }
-    });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -492,31 +441,11 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-optional-save-payload-owner="label-manage-controller"');
     expect(html).toContain('data-label-type-save-payload-contract="angular-preserve-implicit-type"');
     expect(html).toContain('data-label-type-save-payload-owner="label-manage-controller"');
-    expect(html).not.toContain('无标签预览');
+    expect(html).not.toContain(han(0x65e0, 0x6807, 0x7b7e, 0x9884, 0x89c8));
   });
 
   it('shows the Angular display preview row once the label name is defined', () => {
-    const t = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'menu.advanced.labels': '标签管理',
-        'common.refresh': '刷新',
-        'common.button.new': '新增',
-        'common.search': '搜索',
-        'common.button.cancel': '取消',
-        'common.button.save': '保存',
-        'common.none': '无标签预览',
-        'label.search': '搜索标签',
-        'label.new': '新增标签',
-        'label.edit': '编辑标签',
-        'label.name': '标签名',
-        'label.value': '标签值',
-        'label.description': '标签描述',
-        'label.display': '效果',
-        'setting.labels.empty.title': '暂无标签',
-        'setting.labels.empty.copy': '请先新增标签。'
-      }
-    });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -559,27 +488,7 @@ describe('label manage surface', () => {
   });
 
   it('marks the missing label name dirty only after the Angular OK-submit validation path runs', () => {
-    const t = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'menu.advanced.labels': '标签管理',
-        'common.refresh': '刷新',
-        'common.button.new': '新增',
-        'common.search': '搜索',
-        'common.button.cancel': '取消',
-        'common.button.save': '保存',
-        'common.none': '无标签预览',
-        'validation.required': '必填项',
-        'label.search': '搜索标签',
-        'label.new': '新增标签',
-        'label.name': '标签名',
-        'label.value': '标签值',
-        'label.description': '标签描述',
-        'label.display': '效果',
-        'setting.labels.empty.title': '暂无标签',
-        'setting.labels.empty.copy': '请先新增标签。'
-      }
-    });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -611,32 +520,12 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-dialog-name-state="dirty-invalid"');
     expect(html).toContain('data-label-save-submit-state="dirty-invalid"');
     expect(html).toContain('data-label-dialog-name-validation="validation.required"');
-    expect(html).toContain('必填项');
+    expect(html).toContain(t('validation.required'));
     expect(html).not.toContain('disabled=""');
   });
 
   it('does not mark a whitespace-only label name invalid before Angular trim-before-save runs', () => {
-    const t = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'menu.advanced.labels': '标签管理',
-        'common.refresh': '刷新',
-        'common.button.new': '新增',
-        'common.search': '搜索',
-        'common.button.cancel': '取消',
-        'common.button.save': '保存',
-        'common.none': '无标签预览',
-        'validation.required': '必填项',
-        'label.search': '搜索标签',
-        'label.new': '新增标签',
-        'label.name': '标签名',
-        'label.value': '标签值',
-        'label.description': '标签描述',
-        'label.display': '效果',
-        'setting.labels.empty.title': '暂无标签',
-        'setting.labels.empty.copy': '请先新增标签。'
-      }
-    });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -670,25 +559,11 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-dialog-name-state="pristine"');
     expect(html).toContain('data-label-save-submit-state="pristine"');
     expect(html).not.toContain('data-label-dialog-name-validation="validation.required"');
-    expect(html).not.toContain('必填项');
+    expect(html).not.toContain(t('validation.required'));
   });
 
   it('renders the shared Angular-style delete confirmation dialog when a label is targeted', () => {
-    const t = createTranslatorMock({
-      locale: 'zh-CN',
-      overrides: {
-        'menu.advanced.labels': '标签管理',
-        'common.confirm.delete': '请确认是否删除!',
-        'common.button.cancel': '取消',
-        'common.button.ok': '确定',
-        'common.refresh': '刷新',
-        'common.button.new': '新增',
-        'common.search': '搜索',
-        'label.search': '搜索标签',
-        'setting.labels.empty.title': '暂无标签',
-        'setting.labels.empty.copy': '请先新增标签。'
-      }
-    });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -740,12 +615,12 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-delete-confirm-close="angular-close-before-delete-result"');
     expect(html).toContain('data-label-delete-confirm-close-owner="route-state-contract"');
     expect(html).toContain('data-label-delete-confirm-target="team:ops"');
-    expect(html).toContain('请确认是否删除!');
-    expect(html).toContain('确定');
+    expect(html).toContain(t('common.confirm.delete'));
+    expect(html).toContain(t('common.button.ok'));
   });
 
   it('renders Angular label delete failure title with backend detail', () => {
-    const t = createTranslatorMock({ locale: 'zh-CN' });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -762,7 +637,7 @@ describe('label manage surface', () => {
         draftLabel={null}
         isManageModalAdd={false}
         deleteTarget={null}
-        actionError="删除失败!"
+        actionError={t('common.notify.delete-fail')}
         actionMeta="backend refused label delete"
         formatTime={() => '-'}
         onSearchChange={() => {}}
@@ -784,12 +659,12 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-delete-feedback="angular-delete-fail"');
     expect(html).toContain('data-label-delete-feedback-title="common.notify.delete-fail"');
     expect(html).toContain('data-label-delete-feedback-detail="backend-message"');
-    expect(html).toContain('删除失败!');
+    expect(html).toContain(t('common.notify.delete-fail'));
     expect(html).toContain('backend refused label delete');
   });
 
   it('renders Angular label save failure title with backend detail', () => {
-    const t = createTranslatorMock({ locale: 'zh-CN' });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface
@@ -806,7 +681,7 @@ describe('label manage surface', () => {
         draftLabel={null}
         isManageModalAdd={false}
         deleteTarget={null}
-        actionError="修改失败!"
+        actionError={t('common.notify.edit-fail')}
         actionMeta="backend refused label edit"
         formatTime={() => '-'}
         onSearchChange={() => {}}
@@ -829,12 +704,12 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-save-failure-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('data-label-save-feedback-title="common.notify.edit-fail"');
     expect(html).toContain('data-label-save-feedback-detail="backend-message"');
-    expect(html).toContain('修改失败!');
+    expect(html).toContain(t('common.notify.edit-fail'));
     expect(html).toContain('backend refused label edit');
   });
 
   it('keeps the Angular label shell visible without action feedback on load failure', () => {
-    const t = createTranslatorMock({ locale: 'zh-CN' });
+    const t = zh;
 
     const html = renderToStaticMarkup(
       <LabelManageSurface

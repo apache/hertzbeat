@@ -32,12 +32,15 @@ describe('object store view model', () => {
   });
 
   it('uses localized empty fallbacks for missing object store facts', () => {
+    const workspaceLabel = 'Workspace scope';
+    const emptyObjectStoreValue = 'No object store value';
+    const typeLabel = 'Store type';
     const scopedT = createTranslatorMock({
       locale: 'zh-CN',
       overrides: {
-        'common.workspace': '工作区',
-        'common.none': '无对象存储值',
-        'setting.object-store.fact.type': '类型',
+        'common.workspace': workspaceLabel,
+        'common.none': emptyObjectStoreValue,
+        'setting.object-store.fact.type': typeLabel,
         'setting.object-store.fact.bucket': 'Bucket',
         'setting.object-store.fact.endpoint': 'Endpoint'
       }
@@ -52,10 +55,10 @@ describe('object store view model', () => {
         scopedT
       )
     ).toEqual([
-      { label: '工作区', value: 'setting/settings/object-store' },
-      { label: '类型', value: '无对象存储值' },
-      { label: 'Bucket', value: '无对象存储值' },
-      { label: 'Endpoint', value: '无对象存储值' }
+      { label: workspaceLabel, value: 'setting/settings/object-store' },
+      { label: typeLabel, value: emptyObjectStoreValue },
+      { label: 'Bucket', value: emptyObjectStoreValue },
+      { label: 'Endpoint', value: emptyObjectStoreValue }
     ]);
   });
 

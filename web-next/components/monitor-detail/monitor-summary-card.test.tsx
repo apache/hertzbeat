@@ -33,7 +33,7 @@ describe('monitor summary card', () => {
 
     expect(html).toContain('ID');
     expect(html).toContain('checkout-core');
-    expect(html).toContain('正常');
+    expect(html).toContain(t('monitor.status.up'));
     expect(html).not.toContain('>UP<');
     expect(html).toContain('60s');
     expect(html).toContain('Core checkout monitor');

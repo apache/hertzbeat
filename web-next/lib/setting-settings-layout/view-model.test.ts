@@ -11,18 +11,18 @@ describe('setting settings layout view model', () => {
     const rows = buildSettingsMenuRows(t);
 
     expect(rows.map(row => ({ key: row.key, title: row.title, copy: row.copy, meta: row.meta }))).toEqual([
-      { key: '/setting/settings/config', title: '系统配置', copy: '系统、存储、消息和令牌设置', meta: '/setting/settings/config' },
-      { key: '/setting/settings/server', title: '消息服务配置', copy: '系统、存储、消息和令牌设置', meta: '/setting/settings/server' },
-      { key: '/setting/settings/object-store', title: '文件服务配置', copy: '系统、存储、消息和令牌设置', meta: '/setting/settings/object-store' },
-      { key: '/setting/settings/token', title: '令牌管理', copy: '系统、存储、消息和令牌设置', meta: '/setting/settings/token' }
+      { key: '/setting/settings/config', title: t('settings.system-config'), copy: t('setting.settings.menu.copy'), meta: '/setting/settings/config' },
+      { key: '/setting/settings/server', title: t('settings.server'), copy: t('setting.settings.menu.copy'), meta: '/setting/settings/server' },
+      { key: '/setting/settings/object-store', title: t('settings.object-store'), copy: t('setting.settings.menu.copy'), meta: '/setting/settings/object-store' },
+      { key: '/setting/settings/token', title: t('settings.token'), copy: t('setting.settings.menu.copy'), meta: '/setting/settings/token' }
     ]);
 
     const firstAction = renderToStaticMarkup(React.createElement(React.Fragment, null, rows[0]?.extra));
 
-    expect(firstAction).toContain('打开');
-    expect(firstAction).toContain('aria-label="打开系统配置"');
+    expect(firstAction).toContain(t('common.open'));
+    expect(firstAction).toContain(`aria-label="${t('setting.settings.menu.open-action', { title: t('settings.system-config') })}"`);
     expect(renderToStaticMarkup(React.createElement(React.Fragment, null, rows[3]?.extra))).toContain(
-      'aria-label="打开令牌管理"'
+      `aria-label="${t('setting.settings.menu.open-action', { title: t('settings.token') })}"`
     );
     expect(firstAction).not.toContain('common.open');
   });

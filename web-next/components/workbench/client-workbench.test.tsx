@@ -48,6 +48,8 @@ vi.mock('@/lib/workbench-load-cache', () => ({
 describe('ClientWorkbench', () => {
   let root: Root | null = null;
   let container: HTMLDivElement | null = null;
+  const loadingTitle = 'Trace workspace';
+  const loadingCopy = 'Loading trace data';
 
   afterEach(() => {
     if (root) {
@@ -63,7 +65,7 @@ describe('ClientWorkbench', () => {
 
   it('defers the global visible pending state so quick route hops do not flash Loading workspace', () => {
     const html = renderToStaticMarkup(
-      <ClientWorkbench load={() => Promise.resolve({ ready: true })} loadingTitle="链路工作台" loadingCopy="正在加载链路数据">
+      <ClientWorkbench load={() => Promise.resolve({ ready: true })} loadingTitle={loadingTitle} loadingCopy={loadingCopy}>
         {() => <div>ready</div>}
       </ClientWorkbench>
     );
@@ -73,8 +75,8 @@ describe('ClientWorkbench', () => {
     expect(html).not.toContain('data-client-workbench-loading="global-spinner"');
     expect(html).not.toContain('data-client-workbench-loading-spinner="true"');
     expect(html).not.toContain('role="status"');
-    expect(html).not.toContain('链路工作台');
-    expect(html).not.toContain('正在加载链路数据');
+    expect(html).not.toContain(loadingTitle);
+    expect(html).not.toContain(loadingCopy);
     expect(html).not.toContain('ready');
   });
 
@@ -89,7 +91,7 @@ describe('ClientWorkbench', () => {
 
     await act(async () => {
       root?.render(
-        <ClientWorkbench load={load} loadingTitle="链路工作台" loadingCopy="正在加载链路数据" loadingDelayMs={10}>
+        <ClientWorkbench load={load} loadingTitle={loadingTitle} loadingCopy={loadingCopy} loadingDelayMs={10}>
           {() => <div>ready</div>}
         </ClientWorkbench>
       );
@@ -97,7 +99,7 @@ describe('ClientWorkbench', () => {
     });
 
     expect(load).toHaveBeenCalledTimes(1);
-    expect(container.textContent).not.toContain('链路工作台');
+    expect(container.textContent).not.toContain(loadingTitle);
     expect(container.querySelector('[data-client-workbench-loading="deferred"]')).not.toBeNull();
     expect(container.querySelector('[data-client-workbench-loading="global-spinner"]')).toBeNull();
 
@@ -106,8 +108,8 @@ describe('ClientWorkbench', () => {
     });
 
     expect(container.querySelector('[data-client-workbench-loading="global-spinner"]')).not.toBeNull();
-    expect(container.textContent).toContain('链路工作台');
-    expect(container.textContent).toContain('正在加载链路数据');
+    expect(container.textContent).toContain(loadingTitle);
+    expect(container.textContent).toContain(loadingCopy);
 
     await act(async () => {
       resolveLoad?.({ ready: true });

@@ -2607,6 +2607,7 @@ describe('monitors page', () => {
   }, 15000);
 
   it('keeps monitor row updated cells as timestamp-only table values', async () => {
+    const expectedT = createTranslatorMock({ locale: 'zh-CN' });
     const source = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
 
     expect(source).toContain('data-monitor-row-meta={updatedTime}');
@@ -2616,7 +2617,7 @@ describe('monitors page', () => {
 
     expect(html).toContain('data-monitor-row-meta="2026-04-19 09:00:00"');
     expect(html).not.toContain('Updated 2026-04-19 09:00:00');
-    expect(html).not.toContain('更新时间 2026-04-19 09:00:00');
+    expect(html).not.toContain(`${expectedT('common.edit-time')} 2026-04-19 09:00:00`);
   });
 
   it('keeps monitor row status badges on the shared badge density without page-local sizing overrides', async () => {
@@ -2808,6 +2809,7 @@ describe('monitors page', () => {
   });
 
   it('routes the monitor workbench through the shared HertzBeat UI shell owners', () => {
+    const expectedT = createTranslatorMock({ locale: 'zh-CN' });
     const source = readFileSync(resolve(process.cwd(), 'app/monitors/monitor-manage-page.tsx'), 'utf8');
 
     expect(source).toContain('HzExplorerFrame');
@@ -2928,7 +2930,7 @@ describe('monitors page', () => {
     expect(source).not.toContain('font-mono text-[11px] uppercase tracking-[0.14em] text-[#8f99ab]');
     expect(source).not.toContain('text-[11px] text-[#8f99ab]');
     expect(source).not.toContain('scrapeLabel');
-    expect(source).not.toContain('采集方式');
+    expect(source).not.toContain(expectedT('monitor.scrape'));
     expect(source).toContain("id: 'import'");
     expect(source).toContain('onSelect: handleImportClick');
     expect(source).toContain('importMonitorsFromFacade(api.monitors.import, file)');
@@ -3021,7 +3023,6 @@ describe('monitors page', () => {
     expect(source).toContain("title={batchResponseConfirm?.action === 'enable' ? t('common.confirm.enable-batch') : t('common.confirm.cancel-batch')}");
     expect(source).not.toContain('router.push(buildMonitorEditHref');
     expect(source).not.toContain("eyebrow={t('monitors.kicker')}");
-    expect(source).not.toContain("查看传统采集资源");
     expect(source).toContain('data-monitors-open-detail-action="true"');
     expect(source).not.toContain('HzFilterWorkbench');
     expect(source).not.toContain('HzQueryBar');

@@ -8,8 +8,8 @@ import { Select } from './select';
 describe('Select', () => {
   it('renders the shared cold-matte native select owner instead of the system default chrome', () => {
     const html = renderToStaticMarkup(
-      <Select defaultValue="zh-CN" aria-label="语言" defaultOpen>
-        <option value="zh-CN">简体中文</option>
+      <Select defaultValue="zh-CN" aria-label="Language" defaultOpen>
+        <option value="zh-CN">Simplified Chinese</option>
         <option value="en-US">English</option>
       </Select>
     );

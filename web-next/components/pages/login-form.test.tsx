@@ -6,21 +6,21 @@ import { resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-const ZH_CN_LABEL = '简体中文(zh_CN)';
+const zhT = createTranslatorMock({ locale: 'zh-CN' });
+const ZH_CN_LABEL = zhT('settings.system-config.locale.zh_CN');
 const JA_JP_LABEL = 'Japanese(ja_JP)';
 const LOGIN_NOTICE_COPY =
   '\u767b\u5f55\u6210\u529f\u540e\u4f1a\u81ea\u52a8\u6062\u590d\u5f53\u524d\u5de5\u4f5c\u53f0\u4f1a\u8bdd\uff0c\u5e76\u5728\u9700\u8981\u65f6\u5c1d\u8bd5\u5237\u65b0\u4ee4\u724c\u3002';
-const HERO_TITLE = '开源私有化企业运维可观测平台';
-const HERO_LEAD = '采集器、监控模板、实体、指标、日志和链路';
-const HERO_FOCUS = '处理告警并关闭问题';
-const HERO_BODY =
-  '通过采集器接入应用、数据库、操作系统、中间件和网络设备指标，数据留在私有化部署内。';
-const LOGIN_HEADING = '登入 HertzBeat';
-const USERNAME_PROMPT = '请输入用户名';
-const PASSWORD_PROMPT = '请输入密码';
-const PASSWORD_TOGGLE_LABEL = '显示密码';
-const REMEMBER_ME_LABEL = '记住我';
-const LOGIN_BUTTON = '登录';
+const HERO_TITLE = zhT('app.passport.desc');
+const HERO_LEAD = zhT('app.passport.intro-1');
+const HERO_FOCUS = zhT('app.passport.intro-2');
+const HERO_BODY = zhT('about.point.1');
+const LOGIN_HEADING = zhT('app.login.tab-login-credentials');
+const USERNAME_PROMPT = zhT('app.login.message-need-identifier');
+const PASSWORD_PROMPT = zhT('app.login.message-need-credential');
+const PASSWORD_TOGGLE_LABEL = zhT('app.login.password-show');
+const REMEMBER_ME_LABEL = zhT('app.login.remember-me');
+const LOGIN_BUTTON = zhT('app.login.login');
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -34,7 +34,7 @@ vi.mock('next/image', () => ({
 
 vi.mock('../providers/i18n-provider', () => ({
   useI18n: () => ({
-    t: createTranslatorMock({ locale: 'zh-CN' }),
+    t: zhT,
     locale: 'zh-CN',
     locales: [
       { code: 'en-US', labelKey: 'settings.system-config.locale.en_US', abbr: '🇬🇧' },
@@ -143,7 +143,7 @@ describe('LoginForm', () => {
     expect(html).toContain('Apache HertzBeat™');
     expect(html).toContain('Apache HertzBeat™ v1.8.0');
     expect(html).toContain('Copyright ©');
-    expect(html).not.toContain('遵循 Apache License, Version 2.0 授权');
+    expect(html).not.toContain(zhT('platform.footer.license'));
     expect(html).not.toContain(LOGIN_NOTICE_COPY);
     expect(html).not.toContain('value="admin"');
     expect(html).not.toContain('value="hertzbeat"');

@@ -63,6 +63,7 @@ vi.mock('@/components/observability', () => ({
 
 describe('passport lock page', () => {
   it('renders inside the shared passport shell with the angular-style unlock panel', async () => {
+    const expectedT = createTranslatorMock({ locale: 'zh-CN' });
     const { default: PassportLockPage } = await import('./page');
     const html = renderToStaticMarkup(<PassportLockPage />);
 
@@ -95,8 +96,8 @@ describe('passport lock page', () => {
     expect(html).toContain('data-hz-passport-lock-submit-state="disabled"');
     expect(html).toContain('max-w-[712px]');
     expect(html).toContain('rounded-none');
-    expect(html).toContain('解除锁定');
-    expect(html).toContain('输入任意解锁');
+    expect(html).toContain(expectedT('app.lock'));
+    expect(html).toContain(expectedT('app.lock.placeholder'));
     expect(html).toContain('/assets/bg.png');
     expect(html).toContain('Apache HertzBeat™');
   }, 30000);

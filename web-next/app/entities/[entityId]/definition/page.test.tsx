@@ -27,6 +27,8 @@ vi.mock('@/components/providers/i18n-provider', () => ({
   })
 }));
 
+const expectedT = createTranslatorMock({ locale: 'zh-CN' });
+
 vi.mock('@/components/workbench/client-workbench', () => ({
   ClientWorkbench: ({
     children,
@@ -94,7 +96,7 @@ describe('EntityDefinitionPage', () => {
     const html = renderToStaticMarkup(<EntityDefinitionPage entityId="42" />);
 
     expect(html).toContain('data-entity-definition-workspace="definition"');
-    expect(html).toContain('data-loading-copy="编辑实体定义"');
+    expect(html).toContain(`data-loading-copy="${expectedT('entities.definition.loading')}"`);
     expect(html).toContain(
       'data-cache-key="entity-definition:/entities/42/definition?format=yaml:/entities/definition-activities?entityId=42&amp;limit=8:/entities/definition/templates?limit=8"'
     );

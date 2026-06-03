@@ -13,12 +13,12 @@ describe('alert display mapping', () => {
   });
 
   it('falls back to localized generic alert label', () => {
-    expect(alertSeverityLabel({ labels: {} } as unknown as SingleAlert, t)).toBe('告警');
+    expect(alertSeverityLabel({ labels: {} } as unknown as SingleAlert, t)).toBe(t('alert.center.default-title'));
   });
 
   it('maps common alert status values to localized labels', () => {
-    expect(alertStatusLabel('firing', t)).toBe('触发中');
-    expect(alertStatusLabel('resolved', t)).toBe('已恢复');
-    expect(alertStatusLabel('suppressed', t)).toBe('已抑制');
+    expect(alertStatusLabel('firing', t)).toBe(t('alert.center.status.firing'));
+    expect(alertStatusLabel('resolved', t)).toBe(t('alert.center.status.resolved'));
+    expect(alertStatusLabel('suppressed', t)).toBe(t('alert.center.status.suppressed'));
   });
 });

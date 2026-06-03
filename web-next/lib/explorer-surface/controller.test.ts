@@ -88,10 +88,10 @@ describe('explorer read controller', () => {
       signalKey: 'metric',
       signalTone: 'metric',
       href: '/ingestion/otlp/metrics?query=http.server.duration&serviceName=frontend',
-      signal: '指标',
+      signal: t('explorer.rows.metric.signal'),
       service: 'frontend',
       operation: 'http.server.duration',
-      status: '正常',
+      status: t('explorer.status.normal'),
       duration: '0.91'
     });
   });
@@ -140,17 +140,17 @@ describe('explorer read controller', () => {
         signalKey: 'trace',
         signalTone: 'trace',
         href: '/trace/manage?traceId=trace-1',
-        signal: '链路',
+        signal: t('explorer.rows.trace.signal'),
         service: 'checkout',
         operation: 'POST /checkout',
-        status: '错误',
+        status: t('explorer.status.error'),
         duration: '1.25s'
       },
       {
         signalKey: 'log',
         signalTone: 'log',
         href: '/log/manage?traceId=trace-1',
-        signal: '日志',
+        signal: t('explorer.rows.log.signal'),
         service: 'payment',
         operation: 'payment failed',
         status: 'ERROR',

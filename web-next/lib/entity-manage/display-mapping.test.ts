@@ -8,11 +8,11 @@ const missingT = (key: string) => key;
 
 describe('entity display mapping', () => {
   it('maps common entity values to localized labels', () => {
-    expect(entityTypeLabel('service', t)).toBe('服务');
-    expect(entityTypeLabel('endpoint', t)).toBe('端点');
-    expect(entityEnvironmentLabel('local', t)).toBe('本地');
-    expect(entityStatusLabel('healthy', t)).toBe('健康');
-    expect(entityStatusLabel('unknown', t)).toBe('未知');
+    expect(entityTypeLabel('service', t)).toBe(t('entities.list.type.service'));
+    expect(entityTypeLabel('endpoint', t)).toBe(t('entities.list.type.endpoint'));
+    expect(entityEnvironmentLabel('local', t)).toBe(t('entities.list.environment.local'));
+    expect(entityStatusLabel('healthy', t)).toBe(t('entities.list.status.healthy'));
+    expect(entityStatusLabel('unknown', t)).toBe(t('entities.list.status.unknown'));
   });
 
   it('maps English entity identity labels without localized fallback text', () => {
@@ -64,9 +64,9 @@ describe('entity display mapping', () => {
   });
 
   it('uses localized empty fallback for missing entity identity labels', () => {
-    expect(entityTypeLabel('', t)).toBe('无');
-    expect(entityEnvironmentLabel(null, t)).toBe('无');
-    expect(entityStatusLabel(undefined, t)).toBe('无');
+    expect(entityTypeLabel('', t)).toBe(t('common.none'));
+    expect(entityEnvironmentLabel(null, t)).toBe(t('common.none'));
+    expect(entityStatusLabel(undefined, t)).toBe(t('common.none'));
 
     expect(entityTypeLabel('', enT)).toBe('None');
     expect(entityEnvironmentLabel(null, enT)).toBe('None');

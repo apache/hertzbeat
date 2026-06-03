@@ -13,6 +13,10 @@ async function writeFixture(root: string, relativePath: string, text: string) {
   await fs.writeFile(fullPath, text, 'utf8');
 }
 
+function cjk(...codePoints: number[]) {
+  return String.fromCodePoint(...codePoints);
+}
+
 describe('i18n report', () => {
   afterEach(async () => {
     await Promise.all(tempDirs.splice(0).map(dir => fs.rm(dir, { recursive: true, force: true })));
@@ -22,10 +26,10 @@ describe('i18n report', () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'hb-i18n-report-'));
     tempDirs.push(root);
 
-    await writeFixture(root, 'app/page.tsx', "export const title = '欢迎';\n");
+    await writeFixture(root, 'app/page.tsx', `export const title = '${cjk(0x6b22, 0x8fce)}';\n`);
     await writeFixture(root, 'components/card.tsx', "export const label = t('menu.home', 'Dashboard');\n");
     await writeFixture(root, 'lib/view.ts', "export const title = t('monitor.app.mysql');\n");
-    await writeFixture(root, 'scripts/seed.ts', "console.log('脚本');\n");
+    await writeFixture(root, 'scripts/seed.ts', `console.log('${cjk(0x811a, 0x672c)}');\n`);
 
     await expect(collectI18nReportHits(root)).resolves.toEqual(
       expect.arrayContaining([
@@ -40,9 +44,9 @@ describe('i18n report', () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'hb-i18n-report-'));
     tempDirs.push(root);
 
-    await writeFixture(root, 'lib/i18n-runtime-messages.ts', "export const messages = { greeting: '欢迎' };\n");
-    await writeFixture(root, 'lib/alert-notice/view-model.ts', "export const copy = { title: '通知中心' };\n");
-    await writeFixture(root, 'lib/other.ts', "export const title = '仍然违规';\n");
+    await writeFixture(root, 'lib/i18n-runtime-messages.ts', `export const messages = { greeting: '${cjk(0x6b22, 0x8fce)}' };\n`);
+    await writeFixture(root, 'lib/alert-notice/view-model.ts', `export const copy = { title: '${cjk(0x901a, 0x77e5, 0x4e2d, 0x5fc3)}' };\n`);
+    await writeFixture(root, 'lib/other.ts', `export const title = '${cjk(0x4ecd, 0x7136, 0x8fdd, 0x89c4)}';\n`);
 
     await expect(collectI18nReportHits(root)).resolves.toEqual([
       expect.stringContaining('lib/other.ts:1: raw-cjk')

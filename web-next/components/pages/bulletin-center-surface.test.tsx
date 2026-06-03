@@ -61,6 +61,7 @@ vi.mock('../ui/checkbox', () => ({
 
 describe('bulletin center surface', () => {
   it('renders the shared HertzBeat toolbar, tabs, and metrics desk shell', () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
     const html = renderToStaticMarkup(
       <BulletinCenterSurface
         data={{
@@ -80,15 +81,16 @@ describe('bulletin center surface', () => {
     expect(html).toContain('data-bulletin-center-surface="true"');
     expect(html).toContain('data-action-toolbar="true"');
     expect(html).toContain('data-bulletin-tabs="true"');
-    expect(html).toContain('aria-label="公告导航"');
+    expect(html).toContain(`aria-label="${t('bulletin.navigation.aria')}"`);
     expect(html).toContain('data-bulletin-metrics-table="true"');
     expect(html).toContain('Ops board');
     expect(html).toContain('DB board');
-    expect(html).toContain('刷新');
-    expect(html).toContain('新增');
+    expect(html).toContain(t('common.refresh'));
+    expect(html).toContain(t('common.button.new'));
   });
 
   it('routes current bulletin deletion through a cold modal instead of native confirm', () => {
+    const t = createTranslatorMock({ locale: 'zh-CN' });
     const source = readFileSync(resolve(process.cwd(), 'components/pages/bulletin-center-surface.tsx'), 'utf8');
 
     expect(source).not.toContain('window.confirm');
@@ -101,8 +103,8 @@ describe('bulletin center surface', () => {
     expect(source).toContain("t('bulletin.delete.copy')");
     expect(source).toContain("t('bulletin.delete.confirm')");
     expect(source).toContain("t('common.cancel')");
-    expect(source).not.toContain('确认删除公告');
-    expect(source).not.toContain('删除后该公告看板会从当前工作台移除');
+    expect(source).not.toContain(t('bulletin.delete.title'));
+    expect(source).not.toContain(t('bulletin.delete.copy'));
   });
 
   it('trims blank current bulletin names to the localized empty fallback', () => {

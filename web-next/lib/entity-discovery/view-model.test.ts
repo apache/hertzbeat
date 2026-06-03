@@ -24,12 +24,12 @@ describe('entity discovery view model', () => {
         [{}, {}] as any,
         { owners: ['ops', 'platform'] } as any,
         t
-      )
+    )
     ).toEqual([
-      { label: '工作区', value: 'entities/discovery' },
-      { label: '预设', value: '2' },
-      { label: '活动', value: '2' },
-      { label: '负责人', value: '2' }
+      { label: t('entities.discovery.facts.workspace'), value: 'entities/discovery' },
+      { label: t('entities.discovery.facts.presets'), value: '2' },
+      { label: t('entities.discovery.facts.activities'), value: '2' },
+      { label: t('entities.discovery.facts.owners'), value: '2' }
     ]);
   });
 
@@ -39,12 +39,16 @@ describe('entity discovery view model', () => {
         [{}, {}] as any,
         { owners: ['ops'], systems: ['checkout', 'billing'], environments: ['prod'] } as any,
         t
-      )
+    )
     ).toEqual([
-      { label: '负责人', value: '1' },
-      { label: '系统', value: '2' },
-      { label: '环境', value: '1' },
-      { label: '预设覆盖', value: '就绪', tone: 'success' }
+      { label: t('entities.discovery.metrics.owners'), value: '1' },
+      { label: t('entities.discovery.metrics.systems'), value: '2' },
+      { label: t('entities.discovery.metrics.environments'), value: '1' },
+      {
+        label: t('entities.discovery.metrics.preset-coverage'),
+        value: t('entities.discovery.metrics.ready'),
+        tone: 'success'
+      }
     ]);
   });
 
@@ -52,9 +56,9 @@ describe('entity discovery view model', () => {
     expect(
       buildCatalogRows({ owners: ['ops'], systems: ['checkout'], environments: ['prod'] } as any, t)
     ).toEqual([
-      { title: '负责人', copy: 'ops', meta: '数量 1' },
-      { title: '系统', copy: 'checkout', meta: '数量 1' },
-      { title: '环境', copy: 'prod', meta: '数量 1' }
+      { title: t('entities.discovery.catalog.owners'), copy: 'ops', meta: t('entities.discovery.catalog.count', { count: 1 }) },
+      { title: t('entities.discovery.catalog.systems'), copy: 'checkout', meta: t('entities.discovery.catalog.count', { count: 1 }) },
+      { title: t('entities.discovery.catalog.environments'), copy: 'prod', meta: t('entities.discovery.catalog.count', { count: 1 }) }
     ]);
   });
 
@@ -65,7 +69,7 @@ describe('entity discovery view model', () => {
       {
         title: 'checkout-api',
         copy: 'springboot3 · 10.0.0.1',
-        meta: '#9 · 正常'
+        meta: `#9 · ${t('entities.discovery.row.status.normal')}`
       }
     ]);
   });
@@ -83,17 +87,17 @@ describe('entity discovery view model', () => {
         key: 'preset-preset-1',
         name: 'checkout baseline',
         instance: 'checkout',
-        status: '已启用',
+        status: t('entities.discovery.row.status.enabled'),
         statusTone: 'success',
         owner: 'platform',
         system: 'checkout',
         environment: 'prod',
-        activity: '目录预设',
+        activity: t('entities.discovery.row.activity.catalog-preset'),
         href: '/entities/discovery?preset=preset-1',
         attributionState: 'preset',
-        attributionLabel: '目录预设',
-        attributionCopy: '可作为候选确认基线',
-        primaryActionLabel: '查看预设'
+        attributionLabel: t('entities.discovery.row.attribution.preset.label'),
+        attributionCopy: t('entities.discovery.row.attribution.preset.copy'),
+        primaryActionLabel: t('entities.discovery.row.attribution.preset.action')
       }
     ]);
   });
@@ -111,17 +115,17 @@ describe('entity discovery view model', () => {
         key: 'monitor-9',
         name: 'checkout-api',
         instance: '10.0.0.1',
-        status: '正常',
+        status: t('entities.discovery.row.status.normal'),
         statusTone: 'success',
         owner: 'platform',
         system: 'springboot3',
         environment: 'prod',
-        activity: '搜索结果',
+        activity: t('entities.discovery.row.activity.search-result'),
         href: '/entities/discovery?source=telemetry&monitorId=9&action=merge',
         attributionState: 'merge',
-        attributionLabel: '建议归并',
-        attributionCopy: '候选实体 spring catalog',
-        primaryActionLabel: '确认归并'
+        attributionLabel: t('entities.discovery.row.attribution.merge.label'),
+        attributionCopy: t('entities.discovery.row.attribution.merge.copy', { candidate: 'spring catalog' }),
+        primaryActionLabel: t('entities.discovery.row.attribution.merge.action')
       }
     ]);
   });
@@ -133,14 +137,18 @@ describe('entity discovery view model', () => {
     expect(buildDiscoveryTableRows(monitors, [], catalog, t)[0]).toEqual(
       expect.objectContaining({
         attributionState: 'merge',
-        attributionCopy: '候选实体 node_worker 服务'
+        attributionCopy: t('entities.discovery.row.attribution.merge.copy', {
+          candidate: t('entities.discovery.service-name', { name: 'node_worker' })
+        })
       })
     );
 
     expect(buildDiscoveryGovernanceCards(monitors, [], catalog, t)[0]).toEqual(
       expect.objectContaining({
-        draftTitle: 'node-worker 服务',
-        candidateLabel: '建议实体 · node_worker 服务 · 匹配强'
+        draftTitle: t('entities.discovery.service-name', { name: 'node-worker' }),
+        candidateLabel: t('entities.discovery.card.candidate-label', {
+          candidate: t('entities.discovery.service-name', { name: 'node_worker' })
+        })
       })
     );
   });
@@ -155,9 +163,9 @@ describe('entity discovery view model', () => {
       )[0]
     ).toEqual(
       expect.objectContaining({
-        meta: '#12 · queue · 无',
-        draftSubtitle: '无 · queue · 无',
-        candidateContext: '无 · queue · 无'
+        meta: `#12 · queue · ${t('common.none')}`,
+        draftSubtitle: `${t('common.none')} · queue · ${t('common.none')}`,
+        candidateContext: `${t('common.none')} · queue · ${t('common.none')}`
       })
     );
   });
@@ -174,18 +182,23 @@ describe('entity discovery view model', () => {
       {
         key: 'monitor-10',
         name: 'anonymous-worker',
-        instance: '无',
-        status: '待确认',
+        instance: t('common.none'),
+        status: t('entities.discovery.row.status.review'),
         statusTone: 'warning',
-        owner: '无',
+        owner: t('common.none'),
         system: 'worker',
-        environment: '无',
-        activity: '搜索结果',
+        environment: t('common.none'),
+        activity: t('entities.discovery.row.activity.search-result'),
         href: '/entities/discovery?source=telemetry&monitorId=10&action=enrich',
         attributionState: 'review',
-        attributionLabel: '归因待补齐',
-        attributionCopy: '缺少负责人、环境',
-        primaryActionLabel: '补齐归因'
+        attributionLabel: t('entities.discovery.row.attribution.review.label'),
+        attributionCopy: t('entities.discovery.row.missing.copy', {
+          fields: [
+            t('entities.discovery.row.missing.owner'),
+            t('entities.discovery.row.missing.environment')
+          ].join(t('entities.discovery.row.missing.separator'))
+        }),
+        primaryActionLabel: t('entities.discovery.row.attribution.review.action')
       }
     ]);
   });
@@ -201,11 +214,11 @@ describe('entity discovery view model', () => {
     ).toEqual(
       expect.objectContaining({
         name: 'anonymous-worker',
-        instance: '无',
-        status: '未知状态 mystery',
-        owner: '无',
+        instance: t('common.none'),
+        status: t('entities.discovery.row.status.unknown', { status: 'mystery' }),
+        owner: t('common.none'),
         system: 'worker',
-        environment: '无',
+        environment: t('common.none'),
         attributionState: 'review'
       })
     );
@@ -219,12 +232,12 @@ describe('entity discovery view model', () => {
       )[0]
     ).toEqual(
       expect.objectContaining({
-        name: '无',
-        instance: '无',
-        status: '未知状态 unknown',
-        owner: '无',
-        system: '无',
-        environment: '无',
+        name: t('common.none'),
+        instance: t('common.none'),
+        status: t('entities.discovery.row.status.unknown', { status: 'unknown' }),
+        owner: t('common.none'),
+        system: t('common.none'),
+        environment: t('common.none'),
         attributionState: 'preset'
       })
     );
@@ -241,14 +254,14 @@ describe('entity discovery view model', () => {
     ).toEqual([
       expect.objectContaining({
         title: 'checkout-api',
-        riskLabel: '治理风险中',
-        nextActionLabel: '下一步归并',
-        candidateLabel: '建议实体 · checkout-catalog · 匹配强',
+        riskLabel: t('entities.discovery.card.risk.medium'),
+        nextActionLabel: t('entities.discovery.card.next.merge'),
+        candidateLabel: t('entities.discovery.card.candidate-label', { candidate: 'checkout-catalog' }),
         actions: [
-          expect.objectContaining({ label: '归并到建议实体', kind: 'primary' }),
-          expect.objectContaining({ label: '打开定义', kind: 'secondary' }),
-          expect.objectContaining({ label: '打开建议实体', kind: 'secondary' }),
-          expect.objectContaining({ label: '作为草稿采用', kind: 'link' })
+          expect.objectContaining({ label: t('entities.discovery.card.action.merge-suggested'), kind: 'primary' }),
+          expect.objectContaining({ label: t('entities.discovery.card.action.open-definition'), kind: 'secondary' }),
+          expect.objectContaining({ label: t('entities.discovery.card.action.open-suggested'), kind: 'secondary' }),
+          expect.objectContaining({ label: t('entities.discovery.card.action.adopt-draft'), kind: 'link' })
         ]
       })
     ]);
@@ -265,12 +278,12 @@ describe('entity discovery view model', () => {
     ).toEqual([
       expect.objectContaining({
         title: 'anonymous-worker',
-        riskLabel: '治理风险高',
-        nextActionLabel: '下一步补齐',
+        riskLabel: t('entities.discovery.card.risk.high'),
+        nextActionLabel: t('entities.discovery.card.next.enrich'),
         actions: [
-          expect.objectContaining({ label: '复核治理', kind: 'primary' }),
-          expect.objectContaining({ label: '送入定义工作台', kind: 'secondary' }),
-          expect.objectContaining({ label: '作为草稿采用', kind: 'link' })
+          expect.objectContaining({ label: t('entities.discovery.card.action.review-governance'), kind: 'primary' }),
+          expect.objectContaining({ label: t('entities.discovery.card.action.send-definition'), kind: 'secondary' }),
+          expect.objectContaining({ label: t('entities.discovery.card.action.adopt-draft'), kind: 'link' })
         ]
       })
     ]);
@@ -292,29 +305,29 @@ describe('entity discovery view model', () => {
     );
 
     expect(buildDiscoveryScopeOptions(cards, t)).toEqual([
-      { key: 'all', label: '全部', count: 3 },
-      { key: 'matched', label: '已匹配', count: 2 },
-      { key: 'resolved', label: '已归因', count: 0 },
-      { key: 'new', label: '建议新建', count: 1 }
+      { key: 'all', label: t('entities.discovery.scope.all'), count: 3 },
+      { key: 'matched', label: t('entities.discovery.scope.matched'), count: 2 },
+      { key: 'resolved', label: t('entities.discovery.scope.resolved'), count: 0 },
+      { key: 'new', label: t('entities.discovery.scope.suggested-new'), count: 1 }
     ]);
 
     expect(buildDiscoveryIntakeQueueGroups(cards, t)).toEqual([
       expect.objectContaining({
         key: 'merge',
-        title: '可归并',
-        actionLabel: '选择可归并',
+        title: t('entities.discovery.queue.merge.title'),
+        actionLabel: t('entities.discovery.queue.merge.action'),
         cardKeys: ['monitor-9', 'monitor-11']
       }),
       expect.objectContaining({
         key: 'create',
-        title: '建议新建实体',
-        actionLabel: '选择建议新建',
+        title: t('entities.discovery.queue.create.title'),
+        actionLabel: t('entities.discovery.queue.create.action'),
         cardKeys: ['monitor-10']
       }),
       expect.objectContaining({
         key: 'resolved',
-        title: '已收口',
-        actionLabel: '查看已收口',
+        title: t('entities.discovery.queue.resolved.title'),
+        actionLabel: t('entities.discovery.queue.resolved.action'),
         cardKeys: []
       })
     ]);
@@ -347,8 +360,8 @@ describe('entity discovery view model', () => {
         systemDraft: 'commerce-platform'
       }, t)
     ).toEqual([
-      { label: '负责人', value: 'catalog-oncall' },
-      { label: '系统', value: 'commerce-platform' }
+      { label: t('entities.discovery.bulk.tag.owner'), value: 'catalog-oncall' },
+      { label: t('entities.discovery.bulk.tag.system'), value: 'commerce-platform' }
     ]);
   });
 
@@ -374,7 +387,7 @@ describe('entity discovery view model', () => {
       ],
       presetActions: [
         {
-          label: '应用 catalog baseline',
+          label: t('entities.discovery.bulk.preset.apply', { name: 'catalog baseline' }),
           owner: 'catalog-oncall',
           system: 'commerce-platform',
           active: false

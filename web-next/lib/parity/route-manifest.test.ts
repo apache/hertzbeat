@@ -14,6 +14,10 @@ describe('parity route manifest', () => {
     expect([...new Set(PARITY_ROUTE_MANIFEST.map(family => family.milestone))]).toEqual([1, 2, 3, 4, 5]);
   });
 
+  it('keeps route contract copy free of locale-specific Han script literals', () => {
+    expect(JSON.stringify(PARITY_ROUTE_MANIFEST)).not.toMatch(/\p{Script=Han}/u);
+  });
+
   it('maps the major Angular route families to explicit Next.js parity owners', () => {
     expect(PARITY_ROUTE_MANIFEST.map(family => family.key)).toEqual(
       expect.arrayContaining([
@@ -64,7 +68,7 @@ describe('parity route manifest', () => {
       'npm exec vitest run app/overview/page.test.tsx lib/overview/navigation.test.ts lib/overview/view-model.test.ts'
     );
     expect(getParityRoutePair('three-signal-desk', 'overview-desk').textSnippets).toEqual(
-      expect.arrayContaining(['你已完成 83% 的平台配置'])
+      expect.arrayContaining(['You have completed 83% of platform setup'])
     );
     expect(getParityRoutePair('log-compatibility-family', 'log-stream-compat').minimumVerificationCommand).toBe(
       'npm exec vitest run app/log/stream/page.test.tsx app/log/manage/page.test.tsx'
@@ -95,8 +99,8 @@ describe('parity route manifest', () => {
         'input',
         'button'
       ]),
-      textSnippets: expect.arrayContaining(['日志工作台', '严重级别', '趋势带', '运行查询']),
-      actionLabels: ['运行查询', '保存视图', '创建告警', '加入仪表盘'],
+      textSnippets: expect.arrayContaining(['Log workbench', 'Severity', 'Trend band', 'Run query']),
+      actionLabels: ['Run query', 'Save view', 'Create alert', 'Add to dashboard'],
       minimumVerificationCommand:
         'npm exec vitest run app/events/page.test.ts app/log/manage/page.test.tsx app/compatibility-entrypoints.chrome.test.ts lib/log-manage/query-state.test.ts lib/log-manage/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -104,7 +108,7 @@ describe('parity route manifest', () => {
 
   it('tracks the dashboard compatibility alias through the overview route contracts instead of the old route-matrix fallback', () => {
     expect(getParityRoutePair('compatibility-placeholder-family', 'dashboard-alias')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-workspace-shell="true"]',
@@ -114,19 +118,16 @@ describe('parity route manifest', () => {
         'main',
         'aside'
       ]),
-      textSnippets: expect.arrayContaining(['总览', '工作区状态', '下一步：先接入一条可用信号链路', '你已完成 83% 的平台配置']),
-      actionLabels: ['刷新'],
+      textSnippets: expect.arrayContaining(['Overview', 'Workspace status', 'Next step: connect one usable signal path first', 'You have completed 83% of platform setup']),
+      actionLabels: ['Refresh'],
       minimumVerificationCommand:
         'npm exec vitest run app/dashboard/page.test.ts app/overview/page.test.tsx app/compatibility-entrypoints.chrome.test.ts lib/overview/navigation.test.ts lib/overview/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
-    expect(getParityRoutePair('compatibility-placeholder-family', 'dashboard-alias').textSnippets).not.toContain(
-      'Overview'
-    );
   });
 
   it('tracks the alerts compatibility alias through the shared alert-center contracts instead of the old route-matrix fallback', () => {
     expect(getParityRoutePair('compatibility-placeholder-family', 'alerts-alias')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-alert-center-surface="otlp-cold-center-console"]',
@@ -145,8 +146,8 @@ describe('parity route manifest', () => {
         'select',
         'button'
       ]),
-      textSnippets: expect.arrayContaining(['告警中心', '集中查看并处理当前告警', '搜索告警']),
-      actionLabels: ['刷新'],
+      textSnippets: expect.arrayContaining(['Alert center', 'Review and handle current alerts in one place', 'Search alerts']),
+      actionLabels: ['Refresh'],
       minimumVerificationCommand:
         'npm exec vitest run app/alerts/page.test.ts app/alert/page.test.tsx components/pages/alert-center-surface.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-manage/query-state.test.ts lib/alert-manage/controller.test.ts lib/alert-manage/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -160,7 +161,7 @@ describe('parity route manifest', () => {
 
   it('tracks the incidents OTLP cold-matte entry through targeted route and surface-model contracts', () => {
     expect(getParityRoutePair('compatibility-placeholder-family', 'incidents-placeholder')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-incidents-route="otlp-cold-ops-entry"]',
@@ -173,8 +174,8 @@ describe('parity route manifest', () => {
         'aside',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['故障事件', '按 OTLP 工作台的冷色基线', '冷色入口已接入', '等待接入事件适配器', '你已完成 83% 的平台配置']),
-      actionLabels: ['打开概览', '查看对象'],
+      textSnippets: expect.arrayContaining(['Incident events', 'cold baseline from the OTLP workbench', 'Cold entrypoint connected', 'Waiting for event adapter onboarding', 'You have completed 83% of platform setup']),
+      actionLabels: ['Open overview', 'View entity'],
       minimumVerificationCommand:
         'npm exec vitest run app/incidents/page.test.tsx lib/incidents-surface/view-model.test.ts lib/incidents-surface/model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -182,7 +183,7 @@ describe('parity route manifest', () => {
 
   it('tracks the actions OTLP cold-matte entry through targeted route and surface-model contracts', () => {
     expect(getParityRoutePair('compatibility-placeholder-family', 'actions-placeholder')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-actions-route="otlp-cold-ops-entry"]',
@@ -209,8 +210,8 @@ describe('parity route manifest', () => {
         'aside',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['自动化处置', '按 OTLP 工作台的冷色基线', '冷色入口已接入', '等待接入执行适配器', '你已完成 83% 的平台配置']),
-      actionLabels: ['打开概览', '查看对象'],
+      textSnippets: expect.arrayContaining(['Automation actions', 'cold baseline from the OTLP workbench', 'Cold entrypoint connected', 'Waiting for action adapter onboarding', 'You have completed 83% of platform setup']),
+      actionLabels: ['Open overview', 'View entity'],
       minimumVerificationCommand:
         'npm exec vitest run app/actions/page.test.tsx app/api/actions/approval-drafts/route.test.ts app/api/actions/approval-drafts/[draftId]/decision/route.test.ts app/api/actions/catalog/route.test.ts lib/actions-surface/view-model.test.ts lib/actions-surface/model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -230,8 +231,8 @@ describe('parity route manifest', () => {
         'button',
         'input'
       ]),
-      textSnippets: expect.arrayContaining(['HertzBeat 企业运维拓扑', 'OTLP 调用关系', '监控对象归属', 'checkout-api']),
-      actionLabels: ['适配视图', '刷新拓扑'],
+      textSnippets: expect.arrayContaining(['HertzBeat enterprise operations topology', 'OTLP call relationships', 'Monitor entity ownership', 'checkout-api']),
+      actionLabels: ['Fit view', 'Refresh topology'],
       minimumVerificationCommand:
         'npm exec vitest run app/topology/page.test.tsx lib/topology-surface/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -259,8 +260,8 @@ describe('parity route manifest', () => {
         'input',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['查询工作台', '信号类型', '运行查询', 'checkout']),
-      actionLabels: ['运行查询', '保存视图', '创建告警', '加入仪表盘'],
+      textSnippets: expect.arrayContaining(['Query workbench', 'Signal type', 'Run query', 'checkout']),
+      actionLabels: ['Run query', 'Save view', 'Create alert', 'Add to dashboard'],
       minimumVerificationCommand:
         'npm exec vitest run app/explorer/page.test.tsx lib/explorer-surface/controller.test.ts lib/explorer-surface/view-model.test.ts lib/otlp-metrics/controller.test.ts lib/otlp-metrics/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -329,9 +330,9 @@ describe('parity route manifest', () => {
 
   it('keeps the OTLP transition actions while the visual shell follows the HertzBeat intake cortex', () => {
     expect(getParityRoutePair('three-signal-desk', 'otlp-center-desk').actionLabels).toEqual([
-      '管理令牌',
-      '查看实体',
-      '进入遥测发现'
+      'Manage tokens',
+      'View entities',
+      'Open telemetry discovery'
     ]);
   });
 
@@ -343,11 +344,11 @@ describe('parity route manifest', () => {
       referenceCaptureStrategy: 'stable-list-state',
       referenceRouteMode: 'drop-trace-selection',
       nextReadySelectors: ['[data-trace-manage-route="otlp-cold-trace-workbench"]'],
-      referenceReadySelectors: ['text=checkout-service', 'button:has-text("搜索")']
+      referenceReadySelectors: ['text=checkout-service', 'button:has-text("Search")']
     });
     expect(getParityRoutePair('three-signal-desk', 'trace-manage-desk').referencePostLoadActions ?? []).toEqual([]);
     expect(getParityRoutePair('three-signal-desk', 'otlp-center-desk')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-otlp-center-route="hertzbeat-intake-cortex"]',
@@ -385,7 +386,7 @@ describe('parity route manifest', () => {
         '[data-otlp-center-brand-art="kubernetes-pod-logs"]',
         '[data-otlp-center-brand-art="docker-container-logs"]'
       ]),
-      textSnippets: expect.arrayContaining(['OTLP 接入', '指标工作台', '日志工作台', '链路工作台', 'OTLP 协议接入', '你已完成 83% 的平台配置']),
+      textSnippets: expect.arrayContaining(['OTLP intake', 'Metric workbench', 'Log workbench', 'Trace workbench', 'OTLP protocol intake', 'You have completed 83% of platform setup']),
       nextReadySelectors: ['[data-otlp-center-route="hertzbeat-intake-cortex"]'],
       nextApiStubKey: 'otlp-center'
     });
@@ -408,13 +409,13 @@ describe('parity route manifest', () => {
         'input',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['指标工作台', '指标查询', '趋势带', '最近序列', '详情面板', '运行查询']),
-      actionLabels: ['运行查询', '采集集群', '监控模板', '阈值规则'],
+      textSnippets: expect.arrayContaining(['Metric workbench', 'Metric query', 'Trend band', 'Recent series', 'Detail panel', 'Run query']),
+      actionLabels: ['Run query', 'Collector cluster', 'Monitor templates', 'Threshold rules'],
       minimumVerificationCommand:
         'npm exec vitest run app/ingestion/otlp/metrics/page.test.tsx lib/otlp-metrics/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
     expect(routePair.primarySelectors.join(' ')).not.toContain('data-otlp-metrics-hertzbeat-loop');
-    expect(routePair.textSnippets.join(' ')).not.toContain('HertzBeat 采集闭环');
+    expect(routePair.textSnippets.join(' ')).not.toContain('HertzBeat collection loop');
     const serialized = JSON.stringify(routePair);
     expect(serialized).not.toContain('signoz-metrics-explorer');
     expect(serialized).not.toContain('signoz-query-builder');
@@ -423,7 +424,7 @@ describe('parity route manifest', () => {
     expect(routePair.textSnippets.join(' ')).not.toContain('Run Query');
     expect(routePair.textSnippets.join(' ')).not.toContain('Select a metric and run a query');
     expect(routePair.actionLabels.join(' ')).not.toContain('Save this view');
-    expect(routePair.actionLabels.join(' ')).not.toContain('保存视图');
+    expect(routePair.actionLabels.join(' ')).not.toContain('Save view');
   });
 
   it('tracks the OTLP cold trace Workbench surface instead of the old external-product waterfall shell', () => {
@@ -443,8 +444,8 @@ describe('parity route manifest', () => {
         'input',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['链路工作台', '服务名称', '错误链路', '最近链路', '运行查询']),
-      actionLabels: ['运行查询', '保存视图', '创建告警', '加入仪表盘'],
+      textSnippets: expect.arrayContaining(['Trace workbench', 'Service name', 'Error traces', 'Recent traces', 'Run query']),
+      actionLabels: ['Run query', 'Save view', 'Create alert', 'Add to dashboard'],
       minimumVerificationCommand:
         'npm exec vitest run app/trace/manage/page.test.tsx lib/trace-manage/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -468,8 +469,8 @@ describe('parity route manifest', () => {
         'input',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['日志工作台', '严重级别', '趋势带', '最近日志', '运行查询']),
-      actionLabels: ['运行查询', '保存视图', '创建告警', '加入仪表盘'],
+      textSnippets: expect.arrayContaining(['Log workbench', 'Severity', 'Trend band', 'Recent logs', 'Run query']),
+      actionLabels: ['Run query', 'Save view', 'Create alert', 'Add to dashboard'],
       minimumVerificationCommand:
         'npm exec vitest run app/log/manage/page.test.tsx lib/log-manage/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -477,15 +478,14 @@ describe('parity route manifest', () => {
     expect(getParityRoutePair('three-signal-desk', 'log-manage-desk').primarySelectors.join(' ')).not.toContain('signoz-');
   });
 
-  it('tracks the Angular zh-CN overview contract instead of passing on the English fallback copy', () => {
+  it('tracks the Angular en-US overview contract through explicit English route copy', () => {
     const routePair = getParityRoutePair('three-signal-desk', 'overview-desk');
 
     expect(routePair).toMatchObject({
-      locale: 'zh-CN',
-      textSnippets: expect.arrayContaining(['总览', '工作区状态', '下一步：先接入一条可用信号链路'])
+      locale: 'en-US',
+      textSnippets: expect.arrayContaining(['Overview', 'Workspace status', 'Next step: connect one usable signal path first'])
     });
-    expect(routePair.actionLabels).toEqual(['刷新', '查看告警']);
-    expect(routePair.textSnippets).not.toContain('Overview');
+    expect(routePair.actionLabels).toEqual(['Refresh', 'View alerts']);
   });
 
   it('pins overview live screenshots to viewport capture so Angular reference full-page capture cannot stall closeout', () => {
@@ -496,7 +496,7 @@ describe('parity route manifest', () => {
 
   it('keeps log-stream on the redirect-helper owner now that the compatibility route is canonical', () => {
     expect(getParityRoutePair('log-compatibility-family', 'log-stream-compat')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-log-stream-surface="angular-log-stream"]',
@@ -509,8 +509,8 @@ describe('parity route manifest', () => {
         'input',
         'button'
       ]),
-      textSnippets: expect.arrayContaining(['日志流', '已连接', '连接中...', '0 条日志', '日志级别编号', '你已完成 83% 的平台配置']),
-      actionLabels: ['隐藏过滤器', '暂停', '清除', '应用过滤器', '清除过滤器']
+      textSnippets: expect.arrayContaining(['Log stream', 'Connected', 'Connecting...', '0 logs', 'Log level number', 'You have completed 83% of platform setup']),
+      actionLabels: ['Hide filters', 'Pause', 'Clear', 'Apply filters', 'Clear filters']
     });
   });
 
@@ -554,20 +554,20 @@ describe('parity route manifest', () => {
         'button'
       ])
     );
-    expect(rootRoute.textSnippets).toEqual(expect.arrayContaining(['你已完成 83% 的平台配置']));
-    expect(sourceRoute.textSnippets).toEqual(expect.arrayContaining(['你已完成 83% 的平台配置']));
+    expect(rootRoute.textSnippets).toEqual(expect.arrayContaining(['You have completed 83% of platform setup']));
+    expect(sourceRoute.textSnippets).toEqual(expect.arrayContaining(['You have completed 83% of platform setup']));
   });
 
   it('tracks the HertzBeat OTLP log-integration redirect actions instead of a generic refresh fallback', () => {
     expect(getParityRoutePair('log-compatibility-family', 'log-integration-root-compat').actionLabels).toEqual([
-      '管理令牌',
-      '查看实体',
-      '进入遥测发现'
+      'Manage tokens',
+      'View entities',
+      'Open telemetry discovery'
     ]);
     expect(getParityRoutePair('log-compatibility-family', 'log-integration-compat').actionLabels).toEqual([
-      '管理令牌',
-      '查看实体',
-      '进入遥测发现'
+      'Manage tokens',
+      'View entities',
+      'Open telemetry discovery'
     ]);
   });
 
@@ -590,7 +590,7 @@ describe('parity route manifest', () => {
         '/monitors/632051474676992?app=website&pageIndex=0&pageSize=8&returnTo=%2Fmonitors',
       referenceRoute:
         '/monitors/632051474676992?app=website&pageIndex=0&pageSize=8&returnTo=%2Fmonitors',
-      locale: 'zh-CN',
+      locale: 'en-US',
       routeTestPath: 'web-next/app/monitors/[monitorId]/page.test.tsx',
       seedState: 'monitor-fixture',
       nextReadySelectors: ['[data-monitor-detail-signal-list="true"]'],
@@ -727,14 +727,14 @@ describe('parity route manifest', () => {
     expect(routePair.primarySelectors).not.toContain('[data-monitor-header-rail-align="title-block"]');
     expect(routePair.primarySelectors).not.toContain('[data-monitor-header-kicker="angular-workbench"]');
     expect(routePair.primarySelectors).not.toContain('[data-observability-context-chip-variant="header"]');
-    expect(routePair.textSnippets).toEqual(expect.arrayContaining(['监控列表', '监控实时数据详情', '监控历史图表详情']));
+    expect(routePair.textSnippets).toEqual(expect.arrayContaining(['Monitor list', 'Monitor realtime data detail', 'Monitor historical chart detail']));
     expect(routePair.textSnippets).not.toContain('Monitors');
     expect(routePair.textSnippets).not.toContain('Monitor Real-Time Detail');
     expect(routePair.textSnippets).not.toContain('Monitor Historical Chart Detail');
-    expect(routePair.actionLabels).toEqual(['刷新']);
+    expect(routePair.actionLabels).toEqual(['Refresh']);
     expect(routePair.primarySelectors).not.toContain('[data-monitor-detail-return-action="true"]');
     expect(routePair.textSnippets).not.toContain('Metric catalog');
-    expect(routePair.textSnippets).not.toContain('指标目录');
+    expect(routePair.textSnippets).not.toContain('Metric catalog');
     expect(routePair.minimumVerificationCommand).toContain("app/monitors/[monitorId]/page.test.tsx");
     expect(routePair.minimumVerificationCommand).toContain('components/monitor-detail/monitor-detail-sections.test.tsx');
     expect(routePair.minimumVerificationCommand).toContain('lib/parity/route-manifest.test.ts');
@@ -749,7 +749,7 @@ describe('parity route manifest', () => {
     const routePair = getParityRoutePair('entity-family', 'entity-list');
 
     expect(routePair).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-entity-list-surface="otlp-cold-entity-console"]',
@@ -769,8 +769,8 @@ describe('parity route manifest', () => {
         'table',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['对象目录', '对象优先调查', '围绕服务、资源与实体定位问题并进入调查', '实体总数', '对象', '告警']),
-      actionLabels: ['搜索', '刷新', '创建实体'],
+      textSnippets: expect.arrayContaining(['Entity catalog', 'Entity-first investigation', 'Locate issues around services, resources, and entities, then start investigation', 'Total entities', 'Entities', 'Alerts']),
+      actionLabels: ['Search', 'Refresh', 'Create entity'],
       minimumVerificationCommand:
         'npm exec vitest run app/entities/page.test.tsx components/pages/entity-list-surface.test.tsx lib/entity-manage/controller.test.ts lib/entity-manage/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -780,13 +780,13 @@ describe('parity route manifest', () => {
     expect(routePair.primarySelectors).not.toContain('[data-entity-list-rail="signoz-services-rail"]');
     expect(routePair.primarySelectors).not.toContain('[data-entity-list-action-panel="signoz-actions"]');
     expect(routePair.textSnippets).not.toContain('Entity');
-    expect(routePair.textSnippets).not.toContain('常用入口');
+    expect(routePair.textSnippets).not.toContain('Common entrypoints');
     expect(routePair.actionLabels).not.toContain('Add');
   });
 
   it('points entity editor routes at targeted route and shared-surface contracts instead of raw source files', () => {
     expect(getParityRoutePair('entity-family', 'entity-editor-new')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-entity-editor-shell="otlp-cold-entity-composer"]',
@@ -811,8 +811,8 @@ describe('parity route manifest', () => {
         '[data-platform-footer="angular-footer"]',
         '[data-shell-ai-chat-launcher="angular-ai-chat"]'
       ]),
-      textSnippets: expect.arrayContaining(['新建实体', '全部实体', '实体元数据', '页面录入', '基本信息', '你已完成 83% 的平台配置']),
-      actionLabels: ['创建实体']
+      textSnippets: expect.arrayContaining(['New entity', 'All entities', 'Entity metadata', 'Page entry', 'Basic information', 'You have completed 83% of platform setup']),
+      actionLabels: ['Create entity']
     });
     expect(getParityRoutePair('entity-family', 'entity-editor-new').minimumVerificationCommand).toBe(
       "npm exec vitest run app/entities/new/page.test.tsx components/pages/entity-editor-surface.test.tsx lib/entity-editor/controller.test.ts lib/entity-editor/view-model.test.ts"
@@ -820,7 +820,7 @@ describe('parity route manifest', () => {
     expect(getParityRoutePair('entity-family', 'entity-editor-new').primarySelectors).not.toContain('[data-entity-editor-shell="angular-composer"]');
     expect(getParityRoutePair('entity-family', 'entity-editor-new').primarySelectors).not.toContain('[data-entity-editor-frame="angular-flush"]');
     expect(getParityRoutePair('entity-family', 'entity-editor-edit')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       nextApiStubKey: 'entity-fixture',
       referenceApiStubKey: 'entity-fixture',
@@ -849,8 +849,8 @@ describe('parity route manifest', () => {
         '[data-platform-footer="angular-footer"]',
         '[data-shell-ai-chat-launcher="angular-ai-chat"]'
       ]),
-      textSnippets: expect.arrayContaining(['编辑实体', '全部实体', '实体元数据', '基本信息', '你已完成 0% 的平台配置']),
-      actionLabels: ['保存']
+      textSnippets: expect.arrayContaining(['Edit entity', 'All entities', 'Entity metadata', 'Basic information', 'You have completed 0% of platform setup']),
+      actionLabels: ['Save']
     });
     expect(getParityRoutePair('entity-family', 'entity-editor-edit').minimumVerificationCommand).toBe(
       "npm exec vitest run 'app/entities/[entityId]/edit/page.test.tsx' components/pages/entity-editor-surface.test.tsx lib/entity-editor/controller.test.ts lib/entity-editor/view-model.test.ts"
@@ -861,7 +861,7 @@ describe('parity route manifest', () => {
 
   it('tracks the shared entity-import workspace shell with targeted route and controller contracts', () => {
     expect(getParityRoutePair('entity-family', 'entity-import')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-entity-definition-workspace="import"]',
@@ -885,8 +885,8 @@ describe('parity route manifest', () => {
         'textarea',
         'button'
       ]),
-      textSnippets: expect.arrayContaining(['对象优先调查', '导入实体定义', '可直接导入', '模板与批量编辑', '你已完成 83% 的平台配置']),
-      actionLabels: ['清空草稿', '预览定义', '导入实体'],
+      textSnippets: expect.arrayContaining(['Entity-first investigation', 'Import entity definitions', 'Ready to import', 'Templates and bulk editing', 'You have completed 83% of platform setup']),
+      actionLabels: ['Clear draft', 'Preview definition', 'Import entities'],
       minimumVerificationCommand:
         'npm exec vitest run app/entities/import/page.test.tsx components/pages/entity-import-surface.test.tsx components/pages/entity-definition-workspace-surface.test.tsx lib/entity-import/controller.test.ts lib/entity-import/view-model.test.ts'
     });
@@ -899,7 +899,7 @@ describe('parity route manifest', () => {
 
   it('tracks the shared entity-definition workspace shell with targeted route and controller contracts', () => {
     expect(getParityRoutePair('entity-family', 'entity-definition')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-entity-definition-workspace="definition"]',
@@ -926,15 +926,15 @@ describe('parity route manifest', () => {
         'aside'
       ]),
       textSnippets: expect.arrayContaining([
-        '实体定义',
-        '编辑实体定义',
-        '导入格式',
-        '模板与批量编辑',
-        '粘贴 YAML 实体定义',
-        '实体不存在。',
-        '你已完成 83% 的平台配置'
+        'Entity definition',
+        'Edit entity definition',
+        'Import format',
+        'Templates and bulk editing',
+        'Paste YAML entity definition',
+        'Entity does not exist.',
+        'You have completed 83% of platform setup'
       ]),
-      actionLabels: ['清空草稿', '预览定义', '保存定义'],
+      actionLabels: ['Clear draft', 'Preview definition', 'Save definition'],
       minimumVerificationCommand:
         "npm exec vitest run 'app/entities/[entityId]/definition/page.test.tsx' components/pages/entity-definition-workspace-surface.test.tsx lib/entity-definition/controller.test.ts lib/parity/route-manifest.test.ts"
     });
@@ -949,7 +949,7 @@ describe('parity route manifest', () => {
 
   it('tracks the shared entity-discovery telemetry console with targeted route and controller contracts', () => {
     expect(getParityRoutePair('entity-family', 'entity-discovery')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-entity-discovery-surface="otlp-cold-discovery-console"]',
@@ -973,8 +973,8 @@ describe('parity route manifest', () => {
         'table',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['遥测发现', '先搜索一组需要治理的监控线索', '治理筛选与共享策略', '线索', '状态', '你已完成 83% 的平台配置']),
-      actionLabels: ['搜索', '清空', '从定义创建', '创建实体'],
+      textSnippets: expect.arrayContaining(['Telemetry discovery', 'Search a set of monitor signals that need governance first', 'Governance filters and sharing policy', 'Signals', 'Status', 'You have completed 83% of platform setup']),
+      actionLabels: ['Search', 'Clear all', 'Create from definition', 'Create entity'],
       minimumVerificationCommand:
         'npm exec vitest run app/entities/discovery/page.test.tsx components/pages/entity-discovery-surface.test.tsx lib/entity-discovery/controller.test.ts lib/entity-discovery/search-state.test.ts lib/entity-discovery/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -984,15 +984,14 @@ describe('parity route manifest', () => {
     expect(selectors).not.toContain('[data-entity-discovery-right-panel="angular-density"]');
     expect(selectors).not.toContain('[data-entity-discovery-table="signoz-discovery-table"]');
     expect(getParityRoutePair('entity-family', 'entity-discovery').textSnippets).not.toContain('Entity Discovery');
-    expect(getParityRoutePair('entity-family', 'entity-discovery').textSnippets).not.toContain('常用入口');
-    expect(getParityRoutePair('entity-family', 'entity-discovery').textSnippets).not.toContain('原因');
-    expect(getParityRoutePair('entity-family', 'entity-discovery').textSnippets).not.toContain('接着可做');
-    expect(getParityRoutePair('entity-family', 'entity-discovery').actionLabels).not.toContain('Search');
+    expect(getParityRoutePair('entity-family', 'entity-discovery').textSnippets).not.toContain('Common entrypoints');
+    expect(getParityRoutePair('entity-family', 'entity-discovery').textSnippets).not.toContain('Reason');
+    expect(getParityRoutePair('entity-family', 'entity-discovery').textSnippets).not.toContain('Next actions');
   });
 
   it('tracks entity-detail through the cold full-width Workbench contract', () => {
     expect(getParityRoutePair('entity-family', 'entity-detail')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-entity-detail-surface="otlp-cold-entity-detail"]',
@@ -1026,15 +1025,11 @@ describe('parity route manifest', () => {
         "npm exec vitest run 'app/entities/[entityId]/page.test.tsx' components/pages/entity-detail-surface.test.tsx app/entity-detail-family.chrome.test.ts lib/entity-detail/view-model.test.ts lib/parity/route-manifest.test.ts"
     });
     expect(getParityRoutePair('entity-family', 'entity-detail').primarySelectors).not.toContain('aside');
-    expect(getParityRoutePair('entity-family', 'entity-detail').textSnippets).not.toContain('实体详情');
-    expect(getParityRoutePair('entity-family', 'entity-detail').textSnippets).not.toContain('对象优先调查');
-    expect(getParityRoutePair('entity-family', 'entity-detail').actionLabels).not.toContain('刷新');
-    expect(getParityRoutePair('entity-family', 'entity-detail').actionLabels).not.toContain('编辑定义');
   });
 
   it('tracks the alert center through targeted route, shared-surface, and filter contracts', () => {
     expect(getParityRoutePair('alert-family', 'alert-center')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-alert-center-surface="otlp-cold-center-console"]',
@@ -1053,8 +1048,8 @@ describe('parity route manifest', () => {
         'select',
         'button'
       ]),
-      textSnippets: expect.arrayContaining(['告警中心', '集中查看并处理当前告警', '搜索告警']),
-      actionLabels: ['刷新'],
+      textSnippets: expect.arrayContaining(['Alert center', 'Review and handle current alerts in one place', 'Search alerts']),
+      actionLabels: ['Refresh'],
       minimumVerificationCommand:
         'npm exec vitest run app/alert/page.test.tsx components/pages/alert-center-surface.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-manage/query-state.test.ts lib/alert-manage/controller.test.ts lib/alert-manage/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1063,12 +1058,11 @@ describe('parity route manifest', () => {
     expect(getParityRoutePair('alert-family', 'alert-center').primarySelectors).not.toContain('[data-alert-center-workbench-panel="angular-single-panel"]');
     expect(getParityRoutePair('alert-family', 'alert-center').primarySelectors).not.toContain('[data-alert-center-toolbar="angular-density"]');
     expect(getParityRoutePair('alert-family', 'alert-center').textSnippets).not.toContain('Alert');
-    expect(getParityRoutePair('alert-family', 'alert-center').actionLabels).not.toContain('Refresh');
   });
 
   it('tracks alert group through a targeted route test plus shared group surface and authoring contracts', () => {
     expect(getParityRoutePair('alert-family', 'alert-group')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-alert-group-surface="otlp-cold-group-console"]',
@@ -1086,8 +1080,8 @@ describe('parity route manifest', () => {
         'button',
         'input'
       ]),
-      textSnippets: expect.arrayContaining(['分组收敛', '管理 Alertmanager 分组收敛规则', '策略名称', '分组标签']),
-      actionLabels: ['刷新', '新增分组', '搜索'],
+      textSnippets: expect.arrayContaining(['Group convergence', 'Manage Alertmanager group convergence rules', 'Policy name', 'Group labels']),
+      actionLabels: ['Refresh', 'New group', 'Search'],
       minimumVerificationCommand:
         'npm exec vitest run app/alert/group/page.test.tsx components/pages/alert-group-surface.test.tsx components/pages/alert-group-authoring-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-group/controller.test.ts lib/alert-group/query-state.test.ts lib/alert-group/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1096,8 +1090,7 @@ describe('parity route manifest', () => {
     expect(getParityRoutePair('alert-family', 'alert-group').primarySelectors).not.toContain('[data-alert-group-toolbar="angular-table-toolbar"]');
     expect(getParityRoutePair('alert-family', 'alert-group').primarySelectors).not.toContain('[data-alert-group-table-shell="angular-table"]');
     expect(getParityRoutePair('alert-family', 'alert-group').textSnippets).not.toContain('Group');
-    expect(getParityRoutePair('alert-family', 'alert-group').actionLabels).not.toContain('Refresh');
-    expect(getParityRoutePair('alert-family', 'alert-group').actionLabels).not.toContain('新增');
+    expect(getParityRoutePair('alert-family', 'alert-group').actionLabels).not.toContain('New');
   });
 
   it('keeps alert-family toolbar selectors on the shared cold query-row owner', () => {
@@ -1130,7 +1123,7 @@ describe('parity route manifest', () => {
 
   it('tracks alert notice through the OTLP cold tab console plus the receiver/rule/template authoring owner contracts', () => {
     expect(getParityRoutePair('alert-family', 'alert-notice')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-alert-notice-surface="otlp-cold-notice-console"]',
@@ -1149,8 +1142,8 @@ describe('parity route manifest', () => {
         'button',
         'input'
       ]),
-      textSnippets: expect.arrayContaining(['消息通知', '通知媒介', '通知策略', '通知模板', '接收对象', '通知方式', '配置']),
-      actionLabels: ['刷新', '新增接收对象', '搜索'],
+      textSnippets: expect.arrayContaining(['Notifications', 'Notification media', 'Notification policy', 'Notification template', 'Receivers', 'Notification method', 'Configure']),
+      actionLabels: ['Refresh', 'New receiver', 'Search'],
       minimumVerificationCommand:
         'npm exec vitest run app/alert/notice/page.test.tsx components/pages/alert-notice-console-shell.test.tsx components/pages/alert-notice-receiver-fields.test.tsx components/pages/alert-notice-rule-fields.test.tsx components/pages/alert-notice-template-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-notice/controller.test.ts lib/alert-notice/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1161,12 +1154,12 @@ describe('parity route manifest', () => {
 
   it('tracks alert notice rule tab through clicked-tab OTLP cold table parity', () => {
     expect(getParityRoutePair('alert-family', 'alert-notice-rule')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       nextRoute: '/alert/notice',
       referenceRoute: '/alert/notice',
-      nextPostLoadActions: [{ kind: 'click', selector: 'text=通知策略', waitAfterMs: 250 }],
-      referencePostLoadActions: [{ kind: 'click', selector: 'text=通知策略', waitAfterMs: 250 }],
+      nextPostLoadActions: [{ kind: 'click', selector: 'text=Notification policy', waitAfterMs: 250 }],
+      referencePostLoadActions: [{ kind: 'click', selector: 'text=Notification policy', waitAfterMs: 250 }],
       primarySelectors: expect.arrayContaining([
         '[data-alert-notice-surface="otlp-cold-notice-console"]',
         '[data-alert-notice-style-baseline="hertzbeat-cold-matte"]',
@@ -1181,8 +1174,8 @@ describe('parity route manifest', () => {
         'button',
         'input'
       ]),
-      textSnippets: expect.arrayContaining(['消息通知', '通知策略', '策略名称', '接收对象', '模板名称', '转发所有', '启用状态']),
-      actionLabels: ['刷新', '新增通知策略', '搜索'],
+      textSnippets: expect.arrayContaining(['Notifications', 'Notification policy', 'Policy name', 'Receivers', 'Template name', 'Forward all', 'Enabled status']),
+      actionLabels: ['Refresh', 'New notification policy', 'Search'],
       minimumVerificationCommand:
         'npm exec vitest run app/alert/notice/page.test.tsx components/pages/alert-notice-console-shell.test.tsx components/pages/alert-notice-rule-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-notice/controller.test.ts lib/alert-notice/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1190,12 +1183,12 @@ describe('parity route manifest', () => {
 
   it('tracks alert notice template tab through clicked-tab OTLP cold table parity', () => {
     expect(getParityRoutePair('alert-family', 'alert-notice-template')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       nextRoute: '/alert/notice',
       referenceRoute: '/alert/notice',
-      nextPostLoadActions: [{ kind: 'click', selector: 'text=通知模板', waitAfterMs: 250 }],
-      referencePostLoadActions: [{ kind: 'click', selector: 'text=通知模板', waitAfterMs: 250 }],
+      nextPostLoadActions: [{ kind: 'click', selector: 'text=Notification template', waitAfterMs: 250 }],
+      referencePostLoadActions: [{ kind: 'click', selector: 'text=Notification template', waitAfterMs: 250 }],
       primarySelectors: expect.arrayContaining([
         '[data-alert-notice-surface="otlp-cold-notice-console"]',
         '[data-alert-notice-style-baseline="hertzbeat-cold-matte"]',
@@ -1214,16 +1207,16 @@ describe('parity route manifest', () => {
         'select'
       ]),
       textSnippets: expect.arrayContaining([
-        '消息通知',
-        '通知模板',
-        '系统内置模版',
-        '模板名称',
-        '通知方式',
-        '模版类型',
-        '更新时间',
-        '操作'
+        'Notifications',
+        'Notification template',
+        'Built-in system template',
+        'Template name',
+        'Notification method',
+        'Template type',
+        'Updated time',
+        'Actions'
       ]),
-      actionLabels: ['刷新', '新增通知模板', '搜索'],
+      actionLabels: ['Refresh', 'New notification template', 'Search'],
       minimumVerificationCommand:
         'npm exec vitest run app/alert/notice/page.test.tsx components/pages/alert-notice-console-shell.test.tsx components/pages/alert-notice-template-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-notice/controller.test.ts lib/alert-notice/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1231,7 +1224,7 @@ describe('parity route manifest', () => {
 
   it('tracks alert setting through a targeted route test plus the shared define-console surface contract', () => {
     expect(getParityRoutePair('alert-family', 'alert-setting')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-alert-setting-surface="otlp-cold-setting-console"]',
@@ -1250,20 +1243,19 @@ describe('parity route manifest', () => {
         'button',
         'input'
       ]),
-      textSnippets: expect.arrayContaining(['阈值规则', '阈值名称', '阈值类型', '阈值表达式', '告警内容']),
-      actionLabels: ['刷新', '新增阈值', '批量删除', '搜索'],
+      textSnippets: expect.arrayContaining(['Threshold rules', 'Threshold name', 'Threshold type', 'Threshold expression', 'Alert content']),
+      actionLabels: ['Refresh', 'New threshold', 'Bulk delete', 'Search'],
       minimumVerificationCommand:
         'npm exec vitest run app/alert/setting/page.test.tsx components/pages/alert-setting-surface.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-setting/controller.test.ts lib/alert-setting/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
     expect(getParityRoutePair('alert-family', 'alert-setting').textSnippets).not.toContain('Alert settings');
-    expect(getParityRoutePair('alert-family', 'alert-setting').textSnippets).not.toContain('当前阈值');
-    expect(getParityRoutePair('alert-family', 'alert-setting').actionLabels).not.toContain('Refresh');
+    expect(getParityRoutePair('alert-family', 'alert-setting').textSnippets).not.toContain('Current thresholds');
     expect(getParityRoutePair('alert-family', 'alert-setting').primarySelectors.join(' ')).not.toContain('angular-table');
   });
 
   it('tracks alert integration through the OTLP cold-matte source-rail document shell', () => {
     expect(getParityRoutePair('alert-family', 'alert-integration')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       nextRoute: '/alert/integration/webhook',
       referenceRoute: '/alert/integration/webhook',
@@ -1284,19 +1276,19 @@ describe('parity route manifest', () => {
         'main',
         'button'
       ]),
-      textSnippets: expect.arrayContaining(['集成接入', '默认Webhook', '集成告警源', '管理令牌', '接口端点', '请求头']),
-      actionLabels: ['管理令牌'],
+      textSnippets: expect.arrayContaining(['Integration onboarding', 'Default webhook', 'Integrated alert source', 'Manage tokens', 'Endpoint', 'Request headers']),
+      actionLabels: ['Manage tokens'],
       minimumVerificationCommand:
         "npm exec vitest run 'app/alert/integration/[source]/page.test.tsx' lib/alert-integration/view-model.test.ts components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/parity/route-manifest.test.ts"
     });
     expect(getParityRoutePair('alert-family', 'alert-integration').textSnippets).not.toContain('Integration');
-    expect(getParityRoutePair('alert-family', 'alert-integration').textSnippets).not.toContain('管理 API Token');
+    expect(getParityRoutePair('alert-family', 'alert-integration').textSnippets).not.toContain('Manage API token');
     expect(getParityRoutePair('alert-family', 'alert-integration').actionLabels).not.toContain('Apply');
   });
 
   it('tracks alert silence through a targeted route test plus shared silence surface and authoring contracts', () => {
     expect(getParityRoutePair('alert-family', 'alert-silence')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-alert-silence-surface="otlp-cold-silence-console"]',
@@ -1315,20 +1307,19 @@ describe('parity route manifest', () => {
         'button',
         'input'
       ]),
-      textSnippets: expect.arrayContaining(['告警静默', '策略名称', '静默类型', '已静默告警数']),
-      actionLabels: ['刷新', '新增静默', '批量删除', '搜索'],
+      textSnippets: expect.arrayContaining(['Alert silence', 'Policy name', 'Silence type', 'Silenced alerts']),
+      actionLabels: ['Refresh', 'New silence', 'Bulk delete', 'Search'],
       minimumVerificationCommand:
         'npm exec vitest run app/alert/silence/page.test.tsx components/pages/alert-silence-surface.test.tsx components/pages/alert-silence-authoring-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-silence/controller.test.ts lib/alert-silence/query-state.test.ts lib/alert-silence/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
     expect(getParityRoutePair('alert-family', 'alert-silence').textSnippets).not.toContain('Silence');
-    expect(getParityRoutePair('alert-family', 'alert-silence').textSnippets).not.toContain('当前静默');
-    expect(getParityRoutePair('alert-family', 'alert-silence').actionLabels).not.toContain('Refresh');
+    expect(getParityRoutePair('alert-family', 'alert-silence').textSnippets).not.toContain('Current silences');
     expect(getParityRoutePair('alert-family', 'alert-silence').primarySelectors.join(' ')).not.toContain('angular-table');
   });
 
   it('tracks alert inhibit through a targeted route test plus shared inhibit surface and authoring contracts', () => {
     expect(getParityRoutePair('alert-family', 'alert-inhibit')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-alert-inhibit-surface="otlp-cold-inhibit-console"]',
@@ -1347,20 +1338,19 @@ describe('parity route manifest', () => {
         'button',
         'input'
       ]),
-      textSnippets: expect.arrayContaining(['告警抑制', '抑制规则名称', '源标签', '目标标签', '相等标签']),
-      actionLabels: ['刷新', '新增抑制', '批量删除', '搜索'],
+      textSnippets: expect.arrayContaining(['Alert inhibit', 'Inhibit rule name', 'Source labels', 'Target labels', 'Equal labels']),
+      actionLabels: ['Refresh', 'New inhibit rule', 'Bulk delete', 'Search'],
       minimumVerificationCommand:
         'npm exec vitest run app/alert/inhibit/page.test.tsx components/pages/alert-inhibit-surface.test.tsx components/pages/alert-inhibit-authoring-fields.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/alert-inhibit/controller.test.ts lib/alert-inhibit/query-state.test.ts lib/alert-inhibit/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
     expect(getParityRoutePair('alert-family', 'alert-inhibit').textSnippets).not.toContain('Inhibit');
-    expect(getParityRoutePair('alert-family', 'alert-inhibit').textSnippets).not.toContain('当前抑制');
-    expect(getParityRoutePair('alert-family', 'alert-inhibit').actionLabels).not.toContain('Refresh');
+    expect(getParityRoutePair('alert-family', 'alert-inhibit').textSnippets).not.toContain('Current inhibits');
     expect(getParityRoutePair('alert-family', 'alert-inhibit').primarySelectors.join(' ')).not.toContain('angular-table');
   });
 
   it('tracks the setting root through the shared settings console shell contracts instead of a route-matrix smoke fallback', () => {
     expect(getParityRoutePair('setting-family', 'setting-root')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-settings-console-surface="otlp-cold-settings-console"]',
@@ -1379,8 +1369,8 @@ describe('parity route manifest', () => {
         'select',
         'button'
       ]),
-      textSnippets: expect.arrayContaining(['设置', '系统配置', '系统语言', '系统时区', '系统主题', '确认更新']),
-      actionLabels: ['确认更新'],
+      textSnippets: expect.arrayContaining(['Settings', 'System configuration', 'System language', 'System timezone', 'System theme', 'Confirm update']),
+      actionLabels: ['Confirm update'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/page.test.ts app/setting/settings/page.test.ts app/setting/settings/config/page.test.tsx components/settings/settings-console-shell.test.tsx lib/setting-config/controller.test.ts lib/setting-config/view-model.test.ts lib/setting-settings-layout/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1392,7 +1382,7 @@ describe('parity route manifest', () => {
 
   it('tracks system config through targeted route, controller, and view-model contracts instead of the old smoke fallback', () => {
     expect(getParityRoutePair('setting-family', 'setting-system-config')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-settings-console-surface="otlp-cold-settings-console"]',
@@ -1412,15 +1402,15 @@ describe('parity route manifest', () => {
         'button'
       ]),
       textSnippets: expect.arrayContaining([
-        '设置',
-        '把系统配置、消息通道和接入凭证放在一起',
-        '系统配置',
-        '系统语言',
-        '系统时区',
-        '系统主题',
-        '确认更新'
+        'Settings',
+        'Keep system config, messaging channels, and access credentials together',
+        'System configuration',
+        'System language',
+        'System timezone',
+        'System theme',
+        'Confirm update'
       ]),
-      actionLabels: ['确认更新'],
+      actionLabels: ['Confirm update'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/settings/config/page.test.tsx components/settings/settings-console-shell.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/setting-config/controller.test.ts lib/setting-config/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1432,7 +1422,7 @@ describe('parity route manifest', () => {
 
   it('pins object store to the cold settings console form contract', () => {
     expect(getParityRoutePair('setting-family', 'setting-object-store')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-settings-console-surface="otlp-cold-settings-console"]',
@@ -1452,14 +1442,14 @@ describe('parity route manifest', () => {
         'button'
       ]),
       textSnippets: expect.arrayContaining([
-        '文件服务配置',
-        '文件服务提供商',
-        '本地数据库（默认）',
-        '本地文件',
-        '华为云OBS',
-        '确认更新'
+        'File service configuration',
+        'File service provider',
+        'Local database (default)',
+        'Local file',
+        'Huawei Cloud OBS',
+        'Confirm update'
       ]),
-      actionLabels: ['确认更新'],
+      actionLabels: ['Confirm update'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/settings/object-store/page.test.tsx components/settings/settings-console-shell.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/object-store/controller.test.ts lib/object-store/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1473,7 +1463,7 @@ describe('parity route manifest', () => {
 
   it('pins message server to the cold settings console summary-list contract', () => {
     expect(getParityRoutePair('setting-family', 'setting-server')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-settings-console-surface="otlp-cold-settings-console"]',
@@ -1497,16 +1487,16 @@ describe('parity route manifest', () => {
         'button'
       ]),
       textSnippets: expect.arrayContaining([
-        '消息服务配置',
-        '邮件服务器',
-        '短信配置',
-        '邮箱服务器地址',
-        '是否启用SSL',
-        '短信类型',
-        '腾讯短信',
-        '启用状态'
+        'Message service configuration',
+        'Mail server',
+        'SMS configuration',
+        'Mail server address',
+        'SSL enabled',
+        'SMS type',
+        'Tencent SMS',
+        'Enabled status'
       ]),
-      actionLabels: ['配置'],
+      actionLabels: ['Configure'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/settings/server/page.test.tsx components/settings/settings-console-shell.test.tsx components/settings/settings-summary-list.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/setting-server/controller.test.ts lib/setting-server/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1519,7 +1509,7 @@ describe('parity route manifest', () => {
 
   it('pins token management to the cold settings console and dense table contract', () => {
     expect(getParityRoutePair('setting-family', 'setting-token')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-settings-console-surface="otlp-cold-settings-console"]',
@@ -1544,28 +1534,25 @@ describe('parity route manifest', () => {
         'table'
       ]),
       textSnippets: expect.arrayContaining([
-        '令牌管理',
-        'API 密钥',
-        '统一管理遥测和自动化令牌',
-        '生成令牌',
-        '令牌总数',
-        '可用令牌',
-        '过期令牌',
-        'Token 名称',
-        'Token 值',
-        '创建者',
-        '操作'
+        'Token management',
+        'API key',
+        'Manage telemetry and automation tokens in one place',
+        'Generate token',
+        'Total tokens',
+        'Available tokens',
+        'Expired tokens',
+        'Token name',
+        'Token value',
+        'Creator',
+        'Actions'
       ]),
-      actionLabels: ['生成令牌'],
+      actionLabels: ['Generate token'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/settings/token/page.test.tsx components/settings/settings-console-shell.test.tsx components/shell/app-frame.chrome.test.tsx components/shell/platform-copyright-footer.test.tsx lib/setting-token/controller.test.ts lib/setting-token/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
-    expect(getParityRoutePair('setting-family', 'setting-token').textSnippets).not.toContain('Token management');
-    expect(getParityRoutePair('setting-family', 'setting-token').actionLabels).not.toContain('Generate token');
     expect(getParityRoutePair('setting-family', 'setting-token').primarySelectors).not.toContain('[data-settings-console-surface="angular-page-shell"]');
     expect(getParityRoutePair('setting-family', 'setting-token').textSnippets).not.toContain('API Keys');
-    expect(getParityRoutePair('setting-family', 'setting-token').textSnippets).not.toContain('令牌摘要');
-    expect(getParityRoutePair('setting-family', 'setting-token').actionLabels).not.toContain('生成 Token');
+    expect(getParityRoutePair('setting-family', 'setting-token').textSnippets).not.toContain('Token summary');
     expect(getParityRoutePair('setting-family', 'setting-token').primarySelectors).not.toContain('[data-setting-token-surface="angular-token-console"]');
     expect(getParityRoutePair('setting-family', 'setting-token').primarySelectors).not.toContain('[data-setting-token-summary-rail="cold-static-rail"]');
     expect(getParityRoutePair('setting-family', 'setting-token').primarySelectors).not.toContain('[data-setting-token-table="angular-token-table"]');
@@ -1573,7 +1560,7 @@ describe('parity route manifest', () => {
 
   it('tracks collector management through the cold-matte dense admin/list route contract', () => {
     expect(getParityRoutePair('setting-family', 'setting-collector')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       primarySelectors: expect.arrayContaining([
         '[data-collector-manage-surface="otlp-cold-collector-console"]',
         '[data-collector-manage-style-baseline="hertzbeat-cold-matte"]',
@@ -1588,8 +1575,8 @@ describe('parity route manifest', () => {
         'input',
         'table'
       ]),
-      textSnippets: expect.arrayContaining(['采集集群', '采集器名称', '运行状态', '运行模式', '总任务数量', '固定任务', '调度任务', '操作']),
-      actionLabels: ['刷新', '部署采集器', '上线采集器', '下线采集器', '删除采集器', '搜索'],
+      textSnippets: expect.arrayContaining(['Collector cluster', 'Collector name', 'Run status', 'Run mode', 'Total tasks', 'Pinned tasks', 'Scheduled tasks', 'Actions']),
+      actionLabels: ['Refresh', 'Deploy collector', 'Bring collector online', 'Take collector offline', 'Delete collector', 'Search'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/collector/page.test.tsx components/pages/collector-manage-surface.test.tsx lib/collector-manage/controller.test.ts lib/collector-manage/query-state.test.ts lib/collector-manage/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1601,7 +1588,7 @@ describe('parity route manifest', () => {
 
   it('tracks define management through targeted route, shared-surface, controller, and query-state contracts instead of the broken source-file smoke path', () => {
     expect(getParityRoutePair('setting-family', 'setting-define')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-setting-define-surface="otlp-cold-define-console"]',
@@ -1620,8 +1607,8 @@ describe('parity route manifest', () => {
         'button',
         'input'
       ]),
-      textSnippets: expect.arrayContaining(['定义', '管理监控模板 YAML']),
-      actionLabels: ['新增类型', '编辑', '取消', '保存并应用', '搜索', '隐藏', '显示'],
+      textSnippets: expect.arrayContaining(['Definitions', 'Manage monitor template YAML']),
+      actionLabels: ['New type', 'Edit', 'Cancel', 'Save and apply', 'Search', 'Hide', 'Show'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/define/page.test.tsx components/pages/setting-define-surface.test.tsx lib/setting-define/controller.test.ts lib/setting-define/query-state.test.ts lib/setting-define/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1629,13 +1616,13 @@ describe('parity route manifest', () => {
     expect(getParityRoutePair('setting-family', 'setting-define').primarySelectors).not.toContain('[data-setting-define-summary-rail="cold-static-rail"]');
     expect(getParityRoutePair('setting-family', 'setting-define').textSnippets).not.toContain('Define');
     expect(getParityRoutePair('setting-family', 'setting-define').actionLabels).not.toContain('New Monitor Type');
-    expect(getParityRoutePair('setting-family', 'setting-define').textSnippets).not.toContain('数据源状态');
-    expect(getParityRoutePair('setting-family', 'setting-define').actionLabels).not.toContain('预览查询');
+    expect(getParityRoutePair('setting-family', 'setting-define').textSnippets).not.toContain('Data source status');
+    expect(getParityRoutePair('setting-family', 'setting-define').actionLabels).not.toContain('Preview query');
   });
 
   it('pins label management to the OTLP cold-matte dense admin/list contract', () => {
     expect(getParityRoutePair('setting-family', 'setting-labels')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-label-manage-surface="otlp-cold-label-console"]',
@@ -1655,8 +1642,8 @@ describe('parity route manifest', () => {
         'table',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['标签管理', '新增', '搜索标签', '标签名称', '标签类型', '标签描述']),
-      actionLabels: ['新增', '搜索'],
+      textSnippets: expect.arrayContaining(['Label management', 'New', 'Search labels', 'Label name', 'Label type', 'Label description']),
+      actionLabels: ['New', 'Search'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/labels/page.test.tsx components/pages/label-manage-surface.test.tsx lib/label-manage/controller.test.ts lib/label-manage/query-state.test.ts lib/label-manage/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1664,14 +1651,11 @@ describe('parity route manifest', () => {
     expect(getParityRoutePair('setting-family', 'setting-labels').primarySelectors).not.toContain('[data-label-manage-route="angular-label-cards"]');
     expect(getParityRoutePair('setting-family', 'setting-labels').primarySelectors).not.toContain('[data-label-card-shell="angular-card"]');
     expect(getParityRoutePair('setting-family', 'setting-labels').textSnippets).not.toContain('Label');
-    expect(getParityRoutePair('setting-family', 'setting-labels').actionLabels).not.toContain('Refresh');
-    expect(getParityRoutePair('setting-family', 'setting-labels').actionLabels).not.toContain('New');
-    expect(getParityRoutePair('setting-family', 'setting-labels').actionLabels).not.toContain('Search');
   });
 
   it('pins plugin management to the OTLP cold-matte dense admin/list contract', () => {
     expect(getParityRoutePair('setting-family', 'setting-plugins')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-plugin-manage-surface="otlp-cold-plugin-console"]',
@@ -1690,8 +1674,8 @@ describe('parity route manifest', () => {
         'input',
         'table'
       ]),
-      textSnippets: expect.arrayContaining(['插件管理', '插件名称', '插件类型', '启用状态', '操作', '暂无数据']),
-      actionLabels: ['上传插件', '搜索'],
+      textSnippets: expect.arrayContaining(['Plugin management', 'Plugin name', 'Plugin type', 'Enabled status', 'Actions', 'No data']),
+      actionLabels: ['Upload plugin', 'Search'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/plugins/page.test.tsx components/pages/plugin-manage-surface.test.tsx lib/plugin-manage/controller.test.ts lib/plugin-manage/query-state.test.ts lib/plugin-manage/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1705,7 +1689,7 @@ describe('parity route manifest', () => {
 
   it('pins status settings to the cold-matte org form, tabs, and dense component table contract', () => {
     expect(getParityRoutePair('setting-family', 'setting-status')).toMatchObject({
-      locale: 'zh-CN',
+      locale: 'en-US',
       screenshotMode: 'viewport',
       primarySelectors: expect.arrayContaining([
         '[data-status-setting-surface="otlp-cold-status-console"]',
@@ -1726,8 +1710,8 @@ describe('parity route manifest', () => {
         'table',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['状态页面', '组织名称', '组织介绍', '服务组件', '维护事件', '组件状态', '状态统计方式', '匹配标签', '操作']),
-      actionLabels: ['确定', '新增组件'],
+      textSnippets: expect.arrayContaining(['Status page', 'Organization name', 'Organization introduction', 'Service components', 'Maintenance events', 'Component status', 'Status aggregation method', 'Matching labels', 'Actions']),
+      actionLabels: ['OK', 'New component'],
       minimumVerificationCommand:
         'npm exec vitest run app/setting/status/page.test.tsx components/pages/status-setting-surface.test.tsx lib/setting-status/controller.test.ts lib/setting-status/view-model.test.ts lib/parity/route-manifest.test.ts'
     });
@@ -1798,7 +1782,7 @@ describe('parity route manifest', () => {
       nextRoute: '/exception/403',
       referenceRoute: '/exception/403',
       primarySelectors: expect.arrayContaining(['[data-exception-center-surface="true"]', 'main', 'aside', 'a']),
-      actionLabels: ['返回概览', '日志工作台', '链路工作台'],
+      actionLabels: ['Back to overview', 'Log workbench', 'Trace workbench'],
       minimumVerificationCommand:
         "npm exec vitest run 'app/exception/[type]/page.test.tsx' components/pages/exception-center-surface.test.tsx lib/exception-center/view-model.test.ts lib/parity/route-manifest.test.ts"
     });
@@ -1809,7 +1793,7 @@ describe('parity route manifest', () => {
       nextRoute: '/exception/404',
       referenceRoute: '/exception/404',
       primarySelectors: expect.arrayContaining(['[data-exception-center-surface="true"]', 'main', 'aside', 'a']),
-      actionLabels: ['返回概览', '日志工作台', '链路工作台'],
+      actionLabels: ['Back to overview', 'Log workbench', 'Trace workbench'],
       minimumVerificationCommand:
         "npm exec vitest run 'app/exception/[type]/page.test.tsx' components/pages/exception-center-surface.test.tsx lib/exception-center/view-model.test.ts lib/parity/route-manifest.test.ts"
     });
@@ -1831,8 +1815,8 @@ describe('parity route manifest', () => {
         'input',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['异常中心', '筛选', '运行查询', 'ECONNRESET', '应用']),
-      actionLabels: ['运行查询', '返回概览', '日志工作台', '链路工作台'],
+      textSnippets: expect.arrayContaining(['Exception center', 'Filter', 'Run query', 'ECONNRESET', 'Apply']),
+      actionLabels: ['Run query', 'Back to overview', 'Log workbench', 'Trace workbench'],
       minimumVerificationCommand:
         "npm exec vitest run 'app/exception/[type]/page.test.tsx' components/pages/exception-center-surface.test.tsx lib/exception-center/view-model.test.ts lib/parity/route-manifest.test.ts"
     });

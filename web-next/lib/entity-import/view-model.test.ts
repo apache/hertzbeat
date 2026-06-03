@@ -83,19 +83,19 @@ describe('entity import view model', () => {
       )
     ).toEqual([
       {
-        title: '遥测发现已应用',
-        copy: '端点: Checkout · 来源: otel_resource · 系统: website · 证据: 1 监控绑定',
-        meta: '成功 · YAML'
+        title: zhT('entity.definition.import.activity.summary.telemetry-discovery-applied'),
+        copy: `${zhT('entity.definition.import.activity.field.endpoint')}: Checkout · ${zhT('entity.definition.import.activity.field.source')}: otel_resource · ${zhT('entity.definition.import.activity.field.system')}: website · ${zhT('entity.definition.import.activity.field.evidence')}: 1 ${zhT('entity.definition.import.activity.field.monitor-binds')}`,
+        meta: `${zhT('entity.definition.import.activity.status.success')} · YAML`
       },
       {
-        title: '目录实体已更新',
-        copy: '服务: checkout · 负责人: platform · 环境: prod',
-        meta: '成功 · YAML'
+        title: zhT('entity.definition.import.activity.summary.catalog-entity-updated'),
+        copy: `${zhT('entity.definition.import.activity.field.service')}: checkout · ${zhT('entity.definition.import.activity.field.owner')}: platform · ${zhT('entity.definition.import.activity.field.environment')}: prod`,
+        meta: `${zhT('entity.definition.import.activity.status.success')} · YAML`
       },
       {
-        title: '目录实体已创建',
-        copy: '服务: checkout · 来源: manual · 负责人: platform',
-        meta: '已保存 · YAML'
+        title: zhT('entity.definition.import.activity.summary.catalog-entity-created'),
+        copy: `${zhT('entity.definition.import.activity.field.service')}: checkout · ${zhT('entity.definition.import.activity.field.source')}: manual · ${zhT('entity.definition.import.activity.field.owner')}: platform`,
+        meta: `${zhT('entity.definition.import.activity.status.saved')} · YAML`
       }
     ]);
   });
@@ -119,8 +119,8 @@ describe('entity import view model', () => {
       {
         key: '9',
         title: 'empty-template',
-        copy: '无',
-        meta: '无 · 无'
+        copy: zhT('common.none'),
+        meta: `${zhT('common.none')} · ${zhT('common.none')}`
       }
     ]);
 
@@ -138,9 +138,9 @@ describe('entity import view model', () => {
       )
     ).toEqual([
       {
-        title: '无',
-        copy: '无',
-        meta: '无 · 无'
+        title: zhT('common.none'),
+        copy: zhT('common.none'),
+        meta: `${zhT('common.none')} · ${zhT('common.none')}`
       }
     ]);
 
@@ -162,7 +162,7 @@ describe('entity import view model', () => {
         ] as any,
         zhT
       )[0]
-    ).toEqual(expect.objectContaining({ title: '无' }));
+    ).toEqual(expect.objectContaining({ title: zhT('common.none') }));
 
     expect(
       buildActivityRows([{ summary: '', detail: '', status: '', format: '' }] as any, missingTranslator)
@@ -186,7 +186,7 @@ describe('entity import view model', () => {
       {
         title: 'import deferred',
         copy: 'manual review',
-        meta: '未知状态 deferred · YAML'
+        meta: `${zhT('entity.definition.import.activity.status.unknown', { status: 'deferred' })} · YAML`
       }
     ]);
 
@@ -208,7 +208,7 @@ describe('entity import view model', () => {
         key: '12',
         title: 'remote-template',
         copy: 'external registry template',
-        meta: 'JSON · 未知来源 remote-registry'
+        meta: `JSON · ${zhT('entity.definition.import.template.source.unknown', { source: 'remote-registry' })}`
       }
     ]);
   });
@@ -234,17 +234,17 @@ describe('entity import view model', () => {
       )[0]
     ).toEqual(
       expect.objectContaining({
-        kindLabel: '未知类型 lambda_function',
-        sourceLabel: '未知来源 cloud-scanner'
+        kindLabel: zhT('entity.definition.import.kind.unknown', { kind: 'lambda_function' }),
+        sourceLabel: zhT('entity.definition.import.source.unknown', { source: 'cloud-scanner' })
       })
     );
   });
 
   it('localizes unknown import definition format labels', () => {
     expect(buildImportMetrics({ format: 'toml' as any, templateCount: 1, activityCount: 0 }, zhT)).toEqual([
-      { label: '导入格式', value: '未知格式 toml' },
-      { label: '自定义模板', value: '1' },
-      { label: '最近活动', value: '0' }
+      { label: zhT('entity.definition.import.format'), value: zhT('entity.definition.import.format.unknown', { format: 'toml' }) },
+      { label: zhT('entity.definition.workspace.template.custom'), value: '1' },
+      { label: zhT('entities.definition.workspace.activity-title'), value: '0' }
     ]);
 
     expect(
@@ -253,7 +253,7 @@ describe('entity import view model', () => {
       {
         title: 'previewed custom format',
         copy: 'manual',
-        meta: '预览 · 未知格式 toml'
+        meta: `${zhT('entity.definition.import.activity.status.preview')} · ${zhT('entity.definition.import.format.unknown', { format: 'toml' })}`
       }
     ]);
 
@@ -264,7 +264,7 @@ describe('entity import view model', () => {
         key: '15',
         title: 'toml-template',
         copy: 'custom template',
-        meta: '未知格式 toml · 自定义'
+        meta: `${zhT('entity.definition.import.format.unknown', { format: 'toml' })} · ${zhT('entity.definition.import.template.source.custom')}`
       }
     ]);
   });

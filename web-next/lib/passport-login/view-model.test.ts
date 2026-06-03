@@ -33,22 +33,22 @@ describe('passport login view model', () => {
 
   it('builds the login feature cards', () => {
     expect(buildLoginFeatureCards(t)).toEqual([
-      { title: '运维入口', copy: '登录后继续查看资源、实体、遥测数据和告警。' },
-      { title: '私有化部署', copy: '在 HertzBeat 工作台管理内网采集、模板和状态页。' },
-      { title: '安全访问', copy: '验证账号后再进入告警处理、通知和系统设置。' }
+      { title: t('passport.login.card.entry.title'), copy: t('passport.login.card.entry.copy') },
+      { title: t('passport.login.card.shell.title'), copy: t('passport.login.card.shell.copy') },
+      { title: t('passport.login.card.auth.title'), copy: t('passport.login.card.auth.copy') }
     ]);
   });
 
   it('builds the warning or session notice', () => {
     expect(buildLoginNotice(true, t)).toEqual({
       kind: 'warning',
-      copy: '请及时更新初始默认密码!',
+      copy: t('app.login.need-change-password'),
       href: 'https://hertzbeat.apache.org/docs/start/account-modify'
     });
 
     expect(buildLoginNotice(false, t)).toEqual({
       kind: 'session',
-      copy: '登录成功后会自动恢复当前工作台会话，并在需要时尝试刷新令牌。'
+      copy: t('passport.login.session-copy')
     });
   });
 
