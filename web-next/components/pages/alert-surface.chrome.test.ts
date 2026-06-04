@@ -35,7 +35,7 @@ describe('alert surface cold-workbench chrome', () => {
     const completedColdSurfaces = [centerSource, groupSource, inhibitSource, settingSource, silenceSource];
 
     for (const source of completedColdSurfaces) {
-      expect(source).toContain('coldOpsCatalogVisual');
+      expect(source).toContain('hzOpsCatalogVisual');
       expect(source).not.toContain("from './alert-surface-primitives'");
       expect(source).not.toContain("from '../workbench/workbench-page'");
       expect(source).not.toContain('WorkbenchPage');

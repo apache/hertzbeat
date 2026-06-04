@@ -256,7 +256,7 @@ export function AlertNoticeRuleFields({
       <FieldRow row="receiver" required label={t('alert.notice.receiver.people')}>
         <HiddenInput data-testid="notice-rule-field-receiverIdsText" value={draft.receiverIdsText} />
         <div
-          data-alert-notice-rule-receiver-selector="cold-multi-select"
+          data-alert-notice-rule-receiver-selector="hertzbeat-ui-multi-select"
           className="grid min-h-8 gap-2 rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 py-1"
         >
           {effectiveReceiverOptions.length > 0 ? (
@@ -286,7 +286,7 @@ export function AlertNoticeRuleFields({
 
       <FieldRow row="template" label={t('alert.notice.template')}>
         <div
-          data-alert-notice-rule-template-selector="cold-select"
+          data-alert-notice-rule-template-selector="hertzbeat-ui-select"
           data-alert-notice-rule-template-type-filter="angular-selected-receiver-type"
           data-alert-notice-rule-template-type-filter-owner="route-form-contract"
           data-alert-notice-rule-template-active-type="angular-switch-receiver"
@@ -354,7 +354,7 @@ export function AlertNoticeRuleFields({
       {customPeriod ? (
         <FieldRow row="days" label={t('alert.notice.rule.period-chose')}>
           <div
-            data-alert-notice-rule-days-selector="cold-weekday-checkboxes"
+            data-alert-notice-rule-days-selector="hertzbeat-ui-weekday-checkboxes"
             className="flex flex-wrap gap-2 rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 py-1"
           >
             {weekdayOptions.map(option => (
@@ -380,7 +380,7 @@ export function AlertNoticeRuleFields({
       ) : null}
 
       <FieldRow row="time" label={t('alert.notice.rule.time')}>
-        <div data-alert-notice-rule-time-range="shared-cold-time-range">
+        <div data-alert-notice-rule-time-range="shared-hertzbeat-ui-time-range">
           <DateTimeRange
             mode="time"
             startName="periodStart"

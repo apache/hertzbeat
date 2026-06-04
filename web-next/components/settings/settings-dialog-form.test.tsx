@@ -26,16 +26,16 @@ describe('settings dialog form controls', () => {
       </SettingsDialogForm>
     );
 
-    expect(html).toContain('data-settings-dialog-form="cold-dialog-form"');
-    expect(html).toContain('data-settings-dialog-field="cold-dialog-field"');
+    expect(html).toContain('data-settings-dialog-form="hertzbeat-ui-dialog-form"');
+    expect(html).toContain('data-settings-dialog-field="hertzbeat-ui-dialog-field"');
     expect(html).toContain('data-settings-dialog-field-layout="angular-label-7-control-12"');
     expect(html).toContain('data-settings-dialog-label-span="7"');
     expect(html).toContain('data-settings-dialog-control-span="12"');
-    expect(html).toContain('data-settings-dialog-control="cold-select-control"');
-    expect(html).toContain('data-settings-dialog-control="cold-input-control"');
-    expect(html).toContain('data-cold-select-owner="cold-custom-select"');
-    expect(html).toContain('data-cold-select-control="custom-trigger"');
-    expect(html).toContain('data-cold-select-listbox="custom-menu"');
+    expect(html).toContain('data-settings-dialog-control="hertzbeat-ui-select-control"');
+    expect(html).toContain('data-settings-dialog-control="hertzbeat-ui-input-control"');
+    expect(html).toContain('data-hz-select-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-hz-select-control="custom-trigger"');
+    expect(html).toContain('data-hz-select-listbox="custom-menu"');
     expect(html).toContain('appearance-none');
     expect(html).toContain('h-8');
     expect(html).toContain('rounded-[3px]');
@@ -59,7 +59,7 @@ describe('settings dialog form controls', () => {
     expect(source).toContain("data-settings-dialog-label-span={isVertical ? 'vertical' : '7'}");
     expect(source).toContain("data-settings-dialog-control-span={isVertical ? 'vertical' : '12'}");
     expect(source).toContain('md:grid-cols-[7fr_12fr]');
-    expect(source).toContain('data-settings-dialog-control="cold-select-control"');
+    expect(source).toContain('data-settings-dialog-control="hertzbeat-ui-select-control"');
     expect(source).not.toContain('<select');
     expect(source).not.toContain('h-10');
     expect(source).not.toContain('rounded-[2px]');
@@ -84,8 +84,8 @@ describe('settings dialog form controls', () => {
     expect(html).toContain('data-settings-dialog-field-layout="angular-vertical-form"');
     expect(html).toContain('data-settings-dialog-label-span="vertical"');
     expect(html).toContain('data-settings-dialog-control-span="vertical"');
-    expect(html).toContain('data-settings-dialog-control="cold-input-control"');
-    expect(html).toContain('data-settings-dialog-control="cold-select-control"');
+    expect(html).toContain('data-settings-dialog-control="hertzbeat-ui-input-control"');
+    expect(html).toContain('data-settings-dialog-control="hertzbeat-ui-select-control"');
     expect(html).not.toContain('md:grid-cols-[7fr_12fr]');
   });
 });

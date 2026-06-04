@@ -13,7 +13,7 @@ import {
   resolveAlertInternalReturnHref,
   type AlertQueryState
 } from '../../lib/alert-manage/query-state';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import type { AlertInhibitFormDraft } from '../../lib/alert-inhibit/controller';
 import type { AlertInhibitManagementContext } from '../../lib/alert-inhibit/query-state';
 import type { AlertInhibitEvidenceContext } from '../../lib/alert-inhibit/view-model';
@@ -72,7 +72,7 @@ type AlertInhibitSurfaceProps = {
   onClearEqual: () => void;
 };
 
-const coldInhibitVisual = coldOpsCatalogVisual;
+const coldInhibitVisual = hzOpsCatalogVisual;
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
@@ -171,7 +171,7 @@ export function AlertInhibitSurface({
   return (
     <>
       <div
-        data-alert-inhibit-surface="otlp-cold-inhibit-console"
+        data-alert-inhibit-surface="otlp-hertzbeat-ui-inhibit-console"
         data-alert-inhibit-style-baseline={coldInhibitVisual.canvasName}
         className={coldInhibitVisual.canvas.root}
         style={coldInhibitVisual.canvas.backgroundStyle}
@@ -179,7 +179,7 @@ export function AlertInhibitSurface({
         <section className={coldInhibitVisual.layout.pageSection}>
           <div className="mx-auto max-w-[1480px]">
             <div className="mb-5">
-              <div data-alert-inhibit-header="cold-compact-header" className={coldInhibitVisual.panel.hero}>
+              <div data-alert-inhibit-header="hertzbeat-ui-compact-header" className={coldInhibitVisual.panel.hero}>
                 <div className="max-w-[840px]">
                   <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                     {t('menu.alert.inhibit')}
@@ -421,7 +421,7 @@ export function AlertInhibitSurface({
               ) : null}
               <section className="min-w-0">
                 <SearchRow
-                  data-alert-inhibit-toolbar="cold-query-toolbar"
+                  data-alert-inhibit-toolbar="hertzbeat-ui-query-toolbar"
                   value={search}
                   placeholder={t('alert.inhibit.name')}
                   searchLabel={t('common.search')}
@@ -432,7 +432,7 @@ export function AlertInhibitSurface({
                 />
 
                 <div
-                  data-alert-inhibit-table-shell="cold-dense-table"
+                  data-alert-inhibit-table-shell="hertzbeat-ui-dense-table"
                   className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
                 >
                   <div className="overflow-hidden">
@@ -441,7 +441,7 @@ export function AlertInhibitSurface({
                         <tr>
                           <th className="w-[44px] px-3 py-2.5">
                             <Checkbox
-                              data-alert-inhibit-select-all="cold-checkbox"
+                              data-alert-inhibit-select-all="hertzbeat-ui-checkbox"
                               checked={allVisibleChecked}
                               disabled={visibleIds.length === 0}
                               aria-label={t('common.select')}
@@ -479,7 +479,7 @@ export function AlertInhibitSurface({
                             >
                               <td className="px-3 py-2.5" onClick={event => event.stopPropagation()}>
                                 <Checkbox
-                                  data-alert-inhibit-row-checkbox="cold-checkbox"
+                                  data-alert-inhibit-row-checkbox="hertzbeat-ui-checkbox"
                                   checked={checked}
                                   aria-label={item.name || t('alert.inhibit.default-title')}
                                   containerClassName="min-h-0"
@@ -520,7 +520,7 @@ export function AlertInhibitSurface({
                               </td>
                               <td className="px-3 py-2.5" onClick={event => event.stopPropagation()}>
                                 <Checkbox
-                                  data-alert-inhibit-enable-checkbox="cold-checkbox"
+                                  data-alert-inhibit-enable-checkbox="hertzbeat-ui-checkbox"
                                   checked={item.enable ?? true}
                                   containerClassName="min-h-0"
                                   onChange={() => onToggleEnabled(item)}
@@ -543,11 +543,11 @@ export function AlertInhibitSurface({
                             </tr>
                           );
                         }) : (
-                          <tr data-alert-inhibit-empty-state="cold-table-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
+                          <tr data-alert-inhibit-empty-state="hertzbeat-ui-table-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
                             <td colSpan={8} className="h-[240px] px-3 text-center text-[#a9b0bb]">
                               <div className="inline-flex flex-col items-center gap-2.5">
                                 <span
-                                  data-alert-inhibit-empty-icon="cold-empty-box"
+                                  data-alert-inhibit-empty-icon="hertzbeat-ui-empty-box"
                                   className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]"
                                 >
                                   <Inbox className="h-5 w-5" aria-hidden="true" />
@@ -561,7 +561,7 @@ export function AlertInhibitSurface({
                     </table>
                   </div>
                   <div
-                    data-alert-inhibit-pagination="cold-dense-pagination"
+                    data-alert-inhibit-pagination="hertzbeat-ui-dense-pagination"
                     data-alert-inhibit-pagination-owner="hertzbeat-ui-pagination-bar"
                   >
                     <HzPaginationBar
@@ -635,7 +635,7 @@ export function AlertInhibitSurface({
             description={editorErrorDetail}
             variant="embedded"
             className="mb-3 rounded-[3px] border border-[#5d3037] bg-[#1a1013]"
-            data-alert-inhibit-editor-error-inline="cold-validation"
+            data-alert-inhibit-editor-error-inline="hertzbeat-ui-validation"
             data-alert-inhibit-save-failure="angular-notify-title-detail"
             data-alert-inhibit-save-failure-owner="hertzbeat-ui-inline-feedback"
             data-alert-inhibit-save-feedback-title={draft.id ? 'common.notify.edit-fail' : 'common.notify.new-fail'}
@@ -644,7 +644,7 @@ export function AlertInhibitSurface({
         ) : editorError ? (
           <div
             role="alert"
-            data-alert-inhibit-editor-error-inline="cold-validation"
+            data-alert-inhibit-editor-error-inline="hertzbeat-ui-validation"
             className="mb-3 rounded-[3px] border border-[#5d3037] bg-[#1a1013] px-3 py-2 text-[12px] font-semibold text-[#f0a7b2]"
           >
             {editorError}

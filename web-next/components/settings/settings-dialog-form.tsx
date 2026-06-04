@@ -11,7 +11,7 @@ export function SettingsDialogForm({
   ...props
 }: React.FormHTMLAttributes<HTMLFormElement>) {
   return (
-    <form data-settings-dialog-form="cold-dialog-form" className={cn('grid gap-3.5', className)} {...props}>
+    <form data-settings-dialog-form="hertzbeat-ui-dialog-form" className={cn('grid gap-3.5', className)} {...props}>
       {children}
     </form>
   );
@@ -34,7 +34,7 @@ export function SettingsDialogField({
 
   return (
     <label
-      data-settings-dialog-field="cold-dialog-field"
+      data-settings-dialog-field="hertzbeat-ui-dialog-field"
       data-settings-dialog-field-layout={isVertical ? 'angular-vertical-form' : 'angular-label-7-control-12'}
       className={cn(isVertical ? 'grid gap-1.5' : 'grid gap-2 md:grid-cols-[7fr_12fr] md:items-center', className)}
     >
@@ -54,7 +54,7 @@ export const SettingsDialogInput = React.forwardRef<HTMLInputElement, React.Inpu
   ({ className, ...props }, ref) => (
     <Input
       ref={ref}
-      data-settings-dialog-control="cold-input-control"
+      data-settings-dialog-control="hertzbeat-ui-input-control"
       className={cn(
         'h-8 w-full rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 py-1.5 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none placeholder:text-[#858d9a] transition-colors focus-visible:border-[#4e74f8] focus-visible:bg-[#151b28] focus-visible:ring-2 focus-visible:ring-[rgba(78,116,248,0.12)]',
         className
@@ -70,7 +70,7 @@ export const SettingsDialogSelect = React.forwardRef<HTMLSelectElement, React.Se
   ({ className, children, ...props }, ref) => (
     <Select
       ref={ref}
-      data-settings-dialog-control="cold-select-control"
+      data-settings-dialog-control="hertzbeat-ui-select-control"
       containerClassName="w-full"
       className={cn(
         'h-8 text-[12px] font-semibold',

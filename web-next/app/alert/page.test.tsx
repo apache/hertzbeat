@@ -83,7 +83,7 @@ vi.mock('../../components/pages/alert-center-surface', () => ({
     return (
       <div
         data-alert-center-surface="otlp-cold-center-console"
-        data-alert-center-style-baseline="hertzbeat-cold-matte"
+        data-alert-center-style-baseline="hertzbeat-ui-matte"
         data-draft={JSON.stringify(props.draft)}
         data-rule-create={typeof props.onRuleQuickCreate}
         data-realtime-event-count={props.realtimeEventCount}
@@ -156,7 +156,7 @@ describe('alert center page', () => {
     );
 
     expect(html).toContain('data-alert-center-surface="otlp-cold-center-console"');
-    expect(html).toContain('data-alert-center-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-alert-center-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-loading-copy="Loading alert center"');
 
     await mockState.lastLoad?.();

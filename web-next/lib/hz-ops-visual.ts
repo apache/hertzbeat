@@ -1,8 +1,8 @@
-export const coldOpsCatalogVisual = {
-  contract: 'cold-ops-catalog-v1',
+export const hzOpsCatalogVisual = {
+  contract: 'hertzbeat-ui-ops-catalog-v1',
   visualSystem: 'hertzbeat-native-avant-garde',
-  tone: 'cold-ops-catalog',
-  canvasName: 'hertzbeat-cold-matte',
+  tone: 'hertzbeat-ui-ops-catalog',
+  canvasName: 'hertzbeat-ui-matte',
   radius: {
     panel: 'rounded-[4px]',
     control: 'rounded-[3px]',
@@ -79,7 +79,7 @@ export const coldOpsCatalogVisual = {
       'mx-auto flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]',
     emptyTitle: 'mt-8 text-[15px] font-semibold text-[#f1f4fa]',
     emptyCopy: 'mt-3 text-[13px] leading-6 text-[#a6b0c0]',
-    baseline: 'otlp-cold-matte-entry'
+    baseline: 'hertzbeat-ui-entry'
   },
   signal: {
     band: 'grid w-full gap-2',

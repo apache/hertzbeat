@@ -42,8 +42,9 @@ export function SearchRow({
 }: SearchRowProps) {
   return (
     <form
-      data-cold-search-row-owner="cold-search-row"
-      data-cold-search-layout="compact-detached-button"
+      data-hz-ui="search-row"
+      data-hz-search-row-owner="hertzbeat-ui-search-row"
+      data-hz-search-layout="compact-detached-button"
       className={cn('mb-6 flex w-fit max-w-full min-w-0 flex-wrap items-center gap-2', className)}
       onSubmit={event => {
         event.preventDefault();
@@ -53,9 +54,9 @@ export function SearchRow({
     >
       <input
         type="search"
-        data-cold-search-input="fixed-width-direct"
-        data-cold-search-control="direct-input"
-        data-cold-search-chrome="no-extra-input-shell"
+        data-hz-search-input="fixed-width-direct"
+        data-hz-search-control="direct-input"
+        data-hz-search-chrome="no-extra-input-shell"
         className={cn(
           'h-8 max-w-full rounded-[3px] border border-[#282d36] bg-[#101217] px-3 text-[12px] font-semibold text-[#eef2f7] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none placeholder:text-[#6f7788] focus:border-[#4e74f8] focus:ring-2 focus:ring-[rgba(78,116,248,0.12)]',
           inputWidthClassName
@@ -65,7 +66,7 @@ export function SearchRow({
         onChange={event => onValueChange(event.target.value)}
       />
       {filters ? (
-        <div data-cold-search-filter-slot="inline-before-submit" className="flex min-w-0 flex-wrap items-center gap-2">
+        <div data-hz-search-filter-slot="inline-before-submit" className="flex min-w-0 flex-wrap items-center gap-2">
           {filters}
         </div>
       ) : null}
@@ -73,7 +74,7 @@ export function SearchRow({
         type="submit"
         size="sm"
         variant="default"
-        data-cold-search-action="submit"
+        data-hz-search-action="submit"
         className={searchButtonClassName}
         disabled={searchDisabled}
       >
@@ -85,7 +86,7 @@ export function SearchRow({
           type="button"
           size="sm"
           variant="default"
-          data-cold-search-action="clear"
+          data-hz-search-action="clear"
           className={searchButtonClassName}
           onClick={onClear}
         >
@@ -94,7 +95,7 @@ export function SearchRow({
         </Button>
       ) : null}
       {trailingActions ? (
-        <div data-cold-search-trailing-actions="detached-secondary" className="flex min-w-0 flex-wrap items-center gap-2">
+        <div data-hz-search-trailing-actions="detached-secondary" className="flex min-w-0 flex-wrap items-center gap-2">
           {trailingActions}
         </div>
       ) : null}

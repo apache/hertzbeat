@@ -7,7 +7,7 @@ import type { DatasourceStatusPayload } from '../../lib/alert-setting/controller
 import type { AlertDefine } from '../../lib/types';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
-import { ColdCodeEditor } from '../ui/cold-code-editor';
+import { HzCodeEditor } from '../ui/hz-code-editor';
 import { Input } from '../ui/input';
 import { LabelRecordInput } from '../ui/label-record-input';
 import { NumberStepper } from '../ui/number-stepper';
@@ -336,7 +336,7 @@ export function AlertSettingCreateDialog({
             <div
               role="alert"
               aria-live="polite"
-              data-alert-setting-create-validation="cold-validation-feedback"
+              data-alert-setting-create-validation="hertzbeat-ui-validation-feedback"
               className="rounded-[3px] border border-[#6f3141] bg-[#1b1014] px-3 py-2 text-[12px] font-semibold leading-5 text-[#ffb4c1]"
             >
               {validationMessage}
@@ -382,7 +382,7 @@ export function AlertSettingCreateDialog({
           </div>
           <label className="grid gap-1.5 text-[12px] font-semibold text-[#a9b0bb]">
             {expressionLabel}
-            <ColdCodeEditor
+            <HzCodeEditor
               name="alert_define_expr"
               value={draft.expr}
               language="javascript"
@@ -395,7 +395,7 @@ export function AlertSettingCreateDialog({
           </label>
           <label className="grid gap-1.5 text-[12px] font-semibold text-[#a9b0bb]">
             {contentLabel}
-            <ColdCodeEditor
+            <HzCodeEditor
               name="alert_define_template"
               value={draft.template}
               language="text"

@@ -8,7 +8,7 @@ import { Checkbox } from '../ui/checkbox';
 import { SearchRow } from '../ui/search-row';
 import { OverlayDialog } from '../workbench/overlay-dialog';
 import { AlertGroupAuthoringFields } from './alert-group-authoring-fields';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import type { AlertLabelOptions } from '../../lib/alert-label-options';
 import type { AlertGroupFormDraft } from '../../lib/alert-group/controller';
 import type { AlertGroupEvidenceContext } from '../../lib/alert-group/view-model';
@@ -53,7 +53,7 @@ type AlertGroupSurfaceProps = {
   onDraftChange: (nextDraft: AlertGroupFormDraft) => void;
 };
 
-const coldGroupVisual = coldOpsCatalogVisual;
+const coldGroupVisual = hzOpsCatalogVisual;
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
@@ -138,7 +138,7 @@ export function AlertGroupSurface({
   return (
     <>
       <div
-        data-alert-group-surface="otlp-cold-group-console"
+        data-alert-group-surface="otlp-hertzbeat-ui-group-console"
         data-alert-group-style-baseline={coldGroupVisual.canvasName}
         className={coldGroupVisual.canvas.root}
         style={coldGroupVisual.canvas.backgroundStyle}
@@ -146,7 +146,7 @@ export function AlertGroupSurface({
         <section className={coldGroupVisual.layout.pageSection}>
           <div className="mx-auto max-w-[1480px]">
             <div className="mb-5">
-              <div data-alert-group-header="cold-compact-header" className={coldGroupVisual.panel.hero}>
+              <div data-alert-group-header="hertzbeat-ui-compact-header" className={coldGroupVisual.panel.hero}>
                 <div className="max-w-[820px]">
                   <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                     {t('alert.group.title')}
@@ -242,7 +242,7 @@ export function AlertGroupSurface({
               ) : null}
               <section className="min-w-0">
                 <SearchRow
-                  data-alert-group-toolbar="cold-query-toolbar"
+                  data-alert-group-toolbar="hertzbeat-ui-query-toolbar"
                   value={search}
                   placeholder={t('alert.group-converge.name')}
                   searchLabel={t('common.search')}
@@ -253,7 +253,7 @@ export function AlertGroupSurface({
                 />
 
                 <div
-                  data-alert-group-table-shell="cold-dense-table"
+                  data-alert-group-table-shell="hertzbeat-ui-dense-table"
                   className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
                 >
                   <div className="overflow-hidden">
@@ -297,7 +297,7 @@ export function AlertGroupSurface({
                             >
                               <td className="px-3 py-2.5" onClick={event => event.stopPropagation()}>
                                 <Checkbox
-                                  data-alert-group-row-checkbox="cold-checkbox"
+                                  data-alert-group-row-checkbox="hertzbeat-ui-checkbox"
                                   checked={checked}
                                   aria-label={item.name || t('alert.group.default-title')}
                                   containerClassName="min-h-0"
@@ -326,7 +326,7 @@ export function AlertGroupSurface({
                               <td className="px-3 py-2.5 tabular-nums">{item.repeatInterval || 0}{t('alert.group-converge.seconds')}</td>
                               <td className="px-3 py-2.5" onClick={event => event.stopPropagation()}>
                                 <Checkbox
-                                  data-alert-group-enable-checkbox="cold-checkbox"
+                                  data-alert-group-enable-checkbox="hertzbeat-ui-checkbox"
                                   checked={item.enable ?? true}
                                   containerClassName="min-h-0"
                                   onChange={() => onToggleEnabled(item)}
@@ -349,11 +349,11 @@ export function AlertGroupSurface({
                             </tr>
                           );
                         }) : (
-                          <tr data-alert-group-empty-state="cold-table-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
+                          <tr data-alert-group-empty-state="hertzbeat-ui-table-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
                             <td colSpan={9} className="h-[240px] px-3 text-center text-[#a9b0bb]">
                               <div className="inline-flex flex-col items-center gap-2.5">
                                 <span
-                                  data-alert-group-empty-icon="cold-empty-box"
+                                  data-alert-group-empty-icon="hertzbeat-ui-empty-box"
                                   className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]"
                                 >
                                   <Inbox className="h-5 w-5" aria-hidden="true" />
@@ -367,7 +367,7 @@ export function AlertGroupSurface({
                     </table>
                   </div>
                   <div
-                    data-alert-group-pagination="cold-dense-pagination"
+                    data-alert-group-pagination="hertzbeat-ui-dense-pagination"
                     data-alert-group-pagination-owner="hertzbeat-ui-pagination-bar"
                   >
                     <HzPaginationBar
@@ -439,7 +439,7 @@ export function AlertGroupSurface({
             description={editorErrorDetail}
             variant="embedded"
             className="mb-3 rounded-[3px] border border-[#5d3037] bg-[#1a1013]"
-            data-alert-group-editor-error-inline="cold-validation"
+            data-alert-group-editor-error-inline="hertzbeat-ui-validation"
             data-alert-group-save-failure="angular-notify-title-detail"
             data-alert-group-save-failure-owner="hertzbeat-ui-inline-feedback"
             data-alert-group-save-feedback-title={draft.id ? 'common.notify.edit-fail' : 'common.notify.new-fail'}
@@ -448,7 +448,7 @@ export function AlertGroupSurface({
         ) : editorError ? (
           <div
             role="alert"
-            data-alert-group-editor-error-inline="cold-validation"
+            data-alert-group-editor-error-inline="hertzbeat-ui-validation"
             className="mb-3 rounded-[3px] border border-[#5d3037] bg-[#1a1013] px-3 py-2 text-[12px] font-semibold text-[#f0a7b2]"
           >
             {editorError}

@@ -76,7 +76,7 @@ describe('status setting surface', () => {
     );
 
     expect(html).toContain('data-status-setting-surface="otlp-cold-status-console"');
-    expect(html).toContain('data-status-setting-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-status-setting-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-status-setting-mutation-feedback="angular-notify-keys"');
     expect(html).toContain('data-status-setting-mutation-feedback-owner="route-action-feedback-contract"');
     expect(html).toContain('data-status-header="cold-compact-header"');
@@ -84,7 +84,7 @@ describe('status setting surface', () => {
     expect(html).not.toContain('data-status-header-public-link');
     expect(html).toContain('data-status-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-status-org-form="cold-settings-form"');
-    expect(html).toContain('data-status-tabs="cold-segmented-tabs"');
+    expect(html).toContain('data-status-tabs="hertzbeat-ui-segmented-tabs"');
     expect(html).toContain('data-status-tab-refresh-contract="angular-nz-tab-click-load"');
     expect(html).toContain('data-status-tab-refresh-owner="route-refresh-contract"');
     expect(html).toContain('data-status-tab-refresh-mode="component"');
@@ -400,7 +400,7 @@ describe('status setting surface', () => {
   it('uses the shared cold visual owner instead of Workbench or alert primitives', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/status-setting-surface.tsx'), 'utf8');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain('data-status-incident-search-owner="shared-search-row"');
     expect(source).toContain('inputWidthClassName="w-[320px]"');

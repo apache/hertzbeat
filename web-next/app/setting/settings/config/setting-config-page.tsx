@@ -12,7 +12,7 @@ import {
   SettingsFormSelect
 } from '../../../../components/settings/settings-form';
 import { Button } from '../../../../components/ui/button';
-import { coldOpsCatalogVisual } from '../../../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../../../lib/hz-ops-visual';
 import { apiMessageGet, apiMessagePost } from '../../../../lib/api-client';
 import { loadSystemConfigData, persistSystemConfig } from '../../../../lib/setting-config/controller';
 import {
@@ -34,7 +34,7 @@ type ConfigData = {
   timezones: TimezoneOption[];
 };
 
-const coldConfigVisual = coldOpsCatalogVisual;
+const coldConfigVisual = hzOpsCatalogVisual;
 
 const SETTING_CONFIG_SETTLED_CACHE_TTL_MS = 10_000;
 
@@ -94,14 +94,14 @@ export default function SettingConfigPage() {
 
         return (
           <div
-            data-setting-config-surface="otlp-cold-system-config"
+            data-setting-config-surface="otlp-hertzbeat-ui-system-config"
             data-setting-config-style-baseline={coldConfigVisual.canvasName}
             data-setting-config-layout="full-width-settings-form"
             className="space-y-4"
           >
             <SettingsConsoleTitle>{t('settings.system-config')}</SettingsConsoleTitle>
             <SettingsForm
-              data-setting-config-form="cold-settings-form"
+              data-setting-config-form="hertzbeat-ui-settings-form"
               data-setting-config-apply-contract="angular-apply-notify-reload"
               data-setting-config-runtime-locale="underscore-to-hyphen"
               onSubmit={event => {

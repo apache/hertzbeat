@@ -132,7 +132,7 @@ vi.mock('@/lib/alert-integration/view-model', () => ({
 }));
 
 describe('alert integration page', () => {
-  it('renders the OTLP cold-matte source rail plus markdown document shell for the selected integration source', async () => {
+  it('renders the shared HertzBeat UI source rail plus markdown document shell for the selected integration source', async () => {
     headers.mockResolvedValue(new Headers({ 'accept-language': 'zh-CN,zh;q=0.9' }));
     const source = readFileSync(resolve(process.cwd(), 'app/alert/integration/[source]/page.tsx'), 'utf8');
     const { default: AlertIntegrationPage } = await import('./page');
@@ -142,17 +142,21 @@ describe('alert integration page', () => {
       })
     );
 
-    expect(html).toContain('data-alert-integration-surface="otlp-cold-source-doc"');
-    expect(html).toContain('data-alert-integration-style-baseline="hertzbeat-cold-matte"');
-    expect(html).toContain('data-alert-integration-header-actions="cold-source-doc-actions"');
-    expect(html).toContain('data-alert-integration-container="cold-source-doc-shell"');
-    expect(html).toContain('data-alert-integration-source-rail="cold-source-list"');
+    expect(html).toContain('data-alert-integration-surface="hertzbeat-ui-source-doc"');
+    expect(html).toContain('data-alert-integration-shell-owner="hertzbeat-ui-source-doc-shell"');
+    expect(html).toContain('data-hz-ui="source-doc-shell"');
+    expect(html).toContain('data-hz-source-doc-shell-owner="hertzbeat-ui-source-doc-shell"');
+    expect(html).toContain('data-hz-source-doc-rail-owner="hertzbeat-ui-source-doc-shell"');
+    expect(html).toContain('data-hz-source-doc-panel-owner="hertzbeat-ui-source-doc-shell"');
+    expect(html).toContain('data-alert-integration-token-action-owner="hertzbeat-ui-button-link"');
     expect(html).toContain('data-alert-integration-source-item="webhook"');
     expect(html).toContain('data-alert-integration-source-selected="true"');
     expect(html).toContain('data-alert-integration-source-icon="webhook"');
+    expect(html).toContain('data-hz-source-doc-item-owner="hertzbeat-ui-source-doc-shell"');
+    expect(html).toContain('data-hz-source-doc-item-icon-owner="hertzbeat-ui-source-doc-shell"');
     expect(html).toContain('src="/assets/logo.svg"');
     expect(html).toContain('src="/assets/img/integration/prometheus.svg"');
-    expect(html).toContain('data-alert-integration-doc-panel="cold-markdown-doc"');
+    expect(html).toContain('data-hz-source-doc-panel-scroll-owner="hertzbeat-ui-scroll-viewport"');
     expect(html).toContain('data-alert-integration-markdown="rendered"');
     expect(html).toContain('data-alert-integration-code-block="json"');
     expect(html).toContain('data-alert-integration-code-block="bash"');
@@ -183,16 +187,15 @@ describe('alert integration page', () => {
     expect(html).not.toContain('Sources');
     expect(html).not.toContain('Navigation');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain("from '@hertzbeat/ui/source-doc-shell'");
+    expect(source).toContain('HzSourceDocShell');
     expect(source).toContain("from 'next/headers'");
     expect(source).toContain('createAlertIntegrationTranslator(locale)');
     expect(source).toContain('loadIntegrationDoc(baseDir, selectedSource.id, locale)');
-    expect(source).toContain('data-alert-integration-surface="otlp-cold-source-doc"');
-    expect(source).toContain('data-alert-integration-style-baseline={coldOpsVisual.canvasName}');
-    expect(source).toContain('data-alert-integration-source-rail="cold-source-list"');
+    expect(source).toContain('data-alert-integration-surface="hertzbeat-ui-source-doc"');
+    expect(source).toContain('data-alert-integration-shell-owner="hertzbeat-ui-source-doc-shell"');
     expect(source).not.toContain('h-[calc(100vh-242px)]');
-    expect(source).toContain('data-alert-integration-source-icon={item.id}');
-    expect(source).toContain('data-alert-integration-doc-panel="cold-markdown-doc"');
+    expect(source).toContain("'data-alert-integration-source-icon': item.id");
     expect(source).toContain('AlertIntegrationMarkdown');
     expect(source).not.toContain('No integration guide is available for this provider yet.');
     expect(source).not.toContain('angular-source-doc');
@@ -202,6 +205,8 @@ describe('alert integration page', () => {
     expect(source).not.toContain('rounded-[10px]');
     expect(source).not.toContain('rounded-[8px]');
     expect(source).not.toContain('rounded-[16px]');
+    expect(source).not.toContain('hzOpsCatalogVisual');
+    expect(source).not.toContain("from '@/components/ui/button'");
     expect(source).not.toContain("from '@/components/observability'");
     expect(source).not.toContain('StageSection');
     expect(source).not.toContain('DrawerSection');

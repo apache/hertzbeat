@@ -63,7 +63,7 @@ describe('collector manage surface', () => {
     );
 
     expect(html).toContain('data-collector-manage-surface="otlp-cold-collector-console"');
-    expect(html).toContain('data-collector-manage-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-collector-manage-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-collector-header="cold-compact-header"');
     expect(html).toContain('data-collector-command-row="standard-equal-buttons"');
     expect(html).toContain('data-collector-health-evidence="cluster-status"');
@@ -140,7 +140,7 @@ describe('collector manage surface', () => {
     expect(html).toContain('data-collector-table-loading-source="idle"');
     expect(html).toContain('aria-busy="false"');
     expect(html).toContain('data-collector-manage-table="cold-collector-table"');
-    expect(html).toContain('data-collector-select-all="cold-checkbox"');
+    expect(html).toContain('data-collector-select-all="hertzbeat-ui-checkbox"');
     expect(html).toContain('data-collector-row-select="edge-a"');
     expect(html).toContain('data-collector-row-select="edge-b"');
     expect(html).toContain('data-collector-row-health="collector-status"');
@@ -199,7 +199,7 @@ describe('collector manage surface', () => {
   it('uses the shared cold visual owner instead of Workbench table primitives', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/collector-manage-surface.tsx'), 'utf8');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain('inputWidthClassName="w-[360px]"');
     expect(source).toContain('data-collector-manage-surface="otlp-cold-collector-console"');
@@ -307,7 +307,7 @@ describe('collector manage surface', () => {
     expect(source).toContain("t('collector.pagination.summary'");
     expect(source).toContain("t('collector.pagination.page-size')");
     expect(source).toContain("t('collector.pagination.page')");
-    expect(source).toContain('data-collector-select-all="cold-checkbox"');
+    expect(source).toContain('data-collector-select-all="hertzbeat-ui-checkbox"');
     expect(source).toContain('data-collector-select-all-contract="angular-header-includes-disabled-default"');
     expect(source).toContain('data-collector-selectable-names={collectorNames.join');
     expect(source).toContain('data-collector-immutable-names={immutableCollectorNames.join');

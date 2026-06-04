@@ -18,10 +18,10 @@ describe('WeekdayPicker', () => {
       />
     );
 
-    expect(html).toContain('data-cold-weekday-picker-owner="cold-weekday-picker"');
-    expect(html).toContain('data-cold-weekday-option="2"');
+    expect(html).toContain('data-hz-weekday-picker-owner="hertzbeat-ui-weekday-picker"');
+    expect(html).toContain('data-hz-weekday-option="2"');
     expect(html).toContain('<label');
-    expect(html).toContain('data-cold-checkbox-click-target="label-shell"');
-    expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)).toHaveLength(3);
+    expect(html).toContain('data-hz-checkbox-click-target="label-shell"');
+    expect(html.match(/data-hz-checkbox-owner="hertzbeat-ui-checkbox"/g)).toHaveLength(3);
   });
 });

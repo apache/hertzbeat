@@ -11,7 +11,7 @@ export function AlertSurfacePanel({
 }: React.HTMLAttributes<HTMLDivElement> & { tone?: 'default' | 'raised' }) {
   return (
     <div
-      data-alert-surface-panel-owner="cold-panel"
+      data-alert-surface-panel-owner="hertzbeat-ui-panel"
       className={cn(
         'rounded-[4px] border border-[var(--ops-border-color)] px-4 py-3',
         tone === 'raised' ? 'bg-[var(--ops-surface-raised)]' : 'bg-[var(--ops-surface-panel)]',
@@ -61,7 +61,7 @@ export function AlertSurfaceTableShell({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      data-alert-surface-table-shell-owner="cold-dense-table"
+      data-alert-surface-table-shell-owner="hertzbeat-ui-dense-table"
       className={cn(
         'overflow-x-auto rounded-[4px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)]',
         className
@@ -80,7 +80,7 @@ export function AlertSurfaceActionLink({
 }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   return (
     <a
-      data-alert-surface-action-owner="cold-action"
+      data-alert-surface-action-owner="hertzbeat-ui-action"
       className={cn(
         'inline-flex h-8 items-center justify-center gap-1.5 rounded-[3px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-raised)] px-3 text-[12px] font-medium text-[var(--ops-text-primary)] transition-colors hover:border-[var(--ops-primary)] hover:bg-[var(--ops-surface-elevated)] hover:text-[var(--ops-text-primary)]',
         className
@@ -100,7 +100,7 @@ export function AlertSurfaceActionButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      data-alert-surface-action-owner="cold-action"
+      data-alert-surface-action-owner="hertzbeat-ui-action"
       type={type}
       className={cn(
         'inline-flex h-8 items-center justify-center gap-1.5 rounded-[3px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-raised)] px-3 text-[12px] font-medium text-[var(--ops-text-primary)] transition-colors hover:border-[var(--ops-primary)] hover:bg-[var(--ops-surface-elevated)] hover:text-[var(--ops-text-primary)] disabled:cursor-not-allowed disabled:opacity-40',
@@ -150,7 +150,7 @@ export function AlertSurfaceValuePill({
 }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
-      data-alert-surface-value-pill-owner="cold-value"
+      data-alert-surface-value-pill-owner="hertzbeat-ui-value"
       className={cn(
         'inline-flex min-h-7 items-center rounded-[3px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-raised)] px-2 text-[12px] text-[var(--ops-text-primary)]',
         className

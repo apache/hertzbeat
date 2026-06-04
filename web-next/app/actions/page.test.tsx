@@ -24,7 +24,7 @@ describe('actions page', () => {
     expect(routeSource).toContain('const suggestionContext = readActionsSuggestionContext(resolvedSearchParams)');
     expect(routeSource).toContain('return <ActionsPage suggestionContext={suggestionContext} />');
     expect(html).toContain('data-actions-route="otlp-cold-ops-entry"');
-    expect(html).toContain('data-actions-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-actions-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-actions-placeholder-replacement="api-backed-workbench"');
     expect(html).toContain('data-actions-legacy-open-context="adapter-boundary-panel"');
     expect(html).toContain('data-actions-legacy-entity-handoff="/entities"');
@@ -85,7 +85,7 @@ describe('actions page', () => {
     expect(html).not.toContain('DARK OPS');
     expect(html).not.toContain('V1 SHELL IS LIVE');
     expect(html).not.toContain('Domain adapter comes next');
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain('HzActionWorkbench');
     expect(source).toContain('data-actions-placeholder-replacement="api-backed-workbench"');
     expect(source).toContain('data-actions-legacy-open-context="adapter-boundary-panel"');

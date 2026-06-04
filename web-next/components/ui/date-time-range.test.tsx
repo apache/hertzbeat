@@ -22,14 +22,14 @@ describe('DateTimeRange', () => {
       />
     );
 
-    expect(html).toContain('data-cold-date-time-range-owner="cold-date-time-range"');
-    expect(html).toContain('data-cold-date-time-range-shell="unframed-inline"');
-    expect(html).toContain('data-cold-date-time-range-action-space="reserved"');
-    expect(html).toContain('data-cold-date-time-range-reserved-action="true"');
-    expect(html.match(/data-cold-date-time-picker-owner="cold-date-time-picker"/g)).toHaveLength(2);
-    expect(html.match(/data-cold-date-time-picker-library="react-datepicker"/g)).toHaveLength(2);
-    expect(html).toContain('data-cold-date-time-picker-trigger="true"');
-    expect(html).toContain('data-cold-date-time-picker-input="hidden-value"');
+    expect(html).toContain('data-hz-date-time-range-owner="hertzbeat-ui-date-time-range"');
+    expect(html).toContain('data-hz-date-time-range-shell="unframed-inline"');
+    expect(html).toContain('data-hz-date-time-range-action-space="reserved"');
+    expect(html).toContain('data-hz-date-time-range-reserved-action="true"');
+    expect(html.match(/data-hz-date-time-picker-owner="hertzbeat-ui-date-time-picker"/g)).toHaveLength(2);
+    expect(html.match(/data-hz-date-time-picker-library="react-datepicker"/g)).toHaveLength(2);
+    expect(html).toContain('data-hz-date-time-picker-trigger="true"');
+    expect(html).toContain('data-hz-date-time-picker-input="hidden-value"');
     expect(html).not.toMatch(/\u4eca\u5929/);
     expect(html).not.toContain('type="datetime-local"');
     expect(html).not.toContain('type="date"');
@@ -39,15 +39,15 @@ describe('DateTimeRange', () => {
     expect(source).toContain("registerLocale('zh-CN', zhCN)");
     expect(source).toContain('inline');
     expect(source).toContain('getPickerPanelPosition');
-    expect(source).toContain('data-cold-date-time-picker-portal="body"');
-    expect(source).toContain('data-cold-date-time-picker-panel="body-fixed-clear-confirm"');
+    expect(source).toContain('data-hz-date-time-picker-portal="body"');
+    expect(source).toContain('data-hz-date-time-picker-panel="body-fixed-clear-confirm"');
     expect(source).toContain('createPortal(panel, document.body)');
     expect(source).toContain('locale="zh-CN"');
-    expect(source).toContain('data-cold-date-time-picker-time-columns="hour-minute"');
-    expect(source).toContain('data-cold-date-time-picker-layout');
+    expect(source).toContain('data-hz-date-time-picker-time-columns="hour-minute"');
+    expect(source).toContain('data-hz-date-time-picker-layout');
     expect(source).toContain('calendar-time-columns');
-    expect(source).toContain('data-cold-date-time-picker-surface="flat-calendar-time"');
-    expect(source).toContain('data-cold-date-time-picker-calendar-shell="fixed-calendar"');
+    expect(source).toContain('data-hz-date-time-picker-surface="flat-calendar-time"');
+    expect(source).toContain('data-hz-date-time-picker-calendar-shell="fixed-calendar"');
     expect(source).toContain('const PICKER_PANEL_WIDTH = 392');
     expect(source).toContain("mode === 'time' ? 'w-[220px]' : 'w-[392px]'");
     expect(source).toContain("mode === 'time' ? 'block' : 'grid grid-cols-[258px_132px]'");
@@ -60,7 +60,7 @@ describe('DateTimeRange', () => {
     expect(source).toContain('tabular-nums');
     expect(source).toContain('h-6 w-full');
     expect(source).toContain('max-h-[168px]');
-    expect(source).toContain('data-cold-time-column={column}');
+    expect(source).toContain('data-hz-time-column={column}');
     expect(source).toContain("column: 'hour' | 'minute'");
     expect(source).toContain('TIME_HOURS');
     expect(source).toContain('TIME_MINUTES');
@@ -69,13 +69,13 @@ describe('DateTimeRange', () => {
     expect(source).not.toContain('showTimeSelectOnly');
     expect(source).not.toContain('timeIntervals={1}');
     expect(source).not.toContain('timeFormat="HH:mm"');
-    expect(source).toContain('data-cold-date-time-picker-action="clear"');
-    expect(source).toContain('data-cold-date-time-picker-action="confirm"');
+    expect(source).toContain('data-hz-date-time-picker-action="clear"');
+    expect(source).toContain('data-hz-date-time-picker-action="confirm"');
     expect(source).not.toContain('type={mode}');
     expect(source).not.toContain('absolute left-0 top-[calc(100%+6px)]');
     expect(source).not.toContain("rounded-[3px] border border-[#2b3039] bg-[#0d1015] p-2");
     expect(source).not.toContain('getCalendarDays');
-    expect(source).not.toContain('data-cold-calendar-grid');
+    expect(source).not.toContain('data-hz-calendar-grid');
     expect(source).not.toContain('placeholder="YYYY-MM-DD"');
     expect(source).not.toContain('placeholder="HH:mm"');
     expect(source).not.toContain("mode === 'time' ? 'w-[220px]' : 'w-[430px]'");
@@ -109,10 +109,10 @@ describe('DateTimeRange', () => {
       />
     );
 
-    expect(html).toContain('data-cold-time-range-owner="cold-time-range"');
-    expect(html).toContain('data-cold-date-time-range-shell="unframed-inline"');
-    expect(html.match(/data-cold-date-time-picker-owner="cold-date-time-picker"/g)).toHaveLength(2);
-    expect(html.match(/data-cold-date-time-picker-library="react-datepicker"/g)).toHaveLength(2);
+    expect(html).toContain('data-hz-time-range-owner="hertzbeat-ui-time-range"');
+    expect(html).toContain('data-hz-date-time-range-shell="unframed-inline"');
+    expect(html.match(/data-hz-date-time-picker-owner="hertzbeat-ui-date-time-picker"/g)).toHaveLength(2);
+    expect(html.match(/data-hz-date-time-picker-library="react-datepicker"/g)).toHaveLength(2);
     expect(html).toContain('09:00');
     expect(html).toContain('18:00');
     expect(html).not.toMatch(/\u4eca\u5929/);

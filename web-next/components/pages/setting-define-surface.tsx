@@ -4,8 +4,8 @@ import React from 'react';
 import { Eye, EyeOff, FileText, Moon, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { HzButton, HzButtonLink, HzConfirmDialog, HzSwitch, HzYamlWorkspace, type HzTemplateCategory } from '@hertzbeat/ui';
 import { Button } from '../ui/button';
-import { ColdCodeEditor } from '../ui/cold-code-editor';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { HzCodeEditor } from '../ui/hz-code-editor';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import { buildTemplateFacts, buildTemplateMenuView, buildTemplateSummaryRows } from '../../lib/setting-define/view-model';
 import type { SettingDefinePageData } from '../../lib/setting-define/controller';
 
@@ -48,7 +48,7 @@ type TemplateVisibilityConfirm = {
   nextHide: boolean;
 };
 
-const coldDefineVisual = coldOpsCatalogVisual;
+const coldDefineVisual = hzOpsCatalogVisual;
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-[#f8fafc]';
@@ -215,7 +215,7 @@ export function SettingDefineSurface({
         </span>
       ) : null}
       {!hasTemplateItems || isSearchMiss ? (
-        <span data-setting-define-empty-state="cold-list-empty" className="text-[#efd29b]">
+        <span data-setting-define-empty-state="hertzbeat-ui-list-empty" className="text-[#efd29b]">
           {emptyStateTitle}
         </span>
       ) : null}
@@ -250,8 +250,8 @@ export function SettingDefineSurface({
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#858d9a]">
           {t('setting.define.diff.original')}
         </div>
-        <ColdCodeEditor
-          data-setting-define-editor-field="cold-code-editor"
+        <HzCodeEditor
+          data-setting-define-editor-field="hz-code-editor"
           data-setting-define-code-editor="monitor-template-yaml-original"
           data-setting-define-editor-theme={editorTheme}
           data-setting-define-editor-theme-owner="angular-nz-code-editor-theme"
@@ -273,9 +273,9 @@ export function SettingDefineSurface({
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#858d9a]">
           {t('setting.define.diff.current')}
         </div>
-        <ColdCodeEditor
+        <HzCodeEditor
           data-hz-ui="yaml-editor"
-          data-setting-define-editor-field="cold-code-editor"
+          data-setting-define-editor-field="hz-code-editor"
           data-setting-define-code-editor="monitor-template-yaml"
           data-setting-define-editor-theme={editorTheme}
           data-setting-define-editor-theme-owner="angular-nz-code-editor-theme"
@@ -300,9 +300,9 @@ export function SettingDefineSurface({
     </div>
   ) : (
     <div className="p-3">
-      <ColdCodeEditor
+      <HzCodeEditor
         data-hz-ui="yaml-editor"
-        data-setting-define-editor-field="cold-code-editor"
+        data-setting-define-editor-field="hz-code-editor"
         data-setting-define-code-editor="monitor-template-yaml"
         data-setting-define-editor-theme={editorTheme}
         data-setting-define-editor-theme-owner="angular-nz-code-editor-theme"
@@ -328,7 +328,7 @@ export function SettingDefineSurface({
 
   return (
     <div
-      data-setting-define-surface="otlp-cold-define-console"
+      data-setting-define-surface="otlp-hertzbeat-ui-define-console"
       data-setting-define-style-baseline={coldDefineVisual.canvasName}
       data-setting-define-route-state="angular-current-app-url-retained"
       data-setting-define-theme-contract="angular-theme-service-initial"
@@ -373,9 +373,9 @@ export function SettingDefineSurface({
       data-setting-define-template-visibility-loading-owner="setting-define-controller"
       data-setting-define-template-visibility-loading={savePending ? 'true' : 'false'}
       data-setting-define-editor-option-contract="angular-yaml-vs-folding-automatic-layout"
-      data-setting-define-editor-option-owner="cold-code-editor"
+      data-setting-define-editor-option-owner="hz-code-editor"
       data-setting-define-editor-loading-contract="angular-nz-code-editor-loading"
-      data-setting-define-editor-loading-owner="cold-code-editor"
+      data-setting-define-editor-loading-owner="hz-code-editor"
       data-setting-define-editor-loading={editorLoading ? 'true' : 'false'}
       data-setting-define-editor-loading-save-contract="angular-save-hidden-while-editor-loading"
       className={coldDefineVisual.canvas.root}
@@ -384,7 +384,7 @@ export function SettingDefineSurface({
       <section className={coldDefineVisual.layout.pageSection}>
         <div className="mx-auto max-w-[1480px]">
           <div className="mb-5">
-            <div data-setting-define-header="cold-compact-header" className={coldDefineVisual.panel.hero}>
+            <div data-setting-define-header="hertzbeat-ui-compact-header" className={coldDefineVisual.panel.hero}>
               <div className="max-w-[920px]">
                 <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">{defineTitle}</h1>
                 <p className="mt-4 max-w-[780px] text-[13px] leading-6 text-[#a9b0bb]">
@@ -476,7 +476,7 @@ export function SettingDefineSurface({
             </div>
           </div>
 
-          <div data-setting-define-workspace="cold-define-workspace">
+          <div data-setting-define-workspace="hertzbeat-ui-define-workspace">
             <div data-setting-define-editor-shell="shared-yaml-workspace">
               <HzYamlWorkspace
                 categories={templateCategories}

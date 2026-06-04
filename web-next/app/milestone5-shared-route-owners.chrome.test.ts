@@ -71,7 +71,7 @@ describe('Milestone 5 shared route owners', () => {
     expect(traceSource).not.toContain('components/workbench/primitives');
 
     expect(alertIntegrationSource).toContain('AlertIntegrationMarkdown');
-    expect(alertIntegrationSource).toContain('coldOpsCatalogVisual');
+    expect(alertIntegrationSource).toContain('hzOpsCatalogVisual');
     expect(alertIntegrationSource).toContain('data-alert-integration-surface="otlp-cold-source-doc"');
     expect(alertIntegrationSource).not.toContain('components/workbench/primitives');
 

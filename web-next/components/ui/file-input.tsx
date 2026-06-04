@@ -25,8 +25,8 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({ classNam
     {...props}
     ref={ref}
     type="file"
-    data-cold-file-input-owner="cold-file-input"
-    data-cold-file-input-control="native-hidden-file"
+    data-hz-file-input-owner="hertzbeat-ui-file-input"
+    data-hz-file-input-control="native-hidden-file"
     className={cn('hidden', className)}
   />
 ));

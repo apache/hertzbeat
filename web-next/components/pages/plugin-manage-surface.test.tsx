@@ -63,7 +63,7 @@ describe('plugin manage surface', () => {
     );
 
     expect(html).toContain('data-plugin-manage-surface="otlp-cold-plugin-console"');
-    expect(html).toContain('data-plugin-manage-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-plugin-manage-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-plugin-header="cold-compact-header"');
     expect(html).toContain('data-plugin-command-row="standard-equal-buttons"');
     expect(html).toContain('data-plugin-admin-layout="full-width-admin-list"');
@@ -119,7 +119,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-hz-pagination-page-jump="number-input"');
     expect(html).toContain('data-plugin-pagination-page-jump-owner="hertzbeat-ui-input"');
     expect(html).toContain('data-plugin-pagination-page-size-owner="hertzbeat-ui-select"');
-    expect(html).toContain('data-plugin-select-all="cold-checkbox"');
+    expect(html).toContain('data-plugin-select-all="hertzbeat-ui-checkbox"');
     expect(html).toContain('data-plugin-action-menu-clipping="none"');
     expect(html).toContain('data-plugin-toolbar-delete-menu="angular-toolbar-ellipsis-delete"');
     expect(html).toContain('data-plugin-toolbar-delete-menu-contract="angular-toolbar-ellipsis-delete"');
@@ -294,7 +294,7 @@ describe('plugin manage surface', () => {
   it('keeps the plugin page on the cold visual owner instead of WorkbenchPage or alert primitives', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/plugin-manage-surface.tsx'), 'utf8');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain('inputWidthClassName="w-[360px]"');
     expect(source).toContain('data-plugin-manage-surface="otlp-cold-plugin-console"');
@@ -635,19 +635,19 @@ describe('plugin manage surface', () => {
 
     expect(source).toContain("from '../ui/checkbox'");
     expect(source).toContain('HzSwitch');
-    expect(source).toContain('data-plugin-select-all="cold-checkbox"');
+    expect(source).toContain('data-plugin-select-all="hertzbeat-ui-checkbox"');
     expect(source).toContain('data-plugin-row-select={String(original.id)}');
     expect(source).toContain('data-plugin-upload-status-control="angular-nz-switch"');
     expect(source).not.toContain('className="h-3.5 w-3.5 accent-[#4e74f8]"');
-    expect(html).toContain('data-plugin-select-all="cold-checkbox"');
+    expect(html).toContain('data-plugin-select-all="hertzbeat-ui-checkbox"');
     expect(html).toContain('data-plugin-row-select="11"');
     expect(html).toContain('data-plugin-row-select="12"');
     expect(html).toContain('data-plugin-upload-status-control="angular-nz-switch"');
     expect(html).toContain('data-plugin-upload-status-control-owner="hertzbeat-ui-switch"');
     expect(html).toContain('data-hz-ui="switch"');
-    expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length ?? 0).toBe(3);
-    expect(html.match(/data-cold-checkbox-control="native-hidden"/g)?.length ?? 0).toBe(3);
-    expect(html.match(/data-cold-checkbox-box="indicator"/g)?.length ?? 0).toBe(3);
+    expect(html.match(/data-hz-checkbox-owner="hertzbeat-ui-checkbox"/g)?.length ?? 0).toBe(3);
+    expect(html.match(/data-hz-checkbox-control="native-hidden"/g)?.length ?? 0).toBe(3);
+    expect(html.match(/data-hz-checkbox-box="indicator"/g)?.length ?? 0).toBe(3);
     expect(html).toContain('data-hz-switch-owner="hertzbeat-ui-switch"');
   });
 
@@ -1130,7 +1130,7 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-param-labels-contract="angular-app-configurable-field"');
     expect(html).toContain('data-plugin-param-labels-owner="hertzbeat-ui-key-value-editor"');
     expect(html).toContain('data-plugin-param-label-selector-contract="angular-app-label-selector"');
-    expect(html).toContain('data-plugin-param-label-selector-owner="cold-label-selector"');
+    expect(html).toContain('data-plugin-param-label-selector-owner="hertzbeat-ui-label-selector"');
     expect(html).toContain('data-plugin-param-metrics-field-contract="angular-app-configurable-field"');
     expect(html).toContain('data-plugin-param-metrics-field-owner="hertzbeat-ui-configurable-field-editor"');
     expect(html).toContain('data-plugin-param-array-contract="angular-app-multi-func-input"');
@@ -1193,13 +1193,13 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-param-field-type="label-selector"');
     expect(html).toContain('data-plugin-param-label-selector="angular-app-label-selector"');
     expect(html).toContain('data-plugin-param-label-selector-field="selector"');
-    expect(html).toContain('data-plugin-param-label-selector-owner="cold-label-selector"');
-    expect(html).toContain('data-cold-label-selector-owner="cold-label-selector"');
-    expect(html).toContain('data-cold-label-selector-record-row="service:checkout"');
-    expect(html).toContain('data-cold-label-selector-record-row="severity:critical"');
-    expect(html).toContain('data-cold-label-selector-key-input="searchable-key"');
-    expect(html).toContain('data-cold-label-selector-value-input="searchable-value"');
-    expect(html).toContain('data-cold-label-selector-value="hidden"');
+    expect(html).toContain('data-plugin-param-label-selector-owner="hertzbeat-ui-label-selector"');
+    expect(html).toContain('data-hz-label-selector-owner="hertzbeat-ui-label-selector"');
+    expect(html).toContain('data-hz-label-selector-record-row="service:checkout"');
+    expect(html).toContain('data-hz-label-selector-record-row="severity:critical"');
+    expect(html).toContain('data-hz-label-selector-key-input="searchable-key"');
+    expect(html).toContain('data-hz-label-selector-value-input="searchable-value"');
+    expect(html).toContain('data-hz-label-selector-value="hidden"');
     expect(html).toContain('data-plugin-param-field="metrics"');
     expect(html).toContain('data-plugin-param-field-type="metrics-field"');
     expect(html).toContain('data-plugin-param-metrics-field-editor="metrics"');

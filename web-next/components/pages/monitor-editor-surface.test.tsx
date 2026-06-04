@@ -75,10 +75,10 @@ vi.mock('@/components/ui/textarea', () => ({
 
 vi.mock('../ui/number-stepper', () => ({
   NumberStepper: ({ value, onValueChange: _onValueChange, ...props }: any) => (
-    <span data-cold-number-stepper-owner="cold-number-stepper">
-      <input type="text" data-cold-number-stepper-input="true" value={value} readOnly {...props} />
-      <button type="button" data-cold-number-stepper-action="decrement">Decrease</button>
-      <button type="button" data-cold-number-stepper-action="increment">Increase</button>
+    <span data-hz-number-stepper-owner="hertzbeat-ui-number-stepper">
+      <input type="text" data-hz-number-stepper-input="true" value={value} readOnly {...props} />
+      <button type="button" data-hz-number-stepper-action="decrement">Decrease</button>
+      <button type="button" data-hz-number-stepper-action="increment">Increase</button>
     </span>
   )
 }));
@@ -87,15 +87,15 @@ vi.mock('@/components/ui/select', () => ({
   Select: ({ children, ...props }: any) => <select {...props}>{children}</select>
 }));
 
-vi.mock('../ui/cold-code-editor', () => ({
-  ColdCodeEditor: ({ value, language, minHeight, onChange: _onChange, ...props }: any) => (
+vi.mock('../ui/hz-code-editor', () => ({
+  HzCodeEditor: ({ value, language, minHeight, onChange: _onChange, ...props }: any) => (
     <div
       data-monitor-grafana-code-editor={props['data-monitor-grafana-code-editor']}
       data-monitor-param-code-editor={props['data-monitor-param-code-editor']}
       data-monitor-param-field={props['data-monitor-param-field']}
-      data-cold-code-editor="codemirror"
-      data-cold-code-editor-language={language}
-      data-cold-code-editor-min-height={minHeight}
+      data-hz-code-editor="codemirror"
+      data-hz-code-editor-language={language}
+      data-hz-code-editor-min-height={minHeight}
     >
       {props.name ? <input type="hidden" name={props.name} value={value} /> : null}
       {value}
@@ -253,11 +253,11 @@ describe('MonitorEditorSurface', () => {
     expect(html).toContain('Add label');
     expect(html).toContain('Add annotation');
     expect(html).toContain('data-monitor-editor-label-selector="angular-app-label-selector"');
-    expect(html).toContain('data-monitor-editor-label-selector-owner="cold-label-selector"');
-    expect(html).toContain('data-cold-label-selector-owner="cold-label-selector"');
-    expect(html).toContain('data-cold-label-selector-record-row="team:platform"');
-    expect(html).toContain('data-cold-label-selector-key-input="searchable-key"');
-    expect(html).toContain('data-cold-label-selector-value-input="searchable-value"');
+    expect(html).toContain('data-monitor-editor-label-selector-owner="hertzbeat-ui-label-selector"');
+    expect(html).toContain('data-hz-label-selector-owner="hertzbeat-ui-label-selector"');
+    expect(html).toContain('data-hz-label-selector-record-row="team:platform"');
+    expect(html).toContain('data-hz-label-selector-key-input="searchable-key"');
+    expect(html).toContain('data-hz-label-selector-value-input="searchable-value"');
     expect(html).toContain('data-hz-ui="key-value-editor"');
     expect(html).toContain('data-monitor-editor-key-value-owner="hertzbeat-ui-key-value-editor"');
     expect(html).toContain('data-hz-key-value-action="add"');
@@ -561,7 +561,7 @@ describe('MonitorEditorSurface', () => {
     expect(html).toContain('data-hz-ui="monitor-editor-action-bar"');
     expect(html).toContain('data-hz-ui="monitor-editor-section"');
     expect(html).toContain('data-monitor-editor-label-selector="angular-app-label-selector"');
-    expect(html).toContain('data-monitor-editor-label-selector-owner="cold-label-selector"');
+    expect(html).toContain('data-monitor-editor-label-selector-owner="hertzbeat-ui-label-selector"');
     expect(html).toContain('data-monitor-editor-key-value="annotations"');
     expect(html).toContain('data-monitor-editor-section-owner="hertzbeat-ui-editor-section"');
     expect(html).toContain('data-monitor-editor-field-owner="hertzbeat-ui-field"');
@@ -658,7 +658,7 @@ describe('MonitorEditorSurface', () => {
     expect(source).toContain('HzKeyValueEditor');
     expect(source).toContain('LabelRecordInput');
     expect(source).toContain('data-monitor-editor-label-selector="angular-app-label-selector"');
-    expect(source).toContain('data-monitor-editor-label-selector-owner="cold-label-selector"');
+    expect(source).toContain('data-monitor-editor-label-selector-owner="hertzbeat-ui-label-selector"');
     expect(source).not.toContain('data-monitor-editor-key-value="labels"');
     expect(source).toContain('data-monitor-editor-key-value="annotations"');
     expect(source).toContain('HzField');
@@ -829,7 +829,7 @@ describe('MonitorEditorSurface', () => {
     const advancedIndex = html.indexOf('data-monitor-editor-advanced-collapse="angular-ghost-collapse-dashed-trigger"', mainParamIndex);
     const advancedToggleIndex = html.indexOf('data-monitor-editor-advanced-toggle="angular-dashed-collapse-trigger"', advancedIndex);
     const runtimeIndex = html.indexOf('data-monitor-editor-runtime-order="angular-after-advanced-before-labels"');
-    const labelIndex = html.indexOf('data-monitor-editor-label-selector-owner="cold-label-selector"', runtimeIndex);
+    const labelIndex = html.indexOf('data-monitor-editor-label-selector-owner="hertzbeat-ui-label-selector"', runtimeIndex);
 
     expect(html).toContain('data-monitor-editor-field-order="angular-monitor-form-sequence"');
     expect(scrapeIndex).toBeGreaterThan(-1);
@@ -1057,7 +1057,7 @@ describe('MonitorEditorSurface', () => {
     expect(source).toContain('HzNumberStepper');
     expect(source).not.toContain("from '../ui/number-stepper'");
     expect(source).toContain('data-monitor-interval-stepper="hertzbeat-ui-number-stepper"');
-    expect(source).not.toContain('data-cold-number-stepper-owner');
+    expect(source).not.toContain('data-hz-number-stepper-owner');
     expect(source).not.toContain('type="number"');
   });
 
@@ -1209,7 +1209,7 @@ describe('MonitorEditorSurface', () => {
     expect(source).toContain('max={65535}');
     expect(source).toContain('step={1}');
     expect(source).not.toContain("from '../ui/number-stepper'");
-    expect(source).not.toContain('data-cold-number-stepper-owner');
+    expect(source).not.toContain('data-hz-number-stepper-owner');
     expect(source).not.toContain("type={define.type === 'number' ? 'number' : 'text'}");
   });
 
@@ -1255,7 +1255,7 @@ describe('MonitorEditorSurface', () => {
     expect(html).toContain('data-hz-switch-label="true"');
     expect(source).toContain('HzSwitch');
     expect(source).not.toContain("from '../ui/checkbox'");
-    expect(source).not.toContain('data-cold-checkbox-owner');
+    expect(source).not.toContain('data-hz-checkbox-owner');
     expect(source).toContain('data-monitor-param-switch={define.field}');
     expect(source).toContain('data-monitor-param-boolean-contract="angular-nz-switch"');
     expect(source).toContain('data-monitor-param-field={define.field}');
@@ -1304,7 +1304,7 @@ describe('MonitorEditorSurface', () => {
     expect(html).toContain('data-hz-checkbox-label="true"');
     expect(source).toContain('data-monitor-grafana-enabled-checkbox="hertzbeat-ui-checkbox"');
     expect(source).toContain('data-monitor-editor-checkbox="grafana-dashboard-enabled"');
-    expect(source).not.toContain('data-cold-checkbox-owner');
+    expect(source).not.toContain('data-hz-checkbox-owner');
     expect(source).not.toContain('type="checkbox"\n                    checked={Boolean(draft.grafanaDashboard.enabled)}');
   });
 
@@ -1355,7 +1355,7 @@ describe('MonitorEditorSurface', () => {
     expect(html).toContain('data-min-height="120px"');
     expect(html).toContain('name="grafana_dashboard_template"');
     expect(html).toContain('{&quot;panels&quot;:[]}');
-    expect(source).not.toContain("from '../ui/cold-code-editor'");
+    expect(source).not.toContain("from '../ui/hz-code-editor'");
     expect(source).toContain('HzCodeEditor');
     expect(source).toContain('data-monitor-editor-code-editor-owner="hertzbeat-ui-code-editor"');
     expect(source).toContain('data-monitor-editor-code-editor="grafana-dashboard-template"');

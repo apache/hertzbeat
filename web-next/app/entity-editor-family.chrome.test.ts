@@ -83,7 +83,7 @@ describe('entity editor family cold-workbench chrome', () => {
     expect(workbenchPageSource).toContain('text-[var(--ops-text-secondary)]');
 
     expect(entityEditorSource).toContain('data-entity-editor-shell="otlp-cold-entity-composer"');
-    expect(entityEditorSource).toContain('data-entity-editor-style-baseline="hertzbeat-cold-matte"');
+    expect(entityEditorSource).toContain('data-entity-editor-style-baseline="hertzbeat-ui-matte"');
     expect(entityEditorSource).toContain('data-entity-editor-frame="cold-editor-frame"');
     expect(entityEditorSource).toContain('data-entity-editor-definition-footer="cold-definition-footer"');
     expect(entityEditorSource).toContain('data-entity-editor-definition-tabs="cold-bottom-tabs"');

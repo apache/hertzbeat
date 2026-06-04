@@ -261,7 +261,15 @@ export default function OverviewPage() {
               subtitle={t('dashboard.darkops.subtitle')}
               showRail
               showFooter
+              chrome="plain"
               railWidth="wide"
+              className="bg-[#0b0c0e]"
+              surfaceClassName="bg-[#0b0c0e]"
+              mainClassName="bg-[#0b0c0e]"
+              railClassName="bg-[#0b0c0e]"
+              data-overview-shell-chrome="plain-dark-workbench"
+              mainProps={{ 'data-overview-shell-main-owner': 'plain-dark-workbench' }}
+              railProps={{ 'data-overview-shell-rail-owner': 'plain-dark-workbench' }}
               actions={
                 <>
                   <Button

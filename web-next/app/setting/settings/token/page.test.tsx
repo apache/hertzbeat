@@ -126,7 +126,7 @@ describe('setting token page', () => {
     expect(html).toContain('data-client-workbench="true"');
     expect(html).toContain('data-settings-console-title="true"');
     expect(html).toContain('data-setting-token-surface="otlp-cold-token-console"');
-    expect(html).toContain('data-setting-token-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-setting-token-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-setting-token-layout-contract="full-width-admin-no-rail"');
     expect(html).toContain('data-setting-token-generate-dialog-layout-contract="angular-vertical-form"');
     expect(html).toContain('data-setting-token-generated-dialog-width-contract="angular-width-50-percent"');
@@ -189,7 +189,7 @@ describe('setting token page', () => {
   it('keeps the token route on the settings owner instead of observability workbench primitives', () => {
     const source = readFileSync(resolve(__dirname, 'setting-token-page.tsx'), 'utf8');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain('data-setting-token-surface="otlp-cold-token-console"');
     expect(source).toContain('data-setting-token-style-baseline={coldTokenVisual.canvasName}');
     expect(source).toContain('data-setting-token-layout-contract="full-width-admin-no-rail"');

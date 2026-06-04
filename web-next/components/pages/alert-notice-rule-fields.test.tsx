@@ -104,21 +104,21 @@ describe('AlertNoticeRuleFields', () => {
     expect(html).not.toContain('alert.notice.rule.template');
     expect(html).not.toContain('alert.notice.rule.label');
     expect(html).toContain('data-alert-notice-rule-label-selector="searchable-label-record"');
-    expect(html).toContain('data-cold-label-selector-owner="cold-label-selector"');
-    expect(html).toContain('data-cold-label-selector-record-row="severity:critical"');
-    expect(html).toContain('data-cold-label-selector-remove-row="severity:critical"');
-    expect(html).toContain('data-cold-label-selector-draft-row="true"');
-    expect(html).toContain('data-cold-label-selector-key-input="searchable-key"');
-    expect(html).toContain('data-cold-label-selector-value-input="searchable-value"');
+    expect(html).toContain('data-hz-label-selector-owner="hertzbeat-ui-label-selector"');
+    expect(html).toContain('data-hz-label-selector-record-row="severity:critical"');
+    expect(html).toContain('data-hz-label-selector-remove-row="severity:critical"');
+    expect(html).toContain('data-hz-label-selector-draft-row="true"');
+    expect(html).toContain('data-hz-label-selector-key-input="searchable-key"');
+    expect(html).toContain('data-hz-label-selector-value-input="searchable-value"');
     expect(html).toContain('data-testid="notice-rule-field-daysText"');
     expect(html).toContain('name="periodStart"');
     expect(html).toContain('name="periodEnd"');
-    expect(html).toContain('data-cold-time-range-owner="cold-time-range"');
-    expect(html).toContain('data-cold-date-time-picker-owner="cold-date-time-picker"');
-    expect(html).toContain('data-cold-date-time-picker-library="react-datepicker"');
-    expect(html).toContain('data-cold-checkbox-owner="cold-checkbox"');
-    expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(9);
-    expect(html).toContain('data-cold-checkbox-box="indicator"');
+    expect(html).toContain('data-hz-time-range-owner="hertzbeat-ui-time-range"');
+    expect(html).toContain('data-hz-date-time-picker-owner="hertzbeat-ui-date-time-picker"');
+    expect(html).toContain('data-hz-date-time-picker-library="react-datepicker"');
+    expect(html).toContain('data-hz-checkbox-owner="hertzbeat-ui-checkbox"');
+    expect(html.match(/data-hz-checkbox-owner="hertzbeat-ui-checkbox"/g)?.length).toBeGreaterThanOrEqual(9);
+    expect(html).toContain('data-hz-checkbox-box="indicator"');
     expect(html).not.toContain('type="time"');
     expect(html).not.toContain('accent-[var(--ops-primary)]');
   });
@@ -159,7 +159,7 @@ describe('AlertNoticeRuleFields', () => {
 
     expect(html).toContain('data-alert-notice-rule-days-selector="cold-weekday-checkboxes"');
     expect(html).toContain('aria-checked="true"');
-    expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(7);
+    expect(html.match(/data-hz-checkbox-owner="hertzbeat-ui-checkbox"/g)?.length).toBeGreaterThanOrEqual(7);
   });
 
   it('seeds edit receiver and template options from notice rule detail before option pages load', () => {

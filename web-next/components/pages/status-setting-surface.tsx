@@ -7,7 +7,7 @@ import { OverlayDialog } from '../workbench/overlay-dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { SearchRow } from '../ui/search-row';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import { latestIncidentMessage } from '../../lib/status-center/display';
 import type { PageResult, StatusPageComponent, StatusPageIncident, StatusPageOrg } from '../../lib/types';
 import {
@@ -91,7 +91,7 @@ type DeleteDialogState =
   | { kind: 'incident'; item: StatusPageIncident }
   | null;
 
-const coldStatusVisual = coldOpsCatalogVisual;
+const coldStatusVisual = hzOpsCatalogVisual;
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
@@ -114,7 +114,7 @@ const statusActionMenuPanelBaseClassName =
 
 function EmptyTableRow({ colSpan, t }: { colSpan: number; t: Translator }) {
   return (
-    <tr data-status-empty-row="cold-table-empty" className="bg-[#0b0c0e]">
+    <tr data-status-empty-row="hertzbeat-ui-table-empty" className="bg-[#0b0c0e]">
       <td colSpan={colSpan} className="h-[240px] px-3 py-10 text-center text-[#858d9a]">
         <div className="inline-flex flex-col items-center gap-3">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]">
@@ -321,7 +321,7 @@ function StatusTabs({
 }) {
   return (
     <div
-      data-status-tabs="cold-segmented-tabs"
+      data-status-tabs="hertzbeat-ui-segmented-tabs"
       data-status-tab-refresh-contract="angular-nz-tab-click-load"
       data-status-tab-refresh-owner="route-refresh-contract"
       className="mb-4 inline-flex rounded-[3px] border border-[#2b3039] bg-[#101217] p-1"
@@ -476,7 +476,7 @@ export function StatusSettingSurface({
   return (
     <>
       <div
-        data-status-setting-surface="otlp-cold-status-console"
+        data-status-setting-surface="otlp-hertzbeat-ui-status-console"
         data-status-setting-style-baseline={coldStatusVisual.canvasName}
         data-status-setting-mutation-feedback="angular-notify-keys"
         data-status-setting-mutation-feedback-owner="route-action-feedback-contract"
@@ -486,7 +486,7 @@ export function StatusSettingSurface({
         <section className={coldStatusVisual.layout.pageSection}>
           <div className="mx-auto max-w-[1480px]">
             <div className="mb-5">
-              <div data-status-header="cold-compact-header" className={coldStatusVisual.panel.hero}>
+              <div data-status-header="hertzbeat-ui-compact-header" className={coldStatusVisual.panel.hero}>
                 <div className="max-w-[840px]">
                   <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                     {t('setting.status.title')}
@@ -507,7 +507,7 @@ export function StatusSettingSurface({
             <div data-status-admin-layout="full-width-admin-list" className="space-y-5">
               <section className="min-w-0">
                 <div
-                  data-status-org-form="cold-settings-form"
+                  data-status-org-form="hertzbeat-ui-settings-form"
                   className="mb-5 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-4 shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
                 >
                   <div className="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
@@ -534,7 +534,7 @@ export function StatusSettingSurface({
                 <StatusTabs activeMode={activeMode} t={t} onModeChange={onModeChange} />
 
                 <div hidden={activeMode !== 'component'}>
-                  <div data-status-component-toolbar="cold-table-toolbar" className={coldTableToolbarClassName}>
+                  <div data-status-component-toolbar="hertzbeat-ui-table-toolbar" className={coldTableToolbarClassName}>
                     <div className="min-w-0 flex-1 text-[12px] font-semibold text-[#dbe4f0]">
                       {t('setting.status.components.tab')} <span className="ml-2 text-[#6f7788]">{components.length}</span>
                     </div>
@@ -568,8 +568,8 @@ export function StatusSettingSurface({
                     ) : null}
                   </div>
 
-                  <div data-status-component-table-shell="cold-dense-table" className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]">
-                    <table data-status-component-table="cold-component-table" className="w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
+                  <div data-status-component-table-shell="hertzbeat-ui-dense-table" className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]">
+                    <table data-status-component-table="hertzbeat-ui-component-table" className="w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
                       <thead className="border-b border-[#252b34] bg-[#101217] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
                         <tr>
                           <th className="w-[22%] px-3 py-2.5">{t('setting.status.components.name')}</th>
@@ -610,7 +610,7 @@ export function StatusSettingSurface({
                               </td>
                               <td className="px-3 py-2.5 text-[#858d9a]">{formatTime(component.gmtUpdate || component.gmtCreate || null)}</td>
                               <td className="px-3 py-2.5">
-                                <div data-status-component-row-actions="cold-icon-actions" className="flex gap-1.5">
+                                <div data-status-component-row-actions="hertzbeat-ui-icon-actions" className="flex gap-1.5">
                                   <Button
                                     size="icon"
                                     variant="default"
@@ -683,7 +683,7 @@ export function StatusSettingSurface({
 
                 <div hidden={activeMode !== 'incident'}>
                   <SearchRow
-                    data-status-incident-toolbar="cold-table-toolbar"
+                    data-status-incident-toolbar="hertzbeat-ui-table-toolbar"
                     data-status-incident-search-owner="shared-search-row"
                     className="mb-3"
                     inputWidthClassName="w-[320px]"
@@ -729,8 +729,8 @@ export function StatusSettingSurface({
                     }
                   />
 
-                  <div data-status-incident-table-shell="cold-dense-table" className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]">
-                    <table data-status-incident-table="cold-incident-table" className="w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
+                  <div data-status-incident-table-shell="hertzbeat-ui-dense-table" className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]">
+                    <table data-status-incident-table="hertzbeat-ui-incident-table" className="w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
                       <thead className="border-b border-[#252b34] bg-[#101217] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
                         <tr>
                           <th className="w-[18%] px-3 py-2.5">{t('setting.status.incidents.name')}</th>
@@ -772,7 +772,7 @@ export function StatusSettingSurface({
                               </td>
                               <td className="px-3 py-2.5 text-[#858d9a]">{formatTime(incident.startTime || incident.gmtCreate || null)}</td>
                               <td className="px-3 py-2.5">
-                                <div data-status-incident-row-actions="cold-icon-actions" className="flex gap-1.5">
+                                <div data-status-incident-row-actions="hertzbeat-ui-icon-actions" className="flex gap-1.5">
                                   <Button
                                     size="icon"
                                     variant="default"
@@ -839,7 +839,7 @@ export function StatusSettingSurface({
                       </tbody>
                     </table>
                     <div
-                      data-status-incident-pagination="cold-dense-pagination"
+                      data-status-incident-pagination="hertzbeat-ui-dense-pagination"
                       data-status-incident-pagination-owner="hertzbeat-ui-pagination-bar"
                       data-status-incident-pagination-contract="angular-search-pagination"
                     >

@@ -5,7 +5,7 @@ import React from 'react';
 import { Bell, GitBranch, Inbox, Network, Plus, RefreshCw, Upload } from 'lucide-react';
 import { Button } from '../ui/button';
 import { SearchRow } from '../ui/search-row';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import type { EntityQueryState } from '../../lib/entity-manage/query-state';
 import type { LightweightEntityHealthAffordance } from '../../lib/entity-health-affordance';
 
@@ -42,7 +42,7 @@ type EntityListSurfaceProps = {
   onReset: () => void;
 };
 
-const coldEntityVisual = coldOpsCatalogVisual;
+const coldEntityVisual = hzOpsCatalogVisual;
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
@@ -74,7 +74,7 @@ function statusClassName(statusTone: EntityListTableRow['statusTone']) {
 
 function EmptyTableRow({ t }: { t: Translator }) {
   return (
-    <tr data-entity-list-empty-state="cold-table-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
+    <tr data-entity-list-empty-state="hertzbeat-ui-table-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
       <td colSpan={6} className="h-[240px] px-3 text-center text-[#a9b0bb]">
         <div className="inline-flex flex-col items-center gap-2.5">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]">
@@ -116,7 +116,7 @@ export function EntityListSurface({
 
   return (
     <main
-      data-entity-list-surface="otlp-cold-entity-console"
+      data-entity-list-surface="otlp-hertzbeat-ui-entity-console"
       data-entity-list-style-baseline={coldEntityVisual.canvasName}
       className={coldEntityVisual.canvas.root}
       style={coldEntityVisual.canvas.backgroundStyle}
@@ -124,7 +124,7 @@ export function EntityListSurface({
       <section className={coldEntityVisual.layout.pageSection}>
         <div className="mx-auto max-w-[1480px]">
           <div className="mb-5">
-            <div data-entity-list-header="cold-compact-header" className={coldEntityVisual.panel.hero}>
+            <div data-entity-list-header="hertzbeat-ui-compact-header" className={coldEntityVisual.panel.hero}>
               <div className="max-w-[880px]">
                 <div className="text-[11px] font-semibold tracking-[0.12em] text-[#7e8494]">{t('entities.list.kicker')}</div>
                 <h1 className="mt-2 text-[30px] font-semibold leading-tight text-[#f5f7fb]">{t('entities.list.title')}</h1>
@@ -154,7 +154,7 @@ export function EntityListSurface({
           </div>
 
           <div data-entity-list-admin-layout="full-width-admin-list" className="space-y-5">
-            <div data-entity-list-count-strip="cold-inline-counts" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <div data-entity-list-count-strip="hertzbeat-ui-inline-counts" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
               {metricItems.map(({ label, value, Icon }) => {
                 const MetricIcon = Icon;
                 return (
@@ -174,7 +174,7 @@ export function EntityListSurface({
 
             <section className="min-w-0">
               <SearchRow
-                data-entity-list-toolbar="cold-table-toolbar"
+                data-entity-list-toolbar="hertzbeat-ui-table-toolbar"
                 value={draft.search}
                 placeholder={t('entities.list.search.placeholder')}
                 searchLabel={t('common.search')}
@@ -208,7 +208,7 @@ export function EntityListSurface({
               />
 
               <div
-                data-entity-list-table-shell="cold-dense-table"
+                data-entity-list-table-shell="hertzbeat-ui-dense-table"
                 className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
               >
                 <div className="flex min-h-[42px] items-center justify-between gap-3 border-b border-[#252b34] bg-[#101217] px-3 text-[12px] text-[#8f99ab]">
@@ -216,7 +216,7 @@ export function EntityListSurface({
                   <span>{t('entities.list.table.range', { from: rangeFrom, to: rangeTo, total })}</span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table data-entity-list-table="cold-entity-table" className="min-w-[1040px] w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
+                  <table data-entity-list-table="hertzbeat-ui-entity-table" className="min-w-[1040px] w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
                     <thead className="border-b border-[#252b34] bg-[#101217] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
                       <tr>
                         <th className="w-[24%] px-3 py-2.5">{t('entities.list.column.object')}</th>
@@ -274,7 +274,7 @@ export function EntityListSurface({
                             </span>
                           </td>
                           <td className="px-3 py-2.5">
-                            <div data-entity-list-row-actions="cold-inline-actions" className="flex flex-wrap gap-1.5">
+                            <div data-entity-list-row-actions="hertzbeat-ui-inline-actions" className="flex flex-wrap gap-1.5">
                               <Link
                                 href={row.href}
                                 data-entity-list-row-owner-action="text-only"

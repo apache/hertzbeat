@@ -1325,7 +1325,7 @@ export default function MonitorsPage({
                             },
                             buttonProps: {
                               ...monitorBatchActionProps('delete'),
-                              'data-monitors-delete-confirm-trigger': 'cold-modal',
+                              'data-monitors-delete-confirm-trigger': 'hertzbeat-ui-modal',
                               'data-monitor-batch-more-menu-action': 'delete'
                             } as React.ButtonHTMLAttributes<HTMLButtonElement>
                           }
@@ -2041,7 +2041,7 @@ export default function MonitorsPage({
               data-monitor-delete-confirm-closable="angular-nz-closable-false"
               data-monitor-delete-confirm-ok="angular-nz-ok-danger-primary"
             >
-              <div data-monitors-delete-confirm="cold-modal">
+              <div data-monitors-delete-confirm="hertzbeat-ui-modal">
                 <p>{t('monitors.delete.copy')}</p>
                 <HzInlineFeedback
                   tone="critical"

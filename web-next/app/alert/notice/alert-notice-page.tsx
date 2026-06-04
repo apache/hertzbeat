@@ -24,7 +24,7 @@ import { buildNoticeListUrl, buildNoticeRuleDisplayNames, buildNoticeRuleDraft, 
 import type { AlertNoticeRouteState } from '../../../lib/alert-notice/query-state';
 import { buildAlertNoticeEvidenceContext, buildNoticeReceiverDraft, buildNoticeTemplateDraft, getAlertNoticeProductCopy, validateNoticeReceiverDraft, validateNoticeRuleDraft, validateNoticeTemplateDraft } from '../../../lib/alert-notice/view-model';
 import { DEFAULT_ALERT_LABEL_OPTIONS, loadAlertLabelOptionsFromFacade, type AlertLabelOptions } from '../../../lib/alert-label-options';
-import { coldOpsCatalogVisual } from '../../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../../lib/hz-ops-visual';
 import { formatTime } from '../../../lib/format';
 import type { NoticeReceiver, NoticeRule, NoticeTemplate, PageResult } from '../../../lib/types';
 
@@ -44,7 +44,7 @@ type NoticeDeleteRequest = {
 
 const NOTICE_PAGE_SIZE_OPTIONS = [8, 15, 25];
 type Translator = ReturnType<typeof useI18n>['t'];
-const coldNoticeVisual = coldOpsCatalogVisual;
+const coldNoticeVisual = hzOpsCatalogVisual;
 const coldToolbarClass = 'flex flex-wrap items-center gap-2 border-b border-[#252b34] bg-[#0b0c0e] px-3 py-2';
 const coldSelectClass =
   'h-8 w-[132px] rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 text-[12px] font-semibold text-[#eef2f7] outline-none focus:border-[#4e74f8]';
@@ -208,7 +208,7 @@ function NoticePagination({
 
   return (
     <div
-      data-alert-notice-pagination="cold-dense-pagination"
+      data-alert-notice-pagination="hertzbeat-ui-dense-pagination"
       data-alert-notice-pagination-owner="hertzbeat-ui-pagination-bar"
     >
       <HzPaginationBar
@@ -255,14 +255,14 @@ function NoticeTableEmptyRow({
   prefix: 'receiver' | 'rule' | 'template';
 }) {
   return (
-    <tr data-alert-notice-empty-row="true" data-alert-notice-receiver-empty-state={prefix === 'receiver' ? 'cold-empty-state' : undefined} className="bg-[#0b0c0e]">
+    <tr data-alert-notice-empty-row="true" data-alert-notice-receiver-empty-state={prefix === 'receiver' ? 'hertzbeat-ui-empty-state' : undefined} className="bg-[#0b0c0e]">
       <td
         colSpan={colSpan}
         className="h-[360px] px-3 pt-[54px] text-center align-top text-[#8f99ab]"
       >
         <div className="inline-flex flex-col items-center gap-2.5">
           <span
-            data-alert-notice-receiver-empty-icon={prefix === 'receiver' ? 'cold-empty-icon' : undefined}
+            data-alert-notice-receiver-empty-icon={prefix === 'receiver' ? 'hertzbeat-ui-empty-icon' : undefined}
             className="inline-flex h-10 w-12 items-center justify-center rounded-[4px] border border-[#2b3039] bg-[#101217] text-[#7e8494]"
           >
             <Inbox className="h-7 w-7" aria-hidden="true" />
@@ -806,7 +806,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
         const receiverPanel = (
           <div data-alert-notice-receiver-panel="true">
             <div
-              data-alert-notice-receiver-toolbar="cold-query-toolbar"
+              data-alert-notice-receiver-toolbar="hertzbeat-ui-query-toolbar"
               data-alert-notice-receiver-toolbar-layout="compact-inline-actions-query"
               className={coldToolbarClass}
             >
@@ -828,7 +828,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                   {t('alert.notice.receiver.new')}
                 </Button>
                 <Button
-                  data-alert-notice-receiver-bulk-menu="cold-more"
+                  data-alert-notice-receiver-bulk-menu="hertzbeat-ui-more"
                   data-testid="notice-receiver-delete"
                   className={coldIconButtonClass}
                   size="icon"
@@ -844,7 +844,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 <SearchRow
                   data-alert-notice-receiver-search="shared-compact"
                   data-alert-notice-receiver-search-submit="angular-enter-and-clear"
-                  data-alert-notice-receiver-search-submit-owner="cold-search-row"
+                  data-alert-notice-receiver-search-submit-owner="hertzbeat-ui-search-row"
                 className="mb-0"
                 value={receiverSearchDraft}
                 placeholder={t('alert.notice.receiver.people.name')}
@@ -855,7 +855,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 onClear={receiverSearchDraft || receiverSearch ? resetReceiverSearch : undefined}
               />
             </div>
-            <AlertSurfaceTableShell data-alert-notice-receiver-table-shell="cold-dense-table" className={coldTableShellClass}>
+            <AlertSurfaceTableShell data-alert-notice-receiver-table-shell="hertzbeat-ui-dense-table" className={coldTableShellClass}>
               <AlertSurfaceTable className="min-w-[1240px] text-center">
                 <AlertSurfaceTableHead className="text-center text-[13px] normal-case tracking-normal">
                   <tr>
@@ -956,7 +956,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             data-alert-notice-rule-receiver-display-owner="route-table-contract"
           >
             <div
-              data-alert-notice-rule-toolbar="cold-query-toolbar"
+              data-alert-notice-rule-toolbar="hertzbeat-ui-query-toolbar"
               data-alert-notice-rule-toolbar-layout="compact-inline-actions-query"
               className={coldToolbarClass}
             >
@@ -985,7 +985,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 <SearchRow
                   data-alert-notice-rule-search="shared-compact"
                   data-alert-notice-rule-search-submit="angular-enter-and-clear"
-                  data-alert-notice-rule-search-submit-owner="cold-search-row"
+                  data-alert-notice-rule-search-submit-owner="hertzbeat-ui-search-row"
                 className="mb-0"
                 value={ruleSearchDraft}
                 placeholder={t('alert.notice.rule.name')}
@@ -996,7 +996,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 onClear={ruleSearchDraft || ruleSearch ? resetRuleSearch : undefined}
               />
             </div>
-            <AlertSurfaceTableShell data-alert-notice-rule-table-shell="cold-dense-table" className={coldTableShellClass}>
+            <AlertSurfaceTableShell data-alert-notice-rule-table-shell="hertzbeat-ui-dense-table" className={coldTableShellClass}>
               <AlertSurfaceTable className="min-w-[1240px] text-center">
                 <AlertSurfaceTableHead className="text-center text-[13px] normal-case tracking-normal">
                   <tr>
@@ -1097,7 +1097,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             data-alert-notice-template-telegram-label-owner="route-i18n-contract"
           >
             <div
-              data-alert-notice-template-toolbar="cold-query-toolbar"
+              data-alert-notice-template-toolbar="hertzbeat-ui-query-toolbar"
               data-alert-notice-template-toolbar-layout="compact-inline-actions-query"
               className={coldToolbarClass}
             >
@@ -1125,7 +1125,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <Select
-                  data-alert-notice-template-preset-filter="cold-select"
+                  data-alert-notice-template-preset-filter="hertzbeat-ui-select"
                   data-alert-notice-template-preset-query="server-param"
                   aria-label={t('monitor.status')}
                   value={templatePresetFilter ? 'true' : 'false'}
@@ -1142,7 +1142,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 <SearchRow
                   data-alert-notice-template-search="shared-compact"
                   data-alert-notice-template-search-submit="angular-enter-and-clear"
-                  data-alert-notice-template-search-submit-owner="cold-search-row"
+                  data-alert-notice-template-search-submit-owner="hertzbeat-ui-search-row"
                   className="mb-0"
                   value={templateSearchDraft}
                   placeholder={t('alert.notice.template.name')}
@@ -1154,7 +1154,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 />
               </div>
             </div>
-            <AlertSurfaceTableShell data-alert-notice-template-table-shell="cold-dense-table" className={coldTableShellClass}>
+            <AlertSurfaceTableShell data-alert-notice-template-table-shell="hertzbeat-ui-dense-table" className={coldTableShellClass}>
               <AlertSurfaceTable className="min-w-[1240px] text-center">
                 <AlertSurfaceTableHead className="text-center text-[13px] normal-case tracking-normal">
                   <tr>
@@ -1189,7 +1189,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                         <div className="flex justify-center gap-2">
                           {template.preset ? (
                             <Button
-                              data-alert-notice-template-view-trigger="cold-modal-viewer-trigger"
+                              data-alert-notice-template-view-trigger="hertzbeat-ui-modal-viewer-trigger"
                               className={coldIconButtonClass}
                               size="icon"
                               variant="default"
@@ -1282,7 +1282,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               </div>
             }
           >
-            <div data-alert-notice-receiver-editor-dialog="cold-modal-editor" className="space-y-3">
+            <div data-alert-notice-receiver-editor-dialog="hertzbeat-ui-modal-editor" className="space-y-3">
               <div
                 data-alert-notice-save-feedback="angular-new-edit-notify"
                 data-alert-notice-save-feedback-owner="route-action-feedback-contract"
@@ -1296,7 +1296,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               {editingReceiver && receiverError ? (
                 <div
                   role="alert"
-                  data-alert-notice-receiver-validation="cold-validation-feedback"
+                  data-alert-notice-receiver-validation="hertzbeat-ui-validation-feedback"
                   data-alert-notice-receiver-save-failure={receiverErrorDetail ? 'angular-notify-title-detail' : undefined}
                   data-alert-notice-receiver-save-failure-owner={receiverErrorDetail ? 'route-action-feedback-contract' : undefined}
                   data-alert-notice-receiver-save-failure-title={receiverErrorDetail ? receiverError : undefined}
@@ -1310,7 +1310,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               {editingReceiver && receiverMessage ? (
                 <div
                   role="status"
-                  data-alert-notice-receiver-test-feedback="cold-test-feedback"
+                  data-alert-notice-receiver-test-feedback="hertzbeat-ui-test-feedback"
                   className="rounded-[3px] border border-[#24563d] bg-[#0d1a14] px-3 py-2 text-[12px] font-semibold leading-5 text-[#9be8bd]"
                 >
                   {receiverMessage}
@@ -1365,7 +1365,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
             }
           >
             <div
-              data-alert-notice-rule-editor-dialog="cold-modal-editor"
+              data-alert-notice-rule-editor-dialog="hertzbeat-ui-modal-editor"
               data-alert-notice-rule-display-names="angular-save-payload"
               data-alert-notice-rule-display-names-owner="route-payload-contract"
               data-alert-notice-rule-edit-display-names="angular-detail-options"
@@ -1377,7 +1377,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               {editingRule && ruleError ? (
                 <div
                   role="alert"
-                  data-alert-notice-rule-validation="cold-validation-feedback"
+                  data-alert-notice-rule-validation="hertzbeat-ui-validation-feedback"
                   data-alert-notice-rule-save-failure={ruleErrorDetail ? 'angular-notify-title-detail' : undefined}
                   data-alert-notice-rule-save-failure-owner={ruleErrorDetail ? 'route-action-feedback-contract' : undefined}
                   data-alert-notice-rule-save-failure-title={ruleErrorDetail ? ruleError : undefined}
@@ -1439,7 +1439,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
           >
             {templateReadOnly ? (
               <div
-                data-alert-notice-template-viewer-dialog="cold-modal-viewer"
+                data-alert-notice-template-viewer-dialog="hertzbeat-ui-modal-viewer"
                 data-alert-notice-template-viewer-ok="none"
                 data-alert-notice-template-viewer-ok-owner="route-modal-footer-contract"
                 className="space-y-3"
@@ -1448,7 +1448,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
               </div>
             ) : (
               <div
-                data-alert-notice-template-editor-dialog="cold-modal-editor"
+                data-alert-notice-template-editor-dialog="hertzbeat-ui-modal-editor"
                 data-alert-notice-save-feedback="angular-new-edit-notify"
                 data-alert-notice-save-feedback-owner="route-action-feedback-contract"
                 className="space-y-3"
@@ -1456,7 +1456,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 {editingTemplate && templateError ? (
                   <div
                   role="alert"
-                  data-alert-notice-template-validation="cold-validation-feedback"
+                  data-alert-notice-template-validation="hertzbeat-ui-validation-feedback"
                   data-alert-notice-template-save-failure={templateErrorDetail ? 'angular-notify-title-detail' : undefined}
                   data-alert-notice-template-save-failure-owner={templateErrorDetail ? 'route-action-feedback-contract' : undefined}
                   data-alert-notice-template-save-failure-title={templateErrorDetail ? templateError : undefined}
@@ -1476,7 +1476,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
         return (
           <>
             <div
-              data-alert-notice-surface="otlp-cold-notice-console"
+              data-alert-notice-surface="otlp-hertzbeat-ui-notice-console"
               data-alert-notice-style-baseline={coldNoticeVisual.canvasName}
               data-alert-notice-edit-load-feedback="angular-edit-fail"
               data-alert-notice-edit-load-feedback-owner="route-action-feedback-contract"
@@ -1487,7 +1487,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 <div className="mx-auto max-w-[1480px]">
                   <div className="mb-5">
                     <section
-                      data-alert-notice-header="cold-compact-header"
+                      data-alert-notice-header="hertzbeat-ui-compact-header"
                       data-alert-notice-admin-layout="full-width-admin-list"
                       className={coldNoticeVisual.panel.hero}
                     >
@@ -1510,7 +1510,7 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                           </div>
                         </div>
                         <div
-                          data-alert-notice-inline-metrics="cold-inline-counts"
+                          data-alert-notice-inline-metrics="hertzbeat-ui-inline-counts"
                           className="flex min-w-[280px] flex-wrap justify-end gap-2"
                         >
                           {[

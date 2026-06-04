@@ -107,7 +107,7 @@ vi.mock('@/components/pages/collector-manage-surface', () => ({
     return (
       <div
         data-collector-manage-surface="otlp-cold-collector-console"
-        data-collector-manage-style-baseline="hertzbeat-cold-matte"
+        data-collector-manage-style-baseline="hertzbeat-ui-matte"
         data-collector-delete-warning-contract="angular-no-select-warning"
         data-collector-delete-confirm-contract="angular-modal-confirm"
         data-collector-delete-confirm-contract-owner="hertzbeat-ui-confirm-dialog"
@@ -253,7 +253,7 @@ describe('setting collector page', () => {
 
     expect(html).toContain('data-client-workbench="true"');
     expect(html).toContain('data-collector-manage-surface="otlp-cold-collector-console"');
-    expect(html).toContain('data-collector-manage-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-collector-manage-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-collector-delete-warning-contract="angular-no-select-warning"');
     expect(html).toContain('data-collector-delete-confirm-contract="angular-modal-confirm"');
     expect(html).toContain('data-collector-delete-confirm-contract-owner="hertzbeat-ui-confirm-dialog"');

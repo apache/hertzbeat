@@ -38,14 +38,14 @@ export function WeekdayPicker({ name, value, options, onChange, className, ...pr
 
   return (
     <div
-      data-cold-weekday-picker-owner="cold-weekday-picker"
+      data-hz-weekday-picker-owner="hertzbeat-ui-weekday-picker"
       className={cn('flex min-w-0 flex-wrap gap-2 rounded-[3px] border border-[#2b3039] bg-[#0d1015] p-2', className)}
       {...props}
     >
       {options.map(option => (
         <Checkbox
           key={option.value}
-          data-cold-weekday-option={String(option.value)}
+          data-hz-weekday-option={String(option.value)}
           name={name}
           value={option.value}
           checked={selected.has(option.value)}

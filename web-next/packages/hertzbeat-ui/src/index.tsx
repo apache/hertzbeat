@@ -44,6 +44,9 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export { HzSourceDocShell } from './source-doc-shell';
+export type { HzSourceDocShellProps, HzSourceDocShellSource } from './source-doc-shell';
+
 export const hertzBeatUiContract = {
   packageName: '@hertzbeat/ui',
   visualOwner: 'hertzbeat-native-operator-ui',
@@ -66,7 +69,7 @@ export const hertzBeatUiControlBaseline = {
   fieldEdgeClassName: 'border',
   fieldEdgeToken: '--hz-ui-line-soft',
   buttonTiers: ['flat-neutral', 'solid-primary', 'solid-danger'],
-  componentScope: ['HzAiChatModalSurface', 'HzAboutModalSurface', 'HzPassportLoginActionFrame', 'HzPassportLoginNotice', 'HzPassportLoginValidationNotice', 'HzPassportSessionClearFrame', 'HzPassportLockSurface', 'HzButton', 'HzButtonIcon', 'HzButtonLink', 'HzHeaderIconButton', 'HzHeaderMenuAction', 'HzHeaderRealtimeNotice', 'HzLocaleMenuOption', 'HzUserMenuAction', 'HzActionGroup', 'HzAssistiveMarker', 'HzChipGroup', 'HzCollapsibleSection', 'HzControlStack', 'HzDataCellStack', 'HzDetailAside', 'HzDetailBodyStack', 'HzDialogBodyLayout', 'HzDialogEventNotice', 'HzDialogEventText', 'HzDialogMetaItem', 'HzDisabledActionShell', 'HzFileInput', 'HzIconLink', 'HzInput', 'HzQueryActionGroup', 'HzQueryStatusSelect', 'HzQueryTokenField', 'HzSearchFieldFrame', 'HzSearchFieldIcon', 'HzSelect', 'HzNumberStepper', 'HzCheckbox', 'HzSwitch', 'HzUnderlineToggle', 'HzInlineContextMark', 'HzMonitorBreadcrumb', 'HzMonitorIncrementalLoadFooter', 'HzPanelSection', 'HzPanelSurface', 'HzPanelTitleLabel', 'HzScrollViewport', 'HzLogStreamLiveRow', 'HzSignalWorkbenchShell', 'HzStateNotice', 'HzStatusBadge', 'HzTableRowActionButton', 'HzTrendBar', 'HzTrendFrame', 'HzWorkbenchHeaderCopy', 'HzWorkbenchLayout'],
+  componentScope: ['HzAiChatModalSurface', 'HzAboutModalSurface', 'HzPassportLoginActionFrame', 'HzPassportLoginNotice', 'HzPassportLoginValidationNotice', 'HzPassportSessionClearFrame', 'HzPassportLockSurface', 'HzSourceDocShell', 'HzButton', 'HzButtonIcon', 'HzButtonLink', 'HzHeaderIconButton', 'HzHeaderMenuAction', 'HzHeaderRealtimeNotice', 'HzLocaleMenuOption', 'HzUserMenuAction', 'HzActionGroup', 'HzAssistiveMarker', 'HzChipGroup', 'HzCollapsibleSection', 'HzControlStack', 'HzDataCellStack', 'HzDetailAside', 'HzDetailBodyStack', 'HzDialogBodyLayout', 'HzDialogEventNotice', 'HzDialogEventText', 'HzDialogMetaItem', 'HzDisabledActionShell', 'HzFileInput', 'HzIconLink', 'HzInput', 'HzQueryActionGroup', 'HzQueryStatusSelect', 'HzQueryTokenField', 'HzSearchFieldFrame', 'HzSearchFieldIcon', 'HzSelect', 'HzNumberStepper', 'HzCheckbox', 'HzSwitch', 'HzUnderlineToggle', 'HzInlineContextMark', 'HzMonitorBreadcrumb', 'HzMonitorIncrementalLoadFooter', 'HzPanelSection', 'HzPanelSurface', 'HzPanelTitleLabel', 'HzScrollViewport', 'HzLogStreamLiveRow', 'HzSignalWorkbenchShell', 'HzStateNotice', 'HzStatusBadge', 'HzTableRowActionButton', 'HzTrendBar', 'HzTrendFrame', 'HzWorkbenchHeaderCopy', 'HzWorkbenchLayout'],
   exemptPatterns: ['tab-switches', 'menu-options', 'chart-hotspots', 'inline-remove-icons']
 } as const;
 
@@ -1069,16 +1072,28 @@ export const HzWorkbenchHeaderCopy = React.forwardRef<HTMLDivElement, HzWorkbenc
 
 HzWorkbenchHeaderCopy.displayName = 'HzWorkbenchHeaderCopy';
 
-export type HzSignalWorkbenchShellLayout = 'default' | 'metrics-workbench';
+export type HzSignalWorkbenchShellLayout = 'default' | 'metrics-workbench' | 'topology-workbench';
 
 const signalWorkbenchShellLayoutClassNames: Record<HzSignalWorkbenchShellLayout, string | null> = {
   default: null,
-  'metrics-workbench': 'flex flex-col gap-3 px-3 pb-3 pt-0'
+  'metrics-workbench': 'flex flex-col gap-3 px-3 pb-3 pt-0',
+  'topology-workbench': [
+    'flex flex-col bg-[#07090b]',
+    '[&_[data-hz-ui=panel-surface]]:rounded-none',
+    '[&_[data-hz-ui=panel-surface]]:border-x-0',
+    '[&_[data-hz-ui=panel-surface]]:border-t-0',
+    '[&_[data-hz-ui=panel-surface]]:border-[#242a33]',
+    '[&_[data-hz-ui=panel-surface]]:bg-[#07090b]',
+    '[&_[data-hz-ui=panel-surface]]:shadow-none',
+    '[&_[data-hz-ui=data-table]]:rounded-none',
+    '[&_[data-hz-ui=data-table]]:shadow-none'
+  ].join(' ')
 };
 
 const signalWorkbenchShellContentClassNames: Record<HzSignalWorkbenchShellLayout, string> = {
   default: 'mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-6 py-6',
-  'metrics-workbench': 'contents'
+  'metrics-workbench': 'contents',
+  'topology-workbench': 'flex w-full min-w-0 flex-col gap-0 px-4 pb-4 pt-3 xl:px-5'
 };
 
 export type HzSignalWorkbenchShellProps = React.HTMLAttributes<HTMLElement> & {
@@ -8198,7 +8213,7 @@ export function HzIncidentWorkbench({
       data-hz-ui="incident-workbench"
       data-hz-incident-workbench-owner="hertzbeat-ui-incident-workbench"
       data-hz-incident-workbench-density={density}
-      data-hz-incident-workbench-style="cold-matte-hard-edge"
+      data-hz-incident-workbench-style="hertzbeat-ui-matte-hard-edge"
       data-hz-incident-workbench-source={String(sourceLabel)}
       data-hz-incident-workbench-query={String(queryLabel)}
     >
@@ -8235,7 +8250,7 @@ export function HzIncidentWorkbench({
           data-hz-incident-transition-actions="shared"
           data-hz-incident-transition-owner="hertzbeat-ui-incident-transition-actions"
           data-hz-incident-transition-density={density}
-          data-hz-incident-transition-style="cold-matte-hard-edge"
+          data-hz-incident-transition-style="hertzbeat-ui-matte-hard-edge"
         >
           <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#727b8c]">{transitionLabel}</span>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -8520,7 +8535,7 @@ export function HzActionWorkbench({
       data-hz-ui="action-workbench"
       data-hz-action-workbench-owner="hertzbeat-ui-action-workbench"
       data-hz-action-workbench-density={density}
-      data-hz-action-workbench-style="cold-matte-hard-edge"
+      data-hz-action-workbench-style="hertzbeat-ui-matte-hard-edge"
       data-hz-action-workbench-source={String(sourceLabel)}
       data-hz-action-workbench-adapter-state={adapterBoundary.state}
     >
@@ -8546,7 +8561,7 @@ export function HzActionWorkbench({
       </header>
 
       <div className="grid min-w-0 gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="border-b border-r-0 border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface)] px-3 py-3 lg:border-r" data-actions-shell-panel="cold-ops-shell-panel">
+        <section className="border-b border-r-0 border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface)] px-3 py-3 lg:border-r" data-actions-shell-panel="hertzbeat-ui-ops-shell-panel">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#727b8c]">{shell.eyebrow}</div>
           <p className="mt-2 max-w-[760px] text-[12px] leading-5 text-[#9aa4b5]">{shell.copy}</p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -8558,7 +8573,7 @@ export function HzActionWorkbench({
           </div>
         </section>
 
-        <aside className="border-b border-[var(--hz-ui-line-soft)] bg-[#0a0d12] px-3 py-3" data-actions-launch-checklist="cold-ops-static-rail">
+        <aside className="border-b border-[var(--hz-ui-line-soft)] bg-[#0a0d12] px-3 py-3" data-actions-launch-checklist="hertzbeat-ui-ops-static-rail">
           <h3 className="text-[12px] font-semibold text-[#f5f7fb]">{checklistTitle}</h3>
           <div className="mt-3 space-y-3">
             {checklist.map(item => (
@@ -8828,7 +8843,7 @@ export function HzActionWorkbench({
           </section>
         ) : null}
 
-        <section className="flex min-h-[180px] items-center justify-center bg-[var(--hz-ui-canvas)] px-3 py-8 lg:col-span-2" data-actions-empty-state="cold-ops-domain-adapter">
+        <section className="flex min-h-[180px] items-center justify-center bg-[var(--hz-ui-canvas)] px-3 py-8 lg:col-span-2" data-actions-empty-state="hertzbeat-ui-ops-domain-adapter">
           <div className="max-w-[720px] text-center">
             <h3 className="text-[16px] font-semibold text-[#f5f7fb]">{emptyTitle}</h3>
             <p className="mt-2 text-[12px] leading-5 text-[#9aa4b5]">{emptyCopy}</p>

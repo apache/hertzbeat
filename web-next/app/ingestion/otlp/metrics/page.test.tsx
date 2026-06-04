@@ -352,7 +352,7 @@ describe('otlp metrics page', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/metrics/otlp-metrics-page.tsx'), 'utf8');
     const slice = source.slice(
       source.indexOf('const serviceGroupLabel'),
-      source.indexOf('data-otlp-metrics-chart-band="cold-chart-band"')
+      source.indexOf('data-otlp-metrics-chart-band="hertzbeat-ui-chart-band"')
     );
 
     expect(slice).not.toMatch(/[\u4e00-\u9fff]/);
@@ -365,13 +365,13 @@ describe('otlp metrics page', () => {
   it('keeps metrics on the OTLP cold Workbench owner instead of the old external-product explorer stack', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/metrics/otlp-metrics-page.tsx'), 'utf8');
 
-    expect(source).toContain('data-otlp-metrics-route="otlp-cold-metrics-workbench"');
+    expect(source).toContain('data-otlp-metrics-route="otlp-hertzbeat-ui-metrics-workbench"');
     expect(source).toContain('HzSignalWorkbenchShell');
     expect(source).toContain('data-otlp-metrics-shell-owner="hertzbeat-ui-signal-workbench-shell"');
-    expect(source).toContain('layout="metrics-workbench"');
+    expect(source).toContain('layout="topology-workbench"');
     expect(source).not.toContain('className="flex min-h-[calc(100vh-56px)] flex-col gap-3 bg-[#07090b] px-3 pb-3 pt-0 text-[#e8edf5]"');
-    expect(source).toContain('data-otlp-metrics-style-baseline="hertzbeat-cold-matte"');
-    expect(source).toContain('data-otlp-metrics-query-bar="cold-query-row"');
+    expect(source).toContain('data-otlp-metrics-style-baseline="hertzbeat-ui-matte"');
+    expect(source).toContain('data-otlp-metrics-query-bar="hertzbeat-ui-query-row"');
     expect(source).toContain('data-otlp-metrics-query-bar-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('padding="query"');
     expect(source).toContain('data-otlp-metrics-query-control-stack="shared-inline-controls"');
@@ -439,7 +439,7 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('className={primaryActionClass}');
     expect(source).not.toContain('<Play className="h-4 w-4" aria-hidden="true" />');
     expect(source).not.toContain('<RotateCcw className="h-4 w-4" aria-hidden="true" />');
-    expect(source).not.toContain('<section data-otlp-metrics-query-bar="cold-query-row" className={`${panelClass} px-4 py-3`}>');
+    expect(source).not.toContain('<section data-otlp-metrics-query-bar="hertzbeat-ui-query-row" className={`${panelClass} px-4 py-3`}>');
     expect(source).toContain('data-otlp-metrics-header-topbar="time-context"');
     expect(source).toContain('data-otlp-metrics-header-topbar-owner="hertzbeat-ui-workbench-layout"');
     expect(source).toContain('data-otlp-metrics-page-shell="flat-direct-stack"');
@@ -454,8 +454,8 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('className="flex min-h-[calc(100vh-56px)] flex-col gap-3 bg-[#07090b] px-3 pb-3 pt-0 text-[#e8edf5]"');
     expect(source).toContain('HzSignalWorkbenchShell');
     expect(source).toContain('data-otlp-metrics-shell-owner="hertzbeat-ui-signal-workbench-shell"');
-    expect(source).toContain('layout="metrics-workbench"');
-    expect(source).toContain('data-otlp-metrics-header="cold-compact-header"');
+    expect(source).toContain('layout="topology-workbench"');
+    expect(source).toContain('data-otlp-metrics-header="hertzbeat-ui-compact-header"');
     expect(source).toContain('data-otlp-metrics-header-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('data-otlp-metrics-header-layout="compact-title-with-aligned-toolbar"');
     expect(source).toContain('data-otlp-metrics-header-layout-frame="compact-title-with-aligned-toolbar"');
@@ -526,7 +526,7 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('className="w-full justify-end border-[#2b3039] bg-[#101217]"');
     expect(source).toContain('showAbsoluteFields');
     expect(source.indexOf('data-otlp-metrics-time-control="shared-time-context-control"')).toBeLessThan(
-      source.indexOf('data-otlp-metrics-query-bar="cold-query-row"')
+      source.indexOf('data-otlp-metrics-query-bar="hertzbeat-ui-query-row"')
     );
     expect(source).toContain("'data-otlp-metrics-time-range-select': 'true'");
     expect(source).toContain('TimeRangeControl');
@@ -538,7 +538,7 @@ describe('otlp metrics page', () => {
     expect(source).toContain('TIME_CONTEXT_PRESETS');
     expect(source).toContain('sanitizeTimeContext');
     expect(source).toContain('resolveTimeContextBounds(timeContext)');
-    expect(source).toContain('data-otlp-metrics-chart-band="cold-chart-band"');
+    expect(source).toContain('data-otlp-metrics-chart-band="hertzbeat-ui-chart-band"');
     expect(source).toContain('data-otlp-metrics-chart-band-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('padding="chart"');
     expect(source).toContain('data-otlp-metrics-chart-layout="wide-series-chart-with-compact-meta"');
@@ -585,7 +585,7 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('className="bg-[#10141b] px-3 py-3 shadow-none"');
     expect(source).not.toContain('className="mb-3 flex flex-wrap items-center justify-between gap-2 text-[12px] text-[#8792a5]"');
     expect(source).not.toContain('className="min-w-0 rounded-[4px] border border-[#252b35] bg-[#10141b] px-3 py-3"');
-    expect(source).not.toContain('data-otlp-metrics-chart-band="cold-chart-band" className={`${panelClass} px-4 py-4`}');
+    expect(source).not.toContain('data-otlp-metrics-chart-band="hertzbeat-ui-chart-band" className={`${panelClass} px-4 py-4`}');
     expect(source).not.toContain('data-otlp-metrics-chart-layout="fact-stack-with-wide-trend"');
     expect(source).not.toContain('data-otlp-metrics-facts-grid="compact-summary-stack"');
     expect(source).not.toContain('className="grid items-start gap-3 xl:grid-cols-[320px_minmax(0,1fr)]"');
@@ -789,7 +789,7 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain("'grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]'");
     expect(source).not.toContain('xl:grid-cols-[minmax(0,1fr)_360px]');
     expect(source).not.toContain('2xl:grid-cols-[minmax(0,1fr)_330px]');
-    expect(source).toContain('data-otlp-metrics-series-table="cold-dense-metric-list"');
+    expect(source).toContain('data-otlp-metrics-series-table="hertzbeat-ui-dense-metric-list"');
     expect(source).toContain('data-otlp-metrics-series-table-mode="service-entity-series-set"');
     expect(source).toContain('data-otlp-metrics-series-table-density="primary-scan"');
     expect(source).toContain('data-otlp-metrics-series-table-panel-owner="hertzbeat-ui-panel-surface"');
@@ -801,7 +801,7 @@ describe('otlp metrics page', () => {
     expect(source).toContain("t('otlp.metrics.series.collection.title')");
     expect(source).not.toContain('<p className="text-[12px] font-semibold text-[#8792a5]">');
     expect(source).not.toContain('className="flex min-w-0 items-center justify-between gap-3"');
-    expect(source).toContain('data-otlp-metrics-detail-panel="cold-detail-panel"');
+    expect(source).toContain('data-otlp-metrics-detail-panel="hertzbeat-ui-detail-panel"');
     expect(source).toContain('data-otlp-metrics-detail-panel-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('data-otlp-metrics-detail-panel-priority="secondary-inspector"');
     expect(source).toContain('data-otlp-metrics-detail-panel-header-owner="hertzbeat-ui-panel-header"');
@@ -917,22 +917,22 @@ describe('otlp metrics page', () => {
     const { default: OtlpMetricsPage } = await import('./page');
     const html = renderToStaticMarkup(<OtlpMetricsPage />);
 
-    expect(html).toContain('data-otlp-metrics-route="otlp-cold-metrics-workbench"');
+    expect(html).toContain('data-otlp-metrics-route="otlp-hertzbeat-ui-metrics-workbench"');
     expect(html).toContain('data-hz-ui="signal-workbench-shell"');
     expect(html).toContain('data-hz-signal-workbench-shell-owner="hertzbeat-ui-signal-workbench-shell"');
-    expect(html).toContain('data-hz-signal-workbench-shell-layout="metrics-workbench"');
+    expect(html).toContain('data-hz-signal-workbench-shell-layout="topology-workbench"');
     expect(html).toContain('data-otlp-metrics-shell-owner="hertzbeat-ui-signal-workbench-shell"');
     expect(html).toContain('data-hz-signal-workbench-shell-content="true"');
-    expect(html).toContain('data-hz-signal-workbench-shell-content-layout="metrics-workbench"');
-    expect(html).toContain('class="contents"');
-    expect(html).toContain('data-otlp-metrics-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-hz-signal-workbench-shell-content-layout="topology-workbench"');
+    expect(html).toContain('class="flex w-full min-w-0 flex-col gap-0 px-4 pb-4 pt-3 xl:px-5"');
+    expect(html).toContain('data-otlp-metrics-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-otlp-metrics-page-shell="flat-direct-stack"');
     expect(html).toContain('data-otlp-metrics-page-shell-layer="removed"');
     expect(html).toContain('data-otlp-metrics-page-stack="direct-panels"');
     expect(html).not.toContain('data-otlp-metrics-page-shell="full-width-no-gutters"');
     expect(html).not.toContain('data-otlp-metrics-page-shell-gutter="edge-to-edge-viewport"');
     expect(html).not.toContain('data-otlp-metrics-page-shell-top="flush-under-app-bar"');
-    expect(html).toContain('data-otlp-metrics-query-bar="cold-query-row"');
+    expect(html).toContain('data-otlp-metrics-query-bar="hertzbeat-ui-query-row"');
     expect(html).toContain('data-otlp-metrics-query-bar-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-padding="query"');
     expect(html).toContain('data-otlp-metrics-query-control-stack="shared-inline-controls"');
@@ -1034,7 +1034,7 @@ describe('otlp metrics page', () => {
     expect(applyButton).toContain('border-[var(--ops-border-strong)]');
     expect(applyButton).toContain('bg-[var(--ops-surface-panel)]');
     expect(applyButton).not.toContain('border-[var(--ops-primary)]');
-    expect(html).toContain('data-otlp-metrics-chart-band="cold-chart-band"');
+    expect(html).toContain('data-otlp-metrics-chart-band="hertzbeat-ui-chart-band"');
     expect(html).toContain('data-otlp-metrics-chart-layout="wide-series-chart-with-compact-meta"');
     expect(html).toContain('data-otlp-metrics-chart-layout-owner="hertzbeat-ui-workbench-layout"');
     expect(html).toContain('data-hz-workbench-layout-variant="chart-stack"');
@@ -1084,7 +1084,7 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-otlp-metrics-workbench-grid-owner="hertzbeat-ui-workbench-layout"');
     expect(html).toContain('data-hz-ui="workbench-layout"');
     expect(html).toContain('data-hz-workbench-layout-variant="metrics-series-only"');
-    expect(html).toContain('data-otlp-metrics-series-table="cold-dense-metric-list"');
+    expect(html).toContain('data-otlp-metrics-series-table="hertzbeat-ui-dense-metric-list"');
     expect(html).toContain('data-otlp-metrics-series-table-mode="service-entity-series-set"');
     expect(html).toContain('data-otlp-metrics-series-table-density="primary-scan"');
     expect(html).toContain('data-otlp-metrics-series-table-owner="hertzbeat-ui-data-table"');
@@ -1120,7 +1120,7 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-hz-ui="empty-state"');
     expect(html).toContain('data-hz-empty-state-layout="table-panel"');
     expect(html).toContain('data-otlp-metrics-series-set-summary="service-entity-scope"');
-    expect(html).not.toContain('data-otlp-metrics-detail-panel="cold-detail-panel"');
+    expect(html).not.toContain('data-otlp-metrics-detail-panel="hertzbeat-ui-detail-panel"');
     expect(html).toContain('data-otlp-metrics-detail-panel-empty="suppressed-until-real-series"');
     expect(html).toContain('data-otlp-metrics-detail-panel-empty-owner="hertzbeat-ui-assistive-marker"');
     expect(html).toContain('data-hz-ui="assistive-marker"');
@@ -1192,7 +1192,7 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-otlp-metrics-detail-panel-empty-owner="hertzbeat-ui-assistive-marker"');
     expect(html).toContain('data-hz-ui="assistive-marker"');
     expect(html).not.toContain('data-otlp-metrics-facts-grid="inline-summary-strip"');
-    expect(html).not.toContain('data-otlp-metrics-detail-panel="cold-detail-panel"');
+    expect(html).not.toContain('data-otlp-metrics-detail-panel="hertzbeat-ui-detail-panel"');
     expect(html).not.toContain('data-otlp-metrics-detail-panel-body="compact-evidence-stack"');
     expect(html).not.toContain('data-otlp-metrics-handoff-actions="compact-context-actions"');
     expect(html).not.toContain('data-otlp-metrics-entity-action-disabled="missing-entity-id"');
@@ -1363,7 +1363,7 @@ describe('otlp metrics page', () => {
     expect(source).toContain('layout="end-inline"');
     expect(source).not.toContain('variant="narrow-rail"\n                          className="justify-end"');
     expect(source.indexOf('data-otlp-metrics-time-control="shared-time-context-control"')).toBeLessThan(
-      source.indexOf('data-otlp-metrics-query-bar="cold-query-row"')
+      source.indexOf('data-otlp-metrics-query-bar="hertzbeat-ui-query-row"')
     );
     expect(html).toContain('data-otlp-metrics-time-control="shared-time-context-control"');
     expect(html).toContain('data-otlp-metrics-time-control-owner="hertzbeat-ui-control-stack"');
@@ -1707,7 +1707,7 @@ describe('otlp metrics page', () => {
     expect(selectedContextPanel?.textContent).toContain(tZh('otlp.metrics.series.context.selected-series'));
     expect(selectedContextPanel?.textContent).toContain('fastapi');
     const detailPanelHeader = interactionContainer.querySelector('[data-otlp-metrics-detail-panel-header="shared-panel-header"]') as HTMLElement | null;
-    const detailPanel = interactionContainer.querySelector('[data-otlp-metrics-detail-panel="cold-detail-panel"]') as HTMLElement | null;
+    const detailPanel = interactionContainer.querySelector('[data-otlp-metrics-detail-panel="hertzbeat-ui-detail-panel"]') as HTMLElement | null;
     const detailGrid = interactionContainer.querySelector('[data-otlp-metrics-workbench-grid="series-detail-split"]') as HTMLElement | null;
     expect(detailGrid?.getAttribute('data-otlp-metrics-workbench-grid-owner')).toBe('hertzbeat-ui-workbench-layout');
     expect(detailGrid?.getAttribute('data-hz-ui')).toBe('workbench-layout');

@@ -32,6 +32,10 @@ import { buildResetTraceManageRoute, buildTraceManageRoute } from './route-state
 type TraceManageData = {
   overview: TraceOverview;
   list: PageResult<TraceListItem>;
+  loadStatus?: {
+    state: 'degraded';
+    message: string;
+  };
 };
 
 const EMPTY_TRACE_OVERVIEW: TraceOverview = {
@@ -60,11 +64,24 @@ function normalizeTraceList(list: PageResult<TraceListItem> | null | undefined):
 function normalizeTraceManageData(data: {
   overview?: TraceOverview | null;
   list?: PageResult<TraceListItem> | null;
+  loadStatus?: TraceManageData['loadStatus'];
 }): TraceManageData {
   return {
     overview: normalizeTraceOverview(data.overview),
-    list: normalizeTraceList(data.list)
+    list: normalizeTraceList(data.list),
+    ...(data.loadStatus ? { loadStatus: data.loadStatus } : {})
   };
+}
+
+function emptyTraceManageData(message: string): TraceManageData {
+  return normalizeTraceManageData({
+    overview: null,
+    list: null,
+    loadStatus: {
+      state: 'degraded',
+      message
+    }
+  });
 }
 
 const emptyTraceQuery: TraceQueryState = {
@@ -81,6 +98,31 @@ const EMPTY_TRACE_MANAGE_ROUTE_STATE: TraceManageRouteState = {
 };
 
 const TRACE_MANAGE_SETTLED_CACHE_TTL_MS = 10_000;
+const TRACE_MANAGE_API_TIMEOUT_MS = 5_000;
+
+function describeTraceManageLoadFailure(error: unknown) {
+  return error instanceof Error && error.message ? error.message : 'Trace API request failed';
+}
+
+async function apiMessageGetWithTimeout<T>(path: string, timeoutMs = TRACE_MANAGE_API_TIMEOUT_MS): Promise<T> {
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`Trace API request timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([
+      apiMessageGet<T>(path, { signal: controller.signal }),
+      timeout
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
 
 type TraceDetailDrawerState = {
   open: boolean;
@@ -679,12 +721,14 @@ function TraceExplorer({
 
   return (
     <HzSignalWorkbenchShell
-      data-trace-manage-route="otlp-cold-trace-workbench"
-      data-trace-manage-style-baseline="hertzbeat-cold-matte"
+      data-trace-manage-route="otlp-hertzbeat-ui-trace-workbench"
+      data-trace-manage-style-baseline="hertzbeat-ui-matte"
       data-trace-manage-shell-owner="hertzbeat-ui-signal-workbench-shell"
+      data-trace-manage-shell-chrome="topology-workbench"
+      layout="topology-workbench"
     >
         <HzPanelSurface
-          data-trace-manage-header="cold-compact-header"
+          data-trace-manage-header="hertzbeat-ui-compact-header"
           data-trace-manage-panel-surface="header"
           data-trace-manage-header-padding-owner="hertzbeat-ui-panel-surface"
           padding="header"
@@ -731,7 +775,7 @@ function TraceExplorer({
                 />
               </HzControlStack>
               <HzActionGroup
-                data-trace-manage-action-row="cold-workbench-actions"
+                data-trace-manage-action-row="hertzbeat-ui-workbench-actions"
                 data-trace-manage-action-row-owner="hertzbeat-ui-action-group"
                 data-trace-manage-action-row-layout-owner="hertzbeat-ui-action-group"
                 layout="full-end"
@@ -816,7 +860,7 @@ function TraceExplorer({
         </HzPanelSurface>
 
         <HzPanelSurface
-          data-trace-manage-query-bar="cold-query-row"
+          data-trace-manage-query-bar="hertzbeat-ui-query-row"
           data-trace-manage-panel-surface="query"
           data-trace-manage-panel-surface-padding-owner="hertzbeat-ui-panel-surface"
           padding="query"
@@ -898,8 +942,19 @@ function TraceExplorer({
           </HzControlStack>
         </HzPanelSurface>
 
+        {data.loadStatus?.state === 'degraded' ? (
+          <HzStateNotice
+            data-trace-manage-api-degraded="true"
+            data-trace-manage-api-degraded-owner="hertzbeat-ui-state-notice"
+            tone="warning"
+            title={t('trace.manage.api.degraded.title')}
+            description={t('trace.manage.api.degraded.copy')}
+            meta={data.loadStatus.message}
+          />
+        ) : null}
+
         <HzPanelSurface
-          data-trace-manage-chart-band="cold-chart-band"
+          data-trace-manage-chart-band="hertzbeat-ui-chart-band"
           data-trace-manage-panel-surface="chart"
           data-trace-manage-chart-padding-owner="hertzbeat-ui-panel-surface"
           padding="chart"
@@ -949,7 +1004,7 @@ function TraceExplorer({
           data-trace-manage-table-detail-layout-owner="hertzbeat-ui-workbench-layout"
         >
           <HzPanelSurface
-            data-trace-manage-trace-table="cold-dense-trace-list"
+            data-trace-manage-trace-table="hertzbeat-ui-dense-trace-list"
             data-trace-manage-panel-surface="table"
             data-trace-manage-panel-surface-clip-owner="hertzbeat-ui-panel-surface"
             data-trace-manage-row-control-owner="shared-hz-button"
@@ -1072,7 +1127,7 @@ function TraceExplorer({
           </HzPanelSurface>
 
           <HzPanelSurface
-            data-trace-manage-detail-panel="cold-detail-panel"
+            data-trace-manage-detail-panel="hertzbeat-ui-detail-panel"
             data-trace-manage-panel-surface="detail"
             data-trace-manage-panel-surface-clip-owner="hertzbeat-ui-panel-surface"
             clip
@@ -1293,11 +1348,15 @@ export default function TraceManagePage({
   const loadCacheKey = useMemo(() => `trace-manage:${traceUrls.listUrl}|${traceUrls.overviewUrl}|${traceTimeRefreshKey}`, [traceTimeRefreshKey, traceUrls]);
 
   const load = useCallback(async (): Promise<TraceManageData> => {
-    const [overview, list] = await Promise.all([
-      apiMessageGet<TraceOverview>(traceUrls.overviewUrl),
-      apiMessageGet<PageResult<TraceListItem>>(traceUrls.listUrl)
-    ]);
-    return normalizeTraceManageData({ overview, list });
+    try {
+      const [overview, list] = await Promise.all([
+        apiMessageGetWithTimeout<TraceOverview>(traceUrls.overviewUrl),
+        apiMessageGetWithTimeout<PageResult<TraceListItem>>(traceUrls.listUrl)
+      ]);
+      return normalizeTraceManageData({ overview, list });
+    } catch (error) {
+      return emptyTraceManageData(describeTraceManageLoadFailure(error));
+    }
   }, [traceUrls]);
 
   const applyQuery = useCallback((nextQuery: TraceQueryState = draft) => {

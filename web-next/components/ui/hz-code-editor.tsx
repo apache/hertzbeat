@@ -13,14 +13,14 @@ import { EditorView } from '@codemirror/view';
 import { cn } from '../../lib/utils';
 import { HiddenInput } from './hidden-input';
 
-export type ColdCodeEditorLanguage = 'yaml' | 'json' | 'html' | 'javascript' | 'shell' | 'text';
-export type ColdCodeEditorTheme = 'vs' | 'vs-dark';
+export type HzCodeEditorLanguage = 'yaml' | 'json' | 'html' | 'javascript' | 'shell' | 'text';
+export type HzCodeEditorTheme = 'vs' | 'vs-dark';
 
-export type ColdCodeEditorProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> & {
+export type HzCodeEditorProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> & {
   value: string;
   onChange?: (value: string) => void;
-  language?: ColdCodeEditorLanguage;
-  theme?: ColdCodeEditorTheme;
+  language?: HzCodeEditorLanguage;
+  theme?: HzCodeEditorTheme;
   readOnly?: boolean;
   loading?: boolean;
   loadingLabel?: React.ReactNode;
@@ -33,7 +33,7 @@ export type ColdCodeEditorProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'on
   ariaLabel?: string;
 };
 
-const coldCodeEditorTheme = EditorView.theme({
+const hzCodeEditorTheme = EditorView.theme({
   '&': {
     backgroundColor: '#101217',
     color: '#dbe4f0',
@@ -82,7 +82,7 @@ const coldCodeEditorTheme = EditorView.theme({
   dark: true
 });
 
-const coldCodeEditorLightTheme = EditorView.theme({
+const hzCodeEditorLightTheme = EditorView.theme({
   '&': {
     backgroundColor: '#f8fafc',
     color: '#111827',
@@ -131,7 +131,7 @@ const coldCodeEditorLightTheme = EditorView.theme({
   dark: false
 });
 
-function getLanguageExtension(language: ColdCodeEditorLanguage): Extension | null {
+function getLanguageExtension(language: HzCodeEditorLanguage): Extension | null {
   switch (language) {
     case 'yaml':
       return yaml();
@@ -148,7 +148,7 @@ function getLanguageExtension(language: ColdCodeEditorLanguage): Extension | nul
   }
 }
 
-export function ColdCodeEditor({
+export function HzCodeEditor({
   value,
   onChange,
   language = 'text',
@@ -166,10 +166,10 @@ export function ColdCodeEditor({
   className,
   style,
   ...props
-}: ColdCodeEditorProps) {
+}: HzCodeEditorProps) {
   const extensions = useMemo(() => {
     const languageExtension = getLanguageExtension(language);
-    const themeExtension = theme === 'vs-dark' ? coldCodeEditorTheme : coldCodeEditorLightTheme;
+    const themeExtension = theme === 'vs-dark' ? hzCodeEditorTheme : hzCodeEditorLightTheme;
     return [
       basicSetup,
       themeExtension,
@@ -182,20 +182,20 @@ export function ColdCodeEditor({
   return (
     <div
       {...props}
-      data-cold-code-editor="codemirror"
-      data-cold-code-editor-language={language}
-      data-cold-code-editor-theme={theme}
-      data-cold-code-editor-loading={loading ? 'true' : 'false'}
-      data-cold-code-editor-loading-owner="cold-code-editor"
-      data-cold-code-editor-folding={folding ? 'true' : 'false'}
-      data-cold-code-editor-automatic-layout={automaticLayout ? 'true' : 'false'}
-      data-cold-code-editor-readonly={readOnly || loading ? 'true' : undefined}
-      data-cold-code-editor-license="codemirror-mit"
+      data-hz-code-editor="codemirror"
+      data-hz-code-editor-language={language}
+      data-hz-code-editor-theme={theme}
+      data-hz-code-editor-loading={loading ? 'true' : 'false'}
+      data-hz-code-editor-loading-owner="hz-code-editor"
+      data-hz-code-editor-folding={folding ? 'true' : 'false'}
+      data-hz-code-editor-automatic-layout={automaticLayout ? 'true' : 'false'}
+      data-hz-code-editor-readonly={readOnly || loading ? 'true' : undefined}
+      data-hz-code-editor-license="codemirror-mit"
       aria-busy={loading ? 'true' : undefined}
       className={cn('relative min-w-0 overflow-hidden rounded-[3px]', className)}
       style={{ minHeight, ...style }}
     >
-      {name ? <HiddenInput name={name} value={value} data-cold-code-editor-value="hidden" /> : null}
+      {name ? <HiddenInput name={name} value={value} data-hz-code-editor-value="hidden" /> : null}
       <CodeMirror
         value={value}
         height={height}
@@ -211,8 +211,8 @@ export function ColdCodeEditor({
       />
       {loading ? (
         <div
-          data-cold-code-editor-loading-state="angular-nz-code-editor-loading"
-          data-cold-code-editor-loading-state-owner="cold-code-editor"
+          data-hz-code-editor-loading-state="angular-nz-code-editor-loading"
+          data-hz-code-editor-loading-state-owner="hz-code-editor"
           className="absolute inset-0 flex items-center justify-center bg-[#0b0c0e]/72 text-[12px] font-semibold text-[#dbe4f0] backdrop-blur-[1px]"
         >
           {loadingLabel}

@@ -97,7 +97,7 @@ vi.mock('@/components/pages/label-manage-surface', () => ({
     return (
     <div
       data-label-manage-surface="otlp-cold-label-console"
-      data-label-manage-style-baseline="hertzbeat-cold-matte"
+      data-label-manage-style-baseline="hertzbeat-ui-matte"
       data-label-action-feedback={actionError ? 'angular-action-error' : actionMessage ? 'angular-action-success' : 'none'}
       data-label-save-feedback={actionError ? 'angular-save-error' : actionMessage ? 'angular-save-success' : 'none'}
       data-label-action-meta={actionMeta ?? 'no-action-meta'}
@@ -250,7 +250,7 @@ describe('setting labels page', () => {
 
     expect(html).toContain('data-client-workbench="true"');
     expect(html).toContain('data-label-manage-surface="otlp-cold-label-console"');
-    expect(html).toContain('data-label-manage-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-label-manage-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-label-admin-layout="full-width-admin-list"');
     expect(html).not.toContain('data-label-summary-rail=');
     expect(html).toContain('Label management');

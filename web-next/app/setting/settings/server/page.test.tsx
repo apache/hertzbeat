@@ -179,7 +179,7 @@ describe('setting server page', () => {
     expect(html).toContain(`data-loading-copy="${t('setting.settings.server.loading')}"`);
     expect(html).toContain('data-settings-console-title="true"');
     expect(html).toContain('data-settings-server-page="otlp-cold-message-server"');
-    expect(html).toContain('data-settings-server-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-settings-server-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-settings-server-layout="full-width-settings-summary"');
     expect(html).toContain('data-settings-server-dialog-width-contract="angular-width-40-percent"');
     expect(html).toContain('data-settings-server-dialog-field-layout-contract="angular-label-7-control-12"');
@@ -239,7 +239,7 @@ describe('setting server page', () => {
   it('keeps the server route on the cold settings-console summary owner', () => {
     const source = readFileSync(resolve(__dirname, 'setting-server-page.tsx'), 'utf8');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain('data-settings-server-page="otlp-cold-message-server"');
     expect(source).toContain('data-settings-server-style-baseline={coldServerVisual.canvasName}');
     expect(source).toContain('data-settings-server-layout="full-width-settings-summary"');
@@ -270,13 +270,13 @@ describe('setting server page', () => {
     const source = readFileSync(resolve(__dirname, 'setting-server-page.tsx'), 'utf8');
 
     expect(source).toContain("from '../../../../components/ui/number-stepper'");
-    expect(source).toContain('data-settings-server-email-port-stepper="cold-number-stepper"');
+    expect(source).toContain('data-settings-server-email-port-stepper="hertzbeat-ui-number-stepper"');
     expect(source).not.toContain('type="number"');
-    expect(html).toContain('data-settings-server-email-port-stepper="cold-number-stepper"');
-    expect(html).toContain('data-cold-number-stepper-owner="cold-number-stepper"');
-    expect(html).toContain('data-cold-number-stepper-input="true"');
-    expect(html).toContain('data-cold-number-stepper-action="decrement"');
-    expect(html).toContain('data-cold-number-stepper-action="increment"');
+    expect(html).toContain('data-settings-server-email-port-stepper="hertzbeat-ui-number-stepper"');
+    expect(html).toContain('data-hz-number-stepper-owner="hertzbeat-ui-number-stepper"');
+    expect(html).toContain('data-hz-number-stepper-input="true"');
+    expect(html).toContain('data-hz-number-stepper-action="decrement"');
+    expect(html).toContain('data-hz-number-stepper-action="increment"');
     expect(html).toContain('value="587"');
   });
 

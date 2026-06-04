@@ -1,5 +1,9 @@
 import { vi } from 'vitest';
 import { interpolate, type LocaleCode, type TranslationParams } from '../lib/i18n';
+import {
+  PREFIX_ALIASES as RUNTIME_PREFIX_ALIASES,
+  SUPPLEMENTAL_MESSAGES as RUNTIME_SUPPLEMENTAL_MESSAGES,
+} from '../lib/i18n-runtime-messages';
 
 type Messages = Record<string, string>;
 
@@ -1954,6 +1958,9 @@ const SUPPLEMENTAL_MESSAGES: Partial<Record<LocaleCode, Messages>> = {
     'status.incident.public.update-at': 'Update At',
     'status.components.view': 'Component health view',
     'trace.manage.loading': 'Loading trace workbench',
+    'trace.manage.api.degraded.title': 'Trace API unavailable',
+    'trace.manage.api.degraded.copy':
+      'The workbench is showing an empty degraded state because the trace read API did not respond in time. Query controls remain available.',
     'trace.manage.stat.error-ratio': 'Error ratio',
     'trace.manage.stat.activity': 'Activity',
     'trace.manage.stat.list-count': 'List count',
@@ -5118,6 +5125,8 @@ const SUPPLEMENTAL_MESSAGES: Partial<Record<LocaleCode, Messages>> = {
     'status.incident.public.update-at': '更新时间',
     'status.components.view': '组件健康视图',
     'trace.manage.loading': '正在加载链路工作台',
+    'trace.manage.api.degraded.title': '链路 API 暂不可用',
+    'trace.manage.api.degraded.copy': '链路读取接口未及时响应，工作台进入空结果降级状态；查询控件仍可使用。',
     'trace.manage.stat.error-ratio': '错误链路占比',
     'trace.manage.stat.activity': '活动状态',
     'trace.manage.stat.list-count': '列表条数',
@@ -6354,8 +6363,11 @@ function loadMessages(locale: LocaleCode): Messages {
   if (cached) return cached;
 
   const fallbackMessages = locale.startsWith('zh') ? SUPPLEMENTAL_MESSAGES['zh-CN'] : SUPPLEMENTAL_MESSAGES['en-US'];
+  const runtimeFallbackMessages = locale.startsWith('zh') ? RUNTIME_SUPPLEMENTAL_MESSAGES['zh-CN'] : RUNTIME_SUPPLEMENTAL_MESSAGES['en-US'];
   const messages = {
+    ...(runtimeFallbackMessages || {}),
     ...(fallbackMessages || {}),
+    ...(RUNTIME_SUPPLEMENTAL_MESSAGES[locale] || {}),
     ...(SUPPLEMENTAL_MESSAGES[locale] || {}),
   };
   messageCache.set(locale, messages);
@@ -6363,7 +6375,7 @@ function loadMessages(locale: LocaleCode): Messages {
 }
 
 function resolveAliasedTemplate(messages: Messages, key: string) {
-  for (const [from, to] of PREFIX_ALIASES) {
+  for (const [from, to] of [...RUNTIME_PREFIX_ALIASES, ...PREFIX_ALIASES]) {
     if (key.startsWith(from)) {
       const aliased = `${to}${key.slice(from.length)}`;
       if (messages[aliased]) return messages[aliased];

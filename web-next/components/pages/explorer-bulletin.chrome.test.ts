@@ -50,7 +50,7 @@ describe('explorer and bulletin cold-workbench chrome', () => {
     const bulletinDialogSource = readFileSync(resolve(process.cwd(), 'components/pages/bulletin-manage-dialog.tsx'), 'utf8');
 
     expect(discoverySource).toContain("from '../ui/search-row'");
-    expect(discoverySource).toContain('coldOpsCatalogVisual');
+    expect(discoverySource).toContain('hzOpsCatalogVisual');
     expect(discoverySource).toContain('data-entity-discovery-search-owner="shared-search-row"');
     expect(discoverySource).toContain('data-entity-discovery-style-baseline={coldEntityDiscoveryVisual.canvasName}');
 
@@ -61,7 +61,7 @@ describe('explorer and bulletin cold-workbench chrome', () => {
     expect(bulletinMetricsSource).toContain('text-[var(--ops-text-tertiary)]');
     expect(bulletinMetricsSource).toContain('text-[var(--ops-primary)]');
 
-    expect(bulletinDialogSource).toContain('ColdCodeEditor');
+    expect(bulletinDialogSource).toContain('HzCodeEditor');
     expect(bulletinDialogSource).toContain('data-bulletin-fields-code-editor="metrics-json"');
     expect(bulletinDialogSource).not.toContain('EditorRow');
     expect(bulletinDialogSource).toContain('text-[var(--ops-text-secondary)]');

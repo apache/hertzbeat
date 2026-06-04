@@ -2,10 +2,24 @@
 
 import React from 'react';
 import Link from 'next/link';
+import {
+  HzButton,
+  HzButtonLink,
+  HzDataTable,
+  HzExplorerFrame,
+  HzInput,
+  HzPanelSurface,
+  HzSelect,
+  HzStatusBadge
+} from '@hertzbeat/ui';
 import { useI18n } from '../providers/i18n-provider';
-import { Input } from '../ui/input';
-import { Select } from '../ui/select';
-import { buildExceptionCopy, buildExceptionExplorerRows, buildExceptionFilters, buildRecoveryRows } from '../../lib/exception-center/view-model';
+import {
+  buildExceptionCopy,
+  buildExceptionExplorerRows,
+  buildExceptionFilters,
+  buildRecoveryRows,
+  type ExceptionExplorerRow
+} from '../../lib/exception-center/view-model';
 
 export function ExceptionCenterSurface({ type }: { type: string }) {
   const { t } = useI18n();
@@ -13,166 +27,214 @@ export function ExceptionCenterSurface({ type }: { type: string }) {
   const rows = buildExceptionExplorerRows(type);
   const filters = buildExceptionFilters(t);
   const recoveryRows = buildRecoveryRows(t);
+  const columns = React.useMemo(
+    () => [
+      {
+        key: 'type',
+        header: t('exception.table.type'),
+        width: '280px',
+        render: (row: ExceptionExplorerRow) => (
+          <Link href={row.href} className="font-medium text-[#7190ff]">
+            {row.exceptionType}
+          </Link>
+        )
+      },
+      {
+        key: 'message',
+        header: t('exception.table.message'),
+        render: (row: ExceptionExplorerRow) => <span className="font-medium text-[#e8eaed]">{row.errorMessage}</span>
+      },
+      {
+        key: 'count',
+        header: t('exception.table.count'),
+        width: '120px',
+        render: (row: ExceptionExplorerRow) => <span className="font-semibold text-[#e8eaed]">{row.count}</span>
+      },
+      {
+        key: 'lastSeen',
+        header: t('exception.table.last-seen'),
+        width: '200px',
+        render: (row: ExceptionExplorerRow) => <span>{row.lastSeen}</span>
+      },
+      {
+        key: 'firstSeen',
+        header: t('exception.table.first-seen'),
+        width: '200px',
+        render: (row: ExceptionExplorerRow) => <span>{row.firstSeen}</span>
+      },
+      {
+        key: 'application',
+        header: t('exception.table.application'),
+        width: '180px',
+        render: (row: ExceptionExplorerRow) => <span className="font-semibold text-[#e8eaed]">{row.application}</span>
+      }
+    ],
+    [t]
+  );
 
   return (
     <main
-      data-exception-center-surface="hertzbeat-exceptions"
+      data-exception-center-surface="hertzbeat-ui-exceptions"
       data-exception-type={type}
       className="relative min-h-[calc(100vh-56px)] bg-[#08090c] text-[#e8eaed]"
     >
-      <div className="flex min-h-[calc(100vh-56px)] border-t border-[#252832] bg-[#08090c]">
-        <aside
-          data-exception-filter-sidebar="hertzbeat-exception-filters"
-          className="w-[264px] shrink-0 border-r border-[#252832] bg-[#101217]"
-        >
-          <div className="flex h-12 items-center justify-between border-b border-[#252832] px-4">
-            <div className="flex items-center gap-2">
-              <span className="text-[16px] text-[#d7dbe5]">▽</span>
-              <p className="text-[14px] font-semibold text-[#f3f4f7]">{t('exception.chrome.filter-title')}</p>
-            </div>
-            <button
-              type="button"
-              aria-label={t('exception.chrome.refresh-filters')}
-              className="h-7 rounded-[4px] border border-[#252832] bg-[#151821] px-2 text-[12px] text-[#d7dbe5]"
-            >
-              ↻
-            </button>
-          </div>
-
-          <div className="divide-y divide-[#252832]">
-            {filters.map((filter, index) => (
-              <section key={filter.title} className="px-4 py-3">
-                <div className="mb-2 flex items-center justify-between text-[12px] font-semibold text-[#d5d8e1]">
-                  <span>{filter.title}</span>
-                  <button type="button" className="text-[11px] font-medium text-[#7190ff]">
-                    {t('exception.chrome.clear-all')}
-                  </button>
-                </div>
-                {filter.values.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {filter.values.slice(0, index === 1 ? 10 : 4).map(value => (
-                      <label key={value} className="flex h-7 items-center gap-2 text-[12px] text-[#d6d9e2]">
-                        <span className="grid h-4 w-4 place-items-center rounded-[3px] bg-[#526cff] text-[10px] font-semibold text-white">✓</span>
-                        <span>{value}</span>
-                      </label>
-                    ))}
-                    {index === 1 ? (
-                      <button type="button" className="ml-6 text-[12px] font-medium text-[#7190ff]">{t('exception.chrome.expand-more')}</button>
-                    ) : null}
-                  </div>
-                ) : (
-                  <button type="button" className="flex h-8 w-full items-center gap-2 text-left text-[12px] text-[#c2c7d2]">
-                    <span>›</span>
-                    <span>{filter.title}</span>
-                  </button>
-                )}
-              </section>
-            ))}
-          </div>
-        </aside>
-
-        <section className="min-w-0 flex-1">
-          <header className="flex h-12 items-center justify-between border-b border-[#252832] bg-[#0b0c0f] px-5">
-            <div className="flex h-full items-center gap-3">
-              <h1 className="text-[14px] font-semibold text-[#f3f4f7]">{t('exception.chrome.title')}</h1>
-              <span className="rounded-[4px] border border-[#252832] bg-[#151821] px-2 py-1 text-[11px] font-semibold text-[#8f98aa]">
-                {copy.title}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-[12px] text-[#d6d9e2]">
-              <span className="rounded-[4px] border border-[#252832] bg-[#151821] px-2 py-1">1w</span>
-              <span className="font-semibold">{t('exception.time.last-7d')}</span>
-              <span className="rounded-[4px] border border-[#252832] bg-[#151821] px-2 py-1 text-[#9ca3b4]">UTC + 8:00</span>
-              <button type="button" className="h-8 rounded-[4px] border border-[#252832] bg-[#151821] px-3 text-[#d7dbe5]">{t('exception.action.search')}</button>
-              <button type="button" className="h-8 rounded-[4px] border border-[#526cff] bg-[#526cff] px-4 font-semibold text-white">{t('exception.action.run-query')}</button>
-              <button type="button" className="h-8 rounded-[4px] border border-[#252832] bg-[#151821] px-3 text-[#d7dbe5]">{t('exception.action.feedback')}</button>
-              <button type="button" className="h-8 rounded-[4px] border border-[#252832] bg-[#151821] px-3 text-[#d7dbe5]">{t('exception.action.share')}</button>
-            </div>
-          </header>
-
-          <section data-exception-query-bar="hertzbeat-error-query" className="border-b border-[#252832] bg-[#0b0c0f] px-5 py-3">
-            <div className="grid grid-cols-[minmax(0,1fr)_150px_120px] gap-2">
-              <Input
+      <HzExplorerFrame
+        data-exception-shared-frame="hertzbeat-ui"
+        className="mx-0 mb-0 mt-0 min-h-[calc(100vh-56px)] sm:mx-0"
+        eyebrow={t('exception.chrome.title')}
+        title={copy.title}
+        description={copy.subtitle}
+        mainId="exception-center-main"
+        mainLabel={t('exception.chrome.title')}
+        filterRailLabel={t('exception.chrome.filter-title')}
+        actions={
+          <>
+            <HzStatusBadge tone={copy.tone === 'danger' ? 'critical' : 'info'} size="xs" data-exception-type-badge-owner="hertzbeat-ui-status-badge">
+              {type}
+            </HzStatusBadge>
+            <HzStatusBadge tone="neutral" size="xs">1w</HzStatusBadge>
+            <span className="text-[12px] font-semibold text-[#d6d9e2]">{t('exception.time.last-7d')}</span>
+            <HzStatusBadge tone="neutral" size="xs">UTC + 8:00</HzStatusBadge>
+            <HzButton type="button" intent="secondary" data-exception-action-owner="hertzbeat-ui-button">{t('exception.action.search')}</HzButton>
+            <HzButton type="button" intent="primary" data-exception-run-query-owner="hertzbeat-ui-button">{t('exception.action.run-query')}</HzButton>
+            <HzButton type="button" intent="secondary" data-exception-feedback-owner="hertzbeat-ui-button">{t('exception.action.feedback')}</HzButton>
+            <HzButton type="button" intent="secondary" data-exception-share-owner="hertzbeat-ui-button">{t('exception.action.share')}</HzButton>
+          </>
+        }
+        queryBar={
+          <HzPanelSurface
+            data-exception-query-bar="hertzbeat-ui-error-query"
+            data-exception-query-bar-owner="hertzbeat-ui-panel-surface"
+            className="rounded-none border-x-0 border-t-0 shadow-none"
+            padding="query"
+          >
+            <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_150px_120px]">
+              <HzInput
                 aria-label={t('exception.query.aria')}
-                className="h-8 rounded-[4px] border border-[#252832] bg-[#111318] px-3 font-mono text-[12px] text-[#e7eaf1] outline-none placeholder:text-[#777f91]"
+                className="font-mono"
                 defaultValue=""
                 placeholder={t('exception.query.placeholder')}
+                readOnly
+                data-exception-query-input-owner="hertzbeat-ui-input"
               />
-              <Select
+              <HzSelect
                 aria-label={t('exception.scope.aria')}
-                containerClassName="w-full"
-                className="h-8 min-w-0 text-[#d5d8e1]"
                 defaultValue="all"
-              >
-                <option value="all">{t('exception.scope.all')}</option>
-                <option value="critical">{t('exception.scope.critical')}</option>
-              </Select>
-              <Select
+                data-exception-scope-select-owner="hertzbeat-ui-select"
+                options={[
+                  { value: 'all', label: t('exception.scope.all') },
+                  { value: 'critical', label: t('exception.scope.critical') }
+                ]}
+              />
+              <HzSelect
                 aria-label={t('exception.sort.aria')}
-                containerClassName="w-full"
-                className="h-8 min-w-0 text-[#d5d8e1]"
                 defaultValue="lastSeen"
+                data-exception-sort-select-owner="hertzbeat-ui-select"
+                options={[
+                  { value: 'lastSeen', label: t('exception.sort.last-seen') },
+                  { value: 'count', label: t('exception.sort.count') }
+                ]}
+              />
+            </div>
+          </HzPanelSurface>
+        }
+        filterRail={
+          <aside
+            data-exception-filter-sidebar="hertzbeat-ui-exception-filters"
+            className="bg-[var(--hz-ui-surface)] px-3 py-3"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-[13px] font-semibold text-[#e4ebf5]">{t('exception.chrome.filter-title')}</div>
+              <HzButton
+                type="button"
+                size="xs"
+                intent="ghost"
+                aria-label={t('exception.chrome.refresh-filters')}
+                data-exception-filter-refresh-owner="hertzbeat-ui-button"
               >
-                <option value="lastSeen">{t('exception.sort.last-seen')}</option>
-                <option value="count">{t('exception.sort.count')}</option>
-              </Select>
+                {t('exception.action.search')}
+              </HzButton>
             </div>
-          </section>
-
-          <section className="min-h-[560px] bg-[#08090c] px-5 py-4">
-            <div data-exception-table="hertzbeat-exception-list" className="overflow-hidden rounded-[4px] border border-[#252832] bg-[#111318]">
-              <table className="w-full border-collapse text-left text-[13px]">
-                <thead className="border-b border-[#303440] bg-[#1a1c22] text-[12px] font-semibold text-[#dfe3ed]">
-                  <tr>
-                    <th className="w-[280px] px-4 py-3">{t('exception.table.type')}</th>
-                    <th className="px-4 py-3">{t('exception.table.message')}</th>
-                    <th className="w-[120px] px-4 py-3">{t('exception.table.count')}</th>
-                    <th className="w-[200px] px-4 py-3">{t('exception.table.last-seen')}</th>
-                    <th className="w-[200px] px-4 py-3">{t('exception.table.first-seen')}</th>
-                    <th className="w-[180px] px-4 py-3">{t('exception.table.application')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(row => (
-                    <tr key={row.key} className="border-b border-[#303440] last:border-b-0">
-                      <td className="px-4 py-4">
-                        <Link href={row.href} className="font-medium text-[#7190ff]">
-                          {row.exceptionType}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-4 font-medium text-[#e8eaed]">{row.errorMessage}</td>
-                      <td className="px-4 py-4 font-semibold text-[#e8eaed]">{row.count}</td>
-                      <td className="px-4 py-4 text-[#e8eaed]">{row.lastSeen}</td>
-                      <td className="px-4 py-4 text-[#e8eaed]">{row.firstSeen}</td>
-                      <td className="px-4 py-4 font-semibold text-[#e8eaed]">{row.application}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {filters.map((filter, index) => (
+                <section key={filter.title} className="space-y-2">
+                  <div className="flex items-center justify-between text-[12px] font-semibold text-[#d5d8e1]">
+                    <span>{filter.title}</span>
+                    <HzButton type="button" intent="ghost" size="xs">{t('exception.chrome.clear-all')}</HzButton>
+                  </div>
+                  {filter.values.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {filter.values.slice(0, index === 1 ? 10 : 4).map(value => (
+                        <label key={value} className="flex h-7 items-center gap-2 rounded-[3px] px-1 text-[12px] text-[#d6d9e2] hover:bg-[#151a22]">
+                          <span className="grid h-4 w-4 place-items-center rounded-[3px] border border-[#4d65c8] bg-[#17213a] text-[10px] font-semibold text-[#b9c8ff]">
+                            *
+                          </span>
+                          <span className="min-w-0 truncate">{value}</span>
+                        </label>
+                      ))}
+                      {index === 1 ? (
+                        <HzButton type="button" intent="ghost" size="xs" className="ml-5">{t('exception.chrome.expand-more')}</HzButton>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <HzButton type="button" intent="ghost" size="sm" layout="full" className="justify-start">
+                      {filter.title}
+                    </HzButton>
+                  )}
+                </section>
+              ))}
             </div>
+          </aside>
+        }
+      >
+        <section className="min-h-[560px] bg-[#08090c] px-5 py-4">
+          <HzPanelSurface clip data-exception-table="hertzbeat-ui-exception-list" data-exception-table-owner="hertzbeat-ui-data-table">
+            <div className="flex h-11 items-center justify-between border-b border-[var(--hz-ui-line-soft)] px-4 text-[12px] text-[#8e99ab]">
+              <span>{t('exception.chrome.title')}</span>
+              <span>
+                {rows.length} {t('exception.summary.groups')}
+              </span>
+            </div>
+            <HzDataTable
+              rows={rows}
+              columns={columns}
+              getRowKey={row => row.key}
+              variant="embedded"
+              data-exception-table-chrome-owner="hertzbeat-ui-data-table"
+            />
+          </HzPanelSurface>
 
-            <div className="mt-4 flex items-center justify-between rounded-[4px] border border-[#252832] bg-[#101217] px-4 py-3 text-[12px] text-[#8f98aa]">
-              <div className="flex items-center gap-3">
+          <HzPanelSurface
+            className="mt-4"
+            padding="query"
+            data-exception-summary-owner="hertzbeat-ui-panel-surface"
+          >
+            <div className="flex flex-col gap-3 text-[12px] text-[#8f98aa] xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex flex-wrap items-center gap-3">
                 <span>
                   {rows.length} {t('exception.summary.groups')}
                 </span>
                 <span>{copy.subtitle}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {recoveryRows.map(row => (
-                  <Link
+                  <HzButtonLink
                     key={row.href}
+                    component={Link}
                     href={row.href}
-                    className="rounded-full border border-[#252832] bg-[#0b0c0f] px-3 py-1.5 font-semibold text-[#f3f4f7]"
+                    intent="secondary"
+                    size="sm"
+                    data-exception-recovery-action-owner="hertzbeat-ui-button-link"
+                    title={`${row.title}: ${row.copy}`}
                   >
                     {row.label}
-                  </Link>
+                  </HzButtonLink>
                 ))}
               </div>
             </div>
-          </section>
+          </HzPanelSurface>
         </section>
-      </div>
+      </HzExplorerFrame>
     </main>
   );
 }

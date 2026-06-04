@@ -24,11 +24,11 @@ describe('alert authoring primitives', () => {
       </div>
     );
 
-    expect(html).toContain('data-alert-authoring-panel="cold-panel"');
-    expect(html).toContain('data-alert-authoring-callout="cold-panel"');
+    expect(html).toContain('data-alert-authoring-panel="hertzbeat-ui-panel"');
+    expect(html).toContain('data-alert-authoring-callout="hertzbeat-ui-panel"');
     expect(html).toContain('data-alert-authoring-toggle-row="inline-control"');
-    expect(html).toContain('data-alert-authoring-action-pill="cold-action"');
-    expect(html).toContain('data-alert-authoring-value-pill="cold-value"');
+    expect(html).toContain('data-alert-authoring-action-pill="hertzbeat-ui-action"');
+    expect(html).toContain('data-alert-authoring-value-pill="hertzbeat-ui-value"');
     expect(html).not.toContain('data-alert-authoring-textarea="cold-textarea"');
     expect(html).toContain('rounded-[4px]');
     expect(html).toContain('rounded-[3px]');

@@ -6,7 +6,7 @@ import { HzButton, HzCodeEditor, HzConfirmDialog, HzInlineFeedback, HzPagination
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { SearchRow } from '../ui/search-row';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import { buildCollectorClusterHealthEvidence, buildCollectorTableRows } from '../../lib/collector-manage/view-model';
 import type { CollectorSummary, PageResult } from '../../lib/types';
 
@@ -68,7 +68,7 @@ type CollectorManageSurfaceProps = {
   onRowDelete: (collector: string) => void;
 };
 
-const coldCollectorVisual = coldOpsCatalogVisual;
+const coldCollectorVisual = hzOpsCatalogVisual;
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
@@ -103,7 +103,7 @@ function resolveCollectorConfirmTitle(target: CollectorDeleteTarget | null | und
 
 function EmptyTableRow({ colSpan, t }: { colSpan: number; t: Translator }) {
   return (
-    <tr data-collector-empty-state="cold-table-empty" className="bg-[#0b0c0e]">
+    <tr data-collector-empty-state="hertzbeat-ui-table-empty" className="bg-[#0b0c0e]">
       <td colSpan={colSpan} className="h-[240px] px-3 py-10 text-center text-[#858d9a]">
         <div className="inline-flex flex-col items-center gap-3">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]">
@@ -207,7 +207,7 @@ export function CollectorManageSurface({
   return (
     <>
       <div
-        data-collector-manage-surface="otlp-cold-collector-console"
+        data-collector-manage-surface="otlp-hertzbeat-ui-collector-console"
         data-collector-manage-style-baseline={coldCollectorVisual.canvasName}
         className={coldCollectorVisual.canvas.root}
         style={coldCollectorVisual.canvas.backgroundStyle}
@@ -215,7 +215,7 @@ export function CollectorManageSurface({
         <section className={coldCollectorVisual.layout.pageSection}>
         <div className="mx-auto max-w-[1480px]">
           <div className="mb-5">
-            <div data-collector-header="cold-compact-header" className={coldCollectorVisual.panel.hero}>
+            <div data-collector-header="hertzbeat-ui-compact-header" className={coldCollectorVisual.panel.hero}>
               <div className="max-w-[840px]">
                 <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                   {t('menu.advanced.collector')}
@@ -346,7 +346,7 @@ export function CollectorManageSurface({
           >
             <section className="min-w-0">
               <SearchRow
-                data-collector-toolbar="cold-table-toolbar"
+                data-collector-toolbar="hertzbeat-ui-table-toolbar"
                 data-collector-search-owner="shared-search-row"
                 value={search}
                 placeholder={t('collector.name')}
@@ -393,7 +393,7 @@ export function CollectorManageSurface({
               ) : null}
 
               <div
-                data-collector-table-shell="cold-dense-table"
+                data-collector-table-shell="hertzbeat-ui-dense-table"
                 data-collector-table-loading={tableLoading ? 'true' : 'false'}
                 data-collector-table-loading-contract="angular-load-collectors-table"
                 data-collector-table-loading-owner="angular-nz-table-loading"
@@ -402,12 +402,12 @@ export function CollectorManageSurface({
                 aria-busy={tableLoading ? 'true' : 'false'}
                 className="overflow-visible rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
               >
-                <table data-collector-manage-table="cold-collector-table" className="w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
+                <table data-collector-manage-table="hertzbeat-ui-collector-table" className="w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
                   <thead className="border-b border-[#252b34] bg-[#101217] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
                     <tr>
                       <th className="w-[44px] px-3 py-2.5">
                         <Checkbox
-                          data-collector-select-all="cold-checkbox"
+                          data-collector-select-all="hertzbeat-ui-checkbox"
                           data-collector-select-all-contract="angular-header-includes-disabled-default"
                           data-collector-selectable-names={collectorNames.join(',')}
                           data-collector-immutable-names={immutableCollectorNames.join(',')}
@@ -494,7 +494,7 @@ export function CollectorManageSurface({
                         <td className="truncate px-3 py-2.5" title={row.version}>{row.version}</td>
                         <td className="px-3 py-2.5 text-[#858d9a]">{row.updatedAt}</td>
                         <td className="px-3 py-2.5">
-                          <div data-collector-row-actions="cold-icon-actions" className="flex gap-1.5">
+                          <div data-collector-row-actions="hertzbeat-ui-icon-actions" className="flex gap-1.5">
                             {row.nextAction === 'online' ? (
                               <Button
                                 size="icon"
@@ -585,7 +585,7 @@ export function CollectorManageSurface({
                   </tbody>
                 </table>
                 <div
-                  data-collector-pagination="cold-dense-pagination"
+                  data-collector-pagination="hertzbeat-ui-dense-pagination"
                   data-collector-pagination-owner="hertzbeat-ui-pagination-bar"
                   data-collector-pagination-contract="angular-search-pagination"
                 >

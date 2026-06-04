@@ -164,7 +164,7 @@ describe('AlertGroupSurface', () => {
     );
 
     expect(html).toContain('data-alert-group-surface="otlp-cold-group-console"');
-    expect(html).toContain('data-alert-group-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-alert-group-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-alert-group-header="cold-compact-header"');
     expect(html).toContain('data-alert-group-command-row="standard-equal-buttons"');
     expect(html).toContain('data-alert-group-admin-layout="full-width-admin-list"');
@@ -187,9 +187,9 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('data-alert-group-select-current-page="table-header"');
     expect(html).toContain('data-alert-group-select-current-page-owner="hertzbeat-ui-checkbox"');
     expect(html).toContain('data-hz-ui="checkbox"');
-    expect(html).toContain('data-alert-group-row-checkbox="cold-checkbox"');
-    expect(html).toContain('data-alert-group-enable-checkbox="cold-checkbox"');
-    expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(html).toContain('data-alert-group-row-checkbox="hertzbeat-ui-checkbox"');
+    expect(html).toContain('data-alert-group-enable-checkbox="hertzbeat-ui-checkbox"');
+    expect(html.match(/data-hz-checkbox-owner="hertzbeat-ui-checkbox"/g)?.length).toBeGreaterThanOrEqual(2);
     expect(html).toContain(t('common.refresh'));
     expect(html).toContain(t('alert.group.action.new'));
     expect(html).toContain(t('common.search'));
@@ -207,7 +207,7 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('href="/trace/manage?traceId=trace-123"');
     expect(html).toContain('data-label-options="alertname|instance|job"');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain("from '../ui/checkbox'");
     expect(source).toContain("from '@hertzbeat/ui'");

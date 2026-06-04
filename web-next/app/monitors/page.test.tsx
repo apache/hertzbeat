@@ -139,9 +139,9 @@ vi.mock('@/components/ui/input', () => ({
 
 vi.mock('@/components/ui/checkbox', () => ({
   Checkbox: ({ containerClassName: _containerClassName, label, ...props }: any) => (
-    <label data-cold-checkbox-owner="cold-checkbox">
-      <input type="checkbox" data-cold-checkbox-control="native-hidden" {...props} />
-      {label ? <span data-cold-checkbox-label="true">{label}</span> : null}
+    <label data-hz-checkbox-owner="hertzbeat-ui-checkbox">
+      <input type="checkbox" data-hz-checkbox-control="native-hidden" {...props} />
+      {label ? <span data-hz-checkbox-label="true">{label}</span> : null}
     </label>
   )
 }));
@@ -2603,7 +2603,7 @@ describe('monitors page', () => {
     expect(html).toContain('data-monitor-manage-selection-owner="hertzbeat-ui-checkbox"');
     expect(html).toContain('data-hz-ui="checkbox"');
     expect(html).toContain('data-hz-checkbox-control="native-hidden"');
-    expect(html).not.toContain('data-cold-checkbox-owner');
+    expect(html).not.toContain('data-hz-checkbox-owner');
   }, 15000);
 
   it('keeps monitor row updated cells as timestamp-only table values', async () => {
@@ -3119,7 +3119,7 @@ describe('monitors page', () => {
     expect(html).toContain('data-hz-control-edge="lined"');
     expect(html).toContain('aria-label="Select"');
     expect(html).not.toContain('data-hz-checkbox-label="true">Select</span>');
-    expect(html).not.toContain('data-cold-checkbox-owner');
+    expect(html).not.toContain('data-hz-checkbox-owner');
   });
 
   it('excludes disappeared monitors from Angular-style page selection and disables their row actions', async () => {

@@ -45,7 +45,7 @@ vi.mock('@/components/workbench/client-workbench', () => ({
 
 vi.mock('@/components/pages/status-setting-surface', () => ({
   StatusSettingSurface: ({ publicStatusHref, mode }: any) => (
-    <div data-status-setting-surface="otlp-cold-status-console" data-status-setting-style-baseline="hertzbeat-cold-matte">
+    <div data-status-setting-surface="otlp-cold-status-console" data-status-setting-style-baseline="hertzbeat-ui-matte">
       <section data-status-admin-layout="full-width-admin-list">
         <span>Status page table</span>
       </section>
@@ -176,7 +176,7 @@ describe('setting status page', () => {
     expect(html).toContain('data-client-workbench="true"');
     expect(html).toContain('data-loading-copy="Loading status settings"');
     expect(html).toContain('data-status-setting-surface="otlp-cold-status-console"');
-    expect(html).toContain('data-status-setting-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-status-setting-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-status-admin-layout="full-width-admin-list"');
     expect(html).not.toContain('data-status-summary-rail=');
     expect(html).not.toContain('data-status-setting-route="angular-status-page"');

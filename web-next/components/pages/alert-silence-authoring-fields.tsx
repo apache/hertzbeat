@@ -79,7 +79,7 @@ function AlertSilenceFieldRow({
   className?: string;
 }) {
   return (
-    <div data-alert-silence-field-row="cold-form-row" className={`grid gap-2 text-sm text-[var(--ops-text-secondary)] lg:grid-cols-[132px_minmax(0,1fr)] lg:items-center ${className || ''}`}>
+    <div data-alert-silence-field-row="hertzbeat-ui-form-row" className={`grid gap-2 text-sm text-[var(--ops-text-secondary)] lg:grid-cols-[132px_minmax(0,1fr)] lg:items-center ${className || ''}`}>
       <div className="text-[13px] font-semibold text-[#a9b0bb]">{label}</div>
       <div className="min-w-0">{children}</div>
     </div>
@@ -165,7 +165,7 @@ export function AlertSilenceAuthoringFields({
           <SegmentedControl
             name="silence_type"
             value={draft.type}
-            data-alert-silence-type-control="cold-segmented-type"
+            data-alert-silence-type-control="hertzbeat-ui-segmented-type"
             options={[
               { value: '0', label: t('alert.silence.type.once') },
               { value: '1', label: t('alert.silence.type.cyc') }

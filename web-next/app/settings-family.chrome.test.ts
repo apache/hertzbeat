@@ -10,7 +10,7 @@ describe('settings family cold-matte chrome', () => {
     const settingsDialogSource = readFileSync(resolve(process.cwd(), 'components/settings/settings-dialog-form.tsx'), 'utf8');
     const combinedSource = [settingsShellSource, settingsFormSource, settingsSummarySource, settingsDialogSource].join('\n');
 
-    expect(combinedSource).toContain('coldOpsCatalogVisual');
+    expect(combinedSource).toContain('hzOpsCatalogVisual');
     expect(combinedSource).toContain('data-settings-console-style-baseline');
     expect(combinedSource).toContain('data-settings-form-owner="cold-settings-form-owner"');
     expect(combinedSource).toContain('data-settings-summary-list-style="cold-dense-summary-list"');

@@ -91,7 +91,7 @@ vi.mock('@/components/pages/entity-detail-surface', () => ({
     return (
       <main
         data-entity-detail-surface="otlp-cold-entity-detail"
-        data-entity-detail-style-baseline="hertzbeat-cold-matte"
+        data-entity-detail-style-baseline="hertzbeat-ui-matte"
         data-entity-detail-layout="full-width-workbench"
         data-entity-detail-route-monitor-id={routeContext?.monitorId || ''}
         data-entity-detail-route-time-range={routeContext?.timeRange || ''}
@@ -158,7 +158,7 @@ describe('EntityDetailPage', () => {
     const html = renderToStaticMarkup(<EntityDetailPage entityId="42" />);
 
     expect(html).toContain('data-entity-detail-surface="otlp-cold-entity-detail"');
-    expect(html).toContain('data-entity-detail-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-entity-detail-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-detail-layout="full-width-workbench"');
     expect(html).toContain('data-entity-detail-header="cold-compact-header"');
     expect(html).toContain('data-entity-detail-command-row="standard-equal-buttons"');

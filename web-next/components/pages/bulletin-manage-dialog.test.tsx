@@ -13,12 +13,12 @@ vi.mock('../ui/input', () => ({
   Input: (props: any) => <input {...props} />
 }));
 
-vi.mock('../ui/cold-code-editor', () => ({
-  ColdCodeEditor: ({ value, language, minHeight, onChange: _onChange, ...props }: any) => (
+vi.mock('../ui/hz-code-editor', () => ({
+  HzCodeEditor: ({ value, language, minHeight, onChange: _onChange, ...props }: any) => (
     <div
-      data-cold-code-editor="codemirror"
-      data-cold-code-editor-language={language}
-      data-cold-code-editor-min-height={minHeight}
+      data-hz-code-editor="codemirror"
+      data-hz-code-editor-language={language}
+      data-hz-code-editor-min-height={minHeight}
       data-bulletin-fields-code-editor={props['data-bulletin-fields-code-editor']}
     >
       {value}
@@ -77,11 +77,11 @@ describe('BulletinManageDialog', () => {
     );
 
     expect(html).toContain('data-bulletin-fields-code-editor="metrics-json"');
-    expect(html).toContain('data-cold-code-editor="codemirror"');
-    expect(html).toContain('data-cold-code-editor-language="json"');
-    expect(html).toContain('data-cold-code-editor-min-height="260px"');
+    expect(html).toContain('data-hz-code-editor="codemirror"');
+    expect(html).toContain('data-hz-code-editor-language="json"');
+    expect(html).toContain('data-hz-code-editor-min-height="260px"');
     expect(html).toContain('&quot;cpu&quot;');
-    expect(source).toContain("import { ColdCodeEditor } from '../ui/cold-code-editor';");
+    expect(source).toContain("import { HzCodeEditor } from '../ui/hz-code-editor';");
     expect(source).toContain('data-bulletin-fields-code-editor="metrics-json"');
     expect(source).toContain('language="json"');
     expect(source).toContain('onChange={nextValue => onDraftChange({ ...draft, fieldsJson: nextValue })}');

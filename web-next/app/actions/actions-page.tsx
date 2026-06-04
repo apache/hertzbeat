@@ -5,7 +5,7 @@ import { HzActionWorkbench } from '@hertzbeat/ui';
 import { useI18n } from '../../components/providers/i18n-provider';
 import { buildActionsPlaceholderState } from '../../lib/actions-surface/view-model';
 import type { ActionSuggestionContext } from '../../lib/actions-surface/model';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 
 type ApprovalDraftResult = {
   draftId: string;
@@ -50,7 +50,7 @@ type ApprovalDraftQueueResult = {
 export default function ActionsPage({ suggestionContext }: { suggestionContext?: ActionSuggestionContext } = {}) {
   const { t } = useI18n();
   const state = buildActionsPlaceholderState(t, suggestionContext);
-  const coldOpsVisual = coldOpsCatalogVisual;
+  const coldOpsVisual = hzOpsCatalogVisual;
   const [approvalDraftStatus, setApprovalDraftStatus] = React.useState<'ready' | 'submitting' | 'created' | 'failed' | 'blocked'>(
     state.approvalDraft.state === 'ready' ? 'ready' : 'blocked'
   );
@@ -213,7 +213,7 @@ export default function ActionsPage({ suggestionContext }: { suggestionContext?:
   return (
     <main
       className={coldOpsVisual.entry.main}
-      data-actions-route="otlp-cold-ops-entry"
+      data-actions-route="otlp-hertzbeat-ui-ops-entry"
       data-actions-style-baseline={coldOpsVisual.canvasName}
       data-actions-placeholder-replacement="api-backed-workbench"
       data-actions-legacy-open-context="adapter-boundary-panel"

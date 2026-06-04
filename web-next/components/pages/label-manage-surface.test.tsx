@@ -80,7 +80,7 @@ describe('label manage surface', () => {
     );
 
     expect(html).toContain('data-label-manage-surface="otlp-cold-label-console"');
-    expect(html).toContain('data-label-manage-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-label-manage-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-label-header="cold-compact-header"');
     expect(html).toContain('data-label-command-row="standard-equal-buttons"');
     expect(html).toContain('data-label-admin-layout="full-width-admin-list"');
@@ -754,7 +754,7 @@ describe('label manage surface', () => {
   it('keeps the labels page on the cold visual owner instead of WorkbenchPage or alert primitives', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/label-manage-surface.tsx'), 'utf8');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain("from '@hertzbeat/ui'");
     expect(source).toContain('HzInlineFeedback');

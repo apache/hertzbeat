@@ -977,7 +977,7 @@ export function MonitorEditorSurface({
         <HzMonitorEditorSection data-monitor-editor-section-owner="hertzbeat-ui-editor-section" title={t('label.bind')}>
           <div
             data-monitor-editor-label-selector="angular-app-label-selector"
-            data-monitor-editor-label-selector-owner="cold-label-selector"
+            data-monitor-editor-label-selector-owner="hertzbeat-ui-label-selector"
           >
             <LabelRecordInput
               name="labels"

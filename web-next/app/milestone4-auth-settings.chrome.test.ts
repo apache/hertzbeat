@@ -38,7 +38,7 @@ describe('milestone 4 auth/public and settings cold-workbench chrome', () => {
     expect(passportLockSource).toContain('data-passport-lock-panel-owner="hertzbeat-ui-passport-lock"');
 
     expect(settingTokenSource).toContain('SettingsConsoleTitle');
-    expect(settingTokenSource).toContain('coldOpsCatalogVisual');
+    expect(settingTokenSource).toContain('hzOpsCatalogVisual');
     expect(settingTokenSource).toContain('data-setting-token-table-panel="cold-dense-table"');
     expect(settingTokenSource).toContain('data-setting-token-strip-style="cold-inline-counts"');
     expect(settingTokenSource).toContain('data-setting-token-row-action="cold-row-action"');

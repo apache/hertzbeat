@@ -124,7 +124,7 @@ describe('EntityDiscoverySurface', () => {
     expect(source).toContain('{row.primaryActionLabel}');
     expect(source).toContain('data-entity-discovery-row-actions="cold-inline-actions"');
     expect(source).toContain('data-entity-discovery-source-chips="cold-inline-chips"');
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).not.toContain('md:grid-cols-[minmax(0,1fr)_auto_auto]');
     expect(source).not.toContain('className={`${coldEntityDiscoveryVisual.search.row} h-[36px]');
     expect(source).not.toContain('data-entity-discovery-search-input-shell');
@@ -171,7 +171,7 @@ describe('EntityDiscoverySurface', () => {
     );
 
     expect(html).toContain('data-entity-discovery-surface="otlp-cold-discovery-console"');
-    expect(html).toContain('data-entity-discovery-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-entity-discovery-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-discovery-layout="full-width-workbench"');
     expect(html).toContain('data-entity-discovery-header="cold-compact-header"');
     expect(html).toContain('data-entity-discovery-command-row="standard-equal-buttons"');

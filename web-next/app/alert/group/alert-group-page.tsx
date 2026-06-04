@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { ClientWorkbench } from '../../../components/workbench/client-workbench';
 import { useI18n } from '../../../components/providers/i18n-provider';
 import { AlertGroupSurface } from '../../../components/pages/alert-group-surface';
-import { ColdConfirmDialog } from '../../../components/ui/cold-confirm-dialog';
+import { HzConfirmDialog } from '../../../components/ui/hz-confirm-dialog';
 import { api } from '../../../lib/alert-api-facade';
 import {
   createAlertGroupFromFacade,
@@ -288,7 +288,7 @@ export default function AlertGroupPage({ initialRouteState }: { initialRouteStat
               onDraftChange={setDraft}
             />
             <div data-alert-delete-confirm={deleteRequest ? 'open' : 'closed'}>
-              <ColdConfirmDialog
+              <HzConfirmDialog
                 open={Boolean(deleteRequest)}
                 title={deleteRequest?.kind === 'batch' ? t('common.confirm.delete-batch') : t('common.confirm.delete')}
                 copy={

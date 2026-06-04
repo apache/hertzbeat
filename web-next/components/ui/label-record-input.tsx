@@ -187,9 +187,9 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
       return (
         <div
           key={isDraft ? 'draft' : `${index}-${label}`}
-          data-cold-label-selector-row-layout="full-row-equal-key-value-with-action"
-          data-cold-label-selector-record-row={!isDraft ? label : undefined}
-          data-cold-label-selector-draft-row={isDraft ? 'true' : undefined}
+          data-hz-label-selector-row-layout="full-row-equal-key-value-with-action"
+          data-hz-label-selector-record-row={!isDraft ? label : undefined}
+          data-hz-label-selector-draft-row={isDraft ? 'true' : undefined}
           className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_14px_minmax(0,1fr)_76px] items-center gap-2"
         >
           <div className="relative min-w-0">
@@ -200,7 +200,7 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
               type="text"
               disabled={disabled}
               value={record.key}
-              data-cold-label-selector-key-input="searchable-key"
+              data-hz-label-selector-key-input="searchable-key"
               className="h-8 w-full rounded-[3px] border border-[#2b3039] bg-[#0d0f14] px-2 text-[12px] font-semibold text-[#dbe4f0] outline-none placeholder:text-[#858d9a] focus:border-[#4e74f8]"
               placeholder={keyPlaceholder}
               onFocus={event => showPicker({ row, type: 'key' }, event.currentTarget)}
@@ -222,8 +222,8 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
             />
             {keyPopoverOpen ? (
               <div
-                data-cold-label-selector-popover="keys"
-                data-cold-label-selector-popover-position="fixed-anchored"
+                data-hz-label-selector-popover="keys"
+                data-hz-label-selector-popover-position="fixed-anchored"
                 className="fixed z-[80] max-h-40 overflow-y-auto rounded-[3px] border border-[#303743] bg-[#0d1017] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.36)]"
                 style={popoverStyle}
               >
@@ -232,7 +232,7 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
                     key={option}
                     type="button"
                     disabled={disabled}
-                    data-cold-label-selector-suggestion={option}
+                    data-hz-label-selector-suggestion={option}
                     className="flex h-7 w-full items-center rounded-[3px] px-2 text-left text-[12px] font-semibold text-[#a9b7cc] transition hover:bg-[#182238] hover:text-white disabled:pointer-events-none"
                     onMouseDown={event => event.preventDefault()}
                     onClick={() => {
@@ -274,7 +274,7 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
               type="text"
               disabled={disabled}
               value={record.value}
-              data-cold-label-selector-value-input="searchable-value"
+              data-hz-label-selector-value-input="searchable-value"
               className="h-8 w-full rounded-[3px] border border-[#2b3039] bg-[#0d0f14] px-2 text-[12px] font-semibold text-[#dbe4f0] outline-none placeholder:text-[#858d9a] focus:border-[#4e74f8]"
               placeholder={valuePlaceholder}
               onFocus={event => showPicker({ row, type: 'value' }, event.currentTarget)}
@@ -296,8 +296,8 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
             />
             {valuePopoverOpen ? (
               <div
-                data-cold-label-selector-popover="values"
-                data-cold-label-selector-popover-position="fixed-anchored"
+                data-hz-label-selector-popover="values"
+                data-hz-label-selector-popover-position="fixed-anchored"
                 className="fixed z-[80] max-h-40 overflow-y-auto rounded-[3px] border border-[#303743] bg-[#0d1017] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.36)]"
                 style={popoverStyle}
               >
@@ -306,7 +306,7 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
                     key={option}
                     type="button"
                     disabled={disabled}
-                    data-cold-label-selector-suggestion={option}
+                    data-hz-label-selector-suggestion={option}
                     className="flex h-7 w-full items-center rounded-[3px] px-2 text-left text-[12px] font-semibold text-[#a9b7cc] transition hover:bg-[#182238] hover:text-white disabled:pointer-events-none"
                     onMouseDown={event => event.preventDefault()}
                     onClick={() => {
@@ -332,7 +332,7 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
             <button
               type="button"
               disabled={disabled || !draftKey.trim()}
-              data-cold-label-selector-add="true"
+              data-hz-label-selector-add="true"
               className="inline-flex h-8 w-[76px] min-w-0 shrink-0 items-center justify-center gap-1.5 rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 text-[12px] font-semibold text-[#dbe4f0] transition hover:border-[#4e74f8] hover:bg-[#151b28] disabled:pointer-events-none disabled:opacity-45"
               onClick={() => commitRecord()}
             >
@@ -343,7 +343,7 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
             <button
               type="button"
               disabled={disabled}
-              data-cold-label-selector-remove-row={label}
+              data-hz-label-selector-remove-row={label}
               className="inline-flex h-8 w-[76px] min-w-0 shrink-0 items-center justify-center gap-1.5 rounded-[3px] border border-[#2b3039] bg-[#101217] px-2 text-[12px] font-semibold text-[#dbe4f0] transition hover:border-[#4e74f8] hover:bg-[#151b28] disabled:pointer-events-none disabled:opacity-45"
               aria-label={`${removeLabel} ${label}`}
               onClick={() => {
@@ -360,15 +360,15 @@ export const LabelRecordInput = React.forwardRef<HTMLInputElement, LabelRecordIn
 
     return (
       <div
-        data-cold-label-selector-owner="cold-label-selector"
-        data-cold-label-selector-shell="unframed-inline"
+        data-hz-label-selector-owner="hertzbeat-ui-label-selector"
+        data-hz-label-selector-shell="unframed-inline"
         className={cn(
           'space-y-2',
           disabled ? 'opacity-55' : '',
           containerClassName
         )}
       >
-        <HiddenInput name={disabled ? undefined : name} value={value} data-cold-label-selector-value="hidden" />
+        <HiddenInput name={disabled ? undefined : name} value={value} data-hz-label-selector-value="hidden" />
         {records.map((record, index) => renderRow({ row: index, record, index }))}
         {renderRow({ row: 'draft', record: { key: draftKey, value: draftValue } })}
       </div>

@@ -138,7 +138,7 @@ describe('TimeRangeControl', () => {
     expect(html).not.toMatch(/\u8fd1 1 \u5c0f\u65f6/);
   });
 
-  it('renders the shared cold operator toolbar without becoming another card layer', () => {
+  it('renders the shared HertzBeat UI operator toolbar without becoming another card layer', () => {
     const html = renderToStaticMarkup(
       <TimeRangeControl
         value={{ timeRange: 'last-1h', refresh: '30', live: 'false', tz: 'Asia/Shanghai' }}
@@ -146,8 +146,10 @@ describe('TimeRangeControl', () => {
       />
     );
 
+    expect(html).toContain('data-hz-ui="time-range-control"');
+    expect(html).toContain('data-hz-time-range-control-owner="hertzbeat-ui-time-range-control"');
     expect(html).toContain('data-time-range-control="hertzbeat-shared"');
-    expect(html).toContain('data-time-range-control-visual="cold-operator-toolbar"');
+    expect(html).toContain('data-time-range-control-visual="hertzbeat-ui-operator-toolbar"');
     expect(html).toContain('data-time-range-control-density="compact"');
     expect(html).toContain('data-time-range-control-layout="single-row-rail"');
     expect(html).toContain('data-time-range-control-field-labels="sr-only"');

@@ -17,7 +17,7 @@ import {
   type AlertSettingCreateMode,
   type AlertSettingCreatePayload
 } from '../../../components/pages/alert-setting-create-dialog';
-import { ColdConfirmDialog } from '../../../components/ui/cold-confirm-dialog';
+import { HzConfirmDialog } from '../../../components/ui/hz-confirm-dialog';
 import { useI18n } from '../../../components/providers/i18n-provider';
 import { getCurrentLocale } from '../../../lib/api-client';
 import { api } from '../../../lib/alert-api-facade';
@@ -452,7 +452,7 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
               onSubmit={submitCreate}
             />
             <div data-alert-delete-confirm={deleteRequest ? 'open' : 'closed'}>
-              <ColdConfirmDialog
+              <HzConfirmDialog
                 open={Boolean(deleteRequest)}
                 title={deleteRequest?.kind === 'batch' ? t('common.confirm.delete-batch') : t('common.confirm.delete')}
                 copy={

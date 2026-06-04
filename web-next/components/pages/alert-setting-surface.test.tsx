@@ -106,7 +106,7 @@ describe('AlertSettingSurface', () => {
     );
 
     expect(html).toContain('data-alert-setting-surface="otlp-cold-setting-console"');
-    expect(html).toContain('data-alert-setting-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-alert-setting-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-alert-setting-header="cold-compact-header"');
     expect(html).toContain('data-alert-setting-command-row="standard-equal-buttons"');
     expect(html).toContain('data-alert-setting-admin-layout="full-width-admin-list"');
@@ -141,10 +141,10 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('data-hz-ui="pagination-bar"');
     expect(html).toContain(t('common.button.export'));
     expect(html).toContain(t('common.button.import'));
-    expect(html).toContain('data-alert-setting-select-all="cold-checkbox"');
-    expect(html).toContain('data-alert-setting-row-checkbox="cold-checkbox"');
-    expect(html).toContain('data-alert-setting-enable-checkbox="cold-checkbox"');
-    expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(html).toContain('data-alert-setting-select-all="hertzbeat-ui-checkbox"');
+    expect(html).toContain('data-alert-setting-row-checkbox="hertzbeat-ui-checkbox"');
+    expect(html).toContain('data-alert-setting-enable-checkbox="hertzbeat-ui-checkbox"');
+    expect(html.match(/data-hz-checkbox-owner="hertzbeat-ui-checkbox"/g)?.length).toBeGreaterThanOrEqual(3);
     expect(html).toContain(t('menu.alert.setting'));
     expect(html).toContain(t('common.refresh'));
     expect(html).toContain(t('alert.setting.action.new'));
@@ -162,7 +162,7 @@ describe('AlertSettingSurface', () => {
     expect(html).not.toContain('data-workbench-page="true"');
     expect(html).not.toContain('angular-table');
     expect(html).not.toContain('angular-table-panel');
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '@hertzbeat/ui'");
     expect(source).toContain('HzBatchToolbar');
     expect(source).toContain('HzInlineFeedback');

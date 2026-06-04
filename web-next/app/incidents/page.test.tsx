@@ -144,7 +144,7 @@ describe('incidents page', () => {
     expect(html).toContain('data-cache-key="incident-workbench::0:8:0"');
     expect(html).toContain('data-cache-ttl="10000"');
     expect(html).toContain('data-incidents-route="incident-workbench-api-ui-lab-shared"');
-    expect(html).toContain('data-incidents-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-incidents-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-incidents-workbench="hertzbeat-ui"');
     expect(html).toContain('data-incidents-api-owner="status-page-incident-api"');
     expect(html).toContain('data-incidents-api-source="status-page-incident-list"');
@@ -188,7 +188,7 @@ describe('incidents page', () => {
     expect(html).not.toContain('data-incidents-shell-panel="cold-ops-shell-panel"');
     expect(html).not.toContain('data-incidents-launch-checklist="cold-ops-static-rail"');
     expect(html).not.toContain('data-incidents-empty-state="cold-ops-domain-adapter"');
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain('HzIncidentWorkbench');
     expect(source).toContain('ClientWorkbench');
     expect(source).toContain('loadIncidentWorkbenchData');

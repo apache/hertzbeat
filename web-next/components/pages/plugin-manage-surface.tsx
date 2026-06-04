@@ -9,7 +9,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
 import { LabelRecordInput } from '../ui/label-record-input';
 import { SearchRow } from '../ui/search-row';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import { buildPluginTableRows } from '../../lib/plugin-manage/view-model';
 import type { PluginManagePageData, PluginParamDraft, PluginUploadDraft } from '../../lib/plugin-manage/controller';
 import type { ParamDefine, Plugin } from '../../lib/types';
@@ -68,7 +68,7 @@ type PluginManageSurfaceProps = {
   onSaveDialog: () => void;
 };
 
-const coldPluginVisual = coldOpsCatalogVisual;
+const coldPluginVisual = hzOpsCatalogVisual;
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
@@ -354,7 +354,7 @@ export function PluginManageSurface({
   return (
     <>
       <div
-        data-plugin-manage-surface="otlp-cold-plugin-console"
+        data-plugin-manage-surface="otlp-hertzbeat-ui-plugin-console"
         data-plugin-manage-style-baseline={coldPluginVisual.canvasName}
         className={coldPluginVisual.canvas.root}
         style={coldPluginVisual.canvas.backgroundStyle}
@@ -363,7 +363,7 @@ export function PluginManageSurface({
           <div className="mx-auto max-w-[1480px]">
             <div className="mb-5">
               <div
-                data-plugin-header="cold-compact-header"
+                data-plugin-header="hertzbeat-ui-compact-header"
                 data-plugin-action-menu-clipping="none"
                 className={`${coldPluginVisual.panel.hero} z-[80] overflow-visible`}
                 style={{ overflow: 'visible' }}
@@ -538,7 +538,7 @@ export function PluginManageSurface({
               data-plugin-param-labels-contract="angular-app-configurable-field"
               data-plugin-param-labels-owner="hertzbeat-ui-key-value-editor"
               data-plugin-param-label-selector-contract="angular-app-label-selector"
-              data-plugin-param-label-selector-owner="cold-label-selector"
+              data-plugin-param-label-selector-owner="hertzbeat-ui-label-selector"
               data-plugin-param-metrics-field-contract="angular-app-configurable-field"
               data-plugin-param-metrics-field-owner="hertzbeat-ui-configurable-field-editor"
               data-plugin-param-array-contract="angular-app-multi-func-input"
@@ -550,7 +550,7 @@ export function PluginManageSurface({
             >
               <section className="min-w-0">
                 <SearchRow
-                  data-plugin-manage-toolbar="cold-table-toolbar"
+                  data-plugin-manage-toolbar="hertzbeat-ui-table-toolbar"
                   data-plugin-manage-search-owner="shared-search-row"
                   data-plugin-search-submit-contract="angular-enter-and-clear"
                   data-plugin-search-clear-contract="angular-cleared-load"
@@ -658,7 +658,7 @@ export function PluginManageSurface({
                 ) : null}
 
                 <div
-                  data-plugin-manage-table-shell="cold-dense-table"
+                  data-plugin-manage-table-shell="hertzbeat-ui-dense-table"
                   data-plugin-table-stable-height="viewport-fill-on-empty-or-short"
                   data-plugin-table-stable-height-owner="route-layout-contract"
                   data-plugin-table-loading={tableLoading ? 'true' : 'false'}
@@ -668,7 +668,7 @@ export function PluginManageSurface({
                 >
                   <div className="min-h-0 flex-1 bg-[#0b0c0e]" data-plugin-table-fill-stage="viewport-fill-on-empty-or-short">
                     <table
-                      data-plugin-manage-table="cold-plugin-table"
+                      data-plugin-manage-table="hertzbeat-ui-plugin-table"
                       data-plugin-table-columns="angular-five-column-edit-actions"
                       data-plugin-table-columns-owner="angular-nz-table"
                       className="w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]"
@@ -677,7 +677,7 @@ export function PluginManageSurface({
                         <tr>
                           <th className="w-[44px] px-3 py-2.5">
                             <Checkbox
-                              data-plugin-select-all="cold-checkbox"
+                              data-plugin-select-all="hertzbeat-ui-checkbox"
                               aria-label={t('common.select')}
                               containerClassName="min-h-0"
                               checked={allSelected}
@@ -750,7 +750,7 @@ export function PluginManageSurface({
                                 </div>
                               </td>
                               <td className="px-3 py-2.5">
-                                <div data-plugin-row-actions="angular-row-actions-contextual" data-plugin-row-actions-owner="cold-icon-actions" className="flex gap-1.5">
+                                <div data-plugin-row-actions="angular-row-actions-contextual" data-plugin-row-actions-owner="hertzbeat-ui-icon-actions" className="flex gap-1.5">
                                   {row.canEditParams ? (
                                     <Button
                                       size="icon"
@@ -825,11 +825,11 @@ export function PluginManageSurface({
                             </tr>
                           );
                         }) : (
-                          <tr data-plugin-manage-empty-state="cold-table-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
+                          <tr data-plugin-manage-empty-state="hertzbeat-ui-table-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
                             <td colSpan={5} className="h-[320px] px-3 text-center text-[#a9b0bb]">
                               <div className="inline-flex flex-col items-center gap-2.5">
                                 <span
-                                  data-plugin-manage-empty-icon="cold-empty-box"
+                                  data-plugin-manage-empty-icon="hertzbeat-ui-empty-box"
                                   className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]"
                                 >
                                   <Inbox className="h-5 w-5" aria-hidden="true" />
@@ -843,7 +843,7 @@ export function PluginManageSurface({
                     </table>
                   </div>
                   <div
-                    data-plugin-pagination="cold-dense-pagination"
+                    data-plugin-pagination="hertzbeat-ui-dense-pagination"
                     data-plugin-pagination-owner="hertzbeat-ui-pagination-bar"
                     data-plugin-pagination-contract="angular-search-pagination"
                   >
@@ -1163,7 +1163,7 @@ export function PluginManageSurface({
                           className="block min-w-0"
                           data-plugin-param-label-selector="angular-app-label-selector"
                           data-plugin-param-label-selector-field={define.field}
-                          data-plugin-param-label-selector-owner="cold-label-selector"
+                          data-plugin-param-label-selector-owner="hertzbeat-ui-label-selector"
                         >
                           <LabelRecordInput
                             value={stringifyPluginParamLabelSelectorValue(value)}

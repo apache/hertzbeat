@@ -25,7 +25,7 @@ import {
   buildAlertNoiseControlSummary,
   type AlertRuleDialogMode
 } from '../../lib/alert-manage/view-model';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import { formatTime } from '../../lib/format';
 import { buildEntitySignalRouteContext, buildEntityWorkspaceHref } from '../../lib/workspace-navigation';
 import type { GroupAlert, SingleAlert } from '../../lib/types';
@@ -67,7 +67,7 @@ type PendingBatchStatusAction = {
   tone: 'info' | 'critical';
 };
 
-const coldCenterVisual = coldOpsCatalogVisual;
+const coldCenterVisual = hzOpsCatalogVisual;
 const SELECTED_BATCH_DIALOG_GROUP_KEY = '__selected_batch__';
 
 const coldButtonClassName =
@@ -428,7 +428,7 @@ export function AlertCenterSurface({
   return (
     <>
       <div
-        data-alert-center-surface="otlp-cold-center-console"
+        data-alert-center-surface="otlp-hertzbeat-ui-center-console"
         data-alert-center-style-baseline={coldCenterVisual.canvasName}
         data-alert-center-sse-contract="angular-alert-event-refresh"
         data-alert-center-sse-event-count={realtimeEventCount}
@@ -458,7 +458,7 @@ export function AlertCenterSurface({
         <section className={coldCenterVisual.layout.pageSection}>
           <div className="mx-auto max-w-[1480px]">
             <div className="mb-5">
-              <div data-alert-center-header="cold-compact-header" className={coldCenterVisual.panel.hero}>
+              <div data-alert-center-header="hertzbeat-ui-compact-header" className={coldCenterVisual.panel.hero}>
                 <div className="max-w-[860px]">
                   <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                     {t('alert.workbench.kicker')}
@@ -508,7 +508,7 @@ export function AlertCenterSurface({
             <div data-alert-center-admin-layout="full-width-admin-list" className="space-y-5">
               <section className="min-w-0 space-y-4">
                 {entityContextActive ? (
-                  <div data-alert-entity-context="cold-context-panel" className={coldPanelClassName}>
+                  <div data-alert-entity-context="hertzbeat-ui-context-panel" className={coldPanelClassName}>
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0">
                         <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
@@ -558,7 +558,7 @@ export function AlertCenterSurface({
                 ) : null}
 
                 {noiseControlCard ? (
-                  <div data-alert-noise-controls="cold-noise-panel" className={coldPanelClassName}>
+                  <div data-alert-noise-controls="hertzbeat-ui-noise-panel" className={coldPanelClassName}>
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0">
                         <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
@@ -789,7 +789,7 @@ export function AlertCenterSurface({
                   </div>
                 </div>
 
-                <div data-alert-center-toolbar="cold-query-toolbar" className="mb-6 flex w-fit max-w-full flex-wrap items-center gap-2">
+                <div data-alert-center-toolbar="hertzbeat-ui-query-toolbar" className="mb-6 flex w-fit max-w-full flex-wrap items-center gap-2">
                   <SearchRow
                     data-alert-center-search-row="shared-compact"
                     data-alert-center-query-toolbar="single-query-form"
@@ -845,7 +845,7 @@ export function AlertCenterSurface({
                 </div>
 
                 <div
-                  data-alert-center-list-shell="cold-alert-list"
+                  data-alert-center-list-shell="hertzbeat-ui-alert-list"
                   className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
                 >
                   <div className="grid h-9 grid-cols-[minmax(0,1fr)_auto] items-center border-b border-[#252b34] bg-[#101217] px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
@@ -854,12 +854,12 @@ export function AlertCenterSurface({
                   </div>
                   {data.groupAlerts.content.length === 0 ? (
                     <div
-                      data-alert-center-empty-state="cold-table-empty"
+                      data-alert-center-empty-state="hertzbeat-ui-table-empty"
                       className="flex min-h-[280px] items-center justify-center border-t border-[#252b34] px-6 py-10 text-center text-[#a9b0bb]"
                     >
                       <div className="inline-flex max-w-[520px] flex-col items-center gap-2.5">
                         <span
-                          data-alert-center-empty-icon="cold-empty-box"
+                          data-alert-center-empty-icon="hertzbeat-ui-empty-box"
                           className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]"
                         >
                           <Inbox className="h-5 w-5" aria-hidden="true" />
@@ -1059,7 +1059,7 @@ export function AlertCenterSurface({
                   )}
                 </div>
                 <div
-                  data-alert-center-pagination="cold-dense-pagination"
+                  data-alert-center-pagination="hertzbeat-ui-dense-pagination"
                   data-alert-center-pagination-owner="hertzbeat-ui-pagination-bar"
                 >
                   <HzPaginationBar

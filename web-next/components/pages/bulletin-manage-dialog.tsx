@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { ColdCodeEditor } from '../ui/cold-code-editor';
+import { HzCodeEditor } from '../ui/hz-code-editor';
 import { OverlayDialog } from '../workbench/overlay-dialog';
 import type { BulletinFormDraft } from '../../lib/bulletin-center/controller';
 
@@ -72,7 +72,7 @@ export function BulletinManageDialog({
         />
 
         <div className="pt-2 text-right text-[12px] font-medium text-[var(--ops-text-secondary)]">{t('bulletin.monitor.metrics')}</div>
-        <ColdCodeEditor
+        <HzCodeEditor
           data-bulletin-fields-code-editor="metrics-json"
           language="json"
           minHeight="260px"

@@ -31,14 +31,14 @@ describe('entity detail family cold-workbench chrome', () => {
     expect(detailSource).not.toContain('ObservabilityStatusState');
     expect(detailSource).not.toContain('WorkbenchPage');
     expect(detailSource).not.toContain('components/workbench/primitives');
-    expect(detailSurfaceSource).toContain('coldOpsCatalogVisual');
+    expect(detailSurfaceSource).toContain('hzOpsCatalogVisual');
     expect(detailSurfaceSource).toContain('data-entity-detail-surface="otlp-cold-entity-detail"');
     expect(detailSurfaceSource).toContain('data-entity-detail-layout="full-width-workbench"');
     expect(detailSurfaceSource).not.toContain('StageSection');
     expect(detailSurfaceSource).not.toContain('DrawerSection');
     expect(detailSurfaceSource).not.toContain('WorkbenchPage');
 
-    expect(definitionSource).toContain('coldOpsCatalogVisual');
+    expect(definitionSource).toContain('hzOpsCatalogVisual');
     expect(definitionSource).toContain('data-entity-definition-layout="full-width-workbench"');
     expect(definitionSource).toContain('data-entity-definition-editor-shell="otlp-cold-definition-workbench"');
     expect(definitionSource).toContain('WorkbenchInsetPanel');

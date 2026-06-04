@@ -26,11 +26,20 @@ describe('ExceptionCenterSurface', () => {
   it('renders a HertzBeat-native localized exception explorer without English shell copy', () => {
     const html = renderToStaticMarkup(<ExceptionCenterSurface type="500" />);
 
-    expect(html).toContain('data-exception-center-surface="hertzbeat-exceptions"');
+    expect(html).toContain('data-exception-center-surface="hertzbeat-ui-exceptions"');
     expect(html).toContain('data-exception-type="500"');
-    expect(html).toContain('data-exception-filter-sidebar="hertzbeat-exception-filters"');
-    expect(html).toContain('data-exception-query-bar="hertzbeat-error-query"');
-    expect(html).toContain('data-exception-table="hertzbeat-exception-list"');
+    expect(html).toContain('data-exception-shared-frame="hertzbeat-ui"');
+    expect(html).toContain('data-hz-ui="explorer-frame"');
+    expect(html).toContain('data-exception-filter-sidebar="hertzbeat-ui-exception-filters"');
+    expect(html).toContain('data-exception-query-bar="hertzbeat-ui-error-query"');
+    expect(html).toContain('data-exception-query-bar-owner="hertzbeat-ui-panel-surface"');
+    expect(html).toContain('data-exception-query-input-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-exception-scope-select-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-exception-sort-select-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-exception-table="hertzbeat-ui-exception-list"');
+    expect(html).toContain('data-exception-table-chrome-owner="hertzbeat-ui-data-table"');
+    expect(html).toContain('data-hz-ui="data-table"');
+    expect(html).toContain('data-exception-recovery-action-owner="hertzbeat-ui-button-link"');
     expect(html).toContain(t('exception.chrome.title'));
     expect(html).toContain(t('exception.chrome.filter-title'));
     expect(html).toContain(`aria-label="${t('exception.chrome.refresh-filters')}"`);
@@ -75,12 +84,23 @@ describe('ExceptionCenterSurface', () => {
   it('does not keep old workbench/card owners inside the HertzBeat exception explorer', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/exception-center-surface.tsx'), 'utf8');
 
+    expect(source).toContain("from '@hertzbeat/ui'");
+    expect(source).toContain('HzExplorerFrame');
+    expect(source).toContain('HzPanelSurface');
+    expect(source).toContain('HzInput');
+    expect(source).toContain('HzSelect');
+    expect(source).toContain('HzButton');
+    expect(source).toContain('HzDataTable');
+    expect(source).toContain('HzButtonLink');
+    expect(source).not.toContain("from '../ui/input'");
+    expect(source).not.toContain("from '../ui/select'");
+    expect(source).not.toContain('<table');
     expect(source).not.toContain('WorkbenchPage');
     expect(source).not.toContain('SurfaceSection');
     expect(source).not.toContain('RailSection');
     expect(source).not.toContain('StatusState');
     expect(source).not.toContain("from '../workbench/primitives'");
-    expect(source).toContain('data-exception-center-surface="hertzbeat-exceptions"');
+    expect(source).toContain('data-exception-center-surface="hertzbeat-ui-exceptions"');
     expect(source).toContain("aria-label={t('exception.chrome.refresh-filters')}");
     expect(source).not.toContain('signoz');
   });

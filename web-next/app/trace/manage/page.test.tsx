@@ -342,13 +342,13 @@ describe('trace manage page', () => {
     const html = renderTraceManagePage();
     await mockState.lastLoad?.();
 
-    expect(html).toContain('data-trace-manage-route="otlp-cold-trace-workbench"');
+    expect(html).toContain('data-trace-manage-route="otlp-hertzbeat-ui-trace-workbench"');
     expect(html).toContain('data-loading-copy="Loading trace workbench"');
     expect(html).toContain(
       'data-cache-key="trace-manage:/traces/list?pageIndex=0&amp;pageSize=8&amp;traceId=trace-123&amp;serviceName=checkout&amp;errorOnly=true|/traces/stats/overview?traceId=trace-123&amp;serviceName=checkout&amp;errorOnly=true|last-30m'
     );
     expect(html).toContain('data-cache-settled-ttl="10000"');
-    expect(html).toContain('data-trace-manage-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-trace-manage-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-trace-manage-panel-surface="header"');
     expect(html).toContain('data-trace-manage-header-padding-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-padding="header"');
@@ -367,7 +367,7 @@ describe('trace manage page', () => {
     expect(html).toContain('data-hz-disabled-action-shell-owner="hertzbeat-ui-disabled-action-shell"');
     expect(html).toContain('data-trace-manage-disabled-action-owner="hertzbeat-ui-disabled-action-shell"');
     expect(html).toContain('data-trace-manage-disabled-action-scope="header"');
-    expect(html).toContain('data-trace-manage-query-bar="cold-query-row"');
+    expect(html).toContain('data-trace-manage-query-bar="hertzbeat-ui-query-row"');
     expect(html).toContain('data-trace-manage-panel-surface="query"');
     expect(html).toContain('data-trace-manage-panel-surface-padding-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-padding="query"');
@@ -403,7 +403,7 @@ describe('trace manage page', () => {
     expect(html).toContain('data-trace-manage-query-action-icon="reset"');
     expect(html).toContain('data-trace-manage-query-action-icon-owner="hertzbeat-ui-button-icon"');
     expect(html).toContain('data-hz-button-icon-owner="hertzbeat-ui-button-icon"');
-    expect(html).toContain('data-trace-manage-chart-band="cold-chart-band"');
+    expect(html).toContain('data-trace-manage-chart-band="hertzbeat-ui-chart-band"');
     expect(html).toContain('data-trace-manage-panel-surface="chart"');
     expect(html).toContain('data-trace-manage-chart-padding-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-padding="chart"');
@@ -414,7 +414,7 @@ describe('trace manage page', () => {
     expect(html).toContain('data-trace-manage-table-detail-layout-owner="hertzbeat-ui-workbench-layout"');
     expect(html).toContain('data-hz-ui="workbench-layout"');
     expect(html).toContain('data-hz-workbench-layout-variant="table-detail"');
-    expect(html).toContain('data-trace-manage-trace-table="cold-dense-trace-list"');
+    expect(html).toContain('data-trace-manage-trace-table="hertzbeat-ui-dense-trace-list"');
     expect(html).toContain('data-trace-manage-panel-surface-clip-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-clip="true"');
     expect(html).toContain('data-trace-manage-table-chrome-owner="hertzbeat-ui-data-table"');
@@ -433,7 +433,7 @@ describe('trace manage page', () => {
     expect(html).toContain('data-trace-manage-table-header-owner="hertzbeat-ui-panel-header"');
     expect(html).toContain('data-hz-ui="panel-header"');
     expect(html).toContain('data-trace-manage-table-count-badge-owner="hertzbeat-ui-status-badge"');
-    expect(html).toContain('data-trace-manage-detail-panel="cold-detail-panel"');
+    expect(html).toContain('data-trace-manage-detail-panel="hertzbeat-ui-detail-panel"');
     expect(html).toContain('data-trace-manage-panel-surface-clip-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-trace-manage-detail-header-owner="hertzbeat-ui-panel-header"');
     expect(html).toContain('data-trace-manage-detail-body-layout="shared-detail-stack"');
@@ -487,10 +487,46 @@ describe('trace manage page', () => {
     expect(html).not.toContain('Create an Alert');
     expect(html).not.toContain('Add to Dashboard');
     expect(apiMessageGet.mock.calls).toEqual([
-      ['/traces/stats/overview?traceId=trace-123&serviceName=checkout&errorOnly=true'],
-      ['/traces/list?pageIndex=0&pageSize=8&traceId=trace-123&serviceName=checkout&errorOnly=true']
+      ['/traces/stats/overview?traceId=trace-123&serviceName=checkout&errorOnly=true', { signal: expect.any(AbortSignal) }],
+      ['/traces/list?pageIndex=0&pageSize=8&traceId=trace-123&serviceName=checkout&errorOnly=true', { signal: expect.any(AbortSignal) }]
     ]);
   }, 60000);
+
+  it('degrades failed trace API loads without dropping the topology-like workbench contract', async () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/trace/manage/trace-manage-page.tsx'), 'utf8');
+    apiMessageGet.mockRejectedValueOnce(new Error('Trace API request failed'));
+
+    const html = renderTraceManagePage();
+    const loadedData = await mockState.lastLoad?.();
+
+    expect(source).toContain('function apiMessageGetWithTimeout');
+    expect(source).toContain('TRACE_MANAGE_API_TIMEOUT_MS');
+    expect(source).toContain('data-trace-manage-api-degraded="true"');
+    expect(source).toContain('data-trace-manage-api-degraded-owner="hertzbeat-ui-state-notice"');
+    expect(source).toContain("title={t('trace.manage.api.degraded.title')}");
+    expect(source).toContain("description={t('trace.manage.api.degraded.copy')}");
+    expect(source).toContain('return emptyTraceManageData(describeTraceManageLoadFailure(error));');
+    expect(html).toContain('data-trace-manage-shell-chrome="topology-workbench"');
+    expect(html).toContain('data-hz-signal-workbench-shell-layout="topology-workbench"');
+    expect(loadedData).toMatchObject({
+      overview: {
+        totalTraceCount: 0,
+        errorTraceCount: 0,
+        latestObservedAt: null,
+        hasActiveTrace: false
+      },
+      list: {
+        content: [],
+        totalElements: 0,
+        pageIndex: 0,
+        pageSize: 8
+      },
+      loadStatus: {
+        state: 'degraded',
+        message: 'Trace API request failed'
+      }
+    });
+  }, 15000);
 
   it('renders stable trace query selectors for browser retirement smoke', async () => {
     mockState.searchParams = new URLSearchParams('traceId=trace-123&serviceName=checkout&errorOnly=true');
@@ -503,7 +539,7 @@ describe('trace manage page', () => {
     expect(html).toContain('data-trace-manage-reset-action="true"');
     expect(html).toContain('data-trace-manage-search-action="true"');
     expect(html).toContain('data-trace-manage-open-logs-action="true"');
-    expect(html).toContain('data-trace-manage-query-bar="cold-query-row"');
+    expect(html).toContain('data-trace-manage-query-bar="hertzbeat-ui-query-row"');
     expect(html).toContain('data-trace-manage-query-control-stack="shared-inline-controls"');
     expect(html).toContain('data-trace-manage-query-control-stack-owner="hertzbeat-ui-control-stack"');
     expect(html).toContain('data-hz-control-stack-layout="inline-wrap"');
@@ -518,12 +554,12 @@ describe('trace manage page', () => {
     expect(html).toContain('data-hz-query-status-select-owner="hertzbeat-ui-query-status-select"');
     expect(html).toContain('data-trace-manage-query-action-group-owner="hertzbeat-ui-query-action-group"');
     expect(html).toContain('data-hz-query-action-group-owner="hertzbeat-ui-query-action-group"');
-    expect(html).toContain('data-trace-manage-chart-band="cold-chart-band"');
+    expect(html).toContain('data-trace-manage-chart-band="hertzbeat-ui-chart-band"');
     expect(html).toContain('data-trace-manage-table-detail-layout="shared-table-detail"');
     expect(html).toContain('data-trace-manage-table-detail-layout-owner="hertzbeat-ui-workbench-layout"');
-    expect(html).toContain('data-trace-manage-trace-table="cold-dense-trace-list"');
+    expect(html).toContain('data-trace-manage-trace-table="hertzbeat-ui-dense-trace-list"');
     expect(html).toContain('data-trace-manage-table-chrome-owner="hertzbeat-ui-data-table"');
-    expect(html).toContain('data-trace-manage-detail-panel="cold-detail-panel"');
+    expect(html).toContain('data-trace-manage-detail-panel="hertzbeat-ui-detail-panel"');
     expect(html).toContain('data-trace-manage-detail-footer-layout="shared-detail-footer"');
     expect(html).toContain('data-trace-manage-detail-footer-layout-owner="hertzbeat-ui-workbench-layout"');
     expect(html).toContain('data-hz-workbench-layout-variant="detail-footer"');
@@ -569,7 +605,7 @@ describe('trace manage page', () => {
     expect(source).not.toContain('className="justify-end"');
     expect(source).not.toContain('className="ml-auto grid w-full min-w-0 max-w-[1120px] gap-2 xl:w-auto"');
     expect(source.indexOf('data-trace-manage-time-control="shared-time-context-control"')).toBeLessThan(
-      source.indexOf('data-trace-manage-query-bar="cold-query-row"')
+      source.indexOf('data-trace-manage-query-bar="hertzbeat-ui-query-row"')
     );
     expect(html).toContain('data-trace-manage-time-toolbar="top-right-corner"');
     expect(html).toContain('data-trace-manage-time-toolbar-owner="hertzbeat-ui-workbench-layout"');
@@ -645,7 +681,7 @@ describe('trace manage page', () => {
     expect(source).toContain("t('trace.manage.route.action.entity')");
     expect(source).toContain("t('trace.manage.route.action.alerts')");
     expect(source).toContain('HzActionGroup');
-    expect(source).toContain('data-trace-manage-action-row="cold-workbench-actions"');
+    expect(source).toContain('data-trace-manage-action-row="hertzbeat-ui-workbench-actions"');
     expect(source).toContain('data-trace-manage-action-row-owner="hertzbeat-ui-action-group"');
     expect(source).toContain('data-trace-manage-action-row-layout-owner="hertzbeat-ui-action-group"');
     expect(source).toContain('layout="full-end"');
@@ -658,6 +694,9 @@ describe('trace manage page', () => {
     expect(source).toContain("eyebrow={t('trace.manage.route.kicker')}");
     expect(source).toContain("title={t('trace.manage.route.title')}");
     expect(source).toContain("copy={t('trace.manage.route.subtitle')}");
+    expect(source).toContain('data-trace-manage-shell-chrome="topology-workbench"');
+    expect(source).toContain('layout="topology-workbench"');
+    expect(source).not.toContain('mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-6 py-6');
     expect(source).toContain('data-trace-manage-time-toolbar-owner="hertzbeat-ui-workbench-layout"');
     expect(source).toContain('variant="time-toolbar"');
     expect(source).toContain('data-trace-manage-time-control-owner="hertzbeat-ui-control-stack"');
@@ -725,7 +764,7 @@ describe('trace manage page', () => {
     expect(source).toContain('data-trace-manage-row-action-owner="hertzbeat-ui-table-row-action-button"');
     expect(source).toContain('width="root-span"');
     expect(source).not.toContain('className="max-w-[240px] justify-start truncate font-semibold"');
-    expect(source).toContain('data-trace-manage-route="otlp-cold-trace-workbench"');
+    expect(source).toContain('data-trace-manage-route="otlp-hertzbeat-ui-trace-workbench"');
     expect(source).toContain('HzSignalWorkbenchShell');
     expect(source).toContain('data-trace-manage-shell-owner="hertzbeat-ui-signal-workbench-shell"');
     expect(source).not.toContain('className="min-h-[calc(100vh-56px)] bg-[#07090b] text-[#e8edf5]"');
@@ -812,9 +851,9 @@ describe('trace manage page', () => {
     expect(source).not.toContain('className="flex flex-wrap justify-end gap-2"');
     expect(source).not.toContain('className="w-full justify-end"');
     expect(source).not.toContain('className="overflow-hidden"');
-    expect(source).not.toContain('data-trace-manage-header="cold-compact-header" data-trace-manage-panel-surface="header" className="px-5 py-4"');
-    expect(source).not.toContain('data-trace-manage-query-bar="cold-query-row" data-trace-manage-panel-surface="query" className="px-4 py-3"');
-    expect(source).not.toContain('data-trace-manage-chart-band="cold-chart-band" data-trace-manage-panel-surface="chart" className="px-4 py-4"');
+    expect(source).not.toContain('data-trace-manage-header="hertzbeat-ui-compact-header" data-trace-manage-panel-surface="header" className="px-5 py-4"');
+    expect(source).not.toContain('data-trace-manage-query-bar="hertzbeat-ui-query-row" data-trace-manage-panel-surface="query" className="px-4 py-3"');
+    expect(source).not.toContain('data-trace-manage-chart-band="hertzbeat-ui-chart-band" data-trace-manage-panel-surface="chart" className="px-4 py-4"');
   });
 
   it('keeps missing-id trace handoffs visible but disabled with i18n hover guidance', () => {

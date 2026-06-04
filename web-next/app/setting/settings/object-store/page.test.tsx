@@ -96,7 +96,7 @@ describe('setting object store page', () => {
     expect(html).toContain('data-client-workbench="true"');
     expect(html).toContain('data-settings-console-title="true"');
     expect(html).toContain('data-setting-object-store-page="otlp-cold-object-store"');
-    expect(html).toContain('data-setting-object-store-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-setting-object-store-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-setting-object-store-layout="full-width-settings-form"');
     expect(html).toContain('data-setting-object-store-type-change-contract="angular-reset-config-on-type-change"');
     expect(html).toContain('data-setting-object-store-provider-select-contract="angular-centered-bold-dropdown"');
@@ -143,7 +143,7 @@ describe('setting object store page', () => {
   it('keeps the object-store route on the cold settings form owner', () => {
     const source = readFileSync(resolve(__dirname, 'setting-object-store-page.tsx'), 'utf8');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain('data-setting-object-store-page="otlp-cold-object-store"');
     expect(source).toContain('data-setting-object-store-style-baseline={coldObjectStoreVisual.canvasName}');
     expect(source).toContain('data-setting-object-store-layout="full-width-settings-form"');

@@ -5,6 +5,8 @@ import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { WorkspaceTabStrip, type WorkspaceShellTab } from './workspace-tab-strip';
 
+type DataAttributeProps = Record<`data-${string}`, string | undefined>;
+
 export function WorkspaceShell({
   kicker,
   title,
@@ -24,9 +26,13 @@ export function WorkspaceShell({
   chrome = 'default',
   railWidth = 'default',
   className,
+  surfaceClassName,
   mainClassName,
-  railClassName
-}: {
+  railClassName,
+  mainProps,
+  railProps,
+  ...props
+}: React.HTMLAttributes<HTMLElement> & {
   kicker?: string;
   title: string;
   subtitle?: string;
@@ -45,8 +51,11 @@ export function WorkspaceShell({
   chrome?: 'default' | 'plain';
   railWidth?: 'default' | 'wide';
   className?: string;
+  surfaceClassName?: string;
   mainClassName?: string;
   railClassName?: string;
+  mainProps?: React.HTMLAttributes<HTMLElement> & DataAttributeProps;
+  railProps?: React.HTMLAttributes<HTMLElement> & DataAttributeProps;
 }) {
   const showExpandedRail = showRail && !railCollapsed && rail != null;
   const railGridClassName =
@@ -56,6 +65,7 @@ export function WorkspaceShell({
 
   return (
     <section
+      {...props}
       className={cn('flex min-h-0 flex-col gap-3', className)}
       data-observability-workspace-shell="true"
       data-workspace-shell="true"
@@ -92,8 +102,11 @@ export function WorkspaceShell({
 
       <div
         className={cn(
-          'flex min-h-0 flex-1 flex-col overflow-hidden border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] shadow-[var(--ops-panel-shadow)]',
-          chrome === 'default' ? 'rounded-[10px]' : 'rounded-none border-x-0 border-b-0 shadow-none'
+          'flex min-h-0 flex-1 flex-col overflow-hidden border border-[var(--ops-border-color)]',
+          chrome === 'default'
+            ? 'rounded-[10px] bg-[var(--ops-surface-panel)] shadow-[var(--ops-panel-shadow)]'
+            : 'rounded-none border-x-0 border-b-0 bg-transparent shadow-none',
+          surfaceClassName
         )}
         data-observability-workspace-shell-surface="true"
         data-workspace-shell-surface="true"
@@ -106,6 +119,7 @@ export function WorkspaceShell({
           data-workspace-shell-rail-width={showExpandedRail ? railWidth : undefined}
         >
           <main
+            {...mainProps}
             className={cn('min-h-0 min-w-0 overflow-auto bg-[var(--ops-surface-panel)] p-3', mainClassName)}
             data-observability-workspace-shell-main="true"
             data-workspace-shell-main="true"
@@ -114,6 +128,7 @@ export function WorkspaceShell({
           </main>
           {showExpandedRail ? (
             <aside
+              {...railProps}
               className={cn(
                 'min-h-0 min-w-0 overflow-auto border-t border-[var(--ops-border-color)] bg-[var(--ops-surface-elevated)] p-3 xl:border-l xl:border-t-0',
                 railClassName

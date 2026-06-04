@@ -393,16 +393,17 @@ export default function OtlpMetricsPage() {
 
         return (
           <HzSignalWorkbenchShell
-            data-otlp-metrics-route="otlp-cold-metrics-workbench"
+            data-otlp-metrics-route="otlp-hertzbeat-ui-metrics-workbench"
             data-otlp-metrics-shell-owner="hertzbeat-ui-signal-workbench-shell"
-            data-otlp-metrics-style-baseline="hertzbeat-cold-matte"
+            data-otlp-metrics-style-baseline="hertzbeat-ui-matte"
             data-otlp-metrics-page-shell="flat-direct-stack"
             data-otlp-metrics-page-shell-layer="removed"
             data-otlp-metrics-page-stack="direct-panels"
-            layout="metrics-workbench"
+            data-otlp-metrics-shell-chrome="topology-workbench"
+            layout="topology-workbench"
           >
               <HzPanelSurface
-                data-otlp-metrics-header="cold-compact-header"
+                data-otlp-metrics-header="hertzbeat-ui-compact-header"
                 data-otlp-metrics-header-owner="hertzbeat-ui-panel-surface"
                 data-otlp-metrics-header-layout="compact-title-with-aligned-toolbar"
                 data-otlp-metrics-header-actions="removed"
@@ -507,7 +508,7 @@ export default function OtlpMetricsPage() {
               </HzPanelSurface>
 
               <HzPanelSurface
-                data-otlp-metrics-query-bar="cold-query-row"
+                data-otlp-metrics-query-bar="hertzbeat-ui-query-row"
                 data-otlp-metrics-query-bar-owner="hertzbeat-ui-panel-surface"
                 padding="query"
               >
@@ -651,7 +652,7 @@ export default function OtlpMetricsPage() {
               </HzPanelSurface>
 
               <HzPanelSurface
-                data-otlp-metrics-chart-band="cold-chart-band"
+                data-otlp-metrics-chart-band="hertzbeat-ui-chart-band"
                 data-otlp-metrics-chart-band-owner="hertzbeat-ui-panel-surface"
                 padding="chart"
               >
@@ -833,7 +834,7 @@ export default function OtlpMetricsPage() {
                 variant={hasMetricSeries ? 'metrics-series-detail' : 'metrics-series-only'}
               >
                 <HzPanelSurface
-                  data-otlp-metrics-series-table="cold-dense-metric-list"
+                  data-otlp-metrics-series-table="hertzbeat-ui-dense-metric-list"
                   data-otlp-metrics-series-table-mode="service-entity-series-set"
                   data-otlp-metrics-series-table-density="primary-scan"
                   data-otlp-metrics-series-table-owner="hertzbeat-ui-data-table"
@@ -972,7 +973,7 @@ export default function OtlpMetricsPage() {
 
                 {hasMetricSeries && selectedMetricSeries ? (
                 <HzPanelSurface
-                  data-otlp-metrics-detail-panel="cold-detail-panel"
+                  data-otlp-metrics-detail-panel="hertzbeat-ui-detail-panel"
                   data-otlp-metrics-detail-panel-owner="hertzbeat-ui-panel-surface"
                   data-otlp-metrics-detail-panel-priority="secondary-inspector"
                   data-otlp-metrics-detail-panel-stickiness-owner="hertzbeat-ui-panel-surface"

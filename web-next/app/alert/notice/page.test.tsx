@@ -202,7 +202,7 @@ vi.mock('../../../components/pages/alert-notice-console-shell', () => ({
   AlertNoticeConsoleShell: ({ selectedTab, receiverContent, ruleContent, templateContent }: any) => (
     <div data-alert-notice-console="true" data-selected-tab={selectedTab}>
       <div data-alert-notice-workbench-panel="cold-tabbed-table-panel">
-        <div data-alert-notice-tabs="cold-segmented-tabs">
+        <div data-alert-notice-tabs="hertzbeat-ui-segmented-tabs">
           <div data-tab="receiver">receiver-tab</div>
           <div data-tab="rule">rule-tab</div>
           <div data-tab="template">template-tab</div>
@@ -362,13 +362,13 @@ describe('alert notice page', () => {
     expect(html).toContain('data-tab="rule"');
     expect(html).toContain('data-tab="template"');
     expect(html).toContain('data-alert-notice-surface="otlp-cold-notice-console"');
-    expect(html).toContain('data-alert-notice-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-alert-notice-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-alert-notice-header="cold-compact-header"');
     expect(html).toContain('data-alert-notice-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-alert-notice-inline-metrics="cold-inline-counts"');
     expect(html).toContain('data-alert-notice-command-bar="standard-equal-buttons"');
     expect(html).toContain('data-alert-notice-workbench-panel="cold-tabbed-table-panel"');
-    expect(html).toContain('data-alert-notice-tabs="cold-segmented-tabs"');
+    expect(html).toContain('data-alert-notice-tabs="hertzbeat-ui-segmented-tabs"');
     expect(html).toContain('data-alert-notice-receiver-toolbar="cold-query-toolbar"');
     expect(html).toContain('data-alert-notice-receiver-toolbar-layout="compact-inline-actions-query"');
     expect(html).toContain('data-alert-notice-receiver-search="shared-compact"');
@@ -416,7 +416,7 @@ describe('alert notice page', () => {
     expect(html).not.toContain('<#if');
     expect(html).not.toContain('&lt;h1&gt;');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain('data-alert-notice-style-baseline={coldNoticeVisual.canvasName}');
     expect(source).toContain('className={coldNoticeVisual.canvas.root}');
     expect(source).toContain('style={coldNoticeVisual.canvas.backgroundStyle}');
@@ -1098,7 +1098,7 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-delete-confirm-cancel');
     expect(source).toContain('data-alert-notice-delete-feedback="angular-delete-notify"');
     expect(source).toContain('data-alert-notice-delete-feedback-owner="route-action-feedback-contract"');
-    expect(source).not.toContain("from '../../../components/ui/cold-confirm-dialog'");
+    expect(source).not.toContain("from '../../../components/ui/hz-confirm-dialog'");
     expect(handleConfirmedDeleteSource.match(/common.notify.delete-success/g)?.length).toBe(3);
     expect(handleConfirmedDeleteSource).toContain("t('common.notify.delete-fail')");
     expect(handleConfirmedDeleteSource).not.toContain('common.delete-success');

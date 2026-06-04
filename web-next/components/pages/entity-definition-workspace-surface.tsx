@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, FileText, Network } from 'lucide-react';
 import { useI18n } from '@/components/providers/i18n-provider';
-import { ColdCodeEditor, type ColdCodeEditorLanguage } from '@/components/ui/cold-code-editor';
+import { HzCodeEditor, type HzCodeEditorLanguage } from '@/components/ui/hz-code-editor';
 import { WorkbenchInsetPanel } from '@/components/workbench/primitives';
 import { ToolbarField, ToolbarNativeSelect } from '@/components/workbench/toolbar';
 import { RowList, WorkbenchPage } from '@/components/workbench/workbench-page';
@@ -19,7 +19,7 @@ import {
   buildTemplateRows,
   type ImportPreviewRow
 } from '@/lib/entity-import/view-model';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import type { EntityDefinitionActivity, EntityDefinitionFormat, EntityDefinitionWorkspaceTemplate } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +35,7 @@ type EntityDefinitionWorkspaceSurfaceProps = {
 
 type PreviewScope = 'all' | 'ready' | 'attention' | 'telemetry';
 
-function resolveDefinitionEditorLanguage(format: EntityDefinitionFormat): ColdCodeEditorLanguage {
+function resolveDefinitionEditorLanguage(format: EntityDefinitionFormat): HzCodeEditorLanguage {
   switch (format) {
     case 'json':
       return 'json';
@@ -324,7 +324,7 @@ export function EntityDefinitionWorkspaceSurface({
   }
 
   if (mode === 'import') {
-    const visual = coldOpsCatalogVisual;
+    const visual = hzOpsCatalogVisual;
     const importSubtitle = t('entities.import.workspace.subtitle');
     const importFormatHelp = t('entities.import.workspace.format-help');
     const readyCount = previewRows.filter(row => row.gaps.length === 0).length;
@@ -339,10 +339,10 @@ export function EntityDefinitionWorkspaceSurface({
     return (
       <div
         data-entity-definition-workspace={mode}
-        data-entity-definition-style-baseline="hertzbeat-cold-matte"
+        data-entity-definition-style-baseline="hertzbeat-ui-matte"
         data-entity-definition-visual-contract={visual.contract}
         data-entity-definition-layout="full-width-workbench"
-        data-entity-definition-header-spacing="cold-padded"
+        data-entity-definition-header-spacing="hertzbeat-ui-padded"
         data-definition-reload-version={definitionReloadVersion}
         className="min-h-[calc(100vh-64px)] bg-[#0b0c0e] px-6 pb-6 pt-4 text-[#dbe4f0]"
       >
@@ -354,20 +354,20 @@ export function EntityDefinitionWorkspaceSurface({
           facts={[]}
           main={
             <section
-              data-entity-definition-editor-shell="otlp-cold-import-workbench"
-              data-entity-definition-shell-spacing="cold-tight"
-              data-entity-definition-shell-height="cold-content"
+              data-entity-definition-editor-shell="otlp-hertzbeat-ui-import-workbench"
+              data-entity-definition-shell-spacing="hertzbeat-ui-tight"
+              data-entity-definition-shell-height="hertzbeat-ui-content"
               className="rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-4 shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
             >
               <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
                 <section data-entity-definition-editor-column="true" className="grid auto-rows-min content-start gap-3">
                   <div
-                    data-entity-definition-import-action-row="cold-inline-actions"
+                    data-entity-definition-import-action-row="hertzbeat-ui-inline-actions"
                     className="flex flex-wrap items-end justify-between gap-3 rounded-[4px] border border-[#2b3039] bg-[#101217] px-3 py-3"
                   >
                     <ToolbarField label={t('entity.definition.format.label')} className="w-[144px] min-w-[144px] flex-none">
                       <ToolbarNativeSelect
-                        data-entity-definition-format-select="cold-compact-select"
+                        data-entity-definition-format-select="hertzbeat-ui-compact-select"
                         value={format}
                         onChange={event => void handleFormatChange(event.target.value as EntityDefinitionFormat)}
                       >
@@ -383,11 +383,11 @@ export function EntityDefinitionWorkspaceSurface({
                     {importFormatHelp}
                   </p>
 
-                  <ColdCodeEditor
-                    data-entity-definition-starter-draft={content === getImportStarterDraft(format) ? `cold-${format}` : undefined}
+                  <HzCodeEditor
+                    data-entity-definition-starter-draft={content === getImportStarterDraft(format) ? `hertzbeat-ui-${format}` : undefined}
                     data-entity-definition-code-editor="import"
                     data-entity-definition-editor-format={format}
-                    data-entity-definition-editor-width="cold-fluid"
+                    data-entity-definition-editor-width="hertzbeat-ui-fluid"
                     className="min-h-[520px]"
                     value={content}
                     language={resolveDefinitionEditorLanguage(format)}
@@ -412,11 +412,11 @@ export function EntityDefinitionWorkspaceSurface({
                 </section>
 
                 <section
-                  data-entity-definition-context-panel="cold-context-panel"
+                  data-entity-definition-context-panel="hertzbeat-ui-context-panel"
                   data-entity-definition-context-density="minimal-import"
                   className="grid gap-3 self-start rounded-[4px] border border-[#2b3039] bg-[#101217] p-3"
                 >
-                  <div data-entity-definition-metric-strip="cold-inline-counts" className="grid gap-2">
+                  <div data-entity-definition-metric-strip="hertzbeat-ui-inline-counts" className="grid gap-2">
                     {metricCards.map(item => {
                       const Icon = item.icon;
                       return (
@@ -470,7 +470,7 @@ export function EntityDefinitionWorkspaceSurface({
   }
 
   if (mode === 'definition') {
-    const visual = coldOpsCatalogVisual;
+    const visual = hzOpsCatalogVisual;
     const definitionSubtitle = t('entities.definition.workspace.subtitle');
     const definitionFormatHelp = t('entities.definition.workspace.format-help');
     const definitionErrorState = messageTone === 'error' && message != null && content.trim() === '';
@@ -488,7 +488,7 @@ export function EntityDefinitionWorkspaceSurface({
     return (
       <div
         data-entity-definition-workspace={mode}
-        data-entity-definition-style-baseline="hertzbeat-cold-matte"
+        data-entity-definition-style-baseline="hertzbeat-ui-matte"
         data-entity-definition-visual-contract={visual.contract}
         data-entity-definition-layout="full-width-workbench"
         data-definition-reload-version={definitionReloadVersion}
@@ -502,20 +502,20 @@ export function EntityDefinitionWorkspaceSurface({
           facts={[]}
           main={
             <section
-              data-entity-definition-editor-shell="otlp-cold-definition-workbench"
-              data-entity-definition-shell-spacing="cold-tight"
-              data-entity-definition-shell-height="cold-content"
+              data-entity-definition-editor-shell="otlp-hertzbeat-ui-definition-workbench"
+              data-entity-definition-shell-spacing="hertzbeat-ui-tight"
+              data-entity-definition-shell-height="hertzbeat-ui-content"
               className="rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-4 shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
             >
               <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
                 <section data-entity-definition-editor-column="true" className="grid auto-rows-min content-start gap-3">
                   <div
-                    data-entity-definition-action-row="cold-inline-actions"
+                    data-entity-definition-action-row="hertzbeat-ui-inline-actions"
                     className="flex flex-wrap items-end justify-between gap-3 rounded-[4px] border border-[#2b3039] bg-[#101217] px-3 py-3"
                   >
                     <ToolbarField label={t('entity.definition.format.label')} className="w-[144px] min-w-[144px] flex-none">
                       <ToolbarNativeSelect
-                        data-entity-definition-format-select="cold-compact-select"
+                        data-entity-definition-format-select="hertzbeat-ui-compact-select"
                         value={format}
                         onChange={event => void handleFormatChange(event.target.value as EntityDefinitionFormat)}
                       >
@@ -531,10 +531,10 @@ export function EntityDefinitionWorkspaceSurface({
                     {definitionSubtitle} {definitionFormatHelp}
                   </p>
 
-                  <ColdCodeEditor
+                  <HzCodeEditor
                     data-entity-definition-code-editor="definition"
                     data-entity-definition-editor-format={format}
-                    data-entity-definition-editor-width="cold-fluid"
+                    data-entity-definition-editor-width="hertzbeat-ui-fluid"
                     className="min-h-[520px]"
                     value={content}
                     language={resolveDefinitionEditorLanguage(format)}
@@ -546,13 +546,13 @@ export function EntityDefinitionWorkspaceSurface({
                 </section>
 
                 <section
-                  data-entity-definition-context-panel="cold-context-panel"
+                  data-entity-definition-context-panel="hertzbeat-ui-context-panel"
                   data-entity-definition-template-panel="true"
-                  data-entity-definition-error-state={definitionErrorState ? 'cold-reference' : undefined}
-                  data-entity-definition-error-placement={definitionErrorState ? 'cold-context-panel' : undefined}
+                  data-entity-definition-error-state={definitionErrorState ? 'hertzbeat-ui-reference' : undefined}
+                  data-entity-definition-error-placement={definitionErrorState ? 'hertzbeat-ui-context-panel' : undefined}
                   className="grid gap-3 self-start rounded-[4px] border border-[#2b3039] bg-[#101217] p-3"
                 >
-                  <div data-entity-definition-metric-strip="cold-inline-counts" className="grid gap-2">
+                  <div data-entity-definition-metric-strip="hertzbeat-ui-inline-counts" className="grid gap-2">
                     {metricCards.map(item => {
                       const Icon = item.icon;
                       return (
@@ -569,7 +569,7 @@ export function EntityDefinitionWorkspaceSurface({
 
                   {visibleMessage ? (
                     <div
-                      data-entity-definition-load-error={messageTone === 'error' ? 'cold-inline' : undefined}
+                      data-entity-definition-load-error={messageTone === 'error' ? 'hertzbeat-ui-inline' : undefined}
                       className={cn(
                         'rounded-[3px] border px-3 py-2 text-xs leading-5',
                         messageTone === 'success'

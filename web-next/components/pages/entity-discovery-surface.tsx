@@ -10,7 +10,7 @@ import { buildDiscoveryTableRows } from '@/lib/entity-discovery/view-model';
 import type { DiscoveryStatusTone, DiscoveryTableRow } from '@/lib/entity-discovery/view-model';
 import type { EntityCatalogSuggestions, EntityDiscoveryGovernanceActivity, EntityDiscoveryGovernancePreset, Monitor } from '@/lib/types';
 import { SearchRow } from '../ui/search-row';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import {
   buildDiscoveryCandidateActionHref,
   resolveDiscoverySearchSubmission,
@@ -42,7 +42,7 @@ type EntityDiscoveryTableCopy = {
   };
 };
 
-const coldEntityDiscoveryVisual = coldOpsCatalogVisual;
+const coldEntityDiscoveryVisual = hzOpsCatalogVisual;
 
 const coldPrimaryLinkClassName =
   'inline-flex h-8 min-w-[104px] items-center justify-center gap-2 rounded-[3px] border border-[#31405c] bg-[#182238] px-3 text-[12px] font-semibold text-[#d8e4ff] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#4e74f8] hover:bg-[#202a42] hover:text-white';
@@ -88,7 +88,7 @@ function localizeActivitySummary(summary: string | null | undefined, t: EntityDi
 function EntityDiscoveryTable({ rows, emptyCopy, copy }: { rows: DiscoveryTableRow[]; emptyCopy: string; copy: EntityDiscoveryTableCopy }) {
   return (
     <div
-      data-entity-discovery-table-shell="cold-dense-table"
+      data-entity-discovery-table-shell="hertzbeat-ui-dense-table"
       className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
     >
       <div className="flex min-h-[42px] items-center justify-between gap-3 border-b border-[#252b34] bg-[#101217] px-3 text-[12px] text-[#8f99ab]">
@@ -96,7 +96,7 @@ function EntityDiscoveryTable({ rows, emptyCopy, copy }: { rows: DiscoveryTableR
         <span>{copy.resultStatus}</span>
       </div>
       <div className="overflow-x-auto">
-        <table data-entity-discovery-table="cold-discovery-table" className="min-w-[1120px] w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
+        <table data-entity-discovery-table="hertzbeat-ui-discovery-table" className="min-w-[1120px] w-full table-fixed border-collapse text-left text-[12px] text-[#a9b0bb]">
           <thead className="border-b border-[#252b34] bg-[#101217] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7e8494]">
             <tr>
               <th className="w-[20%] px-3 py-2.5">{copy.columns.clue}</th>
@@ -137,7 +137,7 @@ function EntityDiscoveryTable({ rows, emptyCopy, copy }: { rows: DiscoveryTableR
                     </div>
                   </td>
                   <td className="px-3 py-2.5">
-                    <div data-entity-discovery-row-actions="cold-inline-actions" className="flex flex-wrap gap-1.5">
+                    <div data-entity-discovery-row-actions="hertzbeat-ui-inline-actions" className="flex flex-wrap gap-1.5">
                       <Link href={row.href} className="rounded-[3px] border border-[#303743] bg-[#101217] px-2 py-1 text-[11px] font-semibold text-[#dbe4f0] hover:border-[#4e74f8] hover:text-white">
                         {row.primaryActionLabel}
                       </Link>
@@ -146,7 +146,7 @@ function EntityDiscoveryTable({ rows, emptyCopy, copy }: { rows: DiscoveryTableR
                 </tr>
               ))
             ) : (
-              <tr data-entity-discovery-empty-state="cold-inline-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
+              <tr data-entity-discovery-empty-state="hertzbeat-ui-inline-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
                 <td colSpan={8} className="h-[220px] px-3 text-center text-[#a9b0bb]">
                   <div className="inline-flex flex-col items-center gap-2.5">
                     <span className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]">
@@ -250,7 +250,7 @@ export function EntityDiscoverySurface({ presets, activities, catalog, candidate
 
   return (
     <main
-      data-entity-discovery-surface="otlp-cold-discovery-console"
+      data-entity-discovery-surface="otlp-hertzbeat-ui-discovery-console"
       data-entity-discovery-style-baseline={coldEntityDiscoveryVisual.canvasName}
       data-entity-discovery-layout="full-width-workbench"
       className={coldEntityDiscoveryVisual.canvas.root}
@@ -259,7 +259,7 @@ export function EntityDiscoverySurface({ presets, activities, catalog, candidate
       <section className={coldEntityDiscoveryVisual.layout.pageSection}>
         <div className="mx-auto max-w-[1480px]">
           <div className="mb-5">
-            <div data-entity-discovery-header="cold-compact-header" className={coldEntityDiscoveryVisual.panel.hero}>
+            <div data-entity-discovery-header="hertzbeat-ui-compact-header" className={coldEntityDiscoveryVisual.panel.hero}>
               <div className="max-w-[880px]">
                 <div className="text-[11px] font-semibold tracking-[0.12em] text-[#7e8494]">{t('entities.discovery.workspace.kicker')}</div>
                 <h1 className="mt-2 text-[30px] font-semibold leading-tight text-[#f5f7fb]">{t('entities.discovery.workspace.title')}</h1>
@@ -285,7 +285,7 @@ export function EntityDiscoverySurface({ presets, activities, catalog, candidate
           </div>
 
           <div className="space-y-5">
-            <div data-entity-discovery-count-strip="cold-inline-counts" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <div data-entity-discovery-count-strip="hertzbeat-ui-inline-counts" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
               {[
                 [t('entities.discovery.metric.clues'), rows.length, Search],
                 [t('entities.discovery.metric.matched'), matchedCount, Users],
@@ -310,7 +310,7 @@ export function EntityDiscoverySurface({ presets, activities, catalog, candidate
 
             <section className="min-w-0 space-y-3">
               <SearchRow
-                data-entity-discovery-toolbar="cold-search-row"
+                data-entity-discovery-toolbar="hertzbeat-ui-search-row"
                 data-entity-discovery-search-owner="shared-search-row"
                 value={search}
                 placeholder={t('entities.discovery.search.placeholder')}
@@ -368,7 +368,7 @@ export function EntityDiscoverySurface({ presets, activities, catalog, candidate
                 <div className="rounded-[3px] border border-rose-300/25 bg-rose-300/10 px-3 py-2 text-[12px] text-rose-100">{error}</div>
               ) : null}
 
-              <div data-entity-discovery-policy-panel="cold-policy-strip" className="rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
+              <div data-entity-discovery-policy-panel="hertzbeat-ui-policy-strip" className="rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="text-[13px] font-semibold text-[#eef2f7]">{t('entities.discovery.policy.title')}</div>
@@ -376,7 +376,7 @@ export function EntityDiscoverySurface({ presets, activities, catalog, candidate
                   </div>
                   <div className="text-[11px] text-[#858d9a]">{t('entities.discovery.policy.latest-activity', { activity: latestActivity })}</div>
                 </div>
-                <div data-entity-discovery-source-chips="cold-inline-chips" className="mt-3 flex flex-wrap gap-2 text-[11px] text-[#cbd5e1]">
+                <div data-entity-discovery-source-chips="hertzbeat-ui-inline-chips" className="mt-3 flex flex-wrap gap-2 text-[11px] text-[#cbd5e1]">
                   {catalogChips.length > 0 ? (
                     catalogChips.map(chip => (
                       <span key={`${chip.type}-${chip.label}`} className="rounded-[3px] border border-[#303743] bg-[#101217] px-2 py-1">

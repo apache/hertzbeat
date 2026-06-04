@@ -37,12 +37,12 @@ export function AlertNoticeConsoleShell({
   return (
     <div data-alert-notice-console="true">
       <AlertSurfacePanel
-        data-alert-notice-workbench-panel="cold-tabbed-table-panel"
-        data-alert-notice-global-panel="cold-matte-tabbed-table"
+        data-alert-notice-workbench-panel="hertzbeat-ui-tabbed-table-panel"
+        data-alert-notice-global-panel="hertzbeat-ui-matte-tabbed-table"
         className="min-h-[680px] overflow-hidden rounded-[4px] border-[#252b34] bg-[#0b0c0e] p-0"
       >
         <div
-          data-alert-notice-tabs="cold-segmented-tabs"
+          data-alert-notice-tabs="hertzbeat-ui-segmented-tabs"
           className="flex flex-wrap items-center gap-1 border-b border-[#252b34] bg-[#0b0c0e] px-3 py-2"
           role="tablist"
           aria-orientation="horizontal"

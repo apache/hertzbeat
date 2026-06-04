@@ -25,8 +25,9 @@ const HiddenInput = React.forwardRef<HTMLInputElement, HiddenInputProps>(({ read
     ref={ref}
     type="hidden"
     readOnly={readOnly}
-    data-cold-hidden-input-owner="cold-hidden-input"
-    data-cold-hidden-input-control="native-form-value"
+    data-hz-ui="hidden-input"
+    data-hz-hidden-input-owner="hertzbeat-ui-hidden-input"
+    data-hz-hidden-input-control="native-form-value"
   />
 ));
 

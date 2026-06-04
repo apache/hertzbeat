@@ -13,7 +13,7 @@ import {
   SettingsFormSelect
 } from '../../../../components/settings/settings-form';
 import { Button } from '../../../../components/ui/button';
-import { coldOpsCatalogVisual } from '../../../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../../../lib/hz-ops-visual';
 import { apiMessageGet, apiMessagePost } from '../../../../lib/api-client';
 import { loadObjectStoreConfig, saveObjectStoreConfig } from '../../../../lib/object-store/controller';
 import {
@@ -26,7 +26,7 @@ import {
 } from '../../../../lib/object-store/view-model';
 import type { ObjectStoreConfig } from '../../../../lib/types';
 
-const coldObjectStoreVisual = coldOpsCatalogVisual;
+const coldObjectStoreVisual = hzOpsCatalogVisual;
 
 const SETTING_OBJECT_STORE_SETTLED_CACHE_TTL_MS = 10_000;
 
@@ -82,7 +82,7 @@ export default function SettingObjectStorePage() {
 
         return (
           <div
-            data-setting-object-store-page="otlp-cold-object-store"
+            data-setting-object-store-page="otlp-hertzbeat-ui-object-store"
             data-setting-object-store-style-baseline={coldObjectStoreVisual.canvasName}
             data-setting-object-store-layout="full-width-settings-form"
             data-setting-object-store-type-change-contract="angular-reset-config-on-type-change"
@@ -91,7 +91,7 @@ export default function SettingObjectStorePage() {
           >
             <SettingsConsoleTitle>{t('settings.object-store')}</SettingsConsoleTitle>
             <SettingsForm
-              data-setting-object-store-form="cold-settings-form"
+              data-setting-object-store-form="hertzbeat-ui-settings-form"
               data-setting-object-store-apply-contract="angular-apply-notify"
               onSubmit={event => {
                 event.preventDefault();
@@ -100,7 +100,7 @@ export default function SettingObjectStorePage() {
                 }
               }}
             >
-              <div data-setting-object-store-provider="cold-provider-select">
+              <div data-setting-object-store-provider="hertzbeat-ui-provider-select">
                 <SettingsFormField label={t('settings.object-store.type')}>
                   <SettingsFormSelect
                     data-setting-object-store-provider-select="angular-centered-bold-dropdown"
@@ -118,7 +118,7 @@ export default function SettingObjectStorePage() {
               </div>
 
               {showObsFields ? (
-                <div data-setting-object-store-obs-fields="cold-obs-fields" className="contents">
+                <div data-setting-object-store-obs-fields="hertzbeat-ui-obs-fields" className="contents">
                   <SettingsFormField label={t('settings.object-store.obs.accessKey')}>
                     <SettingsFormInput
                       placeholder={t('settings.object-store.obs.accessKey.placeholder')}

@@ -186,7 +186,7 @@ describe('EntityListPage', () => {
 
     expect(html).toContain(`data-loading-copy="${expectedT('entities.list.loading')}"`);
     expect(html).toContain('data-entity-list-surface="otlp-cold-entity-console"');
-    expect(html).toContain('data-entity-list-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-entity-list-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-list-header="cold-compact-header"');
     expect(html).toContain('data-entity-list-command-row="standard-equal-buttons"');
     expect(html).toContain('data-entity-list-admin-layout="full-width-admin-list"');

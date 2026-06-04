@@ -133,6 +133,7 @@ import {
   HzSignalWorkbenchShell,
   HzSelectableRows,
   HzSelect,
+  HzSourceDocShell,
   HzStateNotice,
   HzStatCell,
   HzStatStrip,
@@ -214,7 +215,7 @@ import {
   type HzTopologyG6GraphInput
 } from '@hertzbeat/ui/topology-g6';
 import { AlertNoticeRuleSwitch } from '../../components/pages/alert-notice-rule-fields';
-import { ColdCodeEditor } from '@/components/ui/cold-code-editor';
+import { HzCodeEditor } from '@/components/ui/hz-code-editor';
 import { LabelRecordInput } from '@/components/ui/label-record-input';
 import { SearchRow } from '@/components/ui/search-row';
 import { useI18n } from '@/components/providers/i18n-provider';
@@ -2420,7 +2421,7 @@ export default function HertzBeatUiLabPage() {
               />
               <SettingsForm
                 data-hz-ui-lab-setting-config-selects="angular-400px-centered-bold"
-                data-setting-config-form="cold-settings-form"
+                data-setting-config-form="hertzbeat-ui-settings-form"
                 data-setting-config-select-contract="angular-400px-centered-bold"
                 data-setting-config-timezone-search-contract="angular-nz-show-search"
                 data-setting-config-timezone-dropdown-width-contract="angular-dropdown-match-select-width-false"
@@ -2728,6 +2729,97 @@ export default function HertzBeatUiLabPage() {
                 padding="chart"
               >
                 <span className="block truncate text-[11px] font-semibold text-[#98a2b3]">Chart panel</span>
+              </HzPanelSurface>
+              <HzSourceDocShell
+                data-hz-control-baseline-component="HzSourceDocShell"
+                data-hz-ui-lab-source-doc-shell="shared"
+                data-alert-integration-shell-owner="hertzbeat-ui-source-doc-shell"
+                className="min-w-[720px]"
+                eyebrow="Alert integration"
+                title="Webhook"
+                docTitle="Webhook"
+                sourceRailLabel="Integration alert sources"
+                sourceItems={[
+                  {
+                    id: 'webhook',
+                    label: 'Default Webhook',
+                    href: '/alert/integration/webhook',
+                    selected: true,
+                    iconSrc: '/assets/logo.svg',
+                    iconAlt: 'Default Webhook',
+                    itemProps: {
+                      'data-hz-ui-lab-source-doc-item': 'webhook'
+                    },
+                    iconProps: {
+                      'data-hz-ui-lab-source-doc-icon': 'webhook'
+                    }
+                  },
+                  {
+                    id: 'prometheus',
+                    label: 'Prometheus',
+                    href: '/alert/integration/prometheus',
+                    iconSrc: '/assets/img/integration/prometheus.svg',
+                    iconAlt: 'Prometheus',
+                    itemProps: {
+                      'data-hz-ui-lab-source-doc-item': 'prometheus'
+                    },
+                    iconProps: {
+                      'data-hz-ui-lab-source-doc-icon': 'prometheus'
+                    }
+                  }
+                ]}
+                actions={
+                  <HzButtonLink href="/setting/settings/token" size="sm" data-alert-integration-token-action-owner="hertzbeat-ui-button-link">
+                    <HzButtonIcon icon={Wrench} />
+                    Manage tokens
+                  </HzButtonLink>
+                }
+              >
+                <p className="text-[13px] leading-7 text-[#a9b0bb]" data-hz-ui-lab-source-doc-markdown="shared">
+                  Render provider markdown inside the shared dark source document shell.
+                </p>
+              </HzSourceDocShell>
+              <HzPanelSurface
+                clip
+                className="min-w-[560px]"
+                data-hz-ui-lab-exception-explorer-composition="shared"
+                data-exception-composition-owner="hertzbeat-ui-panel-data-table-actions"
+              >
+                <div className="flex h-11 items-center justify-between border-b border-[var(--hz-ui-line-soft)] px-4 text-[12px] text-[#8e99ab]">
+                  <span>Exception explorer</span>
+                  <HzStatusBadge tone="critical" size="xs" data-hz-ui-lab-exception-type-badge="shared">
+                    500
+                  </HzStatusBadge>
+                </div>
+                <HzDataTable
+                  data-hz-ui-lab-exception-table="shared"
+                  data-exception-table-chrome-owner="hertzbeat-ui-data-table"
+                  variant="embedded"
+                  rows={[
+                    {
+                      key: 'econnreset',
+                      type: 'ECONNRESET',
+                      message: 'read ECONNRESET',
+                      count: '1',
+                      app: 'browser-frontend'
+                    }
+                  ]}
+                  getRowKey={row => row.key}
+                  columns={[
+                    { key: 'type', header: 'Type', width: '150px', render: row => row.type },
+                    { key: 'message', header: 'Message', render: row => row.message },
+                    { key: 'count', header: 'Count', width: '88px', render: row => row.count },
+                    { key: 'app', header: 'Application', width: '150px', render: row => row.app }
+                  ]}
+                />
+                <div className="flex flex-wrap items-center gap-2 border-t border-[var(--hz-ui-line-soft)] px-4 py-3">
+                  <HzButtonLink href="/log/manage" size="sm" data-exception-recovery-action-owner="hertzbeat-ui-button-link">
+                    Logs
+                  </HzButtonLink>
+                  <HzButtonLink href="/trace/manage" size="sm" data-exception-recovery-action-owner="hertzbeat-ui-button-link">
+                    Traces
+                  </HzButtonLink>
+                </div>
               </HzPanelSurface>
               <HzAiChatModalSurface
                 data-hz-control-baseline-component="HzAiChatModalSurface"
@@ -6297,7 +6389,7 @@ export default function HertzBeatUiLabPage() {
                 className="mt-3"
                 data-hz-ui-lab-monitor-label-selector="angular-app-label-selector"
                 data-monitor-editor-label-selector="angular-app-label-selector"
-                data-monitor-editor-label-selector-owner="cold-label-selector"
+                data-monitor-editor-label-selector-owner="hertzbeat-ui-label-selector"
               >
                 <LabelRecordInput
                   value="team:platform, env:prod"
@@ -8942,7 +9034,7 @@ export default function HertzBeatUiLabPage() {
             meta="Label search preserves Angular app-multi-func-input keydown.enter and cleared load behavior"
             variant="embedded"
             data-hz-ui-lab-label-search-submit="angular-enter-and-clear"
-            data-label-search-submit-owner="cold-search-row"
+            data-label-search-submit-owner="hertzbeat-ui-search-row"
           />
           <div
             className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
@@ -9544,7 +9636,7 @@ export default function HertzBeatUiLabPage() {
             data-hz-ui-lab-plugin-param-label-selector="angular-app-label-selector"
             data-hz-ui-lab-plugin-param-pending-editable="angular-controls-remain-enabled"
             data-plugin-param-label-selector="angular-app-label-selector"
-            data-plugin-param-label-selector-owner="cold-label-selector"
+            data-plugin-param-label-selector-owner="hertzbeat-ui-label-selector"
             data-plugin-param-pending-editable="angular-controls-remain-enabled"
             data-plugin-param-pending-editable-owner="angular-param-modal"
           >
@@ -10476,7 +10568,7 @@ export default function HertzBeatUiLabPage() {
             meta="The Angular toolbar searches on keydown.enter and the field cleared event; Next keeps both through the shared cold search row"
             variant="embedded"
             data-hz-ui-lab-alert-notice-rule-search-submit="angular-enter-and-clear"
-            data-alert-notice-rule-search-submit-owner="cold-search-row"
+            data-alert-notice-rule-search-submit-owner="hertzbeat-ui-search-row"
           />
           <HzInlineFeedback
             tone="info"
@@ -10484,9 +10576,9 @@ export default function HertzBeatUiLabPage() {
             meta="The remaining alert-notice toolbar searches preserve Angular keydown.enter and cleared-event submission through the same cold search row"
             variant="embedded"
             data-hz-ui-lab-alert-notice-receiver-search-submit="angular-enter-and-clear"
-            data-alert-notice-receiver-search-submit-owner="cold-search-row"
+            data-alert-notice-receiver-search-submit-owner="hertzbeat-ui-search-row"
             data-hz-ui-lab-alert-notice-template-search-submit="angular-enter-and-clear"
-            data-alert-notice-template-search-submit-owner="cold-search-row"
+            data-alert-notice-template-search-submit-owner="hertzbeat-ui-search-row"
           />
           <HzInlineFeedback
             tone="info"
@@ -10937,7 +11029,7 @@ export default function HertzBeatUiLabPage() {
                     data-monitor-delete-confirm-closable="angular-nz-closable-false"
                     data-monitor-delete-confirm-ok="angular-nz-ok-danger-primary"
                   >
-                    <div data-monitors-delete-confirm="cold-modal">
+                    <div data-monitors-delete-confirm="hertzbeat-ui-modal">
                       <p>This confirmation shell is shared by monitor batch actions.</p>
                       <HzInlineFeedback tone="critical" title="2 monitors selected" />
                     </div>
@@ -11038,9 +11130,9 @@ export default function HertzBeatUiLabPage() {
             data-setting-define-startup-reload-failure-contract="angular-fire-and-forget"
             data-setting-define-startup-reload-failure-owner="startup-service"
             data-setting-define-editor-option-contract="angular-yaml-vs-folding-automatic-layout"
-            data-setting-define-editor-option-owner="cold-code-editor"
+            data-setting-define-editor-option-owner="hz-code-editor"
             data-setting-define-editor-loading-contract="angular-nz-code-editor-loading"
-            data-setting-define-editor-loading-owner="cold-code-editor"
+            data-setting-define-editor-loading-owner="hz-code-editor"
             data-setting-define-editor-loading="false"
             data-setting-define-editor-loading-save-contract="angular-save-hidden-while-editor-loading"
           >
@@ -11058,8 +11150,8 @@ export default function HertzBeatUiLabPage() {
               data-hz-ui-lab-setting-define-menu-loading-demo="angular-monitor-select-list-loading"
             />
             <div className="mt-3" data-hz-ui-lab-setting-define-editor-loading-demo="angular-nz-code-editor-loading">
-              <ColdCodeEditor
-                data-ui-lab-code-editor-loading="cold-code-editor"
+              <HzCodeEditor
+                data-ui-lab-code-editor-loading="hz-code-editor"
                 data-setting-define-editor-loading="true"
                 value={code}
                 language="yaml"
@@ -11081,9 +11173,9 @@ export default function HertzBeatUiLabPage() {
               filename={selectedTemplateItem?.meta || 'app.yml'}
               code={code}
               editor={
-                <ColdCodeEditor
+                <HzCodeEditor
                   data-hz-ui="yaml-editor"
-                  data-ui-lab-code-editor="cold-code-editor"
+                  data-ui-lab-code-editor="hz-code-editor"
                   data-hz-ui-lab-setting-define-editor-theme="angular-vs-dark"
                   data-setting-define-editor-theme="vs-dark"
                   data-setting-define-editor-theme-owner="angular-nz-code-editor-theme"

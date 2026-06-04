@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
 import TraceManagePage from './trace-manage-page';
 import type { TraceManageRouteState } from '@/lib/trace-manage/query-state';
+import { resetWorkbenchLoadCache } from '@/lib/workbench-load-cache';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -61,6 +62,7 @@ describe('TraceManagePage client loading', () => {
   let container: HTMLDivElement | null = null;
 
   beforeEach(() => {
+    resetWorkbenchLoadCache();
     apiMessageGet.mockReset();
     replace.mockReset();
   });
@@ -90,8 +92,30 @@ describe('TraceManagePage client loading', () => {
       await Promise.resolve();
     });
 
-    expect(container.querySelector('[data-trace-manage-route="otlp-cold-trace-workbench"]')).not.toBeNull();
+    expect(container.querySelector('[data-trace-manage-route="otlp-hertzbeat-ui-trace-workbench"]')).not.toBeNull();
     expect(container.textContent).toContain('No traces');
+    expect(container.textContent).not.toContain('Application error');
+  });
+
+  it('renders the topology-like trace shell when the trace API load degrades', async () => {
+    apiMessageGet.mockRejectedValueOnce(new Error('Trace API request failed'));
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root?.render(<TraceManagePage initialRouteState={monitorTraceRouteState()} />);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector('[data-trace-manage-route="otlp-hertzbeat-ui-trace-workbench"]')).not.toBeNull();
+    expect(container.querySelector('[data-hz-signal-workbench-shell-layout="topology-workbench"]')).not.toBeNull();
+    expect(container.querySelector('[data-trace-manage-api-degraded="true"]')).not.toBeNull();
+    expect(container.querySelector('[data-trace-manage-api-degraded-owner="hertzbeat-ui-state-notice"]')).not.toBeNull();
+    expect(container.textContent).toContain('Trace API unavailable');
+    expect(container.textContent).toContain('Trace API request failed');
     expect(container.textContent).not.toContain('Application error');
   });
 });

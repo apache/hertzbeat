@@ -51,10 +51,10 @@ vi.mock('../ui/button', () => ({
 
 vi.mock('../ui/checkbox', () => ({
   Checkbox: ({ label, ...props }: any) => (
-    <label data-cold-checkbox-owner="cold-checkbox">
-      <input type="checkbox" data-cold-checkbox-control="native-hidden" {...props} />
-      <span data-cold-checkbox-box="indicator" />
-      <span data-cold-checkbox-label="true">{label}</span>
+    <label data-hz-checkbox-owner="hertzbeat-ui-checkbox">
+      <input type="checkbox" data-hz-checkbox-control="native-hidden" {...props} />
+      <span data-hz-checkbox-box="indicator" />
+      <span data-hz-checkbox-label="true">{label}</span>
     </label>
   )
 }));
@@ -116,7 +116,7 @@ describe('bulletin center surface', () => {
     expect(source).not.toContain("activeBulletin?.name || '-'");
   });
 
-  it('uses the shared cold checkbox for batch delete selection instead of raw checkbox chrome', () => {
+  it('uses the shared HertzBeat UI checkbox for batch delete selection instead of raw checkbox chrome', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/bulletin-center-surface.tsx'), 'utf8');
 
     expect(source).toContain("from '../ui/checkbox'");

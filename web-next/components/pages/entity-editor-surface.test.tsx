@@ -36,13 +36,13 @@ vi.mock('@/components/ui/textarea', () => ({
   Textarea: (props: any) => <textarea data-cold-textarea-owner="cold-textarea" {...props} />
 }));
 
-vi.mock('../ui/cold-code-editor', () => ({
-  ColdCodeEditor: ({ value, language, minHeight, readOnly, onChange: _onChange, ...props }: any) => (
+vi.mock('../ui/hz-code-editor', () => ({
+  HzCodeEditor: ({ value, language, minHeight, readOnly, onChange: _onChange, ...props }: any) => (
     <div
-      data-cold-code-editor="codemirror"
-      data-cold-code-editor-language={language}
-      data-cold-code-editor-min-height={minHeight}
-      data-cold-code-editor-readonly={readOnly ? 'true' : undefined}
+      data-hz-code-editor="codemirror"
+      data-hz-code-editor-language={language}
+      data-hz-code-editor-min-height={minHeight}
+      data-hz-code-editor-readonly={readOnly ? 'true' : undefined}
       data-entity-editor-json-code-editor={props['data-entity-editor-json-code-editor']}
       data-entity-editor-definition-code-editor={props['data-entity-editor-definition-code-editor']}
       data-entity-editor-definition-preview={props['data-entity-editor-definition-preview']}
@@ -235,7 +235,7 @@ describe('EntityEditorSurface', () => {
   it('uses the shared cold CodeMirror editor for JSON evidence rows and definition previews', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/entity-editor-surface.tsx'), 'utf8');
 
-    expect(source).toContain("import { ColdCodeEditor } from '../ui/cold-code-editor';");
+    expect(source).toContain("import { HzCodeEditor } from '../ui/hz-code-editor';");
     expect(source).toContain('data-entity-editor-json-code-editor="object-row"');
     expect(source).toContain('data-entity-editor-definition-code-editor="preview"');
     expect(source).toContain('language="json"');
@@ -288,17 +288,17 @@ describe('EntityEditorSurface', () => {
 
     expect(html).toContain('<form');
     expect(html).toContain('data-entity-editor-shell="otlp-cold-entity-composer"');
-    expect(html).toContain('data-entity-editor-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-entity-editor-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-editor-layout="full-width-workbench"');
     expect(html).toContain('data-entity-editor-header="cold-compact-header"');
     expect(html).toContain('data-entity-editor-header-rhythm="cold-compact"');
     expect(html).toContain('data-entity-editor-frame="cold-editor-frame"');
-    expect(html).toContain('data-entity-editor-route-tabs="cold-segmented-tabs"');
+    expect(html).toContain('data-entity-editor-route-tabs="hertzbeat-ui-segmented-tabs"');
     expect(html).toContain('data-entity-editor-summary-card="cold-editor-panel"');
     expect(html).toContain('data-entity-editor-type-strip="cold-catalog-grid"');
     expect(html).toContain('data-entity-editor-type-strip-layout="cold-compact-grid"');
     expect(html).toContain('data-entity-editor-type-card-density="cold-compact-card"');
-    expect(html).toContain('data-entity-editor-entry-strip="cold-segmented-pills"');
+    expect(html).toContain('data-entity-editor-entry-strip="hertzbeat-ui-segmented-pills"');
     expect(html).toContain('data-entity-editor-stage-strip="cold-stage-grid"');
     expect(html).toContain('data-entity-editor-body-placement="cold-deferred-body"');
     expect(html).not.toContain('data-entity-editor-body="angular-single-stage"');
@@ -345,7 +345,7 @@ describe('EntityEditorSurface', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/entity-editor-surface.tsx'), 'utf8');
     expect(source).toContain("from 'lucide-react'");
     expect(source).toContain('data-entity-editor-shell="otlp-cold-entity-composer"');
-    expect(source).toContain('data-entity-editor-style-baseline="hertzbeat-cold-matte"');
+    expect(source).toContain('data-entity-editor-style-baseline="hertzbeat-ui-matte"');
     expect(source).toContain('data-entity-editor-frame="cold-editor-frame"');
     expect(source).toContain('data-entity-editor-definition-footer="cold-definition-footer"');
     expect(source).toContain('data-entity-editor-type-card-density="cold-compact-card"');
@@ -415,14 +415,14 @@ describe('EntityEditorSurface', () => {
     );
 
     expect(html).toContain('data-entity-editor-shell="otlp-cold-entity-composer"');
-    expect(html).toContain('data-entity-editor-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-entity-editor-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-editor-layout="full-width-workbench"');
     expect(html).toContain('data-entity-editor-header="cold-compact-header"');
     expect(html).toContain('data-entity-editor-frame="cold-editor-frame"');
     expect(html).toContain('data-entity-editor-frame-spacing="cold-tight"');
     expect(html).toContain('data-entity-editor-summary-card="cold-editor-panel"');
     expect(html).toContain('data-entity-editor-type-strip="cold-catalog-grid"');
-    expect(html).toContain('data-entity-editor-entry-strip="cold-segmented-pills"');
+    expect(html).toContain('data-entity-editor-entry-strip="hertzbeat-ui-segmented-pills"');
     expect(html).toContain('data-entity-editor-stage-strip="cold-stage-grid"');
     expect(html).toContain('data-entity-editor-edit-stage-posture="cold-complete-context"');
     expect(html).toContain('data-entity-editor-stage-status="relations-ready"');

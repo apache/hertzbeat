@@ -169,7 +169,7 @@ describe('AlertSilenceSurface', () => {
     );
 
     expect(html).toContain('data-alert-silence-surface="otlp-cold-silence-console"');
-    expect(html).toContain('data-alert-silence-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-alert-silence-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-alert-silence-header="cold-compact-header"');
     expect(html).toContain('data-alert-silence-command-row="standard-equal-buttons"');
     expect(html).toContain('data-alert-silence-admin-layout="full-width-admin-list"');
@@ -190,10 +190,10 @@ describe('AlertSilenceSurface', () => {
     expect(html).toContain('data-hz-pagination-page-jump="number-input"');
     expect(html).toContain('data-alert-silence-pagination-page-size-owner="hertzbeat-ui-select"');
     expect(html).toContain('data-alert-silence-pagination-page-jump-owner="hertzbeat-ui-input"');
-    expect(html).toContain('data-alert-silence-select-all="cold-checkbox"');
-    expect(html).toContain('data-alert-silence-row-checkbox="cold-checkbox"');
-    expect(html).toContain('data-alert-silence-enable-checkbox="cold-checkbox"');
-    expect(html.match(/data-cold-checkbox-owner="cold-checkbox"/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(html).toContain('data-alert-silence-select-all="hertzbeat-ui-checkbox"');
+    expect(html).toContain('data-alert-silence-row-checkbox="hertzbeat-ui-checkbox"');
+    expect(html).toContain('data-alert-silence-enable-checkbox="hertzbeat-ui-checkbox"');
+    expect(html.match(/data-hz-checkbox-owner="hertzbeat-ui-checkbox"/g)?.length).toBeGreaterThanOrEqual(3);
     expect(html).toContain(t('common.refresh'));
     expect(html).toContain(t('alert.silence.action.new'));
     expect(html).toContain(t('common.button.delete-batch'));
@@ -212,7 +212,7 @@ describe('AlertSilenceSurface', () => {
     expect(html).not.toContain('data-workbench-page="true"');
     expect(html).not.toContain('angular-table');
     expect(html).not.toContain('angular-table-panel');
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '@hertzbeat/ui'");
     expect(source).toContain('HzInlineFeedback');
     expect(source).toContain('HzPaginationBar');

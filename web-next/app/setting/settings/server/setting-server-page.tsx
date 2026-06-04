@@ -17,7 +17,7 @@ import {
 import { SettingsSummaryList } from '../../../../components/settings/settings-summary-list';
 import { Button } from '../../../../components/ui/button';
 import { NumberStepper } from '../../../../components/ui/number-stepper';
-import { coldOpsCatalogVisual } from '../../../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../../../lib/hz-ops-visual';
 import { apiMessageGet, apiMessagePost } from '../../../../lib/api-client';
 import { loadMessageServerData, saveEmailConfig, saveSmsConfig } from '../../../../lib/setting-server/controller';
 import {
@@ -41,7 +41,7 @@ type MessageServerData = {
   sms: SmsNoticeSender;
 };
 
-const coldServerVisual = coldOpsCatalogVisual;
+const coldServerVisual = hzOpsCatalogVisual;
 
 const SETTING_SERVER_SETTLED_CACHE_TTL_MS = 10_000;
 
@@ -126,7 +126,7 @@ export default function SettingServerPage() {
         return (
           <div
             className="space-y-4"
-            data-settings-server-page="otlp-cold-message-server"
+            data-settings-server-page="otlp-hertzbeat-ui-message-server"
             data-settings-server-style-baseline={coldServerVisual.canvasName}
             data-settings-server-layout="full-width-settings-summary"
             data-settings-server-dialog-width-contract="angular-width-40-percent"
@@ -134,7 +134,7 @@ export default function SettingServerPage() {
           >
             <SettingsConsoleTitle>{t('settings.server')}</SettingsConsoleTitle>
 
-            <div data-settings-server-summary="cold-summary-list">
+            <div data-settings-server-summary="hertzbeat-ui-summary-list">
               <SettingsSummaryList
                 items={buildMessageServerSummaryItems(email, sms, t).map(item => {
                   const title = String(item.title);
@@ -204,7 +204,7 @@ export default function SettingServerPage() {
                 </SettingsDialogField>
                 <SettingsDialogField label={t('alert.notice.sender.mail.port')} required>
                   <NumberStepper
-                    data-settings-server-email-port-stepper="cold-number-stepper"
+                    data-settings-server-email-port-stepper="hertzbeat-ui-number-stepper"
                     min="1"
                     max="65535"
                     value={email.emailPort?.toString() || ''}

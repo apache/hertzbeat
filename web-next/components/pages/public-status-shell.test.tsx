@@ -207,13 +207,13 @@ describe('PublicStatusShell', () => {
     );
 
     expect(source).toContain("from '../ui/number-stepper'");
-    expect(source).toContain('data-status-public-year-stepper="cold-number-stepper"');
+    expect(source).toContain('data-status-public-year-stepper="hertzbeat-ui-number-stepper"');
     expect(source).not.toContain('type="number"');
-    expect(html).toContain('data-status-public-year-stepper="cold-number-stepper"');
-    expect(html).toContain('data-cold-number-stepper-owner="cold-number-stepper"');
-    expect(html).toContain('data-cold-number-stepper-input="true"');
-    expect(html).toContain('data-cold-number-stepper-action="decrement"');
-    expect(html).toContain('data-cold-number-stepper-action="increment"');
+    expect(html).toContain('data-status-public-year-stepper="hertzbeat-ui-number-stepper"');
+    expect(html).toContain('data-hz-number-stepper-owner="hertzbeat-ui-number-stepper"');
+    expect(html).toContain('data-hz-number-stepper-input="true"');
+    expect(html).toContain('data-hz-number-stepper-action="decrement"');
+    expect(html).toContain('data-hz-number-stepper-action="increment"');
     expect(html).toContain('value="2026"');
   });
 });

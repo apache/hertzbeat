@@ -420,30 +420,30 @@ describe('log manage page', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
     const messagesSource = readFileSync(resolve(process.cwd(), 'lib/i18n-runtime-messages.ts'), 'utf8');
 
-    expect(source).toContain('data-log-manage-route="otlp-cold-log-workbench"');
-    expect(source).toContain('data-log-manage-style-baseline="hertzbeat-cold-matte"');
+    expect(source).toContain('data-log-manage-route="otlp-hertzbeat-ui-log-workbench"');
+    expect(source).toContain('data-log-manage-style-baseline="hertzbeat-ui-matte"');
     expect(source).toContain('data-log-manage-header-padding-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('padding="header"');
-    expect(source).not.toContain('data-log-manage-header="cold-compact-header" data-log-manage-panel-surface="header" className="px-5 py-4"');
-    expect(source).toContain('data-log-manage-query-bar="cold-query-row"');
+    expect(source).not.toContain('data-log-manage-header="hertzbeat-ui-compact-header" data-log-manage-panel-surface="header" className="px-5 py-4"');
+    expect(source).toContain('data-log-manage-query-bar="hertzbeat-ui-query-row"');
     expect(source).toContain('data-log-manage-panel-surface-padding-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('padding="query"');
-    expect(source).not.toContain('data-log-manage-query-bar="cold-query-row" data-log-manage-panel-surface="query" className="px-4 py-3"');
+    expect(source).not.toContain('data-log-manage-query-bar="hertzbeat-ui-query-row" data-log-manage-panel-surface="query" className="px-4 py-3"');
     expect(source).toContain('data-log-manage-api-degraded="true"');
     expect(source).toContain('data-log-manage-api-degraded-owner="hertzbeat-ui-state-notice"');
     expect(messagesSource).toContain("'log.manage.api.degraded.title':");
     expect(messagesSource).toContain("'log.manage.api.degraded.copy':");
-    expect(source).toContain('data-log-manage-chart-band="cold-chart-band"');
+    expect(source).toContain('data-log-manage-chart-band="hertzbeat-ui-chart-band"');
     expect(source).toContain('data-log-manage-chart-padding-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('padding="chart"');
-    expect(source).not.toContain('data-log-manage-chart-band="cold-chart-band" data-log-manage-panel-surface="chart" className="px-4 py-4"');
-    expect(source).toContain('data-log-manage-log-list="cold-dense-log-list"');
+    expect(source).not.toContain('data-log-manage-chart-band="hertzbeat-ui-chart-band" data-log-manage-panel-surface="chart" className="px-4 py-4"');
+    expect(source).toContain('data-log-manage-log-list="hertzbeat-ui-dense-log-list"');
     expect(source).toContain('data-log-manage-table-chrome-owner="hertzbeat-ui-data-table"');
     expect(source).toContain('HzDataTable');
     expect(source).toContain('HzPanelHeader');
     expect(source).toContain('data-log-manage-table-header-owner="hertzbeat-ui-panel-header"');
     expect(source).toContain('data-log-manage-table-count-badge-owner="hertzbeat-ui-status-badge"');
-    expect(source).toContain('data-log-manage-detail-panel="cold-detail-panel"');
+    expect(source).toContain('data-log-manage-detail-panel="hertzbeat-ui-detail-panel"');
     expect(source).toContain('data-log-manage-detail-header-owner="hertzbeat-ui-panel-header"');
     expect(source).toContain("eyebrow={t('log.manage.detail.title')}");
     expect(source).not.toContain('data-log-manage-hertzbeat-loop="collector-template-alert-loop"');
@@ -519,7 +519,7 @@ describe('log manage page', () => {
     expect(source).toContain('data-log-manage-header-action="return-source"');
     expect(source).toContain('data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"');
     expect(source).toContain('layout="full-end"');
-    expect(source).not.toContain('data-log-manage-action-row="cold-workbench-actions" className="flex flex-wrap items-center justify-end gap-2"');
+    expect(source).not.toContain('data-log-manage-action-row="hertzbeat-ui-workbench-actions" className="flex flex-wrap items-center justify-end gap-2"');
     expect(source).not.toContain('data-log-manage-header-action="collector">\n                  <Server className="h-4 w-4"');
     expect(source).not.toContain('data-log-manage-header-action="templates">\n                  <ListChecks className="h-4 w-4"');
     expect(source).not.toContain('data-log-manage-header-action="alerts">\n                  <BellRing className="h-4 w-4"');
@@ -555,6 +555,16 @@ describe('log manage page', () => {
     expect(source).not.toContain('border-[#4f6df0]');
     expect(source).not.toContain('bg-[#4566e8]');
     expect(source).not.toContain('hover:bg-[#5574f4]');
+  });
+
+  it('uses the topology-like shared signal shell instead of a centered card workbench', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/log/manage/log-manage-page.tsx'), 'utf8');
+
+    expect(source).toContain('HzSignalWorkbenchShell');
+    expect(source).toContain('data-log-manage-shell-owner="hertzbeat-ui-signal-workbench-shell"');
+    expect(source).toContain('data-log-manage-shell-chrome="topology-workbench"');
+    expect(source).toContain('layout="topology-workbench"');
+    expect(source).not.toContain('mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-6 py-6');
   });
 
   it('renders a shared return action when logs inherit a trace return path', () => {
@@ -645,7 +655,7 @@ describe('log manage page', () => {
       expect(messages).toContain("'log.manage.handoff.entity-disabled'");
       expect(html).toContain('data-log-manage-entity-action="true"');
       expect(html).toContain('data-log-manage-entity-action-disabled="missing-entity-id"');
-      expect(html).toContain('title="log.manage.handoff.entity-disabled"');
+      expect(html).toContain(`title="${createTranslatorMock({ locale: 'zh-CN' })('log.manage.handoff.entity-disabled')}"`);
       expect(html).toContain('disabled=""');
     } finally {
       mockState.renderData.list.content = originalContent;
@@ -689,7 +699,7 @@ describe('log manage page', () => {
     expect(html).not.toContain('Full JSON');
     expect(html).not.toContain(tZh('log.manage.query.run.history'));
     expect(html).not.toContain('/api/logs/sse/subscribe');
-    expect(html).not.toContain('data-log-manage-log-list="cold-dense-log-list"');
+    expect(html).not.toContain('data-log-manage-log-list="hertzbeat-ui-dense-log-list"');
   }, 30000);
 
   it('keeps live stream rows keyed by a monotonic sequence without surfacing normal retention as backpressure', () => {
@@ -805,7 +815,7 @@ describe('log manage page', () => {
     expect(source).not.toContain('data-log-manage-time-control="shared-time-context-control" className="min-w-[520px] flex-1"');
     expect(source).not.toContain('value="last-30-minutes"');
     expect(source.indexOf('data-log-manage-time-control="shared-time-context-control"')).toBeLessThan(
-      source.indexOf('data-log-manage-query-bar="cold-query-row"')
+      source.indexOf('data-log-manage-query-bar="hertzbeat-ui-query-row"')
     );
     expect(html).toContain('data-log-manage-time-control="shared-time-context-control"');
     expect(html).toContain('data-log-manage-time-control-placement="top-right"');
@@ -827,10 +837,10 @@ describe('log manage page', () => {
     mockState.searchParams = new URLSearchParams('view=list');
     const html = renderLogManagePage();
 
-    expect(html).toContain('data-log-manage-route="otlp-cold-log-workbench"');
+    expect(html).toContain('data-log-manage-route="otlp-hertzbeat-ui-log-workbench"');
     expect(html).toContain(`data-loading-copy="${tZh('log.manage.loading')}"`);
-    expect(html).toContain('data-log-manage-style-baseline="hertzbeat-cold-matte"');
-    expect(html).toContain('data-log-manage-query-bar="cold-query-row"');
+    expect(html).toContain('data-log-manage-style-baseline="hertzbeat-ui-matte"');
+    expect(html).toContain('data-log-manage-query-bar="hertzbeat-ui-query-row"');
     expect(html).toContain('data-log-manage-panel-surface-padding-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-padding="query"');
     expect(html).toContain('data-log-manage-query-search-frame="shared-search-field-frame"');
@@ -852,16 +862,16 @@ describe('log manage page', () => {
     expect(html).toContain('data-log-manage-query-body-input-owner="hertzbeat-ui-input"');
     expect(html).toContain('data-hz-input-width="log-query-body"');
     expect(html).toContain('placeholder="service.name = &quot;checkout&quot;"');
-    expect(html).toContain('data-log-manage-chart-band="cold-chart-band"');
+    expect(html).toContain('data-log-manage-chart-band="hertzbeat-ui-chart-band"');
     expect(html).toContain('data-log-manage-chart-padding-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-padding="chart"');
-    expect(html).toContain('data-log-manage-log-list="cold-dense-log-list"');
+    expect(html).toContain('data-log-manage-log-list="hertzbeat-ui-dense-log-list"');
     expect(html).toContain('data-log-manage-table-chrome-owner="hertzbeat-ui-data-table"');
     expect(html).toContain('data-hz-ui="data-table"');
     expect(html).toContain('data-log-manage-table-header-owner="hertzbeat-ui-panel-header"');
     expect(html).toContain('data-hz-ui="panel-header"');
     expect(html).toContain('data-log-manage-table-count-badge-owner="hertzbeat-ui-status-badge"');
-    expect(html).toContain('data-log-manage-detail-panel="cold-detail-panel"');
+    expect(html).toContain('data-log-manage-detail-panel="hertzbeat-ui-detail-panel"');
     expect(html).toContain('data-log-manage-detail-header-owner="hertzbeat-ui-panel-header"');
     expect(html).toContain('data-hz-panel-header-eyebrow="true"');
     expect(html).toContain('data-log-manage-row-detail-action="true"');
@@ -949,7 +959,7 @@ describe('log manage page', () => {
 
       expect(html).toContain('data-log-manage-results-open-trace-action="true"');
       expect(html).toContain('data-log-manage-results-open-trace-action-disabled="missing-trace-id"');
-      expect(html).toContain('title="log.manage.handoff.trace-disabled"');
+      expect(html).toContain(`title="${createTranslatorMock({ locale: 'zh-CN' })('log.manage.handoff.trace-disabled')}"`);
       expect(html).toContain('disabled=""');
     } finally {
       mockState.renderData.list.content = originalContent;

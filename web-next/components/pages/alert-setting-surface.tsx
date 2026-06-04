@@ -6,7 +6,7 @@ import { HzBatchToolbar, HzInlineFeedback, HzPaginationBar, type HzStatusTone } 
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { SearchRow } from '../ui/search-row';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import { buildAlertSettingRows, type AlertSettingEvidenceContext } from '../../lib/alert-setting/view-model';
 import type { AlertSettingPageData } from '../../lib/alert-setting/controller';
 import { cn } from '../../lib/utils';
@@ -43,7 +43,7 @@ type AlertSettingSurfaceProps = {
   } | null;
 };
 
-const coldSettingVisual = coldOpsCatalogVisual;
+const coldSettingVisual = hzOpsCatalogVisual;
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
@@ -104,7 +104,7 @@ export function AlertSettingSurface({
 
   return (
     <div
-      data-alert-setting-surface="otlp-cold-setting-console"
+      data-alert-setting-surface="otlp-hertzbeat-ui-setting-console"
       data-alert-setting-style-baseline={coldSettingVisual.canvasName}
       className={coldSettingVisual.canvas.root}
       style={coldSettingVisual.canvas.backgroundStyle}
@@ -112,7 +112,7 @@ export function AlertSettingSurface({
       <section className={coldSettingVisual.layout.pageSection}>
         <div className="mx-auto max-w-[1480px]">
           <div className="mb-5">
-            <div data-alert-setting-header="cold-compact-header" className={coldSettingVisual.panel.hero}>
+            <div data-alert-setting-header="hertzbeat-ui-compact-header" className={coldSettingVisual.panel.hero}>
               <div className="max-w-[840px]">
                 <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                   {t('menu.alert.setting')}
@@ -186,7 +186,7 @@ export function AlertSettingSurface({
             ) : null}
             <section className="min-w-0">
               <SearchRow
-                data-alert-setting-toolbar="cold-query-toolbar"
+                data-alert-setting-toolbar="hertzbeat-ui-query-toolbar"
                 data-alert-setting-search-translation-contract="angular-app-entry-search"
                 data-alert-setting-search-translation-owner="alert-setting-query-state"
                 data-alert-setting-search-translation-source="/apps/defines"
@@ -305,7 +305,7 @@ export function AlertSettingSurface({
               ) : null}
 
               <div
-                data-alert-setting-table-shell="cold-dense-table"
+                data-alert-setting-table-shell="hertzbeat-ui-dense-table"
                 className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
               >
                 <div className="overflow-hidden">
@@ -314,7 +314,7 @@ export function AlertSettingSurface({
                       <tr>
                         <th className="w-[44px] px-3 py-2.5">
                           <Checkbox
-                            data-alert-setting-select-all="cold-checkbox"
+                            data-alert-setting-select-all="hertzbeat-ui-checkbox"
                             checked={allVisibleChecked}
                             disabled={visibleIds.length === 0}
                             aria-label={t('common.select')}
@@ -349,7 +349,7 @@ export function AlertSettingSurface({
                           >
                             <td className="px-3 py-2.5" onClick={event => event.stopPropagation()}>
                               <Checkbox
-                                data-alert-setting-row-checkbox="cold-checkbox"
+                                data-alert-setting-row-checkbox="hertzbeat-ui-checkbox"
                                 checked={checked}
                                 aria-label={row.name}
                                 containerClassName="min-h-0"
@@ -381,7 +381,7 @@ export function AlertSettingSurface({
                             </td>
                             <td className="px-3 py-2.5" onClick={event => event.stopPropagation()}>
                               <Checkbox
-                                data-alert-setting-enable-checkbox="cold-checkbox"
+                                data-alert-setting-enable-checkbox="hertzbeat-ui-checkbox"
                                 checked={Boolean(original.enable)}
                                 containerClassName="min-h-0"
                                 onChange={event => onToggleEnabled(original.id, event.target.checked)}
@@ -404,11 +404,11 @@ export function AlertSettingSurface({
                           </tr>
                         );
                       }) : (
-                        <tr data-alert-setting-empty-state="cold-table-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
+                        <tr data-alert-setting-empty-state="hertzbeat-ui-table-empty" className="border-t border-[#252b34] bg-[#0b0c0e]">
                           <td colSpan={9} className="h-[240px] px-3 text-center text-[#a9b0bb]">
                             <div className="inline-flex flex-col items-center gap-2.5">
                               <span
-                                data-alert-setting-empty-icon="cold-empty-box"
+                                data-alert-setting-empty-icon="hertzbeat-ui-empty-box"
                                 className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]"
                               >
                                 <Inbox className="h-5 w-5" aria-hidden="true" />

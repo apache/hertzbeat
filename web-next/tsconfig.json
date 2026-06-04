@@ -27,6 +27,9 @@
       "@hertzbeat/ui/shell": [
         "./packages/hertzbeat-ui/src/shell"
       ],
+      "@hertzbeat/ui/source-doc-shell": [
+        "./packages/hertzbeat-ui/src/source-doc-shell"
+      ],
       "@hertzbeat/ui/topology": [
         "./packages/hertzbeat-ui/src/topology"
       ],

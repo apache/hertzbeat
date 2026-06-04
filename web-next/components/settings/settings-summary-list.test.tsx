@@ -29,14 +29,14 @@ describe('SettingsSummaryList', () => {
     );
 
     expect(html).toContain('data-settings-summary-list="true"');
-    expect(html).toContain('data-settings-summary-list-owner="cold-settings-summary-owner"');
-    expect(html).toContain('data-settings-summary-list-style="cold-dense-summary-list"');
+    expect(html).toContain('data-settings-summary-list-owner="hertzbeat-ui-settings-summary-owner"');
+    expect(html).toContain('data-settings-summary-list-style="hertzbeat-ui-dense-summary-list"');
     expect(html).toContain('data-settings-summary-item="email"');
     expect(html).toContain('data-settings-summary-item="sms"');
-    expect(html).toContain('data-settings-summary-row-style="cold-summary-row"');
+    expect(html).toContain('data-settings-summary-row-style="hertzbeat-ui-summary-row"');
     expect(html).toContain('data-settings-summary-action="email"');
     expect(html).toContain('data-settings-summary-action="sms"');
-    expect(html).toContain('data-settings-summary-action-style="cold-compact-action"');
+    expect(html).toContain('data-settings-summary-action-style="hertzbeat-ui-compact-action"');
     expect(html).toContain('aria-label="Configure email server"');
     expect(html).toContain('aria-label="Configure SMS settings"');
     expect(html).toContain('rounded-[4px]');

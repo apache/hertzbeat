@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ClientWorkbench } from '../../../components/workbench/client-workbench';
 import { useI18n } from '../../../components/providers/i18n-provider';
 import { AlertSilenceSurface } from '../../../components/pages/alert-silence-surface';
-import { ColdConfirmDialog } from '../../../components/ui/cold-confirm-dialog';
+import { HzConfirmDialog } from '../../../components/ui/hz-confirm-dialog';
 import { api } from '../../../lib/alert-api-facade';
 import {
   buildAlertSilenceEntityPrefillFromFacade,
@@ -420,7 +420,7 @@ export default function AlertSilencePage({ initialRouteState }: { initialRouteSt
               onDraftChange={setDraft}
             />
             <div data-alert-delete-confirm={deleteRequest ? 'open' : 'closed'}>
-              <ColdConfirmDialog
+              <HzConfirmDialog
                 open={Boolean(deleteRequest)}
                 title={deleteRequest?.kind === 'batch' ? t('common.confirm.delete-batch') : t('common.confirm.delete')}
                 copy={

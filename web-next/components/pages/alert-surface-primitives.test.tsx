@@ -39,10 +39,10 @@ describe('alert surface primitives', () => {
       </div>
     );
 
-    expect(html).toContain('data-alert-surface-panel-owner="cold-panel"');
-    expect(html).toContain('data-alert-surface-table-shell-owner="cold-dense-table"');
-    expect(html).toContain('data-alert-surface-action-owner="cold-action"');
-    expect(html).toContain('data-alert-surface-value-pill-owner="cold-value"');
+    expect(html).toContain('data-alert-surface-panel-owner="hertzbeat-ui-panel"');
+    expect(html).toContain('data-alert-surface-table-shell-owner="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-alert-surface-action-owner="hertzbeat-ui-action"');
+    expect(html).toContain('data-alert-surface-value-pill-owner="hertzbeat-ui-value"');
     expect(html).toContain('rounded-[4px]');
     expect(html).toContain('rounded-[3px]');
     expect(html).toContain('h-8');

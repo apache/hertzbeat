@@ -15,7 +15,7 @@ import {
   SettingsDialogSelect
 } from '../../../../components/settings/settings-dialog-form';
 import { Button } from '../../../../components/ui/button';
-import { coldOpsCatalogVisual } from '../../../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../../../lib/hz-ops-visual';
 import { apiDelete, apiGet, apiMessageGet } from '../../../../lib/api-client';
 import { deleteTokenById, generateTokenValue, loadTokenData } from '../../../../lib/setting-token/controller';
 import { buildTokenExpirationOptions, isExpired } from '../../../../lib/setting-token/view-model';
@@ -25,7 +25,7 @@ type TokenData = {
   tokens: AuthToken[];
 };
 
-const coldTokenVisual = coldOpsCatalogVisual;
+const coldTokenVisual = hzOpsCatalogVisual;
 const SETTING_TOKEN_SETTLED_CACHE_TTL_MS = 10_000;
 
 const coldPrimaryButtonClassName =
@@ -201,7 +201,7 @@ export default function SettingTokenPage() {
 
         return (
           <div
-            data-setting-token-surface="otlp-cold-token-console"
+            data-setting-token-surface="otlp-hertzbeat-ui-token-console"
             data-setting-token-style-baseline={coldTokenVisual.canvasName}
             data-setting-token-layout-contract="full-width-admin-no-rail"
             data-setting-token-generate-dialog-layout-contract="angular-vertical-form"
@@ -213,7 +213,7 @@ export default function SettingTokenPage() {
 
             <div data-setting-token-admin-layout="full-width-admin-list" className="space-y-4">
               <section
-                data-setting-token-header="cold-compact-header"
+                data-setting-token-header="hertzbeat-ui-compact-header"
                 className="rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] p-4 shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
               >
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -247,8 +247,8 @@ export default function SettingTokenPage() {
                   </div>
                 </div>
                 <div
-                  data-setting-token-strip="cold-token-strip"
-                  data-setting-token-strip-style="cold-inline-counts"
+                  data-setting-token-strip="hertzbeat-ui-token-strip"
+                  data-setting-token-strip-style="hertzbeat-ui-inline-counts"
                   className="mt-4 grid gap-2 md:grid-cols-3"
                 >
                   {[
@@ -287,14 +287,14 @@ export default function SettingTokenPage() {
               />
 
               <section
-                data-setting-token-table-panel="cold-dense-table"
+                data-setting-token-table-panel="hertzbeat-ui-dense-table"
                 className="rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
               >
                 <div className="border-b border-[#2b3039] px-4 py-3">
                   <p className="text-[12px] leading-5 text-[#98a2b3]">{t('settings.token.desc')}</p>
                 </div>
                 <div className="overflow-x-auto">
-                  <table data-setting-token-table="cold-token-table" className="w-full min-w-[860px] border-collapse text-left text-[12px]">
+                  <table data-setting-token-table="hertzbeat-ui-token-table" className="w-full min-w-[860px] border-collapse text-left text-[12px]">
                     <thead>
                       <tr>
                         <th className={tokenHeaderCellClassName}>{t('settings.token.name')}</th>
@@ -310,7 +310,7 @@ export default function SettingTokenPage() {
                       {tokens.length === 0 ? (
                         <tr>
                           <td
-                            data-setting-token-empty-state="cold-table-empty"
+                            data-setting-token-empty-state="hertzbeat-ui-table-empty"
                             colSpan={7}
                             className="bg-[#0b0c0e] px-3 py-10 text-center text-[12px] text-[#8d95a5]"
                           >
@@ -344,7 +344,7 @@ export default function SettingTokenPage() {
                               <td className="border-b border-[#2b3039] bg-[#0b0c0e] px-3 py-3">
                                 <button
                                   type="button"
-                                  data-setting-token-row-action="cold-row-action"
+                                  data-setting-token-row-action="hertzbeat-ui-row-action"
                                   data-setting-token-delete-confirm-trigger="angular-modal-confirm"
                                   data-setting-token-delete-confirm-owner="hertzbeat-ui-confirm-dialog"
                                   aria-label={t('settings.token.delete-action', {

@@ -7,7 +7,7 @@ describe('Textarea', () => {
   it('renders the cold shared multiline control without a visible resize handle by default', () => {
     const html = renderToStaticMarkup(<Textarea value="entity description" onChange={() => {}} />);
 
-    expect(html).toContain('data-cold-textarea-owner="cold-textarea"');
+    expect(html).toContain('data-hz-textarea-owner="hertzbeat-ui-textarea"');
     expect(html).toContain('resize-none');
     expect(html).toContain('entity description');
   });

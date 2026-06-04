@@ -113,7 +113,7 @@ export function AlertNoticeTemplateFields({
 
       <FieldRow row="type" required label={t('alert.notice.template.type')}>
         <div
-          data-alert-notice-template-type-selector="cold-select"
+          data-alert-notice-template-type-selector="hertzbeat-ui-select"
           data-alert-notice-template-type-required="angular-required-select"
           data-alert-notice-template-type-required-owner="route-validation-contract"
         >

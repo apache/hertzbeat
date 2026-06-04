@@ -300,7 +300,7 @@ function PublicStatusIncidentRows({
             <span className={cn('text-[10px] uppercase tracking-[0.18em]', shellTextTertiaryClass)}>{yearLabel}</span>
             <NumberStepper
               data-testid="status-public-year-input"
-              data-status-public-year-stepper="cold-number-stepper"
+              data-status-public-year-stepper="hertzbeat-ui-number-stepper"
               min="1970"
               max={String(currentYear)}
               value={String(selectedYear)}

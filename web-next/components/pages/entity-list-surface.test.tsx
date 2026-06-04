@@ -69,7 +69,7 @@ describe('EntityListSurface', () => {
     );
 
     expect(html).toContain('data-entity-list-surface="otlp-cold-entity-console"');
-    expect(html).toContain('data-entity-list-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-entity-list-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-list-header="cold-compact-header"');
     expect(html).toContain('data-entity-list-command-row="standard-equal-buttons"');
     expect(html).toContain('data-entity-list-admin-layout="full-width-admin-list"');
@@ -108,7 +108,7 @@ describe('EntityListSurface', () => {
     expect(html).not.toContain('signoz-services-table');
     expect(html).not.toContain('angular-sidebar-flush');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain('inputWidthClassName="w-[420px]"');
     expect(source).toContain('rounded-[4px]');

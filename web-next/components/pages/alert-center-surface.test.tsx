@@ -146,7 +146,7 @@ describe('AlertCenterSurface', () => {
     const html = renderSurface();
 
     expect(html).toContain('data-alert-center-surface="otlp-cold-center-console"');
-    expect(html).toContain('data-alert-center-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-alert-center-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-alert-center-sse-contract="angular-alert-event-refresh"');
     expect(html).toContain('data-alert-center-sse-event-count="0"');
     expect(html).toContain('data-alert-center-sse-highlight="angular-new-alert"');
@@ -226,7 +226,7 @@ describe('AlertCenterSurface', () => {
     expect(html).not.toContain('data-alert-center-workbench-body="angular-list-region"');
     expect(html).not.toContain('data-alert-center-toolbar="angular-density"');
     expect(html).not.toContain('data-observability-stat-grid="pills"');
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain('data-alert-center-admin-layout="full-width-admin-list"');
     expect(source).not.toContain('data-alert-center-summary-rail');
     expect(source).not.toContain('coldCenterVisual.layout.heroGrid');

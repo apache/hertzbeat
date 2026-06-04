@@ -233,7 +233,7 @@ describe('alert setting page', () => {
   it('uses the shared cold delete confirmation instead of leaving threshold delete actions as no-ops', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
 
-    expect(source).toContain('ColdConfirmDialog');
+    expect(source).toContain('HzConfirmDialog');
     expect(source).toContain('deleteAlertDefineFromFacade');
     expect(source).toContain('deleteAlertDefinesFromFacade');
     expect(source).toContain('api.alertSettings.delete');

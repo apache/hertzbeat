@@ -20,7 +20,7 @@ import {
   Workflow
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { HzActionGroup, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzControlStack, HzDataTable, HzDetailAside, HzDetailBodyStack, HzDetailRows, HzEmptyState, HzInput, HzLogStreamLiveRow, HzPanelHeader, HzPanelSurface, HzScrollViewport, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalTrendBars, HzStateNotice, HzStatCell, HzStatusBadge, HzWorkbenchLayout, type HzStatusTone } from '@hertzbeat/ui';
+import { HzActionGroup, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzControlStack, HzDataTable, HzDetailAside, HzDetailBodyStack, HzDetailRows, HzEmptyState, HzInput, HzLogStreamLiveRow, HzPanelHeader, HzPanelSurface, HzScrollViewport, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalTrendBars, HzSignalWorkbenchShell, HzStateNotice, HzStatCell, HzStatusBadge, HzWorkbenchLayout, type HzStatusTone } from '@hertzbeat/ui';
 import { LogRelatedTraceDialog } from '../../../components/log-manage/log-related-trace-dialog';
 import { LogStreamDetailDialog } from '../../../components/log-manage/log-stream-detail-dialog';
 import { buildTimeRangeControlLabels, TimeRangeControl } from '@/components/observability/time-range-control';
@@ -1227,14 +1227,15 @@ function LogManageExplorer({
   };
 
   return (
-    <main
-      data-log-manage-route="otlp-cold-log-workbench"
-      data-log-manage-style-baseline="hertzbeat-cold-matte"
-      className="min-h-[calc(100vh-56px)] bg-[#07090b] text-[#e8edf5]"
+    <HzSignalWorkbenchShell
+      data-log-manage-route="otlp-hertzbeat-ui-log-workbench"
+      data-log-manage-style-baseline="hertzbeat-ui-matte"
+      data-log-manage-shell-owner="hertzbeat-ui-signal-workbench-shell"
+      data-log-manage-shell-chrome="topology-workbench"
+      layout="topology-workbench"
     >
-      <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-6 py-6">
         <HzPanelSurface
-          data-log-manage-header="cold-compact-header"
+          data-log-manage-header="hertzbeat-ui-compact-header"
           data-log-manage-panel-surface="header"
           data-log-manage-header-padding-owner="hertzbeat-ui-panel-surface"
           padding="header"
@@ -1273,7 +1274,7 @@ function LogManageExplorer({
                 />
               </div>
               <HzActionGroup
-                data-log-manage-action-row="cold-workbench-actions"
+                data-log-manage-action-row="hertzbeat-ui-workbench-actions"
                 data-log-manage-action-row-owner="hertzbeat-ui-action-group"
                 data-log-manage-action-row-layout-owner="hertzbeat-ui-action-group"
                 layout="full-end"
@@ -1342,7 +1343,7 @@ function LogManageExplorer({
         {renderViewSwitch()}
 
         <HzPanelSurface
-          data-log-manage-query-bar="cold-query-row"
+          data-log-manage-query-bar="hertzbeat-ui-query-row"
           data-log-manage-panel-surface="query"
           data-log-manage-panel-surface-padding-owner="hertzbeat-ui-panel-surface"
           padding="query"
@@ -1439,7 +1440,7 @@ function LogManageExplorer({
 
         {currentView === 'list' ? (
         <HzPanelSurface
-          data-log-manage-chart-band="cold-chart-band"
+          data-log-manage-chart-band="hertzbeat-ui-chart-band"
           data-log-manage-panel-surface="chart"
           data-log-manage-chart-padding-owner="hertzbeat-ui-panel-surface"
           padding="chart"
@@ -1484,7 +1485,7 @@ function LogManageExplorer({
         {currentView === 'list' ? (
         <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_320px]">
           <HzPanelSurface
-            data-log-manage-log-list="cold-dense-log-list"
+            data-log-manage-log-list="hertzbeat-ui-dense-log-list"
             data-log-manage-panel-surface="table"
             data-log-manage-row-control-owner="shared-hz-button"
             className="overflow-hidden"
@@ -1581,7 +1582,7 @@ function LogManageExplorer({
             />
           </HzPanelSurface>
 
-          <HzPanelSurface data-log-manage-detail-panel="cold-detail-panel" data-log-manage-panel-surface="detail" className="h-fit overflow-hidden">
+          <HzPanelSurface data-log-manage-detail-panel="hertzbeat-ui-detail-panel" data-log-manage-panel-surface="detail" className="h-fit overflow-hidden">
             <HzPanelHeader
               data-log-manage-detail-header-owner="hertzbeat-ui-panel-header"
               eyebrow={t('log.manage.detail.title')}
@@ -1680,8 +1681,7 @@ function LogManageExplorer({
         ) : null}
         {renderDetailDialog()}
         {renderRelatedTraceDialog()}
-      </div>
-    </main>
+    </HzSignalWorkbenchShell>
   );
 }
 

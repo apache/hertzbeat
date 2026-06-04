@@ -44,12 +44,103 @@ describe('i18n report', () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'hb-i18n-report-'));
     tempDirs.push(root);
 
-    await writeFixture(root, 'lib/i18n-runtime-messages.ts', `export const messages = { greeting: '${cjk(0x6b22, 0x8fce)}' };\n`);
+    await writeFixture(
+      root,
+      'lib/i18n-runtime-messages.ts',
+      `export type Messages = Record<string, string>;
+export const SUPPLEMENTAL_MESSAGES = {
+  'en-US': {
+    greeting: 'Hello',
+  },
+  'zh-CN': {
+    greeting: '${cjk(0x6b22, 0x8fce)}',
+  },
+};
+`
+    );
     await writeFixture(root, 'lib/alert-notice/view-model.ts', `export const copy = { title: '${cjk(0x901a, 0x77e5, 0x4e2d, 0x5fc3)}' };\n`);
     await writeFixture(root, 'lib/other.ts', `export const title = '${cjk(0x4ecd, 0x7136, 0x8fdd, 0x89c4)}';\n`);
 
     await expect(collectI18nReportHits(root)).resolves.toEqual([
       expect.stringContaining('lib/other.ts:1: raw-cjk')
     ]);
+  });
+
+  it('reports static t() keys that are missing from the runtime English or Chinese bundle', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'hb-i18n-report-'));
+    tempDirs.push(root);
+
+    await writeFixture(
+      root,
+      'lib/i18n-runtime-messages.ts',
+      `export type Messages = Record<string, string>;
+const EN_US_PRODUCTION_STATIC_MESSAGES: Messages = {
+  'common.save': 'Save',
+};
+const ZH_CN_PRODUCTION_STATIC_MESSAGES: Messages = {
+  'common.save': '${cjk(0x4fdd, 0x5b58)}',
+};
+export const SUPPLEMENTAL_MESSAGES = {
+  'en-US': {
+    ...EN_US_PRODUCTION_STATIC_MESSAGES,
+  },
+  'zh-CN': {
+    ...ZH_CN_PRODUCTION_STATIC_MESSAGES,
+  },
+};
+`
+    );
+    await writeFixture(root, 'app/page.tsx', "export const labels = [t('common.save'), t('missing.route.title')];\n");
+
+    await expect(collectI18nReportHits(root)).resolves.toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('app/page.tsx:1: missing-i18n-key(en-US,static-t): missing.route.title'),
+        expect.stringContaining('app/page.tsx:1: missing-i18n-key(zh-CN,static-t): missing.route.title')
+      ])
+    );
+  });
+
+  it('reports variable translation key properties and translation-key maps without flagging business keys', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'hb-i18n-report-'));
+    tempDirs.push(root);
+
+    await writeFixture(
+      root,
+      'lib/i18n-runtime-messages.ts',
+      `export type Messages = Record<string, string>;
+export const SUPPLEMENTAL_MESSAGES = {
+  'en-US': {
+    'menu.home': 'Home',
+    'common.ready': 'Ready',
+  },
+  'zh-CN': {
+    'menu.home': '${cjk(0x9996, 0x9875)}',
+    'common.ready': '${cjk(0x5c31, 0x7eea)}',
+  },
+};
+`
+    );
+    await writeFixture(
+      root,
+      'lib/nav.ts',
+      `export const routes = [
+  { routePairKey: 'not-a-translation-key', labelKey: 'menu.home' },
+  { labelKey: 'menu.missing' },
+];
+export const STATUS_LABEL_KEYS = {
+  ready: 'common.ready',
+  empty: 'common.empty-missing',
+};
+`
+    );
+
+    await expect(collectI18nReportHits(root)).resolves.toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('lib/nav.ts:3: missing-i18n-key(en-US,translation-key-property): menu.missing'),
+        expect.stringContaining('lib/nav.ts:3: missing-i18n-key(zh-CN,translation-key-property): menu.missing'),
+        expect.stringContaining('lib/nav.ts:6: missing-i18n-key(en-US,translation-key-map): common.empty-missing'),
+        expect.stringContaining('lib/nav.ts:6: missing-i18n-key(zh-CN,translation-key-map): common.empty-missing')
+      ])
+    );
   });
 });

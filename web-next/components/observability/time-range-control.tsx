@@ -336,9 +336,11 @@ export function TimeRangeControl({
         rootClass,
         className
       )}
+      data-hz-ui="time-range-control"
+      data-hz-time-range-control-owner="hertzbeat-ui-time-range-control"
       data-time-range-control="hertzbeat-shared"
       data-time-range-control-labels={labels ? 'localized' : 'default'}
-      data-time-range-control-visual={isNarrowRail ? 'grafana-like-narrow-rail' : 'cold-operator-toolbar'}
+      data-time-range-control-visual={isNarrowRail ? 'grafana-like-narrow-rail' : 'hertzbeat-ui-operator-toolbar'}
       data-time-range-control-density={isNarrowRail ? 'narrow' : 'compact'}
       data-time-range-control-layout={isNarrowRail ? 'nowrap-top-right-rail' : 'single-row-rail'}
       data-time-range-control-align={isNarrowRail ? 'end' : 'natural'}

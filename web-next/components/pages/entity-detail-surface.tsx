@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Activity, ArrowLeft, Bell, Edit3, FileText, GitBranch, Network, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { OverlayDialog } from '../workbench/overlay-dialog';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import { interpolate, type TranslationParams } from '../../lib/i18n';
 import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import {
@@ -66,7 +66,7 @@ type AttributionRow = DetailRow & {
   state: 'ready' | 'review' | 'missing';
 };
 
-const coldEntityDetailVisual = coldOpsCatalogVisual;
+const coldEntityDetailVisual = hzOpsCatalogVisual;
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
@@ -375,7 +375,7 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
   return (
     <>
       <main
-        data-entity-detail-surface="otlp-cold-entity-detail"
+        data-entity-detail-surface="otlp-hertzbeat-ui-entity-detail"
         data-entity-detail-style-baseline={coldEntityDetailVisual.canvasName}
         data-entity-detail-layout="full-width-workbench"
         className={coldEntityDetailVisual.canvas.root}
@@ -384,7 +384,7 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
         <section className={coldEntityDetailVisual.layout.pageSection}>
           <div className="mx-auto max-w-[1480px]">
             <div className="mb-5">
-              <div data-entity-detail-header="cold-compact-header" className={coldEntityDetailVisual.panel.hero}>
+              <div data-entity-detail-header="hertzbeat-ui-compact-header" className={coldEntityDetailVisual.panel.hero}>
                 <div className="max-w-[920px]">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[11px] font-semibold tracking-[0.12em] text-[#7e8494]">{translateEntityDetail('entities.detail.header.kicker')}</span>
@@ -413,7 +413,7 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
                         size="sm"
                         variant="default"
                         className={coldDangerButtonClassName}
-                        data-entity-detail-delete-confirm-trigger="cold-modal"
+                        data-entity-detail-delete-confirm-trigger="hertzbeat-ui-modal"
                         disabled={isPending}
                         onClick={() => setDeleteDialogOpen(true)}
                       >
@@ -432,7 +432,7 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
               </div>
             </div>
 
-          <div data-entity-detail-count-strip="cold-inline-counts" className="mb-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div data-entity-detail-count-strip="hertzbeat-ui-inline-counts" className="mb-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             {metrics.map(({ Icon, label, value }) => (
               <div
                 key={label}
@@ -448,7 +448,7 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
           </div>
 
           <div
-            data-entity-detail-error="cold-inline-error"
+            data-entity-detail-error="hertzbeat-ui-inline-error"
             className={actionError ? 'mb-5 rounded-[4px] border border-[#7f1d1d]/55 bg-[#2a1214] px-4 py-3 text-[12px] text-[#fca5a5]' : 'hidden'}
             aria-hidden={actionError ? undefined : true}
           >
@@ -456,13 +456,13 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
             {actionError ? <span className="ml-2">{actionError}</span> : null}
           </div>
 
-          <div data-entity-detail-signal-grid="cold-detail-grid" className="grid items-start gap-5 lg:grid-cols-2">
+          <div data-entity-detail-signal-grid="hertzbeat-ui-detail-grid" className="grid items-start gap-5 lg:grid-cols-2">
             <DetailPanel
               marker="overview"
               title={translateEntityDetail('entities.detail.panel.overview.title')}
               copy={translateEntityDetail('entities.detail.panel.overview.copy')}
             >
-              <div data-entity-detail-overview-panel="cold-overview-panel">
+              <div data-entity-detail-overview-panel="hertzbeat-ui-overview-panel">
                 <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                   {facts.map(fact => (
                     <div key={fact.label} className="min-h-[36px] rounded-[3px] border border-[#252b34] bg-[#101217] px-3 py-2">
@@ -525,7 +525,7 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
               title={translateEntityDetail('entities.detail.panel.next.title')}
               copy={translateEntityDetail('entities.detail.panel.next.copy')}
             >
-              <div data-entity-detail-next-panel="cold-next-panel">
+              <div data-entity-detail-next-panel="hertzbeat-ui-next-panel">
                 <RowStack rows={buildNextActionRows(detail, entityId, translateEntityDetail)} />
               </div>
             </DetailPanel>
@@ -535,7 +535,7 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
               title={translateEntityDetail('entities.detail.panel.related.title')}
               copy={translateEntityDetail('entities.detail.panel.related.copy')}
             >
-              <div data-entity-detail-related-panel="cold-related-panel">
+              <div data-entity-detail-related-panel="hertzbeat-ui-related-panel">
                 <RowStack rows={buildSummaryRows(detail, translateEntityDetail)} />
               </div>
             </DetailPanel>
@@ -568,7 +568,7 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
               title={translateEntityDetail('entities.detail.panel.drilldown.title')}
               copy={translateEntityDetail('entities.detail.panel.drilldown.copy')}
             >
-              <div data-entity-detail-drilldown-panel="cold-drilldown-panel">
+              <div data-entity-detail-drilldown-panel="hertzbeat-ui-drilldown-panel">
                 <RouteRows rows={buildDrilldownRows(entityId, translateEntityDetail)} />
               </div>
             </DetailPanel>
@@ -601,7 +601,7 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
           </div>
         }
       >
-        <div data-entity-detail-delete-confirm="cold-modal" className="space-y-3 text-[12px] leading-6 text-[#a9b0bb]">
+        <div data-entity-detail-delete-confirm="hertzbeat-ui-modal" className="space-y-3 text-[12px] leading-6 text-[#a9b0bb]">
           <p>{translateEntityDetail('entities.detail.delete.copy')}</p>
           <div className="rounded-[3px] border border-[#3f2228] bg-[#181013] px-3 py-2 text-[#f0b8c1]">
             {title} {entityId ? <span className="text-[#8f99ab]">#{entityId}</span> : null}

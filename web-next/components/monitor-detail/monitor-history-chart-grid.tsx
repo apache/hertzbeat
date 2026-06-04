@@ -258,7 +258,7 @@ export function MonitorHistoryChartGrid({
           className="space-y-2"
           data-monitor-history-time-toolbar="hertzbeat-ui-time-range-toolbar"
           data-monitor-history-time-toolbar-owner="hertzbeat-ui-time-range-toolbar"
-          data-monitor-history-time-toolbar-visual="cold-metrics-controls"
+          data-monitor-history-time-toolbar-visual="hertzbeat-ui-metrics-controls"
           data-monitor-history-datazoom-feedback="time-toolbar"
           data-monitor-history-datazoom-preview-state={previewTimeContext ? 'active' : 'idle'}
           data-monitor-history-refresh-contract="angular-first-page-reload"

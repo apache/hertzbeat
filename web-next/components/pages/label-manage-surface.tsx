@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { SearchRow } from '../ui/search-row';
 import { HzActionGroup, HzConfirmDialog, HzIconButton, HzInlineFeedback, HzLabelTag } from '@hertzbeat/ui';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import { buildLabelDisplayName, renderAngularLabelColor } from '../../lib/label-manage/view-model';
 import type { LabelManagePageData } from '../../lib/label-manage/controller';
 import type { Label } from '../../lib/types';
@@ -46,7 +46,7 @@ type LabelManageSurfaceProps = {
   onSaveDialog: () => void;
 };
 
-const coldLabelVisual = coldOpsCatalogVisual;
+const coldLabelVisual = hzOpsCatalogVisual;
 
 const coldButtonClassName =
   'h-8 min-w-[104px] rounded-[3px] border-[#2b3039] bg-[#101217] px-3 text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-[#4e74f8] hover:bg-[#151b28] hover:text-white';
@@ -112,7 +112,7 @@ export function LabelManageSurface({
   return (
     <>
       <div
-        data-label-manage-surface="otlp-cold-label-console"
+        data-label-manage-surface="otlp-hertzbeat-ui-label-console"
         data-label-manage-style-baseline={coldLabelVisual.canvasName}
         className={coldLabelVisual.canvas.root}
         style={coldLabelVisual.canvas.backgroundStyle}
@@ -120,7 +120,7 @@ export function LabelManageSurface({
         <section className={coldLabelVisual.layout.pageSection}>
           <div className="mx-auto max-w-[1480px]">
             <div className="mb-5">
-              <div data-label-header="cold-compact-header" className={coldLabelVisual.panel.hero}>
+              <div data-label-header="hertzbeat-ui-compact-header" className={coldLabelVisual.panel.hero}>
                 <div className="max-w-[820px]">
                   <h1 className="text-[30px] font-semibold leading-tight text-[#f5f7fb]">
                     {t('menu.advanced.labels')}
@@ -211,10 +211,10 @@ export function LabelManageSurface({
             >
               <section className="min-w-0">
                 <SearchRow
-                  data-label-toolbar="cold-table-toolbar"
+                  data-label-toolbar="hertzbeat-ui-table-toolbar"
                   data-label-search-owner="shared-search-row"
                   data-label-search-submit="angular-enter-and-clear"
-                  data-label-search-submit-owner="cold-search-row"
+                  data-label-search-submit-owner="hertzbeat-ui-search-row"
                   value={search}
                   placeholder={t('label.search')}
                   searchLabel={t('common.search')}
@@ -349,10 +349,10 @@ export function LabelManageSurface({
                       </article>
                     );
                   }) : (
-                    <div data-label-empty-state="cold-card-empty" className="col-span-full h-[240px] rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] px-3 text-center text-[#a9b0bb]">
+                    <div data-label-empty-state="hertzbeat-ui-card-empty" className="col-span-full h-[240px] rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] px-3 text-center text-[#a9b0bb]">
                       <div className="flex h-full flex-col items-center justify-center gap-2.5">
                         <span
-                          data-label-empty-icon="cold-empty-box"
+                          data-label-empty-icon="hertzbeat-ui-empty-box"
                           className="inline-flex h-10 w-10 items-center justify-center rounded-[4px] border border-[#303743] bg-[#101217] text-[#cbd5e1]"
                         >
                           <Inbox className="h-5 w-5" aria-hidden="true" />
@@ -473,7 +473,7 @@ export function LabelManageSurface({
             </div>
             {isLabelPreviewVisible ? (
               <div
-                data-label-dialog-preview="cold-preview"
+                data-label-dialog-preview="hertzbeat-ui-preview"
                 data-label-dialog-preview-visibility="visible"
                 data-label-dialog-preview-visibility-owner="route-form-state"
                 data-label-dialog-preview-frame="angular-inline-tag-no-extra-frame"

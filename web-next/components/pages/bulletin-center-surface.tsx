@@ -246,7 +246,7 @@ export function BulletinCenterSurface({
                   <button
                     type="button"
                     className="flex w-full items-center rounded-[2px] px-3 py-2 text-left text-[12px] text-rose-300 transition hover:bg-[var(--ops-surface-raised)]"
-                    data-bulletin-delete-confirm-trigger="cold-modal"
+                    data-bulletin-delete-confirm-trigger="hertzbeat-ui-modal"
                     onClick={openDeleteDialog}
                   >
                     {t('common.button.delete')}
@@ -353,7 +353,7 @@ export function BulletinCenterSurface({
           </div>
         }
       >
-        <div data-bulletin-delete-confirm="cold-modal" className="space-y-3 text-[12px] leading-6 text-[var(--ops-text-secondary)]">
+        <div data-bulletin-delete-confirm="hertzbeat-ui-modal" className="space-y-3 text-[12px] leading-6 text-[var(--ops-text-secondary)]">
           <p>{t('bulletin.delete.copy')}</p>
           <div className="rounded-[4px] border border-[var(--ops-border-color)] bg-[var(--ops-surface-raised)] px-3 py-2 font-semibold text-[var(--ops-text-primary)]">
             {currentBulletinName}

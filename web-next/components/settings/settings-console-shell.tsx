@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import * as React from 'react';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import { cn } from '../../lib/utils';
 
 export type SettingsConsoleMenuItem = {
@@ -10,7 +10,7 @@ export type SettingsConsoleMenuItem = {
   label: string;
 };
 
-const coldSettingsVisual = coldOpsCatalogVisual;
+const hzSettingsVisual = hzOpsCatalogVisual;
 
 export function SettingsConsoleShell({
   items,
@@ -37,19 +37,19 @@ export function SettingsConsoleShell({
 
   return (
     <div
-      data-settings-console-surface="otlp-cold-settings-console"
-      data-settings-console-style-baseline={coldSettingsVisual.canvasName}
+      data-settings-console-surface="hertzbeat-ui-settings-console"
+      data-settings-console-style-baseline={hzSettingsVisual.canvasName}
       data-settings-console-route-contract="angular-settings-shell"
       data-settings-console-menu-contract="angular-config-server-object-store-token"
       data-settings-console-menu-mode-contract="angular-inline-horizontal-responsive"
       data-settings-console-active-title-contract="angular-active-child-title"
-      className={cn(coldSettingsVisual.canvas.root, className)}
-      style={coldSettingsVisual.canvas.backgroundStyle}
+      className={cn(hzSettingsVisual.canvas.root, className)}
+      style={hzSettingsVisual.canvas.backgroundStyle}
     >
-      <section className={coldSettingsVisual.layout.pageSection}>
+      <section className={hzSettingsVisual.layout.pageSection}>
         <div className="mx-auto max-w-[1480px]">
           {kicker || title || subtitle ? (
-            <header data-settings-console-header="cold-compact-header" className={cn(coldSettingsVisual.panel.hero, 'mb-5')}>
+            <header data-settings-console-header="hertzbeat-ui-compact-header" className={cn(hzSettingsVisual.panel.hero, 'mb-5')}>
               {kicker ? <div className="text-[11px] font-semibold tracking-[0.12em] text-[#858d9a]">{kicker}</div> : null}
               {title ? (
                 <h1 className="mt-2 text-[30px] font-semibold leading-tight text-[#f5f7fb]">{title}</h1>
@@ -58,11 +58,11 @@ export function SettingsConsoleShell({
             </header>
           ) : null}
           <div
-            data-settings-console-main="cold-settings-workspace"
+            data-settings-console-main="hertzbeat-ui-settings-workspace"
             className="grid min-h-[600px] gap-5 lg:grid-cols-[260px_minmax(0,1fr)]"
           >
             <aside
-              data-settings-console-menu="cold-static-list"
+              data-settings-console-menu="hertzbeat-ui-static-list"
               data-settings-console-menu-mode="angular-responsive-inline-horizontal"
               className="self-start overflow-x-auto rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] shadow-[0_20px_56px_rgba(0,0,0,0.32)] lg:overflow-hidden"
             >
@@ -92,7 +92,7 @@ export function SettingsConsoleShell({
               </nav>
             </aside>
             <section
-              data-settings-console-content="cold-settings-content"
+              data-settings-console-content="hertzbeat-ui-settings-content"
               data-settings-console-active-title={activeItem?.label ?? ''}
               aria-label={contentLabel}
               className="min-w-0 rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] px-5 py-5 shadow-[0_20px_56px_rgba(0,0,0,0.32)] md:px-6"

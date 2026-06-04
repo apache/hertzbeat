@@ -20,15 +20,15 @@ vi.mock('@/components/ui/button', () => ({
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>
 }));
 
-vi.mock('@/components/ui/cold-code-editor', () => ({
-  ColdCodeEditor: ({ value, language, onChange: _onChange, ...props }: any) => (
+vi.mock('@/components/ui/hz-code-editor', () => ({
+  HzCodeEditor: ({ value, language, onChange: _onChange, ...props }: any) => (
     <div
       data-entity-definition-code-editor={props['data-entity-definition-code-editor']}
       data-entity-definition-editor-format={props['data-entity-definition-editor-format']}
       data-entity-definition-editor-width={props['data-entity-definition-editor-width']}
       data-entity-definition-starter-draft={props['data-entity-definition-starter-draft']}
-      data-cold-code-editor="codemirror"
-      data-cold-code-editor-language={language}
+      data-hz-code-editor="codemirror"
+      data-hz-code-editor-language={language}
     >
       {value}
       {props.placeholder}
@@ -298,7 +298,7 @@ describe('EntityDefinitionWorkspaceSurface', () => {
     );
 
     expect(html).toContain('data-entity-definition-workspace="definition"');
-    expect(html).toContain('data-entity-definition-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-entity-definition-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-definition-layout="full-width-workbench"');
     expect(html).toContain('data-entity-definition-editor-shell="otlp-cold-definition-workbench"');
     expect(html).toContain('data-entity-definition-shell-spacing="cold-tight"');
@@ -308,8 +308,8 @@ describe('EntityDefinitionWorkspaceSurface', () => {
     expect(html).toContain('data-entity-definition-format-select="cold-compact-select"');
     expect(html).toContain('data-entity-definition-code-editor="definition"');
     expect(html).toContain('data-entity-definition-editor-width="cold-fluid"');
-    expect(html).toContain('data-cold-code-editor="codemirror"');
-    expect(html).toContain('data-cold-code-editor-language="yaml"');
+    expect(html).toContain('data-hz-code-editor="codemirror"');
+    expect(html).toContain('data-hz-code-editor-language="yaml"');
     expect(html).toContain('data-entity-definition-context-panel="cold-context-panel"');
     expect(html).toContain('data-entity-definition-metric-strip="cold-inline-counts"');
     expect(html).toContain('auto-rows-min');
@@ -362,7 +362,7 @@ describe('EntityDefinitionWorkspaceSurface', () => {
     expect(html).toContain('data-entity-definition-format-select="cold-compact-select"');
     expect(html).toContain('data-entity-definition-code-editor="definition"');
     expect(html).toContain('data-entity-definition-editor-width="cold-fluid"');
-    expect(html).toContain('data-cold-code-editor="codemirror"');
+    expect(html).toContain('data-hz-code-editor="codemirror"');
     expect(html).toContain('data-entity-definition-context-panel="cold-context-panel"');
     expect(html).toContain('auto-rows-min');
     expect(html).not.toContain('lg:grid-cols-[190px_minmax(0,1fr)_460px]');
@@ -413,7 +413,7 @@ describe('EntityDefinitionWorkspaceSurface', () => {
     );
 
     expect(html).toContain('data-entity-definition-workspace="import"');
-    expect(html).toContain('data-entity-definition-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-entity-definition-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-definition-layout="full-width-workbench"');
     expect(html).toContain('data-entity-definition-header-spacing="cold-padded"');
     expect(html).toContain('data-entity-definition-editor-shell="otlp-cold-import-workbench"');
@@ -425,8 +425,8 @@ describe('EntityDefinitionWorkspaceSurface', () => {
     expect(html).toContain('data-entity-definition-code-editor="import"');
     expect(html).toContain('data-entity-definition-editor-format="yaml"');
     expect(html).toContain('data-entity-definition-editor-width="cold-fluid"');
-    expect(html).toContain('data-cold-code-editor="codemirror"');
-    expect(html).toContain('data-cold-code-editor-language="yaml"');
+    expect(html).toContain('data-hz-code-editor="codemirror"');
+    expect(html).toContain('data-hz-code-editor-language="yaml"');
     expect(html).toContain('data-entity-definition-context-panel="cold-context-panel"');
     expect(html).toContain('data-entity-definition-context-density="minimal-import"');
     expect(html).toContain('data-entity-definition-metric-strip="cold-inline-counts"');
@@ -464,7 +464,7 @@ describe('EntityDefinitionWorkspaceSurface', () => {
     expect(html).not.toContain('Preview Definitions');
     expect(html).not.toContain('Import Entities');
     expect(source).toContain('setContent(getImportStarterDraft(nextFormat))');
-    expect(source).toContain("from '@/components/ui/cold-code-editor'");
+    expect(source).toContain("from '@/components/ui/hz-code-editor'");
     expect(source).not.toContain('EditorRow');
     expect(source).not.toContain('lg:grid-cols-[minmax(0,1fr)_340px]');
   });

@@ -5,7 +5,7 @@ import { HzIncidentWorkbench } from '@hertzbeat/ui';
 import { ClientWorkbench } from '../../components/workbench/client-workbench';
 import { useI18n } from '../../components/providers/i18n-provider';
 import { apiMessageGet, apiMessagePut } from '../../lib/api-client';
-import { coldOpsCatalogVisual } from '../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../lib/hz-ops-visual';
 import { formatTime } from '../../lib/format';
 import {
   INCIDENT_WORKBENCH_DEFAULT_QUERY,
@@ -26,7 +26,7 @@ function IncidentWorkbenchSurface({
   state: IncidentWorkbenchData;
   onTransition: (incident: NonNullable<IncidentWorkbenchData['selectedIncident']>, nextState: IncidentTransitionState) => Promise<void>;
 }) {
-  const coldOpsVisual = coldOpsCatalogVisual;
+  const coldOpsVisual = hzOpsCatalogVisual;
   const { t } = useI18n();
   const [transitionBusy, setTransitionBusy] = useState<IncidentTransitionState | null>(null);
   const transitionDisabled = state.transitionState !== 'ready' || !state.selectedIncident || transitionBusy != null;

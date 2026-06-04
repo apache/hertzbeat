@@ -179,7 +179,7 @@ export function LoginForm({ initialRouteState }: { initialRouteState?: PassportL
 
             <div data-passport-login-remember="true">
               <Checkbox
-                data-passport-login-remember-checkbox="cold-checkbox"
+                data-passport-login-remember-checkbox="hertzbeat-ui-checkbox"
                 defaultChecked
                 containerClassName="min-h-4 gap-2 text-[13px] font-medium text-[#17181c]"
                 label={t('app.login.remember-me')}

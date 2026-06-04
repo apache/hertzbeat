@@ -17,7 +17,7 @@ describe('alert center cold-workbench chrome', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-center-surface.tsx'), 'utf8');
     const searchRowSource = readFileSync(resolve(process.cwd(), 'components/ui/search-row.tsx'), 'utf8');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain('data-alert-center-surface="otlp-cold-center-console"');
     expect(source).toContain('data-alert-center-style-baseline={coldCenterVisual.canvasName}');
     expect(source).toContain('data-alert-center-header="cold-compact-header"');

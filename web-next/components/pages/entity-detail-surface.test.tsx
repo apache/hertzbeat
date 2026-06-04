@@ -140,7 +140,7 @@ describe('EntityDetailSurface', () => {
     expect(source).toContain('buildEntityContextHandoffLinks');
     expect(source).toContain('data-entity-detail-error="cold-inline-error"');
     expect(source).toContain('lg:grid-cols-2');
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).not.toContain('xl:grid-cols-[minmax(0,1fr)_360px]');
     expect(source).not.toContain('WorkbenchPage');
     expect(source).not.toContain('StageSection');
@@ -156,7 +156,7 @@ describe('EntityDetailSurface', () => {
     );
 
     expect(html).toContain('data-entity-detail-surface="otlp-cold-entity-detail"');
-    expect(html).toContain('data-entity-detail-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-entity-detail-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-detail-layout="full-width-workbench"');
     expect(html).toContain('data-entity-detail-header="cold-compact-header"');
     expect(html).toContain('data-entity-detail-command-row="standard-equal-buttons"');

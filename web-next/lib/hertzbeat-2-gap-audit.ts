@@ -470,7 +470,7 @@ const functionalGaps: HertzBeat2Gap[] = [
       'Fold richer incident CRUD and public-status administration parity into the M10 public-status area.'
     ],
     evidence: [
-      '@hertzbeat/ui and /ui-lab demonstrate HzIncidentWorkbench with operator-compact density and cold-matte-hard-edge styling',
+      '@hertzbeat/ui and /ui-lab demonstrate HzIncidentWorkbench with operator-compact density and hertzbeat-ui-matte-hard-edge styling',
       '/incidents reuses HzIncidentWorkbench instead of page-local placeholder chrome',
       '/incidents reads GET /status/page/incident?pageIndex=0&pageSize=8 through the local BFF list adapter',
       '/incidents reads selected incident detail from GET /status/page/incident/{id} when list data exists',

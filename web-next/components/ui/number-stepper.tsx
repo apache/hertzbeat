@@ -67,7 +67,7 @@ const NumberStepper = React.forwardRef<HTMLInputElement, NumberStepperProps>(
 
     return (
       <span
-        data-cold-number-stepper-owner="cold-number-stepper"
+        data-hz-number-stepper-owner="hertzbeat-ui-number-stepper"
         className={cn(
           'flex h-8 w-full overflow-hidden rounded-[3px] border border-[#2b3039] bg-[#101217] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] focus-within:border-[#4e74f8] focus-within:ring-2 focus-within:ring-[rgba(78,116,248,0.12)]',
           disabled ? 'opacity-55' : '',
@@ -80,7 +80,7 @@ const NumberStepper = React.forwardRef<HTMLInputElement, NumberStepperProps>(
           inputMode="numeric"
           disabled={disabled}
           value={value}
-          data-cold-number-stepper-input="true"
+          data-hz-number-stepper-input="true"
           className={cn(
             'min-w-0 flex-1 border-0 bg-transparent px-3 py-1.5 text-[12px] font-semibold text-[#dbe4f0] outline-none placeholder:text-[#858d9a]',
             className
@@ -88,11 +88,11 @@ const NumberStepper = React.forwardRef<HTMLInputElement, NumberStepperProps>(
           onChange={event => onValueChange(event.target.value)}
           {...props}
         />
-        <span className="flex shrink-0 border-l border-[#2b3039]" data-cold-number-stepper-actions="true">
+        <span className="flex shrink-0 border-l border-[#2b3039]" data-hz-number-stepper-actions="true">
           <button
             type="button"
             disabled={disabled}
-            data-cold-number-stepper-action="decrement"
+            data-hz-number-stepper-action="decrement"
             className="grid h-full w-8 place-items-center text-[#8f99ab] transition hover:bg-[#151b28] hover:text-[#f5f7fb] disabled:pointer-events-none"
             onClick={() => shift(-1)}
           >
@@ -102,7 +102,7 @@ const NumberStepper = React.forwardRef<HTMLInputElement, NumberStepperProps>(
           <button
             type="button"
             disabled={disabled}
-            data-cold-number-stepper-action="increment"
+            data-hz-number-stepper-action="increment"
             className="grid h-full w-8 place-items-center border-l border-[#2b3039] text-[#8f99ab] transition hover:bg-[#151b28] hover:text-[#f5f7fb] disabled:pointer-events-none"
             onClick={() => shift(1)}
           >

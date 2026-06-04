@@ -81,7 +81,7 @@ describe('explorer page', () => {
     const html = renderToStaticMarkup(<ExplorerPage />);
 
     expect(html).toContain('data-explorer-route="otlp-cold-workbench"');
-    expect(html).toContain('data-explorer-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-explorer-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-explorer-api-owner="trace-log-bff-query-api"');
     expect(html).toContain('data-explorer-api-state="ready"');
     expect(html).toContain('data-explorer-api-total="2"');

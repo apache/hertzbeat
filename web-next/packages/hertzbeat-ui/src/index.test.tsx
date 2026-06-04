@@ -708,6 +708,25 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('class="contents"');
   });
 
+  it('owns the topology-like signal workbench chrome without nested card shells', () => {
+    const html = renderToStaticMarkup(
+      <HzSignalWorkbenchShell
+        layout="topology-workbench"
+        data-log-manage-shell-owner="hertzbeat-ui-signal-workbench-shell"
+      >
+        <HzPanelSurface>Signal workbench</HzPanelSurface>
+      </HzSignalWorkbenchShell>
+    );
+
+    expect(html).toContain('data-hz-signal-workbench-shell-layout="topology-workbench"');
+    expect(html).toContain('data-hz-signal-workbench-shell-content-layout="topology-workbench"');
+    expect(html).toContain('data-log-manage-shell-owner="hertzbeat-ui-signal-workbench-shell"');
+    expect(html).toContain('[&amp;_[data-hz-ui=panel-surface]]:rounded-none');
+    expect(html).toContain('[&amp;_[data-hz-ui=panel-surface]]:shadow-none');
+    expect(html).toContain('class="flex w-full min-w-0 flex-col gap-0 px-4 pb-4 pt-3 xl:px-5"');
+    expect(html).not.toContain('max-w-[1600px]');
+  });
+
   it('owns search field icon frame for query controls', () => {
     const TestIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />;
     const html = renderToStaticMarkup(
@@ -1168,11 +1187,11 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-ui="action-workbench"');
     expect(html).toContain('data-hz-action-workbench-owner="hertzbeat-ui-action-workbench"');
     expect(html).toContain('data-hz-action-workbench-density="operator-compact"');
-    expect(html).toContain('data-hz-action-workbench-style="cold-matte-hard-edge"');
+    expect(html).toContain('data-hz-action-workbench-style="hertzbeat-ui-matte-hard-edge"');
     expect(html).toContain('data-hz-action-workbench-adapter-state="adapter-pending"');
     expect(html).toContain('data-hz-action-workbench-actions="shared"');
-    expect(html).toContain('data-actions-shell-panel="cold-ops-shell-panel"');
-    expect(html).toContain('data-actions-launch-checklist="cold-ops-static-rail"');
+    expect(html).toContain('data-actions-shell-panel="hertzbeat-ui-ops-shell-panel"');
+    expect(html).toContain('data-actions-launch-checklist="hertzbeat-ui-ops-static-rail"');
     expect(html).toContain('data-actions-adapter-boundary="adapter-pending"');
     expect(html).toContain('data-actions-suggested-remediation="alert-context-human-confirmation"');
     expect(html).toContain('data-actions-suggested-action="suggest-restart-checkout"');
@@ -1212,7 +1231,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-actions-approval-decision-execution-allowed="false"');
     expect(html).toContain('data-actions-approval-decision-request="preview"');
     expect(html).toContain('data-actions-approval-decision-blocked="true"');
-    expect(html).toContain('data-actions-empty-state="cold-ops-domain-adapter"');
+    expect(html).toContain('data-actions-empty-state="hertzbeat-ui-ops-domain-adapter"');
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
@@ -1275,14 +1294,14 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-ui="incident-workbench"');
     expect(html).toContain('data-hz-incident-workbench-owner="hertzbeat-ui-incident-workbench"');
     expect(html).toContain('data-hz-incident-workbench-density="operator-compact"');
-    expect(html).toContain('data-hz-incident-workbench-style="cold-matte-hard-edge"');
+    expect(html).toContain('data-hz-incident-workbench-style="hertzbeat-ui-matte-hard-edge"');
     expect(html).toContain('data-hz-incident-workbench-source="Status page incidents"');
     expect(html).toContain('data-hz-incident-workbench-query="page=0 size=8"');
     expect(html).toContain('data-hz-incident-workbench-table="shared"');
     expect(html).toContain('data-hz-incident-transition-actions="shared"');
     expect(html).toContain('data-hz-incident-transition-owner="hertzbeat-ui-incident-transition-actions"');
     expect(html).toContain('data-hz-incident-transition-density="operator-compact"');
-    expect(html).toContain('data-hz-incident-transition-style="cold-matte-hard-edge"');
+    expect(html).toContain('data-hz-incident-transition-style="hertzbeat-ui-matte-hard-edge"');
     expect(html).toContain('data-hz-incident-transition-action="monitoring"');
     expect(html).toContain('data-hz-incident-transition-target-state="2"');
     expect(html).toContain('data-hz-incident-transition-disabled="false"');
@@ -3548,7 +3567,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-file-input-control="native-hidden-file"');
     expect(html).toContain('data-monitor-manage-import-input-owner="hertzbeat-ui-file-input"');
     expect(html).toContain('hidden');
-    expect(html).not.toContain('data-cold-file-input-owner');
+    expect(html).not.toContain('data-hz-file-input-owner');
   });
 
   it('renders a filter workbench with active clauses, group-by fields, and include/exclude value actions', () => {
@@ -7116,7 +7135,7 @@ describe('@hertzbeat/ui', () => {
           onConfirm={vi.fn()}
           data-monitor-delete-confirm-owner="hertzbeat-ui-confirm-dialog"
         >
-          <div data-monitors-delete-confirm="cold-modal">3 monitors selected</div>
+          <div data-monitors-delete-confirm="hertzbeat-ui-modal">3 monitors selected</div>
         </HzConfirmDialog>
         <HzBatchToolbar
           selectionCount={3}
@@ -7168,7 +7187,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-confirm-action="cancel"');
     expect(html).toContain('data-hz-confirm-action="confirm"');
     expect(html).toContain('data-monitor-delete-confirm-owner="hertzbeat-ui-confirm-dialog"');
-    expect(html).toContain('data-monitors-delete-confirm="cold-modal"');
+    expect(html).toContain('data-monitors-delete-confirm="hertzbeat-ui-modal"');
     expect(html).toContain('role="dialog"');
     expect(html).toContain('Delete 3 drafts');
     expect(html).toContain('Delete selected monitors');
@@ -7497,7 +7516,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-monitor-editor-textarea-owner="hertzbeat-ui-textarea"');
     expect(html).toContain('Description');
     expect(html).toContain('Primary MySQL endpoint.');
-    expect(html).not.toContain('data-cold-textarea-owner');
+    expect(html).not.toContain('data-hz-textarea-owner');
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
@@ -7517,7 +7536,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-checkbox-label="true"');
     expect(html).toContain('data-monitor-editor-checkbox-owner="hertzbeat-ui-checkbox"');
     expect(html).toContain('Collect this resource');
-    expect(html).not.toContain('data-cold-checkbox-owner');
+    expect(html).not.toContain('data-hz-checkbox-owner');
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
@@ -7541,7 +7560,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-switch-label="true"');
     expect(html).toContain('data-plugin-upload-status-control="angular-nz-switch"');
     expect(html).toContain('data-plugin-upload-status-control-owner="hertzbeat-ui-switch"');
-    expect(html).not.toContain('data-cold-checkbox-owner');
+    expect(html).not.toContain('data-hz-checkbox-owner');
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
@@ -7585,7 +7604,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-number-stepper-action="increment"');
     expect(html).toContain('data-monitor-editor-number-stepper-owner="hertzbeat-ui-number-stepper"');
     expect(html).toContain('value="60"');
-    expect(html).not.toContain('data-cold-number-stepper-owner');
+    expect(html).not.toContain('data-hz-number-stepper-owner');
     expect(html).not.toContain('type="number"');
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
@@ -7596,7 +7615,7 @@ describe('@hertzbeat/ui', () => {
     const html = renderToStaticMarkup(
       <HzField as="div" label="Structured params" rhythm="section">
         <HzCodeEditorFrame data-monitor-editor-code-editor-owner="hertzbeat-ui-code-editor" meta="json">
-          <pre data-cold-code-editor="codemirror">{'{"ssl":true}'}</pre>
+          <pre data-hz-code-editor="codemirror">{'{"ssl":true}'}</pre>
         </HzCodeEditorFrame>
       </HzField>
     );
@@ -7608,9 +7627,9 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-code-editor-body="true"');
     expect(html).toContain('data-hz-code-editor-meta="true"');
     expect(html).toContain('data-monitor-editor-code-editor-owner="hertzbeat-ui-code-editor"');
-    expect(html).toContain('data-cold-code-editor="codemirror"');
+    expect(html).toContain('data-hz-code-editor="codemirror"');
     expect(html).toContain('{&quot;ssl&quot;:true}');
-    expect(html).not.toContain('data-cold-code-editor-owner');
+    expect(html).not.toContain('data-hz-code-editor-owner');
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
@@ -7642,8 +7661,8 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-mocked-codemirror="true"');
     expect(html).toContain('data-min-height="120px"');
     expect(html).toContain('data-monitor-editor-code-editor-owner="hertzbeat-ui-code-editor"');
-    expect(html).not.toContain('data-cold-code-editor="codemirror"');
-    expect(html).not.toContain('data-cold-code-editor-owner');
+    expect(html).not.toContain('data-hz-code-editor="codemirror"');
+    expect(html).not.toContain('data-hz-code-editor-owner');
     expect(html).not.toContain('rounded-[16px]');
     expect(html).not.toContain('rounded-[14px]');
     expect(html).not.toContain('rounded-[12px]');
@@ -8492,7 +8511,7 @@ describe('@hertzbeat/ui', () => {
         filename="app-mysql.yml"
         code={'app: mysql\nmetrics:\n  - name: availability'}
         editor={
-          <div data-cold-code-editor="codemirror" data-cold-code-editor-language="yaml" data-hz-ui="yaml-editor">
+          <div data-hz-code-editor="codemirror" data-hz-code-editor-language="yaml" data-hz-ui="yaml-editor">
             app: mysql
           </div>
         }
@@ -8501,8 +8520,8 @@ describe('@hertzbeat/ui', () => {
 
     expect(html).toContain('data-hz-ui="yaml-editor-shell"');
     expect(html).toContain('data-hz-yaml-editor-runtime="external"');
-    expect(html).toContain('data-cold-code-editor="codemirror"');
-    expect(html).toContain('data-cold-code-editor-language="yaml"');
+    expect(html).toContain('data-hz-code-editor="codemirror"');
+    expect(html).toContain('data-hz-code-editor-language="yaml"');
     expect(html).toContain('data-hz-ui="yaml-editor"');
   });
 

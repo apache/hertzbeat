@@ -12,9 +12,9 @@ import {
 } from './settings-form';
 
 describe('settings form controls', () => {
-  it('renders cold-matte form controls with low-radius dense settings rhythm', () => {
+  it('renders hertzbeat-ui-matte form controls with low-radius dense settings rhythm', () => {
     const html = renderToStaticMarkup(
-      <SettingsForm data-setting-config-form="cold-settings-form">
+      <SettingsForm data-setting-config-form="hertzbeat-ui-settings-form">
         <SettingsFormField label="System language">
           <SettingsFormSelect value="zh-CN" onChange={() => {}}>
             <option value="zh-CN">Simplified Chinese</option>
@@ -29,16 +29,16 @@ describe('settings form controls', () => {
       </SettingsForm>
     );
 
-    expect(html).toContain('data-settings-form-owner="cold-settings-form-owner"');
-    expect(html).toContain('data-setting-config-form="cold-settings-form"');
-    expect(html).toContain('data-settings-form-field="cold-form-field"');
-    expect(html).toContain('data-settings-form-control="cold-input-control"');
-    expect(html).toContain('data-settings-form-control="cold-select-control"');
+    expect(html).toContain('data-settings-form-owner="hertzbeat-ui-settings-form-owner"');
+    expect(html).toContain('data-setting-config-form="hertzbeat-ui-settings-form"');
+    expect(html).toContain('data-settings-form-field="hertzbeat-ui-form-field"');
+    expect(html).toContain('data-settings-form-control="hertzbeat-ui-input-control"');
+    expect(html).toContain('data-settings-form-control="hertzbeat-ui-select-control"');
     expect(html).toContain('data-settings-form-select-width="angular-400px"');
     expect(html).toContain('data-settings-form-select-style="angular-centered-bold"');
     expect(html).toContain('data-settings-form-select-dropdown-style="angular-bold-larger"');
-    expect(html).toContain('data-cold-select-owner="cold-custom-select"');
-    expect(html).toContain('data-cold-select-icon="chevron"');
+    expect(html).toContain('data-hz-select-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-hz-select-icon="chevron"');
     expect(html).toContain('appearance-none');
     expect(html).toContain('data-setting-config-actions="standard-equal-buttons"');
     expect(html).toContain('rounded-[4px]');
@@ -54,9 +54,9 @@ describe('settings form controls', () => {
   it('keeps the settings form owner independent from workbench toolbar primitives', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/settings/settings-form.tsx'), 'utf8');
 
-    expect(source).toContain('data-settings-form-owner="cold-settings-form-owner"');
-    expect(source).toContain('data-settings-form-control="cold-input-control"');
-    expect(source).toContain('data-settings-form-control="cold-select-control"');
+    expect(source).toContain('data-settings-form-owner="hertzbeat-ui-settings-form-owner"');
+    expect(source).toContain('data-settings-form-control="hertzbeat-ui-input-control"');
+    expect(source).toContain('data-settings-form-control="hertzbeat-ui-select-control"');
     expect(source).toContain('data-settings-form-select-width="angular-400px"');
     expect(source).toContain('data-settings-form-select-style="angular-centered-bold"');
     expect(source).toContain('data-settings-form-select-dropdown-style="angular-bold-larger"');

@@ -249,11 +249,11 @@ describe('otlp page', () => {
     expect(html).toContain('data-client-workbench-cache-key="otlp-center:/ingestion/otlp/overview:/ingestion/otlp/guide:/ingestion/otlp/bindings"');
     expect(html).toContain('data-otlp-center-route="hertzbeat-intake-cortex"');
     expect(html).toContain('data-otlp-center-visual-system="hertzbeat-native-avant-garde"');
-    expect(html).toContain('data-otlp-visual-contract="cold-ops-catalog-v1"');
+    expect(html).toContain('data-otlp-visual-contract="hertzbeat-ui-ops-catalog-v1"');
     expect(html).toContain('data-otlp-visual-radius="panel-4-control-3"');
     expect(html).toContain('data-otlp-visual-rail="340px"');
-    expect(html).toContain('data-otlp-center-tone="cold-ops-catalog"');
-    expect(html).toContain('data-otlp-center-catalog-canvas="hertzbeat-cold-matte"');
+    expect(html).toContain('data-otlp-center-tone="hertzbeat-ui-ops-catalog"');
+    expect(html).toContain('data-otlp-center-catalog-canvas="hertzbeat-ui-matte"');
     expect(html).toContain('data-otlp-center-hero="hertzbeat-intake-cortex"');
     expect(html).toContain('data-otlp-center-action-bar="standard-action-row"');
     expect(html).toContain('data-otlp-center-action-size="standard-sm-88"');
@@ -348,7 +348,7 @@ describe('otlp page', () => {
     expect(html).toContain('grid-cols-[minmax(0,auto)_1fr_38px]');
     expect(html).toContain('w-[38px]');
     expect((html.match(/xl:grid-cols-\[minmax\(0,1fr\)_340px\]/g) ?? []).length).toBeGreaterThanOrEqual(2);
-    expect(html).toContain('data-otlp-center-catalog-canvas="hertzbeat-cold-matte"');
+    expect(html).toContain('data-otlp-center-catalog-canvas="hertzbeat-ui-matte"');
     expect(html).toContain('style="background-color:#0b0c0e"');
     expect(html).not.toContain('repeating-linear-gradient');
     expect(html).not.toContain('linear-gradient(135deg');

@@ -19,7 +19,7 @@ describe('alert modal feedback guard', () => {
       expect(source, file).not.toContain('confirm(');
       expect(source, file).not.toContain('window.alert');
       expect(source, file).not.toContain('alert(');
-      expect(source, file).toContain('ColdConfirmDialog');
+      expect(source, file).toContain('HzConfirmDialog');
       expect(source, file).toContain('data-alert-delete-confirm');
     }
   });

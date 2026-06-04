@@ -112,8 +112,8 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
 
   return (
     <main
-      data-explorer-route="otlp-cold-workbench"
-      data-explorer-style-baseline="hertzbeat-cold-matte"
+      data-explorer-route="otlp-hertzbeat-ui-workbench"
+      data-explorer-style-baseline="hertzbeat-ui-matte"
       data-explorer-api-owner={data.apiOwner}
       data-explorer-api-state={data.apiState}
       data-explorer-api-total={rows.length}
@@ -150,7 +150,7 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
           </>
         }
         queryBar={
-          <div data-explorer-query-bar="cold-query-row">
+          <div data-explorer-query-bar="hertzbeat-ui-query-row">
             <HzQueryBar
               query={draft.q}
               onQueryChange={q => setDraft(current => ({ ...current, q }))}
@@ -195,7 +195,7 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
           </div>
         }
         filterRail={
-          <aside data-explorer-filter-rail="cold-static-rail" className="bg-[var(--hz-ui-surface)] px-3 py-3">
+          <aside data-explorer-filter-rail="hertzbeat-ui-static-rail" className="bg-[var(--hz-ui-surface)] px-3 py-3">
             <div className="mb-4 flex items-center justify-between">
               <div className="text-[13px] font-semibold text-[#e4ebf5]">{t('explorer.filters.title')}</div>
               <button type="button" className="text-[12px] font-semibold text-[#9aa6b8] hover:text-[#dbe4f0]">
@@ -222,7 +222,7 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
           </aside>
         }
       >
-        <section data-explorer-chart-band="cold-chart-band" className="border-b border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface)] px-4 py-4">
+        <section data-explorer-chart-band="hertzbeat-ui-chart-band" className="border-b border-[var(--hz-ui-line-soft)] bg-[var(--hz-ui-surface)] px-4 py-4">
           <div className="mb-3 flex items-center justify-between">
             <div>
               <p className="text-[12px] font-semibold text-[#8e99ab]">{t('explorer.chart.title')}</p>
@@ -247,7 +247,7 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
         </section>
 
         <div className="grid min-h-[420px] gap-0 2xl:grid-cols-[minmax(0,1fr)_320px]">
-          <section data-explorer-result-table="cold-dense-table" className="min-w-0 overflow-hidden border-r border-[var(--hz-ui-line-soft)]">
+          <section data-explorer-result-table="hertzbeat-ui-dense-table" className="min-w-0 overflow-hidden border-r border-[var(--hz-ui-line-soft)]">
             <div className="flex h-11 items-center justify-between border-b border-[var(--hz-ui-line-soft)] px-4 text-[12px] text-[#8e99ab]">
               <span>{t('explorer.results.title')}</span>
               <span>{t('explorer.results.count', { count: rows.length })}</span>
@@ -266,7 +266,7 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
             ) : null}
           </section>
 
-          <aside data-explorer-detail-panel="cold-detail-panel" className="h-fit bg-[var(--hz-ui-surface)] px-4 py-4">
+          <aside data-explorer-detail-panel="hertzbeat-ui-detail-panel" className="h-fit bg-[var(--hz-ui-surface)] px-4 py-4">
             <p className="text-[12px] font-semibold text-[#8d98aa]">{t('explorer.detail.title')}</p>
             <h2 className="mt-2 text-[18px] font-semibold text-[#f0f4fa]">{activeRow?.service || t('common.no-data')}</h2>
             <div className="mt-4 space-y-3 text-[12px] text-[#9aa6b8]">

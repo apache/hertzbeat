@@ -12,8 +12,8 @@ import { SettingDefineSurface } from './setting-define-surface';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-vi.mock('../ui/cold-code-editor', () => ({
-  ColdCodeEditor: ({ value, readOnly, language, theme, loading, loadingLabel, onChange: _onChange, ...props }: any) => (
+vi.mock('../ui/hz-code-editor', () => ({
+  HzCodeEditor: ({ value, readOnly, language, theme, loading, loadingLabel, onChange: _onChange, ...props }: any) => (
     <div
       data-hz-ui={props['data-hz-ui']}
       data-setting-define-editor-field={props['data-setting-define-editor-field']}
@@ -23,20 +23,20 @@ vi.mock('../ui/cold-code-editor', () => ({
       data-setting-define-editor-folding={props['data-setting-define-editor-folding']}
       data-setting-define-editor-automatic-layout={props['data-setting-define-editor-automatic-layout']}
       data-setting-define-editor-loading={props['data-setting-define-editor-loading']}
-      data-cold-code-editor="codemirror"
-      data-cold-code-editor-language={language}
-      data-cold-code-editor-theme={theme}
-      data-cold-code-editor-loading={loading ? 'true' : 'false'}
-      data-cold-code-editor-loading-owner="cold-code-editor"
-      data-cold-code-editor-folding="true"
-      data-cold-code-editor-automatic-layout="true"
-      data-cold-code-editor-readonly={readOnly || loading ? 'true' : undefined}
+      data-hz-code-editor="codemirror"
+      data-hz-code-editor-language={language}
+      data-hz-code-editor-theme={theme}
+      data-hz-code-editor-loading={loading ? 'true' : 'false'}
+      data-hz-code-editor-loading-owner="hz-code-editor"
+      data-hz-code-editor-folding="true"
+      data-hz-code-editor-automatic-layout="true"
+      data-hz-code-editor-readonly={readOnly || loading ? 'true' : undefined}
     >
       {value}
       {loading ? (
         <span
-          data-cold-code-editor-loading-state="angular-nz-code-editor-loading"
-          data-cold-code-editor-loading-state-owner="cold-code-editor"
+          data-hz-code-editor-loading-state="angular-nz-code-editor-loading"
+          data-hz-code-editor-loading-state-owner="hz-code-editor"
         >
           {loadingLabel}
         </span>
@@ -107,7 +107,7 @@ describe('setting define monitor-template surface', () => {
     );
 
     expect(html).toContain('data-setting-define-surface="otlp-cold-define-console"');
-    expect(html).toContain('data-setting-define-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-setting-define-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-setting-define-route-state="angular-current-app-url-retained"');
     expect(html).toContain('data-setting-define-theme-contract="angular-theme-service-initial"');
     expect(html).toContain('data-setting-define-theme-owner="angular-theme-service"');
@@ -160,9 +160,9 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-setting-define-template-visibility-loading-owner="setting-define-controller"');
     expect(html).toContain('data-setting-define-template-visibility-loading="false"');
     expect(html).toContain('data-setting-define-editor-option-contract="angular-yaml-vs-folding-automatic-layout"');
-    expect(html).toContain('data-setting-define-editor-option-owner="cold-code-editor"');
+    expect(html).toContain('data-setting-define-editor-option-owner="hz-code-editor"');
     expect(html).toContain('data-setting-define-editor-loading-contract="angular-nz-code-editor-loading"');
-    expect(html).toContain('data-setting-define-editor-loading-owner="cold-code-editor"');
+    expect(html).toContain('data-setting-define-editor-loading-owner="hz-code-editor"');
     expect(html).toContain('data-setting-define-editor-loading="false"');
     expect(html).toContain('data-setting-define-editor-loading-save-contract="angular-save-hidden-while-editor-loading"');
     expect(html).toContain('data-setting-define-header="cold-compact-header"');
@@ -176,16 +176,16 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('data-hz-template-filter-state="matched-groups"');
     expect(html).toContain('data-hz-yaml-editor-runtime="external"');
     expect(html).toContain('data-setting-define-editor-shell="shared-yaml-workspace"');
-    expect(html).toContain('data-setting-define-editor-field="cold-code-editor"');
+    expect(html).toContain('data-setting-define-editor-field="hz-code-editor"');
     expect(html).toContain('data-setting-define-code-editor="monitor-template-yaml"');
     expect(html).toContain('data-hz-ui="yaml-editor"');
-    expect(html).toContain('data-cold-code-editor="codemirror"');
-    expect(html).toContain('data-cold-code-editor-language="yaml"');
-    expect(html).toContain('data-cold-code-editor-theme="vs-dark"');
-    expect(html).toContain('data-cold-code-editor-loading="false"');
-    expect(html).toContain('data-cold-code-editor-loading-owner="cold-code-editor"');
-    expect(html).toContain('data-cold-code-editor-folding="true"');
-    expect(html).toContain('data-cold-code-editor-automatic-layout="true"');
+    expect(html).toContain('data-hz-code-editor="codemirror"');
+    expect(html).toContain('data-hz-code-editor-language="yaml"');
+    expect(html).toContain('data-hz-code-editor-theme="vs-dark"');
+    expect(html).toContain('data-hz-code-editor-loading="false"');
+    expect(html).toContain('data-hz-code-editor-loading-owner="hz-code-editor"');
+    expect(html).toContain('data-hz-code-editor-folding="true"');
+    expect(html).toContain('data-hz-code-editor-automatic-layout="true"');
     expect(html).toContain('data-setting-define-editor-theme="vs-dark"');
     expect(html).toContain('data-setting-define-editor-theme-owner="angular-nz-code-editor-theme"');
     expect(html).toContain('data-setting-define-editor-folding="true"');
@@ -236,7 +236,7 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain(t('setting.define.action.save-apply'));
     expect(html).toContain(t('setting.define.action.delete', { app: 'mysql' }));
     expect(html).toContain(t('common.dark-mode'));
-    expect(html).not.toContain('data-cold-checkbox-owner="cold-checkbox"');
+    expect(html).not.toContain('data-hz-checkbox-owner="hertzbeat-ui-checkbox"');
     expect(html).toContain(t('common.notify.apply-success'));
     expect(html).not.toContain('data-setting-define-preview-panel');
     expect(html).not.toContain('data-setting-define-datasource-panel');
@@ -345,7 +345,7 @@ describe('setting define monitor-template surface', () => {
     );
 
     expect(html).toContain('data-setting-define-save-visibility-contract="angular-code-diff-independent-of-editing"');
-    expect(html).toContain('data-cold-code-editor-readonly="true"');
+    expect(html).toContain('data-hz-code-editor-readonly="true"');
     expect(html).toContain('data-setting-define-save-action="request"');
     expect(html).toContain(t('setting.define.action.save-apply'));
     expect(html).not.toContain('data-setting-define-diff-shell="monitor-template-diff"');
@@ -381,12 +381,12 @@ describe('setting define monitor-template surface', () => {
     );
 
     expect(html).toContain('data-setting-define-editor-loading-contract="angular-nz-code-editor-loading"');
-    expect(html).toContain('data-setting-define-editor-loading-owner="cold-code-editor"');
+    expect(html).toContain('data-setting-define-editor-loading-owner="hz-code-editor"');
     expect(html).toContain('data-setting-define-editor-loading="true"');
     expect(html).toContain('data-setting-define-editor-loading-save-contract="angular-save-hidden-while-editor-loading"');
-    expect(html).toContain('data-cold-code-editor-loading="true"');
-    expect(html).toContain('data-cold-code-editor-loading-state="angular-nz-code-editor-loading"');
-    expect(html).toContain('data-cold-code-editor-loading-state-owner="cold-code-editor"');
+    expect(html).toContain('data-hz-code-editor-loading="true"');
+    expect(html).toContain('data-hz-code-editor-loading-state="angular-nz-code-editor-loading"');
+    expect(html).toContain('data-hz-code-editor-loading-state-owner="hz-code-editor"');
     expect(html).toContain(t('setting.define.loading'));
     expect(html).not.toContain('data-setting-define-save-action="request"');
     expect(html).not.toContain(t('setting.define.action.save-apply'));
@@ -911,20 +911,20 @@ describe('setting define monitor-template surface', () => {
     expect(html).toContain('app: mysql');
     expect(html).toContain('category: database');
     expect(html).toContain('metrics:');
-    expect(html).toContain('data-cold-code-editor-readonly="true"');
+    expect(html).toContain('data-hz-code-editor-readonly="true"');
   });
 
   it('uses the shared cold visual owner and avoids alert-rule preview dependencies', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/setting-define-surface.tsx'), 'utf8');
 
-    expect(source).toContain('coldOpsCatalogVisual');
+    expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '@hertzbeat/ui'");
     expect(source).toContain('HzYamlWorkspace');
     expect(source).toContain('HzButtonLink');
     expect(source).toContain('HzConfirmDialog');
     expect(source).toContain('HzTemplateCategory');
-    expect(source).toContain("from '../ui/cold-code-editor'");
-    expect(source).not.toContain("from '../ui/cold-confirm-dialog'");
+    expect(source).toContain("from '../ui/hz-code-editor'");
+    expect(source).not.toContain("from '../ui/hz-confirm-dialog'");
     expect(source).toContain('originalYaml');
     expect(source).toContain('data-setting-define-diff-shell="monitor-template-diff"');
     expect(source).toContain('data-setting-define-code-editor="monitor-template-yaml"');
@@ -970,7 +970,7 @@ describe('setting define monitor-template surface', () => {
     expect(source).toContain("data-setting-define-delete-feedback={deleteFailure ? 'angular-delete-fail-notification' : undefined}");
     expect(source).toContain("data-setting-define-visibility-feedback={applyFailure ? 'angular-apply-fail-notification' : undefined}");
     expect(source).toContain('data-setting-define-editor-option-contract="angular-yaml-vs-folding-automatic-layout"');
-    expect(source).toContain('data-setting-define-editor-option-owner="cold-code-editor"');
+    expect(source).toContain('data-setting-define-editor-option-owner="hz-code-editor"');
     expect(source).toContain('data-setting-define-editor-folding="true"');
     expect(source).toContain('data-setting-define-editor-automatic-layout="true"');
     expect(source).toContain('data-setting-define-save-confirm');

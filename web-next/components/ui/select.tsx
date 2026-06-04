@@ -5,15 +5,15 @@ import { SUPPLEMENTAL_MESSAGES } from '../../lib/i18n-runtime-messages';
 import { cn } from '../../lib/utils';
 import { HiddenInput } from './hidden-input';
 
-export const coldSelectShellClassName = 'relative inline-flex min-w-0 max-w-full align-middle';
+export const hzSelectShellClassName = 'relative inline-flex min-w-0 max-w-full align-middle';
 
-export const coldSelectTriggerClassName =
+export const hzSelectTriggerClassName =
   'flex h-8 w-full min-w-[104px] appearance-none items-center rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 py-1.5 pr-8 text-left text-[12px] font-semibold text-[#dbe4f0] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-colors hover:border-[#3b4454] hover:bg-[#151b28] focus-visible:border-[#4e74f8] focus-visible:bg-[#151b28] focus-visible:ring-2 focus-visible:ring-[rgba(78,116,248,0.12)] disabled:cursor-not-allowed disabled:opacity-55';
 
-export const coldSelectIconClassName =
+export const hzSelectIconClassName =
   'pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#8f99ab]';
 
-const coldSelectListboxClassName =
+const hzSelectListboxClassName =
   'fixed z-[90] min-w-[220px] overflow-y-auto rounded-[4px] border border-[#2b3039] bg-[#111318] p-1 text-[12px] font-semibold text-[#dbe4f0] shadow-[0_22px_60px_rgba(0,0,0,0.55)]';
 
 const DEFAULT_SELECT_EMPTY_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['common.none'] ?? 'common.none';
@@ -95,7 +95,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const triggerRef = React.useRef<HTMLButtonElement>(null);
     const listboxRef = React.useRef<HTMLDivElement>(null);
     const generatedId = React.useId();
-    const triggerId = id ?? `cold-select-${generatedId}`;
+    const triggerId = id ?? `hz-select-${generatedId}`;
     const listboxId = `${triggerId}-listbox`;
     const selectedValue = String(isControlled ? value : internalValue);
     const selectedOption = options.find(option => option.value === selectedValue) ?? options.find(option => !option.disabled);
@@ -182,10 +182,10 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         id={listboxId}
         role="listbox"
         aria-labelledby={triggerId}
-        data-cold-select-listbox="custom-menu"
-        data-cold-select-layer="viewport-fixed"
-        data-cold-select-portal={canUsePortal ? 'body-layer' : 'server-inline-fallback'}
-        className={cn(coldSelectListboxClassName)}
+        data-hz-select-listbox="custom-menu"
+        data-hz-select-layer="viewport-fixed"
+        data-hz-select-portal={canUsePortal ? 'body-layer' : 'server-inline-fallback'}
+        className={cn(hzSelectListboxClassName)}
         style={listboxStyle}
       >
         {searchable ? (
@@ -194,7 +194,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             value={searchQuery}
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
-            data-cold-select-search="angular-nz-show-search"
+            data-hz-select-search="angular-nz-show-search"
             className="mb-1 h-8 w-full rounded-[3px] border border-[#2b3039] bg-[#0b0c0e] px-2.5 text-[12px] font-semibold text-[#dbe4f0] outline-none placeholder:text-[#858d9a] focus:border-[#4e74f8] focus:ring-2 focus:ring-[rgba(78,116,248,0.12)]"
             onChange={event => setSearchQuery(event.target.value)}
             onKeyDown={event => {
@@ -211,7 +211,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               role="option"
               aria-selected={selected}
               disabled={option.disabled}
-              data-cold-select-option={selected ? 'selected' : 'idle'}
+              data-hz-select-option={selected ? 'selected' : 'idle'}
               className={cn(
                 'flex min-h-8 w-full items-center gap-2 rounded-[3px] px-2.5 text-left text-[12px] transition',
                 selected ? 'bg-[#182238] text-[#f5f8ff]' : 'text-[#cbd5e1] hover:bg-[#151b28] hover:text-white',
@@ -225,7 +225,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           );
         })}
         {visibleOptions.length === 0 ? (
-          <div data-cold-select-empty="search-empty" className="px-2.5 py-2 text-[12px] text-[#8f99ab]">
+          <div data-hz-select-empty="search-empty" className="px-2.5 py-2 text-[12px] text-[#8f99ab]">
             {DEFAULT_SELECT_EMPTY_LABEL}
           </div>
         ) : null}
@@ -235,8 +235,9 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <span
         ref={shellRef}
-        data-cold-select-owner="cold-custom-select"
-        className={cn(coldSelectShellClassName, disabled ? 'opacity-70' : null, containerClassName)}
+        data-hz-ui="select"
+        data-hz-select-owner="hertzbeat-ui-select"
+        className={cn(hzSelectShellClassName, disabled ? 'opacity-70' : null, containerClassName)}
       >
         <select
           ref={ref}
@@ -244,8 +245,8 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           tabIndex={-1}
           disabled
           value={selectedOption?.value ?? selectedValue}
-          data-cold-select-control="hidden-native"
-          data-cold-select-native-disabled="label-activation-guard"
+          data-hz-select-control="hidden-native"
+          data-hz-select-native-disabled="label-activation-guard"
           className="hidden"
           onChange={() => undefined}
         >
@@ -255,7 +256,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           name={disabled ? undefined : name}
           form={form}
           value={selectedOption?.value ?? selectedValue}
-          data-cold-select-control="form-value"
+          data-hz-select-control="form-value"
         />
         <button
           {...props}
@@ -268,8 +269,8 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           aria-controls={listboxId}
           aria-label={ariaLabel}
           disabled={disabled}
-          data-cold-select-control="custom-trigger"
-          className={cn(coldSelectTriggerClassName, className)}
+          data-hz-select-control="custom-trigger"
+          className={cn(hzSelectTriggerClassName, className)}
           onClick={() => {
             if (!open) updateListboxGeometry();
             setOpen(current => !current);
@@ -294,7 +295,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         >
           <span className="min-w-0 truncate">{selectedOption?.label ?? DEFAULT_SELECT_EMPTY_LABEL}</span>
         </button>
-        <ChevronDown data-cold-select-icon="chevron" className={cn(coldSelectIconClassName, open ? 'text-[#dbe4f0]' : null)} aria-hidden="true" />
+        <ChevronDown data-hz-select-icon="chevron" className={cn(hzSelectIconClassName, open ? 'text-[#dbe4f0]' : null)} aria-hidden="true" />
         {listbox ? (canUsePortal ? createPortal(listbox, document.body) : listbox) : null}
       </span>
     );

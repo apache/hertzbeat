@@ -57,10 +57,10 @@ describe('alert notice and quick-dialog cold-workbench chrome', () => {
     expect(quickDialogSource).toContain('AlertAuthoringPanel');
 
     expect(primitiveSource).toContain('alertAuthoringSelectClassName');
-    expect(primitiveSource).toContain('data-alert-authoring-panel="cold-panel"');
-    expect(primitiveSource).toContain('data-alert-authoring-callout="cold-panel"');
-    expect(primitiveSource).toContain('data-alert-authoring-action-pill="cold-action"');
-    expect(primitiveSource).toContain('data-alert-authoring-value-pill="cold-value"');
+    expect(primitiveSource).toContain('data-alert-authoring-panel="hertzbeat-ui-panel"');
+    expect(primitiveSource).toContain('data-alert-authoring-callout="hertzbeat-ui-panel"');
+    expect(primitiveSource).toContain('data-alert-authoring-action-pill="hertzbeat-ui-action"');
+    expect(primitiveSource).toContain('data-alert-authoring-value-pill="hertzbeat-ui-value"');
     expect(primitiveSource).not.toContain('AlertAuthoringTextarea');
     expect(primitiveSource).not.toContain('data-alert-authoring-textarea="cold-textarea"');
     expect(primitiveSource).not.toContain('<textarea');

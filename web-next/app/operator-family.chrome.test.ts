@@ -17,7 +17,7 @@ describe('operator family cold-workbench chrome', () => {
     const otlpSource = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/otlp-page.tsx'), 'utf8');
     const metricsSource = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/metrics/otlp-metrics-page.tsx'), 'utf8');
 
-    expect(otlpSource).toContain('coldOpsCatalogVisual');
+    expect(otlpSource).toContain('hzOpsCatalogVisual');
     expect(otlpSource).toContain('SearchRow');
     expect(otlpSource).toContain('ClientWorkbench');
     expect(otlpSource).toContain('buildReadinessRows');

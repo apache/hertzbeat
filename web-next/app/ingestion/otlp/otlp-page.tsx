@@ -31,7 +31,7 @@ import {
 } from '@/lib/otlp-center/view-model';
 import type { OtlpEntityBindingSummary, OtlpIngestionGuide, OtlpIngestionOverview } from '@/lib/types';
 import { SearchRow } from '../../../components/ui/search-row';
-import { coldOpsCatalogVisual } from '../../../lib/cold-ops-visual';
+import { hzOpsCatalogVisual } from '../../../lib/hz-ops-visual';
 import { formatTime } from '../../../lib/format';
 import { readSignalRouteContext } from '../../../lib/signal-route-context';
 import { buildEntityWorkspaceHref } from '../../../lib/workspace-navigation';
@@ -57,7 +57,7 @@ type SourceSection = {
   items: SourceItem[];
 };
 
-const coldOpsVisual = coldOpsCatalogVisual;
+const coldOpsVisual = hzOpsCatalogVisual;
 const sourceCardClass = coldOpsVisual.sourceCard.className;
 
 const sourceBrandMarks: Record<

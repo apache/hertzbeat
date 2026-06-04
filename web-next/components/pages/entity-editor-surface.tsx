@@ -21,7 +21,7 @@ import { useI18n } from '@/components/providers/i18n-provider';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ColdCodeEditor } from '../ui/cold-code-editor';
+import { HzCodeEditor } from '../ui/hz-code-editor';
 import { WorkbenchInsetPanel } from '@/components/workbench/primitives';
 import { apiMessagePost, apiMessagePut } from '@/lib/api-client';
 import { addJsonRow, addObjectRow, ensureJsonRows, ensureObjectRows, removeJsonRow, removeObjectArrayItem, updateJsonRow, updateObjectArrayItem } from '@/lib/entity-editor/collection-state';
@@ -448,7 +448,7 @@ function JsonObjectListEditor({
               {deleteLabel}
             </Button>
           </div>
-          <ColdCodeEditor
+          <HzCodeEditor
             data-entity-editor-json-code-editor="object-row"
             value={item}
             language="json"
@@ -765,8 +765,8 @@ export function EntityEditorSurface({
           ? 'definition'
           : 'manual';
     const bodyDataAttrs = detailsExpanded
-      ? { 'data-entity-editor-body': 'cold-single-stage' }
-      : { 'data-entity-editor-body-placement': 'cold-deferred-body' };
+      ? { 'data-entity-editor-body': 'hertzbeat-ui-single-stage' }
+      : { 'data-entity-editor-body-placement': 'hertzbeat-ui-deferred-body' };
     const definitionModeTabs = [
       { value: 'editor', label: t('entities.editor.mode.editor') },
       { value: 'yaml', label: 'YAML' },
@@ -804,17 +804,17 @@ export function EntityEditorSurface({
         }}
       >
         <div
-          data-entity-editor-shell="otlp-cold-entity-composer"
-          data-entity-editor-style-baseline="hertzbeat-cold-matte"
+          data-entity-editor-shell="otlp-hertzbeat-ui-entity-composer"
+          data-entity-editor-style-baseline="hertzbeat-ui-matte"
           data-entity-editor-layout="full-width-workbench"
           className="grid gap-3 text-[#dbe4f0]"
         >
-          <header data-entity-editor-header="cold-compact-header" className="grid gap-2">
+          <header data-entity-editor-header="hertzbeat-ui-compact-header" className="grid gap-2">
             <div className="text-[12px] font-medium text-[#98a2b3]">{t('entities.editor.shell.kicker')}</div>
-            <div data-entity-editor-header-rhythm="cold-compact" className="mb-1 grid gap-2">
+            <div data-entity-editor-header-rhythm="hertzbeat-ui-compact" className="mb-1 grid gap-2">
               <div className="text-[24px] font-semibold leading-none text-[#f5f7fb]">{editorTitle}</div>
               <p className="text-[13px] leading-5 text-[#a8b0bf]">{editorCopy}</p>
-              <div data-entity-editor-route-tabs="cold-segmented-tabs" className="flex flex-wrap gap-2">
+              <div data-entity-editor-route-tabs="hertzbeat-ui-segmented-tabs" className="flex flex-wrap gap-2">
                 {routeTabs.map((tab, index) => (
                   <span
                     key={tab.key}
@@ -833,12 +833,12 @@ export function EntityEditorSurface({
           </header>
 
           <section
-            data-entity-editor-frame="cold-editor-frame"
-            data-entity-editor-frame-spacing="cold-tight"
+            data-entity-editor-frame="hertzbeat-ui-editor-frame"
+            data-entity-editor-frame-spacing="hertzbeat-ui-tight"
             className="rounded-[4px] border border-[#2b3039] bg-[#0b0c0e] px-4 py-4 shadow-[0_20px_56px_rgba(0,0,0,0.32)]"
           >
             <div
-              data-entity-editor-summary-card="cold-editor-panel"
+              data-entity-editor-summary-card="hertzbeat-ui-editor-panel"
               className="overflow-hidden rounded-[4px] border border-[#2b3039] bg-[#0b0c0e]"
             >
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#2b3039] px-4 py-3">
@@ -850,7 +850,7 @@ export function EntityEditorSurface({
                   {isEditMode && entityId ? (
                     <Link
                       href={`/entities/${entityId}/definition`}
-                      data-entity-editor-definition-handoff="cold-hidden"
+                      data-entity-editor-definition-handoff="hertzbeat-ui-hidden"
                       className="sr-only"
                     >
                       {t('entities.editor.shell.definition-workspace')}
@@ -903,8 +903,8 @@ export function EntityEditorSurface({
                   <div className="grid gap-2">
                     <div className="text-[11px] font-semibold text-[#8d95a5]">{t('entities.editor.shell.type-label')}</div>
                     <div
-                      data-entity-editor-type-strip="cold-catalog-grid"
-                      data-entity-editor-type-strip-layout="cold-compact-grid"
+                      data-entity-editor-type-strip="hertzbeat-ui-catalog-grid"
+                      data-entity-editor-type-strip-layout="hertzbeat-ui-compact-grid"
                       className="grid gap-2 md:grid-cols-3 xl:grid-cols-4"
                     >
                       {entityTypeCards.map(card => {
@@ -914,7 +914,7 @@ export function EntityEditorSurface({
                           <button
                             key={card.value}
                             type="button"
-                            data-entity-editor-type-card-density="cold-compact-card"
+                            data-entity-editor-type-card-density="hertzbeat-ui-compact-card"
                             className={cn(
                               'flex min-h-[46px] items-start gap-2 border px-3 py-1.5 text-left transition-colors',
                               cn('rounded-[4px]', active ? 'border-[#4e74f8] bg-[#182238]' : 'border-[#2b3039] bg-[#101217] hover:border-[#3b4454] hover:bg-[#151923]')
@@ -940,7 +940,7 @@ export function EntityEditorSurface({
 
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="text-[11px] font-semibold text-[#8d95a5]">{t('entities.editor.shell.entry-source-label')}</div>
-                    <div data-entity-editor-entry-strip="cold-segmented-pills" className="inline-flex rounded-[3px] border border-[#2b3039] bg-[#101217] p-[3px]">
+                    <div data-entity-editor-entry-strip="hertzbeat-ui-segmented-pills" className="inline-flex rounded-[3px] border border-[#2b3039] bg-[#101217] p-[3px]">
                       {entrySources.map(source => {
                         const EntryIcon = source.icon;
                         return (
@@ -968,8 +968,8 @@ export function EntityEditorSurface({
                   <div className="grid gap-2">
                     <div className="text-[11px] font-semibold text-[#8d95a5]">{t('entities.editor.shell.stage-label')}</div>
                     <div
-                      data-entity-editor-stage-strip="cold-stage-grid"
-                      data-entity-editor-edit-stage-posture={isCompleteContextStage ? 'cold-complete-context' : undefined}
+                      data-entity-editor-stage-strip="hertzbeat-ui-stage-grid"
+                      data-entity-editor-edit-stage-posture={isCompleteContextStage ? 'hertzbeat-ui-complete-context' : undefined}
                       className="grid gap-2 md:grid-cols-4"
                     >
                       {editorStages.map(stage => {
@@ -1012,8 +1012,8 @@ export function EntityEditorSurface({
                 {!previewRailCollapsed ? (
                   <aside
                     className="self-start rounded-[4px] border border-[#2b3039] bg-[#101217] p-3"
-                    data-entity-editor-preview-rail="cold-inline-preview"
-                    data-entity-editor-preview-rail-density="cold-inline-preview"
+                    data-entity-editor-preview-rail="hertzbeat-ui-inline-preview"
+                    data-entity-editor-preview-rail-density="hertzbeat-ui-inline-preview"
                   >
                     <div className="text-[14px] font-semibold text-[#f5f7fb]">{t('entities.editor.shell.preview-rail.title')}</div>
                     <p className="mt-2 text-[13px] leading-5 text-[#98a2b3]">{t('entities.editor.shell.preview-rail.copy')}</p>
@@ -1024,14 +1024,14 @@ export function EntityEditorSurface({
             </div>
 
             <div
-              data-entity-editor-definition-footer="cold-definition-footer"
+              data-entity-editor-definition-footer="hertzbeat-ui-definition-footer"
               className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-[#2b3039] pt-3"
             >
               <div>
                 <div className="text-[12px] font-semibold text-[#dbe4f0]">{t('entities.editor.shell.definition-content.title')}</div>
                 <div className="mt-1 text-[12px] leading-5 text-[#98a2b3]">{t('entities.editor.shell.definition-content.copy')}</div>
               </div>
-              <div data-entity-editor-definition-tabs="cold-bottom-tabs" className="inline-flex overflow-hidden rounded-[3px] border border-[#2b3039]">
+              <div data-entity-editor-definition-tabs="hertzbeat-ui-bottom-tabs" className="inline-flex overflow-hidden rounded-[3px] border border-[#2b3039]">
                 {definitionModeTabs.map(({ value, label }) => (
                   <button
                     key={value}
@@ -1139,7 +1139,7 @@ export function EntityEditorSurface({
                     <label className="grid gap-2">
                       <span className={coldFieldLabelTextClassName}>{t('entities.editor.field.description')}</span>
                       <Textarea
-                        data-entity-editor-description-textarea="cold-textarea"
+                        data-entity-editor-description-textarea="hertzbeat-ui-textarea"
                         className="min-h-[112px] border-[#2b3039] bg-[#101217] text-[#dbe4f0] placeholder:text-[#6f7787] focus-visible:border-[#4e74f8]"
                         value={draft.entity.description || ''}
                         placeholder={t('entities.editor.field.description-placeholder')}
@@ -1198,7 +1198,7 @@ export function EntityEditorSurface({
               </div>
             ) : (
               <div data-entity-editor-mode={editorSurfaceMode} className="grid gap-3">
-                <ColdCodeEditor
+                <HzCodeEditor
                   readOnly
                   data-entity-editor-definition-preview={editorSurfaceMode}
                   data-entity-editor-definition-code-editor="preview"

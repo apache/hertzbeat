@@ -325,11 +325,18 @@ describe('overview page', () => {
     expect(html).toContain('data-loading-copy="Loading overview console"');
     expect(html).toContain('checkout latency spike');
     expect(html).toContain('Refresh');
-    expect(html).toContain('Alerts');
+    expect(html).toContain('Review alerts');
     expect(html).toContain('data-overview-quick-links="true"');
     expect(html).toContain('<button type="button">High-priority alerts</button>');
-    expect(html).toContain('rounded-[10px]');
-    expect(html).toContain('border border-[var(--ops-border-color)] bg-[var(--ops-surface-panel)] shadow-[var(--ops-panel-shadow)]');
+    expect(html).toContain('data-overview-shell-chrome="plain-dark-workbench"');
+    expect(html).toContain('rounded-none');
+    expect(html).toContain('border-x-0');
+    expect(html).toContain('border-b-0');
+    expect(html).toContain('shadow-none');
+    expect(html).toContain('data-overview-shell-main-owner="plain-dark-workbench"');
+    expect(html).toContain('data-overview-shell-rail-owner="plain-dark-workbench"');
+    expect(html).not.toContain('rounded-[10px]');
+    expect(html).not.toContain('shadow-[var(--ops-panel-shadow)]');
     expect(html).toContain('<button type="button">checkout</button>');
     expect(html).not.toContain('/entities?app=checkout');
     expect(html).toContain('Open Metrics Workbench:/ingestion/otlp/metrics');
@@ -544,11 +551,11 @@ describe('overview page', () => {
     expect(html).toContain('/ingestion/otlp?signal=logs');
     expect(html).toContain('returnTo=%2Foverview');
     expect(html).not.toContain('returnLabel=Overview');
-    expect(html).toContain('Next: connect one working signal path');
-    expect(html).toContain('Complete one usable signal path first so this page can start showing issues and next steps.');
-    expect(html).toContain('Finish onboarding');
+    expect(html).toContain('Connect telemetry to start investigation');
+    expect(html).toContain('Connect logs, traces, metrics, and entities so the overview can recommend the next hop.');
+    expect(html).toContain('Connect OTLP');
     expect(html).toContain('Refresh');
-    expect(html).not.toContain('Alerts');
+    expect(html).not.toContain('Review alerts');
     expect(html).not.toContain('Connect the First Data Source');
     expect(html).toContain('data-support-panel-chrome="plain"');
     expect(setupRouteMatchCount).toBe(1);
@@ -558,8 +565,8 @@ describe('overview page', () => {
     const { default: OverviewPage } = await import('./page');
     const html = renderToStaticMarkup(<OverviewPage />);
 
-    expect(html.split('<button type="button">Details</button>').length - 1).toBe(2);
-    expect(html).not.toContain('>Details</a>');
+    expect(html.split('<button type="button">Open context</button>').length - 1).toBe(2);
+    expect(html).not.toContain('>Open context</a>');
   }, 60000);
 
   it('collapses the lower affected-items block when every impacted entity is already healthy', async () => {
@@ -616,11 +623,11 @@ describe('overview page', () => {
     expect(html).not.toContain('data-overview-quick-links="true"');
     expect(html).not.toContain('Open Metrics Workbench:/ingestion/otlp/metrics');
     expect(html).toContain('data-support-panel="true"');
-    expect(html).toContain('Overview appears after onboarding');
-    expect(html).toContain('After one usable signal is connected, this page starts showing issues, status, and next steps.');
+    expect(html).toContain('No evidence yet');
+    expect(html).toContain('Connect telemetry or create monitored entities to make the overview actionable.');
     expect(html).toContain('data-overview-guidance="true"');
-    expect(html).toContain('Next: connect one working signal path');
-    expect(html).toContain('Finish onboarding');
+    expect(html).toContain('Connect telemetry to start investigation');
+    expect(html).toContain('Connect OTLP');
     expect(html).not.toContain('Open Object Directory:/entities');
   }, 60000);
 
@@ -687,21 +694,21 @@ describe('overview page', () => {
     expect(html).toContain('data-support-panel-tone="default"');
     expect(html).toContain('data-overview-status-density="compact"');
     expect(html).toContain('Workspace:Ready');
-    expect(html).toContain('Telemetry Ingestion:Pending');
-    expect(html).toContain('Object Context:Pending');
-    expect(html).toContain('Alert Rules:Pending');
-    expect(html).not.toContain('Telemetry Ingestion:Ready');
-    expect(html).not.toContain('Object Context:Ready');
-    expect(html).toContain('Overview appears after onboarding');
-    expect(html).toContain('After one usable signal is connected, this page starts showing issues, status, and next steps.');
+    expect(html).toContain('Ingestion:Pending');
+    expect(html).toContain('Entities:Pending');
+    expect(html).toContain('Alerts:Pending');
+    expect(html).not.toContain('Ingestion:Ready');
+    expect(html).not.toContain('Entities:Ready');
+    expect(html).toContain('No evidence yet');
+    expect(html).toContain('Connect telemetry or create monitored entities to make the overview actionable.');
     expect(html).toContain('min-h-[48px]');
     expect(html).not.toContain('min-h-[132px]');
     expect(html).not.toContain('min-h-[72px]');
-    expect(html).toContain('Finish onboarding');
+    expect(html).toContain('Connect OTLP');
     expect(html).toContain('/ingestion/otlp?signal=logs');
     expect(html).not.toContain('>Details</button>');
-    expect(guidanceSectionMatch?.[1]).toContain('Next: connect one working signal path');
-    expect(guidanceSectionMatch?.[1]).toContain('Complete one usable signal path first so this page can start showing issues and next steps.');
+    expect(guidanceSectionMatch?.[1]).toContain('Connect telemetry to start investigation');
+    expect(guidanceSectionMatch?.[1]).toContain('Connect logs, traces, metrics, and entities so the overview can recommend the next hop.');
     expect(guidanceSectionMatch?.[1]).not.toContain('Open Object Directory:/entities');
     expect(guidanceSectionMatch?.[1]).not.toContain('Logs:/log/manage');
     expect(guidanceSectionMatch?.[1]).not.toContain('Traces:/trace/manage');

@@ -112,7 +112,7 @@ describe('setting config page', () => {
     expect(html).toContain('data-settings-console-title="true"');
     expect(html).toContain(t('settings.system-config'));
     expect(html).toContain('data-setting-config-surface="otlp-cold-system-config"');
-    expect(html).toContain('data-setting-config-style-baseline="hertzbeat-cold-matte"');
+    expect(html).toContain('data-setting-config-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-setting-config-layout="full-width-settings-form"');
     expect(html).toContain('data-setting-config-form="cold-settings-form"');
     expect(html).toContain('data-setting-config-apply-contract="angular-apply-notify-reload"');

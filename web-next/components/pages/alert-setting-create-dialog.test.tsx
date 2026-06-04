@@ -15,13 +15,13 @@ vi.mock('../ui/button', () => ({
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>
 }));
 
-vi.mock('../ui/cold-code-editor', () => ({
-  ColdCodeEditor: ({ value, language, minHeight, onChange: _onChange, ...props }: any) => (
+vi.mock('../ui/hz-code-editor', () => ({
+  HzCodeEditor: ({ value, language, minHeight, onChange: _onChange, ...props }: any) => (
     <div
       data-alert-setting-code-editor={props['data-alert-setting-code-editor']}
-      data-cold-code-editor="codemirror"
-      data-cold-code-editor-language={language}
-      data-cold-code-editor-min-height={minHeight}
+      data-hz-code-editor="codemirror"
+      data-hz-code-editor-language={language}
+      data-hz-code-editor-min-height={minHeight}
     >
       {props.name ? <input type="hidden" name={props.name} value={value} /> : null}
       {value}
@@ -109,16 +109,16 @@ describe('AlertSettingCreateDialog', () => {
     expect(html).toContain('name="alert_define_template"');
     expect(html).toContain('data-alert-setting-code-editor="threshold-expression"');
     expect(html).toContain('data-alert-setting-code-editor="alert-template"');
-    expect(html).toContain('data-cold-code-editor="codemirror"');
-    expect(html).toContain('data-cold-code-editor-language="javascript"');
-    expect(html).toContain('data-cold-code-editor-language="text"');
-    expect(html).toContain('data-cold-segmented-control-owner="cold-segmented-control"');
-    expect(html).toContain('data-cold-number-stepper-owner="cold-number-stepper"');
-    expect(html).toContain('data-cold-label-selector-owner="cold-label-selector"');
-    expect(html).toContain('data-cold-checkbox-owner="cold-checkbox"');
+    expect(html).toContain('data-hz-code-editor="codemirror"');
+    expect(html).toContain('data-hz-code-editor-language="javascript"');
+    expect(html).toContain('data-hz-code-editor-language="text"');
+    expect(html).toContain('data-hz-segmented-control-owner="hertzbeat-ui-segmented-control"');
+    expect(html).toContain('data-hz-number-stepper-owner="hertzbeat-ui-number-stepper"');
+    expect(html).toContain('data-hz-label-selector-owner="hertzbeat-ui-label-selector"');
+    expect(html).toContain('data-hz-checkbox-owner="hertzbeat-ui-checkbox"');
     expect(html).not.toContain('md:grid-cols-2');
     expect(source).toContain('buildAlertSettingCreatePayload');
-    expect(source).toContain("from '../ui/cold-code-editor'");
+    expect(source).toContain("from '../ui/hz-code-editor'");
     expect(source).toContain('data-alert-setting-code-editor="threshold-expression"');
     expect(source).toContain('data-alert-setting-code-editor="alert-template"');
     expect(source).toContain('data-alert-setting-create-validation="cold-validation-feedback"');

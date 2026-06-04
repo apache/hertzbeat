@@ -2,12 +2,12 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { ColdConfirmDialog } from './cold-confirm-dialog';
+import { HzConfirmDialog } from './hz-confirm-dialog';
 
-describe('ColdConfirmDialog', () => {
+describe('HzConfirmDialog', () => {
   it('renders shared confirmation chrome from runtime messages while preserving caller labels', () => {
     const idleHtml = renderToStaticMarkup(
-      <ColdConfirmDialog
+      <HzConfirmDialog
         open
         title="Confirm delete"
         copy="This action cannot be undone."
@@ -18,7 +18,7 @@ describe('ColdConfirmDialog', () => {
       />
     );
 
-    expect(idleHtml).toContain('data-cold-confirm-dialog="cold-confirm-dialog"');
+    expect(idleHtml).toContain('data-hz-confirm-dialog="hz-confirm-dialog"');
     expect(idleHtml).toContain('Confirm operation');
     expect(idleHtml).toContain('Confirm delete');
     expect(idleHtml).toContain('This action cannot be undone.');
@@ -26,7 +26,7 @@ describe('ColdConfirmDialog', () => {
     expect(idleHtml).toContain('Cancel');
 
     const pendingHtml = renderToStaticMarkup(
-      <ColdConfirmDialog
+      <HzConfirmDialog
         open
         title="Confirm delete"
         copy="This action cannot be undone."
