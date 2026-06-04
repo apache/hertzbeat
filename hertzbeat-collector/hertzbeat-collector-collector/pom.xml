@@ -41,6 +41,7 @@
             <artifactId>hertzbeat-collector-basic</artifactId>
             <version>${hertzbeat.version}</version>
         </dependency>
+
         <!-- collector-kafka -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
