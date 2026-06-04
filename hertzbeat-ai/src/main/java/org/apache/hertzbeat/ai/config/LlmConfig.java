@@ -112,6 +112,7 @@ public class LlmConfig {
         OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
                 .model(modelProviderConfig.getModel())
                 .temperature(0.3)
+                .apiKey(modelProviderConfig.getApiKey())
                 .build();
 
         // Create Chat Model
