@@ -18,6 +18,8 @@
 
 package org.apache.hertzbeat.ai.config;
 
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
@@ -27,7 +29,6 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -44,7 +45,7 @@ import org.springframework.context.event.EventListener;
 public class LlmConfig {
 
     private final GeneralConfigDao generalConfigDao;
-    
+
     private ApplicationContext applicationContext;
 
     public LlmConfig(GeneralConfigDao generalConfigDao, ApplicationContext applicationContext) {
@@ -88,7 +89,7 @@ public class LlmConfig {
                 modelProviderConfig.setBaseUrl("https://api.openai.com/v1");
             }
         }
-        
+
         if (modelProviderConfig.getModel() == null) {
             if ("openai".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setModel("gpt-5");
@@ -101,23 +102,23 @@ public class LlmConfig {
             }
         }
 
-        OpenAiApi.Builder builder = new OpenAiApi.Builder();
-        builder.baseUrl(modelProviderConfig.getBaseUrl());
-        builder.apiKey(modelProviderConfig.getApiKey());
-        builder.completionsPath("/chat/completions");
-        
+        OpenAIClient openAiClient = OpenAIOkHttpClient.builder()
+                .baseUrl(modelProviderConfig.getBaseUrl())
+                .apiKey(modelProviderConfig.getApiKey())
+                .build();
+
         // Create Chat Options
         OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
                 .model(modelProviderConfig.getModel())
                 .temperature(0.3)
                 .build();
-        
+
         // Create Chat Model
         OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
-                .openAiApi(builder.build())
-                .defaultOptions(openAiChatOptions)
+                .openAiClient(openAiClient)
+                .options(openAiChatOptions)
                 .build();
-        
+
         // Create and return ChatClient
         return ChatClient.create(openAiChatModel);
     }
@@ -129,25 +130,25 @@ public class LlmConfig {
     @EventListener(AiProviderConfigChangeEvent.class)
     public void onAiProviderConfigChange(AiProviderConfigChangeEvent event) {
         log.info("Provider configuration change event received, refreshing ChatClient bean");
-        
+
         try {
             ConfigurableApplicationContext configurableContext = (ConfigurableApplicationContext) applicationContext;
             DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) configurableContext.getBeanFactory();
-            
+
             // Remove the existing ChatClient bean
             if (beanFactory.containsSingleton("openAiChatClient")) {
                 beanFactory.destroySingleton("openAiChatClient");
                 log.info("Existing ChatClient bean destroyed");
             }
-                        
+
             // Create new ChatClient with updated configuration
             ChatClient newChatClient = createChatClient();
-            
+
             // Register the new ChatClient bean
             beanFactory.registerSingleton("openAiChatClient", newChatClient);
-            
+
             log.info("ChatClient bean refreshed successfully with new AI provider configuration");
-            
+
         } catch (Exception e) {
             log.error("Failed to refresh ChatClient bean after configuration change", e);
         }

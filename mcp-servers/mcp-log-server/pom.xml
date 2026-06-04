@@ -31,7 +31,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-ai.version>1.0.0-M6</spring-ai.version>
+        <spring-ai.version>2.0.0-M8</spring-ai.version>
     </properties>
 
     <dependencyManagement>
@@ -56,7 +56,7 @@
     <dependencies>
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-mcp-server-webflux-spring-boot-starter</artifactId>
+            <artifactId>spring-ai-starter-mcp-server-webflux</artifactId>
             <version>${spring-ai.version}</version>
         </dependency>
         <!-- json path parser-->
