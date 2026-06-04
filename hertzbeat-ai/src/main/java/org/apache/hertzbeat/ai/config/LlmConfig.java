@@ -35,6 +35,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
+import org.springframework.util.StringUtils;
 
 /**
  * Configuration class for Large Language Model (LLM) settings.
@@ -73,12 +74,12 @@ public class LlmConfig {
         }
         ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
 
-        if (modelProviderConfig == null || modelProviderConfig.getApiKey() == null) {
+        if (modelProviderConfig == null || !StringUtils.hasText(modelProviderConfig.getApiKey())) {
             log.warn("LLM Provider configuration is incomplete, ChatClient bean will not be created");
             return null;
         }
 
-        if (modelProviderConfig.getBaseUrl() == null) {
+        if (!StringUtils.hasText(modelProviderConfig.getBaseUrl())) {
             if ("openai".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setBaseUrl("https://api.openai.com/v1");
             } else if ("zhipu".equals(modelProviderConfig.getCode())) {
@@ -90,7 +91,7 @@ public class LlmConfig {
             }
         }
 
-        if (modelProviderConfig.getModel() == null) {
+        if (!StringUtils.hasText(modelProviderConfig.getModel())) {
             if ("openai".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setModel("gpt-5");
             } else if ("zhipu".equals(modelProviderConfig.getCode())) {
@@ -143,6 +144,10 @@ public class LlmConfig {
 
             // Create new ChatClient with updated configuration
             ChatClient newChatClient = createChatClient();
+            if (newChatClient == null) {
+                log.info("ChatClient bean refresh skipped because AI provider configuration is incomplete");
+                return;
+            }
 
             // Register the new ChatClient bean
             beanFactory.registerSingleton("openAiChatClient", newChatClient);
