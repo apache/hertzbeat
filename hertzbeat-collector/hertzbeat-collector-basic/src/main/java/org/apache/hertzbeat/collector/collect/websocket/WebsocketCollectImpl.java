@@ -73,6 +73,8 @@ public class WebsocketCollectImpl extends AbstractCollect {
         String host = websocketProtocol.getHost();
         String port = websocketProtocol.getPort();
         Socket socket = null;
+        OutputStream out = null;
+        InputStream in = null;
         try {
             socket = new Socket();
             SocketAddress socketAddress = new InetSocketAddress(host, Integer.parseInt(port));
@@ -80,17 +82,13 @@ public class WebsocketCollectImpl extends AbstractCollect {
 
             if (socket.isConnected()) {
                 long responseTime = System.currentTimeMillis() - startTime;
-                OutputStream out = socket.getOutputStream();
-                InputStream in = socket.getInputStream();
-                
+                out = socket.getOutputStream();
+                in = socket.getInputStream();
+
                 send(out, websocketProtocol);
                 Map<String, String> resultMap = readHeaders(in);
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
 
-                // Close the output stream and socket connection
-                in.close();
-                out.close();
-                socket.close();
                 List<String> aliasFields = metrics.getAliasFields();
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String field : aliasFields) {
@@ -117,6 +115,29 @@ public class WebsocketCollectImpl extends AbstractCollect {
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg("Connect may fail:" + errorMsg);
+        } finally {
+            // Ensure socket and streams are always closed to prevent resource leaks
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    log.warn(e.getMessage());
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    log.warn(e.getMessage());
+                }
+            }
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    log.warn(e.getMessage());
+                }
+            }
         }
     }
 

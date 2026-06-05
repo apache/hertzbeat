@@ -324,8 +324,18 @@ public class JdbcCommonCollect extends AbstractCollect {
         }
         // renew connection when failed
         Connection connection = DriverManager.getConnection(url, username, password);
-        connection.setReadOnly(true);
-        statement = connection.createStatement();
+        try {
+            connection.setReadOnly(true);
+            statement = connection.createStatement();
+        } catch (Exception e) {
+            // Close connection if statement creation fails to prevent connection leak
+            try {
+                connection.close();
+            } catch (Exception closeEx) {
+                log.warn("Failed to close connection after statement creation error: {}", closeEx.getMessage());
+            }
+            throw e;
+        }
         int timeoutSecond = timeout / 1000;
         timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
         statement.setQueryTimeout(timeoutSecond);
