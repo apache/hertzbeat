@@ -304,6 +304,18 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             List<CollectRep.MetricsData> metricsData = new LinkedList<>();
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
+            // Register listener BEFORE sending to avoid race where response arrives before registration
+            CollectResponseEventListener listener = new CollectResponseEventListener() {
+                @Override
+                public void response(List<CollectRep.MetricsData> responseMetrics) {
+                    if (responseMetrics != null) {
+                        metricsData.addAll(responseMetrics);
+                    }
+                    countDownLatch.countDown();
+                }
+            };
+            eventListeners.put(job.getMonitorId(), listener);
+
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
                     .setDirection(ClusterMsg.Direction.REQUEST)
@@ -311,22 +323,17 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                     .build();
             boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
 
-            if (result) {
-                CollectResponseEventListener listener = new CollectResponseEventListener() {
-                    @Override
-                    public void response(List<CollectRep.MetricsData> responseMetrics) {
-                        if (responseMetrics != null) {
-                            metricsData.addAll(responseMetrics);
-                        }
-                        countDownLatch.countDown();
-                    }
-                };
-                eventListeners.put(job.getMonitorId(), listener);
-            }
             try {
-                countDownLatch.await(120, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                log.info("The sync task runs for 120 seconds with no response and returns");
+                if (result) {
+                    try {
+                        countDownLatch.await(120, TimeUnit.SECONDS);
+                    } catch (Exception e) {
+                        log.info("The sync task runs for 120 seconds with no response and returns");
+                    }
+                }
+            } finally {
+                // Always remove listener to prevent memory leak
+                eventListeners.remove(job.getMonitorId());
             }
             return metricsData;
         }
@@ -347,29 +354,35 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             return collectJobService.collectSyncJobData(job);
         }
         List<CollectRep.MetricsData> metricsData = new LinkedList<>();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        // Register listener BEFORE sending to avoid race where response arrives before registration
+        CollectResponseEventListener listener = new CollectResponseEventListener() {
+            @Override
+            public void response(List<CollectRep.MetricsData> responseMetrics) {
+                if (responseMetrics != null) {
+                    metricsData.addAll(responseMetrics);
+                }
+                countDownLatch.countDown();
+            }
+        };
+        eventListeners.put(job.getMonitorId(), listener);
         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                 .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
                 .setDirection(ClusterMsg.Direction.REQUEST)
                 .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
                 .build();
         boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
-        if (result) {
-            CountDownLatch countDownLatch = new CountDownLatch(1);
-            CollectResponseEventListener listener = new CollectResponseEventListener() {
-                @Override
-                public void response(List<CollectRep.MetricsData> responseMetrics) {
-                    if (responseMetrics != null) {
-                        metricsData.addAll(responseMetrics);
-                    }
-                    countDownLatch.countDown();
+        try {
+            if (result) {
+                try {
+                    countDownLatch.await(120, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    log.info("The sync task runs for 120 seconds with no response and returns");
                 }
-            };
-            eventListeners.put(job.getMonitorId(), listener);
-            try {
-                countDownLatch.await(120, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                log.info("The sync task runs for 120 seconds with no response and returns");
             }
+        } finally {
+            // Always remove listener to prevent memory leak
+            eventListeners.remove(job.getMonitorId());
         }
         return metricsData;
     }

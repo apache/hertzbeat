@@ -120,6 +120,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                 channel.closeFuture().sync();
             } catch (InterruptedException ignored) {
                 log.info("server shutdown now!");
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
                 log.error("Netty Server start exception, {}", e.getMessage());
                 throw new RuntimeException(e);
