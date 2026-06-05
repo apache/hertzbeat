@@ -7,7 +7,7 @@ export const SYSTEM_CONFIG_LOCALE_OPTIONS = [
   { value: 'en_US', labelKey: 'settings.system-config.locale.en_US' },
   { value: 'zh_CN', labelKey: 'settings.system-config.locale.zh_CN' },
   { value: 'zh_TW', labelKey: 'settings.system-config.locale.zh_TW' },
-  { value: 'ja_JP', labelKey: 'settings.system-config.locale.ja-JP' },
+  { value: 'ja_JP', labelKey: 'settings.system-config.locale.ja_JP' },
   { value: 'pt_BR', labelKey: 'settings.system-config.locale.pt_BR' }
 ] as const;
 
