@@ -66,8 +66,16 @@ public class SmsLocalSmsClientImpl implements SmsClient {
         }
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            String content = alert.getCommonAnnotations().get("summary");
-            if (Objects.isNull(content) || Objects.isNull(alert.getCommonAnnotations().get("description"))) {
+            String content = null;
+            if (alert.getCommonAnnotations() != null) {
+                content = alert.getCommonAnnotations().get("summary");
+                // Use fallback if summary is null OR description is null (original logic)
+                if (Objects.isNull(content) || Objects.isNull(alert.getCommonAnnotations().get("description"))) {
+                    content = alert.getAlerts() != null && !alert.getAlerts().isEmpty()
+                            ? alert.getAlerts().get(0).getContent()
+                            : null;
+                }
+            } else if (alert.getAlerts() != null && !alert.getAlerts().isEmpty()) {
                 content = alert.getAlerts().get(0).getContent();
             }
             SmsMessage smsMessage = new SmsMessage(FROM, receiver.getPhone(), content);

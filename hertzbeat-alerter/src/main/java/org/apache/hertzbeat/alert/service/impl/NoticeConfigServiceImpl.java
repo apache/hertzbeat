@@ -218,7 +218,8 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
                         // filter labels
                         if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {
                             boolean labelMatch = rule.getLabels().entrySet().stream().allMatch(labelItem -> {
-                                if (!alert.getCommonLabels().containsKey(labelItem.getKey())) {
+                                if (alert.getCommonLabels() == null
+                                        || !alert.getCommonLabels().containsKey(labelItem.getKey())) {
                                     return false;
                                 }
                                 String alertLabelValue = alert.getCommonLabels().get(labelItem.getKey());
