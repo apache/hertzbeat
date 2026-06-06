@@ -31,6 +31,7 @@ import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.GenericApplicationContext;
 
 class LlmConfigTest {
@@ -104,6 +105,11 @@ class LlmConfigTest {
                     assertFalse(context.containsBean(LlmConfig.OPEN_AI_CHAT_CLIENT_BEAN_NAME));
                     assertNull(context.getStartupFailure());
                 });
+    }
+
+    @Test
+    void openAiChatClientHasNoBeanAnnotation() throws NoSuchMethodException {
+        assertFalse(LlmConfig.class.getDeclaredMethod("openAiChatClient").isAnnotationPresent(Bean.class));
     }
 
     @Test

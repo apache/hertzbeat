@@ -19,9 +19,11 @@
 package org.apache.hertzbeat.ai.config;
 
 import com.openai.client.OpenAIClient;
-import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.credential.BearerTokenCredential;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.observation.ObservationRegistry;
 import jakarta.annotation.PostConstruct;
+import java.time.Duration;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
@@ -31,6 +33,7 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.setup.OpenAiSetup;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -72,7 +75,7 @@ public class LlmConfig {
     private ChatClient createChatClient() {
         try {
             return createConfiguredChatClient();
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | LinkageError e) {
             log.warn("LLM Provider configuration cannot create ChatClient, ChatClient bean will not be created", e);
             return null;
         }
@@ -116,10 +119,23 @@ public class LlmConfig {
             }
         }
 
-        OpenAIClient openAiClient = OpenAIOkHttpClient.builder()
-                .baseUrl(modelProviderConfig.getBaseUrl())
-                .credential(BearerTokenCredential.create(modelProviderConfig.getApiKey()))
-                .build();
+        OpenAIClient openAiClient = OpenAiSetup.setupSyncClient(
+                modelProviderConfig.getBaseUrl(),
+                modelProviderConfig.getApiKey(),
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                null,
+                Duration.ofSeconds(60),
+                10,
+                null,
+                Map.of(),
+                ObservationRegistry.NOOP,
+                Metrics.globalRegistry,
+                null);
 
         // Create Chat Options
         OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
