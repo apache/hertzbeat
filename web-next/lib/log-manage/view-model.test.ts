@@ -550,6 +550,38 @@ describe('log view model', () => {
     });
   });
 
+  it('keeps severity number scope in executable log alert expressions', () => {
+    expect(buildLogAlertRuleDraft(
+      {
+        search: '',
+        logContent: '',
+        traceId: 'trace-123',
+        spanId: '',
+        severityNumber: '17',
+        severityText: '',
+        resourceFilter: '',
+        attributeFilter: ''
+      } as any
+    )).toMatchObject({
+      query: 'severityNumber=17\ntraceId=trace-123',
+      expression: "log.severityNumber == 17 && log.traceId == 'trace-123'",
+      template: 'Log matched: {{log.body}}'
+    });
+  });
+
+  it('suppresses executable log alert expressions for unsafe severity number values', () => {
+    expect(buildLogAlertRuleDraft({
+      search: 'checkout failed',
+      logContent: '',
+      traceId: '',
+      spanId: '',
+      severityNumber: '17 || true',
+      severityText: '',
+      resourceFilter: '',
+      attributeFilter: ''
+    } as any).expression).toBeUndefined();
+  });
+
   it('suppresses executable log alert expressions for unsafe trace scope values', () => {
     expect(buildLogAlertRuleDraft({
       search: 'checkout failed',

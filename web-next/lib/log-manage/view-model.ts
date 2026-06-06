@@ -398,6 +398,13 @@ function buildLogSeverityAlertExpression(severityText: string | null | undefined
   return `log.severityText == '${normalized}'`;
 }
 
+function buildLogSeverityNumberAlertExpression(severityNumber: string | null | undefined) {
+  const normalized = severityNumber?.trim();
+  if (!normalized) return undefined;
+  if (!/^\d+$/.test(normalized)) return null;
+  return `log.severityNumber == ${Number(normalized)}`;
+}
+
 function escapeLogAlertStringLiteral(value: string) {
   return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
@@ -464,6 +471,7 @@ function buildLogFilterAlertExpressions(source: 'resource' | 'attributes', filte
 
 export function buildLogAlertRuleDraft(query: LogQueryState, routeContext: SignalRouteContext = {}): SignalAlertRuleDraftContext {
   const severityExpression = buildLogSeverityAlertExpression(query.severityText);
+  const severityNumberExpression = buildLogSeverityNumberAlertExpression(query.severityNumber);
   const contentExpression = buildLogContentAlertExpression(query.logContent || query.search);
   const resourceExpressions = buildLogFilterAlertExpressions('resource', query.resourceFilter);
   const attributeExpressions = buildLogFilterAlertExpressions('attributes', query.attributeFilter);
@@ -495,9 +503,15 @@ export function buildLogAlertRuleDraft(query: LogQueryState, routeContext: Signa
     buildLogDirectFieldAlertExpression('spanId', query.spanId || routeContext.spanId)
   ];
   const hasUnsafeTraceScope = traceScopeExpressions.some(expression => expression === null);
-  const expression = severityExpression !== null && contentExpression !== null && resourceExpressions && attributeExpressions && !hasUnsafeTraceScope
+  const expression = severityExpression !== null
+      && severityNumberExpression !== null
+      && contentExpression !== null
+      && resourceExpressions
+      && attributeExpressions
+      && !hasUnsafeTraceScope
     ? Array.from(new Set([
         severityExpression,
+        severityNumberExpression,
         contentExpression,
         ...routeContextExpressions,
         ...traceScopeExpressions,

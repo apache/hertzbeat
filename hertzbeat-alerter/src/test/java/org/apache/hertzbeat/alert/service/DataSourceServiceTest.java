@@ -813,6 +813,26 @@ class DataSourceServiceTest {
     }
 
     @Test
+    void queryTraceScopeAllowsRawTraceJsonResourceFilters() {
+        List<Map<String, Object>> sqlData = List.of(new HashMap<>(Map.of("__value__", 1)));
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        when(mockExecutor.execute(anyString())).thenReturn(sqlData);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.query("sql",
+                "SELECT service_name, span_name AS operation, span_kind, COUNT(*) AS __value__ FROM hzb_traces "
+                        + "WHERE service_name = 'checkout' "
+                        + "AND json_get_string(resource_attributes, '$[\"service.version\"]') = '1.2.3' "
+                        + "AND span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
+                        + "GROUP BY service_name, span_name, span_kind HAVING __value__ > 0",
+                TRACE_ALERT_THRESHOLD_TYPE_PERIODIC);
+
+        assertEquals(1, result.size());
+        verify(mockExecutor).execute(anyString());
+    }
+
+    @Test
     void queryLogScopeRejectsTraceTables() {
         QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
         when(mockExecutor.support("sql")).thenReturn(true);

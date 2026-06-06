@@ -285,4 +285,18 @@ class LogWorkerTest {
                 "log.traceId == 'trace-123' && log.spanId != 'span-other'",
                 false));
     }
+
+    @Test
+    void testLogExpressionCanReadSeverityNumber() {
+        LogEntry detailedLogEntry = LogEntry.builder()
+                .severityNumber(17)
+                .build();
+
+        JexlExprCalculator calculator = new JexlExprCalculator();
+
+        assertTrue(calculator.execAlertExpression(
+                Map.of("log", detailedLogEntry),
+                "log.severityNumber == 17",
+                false));
+    }
 }

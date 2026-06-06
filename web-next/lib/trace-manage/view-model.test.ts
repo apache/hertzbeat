@@ -391,7 +391,7 @@ describe('trace view model', () => {
         serviceName: 'checkout',
         resourceFilter: 'deployment.environment.name="prod"',
         operationName: 'POST /checkout',
-        minDurationMs: '250',
+        minDurationMs: '',
         maxDurationMs: '',
         errorOnly: true,
         spanScope: 'root'
@@ -584,7 +584,7 @@ describe('trace view model', () => {
         resourceFilter: '',
         operationName: 'POST /checkout',
         minDurationMs: '250',
-        maxDurationMs: '',
+        maxDurationMs: '500',
         errorOnly: false,
         spanScope: 'root'
       } as any,
@@ -604,7 +604,75 @@ describe('trace view model', () => {
     expect(draft.expression).toContain("AND entity_id = '7'");
     expect(draft.expression).toContain("AND service_namespace = 'payments'");
     expect(draft.expression).toContain("AND deployment_environment = 'prod'");
-    expect(draft.expression).toContain('HAVING __value__ >= 250');
+    expect(draft.expression).toContain('HAVING __value__ >= 250 AND __value__ <= 500');
+  });
+
+  it('keeps RED-backed resource filters in trace alert SQL', () => {
+    const draft = buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: '',
+      resourceFilter:
+        'service.name=checkout and service.namespace="payments" and deployment.environment.name=prod and hertzbeat.entity_id=7',
+      operationName: 'POST /checkout',
+      minDurationMs: '',
+      maxDurationMs: '',
+      errorOnly: true,
+      spanScope: 'root'
+    } as any);
+
+    expect(draft.datasource).toBe('sql');
+    expect(draft.expression).toContain("WHERE service_name = 'checkout'");
+    expect(draft.expression).toContain("AND operation = 'POST /checkout'");
+    expect(draft.expression).toContain("AND service_namespace = 'payments'");
+    expect(draft.expression).toContain("AND deployment_environment = 'prod'");
+    expect(draft.expression).toContain("AND entity_id = '7'");
+    expect(draft.expression).toContain('HAVING __value__ > 0');
+  });
+
+  it('falls back to raw trace SQL for non-RED resource filters', () => {
+    const draft = buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: 'checkout',
+      resourceFilter: 'service.version=1.2.3',
+      operationName: 'POST /checkout',
+      minDurationMs: '',
+      maxDurationMs: '',
+      errorOnly: true,
+      spanScope: 'root'
+    } as any);
+
+    expect(draft.datasource).toBe('sql');
+    expect(draft.expression).toContain('FROM hzb_traces');
+    expect(draft.expression).toContain("WHERE service_name = 'checkout'");
+    expect(draft.expression).toContain("AND span_name = 'POST /checkout'");
+    expect(draft.expression).toContain("AND json_get_string(resource_attributes, '$[\"service.version\"]') = '1.2.3'");
+    expect(draft.expression).toContain("AND span_status_code IN ('STATUS_CODE_ERROR', 'ERROR')");
+    expect(draft.expression).toContain("AND (parent_span_id IS NULL OR parent_span_id = '')");
+    expect(draft.expression).toContain('COUNT(*) AS __value__');
+    expect(draft.expression).toContain('HAVING __value__ > 0');
+  });
+
+  it('uses raw trace SQL for error-only alerts with duration filters', () => {
+    const draft = buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: 'checkout',
+      resourceFilter: '',
+      operationName: '',
+      minDurationMs: '250',
+      maxDurationMs: '500',
+      errorOnly: true,
+      spanScope: 'root'
+    } as any);
+
+    expect(draft.datasource).toBe('sql');
+    expect(draft.expression).toContain('FROM hzb_traces');
+    expect(draft.expression).toContain('duration_nano >= 250000000');
+    expect(draft.expression).toContain('duration_nano <= 500000000');
+    expect(draft.expression).toContain("span_status_code IN ('STATUS_CODE_ERROR', 'ERROR')");
+    expect(draft.expression).toContain('HAVING __value__ > 0');
   });
 
   it('does not invent trace latency SQL from unsafe duration or optional filters', () => {
@@ -626,6 +694,38 @@ describe('trace view model', () => {
       errorOnly: false,
       spanScope: 'root'
     } as any).expression).toBeUndefined();
+    expect(buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: 'checkout',
+      resourceFilter: 'service.version=1.2.3',
+      operationName: '',
+      minDurationMs: '250',
+      errorOnly: false,
+      spanScope: 'root'
+    } as any).expression).toContain('FROM hzb_traces');
+    expect(buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: 'checkout',
+      resourceFilter: '',
+      operationName: '',
+      minDurationMs: '250',
+      maxDurationMs: '',
+      errorOnly: true,
+      spanScope: 'root'
+    } as any).expression).toContain('FROM hzb_traces');
+    expect(buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: 'checkout',
+      resourceFilter: '',
+      operationName: '',
+      minDurationMs: '',
+      maxDurationMs: '500',
+      errorOnly: true,
+      spanScope: 'root'
+    } as any).expression).toContain('FROM hzb_traces');
   });
 
   it('uses trace detail and selected span HertzBeat attributes when route entity context is missing', () => {

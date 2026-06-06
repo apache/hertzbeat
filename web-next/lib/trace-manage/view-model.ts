@@ -473,26 +473,168 @@ function sanitizeTraceDurationThreshold(value: string | null | undefined) {
   return parsed;
 }
 
+function traceDurationMillisToNanos(value: number) {
+  return value * 1_000_000;
+}
+
+function traceRedResourceColumn(key: string) {
+  switch (key.trim()) {
+    case 'service.name':
+    case 'service_name':
+      return 'service_name';
+    case 'service.namespace':
+    case 'service_namespace':
+      return 'service_namespace';
+    case 'deployment.environment.name':
+    case 'deployment.environment':
+    case 'deployment_environment':
+    case 'deployment_environment_name':
+    case 'environment':
+      return 'deployment_environment';
+    case 'hertzbeat.entity_id':
+    case 'entity_id':
+      return 'entity_id';
+    default:
+      return undefined;
+  }
+}
+
+function parseTraceRedResourceFilterClause(clause: string) {
+  const normalized = clause.trim();
+  if (!normalized) return undefined;
+
+  const quotedMatch = normalized.match(/^([A-Za-z0-9_.:-]+)\s*(=|:)\s*(?:"([^"\\\r\n]*)"|'([^'\\\r\n]*)')$/);
+  if (quotedMatch) {
+    const column = traceRedResourceColumn(quotedMatch[1]);
+    const value = sanitizeTraceSqlLiteral(quotedMatch[3] ?? quotedMatch[4] ?? '');
+    return column && value ? `${column} = '${value}'` : null;
+  }
+
+  const rawMatch = normalized.match(/^([A-Za-z0-9_.:-]+)\s*(=|:)\s*([A-Za-z0-9_.:/ -]+)$/);
+  if (rawMatch) {
+    const column = traceRedResourceColumn(rawMatch[1]);
+    const value = sanitizeTraceSqlLiteral(rawMatch[3]);
+    return column && value ? `${column} = '${value}'` : null;
+  }
+
+  return null;
+}
+
+function buildTraceRedResourceFilterClauses(resourceFilter: string | null | undefined) {
+  const normalized = resourceFilter?.trim();
+  if (!normalized) return [];
+
+  const clauses = normalized.split(/\s+and\s+|\s*,\s*/i).map(clause => clause.trim()).filter(Boolean);
+  if (clauses.length === 0) return [];
+
+  const expressions = clauses.map(parseTraceRedResourceFilterClause);
+  return expressions.every(Boolean) ? expressions as string[] : undefined;
+}
+
+function parseTraceRawResourceFilterClause(clause: string) {
+  const normalized = clause.trim();
+  if (!normalized) return undefined;
+
+  const quotedMatch = normalized.match(/^([A-Za-z0-9_.:-]+)\s*(=|:)\s*(?:"([^"\\\r\n]*)"|'([^'\\\r\n]*)')$/);
+  if (quotedMatch) {
+    const value = sanitizeTraceSqlLiteral(quotedMatch[3] ?? quotedMatch[4] ?? '');
+    return value ? traceRawResourceFilterExpression(quotedMatch[1], value) : null;
+  }
+
+  const rawMatch = normalized.match(/^([A-Za-z0-9_.:-]+)\s*(=|:)\s*([A-Za-z0-9_.:/ -]+)$/);
+  if (rawMatch) {
+    const value = sanitizeTraceSqlLiteral(rawMatch[3]);
+    return value ? traceRawResourceFilterExpression(rawMatch[1], value) : null;
+  }
+
+  return null;
+}
+
+function traceRawResourceFilterExpression(key: string, value: string) {
+  const normalizedKey = key.trim();
+  if (!/^[A-Za-z0-9_.:-]+$/.test(normalizedKey)) return null;
+  if (normalizedKey === 'service.name' || normalizedKey === 'service_name') {
+    return `service_name = '${value}'`;
+  }
+  return `json_get_string(resource_attributes, '$["${normalizedKey}"]') = '${value}'`;
+}
+
+function buildTraceRawResourceFilterClauses(resourceFilter: string | null | undefined) {
+  const normalized = resourceFilter?.trim();
+  if (!normalized) return [];
+
+  const clauses = normalized.split(/\s+and\s+|\s*,\s*/i).map(clause => clause.trim()).filter(Boolean);
+  if (clauses.length === 0) return [];
+
+  const expressions = clauses.map(parseTraceRawResourceFilterClause);
+  return expressions.every(Boolean) ? expressions as string[] : undefined;
+}
+
 function buildTraceRedWhereClauses(query: TraceQueryState, routeContext: SignalRouteContext) {
-  const serviceName = sanitizeTraceSqlLiteral(query.serviceName || routeContext.serviceName);
+  const resourceFilterClauses = buildTraceRedResourceFilterClauses(query.resourceFilter);
+  if (!resourceFilterClauses) return undefined;
+  const resourceServiceNameClause = resourceFilterClauses.find(clause => clause.startsWith('service_name = '));
+  const resourceServiceName = resourceServiceNameClause?.match(/^service_name = '(.+)'$/)?.[1];
+  const serviceName = sanitizeTraceSqlLiteral(query.serviceName || routeContext.serviceName) || resourceServiceName;
   if (!serviceName) return undefined;
   const operationName = sanitizeOptionalTraceSqlLiteral(query.operationName);
   const entityId = sanitizeOptionalTraceSqlLiteral(routeContext.entityId);
   const serviceNamespace = sanitizeOptionalTraceSqlLiteral(routeContext.serviceNamespace);
   const environment = sanitizeOptionalTraceSqlLiteral(routeContext.environment);
   if (![operationName, entityId, serviceNamespace, environment].every(filter => filter.valid)) return undefined;
-  return [
+  return Array.from(new Set([
     `service_name = '${serviceName}'`,
     operationName.value ? `operation = '${operationName.value}'` : undefined,
     entityId.value ? `entity_id = '${entityId.value}'` : undefined,
     serviceNamespace.value ? `service_namespace = '${serviceNamespace.value}'` : undefined,
     environment.value ? `deployment_environment = '${environment.value}'` : undefined,
+    ...resourceFilterClauses,
     "time_window >= NOW() - INTERVAL '5 minutes'"
-  ].filter((clause): clause is string => Boolean(clause));
+  ].filter((clause): clause is string => Boolean(clause))));
+}
+
+function buildTraceRawWhereClauses(query: TraceQueryState, routeContext: SignalRouteContext) {
+  const resourceFilterClauses = buildTraceRawResourceFilterClauses(query.resourceFilter);
+  if (!resourceFilterClauses) return undefined;
+  const resourceServiceNameClause = resourceFilterClauses.find(clause => clause.startsWith('service_name = '));
+  const resourceServiceName = resourceServiceNameClause?.match(/^service_name = '(.+)'$/)?.[1];
+  const serviceName = sanitizeTraceSqlLiteral(query.serviceName || routeContext.serviceName) || resourceServiceName;
+  if (!serviceName) return undefined;
+  const operationName = sanitizeOptionalTraceSqlLiteral(query.operationName);
+  const traceId = sanitizeOptionalTraceSqlLiteral(query.traceId || routeContext.traceId);
+  const spanId = sanitizeOptionalTraceSqlLiteral(query.spanId || routeContext.spanId);
+  const entityId = sanitizeOptionalTraceSqlLiteral(routeContext.entityId);
+  const serviceNamespace = sanitizeOptionalTraceSqlLiteral(routeContext.serviceNamespace);
+  const environment = sanitizeOptionalTraceSqlLiteral(routeContext.environment);
+  if (![operationName, traceId, spanId, entityId, serviceNamespace, environment].every(filter => filter.valid)) return undefined;
+  const minDurationMs = sanitizeTraceDurationThreshold(query.minDurationMs);
+  const maxDurationMs = sanitizeTraceDurationThreshold(query.maxDurationMs);
+  if (query.minDurationMs?.trim() && minDurationMs == null) return undefined;
+  if (query.maxDurationMs?.trim() && maxDurationMs == null) return undefined;
+  if (minDurationMs != null && maxDurationMs != null && maxDurationMs < minDurationMs) return undefined;
+  const scope = query.spanScope?.trim().toLowerCase();
+  return Array.from(new Set([
+    `service_name = '${serviceName}'`,
+    operationName.value ? `span_name = '${operationName.value}'` : undefined,
+    traceId.value ? `trace_id = '${traceId.value}'` : undefined,
+    spanId.value ? `span_id = '${spanId.value}'` : undefined,
+    entityId.value ? `json_get_string(resource_attributes, '$["hertzbeat.entity_id"]') = '${entityId.value}'` : undefined,
+    serviceNamespace.value ? `json_get_string(resource_attributes, '$["service.namespace"]') = '${serviceNamespace.value}'` : undefined,
+    environment.value ? `json_get_string(resource_attributes, '$["deployment.environment.name"]') = '${environment.value}'` : undefined,
+    minDurationMs != null ? `duration_nano >= ${traceDurationMillisToNanos(minDurationMs)}` : undefined,
+    maxDurationMs != null ? `duration_nano <= ${traceDurationMillisToNanos(maxDurationMs)}` : undefined,
+    scope === 'root' ? "(parent_span_id IS NULL OR parent_span_id = '')" : undefined,
+    scope === 'entrypoint' || scope === 'entrypoint-spans' || scope === 'entry'
+      ? "(parent_span_id IS NULL OR parent_span_id = '' OR UPPER(span_kind) IN ('SPAN_KIND_SERVER', 'SERVER', 'SPAN_KIND_CONSUMER', 'CONSUMER'))"
+      : undefined,
+    ...resourceFilterClauses,
+    "`timestamp` >= NOW() - INTERVAL '5 minutes'"
+  ].filter((clause): clause is string => Boolean(clause))));
 }
 
 function buildTraceErrorRateSql(query: TraceQueryState, routeContext: SignalRouteContext) {
   if (!query.errorOnly) return undefined;
+  if (query.minDurationMs?.trim() || query.maxDurationMs?.trim()) return undefined;
   const whereClauses = buildTraceRedWhereClauses(query, routeContext);
   if (!whereClauses) return undefined;
   return [
@@ -505,26 +647,78 @@ function buildTraceErrorRateSql(query: TraceQueryState, routeContext: SignalRout
   ].join(' ');
 }
 
+function buildTraceRawErrorSql(query: TraceQueryState, routeContext: SignalRouteContext) {
+  if (!query.errorOnly) return undefined;
+  const whereClauses = buildTraceRawWhereClauses(query, routeContext);
+  if (!whereClauses) return undefined;
+  return [
+    'SELECT service_name, span_name AS operation, span_kind, COUNT(*) AS __value__',
+    'FROM hzb_traces',
+    `WHERE ${[
+      ...whereClauses,
+      "span_status_code IN ('STATUS_CODE_ERROR', 'ERROR')"
+    ].join(' AND ')}`,
+    'GROUP BY service_name, span_name, span_kind',
+    'HAVING __value__ > 0'
+  ].join(' ');
+}
+
 function buildTraceLatencySql(query: TraceQueryState, routeContext: SignalRouteContext) {
   if (query.errorOnly) return undefined;
   const minDurationMs = sanitizeTraceDurationThreshold(query.minDurationMs);
-  if (minDurationMs == null) return undefined;
+  const maxDurationMs = sanitizeTraceDurationThreshold(query.maxDurationMs);
+  if (minDurationMs == null && maxDurationMs == null) return undefined;
+  if (query.minDurationMs?.trim() && minDurationMs == null) return undefined;
+  if (query.maxDurationMs?.trim() && maxDurationMs == null) return undefined;
+  if (minDurationMs != null && maxDurationMs != null && maxDurationMs < minDurationMs) return undefined;
   const whereClauses = buildTraceRedWhereClauses(query, routeContext);
   if (!whereClauses) return undefined;
+  const havingClauses = [
+    minDurationMs != null ? `__value__ >= ${minDurationMs}` : undefined,
+    maxDurationMs != null ? `__value__ <= ${maxDurationMs}` : undefined
+  ].filter((clause): clause is string => Boolean(clause));
   return [
     'SELECT service_name, operation, span_kind,',
     'SUM(duration_sum_nano) / NULLIF(SUM(duration_count), 0) / 1000000 AS __value__',
     'FROM hertzbeat_apm_red_1m',
     `WHERE ${whereClauses.join(' AND ')}`,
     'GROUP BY service_name, operation, span_kind',
-    `HAVING __value__ >= ${minDurationMs}`
+    `HAVING ${havingClauses.join(' AND ')}`
+  ].join(' ');
+}
+
+function buildTraceRawLatencySql(query: TraceQueryState, routeContext: SignalRouteContext) {
+  if (query.errorOnly) return undefined;
+  const minDurationMs = sanitizeTraceDurationThreshold(query.minDurationMs);
+  const maxDurationMs = sanitizeTraceDurationThreshold(query.maxDurationMs);
+  if (minDurationMs == null && maxDurationMs == null) return undefined;
+  if (query.minDurationMs?.trim() && minDurationMs == null) return undefined;
+  if (query.maxDurationMs?.trim() && maxDurationMs == null) return undefined;
+  if (minDurationMs != null && maxDurationMs != null && maxDurationMs < minDurationMs) return undefined;
+  const whereClauses = buildTraceRawWhereClauses(query, routeContext);
+  if (!whereClauses) return undefined;
+  const havingClauses = [
+    minDurationMs != null ? `__value__ >= ${minDurationMs}` : undefined,
+    maxDurationMs != null ? `__value__ <= ${maxDurationMs}` : undefined
+  ].filter((clause): clause is string => Boolean(clause));
+  return [
+    'SELECT service_name, span_name AS operation, span_kind,',
+    'SUM(duration_nano) / NULLIF(COUNT(duration_nano), 0) / 1000000 AS __value__',
+    'FROM hzb_traces',
+    `WHERE ${whereClauses.join(' AND ')}`,
+    'GROUP BY service_name, span_name, span_kind',
+    `HAVING ${havingClauses.join(' AND ')}`
   ].join(' ');
 }
 
 export function buildTraceAlertRuleDraft(query: TraceQueryState, routeContext: SignalRouteContext = {}): SignalAlertRuleDraftContext {
   const errorRateExpression = buildTraceErrorRateSql(query, routeContext);
   const latencyExpression = errorRateExpression ? undefined : buildTraceLatencySql(query, routeContext);
-  const expression = errorRateExpression || latencyExpression;
+  const rawErrorExpression = errorRateExpression || latencyExpression ? undefined : buildTraceRawErrorSql(query, routeContext);
+  const rawLatencyExpression = errorRateExpression || latencyExpression || rawErrorExpression
+    ? undefined
+    : buildTraceRawLatencySql(query, routeContext);
+  const expression = errorRateExpression || latencyExpression || rawErrorExpression || rawLatencyExpression;
   const parts = [
     ['traceId', query.traceId || routeContext.traceId],
     ['spanId', query.spanId || routeContext.spanId],
@@ -550,7 +744,7 @@ export function buildTraceAlertRuleDraft(query: TraceQueryState, routeContext: S
     expression,
     ...(expression ? {
       datasource: 'sql',
-      template: latencyExpression
+      template: latencyExpression || rawLatencyExpression
         ? 'Trace latency detected ${service_name} ${operation}: ${__value__} ms'
         : 'Trace error rate detected ${service_name} ${operation}: ${__value__}'
     } : {})
