@@ -110,9 +110,11 @@ public class ScriptCollectImpl extends AbstractCollect {
             processBuilder.directory(new File(workDirectory));
         }
         // execute command
+        Process process = null;
+        BufferedReader reader = null;
         try {
-            Process process = processBuilder.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), Charset.forName(scriptProtocol.getCharset())));
+            process = processBuilder.start();
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream(), Charset.forName(scriptProtocol.getCharset())));
             StringBuilder response = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -148,11 +150,23 @@ public class ScriptCollectImpl extends AbstractCollect {
             log.warn(errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Peer interrupt this script: " + errorMsg);
+            Thread.currentThread().interrupt();
         } catch (Exception exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.warn(errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    log.warn(e.getMessage());
+                }
+            }
+            if (process != null) {
+                process.destroy();
+            }
         }
     }
 

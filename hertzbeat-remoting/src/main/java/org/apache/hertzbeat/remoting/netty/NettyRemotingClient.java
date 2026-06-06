@@ -112,6 +112,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
                     try {
                         Thread.sleep(10000);
                     } catch (InterruptedException ignored) {
+                        Thread.currentThread().interrupt();
                     }
                 }
             }

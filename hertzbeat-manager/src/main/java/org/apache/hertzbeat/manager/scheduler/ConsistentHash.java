@@ -106,7 +106,7 @@ public class ConsistentHash {
      * add collector node
      * @param newNode node
      */
-    public void addNode(Node newNode) {
+    public synchronized void addNode(Node newNode) {
         // when mode is cluster public, need reBalance dispatch jobs. else not when is cloud-edge private
         if (!CommonConstants.MODE_PRIVATE.equals(newNode.mode)) {
             byte virtualNodeNum = newNode.quality == null ? VIRTUAL_NODE_DEFAULT_SIZE : newNode.quality;
@@ -160,7 +160,7 @@ public class ConsistentHash {
      * deleted collector node
      * @param name collector name
      */
-    public Node removeNode(String name) {
+    public synchronized Node removeNode(String name) {
         Node deletedNode = existNodeMap.remove(name);
         if (deletedNode == null) {
             return null;
@@ -247,7 +247,7 @@ public class ConsistentHash {
      * @param isFlushed is has flush this job or wait to dispatch
      * @return collector node
      */
-    public Node dispatchJob(Integer dispatchHash, Long jobId, boolean isFlushed) {
+    public synchronized Node dispatchJob(Integer dispatchHash, Long jobId, boolean isFlushed) {
         if (dispatchHash == null || hashCircle == null || hashCircle.isEmpty()) {
             log.warn("There is no available collector registered. Cache the job {}.", jobId);
             dispatchJobCache.add(new DispatchJob(dispatchHash, jobId));
@@ -267,7 +267,7 @@ public class ConsistentHash {
      * @param dispatchHash The task route hash is collected
      * @return collector node
      */
-    public Node preDispatchJob(Integer dispatchHash) {
+    public synchronized Node preDispatchJob(Integer dispatchHash) {
         if (dispatchHash == null || hashCircle == null || hashCircle.isEmpty()) {
             log.warn("There is no available collector registered.");
             return null;

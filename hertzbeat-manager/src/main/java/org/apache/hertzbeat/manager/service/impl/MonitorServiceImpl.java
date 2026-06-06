@@ -212,7 +212,9 @@ public class MonitorServiceImpl implements MonitorService {
                 : collectJobScheduling.addAsyncCollectJob(appDefine, collector);
         try {
             detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("Monitor detection failed during addMonitor for monitor [{}]: {}",
+                    monitor.getName(), e.getMessage());
         }
 
         try {
@@ -621,7 +623,9 @@ public class MonitorServiceImpl implements MonitorService {
             applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             try {
                 detectMonitor(monitor, params, collector);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("Monitor detection failed during reapplyMonitors for monitor [{}]: {}",
+                        monitor.getName(), e.getMessage());
             }
         }
         oldMonitorStatusWriteModelService.saveMonitorStatusChanges(unManagedMonitors);

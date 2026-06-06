@@ -84,12 +84,14 @@ public class AlibabaSmsClientImpl implements SmsClient {
     @Override
     public void sendMessage(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
         // Extract alert info
-        String instance = null;
-        String priority = null;
+        String instance = alert.getGroupKey();
+        String priority = "unknown";
         String content = null;
         if (alert.getCommonLabels() != null) {
-            instance = alert.getCommonLabels().get("instance");
-            priority = alert.getCommonLabels().get("priority");
+            instance = alert.getCommonLabels().getOrDefault("instance", alert.getGroupKey());
+            priority = alert.getCommonLabels().getOrDefault("priority", "unknown");
+        }
+        if (alert.getCommonAnnotations() != null) {
             content = alert.getCommonAnnotations().get("summary");
             content = content == null ? alert.getCommonAnnotations().get("description") : content;
             if (content == null) {
@@ -99,8 +101,8 @@ public class AlibabaSmsClientImpl implements SmsClient {
 
         // Build template parameters
         Map<String, String> templateParam = new HashMap<>();
-        templateParam.put("instance", instance == null ? alert.getGroupKey() : instance);
-        templateParam.put("priority", priority == null ? "unknown" : priority);
+        templateParam.put("instance", instance);
+        templateParam.put("priority", priority);
         templateParam.put("content", content);
 
         sendSms(receiver.getPhone(), JsonUtil.toJson(templateParam));

@@ -145,6 +145,11 @@ export async function loadLocaleMessages(locale: LocaleCode, allowRemoteOverride
 }
 
 async function resolveInitialLocale(allowRemoteBootstrap: boolean): Promise<LocaleCode> {
+  // Priority 1: localStorage (user's manual choice should always take precedence)
+  const stored = readStoredLocale();
+  if (stored) return stored;
+
+  // Priority 2: Backend API system config
   if (allowRemoteBootstrap) {
     try {
       const response = await fetch('/api/config/system', { cache: 'no-store' });
@@ -160,9 +165,7 @@ async function resolveInitialLocale(allowRemoteBootstrap: boolean): Promise<Loca
     }
   }
 
-  const stored = readStoredLocale();
-  if (stored) return stored;
-
+  // Priority 3: Browser language
   if (typeof window !== 'undefined') {
     const browserLocale = window.navigator.languages?.[0] || window.navigator.language;
     return normalizeLocale(browserLocale);

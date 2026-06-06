@@ -87,9 +87,10 @@ public abstract class NettyRemotingAbstract implements RemotingService {
     }
 
     protected void processResponseMsg(ChannelHandlerContext ctx, ClusterMsg.Message response) {
-        // for sync response
-        if (this.responseTable.containsKey(response.getIdentity())) {
-            ResponseFuture responseFuture = this.responseTable.get(response.getIdentity());
+        // for sync response — use get() directly instead of containsKey()+get()
+        // to avoid TOCTOU race with sendMsgSyncImpl's finally block
+        ResponseFuture responseFuture = this.responseTable.get(response.getIdentity());
+        if (responseFuture != null) {
             responseFuture.putResponse(response);
         } else {
             // async response
@@ -99,7 +100,7 @@ public abstract class NettyRemotingAbstract implements RemotingService {
                 if (repMessage != null) {
                     ctx.writeAndFlush(repMessage);
                 }
-            }   
+            }
         }
     }
 
@@ -130,6 +131,7 @@ public abstract class NettyRemotingAbstract implements RemotingService {
             return response;
         } catch (InterruptedException e) {
             log.warn("get response message failed, ", e);
+            Thread.currentThread().interrupt();
         } finally {
             responseTable.remove(identity);
         }

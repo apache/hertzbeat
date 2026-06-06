@@ -7,7 +7,7 @@ export const LOCALES: Array<{ code: LocaleCode; labelKey: string; abbr: string }
   { code: 'en-US', labelKey: 'settings.system-config.locale.en_US', abbr: '🇬🇧' },
   { code: 'zh-CN', labelKey: 'settings.system-config.locale.zh_CN', abbr: '🇨🇳' },
   { code: 'zh-TW', labelKey: 'settings.system-config.locale.zh_TW', abbr: '🇭🇰' },
-  { code: 'ja-JP', labelKey: 'settings.system-config.locale.ja-JP', abbr: '🇯🇵' },
+  { code: 'ja-JP', labelKey: 'settings.system-config.locale.ja_JP', abbr: '🇯🇵' },
   { code: 'pt-BR', labelKey: 'settings.system-config.locale.pt_BR', abbr: '🇧🇷' }
 ];
 

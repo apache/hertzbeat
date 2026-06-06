@@ -191,6 +191,14 @@ public class FtpCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(e.getMessage());
             return;
+        } finally {
+            if (ftpClient.isConnected()) {
+                try {
+                    ftpClient.disconnect();
+                } catch (IOException e) {
+                    log.warn("[FTPClient] error while disconnecting: {}", e.getMessage());
+                }
+            }
         }
         builder.addValueRow(valueRowBuilder.build());
     }
