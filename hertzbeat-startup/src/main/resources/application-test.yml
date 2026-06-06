@@ -15,6 +15,10 @@
 server:
   port: ${random.int[10000,19999]}
 spring:
+  ai:
+    model:
+      chat: none
+
   datasource:
     driver-class-name: org.h2.Driver
     username: sa

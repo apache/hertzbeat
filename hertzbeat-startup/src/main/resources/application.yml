@@ -23,6 +23,8 @@ spring:
       local:
         - prod
   ai:
+    model:
+      chat: none
     mcp:
       server:
         enabled: true
