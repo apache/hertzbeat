@@ -2,16 +2,18 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { BarChart3, Play, RotateCcw, Search, Workflow } from 'lucide-react';
+import { BarChart3, Check, Copy, Download, Filter, Pencil, Play, Replace, RotateCcw, Save, Search, Table2, Trash2, Workflow, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { HzActionGroup, HzAssistiveMarker, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzChipGroup, HzCollapsibleSection, HzContextHandoff, HzControlStack, HzDataCellStack, HzDataCellText, HzDataMetaText, HzDataTable, HzDetailRows, HzDisabledActionShell, HzEmptyState, HzInput, HzPanelHeader, HzPanelSection, HzPanelSurface, HzPanelTitleLabel, HzQueryActionGroup, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalWorkbenchShell, HzStateNotice, HzStatCell, HzStatStrip, HzStatusBadge, HzTrendBar, HzTrendFrame, HzWorkbenchHeaderCopy, HzWorkbenchLayout } from '@hertzbeat/ui';
+import { HzActionGroup, HzAssistiveMarker, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzChipGroup, HzCollapsibleSection, HzContextHandoff, HzControlStack, HzDataCellStack, HzDataCellText, HzDataMetaText, HzDataTable, HzDetailRows, HzDisabledActionShell, HzEmptyState, HzInput, HzPaginationBar, HzPanelHeader, HzPanelSection, HzPanelSurface, HzPanelTitleLabel, HzQueryActionGroup, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalSummaryStrip, HzSignalWorkbenchShell, HzStateNotice, HzStatusBadge, HzTrendBar, HzTrendFrame, HzWorkbenchHeaderCopy, HzWorkbenchLayout } from '@hertzbeat/ui';
 import { EChartsPanel, type EChartsDataZoomRange } from '@/components/observability/echarts-panel';
 import { buildTimeRangeControlLabels, buildTimeRangePresetLabels, formatEpochMillisDraft, TimeRangeControl } from '@/components/observability/time-range-control';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
 import { useI18n } from '@/components/providers/i18n-provider';
 import { apiMessageGet } from '@/lib/api-client';
+import { copyTextToClipboard } from '@/lib/browser-clipboard';
 import { formatTime } from '@/lib/format';
 import { buildOtlpMetricsConsoleUrl, loadOtlpMetricsConsole, queryStateFromParams, type OtlpMetricsQueryState } from '@/lib/otlp-metrics/controller';
+import { buildOtlpMetricsCsv, buildOtlpMetricsExportFilename, buildOtlpMetricsJsonl, type OtlpMetricsExportFormat, type OtlpMetricsExportScope } from '@/lib/otlp-metrics/export';
 import { buildSignalEntityContextRows, readEntityIdRouteParam, readEpochMillisRouteParam, readSignalRouteContext, type SignalRouteContext } from '@/lib/signal-route-context';
 import { resolveTimeContextBounds, sanitizeTimeContext, TIME_CONTEXT_PRESETS, type TimeContext } from '@/lib/time-context';
 import {
@@ -21,18 +23,52 @@ import {
   buildMetricSeriesAttributionDiagnostics,
   buildMetricSeriesContextRows,
   buildMetricSeriesEvidenceRows,
+  buildMetricSeriesAttributeRows,
   buildMetricSeriesLinkedRecordRows,
   buildMetricSeriesRows,
+  buildMetricSeriesSampleRows,
   buildMetricSeriesViews,
+  buildMetricInventoryRows,
+  applyMetricsFormula,
   buildMetricsChartOption,
   buildMetricsDataZoomTimeContext,
+  buildMetricExpectedRangeConfig,
   buildMetricTrendBars,
+  buildMetricThresholdConfig,
   buildMetricsExplorerState,
   buildMetricsHandoffLinks,
+  type OtlpMetricInventorySort,
   type OtlpMetricSeriesView
 } from '@/lib/otlp-metrics/view-model';
 import type { OtlpMetricsConsole } from '@/lib/types';
 import { buildOtlpMetricsRoute, hasMetricsDisplayReturnLabel } from './route-state';
+
+type OtlpMetricsTranslate = ReturnType<typeof useI18n>['t'];
+
+type MetricsSavedQueryView = {
+  id: string;
+  label: string;
+  description: string;
+  route: string;
+  createdAt: number;
+};
+
+const METRICS_SAVED_QUERY_VIEW_STORAGE_KEY = 'hertzbeat.otlp-metrics.saved-query-views';
+const METRICS_SAVED_QUERY_VIEW_LIMIT = 5;
+const DEFAULT_METRIC_INVENTORY_PAGE_SIZE = '10';
+const DEFAULT_METRIC_INVENTORY_PAGE_INDEX = '0';
+const METRIC_INVENTORY_PAGE_SIZE_OPTIONS = ['5', '10', '20', '50'] as const;
+const METRICS_EXPORT_SCOPES: OtlpMetricsExportScope[] = ['all', 'selected'];
+
+function resolveMetricInventoryPageSize(value?: string) {
+  return METRIC_INVENTORY_PAGE_SIZE_OPTIONS.find(option => option === value) || DEFAULT_METRIC_INVENTORY_PAGE_SIZE;
+}
+
+function resolveMetricInventoryPageIndex(value?: string) {
+  const trimmed = value?.trim();
+  if (!trimmed || !/^\d+$/.test(trimmed)) return DEFAULT_METRIC_INVENTORY_PAGE_INDEX;
+  return String(Math.max(0, Number(trimmed)));
+}
 
 function latestSeriesTimestamp(data: OtlpMetricsConsole) {
   const timestamps = (data.results?.frames || [])
@@ -56,6 +92,67 @@ function firstRouteText(...values: Array<string | null | undefined>) {
   return values.find((value): value is string => value != null && value.trim() !== '')?.trim();
 }
 
+function escapeMetricFilterValue(value: string) {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function buildMetricAttributeFilterExpression(name: string, value: string) {
+  const trimmedName = name.trim();
+  const trimmedValue = value.trim();
+  if (!trimmedName || !trimmedValue) return null;
+  return `${trimmedName}="${escapeMetricFilterValue(trimmedValue)}"`;
+}
+
+function mergeMetricFilterExpression(currentFilter: string, expression: string) {
+  const trimmedFilter = currentFilter.trim();
+  if (!trimmedFilter) return expression;
+  const compactFilter = trimmedFilter.replace(/\s+/g, '');
+  const compactExpression = expression.replace(/\s+/g, '');
+  if (compactFilter.includes(compactExpression)) {
+    return trimmedFilter;
+  }
+  return `${trimmedFilter} and ${expression}`;
+}
+
+function normalizeMetricGroupByLabel(label: string) {
+  const normalized = label
+    .trim()
+    .replace(/[^A-Za-z0-9_:]/g, '_')
+    .replace(/_+/g, '_');
+  if (!normalized) return null;
+  return /^\d/.test(normalized) ? `_${normalized}` : normalized;
+}
+
+function metricGroupByLabelCandidates(groupBy: string) {
+  const normalized = groupBy.trim();
+  if (!normalized) return [];
+  const candidates = [normalized];
+  if (normalized === 'service_name') {
+    candidates.push('service.name');
+  } else if (normalized === 'service_namespace') {
+    candidates.push('service.namespace');
+  } else if (normalized === 'deployment_environment_name') {
+    candidates.push('deployment.environment.name');
+  }
+  return candidates;
+}
+
+function buildMetricGroupValueFilter(groupBy: string, series?: OtlpMetricSeriesView | null) {
+  const normalizedGroupBy = groupBy.trim();
+  if (!normalizedGroupBy || !series) return null;
+  const value = firstRouteText(...metricGroupByLabelCandidates(normalizedGroupBy).map(candidate => series.labels[candidate]));
+  if (!value) return null;
+  const expression = buildMetricAttributeFilterExpression(normalizedGroupBy, value);
+  if (!expression) return null;
+  return { groupBy: normalizedGroupBy, value, expression };
+}
+
+function buildMetricSeriesServiceFilter(series?: OtlpMetricSeriesView | null) {
+  if (!series) return null;
+  const value = firstRouteText(series.labels['service.name'], series.labels.service_name, series.labels.serviceName);
+  return value ? { value } : null;
+}
+
 function readMetricSeriesLabel(series: OtlpMetricSeriesView, ...keys: string[]) {
   return firstRouteText(...keys.map(key => series.labels[key]));
 }
@@ -76,6 +173,115 @@ function findMetricSeriesForRouteTrace(
   }) || null;
 }
 
+function buildMetricSeriesRouteContext(series: OtlpMetricSeriesView): Partial<OtlpMetricsQueryState> {
+  return {
+    entityId: readEntityIdRouteParam(readMetricSeriesLabel(series, 'hertzbeat.entity_id', 'hertzbeat_entity_id', 'entity.id', 'entity_id')),
+    entityName: readMetricSeriesLabel(series, 'hertzbeat.entity_name', 'hertzbeat_entity_name', 'entity.name', 'entity_name'),
+    serviceName: readMetricSeriesLabel(series, 'service.name', 'service_name', 'serviceName'),
+    serviceNamespace: readMetricSeriesLabel(series, 'service.namespace', 'service_namespace', 'serviceNamespace'),
+    environment: readMetricSeriesLabel(series, 'deployment.environment.name', 'deployment_environment_name', 'deployment_environment', 'environment'),
+    traceId: readMetricSeriesLabel(series, 'traceId', 'trace_id', 'trace.id', 'trace_id_hex'),
+    spanId: readMetricSeriesLabel(series, 'spanId', 'span_id', 'span.id', 'span_id_hex'),
+    collector: readMetricSeriesLabel(series, 'hertzbeat.collector', 'hertzbeat_collector', 'collector'),
+    template: readMetricSeriesLabel(series, 'hertzbeat.template', 'hertzbeat_template', 'hertzbeat.monitor_template', 'hertzbeat_monitor_template', 'template')
+  };
+}
+
+function isMetricsSavedQueryView(value: unknown): value is MetricsSavedQueryView {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<MetricsSavedQueryView>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.label === 'string' &&
+    typeof candidate.description === 'string' &&
+    typeof candidate.route === 'string' &&
+    candidate.route.startsWith('/ingestion/otlp/metrics') &&
+    typeof candidate.createdAt === 'number'
+  );
+}
+
+function readMetricsSavedQueryViews(): MetricsSavedQueryView[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(METRICS_SAVED_QUERY_VIEW_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter(isMetricsSavedQueryView).slice(0, METRICS_SAVED_QUERY_VIEW_LIMIT) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeMetricsSavedQueryViews(views: MetricsSavedQueryView[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(METRICS_SAVED_QUERY_VIEW_STORAGE_KEY, JSON.stringify(views.slice(0, METRICS_SAVED_QUERY_VIEW_LIMIT)));
+  } catch {
+    // Ignore quota or privacy-mode failures; the current route remains shareable.
+  }
+}
+
+function compactMetricsSavedViewValue(value: string | undefined, limit = 32) {
+  const trimmed = value?.trim();
+  if (!trimmed) return '';
+  return trimmed.length > limit ? `${trimmed.slice(0, limit - 1)}...` : trimmed;
+}
+
+function buildMetricsSavedViewDescription(query: OtlpMetricsQueryState, routeContext: SignalRouteContext, t: OtlpMetricsTranslate) {
+  const serviceName = firstRouteText(query.serviceName, routeContext.serviceName);
+  const environment = firstRouteText(query.environment, routeContext.environment);
+  const parts = [
+    query.query?.trim() ? `${t('otlp.metrics.saved-view.field.query')}: ${compactMetricsSavedViewValue(query.query)}` : '',
+    query.filter?.trim() ? `${t('otlp.metrics.saved-view.field.filter')}: ${compactMetricsSavedViewValue(query.filter)}` : '',
+    query.aggregation?.trim() ? `${t('otlp.metrics.saved-view.field.aggregation')}: ${compactMetricsSavedViewValue(query.aggregation)}` : '',
+    query.temporalAggregation?.trim() ? `${t('otlp.metrics.saved-view.field.temporal')}: ${compactMetricsSavedViewValue(query.temporalAggregation)}` : '',
+    query.groupBy?.trim() ? `${t('otlp.metrics.saved-view.field.group-by')}: ${compactMetricsSavedViewValue(query.groupBy)}` : '',
+    query.legendFormat?.trim() ? `${t('otlp.metrics.saved-view.field.legend')}: ${compactMetricsSavedViewValue(query.legendFormat)}` : '',
+    query.formula?.trim() ? `${t('otlp.metrics.saved-view.field.formula')}: ${compactMetricsSavedViewValue(query.formula)}` : '',
+    query.step?.trim() ? `${t('otlp.metrics.saved-view.field.step')}: ${compactMetricsSavedViewValue(query.step)}` : '',
+    query.limit?.trim() ? `${t('otlp.metrics.saved-view.field.limit')}: ${compactMetricsSavedViewValue(query.limit)}` : '',
+    query.series?.trim() ? `${t('otlp.metrics.saved-view.field.series')}: ${compactMetricsSavedViewValue(query.series)}` : '',
+    query.inspector === 'table' ? `${t('otlp.metrics.saved-view.field.inspector')}: ${query.inspector}` : '',
+    serviceName ? `${t('otlp.metrics.saved-view.field.service')}: ${compactMetricsSavedViewValue(serviceName)}` : '',
+    query.entityId?.trim() ? `${t('otlp.metrics.saved-view.field.entity')}: ${compactMetricsSavedViewValue(query.entityId)}` : '',
+    environment ? `${t('otlp.metrics.saved-view.field.environment')}: ${compactMetricsSavedViewValue(environment)}` : '',
+    query.warningThreshold?.trim() ? `${t('otlp.metrics.saved-view.field.warning')}: ${compactMetricsSavedViewValue(query.warningThreshold)}` : '',
+    query.criticalThreshold?.trim() ? `${t('otlp.metrics.saved-view.field.critical')}: ${compactMetricsSavedViewValue(query.criticalThreshold)}` : '',
+    query.expectedRange === 'on' ? `${t('otlp.metrics.saved-view.field.expected-range')}: on` : '',
+    query.inventorySearch?.trim() ? `${t('otlp.metrics.saved-view.field.inventory-search')}: ${compactMetricsSavedViewValue(query.inventorySearch)}` : '',
+    query.inventorySort?.trim() ? `${t('otlp.metrics.saved-view.field.inventory-sort')}: ${compactMetricsSavedViewValue(query.inventorySort)}` : '',
+    query.inventoryPageSize?.trim() ? `${t('otlp.metrics.saved-view.field.inventory-page-size')}: ${compactMetricsSavedViewValue(query.inventoryPageSize)}` : '',
+    query.inventoryPageIndex?.trim() ? `${t('otlp.metrics.saved-view.field.inventory-page-index')}: ${compactMetricsSavedViewValue(query.inventoryPageIndex)}` : '',
+    query.seriesAttributeSearch?.trim() ? `${t('otlp.metrics.saved-view.field.series-attribute-search')}: ${compactMetricsSavedViewValue(query.seriesAttributeSearch)}` : ''
+  ].filter(Boolean);
+  return parts.join(' | ') || t('otlp.metrics.saved-view.description.empty');
+}
+
+function buildMetricsSavedViewLabel(query: OtlpMetricsQueryState, routeContext: SignalRouteContext, t: OtlpMetricsTranslate) {
+  return (
+    compactMetricsSavedViewValue(query.query, 42)
+    || compactMetricsSavedViewValue(query.series, 42)
+    || compactMetricsSavedViewValue(query.serviceName || routeContext.serviceName, 42)
+    || compactMetricsSavedViewValue(query.groupBy, 42)
+    || t('otlp.metrics.saved-view.current-label')
+  );
+}
+
+function createMetricsSavedQueryView(
+  query: OtlpMetricsQueryState,
+  routeContext: SignalRouteContext,
+  route: string,
+  t: OtlpMetricsTranslate
+): MetricsSavedQueryView {
+  const now = Date.now();
+  return {
+    id: `metrics-query-${now}`,
+    label: buildMetricsSavedViewLabel(query, routeContext, t),
+    description: buildMetricsSavedViewDescription(query, routeContext, t),
+    route,
+    createdAt: now
+  };
+}
+
 export default function OtlpMetricsPage() {
   const { t } = useI18n();
   const router = useRouter();
@@ -86,13 +292,23 @@ export default function OtlpMetricsPage() {
     [metricsTimeRangeLabels]
   );
   const query = useMemo(() => queryStateFromParams(searchParams), [searchParams]);
+  const metricsInspectorView = query.inspector || 'graph';
   const routeContext = useMemo(() => readSignalRouteContext(searchParams), [searchParams]);
+  const currentMetricsRoute = useMemo(() => buildOtlpMetricsRoute(query), [query]);
   const workbenchCacheKey = useMemo(() => buildOtlpMetricsConsoleUrl(query), [query]);
   const load = useCallback(async (): Promise<OtlpMetricsConsole> => loadOtlpMetricsConsole(apiMessageGet, query), [query]);
   const initialDraft = useMemo(() => ({
     query: query.query || '',
+    filter: query.filter || '',
     aggregation: query.aggregation || 'avg',
-    groupBy: query.groupBy || 'service_name',
+    temporalAggregation: query.temporalAggregation || 'raw',
+    groupBy: query.groupBy || '',
+    legendFormat: query.legendFormat || '',
+    formula: query.formula || '',
+    step: query.step || '',
+    limit: query.limit || '',
+    warningThreshold: query.warningThreshold || '',
+    criticalThreshold: query.criticalThreshold || '',
     timeRange: query.timeRange || 'last-30m',
     from: query.from || '',
     to: query.to || '',
@@ -105,11 +321,16 @@ export default function OtlpMetricsPage() {
     serviceName: query.serviceName || '',
     serviceNamespace: query.serviceNamespace || '',
     environment: query.environment || '',
-    traceId: query.traceId || ''
+    traceId: query.traceId || '',
+    spanId: query.spanId || ''
   }), [
     query.aggregation,
     query.environment,
+    query.filter,
     query.groupBy,
+    query.legendFormat,
+    query.formula,
+    query.limit,
     query.query,
     query.end,
     query.from,
@@ -117,16 +338,31 @@ export default function OtlpMetricsPage() {
     query.refresh,
     query.serviceName,
     query.serviceNamespace,
+    query.spanId,
     query.start,
     query.timeRange,
+    query.temporalAggregation,
     query.timezone,
     query.to,
     query.traceId,
-    query.tz
+    query.tz,
+    query.step,
+    query.warningThreshold,
+    query.criticalThreshold
   ]);
   const [draft, setDraft] = useState(initialDraft);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState<string | null>(null);
+  const metricInventorySearch = query.inventorySearch || '';
+  const metricInventorySort: OtlpMetricInventorySort = query.inventorySort || 'name';
+  const metricInventoryPageSize = resolveMetricInventoryPageSize(query.inventoryPageSize);
+  const metricInventoryPageIndex = resolveMetricInventoryPageIndex(query.inventoryPageIndex);
+  const metricAttributeSearch = query.seriesAttributeSearch || '';
+  const [savedQueryViews, setSavedQueryViews] = useState<MetricsSavedQueryView[]>(readMetricsSavedQueryViews);
+  const [editingSavedQueryViewId, setEditingSavedQueryViewId] = useState<string | null>(null);
+  const [savedQueryViewLabelDraft, setSavedQueryViewLabelDraft] = useState('');
   const [metricsChartZoomRange, setMetricsChartZoomRange] = useState<EChartsDataZoomRange | null>(null);
+  const [metricsExportFormat, setMetricsExportFormat] = useState<OtlpMetricsExportFormat>('csv');
+  const [metricsExportScope, setMetricsExportScope] = useState<OtlpMetricsExportScope>('all');
 
   useEffect(() => {
     if (hasMetricsDisplayReturnLabel(searchParams)) {
@@ -141,6 +377,136 @@ export default function OtlpMetricsPage() {
   const updateDraftField = useCallback((field: keyof typeof draft, value: string) => {
     setDraft(previous => ({ ...previous, [field]: value }));
   }, []);
+
+  const replaceMetricsInventoryRoute = useCallback((nextSearch: string, nextSort: OtlpMetricInventorySort) => {
+    router.replace(buildOtlpMetricsRoute({
+      ...query,
+      inventorySearch: nextSearch.trim() || undefined,
+      inventorySort: nextSort === 'name' ? undefined : nextSort,
+      inventoryPageIndex: undefined
+    }));
+  }, [query, router]);
+
+  const replaceMetricsInventoryPageRoute = useCallback((nextPageSize: string, nextPageIndex: string) => {
+    const pageSize = resolveMetricInventoryPageSize(nextPageSize);
+    const pageIndex = resolveMetricInventoryPageIndex(nextPageIndex);
+    router.replace(buildOtlpMetricsRoute({
+      ...query,
+      inventoryPageSize: pageSize === DEFAULT_METRIC_INVENTORY_PAGE_SIZE ? undefined : pageSize,
+      inventoryPageIndex: pageIndex === DEFAULT_METRIC_INVENTORY_PAGE_INDEX ? undefined : pageIndex
+    }));
+  }, [query, router]);
+
+  const replaceMetricsAttributeSearchRoute = useCallback((nextSearch: string) => {
+    router.replace(buildOtlpMetricsRoute({
+      ...query,
+      seriesAttributeSearch: nextSearch.trim() || undefined
+    }));
+  }, [query, router]);
+
+  const applyMetricsInspectorView = useCallback((inspector: NonNullable<OtlpMetricsQueryState['inspector']>) => {
+    router.replace(buildOtlpMetricsRoute({
+      ...query,
+      inspector
+    }));
+  }, [query, router]);
+
+  const applySelectedMetricSeries = useCallback((series: OtlpMetricSeriesView) => {
+    setSelectedSeriesKey(series.key);
+    router.replace(buildOtlpMetricsRoute({
+      ...query,
+      ...buildMetricSeriesRouteContext(series),
+      series: series.key
+    }));
+  }, [query, router]);
+
+  const toggleMetricsExpectedRange = useCallback(() => {
+    router.replace(buildOtlpMetricsRoute({
+      ...query,
+      expectedRange: query.expectedRange === 'on' ? undefined : 'on'
+    }));
+  }, [query, router]);
+
+  const saveCurrentMetricsQueryView = useCallback(() => {
+    const nextView = createMetricsSavedQueryView(query, routeContext, currentMetricsRoute, t);
+    setSavedQueryViews(previous => {
+      const nextViews = [nextView, ...previous.filter(view => view.route !== nextView.route)].slice(0, METRICS_SAVED_QUERY_VIEW_LIMIT);
+      writeMetricsSavedQueryViews(nextViews);
+      return nextViews;
+    });
+  }, [currentMetricsRoute, query, routeContext, t]);
+
+  const copyCurrentMetricsQueryView = useCallback(() => {
+    void copyTextToClipboard(currentMetricsRoute);
+  }, [currentMetricsRoute]);
+
+  const downloadMetricsSeries = useCallback((
+    seriesList: OtlpMetricSeriesView[],
+    selectedSeries: OtlpMetricSeriesView | null | undefined
+  ) => {
+    if (typeof window === 'undefined') return;
+    const exportSeries = metricsExportScope === 'selected' && selectedSeries ? [selectedSeries] : seriesList;
+    if (exportSeries.length === 0) return;
+    const content = metricsExportFormat === 'jsonl'
+      ? buildOtlpMetricsJsonl(exportSeries)
+      : buildOtlpMetricsCsv(exportSeries);
+    const type = metricsExportFormat === 'jsonl' ? 'application/x-ndjson;charset=utf-8' : 'text/csv;charset=utf-8';
+    const blob = new Blob([content], { type });
+    const href = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = href;
+    anchor.download = buildOtlpMetricsExportFilename(metricsExportFormat);
+    anchor.rel = 'noopener';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(href);
+  }, [metricsExportFormat, metricsExportScope]);
+
+  const deleteMetricsSavedQueryView = useCallback((viewId: string) => {
+    setSavedQueryViews(previous => {
+      const nextViews = previous.filter(view => view.id !== viewId);
+      writeMetricsSavedQueryViews(nextViews);
+      return nextViews;
+    });
+  }, []);
+
+  const updateMetricsSavedQueryView = useCallback((viewId: string) => {
+    const nextSnapshot = createMetricsSavedQueryView(query, routeContext, currentMetricsRoute, t);
+    setSavedQueryViews(previous => {
+      const nextViews = previous.map(view => (
+        view.id === viewId
+          ? { ...nextSnapshot, id: view.id, label: view.label, createdAt: view.createdAt }
+          : view
+      ));
+      writeMetricsSavedQueryViews(nextViews);
+      return nextViews;
+    });
+  }, [currentMetricsRoute, query, routeContext, t]);
+
+  const startRenameMetricsSavedQueryView = useCallback((view: MetricsSavedQueryView) => {
+    setEditingSavedQueryViewId(view.id);
+    setSavedQueryViewLabelDraft(view.label);
+  }, []);
+
+  const cancelRenameMetricsSavedQueryView = useCallback(() => {
+    setEditingSavedQueryViewId(null);
+    setSavedQueryViewLabelDraft('');
+  }, []);
+
+  const saveRenameMetricsSavedQueryView = useCallback((viewId: string) => {
+    const nextLabel = savedQueryViewLabelDraft.trim();
+    if (!nextLabel) {
+      cancelRenameMetricsSavedQueryView();
+      return;
+    }
+    setSavedQueryViews(previous => {
+      const nextViews = previous.map(view => (view.id === viewId ? { ...view, label: nextLabel } : view));
+      writeMetricsSavedQueryViews(nextViews);
+      return nextViews;
+    });
+    cancelRenameMetricsSavedQueryView();
+  }, [cancelRenameMetricsSavedQueryView, savedQueryViewLabelDraft]);
 
   const handleMetricsChartZoomChange = useCallback((nextZoom: EChartsDataZoomRange) => {
     setMetricsChartZoomRange(previous => {
@@ -187,33 +553,44 @@ export default function OtlpMetricsPage() {
     query.tz
   ]);
 
-  const applyMetricsQuery = useCallback((nextTimeContext?: TimeContext) => {
+  const replaceMetricsRoute = useCallback((nextDraft: typeof draft, nextTimeContext?: TimeContext, nextSeriesKey?: string, nextSeriesContext: Partial<OtlpMetricsQueryState> = {}) => {
     const timeContext = sanitizeTimeContext({
-      timeRange: nextTimeContext?.timeRange || draft.timeRange || query.timeRange || 'last-30m',
-      from: nextTimeContext?.from || draft.from || query.from,
-      to: nextTimeContext?.to || draft.to || query.to,
-      start: nextTimeContext?.start || draft.start || query.start,
-      end: nextTimeContext?.end || draft.end || query.end,
-      refresh: nextTimeContext?.refresh || draft.refresh || query.refresh,
-      live: nextTimeContext?.live || draft.live || query.live,
-      tz: nextTimeContext?.tz || draft.tz || query.tz,
-      timezone: nextTimeContext?.timezone || draft.timezone || query.timezone
+      timeRange: nextTimeContext?.timeRange || nextDraft.timeRange || query.timeRange || 'last-30m',
+      from: nextTimeContext?.from || nextDraft.from || query.from,
+      to: nextTimeContext?.to || nextDraft.to || query.to,
+      start: nextTimeContext?.start || nextDraft.start || query.start,
+      end: nextTimeContext?.end || nextDraft.end || query.end,
+      refresh: nextTimeContext?.refresh || nextDraft.refresh || query.refresh,
+      live: nextTimeContext?.live || nextDraft.live || query.live,
+      tz: nextTimeContext?.tz || nextDraft.tz || query.tz,
+      timezone: nextTimeContext?.timezone || nextDraft.timezone || query.timezone
     });
     const bounds = resolveTimeContextBounds(timeContext);
     const hasExpressionDraft = Boolean(timeContext.from && timeContext.to);
     const hasAbsoluteDraft = Boolean(timeContext.start && timeContext.end);
     router.replace(buildOtlpMetricsRoute({
       ...query,
-      query: draft.query.trim() || undefined,
-      aggregation: draft.aggregation,
-      groupBy: draft.groupBy,
+      query: nextDraft.query.trim() || undefined,
+      series: nextSeriesKey ?? query.series,
+      filter: nextDraft.filter.trim() || undefined,
+      aggregation: nextDraft.aggregation,
+      temporalAggregation: nextDraft.temporalAggregation === 'raw' ? undefined : nextDraft.temporalAggregation,
+      groupBy: nextDraft.groupBy,
+      legendFormat: nextDraft.legendFormat.trim() || undefined,
+      formula: nextDraft.formula.trim() || undefined,
+      step: nextDraft.step.trim() || undefined,
+      limit: nextDraft.limit.trim() || undefined,
+      warningThreshold: nextDraft.warningThreshold.trim() || undefined,
+      criticalThreshold: nextDraft.criticalThreshold.trim() || undefined,
       timeRange: timeContext.timeRange || 'last-30m',
       from: hasExpressionDraft ? timeContext.from : undefined,
       to: hasExpressionDraft ? timeContext.to : undefined,
-      serviceName: draft.serviceName.trim() || undefined,
-      serviceNamespace: draft.serviceNamespace.trim() || undefined,
-      environment: draft.environment.trim() || undefined,
-      traceId: draft.traceId.trim() || undefined,
+      serviceName: nextDraft.serviceName.trim() || undefined,
+      serviceNamespace: nextDraft.serviceNamespace.trim() || undefined,
+      environment: nextDraft.environment.trim() || undefined,
+      traceId: nextDraft.traceId.trim() || undefined,
+      spanId: nextDraft.spanId.trim() || undefined,
+      ...nextSeriesContext,
       start: hasExpressionDraft ? undefined : bounds?.start || (!hasAbsoluteDraft ? query.start : undefined),
       end: hasExpressionDraft ? undefined : bounds?.end || (!hasAbsoluteDraft ? query.end : undefined),
       refresh: timeContext.refresh,
@@ -221,7 +598,80 @@ export default function OtlpMetricsPage() {
       tz: hasExpressionDraft ? undefined : timeContext.tz,
       timezone: hasExpressionDraft ? timeContext.timezone || timeContext.tz : timeContext.timezone
     }));
-  }, [draft, query, router]);
+  }, [query, router]);
+
+  const applyMetricsQuery = useCallback((nextTimeContext?: TimeContext) => {
+    replaceMetricsRoute(draft, nextTimeContext);
+  }, [draft, replaceMetricsRoute]);
+
+  const applyMetricInventoryQuery = useCallback((metricName: string, series?: OtlpMetricSeriesView | null) => {
+    const nextMetricName = metricName.trim();
+    if (!nextMetricName) return;
+    const nextDraft = {
+      ...draft,
+      query: nextMetricName
+    };
+    setDraft(nextDraft);
+    if (series) setSelectedSeriesKey(series.key);
+    replaceMetricsRoute(nextDraft, undefined, series?.key || query.series, series ? buildMetricSeriesRouteContext(series) : {});
+  }, [draft, query.series, replaceMetricsRoute]);
+
+  const applyMetricAttributeFilter = useCallback((name: string, value: string, series?: OtlpMetricSeriesView | null) => {
+    const expression = buildMetricAttributeFilterExpression(name, value);
+    if (!expression) return;
+    const nextDraft = {
+      ...draft,
+      filter: mergeMetricFilterExpression(draft.filter, expression)
+    };
+    setDraft(nextDraft);
+    replaceMetricsRoute(nextDraft, undefined, series?.key || query.series, series ? buildMetricSeriesRouteContext(series) : {});
+  }, [draft, query.series, replaceMetricsRoute]);
+
+  const applyMetricAttributeReplaceFilter = useCallback((name: string, value: string, series?: OtlpMetricSeriesView | null) => {
+    const expression = buildMetricAttributeFilterExpression(name, value);
+    if (!expression) return;
+    const nextDraft = {
+      ...draft,
+      filter: expression
+    };
+    setDraft(nextDraft);
+    replaceMetricsRoute(nextDraft, undefined, series?.key || query.series, series ? buildMetricSeriesRouteContext(series) : {});
+  }, [draft, query.series, replaceMetricsRoute]);
+
+  const applyMetricGroupValueFilter = useCallback((groupBy: string, value: string) => {
+    const expression = buildMetricAttributeFilterExpression(groupBy, value);
+    if (!expression) return;
+    const nextDraft = {
+      ...draft,
+      filter: mergeMetricFilterExpression(draft.filter, expression),
+      groupBy
+    };
+    setDraft(nextDraft);
+    replaceMetricsRoute(nextDraft);
+  }, [draft, replaceMetricsRoute]);
+
+  const applyMetricSeriesServiceFilter = useCallback((value: string, series?: OtlpMetricSeriesView | null) => {
+    const serviceName = value.trim();
+    if (!serviceName) return;
+    const nextDraft = {
+      ...draft,
+      serviceName
+    };
+    setDraft(nextDraft);
+    if (series) setSelectedSeriesKey(series.key);
+    replaceMetricsRoute(nextDraft, undefined, series?.key || query.series);
+  }, [draft, query.series, replaceMetricsRoute]);
+
+  const applyMetricAttributeGroupBy = useCallback((name: string, series?: OtlpMetricSeriesView | null) => {
+    const groupBy = normalizeMetricGroupByLabel(name);
+    if (!groupBy) return;
+    const nextDraft = {
+      ...draft,
+      groupBy
+    };
+    setDraft(nextDraft);
+    replaceMetricsRoute(nextDraft, undefined, series?.key || query.series, series ? buildMetricSeriesRouteContext(series) : {});
+  }, [draft, query.series, replaceMetricsRoute]);
 
   const applyMetricsTimeContext = useCallback((timeContext: TimeContext) => {
     const sanitized = sanitizeTimeContext(timeContext);
@@ -263,10 +713,11 @@ export default function OtlpMetricsPage() {
           }
         };
         const workbenchState = buildMetricsExplorerState(mergedData, t);
-        const metricSeries = buildMetricSeriesViews(mergedData, t);
+        const metricSeries = applyMetricsFormula(buildMetricSeriesViews(mergedData, t), query.formula);
         const hasMetricSeries = metricSeries.length > 0;
         const seriesRows = buildMetricSeriesRows(metricSeries, t);
         const selectedMetricSeries =
+          metricSeries.find(series => series.key === query.series) ||
           metricSeries.find(series => series.key === selectedSeriesKey) ||
           findMetricSeriesForRouteTrace(metricSeries, query, routeContext) ||
           metricSeries[0] ||
@@ -274,6 +725,8 @@ export default function OtlpMetricsPage() {
         const selectedMetricSeriesIndex = selectedMetricSeries ? metricSeries.findIndex(series => series.key === selectedMetricSeries.key) : -1;
         const selectedSeriesContextRows = buildMetricSeriesContextRows(selectedMetricSeries, t);
         const selectedSeriesEvidenceRows = buildMetricSeriesEvidenceRows(selectedMetricSeries, formatTime, t);
+        const selectedSeriesSampleRows = buildMetricSeriesSampleRows(selectedMetricSeries, formatTime, t);
+        const selectedSeriesAttributeRows = buildMetricSeriesAttributeRows(selectedMetricSeries, metricAttributeSearch);
         const selectedSeriesContextDetailRows = selectedSeriesContextRows.map(row => ({
           key: row.label,
           title: row.label,
@@ -303,7 +756,11 @@ export default function OtlpMetricsPage() {
           ? [selectedMetricSeries, ...metricSeries.filter(series => series.key !== selectedMetricSeries.key)]
           : metricSeries;
         const trendBars = buildMetricTrendBars(trendSourceSeries, formatTime);
-        const metricsChartOption = buildMetricsChartOption(metricSeries);
+        const metricThresholdConfig = buildMetricThresholdConfig(query.warningThreshold, query.criticalThreshold, t);
+        const metricExpectedRangeConfig = query.expectedRange === 'on'
+          ? buildMetricExpectedRangeConfig(selectedMetricSeries || metricSeries[0] || null, t)
+          : null;
+        const metricsChartOption = buildMetricsChartOption(metricSeries, metricThresholdConfig, metricExpectedRangeConfig, query.legendFormat);
         const metricsChartZoomContext = buildMetricsDataZoomTimeContext(
           metricSeries,
           metricsChartZoomRange,
@@ -354,15 +811,34 @@ export default function OtlpMetricsPage() {
         const serviceGroupLabel = t('otlp.metrics.group.service');
         const namespaceGroupLabel = t('otlp.metrics.group.namespace');
         const environmentGroupLabel = t('otlp.metrics.group.environment');
-        const currentGroupLabel = draft.groupBy === 'service_namespace'
-          ? namespaceGroupLabel
-          : draft.groupBy === 'deployment_environment_name'
-            ? environmentGroupLabel
-            : serviceGroupLabel;
+        const noGroupLabel = t('otlp.metrics.group.none');
+        const metricsGroupOptions = [
+          { value: '', label: noGroupLabel },
+          { value: 'service_name', label: serviceGroupLabel },
+          { value: 'service_namespace', label: namespaceGroupLabel },
+          { value: 'deployment_environment_name', label: environmentGroupLabel }
+        ];
+        const hasCustomGroupBy = Boolean(draft.groupBy && !metricsGroupOptions.some(option => option.value === draft.groupBy));
+        const visibleMetricsGroupOptions = hasCustomGroupBy
+          ? [...metricsGroupOptions, { value: draft.groupBy, label: draft.groupBy }]
+          : metricsGroupOptions;
+        const currentGroupLabel = visibleMetricsGroupOptions.find(option => option.value === draft.groupBy)?.label || noGroupLabel;
+        const currentTemporalAggregationLabel = draft.temporalAggregation === 'rate'
+          ? t('otlp.metrics.temporal.rate')
+          : draft.temporalAggregation === 'increase'
+            ? t('otlp.metrics.temporal.increase')
+            : draft.temporalAggregation === 'delta'
+              ? t('otlp.metrics.temporal.delta')
+              : t('otlp.metrics.temporal.raw');
         const headerContextPills = [
           { label: t('otlp.metrics.field.service'), value: firstRouteText(mergedData.context?.serviceName, query.serviceName, draft.serviceName) },
           { label: t('otlp.metrics.field.namespace'), value: firstRouteText(mergedData.context?.serviceNamespace, query.serviceNamespace, draft.serviceNamespace) },
           { label: t('otlp.metrics.field.environment'), value: firstRouteText(mergedData.context?.environment, query.environment, draft.environment) },
+          { label: t('otlp.metrics.filter.short'), value: firstRouteText(query.filter, draft.filter) },
+          {
+            label: t('otlp.metrics.temporal.aria'),
+            value: currentTemporalAggregationLabel
+          },
           {
             label: t('otlp.metrics.field.group-by'),
             value: currentGroupLabel
@@ -385,6 +861,24 @@ export default function OtlpMetricsPage() {
           pointCount: metricSeries[index]?.points.length ?? 0,
           series: metricSeries[index]
         }));
+        const metricInventoryRows = buildMetricInventoryRows(metricSeriesTableRows, metricInventorySearch, metricInventorySort);
+        const metricInventoryPageSizeNumber = Number(metricInventoryPageSize);
+        const metricInventoryTotalPages = Math.max(1, Math.ceil(metricInventoryRows.length / metricInventoryPageSizeNumber));
+        const clampedMetricInventoryPageIndex = Math.min(Number(metricInventoryPageIndex), metricInventoryTotalPages - 1);
+        const metricInventoryPageStartIndex = clampedMetricInventoryPageIndex * metricInventoryPageSizeNumber;
+        const metricInventoryPageRows = metricInventoryRows.slice(metricInventoryPageStartIndex, metricInventoryPageStartIndex + metricInventoryPageSizeNumber);
+        const metricInventoryPageFrom = metricInventoryRows.length === 0 ? 0 : metricInventoryPageStartIndex + 1;
+        const metricInventoryPageTo = metricInventoryRows.length === 0 ? 0 : Math.min(metricInventoryRows.length, metricInventoryPageStartIndex + metricInventoryPageRows.length);
+        const metricInventoryPaginationSummary = t('common.pagination.summary', {
+          page: clampedMetricInventoryPageIndex + 1,
+          totalPages: metricInventoryTotalPages,
+          from: metricInventoryPageFrom,
+          to: metricInventoryPageTo,
+          total: metricInventoryRows.length
+        });
+        const metricInventorySummary = metricInventorySearch.trim()
+          ? t('otlp.metrics.inventory.filtered-count', { filtered: metricInventoryRows.length, total: metricSeriesTableRows.length })
+          : t('otlp.metrics.scope.series-count', { count: metricSeriesTableRows.length });
         const firstSeries = (selectedMetricSeriesIndex >= 0 ? seriesRows[selectedMetricSeriesIndex] : undefined) ?? seriesRows[0] ?? {
           title: mergedData.query || t('otlp.metrics.query.unselected'),
           copy: mergedData.context?.serviceName || routeContext.serviceName || '-',
@@ -567,11 +1061,7 @@ export default function OtlpMetricsPage() {
                     onChange={event => updateDraftField('groupBy', event.target.value)}
                     width="metrics-group-by"
                     triggerClassName="text-[#d5dce8]"
-                    options={[
-                      { value: 'service_name', label: serviceGroupLabel },
-                      { value: 'service_namespace', label: namespaceGroupLabel },
-                      { value: 'deployment_environment_name', label: environmentGroupLabel }
-                    ]}
+                    options={visibleMetricsGroupOptions}
                     optionDataAttributes={option => ({
                       'data-otlp-metrics-group-by-option': option.value
                     })}
@@ -597,6 +1087,135 @@ export default function OtlpMetricsPage() {
                       {t('common.reset')}
                     </HzButtonLink>
                   </HzQueryActionGroup>
+                </HzControlStack>
+                <HzControlStack
+                  layout="inline-wrap"
+                  spacing="top-2"
+                  data-otlp-metrics-builder-control-stack="shared-query-builder-controls"
+                  data-otlp-metrics-builder-control-stack-owner="hertzbeat-ui-control-stack"
+                >
+                  <HzSearchFieldFrame
+                    data-otlp-metrics-filter-search-frame="shared-search-field-frame"
+                    data-otlp-metrics-filter-search-frame-owner="hertzbeat-ui-search-field-frame"
+                    width="metrics-query"
+                    icon={(
+                      <HzSearchFieldIcon
+                        icon={Search}
+                        data-otlp-metrics-filter-search-icon="metric-filter"
+                        data-otlp-metrics-filter-search-icon-owner="hertzbeat-ui-search-field-icon"
+                      />
+                    )}
+                  >
+                    <HzInput
+                      data-otlp-metrics-filter-input="true"
+                      data-otlp-metrics-filter-input-owner="hertzbeat-ui-input"
+                      aria-label={t('otlp.metrics.filter.aria')}
+                      value={draft.filter}
+                      onChange={event => updateDraftField('filter', event.target.value)}
+                      onInput={event => updateDraftField('filter', event.currentTarget.value)}
+                      placeholder={t('otlp.metrics.filter.placeholder')}
+                      inset="search-icon"
+                      width="metrics-filter-expression"
+                    />
+                  </HzSearchFieldFrame>
+                  <HzSelect
+                    data-otlp-metrics-temporal-aggregation-select="true"
+                    data-otlp-metrics-temporal-aggregation-select-owner="hertzbeat-ui-select"
+                    aria-label={t('otlp.metrics.temporal.aria')}
+                    value={draft.temporalAggregation}
+                    onChange={event => updateDraftField('temporalAggregation', event.target.value)}
+                    width="metrics-temporal-aggregation"
+                    triggerClassName="text-[#d5dce8]"
+                    options={[
+                      { value: 'raw', label: t('otlp.metrics.temporal.raw') },
+                      { value: 'rate', label: t('otlp.metrics.temporal.rate') },
+                      { value: 'increase', label: t('otlp.metrics.temporal.increase') },
+                      { value: 'delta', label: t('otlp.metrics.temporal.delta') }
+                    ]}
+                    optionDataAttributes={option => ({
+                      'data-otlp-metrics-temporal-aggregation-option': option.value
+                    })}
+                  />
+                  <HzInput
+                    data-otlp-metrics-step-input="true"
+                    data-otlp-metrics-step-input-owner="hertzbeat-ui-input"
+                    aria-label={t('otlp.metrics.step.aria')}
+                    value={draft.step}
+                    onChange={event => updateDraftField('step', event.target.value)}
+                    onInput={event => updateDraftField('step', event.currentTarget.value)}
+                    placeholder={t('otlp.metrics.step.placeholder')}
+                    inputMode="numeric"
+                    width="metrics-query-step"
+                  />
+                  <HzInput
+                    data-otlp-metrics-limit-input="true"
+                    data-otlp-metrics-limit-input-owner="hertzbeat-ui-input"
+                    aria-label={t('otlp.metrics.limit.aria')}
+                    value={draft.limit}
+                    onChange={event => updateDraftField('limit', event.target.value)}
+                    onInput={event => updateDraftField('limit', event.currentTarget.value)}
+                    placeholder={t('otlp.metrics.limit.placeholder')}
+                    inputMode="numeric"
+                    width="metrics-query-limit"
+                  />
+                  <HzInput
+                    data-otlp-metrics-legend-format-input="true"
+                    data-otlp-metrics-legend-format-input-owner="hertzbeat-ui-input"
+                    aria-label={t('otlp.metrics.legend-format.aria')}
+                    value={draft.legendFormat}
+                    onChange={event => updateDraftField('legendFormat', event.target.value)}
+                    onInput={event => updateDraftField('legendFormat', event.currentTarget.value)}
+                    placeholder={t('otlp.metrics.legend-format.placeholder')}
+                    width="metrics-filter-expression"
+                  />
+                  <HzInput
+                    data-otlp-metrics-formula-input="true"
+                    data-otlp-metrics-formula-input-owner="hertzbeat-ui-input"
+                    aria-label={t('otlp.metrics.formula.aria')}
+                    value={draft.formula}
+                    onChange={event => updateDraftField('formula', event.target.value)}
+                    onInput={event => updateDraftField('formula', event.currentTarget.value)}
+                    placeholder={t('otlp.metrics.formula.placeholder')}
+                    width="metrics-filter-expression"
+                  />
+                  <HzInput
+                    data-otlp-metrics-warning-threshold-input="true"
+                    data-otlp-metrics-warning-threshold-input-owner="hertzbeat-ui-input"
+                    aria-label={t('otlp.metrics.threshold.warning.aria')}
+                    value={draft.warningThreshold}
+                    onChange={event => updateDraftField('warningThreshold', event.target.value)}
+                    onInput={event => updateDraftField('warningThreshold', event.currentTarget.value)}
+                    placeholder={t('otlp.metrics.threshold.warning.placeholder')}
+                    inputMode="decimal"
+                    width="metrics-query-step"
+                  />
+                  <HzInput
+                    data-otlp-metrics-critical-threshold-input="true"
+                    data-otlp-metrics-critical-threshold-input-owner="hertzbeat-ui-input"
+                    aria-label={t('otlp.metrics.threshold.critical.aria')}
+                    value={draft.criticalThreshold}
+                    onChange={event => updateDraftField('criticalThreshold', event.target.value)}
+                    onInput={event => updateDraftField('criticalThreshold', event.currentTarget.value)}
+                    placeholder={t('otlp.metrics.threshold.critical.placeholder')}
+                    inputMode="decimal"
+                    width="metrics-query-step"
+                  />
+                  <HzButton
+                    data-otlp-metrics-expected-range-toggle="true"
+                    data-otlp-metrics-expected-range-toggle-owner="hertzbeat-ui-button"
+                    aria-label={t('otlp.metrics.expected-range.aria')}
+                    aria-pressed={query.expectedRange === 'on'}
+                    intent={query.expectedRange === 'on' ? 'primary' : 'secondary'}
+                    size="md"
+                    onClick={toggleMetricsExpectedRange}
+                  >
+                    <HzButtonIcon
+                      icon={BarChart3}
+                      data-otlp-metrics-expected-range-icon="true"
+                      data-otlp-metrics-expected-range-icon-owner="hertzbeat-ui-button-icon"
+                    />
+                    {t('otlp.metrics.expected-range.label')}
+                  </HzButton>
                 </HzControlStack>
                 <HzControlStack
                   layout="inline-wrap"
@@ -648,7 +1267,167 @@ export default function OtlpMetricsPage() {
                     placeholder={t('otlp.metrics.field.trace-id')}
                     width="metrics-trace-id"
                   />
+                  <HzInput
+                    data-otlp-metrics-span-id-input="true"
+                    data-otlp-metrics-context-input="span-id"
+                    data-otlp-metrics-context-input-owner="hertzbeat-ui-input"
+                    aria-label={t('otlp.metrics.field.span-id')}
+                    value={draft.spanId}
+                    onChange={event => updateDraftField('spanId', event.target.value)}
+                    onInput={event => updateDraftField('spanId', event.currentTarget.value)}
+                    placeholder={t('otlp.metrics.field.span-id')}
+                    width="metrics-trace-id"
+                  />
                 </HzControlStack>
+                <HzPanelSurface
+                  data-otlp-metrics-saved-views="route-query-views"
+                  data-otlp-metrics-saved-views-owner="hertzbeat-ui-panel-surface"
+                  padding="view-switch"
+                  variant="view-switch"
+                >
+                  <HzWorkbenchLayout
+                    as="div"
+                    variant="view-switch"
+                    data-otlp-metrics-saved-view-layout="shared-view-switch"
+                    data-otlp-metrics-saved-view-layout-owner="hertzbeat-ui-workbench-layout"
+                  >
+                    <div className="min-w-[128px] text-[12px] font-semibold text-[#8792a5]">{t('otlp.metrics.saved-view.title')}</div>
+                    <HzActionGroup
+                      layout="end-wrap"
+                      data-otlp-metrics-saved-view-action-group="shared-action-group"
+                      data-otlp-metrics-saved-view-action-group-owner="hertzbeat-ui-action-group"
+                    >
+                      <HzButton
+                        type="button"
+                        intent="secondary"
+                        size="md"
+                        onClick={saveCurrentMetricsQueryView}
+                        data-otlp-metrics-saved-view-action="save-current"
+                        data-otlp-metrics-saved-view-action-owner="hertzbeat-ui-button"
+                      >
+                        <Save className="h-4 w-4" aria-hidden="true" />
+                        {t('otlp.metrics.saved-view.save-current')}
+                      </HzButton>
+                      <HzButton
+                        type="button"
+                        intent="secondary"
+                        size="md"
+                        title={t('otlp.metrics.saved-view.copy-current')}
+                        aria-label={t('otlp.metrics.saved-view.copy-current')}
+                        onClick={copyCurrentMetricsQueryView}
+                        data-otlp-metrics-saved-view-copy-action="current"
+                        data-otlp-metrics-saved-view-copy-owner="hertzbeat-ui-button"
+                      >
+                        <Copy className="h-4 w-4" aria-hidden="true" />
+                      </HzButton>
+                      {savedQueryViews.length ? (
+                        savedQueryViews.map(view => {
+                          const active = view.route === currentMetricsRoute;
+                          const editing = editingSavedQueryViewId === view.id;
+                          return (
+                            <React.Fragment key={view.id}>
+                              {editing ? (
+                                <>
+                                  <HzInput
+                                    value={savedQueryViewLabelDraft}
+                                    onChange={event => setSavedQueryViewLabelDraft(event.target.value)}
+                                    onInput={event => setSavedQueryViewLabelDraft(event.currentTarget.value)}
+                                    aria-label={t('otlp.metrics.saved-view.rename-label')}
+                                    data-otlp-metrics-saved-view-rename-input={view.id}
+                                    data-otlp-metrics-saved-view-rename-input-owner="hertzbeat-ui-input"
+                                  />
+                                  <HzButton
+                                    type="button"
+                                    intent="primary"
+                                    size="md"
+                                    title={t('otlp.metrics.saved-view.rename-save')}
+                                    aria-label={t('otlp.metrics.saved-view.rename-save')}
+                                    data-otlp-metrics-saved-view-rename-save-action={view.id}
+                                    data-otlp-metrics-saved-view-rename-save-owner="hertzbeat-ui-button"
+                                    onClick={() => saveRenameMetricsSavedQueryView(view.id)}
+                                  >
+                                    <Check className="h-4 w-4" aria-hidden="true" />
+                                  </HzButton>
+                                  <HzButton
+                                    type="button"
+                                    intent="secondary"
+                                    size="md"
+                                    title={t('otlp.metrics.saved-view.rename-cancel')}
+                                    aria-label={t('otlp.metrics.saved-view.rename-cancel')}
+                                    data-otlp-metrics-saved-view-rename-cancel-action={view.id}
+                                    data-otlp-metrics-saved-view-rename-cancel-owner="hertzbeat-ui-button"
+                                    onClick={cancelRenameMetricsSavedQueryView}
+                                  >
+                                    <X className="h-4 w-4" aria-hidden="true" />
+                                  </HzButton>
+                                </>
+                              ) : (
+                                <>
+                                  <HzButton
+                                    type="button"
+                                    intent={active ? 'primary' : 'secondary'}
+                                    size="md"
+                                    title={view.description}
+                                    data-otlp-metrics-saved-view-select-action={view.id}
+                                    data-otlp-metrics-saved-view-select-owner="hertzbeat-ui-button"
+                                    data-otlp-metrics-saved-view-active={active ? 'true' : 'false'}
+                                    onClick={() => router.replace(view.route)}
+                                  >
+                                    <Table2 className="h-4 w-4" aria-hidden="true" />
+                                    <span className="min-w-0 truncate">{view.label}</span>
+                                  </HzButton>
+                                  <HzButton
+                                    type="button"
+                                    intent="secondary"
+                                    size="md"
+                                    title={t('otlp.metrics.saved-view.rename')}
+                                    aria-label={t('otlp.metrics.saved-view.rename')}
+                                    data-otlp-metrics-saved-view-rename-action={view.id}
+                                    data-otlp-metrics-saved-view-rename-owner="hertzbeat-ui-button"
+                                    onClick={() => startRenameMetricsSavedQueryView(view)}
+                                  >
+                                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                                  </HzButton>
+                                  <HzButton
+                                    type="button"
+                                    intent="secondary"
+                                    size="md"
+                                    title={t('otlp.metrics.saved-view.update')}
+                                    aria-label={t('otlp.metrics.saved-view.update')}
+                                    data-otlp-metrics-saved-view-update-action={view.id}
+                                    data-otlp-metrics-saved-view-update-owner="hertzbeat-ui-button"
+                                    onClick={() => updateMetricsSavedQueryView(view.id)}
+                                  >
+                                    <Replace className="h-4 w-4" aria-hidden="true" />
+                                  </HzButton>
+                                </>
+                              )}
+                              <HzButton
+                                type="button"
+                                intent="secondary"
+                                size="md"
+                                title={t('common.button.delete')}
+                                aria-label={t('common.button.delete')}
+                                data-otlp-metrics-saved-view-delete-action={view.id}
+                                data-otlp-metrics-saved-view-delete-owner="hertzbeat-ui-button"
+                                onClick={() => deleteMetricsSavedQueryView(view.id)}
+                              >
+                                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                              </HzButton>
+                            </React.Fragment>
+                          );
+                        })
+                      ) : (
+                        <span
+                          className="min-w-0 truncate text-[12px] text-[#727b8c]"
+                          data-otlp-metrics-saved-view-empty="local-route-snapshots"
+                        >
+                          {t('otlp.metrics.saved-view.empty')}
+                        </span>
+                      )}
+                    </HzActionGroup>
+                  </HzWorkbenchLayout>
+                </HzPanelSurface>
               </HzPanelSurface>
 
               <HzPanelSurface
@@ -666,6 +1445,8 @@ export default function OtlpMetricsPage() {
                   <HzPanelSurface
                     data-otlp-metrics-chart-panel="series-set-trend"
                     data-otlp-metrics-chart-panel-owner="hertzbeat-ui-panel-surface"
+                    data-otlp-metrics-explorer-view="time-series"
+                    data-otlp-metrics-explorer-view-owner="hertzbeat-ui-signal-time-series"
                     data-otlp-metrics-chart-panel-variant-owner="hertzbeat-ui-panel-surface"
                     padding="chart-inner"
                     variant="chart-inner"
@@ -691,25 +1472,17 @@ export default function OtlpMetricsPage() {
                         data-otlp-metrics-chart-toolbar-actions-owner="hertzbeat-ui-action-group"
                       >
                         {hasMetricSeries ? (
-                          <HzChipGroup
+                          <HzSignalSummaryStrip
                             data-otlp-metrics-chart-meta-row="compact-real-facts"
-                            data-otlp-metrics-chart-meta-row-owner="hertzbeat-ui-toolbar-chips"
-                            align="end"
+                            data-otlp-metrics-chart-meta-row-owner="hertzbeat-ui-signal-summary-strip"
+                            layout="toolbar"
                             density="compact"
-                          >
-                            {facts.map(fact => (
-                              <HzStatusBadge
-                                key={fact.label}
-                                data-otlp-metrics-chart-meta-fact="true"
-                                data-otlp-metrics-chart-meta-fact-owner="hertzbeat-ui-status-badge"
-                                tone="neutral"
-                                size="sm"
-                                layout="metric-fact"
-                                label={fact.label}
-                                value={fact.value}
-                              />
-                            ))}
-                          </HzChipGroup>
+                            items={facts.map(fact => ({
+                              id: fact.label,
+                              label: fact.label,
+                              value: fact.value
+                            }))}
+                          />
                         ) : null}
                         {metricsChartZoomDraftLabel ? (
                           <HzStatusBadge
@@ -845,54 +1618,159 @@ export default function OtlpMetricsPage() {
                     data-otlp-metrics-series-table-header="shared-panel-header"
                     data-otlp-metrics-series-table-header-owner="hertzbeat-ui-panel-header"
                     chrome="transparent-topless"
-                    title={t('otlp.metrics.series.collection.title')}
+                    title={t('otlp.metrics.inventory.title')}
                     meta={
                       <HzStatusBadge
                         data-otlp-metrics-series-table-summary="result-count"
                         data-otlp-metrics-series-table-summary-owner="hertzbeat-ui-status-badge"
+                        data-otlp-metrics-inventory-count="filtered-series"
                         tone="neutral"
                         size="xs"
                       >
-                        {t('otlp.metrics.scope.series-count', { count: seriesRows.length })}
+                        {metricInventorySummary}
                       </HzStatusBadge>
                     }
                   />
                   <HzPanelSection
+                    data-otlp-metrics-inventory-controls="search-sort"
+                    data-otlp-metrics-inventory-controls-owner="hertzbeat-ui-panel-section"
+                    spacing="stack-2"
+                  >
+                    <HzControlStack
+                      layout="inline-wrap"
+                      data-otlp-metrics-inventory-control-stack="shared-inline-controls"
+                      data-otlp-metrics-inventory-control-stack-owner="hertzbeat-ui-control-stack"
+                    >
+                      <HzSearchFieldFrame
+                        data-otlp-metrics-inventory-search-frame="shared-search-field-frame"
+                        data-otlp-metrics-inventory-search-frame-owner="hertzbeat-ui-search-field-frame"
+                        width="metrics-inventory"
+                        icon={(
+                          <HzSearchFieldIcon
+                            icon={Search}
+                            data-otlp-metrics-inventory-search-icon="metric-inventory"
+                            data-otlp-metrics-inventory-search-icon-owner="hertzbeat-ui-search-field-icon"
+                          />
+                        )}
+                      >
+                        <HzInput
+                          data-otlp-metrics-inventory-search-input="true"
+                          data-otlp-metrics-inventory-search-input-owner="hertzbeat-ui-input"
+                          aria-label={t('otlp.metrics.inventory.search.aria')}
+                          value={metricInventorySearch}
+                          onChange={event => replaceMetricsInventoryRoute(event.target.value, metricInventorySort)}
+                          onInput={event => replaceMetricsInventoryRoute(event.currentTarget.value, metricInventorySort)}
+                          placeholder={t('otlp.metrics.inventory.search.placeholder')}
+                          inset="search-icon"
+                          width="metrics-inventory-search"
+                        />
+                      </HzSearchFieldFrame>
+                      <HzSelect
+                        data-otlp-metrics-inventory-sort-select="true"
+                        data-otlp-metrics-inventory-sort-select-owner="hertzbeat-ui-select"
+                        aria-label={t('otlp.metrics.inventory.sort.aria')}
+                        value={metricInventorySort}
+                        onChange={event => replaceMetricsInventoryRoute(metricInventorySearch, event.target.value as OtlpMetricInventorySort)}
+                        width="metrics-inventory-sort"
+                        triggerClassName="text-[#d5dce8]"
+                        options={[
+                          { value: 'name', label: t('otlp.metrics.inventory.sort.name') },
+                          { value: 'latest', label: t('otlp.metrics.inventory.sort.latest') },
+                          { value: 'samples', label: t('otlp.metrics.inventory.sort.samples') },
+                          { value: 'time-series', label: t('otlp.metrics.inventory.sort.time-series') }
+                        ]}
+                        optionDataAttributes={option => ({
+                          'data-otlp-metrics-inventory-sort-option': option.value
+                        })}
+                      />
+                      <HzSelect
+                        data-otlp-metrics-export-format-select="true"
+                        data-otlp-metrics-export-format-owner="hertzbeat-ui-select"
+                        data-otlp-metrics-export-format-value={metricsExportFormat}
+                        aria-label={t('otlp.metrics.export.format.aria')}
+                        value={metricsExportFormat}
+                        onChange={event => setMetricsExportFormat(event.target.value === 'jsonl' ? 'jsonl' : 'csv')}
+                        width="metrics-inventory-sort"
+                        triggerClassName="text-[#d5dce8]"
+                        options={[
+                          { value: 'csv' satisfies OtlpMetricsExportFormat, label: t('otlp.metrics.export.format.csv') },
+                          { value: 'jsonl' satisfies OtlpMetricsExportFormat, label: t('otlp.metrics.export.format.jsonl') }
+                        ]}
+                        optionDataAttributes={option => ({
+                          'data-otlp-metrics-export-format-option': option.value
+                        })}
+                      />
+                      <HzSelect
+                        data-otlp-metrics-export-scope-select="true"
+                        data-otlp-metrics-export-scope-owner="hertzbeat-ui-select"
+                        data-otlp-metrics-export-scope-value={metricsExportScope}
+                        aria-label={t('otlp.metrics.export.scope.aria')}
+                        value={metricsExportScope}
+                        onChange={event => setMetricsExportScope(METRICS_EXPORT_SCOPES.includes(event.target.value as OtlpMetricsExportScope) ? event.target.value as OtlpMetricsExportScope : 'all')}
+                        width="metrics-inventory-sort"
+                        triggerClassName="text-[#d5dce8]"
+                        options={[
+                          { value: 'all' satisfies OtlpMetricsExportScope, label: t('otlp.metrics.export.scope.all') },
+                          { value: 'selected' satisfies OtlpMetricsExportScope, label: t('otlp.metrics.export.scope.selected') }
+                        ]}
+                        optionDataAttributes={option => ({
+                          'data-otlp-metrics-export-scope-option': option.value
+                        })}
+                      />
+                      <HzButton
+                        type="button"
+                        intent="secondary"
+                        size="md"
+                        disabled={!hasMetricSeries}
+                        onClick={() => downloadMetricsSeries(metricSeries, selectedMetricSeries)}
+                        data-otlp-metrics-download-action="current-query"
+                        data-otlp-metrics-download-owner="hertzbeat-ui-button"
+                        data-otlp-metrics-download-format={metricsExportFormat}
+                        data-otlp-metrics-download-scope={metricsExportScope}
+                        data-otlp-metrics-download-series-count={metricSeries.length}
+                        aria-label={t('otlp.metrics.export.download.aria', { format: metricsExportFormat.toUpperCase() })}
+                      >
+                        <HzButtonIcon
+                          icon={Download}
+                          data-otlp-metrics-download-icon="download"
+                          data-otlp-metrics-download-icon-owner="hertzbeat-ui-button-icon"
+                        />
+                        {t('otlp.metrics.export.download')}
+                      </HzButton>
+                    </HzControlStack>
+                  </HzPanelSection>
+                  <HzPanelSection
                     data-otlp-metrics-series-set-summary-section="shared-panel-section"
                     data-otlp-metrics-series-set-summary-section-owner="hertzbeat-ui-panel-section"
                   >
-                    <HzStatStrip
-                      columns={4}
-                      frame="panel-inset"
-                      spacing="compact"
+                    <HzSignalSummaryStrip
                       data-otlp-metrics-series-set-summary="service-entity-scope"
-                      data-otlp-metrics-series-set-summary-owner="hertzbeat-ui-stat-strip"
-                      data-otlp-metrics-series-set-summary-strip="shared-stat-strip"
-                      data-otlp-metrics-series-set-summary-strip-owner="hertzbeat-ui-stat-strip"
-                    >
-                      {seriesSetScopeRows.map(row => (
-                        <HzStatCell
-                          key={row.label}
-                          data-otlp-metrics-series-set-summary-cell={row.label}
-                          data-otlp-metrics-series-set-summary-cell-owner="hertzbeat-ui-stat-cell"
-                          label={row.label}
-                          value={row.value}
-                          variant="tile"
-                          density="compact"
-                          frame="inset"
-                        />
-                      ))}
-                    </HzStatStrip>
+                      data-otlp-metrics-series-set-summary-owner="hertzbeat-ui-signal-summary-strip"
+                      data-otlp-metrics-series-set-summary-strip="inline-signal-summary"
+                      data-otlp-metrics-series-set-summary-strip-owner="hertzbeat-ui-signal-summary-strip"
+                      density="compact"
+                      items={seriesSetScopeRows.map(row => ({
+                        id: row.label,
+                        label: row.label,
+                        value: row.value
+                      }))}
+                    />
                   </HzPanelSection>
                   <HzDataTable
                     data-otlp-metrics-series-data-table="shared-data-table"
                     data-otlp-metrics-series-data-table-owner="hertzbeat-ui-data-table"
+                    data-otlp-metrics-inventory="metric-inventory"
+                    data-otlp-metrics-inventory-owner="hertzbeat-ui-data-table"
+                    data-otlp-metrics-inventory-filtered-count={metricInventoryRows.length}
+                    data-otlp-metrics-inventory-total-count={metricSeriesTableRows.length}
+                    data-otlp-metrics-inventory-page-size={metricInventoryPageSize}
+                    data-otlp-metrics-inventory-page-index={clampedMetricInventoryPageIndex}
                     variant="embedded"
-                    rows={metricSeriesTableRows}
+                    rows={metricInventoryPageRows}
                     getRowKey={row => row.rowKey}
                     selectedRowKey={selectedMetricSeries?.key}
                     onRowClick={row => {
-                      if (row.series) setSelectedSeriesKey(row.series.key);
+                      if (row.series) applySelectedMetricSeries(row.series);
                     }}
                     getRowProps={row => ({
                       'data-otlp-metrics-series-row': 'selectable-series',
@@ -912,12 +1790,108 @@ export default function OtlpMetricsPage() {
                       {
                         key: 'name',
                         header: t('otlp.metrics.series.context.metric-name'),
-                        render: row => <HzDataCellText variant="title" display="block">{row.title}</HzDataCellText>
+                        render: row => row.series ? (
+                          <HzButton
+                            type="button"
+                            size="xs"
+                            intent="ghost"
+                            data-otlp-metrics-inventory-query-action={row.series.key}
+                            data-otlp-metrics-inventory-query-action-owner="hertzbeat-ui-button"
+                            aria-label={t('otlp.metrics.inventory.query-action.aria', { metric: row.title })}
+                            onClick={event => {
+                              event.stopPropagation();
+                              applyMetricInventoryQuery(row.title, row.series);
+                            }}
+                            className="min-w-0 justify-start truncate font-mono"
+                          >
+                            {row.title}
+                          </HzButton>
+                        ) : (
+                          <HzDataCellText variant="title" display="block">{row.title}</HzDataCellText>
+                        )
+                      },
+                      {
+                        key: 'description',
+                        header: t('otlp.metrics.inventory.column.description'),
+                        render: row => (
+                          <HzDataCellText
+                            variant="meta"
+                            display="block"
+                            casing="plain"
+                            data-otlp-metrics-inventory-description-owner="hertzbeat-ui-data-cell-text"
+                          >
+                            {row.description}
+                          </HzDataCellText>
+                        )
+                      },
+                      {
+                        key: 'type',
+                        header: t('otlp.metrics.inventory.column.type'),
+                        render: row => (
+                          <HzDataCellText
+                            variant="value"
+                            data-otlp-metrics-inventory-type-owner="hertzbeat-ui-data-cell-text"
+                          >
+                            {row.metricType}
+                          </HzDataCellText>
+                        )
+                      },
+                      {
+                        key: 'unit',
+                        header: t('otlp.metrics.inventory.column.unit'),
+                        render: row => (
+                          <HzDataCellText
+                            variant="value"
+                            font="mono"
+                            data-otlp-metrics-inventory-unit-owner="hertzbeat-ui-data-cell-text"
+                          >
+                            {row.unit}
+                          </HzDataCellText>
+                        )
                       },
                       {
                         key: 'service',
                         header: t('otlp.metrics.field.service'),
-                        render: row => <HzDataCellText variant="value">{row.copy}</HzDataCellText>
+                        render: row => {
+                          const groupFilter = buildMetricGroupValueFilter(draft.groupBy, row.series);
+                          const serviceFilter = buildMetricSeriesServiceFilter(row.series);
+                          return groupFilter ? (
+                            <HzButton
+                              type="button"
+                              size="xs"
+                              intent="ghost"
+                              data-otlp-metrics-series-group-filter-action={groupFilter.groupBy}
+                              data-otlp-metrics-series-group-filter-value={groupFilter.value}
+                              data-otlp-metrics-series-group-filter-owner="hertzbeat-ui-button"
+                              aria-label={t('otlp.metrics.group.filter-action.aria', { groupBy: groupFilter.groupBy, value: groupFilter.value })}
+                              onClick={event => {
+                                event.stopPropagation();
+                                applyMetricGroupValueFilter(groupFilter.groupBy, groupFilter.value);
+                              }}
+                              className="min-w-0 justify-start truncate font-mono"
+                            >
+                              {groupFilter.value}
+                            </HzButton>
+                          ) : serviceFilter ? (
+                            <HzButton
+                              type="button"
+                              size="xs"
+                              intent="ghost"
+                              data-otlp-metrics-series-service-filter-action={serviceFilter.value}
+                              data-otlp-metrics-series-service-filter-owner="hertzbeat-ui-button"
+                              aria-label={t('otlp.metrics.service.filter-action.aria', { service: serviceFilter.value })}
+                              onClick={event => {
+                                event.stopPropagation();
+                                applyMetricSeriesServiceFilter(serviceFilter.value, row.series);
+                              }}
+                              className="min-w-0 justify-start truncate font-mono"
+                            >
+                              {serviceFilter.value}
+                            </HzButton>
+                          ) : (
+                            <HzDataCellText variant="value">{row.copy}</HzDataCellText>
+                          );
+                        }
                       },
                       {
                         key: 'entity',
@@ -960,7 +1934,19 @@ export default function OtlpMetricsPage() {
                       {
                         key: 'points',
                         header: t('otlp.metrics.evidence.samples'),
-                        render: row => <HzDataCellText variant="value">{row.pointCount}</HzDataCellText>
+                        render: row => <HzDataCellText variant="value">{row.sampleCount ?? row.pointCount}</HzDataCellText>
+                      },
+                      {
+                        key: 'time-series',
+                        header: t('otlp.metrics.inventory.column.time-series'),
+                        render: row => (
+                          <HzDataCellText
+                            variant="value"
+                            data-otlp-metrics-inventory-time-series-owner="hertzbeat-ui-data-cell-text"
+                          >
+                            {row.timeSeriesCount}
+                          </HzDataCellText>
+                        )
                       },
                       {
                         key: 'time',
@@ -968,6 +1954,47 @@ export default function OtlpMetricsPage() {
                         render: () => <HzDataCellText variant="timestamp">{formatTime(latestObservedAt)}</HzDataCellText>
                       }
                     ]}
+                  />
+                  <HzPaginationBar
+                    data-otlp-metrics-inventory-pagination="shared-pagination-bar"
+                    data-otlp-metrics-inventory-pagination-owner="hertzbeat-ui-pagination-bar"
+                    summary={metricInventoryPaginationSummary}
+                    pageSizeLabel={t('common.page-size')}
+                    pageSizeValue={metricInventoryPageSize}
+                    pageSizeOptions={METRIC_INVENTORY_PAGE_SIZE_OPTIONS.map(value => ({
+                      value,
+                      label: value
+                    }))}
+                    onPageSizeChange={value => replaceMetricsInventoryPageRoute(value, DEFAULT_METRIC_INVENTORY_PAGE_INDEX)}
+                    pageJumpLabel={t('common.page')}
+                    pageJumpValue={String(clampedMetricInventoryPageIndex + 1)}
+                    pageJumpMax={metricInventoryTotalPages}
+                    onPageJumpChange={value => {
+                      const nextPage = Number(value);
+                      if (!Number.isInteger(nextPage)) return;
+                      replaceMetricsInventoryPageRoute(metricInventoryPageSize, String(Math.max(0, nextPage - 1)));
+                    }}
+                    previousLabel={t('common.previous-page')}
+                    nextLabel={t('common.next-page')}
+                    previousDisabled={clampedMetricInventoryPageIndex <= 0}
+                    nextDisabled={clampedMetricInventoryPageIndex >= metricInventoryTotalPages - 1}
+                    onPrevious={() => replaceMetricsInventoryPageRoute(metricInventoryPageSize, String(Math.max(0, clampedMetricInventoryPageIndex - 1)))}
+                    onNext={() => replaceMetricsInventoryPageRoute(metricInventoryPageSize, String(clampedMetricInventoryPageIndex + 1))}
+                    pageSizeSelectProps={{
+                      'data-otlp-metrics-inventory-pagination-page-size': 'true',
+                      optionDataAttributes: option => ({
+                        'data-otlp-metrics-inventory-page-size-option': option.value
+                      })
+                    }}
+                    pageJumpInputProps={{
+                      'data-otlp-metrics-inventory-pagination-page-jump': 'true'
+                    }}
+                    previousButtonProps={{
+                      'data-otlp-metrics-inventory-pagination-previous': 'true'
+                    }}
+                    nextButtonProps={{
+                      'data-otlp-metrics-inventory-pagination-next': 'true'
+                    }}
                   />
                 </HzPanelSurface>
 
@@ -993,25 +2020,59 @@ export default function OtlpMetricsPage() {
                     data-otlp-metrics-detail-panel-body="compact-evidence-stack"
                     data-otlp-metrics-detail-panel-body-owner="hertzbeat-ui-panel-section"
                   >
-                    <HzStatStrip
-                      columns={3}
-                      frame="panel-solid"
+                    <HzSignalSummaryStrip
                       data-otlp-metrics-detail-summary-stats="shared-stat-strip"
-                      data-otlp-metrics-detail-summary-stats-owner="hertzbeat-ui-stat-strip"
+                      data-otlp-metrics-detail-summary-stats-owner="hertzbeat-ui-signal-summary-strip"
+                      layout="detail"
+                      density="compact"
+                      items={metrics.map(metric => ({
+                        id: metric.label,
+                        label: metric.label,
+                        value: metric.value
+                      }))}
+                    />
+                    <HzActionGroup
+                      layout="inline-wrap"
+                      data-otlp-metrics-inspector-toggle="graph-table"
+                      data-otlp-metrics-inspector-toggle-owner="hertzbeat-ui-action-group"
+                      data-otlp-metrics-inspector-view={metricsInspectorView}
+                      aria-label={t('otlp.metrics.inspector.aria')}
                     >
-                      {metrics.map(metric => (
-                        <HzStatCell
-                          key={metric.label}
-                          data-otlp-metrics-detail-summary-stat={metric.label}
-                          data-otlp-metrics-detail-summary-stat-owner="hertzbeat-ui-stat-cell"
-                          label={metric.label}
-                          value={metric.value}
-                          variant="tile"
-                          density="compact"
-                          frame="flush"
+                      <HzButton
+                        type="button"
+                        size="sm"
+                        intent={metricsInspectorView === 'graph' ? 'secondary' : 'ghost'}
+                        aria-pressed={metricsInspectorView === 'graph'}
+                        data-otlp-metrics-inspector-action="graph"
+                        data-otlp-metrics-inspector-action-owner="hertzbeat-ui-button"
+                        data-otlp-metrics-inspector-action-active={metricsInspectorView === 'graph' ? 'true' : 'false'}
+                        onClick={() => applyMetricsInspectorView('graph')}
+                      >
+                        <HzButtonIcon
+                          icon={BarChart3}
+                          data-otlp-metrics-inspector-action-icon="graph"
+                          data-otlp-metrics-inspector-action-icon-owner="hertzbeat-ui-button-icon"
                         />
-                      ))}
-                    </HzStatStrip>
+                        {t('otlp.metrics.inspector.graph')}
+                      </HzButton>
+                      <HzButton
+                        type="button"
+                        size="sm"
+                        intent={metricsInspectorView === 'table' ? 'secondary' : 'ghost'}
+                        aria-pressed={metricsInspectorView === 'table'}
+                        data-otlp-metrics-inspector-action="table"
+                        data-otlp-metrics-inspector-action-owner="hertzbeat-ui-button"
+                        data-otlp-metrics-inspector-action-active={metricsInspectorView === 'table' ? 'true' : 'false'}
+                        onClick={() => applyMetricsInspectorView('table')}
+                      >
+                        <HzButtonIcon
+                          icon={Table2}
+                          data-otlp-metrics-inspector-action-icon="table"
+                          data-otlp-metrics-inspector-action-icon-owner="hertzbeat-ui-button-icon"
+                        />
+                        {t('otlp.metrics.inspector.table')}
+                      </HzButton>
+                    </HzActionGroup>
                     <HzDetailRows
                       data-otlp-metrics-detail-context-rows="shared-detail-rows"
                       data-otlp-metrics-detail-context-rows-owner="hertzbeat-ui-detail-rows"
@@ -1029,7 +2090,44 @@ export default function OtlpMetricsPage() {
                         rows={selectedSeriesContextDetailRows}
                       />
                     ) : null}
-                    {selectedSeriesEvidenceRows.length > 0 ? (
+                    {metricsInspectorView === 'table' ? (
+                      <HzDataTable
+                        data-otlp-metrics-inspector-sample-table="selected-series-samples"
+                        data-otlp-metrics-inspector-sample-table-owner="hertzbeat-ui-data-table"
+                        data-otlp-metrics-inspector-sample-table-view={metricsInspectorView}
+                        variant="embedded"
+                        rows={selectedSeriesSampleRows}
+                        getRowKey={row => row.key}
+                        emptyLabel={t('otlp.metrics.inspector.empty')}
+                        columns={[
+                          {
+                            key: 'index',
+                            header: t('otlp.metrics.inspector.column.index'),
+                            render: row => <HzDataCellText variant="meta">{row.index}</HzDataCellText>
+                          },
+                          {
+                            key: 'timestamp',
+                            header: t('otlp.metrics.inspector.column.timestamp'),
+                            render: row => <HzDataCellText variant="timestamp">{row.timestamp}</HzDataCellText>
+                          },
+                          {
+                            key: 'rawTimestamp',
+                            header: t('otlp.metrics.inspector.column.raw-timestamp'),
+                            render: row => <HzDataCellText variant="value" font="mono">{row.rawTimestamp}</HzDataCellText>
+                          },
+                          {
+                            key: 'value',
+                            header: t('otlp.metrics.inspector.column.value'),
+                            render: row => <HzDataCellText variant="value" font="mono" tone={row.value === '-' ? 'muted' : 'bright'}>{row.value}</HzDataCellText>
+                          },
+                          {
+                            key: 'state',
+                            header: t('otlp.metrics.inspector.column.state'),
+                            render: row => <HzDataCellText variant="meta">{row.state}</HzDataCellText>
+                          }
+                        ]}
+                      />
+                    ) : selectedSeriesEvidenceRows.length > 0 ? (
                       <HzDetailRows
                         data-otlp-metrics-selected-series-evidence="real-sample-evidence"
                         data-otlp-metrics-selected-series-evidence-owner="hertzbeat-ui-detail-rows"
@@ -1075,6 +2173,12 @@ export default function OtlpMetricsPage() {
                       <HzButtonLink component={Link} href={handoffLinks.alertHandlingHref} size="md" layout="full" data-otlp-metrics-alert-handling-action="true">
                         {t('otlp.metrics.handoff.alerts')}
                       </HzButtonLink>
+                      <HzButtonLink component={Link} href={handoffLinks.alertRulesHref} size="md" layout="full" data-otlp-metrics-alert-rule-action="true">
+                        {t('explorer.actions.create-alert')}
+                      </HzButtonLink>
+                      <HzButtonLink component={Link} href={handoffLinks.dashboardHref} size="md" layout="full" data-otlp-metrics-dashboard-action="true">
+                        {t('explorer.actions.add-dashboard')}
+                      </HzButtonLink>
                       <HzButtonLink component={Link} href={handoffLinks.logsHref} size="md" layout="full" data-otlp-metrics-logs-action="true">
                         {t('otlp.metrics.handoff.logs.action')}
                       </HzButtonLink>
@@ -1092,6 +2196,133 @@ export default function OtlpMetricsPage() {
                     data-otlp-metrics-secondary-context="collapsible-evidence-diagnostics"
                     data-otlp-metrics-secondary-context-owner="hertzbeat-ui-panel-section"
                   >
+                    <HzCollapsibleSection
+                      data-otlp-metrics-attribute-summary="selected-series-labels"
+                      data-otlp-metrics-attribute-summary-panel="collapsible"
+                      data-otlp-metrics-attribute-summary-owner="hertzbeat-ui-collapsible-section"
+                      aria-label={t('otlp.metrics.attributes.aria')}
+                      title={t('otlp.metrics.attributes.title')}
+                      meta={t('otlp.metrics.attributes.meta')}
+                      surface="inset"
+                    >
+                      <HzControlStack
+                        layout="inline-wrap"
+                        data-otlp-metrics-attribute-controls="search"
+                        data-otlp-metrics-attribute-controls-owner="hertzbeat-ui-control-stack"
+                      >
+                        <HzSearchFieldFrame
+                          data-otlp-metrics-attribute-search-frame="shared-search-field-frame"
+                          data-otlp-metrics-attribute-search-frame-owner="hertzbeat-ui-search-field-frame"
+                          width="metrics-inventory"
+                          icon={(
+                            <HzSearchFieldIcon
+                              icon={Search}
+                              data-otlp-metrics-attribute-search-icon="metric-attribute"
+                              data-otlp-metrics-attribute-search-icon-owner="hertzbeat-ui-search-field-icon"
+                            />
+                          )}
+                        >
+                          <HzInput
+                            data-otlp-metrics-attribute-search-input="true"
+                            data-otlp-metrics-attribute-search-input-owner="hertzbeat-ui-input"
+                            aria-label={t('otlp.metrics.attributes.search.aria')}
+                            value={metricAttributeSearch}
+                            onChange={event => replaceMetricsAttributeSearchRoute(event.target.value)}
+                            onInput={event => replaceMetricsAttributeSearchRoute(event.currentTarget.value)}
+                            placeholder={t('otlp.metrics.attributes.search.placeholder')}
+                            inset="search-icon"
+                            width="metrics-inventory-search"
+                          />
+                        </HzSearchFieldFrame>
+                      </HzControlStack>
+                      <HzDataTable
+                        data-otlp-metrics-attribute-table="selected-series-labels"
+                        data-otlp-metrics-attribute-table-owner="hertzbeat-ui-data-table"
+                        data-otlp-metrics-attribute-table-count={selectedSeriesAttributeRows.length}
+                        variant="embedded"
+                        rows={selectedSeriesAttributeRows}
+                        getRowKey={row => row.key}
+                        emptyLabel={t('otlp.metrics.attributes.empty')}
+                        columns={[
+                          {
+                            key: 'name',
+                            header: t('otlp.metrics.attributes.column.name'),
+                            render: row => <HzDataCellText variant="value" font="mono">{row.name}</HzDataCellText>
+                          },
+                          {
+                            key: 'value',
+                            header: t('otlp.metrics.attributes.column.value'),
+                            render: row => <HzDataCellText variant="meta" display="block" casing="plain">{row.value}</HzDataCellText>
+                          },
+                          {
+                            key: 'filter',
+                            header: t('otlp.metrics.attributes.column.filter'),
+                            render: row => (
+                              <HzButton
+                                type="button"
+                                size="xs"
+                                intent="ghost"
+                                data-otlp-metrics-attribute-filter-action={row.name}
+                                data-otlp-metrics-attribute-filter-action-owner="hertzbeat-ui-button"
+                                aria-label={t('otlp.metrics.attributes.filter-action.aria', { name: row.name, value: row.value })}
+                                onClick={() => applyMetricAttributeFilter(row.name, row.value, selectedMetricSeries)}
+                              >
+                                <HzButtonIcon
+                                  icon={Filter}
+                                  data-otlp-metrics-attribute-filter-action-icon={row.name}
+                                  data-otlp-metrics-attribute-filter-action-icon-owner="hertzbeat-ui-button-icon"
+                                />
+                                {t('otlp.metrics.attributes.filter-action')}
+                              </HzButton>
+                            )
+                          },
+                          {
+                            key: 'replace',
+                            header: t('otlp.metrics.attributes.column.replace'),
+                            render: row => (
+                              <HzButton
+                                type="button"
+                                size="xs"
+                                intent="ghost"
+                                data-otlp-metrics-attribute-replace-action={row.name}
+                                data-otlp-metrics-attribute-replace-action-owner="hertzbeat-ui-button"
+                                aria-label={t('otlp.metrics.attributes.replace-action.aria', { name: row.name, value: row.value })}
+                                onClick={() => applyMetricAttributeReplaceFilter(row.name, row.value, selectedMetricSeries)}
+                              >
+                                <HzButtonIcon
+                                  icon={Replace}
+                                  data-otlp-metrics-attribute-replace-action-icon={row.name}
+                                  data-otlp-metrics-attribute-replace-action-icon-owner="hertzbeat-ui-button-icon"
+                                />
+                                {t('otlp.metrics.attributes.replace-action')}
+                              </HzButton>
+                            )
+                          },
+                          {
+                            key: 'group',
+                            header: t('otlp.metrics.attributes.column.group'),
+                            render: row => (
+                              <HzButton
+                                type="button"
+                                size="xs"
+                                intent="ghost"
+                                data-otlp-metrics-attribute-group-action={row.name}
+                                data-otlp-metrics-attribute-group-action-owner="hertzbeat-ui-button"
+                                aria-label={t('otlp.metrics.attributes.group-action.aria', { name: row.name })}
+                                onClick={() => applyMetricAttributeGroupBy(row.name, selectedMetricSeries)}
+                              >
+                                <HzButtonIcon
+                                  icon={Workflow}
+                                  data-otlp-metrics-attribute-group-action-icon={row.name}
+                                  data-otlp-metrics-attribute-group-action-icon-owner="hertzbeat-ui-button-icon"
+                                />
+                                {t('otlp.metrics.attributes.group-action')}
+                              </HzButton>
+                            )
+                          }
+                        ]}
+                      />
+                    </HzCollapsibleSection>
                     {linkedRecordRows.length > 0 ? (
                       <HzCollapsibleSection
                         data-otlp-metrics-linked-record-summary="log-trace-alert-links"

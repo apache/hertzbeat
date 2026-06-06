@@ -121,6 +121,8 @@ describe('alert setting view model', () => {
         spanId: 'span-456',
         collector: 'collector-a',
         template: 'spring-boot',
+        alertQuery: 'operationName=POST /checkout\nerrorOnly=true',
+        alertQueryType: 'traces',
         returnTo: '/trace/manage?traceId=trace-123&returnLabel=Trace'
       },
       t
@@ -130,10 +132,17 @@ describe('alert setting view model', () => {
       signal: 'traces',
       title: t('alert.rule.evidence.setting.title', { signal: t('alert.rule.signal.traces') }),
       returnHref: '/trace/manage?traceId=trace-123',
+      sourceQuery: 'operationName=POST /checkout\nerrorOnly=true',
+      sourceQueryType: 'traces',
       labelsText:
         'hertzbeat.signal:traces, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot'
     });
     expect(context?.rows.map(row => row.label)).toContain(t('signal.context.trace.label'));
+    expect(context?.rows).toContainEqual({
+      label: t('alert.rule.evidence.query.label'),
+      value: 'operationName=POST /checkout\nerrorOnly=true',
+      meta: 'traces'
+    });
   });
 
   it('localizes threshold evidence context and inherited rows outside zh-CN', () => {

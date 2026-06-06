@@ -2,13 +2,16 @@ import {
   appendSignalRouteContext,
   buildSignalAlertHandlingHref,
   buildSignalAlertRulesHref,
+  buildSignalDashboardHref,
   buildSignalEntityHref,
   stripReturnLabelFromHref,
+  type SignalAlertRuleDraftContext,
   type SignalRouteContext
 } from '../signal-route-context';
 import type { CodeNavigationHint, LogEntry, TraceSpanNode } from '@/lib/types';
 import { buildCodeNavigationUrl } from '../code-navigation';
 import { logSeverityTone, type LogSeverityTone } from './display-mapping';
+import type { LogQueryState } from './query-state';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
@@ -32,6 +35,13 @@ export type LogAttributionDiagnostic = {
   meta: string;
 };
 
+export type LogAttributeRow = {
+  key: string;
+  source: string;
+  name: string;
+  value: string;
+};
+
 export type LogExplorerRow = {
   key: string;
   timestamp: string;
@@ -42,6 +52,22 @@ export type LogExplorerRow = {
   traceId: string;
   spanId: string;
 };
+
+export type LogMetricsPreviewTarget = {
+  family: 'cpu' | 'memory';
+  query: string;
+  source: 'k8s' | 'host';
+};
+
+const LOG_K8S_METRICS_PREVIEW_TARGETS: LogMetricsPreviewTarget[] = [
+  { family: 'cpu', query: 'container.cpu.usage', source: 'k8s' },
+  { family: 'memory', query: 'container.memory.working_set', source: 'k8s' }
+];
+
+const LOG_HOST_METRICS_PREVIEW_TARGETS: LogMetricsPreviewTarget[] = [
+  { family: 'cpu', query: 'system.cpu.utilization', source: 'host' },
+  { family: 'memory', query: 'system.memory.usage', source: 'host' }
+];
 
 export function buildTrendRows(hourlyStats: Record<string, number> | undefined, t: Translator): Row[] {
   return Object.entries(hourlyStats || {})
@@ -140,6 +166,45 @@ export function buildSelectedLogFacts(
       : []),
     ...buildHertzBeatLogFacts(selectedLog)
   ];
+}
+
+export function buildLogAttributeRows(selectedLog: LogEntry | null, t: Translator): LogAttributeRow[] {
+  const rows = [
+    ...buildAttributeRows('resource', selectedLog?.resource, t('log.manage.attributes.source.resource'), t),
+    ...buildAttributeRows('attribute', selectedLog?.attributes, t('log.manage.attributes.source.attribute'), t)
+  ].sort((left, right) => left.source.localeCompare(right.source) || left.name.localeCompare(right.name));
+
+  if (rows.length > 0) return rows;
+
+  return [
+    {
+      key: 'empty',
+      source: '-',
+      name: t('log.manage.attributes.empty.name'),
+      value: t('log.manage.attributes.empty.value')
+    }
+  ];
+}
+
+function buildAttributeRows(kind: 'resource' | 'attribute', attributes: Record<string, unknown> | undefined, source: string, t: Translator): LogAttributeRow[] {
+  return Object.entries(attributes || {})
+    .filter(([key]) => key.trim() !== '')
+    .map(([key, value]) => ({
+      key: `${kind}-${key}`,
+      source,
+      name: key,
+      value: formatLogAttributeValue(value, t)
+    }));
+}
+
+function formatLogAttributeValue(value: unknown, t: Translator): string {
+  if (value == null) return '-';
+  if (Array.isArray(value)) {
+    const values = value.map(part => formatLogAttributeValue(part, t)).filter(part => part !== '-');
+    return values.length > 0 ? values.join(', ') : '-';
+  }
+  if (typeof value === 'object') return t('log.manage.attributes.value.object');
+  return String(value);
 }
 
 function buildHertzBeatLogFacts(selectedLog: LogEntry): Fact[] {
@@ -264,6 +329,208 @@ function resolveCurrentTimeWindow(logEntry?: LogEntry): [number, number] {
   return [end - 15 * 60 * 1000, end];
 }
 
+function escapeMetricFilterValue(value: string) {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function buildMetricFilterExpression(name: string, value: string | undefined) {
+  const trimmedName = name.trim();
+  const trimmedValue = value?.trim();
+  if (!trimmedName || !trimmedValue || trimmedValue === '-') return undefined;
+  return `${trimmedName}="${escapeMetricFilterValue(trimmedValue)}"`;
+}
+
+function buildLogMetricsResourceFilter(selectedLog: LogEntry | null) {
+  const expressions = [
+    buildMetricFilterExpression('k8s.namespace.name', firstText(
+      readAttribute(selectedLog?.resource, 'k8s.namespace.name'),
+      readAttribute(selectedLog?.attributes, 'k8s.namespace.name'),
+      readAttribute(selectedLog?.resource, 'k8s_namespace_name'),
+      readAttribute(selectedLog?.attributes, 'k8s_namespace_name')
+    )),
+    buildMetricFilterExpression('k8s.pod.name', firstText(
+      readAttribute(selectedLog?.resource, 'k8s.pod.name'),
+      readAttribute(selectedLog?.attributes, 'k8s.pod.name'),
+      readAttribute(selectedLog?.resource, 'k8s_pod_name'),
+      readAttribute(selectedLog?.attributes, 'k8s_pod_name')
+    )),
+    buildMetricFilterExpression('k8s.node.name', firstText(
+      readAttribute(selectedLog?.resource, 'k8s.node.name'),
+      readAttribute(selectedLog?.attributes, 'k8s.node.name'),
+      readAttribute(selectedLog?.resource, 'k8s_node_name'),
+      readAttribute(selectedLog?.attributes, 'k8s_node_name')
+    )),
+    buildMetricFilterExpression('k8s.container.name', firstText(
+      readAttribute(selectedLog?.resource, 'k8s.container.name'),
+      readAttribute(selectedLog?.attributes, 'k8s.container.name'),
+      readAttribute(selectedLog?.resource, 'container.name'),
+      readAttribute(selectedLog?.attributes, 'container.name'),
+      readAttribute(selectedLog?.resource, 'k8s_container_name'),
+      readAttribute(selectedLog?.attributes, 'k8s_container_name')
+    )),
+    buildMetricFilterExpression('host.name', firstText(
+      readAttribute(selectedLog?.resource, 'host.name'),
+      readAttribute(selectedLog?.attributes, 'host.name'),
+      readAttribute(selectedLog?.resource, 'host_name'),
+      readAttribute(selectedLog?.attributes, 'host_name')
+    ))
+  ];
+  const seen = new Set<string>();
+  return expressions
+    .filter((expression): expression is string => Boolean(expression && !seen.has(expression) && seen.add(expression)))
+    .join(' and ');
+}
+
+function metricsFilterContainsAny(filter: string, keys: string[]) {
+  return keys.some(key => new RegExp(`(?:^|\\s|and\\s)${key.replace(/\./g, '\\.')}\\s*=`, 'i').test(filter));
+}
+
+function compactAlertDraftValue(value: string | null | undefined, maxLength = 160) {
+  const normalized = value?.trim();
+  if (!normalized) return undefined;
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
+}
+
+function buildLogSeverityAlertExpression(severityText: string | null | undefined) {
+  const normalized = severityText?.trim().toUpperCase();
+  if (!normalized) return undefined;
+  if (!/^[A-Z0-9_.-]+$/.test(normalized)) return null;
+  return `log.severityText == '${normalized}'`;
+}
+
+function escapeLogAlertStringLiteral(value: string) {
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+function buildLogAlertMapAccessor(source: 'resource' | 'attributes', key: string) {
+  return `log.${source}['${key}']`;
+}
+
+function buildLogContentAlertExpression(value: string | null | undefined) {
+  const normalized = value?.trim();
+  if (!normalized) return undefined;
+  if (normalized.length > 160 || /[\r\n\t]/.test(normalized)) return null;
+  return `contains(log.body, '${escapeLogAlertStringLiteral(normalized)}')`;
+}
+
+function buildLogAlertValueLiteral(value: string, quoted: boolean) {
+  if (!quoted && /^-?\d+(?:\.\d+)?$/.test(value)) return value;
+  return `'${escapeLogAlertStringLiteral(value)}'`;
+}
+
+function buildLogAttributeAlertExpression(source: 'resource' | 'attributes', key: string, value: string | undefined) {
+  const normalizedKey = key.trim();
+  const normalizedValue = value?.trim();
+  if (!/^[A-Za-z0-9_.:-]+$/.test(normalizedKey) || !normalizedValue) return undefined;
+  return `${buildLogAlertMapAccessor(source, normalizedKey)} == '${escapeLogAlertStringLiteral(normalizedValue)}'`;
+}
+
+function buildLogDirectFieldAlertExpression(field: 'traceId' | 'spanId', value: string | null | undefined) {
+  const normalized = value?.trim();
+  if (!normalized) return undefined;
+  if (!/^[A-Za-z0-9_.:-]+$/.test(normalized)) return null;
+  return `log.${field} == '${escapeLogAlertStringLiteral(normalized)}'`;
+}
+
+function parseLogFilterAlertClause(source: 'resource' | 'attributes', clause: string) {
+  const normalized = clause.trim();
+  if (!normalized) return undefined;
+
+  const quotedMatch = normalized.match(/^([A-Za-z0-9_.:-]+)\s*(!=|=|:)\s*(?:"([^"\\\r\n]*)"|'([^'\\\r\n]*)')$/);
+  if (quotedMatch) {
+    const operator = quotedMatch[2] === '!=' ? '!=' : '==';
+    return `${buildLogAlertMapAccessor(source, quotedMatch[1])} ${operator} ${buildLogAlertValueLiteral(quotedMatch[3] ?? quotedMatch[4] ?? '', true)}`;
+  }
+
+  const rawMatch = normalized.match(/^([A-Za-z0-9_.:-]+)\s*(!=|=|:)\s*([A-Za-z0-9_.:/{}-]+)$/);
+  if (rawMatch) {
+    const operator = rawMatch[2] === '!=' ? '!=' : '==';
+    return `${buildLogAlertMapAccessor(source, rawMatch[1])} ${operator} ${buildLogAlertValueLiteral(rawMatch[3], false)}`;
+  }
+
+  return undefined;
+}
+
+function buildLogFilterAlertExpressions(source: 'resource' | 'attributes', filter: string | null | undefined) {
+  const normalized = filter?.trim();
+  if (!normalized) return [];
+
+  const clauses = normalized.split(/\s+and\s+|\s*,\s*/i).map(clause => clause.trim()).filter(Boolean);
+  if (clauses.length === 0) return [];
+
+  const expressions = clauses.map(clause => parseLogFilterAlertClause(source, clause));
+  return expressions.every(Boolean) ? expressions as string[] : undefined;
+}
+
+export function buildLogAlertRuleDraft(query: LogQueryState, routeContext: SignalRouteContext = {}): SignalAlertRuleDraftContext {
+  const severityExpression = buildLogSeverityAlertExpression(query.severityText);
+  const contentExpression = buildLogContentAlertExpression(query.logContent || query.search);
+  const resourceExpressions = buildLogFilterAlertExpressions('resource', query.resourceFilter);
+  const attributeExpressions = buildLogFilterAlertExpressions('attributes', query.attributeFilter);
+  const parts = [
+    ['search', query.search],
+    ['content', query.logContent],
+    ['resourceFilter', query.resourceFilter],
+    ['attributeFilter', query.attributeFilter],
+    ['severityText', query.severityText],
+    ['severityNumber', query.severityNumber],
+    ['traceId', query.traceId || routeContext.traceId],
+    ['spanId', query.spanId || routeContext.spanId],
+    ['serviceName', routeContext.serviceName],
+    ['environment', routeContext.environment]
+  ]
+    .map(([key, value]) => {
+      const normalized = compactAlertDraftValue(value);
+      return normalized ? `${key}=${normalized}` : undefined;
+    })
+    .filter((value): value is string => Boolean(value));
+  const serviceName = compactAlertDraftValue(routeContext.serviceName);
+  const routeContextExpressions = [
+    buildLogAttributeAlertExpression('resource', 'service.name', routeContext.serviceName),
+    buildLogAttributeAlertExpression('resource', 'service.namespace', routeContext.serviceNamespace),
+    buildLogAttributeAlertExpression('resource', 'deployment.environment.name', routeContext.environment)
+  ];
+  const traceScopeExpressions = [
+    buildLogDirectFieldAlertExpression('traceId', query.traceId || routeContext.traceId),
+    buildLogDirectFieldAlertExpression('spanId', query.spanId || routeContext.spanId)
+  ];
+  const hasUnsafeTraceScope = traceScopeExpressions.some(expression => expression === null);
+  const expression = severityExpression !== null && contentExpression !== null && resourceExpressions && attributeExpressions && !hasUnsafeTraceScope
+    ? Array.from(new Set([
+        severityExpression,
+        contentExpression,
+        ...routeContextExpressions,
+        ...traceScopeExpressions,
+        ...resourceExpressions,
+        ...attributeExpressions
+      ].filter((value): value is string => Boolean(value)))).join(' && ') || undefined
+    : undefined;
+  return {
+    name: serviceName ? `${serviceName} log alert` : 'Log alert',
+    query: parts.join('\n'),
+    queryType: 'logs',
+    expression,
+    ...(expression ? { template: 'Log matched: {{log.body}}' } : {})
+  };
+}
+
+export function buildLogMetricsPreviewTargets(metricsHref: string | null | undefined): LogMetricsPreviewTarget[] {
+  if (!metricsHref) return [];
+  let filter = '';
+  try {
+    filter = new URL(metricsHref, 'http://localhost').searchParams.get('filter') || '';
+  } catch {
+    return [];
+  }
+  const targets = [
+    ...(metricsFilterContainsAny(filter, ['k8s.pod.name', 'k8s.container.name', 'k8s.node.name', 'k8s.namespace.name'])
+      ? LOG_K8S_METRICS_PREVIEW_TARGETS
+      : []),
+    ...(metricsFilterContainsAny(filter, ['host.name']) ? LOG_HOST_METRICS_PREVIEW_TARGETS : [])
+  ];
+  return targets;
+}
+
 export function buildLogHandoffLinks(
   selectedLog: LogEntry | null,
   routeContext: SignalRouteContext = {},
@@ -272,6 +539,9 @@ export function buildLogHandoffLinks(
     intakeReturnLabel?: string;
     traceReturnTo?: string;
     traceReturnLabel?: string;
+    metricsReturnTo?: string;
+    metricsReturnLabel?: string;
+    alertDraft?: SignalAlertRuleDraftContext;
   }
 ) {
   const [start, end] = resolveCurrentTimeWindow(selectedLog || undefined);
@@ -322,6 +592,8 @@ export function buildLogHandoffLinks(
   );
   const traceId = firstText(selectedLog?.traceId, routeContext.traceId);
   const spanId = firstText(selectedLog?.spanId, routeContext.spanId);
+  const metricsFilter = buildLogMetricsResourceFilter(selectedLog);
+  const signalDraft = options?.alertDraft;
   const signalContext: SignalRouteContext = {
     ...routeContext,
     entityId,
@@ -343,6 +615,10 @@ export function buildLogHandoffLinks(
     ...signalContext,
     returnTo: stripReturnLabelFromHref(options?.traceReturnTo || signalContext.returnTo)
   };
+  const metricsContext: SignalRouteContext = {
+    ...signalContext,
+    returnTo: stripReturnLabelFromHref(options?.metricsReturnTo || signalContext.returnTo)
+  };
 
   const intakeParams = new URLSearchParams();
   appendSignalRouteContext(intakeParams, signalContext);
@@ -361,7 +637,8 @@ export function buildLogHandoffLinks(
   if (spanId) metricsParams.set('spanId', spanId);
   if (serviceName) metricsParams.set('serviceName', serviceName);
   if (serviceNamespace) metricsParams.set('serviceNamespace', serviceNamespace);
-  appendSignalRouteContext(metricsParams, signalContext);
+  if (metricsFilter) metricsParams.set('filter', metricsFilter);
+  appendSignalRouteContext(metricsParams, metricsContext);
 
   const entityParams = new URLSearchParams();
   if (serviceName) entityParams.set('search', serviceName);
@@ -373,7 +650,8 @@ export function buildLogHandoffLinks(
     entitiesHref: entityParams.toString() ? `/entities?${entityParams.toString()}` : '/entities',
     entityHref: buildSignalEntityHref(signalContext, serviceName),
     alertHandlingHref: buildSignalAlertHandlingHref('logs', signalContext),
-    alertRulesHref: buildSignalAlertRulesHref('logs', signalContext)
+    alertRulesHref: buildSignalAlertRulesHref('logs', signalContext, signalDraft),
+    dashboardHref: buildSignalDashboardHref('logs', signalContext, signalDraft)
   };
 }
 

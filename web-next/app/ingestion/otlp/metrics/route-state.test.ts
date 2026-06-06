@@ -30,8 +30,14 @@ describe('otlp metrics route state', () => {
       traceId: 'trace-123',
       spanId: 'span-456',
       query: 'http_server_duration_milliseconds_count',
+      filter: 'service.name="checkout"',
       aggregation: 'sum',
+      temporalAggregation: 'rate',
       groupBy: 'service_name',
+      legendFormat: '{{service.name}} - p95',
+      formula: 'A * 1000',
+      step: '60',
+      limit: '25',
       timeRange: 'last-1h',
       collector: 'collector-a',
       template: 'spring-boot',
@@ -43,7 +49,7 @@ describe('otlp metrics route state', () => {
     });
 
     expect(route).toBe(
-      '/ingestion/otlp/metrics?entityId=7&entityName=checkout&returnTo=%2Flog%2Fmanage&traceId=trace-123&spanId=span-456&query=http_server_duration_milliseconds_count&aggregation=sum&groupBy=service_name&timeRange=last-1h&serviceName=checkout&serviceNamespace=payments&environment=prod&collector=collector-a&template=spring-boot&start=1712730000000&end=1712733600000'
+      '/ingestion/otlp/metrics?entityId=7&entityName=checkout&returnTo=%2Flog%2Fmanage&traceId=trace-123&spanId=span-456&query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=25&timeRange=last-1h&serviceName=checkout&serviceNamespace=payments&environment=prod&collector=collector-a&template=spring-boot&start=1712730000000&end=1712733600000'
     );
     expect(route).not.toContain('returnLabel=');
     expect(route).not.toContain(encodeURIComponent(localizedReturnLabel));
@@ -74,6 +80,87 @@ describe('otlp metrics route state', () => {
         serviceName: 'checkout'
       })
     ).toBe('/ingestion/otlp/metrics?entityName=checkout&serviceName=checkout');
+  });
+
+  it('rejects invalid metrics builder numeric controls instead of forwarding them', () => {
+    expect(
+      buildOtlpMetricsRoute({
+        query: 'http_server_duration_milliseconds_count',
+        filter: 'service.name="checkout"',
+        step: '0',
+        limit: '12.5'
+      })
+    ).toBe('/ingestion/otlp/metrics?query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22');
+  });
+
+  it('keeps table inspector mode in the metrics workbench URL', () => {
+    expect(
+      buildOtlpMetricsRoute({
+        query: 'http.server.duration',
+        inspector: 'table'
+      })
+    ).toBe('/ingestion/otlp/metrics?query=http.server.duration&inspector=table');
+
+    expect(
+      buildOtlpMetricsRoute({
+        query: 'http.server.duration',
+        inspector: 'heatmap' as 'table'
+      })
+    ).toBe('/ingestion/otlp/metrics?query=http.server.duration');
+  });
+
+  it('keeps selected metric series in the workbench URL for repeatable inspection', () => {
+    expect(
+      buildOtlpMetricsRoute({
+        query: 'http.server.duration',
+        inspector: 'table',
+        series: 'http.server.duration-1'
+      })
+    ).toBe('/ingestion/otlp/metrics?query=http.server.duration&series=http.server.duration-1&inspector=table');
+  });
+
+  it('keeps chart display settings in the metrics workbench URL', () => {
+    expect(
+      buildOtlpMetricsRoute({
+        query: 'http.server.duration',
+        warningThreshold: '75.5',
+        criticalThreshold: '90',
+        expectedRange: 'on'
+      })
+    ).toBe('/ingestion/otlp/metrics?query=http.server.duration&warningThreshold=75.5&criticalThreshold=90&expectedRange=on');
+
+    expect(
+      buildOtlpMetricsRoute({
+        query: 'http.server.duration',
+        warningThreshold: 'abc',
+        criticalThreshold: 'Infinity',
+        expectedRange: 'yes' as 'on'
+      })
+    ).toBe('/ingestion/otlp/metrics?query=http.server.duration');
+  });
+
+  it('keeps metrics legend format in the workbench URL', () => {
+    expect(
+      buildOtlpMetricsRoute({
+        query: 'http.server.duration',
+        groupBy: 'service.name',
+        legendFormat: '{{service.name}} - p95',
+        formula: 'A / 1024'
+      })
+    ).toBe('/ingestion/otlp/metrics?query=http.server.duration&groupBy=service.name&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+%2F+1024');
+  });
+
+  it('keeps metrics inventory search and sort in the workbench URL', () => {
+    expect(
+      buildOtlpMetricsRoute({
+        query: 'http.server.duration',
+        inventorySearch: 'checkout',
+        inventorySort: 'time-series',
+        inventoryPageSize: '20',
+        inventoryPageIndex: '2',
+        seriesAttributeSearch: 'deployment'
+      })
+    ).toBe('/ingestion/otlp/metrics?query=http.server.duration&inventorySearch=checkout&inventorySort=time-series&inventoryPageSize=20&inventoryPageIndex=2&seriesAttributeSearch=deployment');
   });
 
   it('keeps the shared time context keys when metrics opens another signal window', () => {

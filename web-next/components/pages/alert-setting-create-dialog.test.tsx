@@ -121,7 +121,7 @@ describe('AlertSettingCreateDialog', () => {
     expect(source).toContain("from '../ui/hz-code-editor'");
     expect(source).toContain('data-alert-setting-code-editor="threshold-expression"');
     expect(source).toContain('data-alert-setting-code-editor="alert-template"');
-    expect(source).toContain('data-alert-setting-create-validation="cold-validation-feedback"');
+    expect(source).toContain('data-alert-setting-create-validation="hertzbeat-ui-validation-feedback"');
     expect(source).toContain('aria-live="polite"');
     expect(source).toContain("t('alert.setting.validation.name')");
     expect(source).toContain("t('alert.setting.validation.expr')");
@@ -131,6 +131,46 @@ describe('AlertSettingCreateDialog', () => {
     expect(source).not.toMatch(/setValidationMessage\('\u544a\u8b66\u5185\u5bb9\u4e3a\u5fc5\u586b\u9879'\)/);
     expect(source).not.toContain('<textarea');
     expect(source).not.toContain('router.push');
+  });
+
+  it('renders threshold preview action and source-backed sample rows inside authoring', () => {
+    const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-setting-create-dialog.tsx'), 'utf8');
+    const html = renderToStaticMarkup(
+      <AlertSettingCreateDialog
+        t={t}
+        open
+        mode="authoring"
+        datasourceStatus={{ code: 0, data: { hasPromqlExecutor: true } }}
+        draft={draft}
+        submitting={false}
+        previewFeedback={{
+          tone: 'success',
+          title: t('alert.setting.preview.success.title', { count: 1 }),
+          description: t('alert.setting.preview.success.description'),
+          rows: [{ __value__: 0.92, service_name: 'checkout', operation: '/pay' }],
+          contract: 'success'
+        }}
+        onClose={vi.fn()}
+        onSelectType={vi.fn()}
+        onDraftChange={vi.fn()}
+        onBackToType={vi.fn()}
+        onSubmit={vi.fn()}
+        onPreview={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-setting-preview-action="true"');
+    expect(html).toContain('data-alert-setting-preview-action-owner="hertzbeat-ui-button"');
+    expect(html).toContain(t('alert.setting.preview.action'));
+    expect(html).toContain('data-alert-setting-preview-feedback="success"');
+    expect(html).toContain('data-alert-setting-preview-feedback-owner="hertzbeat-ui-inline-feedback"');
+    expect(html).toContain('data-alert-setting-preview-rows="query-result-sample"');
+    expect(html).toContain('data-alert-setting-preview-rows-owner="hertzbeat-ui-inline-preview"');
+    expect(html).toContain('__value__');
+    expect(html).toContain('checkout');
+    expect(source).toContain('onPreview?.(buildAlertSettingCreatePayload(draft))');
+    expect(source).toContain("t('alert.setting.preview.action')");
+    expect(source).toContain("t('alert.setting.preview.loading')");
   });
 
   it('renders Angular title/detail feedback for threshold save failures inside the authoring modal', () => {

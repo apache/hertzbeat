@@ -33,6 +33,12 @@ public interface HistoryDataReader {
      */
     boolean isServerAvailable();
 
+    private static boolean hasLogAttributeFilters(Map<String, String> resourceFilters,
+                                                  Map<String, String> attributeFilters) {
+        return (resourceFilters != null && !resourceFilters.isEmpty())
+                || (attributeFilters != null && !attributeFilters.isEmpty());
+    }
+
     /**
      * query history range metrics data from tsdb
      *
@@ -129,6 +135,43 @@ public interface HistoryDataReader {
     }
 
     /**
+     * Query logs with service/resource context and optional workspace/noise filters.
+     */
+    default List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                         String spanId, Integer severityNumber,
+                                                         String severityText, String searchContent,
+                                                         Set<String> excludedServiceNames,
+                                                         boolean requireServiceName,
+                                                         String workspaceId,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment) {
+        throw new UnsupportedOperationException("query service-scoped logs is not supported");
+    }
+
+    /**
+     * Query logs with service/resource context plus resource and log attribute predicates.
+     */
+    default List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                         String spanId, Integer severityNumber,
+                                                         String severityText, String searchContent,
+                                                         Set<String> excludedServiceNames,
+                                                         boolean requireServiceName,
+                                                         String workspaceId,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         Map<String, String> resourceFilters,
+                                                         Map<String, String> attributeFilters) {
+        if (!hasLogAttributeFilters(resourceFilters, attributeFilters)) {
+            return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                    severityText, searchContent, excludedServiceNames, requireServiceName,
+                    workspaceId, serviceName, serviceNamespace, environment);
+        }
+        throw new UnsupportedOperationException("query attribute-scoped logs is not supported");
+    }
+
+    /**
      * Query logs with multiple filter conditions and pagination (Legacy)
      */
     default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
@@ -191,6 +234,64 @@ public interface HistoryDataReader {
     }
 
     /**
+     * Query workspace logs with pagination plus resource and log attribute predicates.
+     */
+    default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                       String spanId, Integer severityNumber,
+                                                                       String severityText, String searchContent,
+                                                                       Integer offset, Integer limit,
+                                                                       Set<String> excludedServiceNames,
+                                                                       boolean requireServiceName,
+                                                                       String workspaceId,
+                                                                       Map<String, String> resourceFilters,
+                                                                       Map<String, String> attributeFilters) {
+        if (!hasLogAttributeFilters(resourceFilters, attributeFilters)) {
+            return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                    severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName, workspaceId);
+        }
+        throw new UnsupportedOperationException("query attribute-scoped workspace logs with pagination is not supported");
+    }
+
+    /**
+     * Query logs with pagination, service/resource context, workspace scope, and storage-side noise filters.
+     */
+    default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                       String spanId, Integer severityNumber,
+                                                                       String severityText, String searchContent,
+                                                                       Integer offset, Integer limit,
+                                                                       Set<String> excludedServiceNames,
+                                                                       boolean requireServiceName,
+                                                                       String workspaceId,
+                                                                       String serviceName,
+                                                                       String serviceNamespace,
+                                                                       String environment) {
+        throw new UnsupportedOperationException("query service-scoped logs with pagination is not supported");
+    }
+
+    /**
+     * Query logs with pagination plus resource and log attribute predicates.
+     */
+    default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                       String spanId, Integer severityNumber,
+                                                                       String severityText, String searchContent,
+                                                                       Integer offset, Integer limit,
+                                                                       Set<String> excludedServiceNames,
+                                                                       boolean requireServiceName,
+                                                                       String workspaceId,
+                                                                       String serviceName,
+                                                                       String serviceNamespace,
+                                                                       String environment,
+                                                                       Map<String, String> resourceFilters,
+                                                                       Map<String, String> attributeFilters) {
+        if (!hasLogAttributeFilters(resourceFilters, attributeFilters)) {
+            return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                    severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName,
+                    workspaceId, serviceName, serviceNamespace, environment);
+        }
+        throw new UnsupportedOperationException("query attribute-scoped logs with pagination is not supported");
+    }
+
+    /**
      * Count logs with multiple filter conditions (Legacy)
      */
     default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
@@ -248,6 +349,61 @@ public interface HistoryDataReader {
     }
 
     /**
+     * Count workspace logs with resource and log attribute predicates.
+     */
+    default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                               String spanId, Integer severityNumber,
+                                               String severityText, String searchContent,
+                                               Set<String> excludedServiceNames,
+                                               boolean requireServiceName,
+                                               String workspaceId,
+                                               Map<String, String> resourceFilters,
+                                               Map<String, String> attributeFilters) {
+        if (!hasLogAttributeFilters(resourceFilters, attributeFilters)) {
+            return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                    severityText, searchContent, excludedServiceNames, requireServiceName, workspaceId);
+        }
+        throw new UnsupportedOperationException("count attribute-scoped workspace logs is not supported");
+    }
+
+    /**
+     * Count logs with service/resource context, workspace scope, and storage-side noise filters.
+     */
+    default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                               String spanId, Integer severityNumber,
+                                               String severityText, String searchContent,
+                                               Set<String> excludedServiceNames,
+                                               boolean requireServiceName,
+                                               String workspaceId,
+                                               String serviceName,
+                                               String serviceNamespace,
+                                               String environment) {
+        throw new UnsupportedOperationException("count service-scoped logs is not supported");
+    }
+
+    /**
+     * Count logs with resource and log attribute predicates.
+     */
+    default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                               String spanId, Integer severityNumber,
+                                               String severityText, String searchContent,
+                                               Set<String> excludedServiceNames,
+                                               boolean requireServiceName,
+                                               String workspaceId,
+                                               String serviceName,
+                                               String serviceNamespace,
+                                               String environment,
+                                               Map<String, String> resourceFilters,
+                                               Map<String, String> attributeFilters) {
+        if (!hasLogAttributeFilters(resourceFilters, attributeFilters)) {
+            return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                    severityText, searchContent, excludedServiceNames, requireServiceName,
+                    workspaceId, serviceName, serviceNamespace, environment);
+        }
+        throw new UnsupportedOperationException("count attribute-scoped logs is not supported");
+    }
+
+    /**
      * Aggregate log severity buckets in the storage engine when supported.
      *
      * @return a map with totalCount, fatalCount, errorCount, warnCount, infoCount, debugCount, traceCount
@@ -273,6 +429,43 @@ public interface HistoryDataReader {
                                                          boolean requireServiceName,
                                                          String workspaceId) {
         throw new UnsupportedOperationException("count workspace log severity buckets is not supported");
+    }
+
+    /**
+     * Aggregate log severity buckets with service/resource context.
+     */
+    default Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                         String spanId, Integer severityNumber,
+                                                         String severityText, String searchContent,
+                                                         Set<String> excludedServiceNames,
+                                                         boolean requireServiceName,
+                                                         String workspaceId,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment) {
+        throw new UnsupportedOperationException("count service-scoped log severity buckets is not supported");
+    }
+
+    /**
+     * Aggregate log severity buckets with resource and log attribute predicates.
+     */
+    default Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                         String spanId, Integer severityNumber,
+                                                         String severityText, String searchContent,
+                                                         Set<String> excludedServiceNames,
+                                                         boolean requireServiceName,
+                                                         String workspaceId,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         Map<String, String> resourceFilters,
+                                                         Map<String, String> attributeFilters) {
+        if (!hasLogAttributeFilters(resourceFilters, attributeFilters)) {
+            return countLogsBySeverityBuckets(startTime, endTime, traceId, spanId, severityNumber,
+                    severityText, searchContent, excludedServiceNames, requireServiceName,
+                    workspaceId, serviceName, serviceNamespace, environment);
+        }
+        throw new UnsupportedOperationException("count attribute-scoped log severity buckets is not supported");
     }
 
     /**
@@ -304,6 +497,43 @@ public interface HistoryDataReader {
     }
 
     /**
+     * Aggregate log trace coverage with service/resource context.
+     */
+    default Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                    String spanId, Integer severityNumber,
+                                                    String severityText, String searchContent,
+                                                    Set<String> excludedServiceNames,
+                                                    boolean requireServiceName,
+                                                    String workspaceId,
+                                                    String serviceName,
+                                                    String serviceNamespace,
+                                                    String environment) {
+        throw new UnsupportedOperationException("count service-scoped log trace coverage is not supported");
+    }
+
+    /**
+     * Aggregate log trace coverage with resource and log attribute predicates.
+     */
+    default Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                    String spanId, Integer severityNumber,
+                                                    String severityText, String searchContent,
+                                                    Set<String> excludedServiceNames,
+                                                    boolean requireServiceName,
+                                                    String workspaceId,
+                                                    String serviceName,
+                                                    String serviceNamespace,
+                                                    String environment,
+                                                    Map<String, String> resourceFilters,
+                                                    Map<String, String> attributeFilters) {
+        if (!hasLogAttributeFilters(resourceFilters, attributeFilters)) {
+            return countLogTraceCoverage(startTime, endTime, traceId, spanId, severityNumber,
+                    severityText, searchContent, excludedServiceNames, requireServiceName,
+                    workspaceId, serviceName, serviceNamespace, environment);
+        }
+        throw new UnsupportedOperationException("count attribute-scoped log trace coverage is not supported");
+    }
+
+    /**
      * Aggregate log counts by hour in the storage engine when supported.
      *
      * @return a map keyed by yyyy-MM-dd HH:00
@@ -329,5 +559,60 @@ public interface HistoryDataReader {
                                              boolean requireServiceName,
                                              String workspaceId) {
         throw new UnsupportedOperationException("count workspace logs by hour is not supported");
+    }
+
+    /**
+     * Aggregate log counts by hour with service/resource context.
+     */
+    default Map<String, Long> countLogsByHour(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             String serviceName,
+                                             String serviceNamespace,
+                                             String environment) {
+        throw new UnsupportedOperationException("count service-scoped logs by hour is not supported");
+    }
+
+    /**
+     * Aggregate log counts by hour with resource and log attribute predicates.
+     */
+    default Map<String, Long> countLogsByHour(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             String serviceName,
+                                             String serviceNamespace,
+                                             String environment,
+                                             Map<String, String> resourceFilters,
+                                             Map<String, String> attributeFilters) {
+        if (!hasLogAttributeFilters(resourceFilters, attributeFilters)) {
+            return countLogsByHour(startTime, endTime, traceId, spanId, severityNumber,
+                    severityText, searchContent, excludedServiceNames, requireServiceName,
+                    workspaceId, serviceName, serviceNamespace, environment);
+        }
+        throw new UnsupportedOperationException("count attribute-scoped logs by hour is not supported");
+    }
+
+    /**
+     * Aggregate log counts by a native log field, resource attribute, or log attribute.
+     */
+    default Map<String, Long> countLogsByGroup(Long startTime, Long endTime, String traceId,
+                                              String spanId, Integer severityNumber,
+                                              String severityText, String searchContent,
+                                              Set<String> excludedServiceNames,
+                                              boolean requireServiceName,
+                                              String workspaceId,
+                                              String serviceName,
+                                              String serviceNamespace,
+                                              String environment,
+                                              Map<String, String> resourceFilters,
+                                              Map<String, String> attributeFilters,
+                                              String groupBy) {
+        throw new UnsupportedOperationException("count logs by group is not supported");
     }
 }

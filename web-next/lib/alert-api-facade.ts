@@ -39,6 +39,7 @@ import type {
 
 type ApiReadOptions = RequestInit;
 type AlertListQuery = string | URLSearchParams | Record<string, string | number | boolean | undefined | null>;
+export type AlertDefinePreviewRow = Record<string, unknown>;
 type EntityAlertsQuery = {
   pageIndex?: number;
   pageSize?: number;
@@ -98,6 +99,10 @@ export const api = {
       apiMessageGet<Record<string, string>>(`/apps/defines?lang=${encodeURIComponent(locale || 'en_US')}`),
     datasourceStatus: () => apiGet<DatasourceStatusPayload>('/alert/define/datasource/status'),
     detail: (id: number) => apiMessageGet<AlertDefine>(`/alert/define/${id}`),
+    preview: (datasource: string, type: string, expr: string) =>
+      apiMessageGet<AlertDefinePreviewRow[]>(
+        `/alert/define/preview/${encodeURIComponent(datasource)}?type=${encodeURIComponent(type)}&expr=${encodeURIComponent(expr)}`
+      ),
     create: (payload: unknown) => apiMessagePost<unknown>('/alert/define', payload),
     update: (payload: unknown) => apiMessagePut<unknown>('/alert/define', payload),
     delete: (ids: number[]) => apiMessageDelete<unknown>(buildAlertDefineDeleteUrl(ids))

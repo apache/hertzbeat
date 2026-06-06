@@ -7,13 +7,19 @@ import {
   buildContextRows,
   buildMetricsExplorerState,
   buildMetricsHandoffLinks,
+  buildMetricInventoryRows,
   buildMetricSeriesRows,
+  buildMetricSeriesSampleRows,
+  buildMetricSeriesAttributeRows,
+  buildMetricExpectedRangeConfig,
+  buildMetricThresholdConfig,
   buildMetricSeriesAttributionDiagnostics,
   buildMetricSeriesContextRows,
   buildMetricSeriesEvidenceRows,
   buildMetricSeriesLinkedRecordRows,
   buildMetricSeriesViews,
   buildMetricTrendBars,
+  applyMetricsFormula,
   buildMetricsChartOption,
   buildMetricsDataZoomTimeContext
 } from './view-model';
@@ -118,7 +124,15 @@ describe('otlp metrics view model', () => {
             frames: [
               {
                 schema: {
-                  labels: { __name__: 'http_requests_total', service_name: 'checkout' }
+                  labels: {
+                    __name__: 'http_requests_total',
+                    service_name: 'checkout',
+                    unit: 'requests'
+                  },
+                  meta: {
+                    description: 'Total HTTP requests',
+                    metricType: 'counter'
+                  }
                 },
                 data: [
                   [1000, 12],
@@ -134,7 +148,10 @@ describe('otlp metrics view model', () => {
       {
         key: 'http_requests_total-0',
         name: 'http_requests_total',
-        labels: { __name__: 'http_requests_total', service_name: 'checkout' },
+        labels: { __name__: 'http_requests_total', service_name: 'checkout', unit: 'requests' },
+        description: 'Total HTTP requests',
+        metricType: 'counter',
+        unit: 'requests',
         points: [
           [1000, 12],
           [2000, 14]
@@ -142,6 +159,33 @@ describe('otlp metrics view model', () => {
         latestValue: 14
       }
     ]);
+  });
+
+  it('applies safe single-query metric formulas to series points', () => {
+    const series = [
+      {
+        key: 'latency-0',
+        name: 'latency',
+        labels: {},
+        description: '',
+        metricType: 'gauge',
+        unit: 'ms',
+        points: [
+          [1000, 1.5],
+          [2000, null],
+          [3000, 2]
+        ],
+        latestValue: 2
+      }
+    ];
+
+    expect(applyMetricsFormula(series as any, 'A * 1000')[0]?.points).toEqual([
+      [1000, 1500],
+      [2000, null],
+      [3000, 2000]
+    ]);
+    expect(applyMetricsFormula(series as any, 'value / 0')).toBe(series);
+    expect(applyMetricsFormula(series as any, 'B / A')).toBe(series);
   });
 
   it('builds a chart option and series inspector rows', () => {
@@ -175,10 +219,125 @@ describe('otlp metrics view model', () => {
         title: 'http_requests_total',
         copy: 'checkout',
         meta: '14',
+        description: '-',
+        metricType: '-',
+        unit: '-',
+        sampleCount: 2,
+        pointCount: 2,
+        timeSeriesCount: 1,
         entityLabel: '-',
         entityMeta: t('otlp.metrics.series.entity-missing'),
         entityState: 'missing'
       }
+    ]);
+  });
+
+  it('formats metrics chart legends from series labels', () => {
+    const series = [
+      {
+        key: 'http_requests_total-0',
+        name: 'http_requests_total',
+        labels: { 'service.name': 'checkout', service_name: 'checkout_underscore' },
+        points: [
+          [1000, 12],
+          [2000, 14]
+        ],
+        latestValue: 14
+      }
+    ];
+
+    const option = buildMetricsChartOption(series as any, undefined, undefined, '{{service.name}} - p95');
+    expect((option.series as any[])[0].name).toBe('checkout - p95');
+  });
+
+  it('builds static threshold lines for metrics chart display without changing series data', () => {
+    const series = [
+      {
+        key: 'http_requests_total-0',
+        name: 'http_requests_total',
+        labels: { service_name: 'checkout' },
+        points: [
+          [1000, 12],
+          [2000, 14]
+        ],
+        latestValue: 14
+      }
+    ];
+
+    const thresholds = buildMetricThresholdConfig('75.5', '90', t);
+    expect(thresholds).toEqual({
+      warning: 75.5,
+      critical: 90,
+      warningLabel: t('otlp.metrics.threshold.warning'),
+      criticalLabel: t('otlp.metrics.threshold.critical')
+    });
+
+    const option = buildMetricsChartOption(series as any, thresholds);
+    const chartSeries = option.series as any[];
+    expect(chartSeries[0].data).toEqual([
+      [1000, 12],
+      [2000, 14]
+    ]);
+    expect(chartSeries[0].markLine).toMatchObject({
+      silent: true,
+      symbol: 'none',
+      data: [
+        { yAxis: 75.5, name: t('otlp.metrics.threshold.warning') },
+        { yAxis: 90, name: t('otlp.metrics.threshold.critical') }
+      ]
+    });
+  });
+
+  it('ignores invalid static metric threshold values', () => {
+    expect(buildMetricThresholdConfig('abc', 'Infinity', t)).toBeNull();
+    expect(buildMetricThresholdConfig('', undefined, t)).toBeNull();
+  });
+
+  it('builds an expected range band from real metric points without changing the raw chart series', () => {
+    const series = [
+      {
+        key: 'http_requests_total-0',
+        name: 'http_requests_total',
+        labels: { service_name: 'checkout' },
+        points: [
+          [1000, 10],
+          [2000, 12],
+          [3000, 20]
+        ],
+        latestValue: 20
+      }
+    ];
+
+    const expectedRange = buildMetricExpectedRangeConfig(series[0] as any, t);
+    expect(expectedRange).toMatchObject({
+      label: t('otlp.metrics.expected-range.label'),
+      lowerLabel: t('otlp.metrics.expected-range.lower'),
+      upperLabel: t('otlp.metrics.expected-range.upper'),
+      sampleCount: 3
+    });
+    expect(expectedRange?.lowerData[0]).toEqual([1000, 9]);
+    expect(expectedRange?.upperGapData[0]).toEqual([1000, 2]);
+    expect(expectedRange?.lowerData[2][1]).toBeCloseTo(5.36, 2);
+    expect(expectedRange?.upperGapData[2][1]).toBeCloseTo(17.28, 2);
+
+    const option = buildMetricsChartOption(series as any, null, expectedRange);
+    const chartSeries = option.series as any[];
+    expect(chartSeries[0]).toMatchObject({
+      name: t('otlp.metrics.expected-range.lower'),
+      type: 'line',
+      stack: 'otlp-metrics-expected-range',
+      silent: true
+    });
+    expect(chartSeries[1]).toMatchObject({
+      name: t('otlp.metrics.expected-range.label'),
+      type: 'line',
+      stack: 'otlp-metrics-expected-range',
+      areaStyle: { color: 'rgba(96, 165, 250, 0.14)' }
+    });
+    expect(chartSeries[2].data).toEqual([
+      [1000, 10],
+      [2000, 12],
+      [3000, 20]
     ]);
   });
 
@@ -234,11 +393,158 @@ describe('otlp metrics view model', () => {
         title: 'hertzbeat_demo_checkout_latency_ms_milliseconds',
         copy: 'checkout',
         meta: '128',
+        description: '-',
+        metricType: '-',
+        unit: '-',
+        sampleCount: 1,
+        pointCount: 1,
+        timeSeriesCount: 1,
         entityLabel: 'Checkout API',
         entityMeta: 'entityId 4200',
         entityState: 'present'
       }
     ]);
+  });
+
+  it('filters and sorts metric inventory rows by metric, service, labels, latest value, and samples', () => {
+    const rows = buildMetricSeriesRows(
+      [
+        {
+          key: 'db_latency-0',
+          name: 'db_latency',
+          labels: {
+            service_name: 'inventory',
+            region: 'west',
+            hertzbeat_entity_name: 'Inventory DB'
+          },
+          points: [[1000, 42]],
+          latestValue: 42
+        },
+        {
+          key: 'http_requests_total-1',
+          name: 'http_requests_total',
+          labels: {
+            service_name: 'checkout',
+            route: '/cart',
+            hertzbeat_entity_name: 'Checkout API'
+          },
+          points: [[1000, 12], [2000, 18], [3000, 24]],
+          latestValue: 24
+        },
+        {
+          key: 'cache_hits-2',
+          name: 'cache_hits',
+          labels: {
+            service_name: 'checkout',
+            region: 'east'
+          },
+          points: [[1000, 100], [2000, 101]],
+          latestValue: 101
+        }
+      ],
+      t
+    ).map((row, index) => ({
+      ...row,
+      rowKey: String(index),
+      pointCount: [1, 3, 2][index],
+      timeSeriesCount: [5, 9, 2][index],
+      series: [
+        {
+          key: 'db_latency-0',
+          name: 'db_latency',
+          labels: {
+            service_name: 'inventory',
+            region: 'west',
+            hertzbeat_entity_name: 'Inventory DB'
+          },
+          points: [[1000, 42]],
+          latestValue: 42
+        },
+        {
+          key: 'http_requests_total-1',
+          name: 'http_requests_total',
+          labels: {
+            service_name: 'checkout',
+            route: '/cart',
+            hertzbeat_entity_name: 'Checkout API'
+          },
+          points: [[1000, 12], [2000, 18], [3000, 24]],
+          latestValue: 24
+        },
+        {
+          key: 'cache_hits-2',
+          name: 'cache_hits',
+          labels: {
+            service_name: 'checkout',
+            region: 'east'
+          },
+          points: [[1000, 100], [2000, 101]],
+          latestValue: 101
+        }
+      ][index]
+    }));
+
+    expect(buildMetricInventoryRows(rows, 'checkout', 'name').map(row => row.title)).toEqual([
+      'cache_hits',
+      'http_requests_total'
+    ]);
+    expect(buildMetricInventoryRows(rows, 'region', 'latest').map(row => row.title)).toEqual([
+      'cache_hits',
+      'db_latency'
+    ]);
+    expect(buildMetricInventoryRows(rows, '', 'samples').map(row => row.title)).toEqual([
+      'http_requests_total',
+      'cache_hits',
+      'db_latency'
+    ]);
+    expect(buildMetricInventoryRows(rows, '', 'time-series').map(row => row.title)).toEqual([
+      'http_requests_total',
+      'db_latency',
+      'cache_hits'
+    ]);
+  });
+
+  it('builds SigNoz-style metric inventory metadata from real frame schema fields', () => {
+    const rows = buildMetricSeriesRows(
+      buildMetricSeriesViews(
+        {
+          results: {
+            frames: [
+              {
+                schema: {
+                  labels: {
+                    __name__: 'http.server.duration',
+                    service_name: 'checkout',
+                    unit: 'ms'
+                  },
+                  meta: {
+                    description: 'Server duration histogram',
+                    type: 'histogram'
+                  }
+                },
+                data: [
+                  [1000, 12],
+                  [2000, 18],
+                  [3000, 21]
+                ]
+              }
+            ]
+          }
+        } as any,
+        t
+      ),
+      t
+    );
+
+    expect(rows[0]).toMatchObject({
+      title: 'http.server.duration',
+      description: 'Server duration histogram',
+      metricType: 'histogram',
+      unit: 'ms',
+      sampleCount: 3,
+      pointCount: 3,
+      timeSeriesCount: 1
+    });
   });
 
   it('builds trend bars from real metric series points instead of synthetic heights', () => {
@@ -345,6 +651,92 @@ describe('otlp metrics view model', () => {
       { label: t('otlp.metrics.evidence.value-range'), value: '12 - 24', meta: t('otlp.metrics.evidence.average', { average: 18 }) },
       { label: t('otlp.metrics.evidence.sample-window'), value: 'T1000 → T4000', meta: t('otlp.metrics.evidence.real-sample-time') },
       { label: t('otlp.metrics.evidence.linked-trace'), value: 'trace-series-42', meta: 'span-series-42' }
+    ]);
+  });
+
+  it('builds selected metric table inspector rows from raw series samples', () => {
+    expect(
+      buildMetricSeriesSampleRows(
+        {
+          key: 'checkout_latency_ms-0',
+          name: 'checkout.latency',
+          labels: { 'service.name': 'checkout' },
+          points: [
+            [1000, 12],
+            [2000, null],
+            [3000, 24]
+          ],
+          latestValue: 24
+        },
+        value => `T${value}`,
+        t
+      )
+    ).toEqual([
+      {
+        key: 'checkout_latency_ms-0:1000:0',
+        index: '1',
+        timestamp: 'T1000',
+        rawTimestamp: '1000',
+        value: '12',
+        state: t('otlp.metrics.inspector.sample-state.present')
+      },
+      {
+        key: 'checkout_latency_ms-0:2000:1',
+        index: '2',
+        timestamp: 'T2000',
+        rawTimestamp: '2000',
+        value: '-',
+        state: t('otlp.metrics.inspector.sample-state.empty')
+      },
+      {
+        key: 'checkout_latency_ms-0:3000:2',
+        index: '3',
+        timestamp: 'T3000',
+        rawTimestamp: '3000',
+        value: '24',
+        state: t('otlp.metrics.inspector.sample-state.present')
+      }
+    ]);
+  });
+
+  it('builds searchable selected metric attribute rows from real series labels', () => {
+    const series = {
+      key: 'checkout_latency_ms-0',
+      name: 'checkout.latency',
+      labels: {
+        'service.name': 'checkout',
+        'deployment.environment.name': 'prod',
+        route: '/checkout',
+        empty: ''
+      },
+      points: [[1000, 12]],
+      latestValue: 12
+    };
+
+    expect(buildMetricSeriesAttributeRows(series, '')).toEqual([
+      {
+        key: 'deployment.environment.name',
+        name: 'deployment.environment.name',
+        value: 'prod'
+      },
+      {
+        key: 'route',
+        name: 'route',
+        value: '/checkout'
+      },
+      {
+        key: 'service.name',
+        name: 'service.name',
+        value: 'checkout'
+      }
+    ]);
+
+    expect(buildMetricSeriesAttributeRows(series, 'prod')).toEqual([
+      {
+        key: 'deployment.environment.name',
+        name: 'deployment.environment.name',
+        value: 'prod'
+      }
     ]);
   });
 
@@ -465,6 +857,9 @@ describe('otlp metrics view model', () => {
       {
         traceId: 'trace-1',
         spanId: 'span-1',
+        query: 'http.server.duration',
+        filter: 'service.name="checkout"',
+        formula: 'rate(http.server.duration[5m])',
         returnTo: '/overview?returnLabel=Overview'
       },
       {
@@ -552,11 +947,18 @@ describe('otlp metrics view model', () => {
 
     const alertParams = new URL(result.alertRulesHref, 'https://example.com').searchParams;
     expect(alertParams.get('signal')).toBe('metrics');
+    expect(alertParams.get('intent')).toBe('create');
     expect(alertParams.get('entityId')).toBe('7');
     expect(alertParams.get('serviceName')).toBe('checkout');
     expect(alertParams.get('environment')).toBe('prod');
     expect(alertParams.get('timeRange')).toBe('last-1h');
     expect(alertParams.get('source')).toBe('otlp');
+    expect(alertParams.get('alertName')).toBe('http.server.duration metric alert');
+    expect(alertParams.get('alertQueryType')).toBe('metrics');
+    expect(alertParams.get('alertExpression')).toBe('rate(http.server.duration[5m])');
+    expect(alertParams.get('alertDatasource')).toBe('promql');
+    expect(alertParams.get('alertQuery')).toContain('query=http.server.duration');
+    expect(alertParams.get('alertQuery')).toContain('filter=service.name="checkout"');
 
     const handlingUrl = new URL(result.alertHandlingHref, 'https://example.com');
     expect(handlingUrl.pathname).toBe('/alert');
@@ -568,6 +970,22 @@ describe('otlp metrics view model', () => {
     expect(handlingUrl.searchParams.get('environment')).toBe('prod');
     expect(handlingUrl.searchParams.get('timeRange')).toBe('last-1h');
     expect(handlingUrl.searchParams.get('source')).toBe('otlp');
+
+    const dashboardHref = new URL(result.dashboardHref, 'https://example.com');
+    expect(dashboardHref.pathname).toBe('/dashboard');
+    expect(dashboardHref.searchParams.get('intent')).toBe('add-panel');
+    expect(dashboardHref.searchParams.get('signal')).toBe('metrics');
+    expect(dashboardHref.searchParams.get('panelTitle')).toBe('checkout');
+    expect(dashboardHref.searchParams.get('entityId')).toBe('7');
+    expect(dashboardHref.searchParams.get('serviceName')).toBe('checkout');
+    expect(dashboardHref.searchParams.get('environment')).toBe('prod');
+    expect(dashboardHref.searchParams.get('timeRange')).toBe('last-1h');
+    expect(dashboardHref.searchParams.get('source')).toBe('otlp');
+    expect(dashboardHref.searchParams.get('panelQueryType')).toBe('metrics');
+    expect(dashboardHref.searchParams.get('panelExpression')).toBe('rate(http.server.duration[5m])');
+    expect(dashboardHref.searchParams.get('panelDatasource')).toBe('promql');
+    expect(dashboardHref.searchParams.get('panelQuery')).toContain('query=http.server.duration');
+    expect(dashboardHref.searchParams.get('panelQuery')).toContain('filter=service.name="checkout"');
   });
 
   it('lets a selected metric series drive service, entity, logs, traces, and alert handoffs', () => {

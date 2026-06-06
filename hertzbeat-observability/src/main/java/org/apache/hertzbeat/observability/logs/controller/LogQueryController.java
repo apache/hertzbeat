@@ -65,6 +65,16 @@ public class LogQueryController {
             @RequestParam(value = "severityText", required = false) String severityText,
             @Parameter(description = "Log content search keyword", example = "error")
             @RequestParam(value = "search", required = false) String search,
+            @Parameter(description = "OTel service.name resource attribute", example = "checkout")
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @Parameter(description = "OTel service.namespace resource attribute", example = "payments")
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
+            @RequestParam(value = "environment", required = false) String environment,
+            @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
+            @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
+            @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @Parameter(description = "Page index starting from 0", example = "0")
             @RequestParam(value = "pageIndex", required = false, defaultValue = "0") Integer pageIndex,
             @Parameter(description = "Number of items per page", example = "20")
@@ -74,8 +84,44 @@ public class LogQueryController {
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
         Page<LogEntry> result = logQueryService.list(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
                 pageIndex, pageSize, hideInternal, hideNoise);
         return ResponseEntity.ok(Message.success(result));
+    }
+
+    @GetMapping("/context")
+    @Operation(summary = "Query log context around a selected log",
+            description = "Return surrounding logs around a selected log timestamp. The response contains bounded before, selected, and after rows for log-detail context inspection.")
+    public ResponseEntity<Message<Map<String, Object>>> context(
+            @Parameter(description = "Selected log timestamp in nanoseconds", example = "1734005477630000000")
+            @RequestParam(value = "logTimeUnixNano") Long logTimeUnixNano,
+            @Parameter(description = "Optional context window start timestamp in milliseconds", example = "1734005177000")
+            @RequestParam(value = "start", required = false) Long start,
+            @Parameter(description = "Optional context window end timestamp in milliseconds", example = "1734005777000")
+            @RequestParam(value = "end", required = false) Long end,
+            @Parameter(description = "OTel service.name resource attribute", example = "checkout")
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @Parameter(description = "OTel service.namespace resource attribute", example = "payments")
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
+            @RequestParam(value = "environment", required = false) String environment,
+            @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
+            @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
+            @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
+            @Parameter(description = "Number of logs to return on each side of the selected log", example = "10")
+            @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
+            @Parameter(description = "Optional directional context page, either before or after")
+            @RequestParam(value = "direction", required = false) String direction,
+            @Parameter(description = "Optional directional cursor timestamp in nanoseconds")
+            @RequestParam(value = "cursorLogTimeUnixNano", required = false) Long cursorLogTimeUnixNano,
+            @Parameter(description = "Hide internal workspace infrastructure logs such as collector/exporter self logs", example = "true")
+            @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
+            @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
+            @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        return ResponseEntity.ok(Message.success(logQueryService.context(
+                logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
+                resourceFilter, attributeFilter, limit, direction, cursorLogTimeUnixNano, hideInternal, hideNoise)));
     }
 
     @GetMapping("/stats/overview")
@@ -96,12 +142,24 @@ public class LogQueryController {
             @RequestParam(value = "severityText", required = false) String severityText,
             @Parameter(description = "Log content search keyword", example = "error")
             @RequestParam(value = "search", required = false) String search,
+            @Parameter(description = "OTel service.name resource attribute", example = "checkout")
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @Parameter(description = "OTel service.namespace resource attribute", example = "payments")
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
+            @RequestParam(value = "environment", required = false) String environment,
+            @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
+            @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
+            @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @Parameter(description = "Hide internal workspace infrastructure logs such as collector/exporter self logs", example = "true")
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
         return ResponseEntity.ok(Message.success(logQueryService.overviewStats(
-                start, end, traceId, spanId, severityNumber, severityText, search, hideInternal, hideNoise)));
+                start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                hideInternal, hideNoise)));
     }
 
     @GetMapping("/stats/trace-coverage")
@@ -122,12 +180,24 @@ public class LogQueryController {
             @RequestParam(value = "severityText", required = false) String severityText,
             @Parameter(description = "Log content search keyword", example = "error")
             @RequestParam(value = "search", required = false) String search,
+            @Parameter(description = "OTel service.name resource attribute", example = "checkout")
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @Parameter(description = "OTel service.namespace resource attribute", example = "payments")
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
+            @RequestParam(value = "environment", required = false) String environment,
+            @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
+            @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
+            @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @Parameter(description = "Hide internal workspace infrastructure logs such as collector/exporter self logs", example = "true")
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
         return ResponseEntity.ok(Message.success(logQueryService.traceCoverageStats(
-                start, end, traceId, spanId, severityNumber, severityText, search, hideInternal, hideNoise)));
+                start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                hideInternal, hideNoise)));
     }
 
     @GetMapping("/stats/trend")
@@ -148,11 +218,69 @@ public class LogQueryController {
             @RequestParam(value = "severityText", required = false) String severityText,
             @Parameter(description = "Log content search keyword", example = "error")
             @RequestParam(value = "search", required = false) String search,
+            @Parameter(description = "OTel service.name resource attribute", example = "checkout")
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @Parameter(description = "OTel service.namespace resource attribute", example = "payments")
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
+            @RequestParam(value = "environment", required = false) String environment,
+            @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
+            @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
+            @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @Parameter(description = "Hide internal workspace infrastructure logs such as collector/exporter self logs", example = "true")
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
         return ResponseEntity.ok(Message.success(logQueryService.trendStats(
-                start, end, traceId, spanId, severityNumber, severityText, search, hideInternal, hideNoise)));
+                start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                hideInternal, hideNoise)));
+    }
+
+    @GetMapping("/stats/group-by")
+    @Operation(summary = "Log field group statistics",
+            description = "Count logs grouped by a resource attribute, log attribute, or supported native log field.")
+    public ResponseEntity<Message<Map<String, Object>>> groupByStats(
+            @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000")
+            @RequestParam(value = "start", required = false) Long start,
+            @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000")
+            @RequestParam(value = "end", required = false) Long end,
+            @Parameter(description = "Trace ID for distributed tracing", example = "1234567890abcdef")
+            @RequestParam(value = "traceId", required = false) String traceId,
+            @Parameter(description = "Span ID for distributed tracing", example = "abcdef1234567890")
+            @RequestParam(value = "spanId", required = false) String spanId,
+            @Parameter(description = "Log severity number (1-24 according to OpenTelemetry standard)", example = "9")
+            @RequestParam(value = "severityNumber", required = false) Integer severityNumber,
+            @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO")
+            @RequestParam(value = "severityText", required = false) String severityText,
+            @Parameter(description = "Log content search keyword", example = "error")
+            @RequestParam(value = "search", required = false) String search,
+            @Parameter(description = "OTel service.name resource attribute", example = "checkout")
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @Parameter(description = "OTel service.namespace resource attribute", example = "payments")
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @Parameter(description = "OTel deployment.environment.name resource attribute", example = "prod")
+            @RequestParam(value = "environment", required = false) String environment,
+            @Parameter(description = "Resource attribute filter expression, for example service.version=1.2.3")
+            @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @Parameter(description = "Log attribute filter expression, for example http.route:/checkout")
+            @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
+            @Parameter(description = "Group field, for example service.name, resource:service.version, or attribute:http.route")
+            @RequestParam(value = "groupBy") String groupBy,
+            @Parameter(description = "Maximum number of grouped rows to return", example = "20")
+            @RequestParam(value = "limit", required = false) Integer limit,
+            @Parameter(description = "Group result order, supported values: count-desc, count-asc", example = "count-desc")
+            @RequestParam(value = "orderBy", required = false) String orderBy,
+            @Parameter(description = "Minimum log count a group must have before it is returned", example = "5")
+            @RequestParam(value = "minCount", required = false) Integer minCount,
+            @Parameter(description = "Hide internal workspace infrastructure logs such as collector/exporter self logs", example = "true")
+            @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
+            @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
+            @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        return ResponseEntity.ok(Message.success(logQueryService.groupByStats(
+                start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter, groupBy,
+                limit, orderBy, minCount, hideInternal, hideNoise)));
     }
 }

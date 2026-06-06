@@ -69,7 +69,7 @@ export const hertzBeatUiControlBaseline = {
   fieldEdgeClassName: 'border',
   fieldEdgeToken: '--hz-ui-line-soft',
   buttonTiers: ['flat-neutral', 'solid-primary', 'solid-danger'],
-  componentScope: ['HzAiChatModalSurface', 'HzAboutModalSurface', 'HzPassportLoginActionFrame', 'HzPassportLoginNotice', 'HzPassportLoginValidationNotice', 'HzPassportSessionClearFrame', 'HzPassportLockSurface', 'HzSourceDocShell', 'HzButton', 'HzButtonIcon', 'HzButtonLink', 'HzHeaderIconButton', 'HzHeaderMenuAction', 'HzHeaderRealtimeNotice', 'HzLocaleMenuOption', 'HzUserMenuAction', 'HzActionGroup', 'HzAssistiveMarker', 'HzChipGroup', 'HzCollapsibleSection', 'HzControlStack', 'HzDataCellStack', 'HzDetailAside', 'HzDetailBodyStack', 'HzDialogBodyLayout', 'HzDialogEventNotice', 'HzDialogEventText', 'HzDialogMetaItem', 'HzDisabledActionShell', 'HzFileInput', 'HzIconLink', 'HzInput', 'HzQueryActionGroup', 'HzQueryStatusSelect', 'HzQueryTokenField', 'HzSearchFieldFrame', 'HzSearchFieldIcon', 'HzSelect', 'HzNumberStepper', 'HzCheckbox', 'HzSwitch', 'HzUnderlineToggle', 'HzInlineContextMark', 'HzMonitorBreadcrumb', 'HzMonitorIncrementalLoadFooter', 'HzPanelSection', 'HzPanelSurface', 'HzPanelTitleLabel', 'HzScrollViewport', 'HzLogStreamLiveRow', 'HzSignalWorkbenchShell', 'HzStateNotice', 'HzStatusBadge', 'HzTableRowActionButton', 'HzTrendBar', 'HzTrendFrame', 'HzWorkbenchHeaderCopy', 'HzWorkbenchLayout'],
+  componentScope: ['HzAiChatModalSurface', 'HzAboutModalSurface', 'HzPassportLoginActionFrame', 'HzPassportLoginNotice', 'HzPassportLoginValidationNotice', 'HzPassportSessionClearFrame', 'HzPassportLockSurface', 'HzSourceDocShell', 'HzButton', 'HzButtonIcon', 'HzButtonLink', 'HzHeaderIconButton', 'HzHeaderMenuAction', 'HzHeaderRealtimeNotice', 'HzLocaleMenuOption', 'HzUserMenuAction', 'HzActionGroup', 'HzAssistiveMarker', 'HzChipGroup', 'HzCollapsibleSection', 'HzControlStack', 'HzDataCellStack', 'HzDetailAside', 'HzDetailBodyStack', 'HzDialogBodyLayout', 'HzDialogEventNotice', 'HzDialogEventText', 'HzDialogMetaItem', 'HzDisabledActionShell', 'HzFileInput', 'HzIconLink', 'HzInput', 'HzQueryActionGroup', 'HzQueryStatusSelect', 'HzQueryTokenField', 'HzSearchFieldFrame', 'HzSearchFieldIcon', 'HzSelect', 'HzNumberStepper', 'HzCheckbox', 'HzSwitch', 'HzUnderlineToggle', 'HzInlineContextMark', 'HzMonitorBreadcrumb', 'HzMonitorIncrementalLoadFooter', 'HzPanelSection', 'HzPanelSurface', 'HzPanelTitleLabel', 'HzScrollViewport', 'HzLogStreamLiveRow', 'HzSignalSummaryItem', 'HzSignalSummaryStrip', 'HzSignalWorkbenchShell', 'HzStateNotice', 'HzStatusBadge', 'HzTableRowActionButton', 'HzTrendBar', 'HzTrendFrame', 'HzWorkbenchHeaderCopy', 'HzWorkbenchLayout'],
   exemptPatterns: ['tab-switches', 'menu-options', 'chart-hotspots', 'inline-remove-icons']
 } as const;
 
@@ -1137,12 +1137,13 @@ HzSignalWorkbenchShell.displayName = 'HzSignalWorkbenchShell';
 
 export type HzSearchFieldFrameProps = React.HTMLAttributes<HTMLDivElement> & {
   icon?: React.ReactNode;
-  width?: 'default' | 'metrics-query' | 'log-query';
+  width?: 'default' | 'metrics-query' | 'metrics-inventory' | 'log-query';
 };
 
 const searchFieldFrameWidthClassName: Record<NonNullable<HzSearchFieldFrameProps['width']>, string> = {
   default: 'min-w-[280px] max-w-[420px] flex-1',
   'metrics-query': 'min-w-[320px] max-w-[560px] flex-1',
+  'metrics-inventory': 'min-w-[260px] max-w-[420px] flex-1',
   'log-query': 'min-w-[320px] max-w-[560px] flex-1'
 };
 
@@ -3406,7 +3407,7 @@ export function HzAttributeDiagnostics({
 }
 
 export type HzInputInset = 'none' | 'search-icon';
-export type HzInputWidth = 'default' | 'metrics-query-expression' | 'log-query-expression' | 'log-query-token' | 'log-query-body' | 'metrics-context' | 'metrics-context-compact' | 'metrics-trace-id';
+export type HzInputWidth = 'default' | 'metrics-query-expression' | 'metrics-filter-expression' | 'metrics-query-step' | 'metrics-query-limit' | 'metrics-inventory-search' | 'log-query-expression' | 'log-query-token' | 'log-query-body' | 'metrics-context' | 'metrics-context-compact' | 'metrics-trace-id';
 
 export type HzInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   inset?: HzInputInset;
@@ -3421,6 +3422,10 @@ const hzInputInsetClassName: Record<HzInputInset, string | null> = {
 const hzInputWidthClassName: Record<HzInputWidth, string | null> = {
   default: null,
   'metrics-query-expression': 'w-full font-mono',
+  'metrics-filter-expression': 'w-full font-mono',
+  'metrics-query-step': 'w-[116px] font-mono',
+  'metrics-query-limit': 'w-[104px] font-mono',
+  'metrics-inventory-search': 'w-full',
   'log-query-expression': 'w-full font-mono',
   'log-query-token': 'w-[220px] font-mono',
   'log-query-body': 'min-w-[280px] max-w-[520px] flex-1',
@@ -4246,7 +4251,7 @@ export type HzSelectOption = {
   label: string;
 };
 
-export type HzSelectWidth = 'default' | 'metrics-aggregation' | 'metrics-group-by' | 'log-severity';
+export type HzSelectWidth = 'default' | 'metrics-aggregation' | 'metrics-temporal-aggregation' | 'metrics-group-by' | 'metrics-inventory-sort' | 'log-severity' | 'trace-span-scope';
 export type HzSelectTriggerTone = 'default' | 'signal-query';
 
 export type HzSelectProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onChange' | 'defaultValue'> & {
@@ -4266,8 +4271,11 @@ export type HzSelectProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children
 const hzSelectWidthClassName: Record<HzSelectWidth, string | null> = {
   default: null,
   'metrics-aggregation': 'w-[124px]',
+  'metrics-temporal-aggregation': 'w-[156px]',
   'metrics-group-by': 'w-[132px]',
-  'log-severity': 'w-[132px]'
+  'metrics-inventory-sort': 'w-[152px]',
+  'log-severity': 'w-[132px]',
+  'trace-span-scope': 'w-[152px]'
 };
 
 const hzSelectTriggerToneClassName: Record<HzSelectTriggerTone, string | null> = {
@@ -8969,6 +8977,7 @@ export type HzDetailRow = {
   title: React.ReactNode;
   copy: React.ReactNode;
   meta?: React.ReactNode;
+  action?: React.ReactNode;
 };
 
 export type HzDetailRowsProps = React.HTMLAttributes<HTMLDivElement> & {
@@ -9018,7 +9027,10 @@ export function HzDetailRows({
         {rows.map((row, index) => (
           <div
             key={row.key ?? `${stringifyNode(row.title, 'row')}-${index}`}
-            className="grid min-h-9 gap-2 border-b border-[var(--hz-ui-line-faint)] px-3 py-2 last:border-b-0 sm:grid-cols-[minmax(0,180px)_1fr] sm:items-start"
+            className={cn(
+              'grid min-h-9 gap-2 border-b border-[var(--hz-ui-line-faint)] px-3 py-2 last:border-b-0 sm:items-start',
+              row.action ? 'sm:grid-cols-[minmax(0,180px)_1fr_auto]' : 'sm:grid-cols-[minmax(0,180px)_1fr]'
+            )}
             data-hz-detail-row="true"
           >
             <dt className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8f99ab]">
@@ -9032,6 +9044,14 @@ export function HzDetailRows({
                 </span>
               ) : null}
             </dd>
+            {row.action ? (
+              <div
+                className="flex min-w-0 justify-end"
+                data-hz-detail-row-action-owner="hertzbeat-ui-detail-row-action"
+              >
+                {row.action}
+              </div>
+            ) : null}
           </div>
         ))}
       </dl>
@@ -16743,6 +16763,87 @@ export function HzStatCell({
         {unit ? <span className="font-mono text-[11px] text-[#727b8c]">{unit}</span> : null}
       </div>
       {detail ? <div className="mt-2 truncate text-[11px] text-[#8f99ab]">{detail}</div> : null}
+    </div>
+  );
+}
+
+export type HzSignalSummaryItem = {
+  id: string;
+  label: React.ReactNode;
+  value: React.ReactNode;
+  unit?: React.ReactNode;
+  detail?: React.ReactNode;
+  trend?: React.ReactNode;
+  tone?: HzStatusTone;
+};
+
+export type HzSignalSummaryStripProps = React.HTMLAttributes<HTMLDivElement> & {
+  items: HzSignalSummaryItem[];
+  layout?: 'panel' | 'toolbar' | 'detail';
+  density?: 'default' | 'compact';
+};
+
+export function HzSignalSummaryStrip({
+  items,
+  layout = 'panel',
+  density = 'default',
+  className,
+  ...props
+}: HzSignalSummaryStripProps) {
+  const wrapperClassName =
+    layout === 'toolbar'
+      ? 'flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-1.5'
+      : cn(
+          'grid min-w-0',
+          density === 'compact' ? 'gap-x-3 gap-y-2' : 'gap-x-5 gap-y-3',
+          layout === 'detail' ? 'sm:grid-cols-3' : 'sm:grid-cols-2 xl:grid-cols-4'
+        );
+
+  return (
+    <div
+      {...props}
+      className={cn(wrapperClassName, className)}
+      data-hz-ui="signal-summary-strip"
+      data-hz-signal-summary-layout={layout}
+      data-hz-signal-summary-density={density}
+    >
+      {items.map((item, index) => {
+        const tone = item.tone || 'neutral';
+        const toneColor = chartToneColor[tone];
+
+        return (
+          <div
+            key={item.id}
+            className={cn(
+              'min-w-0',
+              layout === 'toolbar'
+                ? 'inline-grid grid-cols-[auto_auto] items-baseline gap-x-1.5 gap-y-0.5 border-l border-[#2a303a] pl-3 first:border-l-0 first:pl-0'
+                : 'grid gap-1 border-l border-[#2a303a] pl-3 first:border-l-0 first:pl-0',
+              layout === 'detail' ? 'py-0.5' : null
+            )}
+            data-hz-ui="signal-summary-item"
+            data-hz-signal-summary-item={item.id}
+            data-hz-signal-summary-item-tone={tone}
+            data-hz-signal-summary-item-index={index}
+          >
+            <div className={cn('min-w-0 truncate text-[10px] font-semibold uppercase text-[#7e8494]', layout === 'toolbar' ? 'tracking-normal' : 'tracking-[0.12em]')}>
+              {item.label}
+            </div>
+            <div className="flex min-w-0 items-baseline gap-1">
+              <span className={cn('truncate font-mono font-semibold text-[#f5f7fb]', density === 'compact' || layout === 'toolbar' ? 'text-[13px]' : 'text-[15px]')}>
+                {item.value}
+              </span>
+              {item.unit ? <span className="shrink-0 font-mono text-[10px] text-[#727b8c]">{item.unit}</span> : null}
+            </div>
+            {item.detail || item.trend ? (
+              <div className={cn('min-w-0 truncate text-[11px] text-[#8f99ab]', layout === 'toolbar' ? 'col-span-2' : null)}>
+                {item.trend ? <span className="mr-1 font-mono" style={{ color: toneColor.stroke }}>{item.trend}</span> : null}
+                {item.detail}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }

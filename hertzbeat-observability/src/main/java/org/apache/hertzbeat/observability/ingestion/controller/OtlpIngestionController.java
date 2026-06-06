@@ -83,9 +83,14 @@ public class OtlpIngestionController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "filter", required = false) String filter,
             @RequestParam(value = "groupBy", required = false) String groupBy,
-            @RequestParam(value = "aggregation", required = false) String aggregation) {
+            @RequestParam(value = "aggregation", required = false) String aggregation,
+            @RequestParam(value = "temporalAggregation", required = false) String temporalAggregation,
+            @RequestParam(value = "step", required = false) String step,
+            @RequestParam(value = "limit", required = false) String limit) {
         return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getMetricsConsole(
-                entityId, start, end, serviceName, serviceNamespace, environment, query, groupBy, aggregation)));
+                entityId, start, end, serviceName, serviceNamespace, environment, query, filter, groupBy, aggregation,
+                temporalAggregation, step, limit)));
     }
 }

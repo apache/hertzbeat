@@ -92,6 +92,39 @@ public interface TraceQueryRepository {
                                                            String workspaceId,
                                                            Map<String, Set<String>> resourceIdentityFilters,
                                                            Boolean hideInternal) {
+        return queryRecentTraceRows(limit, start, end, serviceName, serviceNamespace, environment,
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    /**
+     * Query recent trace rows with storage-owned workspace and entity scope filters.
+     *
+     * @param limit row limit
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param operationName operation/span name filter
+     * @param minDurationNanos minimum duration filter in nanoseconds
+     * @param maxDurationNanos maximum duration filter in nanoseconds
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @return raw trace rows
+     */
+    default List<Map<String, Object>> queryRecentTraceRows(int limit,
+                                                           Long start,
+                                                           Long end,
+                                                           String serviceName,
+                                                           String serviceNamespace,
+                                                           String environment,
+                                                           String operationName,
+                                                           Long minDurationNanos,
+                                                           Long maxDurationNanos,
+                                                           String workspaceId,
+                                                           Map<String, Set<String>> resourceIdentityFilters,
+                                                           Boolean hideInternal) {
         return queryRecentTraceRows(limit, start, end, serviceName, environment, hideInternal);
     }
 
@@ -131,7 +164,45 @@ public interface TraceQueryRepository {
                                                          Boolean hideInternal,
                                                          int offset,
                                                          int limit) {
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal, offset, limit);
+    }
+
+    default List<Map<String, Object>> queryTraceListRows(Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String operationName,
+                                                         Long minDurationNanos,
+                                                         Long maxDurationNanos,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal,
+                                                         int offset,
+                                                         int limit) {
         return List.of();
+    }
+
+    default List<Map<String, Object>> queryTraceListRows(Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String operationName,
+                                                         Long minDurationNanos,
+                                                         Long maxDurationNanos,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal,
+                                                         String spanScope,
+                                                         int offset,
+                                                         int limit) {
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters,
+                hideInternal, offset, limit);
     }
 
     /**
@@ -166,7 +237,40 @@ public interface TraceQueryRepository {
                                                        String workspaceId,
                                                        Map<String, Set<String>> resourceIdentityFilters,
                                                        Boolean hideInternal) {
+        return queryTraceOverviewRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    default Map<String, Object> queryTraceOverviewRows(Long start,
+                                                       Long end,
+                                                       Boolean errorOnly,
+                                                       String serviceName,
+                                                       String serviceNamespace,
+                                                       String environment,
+                                                       String operationName,
+                                                       Long minDurationNanos,
+                                                       Long maxDurationNanos,
+                                                       String workspaceId,
+                                                       Map<String, Set<String>> resourceIdentityFilters,
+                                                       Boolean hideInternal) {
         return Map.of();
+    }
+
+    default Map<String, Object> queryTraceOverviewRows(Long start,
+                                                       Long end,
+                                                       Boolean errorOnly,
+                                                       String serviceName,
+                                                       String serviceNamespace,
+                                                       String environment,
+                                                       String operationName,
+                                                       Long minDurationNanos,
+                                                       Long maxDurationNanos,
+                                                       String workspaceId,
+                                                       Map<String, Set<String>> resourceIdentityFilters,
+                                                       Boolean hideInternal,
+                                                       String spanScope) {
+        return queryTraceOverviewRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal);
     }
 
     /**
@@ -203,7 +307,111 @@ public interface TraceQueryRepository {
                                                          String workspaceId,
                                                          Map<String, Set<String>> resourceIdentityFilters,
                                                          Boolean hideInternal) {
+        return queryTraceIdOverviewRows(traceId, start, end, errorOnly, serviceName, serviceNamespace, environment,
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    default Map<String, Object> queryTraceIdOverviewRows(String traceId,
+                                                         Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String operationName,
+                                                         Long minDurationNanos,
+                                                         Long maxDurationNanos,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal) {
         return Map.of();
+    }
+
+    default Map<String, Object> queryTraceIdOverviewRows(String traceId,
+                                                         Long start,
+                                                         Long end,
+                                                         Boolean errorOnly,
+                                                         String serviceName,
+                                                         String serviceNamespace,
+                                                         String environment,
+                                                         String operationName,
+                                                         Long minDurationNanos,
+                                                         Long maxDurationNanos,
+                                                         String workspaceId,
+                                                         Map<String, Set<String>> resourceIdentityFilters,
+                                                         Boolean hideInternal,
+                                                         String spanScope) {
+        return queryTraceIdOverviewRows(traceId, start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    /**
+     * Whether this repository can aggregate trace group-by rows in storage.
+     *
+     * @return true when storage-owned trace group-by rows are supported
+     */
+    default boolean supportsTraceGroupByRows() {
+        return false;
+    }
+
+    /**
+     * Query trace group-by statistics in the storage layer.
+     *
+     * @param start start time in epoch milliseconds
+     * @param end end time in epoch milliseconds
+     * @param errorOnly whether only error traces should be counted
+     * @param serviceName service name filter
+     * @param serviceNamespace service namespace filter
+     * @param environment deployment environment filter
+     * @param operationName operation/span name filter
+     * @param minDurationNanos minimum duration filter in nanoseconds
+     * @param maxDurationNanos maximum duration filter in nanoseconds
+     * @param workspaceId workspace id filter
+     * @param resourceIdentityFilters canonical resource identity filters
+     * @param hideInternal whether internal HertzBeat traces should be hidden
+     * @param groupBy group-by field
+     * @param limit result limit
+     * @return rows with group_value, trace_count, error_trace_count, latency_avg_ms, and latency_p95_ms
+     */
+    default List<Map<String, Object>> queryTraceGroupByRows(Long start,
+                                                            Long end,
+                                                            Boolean errorOnly,
+                                                            String serviceName,
+                                                            String serviceNamespace,
+                                                            String environment,
+                                                            String operationName,
+                                                            Long minDurationNanos,
+                                                            Long maxDurationNanos,
+                                                            String workspaceId,
+                                                            Map<String, Set<String>> resourceIdentityFilters,
+                                                            Boolean hideInternal,
+                                                            String groupBy,
+                                                            String orderBy,
+                                                            long minCount,
+                                                            int limit) {
+        return List.of();
+    }
+
+    default List<Map<String, Object>> queryTraceGroupByRows(Long start,
+                                                            Long end,
+                                                            Boolean errorOnly,
+                                                            String serviceName,
+                                                            String serviceNamespace,
+                                                            String environment,
+                                                            String operationName,
+                                                            Long minDurationNanos,
+                                                            Long maxDurationNanos,
+                                                            String workspaceId,
+                                                            Map<String, Set<String>> resourceIdentityFilters,
+                                                            Boolean hideInternal,
+                                                            String spanScope,
+                                                            String groupBy,
+                                                            String orderBy,
+                                                            long minCount,
+                                                            int limit) {
+        return queryTraceGroupByRows(start, end, errorOnly, serviceName, serviceNamespace, environment, operationName,
+                minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal, groupBy,
+                orderBy, minCount, limit);
     }
 
     /**
@@ -308,6 +516,23 @@ public interface TraceQueryRepository {
                                                      String serviceName,
                                                      String serviceNamespace,
                                                      String environment,
+                                                     String workspaceId,
+                                                     Map<String, Set<String>> resourceIdentityFilters,
+                                                     Boolean hideInternal) {
+        return queryTraceRows(traceId, limit, start, end, serviceName, serviceNamespace, environment,
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal);
+    }
+
+    default List<Map<String, Object>> queryTraceRows(String traceId,
+                                                     int limit,
+                                                     Long start,
+                                                     Long end,
+                                                     String serviceName,
+                                                     String serviceNamespace,
+                                                     String environment,
+                                                     String operationName,
+                                                     Long minDurationNanos,
+                                                     Long maxDurationNanos,
                                                      String workspaceId,
                                                      Map<String, Set<String>> resourceIdentityFilters,
                                                      Boolean hideInternal) {

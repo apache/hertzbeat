@@ -50,6 +50,22 @@ describe('navigation information architecture', () => {
     ]);
   });
 
+  it('keeps the three signal workbench labels on the same i18n pattern', () => {
+    const signalItems = navSections.find(section => section.key === 'observability')?.items.filter(item => [
+      '/ingestion/otlp/metrics',
+      '/log/manage',
+      '/trace/manage'
+    ].includes(item.href));
+
+    expect(signalItems?.map(item => item.labelKey)).toEqual([
+      'menu.ingestion.metrics',
+      'menu.log.manage',
+      'menu.trace.manage'
+    ]);
+    const workbenchSuffix = t('menu.log.manage').slice(-2);
+    expect(signalItems?.map(item => t(item.labelKey)).every(label => label.endsWith(workbenchSuffix))).toBe(true);
+  });
+
   it('keeps only real existing app entries visible in navigation', () => {
     const visibleHrefs = navSections.flatMap(section => section.items.map(item => item.href));
 

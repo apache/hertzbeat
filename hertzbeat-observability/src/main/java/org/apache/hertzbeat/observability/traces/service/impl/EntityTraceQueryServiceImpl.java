@@ -78,6 +78,12 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
     private static final ObjectMapper JSON_MAPPER = JsonMapper.builder().build();
     private static final int TRACE_LIST_SAMPLE_LIMIT = 1500;
     private static final int TRACE_DETAIL_LIMIT = 5000;
+    private static final int DEFAULT_TRACE_LIST_PAGE_INDEX = 0;
+    private static final int DEFAULT_TRACE_LIST_PAGE_SIZE = 20;
+    private static final int MAX_TRACE_LIST_PAGE_SIZE = 1000;
+    private static final int TRACE_GROUP_BY_LIMIT = 20;
+    private static final int TRACE_GROUP_BY_MAX_LIMIT = 100;
+    private static final long TRACE_GROUP_BY_MAX_MIN_COUNT = 1_000_000L;
     private static final long DEFAULT_LOOKBACK_MILLIS = Duration.ofHours(24).toMillis();
     private static final long ACTIVE_TRACE_WINDOW_MILLIS = Duration.ofMinutes(15).toMillis();
     private static final BigInteger LONG_MAX_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
@@ -182,22 +188,77 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
     public Page<TraceListItemDto> queryTraceList(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
                                                  String serviceName, String serviceNamespace, String environment,
                                                  int pageIndex, int pageSize, Boolean hideInternal) {
+        return queryTraceList(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                null, null, null, pageIndex, pageSize, hideInternal);
+    }
+
+    @Override
+    public Page<TraceListItemDto> queryTraceList(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                                 String serviceName, String serviceNamespace, String environment,
+                                                 String operationName, Long minDurationMs, Long maxDurationMs,
+                                                 int pageIndex, int pageSize, Boolean hideInternal) {
+        return queryTraceList(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                null, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal);
+    }
+
+    @Override
+    public Page<TraceListItemDto> queryTraceList(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                                 String serviceName, String serviceNamespace, String environment,
+                                                 String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
+                                                 int pageIndex, int pageSize, Boolean hideInternal) {
+        return queryTraceList(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal, null);
+    }
+
+    @Override
+    public Page<TraceListItemDto> queryTraceList(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                                 String serviceName, String serviceNamespace, String environment,
+                                                 String resourceFilter, String operationName, Long minDurationMs,
+                                                 Long maxDurationMs, int pageIndex, int pageSize,
+                                                 Boolean hideInternal, String spanScope) {
         Map<String, Set<String>> identityValues = entityId == null ? Collections.emptyMap() : canonicalIdentityValues(loadEntityContext(entityId));
-        PageRequest pageRequest = PageRequest.of(Math.max(pageIndex, 0), Math.max(pageSize, 1));
+        Map<String, Set<String>> resourceFilters = parseResourceFilters(resourceFilter);
+        Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters);
+        PageRequest pageRequest = PageRequest.of(normalizeTraceListPageIndex(pageIndex), normalizeTraceListPageSize(pageSize));
+        int repositoryOffset = Math.toIntExact(Math.min(pageRequest.getOffset(), Integer.MAX_VALUE));
+        Long minDurationNanos = durationMillisToNanos(minDurationMs);
+        Long maxDurationNanos = durationMillisToNanos(maxDurationMs);
+        String normalizedSpanScope = normalizeSpanScope(spanScope);
         if (!StringUtils.hasText(traceId) && traceQueryRepository.supportsTraceListRows()) {
-            List<Map<String, Object>> rows = traceQueryRepository.queryTraceListRows(
-                    start,
-                    end,
-                    errorOnly,
-                    serviceName,
-                    serviceNamespace,
-                    environment,
-                    AuthTokenRequestContext.currentWorkspaceId(),
-                    identityValues,
-                    hideInternal,
-                    Math.toIntExact(pageRequest.getOffset()),
-                    pageRequest.getPageSize()
-            );
+            List<Map<String, Object>> rows = StringUtils.hasText(normalizedSpanScope)
+                    ? traceQueryRepository.queryTraceListRows(
+                            start,
+                            end,
+                            errorOnly,
+                            serviceName,
+                            serviceNamespace,
+                            environment,
+                            operationName,
+                            minDurationNanos,
+                            maxDurationNanos,
+                            AuthTokenRequestContext.currentWorkspaceId(),
+                            pushedResourceFilters,
+                            hideInternal,
+                            normalizedSpanScope,
+                            repositoryOffset,
+                            pageRequest.getPageSize()
+                    )
+                    : traceQueryRepository.queryTraceListRows(
+                            start,
+                            end,
+                            errorOnly,
+                            serviceName,
+                            serviceNamespace,
+                            environment,
+                            operationName,
+                            minDurationNanos,
+                            maxDurationNanos,
+                            AuthTokenRequestContext.currentWorkspaceId(),
+                            pushedResourceFilters,
+                            hideInternal,
+                            repositoryOffset,
+                            pageRequest.getPageSize()
+                    );
             List<TraceListItemDto> items = rows.stream()
                     .map(this::toTraceListItem)
                     .toList();
@@ -209,17 +270,29 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             return new PageImpl<>(items, pageRequest, total);
         }
         List<TraceAggregate> filtered = aggregateTraceRows(queryRowsForList(traceId, start, end, serviceName,
-                serviceNamespace, environment, identityValues, hideInternal)).stream()
-                .filter(trace -> matchesTraceFilters(trace, identityValues, start, end, traceId, errorOnly,
-                        serviceName, serviceNamespace, environment, hideInternal))
+                serviceNamespace, environment, operationName, minDurationNanos, maxDurationNanos, pushedResourceFilters, hideInternal)).stream()
+                .filter(trace -> matchesSpanScope(trace, normalizedSpanScope))
+                .filter(trace -> matchesTraceFilters(trace, identityValues, resourceFilters, start, end, traceId, errorOnly,
+                        serviceName, serviceNamespace, environment, operationName, minDurationNanos, maxDurationNanos, hideInternal))
                 .sorted(Comparator.comparing(TraceAggregate::getStartTime, Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
-        int safeStart = Math.min((int) pageRequest.getOffset(), filtered.size());
+        int safeStart = Math.min(repositoryOffset, filtered.size());
         int safeEnd = Math.min(safeStart + pageRequest.getPageSize(), filtered.size());
         List<TraceListItemDto> items = filtered.subList(safeStart, safeEnd).stream()
                 .map(this::toTraceListItem)
                 .toList();
         return new PageImpl<>(items, pageRequest, filtered.size());
+    }
+
+    private int normalizeTraceListPageIndex(int pageIndex) {
+        return Math.max(pageIndex, DEFAULT_TRACE_LIST_PAGE_INDEX);
+    }
+
+    private int normalizeTraceListPageSize(int pageSize) {
+        if (pageSize <= 0) {
+            return DEFAULT_TRACE_LIST_PAGE_SIZE;
+        }
+        return Math.min(pageSize, MAX_TRACE_LIST_PAGE_SIZE);
     }
 
     @Override
@@ -245,44 +318,115 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
     @Override
     public TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
                                              String serviceName, String serviceNamespace, String environment, Boolean hideInternal) {
+        return getTraceOverview(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                null, null, null, hideInternal);
+    }
+
+    @Override
+    public TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                             String serviceName, String serviceNamespace, String environment,
+                                             String operationName, Long minDurationMs, Long maxDurationMs, Boolean hideInternal) {
+        return getTraceOverview(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                null, operationName, minDurationMs, maxDurationMs, hideInternal);
+    }
+
+    @Override
+    public TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                             String serviceName, String serviceNamespace, String environment,
+                                             String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
+                                             Boolean hideInternal) {
+        return getTraceOverview(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, null);
+    }
+
+    @Override
+    public TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                             String serviceName, String serviceNamespace, String environment,
+                                             String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
+                                             Boolean hideInternal, String spanScope) {
         Map<String, Set<String>> identityValues = entityId == null ? Collections.emptyMap() : canonicalIdentityValues(loadEntityContext(entityId));
+        Map<String, Set<String>> resourceFilters = parseResourceFilters(resourceFilter);
+        Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters);
+        Long minDurationNanos = durationMillisToNanos(minDurationMs);
+        Long maxDurationNanos = durationMillisToNanos(maxDurationMs);
+        String normalizedSpanScope = normalizeSpanScope(spanScope);
         if (StringUtils.hasText(traceId) && traceQueryRepository.supportsTraceIdOverviewRows()) {
-            Map<String, Object> row = traceQueryRepository.queryTraceIdOverviewRows(
-                    traceId,
-                    start,
-                    end,
-                    errorOnly,
-                    serviceName,
-                    serviceNamespace,
-                    environment,
-                    AuthTokenRequestContext.currentWorkspaceId(),
-                    identityValues,
-                    hideInternal
-            );
+            Map<String, Object> row = StringUtils.hasText(normalizedSpanScope)
+                    ? traceQueryRepository.queryTraceIdOverviewRows(
+                            traceId,
+                            start,
+                            end,
+                            errorOnly,
+                            serviceName,
+                            serviceNamespace,
+                            environment,
+                            operationName,
+                            minDurationNanos,
+                            maxDurationNanos,
+                            AuthTokenRequestContext.currentWorkspaceId(),
+                            pushedResourceFilters,
+                            hideInternal,
+                            normalizedSpanScope
+                    )
+                    : traceQueryRepository.queryTraceIdOverviewRows(
+                            traceId,
+                            start,
+                            end,
+                            errorOnly,
+                            serviceName,
+                            serviceNamespace,
+                            environment,
+                            operationName,
+                            minDurationNanos,
+                            maxDurationNanos,
+                            AuthTokenRequestContext.currentWorkspaceId(),
+                            pushedResourceFilters,
+                            hideInternal
+                    );
             TraceOverviewDto overview = toTraceOverview(row);
             if (overview != null) {
                 return overview;
             }
         }
         if (!StringUtils.hasText(traceId) && traceQueryRepository.supportsTraceOverviewRows()) {
-            Map<String, Object> row = traceQueryRepository.queryTraceOverviewRows(
-                    start,
-                    end,
-                    errorOnly,
-                    serviceName,
-                    serviceNamespace,
-                    environment,
-                    AuthTokenRequestContext.currentWorkspaceId(),
-                    identityValues,
-                    hideInternal
-            );
+            Map<String, Object> row = StringUtils.hasText(normalizedSpanScope)
+                    ? traceQueryRepository.queryTraceOverviewRows(
+                            start,
+                            end,
+                            errorOnly,
+                            serviceName,
+                            serviceNamespace,
+                            environment,
+                            operationName,
+                            minDurationNanos,
+                            maxDurationNanos,
+                            AuthTokenRequestContext.currentWorkspaceId(),
+                            pushedResourceFilters,
+                            hideInternal,
+                            normalizedSpanScope
+                    )
+                    : traceQueryRepository.queryTraceOverviewRows(
+                            start,
+                            end,
+                            errorOnly,
+                            serviceName,
+                            serviceNamespace,
+                            environment,
+                            operationName,
+                            minDurationNanos,
+                            maxDurationNanos,
+                            AuthTokenRequestContext.currentWorkspaceId(),
+                            pushedResourceFilters,
+                            hideInternal
+                    );
             TraceOverviewDto overview = toTraceOverview(row);
             if (overview != null) {
                 return overview;
             }
         }
-        Page<TraceListItemDto> result = queryTraceList(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment, 0,
-                TRACE_LIST_SAMPLE_LIMIT, hideInternal);
+        Page<TraceListItemDto> result = queryTraceList(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, 0, TRACE_LIST_SAMPLE_LIMIT, hideInternal,
+                normalizedSpanScope);
         Long latestObservedAt = result.getContent().stream()
                 .map(TraceListItemDto::getStartTime)
                 .filter(Objects::nonNull)
@@ -291,6 +435,202 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         int errorTraceCount = (int) result.getContent().stream().filter(item -> isErrorStatus(item.getStatus())).count();
         boolean active = latestObservedAt != null && latestObservedAt >= System.currentTimeMillis() - ACTIVE_TRACE_WINDOW_MILLIS;
         return new TraceOverviewDto((int) result.getTotalElements(), errorTraceCount, latestObservedAt, active);
+    }
+
+    @Override
+    public Map<String, Object> getTraceGroupByStats(Long entityId, Long start, Long end, String traceId,
+                                                    Boolean errorOnly, String serviceName, String serviceNamespace,
+                                                    String environment, String resourceFilter, String operationName,
+                                                    Long minDurationMs, Long maxDurationMs, String groupBy,
+                                                    Integer limit, String orderBy, Integer minCount, Boolean hideInternal) {
+        return getTraceGroupByStats(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace,
+                environment, resourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy,
+                minCount, hideInternal, null);
+    }
+
+    @Override
+    public Map<String, Object> getTraceGroupByStats(Long entityId, Long start, Long end, String traceId,
+                                                    Boolean errorOnly, String serviceName, String serviceNamespace,
+                                                    String environment, String resourceFilter, String operationName,
+                                                    Long minDurationMs, Long maxDurationMs, String groupBy,
+                                                    Integer limit, String orderBy, Integer minCount, Boolean hideInternal,
+                                                    String spanScope) {
+        String normalizedGroupBy = normalizeTraceGroupBy(groupBy);
+        int resolvedLimit = resolveTraceGroupByLimit(limit);
+        long resolvedMinCount = resolveTraceGroupByMinCount(minCount);
+        String normalizedSpanScope = normalizeSpanScope(spanScope);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("groupBy", normalizedGroupBy == null ? trimText(groupBy) : normalizedGroupBy);
+        if (!StringUtils.hasText(normalizedGroupBy)) {
+            result.put("groups", List.of());
+            return result;
+        }
+        Map<String, Set<String>> identityValues = entityId == null ? Collections.emptyMap() : canonicalIdentityValues(loadEntityContext(entityId));
+        Map<String, Set<String>> resourceFilters = parseResourceFilters(resourceFilter);
+        Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters);
+        Long minDurationNanos = durationMillisToNanos(minDurationMs);
+        Long maxDurationNanos = durationMillisToNanos(maxDurationMs);
+        if (!StringUtils.hasText(traceId) && traceQueryRepository.supportsTraceGroupByRows()) {
+            List<Map<String, Object>> rows = StringUtils.hasText(normalizedSpanScope)
+                    ? traceQueryRepository.queryTraceGroupByRows(
+                            start,
+                            end,
+                            errorOnly,
+                            serviceName,
+                            serviceNamespace,
+                            environment,
+                            operationName,
+                            minDurationNanos,
+                            maxDurationNanos,
+                            AuthTokenRequestContext.currentWorkspaceId(),
+                            pushedResourceFilters,
+                            hideInternal,
+                            normalizedSpanScope,
+                            normalizedGroupBy,
+                            orderBy,
+                            resolvedMinCount,
+                            resolvedLimit
+                    )
+                    : traceQueryRepository.queryTraceGroupByRows(
+                            start,
+                            end,
+                            errorOnly,
+                            serviceName,
+                            serviceNamespace,
+                            environment,
+                            operationName,
+                            minDurationNanos,
+                            maxDurationNanos,
+                            AuthTokenRequestContext.currentWorkspaceId(),
+                            pushedResourceFilters,
+                            hideInternal,
+                            normalizedGroupBy,
+                            orderBy,
+                            resolvedMinCount,
+                            resolvedLimit
+                    );
+            result.put("groups", rows.stream().map(this::toTraceGroupResult).toList());
+            return result;
+        }
+        Page<TraceListItemDto> traces = queryTraceList(entityId, start, end, traceId, errorOnly, serviceName,
+                serviceNamespace, environment, resourceFilter, operationName, minDurationMs, maxDurationMs,
+                0, TRACE_LIST_SAMPLE_LIMIT, hideInternal, normalizedSpanScope);
+        result.put("groups", buildTraceGroupResults(traces.getContent(), normalizedGroupBy, resolvedLimit, orderBy, resolvedMinCount));
+        return result;
+    }
+
+    private Map<String, Object> toTraceGroupResult(Map<String, Object> row) {
+        Map<String, Object> group = new LinkedHashMap<>();
+        group.put("value", defaultText(readTextValue(row, "group_value"), "unknown"));
+        group.put("traceCount", Optional.ofNullable(readLongValue(row, "trace_count", "traceCount")).orElse(0L));
+        group.put("errorTraceCount", Optional.ofNullable(readLongValue(row, "error_trace_count", "errorTraceCount")).orElse(0L));
+        group.put("latencyAvgMs", Optional.ofNullable(readDoubleValue(row, "latency_avg_ms", "latencyAvgMs")).orElse(0.0d));
+        group.put("latencyP95Ms", Optional.ofNullable(readDoubleValue(row, "latency_p95_ms", "latencyP95Ms")).orElse(0.0d));
+        return group;
+    }
+
+    private List<Map<String, Object>> buildTraceGroupResults(List<TraceListItemDto> traces, String groupBy, int limit, String orderBy, long minCount) {
+        if (CollectionUtils.isEmpty(traces)) {
+            return List.of();
+        }
+        Map<String, List<TraceListItemDto>> grouped = new LinkedHashMap<>();
+        for (TraceListItemDto trace : traces) {
+            String value = defaultText(resolveTraceListGroupValue(trace, groupBy), "unknown");
+            grouped.computeIfAbsent(value, ignored -> new ArrayList<>()).add(trace);
+        }
+        return grouped.entrySet().stream()
+                .map(entry -> toTraceGroupResult(entry.getKey(), entry.getValue()))
+                .filter(group -> ((Long) group.get("traceCount")) >= minCount)
+                .sorted(resolveTraceGroupComparator(orderBy))
+                .limit(limit)
+                .toList();
+    }
+
+    private Comparator<Map<String, Object>> resolveTraceGroupComparator(String orderBy) {
+        String normalized = StringUtils.trimWhitespace(orderBy);
+        if ("error-count-desc".equalsIgnoreCase(normalized)) {
+            return (left, right) -> Long.compare((Long) right.get("errorTraceCount"), (Long) left.get("errorTraceCount"));
+        }
+        if ("latency-p95-desc".equalsIgnoreCase(normalized)) {
+            return (left, right) -> Double.compare((Double) right.get("latencyP95Ms"), (Double) left.get("latencyP95Ms"));
+        }
+        return (left, right) -> Long.compare((Long) right.get("traceCount"), (Long) left.get("traceCount"));
+    }
+
+    private int resolveTraceGroupByLimit(Integer limit) {
+        if (limit == null || limit < 1) {
+            return TRACE_GROUP_BY_LIMIT;
+        }
+        return Math.min(limit, TRACE_GROUP_BY_MAX_LIMIT);
+    }
+
+    private long resolveTraceGroupByMinCount(Integer minCount) {
+        if (minCount == null || minCount < 1) {
+            return 1L;
+        }
+        return Math.min(minCount.longValue(), TRACE_GROUP_BY_MAX_MIN_COUNT);
+    }
+
+    private Map<String, Object> toTraceGroupResult(String value, List<TraceListItemDto> traces) {
+        Map<String, Object> group = new LinkedHashMap<>();
+        List<Long> durations = traces.stream()
+                .map(TraceListItemDto::getDurationNanos)
+                .filter(Objects::nonNull)
+                .filter(duration -> duration >= 0)
+                .sorted()
+                .toList();
+        group.put("value", value);
+        group.put("traceCount", (long) traces.size());
+        group.put("errorTraceCount", traces.stream().filter(trace -> isErrorStatus(trace.getStatus())).count());
+        group.put("latencyAvgMs", durations.isEmpty() ? 0.0d
+                : durations.stream().mapToDouble(Long::doubleValue).average().orElse(0.0d) / 1_000_000.0d);
+        group.put("latencyP95Ms", durations.isEmpty() ? 0.0d
+                : durations.get(Math.min(durations.size() - 1, (int) Math.ceil(durations.size() * 0.95d) - 1)) / 1_000_000.0d);
+        return group;
+    }
+
+    private String resolveTraceListGroupValue(TraceListItemDto trace, String groupBy) {
+        if (trace == null || !StringUtils.hasText(groupBy)) {
+            return null;
+        }
+        Map<String, String> resourceAttributes = trace.getResourceAttributes() == null
+                ? Collections.emptyMap()
+                : trace.getResourceAttributes();
+        if ("service.name".equals(groupBy)) {
+            return defaultText(trace.getServiceName(), resourceAttributes.get("service.name"));
+        }
+        if ("operation.name".equals(groupBy)) {
+            return trace.getRootSpanName();
+        }
+        if ("status".equals(groupBy)) {
+            return isErrorStatus(trace.getStatus()) ? "ERROR" : "OK";
+        }
+        if (groupBy.startsWith("resource:")) {
+            return resourceAttributes.get(groupBy.substring("resource:".length()));
+        }
+        return resourceAttributes.get(groupBy);
+    }
+
+    private String normalizeTraceGroupBy(String groupBy) {
+        if (!StringUtils.hasText(groupBy)) {
+            return null;
+        }
+        String normalized = groupBy.trim().toLowerCase(Locale.ROOT);
+        if ("service_name".equals(normalized)) {
+            return "service.name";
+        }
+        if ("operation".equals(normalized) || "operation.name".equals(normalized)
+                || "span.name".equals(normalized) || "span_name".equals(normalized)) {
+            return "operation.name";
+        }
+        if ("status".equals(normalized) || "error".equals(normalized)) {
+            return "status";
+        }
+        if (normalized.startsWith("resource:")) {
+            String key = normalized.substring("resource:".length());
+            return isSafeResourceFilterKey(key) ? "resource:" + key : null;
+        }
+        return isSafeResourceFilterKey(normalized) ? normalized : null;
     }
 
     private TraceOverviewDto toTraceOverview(Map<String, Object> row) {
@@ -367,10 +707,14 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                        String serviceName,
                                                        String serviceNamespace,
                                                        String environment,
+                                                       String operationName,
+                                                       Long minDurationNanos,
+                                                       Long maxDurationNanos,
                                                        Map<String, Set<String>> identityValues,
                                                        Boolean hideInternal) {
         if (StringUtils.hasText(traceId)) {
             return queryTraceRows(traceId, start, end, serviceName, serviceNamespace, environment,
+                    operationName, minDurationNanos, maxDurationNanos,
                     identityValues, hideInternal);
         }
         return traceQueryRepository.queryRecentTraceRows(
@@ -380,6 +724,9 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 serviceName,
                 serviceNamespace,
                 environment,
+                operationName,
+                minDurationNanos,
+                maxDurationNanos,
                 AuthTokenRequestContext.currentWorkspaceId(),
                 identityValues,
                 hideInternal
@@ -398,9 +745,24 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                      String environment,
                                                      Map<String, Set<String>> identityValues,
                                                      Boolean hideInternal) {
+        return queryTraceRows(traceId, start, end, serviceName, serviceNamespace, environment,
+                null, null, null, identityValues, hideInternal);
+    }
+
+    private List<Map<String, Object>> queryTraceRows(String traceId,
+                                                     Long start,
+                                                     Long end,
+                                                     String serviceName,
+                                                     String serviceNamespace,
+                                                     String environment,
+                                                     String operationName,
+                                                     Long minDurationNanos,
+                                                     Long maxDurationNanos,
+                                                     Map<String, Set<String>> identityValues,
+                                                     Boolean hideInternal) {
         String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
         if (!hasTraceRowPushdownFilters(start, end, serviceName, serviceNamespace, environment,
-                workspaceId, identityValues, hideInternal)) {
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, identityValues, hideInternal)) {
             return traceQueryRepository.queryTraceRows(traceId, TRACE_DETAIL_LIMIT);
         }
         return traceQueryRepository.queryTraceRows(
@@ -411,6 +773,9 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 serviceName,
                 serviceNamespace,
                 environment,
+                operationName,
+                minDurationNanos,
+                maxDurationNanos,
                 workspaceId,
                 identityValues,
                 hideInternal
@@ -422,6 +787,9 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                String serviceName,
                                                String serviceNamespace,
                                                String environment,
+                                               String operationName,
+                                               Long minDurationNanos,
+                                               Long maxDurationNanos,
                                                String workspaceId,
                                                Map<String, Set<String>> identityValues,
                                                Boolean hideInternal) {
@@ -430,6 +798,9 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 || StringUtils.hasText(serviceName)
                 || StringUtils.hasText(serviceNamespace)
                 || StringUtils.hasText(environment)
+                || StringUtils.hasText(operationName)
+                || minDurationNanos != null
+                || maxDurationNanos != null
                 || StringUtils.hasText(workspaceId)
                 || !CollectionUtils.isEmpty(identityValues)
                 || Boolean.TRUE.equals(hideInternal);
@@ -480,9 +851,11 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return null;
     }
 
-    private boolean matchesTraceFilters(TraceAggregate trace, Map<String, Set<String>> identityValues, Long start, Long end,
+    private boolean matchesTraceFilters(TraceAggregate trace, Map<String, Set<String>> identityValues,
+                                        Map<String, Set<String>> resourceFilters, Long start, Long end,
                                         String traceId, Boolean errorOnly, String serviceName, String serviceNamespace,
-                                        String environment, Boolean hideInternal) {
+                                        String environment, String operationName, Long minDurationNanos,
+                                        Long maxDurationNanos, Boolean hideInternal) {
         if (trace == null) {
             return false;
         }
@@ -513,7 +886,70 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 && !environment.equalsIgnoreCase(trace.getResourceAttributes().get("deployment.environment.name"))) {
             return false;
         }
-        return identityValues.isEmpty() || matchesEntity(trace, identityValues);
+        if (StringUtils.hasText(operationName) && !operationName.equalsIgnoreCase(trace.getRootSpanName())) {
+            return false;
+        }
+        if (minDurationNanos != null && (trace.getDurationNanos() == null || trace.getDurationNanos() < minDurationNanos)) {
+            return false;
+        }
+        if (maxDurationNanos != null && (trace.getDurationNanos() == null || trace.getDurationNanos() > maxDurationNanos)) {
+            return false;
+        }
+        if (!identityValues.isEmpty() && !matchesEntity(trace, identityValues)) {
+            return false;
+        }
+        return resourceFilters.isEmpty() || matchesResourceFilters(trace, resourceFilters);
+    }
+
+    private String normalizeSpanScope(String spanScope) {
+        String normalized = StringUtils.trimWhitespace(spanScope);
+        if (!StringUtils.hasText(normalized)) {
+            return null;
+        }
+        normalized = normalized.toLowerCase(Locale.ROOT);
+        if ("root".equals(normalized)) {
+            return "root";
+        }
+        if ("entrypoint".equals(normalized) || "entrypoint-spans".equals(normalized) || "entry".equals(normalized)) {
+            return "entrypoint";
+        }
+        return null;
+    }
+
+    private boolean matchesSpanScope(TraceAggregate trace, String spanScope) {
+        if (!StringUtils.hasText(spanScope) || trace == null) {
+            return true;
+        }
+        if ("root".equals(spanScope)) {
+            return trace.spans.stream().anyMatch(span -> !StringUtils.hasText(span.getParentSpanId()));
+        }
+        if ("entrypoint".equals(spanScope)) {
+            return trace.spans.stream().anyMatch(span -> !StringUtils.hasText(span.getParentSpanId())
+                    || isEntrypointSpanKind(span.getSpanKind()));
+        }
+        return true;
+    }
+
+    private boolean isEntrypointSpanKind(String spanKind) {
+        String normalized = StringUtils.trimWhitespace(spanKind);
+        if (!StringUtils.hasText(normalized)) {
+            return false;
+        }
+        normalized = normalized.toUpperCase(Locale.ROOT);
+        return "SPAN_KIND_SERVER".equals(normalized)
+                || "SERVER".equals(normalized)
+                || "SPAN_KIND_CONSUMER".equals(normalized)
+                || "CONSUMER".equals(normalized);
+    }
+
+    private Long durationMillisToNanos(Long durationMillis) {
+        if (durationMillis == null || durationMillis < 0) {
+            return null;
+        }
+        if (durationMillis > Long.MAX_VALUE / 1_000_000L) {
+            return Long.MAX_VALUE;
+        }
+        return durationMillis * 1_000_000L;
     }
 
     private boolean isSelfTelemetryTrace(TraceAggregate trace) {
@@ -552,6 +988,100 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             }
         }
         return false;
+    }
+
+    private boolean matchesResourceFilters(TraceAggregate trace, Map<String, Set<String>> resourceFilters) {
+        if (resourceFilters.isEmpty()) {
+            return true;
+        }
+        if (trace == null) {
+            return false;
+        }
+        for (Map.Entry<String, Set<String>> entry : resourceFilters.entrySet()) {
+            String actual = trimText(resolveCanonicalValue(trace.getResourceAttributes(), entry.getKey(), trace.getServiceName()));
+            if (!StringUtils.hasText(actual)) {
+                return false;
+            }
+            boolean matched = entry.getValue().stream()
+                    .filter(StringUtils::hasText)
+                    .anyMatch(expected -> actual.equalsIgnoreCase(expected));
+            if (!matched) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Map<String, Set<String>> parseResourceFilters(String resourceFilter) {
+        if (!StringUtils.hasText(resourceFilter)) {
+            return Collections.emptyMap();
+        }
+        Map<String, Set<String>> filters = new LinkedHashMap<>();
+        for (String clause : resourceFilter.split("(?i)\\s+and\\s+|\\s*,\\s*")) {
+            String trimmedClause = trimText(clause);
+            if (!StringUtils.hasText(trimmedClause)) {
+                continue;
+            }
+            int separatorIndex = resourceFilterSeparatorIndex(trimmedClause);
+            if (separatorIndex <= 0 || separatorIndex >= trimmedClause.length() - 1) {
+                continue;
+            }
+            String key = trimText(trimmedClause.substring(0, separatorIndex));
+            String value = stripResourceFilterQuotes(trimText(trimmedClause.substring(separatorIndex + 1)));
+            if (!isSafeResourceFilterKey(key) || !StringUtils.hasText(value)) {
+                continue;
+            }
+            filters.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(value);
+        }
+        return filters;
+    }
+
+    private int resourceFilterSeparatorIndex(String clause) {
+        int equalsIndex = clause.indexOf('=');
+        int colonIndex = clause.indexOf(':');
+        if (equalsIndex < 0) {
+            return colonIndex;
+        }
+        if (colonIndex < 0) {
+            return equalsIndex;
+        }
+        return Math.min(equalsIndex, colonIndex);
+    }
+
+    private String stripResourceFilterQuotes(String value) {
+        if (value == null || value.length() < 2) {
+            return value;
+        }
+        char first = value.charAt(0);
+        char last = value.charAt(value.length() - 1);
+        if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+            return trimText(value.substring(1, value.length() - 1));
+        }
+        return value;
+    }
+
+    private boolean isSafeResourceFilterKey(String key) {
+        if (!StringUtils.hasText(key)) {
+            return false;
+        }
+        for (int index = 0; index < key.length(); index++) {
+            char character = key.charAt(index);
+            if (!Character.isLetterOrDigit(character) && character != '.' && character != '_' && character != '-' && character != ':') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Map<String, Set<String>> mergeResourceFilters(Map<String, Set<String>> identityValues,
+                                                          Map<String, Set<String>> resourceFilters) {
+        if (CollectionUtils.isEmpty(identityValues) && CollectionUtils.isEmpty(resourceFilters)) {
+            return Collections.emptyMap();
+        }
+        Map<String, Set<String>> merged = new LinkedHashMap<>();
+        identityValues.forEach((key, values) -> merged.put(key, new LinkedHashSet<>(values)));
+        resourceFilters.forEach((key, values) -> merged.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).addAll(values));
+        return merged;
     }
 
     private String resolveCanonicalValue(Map<String, String> resourceAttributes, String key, String serviceName) {
@@ -778,6 +1308,31 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             Long value = coerceLong(row.get(key));
             if (value != null) {
                 return value;
+            }
+        }
+        return null;
+    }
+
+    private Double readDoubleValue(Map<String, Object> row, String... keys) {
+        if (row == null || keys == null) {
+            return null;
+        }
+        for (String key : keys) {
+            if (!StringUtils.hasText(key) || !row.containsKey(key)) {
+                continue;
+            }
+            Object value = row.get(key);
+            if (value instanceof Number number) {
+                return number.doubleValue();
+            }
+            String text = trimText(Objects.toString(value, null));
+            if (!StringUtils.hasText(text)) {
+                continue;
+            }
+            try {
+                return Double.parseDouble(text);
+            } catch (NumberFormatException ignored) {
+                // Try the next key.
             }
         }
         return null;

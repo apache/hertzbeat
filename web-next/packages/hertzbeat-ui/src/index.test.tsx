@@ -154,6 +154,7 @@ import {
   HzChipGroup,
   HzControlStack,
   HzDialogBodyLayout,
+  HzSignalSummaryStrip,
   HzSignalWorkbenchShell,
   HzSearchFieldFrame,
   HzSearchFieldIcon,
@@ -819,6 +820,9 @@ describe('@hertzbeat/ui', () => {
     const html = renderToStaticMarkup(
       <div>
         <HzInput width="metrics-query-expression" inset="search-icon" aria-label="Metric query" data-otlp-metrics-query-input="true" />
+        <HzInput width="metrics-filter-expression" inset="search-icon" aria-label="Metric filter" data-otlp-metrics-filter-input="true" />
+        <HzInput width="metrics-query-step" aria-label="Query step" data-otlp-metrics-step-input="true" />
+        <HzInput width="metrics-query-limit" aria-label="Series limit" data-otlp-metrics-limit-input="true" />
         <HzInput width="log-query-token" aria-label="Log trace ID" data-log-manage-query-token-input="trace-id" />
         <HzInput width="log-query-body" aria-label="Log body" data-log-manage-query-body-input="shared-log-body-input" />
         <HzInput width="metrics-context" aria-label="Service" data-otlp-metrics-context-input="service-name" />
@@ -829,6 +833,9 @@ describe('@hertzbeat/ui', () => {
 
     expect(html).toContain('data-hz-ui="input"');
     expect(html).toContain('data-hz-input-width="metrics-query-expression"');
+    expect(html).toContain('data-hz-input-width="metrics-filter-expression"');
+    expect(html).toContain('data-hz-input-width="metrics-query-step"');
+    expect(html).toContain('data-hz-input-width="metrics-query-limit"');
     expect(html).toContain('data-hz-input-width="log-query-token"');
     expect(html).toContain('data-hz-input-width="log-query-body"');
     expect(html).toContain('data-hz-input-width="metrics-context"');
@@ -837,6 +844,9 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-log-manage-query-token-input="trace-id"');
     expect(html).toContain('data-log-manage-query-body-input="shared-log-body-input"');
     expect(html).toContain('data-otlp-metrics-query-input="true"');
+    expect(html).toContain('data-otlp-metrics-filter-input="true"');
+    expect(html).toContain('data-otlp-metrics-step-input="true"');
+    expect(html).toContain('data-otlp-metrics-limit-input="true"');
     expect(html).toContain('data-otlp-metrics-context-input="service-name"');
     expect(html).toContain('data-otlp-metrics-context-input="environment"');
     expect(html).toContain('data-otlp-metrics-context-input="trace-id"');
@@ -1704,6 +1714,16 @@ describe('@hertzbeat/ui', () => {
           ]}
         />
         <HzSelect
+          aria-label="Temporal aggregation"
+          value="rate"
+          width="metrics-temporal-aggregation"
+          data-otlp-metrics-temporal-aggregation-select-owner="hertzbeat-ui-select"
+          options={[
+            { value: 'raw', label: 'Raw' },
+            { value: 'rate', label: 'Rate' }
+          ]}
+        />
+        <HzSelect
           aria-label="Severity"
           value="WARN"
           width="log-severity"
@@ -1721,13 +1741,16 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-select-width="default"');
     expect(html).toContain('data-hz-select-width="metrics-aggregation"');
     expect(html).toContain('data-hz-select-width="metrics-group-by"');
+    expect(html).toContain('data-hz-select-width="metrics-temporal-aggregation"');
     expect(html).toContain('data-hz-select-width="log-severity"');
     expect(html).toContain('data-hz-select-trigger-tone="signal-query"');
     expect(html).toContain('data-otlp-metrics-aggregation-select-owner="hertzbeat-ui-select"');
     expect(html).toContain('data-otlp-metrics-group-by-select-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-otlp-metrics-temporal-aggregation-select-owner="hertzbeat-ui-select"');
     expect(html).toContain('data-log-manage-query-severity-select-owner="hertzbeat-ui-select"');
     expect(html).toContain('w-[124px]');
     expect(html).toContain('w-[132px]');
+    expect(html).toContain('w-[156px]');
     expect(html).toContain('text-[#d5dce8]');
     expect(html).toContain('data-hz-ui="select-menu"');
     expect(html).toContain('data-hz-ui="select-trigger"');
@@ -2794,7 +2817,7 @@ describe('@hertzbeat/ui', () => {
     expect(hertzBeatUiControlBaseline.fieldEdge).toBe('lined');
     expect(hertzBeatUiControlBaseline.buttonTiers).toEqual(['flat-neutral', 'solid-primary', 'solid-danger']);
     expect(hertzBeatUiControlBaseline.componentScope).toEqual(
-      expect.arrayContaining(['HzButton', 'HzButtonIcon', 'HzButtonLink', 'HzHeaderIconButton', 'HzHeaderRealtimeNotice', 'HzAboutModalSurface', 'HzPassportLockSurface', 'HzTableRowActionButton', 'HzDisabledActionShell', 'HzActionGroup', 'HzChipGroup', 'HzControlStack', 'HzDetailAside', 'HzDetailBodyStack', 'HzDialogBodyLayout', 'HzDialogEventNotice', 'HzDialogEventText', 'HzDialogMetaItem', 'HzSignalWorkbenchShell', 'HzSearchFieldIcon', 'HzPanelSection', 'HzPanelTitleLabel', 'HzTrendBar', 'HzTrendFrame', 'HzWorkbenchHeaderCopy', 'HzWorkbenchLayout', 'HzIconLink', 'HzInput', 'HzSelect', 'HzNumberStepper', 'HzCheckbox', 'HzSwitch', 'HzUnderlineToggle'])
+      expect.arrayContaining(['HzButton', 'HzButtonIcon', 'HzButtonLink', 'HzHeaderIconButton', 'HzHeaderRealtimeNotice', 'HzAboutModalSurface', 'HzPassportLockSurface', 'HzTableRowActionButton', 'HzDisabledActionShell', 'HzActionGroup', 'HzChipGroup', 'HzControlStack', 'HzDetailAside', 'HzDetailBodyStack', 'HzDialogBodyLayout', 'HzDialogEventNotice', 'HzDialogEventText', 'HzDialogMetaItem', 'HzSignalSummaryItem', 'HzSignalSummaryStrip', 'HzSignalWorkbenchShell', 'HzSearchFieldIcon', 'HzPanelSection', 'HzPanelTitleLabel', 'HzTrendBar', 'HzTrendFrame', 'HzWorkbenchHeaderCopy', 'HzWorkbenchLayout', 'HzIconLink', 'HzInput', 'HzSelect', 'HzNumberStepper', 'HzCheckbox', 'HzSwitch', 'HzUnderlineToggle'])
     );
     expect(hertzBeatUiControlBaseline.componentScope).toContain('HzHeaderMenuAction');
     expect(hertzBeatUiControlBaseline.componentScope).toContain('HzLocaleMenuOption');
@@ -3359,7 +3382,7 @@ describe('@hertzbeat/ui', () => {
           <HzPanelSurface data-panel="chart">Chart</HzPanelSurface>
         </HzWorkbenchLayout>
         <HzWorkbenchLayout as="div" variant="metrics-chart-toolbar" data-otlp-metrics-chart-header-layout-owner="hertzbeat-ui-workbench-layout">
-          <HzPanelTitleLabel>Trend band</HzPanelTitleLabel>
+          <HzPanelTitleLabel>Time series</HzPanelTitleLabel>
           <HzActionGroup layout="end-wrap">
             <HzStatusBadge tone="neutral" size="xs">0 series</HzStatusBadge>
           </HzActionGroup>
@@ -4119,7 +4142,17 @@ describe('@hertzbeat/ui', () => {
           heading="Selected point"
           rows={[
             { key: 'latest', title: 'Latest value', copy: '128', meta: '14:20' },
-            { key: 'delta', title: 'Delta', copy: '+8', meta: 'origin' }
+            {
+              key: 'delta',
+              title: 'Delta',
+              copy: '+8',
+              meta: 'origin',
+              action: (
+                <button type="button" data-monitor-history-row-action="delta">
+                  Inspect
+                </button>
+              )
+            }
           ]}
           data-monitor-history-summary-owner="hertzbeat-ui-detail-rows"
         />
@@ -4145,6 +4178,8 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-detail-rows-boundary="top"');
     expect(html).toContain('data-hz-detail-rows-offset="top"');
     expect(html).toContain('data-hz-detail-rows-padding="compact-y"');
+    expect(html).toContain('data-hz-detail-row-action-owner="hertzbeat-ui-detail-row-action"');
+    expect(html).toContain('data-monitor-history-row-action="delta"');
     expect(html).toContain('py-2');
     expect(html).toContain('data-monitor-history-summary-owner="hertzbeat-ui-detail-rows"');
     expect(html).toContain('data-metrics-detail-boundary-owner="hertzbeat-ui-detail-rows"');
@@ -7695,6 +7730,20 @@ describe('@hertzbeat/ui', () => {
           density="compact"
           data-trace-manage-drawer-stage-stat-owner="hertzbeat-ui-stat-cell"
         />
+        <HzSignalSummaryStrip
+          data-signal-summary-strip-owner="hertzbeat-ui-signal-summary-strip"
+          items={[
+            { id: 'total', label: 'Total', value: 8 },
+            { id: 'errors', label: 'Errors', value: 2, tone: 'critical', trend: '+1' },
+            { id: 'latest', label: 'Latest', value: 'now', detail: 'last event' }
+          ]}
+        />
+        <HzSignalSummaryStrip
+          layout="toolbar"
+          density="compact"
+          data-signal-toolbar-summary-owner="hertzbeat-ui-signal-summary-strip"
+          items={[{ id: 'series', label: 'Series', value: 12 }]}
+        />
         <HzSignalTrendBars
           title="Signal trend"
           meta="4 points"
@@ -7770,6 +7819,13 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('Collection success');
     expect(html).toContain('Trace count');
     expect(html).toContain('99.2');
+    expect(html).toContain('data-hz-ui="signal-summary-strip"');
+    expect(html).toContain('data-hz-signal-summary-layout="panel"');
+    expect(html).toContain('data-hz-signal-summary-layout="toolbar"');
+    expect(html).toContain('data-hz-signal-summary-item="errors"');
+    expect(html).toContain('data-hz-signal-summary-item-tone="critical"');
+    expect(html).toContain('data-signal-summary-strip-owner="hertzbeat-ui-signal-summary-strip"');
+    expect(html).toContain('data-signal-toolbar-summary-owner="hertzbeat-ui-signal-summary-strip"');
     expect(html).toContain('data-hz-ui="signal-trend-bars"');
     expect(html).toContain('data-hz-signal-trend-count="4"');
     expect(html).toContain('data-signal-trend-bars-owner="hertzbeat-ui-signal-trend-bars"');
@@ -7890,7 +7946,7 @@ describe('@hertzbeat/ui', () => {
         icon={PanelIcon}
         data-signal-panel-title-label-owner="hertzbeat-ui-panel-title-label"
       >
-        Trend band
+        Time series
       </HzPanelTitleLabel>
     );
 
@@ -7902,7 +7958,7 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('inline-flex min-w-0 items-center gap-2');
     expect(html).toContain('text-[12px] font-semibold text-[#c6cfdd]');
     expect(html).toContain('h-4 w-4 shrink-0');
-    expect(html).toContain('Trend band');
+    expect(html).toContain('Time series');
   });
 
   it('renders compact trend frames for empty and fallback chart bands', () => {

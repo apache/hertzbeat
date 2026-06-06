@@ -1,11 +1,16 @@
-import React from 'react';
+// @vitest-environment jsdom
+
+import React, { act } from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTranslatorMock } from '../../../test/i18n-test-helper';
 import TraceManagePage from './trace-manage-page';
 import type { TraceManageRouteState, TraceQueryState } from '@/lib/trace-manage/query-state';
+
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const apiMessageGet = vi.hoisted(() => vi.fn());
 
@@ -13,6 +18,7 @@ const mockState = vi.hoisted(() => ({
   searchParams: new URLSearchParams(),
   replace: vi.fn(),
   lastLoad: null as null | (() => Promise<unknown>),
+  traceListOverride: null as null | Record<string, unknown>,
   translatorOverrides: {} as Record<string, string>,
   translatorFallbackToKey: true
 }));
@@ -64,7 +70,7 @@ vi.mock('@/components/workbench/client-workbench', () => ({
             latestObservedAt: 1713200000000,
             hasActiveTrace: true
           },
-          list: {
+          list: mockState.traceListOverride || {
             content: [
               {
                 traceId: 'trace-123',
@@ -75,6 +81,18 @@ vi.mock('@/components/workbench/client-workbench', () => ({
                 durationNanos: 420000000,
                 status: 'ERROR',
                 startTime: 1713200000000
+              }
+            ]
+          },
+          group: {
+            groupBy: 'resource:service.version',
+            groups: [
+              {
+                value: '1.2.3',
+                traceCount: 12,
+                errorTraceCount: 2,
+                latencyAvgMs: 84.5,
+                latencyP95Ms: 210
               }
             ]
           }
@@ -166,18 +184,47 @@ vi.mock('@/lib/format', () => ({
   formatTime: () => '2026-04-16 22:00:00'
 }));
 
-vi.mock('@/lib/trace-manage/query-state', () => ({
-  buildTraceRouteUrl: (query: any) => {
+vi.mock('@/lib/trace-manage/query-state', () => {
+  const defaultTraceTableColumns = ['start', 'service', 'root-span', 'duration', 'status', 'trace-id'];
+  const normalizeTraceTableColumns = (columns?: string[]) => {
+    const requested = new Set(columns?.length ? columns : defaultTraceTableColumns);
+    requested.add('start');
+    return defaultTraceTableColumns.filter(column => requested.has(column));
+  };
+
+  return {
+  DEFAULT_TRACE_TABLE_COLUMNS: defaultTraceTableColumns,
+  DEFAULT_TRACE_LIST_PAGE_SIZE: '8',
+  DEFAULT_TRACE_LIST_PAGE_INDEX: '0',
+  TRACE_LIST_PAGE_SIZE_OPTIONS: ['8', '20', '50', '100', '200'],
+  TRACE_TABLE_COLUMN_KEYS: defaultTraceTableColumns,
+  buildTraceRouteUrl: (query: any, options?: { view?: string }) => {
     const params = new URLSearchParams();
     if (query.traceId) params.set('traceId', query.traceId);
     if (query.spanId) params.set('spanId', query.spanId);
     if (query.serviceName) params.set('serviceName', query.serviceName);
+    if (query.resourceFilter) params.set('resourceFilter', query.resourceFilter);
+    if (query.operationName) params.set('operationName', query.operationName);
+    if (query.minDurationMs) params.set('minDurationMs', query.minDurationMs);
+    if (query.maxDurationMs) params.set('maxDurationMs', query.maxDurationMs);
+    if (query.groupBy) params.set('groupBy', query.groupBy);
+    if (query.groupLimit) params.set('groupLimit', query.groupLimit);
+    if (query.groupBy && query.groupOrder && query.groupOrder !== 'trace-count-desc') params.set('groupOrder', query.groupOrder);
+    if (query.groupBy && query.groupMinCount) params.set('groupMinCount', query.groupMinCount);
     if (query.errorOnly) params.set('errorOnly', 'true');
+    if (query.spanScope && query.spanScope !== 'root') params.set('spanScope', query.spanScope);
+    if (query.listPageSize && query.listPageSize !== '8') params.set('listPageSize', query.listPageSize);
+    if (query.listPageIndex && query.listPageIndex !== '0') params.set('listPageIndex', query.listPageIndex);
+    const columns = normalizeTraceTableColumns(query.columns);
+    if (columns.join(',') !== defaultTraceTableColumns.join(',')) params.set('columns', columns.join(','));
+    if (options?.view && options.view !== 'list') params.set('view', options.view);
     const queryString = params.toString();
     return queryString ? `/trace/manage?${queryString}` : '/trace/manage';
   },
-  buildTraceUrls: (query: any) => {
-    const listParams = new URLSearchParams({ pageIndex: '0', pageSize: '8' });
+  buildTraceUrls: (query: any, routeContext: Record<string, string | undefined> = {}) => {
+    const listPageSize = ['8', '20', '50', '100', '200'].includes(query.listPageSize) ? query.listPageSize : '8';
+    const listPageIndex = /^\d+$/.test(query.listPageIndex || '') ? query.listPageIndex : '0';
+    const listParams = new URLSearchParams({ pageIndex: listPageIndex, pageSize: listPageSize });
     const overviewParams = new URLSearchParams();
     if (query.traceId) {
       listParams.set('traceId', query.traceId);
@@ -187,27 +234,71 @@ vi.mock('@/lib/trace-manage/query-state', () => ({
       listParams.set('serviceName', query.serviceName);
       overviewParams.set('serviceName', query.serviceName);
     }
+    if (query.resourceFilter) {
+      listParams.set('resourceFilter', query.resourceFilter);
+      overviewParams.set('resourceFilter', query.resourceFilter);
+    }
+    if (query.operationName) {
+      listParams.set('operationName', query.operationName);
+      overviewParams.set('operationName', query.operationName);
+    }
+    if (query.minDurationMs) {
+      listParams.set('minDurationMs', query.minDurationMs);
+      overviewParams.set('minDurationMs', query.minDurationMs);
+    }
+    if (query.maxDurationMs) {
+      listParams.set('maxDurationMs', query.maxDurationMs);
+      overviewParams.set('maxDurationMs', query.maxDurationMs);
+    }
     if (query.errorOnly) {
       listParams.set('errorOnly', 'true');
       overviewParams.set('errorOnly', 'true');
     }
+    listParams.set('spanScope', query.spanScope || 'root');
+    overviewParams.set('spanScope', query.spanScope || 'root');
+    ['entityId', 'serviceNamespace', 'environment', 'start', 'end'].forEach(key => {
+      const value = routeContext[key];
+      if (!value) return;
+      listParams.set(key, value);
+      overviewParams.set(key, value);
+    });
+    const groupByParams = new URLSearchParams(overviewParams);
+    if (query.groupBy) groupByParams.set('groupBy', query.groupBy);
+    if (query.groupLimit) groupByParams.set('limit', query.groupLimit);
+    if (query.groupBy && query.groupOrder && query.groupOrder !== 'trace-count-desc') groupByParams.set('orderBy', query.groupOrder);
+    if (query.groupBy && query.groupMinCount) groupByParams.set('minCount', query.groupMinCount);
     return {
       listUrl: `/traces/list?${listParams.toString()}`,
-      overviewUrl: overviewParams.toString() ? `/traces/stats/overview?${overviewParams.toString()}` : '/traces/stats/overview'
+      overviewUrl: overviewParams.toString() ? `/traces/stats/overview?${overviewParams.toString()}` : '/traces/stats/overview',
+      ...(query.groupBy ? { groupByUrl: `/traces/stats/group-by?${groupByParams.toString()}` } : {})
     };
   },
   queryStateFromParams: (searchParams: { get(name: string): string | null }) => ({
     traceId: searchParams.get('traceId') || '',
     spanId: searchParams.get('spanId') || '',
     serviceName: searchParams.get('serviceName') || '',
-    errorOnly: searchParams.get('errorOnly') === 'true'
+    resourceFilter: searchParams.get('resourceFilter') || '',
+    operationName: searchParams.get('operationName') || '',
+    minDurationMs: searchParams.get('minDurationMs') || '',
+    maxDurationMs: searchParams.get('maxDurationMs') || '',
+    groupBy: searchParams.get('groupBy') || '',
+    groupLimit: searchParams.get('groupLimit') || '',
+    groupOrder: ['error-count-desc', 'latency-p95-desc'].includes(searchParams.get('groupOrder') || '') ? searchParams.get('groupOrder') : undefined,
+    groupMinCount: searchParams.get('groupMinCount') || '',
+    errorOnly: searchParams.get('errorOnly') === 'true',
+    spanScope: searchParams.get('spanScope') === 'all' ? 'all' : searchParams.get('spanScope') === 'entrypoint' ? 'entrypoint' : 'root',
+    listPageSize: ['8', '20', '50', '100', '200'].includes(searchParams.get('listPageSize') || '') ? searchParams.get('listPageSize') || '8' : '8',
+    listPageIndex: /^\d+$/.test(searchParams.get('listPageIndex') || '') ? searchParams.get('listPageIndex') || '0' : '0',
+    columns: normalizeTraceTableColumns((searchParams.get('columns') || defaultTraceTableColumns.join(',')).split(',').filter(Boolean))
   })
-}));
+  };
+});
 
 vi.mock('@/lib/trace-manage/view-model', () => ({
   buildSelectedSpanEventRows: () => [],
   buildSelectedSpanFacts: () => [],
   buildSelectedSpanLinkRows: () => [],
+  buildTraceAttributeRows: () => [],
   buildTraceAttributionDiagnostics: (_detail: any, _span: any, routeContext: any) => [
     {
       key: 'hertzbeat.entity_id',
@@ -240,11 +331,17 @@ vi.mock('@/lib/trace-manage/view-model', () => ({
       service: item.serviceName || '-',
       namespace: item.serviceNamespace || 'default',
       duration: formatDurationNanos(item.durationNanos),
+      durationMs: item.durationNanos == null ? '' : String(Math.ceil(item.durationNanos / 1_000_000)),
       status: item.status || 'UNSET',
       statusTone: item.status === 'ERROR' ? 'danger' : item.status === 'OK' ? 'success' : undefined,
       startTime: formatTime(item.startTime)
     })),
   buildTraceWaterfallRows: () => [],
+  buildTraceAlertRuleDraft: (query: any, routeContext: any = {}) => ({
+    name: query.serviceName || routeContext.serviceName ? `${query.serviceName || routeContext.serviceName} trace alert` : 'Trace alert',
+    query: query.operationName ? `operationName=${query.operationName}` : '',
+    queryType: 'traces'
+  }),
   buildTraceExplorerState: (_overview: any, listCount: number) => ({
     traceCountLabel: '8 traces',
     errorCountLabel: '2 errors',
@@ -259,6 +356,17 @@ vi.mock('@/lib/trace-manage/view-model', () => ({
     if (options.serviceName) sharedParams.set('serviceName', options.serviceName);
     if (options.serviceNamespace) sharedParams.set('serviceNamespace', options.serviceNamespace);
     if (routeContext.environment) sharedParams.set('environment', routeContext.environment);
+    const serviceName = options.serviceName || 'checkout';
+    const alertRulesParams = new URLSearchParams();
+    alertRulesParams.set('signal', 'traces');
+    alertRulesParams.set('entityId', '7');
+    alertRulesParams.set('serviceName', serviceName);
+    alertRulesParams.set('environment', 'prod');
+    alertRulesParams.set('timeRange', 'last-1h');
+    alertRulesParams.set('source', 'otlp');
+    if (options.alertDraft?.name) alertRulesParams.set('alertName', options.alertDraft.name);
+    if (options.alertDraft?.query) alertRulesParams.set('alertQuery', options.alertDraft.query);
+    if (options.alertDraft?.queryType) alertRulesParams.set('alertQueryType', options.alertDraft.queryType);
     return {
       intakeHref: `/ingestion/otlp?signal=traces&entityId=7&serviceName=${encodeURIComponent(options.serviceName || 'checkout')}&environment=prod&timeRange=last-1h&source=otlp`,
       logsHref: `/log/manage?${sharedParams.toString()}`,
@@ -266,7 +374,7 @@ vi.mock('@/lib/trace-manage/view-model', () => ({
       entitiesHref: `/entities?search=${encodeURIComponent(options.serviceName || 'checkout')}`,
       entityHref: `/entities/7?entityId=7&serviceName=${encodeURIComponent(options.serviceName || 'checkout')}&environment=prod&timeRange=last-1h&source=otlp`,
       alertHandlingHref: `/alert?status=firing&signal=traces&search=${encodeURIComponent(options.serviceName || 'checkout')}&entityId=7&serviceName=${encodeURIComponent(options.serviceName || 'checkout')}&environment=prod&timeRange=last-1h&source=otlp`,
-      alertRulesHref: `/alert/setting?signal=traces&entityId=7&serviceName=${encodeURIComponent(options.serviceName || 'checkout')}&environment=prod&timeRange=last-1h&source=otlp`
+      alertRulesHref: `/alert/setting?${alertRulesParams.toString()}`
     };
   }
 }));
@@ -280,12 +388,40 @@ function stripReturnLabelFromRoute(href?: string | null) {
   return queryString ? `${path}?${queryString}` : path;
 }
 
+function normalizeTestTraceTableColumns(columns?: string[]) {
+  const defaultColumns = ['start', 'service', 'root-span', 'duration', 'status', 'trace-id'];
+  const requested = new Set(columns?.length ? columns : defaultColumns);
+  requested.add('start');
+  return defaultColumns.filter(column => requested.has(column)) as TraceQueryState['columns'];
+}
+
 function buildTraceManageRouteState(): TraceManageRouteState {
   const initialQuery: TraceQueryState = {
     traceId: mockState.searchParams.get('traceId') || '',
     spanId: mockState.searchParams.get('spanId') || '',
     serviceName: mockState.searchParams.get('serviceName') || '',
-    errorOnly: mockState.searchParams.get('errorOnly') === 'true'
+    resourceFilter: mockState.searchParams.get('resourceFilter') || '',
+    operationName: mockState.searchParams.get('operationName') || '',
+    minDurationMs: mockState.searchParams.get('minDurationMs') || '',
+    maxDurationMs: mockState.searchParams.get('maxDurationMs') || '',
+    groupBy: mockState.searchParams.get('groupBy') || '',
+    groupLimit: mockState.searchParams.get('groupLimit') || '',
+    groupOrder: ['error-count-desc', 'latency-p95-desc'].includes(mockState.searchParams.get('groupOrder') || '') ? mockState.searchParams.get('groupOrder') as TraceQueryState['groupOrder'] : undefined,
+    groupMinCount: mockState.searchParams.get('groupMinCount') || '',
+    errorOnly: mockState.searchParams.get('errorOnly') === 'true',
+    spanScope:
+      mockState.searchParams.get('spanScope') === 'all'
+        ? 'all'
+        : mockState.searchParams.get('spanScope') === 'entrypoint' || mockState.searchParams.get('spanScope') === 'entry'
+          ? 'entrypoint'
+          : 'root',
+    listPageSize: ['8', '20', '50', '100', '200'].includes(mockState.searchParams.get('listPageSize') || '')
+      ? mockState.searchParams.get('listPageSize') || '8'
+      : '8',
+    listPageIndex: /^\d+$/.test(mockState.searchParams.get('listPageIndex') || '')
+      ? mockState.searchParams.get('listPageIndex') || '0'
+      : '0',
+    columns: normalizeTestTraceTableColumns((mockState.searchParams.get('columns') || '').split(',').filter(Boolean))
   };
   const start = mockState.searchParams.get('start');
   const end = mockState.searchParams.get('end');
@@ -293,6 +429,14 @@ function buildTraceManageRouteState(): TraceManageRouteState {
 
   return {
     initialQuery,
+    currentView:
+      mockState.searchParams.get('view') === 'trace'
+        ? 'trace'
+        : mockState.searchParams.get('view') === 'time-series' || mockState.searchParams.get('view') === 'timeseries'
+          ? 'time-series'
+          : mockState.searchParams.get('view') === 'table'
+            ? 'table'
+            : 'list',
     routeContext: {
       entityId: mockState.searchParams.get('entityId') || undefined,
       entityName: mockState.searchParams.get('entityName') || undefined,
@@ -323,18 +467,37 @@ function renderTraceManagePage(initialRouteState = buildTraceManageRouteState())
   return renderToStaticMarkup(<TraceManagePage initialRouteState={initialRouteState} />);
 }
 
+function renderInteractiveTraceManagePage(initialRouteState = buildTraceManageRouteState()) {
+  interactionRoot?.render(<TraceManagePage initialRouteState={initialRouteState} />);
+}
+
 beforeEach(() => {
   mockState.searchParams = new URLSearchParams();
   mockState.replace.mockReset();
   mockState.lastLoad = null;
+  mockState.traceListOverride = null;
   mockState.translatorOverrides = {};
   mockState.translatorFallbackToKey = true;
   apiMessageGet.mockReset();
 });
 
+let interactionRoot: Root | null = null;
+let interactionContainer: HTMLDivElement | null = null;
+
+afterEach(() => {
+  if (interactionRoot) {
+    act(() => {
+      interactionRoot?.unmount();
+    });
+  }
+  interactionContainer?.remove();
+  interactionRoot = null;
+  interactionContainer = null;
+});
+
 describe('trace manage page', () => {
   it('renders the OTLP cold trace workbench and keeps the filtered trace endpoints', async () => {
-    mockState.searchParams = new URLSearchParams('traceId=trace-123&serviceName=checkout&errorOnly=true');
+    mockState.searchParams = new URLSearchParams('traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=POST%20%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true');
     apiMessageGet
       .mockResolvedValueOnce({ totalTraceCount: 8, errorTraceCount: 2, latestObservedAt: 1713200000000, hasActiveTrace: true })
       .mockResolvedValueOnce({ content: [] });
@@ -345,7 +508,7 @@ describe('trace manage page', () => {
     expect(html).toContain('data-trace-manage-route="otlp-hertzbeat-ui-trace-workbench"');
     expect(html).toContain('data-loading-copy="Loading trace workbench"');
     expect(html).toContain(
-      'data-cache-key="trace-manage:/traces/list?pageIndex=0&amp;pageSize=8&amp;traceId=trace-123&amp;serviceName=checkout&amp;errorOnly=true|/traces/stats/overview?traceId=trace-123&amp;serviceName=checkout&amp;errorOnly=true|last-30m'
+      'data-cache-key="trace-manage:list:/traces/list?pageIndex=0&amp;pageSize=8&amp;traceId=trace-123&amp;serviceName=checkout&amp;resourceFilter=service.version%3D1.2.3&amp;operationName=POST+%2Fcheckout&amp;minDurationMs=100&amp;maxDurationMs=500&amp;errorOnly=true&amp;spanScope=root|/traces/stats/overview?traceId=trace-123&amp;serviceName=checkout&amp;resourceFilter=service.version%3D1.2.3&amp;operationName=POST+%2Fcheckout&amp;minDurationMs=100&amp;maxDurationMs=500&amp;errorOnly=true&amp;spanScope=root|no-group|last-30m'
     );
     expect(html).toContain('data-cache-settled-ttl="10000"');
     expect(html).toContain('data-trace-manage-style-baseline="hertzbeat-ui-matte"');
@@ -391,6 +554,10 @@ describe('trace manage page', () => {
     expect(html).toContain('data-hz-query-token-field-width="trace-id"');
     expect(html).toContain('data-hz-query-token-field-width="span-id"');
     expect(html).toContain('data-hz-query-token-input-owner="hertzbeat-ui-query-token-field"');
+    expect(html).toContain('data-trace-manage-span-scope-select="shared-span-scope-select"');
+    expect(html).toContain('data-trace-manage-span-scope-select-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-hz-select-width="trace-span-scope"');
+    expect(html).toContain('data-trace-manage-span-scope="root"');
     expect(html).toContain('data-trace-manage-query-status-select="shared-query-status-select"');
     expect(html).toContain('data-trace-manage-query-status-select-owner="hertzbeat-ui-query-status-select"');
     expect(html).toContain('data-hz-query-status-select-owner="hertzbeat-ui-query-status-select"');
@@ -403,13 +570,41 @@ describe('trace manage page', () => {
     expect(html).toContain('data-trace-manage-query-action-icon="reset"');
     expect(html).toContain('data-trace-manage-query-action-icon-owner="hertzbeat-ui-button-icon"');
     expect(html).toContain('data-hz-button-icon-owner="hertzbeat-ui-button-icon"');
+    expect(html).toContain('data-trace-manage-quick-filter-controls="traces-quick-filters"');
+    expect(html).toContain('data-trace-manage-quick-filter-controls-owner="hertzbeat-ui-control-stack"');
+    expect(html).toContain('data-trace-manage-quick-filter="status"');
+    expect(html).toContain('data-trace-manage-quick-filter="serviceName"');
+    expect(html).toContain('data-trace-manage-quick-filter="operationName"');
+    expect(html).toContain('data-trace-manage-quick-filter="minDurationMs"');
+    expect(html).toContain('data-trace-manage-quick-filter="traceId"');
+    expect(html).toContain('data-trace-manage-quick-filter-owner="hertzbeat-ui-button"');
+    expect(html).toContain('data-trace-manage-quick-filter-value="error"');
+    expect(html).toContain('data-trace-manage-quick-filter-value="checkout"');
+    expect(html).toContain('data-trace-manage-quick-filter-value="POST /checkout"');
+    expect(html).toContain('data-trace-manage-quick-filter-value="100"');
+    expect(html).toContain('data-trace-manage-quick-filter-value="trace-123"');
+    expect(html).toContain('data-trace-manage-quick-filter-active="true"');
+    expect(html).toContain('data-trace-manage-view-switch="explorer-views"');
+    expect(html).toContain('data-trace-manage-view-switch-layout="shared-view-switch"');
+    expect(html).toContain('data-trace-manage-view-toggle-group="shared-action-group"');
+    expect(html).toContain('data-trace-manage-view-option="list"');
+    expect(html).toContain('data-trace-manage-view-option="trace"');
+    expect(html).toContain('data-trace-manage-view-option="time-series"');
+    expect(html).toContain('data-trace-manage-view-option="table"');
     expect(html).toContain('data-trace-manage-chart-band="hertzbeat-ui-chart-band"');
+    expect(html).not.toContain('data-trace-manage-group-panel="hertzbeat-ui-trace-group-results"');
+    expect(html).toContain('data-trace-manage-explorer-view="time-series"');
     expect(html).toContain('data-trace-manage-panel-surface="chart"');
+    expect(html).toContain('data-trace-manage-explorer-view="time-series"');
+    expect(html).toContain('data-trace-manage-explorer-view-owner="hertzbeat-ui-signal-time-series"');
     expect(html).toContain('data-trace-manage-chart-padding-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-padding="chart"');
     expect(html).toContain('data-trace-manage-chart-layout="shared-summary-trend"');
     expect(html).toContain('data-trace-manage-chart-layout-owner="hertzbeat-ui-workbench-layout"');
-    expect(html).toContain('data-hz-workbench-layout-variant="summary-trend"');
+    expect(html).toContain('data-hz-workbench-layout-variant="chart-stack"');
+    expect(html).toContain('data-trace-manage-summary-strip="inline-signal-summary"');
+    expect(html).toContain('data-trace-manage-summary-strip-owner="hertzbeat-ui-signal-summary-strip"');
+    expect(html).not.toContain('data-hz-stat-variant="tile"');
     expect(html).toContain('data-trace-manage-table-detail-layout="shared-table-detail"');
     expect(html).toContain('data-trace-manage-table-detail-layout-owner="hertzbeat-ui-workbench-layout"');
     expect(html).toContain('data-hz-ui="workbench-layout"');
@@ -417,11 +612,23 @@ describe('trace manage page', () => {
     expect(html).toContain('data-trace-manage-trace-table="hertzbeat-ui-dense-trace-list"');
     expect(html).toContain('data-trace-manage-panel-surface-clip-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-clip="true"');
+    expect(html).toContain('data-trace-manage-table-column-controls="customize-columns"');
+    expect(html).toContain('data-trace-manage-table-column-controls-owner="hertzbeat-ui-control-stack"');
+    expect(html).toContain('data-trace-manage-table-visible-columns="start,service,root-span,duration,status,trace-id"');
+    expect(html).toContain('data-trace-manage-table-column-control-owner="hertzbeat-ui-checkbox"');
+    expect(html).toContain('data-trace-manage-table-column="trace-id"');
     expect(html).toContain('data-trace-manage-table-chrome-owner="hertzbeat-ui-data-table"');
     expect(html).toContain('data-hz-ui="data-table"');
     expect(html).toContain('data-trace-manage-start-cell-owner="hertzbeat-ui-data-cell-text"');
-    expect(html).toContain('data-trace-manage-service-cell-owner="hertzbeat-ui-data-cell-text"');
+    expect(html).toContain('data-trace-manage-service-cell-owner="hertzbeat-ui-button"');
+    expect(html).toContain('data-trace-manage-table-service-filter-action="checkout"');
     expect(html).toContain('data-trace-manage-duration-cell-owner="hertzbeat-ui-data-cell-text"');
+    expect(html).toContain('data-trace-manage-table-duration-filter-action="420"');
+    expect(html).toContain('data-trace-manage-table-duration-filter-owner="hertzbeat-ui-button"');
+    expect(html).toContain('Filter traces to minimum duration 420ms');
+    expect(html).toContain('data-trace-manage-table-trace-id-filter-action="trace-123"');
+    expect(html).toContain('data-trace-manage-table-trace-id-filter-owner="hertzbeat-ui-button"');
+    expect(html).toContain('Filter traces to trace ID trace-123');
     expect(html).toContain('data-trace-manage-trace-id-cell-owner="hertzbeat-ui-data-cell-text"');
     expect(html).toContain('data-trace-manage-row-action-owner="hertzbeat-ui-table-row-action-button"');
     expect(html).toContain('data-hz-table-row-action-owner="hertzbeat-ui-table-row-action-button"');
@@ -448,15 +655,18 @@ describe('trace manage page', () => {
     expect(html).toContain('Traces Workbench');
     expect(html).toContain('Service name');
     expect(html).toContain('Error traces');
-    expect(html).toContain('Trend band');
+    expect(html).toContain('Trace time series');
     expect(html).toContain('Recent traces');
     expect(html).toContain('Run query');
-    expect(html).toContain('Filter traces by service, trace ID, span ID, and error state, then inspect trend, list, and detail evidence.');
+    expect(html).toContain('Filter traces by service, trace ID, span ID, and error state, then inspect time series, list, and detail evidence.');
     expect(html).toContain('/ingestion/otlp?signal=traces');
     expect(html).toContain('POST /checkout');
     expect(html).toContain('checkout');
     expect(html).toContain('ERROR');
     expect(html).toContain('data-trace-manage-status-tone="danger"');
+    expect(html).toContain('data-trace-manage-table-status-filter-action="ERROR"');
+    expect(html).toContain('data-trace-manage-table-status-filter-owner="hertzbeat-ui-button"');
+    expect(html).toContain('Filter traces to status ERROR');
     expect(html).toContain('Entity context');
     expect(html).toContain('data-trace-manage-attribution-diagnostics="hertzbeat-attribute-diagnostics"');
     expect(html).toContain('data-trace-manage-attribution-diagnostics-owner="hertzbeat-ui-attribute-diagnostics"');
@@ -468,6 +678,8 @@ describe('trace manage page', () => {
     expect(html).toContain('Collection source');
     expect(html).toContain('Entity detail');
     expect(html).toContain('Alert handling');
+    expect(html).toContain('Create alert');
+    expect(html).toContain('/alert/setting?signal=traces');
     expect(html).toContain('data-trace-manage-signal-handoff-hint="trace-log-metric-context"');
     expect(html).toContain('The current traceId, spanId, and service context carry into logs and metrics workbenches.');
     expect(html).toContain('data-trace-manage-selected-evidence="selected-trace-evidence"');
@@ -487,10 +699,484 @@ describe('trace manage page', () => {
     expect(html).not.toContain('Create an Alert');
     expect(html).not.toContain('Add to Dashboard');
     expect(apiMessageGet.mock.calls).toEqual([
-      ['/traces/stats/overview?traceId=trace-123&serviceName=checkout&errorOnly=true', { signal: expect.any(AbortSignal) }],
-      ['/traces/list?pageIndex=0&pageSize=8&traceId=trace-123&serviceName=checkout&errorOnly=true', { signal: expect.any(AbortSignal) }]
+      ['/traces/stats/overview?traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=POST+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root', { signal: expect.any(AbortSignal) }],
+      ['/traces/list?pageIndex=0&pageSize=8&traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=POST+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root', { signal: expect.any(AbortSignal) }]
     ]);
   }, 60000);
+
+  it('loads and renders trace group-by results when the route has an active groupBy', async () => {
+    mockState.searchParams = new URLSearchParams('serviceName=checkout&resourceFilter=service.version%3D1.2.3&groupBy=resource%3Aservice.version&groupLimit=7&groupOrder=latency-p95-desc&groupMinCount=5');
+    apiMessageGet
+      .mockResolvedValueOnce({ totalTraceCount: 8, errorTraceCount: 2, latestObservedAt: 1713200000000, hasActiveTrace: true })
+      .mockResolvedValueOnce({ content: [] })
+      .mockResolvedValueOnce({
+        groupBy: 'resource:service.version',
+        groups: [
+          {
+            value: '1.2.3',
+            traceCount: 12,
+            errorTraceCount: 2,
+            latencyAvgMs: 84.5,
+            latencyP95Ms: 210
+          }
+        ]
+      });
+
+    const html = renderTraceManagePage();
+    await mockState.lastLoad?.();
+
+    expect(html).toContain('data-cache-key="trace-manage:list:');
+    expect(html).toContain('/traces/stats/group-by?serviceName=checkout&amp;resourceFilter=service.version%3D1.2.3&amp;spanScope=root&amp;groupBy=resource%3Aservice.version&amp;limit=7&amp;orderBy=latency-p95-desc&amp;minCount=5');
+    expect(html).toContain('data-trace-manage-group-panel="hertzbeat-ui-trace-group-results"');
+    expect(html).toContain('data-trace-manage-group-panel-owner="hertzbeat-ui-panel-surface"');
+    expect(html).toContain('data-trace-manage-group-by="resource:service.version"');
+    expect(html).toContain('data-trace-manage-group-limit-input="true"');
+    expect(html).toContain('data-trace-manage-group-limit-input-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-trace-manage-group-order-select="true"');
+    expect(html).toContain('data-trace-manage-group-order-select-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-trace-manage-group-min-count-input="true"');
+    expect(html).toContain('data-trace-manage-group-min-count-input-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-trace-manage-group-table="hertzbeat-ui-trace-group-table"');
+    expect(html).toContain('data-trace-manage-group-table-owner="hertzbeat-ui-data-table"');
+    expect(html).toContain('Trace groups');
+    expect(html).toContain('Grouped by resource:service.version');
+    expect(html).toContain('1 groups');
+    expect(html).toContain('1.2.3');
+    expect(html).toContain('12');
+    expect(html).toContain('84.5ms');
+    expect(html).toContain('210ms');
+    expect(apiMessageGet.mock.calls).toEqual([
+      ['/traces/stats/overview?serviceName=checkout&resourceFilter=service.version%3D1.2.3&spanScope=root', { signal: expect.any(AbortSignal) }],
+      ['/traces/list?pageIndex=0&pageSize=8&serviceName=checkout&resourceFilter=service.version%3D1.2.3&spanScope=root', { signal: expect.any(AbortSignal) }],
+      ['/traces/stats/group-by?serviceName=checkout&resourceFilter=service.version%3D1.2.3&spanScope=root&groupBy=resource%3Aservice.version&limit=7&orderBy=latency-p95-desc&minCount=5', { signal: expect.any(AbortSignal) }]
+    ]);
+  }, 15000);
+
+  it('filters trace group result values back into the query route', async () => {
+    mockState.searchParams = new URLSearchParams('view=list&groupBy=resource:service.version');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      renderInteractiveTraceManagePage();
+      await Promise.resolve();
+    });
+
+    const resourceValueAction = interactionContainer.querySelector(
+      '[data-trace-manage-group-filter-action="resource:service.version"][data-trace-manage-group-filter-value="1.2.3"]'
+    ) as HTMLButtonElement | null;
+    expect(resourceValueAction).toBeTruthy();
+    expect(resourceValueAction?.getAttribute('data-trace-manage-group-filter-owner')).toBe('hertzbeat-ui-button');
+    mockState.replace.mockClear();
+
+    await act(async () => {
+      resourceValueAction?.click();
+      await Promise.resolve();
+    });
+
+    expect(String(mockState.replace.mock.calls[0]?.[0])).toContain('resourceFilter=service.version%3D1.2.3');
+    expect(String(mockState.replace.mock.calls[0]?.[0])).toContain('groupBy=resource%3Aservice.version');
+  }, 15000);
+
+  it('saves and restores the current trace explorer query view from shared UI controls', async () => {
+    window.localStorage.removeItem('hertzbeat.trace-manage.saved-query-views');
+    mockState.searchParams = new URLSearchParams(
+      'view=table&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=POST%20%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&environment=prod&spanScope=entrypoint&columns=service,duration,trace-id'
+    );
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      renderInteractiveTraceManagePage();
+      await Promise.resolve();
+    });
+
+    const savedViewPanel = interactionContainer.querySelector('[data-trace-manage-saved-views="route-query-views"]') as HTMLElement | null;
+    expect(savedViewPanel).toBeTruthy();
+    expect(savedViewPanel?.getAttribute('data-trace-manage-saved-views-owner')).toBe('hertzbeat-ui-panel-surface');
+
+    const saveAction = interactionContainer.querySelector('[data-trace-manage-saved-view-action="save-current"]') as HTMLButtonElement | null;
+    expect(saveAction).toBeTruthy();
+    expect(saveAction?.getAttribute('data-trace-manage-saved-view-action-owner')).toBe('hertzbeat-ui-button');
+
+    const clipboardWrites: string[] = [];
+    Object.defineProperty(window.navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: vi.fn((value: string) => {
+        clipboardWrites.push(value);
+        return Promise.resolve();
+      }) }
+    });
+    const copyAction = interactionContainer.querySelector('[data-trace-manage-saved-view-copy-action="current"]') as HTMLButtonElement | null;
+    expect(copyAction).toBeTruthy();
+    expect(copyAction?.getAttribute('data-trace-manage-saved-view-copy-owner')).toBe('hertzbeat-ui-button');
+
+    await act(async () => {
+      copyAction?.click();
+      await Promise.resolve();
+    });
+
+    expect(clipboardWrites[0]).toContain('/trace/manage?serviceName=checkout');
+    expect(clipboardWrites[0]).toContain('operationName=POST+%2Fcheckout');
+    expect(clipboardWrites[0]).toContain('spanScope=entrypoint');
+    expect(clipboardWrites[0]).toContain('columns=start%2Cservice%2Cduration%2Ctrace-id');
+    expect(clipboardWrites[0]).toContain('view=table');
+
+    await act(async () => {
+      saveAction?.click();
+      await Promise.resolve();
+    });
+
+    const savedViews = JSON.parse(window.localStorage.getItem('hertzbeat.trace-manage.saved-query-views') || '[]');
+    expect(savedViews).toHaveLength(1);
+    expect(savedViews[0]?.label).toBe('POST /checkout');
+    expect(savedViews[0]?.description).toContain('table');
+    expect(savedViews[0]?.description).toContain('POST /checkout');
+    expect(savedViews[0]?.description).toContain('entrypoint');
+    expect(savedViews[0]?.description).toContain('service,duration,trace-id');
+    expect(savedViews[0]?.route).toContain('/trace/manage?serviceName=checkout');
+    expect(savedViews[0]?.route).toContain('resourceFilter=service.version%3D1.2.3');
+    expect(savedViews[0]?.route).toContain('operationName=POST+%2Fcheckout');
+    expect(savedViews[0]?.route).toContain('minDurationMs=100');
+    expect(savedViews[0]?.route).toContain('maxDurationMs=500');
+    expect(savedViews[0]?.route).toContain('errorOnly=true');
+    expect(savedViews[0]?.route).toContain('spanScope=entrypoint');
+    expect(savedViews[0]?.route).toContain('columns=start%2Cservice%2Cduration%2Ctrace-id');
+    expect(savedViews[0]?.route).toContain('view=table');
+    expect(savedViews[0]?.route).toContain('environment=prod');
+
+    const renameSavedViewAction = interactionContainer.querySelector('[data-trace-manage-saved-view-rename-action]') as HTMLButtonElement | null;
+    expect(renameSavedViewAction).toBeTruthy();
+    expect(renameSavedViewAction?.getAttribute('data-trace-manage-saved-view-rename-owner')).toBe('hertzbeat-ui-button');
+
+    await act(async () => {
+      renameSavedViewAction?.click();
+      await Promise.resolve();
+    });
+
+    const renameInput = interactionContainer.querySelector('[data-trace-manage-saved-view-rename-input]') as HTMLInputElement | null;
+    expect(renameInput).toBeTruthy();
+    expect(renameInput?.getAttribute('data-trace-manage-saved-view-rename-input-owner')).toBe('hertzbeat-ui-input');
+
+    await act(async () => {
+      renameInput!.value = 'Checkout trace failures';
+      renameInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const renameSaveAction = interactionContainer.querySelector('[data-trace-manage-saved-view-rename-save-action]') as HTMLButtonElement | null;
+    expect(renameSaveAction).toBeTruthy();
+    expect(renameSaveAction?.getAttribute('data-trace-manage-saved-view-rename-save-owner')).toBe('hertzbeat-ui-button');
+
+    await act(async () => {
+      renameSaveAction?.click();
+      await Promise.resolve();
+    });
+
+    const renamedViews = JSON.parse(window.localStorage.getItem('hertzbeat.trace-manage.saved-query-views') || '[]');
+    expect(renamedViews).toHaveLength(1);
+    expect(renamedViews[0]?.label).toBe('Checkout trace failures');
+    expect(renamedViews[0]?.route).toBe(savedViews[0]?.route);
+
+    mockState.searchParams = new URLSearchParams(
+      'view=time-series&serviceName=billing&resourceFilter=service.version%3D2.0.0&operationName=GET%20%2Fbilling&minDurationMs=250&maxDurationMs=900&environment=stage&groupBy=resource%3Aservice.version&groupLimit=7&groupOrder=latency-p95-desc&groupMinCount=5&spanScope=all&columns=start,service,status'
+    );
+    await act(async () => {
+      interactionRoot?.unmount();
+      interactionContainer.innerHTML = '';
+      interactionRoot = createRoot(interactionContainer);
+      renderInteractiveTraceManagePage();
+      await Promise.resolve();
+    });
+
+    const updateSavedViewAction = interactionContainer.querySelector('[data-trace-manage-saved-view-update-action]') as HTMLButtonElement | null;
+    expect(updateSavedViewAction).toBeTruthy();
+    expect(updateSavedViewAction?.getAttribute('data-trace-manage-saved-view-update-owner')).toBe('hertzbeat-ui-button');
+
+    await act(async () => {
+      updateSavedViewAction?.click();
+      await Promise.resolve();
+    });
+
+    const updatedViews = JSON.parse(window.localStorage.getItem('hertzbeat.trace-manage.saved-query-views') || '[]');
+    expect(updatedViews).toHaveLength(1);
+    expect(updatedViews[0]?.label).toBe('Checkout trace failures');
+    expect(updatedViews[0]?.route).not.toBe(savedViews[0]?.route);
+    expect(updatedViews[0]?.route).toContain('/trace/manage?serviceName=billing');
+    expect(updatedViews[0]?.route).toContain('resourceFilter=service.version%3D2.0.0');
+    expect(updatedViews[0]?.route).toContain('operationName=GET+%2Fbilling');
+    expect(updatedViews[0]?.route).toContain('minDurationMs=250');
+    expect(updatedViews[0]?.route).toContain('maxDurationMs=900');
+    expect(updatedViews[0]?.route).toContain('view=time-series');
+    expect(updatedViews[0]?.route).toContain('environment=stage');
+    expect(updatedViews[0]?.route).toContain('groupBy=resource%3Aservice.version');
+    expect(updatedViews[0]?.route).toContain('groupLimit=7');
+    expect(updatedViews[0]?.route).toContain('groupOrder=latency-p95-desc');
+    expect(updatedViews[0]?.route).toContain('groupMinCount=5');
+    expect(updatedViews[0]?.route).toContain('spanScope=all');
+    expect(updatedViews[0]?.route).toContain('columns=start%2Cservice%2Cstatus');
+    expect(updatedViews[0]?.description).toContain('resource:service.version');
+    expect(updatedViews[0]?.description).toContain('7');
+    expect(updatedViews[0]?.description).toContain('latency-p95-desc');
+    expect(updatedViews[0]?.description).toContain('5');
+    expect(updatedViews[0]?.description).toContain('all');
+    expect(updatedViews[0]?.description).toContain('start,service,status');
+
+    const savedViewAction = interactionContainer.querySelector('[data-trace-manage-saved-view-select-action]') as HTMLButtonElement | null;
+    expect(savedViewAction).toBeTruthy();
+    expect(savedViewAction?.getAttribute('data-trace-manage-saved-view-select-owner')).toBe('hertzbeat-ui-button');
+    mockState.replace.mockClear();
+
+    await act(async () => {
+      savedViewAction?.click();
+      await Promise.resolve();
+    });
+
+    const restoredRoute = String(mockState.replace.mock.calls[0]?.[0]);
+    expect(restoredRoute).toContain('/trace/manage?serviceName=billing');
+    expect(restoredRoute).toContain('resourceFilter=service.version%3D2.0.0');
+    expect(restoredRoute).toContain('operationName=GET+%2Fbilling');
+    expect(restoredRoute).toContain('minDurationMs=250');
+    expect(restoredRoute).toContain('maxDurationMs=900');
+    expect(restoredRoute).toContain('spanScope=all');
+    expect(restoredRoute).toContain('columns=start%2Cservice%2Cstatus');
+    expect(restoredRoute).toContain('view=time-series');
+    expect(restoredRoute).toContain('environment=stage');
+    expect(restoredRoute).toContain('groupBy=resource%3Aservice.version');
+    expect(restoredRoute).toContain('groupLimit=7');
+    expect(restoredRoute).toContain('groupOrder=latency-p95-desc');
+
+    const deleteSavedViewAction = interactionContainer.querySelector('[data-trace-manage-saved-view-delete-action]') as HTMLButtonElement | null;
+    expect(deleteSavedViewAction).toBeTruthy();
+    expect(deleteSavedViewAction?.getAttribute('data-trace-manage-saved-view-delete-owner')).toBe('hertzbeat-ui-button');
+
+    await act(async () => {
+      deleteSavedViewAction?.click();
+      await Promise.resolve();
+    });
+
+    expect(JSON.parse(window.localStorage.getItem('hertzbeat.trace-manage.saved-query-views') || '[]')).toHaveLength(0);
+  }, 15000);
+
+  it('downloads trace rows in bounded pages with the selected format and visible columns from a shared UI action', async () => {
+    mockState.searchParams = new URLSearchParams(
+      'view=table&serviceName=checkout&operationName=POST%20%2Fcheckout&minDurationMs=100&errorOnly=true&environment=prod&spanScope=entrypoint&columns=service,root-span,trace-id'
+    );
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+    const firstExportPage = Array.from({ length: 1000 }, (_, index) => ({
+      traceId: `trace-export-${index}`,
+      rootSpanId: `span-export-${index}`,
+      rootSpanName: `POST /checkout ${index}`,
+      serviceName: 'checkout-worker',
+      serviceNamespace: 'payments',
+      durationNanos: 420000000 + index,
+      status: 'OK',
+      startTime: 1713200000000 + index
+    }));
+    apiMessageGet
+      .mockResolvedValueOnce({
+        content: firstExportPage,
+        totalElements: 1001,
+        pageIndex: 0,
+        pageSize: 1000
+      })
+      .mockResolvedValueOnce({
+        content: [
+          {
+            traceId: 'trace-export-final',
+            rootSpanId: 'span-export-final',
+            rootSpanName: 'POST /checkout final',
+            serviceName: 'checkout-worker-final',
+            serviceNamespace: 'payments',
+            durationNanos: 960000000,
+            status: 'ERROR',
+            startTime: 1713200002000
+          }
+        ],
+        totalElements: 1001,
+        pageIndex: 1,
+        pageSize: 1000
+      });
+    const createObjectURL = vi.fn(() => 'blob:hertzbeat-traces');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(window.URL, 'createObjectURL', {
+      configurable: true,
+      value: createObjectURL
+    });
+    Object.defineProperty(window.URL, 'revokeObjectURL', {
+      configurable: true,
+      value: revokeObjectURL
+    });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+
+    await act(async () => {
+      renderInteractiveTraceManagePage();
+      await Promise.resolve();
+    });
+
+    const downloadAction = interactionContainer.querySelector(
+      '[data-trace-manage-download-csv-action="current-query"]'
+    ) as HTMLButtonElement | null;
+    const exportFormatSelect = interactionContainer.querySelector(
+      '[data-trace-manage-export-format-select="true"]'
+    ) as HTMLElement | null;
+    const exportRowLimitSelect = interactionContainer.querySelector(
+      '[data-trace-manage-export-row-limit-select="true"]'
+    ) as HTMLElement | null;
+    expect(exportFormatSelect).toBeTruthy();
+    expect(exportFormatSelect?.getAttribute('data-trace-manage-export-format-owner')).toBe('hertzbeat-ui-select');
+    expect(exportFormatSelect?.getAttribute('data-trace-manage-export-format-value')).toBe('csv');
+    expect(exportRowLimitSelect).toBeTruthy();
+    expect(exportRowLimitSelect?.getAttribute('data-trace-manage-export-row-limit-owner')).toBe('hertzbeat-ui-select');
+    expect(exportRowLimitSelect?.getAttribute('data-trace-manage-export-row-limit-value')).toBe('current');
+    expect(downloadAction).toBeTruthy();
+    expect(downloadAction?.getAttribute('data-trace-manage-download-csv-owner')).toBe('hertzbeat-ui-button');
+    expect(downloadAction?.getAttribute('data-trace-manage-download-csv-row-count')).toBe('1');
+
+    await act(async () => {
+      const trigger = exportFormatSelect!.querySelector('[data-hz-ui="select-trigger"]') as HTMLButtonElement | null;
+      trigger?.click();
+      await Promise.resolve();
+    });
+
+    const jsonlOption = interactionContainer.querySelector(
+      '[data-trace-manage-export-format-option="jsonl"]'
+    ) as HTMLButtonElement | null;
+    expect(jsonlOption).toBeTruthy();
+
+    await act(async () => {
+      jsonlOption?.click();
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-trace-manage-export-format-select="true"]')?.getAttribute('data-trace-manage-export-format-value')).toBe('jsonl');
+
+    await act(async () => {
+      const trigger = exportRowLimitSelect!.querySelector('[data-hz-ui="select-trigger"]') as HTMLButtonElement | null;
+      trigger?.click();
+      await Promise.resolve();
+    });
+
+    const rowLimitOption = interactionContainer.querySelector(
+      '[data-trace-manage-export-row-limit-option="10000"]'
+    ) as HTMLButtonElement | null;
+    expect(rowLimitOption).toBeTruthy();
+
+    await act(async () => {
+      rowLimitOption?.click();
+      await Promise.resolve();
+    });
+
+    expect(interactionContainer.querySelector('[data-trace-manage-export-row-limit-select="true"]')?.getAttribute('data-trace-manage-export-row-limit-value')).toBe('10000');
+
+    await act(async () => {
+      downloadAction?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(apiMessageGet).toHaveBeenCalledTimes(2);
+    const exportListUrl = String(apiMessageGet.mock.calls[0]?.[0]);
+    expect(exportListUrl).toContain('/traces/list?pageIndex=0&pageSize=1000');
+    expect(exportListUrl).toContain('serviceName=checkout');
+    expect(exportListUrl).toContain('operationName=POST+%2Fcheckout');
+    expect(exportListUrl).toContain('minDurationMs=100');
+    expect(exportListUrl).toContain('errorOnly=true');
+    expect(exportListUrl).toContain('environment=prod');
+    expect(exportListUrl).toContain('spanScope=entrypoint');
+    expect(exportListUrl).not.toContain('columns');
+    const secondExportListUrl = String(apiMessageGet.mock.calls[1]?.[0]);
+    expect(secondExportListUrl).toContain('/traces/list?pageIndex=1&pageSize=1000');
+    expect(secondExportListUrl).toContain('serviceName=checkout');
+    expect(secondExportListUrl).toContain('operationName=POST+%2Fcheckout');
+    expect(secondExportListUrl).toContain('environment=prod');
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    const exportBlob = createObjectURL.mock.calls[0]?.[0] as Blob;
+    expect(exportBlob.type).toBe('application/x-ndjson;charset=utf-8');
+    const exportText = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(exportBlob);
+    });
+    const exportLines = exportText.split('\n');
+    expect(exportLines).toHaveLength(1001);
+    expect(exportLines[0]).toBe('{"startTime":"2026-04-16 22:00:00","service":"checkout-worker","rootSpan":"POST /checkout 0","traceId":"trace-export-0"}');
+    expect(exportLines[1000]).toBe('{"startTime":"2026-04-16 22:00:00","service":"checkout-worker-final","rootSpan":"POST /checkout final","traceId":"trace-export-final"}');
+    expect(exportText).not.toContain('duration');
+    expect(exportText).not.toContain('status');
+    expect(exportText).not.toContain('trace-123');
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:hertzbeat-traces');
+    clickSpy.mockRestore();
+  }, 15000);
+
+  it('renders only the trace time series panel when the time-series explorer view is requested', async () => {
+    mockState.searchParams = new URLSearchParams('view=time-series');
+    const html = renderTraceManagePage();
+
+    expect(html).toContain('data-trace-manage-view-option="time-series"');
+    expect(html).toContain('data-trace-manage-explorer-view="time-series"');
+    expect(html).not.toContain('data-trace-manage-trace-table="hertzbeat-ui-dense-trace-list"');
+    expect(html).not.toContain('data-trace-manage-detail-panel="hertzbeat-ui-detail-panel"');
+  });
+
+  it('renders only the trace table and detail panel when the table explorer view is requested', async () => {
+    mockState.searchParams = new URLSearchParams('view=table');
+    const html = renderTraceManagePage();
+
+    expect(html).toContain('data-trace-manage-view-option="table"');
+    expect(html).toContain('data-trace-manage-trace-table="hertzbeat-ui-dense-trace-list"');
+    expect(html).toContain('data-trace-manage-detail-panel="hertzbeat-ui-detail-panel"');
+    expect(html).not.toContain('data-trace-manage-explorer-view="time-series"');
+  });
+
+  it('renders route-backed customized trace table columns', async () => {
+    mockState.searchParams = new URLSearchParams('view=table&columns=service,duration,trace-id');
+    const html = renderTraceManagePage();
+
+    expect(html).toContain('data-trace-manage-table-column-controls="customize-columns"');
+    expect(html).toContain('data-trace-manage-table-visible-columns="start,service,duration,trace-id"');
+    expect(html).toContain('data-trace-manage-table-column-required="start"');
+    expect(html).toContain('data-trace-manage-start-cell-owner="hertzbeat-ui-data-cell-text"');
+    expect(html).toContain('data-trace-manage-service-cell-owner="hertzbeat-ui-button"');
+    expect(html).toContain('data-trace-manage-table-service-filter-action="checkout"');
+    expect(html).toContain('data-trace-manage-table-duration-filter-action="420"');
+    expect(html).toContain('data-trace-manage-duration-cell-owner="hertzbeat-ui-data-cell-text"');
+    expect(html).toContain('data-trace-manage-trace-id-cell-owner="hertzbeat-ui-data-cell-text"');
+    expect(html).not.toContain('data-trace-manage-row-action-owner="hertzbeat-ui-table-row-action-button"');
+    expect(html).not.toContain('data-trace-manage-status-badge-owner="hertzbeat-ui-status-badge"');
+  });
+
+  it('keeps span scope as a route-backed trace list API contract', async () => {
+    mockState.searchParams = new URLSearchParams('view=table&spanScope=entrypoint&listPageSize=50&listPageIndex=2&traceId=trace-123&serviceName=checkout');
+    mockState.traceListOverride = { content: [], totalElements: 130, pageIndex: 2, pageSize: 50 };
+    apiMessageGet
+      .mockResolvedValueOnce({ totalTraceCount: 8, errorTraceCount: 2, latestObservedAt: 1713200000000, hasActiveTrace: true })
+      .mockResolvedValueOnce({ content: [], totalElements: 130, pageIndex: 2, pageSize: 50 });
+
+    const html = renderTraceManagePage();
+    await mockState.lastLoad?.();
+
+    expect(html).toContain('data-trace-manage-span-scope-select="shared-span-scope-select"');
+    expect(html).toContain('data-trace-manage-span-scope="entrypoint"');
+    expect(html).toContain('data-trace-manage-span-scope-contract="trace-list-api-span-scope"');
+    expect(html).toContain('data-trace-manage-list-page-size-select="shared-list-page-size-select"');
+    expect(html).toContain('data-trace-manage-list-page-size="50"');
+    expect(html).toContain('data-trace-manage-list-pagination="shared-list-pagination"');
+    expect(html).toContain('data-trace-manage-list-page-index="2"');
+    expect(html).toContain('data-trace-manage-list-total-elements="130"');
+    expect(html).toContain('data-trace-manage-list-prev-page-owner="hertzbeat-ui-button"');
+    expect(html).toContain('data-trace-manage-list-next-page-owner="hertzbeat-ui-button"');
+    expect(apiMessageGet.mock.calls).toEqual([
+      ['/traces/stats/overview?traceId=trace-123&serviceName=checkout&spanScope=entrypoint', { signal: expect.any(AbortSignal) }],
+      ['/traces/list?pageIndex=2&pageSize=50&traceId=trace-123&serviceName=checkout&spanScope=entrypoint', { signal: expect.any(AbortSignal) }]
+    ]);
+  });
 
   it('degrades failed trace API loads without dropping the topology-like workbench contract', async () => {
     const source = readFileSync(resolve(process.cwd(), 'app/trace/manage/trace-manage-page.tsx'), 'utf8');
@@ -535,6 +1221,12 @@ describe('trace manage page', () => {
 
     expect(html).toContain('data-trace-manage-trace-id-input="true"');
     expect(html).toContain('data-trace-manage-service-input="true"');
+    expect(html).toContain('data-trace-manage-resource-filter-input="true"');
+    expect(html).toContain('data-trace-manage-resource-filter-input-owner="hertzbeat-ui-query-token-field"');
+    expect(html).toContain('data-trace-manage-operation-input="true"');
+    expect(html).toContain('data-trace-manage-min-duration-input="true"');
+    expect(html).toContain('data-trace-manage-max-duration-input="true"');
+    expect(html).toContain('data-trace-manage-duration-input-owner="hertzbeat-ui-input"');
     expect(html).toContain('data-trace-manage-status-filter="true"');
     expect(html).toContain('data-trace-manage-reset-action="true"');
     expect(html).toContain('data-trace-manage-search-action="true"');
@@ -581,13 +1273,13 @@ describe('trace manage page', () => {
 
     expect(source).toContain("import { buildTimeRangeControlLabels, TimeRangeControl } from '@/components/observability/time-range-control';");
     expect(source).toContain('labels={buildTimeRangeControlLabels(t)}');
-    expect(source).toContain('buildTraceManageRoute(routeContext, query, appliedContext)');
+    expect(source).toContain('buildTraceManageRoute(routeContext, query, { view: currentView, timeContext: appliedContext })');
     expect(source).toContain('const traceTimeRefreshKey = useMemo(');
     expect(source).toContain('traceTimeContext.timeRange');
     expect(source).toContain('traceTimeContext.refresh');
     expect(source).toContain('traceTimeContext.live');
     expect(source).toContain('traceTimeContext.tz');
-    expect(source).toContain('`trace-manage:${traceUrls.listUrl}|${traceUrls.overviewUrl}|${traceTimeRefreshKey}`');
+    expect(source).toContain("`trace-manage:${currentView}:${traceUrls.listUrl}|${traceUrls.overviewUrl}|${traceUrls.groupByUrl || 'no-group'}|${traceTimeRefreshKey}`");
     expect(source).toContain('data-trace-manage-time-toolbar="top-right-corner"');
     expect(source).toContain('data-trace-manage-time-toolbar-owner="hertzbeat-ui-workbench-layout"');
     expect(source).toContain('variant="time-toolbar"');
@@ -707,7 +1399,7 @@ describe('trace manage page', () => {
     expect(source).toContain('data-trace-manage-header-action-icon="collector"');
     expect(source).toContain('data-trace-manage-header-action-icon="templates"');
     expect(source).not.toContain('<Server className="h-4 w-4" aria-hidden="true" />');
-    expect(source).not.toContain('<ListChecks className="h-4 w-4" aria-hidden="true" />');
+    expect(source).toContain('data-trace-manage-view-option="table"');
     expect(source).toContain('data-trace-manage-query-search-input-owner="hertzbeat-ui-input"');
     expect(source).toContain('data-trace-manage-query-search-icon-owner="hertzbeat-ui-search-field-icon"');
     expect(source).toContain('inset="search-icon"');
@@ -724,6 +1416,12 @@ describe('trace manage page', () => {
     expect(source).not.toContain('className="ml-auto grid w-full min-w-0 max-w-[1120px] gap-2 xl:w-auto"');
     expect(source).not.toContain('className="flex max-w-full justify-end"');
     expect(source).toContain('href={handoffLinks.alertHandlingHref}');
+    expect(source).toContain('href={handoffLinks.alertRulesHref}');
+    expect(source).toContain('href={handoffLinks.dashboardHref}');
+    expect(source).toContain('data-trace-manage-header-action="create-alert"');
+    expect(source).toContain('data-trace-manage-header-action="add-dashboard"');
+    expect(source).toContain("t('explorer.actions.create-alert')");
+    expect(source).toContain("t('explorer.actions.add-dashboard')");
     expect(source).toContain('data-trace-manage-alert-context-hint="entity-trace-alert-handoff"');
     expect(source).toContain("t('trace.manage.route.handoff.alert-hint')");
     expect(source).toContain('data-trace-manage-empty-guidance="operator-no-data-guidance"');
@@ -735,7 +1433,10 @@ describe('trace manage page', () => {
     expect(source).toContain('HzWorkbenchLayout');
     expect(source).toContain('data-trace-manage-chart-layout="shared-summary-trend"');
     expect(source).toContain('data-trace-manage-chart-layout-owner="hertzbeat-ui-workbench-layout"');
-    expect(source).toContain('variant="summary-trend"');
+    expect(source).toContain('variant="chart-stack"');
+    expect(source).toContain('data-trace-manage-summary-strip="inline-signal-summary"');
+    expect(source).toContain('data-trace-manage-summary-strip-owner="hertzbeat-ui-signal-summary-strip"');
+    expect(source).not.toContain('variant="tile"');
     expect(source).toContain('data-trace-manage-detail-body-layout="shared-detail-stack"');
     expect(source).toContain('data-trace-manage-detail-body-layout-owner="hertzbeat-ui-workbench-layout"');
     expect(source).toContain('variant="detail-stack"');
@@ -761,8 +1462,13 @@ describe('trace manage page', () => {
     expect(source).not.toContain('className="space-y-3 px-4 py-4"');
     expect(source).not.toContain('className="grid gap-2 border-t border-[#252b35] px-4 py-4"');
     expect(source).toContain('HzTableRowActionButton');
+    expect(source).toContain('data-trace-manage-table-operation-actions="detail-filter"');
+    expect(source).toContain('data-trace-manage-table-operation-actions-owner="hertzbeat-ui-action-group"');
     expect(source).toContain('data-trace-manage-row-action-owner="hertzbeat-ui-table-row-action-button"');
     expect(source).toContain('width="root-span"');
+    expect(source).toContain('data-trace-manage-table-operation-filter-action={row.name}');
+    expect(source).toContain('data-trace-manage-table-operation-filter-owner="hertzbeat-ui-button"');
+    expect(source).toContain("applyTraceQuickFilter('operationName', row.name)");
     expect(source).not.toContain('className="max-w-[240px] justify-start truncate font-semibold"');
     expect(source).toContain('data-trace-manage-route="otlp-hertzbeat-ui-trace-workbench"');
     expect(source).toContain('HzSignalWorkbenchShell');
@@ -808,15 +1514,42 @@ describe('trace manage page', () => {
     expect(source).not.toContain('className="h-6 max-w-[160px] text-[11px]"');
     expect(source).toContain('data-trace-manage-drawer-action-group="handoff-actions"');
     expect(source).toContain('data-trace-manage-drawer-action-group-owner="hertzbeat-ui-action-group"');
-    expect(source).toContain('data-trace-manage-drawer-stage-stats="shared-stat-strip"');
-    expect(source).toContain('data-trace-manage-drawer-stage-stats-owner="hertzbeat-ui-stat-strip"');
-    expect(source).toContain('HzStatStrip');
-    expect(source).toContain('data-trace-manage-drawer-stage-stat-owner="hertzbeat-ui-stat-cell"');
-    expect(source).toContain('data-trace-manage-drawer-stage-stat={item.id}');
-    expect(source).toContain('HzStatCell');
+    expect(source).toContain('data-trace-manage-drawer-stage-stats="inline-signal-summary"');
+    expect(source).toContain('data-trace-manage-drawer-stage-stats-owner="hertzbeat-ui-signal-summary-strip"');
+    expect(source).toContain('HzSignalSummaryStrip');
+    expect(source).toContain('layout="detail"');
+    expect(source).toContain('items={[');
     expect(source).toContain('density="compact"');
     expect(source).not.toContain('className="min-h-[64px]"');
     expect(source).toContain('data-trace-manage-drawer-selected-facts-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('buildTraceAttributeRows(');
+    expect(source).toContain('selectedSpanAttributeRows');
+    expect(source).toContain('selectedResourceAttributeRows');
+    expect(source).toContain('buildTraceResourceFilterExpression');
+    expect(source).toContain('mergeTraceResourceFilterExpression');
+    expect(source).toContain('applyTraceResourceFilter');
+    expect(source).toContain('replaceTraceResourceFilter');
+    expect(source).toContain('buildTraceResourceGroupBy');
+    expect(source).toContain('applyTraceResourceGroupBy');
+    expect(source).toContain('data-trace-manage-drawer-span-attributes="span-attributes"');
+    expect(source).toContain('data-trace-manage-drawer-span-attributes-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain("heading={t('trace.manage.drawer.attributes.span.title')}");
+    expect(source).toContain("aria-label={t('trace.manage.drawer.attributes.span.aria')}");
+    expect(source).toContain('data-trace-manage-drawer-resource-attributes="resource-attributes"');
+    expect(source).toContain('data-trace-manage-drawer-resource-attributes-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('data-trace-manage-drawer-resource-filter-action="true"');
+    expect(source).toContain('data-trace-manage-drawer-resource-filter-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain("t('trace.manage.drawer.attributes.filter-action')");
+    expect(source).toContain('data-trace-manage-drawer-resource-replace-action="true"');
+    expect(source).toContain('data-trace-manage-drawer-resource-replace-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain("t('trace.manage.drawer.attributes.replace-action')");
+    expect(source).toContain('data-trace-manage-drawer-resource-group-action="true"');
+    expect(source).toContain('data-trace-manage-drawer-resource-group-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain("t('trace.manage.drawer.attributes.group-action')");
+    expect(source).toContain('data-trace-manage-group-panel="hertzbeat-ui-trace-group-results"');
+    expect(source).toContain('data-trace-manage-group-table="hertzbeat-ui-trace-group-table"');
+    expect(source).toContain("heading={t('trace.manage.drawer.attributes.resource.title')}");
+    expect(source).toContain("aria-label={t('trace.manage.drawer.attributes.resource.aria')}");
     expect(source).toContain('ObservabilityWaterfall');
     expect(source).toContain('autoOpenedTraceDetailKeyRef');
     expect(source).toContain('requestedTraceId');

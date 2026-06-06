@@ -22,7 +22,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +52,17 @@ import org.springframework.util.StringUtils;
 @Service
 @Slf4j
 public class LogQueryServiceImpl implements LogQueryService {
+
+    private static final int DEFAULT_GROUP_BY_LIMIT = 20;
+    private static final int MAX_GROUP_BY_LIMIT = 100;
+    private static final long MAX_GROUP_BY_MIN_COUNT = 1_000_000L;
+    private static final int DEFAULT_LIST_PAGE_INDEX = 0;
+    private static final int DEFAULT_LIST_PAGE_SIZE = 20;
+    private static final int MAX_LIST_PAGE_SIZE = 1000;
+    private static final int DEFAULT_CONTEXT_LIMIT = 10;
+    private static final int MAX_CONTEXT_LIMIT = 50;
+    private static final long DEFAULT_CONTEXT_WINDOW_MS = 300_000L;
+    private static final String LOG_FILTER_NEGATION_PREFIX = "!";
 
     private static final Set<String> WORKSPACE_INFRA_SERVICE_NAMES = Set.of(
             "otelcol-contrib",
@@ -86,23 +99,52 @@ public class LogQueryServiceImpl implements LogQueryService {
     @Override
     public Page<LogEntry> list(Long start, Long end, String traceId, String spanId,
                                Integer severityNumber, String severityText, String search,
+                               String serviceName, String serviceNamespace, String environment,
                                Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise) {
+        return list(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, null, null,
+                pageIndex, pageSize, hideInternal, hideNoise);
+    }
+
+    @Override
+    public Page<LogEntry> list(Long start, Long end, String traceId, String spanId,
+                               Integer severityNumber, String severityText, String search,
+                               String serviceName, String serviceNamespace, String environment,
+                               String resourceFilter, String attributeFilter,
+                               Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise) {
+        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
         return getPagedLogs(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
                 pageIndex, pageSize, hideInternal, hideNoise);
     }
 
     @Override
     public Map<String, Object> overviewStats(Long start, Long end, String traceId, String spanId,
                                              Integer severityNumber, String severityText, String search,
+                                             String serviceName, String serviceNamespace, String environment,
                                              boolean hideInternal, boolean hideNoise) {
+        return overviewStats(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, null, null, hideInternal, hideNoise);
+    }
+
+    @Override
+    public Map<String, Object> overviewStats(Long start, Long end, String traceId, String spanId,
+                                             Integer severityNumber, String severityText, String search,
+                                             String serviceName, String serviceNamespace, String environment,
+                                             String resourceFilter, String attributeFilter,
+                                             boolean hideInternal, boolean hideNoise) {
+        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
         Map<String, Long> aggregate = readSeverityBuckets(start, end, traceId, spanId, severityNumber,
-                severityText, search, hideInternal, hideNoise);
+                severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                hideInternal, hideNoise);
         if (aggregate != null) {
             return new HashMap<>(aggregate);
         }
 
         List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search,
-                hideInternal, hideNoise);
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, hideInternal, hideNoise);
 
         Map<String, Object> overview = new HashMap<>();
         overview.put("totalCount", logs.size());
@@ -127,9 +169,23 @@ public class LogQueryServiceImpl implements LogQueryService {
     @Override
     public Map<String, Object> traceCoverageStats(Long start, Long end, String traceId, String spanId,
                                                   Integer severityNumber, String severityText, String search,
+                                                  String serviceName, String serviceNamespace, String environment,
                                                   boolean hideInternal, boolean hideNoise) {
+        return traceCoverageStats(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, null, null, hideInternal, hideNoise);
+    }
+
+    @Override
+    public Map<String, Object> traceCoverageStats(Long start, Long end, String traceId, String spanId,
+                                                  Integer severityNumber, String severityText, String search,
+                                                  String serviceName, String serviceNamespace, String environment,
+                                                  String resourceFilter, String attributeFilter,
+                                                  boolean hideInternal, boolean hideNoise) {
+        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
         Map<String, Long> aggregate = readTraceCoverage(start, end, traceId, spanId, severityNumber,
-                severityText, search, hideInternal, hideNoise);
+                severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                hideInternal, hideNoise);
         if (aggregate != null) {
             Map<String, Object> result = new HashMap<>();
             result.put("traceCoverage", aggregate);
@@ -137,7 +193,7 @@ public class LogQueryServiceImpl implements LogQueryService {
         }
 
         List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search,
-                hideInternal, hideNoise);
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, hideInternal, hideNoise);
 
         long withTraceId = logs.stream().filter(log -> log.getTraceId() != null && !log.getTraceId().isEmpty()).count();
         long withSpanId = logs.stream().filter(log -> log.getSpanId() != null && !log.getSpanId().isEmpty()).count();
@@ -160,9 +216,23 @@ public class LogQueryServiceImpl implements LogQueryService {
     @Override
     public Map<String, Object> trendStats(Long start, Long end, String traceId, String spanId,
                                           Integer severityNumber, String severityText, String search,
+                                          String serviceName, String serviceNamespace, String environment,
                                           boolean hideInternal, boolean hideNoise) {
+        return trendStats(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, null, null, hideInternal, hideNoise);
+    }
+
+    @Override
+    public Map<String, Object> trendStats(Long start, Long end, String traceId, String spanId,
+                                          Integer severityNumber, String severityText, String search,
+                                          String serviceName, String serviceNamespace, String environment,
+                                          String resourceFilter, String attributeFilter,
+                                          boolean hideInternal, boolean hideNoise) {
+        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
         Map<String, Long> aggregate = readHourlyStats(start, end, traceId, spanId, severityNumber,
-                severityText, search, hideInternal, hideNoise);
+                severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                hideInternal, hideNoise);
         if (aggregate != null) {
             Map<String, Object> result = new HashMap<>();
             result.put("hourlyStats", aggregate);
@@ -170,7 +240,7 @@ public class LogQueryServiceImpl implements LogQueryService {
         }
 
         List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search,
-                hideInternal, hideNoise);
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, hideInternal, hideNoise);
 
         Map<String, Long> hourlyStats = logs.stream()
                 .filter(log -> log.getTimeUnixNano() != null)
@@ -189,16 +259,220 @@ public class LogQueryServiceImpl implements LogQueryService {
         return result;
     }
 
-    private Map<String, Long> readSeverityBuckets(Long start, Long end, String traceId, String spanId,
-                                                  Integer severityNumber, String severityText, String search,
-                                                  boolean hideInternal, boolean hideNoise) {
+    @Override
+    public Map<String, Object> groupByStats(Long start, Long end, String traceId, String spanId,
+                                            Integer severityNumber, String severityText, String search,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            String resourceFilter, String attributeFilter, String groupBy,
+                                            Integer limit, String orderBy, Integer minCount,
+                                            boolean hideInternal, boolean hideNoise) {
+        String normalizedGroupBy = normalizeGroupBy(groupBy);
+        int resolvedLimit = resolveGroupByLimit(limit);
+        long resolvedMinCount = resolveGroupByMinCount(minCount);
+        if (!StringUtils.hasText(normalizedGroupBy)) {
+            return groupByResult("", Map.of(), resolvedLimit, orderBy, resolvedMinCount);
+        }
+        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        Map<String, Long> aggregate = readGroupStats(start, end, traceId, spanId, severityNumber,
+                severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                normalizedGroupBy, hideInternal, hideNoise);
+        if (aggregate != null) {
+            return groupByResult(normalizedGroupBy, aggregate, resolvedLimit, orderBy, resolvedMinCount);
+        }
+
+        List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, hideInternal, hideNoise);
+        Map<String, Long> grouped = logs.stream()
+                .collect(Collectors.groupingBy(log -> resolveLogGroupValue(log, normalizedGroupBy), Collectors.counting()));
+        return groupByResult(normalizedGroupBy, grouped, resolvedLimit, orderBy, resolvedMinCount);
+    }
+
+    @Override
+    public Map<String, Object> context(Long logTimeUnixNano, Long start, Long end,
+                                       String serviceName, String serviceNamespace, String environment,
+                                       String resourceFilter, String attributeFilter,
+                                       Integer limit, boolean hideInternal, boolean hideNoise) {
+        return context(logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
+                resourceFilter, attributeFilter, limit, null, null, hideInternal, hideNoise);
+    }
+
+    @Override
+    public Map<String, Object> context(Long logTimeUnixNano, Long start, Long end,
+                                       String serviceName, String serviceNamespace, String environment,
+                                       String resourceFilter, String attributeFilter,
+                                       Integer limit, String direction, Long cursorLogTimeUnixNano,
+                                       boolean hideInternal, boolean hideNoise) {
+        long targetTimeUnixNano = logTimeUnixNano == null ? 0L : logTimeUnixNano;
+        String normalizedDirection = normalizeContextDirection(direction);
+        boolean beforePage = "before".equals(normalizedDirection);
+        boolean afterPage = "after".equals(normalizedDirection);
+        long cursorTimeUnixNano = cursorLogTimeUnixNano == null ? targetTimeUnixNano : cursorLogTimeUnixNano;
+        long targetTimeMillis = targetTimeUnixNano / 1_000_000L;
+        long resolvedStart = start == null ? targetTimeMillis - DEFAULT_CONTEXT_WINDOW_MS : start;
+        long resolvedEnd = end == null ? targetTimeMillis + DEFAULT_CONTEXT_WINDOW_MS : end;
+        if (resolvedStart > resolvedEnd) {
+            long previousStart = resolvedStart;
+            resolvedStart = resolvedEnd;
+            resolvedEnd = previousStart;
+        }
+        int resolvedLimit = resolveContextLimit(limit);
+        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        List<LogEntry> contextLogs = getFilteredLogs(resolvedStart, resolvedEnd, null, null, null, null, null,
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                hideInternal, hideNoise);
+
+        List<LogEntry> beforeCandidates = contextLogs.stream()
+                .filter(log -> hasComparableLogTime(log) && log.getTimeUnixNano() < (beforePage ? cursorTimeUnixNano : targetTimeUnixNano))
+                .sorted(Comparator.comparing(LogEntry::getTimeUnixNano).reversed())
+                .toList();
+        List<LogEntry> afterCandidates = contextLogs.stream()
+                .filter(log -> hasComparableLogTime(log) && log.getTimeUnixNano() > (afterPage ? cursorTimeUnixNano : targetTimeUnixNano))
+                .sorted(Comparator.comparing(LogEntry::getTimeUnixNano))
+                .toList();
+        LogEntry selected = beforePage || afterPage ? null : contextLogs.stream()
+                .filter(log -> hasComparableLogTime(log) && log.getTimeUnixNano() == targetTimeUnixNano)
+                .findFirst()
+                .orElse(null);
+        List<LogEntry> before = afterPage ? List.of() : beforeCandidates.stream()
+                .limit(resolvedLimit)
+                .sorted(Comparator.comparing(LogEntry::getTimeUnixNano))
+                .toList();
+        List<LogEntry> after = beforePage ? List.of() : afterCandidates.stream()
+                .limit(resolvedLimit)
+                .toList();
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("targetTimeUnixNano", targetTimeUnixNano);
+        result.put("windowStart", resolvedStart);
+        result.put("windowEnd", resolvedEnd);
+        result.put("limit", resolvedLimit);
+        if (StringUtils.hasText(normalizedDirection)) {
+            result.put("direction", normalizedDirection);
+            result.put("cursorLogTimeUnixNano", cursorTimeUnixNano);
+        }
+        result.put("before", before);
+        if (!beforePage && !afterPage) {
+            result.put("selected", selected);
+        }
+        result.put("after", after);
+        result.put("hasMoreBefore", !afterPage && beforeCandidates.size() > resolvedLimit);
+        result.put("hasMoreAfter", !beforePage && afterCandidates.size() > resolvedLimit);
+        return result;
+    }
+
+    private String normalizeContextDirection(String direction) {
+        if (!StringUtils.hasText(direction)) {
+            return "";
+        }
+        String normalized = direction.trim().toLowerCase();
+        return "before".equals(normalized) || "after".equals(normalized) ? normalized : "";
+    }
+
+    private Map<String, Object> groupByResult(String groupBy, Map<String, Long> aggregate, int limit, String orderBy, long minCount) {
+        List<Map<String, Object>> groups = aggregate.entrySet().stream()
+                .filter(entry -> StringUtils.hasText(entry.getKey()))
+                .filter(entry -> entry.getValue() >= minCount)
+                .sorted(resolveLogGroupComparator(orderBy))
+                .limit(limit)
+                .map(entry -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("value", entry.getKey());
+                    row.put("count", entry.getValue());
+                    return row;
+                })
+                .toList();
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("groupBy", groupBy);
+        result.put("groups", groups);
+        return result;
+    }
+
+    private Comparator<Map.Entry<String, Long>> resolveLogGroupComparator(String orderBy) {
+        if ("count-asc".equalsIgnoreCase(StringUtils.trimWhitespace(orderBy))) {
+            return Comparator.comparingLong(Map.Entry::getValue);
+        }
+        return (left, right) -> Long.compare(right.getValue(), left.getValue());
+    }
+
+    private int resolveGroupByLimit(Integer limit) {
+        if (limit == null || limit < 1) {
+            return DEFAULT_GROUP_BY_LIMIT;
+        }
+        return Math.min(limit, MAX_GROUP_BY_LIMIT);
+    }
+
+    private long resolveGroupByMinCount(Integer minCount) {
+        if (minCount == null || minCount < 1) {
+            return 1L;
+        }
+        return Math.min(minCount.longValue(), MAX_GROUP_BY_MIN_COUNT);
+    }
+
+    private int resolveContextLimit(Integer limit) {
+        if (limit == null || limit < 1) {
+            return DEFAULT_CONTEXT_LIMIT;
+        }
+        return Math.min(limit, MAX_CONTEXT_LIMIT);
+    }
+
+    private boolean hasComparableLogTime(LogEntry logEntry) {
+        return logEntry != null && logEntry.getTimeUnixNano() != null;
+    }
+
+    private Map<String, Long> readGroupStats(Long start, Long end, String traceId, String spanId,
+                                             Integer severityNumber, String severityText, String search,
+                                             String serviceName, String serviceNamespace, String environment,
+                                             Map<String, String> resourceFilters,
+                                             Map<String, String> attributeFilters,
+                                             String groupBy, boolean hideInternal, boolean hideNoise) {
         String normalizedWorkspaceId = hasWorkspaceContext()
                 ? AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId())
                 : null;
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
+                Map<String, Long> aggregate = historyDataReader.countLogsByGroup(
+                        start, end, traceId, spanId, severityNumber, severityText, search,
+                        hiddenServiceNames(hideInternal, hideNoise),
+                        shouldRequireServiceName(hideInternal, hideNoise), normalizedWorkspaceId,
+                        serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, groupBy);
+                if (aggregate != null && !aggregate.isEmpty()) {
+                    return aggregate;
+                }
+            } catch (UnsupportedOperationException ex) {
+                // Fall back to row-based grouping for history stores without native group-by support.
+            }
+        }
+        return null;
+    }
+
+    private Map<String, Long> readSeverityBuckets(Long start, Long end, String traceId, String spanId,
+                                                  Integer severityNumber, String severityText, String search,
+                                                  String serviceName, String serviceNamespace, String environment,
+                                                  Map<String, String> resourceFilters,
+                                                  Map<String, String> attributeFilters,
+                                                  boolean hideInternal, boolean hideNoise) {
+        String normalizedWorkspaceId = hasWorkspaceContext()
+                ? AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId())
+                : null;
+        boolean hasAttributeFilters = hasAttributeFilters(resourceFilters, attributeFilters);
+        for (HistoryDataReader historyDataReader : historyDataReaders) {
+            try {
                 Map<String, Long> aggregate;
-                if (StringUtils.hasText(normalizedWorkspaceId)) {
+                if (hasAttributeFilters) {
+                    aggregate = historyDataReader.countLogsBySeverityBuckets(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise), normalizedWorkspaceId,
+                            serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
+                } else if (hasServiceContext(serviceName, serviceNamespace, environment)) {
+                    aggregate = historyDataReader.countLogsBySeverityBuckets(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise), normalizedWorkspaceId,
+                            serviceName, serviceNamespace, environment);
+                } else if (StringUtils.hasText(normalizedWorkspaceId)) {
                     aggregate = historyDataReader.countLogsBySeverityBuckets(
                             start, end, traceId, spanId, severityNumber, severityText, search,
                             hiddenServiceNames(hideInternal, hideNoise),
@@ -206,7 +480,8 @@ public class LogQueryServiceImpl implements LogQueryService {
                 } else {
                     aggregate = historyDataReader.countLogsBySeverityBuckets(
                             start, end, traceId, spanId, severityNumber, severityText, search,
-                            hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise));
                 }
                 if (aggregate != null && !aggregate.isEmpty()) {
                     return aggregate;
@@ -220,14 +495,30 @@ public class LogQueryServiceImpl implements LogQueryService {
 
     private Map<String, Long> readTraceCoverage(Long start, Long end, String traceId, String spanId,
                                                 Integer severityNumber, String severityText, String search,
+                                                String serviceName, String serviceNamespace, String environment,
+                                                Map<String, String> resourceFilters,
+                                                Map<String, String> attributeFilters,
                                                 boolean hideInternal, boolean hideNoise) {
         String normalizedWorkspaceId = hasWorkspaceContext()
                 ? AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId())
                 : null;
+        boolean hasAttributeFilters = hasAttributeFilters(resourceFilters, attributeFilters);
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
                 Map<String, Long> aggregate;
-                if (StringUtils.hasText(normalizedWorkspaceId)) {
+                if (hasAttributeFilters) {
+                    aggregate = historyDataReader.countLogTraceCoverage(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise), normalizedWorkspaceId,
+                            serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
+                } else if (hasServiceContext(serviceName, serviceNamespace, environment)) {
+                    aggregate = historyDataReader.countLogTraceCoverage(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise), normalizedWorkspaceId,
+                            serviceName, serviceNamespace, environment);
+                } else if (StringUtils.hasText(normalizedWorkspaceId)) {
                     aggregate = historyDataReader.countLogTraceCoverage(
                             start, end, traceId, spanId, severityNumber, severityText, search,
                             hiddenServiceNames(hideInternal, hideNoise),
@@ -235,7 +526,8 @@ public class LogQueryServiceImpl implements LogQueryService {
                 } else {
                     aggregate = historyDataReader.countLogTraceCoverage(
                             start, end, traceId, spanId, severityNumber, severityText, search,
-                            hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise));
                 }
                 if (aggregate != null && !aggregate.isEmpty()) {
                     return aggregate;
@@ -249,14 +541,30 @@ public class LogQueryServiceImpl implements LogQueryService {
 
     private Map<String, Long> readHourlyStats(Long start, Long end, String traceId, String spanId,
                                               Integer severityNumber, String severityText, String search,
+                                              String serviceName, String serviceNamespace, String environment,
+                                              Map<String, String> resourceFilters,
+                                              Map<String, String> attributeFilters,
                                               boolean hideInternal, boolean hideNoise) {
         String normalizedWorkspaceId = hasWorkspaceContext()
                 ? AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId())
                 : null;
+        boolean hasAttributeFilters = hasAttributeFilters(resourceFilters, attributeFilters);
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
                 Map<String, Long> aggregate;
-                if (StringUtils.hasText(normalizedWorkspaceId)) {
+                if (hasAttributeFilters) {
+                    aggregate = historyDataReader.countLogsByHour(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise), normalizedWorkspaceId,
+                            serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
+                } else if (hasServiceContext(serviceName, serviceNamespace, environment)) {
+                    aggregate = historyDataReader.countLogsByHour(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise), normalizedWorkspaceId,
+                            serviceName, serviceNamespace, environment);
+                } else if (StringUtils.hasText(normalizedWorkspaceId)) {
                     aggregate = historyDataReader.countLogsByHour(
                             start, end, traceId, spanId, severityNumber, severityText, search,
                             hiddenServiceNames(hideInternal, hideNoise),
@@ -264,7 +572,8 @@ public class LogQueryServiceImpl implements LogQueryService {
                 } else {
                     aggregate = historyDataReader.countLogsByHour(
                             start, end, traceId, spanId, severityNumber, severityText, search,
-                            hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                            hiddenServiceNames(hideInternal, hideNoise),
+                            shouldRequireServiceName(hideInternal, hideNoise));
                 }
                 if (aggregate != null && !aggregate.isEmpty()) {
                     return aggregate;
@@ -278,7 +587,54 @@ public class LogQueryServiceImpl implements LogQueryService {
 
     private List<LogEntry> getFilteredLogs(Long start, Long end, String traceId, String spanId,
                                            Integer severityNumber, String severityText, String search,
+                                           String serviceName, String serviceNamespace, String environment,
+                                           Map<String, String> resourceFilters,
+                                           Map<String, String> attributeFilters,
                                            boolean hideInternal, boolean hideNoise) {
+        boolean hasAttributeFilters = hasAttributeFilters(resourceFilters, attributeFilters);
+        for (HistoryDataReader historyDataReader : historyDataReaders) {
+            try {
+                List<LogEntry> logs;
+                if (hasAttributeFilters) {
+                    logs = historyDataReader.queryLogsByMultipleConditions(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise),
+                            null, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
+                } else if (hasServiceContext(serviceName, serviceNamespace, environment)) {
+                    logs = historyDataReader.queryLogsByMultipleConditions(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise),
+                            null, serviceName, serviceNamespace, environment);
+                } else if (hideInternal || hideNoise) {
+                    logs = historyDataReader.queryLogsByMultipleConditions(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                } else {
+                    logs = historyDataReader.queryLogsByMultipleConditions(
+                            start, end, traceId, spanId, severityNumber, severityText, search);
+                }
+                if (logs != null && !logs.isEmpty()) {
+                    return filterQueryLogs(logs, serviceName, serviceNamespace, environment,
+                            resourceFilters, attributeFilters, hideInternal, hideNoise);
+                }
+            } catch (UnsupportedOperationException ex) {
+                // Try the next reader. Not every history store supports log queries.
+            }
+        }
+        if (hasExtendedFilterContext(serviceName, serviceNamespace, environment, resourceFilters, attributeFilters)) {
+            return getRowFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                    hideInternal, hideNoise);
+        }
+        return Collections.emptyList();
+    }
+
+    private List<LogEntry> getRowFilteredLogs(Long start, Long end, String traceId, String spanId,
+                                              Integer severityNumber, String severityText, String search,
+                                              String serviceName, String serviceNamespace, String environment,
+                                              Map<String, String> resourceFilters,
+                                              Map<String, String> attributeFilters,
+                                              boolean hideInternal, boolean hideNoise) {
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
                 List<LogEntry> logs;
@@ -291,7 +647,8 @@ public class LogQueryServiceImpl implements LogQueryService {
                             start, end, traceId, spanId, severityNumber, severityText, search);
                 }
                 if (logs != null && !logs.isEmpty()) {
-                    return filterQueryLogs(logs, hideInternal, hideNoise);
+                    return filterQueryLogs(logs, serviceName, serviceNamespace, environment,
+                            resourceFilters, attributeFilters, hideInternal, hideNoise);
                 }
             } catch (UnsupportedOperationException ex) {
                 // Try the next reader. Not every history store supports log queries.
@@ -302,19 +659,66 @@ public class LogQueryServiceImpl implements LogQueryService {
 
     private Page<LogEntry> getPagedLogs(Long start, Long end, String traceId, String spanId,
                                         Integer severityNumber, String severityText, String search,
+                                        String serviceName, String serviceNamespace, String environment,
+                                        Map<String, String> resourceFilters,
+                                        Map<String, String> attributeFilters,
                                         Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise) {
-        int offset = pageIndex * pageSize;
+        int resolvedPageIndex = normalizeListPageIndex(pageIndex);
+        int resolvedPageSize = normalizeListPageSize(pageSize);
+        int offset = Math.toIntExact(Math.min((long) resolvedPageIndex * resolvedPageSize, Integer.MAX_VALUE));
         Sort sort = Sort.by(Sort.Direction.DESC, "timeUnixNano");
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sort);
+        PageRequest pageRequest = PageRequest.of(resolvedPageIndex, resolvedPageSize, sort);
 
         if (hasWorkspaceContext()) {
             return getWorkspacePagedLogs(start, end, traceId, spanId, severityNumber, severityText, search,
-                    pageRequest, offset, pageSize, hideInternal, hideNoise);
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                    pageRequest, offset, resolvedPageSize, hideInternal, hideNoise);
         }
 
+        boolean hasAttributeFilters = hasAttributeFilters(resourceFilters, attributeFilters);
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
-                if (hideInternal || hideNoise) {
+                if (hasAttributeFilters) {
+                    Set<String> hiddenServiceNames = hiddenServiceNames(hideInternal, hideNoise);
+                    boolean requireServiceName = shouldRequireServiceName(hideInternal, hideNoise);
+                    long totalElements = historyDataReader.countLogsByMultipleConditions(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames, requireServiceName, null, serviceName, serviceNamespace, environment,
+                            resourceFilters, attributeFilters);
+                    if (totalElements <= 0) {
+                        continue;
+                    }
+                    List<LogEntry> pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                            start, end, traceId, spanId, severityNumber, severityText, search, offset, resolvedPageSize,
+                            hiddenServiceNames, requireServiceName, null, serviceName, serviceNamespace, environment,
+                            resourceFilters, attributeFilters);
+                    List<LogEntry> filteredLogs = filterQueryLogs(pagedLogs,
+                            serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                            hideInternal, hideNoise);
+                    long safeTotal = filteredLogs.size() < (pagedLogs == null ? 0 : pagedLogs.size())
+                            ? offset + filteredLogs.size()
+                            : totalElements;
+                    return new PageImpl<>(filteredLogs, pageRequest, safeTotal);
+                } else if (hasServiceContext(serviceName, serviceNamespace, environment)) {
+                    Set<String> hiddenServiceNames = hiddenServiceNames(hideInternal, hideNoise);
+                    boolean requireServiceName = shouldRequireServiceName(hideInternal, hideNoise);
+                    long totalElements = historyDataReader.countLogsByMultipleConditions(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames, requireServiceName, null, serviceName, serviceNamespace, environment);
+                    if (totalElements <= 0) {
+                        continue;
+                    }
+                    List<LogEntry> pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                            start, end, traceId, spanId, severityNumber, severityText, search, offset, resolvedPageSize,
+                            hiddenServiceNames, requireServiceName, null, serviceName, serviceNamespace, environment);
+                    List<LogEntry> filteredLogs = filterQueryLogs(pagedLogs,
+                            serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                            hideInternal, hideNoise);
+                    long safeTotal = filteredLogs.size() < (pagedLogs == null ? 0 : pagedLogs.size())
+                            ? offset + filteredLogs.size()
+                            : totalElements;
+                    return new PageImpl<>(filteredLogs, pageRequest, safeTotal);
+                } else if (hideInternal || hideNoise) {
                     Set<String> hiddenServiceNames = hiddenServiceNames(hideInternal, hideNoise);
                     boolean requireServiceName = shouldRequireServiceName(hideInternal, hideNoise);
                     long totalElements = historyDataReader.countLogsByMultipleConditions(
@@ -324,9 +728,11 @@ public class LogQueryServiceImpl implements LogQueryService {
                         continue;
                     }
                     List<LogEntry> pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
-                            start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize,
+                            start, end, traceId, spanId, severityNumber, severityText, search, offset, resolvedPageSize,
                             hiddenServiceNames, requireServiceName);
-                    List<LogEntry> filteredLogs = filterQueryLogs(pagedLogs, hideInternal, hideNoise);
+                    List<LogEntry> filteredLogs = filterQueryLogs(pagedLogs,
+                            serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                            hideInternal, hideNoise);
                     long safeTotal = filteredLogs.size() < (pagedLogs == null ? 0 : pagedLogs.size())
                             ? offset + filteredLogs.size()
                             : totalElements;
@@ -338,8 +744,10 @@ public class LogQueryServiceImpl implements LogQueryService {
                     continue;
                 }
                 List<LogEntry> pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
-                        start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize);
-                List<LogEntry> filteredLogs = filterQueryLogs(pagedLogs, hideInternal, hideNoise);
+                        start, end, traceId, spanId, severityNumber, severityText, search, offset, resolvedPageSize);
+                List<LogEntry> filteredLogs = filterQueryLogs(pagedLogs,
+                        serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                        hideInternal, hideNoise);
                 long safeTotal = filteredLogs.size() < (pagedLogs == null ? 0 : pagedLogs.size())
                         ? offset + filteredLogs.size()
                         : totalElements;
@@ -348,28 +756,93 @@ public class LogQueryServiceImpl implements LogQueryService {
                 // Try the next reader. Not every history store supports log queries.
             }
         }
+        if (hasExtendedFilterContext(serviceName, serviceNamespace, environment, resourceFilters, attributeFilters)) {
+            return getRowFilteredPagedLogs(start, end, traceId, spanId, severityNumber, severityText, search,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                    pageRequest, offset, resolvedPageSize, hideInternal, hideNoise);
+        }
         return new PageImpl<>(Collections.emptyList(), pageRequest, 0);
+    }
+
+    private int normalizeListPageIndex(Integer pageIndex) {
+        if (pageIndex == null || pageIndex < DEFAULT_LIST_PAGE_INDEX) {
+            return DEFAULT_LIST_PAGE_INDEX;
+        }
+        return pageIndex;
+    }
+
+    private int normalizeListPageSize(Integer pageSize) {
+        if (pageSize == null || pageSize <= 0) {
+            return DEFAULT_LIST_PAGE_SIZE;
+        }
+        return Math.min(pageSize, MAX_LIST_PAGE_SIZE);
     }
 
     private Page<LogEntry> getWorkspacePagedLogs(Long start, Long end, String traceId, String spanId,
                                                  Integer severityNumber, String severityText, String search,
+                                                 String serviceName, String serviceNamespace, String environment,
+                                                 Map<String, String> resourceFilters,
+                                                 Map<String, String> attributeFilters,
                                                  PageRequest pageRequest, int offset, int pageSize,
                                                  boolean hideInternal, boolean hideNoise) {
         String normalizedWorkspaceId = AuthTokenScopes.normalizeWorkspaceId(AuthTokenRequestContext.currentWorkspaceId());
         Set<String> hiddenServiceNames = hiddenServiceNames(hideInternal, hideNoise);
         boolean requireServiceName = shouldRequireServiceName(hideInternal, hideNoise);
+        boolean hasAttributeFilters = hasAttributeFilters(resourceFilters, attributeFilters);
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
-                long totalElements = historyDataReader.countLogsByMultipleConditions(
-                        start, end, traceId, spanId, severityNumber, severityText, search,
-                        hiddenServiceNames, requireServiceName, normalizedWorkspaceId);
+                long totalElements;
+                if (hasAttributeFilters) {
+                    if (hasServiceContext(serviceName, serviceNamespace, environment)) {
+                        totalElements = historyDataReader.countLogsByMultipleConditions(
+                                start, end, traceId, spanId, severityNumber, severityText, search,
+                                hiddenServiceNames, requireServiceName, normalizedWorkspaceId,
+                                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
+                    } else {
+                        totalElements = historyDataReader.countLogsByMultipleConditions(
+                                start, end, traceId, spanId, severityNumber, severityText, search,
+                                hiddenServiceNames, requireServiceName, normalizedWorkspaceId,
+                                resourceFilters, attributeFilters);
+                    }
+                } else if (hasServiceContext(serviceName, serviceNamespace, environment)) {
+                    totalElements = historyDataReader.countLogsByMultipleConditions(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames, requireServiceName, normalizedWorkspaceId,
+                            serviceName, serviceNamespace, environment);
+                } else {
+                    totalElements = historyDataReader.countLogsByMultipleConditions(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames, requireServiceName, normalizedWorkspaceId);
+                }
                 if (totalElements <= 0) {
                     continue;
                 }
-                List<LogEntry> pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
-                        start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize,
-                        hiddenServiceNames, requireServiceName, normalizedWorkspaceId);
-                List<LogEntry> guardedLogs = filterQueryLogs(pagedLogs, hideInternal, hideNoise);
+                List<LogEntry> pagedLogs;
+                if (hasAttributeFilters) {
+                    if (hasServiceContext(serviceName, serviceNamespace, environment)) {
+                        pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                                start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize,
+                                hiddenServiceNames, requireServiceName, normalizedWorkspaceId,
+                                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
+                    } else {
+                        pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                                start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize,
+                                hiddenServiceNames, requireServiceName, normalizedWorkspaceId,
+                                resourceFilters, attributeFilters);
+                    }
+                } else if (hasServiceContext(serviceName, serviceNamespace, environment)) {
+                    pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                            start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize,
+                            hiddenServiceNames, requireServiceName, normalizedWorkspaceId,
+                            serviceName, serviceNamespace, environment);
+                } else {
+                    pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                            start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize,
+                            hiddenServiceNames, requireServiceName, normalizedWorkspaceId);
+                }
+                List<LogEntry> guardedLogs = filterQueryLogs(pagedLogs,
+                        serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                        hideInternal, hideNoise);
                 long safeTotal = guardedLogs.size() < (pagedLogs == null ? 0 : pagedLogs.size())
                         ? offset + guardedLogs.size()
                         : totalElements;
@@ -393,7 +866,44 @@ public class LogQueryServiceImpl implements LogQueryService {
                 if (logs == null || logs.isEmpty()) {
                     continue;
                 }
-                List<LogEntry> filteredLogs = filterQueryLogs(logs, hideInternal, hideNoise);
+                List<LogEntry> filteredLogs = filterQueryLogs(logs,
+                        serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                        hideInternal, hideNoise);
+                int fromIndex = Math.min(offset, filteredLogs.size());
+                int toIndex = Math.min(fromIndex + pageSize, filteredLogs.size());
+                return new PageImpl<>(List.copyOf(filteredLogs.subList(fromIndex, toIndex)),
+                        pageRequest, filteredLogs.size());
+            } catch (UnsupportedOperationException ex) {
+                // Try the next reader. Not every history store supports log queries.
+            }
+        }
+        return new PageImpl<>(Collections.emptyList(), pageRequest, 0);
+    }
+
+    private Page<LogEntry> getRowFilteredPagedLogs(Long start, Long end, String traceId, String spanId,
+                                                   Integer severityNumber, String severityText, String search,
+                                                   String serviceName, String serviceNamespace, String environment,
+                                                   Map<String, String> resourceFilters,
+                                                   Map<String, String> attributeFilters,
+                                                   PageRequest pageRequest, int offset, int pageSize,
+                                                   boolean hideInternal, boolean hideNoise) {
+        for (HistoryDataReader historyDataReader : historyDataReaders) {
+            try {
+                List<LogEntry> logs;
+                if (hideInternal || hideNoise) {
+                    logs = historyDataReader.queryLogsByMultipleConditions(
+                            start, end, traceId, spanId, severityNumber, severityText, search,
+                            hiddenServiceNames(hideInternal, hideNoise), shouldRequireServiceName(hideInternal, hideNoise));
+                } else {
+                    logs = historyDataReader.queryLogsByMultipleConditions(
+                            start, end, traceId, spanId, severityNumber, severityText, search);
+                }
+                if (logs == null || logs.isEmpty()) {
+                    continue;
+                }
+                List<LogEntry> filteredLogs = filterQueryLogs(logs,
+                        serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                        hideInternal, hideNoise);
                 int fromIndex = Math.min(offset, filteredLogs.size());
                 int toIndex = Math.min(fromIndex + pageSize, filteredLogs.size());
                 return new PageImpl<>(List.copyOf(filteredLogs.subList(fromIndex, toIndex)),
@@ -423,12 +933,92 @@ public class LogQueryServiceImpl implements LogQueryService {
         return hideInternal || hideNoise;
     }
 
-    private List<LogEntry> filterQueryLogs(List<LogEntry> logs, boolean hideInternal, boolean hideNoise) {
+    private boolean hasServiceContext(String serviceName, String serviceNamespace, String environment) {
+        return StringUtils.hasText(serviceName)
+                || StringUtils.hasText(serviceNamespace)
+                || StringUtils.hasText(environment);
+    }
+
+    private boolean hasExtendedFilterContext(String serviceName, String serviceNamespace, String environment,
+                                             Map<String, String> resourceFilters,
+                                             Map<String, String> attributeFilters) {
+        return hasServiceContext(serviceName, serviceNamespace, environment)
+                || hasAttributeFilters(resourceFilters, attributeFilters);
+    }
+
+    private boolean hasAttributeFilters(Map<String, String> resourceFilters, Map<String, String> attributeFilters) {
+        return (resourceFilters != null && !resourceFilters.isEmpty())
+                || (attributeFilters != null && !attributeFilters.isEmpty());
+    }
+
+    private Map<String, String> parseLogAttributeFilter(String filterExpression) {
+        if (!StringUtils.hasText(filterExpression)) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> filters = new HashMap<>();
+        String[] tokens = filterExpression.trim().split("(?i)\\s+and\\s+|\\s*,\\s*");
+        for (String token : tokens) {
+            if (!StringUtils.hasText(token)) {
+                continue;
+            }
+            boolean negate = false;
+            int separatorIndex = token.indexOf("!=");
+            if (separatorIndex >= 0) {
+                negate = true;
+            } else {
+                separatorIndex = token.indexOf('=');
+            }
+            if (separatorIndex < 0) {
+                separatorIndex = token.indexOf(':');
+            }
+            if (separatorIndex <= 0 || separatorIndex >= token.length() - 1) {
+                continue;
+            }
+            String key = token.substring(0, separatorIndex).trim();
+            String value = stripFilterQuotes(token.substring(separatorIndex + (negate ? 2 : 1)).trim());
+            if (!isSafeAttributeKey(key) || !StringUtils.hasText(value)) {
+                continue;
+            }
+            filters.put(key, negate ? LOG_FILTER_NEGATION_PREFIX + value : value);
+        }
+        return filters.isEmpty() ? Collections.emptyMap() : Map.copyOf(filters);
+    }
+
+    private String stripFilterQuotes(String value) {
+        if (value.length() < 2) {
+            return value;
+        }
+        char first = value.charAt(0);
+        char last = value.charAt(value.length() - 1);
+        if ((first == '\'' && last == '\'') || (first == '"' && last == '"')) {
+            return value.substring(1, value.length() - 1).trim();
+        }
+        return value;
+    }
+
+    private boolean isSafeAttributeKey(String key) {
+        return StringUtils.hasText(key) && key.matches("[A-Za-z0-9_.:-]+");
+    }
+
+    private String normalizeGroupBy(String groupBy) {
+        if (!StringUtils.hasText(groupBy)) {
+            return null;
+        }
+        String normalized = groupBy.trim();
+        return isSafeAttributeKey(normalized) ? normalized : null;
+    }
+
+    private List<LogEntry> filterQueryLogs(List<LogEntry> logs, String serviceName, String serviceNamespace,
+                                           String environment, Map<String, String> resourceFilters,
+                                           Map<String, String> attributeFilters,
+                                           boolean hideInternal, boolean hideNoise) {
         if (logs == null || logs.isEmpty()) {
             return logs == null ? Collections.emptyList() : logs;
         }
         String workspaceId = AuthTokenRequestContext.currentWorkspaceId();
-        if (!StringUtils.hasText(workspaceId) && !hideInternal && !hideNoise) {
+        if (!StringUtils.hasText(workspaceId) && !hideInternal && !hideNoise
+                && !hasExtendedFilterContext(serviceName, serviceNamespace, environment,
+                resourceFilters, attributeFilters)) {
             return logs;
         }
         String normalizedWorkspaceId = StringUtils.hasText(workspaceId)
@@ -437,7 +1027,32 @@ public class LogQueryServiceImpl implements LogQueryService {
         return logs.stream()
                 .filter(log -> !shouldHideWorkspaceLog(log, hideInternal, hideNoise))
                 .filter(log -> matchesWorkspace(log, normalizedWorkspaceId))
+                .filter(log -> matchesServiceContext(log, serviceName, serviceNamespace, environment))
+                .filter(log -> matchesAttributes(log.getResource(), resourceFilters))
+                .filter(log -> matchesAttributes(log.getAttributes(), attributeFilters))
                 .toList();
+    }
+
+    private boolean matchesAttributes(Map<String, Object> source, Map<String, String> expectedAttributes) {
+        if (expectedAttributes == null || expectedAttributes.isEmpty()) {
+            return true;
+        }
+        if (source == null || source.isEmpty()) {
+            return expectedAttributes.values().stream().allMatch(this::isNegatedLogAttributeFilter);
+        }
+        return expectedAttributes.entrySet().stream()
+                .allMatch(entry -> matchesAttributeFilter(resolveMapValue(source, entry.getKey()), entry.getValue()));
+    }
+
+    private boolean matchesAttributeFilter(String actualValue, String expectedValue) {
+        if (isNegatedLogAttributeFilter(expectedValue)) {
+            return !matchesOptionalResourceValue(actualValue, expectedValue.substring(LOG_FILTER_NEGATION_PREFIX.length()));
+        }
+        return matchesOptionalResourceValue(actualValue, expectedValue);
+    }
+
+    private boolean isNegatedLogAttributeFilter(String expectedValue) {
+        return expectedValue != null && expectedValue.startsWith(LOG_FILTER_NEGATION_PREFIX);
     }
 
     private boolean shouldHideWorkspaceLog(LogEntry logEntry, boolean hideInternal, boolean hideNoise) {
@@ -449,6 +1064,23 @@ public class LogQueryServiceImpl implements LogQueryService {
             return true;
         }
         return hideNoise && DEMO_INFRA_SERVICE_NAMES.contains(serviceName);
+    }
+
+    private boolean matchesServiceContext(LogEntry logEntry, String serviceName, String serviceNamespace,
+                                          String environment) {
+        return matchesOptionalResourceValue(resolveServiceName(logEntry), serviceName)
+                && matchesOptionalResourceValue(resolveResourceValue(logEntry,
+                        "service.namespace", "service_namespace"), serviceNamespace)
+                && matchesOptionalResourceValue(resolveResourceValue(logEntry,
+                        "deployment.environment.name", "deployment_environment_name", "environment"), environment);
+    }
+
+    private boolean matchesOptionalResourceValue(String actualValue, String expectedValue) {
+        if (!StringUtils.hasText(expectedValue)) {
+            return true;
+        }
+        return StringUtils.hasText(actualValue)
+                && actualValue.equalsIgnoreCase(expectedValue.trim());
     }
 
     private boolean hasWorkspaceContext() {
@@ -480,14 +1112,53 @@ public class LogQueryServiceImpl implements LogQueryService {
     }
 
     private String resolveServiceName(LogEntry logEntry) {
-        if (logEntry == null || logEntry.getResource() == null || logEntry.getResource().isEmpty()) {
+        return resolveResourceValue(logEntry, "service.name", "service_name");
+    }
+
+    private String resolveLogGroupValue(LogEntry logEntry, String groupBy) {
+        if (!StringUtils.hasText(groupBy)) {
+            return "unknown";
+        }
+        String normalized = groupBy.trim();
+        String value;
+        if ("service.name".equalsIgnoreCase(normalized) || "service_name".equalsIgnoreCase(normalized)) {
+            value = resolveServiceName(logEntry);
+        } else if ("severity".equalsIgnoreCase(normalized) || "severity_text".equalsIgnoreCase(normalized)) {
+            value = normalizeRawValue(logEntry == null ? null : logEntry.getSeverityText());
+        } else if (normalized.startsWith("resource:")) {
+            value = resolveMapValue(logEntry == null ? null : logEntry.getResource(),
+                    normalized.substring("resource:".length()));
+        } else if (normalized.startsWith("attribute:")) {
+            value = resolveMapValue(logEntry == null ? null : logEntry.getAttributes(),
+                    normalized.substring("attribute:".length()));
+        } else {
+            value = resolveResourceValue(logEntry, normalized);
+        }
+        return StringUtils.hasText(value) ? value : "unknown";
+    }
+
+    private String resolveResourceValue(LogEntry logEntry, String... keys) {
+        if (logEntry == null || keys == null || keys.length == 0) {
             return null;
         }
-        String serviceName = normalizeResourceValue(logEntry.getResource().get("service.name"));
-        if (!StringUtils.hasText(serviceName)) {
-            serviceName = normalizeResourceValue(logEntry.getResource().get("service_name"));
+        String value = resolveMapValue(logEntry.getResource(), keys);
+        if (!StringUtils.hasText(value)) {
+            value = resolveMapValue(logEntry.getAttributes(), keys);
         }
-        return serviceName;
+        return value;
+    }
+
+    private String resolveMapValue(Map<String, Object> source, String... keys) {
+        if (source == null || source.isEmpty()) {
+            return null;
+        }
+        for (String key : keys) {
+            String value = normalizeResourceValue(source.get(key));
+            if (StringUtils.hasText(value)) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private String normalizeRawValue(Object rawValue) {

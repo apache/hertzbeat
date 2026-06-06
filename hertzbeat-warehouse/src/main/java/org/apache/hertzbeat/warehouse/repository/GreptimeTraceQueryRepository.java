@@ -66,12 +66,12 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
 
     @Override
     public List<Map<String, Object>> queryRecentTraceRows(int limit) {
-        return queryRecentTraceRows(limit, null, null, null, null, null, null, null, false);
+        return queryRecentTraceRows(limit, null, null, null, null, null, null, null, null, null, null, false);
     }
 
     @Override
     public List<Map<String, Object>> queryRecentTraceRows(int limit, String serviceName, Boolean hideInternal) {
-        return queryRecentTraceRows(limit, null, null, serviceName, null, null, null, null, hideInternal);
+        return queryRecentTraceRows(limit, null, null, serviceName, null, null, null, null, null, null, null, hideInternal);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                                                           String serviceName,
                                                           String environment,
                                                           Boolean hideInternal) {
-        return queryRecentTraceRows(limit, start, end, serviceName, null, environment, null, null, hideInternal);
+        return queryRecentTraceRows(limit, start, end, serviceName, null, environment, null, null, null, null, null, hideInternal);
     }
 
     @Override
@@ -91,6 +91,9 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                                                           String serviceName,
                                                           String serviceNamespace,
                                                           String environment,
+                                                          String operationName,
+                                                          Long minDurationNanos,
+                                                          Long maxDurationNanos,
                                                           String workspaceId,
                                                           Map<String, Set<String>> resourceIdentityFilters,
                                                           Boolean hideInternal) {
@@ -108,6 +111,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         if (StringUtils.hasText(serviceName)) {
             filters.add("service_name = '" + escapeSql(serviceName) + "'");
         }
+        addTraceSpanFilters(filters, operationName, minDurationNanos, maxDurationNanos);
         if (StringUtils.hasText(serviceNamespace)) {
             filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
         }
@@ -148,9 +152,33 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                                                         String serviceName,
                                                         String serviceNamespace,
                                                         String environment,
+                                                        String operationName,
+                                                        Long minDurationNanos,
+                                                        Long maxDurationNanos,
                                                         String workspaceId,
                                                         Map<String, Set<String>> resourceIdentityFilters,
                                                         Boolean hideInternal,
+                                                        int offset,
+                                                        int limit) {
+        return queryTraceListRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters,
+                hideInternal, null, offset, limit);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryTraceListRows(Long start,
+                                                        Long end,
+                                                        Boolean errorOnly,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        String operationName,
+                                                        Long minDurationNanos,
+                                                        Long maxDurationNanos,
+                                                        String workspaceId,
+                                                        Map<String, Set<String>> resourceIdentityFilters,
+                                                        Boolean hideInternal,
+                                                        String spanScope,
                                                         int offset,
                                                         int limit) {
         String errorExpression = "SUM(CASE WHEN span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
@@ -190,6 +218,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         if (StringUtils.hasText(serviceName)) {
             filters.add("service_name = '" + escapeSql(serviceName) + "'");
         }
+        addTraceSpanFilters(filters, operationName, minDurationNanos, maxDurationNanos, spanScope);
         if (StringUtils.hasText(serviceNamespace)) {
             filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
         }
@@ -238,15 +267,42 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
     }
 
     @Override
+    public boolean supportsTraceGroupByRows() {
+        return true;
+    }
+
+    @Override
     public Map<String, Object> queryTraceOverviewRows(Long start,
                                                       Long end,
                                                       Boolean errorOnly,
                                                       String serviceName,
                                                       String serviceNamespace,
                                                       String environment,
+                                                      String operationName,
+                                                      Long minDurationNanos,
+                                                      Long maxDurationNanos,
                                                       String workspaceId,
                                                       Map<String, Set<String>> resourceIdentityFilters,
                                                       Boolean hideInternal) {
+        return queryTraceOverviewRows(start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal,
+                null);
+    }
+
+    @Override
+    public Map<String, Object> queryTraceOverviewRows(Long start,
+                                                      Long end,
+                                                      Boolean errorOnly,
+                                                      String serviceName,
+                                                      String serviceNamespace,
+                                                      String environment,
+                                                      String operationName,
+                                                      Long minDurationNanos,
+                                                      Long maxDurationNanos,
+                                                      String workspaceId,
+                                                      Map<String, Set<String>> resourceIdentityFilters,
+                                                      Boolean hideInternal,
+                                                      String spanScope) {
         String errorExpression = "SUM(CASE WHEN span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
                 + "THEN 1 ELSE 0 END)";
         StringBuilder innerSql = new StringBuilder("SELECT trace_id, ")
@@ -264,6 +320,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         if (StringUtils.hasText(serviceName)) {
             filters.add("service_name = '" + escapeSql(serviceName) + "'");
         }
+        addTraceSpanFilters(filters, operationName, minDurationNanos, maxDurationNanos, spanScope);
         if (StringUtils.hasText(serviceNamespace)) {
             filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
         }
@@ -309,13 +366,37 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                                                         String serviceName,
                                                         String serviceNamespace,
                                                         String environment,
+                                                        String operationName,
+                                                        Long minDurationNanos,
+                                                        Long maxDurationNanos,
                                                         String workspaceId,
                                                         Map<String, Set<String>> resourceIdentityFilters,
                                                         Boolean hideInternal) {
+        return queryTraceIdOverviewRows(traceId, start, end, errorOnly, serviceName, serviceNamespace, environment,
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal,
+                null);
+    }
+
+    @Override
+    public Map<String, Object> queryTraceIdOverviewRows(String traceId,
+                                                        Long start,
+                                                        Long end,
+                                                        Boolean errorOnly,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        String operationName,
+                                                        Long minDurationNanos,
+                                                        Long maxDurationNanos,
+                                                        String workspaceId,
+                                                        Map<String, Set<String>> resourceIdentityFilters,
+                                                        Boolean hideInternal,
+                                                        String spanScope) {
         String errorExpression = "SUM(CASE WHEN span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
                 + "THEN 1 ELSE 0 END)";
         StringBuilder innerSql = buildTraceGroupedSql(start, end, serviceName, serviceNamespace, environment,
-                workspaceId, resourceIdentityFilters, hideInternal, errorExpression, traceId);
+                operationName, minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal,
+                errorExpression, traceId, spanScope);
         if (Boolean.TRUE.equals(errorOnly)) {
             innerSql.append(" HAVING ").append(errorExpression).append(" > 0");
         }
@@ -326,6 +407,113 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                 + ") trace_id_overview";
         List<Map<String, Object>> rows = queryRows(sql);
         return rows.isEmpty() ? Map.of() : rows.getFirst();
+    }
+
+    @Override
+    public List<Map<String, Object>> queryTraceGroupByRows(Long start,
+                                                           Long end,
+                                                           Boolean errorOnly,
+                                                           String serviceName,
+                                                           String serviceNamespace,
+                                                           String environment,
+                                                           String operationName,
+                                                           Long minDurationNanos,
+                                                           Long maxDurationNanos,
+                                                           String workspaceId,
+                                                           Map<String, Set<String>> resourceIdentityFilters,
+                                                           Boolean hideInternal,
+                                                           String groupBy,
+                                                           String orderBy,
+                                                           long minCount,
+                                                           int limit) {
+        return queryTraceGroupByRows(start, end, errorOnly, serviceName, serviceNamespace, environment, operationName,
+                minDurationNanos, maxDurationNanos, workspaceId, resourceIdentityFilters, hideInternal, null, groupBy,
+                orderBy, minCount, limit);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryTraceGroupByRows(Long start,
+                                                           Long end,
+                                                           Boolean errorOnly,
+                                                           String serviceName,
+                                                           String serviceNamespace,
+                                                           String environment,
+                                                           String operationName,
+                                                           Long minDurationNanos,
+                                                           Long maxDurationNanos,
+                                                           String workspaceId,
+                                                           Map<String, Set<String>> resourceIdentityFilters,
+                                                           Boolean hideInternal,
+                                                           String spanScope,
+                                                           String groupBy,
+                                                           String orderBy,
+                                                           long minCount,
+                                                           int limit) {
+        String errorExpression = "SUM(CASE WHEN span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
+                + "THEN 1 ELSE 0 END)";
+        String groupValueProjection = traceGroupValueProjection(groupBy, errorExpression);
+        if (!StringUtils.hasText(groupValueProjection)) {
+            return Collections.emptyList();
+        }
+        StringBuilder innerSql = new StringBuilder("SELECT trace_id, ")
+                .append(groupValueProjection)
+                .append(" AS group_value, ")
+                .append("MAX(duration_nano) AS duration_nano, ")
+                .append(errorExpression)
+                .append(" AS error_span_count FROM ")
+                .append(TRACE_TABLE);
+        List<String> filters = new LinkedList<>();
+        if (start != null) {
+            filters.add("timestamp >= to_timestamp_millis(" + start + ")");
+        }
+        if (end != null) {
+            filters.add("timestamp <= to_timestamp_millis(" + end + ")");
+        }
+        if (StringUtils.hasText(serviceName)) {
+            filters.add("service_name = '" + escapeSql(serviceName) + "'");
+        }
+        addTraceSpanFilters(filters, operationName, minDurationNanos, maxDurationNanos, spanScope);
+        if (StringUtils.hasText(serviceNamespace)) {
+            filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
+        }
+        if (StringUtils.hasText(environment) && !"all".equalsIgnoreCase(environment.trim())) {
+            String filter = environmentFilter(null, environment);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (StringUtils.hasText(workspaceId)) {
+            String filter = workspaceFilter(null, workspaceId);
+            if (StringUtils.hasText(filter)) {
+                filters.add(filter);
+            }
+        }
+        if (!CollectionUtils.isEmpty(resourceIdentityFilters)) {
+            addResourceIdentityFilters(filters, null, resourceIdentityFilters, serviceName, serviceNamespace);
+        }
+        if (Boolean.TRUE.equals(hideInternal)) {
+            filters.add(SELF_TELEMETRY_SERVICE_FILTER);
+        }
+        if (!filters.isEmpty()) {
+            innerSql.append(" WHERE ").append(String.join(" AND ", filters));
+        }
+        innerSql.append(" GROUP BY trace_id");
+        if (Boolean.TRUE.equals(errorOnly)) {
+            innerSql.append(" HAVING ").append(errorExpression).append(" > 0");
+        }
+        String sql = "SELECT group_value, COUNT(*) AS trace_count, "
+                + "SUM(CASE WHEN error_span_count > 0 THEN 1 ELSE 0 END) AS error_trace_count, "
+                + "COALESCE(SUM(duration_nano), 0) / NULLIF(COUNT(duration_nano), 0) / 1000000.0 AS latency_avg_ms, "
+                + "uddsketch_calc(0.95, uddsketch_state(128, 0.01, duration_nano)) / 1000000.0 AS latency_p95_ms "
+                + "FROM ("
+                + innerSql
+                + ") trace_group GROUP BY group_value HAVING COUNT(*) >= "
+                + Math.max(minCount, 1L)
+                + " ORDER BY "
+                + traceGroupOrderBy(orderBy)
+                + " LIMIT "
+                + Math.max(limit, 1);
+        return queryRows(sql);
     }
 
     @Override
@@ -345,7 +533,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         String errorExpression = "SUM(CASE WHEN span_status_code IN ('STATUS_CODE_ERROR', 'ERROR') "
                 + "THEN 1 ELSE 0 END)";
         String groupedSql = buildTraceGroupedSql(start, end, serviceName, serviceNamespace, environment,
-                workspaceId, resourceIdentityFilters, hideInternal, errorExpression, null).toString();
+                null, null, null, workspaceId, resourceIdentityFilters, hideInternal, errorExpression, null, null).toString();
         String sql = "SELECT summary.total_trace_count, summary.error_trace_count, "
                 + "latest.trace_start_time AS latest_observed_at, latest.trace_id AS latest_trace_id "
                 + "FROM (SELECT COUNT(*) AS total_trace_count, "
@@ -365,11 +553,15 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                                                String serviceName,
                                                String serviceNamespace,
                                                String environment,
+                                               String operationName,
+                                               Long minDurationNanos,
+                                               Long maxDurationNanos,
                                                String workspaceId,
                                                Map<String, Set<String>> resourceIdentityFilters,
                                                Boolean hideInternal,
                                                String errorExpression,
-                                               String traceId) {
+                                               String traceId,
+                                               String spanScope) {
         StringBuilder innerSql = new StringBuilder("SELECT trace_id, ")
                 .append("MIN(timestamp) AS trace_start_time, ")
                 .append(errorExpression)
@@ -388,6 +580,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         if (StringUtils.hasText(serviceName)) {
             filters.add("service_name = '" + escapeSql(serviceName) + "'");
         }
+        addTraceSpanFilters(filters, operationName, minDurationNanos, maxDurationNanos, spanScope);
         if (StringUtils.hasText(serviceNamespace)) {
             filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
         }
@@ -520,7 +713,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
 
     @Override
     public List<Map<String, Object>> queryTraceRows(String traceId, int limit) {
-        return queryTraceRows(traceId, limit, null, null, null, null, null, null, null, false);
+        return queryTraceRows(traceId, limit, null, null, null, null, null, null, null, null, null, null, false);
     }
 
     @Override
@@ -531,6 +724,9 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
                                                     String serviceName,
                                                     String serviceNamespace,
                                                     String environment,
+                                                    String operationName,
+                                                    Long minDurationNanos,
+                                                    Long maxDurationNanos,
                                                     String workspaceId,
                                                     Map<String, Set<String>> resourceIdentityFilters,
                                                     Boolean hideInternal) {
@@ -552,6 +748,7 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
         if (StringUtils.hasText(serviceName)) {
             filters.add("service_name = '" + escapeSql(serviceName) + "'");
         }
+        addTraceSpanFilters(filters, operationName, minDurationNanos, maxDurationNanos);
         if (StringUtils.hasText(serviceNamespace)) {
             filters.add(resourceAttributeFilter(null, "service.namespace", serviceNamespace));
         }
@@ -747,6 +944,123 @@ public class GreptimeTraceQueryRepository implements TraceQueryRepository {
             return valueFilters.getFirst();
         }
         return "(" + String.join(" OR ", valueFilters) + ")";
+    }
+
+    private void addTraceSpanFilters(List<String> filters,
+                                     String operationName,
+                                     Long minDurationNanos,
+                                     Long maxDurationNanos) {
+        addTraceSpanFilters(filters, operationName, minDurationNanos, maxDurationNanos, null);
+    }
+
+    private void addTraceSpanFilters(List<String> filters,
+                                     String operationName,
+                                     Long minDurationNanos,
+                                     Long maxDurationNanos,
+                                     String spanScope) {
+        if (StringUtils.hasText(operationName)) {
+            filters.add("span_name = '" + escapeSql(operationName.trim()) + "'");
+        }
+        if (minDurationNanos != null && minDurationNanos >= 0) {
+            filters.add("duration_nano >= " + minDurationNanos);
+        }
+        if (maxDurationNanos != null && maxDurationNanos >= 0) {
+            filters.add("duration_nano <= " + maxDurationNanos);
+        }
+        String scope = StringUtils.trimWhitespace(spanScope);
+        if (!StringUtils.hasText(scope) || "all".equalsIgnoreCase(scope)) {
+            return;
+        }
+        if ("root".equalsIgnoreCase(scope)) {
+            filters.add("(parent_span_id IS NULL OR parent_span_id = '')");
+            return;
+        }
+        if ("entrypoint".equalsIgnoreCase(scope)
+                || "entrypoint-spans".equalsIgnoreCase(scope)
+                || "entry".equalsIgnoreCase(scope)) {
+            filters.add("(parent_span_id IS NULL OR parent_span_id = '' "
+                    + "OR UPPER(span_kind) IN ('SPAN_KIND_SERVER', 'SERVER', 'SPAN_KIND_CONSUMER', 'CONSUMER'))");
+        }
+    }
+
+    private String traceGroupValueProjection(String groupBy, String errorExpression) {
+        String expression = traceGroupExpression(groupBy, errorExpression);
+        if (!StringUtils.hasText(expression)) {
+            return null;
+        }
+        if ("status".equals(normalizeTraceGroupBy(groupBy))) {
+            return expression;
+        }
+        return "COALESCE(NULLIF(MAX(" + expression + "), ''), 'unknown')";
+    }
+
+    private String traceGroupOrderBy(String orderBy) {
+        String normalized = StringUtils.trimWhitespace(orderBy);
+        if ("error-count-desc".equalsIgnoreCase(normalized)) {
+            return "error_trace_count DESC";
+        }
+        if ("latency-p95-desc".equalsIgnoreCase(normalized)) {
+            return "latency_p95_ms DESC";
+        }
+        return "trace_count DESC";
+    }
+
+    private String traceGroupExpression(String groupBy, String errorExpression) {
+        String normalizedGroupBy = normalizeTraceGroupBy(groupBy);
+        if (!StringUtils.hasText(normalizedGroupBy)) {
+            return null;
+        }
+        if ("service.name".equals(normalizedGroupBy)) {
+            return "service_name";
+        }
+        if ("operation.name".equals(normalizedGroupBy)) {
+            return "span_name";
+        }
+        if ("status".equals(normalizedGroupBy)) {
+            return "CASE WHEN " + errorExpression + " > 0 THEN 'ERROR' ELSE 'OK' END";
+        }
+        if (normalizedGroupBy.startsWith("resource:")) {
+            String key = normalizedGroupBy.substring("resource:".length());
+            if (!isSafeTraceGroupResourceKey(key)) {
+                return null;
+            }
+            return resourceAttributeExpression(null, key);
+        }
+        if (isSafeTraceGroupResourceKey(normalizedGroupBy)) {
+            return resourceAttributeExpression(null, normalizedGroupBy);
+        }
+        return null;
+    }
+
+    private String normalizeTraceGroupBy(String groupBy) {
+        if (!StringUtils.hasText(groupBy)) {
+            return null;
+        }
+        String normalized = groupBy.trim().toLowerCase();
+        if ("service_name".equals(normalized)) {
+            return "service.name";
+        }
+        if ("operation".equals(normalized) || "operation.name".equals(normalized)
+                || "span.name".equals(normalized) || "span_name".equals(normalized)) {
+            return "operation.name";
+        }
+        if ("status".equals(normalized) || "error".equals(normalized)) {
+            return "status";
+        }
+        return normalized;
+    }
+
+    private boolean isSafeTraceGroupResourceKey(String key) {
+        if (!StringUtils.hasText(key)) {
+            return false;
+        }
+        for (int index = 0; index < key.length(); index++) {
+            char character = key.charAt(index);
+            if (!Character.isLetterOrDigit(character) && character != '.' && character != '_' && character != '-') {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String resourceAttributeFilter(String alias, String key, String value) {

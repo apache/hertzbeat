@@ -236,4 +236,53 @@ class LogWorkerTest {
         assertTrue(context.containsKey("log"));
         assertEquals(logEntry, context.get("log"));
     }
+
+    @Test
+    void testLogExpressionCanReadOtelResourceAndAttributes() {
+        LogEntry detailedLogEntry = LogEntry.builder()
+                .severityText("ERROR")
+                .body("checkout failed")
+                .resource(Map.of("service.name", "checkout", "deployment.environment.name", "prod"))
+                .attributes(Map.of("http.status_code", 500, "http.route", "/checkout/{id}"))
+                .build();
+
+        JexlExprCalculator calculator = new JexlExprCalculator();
+
+        assertTrue(calculator.execAlertExpression(
+                Map.of("log", detailedLogEntry),
+                "log.severityText == 'ERROR' && log.resource['service.name'] == 'checkout' && "
+                        + "log.resource['deployment.environment.name'] != 'staging' && "
+                        + "log.attributes['http.status_code'] == 500 && log.attributes['http.route'] != '/health'",
+                false));
+    }
+
+    @Test
+    void testLogExpressionCanMatchBodyContentCaseInsensitive() {
+        LogEntry detailedLogEntry = LogEntry.builder()
+                .severityText("ERROR")
+                .body("Checkout timed out while calling inventory")
+                .build();
+
+        JexlExprCalculator calculator = new JexlExprCalculator();
+
+        assertTrue(calculator.execAlertExpression(
+                Map.of("log", detailedLogEntry),
+                "contains(log.body, 'TIMED OUT')",
+                false));
+    }
+
+    @Test
+    void testLogExpressionCanReadTraceAndSpanIds() {
+        LogEntry detailedLogEntry = LogEntry.builder()
+                .traceId("trace-123")
+                .spanId("span-456")
+                .build();
+
+        JexlExprCalculator calculator = new JexlExprCalculator();
+
+        assertTrue(calculator.execAlertExpression(
+                Map.of("log", detailedLogEntry),
+                "log.traceId == 'trace-123' && log.spanId != 'span-other'",
+                false));
+    }
 }

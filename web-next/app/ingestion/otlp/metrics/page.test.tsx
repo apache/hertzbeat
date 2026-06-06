@@ -104,6 +104,14 @@ vi.mock('@/lib/otlp-metrics/controller', () => ({
     const params = new URLSearchParams();
     Object.entries(query).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
+        if (key === 'inspector') return;
+        if (key === 'series') return;
+        if (key === 'legendFormat') return;
+        if (key === 'formula') return;
+        if (key === 'inventorySearch' || key === 'inventorySort' || key === 'inventoryPageSize' || key === 'inventoryPageIndex') return;
+        if (key === 'seriesAttributeSearch') return;
+        if (key === 'warningThreshold' || key === 'criticalThreshold') return;
+        if (key === 'expectedRange') return;
         params.set(key, String(value));
       }
     });
@@ -112,8 +120,20 @@ vi.mock('@/lib/otlp-metrics/controller', () => ({
   },
   queryStateFromParams: (params: { get(key: string): string | null }) => ({
     query: params.get('query') || undefined,
+    series: params.get('series') || undefined,
+    filter: params.get('filter') || undefined,
     aggregation: params.get('aggregation') || undefined,
+    temporalAggregation: params.get('temporalAggregation') || undefined,
     groupBy: params.get('groupBy') || undefined,
+    legendFormat: params.get('legendFormat') || undefined,
+    formula: params.get('formula') || undefined,
+    inventorySearch: params.get('inventorySearch') || undefined,
+    inventorySort: params.get('inventorySort') || undefined,
+    inventoryPageSize: params.get('inventoryPageSize') || undefined,
+    inventoryPageIndex: params.get('inventoryPageIndex') || undefined,
+    seriesAttributeSearch: params.get('seriesAttributeSearch') || undefined,
+    step: params.get('step') || undefined,
+    limit: params.get('limit') || undefined,
     timeRange: params.get('timeRange') || undefined,
     collector: params.get('collector') || undefined,
     template: params.get('template') || undefined,
@@ -122,6 +142,10 @@ vi.mock('@/lib/otlp-metrics/controller', () => ({
     returnTo: params.get('returnTo') || undefined,
     traceId: params.get('traceId') || undefined,
     spanId: params.get('spanId') || undefined,
+    inspector: params.get('inspector') === 'table' ? 'table' : 'graph',
+    warningThreshold: params.get('warningThreshold') || undefined,
+    criticalThreshold: params.get('criticalThreshold') || undefined,
+    expectedRange: params.get('expectedRange') === 'on' ? 'on' : undefined,
     serviceName: params.get('serviceName') || undefined,
     serviceNamespace: params.get('serviceNamespace') || undefined,
     environment: params.get('environment') || undefined,
@@ -151,6 +175,14 @@ vi.mock('@/lib/signal-route-context', () => ({
   readEntityIdRouteParam: (value: string | null | undefined) => {
     const trimmed = value?.trim();
     return trimmed && /^\d+$/.test(trimmed) ? trimmed : undefined;
+  },
+  stripReturnLabelFromHref: (href?: string | null) => {
+    if (!href) return undefined;
+    const [path, query = ''] = href.split('?');
+    const params = new URLSearchParams(query);
+    params.delete('returnLabel');
+    const search = params.toString();
+    return search ? `${path}?${search}` : path;
   },
   readSignalRouteContext: () => ({
     entityId: mockState.searchParams.get('entityId') || undefined,
@@ -213,6 +245,25 @@ vi.mock('@/lib/otlp-metrics/view-model', () => ({
         { label: tZh('otlp.metrics.evidence.linked-trace'), value: series.labels.trace_id || '-', meta: series.labels.span_id || '-' }
       ]
     : [],
+  buildMetricSeriesSampleRows: (series: any) => series
+    ? (series.points || []).map(([timestamp, value]: [number, number | null], index: number) => ({
+        key: `${series.key}:${timestamp}:${index}`,
+        index: String(index + 1),
+        timestamp: `T${timestamp}`,
+        rawTimestamp: String(timestamp),
+        value: value == null ? '-' : String(value),
+        state: value == null ? tZh('otlp.metrics.inspector.sample-state.empty') : tZh('otlp.metrics.inspector.sample-state.present')
+      }))
+    : [],
+  buildMetricSeriesAttributeRows: (series: any, search: string) => {
+    if (!series) return [];
+    const normalizedSearch = search.trim().toLowerCase();
+    return Object.entries(series.labels || {})
+      .map(([name, value]) => ({ key: name, name, value: String(value).trim() }))
+      .filter(row => row.value)
+      .filter(row => !normalizedSearch || `${row.name} ${row.value}`.toLowerCase().includes(normalizedSearch))
+      .sort((left, right) => left.name.localeCompare(right.name));
+  },
   buildMetricSeriesLinkedRecordRows: (series: any, handoffLinks: any) => series
     ? [
         {
@@ -256,10 +307,47 @@ vi.mock('@/lib/otlp-metrics/view-model', () => ({
     ];
   },
   buildMetricSeriesViews: () => mockState.metricSeries,
-  buildMetricsChartOption: () => ({
+  applyMetricsFormula: (seriesList: any[], formula?: string | null) => (
+    formula?.trim() === 'A * 1000'
+      ? seriesList.map(series => ({
+          ...series,
+          points: (series.points || []).map(([timestamp, value]: [number, number | null]) => [
+            timestamp,
+            value == null ? null : value * 1000
+          ]),
+          latestValue: series.latestValue == null ? null : series.latestValue * 1000
+        }))
+      : seriesList
+  ),
+  buildMetricExpectedRangeConfig: (series: any) => series
+    ? {
+        label: tZh('otlp.metrics.expected-range.label'),
+        lowerLabel: tZh('otlp.metrics.expected-range.lower'),
+        upperLabel: tZh('otlp.metrics.expected-range.upper'),
+        lowerData: [[1000, 9]],
+        upperGapData: [[1000, 2]],
+        sampleCount: 1
+      }
+    : null,
+  buildMetricsChartOption: (_seriesList: any[], thresholds?: any, expectedRange?: any, legendFormat?: any) => ({
     series: [],
-    dataZoom: [{ type: 'slider', start: 0, end: 100 }]
+    dataZoom: [{ type: 'slider', start: 0, end: 100 }],
+    thresholdProof: thresholds || null,
+    expectedRangeProof: expectedRange || null,
+    legendFormatProof: legendFormat || null
   }),
+  buildMetricThresholdConfig: (warningThreshold?: string, criticalThreshold?: string) => {
+    const warning = warningThreshold && Number.isFinite(Number(warningThreshold)) ? Number(warningThreshold) : undefined;
+    const critical = criticalThreshold && Number.isFinite(Number(criticalThreshold)) ? Number(criticalThreshold) : undefined;
+    return warning == null && critical == null
+      ? null
+      : {
+          warning,
+          critical,
+          warningLabel: tZh('otlp.metrics.threshold.warning'),
+          criticalLabel: tZh('otlp.metrics.threshold.critical')
+        };
+  },
   buildMetricsDataZoomTimeContext: (_seriesList: any[], zoomRange: any, fallbackTimeRange?: string) =>
     zoomRange
       ? {
@@ -272,12 +360,30 @@ vi.mock('@/lib/otlp-metrics/view-model', () => ({
     title: series.name,
     copy: series.labels['service.name'] || series.labels.service_name || '-',
     meta: series.latestValue == null ? '-' : String(series.latestValue),
+    description: series.description || '-',
+    metricType: series.metricType || '-',
+    unit: series.unit || '-',
+    sampleCount: (series.points || []).length,
+    pointCount: (series.points || []).length,
+    timeSeriesCount: 1,
     entityLabel: series.labels['hertzbeat.entity_name'] || series.labels.hertzbeat_entity_name || '-',
     entityMeta: series.labels['hertzbeat.entity_id'] || series.labels.hertzbeat_entity_id
       ? tZh('otlp.metrics.series.entity-id', { entityId: series.labels['hertzbeat.entity_id'] || series.labels.hertzbeat_entity_id })
       : tZh('otlp.metrics.series.entity-missing'),
     entityState: series.labels['hertzbeat.entity_id'] || series.labels.hertzbeat_entity_id ? 'present' : 'missing'
   })),
+  buildMetricInventoryRows: (rows: any[], search: string, sort: string) => {
+    const normalizedSearch = search.trim().toLowerCase();
+    const filteredRows = normalizedSearch
+      ? rows.filter(row => [row.title, row.copy, row.meta, row.entityLabel, row.entityMeta, row.series?.name, ...Object.values(row.series?.labels || {})].join(' ').toLowerCase().includes(normalizedSearch))
+      : [...rows];
+    return filteredRows.sort((left, right) => {
+      if (sort === 'latest') return (right.series?.latestValue ?? Number.NEGATIVE_INFINITY) - (left.series?.latestValue ?? Number.NEGATIVE_INFINITY);
+      if (sort === 'samples') return (right.pointCount ?? 0) - (left.pointCount ?? 0);
+      if (sort === 'time-series') return (right.timeSeriesCount ?? 0) - (left.timeSeriesCount ?? 0);
+      return String(left.title).localeCompare(String(right.title));
+    });
+  },
   buildMetricTrendBars: () => [],
   buildMetricsHandoffLinks: (_data: any, _query: any, _routeContext: any, selectedSeries?: any) => {
     const serviceName = selectedSeries?.labels['service.name'] || selectedSeries?.labels.service_name || 'checkout';
@@ -318,7 +424,8 @@ vi.mock('@/lib/otlp-metrics/view-model', () => ({
       entitiesHref: `/entities?search=${encodeURIComponent(serviceName)}`,
       entityHref: entityId ? `/entities/${entityId}?${params.toString()}` : `/entities?search=${encodeURIComponent(serviceName)}&${params.toString()}`,
       alertRulesHref: `/alert/setting?signal=metrics&${params.toString()}`,
-      alertHandlingHref: `/alert?${alertParams.toString()}`
+      alertHandlingHref: `/alert?${alertParams.toString()}`,
+      dashboardHref: `/dashboard?intent=add-panel&signal=metrics&panelTitle=${encodeURIComponent(serviceName)}&${params.toString()}`
     };
   }
 }));
@@ -376,6 +483,8 @@ describe('otlp metrics page', () => {
     expect(source).toContain('padding="query"');
     expect(source).toContain('data-otlp-metrics-query-control-stack="shared-inline-controls"');
     expect(source).toContain('data-otlp-metrics-query-control-stack-owner="hertzbeat-ui-control-stack"');
+    expect(source).toContain('data-otlp-metrics-builder-control-stack="shared-query-builder-controls"');
+    expect(source).toContain('data-otlp-metrics-builder-control-stack-owner="hertzbeat-ui-control-stack"');
     expect(source).toContain('data-otlp-metrics-context-control-stack="shared-inline-controls"');
     expect(source).toContain('data-otlp-metrics-context-control-stack-owner="hertzbeat-ui-control-stack"');
     expect(source).toContain('layout="inline-wrap"');
@@ -394,6 +503,40 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-query-input-owner="hertzbeat-ui-input"');
     expect(source).toContain('inset="search-icon"');
     expect(source).toContain('width="metrics-query-expression"');
+    expect(source).toContain('data-otlp-metrics-filter-input="true"');
+    expect(source).toContain('data-otlp-metrics-filter-input-owner="hertzbeat-ui-input"');
+    expect(source).toContain("aria-label={t('otlp.metrics.filter.aria')}");
+    expect(source).toContain("placeholder={t('otlp.metrics.filter.placeholder')}");
+    expect(source).toContain('width="metrics-filter-expression"');
+    expect(source).toContain('data-otlp-metrics-temporal-aggregation-select="true"');
+    expect(source).toContain('data-otlp-metrics-temporal-aggregation-select-owner="hertzbeat-ui-select"');
+    expect(source).toContain("aria-label={t('otlp.metrics.temporal.aria')}");
+    expect(source).toContain('width="metrics-temporal-aggregation"');
+    expect(source).toContain('data-otlp-metrics-temporal-aggregation-option');
+    expect(source).toContain('data-otlp-metrics-step-input="true"');
+    expect(source).toContain('data-otlp-metrics-step-input-owner="hertzbeat-ui-input"');
+    expect(source).toContain('width="metrics-query-step"');
+    expect(source).toContain('data-otlp-metrics-limit-input="true"');
+    expect(source).toContain('data-otlp-metrics-limit-input-owner="hertzbeat-ui-input"');
+    expect(source).toContain('width="metrics-query-limit"');
+    expect(source).toContain('data-otlp-metrics-legend-format-input="true"');
+    expect(source).toContain('data-otlp-metrics-legend-format-input-owner="hertzbeat-ui-input"');
+    expect(source).toContain("aria-label={t('otlp.metrics.legend-format.aria')}");
+    expect(source).toContain('data-otlp-metrics-formula-input="true"');
+    expect(source).toContain('data-otlp-metrics-formula-input-owner="hertzbeat-ui-input"');
+    expect(source).toContain("aria-label={t('otlp.metrics.formula.aria')}");
+    expect(source).toContain('data-otlp-metrics-warning-threshold-input="true"');
+    expect(source).toContain('data-otlp-metrics-warning-threshold-input-owner="hertzbeat-ui-input"');
+    expect(source).toContain('data-otlp-metrics-critical-threshold-input="true"');
+    expect(source).toContain('data-otlp-metrics-critical-threshold-input-owner="hertzbeat-ui-input"');
+    expect(source).toContain('data-otlp-metrics-expected-range-toggle="true"');
+    expect(source).toContain('data-otlp-metrics-expected-range-toggle-owner="hertzbeat-ui-button"');
+    expect(source).toContain('buildMetricThresholdConfig(query.warningThreshold, query.criticalThreshold, t)');
+    expect(source).toContain("query.expectedRange === 'on'");
+    expect(source).toContain('buildMetricExpectedRangeConfig(selectedMetricSeries || metricSeries[0] || null, t)');
+    expect(source).toContain('applyMetricsFormula(buildMetricSeriesViews(mergedData, t), query.formula)');
+    expect(source).toContain('applyMetricsFormula(buildMetricSeriesViews(mergedData, t), query.formula)');
+    expect(source).toContain('buildMetricsChartOption(metricSeries, metricThresholdConfig, metricExpectedRangeConfig, query.legendFormat)');
     expect(source).not.toContain('<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4');
     expect(source).not.toContain('className={`${inputClass} w-full pl-9 font-mono`}');
     expect(source).not.toContain('className="w-full font-mono"');
@@ -405,6 +548,8 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-context-input="namespace"');
     expect(source).toContain('data-otlp-metrics-context-input="environment"');
     expect(source).toContain('data-otlp-metrics-context-input="trace-id"');
+    expect(source).toContain('data-otlp-metrics-context-input="span-id"');
+    expect(source).toContain('data-otlp-metrics-span-id-input="true"');
     expect(source).toContain('data-otlp-metrics-context-input-owner="hertzbeat-ui-input"');
     expect(source).toContain('width="metrics-context"');
     expect(source).toContain('width="metrics-context-compact"');
@@ -561,23 +706,23 @@ describe('otlp metrics page', () => {
     expect(source).toContain('const hasMetricSeries = metricSeries.length > 0');
     expect(source).toContain('{hasMetricSeries ? (');
     expect(source).toContain('data-otlp-metrics-chart-meta-row="compact-real-facts"');
-    expect(source).toContain('data-otlp-metrics-chart-meta-row-owner="hertzbeat-ui-toolbar-chips"');
-    expect(source).toContain('align="end"');
+    expect(source).toContain('data-otlp-metrics-chart-meta-row-owner="hertzbeat-ui-signal-summary-strip"');
+    expect(source).toContain('layout="toolbar"');
     expect(source).not.toContain('data-otlp-metrics-chart-meta-row-owner="hertzbeat-ui-toolbar-chips"\n                            density="compact"\n                            className="justify-end"');
-    expect(source).toContain('data-otlp-metrics-chart-meta-fact="true"');
-    expect(source).toContain('data-otlp-metrics-chart-meta-fact-owner="hertzbeat-ui-status-badge"');
-    expect(source).toContain('layout="metric-fact"');
-    expect(source).toContain('label={fact.label}');
-    expect(source).toContain('value={fact.value}');
+    expect(source).toContain('items={facts.map(fact => ({');
+    expect(source).toContain('label: fact.label');
+    expect(source).toContain('value: fact.value');
     expect(source).not.toContain('<span className="truncate text-[10px] font-semibold text-[#7f8a9d]">{fact.label}</span>');
     expect(source).not.toContain('<span className="truncate text-[11px] font-semibold text-[#cfd8e6]">{fact.value}</span>');
     expect(source).toContain('facts.map');
-    expect(source).toContain('HzChipGroup');
-    expect(source).not.toContain('data-otlp-metrics-facts-grid="inline-summary-strip"');
+    expect(source).toContain('HzSignalSummaryStrip');
+    expect(source).not.toContain('layout="metric-fact"');
     expect(source).toContain('data-otlp-metrics-empty-state="honest-no-series"');
     expect(source).toContain('data-otlp-metrics-empty-state-context="applied-query-visible"');
     expect(source).toContain('data-otlp-metrics-chart-panel="series-set-trend"');
     expect(source).toContain('data-otlp-metrics-chart-panel-owner="hertzbeat-ui-panel-surface"');
+    expect(source).toContain('data-otlp-metrics-explorer-view="time-series"');
+    expect(source).toContain('data-otlp-metrics-explorer-view-owner="hertzbeat-ui-signal-time-series"');
     expect(source).toContain('data-otlp-metrics-chart-panel-variant-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('padding="chart-inner"');
     expect(source).toContain('variant="chart-inner"');
@@ -612,7 +757,7 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('className="inline-flex h-7 items-center justify-center rounded-[3px] border border-[#2b3039] bg-transparent px-2 text-[11px] font-semibold text-[#9ca7ba] transition-colors enabled:hover:border-[#3b4454] enabled:hover:bg-[#151821] enabled:hover:text-[#e6edf7] disabled:cursor-not-allowed disabled:opacity-45"');
     expect(source).not.toContain('className="inline-flex h-7 max-w-[340px] items-center gap-1.5 overflow-hidden rounded-[3px] border border-[#344052] bg-[#121823] px-2 text-[11px] font-semibold text-[#cfd8e6]"');
     expect(source).toContain('formatEpochMillisDraft');
-    expect(source).toContain('buildMetricsChartOption(metricSeries)');
+    expect(source).toContain('buildMetricsChartOption(metricSeries, metricThresholdConfig, metricExpectedRangeConfig, query.legendFormat)');
     expect(source).toContain('height={300}');
     expect(source).toContain('edge="metrics-chart"');
     expect(source).toContain('data-otlp-metrics-echarts-edge="shared-metrics-chart"');
@@ -661,20 +806,66 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-series-table-header-owner="hertzbeat-ui-panel-header"');
     expect(source).toContain('chrome="transparent-topless"');
     expect(source).not.toContain('className="border-x-0 border-t-0 bg-transparent"');
-    expect(source).toContain("title={t('otlp.metrics.series.collection.title')}");
+    expect(source).toContain("title={t('otlp.metrics.inventory.title')}");
     expect(source).toContain('data-otlp-metrics-series-table-summary-owner="hertzbeat-ui-status-badge"');
+    expect(source).toContain('data-otlp-metrics-inventory-count="filtered-series"');
+    expect(source).toContain('metricInventorySummary');
+    expect(source).toContain('buildMetricInventoryRows(metricSeriesTableRows, metricInventorySearch, metricInventorySort)');
+    expect(source).toContain('metricInventoryPageRows');
+    expect(source).toContain('HzPaginationBar');
+    expect(source).toContain("const metricInventorySearch = query.inventorySearch || ''");
+    expect(source).toContain("const metricInventorySort: OtlpMetricInventorySort = query.inventorySort || 'name'");
+    expect(source).toContain("const metricInventoryPageSize = resolveMetricInventoryPageSize(query.inventoryPageSize)");
+    expect(source).toContain("const metricInventoryPageIndex = resolveMetricInventoryPageIndex(query.inventoryPageIndex)");
+    expect(source).toContain("const metricAttributeSearch = query.seriesAttributeSearch || ''");
+    expect(source).toContain('replaceMetricsInventoryRoute');
+    expect(source).toContain('replaceMetricsInventoryPageRoute');
+    expect(source).toContain('replaceMetricsAttributeSearchRoute');
+    expect(source).toContain('data-otlp-metrics-inventory-controls="search-sort"');
+    expect(source).toContain('data-otlp-metrics-inventory-controls-owner="hertzbeat-ui-panel-section"');
+    expect(source).toContain('data-otlp-metrics-inventory-search-frame-owner="hertzbeat-ui-search-field-frame"');
+    expect(source).toContain('width="metrics-inventory"');
+    expect(source).toContain('data-otlp-metrics-inventory-search-input-owner="hertzbeat-ui-input"');
+    expect(source).toContain("aria-label={t('otlp.metrics.inventory.search.aria')}");
+    expect(source).toContain("placeholder={t('otlp.metrics.inventory.search.placeholder')}");
+    expect(source).toContain('width="metrics-inventory-search"');
+    expect(source).toContain('data-otlp-metrics-inventory-sort-select-owner="hertzbeat-ui-select"');
+    expect(source).toContain("aria-label={t('otlp.metrics.inventory.sort.aria')}");
+    expect(source).toContain('width="metrics-inventory-sort"');
+    expect(source).toContain("{ value: 'time-series', label: t('otlp.metrics.inventory.sort.time-series') }");
+    expect(source).toContain("'data-otlp-metrics-inventory-sort-option': option.value");
+    expect(source).toContain('data-otlp-metrics-export-format-owner="hertzbeat-ui-select"');
+    expect(source).toContain('data-otlp-metrics-export-scope-owner="hertzbeat-ui-select"');
+    expect(source).toContain('data-otlp-metrics-download-owner="hertzbeat-ui-button"');
+    expect(source).toContain("downloadMetricsSeries(metricSeries, selectedMetricSeries)");
+    expect(source).toContain('data-otlp-metrics-inventory="metric-inventory"');
+    expect(source).toContain('data-otlp-metrics-inventory-owner="hertzbeat-ui-data-table"');
+    expect(source).toContain('data-otlp-metrics-inventory-filtered-count={metricInventoryRows.length}');
+    expect(source).toContain('data-otlp-metrics-inventory-total-count={metricSeriesTableRows.length}');
+    expect(source).toContain('data-otlp-metrics-inventory-page-size={metricInventoryPageSize}');
+    expect(source).toContain('data-otlp-metrics-inventory-page-index={clampedMetricInventoryPageIndex}');
+    expect(source).toContain('rows={metricInventoryPageRows}');
+    expect(source).toContain('data-otlp-metrics-inventory-pagination="shared-pagination-bar"');
+    expect(source).toContain('data-otlp-metrics-inventory-pagination-owner="hertzbeat-ui-pagination-bar"');
+    expect(source).toContain("header: t('otlp.metrics.inventory.column.description')");
+    expect(source).toContain("header: t('otlp.metrics.inventory.column.type')");
+    expect(source).toContain("header: t('otlp.metrics.inventory.column.unit')");
+    expect(source).toContain("header: t('otlp.metrics.inventory.column.time-series')");
+    expect(source).toContain('data-otlp-metrics-inventory-description-owner="hertzbeat-ui-data-cell-text"');
+    expect(source).toContain('data-otlp-metrics-inventory-type-owner="hertzbeat-ui-data-cell-text"');
+    expect(source).toContain('data-otlp-metrics-inventory-unit-owner="hertzbeat-ui-data-cell-text"');
+    expect(source).toContain('data-otlp-metrics-inventory-time-series-owner="hertzbeat-ui-data-cell-text"');
     expect(source).toContain('data-otlp-metrics-series-table-empty-state="shared-empty-state"');
     expect(source).toContain('data-otlp-metrics-series-table-empty-state-owner="hertzbeat-ui-empty-state"');
-    expect(source).toContain('data-otlp-metrics-series-set-summary-owner="hertzbeat-ui-stat-strip"');
+    expect(source).toContain('data-otlp-metrics-series-set-summary-owner="hertzbeat-ui-signal-summary-strip"');
     expect(source).toContain('data-otlp-metrics-series-set-summary-section="shared-panel-section"');
     expect(source).toContain('data-otlp-metrics-series-set-summary-section-owner="hertzbeat-ui-panel-section"');
-    expect(source).toContain('data-otlp-metrics-series-set-summary-strip="shared-stat-strip"');
-    expect(source).toContain('data-otlp-metrics-series-set-summary-strip-owner="hertzbeat-ui-stat-strip"');
-    expect(source).toContain('frame="panel-inset"');
-    expect(source).toContain('spacing="compact"');
-    expect(source).toContain('data-otlp-metrics-series-set-summary-cell={row.label}');
-    expect(source).toContain('data-otlp-metrics-series-set-summary-cell-owner="hertzbeat-ui-stat-cell"');
-    expect(source).toContain('frame="inset"');
+    expect(source).toContain('data-otlp-metrics-series-set-summary-strip="inline-signal-summary"');
+    expect(source).toContain('data-otlp-metrics-series-set-summary-strip-owner="hertzbeat-ui-signal-summary-strip"');
+    expect(source).toContain('items={seriesSetScopeRows.map(row => ({');
+    expect(source).toContain('label: row.label');
+    expect(source).toContain('value: row.value');
+    expect(source).not.toContain('data-otlp-metrics-series-set-summary-cell-owner="hertzbeat-ui-stat-cell"');
     expect(source).not.toContain('className="border-[#252b35] bg-[#0d1015]"');
     expect(source).not.toContain('<div className="border-b border-[#252b35] px-4 py-3">');
     expect(source).not.toContain('className="rounded-[3px] border border-[#252b35] bg-[#10141b] p-1"');
@@ -700,9 +891,13 @@ describe('otlp metrics page', () => {
     expect(source).not.toContain('className="font-semibold text-[#dbe5f3]"');
     expect(source).not.toContain("className={row.entityState === 'present' ? 'normal-case tracking-normal text-[#75c795]' : 'normal-case tracking-normal text-[#8b94a4]'}");
     expect(source).not.toContain('className="font-mono text-[#e6edf7]"');
-    expect(source).toContain('setSelectedSeriesKey(row.series.key)');
+    expect(source).toContain('applySelectedMetricSeries(row.series)');
+    expect(source).toContain('buildMetricSeriesRouteContext(series)');
+    expect(source).toContain('series: series.key');
     expect(source).toContain('buildMetricSeriesContextRows(selectedMetricSeries, t)');
     expect(source).toContain('buildMetricSeriesEvidenceRows(selectedMetricSeries, formatTime, t)');
+    expect(source).toContain('buildMetricSeriesSampleRows(selectedMetricSeries, formatTime, t)');
+    expect(source).toContain('buildMetricSeriesAttributeRows(selectedMetricSeries, metricAttributeSearch)');
     expect(source).toContain('buildMetricSeriesLinkedRecordRows(selectedMetricSeries, handoffLinks, t)');
     expect(source).toContain('linkedRecordHandoffTargets');
     expect(source).toContain('buildMetricSeriesAttributionDiagnostics(selectedMetricSeries, t)');
@@ -710,8 +905,8 @@ describe('otlp metrics page', () => {
     expect(source).toContain('HzContextHandoff');
     expect(source).toContain('HzDetailRows');
     expect(source).toContain('HzPanelHeader');
-    expect(source).toContain('HzStatStrip');
-    expect(source).toContain('HzStatCell');
+    expect(source).not.toContain('HzStatStrip');
+    expect(source).not.toContain('HzStatCell');
     expect(source).toContain('HzAttributeDiagnostics');
     expect(source).toContain('metricsDetailContextRows');
     expect(source).toContain('data-otlp-metrics-detail-panel-header="shared-panel-header"');
@@ -722,10 +917,10 @@ describe('otlp metrics page', () => {
     expect(source).toContain('stickiness="top-4"');
     expect(source).not.toContain('className="xl:sticky xl:top-4 xl:self-start"');
     expect(source).toContain('data-otlp-metrics-detail-summary-stats="shared-stat-strip"');
-    expect(source).toContain('data-otlp-metrics-detail-summary-stats-owner="hertzbeat-ui-stat-strip"');
-    expect(source).toContain('data-otlp-metrics-detail-summary-stat-owner="hertzbeat-ui-stat-cell"');
-    expect(source).toContain('frame="panel-solid"');
-    expect(source).toContain('frame="flush"');
+    expect(source).toContain('data-otlp-metrics-detail-summary-stats-owner="hertzbeat-ui-signal-summary-strip"');
+    expect(source).toContain('layout="detail"');
+    expect(source).toContain('items={metrics.map(metric => ({');
+    expect(source).not.toContain('data-otlp-metrics-detail-summary-stat-owner="hertzbeat-ui-stat-cell"');
     expect(source).not.toContain('className="rounded-[3px] border border-[#252b35] bg-[#252b35] p-1"');
     expect(source).not.toContain('density="compact"\n                          className="border-0"');
     expect(source).toContain('data-otlp-metrics-detail-context-rows="shared-detail-rows"');
@@ -739,6 +934,25 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-selected-series-context-owner="hertzbeat-ui-detail-rows"');
     expect(source).toContain('data-otlp-metrics-selected-series-evidence="real-sample-evidence"');
     expect(source).toContain('data-otlp-metrics-selected-series-evidence-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('data-otlp-metrics-inspector-toggle="graph-table"');
+    expect(source).toContain('data-otlp-metrics-inspector-toggle-owner="hertzbeat-ui-action-group"');
+    expect(source).toContain('data-otlp-metrics-inspector-view={metricsInspectorView}');
+    expect(source).toContain('data-otlp-metrics-inspector-action="graph"');
+    expect(source).toContain('data-otlp-metrics-inspector-action="table"');
+    expect(source).toContain('data-otlp-metrics-inspector-sample-table="selected-series-samples"');
+    expect(source).toContain('data-otlp-metrics-inspector-sample-table-owner="hertzbeat-ui-data-table"');
+    expect(source).toContain("header: t('otlp.metrics.inspector.column.timestamp')");
+    expect(source).toContain("header: t('otlp.metrics.inspector.column.raw-timestamp')");
+    expect(source).toContain("header: t('otlp.metrics.inspector.column.value')");
+    expect(source).toContain('data-otlp-metrics-attribute-summary="selected-series-labels"');
+    expect(source).toContain('data-otlp-metrics-attribute-summary-owner="hertzbeat-ui-collapsible-section"');
+    expect(source).toContain('data-otlp-metrics-attribute-controls="search"');
+    expect(source).toContain('data-otlp-metrics-attribute-controls-owner="hertzbeat-ui-control-stack"');
+    expect(source).toContain('data-otlp-metrics-attribute-search-input-owner="hertzbeat-ui-input"');
+    expect(source).toContain('data-otlp-metrics-attribute-table="selected-series-labels"');
+    expect(source).toContain('data-otlp-metrics-attribute-table-owner="hertzbeat-ui-data-table"');
+    expect(source).toContain("header: t('otlp.metrics.attributes.column.name')");
+    expect(source).toContain("header: t('otlp.metrics.attributes.column.value')");
     expect(source).toContain('boundary="top"');
     expect(source).not.toContain('className="mt-3 border-t border-[#252b35] pt-3"');
     expect(source).toContain('data-otlp-metrics-linked-record-summary="log-trace-alert-links"');
@@ -795,10 +1009,10 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-series-table-panel-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('data-otlp-metrics-series-table-summary-owner="hertzbeat-ui-status-badge"');
     expect(source).not.toContain('className={`${panelClass} min-w-0 overflow-hidden`}');
-    expect(source).toContain('data-otlp-metrics-series-set-summary-owner="hertzbeat-ui-stat-strip"');
+    expect(source).toContain('data-otlp-metrics-series-set-summary-owner="hertzbeat-ui-signal-summary-strip"');
     expect(source).toContain('data-otlp-metrics-series-set-summary="service-entity-scope"');
     expect(source).toContain('seriesSetScopeRows.map');
-    expect(source).toContain("t('otlp.metrics.series.collection.title')");
+    expect(source).toContain("t('otlp.metrics.inventory.title')");
     expect(source).not.toContain('<p className="text-[12px] font-semibold text-[#8792a5]">');
     expect(source).not.toContain('className="flex min-w-0 items-center justify-between gap-3"');
     expect(source).toContain('data-otlp-metrics-detail-panel="hertzbeat-ui-detail-panel"');
@@ -853,6 +1067,12 @@ describe('otlp metrics page', () => {
     expect(source).toContain("t('topology.context-link.entity')");
     expect(source).toContain("t('otlp.metrics.handoff.alerts')");
     expect(source).toContain('href={handoffLinks.alertHandlingHref}');
+    expect(source).toContain("t('explorer.actions.create-alert')");
+    expect(source).toContain('href={handoffLinks.alertRulesHref}');
+    expect(source).toContain('data-otlp-metrics-alert-rule-action="true"');
+    expect(source).toContain("t('explorer.actions.add-dashboard')");
+    expect(source).toContain('href={handoffLinks.dashboardHref}');
+    expect(source).toContain('data-otlp-metrics-dashboard-action="true"');
     expect(source).not.toContain('data-otlp-metrics-alert-context-hint="entity-trace-alert-handoff"');
     expect(source).not.toContain('data-otlp-metrics-signal-handoff-hint="metric-log-trace-context"');
     expect(source).toContain('data-otlp-metrics-entity-action="true"');
@@ -936,6 +1156,8 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-otlp-metrics-query-bar-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-padding="query"');
     expect(html).toContain('data-otlp-metrics-query-control-stack="shared-inline-controls"');
+    expect(html).toContain('data-otlp-metrics-builder-control-stack="shared-query-builder-controls"');
+    expect(html).toContain('data-otlp-metrics-builder-control-stack-owner="hertzbeat-ui-control-stack"');
     expect(html).toContain('data-otlp-metrics-context-control-stack="shared-inline-controls"');
     expect(html).toContain('data-hz-control-stack-layout="inline-wrap"');
     expect(html).toContain('data-hz-control-stack-spacing="top-2"');
@@ -988,6 +1210,8 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-otlp-metrics-context-input="namespace"');
     expect(html).toContain('data-otlp-metrics-context-input="environment"');
     expect(html).toContain('data-otlp-metrics-context-input="trace-id"');
+    expect(html).toContain('data-otlp-metrics-context-input="span-id"');
+    expect(html).toContain('data-otlp-metrics-span-id-input="true"');
     expect(html).toContain('data-otlp-metrics-context-input-owner="hertzbeat-ui-input"');
     expect(html).toContain('data-hz-input-width="metrics-context"');
     expect(html).toContain('data-hz-input-width="metrics-context-compact"');
@@ -1045,6 +1269,8 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-otlp-metrics-chart-band-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-hz-panel-surface-padding="chart"');
     expect(html).toContain('data-otlp-metrics-chart-panel-owner="hertzbeat-ui-panel-surface"');
+    expect(html).toContain('data-otlp-metrics-explorer-view="time-series"');
+    expect(html).toContain('data-otlp-metrics-explorer-view-owner="hertzbeat-ui-signal-time-series"');
     expect(html).toContain('data-hz-ui="panel-surface"');
     expect(html).toContain('data-hz-panel-surface-density="operator-compact"');
     expect(html).toContain('data-otlp-metrics-chart-panel-variant-owner="hertzbeat-ui-panel-surface"');
@@ -1097,22 +1323,34 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-hz-panel-header-density="operator-compact"');
     expect(html).toContain('data-hz-panel-header-chrome="transparent-topless"');
     expect(html).toContain('data-otlp-metrics-series-table-summary-owner="hertzbeat-ui-status-badge"');
+    expect(html).toContain('data-otlp-metrics-inventory-count="filtered-series"');
     expect(html).toContain('data-hz-ui="status-badge"');
     expect(html).toContain('data-hz-status-size="xs"');
-    expect(html).toContain('data-otlp-metrics-series-set-summary-owner="hertzbeat-ui-stat-strip"');
+    expect(html).toContain('data-otlp-metrics-inventory-controls="search-sort"');
+    expect(html).toContain('data-otlp-metrics-inventory-controls-owner="hertzbeat-ui-panel-section"');
+    expect(html).toContain('data-otlp-metrics-inventory-search-frame-owner="hertzbeat-ui-search-field-frame"');
+    expect(html).toContain('data-hz-search-field-frame-width="metrics-inventory"');
+    expect(html).toContain('data-otlp-metrics-inventory-search-input="true"');
+    expect(html).toContain('data-otlp-metrics-inventory-search-input-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-hz-input-width="metrics-inventory-search"');
+    expect(html).toContain('data-otlp-metrics-inventory-sort-select="true"');
+    expect(html).toContain('data-otlp-metrics-inventory-sort-select-owner="hertzbeat-ui-select"');
+    expect(html).toContain('data-hz-select-width="metrics-inventory-sort"');
+    expect(html).toContain('data-otlp-metrics-series-set-summary-owner="hertzbeat-ui-signal-summary-strip"');
     expect(html).toContain('data-otlp-metrics-series-set-summary-section="shared-panel-section"');
     expect(html).toContain('data-otlp-metrics-series-set-summary-section-owner="hertzbeat-ui-panel-section"');
     expect(html).toContain('data-hz-panel-section-owner="hertzbeat-ui-panel-section"');
     expect(html).toContain('data-hz-panel-section-padding="summary"');
-    expect(html).toContain('data-otlp-metrics-series-set-summary-strip="shared-stat-strip"');
-    expect(html).toContain('data-otlp-metrics-series-set-summary-strip-owner="hertzbeat-ui-stat-strip"');
-    expect(html).toContain('data-hz-stat-strip-frame="panel-inset"');
-    expect(html).toContain('data-hz-stat-strip-spacing="compact"');
-    expect(html).toContain('data-otlp-metrics-series-set-summary-cell-owner="hertzbeat-ui-stat-cell"');
-    expect(html).toContain('data-hz-ui="stat-strip"');
-    expect(html).toContain('data-hz-ui="stat-cell"');
+    expect(html).toContain('data-otlp-metrics-series-set-summary-strip="inline-signal-summary"');
+    expect(html).toContain('data-otlp-metrics-series-set-summary-strip-owner="hertzbeat-ui-signal-summary-strip"');
+    expect(html).toContain('data-hz-ui="signal-summary-strip"');
+    expect(html).toContain('data-hz-ui="signal-summary-item"');
     expect(html).toContain('data-otlp-metrics-series-data-table="shared-data-table"');
     expect(html).toContain('data-otlp-metrics-series-data-table-owner="hertzbeat-ui-data-table"');
+    expect(html).toContain('data-otlp-metrics-inventory="metric-inventory"');
+    expect(html).toContain('data-otlp-metrics-inventory-owner="hertzbeat-ui-data-table"');
+    expect(html).toContain('data-otlp-metrics-inventory-filtered-count="0"');
+    expect(html).toContain('data-otlp-metrics-inventory-total-count="0"');
     expect(html).toContain('data-hz-ui="data-table"');
     expect(html).toContain('data-hz-data-table-variant="embedded"');
     expect(html).toContain('data-otlp-metrics-series-table-empty-state="shared-empty-state"');
@@ -1137,10 +1375,14 @@ describe('otlp metrics page', () => {
     expect(html).toContain(tZh('otlp.metrics.field.namespace'));
     expect(html).toContain('payments');
     expect(html).toContain(tZh('otlp.metrics.query.aria'));
+    expect(html).toContain(tZh('otlp.metrics.filter.aria'));
+    expect(html).toContain(tZh('otlp.metrics.temporal.aria'));
+    expect(html).toContain(tZh('otlp.metrics.step.aria'));
+    expect(html).toContain(tZh('otlp.metrics.limit.aria'));
     expect(html).toContain(tZh('otlp.metrics.field.group-by'));
     expect(html).toContain(tZh('otlp.metrics.aggregation.aria'));
     expect(html).toContain(tZh('otlp.metrics.trend.title'));
-    expect(html).toContain(tZh('otlp.metrics.series.collection.title'));
+    expect(html).toContain(tZh('otlp.metrics.inventory.title'));
     expect(html).toContain(tZh('otlp.metrics.scope.service'));
     expect(html).toContain(tZh('otlp.metrics.scope.series'));
     expect(html).toContain(tZh('otlp.metrics.context.time-range'));
@@ -1231,20 +1473,13 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-hz-control-height="28"');
     expect(html).not.toContain('data-otlp-metrics-chart-zoom-draft="pending-query-time"');
     expect(html).toContain('data-otlp-metrics-chart-meta-row="compact-real-facts"');
-    expect(html).toContain('data-otlp-metrics-chart-meta-row-owner="hertzbeat-ui-toolbar-chips"');
+    expect(html).toContain('data-otlp-metrics-chart-meta-row-owner="hertzbeat-ui-signal-summary-strip"');
     expect(html).toContain('data-otlp-metrics-chart-toolbar-actions="shared-toolbar-actions"');
     expect(html).toContain('data-otlp-metrics-chart-toolbar-actions-owner="hertzbeat-ui-action-group"');
     expect(html).toContain('data-hz-ui="action-group"');
     expect(html).toContain('data-hz-action-group-layout="end-wrap"');
-    expect(html).toContain('data-otlp-metrics-chart-meta-fact="true"');
-    expect(html).toContain('data-otlp-metrics-chart-meta-fact-owner="hertzbeat-ui-status-badge"');
-    expect(html).toContain('data-hz-ui="chip-group"');
-    expect(html).toContain('data-hz-chip-group-density="compact"');
-    expect(html).toContain('data-hz-ui="status-badge"');
-    expect(html).toContain('data-hz-status-badge-layout="metric-fact"');
-    expect(html).toContain('data-hz-status-badge-part="label"');
-    expect(html).toContain('data-hz-status-badge-part="value"');
-    expect(html).not.toContain('data-otlp-metrics-facts-grid="inline-summary-strip"');
+    expect(html).toContain('data-hz-signal-summary-layout="toolbar"');
+    expect(html).not.toContain('data-hz-status-badge-layout="metric-fact"');
     expect(html).toContain('disabled=""');
     expect(html).toContain(tZh('time.context.zoom.apply'));
   });
@@ -1401,9 +1636,9 @@ describe('otlp metrics page', () => {
     expect(html).toContain('data-otlp-metrics-time-refresh-action="true"');
   });
 
-  it('applies metric, service, aggregation, grouping, and time range into the workbench route', async () => {
+  it('applies metric, builder filters, service, aggregation, grouping, and time range into the workbench route', async () => {
     const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(1712733600000);
-    mockState.searchParams = new URLSearchParams('entityId=7&entityName=Checkout%20API&source=otlp&collector=collector-a&template=spring-boot');
+    mockState.searchParams = new URLSearchParams('entityId=7&entityName=Checkout%20API&source=otlp&collector=collector-a&template=spring-boot&traceId=trace-123&spanId=span-456');
 
     const { default: OtlpMetricsPage } = await import('./page');
     interactionContainer = document.createElement('div');
@@ -1416,18 +1651,37 @@ describe('otlp metrics page', () => {
     });
 
     const queryInput = interactionContainer.querySelector('[data-otlp-metrics-query-input="true"]') as HTMLInputElement | null;
+    const filterInput = interactionContainer.querySelector('[data-otlp-metrics-filter-input="true"]') as HTMLInputElement | null;
+    const stepInput = interactionContainer.querySelector('[data-otlp-metrics-step-input="true"]') as HTMLInputElement | null;
+    const limitInput = interactionContainer.querySelector('[data-otlp-metrics-limit-input="true"]') as HTMLInputElement | null;
+    const legendFormatInput = interactionContainer.querySelector('[data-otlp-metrics-legend-format-input="true"]') as HTMLInputElement | null;
+    const formulaInput = interactionContainer.querySelector('[data-otlp-metrics-formula-input="true"]') as HTMLInputElement | null;
+    const warningThresholdInput = interactionContainer.querySelector('[data-otlp-metrics-warning-threshold-input="true"]') as HTMLInputElement | null;
+    const criticalThresholdInput = interactionContainer.querySelector('[data-otlp-metrics-critical-threshold-input="true"]') as HTMLInputElement | null;
     const serviceInput = interactionContainer.querySelector('[data-otlp-metrics-service-input="true"]') as HTMLInputElement | null;
     const namespaceInput = interactionContainer.querySelector('[data-otlp-metrics-namespace-input="true"]') as HTMLInputElement | null;
     const environmentInput = interactionContainer.querySelector('[data-otlp-metrics-environment-input="true"]') as HTMLInputElement | null;
+    const spanIdInput = interactionContainer.querySelector('[data-otlp-metrics-span-id-input="true"]') as HTMLInputElement | null;
     const aggregationSelect = interactionContainer.querySelector('[data-otlp-metrics-aggregation-select="true"]') as HTMLElement | null;
+    const temporalAggregationSelect = interactionContainer.querySelector('[data-otlp-metrics-temporal-aggregation-select="true"]') as HTMLElement | null;
     const groupBySelect = interactionContainer.querySelector('[data-otlp-metrics-group-by-select="true"]') as HTMLElement | null;
     const timeRangeSelect = interactionContainer.querySelector('[data-otlp-metrics-time-range-select="true"]') as HTMLSelectElement | null;
     const timeApplyAction = interactionContainer.querySelector('[data-time-range-apply-action="true"]') as HTMLButtonElement | null;
     const runAction = interactionContainer.querySelector('[data-otlp-metrics-run-query-action="true"]') as HTMLButtonElement | null;
 
     expect(queryInput).not.toBeNull();
+    expect(filterInput).not.toBeNull();
+    expect(stepInput).not.toBeNull();
+    expect(limitInput).not.toBeNull();
+    expect(legendFormatInput).not.toBeNull();
+    expect(formulaInput).not.toBeNull();
+    expect(warningThresholdInput).not.toBeNull();
+    expect(criticalThresholdInput).not.toBeNull();
     expect(serviceInput).not.toBeNull();
+    expect(spanIdInput).not.toBeNull();
+    expect(spanIdInput?.value).toBe('span-456');
     expect(aggregationSelect).not.toBeNull();
+    expect(temporalAggregationSelect).not.toBeNull();
     expect(groupBySelect).not.toBeNull();
     expect(timeRangeSelect).not.toBeNull();
     expect(timeApplyAction).not.toBeNull();
@@ -1435,12 +1689,28 @@ describe('otlp metrics page', () => {
     await act(async () => {
       queryInput!.value = 'http_server_duration_milliseconds_count';
       queryInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      filterInput!.value = 'service.name="checkout"';
+      filterInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      stepInput!.value = '60';
+      stepInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      limitInput!.value = '25';
+      limitInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      legendFormatInput!.value = '{{service.name}} - p95';
+      legendFormatInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      formulaInput!.value = 'A * 1000';
+      formulaInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      warningThresholdInput!.value = '75.5';
+      warningThresholdInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      criticalThresholdInput!.value = '90';
+      criticalThresholdInput!.dispatchEvent(new Event('input', { bubbles: true }));
       serviceInput!.value = 'checkout';
       serviceInput!.dispatchEvent(new Event('input', { bubbles: true }));
       namespaceInput!.value = 'payments';
       namespaceInput!.dispatchEvent(new Event('input', { bubbles: true }));
       environmentInput!.value = 'prod';
       environmentInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      spanIdInput!.value = 'span-789';
+      spanIdInput!.dispatchEvent(new Event('input', { bubbles: true }));
       timeRangeSelect!.value = 'last-1h';
       timeRangeSelect!.dispatchEvent(new Event('change', { bubbles: true }));
       await Promise.resolve();
@@ -1453,6 +1723,16 @@ describe('otlp metrics page', () => {
 
     await act(async () => {
       aggregationSelect!.querySelector('[data-otlp-metrics-aggregation-option="sum"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      temporalAggregationSelect!.querySelector('[data-hz-ui="select-trigger"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      temporalAggregationSelect!.querySelector('[data-otlp-metrics-temporal-aggregation-option="rate"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       await Promise.resolve();
     });
 
@@ -1480,11 +1760,21 @@ describe('otlp metrics page', () => {
     const href = String(mockState.replace.mock.calls.at(-1)?.[0]);
     expect(href).toContain('/ingestion/otlp/metrics?');
     expect(href).toContain('query=http_server_duration_milliseconds_count');
+    expect(href).toContain('filter=service.name%3D%22checkout%22');
     expect(href).toContain('aggregation=sum');
+    expect(href).toContain('temporalAggregation=rate');
     expect(href).toContain('groupBy=service_name');
+    expect(href).toContain('legendFormat=%7B%7Bservice.name%7D%7D+-+p95');
+    expect(href).toContain('formula=A+*+1000');
+    expect(href).toContain('step=60');
+    expect(href).toContain('limit=25');
+    expect(href).toContain('warningThreshold=75.5');
+    expect(href).toContain('criticalThreshold=90');
     expect(href).toContain('serviceName=checkout');
     expect(href).toContain('serviceNamespace=payments');
     expect(href).toContain('environment=prod');
+    expect(href).toContain('traceId=trace-123');
+    expect(href).toContain('spanId=span-789');
     expect(href).toContain('timeRange=last-1h');
     expect(href).toContain('start=1712730000000');
     expect(href).toContain('end=1712733600000');
@@ -1493,6 +1783,74 @@ describe('otlp metrics page', () => {
     expect(href).toContain('template=spring-boot');
     expect(href).not.toContain('returnLabel=');
     nowSpy.mockRestore();
+  });
+
+  it('keeps metrics group-by optional when the route has no groupBy', async () => {
+    mockState.searchParams = new URLSearchParams();
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const queryInput = interactionContainer.querySelector('[data-otlp-metrics-query-input="true"]') as HTMLInputElement | null;
+    const groupBySelect = interactionContainer.querySelector('[data-otlp-metrics-group-by-select="true"]') as HTMLElement | null;
+    const runAction = interactionContainer.querySelector('[data-otlp-metrics-run-query-action="true"]') as HTMLButtonElement | null;
+    expect(groupBySelect?.textContent).toContain(tZh('otlp.metrics.group.none'));
+
+    await act(async () => {
+      groupBySelect!.querySelector('[data-hz-ui="select-trigger"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(groupBySelect?.querySelector('[data-otlp-metrics-group-by-option=""]')).not.toBeNull();
+
+    await act(async () => {
+      queryInput!.value = 'http.server.duration';
+      queryInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      runAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const href = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(href).toContain('/ingestion/otlp/metrics?');
+    expect(href).toContain('query=http.server.duration');
+    expect(href).not.toContain('groupBy=');
+    expect(href).not.toContain('service_name');
+  });
+
+  it('toggles the expected range display as route-only chart state', async () => {
+    mockState.searchParams = new URLSearchParams('query=http.server.duration');
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const expectedRangeToggle = interactionContainer.querySelector('[data-otlp-metrics-expected-range-toggle="true"]') as HTMLButtonElement | null;
+    expect(expectedRangeToggle).not.toBeNull();
+    expect(expectedRangeToggle?.getAttribute('aria-pressed')).toBe('false');
+
+    await act(async () => {
+      expectedRangeToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const toggleHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(toggleHref).toBe('/ingestion/otlp/metrics?query=http.server.duration&expectedRange=on');
   });
 
   it('applies a custom relative metrics window through the shared control', async () => {
@@ -1545,7 +1903,7 @@ describe('otlp metrics page', () => {
     renderToStaticMarkup(<OtlpMetricsPage />);
     await mockState.lastLoad?.();
 
-    expect(loadOtlpMetricsConsole).toHaveBeenCalledWith(apiMessageGet, {
+    expect(loadOtlpMetricsConsole).toHaveBeenCalledWith(apiMessageGet, expect.objectContaining({
       entityId: undefined,
       entityName: undefined,
       returnTo: undefined,
@@ -1555,8 +1913,9 @@ describe('otlp metrics page', () => {
       serviceNamespace: undefined,
       environment: undefined,
       start: undefined,
-      end: undefined
-    });
+      end: undefined,
+      inspector: 'graph'
+    }));
   });
 
   it('keeps the context handoff links when opened from traced entity context', async () => {
@@ -1594,7 +1953,8 @@ describe('otlp metrics page', () => {
     expect(html).not.toContain('search=service.name+%3D+%22checkout%22');
     expect(html).toContain('/entities/7?');
     expect(html).toContain('entityId=7');
-    expect(html).not.toContain('/alert/setting?signal=metrics');
+    expect(html).toContain('/alert/setting?signal=metrics');
+    expect(html).toContain(tZh('explorer.actions.create-alert'));
     expect(html).toContain('/alert?');
     expect(html).toContain('status=firing');
     expect(html).toContain('signal=metrics');
@@ -1650,16 +2010,16 @@ describe('otlp metrics page', () => {
 
     const rows = Array.from(interactionContainer.querySelectorAll('[data-otlp-metrics-series-row="selectable-series"]')) as HTMLTableRowElement[];
     expect(rows).toHaveLength(2);
-    expect(rows[0]?.getAttribute('data-otlp-metrics-series-row-selected')).toBe('true');
+    expect(rows[1]?.getAttribute('data-otlp-metrics-series-row-selected')).toBe('true');
     const initialEntityCells = Array.from(interactionContainer.querySelectorAll('[data-otlp-metrics-series-entity="true"]')) as HTMLElement[];
-    expect(initialEntityCells[0]?.textContent).toContain('Checkout API');
-    expect(initialEntityCells[0]?.textContent).toContain('entityId 7');
-    expect(initialEntityCells[0]?.getAttribute('data-hz-ui')).toBe('data-cell-stack');
-    expect(initialEntityCells[0]?.getAttribute('data-otlp-metrics-series-entity-owner')).toBe('hertzbeat-ui-data-cell-stack');
-    expect(initialEntityCells[0]?.getAttribute('data-hz-data-cell-stack-width')).toBe('metrics-entity');
-    expect(initialEntityCells[0]?.className).toContain('min-w-[140px]');
-    const initialEntityLabel = initialEntityCells[0]?.querySelector('[data-otlp-metrics-series-entity-label-owner="hertzbeat-ui-data-cell-text"]') as HTMLElement | null;
-    const initialEntityMeta = initialEntityCells[0]?.querySelector('[data-otlp-metrics-series-entity-meta-owner="hertzbeat-ui-data-cell-text"]') as HTMLElement | null;
+    expect(initialEntityCells[1]?.textContent).toContain('Checkout API');
+    expect(initialEntityCells[1]?.textContent).toContain('entityId 7');
+    expect(initialEntityCells[1]?.getAttribute('data-hz-ui')).toBe('data-cell-stack');
+    expect(initialEntityCells[1]?.getAttribute('data-otlp-metrics-series-entity-owner')).toBe('hertzbeat-ui-data-cell-stack');
+    expect(initialEntityCells[1]?.getAttribute('data-hz-data-cell-stack-width')).toBe('metrics-entity');
+    expect(initialEntityCells[1]?.className).toContain('min-w-[140px]');
+    const initialEntityLabel = initialEntityCells[1]?.querySelector('[data-otlp-metrics-series-entity-label-owner="hertzbeat-ui-data-cell-text"]') as HTMLElement | null;
+    const initialEntityMeta = initialEntityCells[1]?.querySelector('[data-otlp-metrics-series-entity-meta-owner="hertzbeat-ui-data-cell-text"]') as HTMLElement | null;
     const initialLatestValue = interactionContainer.querySelector('[data-otlp-metrics-series-latest-owner="hertzbeat-ui-data-cell-text"]') as HTMLElement | null;
     expect(initialEntityLabel?.getAttribute('data-hz-data-cell-tone')).toBe('strong');
     expect(initialEntityLabel?.getAttribute('data-hz-data-cell-weight')).toBe('semibold');
@@ -1670,14 +2030,26 @@ describe('otlp metrics page', () => {
     expect(initialLatestValue?.getAttribute('data-hz-data-cell-font')).toBe('mono');
 
     await act(async () => {
-      rows[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      rows[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       await Promise.resolve();
     });
 
-    expect(rows[1]?.getAttribute('data-otlp-metrics-series-row-selected')).toBe('true');
+    expect(rows[0]?.getAttribute('data-otlp-metrics-series-row-selected')).toBe('true');
+    const selectedSeriesHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    const selectedSeriesParams = new URL(selectedSeriesHref, 'http://localhost').searchParams;
+    expect(selectedSeriesParams.get('series')).toBe('db_client_duration-1');
+    expect(selectedSeriesParams.get('entityId')).toBe('42');
+    expect(selectedSeriesParams.get('entityName')).toBe('Inventory API');
+    expect(selectedSeriesParams.get('serviceName')).toBe('inventory');
+    expect(selectedSeriesParams.get('serviceNamespace')).toBe('warehouse');
+    expect(selectedSeriesParams.get('environment')).toBe('prod-east');
+    expect(selectedSeriesParams.get('traceId')).toBe('trace-inventory');
+    expect(selectedSeriesParams.get('spanId')).toBe('span-inventory');
+    expect(selectedSeriesParams.get('collector')).toBe('collector-b');
+    expect(selectedSeriesParams.get('template')).toBe('fastapi');
     const selectedEntityCells = Array.from(interactionContainer.querySelectorAll('[data-otlp-metrics-series-entity="true"]')) as HTMLElement[];
-    expect(selectedEntityCells[1]?.textContent).toContain('Inventory API');
-    expect(selectedEntityCells[1]?.textContent).toContain('entityId 42');
+    expect(selectedEntityCells[0]?.textContent).toContain('Inventory API');
+    expect(selectedEntityCells[0]?.textContent).toContain('entityId 42');
     expect(interactionContainer.textContent).toContain('fastapi');
     const evidencePanel = interactionContainer.querySelector('[data-otlp-metrics-selected-series-evidence="real-sample-evidence"]') as HTMLElement | null;
     expect(evidencePanel).not.toBeNull();
@@ -1724,11 +2096,10 @@ describe('otlp metrics page', () => {
     expect(detailPanelHeader?.textContent).toContain(tZh('otlp.metrics.detail.eyebrow'));
     expect(detailPanelHeader?.textContent).toContain('db.client.duration');
     const detailSummaryStats = interactionContainer.querySelector('[data-otlp-metrics-detail-summary-stats="shared-stat-strip"]') as HTMLElement | null;
-    expect(detailSummaryStats?.getAttribute('data-otlp-metrics-detail-summary-stats-owner')).toBe('hertzbeat-ui-stat-strip');
-    expect(detailSummaryStats?.getAttribute('data-hz-stat-strip-owner')).toBe('hertzbeat-ui-stat-strip');
-    expect(detailSummaryStats?.getAttribute('data-hz-stat-strip-frame')).toBe('panel-solid');
-    expect(detailSummaryStats?.querySelectorAll('[data-otlp-metrics-detail-summary-stat-owner="hertzbeat-ui-stat-cell"]')).toHaveLength(3);
-    expect(detailSummaryStats?.querySelector('[data-otlp-metrics-detail-summary-stat-owner="hertzbeat-ui-stat-cell"]')?.getAttribute('data-hz-stat-frame')).toBe('flush');
+    expect(detailSummaryStats?.getAttribute('data-otlp-metrics-detail-summary-stats-owner')).toBe('hertzbeat-ui-signal-summary-strip');
+    expect(detailSummaryStats?.getAttribute('data-hz-ui')).toBe('signal-summary-strip');
+    expect(detailSummaryStats?.getAttribute('data-hz-signal-summary-layout')).toBe('detail');
+    expect(detailSummaryStats?.querySelectorAll('[data-hz-ui="signal-summary-item"]')).toHaveLength(3);
     const detailContextRows = interactionContainer.querySelector('[data-otlp-metrics-detail-context-rows="shared-detail-rows"]') as HTMLElement | null;
     expect(detailContextRows?.getAttribute('data-otlp-metrics-detail-context-rows-owner')).toBe('hertzbeat-ui-detail-rows');
     expect(detailContextRows?.getAttribute('data-hz-detail-rows-owner')).toBe('hertzbeat-ui-detail-rows');
@@ -1743,6 +2114,8 @@ describe('otlp metrics page', () => {
     const traceHref = (interactionContainer.querySelector('[data-otlp-metrics-traces-action="true"]') as HTMLAnchorElement | null)?.href;
     const entityHref = (interactionContainer.querySelector('[data-otlp-metrics-entity-action="true"]') as HTMLAnchorElement | null)?.href;
     const alertHref = (interactionContainer.querySelector('[data-otlp-metrics-alert-handling-action="true"]') as HTMLAnchorElement | null)?.href;
+    const alertRuleHref = (interactionContainer.querySelector('[data-otlp-metrics-alert-rule-action="true"]') as HTMLAnchorElement | null)?.href;
+    const dashboardHref = (interactionContainer.querySelector('[data-otlp-metrics-dashboard-action="true"]') as HTMLAnchorElement | null)?.href;
     const handoffSection = interactionContainer.querySelector('[data-otlp-metrics-handoff-action-section="shared-panel-section"]') as HTMLElement | null;
     const handoffGroup = interactionContainer.querySelector('[data-otlp-metrics-handoff-actions="compact-context-actions"]') as HTMLElement | null;
 
@@ -1752,7 +2125,7 @@ describe('otlp metrics page', () => {
     expect(handoffGroup?.getAttribute('data-otlp-metrics-handoff-actions-owner')).toBe('hertzbeat-ui-action-group');
     expect(handoffGroup?.getAttribute('data-hz-action-group-owner')).toBe('hertzbeat-ui-action-group');
     expect(handoffGroup?.getAttribute('data-hz-action-group-layout')).toBe('grid-2');
-    expect(handoffGroup?.querySelectorAll('[data-hz-ui="button-link"]')).toHaveLength(5);
+    expect(handoffGroup?.querySelectorAll('[data-hz-ui="button-link"]')).toHaveLength(7);
     handoffGroup?.querySelectorAll('[data-hz-ui="button-link"]').forEach(link => {
       expect(link.getAttribute('data-hz-button-link-layout')).toBe('full');
     });
@@ -1783,6 +2156,949 @@ describe('otlp metrics page', () => {
     expect(alertParams.get('signal')).toBe('metrics');
     expect(alertParams.get('search')).toBe('inventory');
     expect(alertParams.get('entityId')).toBe('42');
+
+    const alertRuleParams = new URL(alertRuleHref || '', 'http://localhost').searchParams;
+    expect(alertRuleParams.get('signal')).toBe('metrics');
+    expect(alertRuleParams.get('entityId')).toBe('42');
+    expect(alertRuleParams.get('serviceName')).toBe('inventory');
+    expect(alertRuleParams.get('traceId')).toBe('trace-inventory');
+
+    const dashboardParams = new URL(dashboardHref || '', 'http://localhost').searchParams;
+    expect(dashboardParams.get('intent')).toBe('add-panel');
+    expect(dashboardParams.get('signal')).toBe('metrics');
+    expect(dashboardParams.get('panelTitle')).toBe('inventory');
+    expect(dashboardParams.get('entityId')).toBe('42');
+    expect(dashboardParams.get('serviceName')).toBe('inventory');
+  });
+
+  it('restores selected metric series from route state before falling back to the first row', async () => {
+    mockState.searchParams = new URLSearchParams('query=http.server.duration&inspector=table&series=inventory_latency-1');
+    mockState.metricSeries = [
+      {
+        key: 'checkout_latency-0',
+        name: 'checkout.latency',
+        labels: {
+          'service.name': 'checkout',
+          'hertzbeat.entity_id': '7',
+          'hertzbeat.entity_name': 'Checkout API'
+        },
+        points: [[1000, 12]],
+        latestValue: 12
+      },
+      {
+        key: 'inventory_latency-1',
+        name: 'inventory.latency',
+        labels: {
+          'service.name': 'inventory',
+          'hertzbeat.entity_id': '42',
+          'hertzbeat.entity_name': 'Inventory API'
+        },
+        points: [[2000, 20]],
+        latestValue: 20
+      }
+    ];
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const rows = Array.from(interactionContainer.querySelectorAll('[data-otlp-metrics-series-row="selectable-series"]')) as HTMLTableRowElement[];
+    expect(rows[0]?.getAttribute('data-otlp-metrics-series-row-selected')).toBe('false');
+    expect(rows[1]?.getAttribute('data-otlp-metrics-series-row-selected')).toBe('true');
+    const sampleTable = interactionContainer.querySelector('[data-otlp-metrics-inspector-sample-table="selected-series-samples"]') as HTMLElement | null;
+    expect(sampleTable?.textContent).toContain('T2000');
+    expect(sampleTable?.textContent).not.toContain('T1000');
+    expect(mockState.replace).not.toHaveBeenCalled();
+  });
+
+  it('downloads the current metrics query samples with selected-series scope from shared UI controls', async () => {
+    mockState.searchParams = new URLSearchParams('query=http.server.duration&series=inventory_latency-1');
+    mockState.metricSeries = [
+      {
+        key: 'checkout_latency-0',
+        name: 'checkout.latency',
+        labels: {
+          'service.name': 'checkout',
+          'service.namespace': 'payments',
+          'deployment.environment.name': 'prod'
+        },
+        description: 'Checkout latency',
+        metricType: 'gauge',
+        unit: 'ms',
+        points: [[1713200000000, 12]],
+        latestValue: 12
+      },
+      {
+        key: 'inventory_latency-1',
+        name: 'inventory.latency',
+        labels: {
+          'service.name': 'inventory',
+          'service.namespace': 'warehouse',
+          'deployment.environment.name': 'prod-east'
+        },
+        description: 'Inventory latency',
+        metricType: 'gauge',
+        unit: 'ms',
+        points: [
+          [1713200000000, 20],
+          [1713200060000, null]
+        ],
+        latestValue: 20
+      }
+    ];
+    const createObjectURL = vi.fn(() => 'blob:hertzbeat-metrics');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(window.URL, 'createObjectURL', {
+      configurable: true,
+      value: createObjectURL
+    });
+    Object.defineProperty(window.URL, 'revokeObjectURL', {
+      configurable: true,
+      value: revokeObjectURL
+    });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const exportFormatSelect = interactionContainer.querySelector('[data-otlp-metrics-export-format-select="true"]') as HTMLElement | null;
+    const exportScopeSelect = interactionContainer.querySelector('[data-otlp-metrics-export-scope-select="true"]') as HTMLElement | null;
+    const downloadAction = interactionContainer.querySelector('[data-otlp-metrics-download-action="current-query"]') as HTMLButtonElement | null;
+    expect(exportFormatSelect).not.toBeNull();
+    expect(exportFormatSelect?.getAttribute('data-otlp-metrics-export-format-owner')).toBe('hertzbeat-ui-select');
+    expect(exportFormatSelect?.getAttribute('data-otlp-metrics-export-format-value')).toBe('csv');
+    expect(exportScopeSelect).not.toBeNull();
+    expect(exportScopeSelect?.getAttribute('data-otlp-metrics-export-scope-owner')).toBe('hertzbeat-ui-select');
+    expect(exportScopeSelect?.getAttribute('data-otlp-metrics-export-scope-value')).toBe('all');
+    expect(downloadAction).not.toBeNull();
+    expect(downloadAction?.getAttribute('data-otlp-metrics-download-owner')).toBe('hertzbeat-ui-button');
+    expect(downloadAction?.getAttribute('data-otlp-metrics-download-series-count')).toBe('2');
+
+    await act(async () => {
+      exportFormatSelect!.querySelector('[data-hz-ui="select-trigger"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    await act(async () => {
+      exportFormatSelect!.querySelector('[data-otlp-metrics-export-format-option="jsonl"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(interactionContainer.querySelector('[data-otlp-metrics-export-format-select="true"]')?.getAttribute('data-otlp-metrics-export-format-value')).toBe('jsonl');
+
+    await act(async () => {
+      exportScopeSelect!.querySelector('[data-hz-ui="select-trigger"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    await act(async () => {
+      exportScopeSelect!.querySelector('[data-otlp-metrics-export-scope-option="selected"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(interactionContainer.querySelector('[data-otlp-metrics-export-scope-select="true"]')?.getAttribute('data-otlp-metrics-export-scope-value')).toBe('selected');
+
+    await act(async () => {
+      downloadAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(apiMessageGet).not.toHaveBeenCalled();
+    expect(loadOtlpMetricsConsole).not.toHaveBeenCalled();
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    const exportBlob = createObjectURL.mock.calls[0]?.[0] as Blob;
+    expect(exportBlob.type).toBe('application/x-ndjson;charset=utf-8');
+    const exportText = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(exportBlob);
+    });
+    const exportLines = exportText.split('\n');
+    expect(exportLines).toHaveLength(2);
+    expect(exportLines[0]).toContain('"metric":"inventory.latency"');
+    expect(exportLines[0]).toContain('"service.name":"inventory"');
+    expect(exportLines[1]).toContain('"value":null');
+    expect(exportText).not.toContain('checkout.latency');
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:hertzbeat-metrics');
+    clickSpy.mockRestore();
+  });
+
+  it('loads a metric inventory row into the route-backed query builder', async () => {
+    mockState.searchParams = new URLSearchParams('filter=service.name%3D%22checkout%22&timeRange=last-1h');
+    mockState.metricSeries = [
+      {
+        key: 'http_server_duration-0',
+        name: 'http.server.duration',
+        labels: {
+          'service.name': 'checkout',
+          'service.namespace': 'payments',
+          'deployment.environment.name': 'prod',
+          'hertzbeat.entity_id': '7',
+          'hertzbeat.entity_name': 'Checkout API',
+          'hertzbeat.collector': 'collector-a',
+          'hertzbeat.template': 'spring-boot',
+          trace_id: 'trace-checkout',
+          span_id: 'span-checkout'
+        },
+        points: [[1000, 12]],
+        latestValue: 12
+      }
+    ];
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const queryAction = interactionContainer.querySelector('[data-otlp-metrics-inventory-query-action="http_server_duration-0"]') as HTMLButtonElement | null;
+    expect(queryAction).not.toBeNull();
+    expect(queryAction?.getAttribute('data-otlp-metrics-inventory-query-action-owner')).toBe('hertzbeat-ui-button');
+    expect(queryAction?.getAttribute('aria-label')).toContain('http.server.duration');
+
+    await act(async () => {
+      queryAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const href = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(href).toContain('/ingestion/otlp/metrics?');
+    expect(href).toContain('query=http.server.duration');
+    expect(href).toContain('series=http_server_duration-0');
+    expect(href).toContain('filter=service.name%3D%22checkout%22');
+    expect(href).toContain('timeRange=last-1h');
+    const params = new URL(href, 'http://localhost').searchParams;
+    expect(params.get('entityId')).toBe('7');
+    expect(params.get('entityName')).toBe('Checkout API');
+    expect(params.get('serviceName')).toBe('checkout');
+    expect(params.get('serviceNamespace')).toBe('payments');
+    expect(params.get('environment')).toBe('prod');
+    expect(params.get('traceId')).toBe('trace-checkout');
+    expect(params.get('spanId')).toBe('span-checkout');
+    expect(params.get('collector')).toBe('collector-a');
+    expect(params.get('template')).toBe('spring-boot');
+  });
+
+  it('renders a route-backed table inspector for selected metric raw samples', async () => {
+    mockState.searchParams = new URLSearchParams('inspector=table&query=http.server.duration');
+    mockState.metricSeries = [
+      {
+        key: 'http_server_duration-0',
+        name: 'http.server.duration',
+        labels: {
+          'service.name': 'checkout',
+          'service.namespace': 'payments',
+          'deployment.environment.name': 'prod',
+          'hertzbeat.entity_id': '7',
+          'hertzbeat.entity_name': 'Checkout API'
+        },
+        points: [
+          [1000, 12],
+          [2000, null],
+          [3000, 20]
+        ],
+        latestValue: 20
+      }
+    ];
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const toggle = interactionContainer.querySelector('[data-otlp-metrics-inspector-toggle="graph-table"]') as HTMLElement | null;
+    expect(toggle?.getAttribute('data-otlp-metrics-inspector-toggle-owner')).toBe('hertzbeat-ui-action-group');
+    expect(toggle?.getAttribute('data-hz-action-group-owner')).toBe('hertzbeat-ui-action-group');
+    expect(toggle?.getAttribute('data-otlp-metrics-inspector-view')).toBe('table');
+
+    const tableAction = interactionContainer.querySelector('[data-otlp-metrics-inspector-action="table"]') as HTMLButtonElement | null;
+    expect(tableAction?.getAttribute('data-otlp-metrics-inspector-action-owner')).toBe('hertzbeat-ui-button');
+    expect(tableAction?.getAttribute('data-otlp-metrics-inspector-action-active')).toBe('true');
+    expect(tableAction?.getAttribute('aria-pressed')).toBe('true');
+
+    const sampleTable = interactionContainer.querySelector('[data-otlp-metrics-inspector-sample-table="selected-series-samples"]') as HTMLElement | null;
+    expect(sampleTable).not.toBeNull();
+    expect(sampleTable?.getAttribute('data-otlp-metrics-inspector-sample-table-owner')).toBe('hertzbeat-ui-data-table');
+    expect(sampleTable?.getAttribute('data-hz-ui')).toBe('data-table');
+    expect(sampleTable?.getAttribute('data-hz-data-table-variant')).toBe('embedded');
+    expect(sampleTable?.textContent).toContain(tZh('otlp.metrics.inspector.column.timestamp'));
+    expect(sampleTable?.textContent).toContain(tZh('otlp.metrics.inspector.column.raw-timestamp'));
+    expect(sampleTable?.textContent).toContain('T1000');
+    expect(sampleTable?.textContent).toContain('2000');
+    expect(sampleTable?.textContent).toContain(tZh('otlp.metrics.inspector.sample-state.empty'));
+    expect(sampleTable?.textContent).toContain('20');
+    expect(interactionContainer.querySelector('[data-otlp-metrics-selected-series-evidence="real-sample-evidence"]')).toBeNull();
+
+    const graphAction = interactionContainer.querySelector('[data-otlp-metrics-inspector-action="graph"]') as HTMLButtonElement | null;
+    await act(async () => {
+      graphAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(mockState.replace).toHaveBeenCalledWith('/ingestion/otlp/metrics?query=http.server.duration');
+  });
+
+  it('saves and restores the current metrics explorer query view from shared UI controls', async () => {
+    window.localStorage.removeItem('hertzbeat.otlp-metrics.saved-query-views');
+    mockState.searchParams = new URLSearchParams(
+      'query=http.server.duration&series=checkout_latency-0&filter=service.name%3D%22checkout%22&aggregation=p95&temporalAggregation=rate&groupBy=route&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=10&inspector=table&warningThreshold=75&criticalThreshold=90&expectedRange=on&serviceName=checkout&entityId=7&environment=prod&timeRange=last-1h'
+    );
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const savedViewPanel = interactionContainer.querySelector('[data-otlp-metrics-saved-views="route-query-views"]') as HTMLElement | null;
+    expect(savedViewPanel).toBeTruthy();
+    expect(savedViewPanel?.getAttribute('data-otlp-metrics-saved-views-owner')).toBe('hertzbeat-ui-panel-surface');
+
+    const saveAction = interactionContainer.querySelector('[data-otlp-metrics-saved-view-action="save-current"]') as HTMLButtonElement | null;
+    expect(saveAction).toBeTruthy();
+    expect(saveAction?.getAttribute('data-otlp-metrics-saved-view-action-owner')).toBe('hertzbeat-ui-button');
+
+    const clipboardWrites: string[] = [];
+    Object.defineProperty(window.navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: vi.fn((value: string) => {
+        clipboardWrites.push(value);
+        return Promise.resolve();
+      }) }
+    });
+    const copyAction = interactionContainer.querySelector('[data-otlp-metrics-saved-view-copy-action="current"]') as HTMLButtonElement | null;
+    expect(copyAction).toBeTruthy();
+    expect(copyAction?.getAttribute('data-otlp-metrics-saved-view-copy-owner')).toBe('hertzbeat-ui-button');
+
+    await act(async () => {
+      copyAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(clipboardWrites[0]).toContain('/ingestion/otlp/metrics?');
+    expect(clipboardWrites[0]).toContain('query=http.server.duration');
+    expect(clipboardWrites[0]).toContain('aggregation=p95');
+    expect(clipboardWrites[0]).toContain('formula=A+*+1000');
+
+    await act(async () => {
+      saveAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const savedViews = JSON.parse(window.localStorage.getItem('hertzbeat.otlp-metrics.saved-query-views') || '[]');
+    expect(savedViews).toHaveLength(1);
+    expect(savedViews[0]?.label).toBe('http.server.duration');
+    expect(savedViews[0]?.description).toContain('p95');
+    expect(savedViews[0]?.description).toContain('rate');
+    expect(savedViews[0]?.description).toContain('{{service.name}} - p95');
+    expect(savedViews[0]?.description).toContain('A * 1000');
+    expect(savedViews[0]?.description).toContain('60');
+    expect(savedViews[0]?.description).toContain('10');
+    expect(savedViews[0]?.description).toContain('on');
+    const savedParams = new URL(savedViews[0]?.route, 'http://localhost').searchParams;
+    expect(savedViews[0]?.route).toContain('/ingestion/otlp/metrics?');
+    expect(savedParams.get('query')).toBe('http.server.duration');
+    expect(savedParams.get('series')).toBe('checkout_latency-0');
+    expect(savedParams.get('filter')).toBe('service.name="checkout"');
+    expect(savedParams.get('aggregation')).toBe('p95');
+    expect(savedParams.get('temporalAggregation')).toBe('rate');
+    expect(savedParams.get('groupBy')).toBe('route');
+    expect(savedParams.get('legendFormat')).toBe('{{service.name}} - p95');
+    expect(savedParams.get('formula')).toBe('A * 1000');
+    expect(savedParams.get('step')).toBe('60');
+    expect(savedParams.get('limit')).toBe('10');
+    expect(savedParams.get('inspector')).toBe('table');
+    expect(savedParams.get('warningThreshold')).toBe('75');
+    expect(savedParams.get('criticalThreshold')).toBe('90');
+    expect(savedParams.get('expectedRange')).toBe('on');
+    expect(savedParams.get('serviceName')).toBe('checkout');
+    expect(savedParams.get('entityId')).toBe('7');
+    expect(savedParams.get('environment')).toBe('prod');
+    expect(savedParams.get('timeRange')).toBe('last-1h');
+
+    const renameSavedViewAction = interactionContainer.querySelector('[data-otlp-metrics-saved-view-rename-action]') as HTMLButtonElement | null;
+    expect(renameSavedViewAction).toBeTruthy();
+    expect(renameSavedViewAction?.getAttribute('data-otlp-metrics-saved-view-rename-owner')).toBe('hertzbeat-ui-button');
+
+    await act(async () => {
+      renameSavedViewAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const renameInput = interactionContainer.querySelector('[data-otlp-metrics-saved-view-rename-input]') as HTMLInputElement | null;
+    expect(renameInput).toBeTruthy();
+    expect(renameInput?.getAttribute('data-otlp-metrics-saved-view-rename-input-owner')).toBe('hertzbeat-ui-input');
+
+    await act(async () => {
+      renameInput!.value = 'Checkout p95 latency';
+      renameInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const renameSaveAction = interactionContainer.querySelector('[data-otlp-metrics-saved-view-rename-save-action]') as HTMLButtonElement | null;
+    expect(renameSaveAction).toBeTruthy();
+    expect(renameSaveAction?.getAttribute('data-otlp-metrics-saved-view-rename-save-owner')).toBe('hertzbeat-ui-button');
+
+    await act(async () => {
+      renameSaveAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const renamedViews = JSON.parse(window.localStorage.getItem('hertzbeat.otlp-metrics.saved-query-views') || '[]');
+    expect(renamedViews).toHaveLength(1);
+    expect(renamedViews[0]?.label).toBe('Checkout p95 latency');
+    expect(renamedViews[0]?.route).toBe(savedViews[0]?.route);
+
+    mockState.searchParams = new URLSearchParams(
+      'query=process.runtime.jvm.memory.used&series=jvm_memory-0&filter=service.name%3D%22billing%22&aggregation=avg&temporalAggregation=avg&groupBy=pool&legendFormat=%7B%7Bservice.name%7D%7D+%2F+%7B%7Bpool%7D%7D&formula=A+%2F+1024&step=120&limit=7&inspector=table&warningThreshold=512&criticalThreshold=768&serviceName=billing&entityId=9&environment=stage&timeRange=last-6h'
+    );
+    await act(async () => {
+      interactionRoot?.unmount();
+      interactionContainer.innerHTML = '';
+      interactionRoot = createRoot(interactionContainer);
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const updateSavedViewAction = interactionContainer.querySelector('[data-otlp-metrics-saved-view-update-action]') as HTMLButtonElement | null;
+    expect(updateSavedViewAction).toBeTruthy();
+    expect(updateSavedViewAction?.getAttribute('data-otlp-metrics-saved-view-update-owner')).toBe('hertzbeat-ui-button');
+
+    await act(async () => {
+      updateSavedViewAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const updatedViews = JSON.parse(window.localStorage.getItem('hertzbeat.otlp-metrics.saved-query-views') || '[]');
+    expect(updatedViews).toHaveLength(1);
+    expect(updatedViews[0]?.label).toBe('Checkout p95 latency');
+    expect(updatedViews[0]?.route).not.toBe(savedViews[0]?.route);
+    expect(updatedViews[0]?.description).toContain('avg');
+    expect(updatedViews[0]?.description).toContain('{{service.name}} / {{pool}}');
+    expect(updatedViews[0]?.description).toContain('A / 1024');
+    expect(updatedViews[0]?.description).toContain('120');
+    expect(updatedViews[0]?.description).toContain('7');
+    const updatedParams = new URL(updatedViews[0]?.route, 'http://localhost').searchParams;
+    expect(updatedViews[0]?.route).toContain('/ingestion/otlp/metrics?');
+    expect(updatedParams.get('query')).toBe('process.runtime.jvm.memory.used');
+    expect(updatedParams.get('series')).toBe('jvm_memory-0');
+    expect(updatedParams.get('filter')).toBe('service.name="billing"');
+    expect(updatedParams.get('aggregation')).toBe('avg');
+    expect(updatedParams.get('temporalAggregation')).toBe('avg');
+    expect(updatedParams.get('groupBy')).toBe('pool');
+    expect(updatedParams.get('legendFormat')).toBe('{{service.name}} / {{pool}}');
+    expect(updatedParams.get('formula')).toBe('A / 1024');
+    expect(updatedParams.get('step')).toBe('120');
+    expect(updatedParams.get('limit')).toBe('7');
+    expect(updatedParams.get('inspector')).toBe('table');
+    expect(updatedParams.get('warningThreshold')).toBe('512');
+    expect(updatedParams.get('criticalThreshold')).toBe('768');
+    expect(updatedParams.get('serviceName')).toBe('billing');
+    expect(updatedParams.get('entityId')).toBe('9');
+    expect(updatedParams.get('environment')).toBe('stage');
+    expect(updatedParams.get('timeRange')).toBe('last-6h');
+
+    const savedViewAction = interactionContainer.querySelector('[data-otlp-metrics-saved-view-select-action]') as HTMLButtonElement | null;
+    expect(savedViewAction).toBeTruthy();
+    expect(savedViewAction?.getAttribute('data-otlp-metrics-saved-view-select-owner')).toBe('hertzbeat-ui-button');
+    mockState.replace.mockClear();
+
+    await act(async () => {
+      savedViewAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const restoredRoute = String(mockState.replace.mock.calls[0]?.[0]);
+    const restoredParams = new URL(restoredRoute, 'http://localhost').searchParams;
+    expect(restoredRoute).toContain('/ingestion/otlp/metrics?');
+    expect(restoredParams.get('query')).toBe('process.runtime.jvm.memory.used');
+    expect(restoredParams.get('series')).toBe('jvm_memory-0');
+    expect(restoredParams.get('filter')).toBe('service.name="billing"');
+    expect(restoredParams.get('aggregation')).toBe('avg');
+    expect(restoredParams.get('temporalAggregation')).toBe('avg');
+    expect(restoredParams.get('groupBy')).toBe('pool');
+    expect(restoredParams.get('legendFormat')).toBe('{{service.name}} / {{pool}}');
+    expect(restoredParams.get('formula')).toBe('A / 1024');
+    expect(restoredParams.get('inspector')).toBe('table');
+    expect(restoredParams.get('serviceName')).toBe('billing');
+    expect(restoredParams.get('entityId')).toBe('9');
+    expect(restoredParams.get('environment')).toBe('stage');
+
+    const deleteSavedViewAction = interactionContainer.querySelector('[data-otlp-metrics-saved-view-delete-action]') as HTMLButtonElement | null;
+    expect(deleteSavedViewAction).toBeTruthy();
+    expect(deleteSavedViewAction?.getAttribute('data-otlp-metrics-saved-view-delete-owner')).toBe('hertzbeat-ui-button');
+
+    await act(async () => {
+      deleteSavedViewAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(JSON.parse(window.localStorage.getItem('hertzbeat.otlp-metrics.saved-query-views') || '[]')).toHaveLength(0);
+  });
+
+  it('renders searchable selected metric attributes from real series labels', async () => {
+    mockState.metricSeries = [
+      {
+        key: 'checkout_latency-0',
+        name: 'checkout.latency',
+        labels: {
+          'service.name': 'checkout',
+          'deployment.environment.name': 'prod',
+          route: '/checkout',
+          'hertzbeat.entity_id': '7',
+          trace_id: 'trace-checkout',
+          span_id: 'span-checkout'
+        },
+        points: [[1000, 12]],
+        latestValue: 12
+      }
+    ];
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const attributePanel = interactionContainer.querySelector('[data-otlp-metrics-attribute-summary="selected-series-labels"]') as HTMLElement | null;
+    expect(attributePanel).not.toBeNull();
+    expect(attributePanel?.getAttribute('data-otlp-metrics-attribute-summary-owner')).toBe('hertzbeat-ui-collapsible-section');
+    expect(attributePanel?.getAttribute('data-hz-collapsible-owner')).toBe('hertzbeat-ui-collapsible-section');
+    expect(attributePanel?.textContent).toContain(tZh('otlp.metrics.attributes.title'));
+
+    const attributeControls = interactionContainer.querySelector('[data-otlp-metrics-attribute-controls="search"]') as HTMLElement | null;
+    expect(attributeControls?.getAttribute('data-otlp-metrics-attribute-controls-owner')).toBe('hertzbeat-ui-control-stack');
+    expect(attributeControls?.getAttribute('data-hz-action-group-owner') || attributeControls?.getAttribute('data-hz-control-stack-owner')).toBe('hertzbeat-ui-control-stack');
+
+    const attributeTable = interactionContainer.querySelector('[data-otlp-metrics-attribute-table="selected-series-labels"]') as HTMLElement | null;
+    expect(attributeTable?.getAttribute('data-otlp-metrics-attribute-table-owner')).toBe('hertzbeat-ui-data-table');
+    expect(attributeTable?.getAttribute('data-hz-ui')).toBe('data-table');
+    expect(attributeTable?.getAttribute('data-otlp-metrics-attribute-table-count')).toBe('6');
+    expect(attributeTable?.textContent).toContain('deployment.environment.name');
+    expect(attributeTable?.textContent).toContain('prod');
+    expect(attributeTable?.textContent).toContain('service.name');
+    expect(attributeTable?.textContent).toContain('checkout');
+    expect(attributeTable?.textContent).toContain('route');
+
+    const serviceFilterAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-filter-action="service.name"]') as HTMLButtonElement | null;
+    expect(serviceFilterAction?.getAttribute('data-otlp-metrics-attribute-filter-action-owner')).toBe('hertzbeat-ui-button');
+    expect(serviceFilterAction?.getAttribute('aria-label')).toContain('service.name');
+
+    await act(async () => {
+      serviceFilterAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const filterHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(filterHref).toContain('/ingestion/otlp/metrics?');
+    expect(filterHref).toContain('filter=service.name%3D%22checkout%22');
+    const filterParams = new URL(filterHref, 'http://localhost').searchParams;
+    expect(filterParams.get('series')).toBe('checkout_latency-0');
+    expect(filterParams.get('entityId')).toBe('7');
+    expect(filterParams.get('serviceName')).toBe('checkout');
+    expect(filterParams.get('environment')).toBe('prod');
+    expect(filterParams.get('traceId')).toBe('trace-checkout');
+    expect(filterParams.get('spanId')).toBe('span-checkout');
+
+    const routeGroupAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-group-action="route"]') as HTMLButtonElement | null;
+    expect(routeGroupAction?.getAttribute('data-otlp-metrics-attribute-group-action-owner')).toBe('hertzbeat-ui-button');
+    expect(routeGroupAction?.getAttribute('aria-label')).toContain('route');
+
+    await act(async () => {
+      routeGroupAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const groupHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(groupHref).toContain('filter=service.name%3D%22checkout%22');
+    expect(groupHref).toContain('groupBy=route');
+    const groupParams = new URL(groupHref, 'http://localhost').searchParams;
+    expect(groupParams.get('series')).toBe('checkout_latency-0');
+    expect(groupParams.get('traceId')).toBe('trace-checkout');
+    expect(groupParams.get('spanId')).toBe('span-checkout');
+
+    const searchInput = interactionContainer.querySelector('[data-otlp-metrics-attribute-search-input="true"]') as HTMLInputElement | null;
+    expect(searchInput?.getAttribute('data-otlp-metrics-attribute-search-input-owner')).toBe('hertzbeat-ui-input');
+    expect(searchInput?.getAttribute('data-hz-input-width')).toBe('metrics-inventory-search');
+    expect(searchInput?.value).toBe('');
+
+    await act(async () => {
+      if (searchInput) {
+        searchInput.value = 'prod';
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      await Promise.resolve();
+    });
+
+    const attributeSearchHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(attributeSearchHref).toContain('seriesAttributeSearch=prod');
+  });
+
+  it('restores selected metric attribute search from route state', async () => {
+    mockState.searchParams = new URLSearchParams('seriesAttributeSearch=prod');
+    mockState.metricSeries = [
+      {
+        key: 'checkout_latency-0',
+        name: 'checkout.latency',
+        labels: {
+          'service.name': 'checkout',
+          'deployment.environment.name': 'prod',
+          route: '/checkout'
+        },
+        points: [[1000, 12]],
+        latestValue: 12
+      }
+    ];
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const searchInput = interactionContainer.querySelector('[data-otlp-metrics-attribute-search-input="true"]') as HTMLInputElement | null;
+    expect(searchInput?.value).toBe('prod');
+
+    const filteredAttributeTable = interactionContainer.querySelector('[data-otlp-metrics-attribute-table="selected-series-labels"]') as HTMLElement | null;
+    expect(filteredAttributeTable?.getAttribute('data-otlp-metrics-attribute-table-count')).toBe('1');
+    expect(filteredAttributeTable?.textContent).toContain('deployment.environment.name');
+    expect(filteredAttributeTable?.textContent).toContain('prod');
+    expect(filteredAttributeTable?.textContent).not.toContain('service.name');
+    expect(filteredAttributeTable?.textContent).not.toContain('/checkout');
+  });
+
+  it('replaces metrics attribute filters from selected series labels', async () => {
+    mockState.searchParams = new URLSearchParams('filter=old.attr%3D%22stale%22');
+    mockState.metricSeries = [
+      {
+        key: 'checkout_latency-0',
+        name: 'checkout.latency',
+        labels: {
+          'service.name': 'checkout',
+          route: '/checkout',
+          trace_id: 'trace-checkout',
+          span_id: 'span-checkout'
+        },
+        points: [[1000, 12]],
+        latestValue: 12
+      }
+    ];
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const replaceAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-replace-action="service.name"]') as HTMLButtonElement | null;
+    expect(replaceAction).not.toBeNull();
+    expect(replaceAction?.getAttribute('data-otlp-metrics-attribute-replace-action-owner')).toBe('hertzbeat-ui-button');
+    expect(replaceAction?.getAttribute('aria-label')).toContain('service.name');
+
+    await act(async () => {
+      replaceAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const href = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(href).toContain('/ingestion/otlp/metrics?');
+    expect(href).toContain('filter=service.name%3D%22checkout%22');
+    expect(href).not.toContain('old.attr');
+    const params = new URL(href, 'http://localhost').searchParams;
+    expect(params.get('series')).toBe('checkout_latency-0');
+    expect(params.get('serviceName')).toBe('checkout');
+    expect(params.get('traceId')).toBe('trace-checkout');
+    expect(params.get('spanId')).toBe('span-checkout');
+  });
+
+  it('filters metrics group values from the series table back into the query route', async () => {
+    mockState.searchParams = new URLSearchParams('groupBy=service_name');
+    mockState.metricSeries = [
+      {
+        key: 'checkout_latency-0',
+        name: 'checkout.latency',
+        labels: {
+          service_name: 'checkout',
+          'service.name': 'checkout'
+        },
+        points: [[1000, 12]],
+        latestValue: 12
+      }
+    ];
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const groupValueAction = interactionContainer.querySelector(
+      '[data-otlp-metrics-series-group-filter-action="service_name"][data-otlp-metrics-series-group-filter-value="checkout"]'
+    ) as HTMLButtonElement | null;
+    expect(groupValueAction).not.toBeNull();
+    expect(groupValueAction?.getAttribute('data-otlp-metrics-series-group-filter-owner')).toBe('hertzbeat-ui-button');
+    expect(groupValueAction?.getAttribute('aria-label')).toContain('service_name');
+
+    await act(async () => {
+      groupValueAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const href = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(href).toContain('/ingestion/otlp/metrics?');
+    expect(href).toContain('filter=service_name%3D%22checkout%22');
+    expect(href).toContain('groupBy=service_name');
+  });
+
+  it('narrows metrics inventory rows by service without requiring groupBy', async () => {
+    mockState.searchParams = new URLSearchParams('query=http.server.duration&filter=route%3D%22%2Fcheckout%22&timeRange=last-1h&inventorySearch=checkout&inventorySort=time-series');
+    mockState.metricSeries = [
+      {
+        key: 'checkout_latency-0',
+        name: 'checkout.latency',
+        labels: {
+          'service.name': 'checkout'
+        },
+        points: [[1000, 12]],
+        latestValue: 12
+      }
+    ];
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const inventorySearchInput = interactionContainer.querySelector('[data-otlp-metrics-inventory-search-input="true"]') as HTMLInputElement | null;
+    const inventorySortSelect = interactionContainer.querySelector('[data-otlp-metrics-inventory-sort-select="true"]') as HTMLElement | null;
+    expect(inventorySearchInput?.value).toBe('checkout');
+    expect(inventorySortSelect).not.toBeNull();
+
+    await act(async () => {
+      inventorySearchInput!.value = 'latency';
+      inventorySearchInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const searchHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(searchHref).toContain('inventorySearch=latency');
+    expect(searchHref).toContain('inventorySort=time-series');
+
+    await act(async () => {
+      inventorySortSelect!.querySelector('[data-hz-ui="select-trigger"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      inventorySortSelect!.querySelector('[data-otlp-metrics-inventory-sort-option="samples"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const sortHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(sortHref).toContain('inventorySearch=checkout');
+    expect(sortHref).toContain('inventorySort=samples');
+
+    const serviceAction = interactionContainer.querySelector(
+      '[data-otlp-metrics-series-service-filter-action="checkout"]'
+    ) as HTMLButtonElement | null;
+    expect(serviceAction).not.toBeNull();
+    expect(serviceAction?.getAttribute('data-otlp-metrics-series-service-filter-owner')).toBe('hertzbeat-ui-button');
+    expect(serviceAction?.getAttribute('aria-label')).toContain('checkout');
+
+    await act(async () => {
+      serviceAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const href = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(href).toContain('/ingestion/otlp/metrics?');
+    expect(href).toContain('query=http.server.duration');
+    expect(href).toContain('filter=route%3D%22%2Fcheckout%22');
+    expect(href).toContain('serviceName=checkout');
+    expect(href).toContain('series=checkout_latency-0');
+    expect(href).toContain('timeRange=last-1h');
+    expect(href).not.toContain('groupBy=');
+  });
+
+  it('paginates the metrics inventory through route-backed shared controls', async () => {
+    mockState.searchParams = new URLSearchParams('query=http.server.duration&inventoryPageSize=5&inventoryPageIndex=1');
+    mockState.metricSeries = [
+      {
+        key: 'alpha_latency-0',
+        name: 'alpha.latency',
+        labels: { 'service.name': 'alpha' },
+        points: [[1000, 1]],
+        latestValue: 1
+      },
+      {
+        key: 'bravo_latency-0',
+        name: 'bravo.latency',
+        labels: { 'service.name': 'bravo' },
+        points: [[1000, 2]],
+        latestValue: 2
+      },
+      {
+        key: 'charlie_latency-0',
+        name: 'charlie.latency',
+        labels: { 'service.name': 'charlie' },
+        points: [[1000, 3]],
+        latestValue: 3
+      },
+      {
+        key: 'delta_latency-0',
+        name: 'delta.latency',
+        labels: { 'service.name': 'delta' },
+        points: [[1000, 4]],
+        latestValue: 4
+      },
+      {
+        key: 'echo_latency-0',
+        name: 'echo.latency',
+        labels: { 'service.name': 'echo' },
+        points: [[1000, 5]],
+        latestValue: 5
+      },
+      {
+        key: 'foxtrot_latency-0',
+        name: 'foxtrot.latency',
+        labels: { 'service.name': 'foxtrot' },
+        points: [[1000, 6]],
+        latestValue: 6
+      }
+    ];
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const inventoryTable = interactionContainer.querySelector('[data-otlp-metrics-inventory="metric-inventory"]') as HTMLElement | null;
+    const pagination = interactionContainer.querySelector('[data-otlp-metrics-inventory-pagination="shared-pagination-bar"]') as HTMLElement | null;
+    expect(inventoryTable?.getAttribute('data-otlp-metrics-inventory-page-size')).toBe('5');
+    expect(inventoryTable?.getAttribute('data-otlp-metrics-inventory-page-index')).toBe('1');
+    expect(inventoryTable?.getAttribute('data-otlp-metrics-inventory-filtered-count')).toBe('6');
+    expect(pagination?.getAttribute('data-otlp-metrics-inventory-pagination-owner')).toBe('hertzbeat-ui-pagination-bar');
+    expect(interactionContainer.querySelector('[data-otlp-metrics-inventory-query-action="foxtrot_latency-0"]')).not.toBeNull();
+    expect(interactionContainer.querySelector('[data-otlp-metrics-inventory-query-action="alpha_latency-0"]')).toBeNull();
+
+    const nextButton = pagination?.querySelector('[data-otlp-metrics-inventory-pagination-next="true"]') as HTMLButtonElement | null;
+    expect(nextButton?.disabled).toBe(true);
+    const previousButton = pagination?.querySelector('[data-otlp-metrics-inventory-pagination-previous="true"]') as HTMLButtonElement | null;
+    expect(previousButton?.disabled).toBe(false);
+
+    await act(async () => {
+      previousButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const previousHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(previousHref).toContain('inventoryPageSize=5');
+    expect(previousHref).not.toContain('inventoryPageIndex=1');
+
+    const pageSizeSelect = pagination?.querySelector('[data-otlp-metrics-inventory-pagination-page-size="true"]') as HTMLElement | null;
+    expect(pageSizeSelect).not.toBeNull();
+
+    await act(async () => {
+      pageSizeSelect!.querySelector('[data-hz-ui="select-trigger"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      pageSizeSelect!.querySelector('[data-otlp-metrics-inventory-page-size-option="20"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const pageSizeHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(pageSizeHref).toContain('inventoryPageSize=20');
+    expect(pageSizeHref).not.toContain('inventoryPageIndex=1');
+  });
+
+  it('keeps custom metrics groupBy dimensions visible after route reload', async () => {
+    mockState.searchParams = new URLSearchParams('groupBy=route');
+    mockState.metricSeries = [
+      {
+        key: 'checkout_latency-0',
+        name: 'checkout.latency',
+        labels: {
+          route: '/checkout',
+          service_name: 'checkout'
+        },
+        points: [[1000, 12]],
+        latestValue: 12
+      }
+    ];
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const groupBySelect = interactionContainer.querySelector('[data-otlp-metrics-group-by-select="true"]') as HTMLElement | null;
+    expect(groupBySelect).not.toBeNull();
+    await act(async () => {
+      groupBySelect!.querySelector('[data-hz-ui="select-trigger"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(groupBySelect?.querySelector('[data-otlp-metrics-group-by-option="route"]')).not.toBeNull();
+    expect(groupBySelect?.textContent).toContain('route');
+
+    const seriesSetSummary = interactionContainer.querySelector('[data-otlp-metrics-series-set-summary="service-entity-scope"]') as HTMLElement | null;
+    expect(seriesSetSummary?.textContent).toContain('route');
   });
 
   it('prefers the metric series that matches the incoming trace context before building handoff links', async () => {

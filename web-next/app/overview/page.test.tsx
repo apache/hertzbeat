@@ -107,6 +107,7 @@ const mockState = vi.hoisted(() => ({
   lastLoad: null as null | (() => Promise<unknown>),
   clientData: createClientData(),
   viewModel: createOverviewViewModel(),
+  searchParams: new URLSearchParams(),
   queryClient: {
     fetchQuery: vi.fn(async ({ queryFn }: { queryFn: () => Promise<unknown> }) => queryFn())
   }
@@ -116,6 +117,10 @@ const apiMessageGet = vi.fn();
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>
+}));
+
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => mockState.searchParams
 }));
 
 vi.mock('@/components/providers/i18n-provider', () => ({
@@ -290,12 +295,69 @@ beforeEach(() => {
   mockState.lastLoad = null;
   mockState.clientData = createClientData();
   mockState.viewModel = createOverviewViewModel();
+  mockState.searchParams = new URLSearchParams();
   mockState.queryClient.fetchQuery.mockReset();
   mockState.queryClient.fetchQuery.mockImplementation(async ({ queryFn }: { queryFn: () => Promise<unknown> }) => queryFn());
   apiMessageGet.mockReset();
 });
 
 describe('overview page', () => {
+  it('persists dashboard panel drafts as bounded local snapshots', async () => {
+    const {
+      DASHBOARD_PANEL_DRAFT_STORAGE_KEY,
+      readSavedDashboardPanelDrafts,
+      saveDashboardPanelDraft
+    } = await import('./overview-page');
+    const storage = {
+      value: '',
+      getItem: vi.fn(() => storage.value),
+      setItem: vi.fn((_key: string, value: string) => {
+        storage.value = value;
+      })
+    };
+    const draft = {
+      signal: 'logs' as const,
+      signalLabelKey: 'dashboard.add-panel.signal.logs',
+      panelTitle: 'Checkout errors',
+      explorerHref: '/log/manage?serviceName=checkout&returnTo=%2Foverview',
+      panelQuery: 'search=checkout failed',
+      panelQueryType: 'logs',
+      context: {
+        serviceName: 'checkout',
+        entityId: '7',
+        timeRange: 'last-1h',
+        source: 'otlp'
+      }
+    };
+
+    const nextDrafts = saveDashboardPanelDraft(draft, [], storage, 1713200000000);
+
+    expect(nextDrafts).toHaveLength(1);
+    expect(nextDrafts[0]).toMatchObject({
+      id: 'logs:1713200000000:Checkout errors',
+      signal: 'logs',
+      panelTitle: 'Checkout errors',
+      explorerHref: '/log/manage?serviceName=checkout&returnTo=%2Foverview',
+      panelQuery: 'search=checkout failed',
+      panelQueryType: 'logs',
+      context: {
+        serviceName: 'checkout',
+        entityId: '7',
+        timeRange: 'last-1h',
+        source: 'otlp'
+      }
+    });
+    expect(storage.setItem).toHaveBeenCalledWith(DASHBOARD_PANEL_DRAFT_STORAGE_KEY, expect.stringContaining('Checkout errors'));
+    expect(readSavedDashboardPanelDrafts(storage)).toEqual(nextDrafts);
+
+    storage.value = JSON.stringify([{ bad: 'shape' }, ...Array.from({ length: 8 }, (_item, index) => ({
+      ...nextDrafts[0],
+      id: `logs:${index}`,
+      createdAt: index
+    }))]);
+    expect(readSavedDashboardPanelDrafts(storage)).toHaveLength(6);
+  });
+
   it('keeps overview remounts on a short settled cache window without bypassing refresh keys', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/overview/overview-page.tsx'), 'utf8');
 
@@ -370,6 +432,31 @@ describe('overview page', () => {
         staleTime: 5000
       })
     );
+  }, 60000);
+
+  it('surfaces dashboard add-panel intent from explorer handoffs on the overview route', async () => {
+    mockState.searchParams = new URLSearchParams(
+      'intent=add-panel&signal=logs&panelTitle=Checkout+errors&entityId=7&entityName=Checkout+API&serviceName=checkout&environment=prod&timeRange=last-1h&traceId=trace-123&spanId=span-1&source=otlp&panelQuery=search%3Dcheckout+failed&panelQueryType=logs'
+    );
+
+    const { default: OverviewPage } = await import('./page');
+    const html = renderToStaticMarkup(<OverviewPage />);
+
+    expect(html).toContain('data-overview-dashboard-panel-draft="true"');
+    expect(html).toContain('data-overview-dashboard-panel-draft-signal="logs"');
+    expect(html).toContain('Dashboard panel draft');
+    expect(html).toContain('Checkout errors');
+    expect(html).toContain('Prepare a Logs panel for Checkout errors from the current explorer context.');
+    expect(html).toContain('data-overview-dashboard-panel-draft-context="true"');
+    expect(html).toContain('Checkout API');
+    expect(html).toContain('checkout');
+    expect(html).toContain('trace-123');
+    expect(html).toContain('Source query');
+    expect(html).toContain('search=checkout failed');
+    expect(html).toContain('/log/manage?timeRange=last-1h');
+    expect(html).toContain('returnTo=%2Foverview');
+    expect(html).toContain('Save draft');
+    expect(html).toContain('Open source explorer');
   }, 60000);
 
   it('keeps Angular forkJoin-style summary fallback when alerts still load', async () => {

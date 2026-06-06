@@ -10,6 +10,7 @@ const mockState = vi.hoisted(() => ({
   lastLoad: null as null | (() => Promise<unknown>),
   lastOnNew: null as null | (() => void),
   lastOnSubmit: null as null | ((payload: unknown) => Promise<void>),
+  lastOnPreview: null as null | ((payload: unknown) => Promise<void>),
   lastOnToggleEnabled: null as null | ((defineId: number, enabled: boolean) => void),
   lastOnEdit: null as null | ((defineId: number) => Promise<void> | void),
   lastOnExport: null as null | (() => void),
@@ -105,9 +106,20 @@ vi.mock('../../../components/pages/alert-setting-surface', () => ({
 }));
 
 vi.mock('../../../components/pages/alert-setting-create-dialog', () => ({
-  AlertSettingCreateDialog: ({ open, mode, evidenceReturnHref, onSubmit }: any) => {
+  AlertSettingCreateDialog: ({ open, mode, draft, evidenceReturnHref, previewFeedback, previewing, onSubmit, onPreview }: any) => {
     mockState.lastOnSubmit = onSubmit;
-    return <div data-alert-setting-create-dialog={open ? mode : 'closed'} data-evidence-return-href={evidenceReturnHref || ''} />;
+    mockState.lastOnPreview = onPreview;
+    return (
+      <div
+        data-alert-setting-create-dialog={open ? mode : 'closed'}
+        data-alert-setting-create-name={draft?.name || ''}
+        data-alert-setting-create-expr={draft?.expr || ''}
+        data-alert-setting-create-template={draft?.template || ''}
+        data-evidence-return-href={evidenceReturnHref || ''}
+        data-previewing={String(Boolean(previewing))}
+        data-preview-feedback={previewFeedback?.contract || ''}
+      />
+    );
   },
   createDefaultAlertSettingDraft: (kind = 'realtime', previous: any = {}) => ({
     id: previous.id,
@@ -159,6 +171,7 @@ describe('alert setting page', () => {
     mockState.lastLoad = null;
     mockState.lastOnNew = null;
     mockState.lastOnSubmit = null;
+    mockState.lastOnPreview = null;
     mockState.lastOnToggleEnabled = null;
     mockState.lastOnEdit = null;
     mockState.lastOnExport = null;
@@ -230,6 +243,87 @@ describe('alert setting page', () => {
     expect(source).toContain('api.alertSettings.update');
   });
 
+  it('opens the threshold type choice when trace handoff carries create intent without a metrics expression', async () => {
+    const html = await renderAlertSettingPage({
+      signal: 'traces',
+      createIntent: 'create',
+      signalContext: {
+        serviceName: 'checkout',
+        traceId: 'trace-123',
+        returnTo: '/trace/manage?traceId=trace-123'
+      }
+    });
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
+
+    expect(html).toContain('data-alert-setting-create-dialog="type"');
+    expect(html).toContain('data-evidence-return-href="/trace/manage?traceId=trace-123"');
+    expect(source).toContain('resolveAlertSettingInitialCreateMode(signal, createIntent, initialCreateDraftSeed)');
+    expect(source).toContain('buildAlertSettingCreateDraftSeed(signal');
+  });
+
+  it('opens metrics alert authoring directly when explorer handoff carries a panel expression', async () => {
+    const html = await renderAlertSettingPage({
+      signal: 'metrics',
+      createIntent: 'create',
+      signalContext: {
+        serviceName: 'checkout',
+        returnTo: '/ingestion/otlp/metrics?query=http.server.duration',
+        alertName: 'checkout latency',
+        alertExpression: 'rate(http.server.duration[5m]) > 0',
+        alertDatasource: 'promql',
+        alertTemplate: 'Latency is high'
+      }
+    });
+
+    expect(html).toContain('data-alert-setting-create-dialog="authoring"');
+    expect(html).toContain('data-alert-setting-create-name="checkout latency"');
+    expect(html).toContain('data-alert-setting-create-expr="rate(http.server.duration[5m]) &gt; 0"');
+    expect(html).toContain('data-alert-setting-create-template="Latency is high"');
+    expect(html).toContain('data-evidence-return-href="/ingestion/otlp/metrics?query=http.server.duration"');
+  });
+
+  it('opens log alert authoring directly when explorer handoff carries a safe realtime expression', async () => {
+    const html = await renderAlertSettingPage({
+      signal: 'logs',
+      createIntent: 'create',
+      signalContext: {
+        serviceName: 'checkout',
+        returnTo: '/log/manage?severityText=ERROR',
+        alertName: 'checkout log alert',
+        alertExpression: "log.severityText == 'ERROR'",
+        alertTemplate: 'Log severity matched: {{log.body}}'
+      }
+    });
+
+    expect(html).toContain('data-alert-setting-create-dialog="authoring"');
+    expect(html).toContain('data-alert-setting-create-name="checkout log alert"');
+    expect(html).toContain("data-alert-setting-create-expr=\"log.severityText == &#x27;ERROR&#x27;\"");
+    expect(html).toContain('data-alert-setting-create-template="Log severity matched: {{log.body}}"');
+    expect(html).toContain('data-evidence-return-href="/log/manage?severityText=ERROR"');
+  });
+
+  it('opens trace alert authoring directly when explorer handoff carries periodic SQL', async () => {
+    const sql = "SELECT service_name, operation, span_kind, SUM(error_total) / NULLIF(SUM(calls_total), 0) AS __value__ FROM hertzbeat_apm_red_1m WHERE service_name = 'checkout' AND time_window >= NOW() - INTERVAL '5 minutes' GROUP BY service_name, operation, span_kind HAVING __value__ > 0";
+    const html = await renderAlertSettingPage({
+      signal: 'traces',
+      createIntent: 'create',
+      signalContext: {
+        serviceName: 'checkout',
+        returnTo: '/trace/manage?serviceName=checkout&errorOnly=true',
+        alertName: 'checkout trace alert',
+        alertExpression: sql,
+        alertDatasource: 'sql',
+        alertTemplate: 'Trace error rate detected ${service_name} ${operation}: ${__value__}'
+      }
+    });
+
+    expect(html).toContain('data-alert-setting-create-dialog="authoring"');
+    expect(html).toContain('data-alert-setting-create-name="checkout trace alert"');
+    expect(html).toContain('FROM hertzbeat_apm_red_1m');
+    expect(html).toContain('data-alert-setting-create-template="Trace error rate detected ${service_name} ${operation}: ${__value__}"');
+    expect(html).toContain('data-evidence-return-href="/trace/manage?serviceName=checkout&amp;errorOnly=true"');
+  });
+
   it('uses the shared cold delete confirmation instead of leaving threshold delete actions as no-ops', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
 
@@ -264,6 +358,94 @@ describe('alert setting page', () => {
     expect(source).toContain("contract: isEdit ? 'edit' : 'create'");
     expect(source).toContain('saveFeedback={saveFeedback}');
     expect(source).not.toContain("t('common.save-failed')");
+  });
+
+  it('previews periodic threshold expressions through the alert define preview endpoint before save', async () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
+    await renderAlertSettingPage();
+
+    apiMessageGet.mockResolvedValueOnce([{ __value__: 0.92, service_name: 'checkout' }]);
+
+    expect(mockState.lastOnPreview).toBeTypeOf('function');
+
+    await mockState.lastOnPreview?.({
+      name: 'checkout trace alert',
+      type: 'periodic_trace',
+      datasource: 'sql',
+      expr: 'SELECT 1 AS __value__ FROM hertzbeat_apm_red_1m',
+      template: 'Trace error rate',
+      labels: {},
+      annotations: {},
+      enable: true,
+      period: 300,
+      times: 3,
+      priority: 2
+    });
+
+    expect(apiMessageGet).toHaveBeenCalledWith(
+      '/alert/define/preview/sql?type=periodic_trace&expr=SELECT%201%20AS%20__value__%20FROM%20hertzbeat_apm_red_1m'
+    );
+    expect(source).toContain('api.alertSettings.preview(payload.datasource, payload.type, payload.expr)');
+    expect(source).toContain('buildPreviewSuccessFeedback(rows)');
+    expect(source).toContain("t('alert.setting.preview.success.title'");
+    expect(source).toContain("contract: 'success'");
+  });
+
+  it('previews realtime log expressions through the alert define preview endpoint before save', async () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
+    await renderAlertSettingPage();
+
+    apiMessageGet.mockResolvedValueOnce([
+      { preview_mode: 'log_sample', type: 'realtime_log', severityText: 'ERROR', body: 'checkout timeout' }
+    ]);
+
+    expect(mockState.lastOnPreview).toBeTypeOf('function');
+
+    await mockState.lastOnPreview?.({
+      name: 'checkout log alert',
+      type: 'realtime_log',
+      datasource: 'promql',
+      expr: "log.severityText == 'ERROR'",
+      template: 'Log severity matched',
+      labels: {},
+      annotations: {},
+      enable: true,
+      period: 300,
+      times: 3,
+      priority: 2
+    });
+
+    expect(apiMessageGet).toHaveBeenCalledWith(
+      "/alert/define/preview/promql?type=realtime_log&expr=log.severityText%20%3D%3D%20'ERROR'"
+    );
+    expect(source).toContain("payload.type === 'realtime_log'");
+    expect(source).toContain('buildPreviewSuccessFeedback(rows)');
+  });
+
+  it('keeps unsupported realtime metric preview honest instead of calling the preview endpoint', async () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/alert/setting/alert-setting-page.tsx'), 'utf8');
+    await renderAlertSettingPage();
+
+    expect(mockState.lastOnPreview).toBeTypeOf('function');
+
+    await mockState.lastOnPreview?.({
+      name: 'checkout metric alert',
+      type: 'realtime_metric',
+      datasource: 'promql',
+      expr: 'cpu > 80',
+      template: 'Metric matched',
+      labels: {},
+      annotations: {},
+      enable: true,
+      period: 300,
+      times: 3,
+      priority: 2
+    });
+
+    expect(apiMessageGet).not.toHaveBeenCalledWith(expect.stringContaining('/alert/define/preview'));
+    expect(source).toContain("const supportsPreview = payload.type.startsWith('periodic_') || payload.type === 'realtime_log'");
+    expect(source).toContain("t('alert.setting.preview.unsupported.title')");
+    expect(source).toContain("contract: 'unsupported'");
   });
 
   it('maps threshold enable toggle failures to the Angular edit notify title plus backend detail', () => {
@@ -443,6 +625,49 @@ describe('alert setting page', () => {
     expect(source).toContain('evidenceContext={evidenceContext}');
     expect(source).toContain('evidenceReturnHref={evidenceContext?.returnHref}');
     expect(source).toContain('const alertSettingRouteState = initialRouteState ?? EMPTY_ALERT_SETTING_ROUTE_STATE');
+  });
+
+  it('seeds alert-rule authoring type from the incoming three-signal route context', async () => {
+    const { buildAlertSettingCreateDraftSeed, resolveAlertSettingInitialCreateMode } = await import('./alert-setting-page');
+    const labelsText = 'hertzbeat.signal:logs, service.name:checkout';
+
+    expect(buildAlertSettingCreateDraftSeed('logs', labelsText)).toEqual({
+      labelsText,
+      kind: 'realtime',
+      dataType: 'log'
+    });
+    expect(buildAlertSettingCreateDraftSeed('metrics', labelsText)).toEqual({
+      labelsText,
+      kind: 'realtime',
+      dataType: 'metric'
+    });
+    expect(buildAlertSettingCreateDraftSeed('traces', labelsText)).toEqual({
+      labelsText,
+      kind: 'periodic',
+      dataType: 'trace'
+    });
+    expect(buildAlertSettingCreateDraftSeed(null, labelsText)).toEqual({
+      labelsText
+    });
+    expect(buildAlertSettingCreateDraftSeed('metrics', labelsText, {
+      alertName: 'checkout latency',
+      alertExpression: 'rate(http.server.duration[5m])',
+      alertDatasource: 'promql',
+      alertTemplate: 'Latency is high'
+    })).toEqual({
+      labelsText,
+      name: 'checkout latency',
+      expr: 'rate(http.server.duration[5m])',
+      datasource: 'promql',
+      template: 'Latency is high',
+      kind: 'realtime',
+      dataType: 'metric'
+    });
+    expect(resolveAlertSettingInitialCreateMode('metrics', 'create', { expr: 'rate(up[5m])' })).toBe('authoring');
+    expect(resolveAlertSettingInitialCreateMode('logs', 'create', { expr: "log.severityText == 'ERROR'" })).toBe('authoring');
+    expect(resolveAlertSettingInitialCreateMode('traces', 'create', { expr: 'SELECT service_name, 1 AS __value__ FROM hertzbeat_apm_red_1m' })).toBe('authoring');
+    expect(resolveAlertSettingInitialCreateMode('traces', 'create', {})).toBe('type');
+    expect(resolveAlertSettingInitialCreateMode('metrics', null, { expr: 'rate(up[5m])' })).toBe('closed');
   });
 
   it('keeps alert setting remounts on a short settled cache window with refresh-key invalidation', () => {

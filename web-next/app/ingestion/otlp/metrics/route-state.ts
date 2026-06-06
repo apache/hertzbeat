@@ -19,6 +19,8 @@ import type { OtlpMetricsQueryState } from '../../../../lib/otlp-metrics/control
 import { readEntityIdRouteParam, readEpochMillisRouteParam, stripReturnLabelFromHref, type SearchParamReader } from '../../../../lib/signal-route-context';
 import { normalizeTimeContextValue } from '../../../../lib/time-context';
 
+const METRICS_INVENTORY_PAGE_SIZE_OPTIONS = ['5', '10', '20', '50'] as const;
+
 const METRICS_ROUTE_KEYS: Array<keyof OtlpMetricsQueryState> = [
   'entityId',
   'entityName',
@@ -26,8 +28,24 @@ const METRICS_ROUTE_KEYS: Array<keyof OtlpMetricsQueryState> = [
   'traceId',
   'spanId',
   'query',
+  'series',
+  'filter',
   'aggregation',
+  'temporalAggregation',
   'groupBy',
+  'legendFormat',
+  'formula',
+  'step',
+  'limit',
+  'inspector',
+  'warningThreshold',
+  'criticalThreshold',
+  'expectedRange',
+  'inventorySearch',
+  'inventorySort',
+  'inventoryPageSize',
+  'inventoryPageIndex',
+  'seriesAttributeSearch',
   'timeRange',
   'from',
   'to',
@@ -50,6 +68,35 @@ const METRICS_ROUTE_KEYS: Array<keyof OtlpMetricsQueryState> = [
   'codeLabel'
 ];
 
+function readPositiveIntegerRouteParam(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed || !/^\d+$/.test(trimmed)) return undefined;
+  return Number(trimmed) > 0 ? trimmed : undefined;
+}
+
+function readMetricsInspectorRouteParam(value: string | undefined) {
+  return value === 'table' ? 'table' : undefined;
+}
+
+function readMetricsInventoryPageSizeRouteParam(value: string | undefined) {
+  const positiveInteger = readPositiveIntegerRouteParam(value);
+  return METRICS_INVENTORY_PAGE_SIZE_OPTIONS.find(option => option === positiveInteger);
+}
+
+function readFiniteNumberRouteParam(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  return Number.isFinite(Number(trimmed)) ? trimmed : undefined;
+}
+
+function readExpectedRangeRouteParam(value: string | undefined) {
+  return value === 'on' ? 'on' : undefined;
+}
+
+function readInventorySortRouteParam(value: string | undefined) {
+  return value === 'latest' || value === 'samples' || value === 'time-series' ? value : undefined;
+}
+
 function appendRouteValue(params: URLSearchParams, key: keyof OtlpMetricsQueryState, value: string | undefined) {
   if (!value || value.trim() === '') return;
   if (key === 'returnTo') {
@@ -65,6 +112,41 @@ function appendRouteValue(params: URLSearchParams, key: keyof OtlpMetricsQuerySt
   if (key === 'timeRange' || key === 'from' || key === 'to' || key === 'start' || key === 'end' || key === 'refresh' || key === 'live' || key === 'tz' || key === 'timezone') {
     const timeValue = normalizeTimeContextValue(key, value);
     if (timeValue) params.set(key, timeValue);
+    return;
+  }
+  if (key === 'step' || key === 'limit') {
+    const positiveInteger = readPositiveIntegerRouteParam(value);
+    if (positiveInteger) params.set(key, positiveInteger);
+    return;
+  }
+  if (key === 'inventoryPageSize') {
+    const pageSize = readMetricsInventoryPageSizeRouteParam(value);
+    if (pageSize) params.set(key, pageSize);
+    return;
+  }
+  if (key === 'inventoryPageIndex') {
+    const positiveInteger = readPositiveIntegerRouteParam(value);
+    if (positiveInteger && positiveInteger !== '0') params.set(key, positiveInteger);
+    return;
+  }
+  if (key === 'inspector') {
+    const inspector = readMetricsInspectorRouteParam(value);
+    if (inspector) params.set(key, inspector);
+    return;
+  }
+  if (key === 'warningThreshold' || key === 'criticalThreshold') {
+    const threshold = readFiniteNumberRouteParam(value);
+    if (threshold) params.set(key, threshold);
+    return;
+  }
+  if (key === 'expectedRange') {
+    const expectedRange = readExpectedRangeRouteParam(value);
+    if (expectedRange) params.set(key, expectedRange);
+    return;
+  }
+  if (key === 'inventorySort') {
+    const inventorySort = readInventorySortRouteParam(value);
+    if (inventorySort) params.set(key, inventorySort);
     return;
   }
   params.set(key, value);

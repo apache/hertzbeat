@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Activity, ArrowLeft, BarChart3, RotateCcw, Save, Timer } from 'lucide-react';
+import { Activity, ArrowLeft, BarChart3, RotateCcw, Save, SearchCheck, Timer } from 'lucide-react';
 import { HzInlineFeedback, type HzStatusTone } from '@hertzbeat/ui';
 import type { DatasourceStatusPayload } from '../../lib/alert-setting/controller';
 import type { AlertDefine } from '../../lib/types';
@@ -25,6 +25,13 @@ export type AlertSettingCreateSaveFeedback = {
   title: string;
   description?: string;
   contract: AlertSettingCreateIntent;
+};
+export type AlertSettingCreatePreviewFeedback = {
+  tone: HzStatusTone;
+  title: string;
+  description?: string;
+  rows?: Array<Record<string, unknown>>;
+  contract: 'success' | 'empty' | 'unsupported' | 'failed';
 };
 
 export type AlertSettingCreateDraft = {
@@ -136,6 +143,18 @@ function parseLabels(value: string) {
     }, {});
 }
 
+function formatPreviewValue(value: unknown) {
+  if (value == null) return '';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
 export function buildAlertSettingCreatePayload(draft: AlertSettingCreateDraft): AlertSettingCreatePayload {
   const payload: AlertSettingCreatePayload = {
     name: draft.name.trim(),
@@ -182,8 +201,11 @@ export function AlertSettingCreateDialog({
   onDraftChange,
   onBackToType,
   onSubmit,
+  onPreview,
   evidenceReturnHref,
   saveFeedback,
+  previewFeedback,
+  previewing = false,
   intent = 'create'
 }: {
   t: Translator;
@@ -198,8 +220,11 @@ export function AlertSettingCreateDialog({
   onDraftChange: (draft: AlertSettingCreateDraft) => void;
   onBackToType: () => void;
   onSubmit: (payload: AlertSettingCreatePayload) => Promise<void> | void;
+  onPreview?: (payload: AlertSettingCreatePayload) => Promise<void> | void;
   evidenceReturnHref?: string;
   saveFeedback?: AlertSettingCreateSaveFeedback | null;
+  previewFeedback?: AlertSettingCreatePreviewFeedback | null;
+  previewing?: boolean;
 }) {
   const [validationMessage, setValidationMessage] = React.useState('');
   const periodicAvailable = hasReadyExecutor(datasourceStatus);
@@ -243,6 +268,15 @@ export function AlertSettingCreateDialog({
     await onSubmit(buildAlertSettingCreatePayload(draft));
   }
 
+  async function preview() {
+    if (!draft.expr.trim()) {
+      setValidationMessage(t('alert.setting.validation.expr'));
+      return;
+    }
+    setValidationMessage('');
+    await onPreview?.(buildAlertSettingCreatePayload(draft));
+  }
+
   const footer = isTypeMode ? (
     <div className="flex justify-end">
       <Button type="button" variant="default" onClick={onClose}>
@@ -271,6 +305,19 @@ export function AlertSettingCreateDialog({
         <Button type="button" variant="default" onClick={onClose}>
           {t('common.button.cancel')}
         </Button>
+        {onPreview ? (
+          <Button
+            type="button"
+            variant="default"
+            disabled={submitting || previewing}
+            data-alert-setting-preview-action="true"
+            data-alert-setting-preview-action-owner="hertzbeat-ui-button"
+            onClick={preview}
+          >
+            <SearchCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            {previewing ? t('alert.setting.preview.loading') : t('alert.setting.preview.action')}
+          </Button>
+        ) : null}
         <Button type="button" variant="primary" disabled={submitting} onClick={submit}>
           <Save className="h-3.5 w-3.5" aria-hidden="true" />
           {submitting ? t('common.saving') : t('common.save')}
@@ -356,6 +403,44 @@ export function AlertSettingCreateDialog({
               }
               data-alert-setting-save-feedback-detail="backend-message"
             />
+          ) : null}
+          {previewFeedback ? (
+            <div
+              data-alert-setting-preview-feedback={previewFeedback.contract}
+              data-alert-setting-preview-feedback-owner="hertzbeat-ui-inline-feedback"
+              className="space-y-2"
+            >
+              <HzInlineFeedback
+                tone={previewFeedback.tone}
+                title={previewFeedback.title}
+                description={previewFeedback.description}
+                variant="embedded"
+                data-alert-setting-preview-feedback-message={previewFeedback.contract}
+                data-alert-setting-preview-feedback-message-owner="hertzbeat-ui-inline-feedback"
+              />
+              {previewFeedback.rows?.length ? (
+                <div
+                  data-alert-setting-preview-rows="query-result-sample"
+                  data-alert-setting-preview-rows-owner="hertzbeat-ui-inline-preview"
+                  className="overflow-hidden rounded-[3px] border border-[#2b3039] bg-[#0b0d12]"
+                >
+                  {previewFeedback.rows.slice(0, 3).map((row, index) => (
+                    <div
+                      key={index}
+                      data-alert-setting-preview-row={String(index)}
+                      className="grid gap-1 border-t border-[#202633] px-3 py-2 text-[12px] first:border-t-0"
+                    >
+                      {Object.entries(row).slice(0, 6).map(([key, value]) => (
+                        <div key={key} className="grid grid-cols-[minmax(88px,140px)_1fr] gap-2">
+                          <span className="truncate font-semibold text-[#8f99ab]">{key}</span>
+                          <span className="truncate text-[#dbe4f0]">{formatPreviewValue(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           ) : null}
           <label className="grid gap-1.5 text-[12px] font-semibold text-[#a9b0bb]">
             {t('alert.setting.name')}

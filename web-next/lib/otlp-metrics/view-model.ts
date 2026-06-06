@@ -2,9 +2,11 @@ import {
   appendSignalRouteContext,
   buildSignalAlertHandlingHref,
   buildSignalAlertRulesHref,
+  buildSignalDashboardHref,
   buildSignalEntityHref,
   readEntityIdRouteParam,
   stripReturnLabelFromHref,
+  type SignalAlertRuleDraftContext,
   type SignalRouteContext
 } from '../signal-route-context';
 import { buildChartDataZoomTimeContext, type ChartDataZoomRange, type TimeContext } from '../time-context';
@@ -18,8 +20,28 @@ export type OtlpMetricSeriesView = {
   key: string;
   name: string;
   labels: Record<string, string>;
+  description: string;
+  metricType: string;
+  unit: string;
   points: Array<[number, number | null]>;
   latestValue: number | null;
+};
+
+export type OtlpMetricInventorySort = 'name' | 'latest' | 'samples' | 'time-series';
+
+export type OtlpMetricInventoryRow = {
+  title: string;
+  copy?: string;
+  meta?: string;
+  entityLabel?: string;
+  entityMeta?: string;
+  pointCount?: number;
+  sampleCount?: number;
+  timeSeriesCount?: number;
+  description?: string;
+  metricType?: string;
+  unit?: string;
+  series?: OtlpMetricSeriesView | null;
 };
 
 export type OtlpMetricTrendBar = {
@@ -29,6 +51,22 @@ export type OtlpMetricTrendBar = {
   value: number;
   valueLabel: string;
   heightPct: number;
+};
+
+export type OtlpMetricThresholdConfig = {
+  warning?: number;
+  critical?: number;
+  warningLabel: string;
+  criticalLabel: string;
+};
+
+export type OtlpMetricExpectedRangeConfig = {
+  label: string;
+  lowerLabel: string;
+  upperLabel: string;
+  lowerData: Array<[number, number]>;
+  upperGapData: Array<[number, number]>;
+  sampleCount: number;
 };
 
 export type MetricsDataZoomRange = ChartDataZoomRange;
@@ -45,6 +83,21 @@ export type OtlpMetricSeriesEvidenceRow = {
   label: string;
   value: string;
   meta: string;
+};
+
+export type OtlpMetricSeriesSampleRow = {
+  key: string;
+  index: string;
+  timestamp: string;
+  rawTimestamp: string;
+  value: string;
+  state: string;
+};
+
+export type OtlpMetricSeriesAttributeRow = {
+  key: string;
+  name: string;
+  value: string;
 };
 
 export type OtlpMetricSeriesLinkedRecordRow = {
@@ -66,6 +119,53 @@ export type MetricsExplorerState = {
 
 function firstText(...values: Array<string | null | undefined>): string | undefined {
   return values.find((value): value is string => value != null && value.trim() !== '');
+}
+
+function compactAlertDraftValue(value: string | null | undefined, maxLength = 160) {
+  const normalized = value?.trim();
+  if (!normalized) return undefined;
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
+}
+
+export function buildMetricsAlertRuleDraft(
+  query: OtlpMetricsQueryState,
+  routeContext: SignalRouteContext = {},
+  selectedSeries?: OtlpMetricSeriesView | null
+): SignalAlertRuleDraftContext {
+  const metricName = compactAlertDraftValue(query.query || selectedSeries?.name || query.series);
+  const expression = compactAlertDraftValue(query.formula || query.query || selectedSeries?.name || query.series, 240);
+  const parts = [
+    ['query', query.query || selectedSeries?.name],
+    ['series', query.series],
+    ['formula', query.formula],
+    ['filter', query.filter],
+    ['aggregation', query.aggregation],
+    ['groupBy', query.groupBy],
+    ['serviceName', query.serviceName || routeContext.serviceName],
+    ['environment', query.environment || routeContext.environment]
+  ]
+    .map(([key, value]) => {
+      const normalized = compactAlertDraftValue(value);
+      return normalized ? `${key}=${normalized}` : undefined;
+    })
+    .filter((value): value is string => Boolean(value));
+  return {
+    name: metricName ? `${metricName} metric alert` : 'Metric alert',
+    query: parts.join('\n'),
+    queryType: 'metrics',
+    expression,
+    datasource: 'promql'
+  };
+}
+
+function metadataText(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return value.trim() || undefined;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return undefined;
 }
 
 function readSeriesLabel(series: OtlpMetricSeriesView | null | undefined, ...keys: string[]) {
@@ -144,6 +244,7 @@ export function buildMetricSeriesViews(data: OtlpMetricsConsole, t: Translator):
   return (data.results?.frames || [])
     .map((frame, index) => {
       const labels = frame.schema?.labels || {};
+      const meta = frame.schema?.meta || {};
       const name = labels.__name__ || `${t('otlp.metrics.series.fallback')} ${index + 1}`;
       const points = (frame.data || []).map(row => {
         const timestamp = Number(row?.[0]);
@@ -155,6 +256,30 @@ export function buildMetricSeriesViews(data: OtlpMetricsConsole, t: Translator):
         key: `${name}-${index}`,
         name,
         labels,
+        description: firstText(
+          metadataText(meta.description),
+          metadataText(meta.help),
+          labels.description,
+          labels['otel.metric.description'],
+          labels.metric_description
+        ) || '',
+        metricType: firstText(
+          metadataText(meta.metricType),
+          metadataText(meta.type),
+          metadataText(meta.metric_type),
+          labels.metric_type,
+          labels['metric.type'],
+          labels['otel.metric.type'],
+          labels.instrument_type
+        ) || '',
+        unit: firstText(
+          metadataText(meta.unit),
+          metadataText(meta.metricUnit),
+          metadataText(meta.metric_unit),
+          labels.unit,
+          labels['otel.metric.unit'],
+          labels.metric_unit
+        ) || '',
         points,
         latestValue: points.length > 0 ? points[points.length - 1][1] : null,
       };
@@ -162,8 +287,185 @@ export function buildMetricSeriesViews(data: OtlpMetricsConsole, t: Translator):
     .filter(series => series.points.length > 0);
 }
 
-export function buildMetricsChartOption(seriesList: OtlpMetricSeriesView[]): EChartsOption {
+type MetricsFormulaTransform = {
+  operator: '+' | '-' | '*' | '/';
+  operand: number;
+};
+
+function parseMetricsFormula(formula?: string | null): MetricsFormulaTransform | null {
+  const normalized = formula?.trim();
+  if (!normalized) return null;
+  const match = /^(?:A|a|value)\s*([+\-*/])\s*(-?(?:\d+(?:\.\d+)?|\.\d+))$/.exec(normalized);
+  if (!match) return null;
+  const operand = Number(match[2]);
+  if (!Number.isFinite(operand)) return null;
+  if (match[1] === '/' && operand === 0) return null;
+  return {
+    operator: match[1] as MetricsFormulaTransform['operator'],
+    operand
+  };
+}
+
+function applyMetricsFormulaValue(value: number, transform: MetricsFormulaTransform) {
+  switch (transform.operator) {
+    case '+':
+      return value + transform.operand;
+    case '-':
+      return value - transform.operand;
+    case '*':
+      return value * transform.operand;
+    case '/':
+      return value / transform.operand;
+    default:
+      return value;
+  }
+}
+
+export function applyMetricsFormula(
+  seriesList: OtlpMetricSeriesView[],
+  formula?: string | null
+): OtlpMetricSeriesView[] {
+  const transform = parseMetricsFormula(formula);
+  if (!transform) return seriesList;
+  return seriesList.map(series => {
+    const points = series.points.map(([timestamp, value]) => {
+      if (value == null || !Number.isFinite(value)) return [timestamp, null] as [number, number | null];
+      const nextValue = applyMetricsFormulaValue(value, transform);
+      return [timestamp, Number.isFinite(nextValue) ? nextValue : null] as [number, number | null];
+    });
+    return {
+      ...series,
+      points,
+      latestValue: points.length > 0 ? points[points.length - 1][1] : null
+    };
+  });
+}
+
+function buildMetricThresholdMarkLine(thresholds: OtlpMetricThresholdConfig | null | undefined) {
+  if (!thresholds) return undefined;
+  const data = [
+    thresholds.warning == null
+      ? null
+      : {
+          yAxis: thresholds.warning,
+          name: thresholds.warningLabel,
+          lineStyle: { color: '#f2c94c', type: 'dashed', width: 1.5 },
+          label: { color: '#f2c94c', formatter: `${thresholds.warningLabel} {c}` }
+        },
+    thresholds.critical == null
+      ? null
+      : {
+          yAxis: thresholds.critical,
+          name: thresholds.criticalLabel,
+          lineStyle: { color: '#ef6f6c', type: 'dashed', width: 1.5 },
+          label: { color: '#ef6f6c', formatter: `${thresholds.criticalLabel} {c}` }
+        }
+  ].filter((item): item is NonNullable<typeof item> => item != null);
+  if (!data.length) return undefined;
+  return {
+    silent: true,
+    symbol: 'none',
+    data
+  };
+}
+
+function mean(values: number[]) {
+  return values.reduce((total, value) => total + value, 0) / values.length;
+}
+
+function standardDeviation(values: number[], average: number) {
+  if (values.length < 2) return 0;
+  const variance = values.reduce((total, value) => total + Math.pow(value - average, 2), 0) / values.length;
+  return Math.sqrt(variance);
+}
+
+export function buildMetricExpectedRangeConfig(
+  series: OtlpMetricSeriesView | null | undefined,
+  t: Translator
+): OtlpMetricExpectedRangeConfig | null {
+  const points = (series?.points || [])
+    .map(([timestamp, value]) => [timestamp, value] as [number, number | null])
+    .filter(([timestamp, value]) => Number.isFinite(timestamp) && value != null && Number.isFinite(value));
+  if (points.length < 3) return null;
+
+  const lowerData: Array<[number, number]> = [];
+  const upperGapData: Array<[number, number]> = [];
+  points.forEach(([timestamp], index) => {
+    const windowStart = Math.max(0, index - 5);
+    const values = points.slice(windowStart, index + 1).map(([, value]) => value as number);
+    const average = mean(values);
+    const deviation = standardDeviation(values, average);
+    const minimumBand = Math.max(Math.abs(average) * 0.05, 1);
+    const bandWidth = Math.max(deviation * 2, minimumBand);
+    const lower = average - bandWidth;
+    const upper = average + bandWidth;
+    lowerData.push([timestamp, lower]);
+    upperGapData.push([timestamp, Math.max(upper - lower, 0)]);
+  });
+
+  return {
+    label: t('otlp.metrics.expected-range.label'),
+    lowerLabel: t('otlp.metrics.expected-range.lower'),
+    upperLabel: t('otlp.metrics.expected-range.upper'),
+    lowerData,
+    upperGapData,
+    sampleCount: points.length
+  };
+}
+
+function buildMetricExpectedRangeSeries(expectedRange: OtlpMetricExpectedRangeConfig | null | undefined) {
+  if (!expectedRange) return [];
+  const stack = 'otlp-metrics-expected-range';
+  return [
+    {
+      name: expectedRange.lowerLabel,
+      type: 'line',
+      stack,
+      silent: true,
+      showSymbol: false,
+      symbol: 'none',
+      data: expectedRange.lowerData,
+      lineStyle: { opacity: 0 },
+      itemStyle: { opacity: 0 },
+      tooltip: { show: false },
+      z: 0
+    },
+    {
+      name: expectedRange.label,
+      type: 'line',
+      stack,
+      silent: true,
+      showSymbol: false,
+      symbol: 'none',
+      data: expectedRange.upperGapData,
+      lineStyle: { opacity: 0 },
+      itemStyle: { opacity: 0 },
+      areaStyle: { color: 'rgba(96, 165, 250, 0.14)' },
+      tooltip: { show: false },
+      z: 0
+    }
+  ];
+}
+
+function formatMetricLegendName(series: OtlpMetricSeriesView, legendFormat?: string | null) {
+  const format = legendFormat?.trim();
+  if (!format) return series.name;
+  const formatted = format.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_match, rawKey: string) => {
+    const key = String(rawKey).trim();
+    return series.labels[key] ?? series.labels[key.replace(/\./g, '_')] ?? '';
+  }).trim();
+  return formatted || series.name;
+}
+
+export function buildMetricsChartOption(
+  seriesList: OtlpMetricSeriesView[],
+  thresholds?: OtlpMetricThresholdConfig | null,
+  expectedRange?: OtlpMetricExpectedRangeConfig | null,
+  legendFormat?: string | null
+): EChartsOption {
   const hasZoomableSeries = seriesList.some(series => series.points.length > 1);
+  const thresholdMarkLine = buildMetricThresholdMarkLine(thresholds);
+  const expectedRangeSeries = buildMetricExpectedRangeSeries(expectedRange);
   return {
     animation: false,
     backgroundColor: 'transparent',
@@ -239,21 +541,26 @@ export function buildMetricsChartOption(seriesList: OtlpMetricSeriesView[]): ECh
           }
         ]
       : undefined,
-    series: seriesList.slice(0, 6).map(series => ({
-      name: series.name,
-      type: 'line',
-      smooth: true,
-      connectNulls: true,
-      showSymbol: false,
-      symbol: 'circle',
-      lineStyle: {
-        width: 2,
-      },
-      areaStyle: {
-        opacity: 0.08,
-      },
-      data: series.points.map(point => [point[0], point[1] == null ? Number.NaN : point[1]]),
-    })),
+    series: [
+      ...expectedRangeSeries,
+      ...seriesList.slice(0, 6).map((series, index) => ({
+        name: formatMetricLegendName(series, legendFormat),
+        type: 'line',
+        smooth: true,
+        connectNulls: true,
+        showSymbol: false,
+        symbol: 'circle',
+        lineStyle: {
+          width: 2,
+        },
+        areaStyle: {
+          opacity: 0.08,
+        },
+        data: series.points.map(point => [point[0], point[1] == null ? Number.NaN : point[1]]),
+        markLine: index === 0 ? thresholdMarkLine : undefined,
+        z: 2
+      })),
+    ],
   };
 }
 
@@ -269,6 +576,29 @@ export function buildMetricsDataZoomTimeContext(
   );
 }
 
+function readFiniteThresholdValue(value?: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+export function buildMetricThresholdConfig(
+  warningThreshold: string | undefined,
+  criticalThreshold: string | undefined,
+  t: Translator
+): OtlpMetricThresholdConfig | null {
+  const warning = readFiniteThresholdValue(warningThreshold);
+  const critical = readFiniteThresholdValue(criticalThreshold);
+  if (warning == null && critical == null) return null;
+  return {
+    warning,
+    critical,
+    warningLabel: t('otlp.metrics.threshold.warning'),
+    criticalLabel: t('otlp.metrics.threshold.critical')
+  };
+}
+
 export function buildMetricSeriesRows(seriesList: OtlpMetricSeriesView[], t: Translator) {
   return seriesList.map(series => {
     const context = buildMetricSeriesSignalContext(series);
@@ -277,10 +607,73 @@ export function buildMetricSeriesRows(seriesList: OtlpMetricSeriesView[], t: Tra
       title: series.name,
       copy: context.serviceName || t('otlp.metrics.series.unknown-service'),
       meta: series.latestValue == null ? '-' : String(series.latestValue),
+      description: series.description || '-',
+      metricType: series.metricType || '-',
+      unit: series.unit || '-',
+      sampleCount: series.points.length,
+      pointCount: series.points.length,
+      timeSeriesCount: 1,
       entityLabel: context.entityName || entityId || '-',
       entityMeta: entityId ? t('otlp.metrics.series.entity-id', { entityId }) : t('otlp.metrics.series.entity-missing'),
       entityState: entityId ? 'present' : 'missing'
     };
+  });
+}
+
+function buildMetricInventorySearchText(row: OtlpMetricInventoryRow) {
+  const labelText = row.series
+    ? Object.entries(row.series.labels).flatMap(([key, value]) => [key, value])
+    : [];
+  return [
+    row.title,
+    row.copy,
+    row.meta,
+    row.entityLabel,
+    row.entityMeta,
+    row.description,
+    row.metricType,
+    row.unit,
+    row.series?.name,
+    ...labelText
+  ]
+    .filter((value): value is string => typeof value === 'string' && value.trim() !== '')
+    .join(' ')
+    .toLowerCase();
+}
+
+function metricInventoryName(row: OtlpMetricInventoryRow) {
+  return row.title || row.series?.name || '';
+}
+
+function metricInventoryLatestValue(row: OtlpMetricInventoryRow) {
+  const value = row.series?.latestValue ?? Number(row.meta);
+  return Number.isFinite(value) ? value : Number.NEGATIVE_INFINITY;
+}
+
+export function buildMetricInventoryRows<T extends OtlpMetricInventoryRow>(
+  rows: T[],
+  search: string,
+  sort: OtlpMetricInventorySort = 'name'
+): T[] {
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredRows = normalizedSearch
+    ? rows.filter(row => buildMetricInventorySearchText(row).includes(normalizedSearch))
+    : [...rows];
+
+  const compareByName = (left: T, right: T) =>
+    metricInventoryName(left).localeCompare(metricInventoryName(right), undefined, { sensitivity: 'base' });
+
+  return filteredRows.sort((left, right) => {
+    if (sort === 'latest') {
+      return metricInventoryLatestValue(right) - metricInventoryLatestValue(left) || compareByName(left, right);
+    }
+    if (sort === 'samples') {
+      return (right.pointCount ?? 0) - (left.pointCount ?? 0) || compareByName(left, right);
+    }
+    if (sort === 'time-series') {
+      return (right.timeSeriesCount ?? 0) - (left.timeSeriesCount ?? 0) || compareByName(left, right);
+    }
+    return compareByName(left, right);
   });
 }
 
@@ -366,6 +759,44 @@ export function buildMetricSeriesEvidenceRows(
       meta: spanId || (traceId ? t('otlp.metrics.evidence.missing-span') : t('otlp.metrics.evidence.missing-trace-span'))
     }
   ];
+}
+
+export function buildMetricSeriesSampleRows(
+  series: OtlpMetricSeriesView | null | undefined,
+  formatTime: (value?: number | string | null) => string,
+  t: Translator
+): OtlpMetricSeriesSampleRow[] {
+  if (!series) return [];
+  return series.points
+    .filter(([timestamp]) => Number.isFinite(timestamp))
+    .map(([timestamp, value], index) => {
+      const hasValue = value != null && Number.isFinite(value);
+      return {
+        key: `${series.key}:${timestamp}:${index}`,
+        index: String(index + 1),
+        timestamp: formatTime(timestamp),
+        rawTimestamp: String(timestamp),
+        value: hasValue ? String(value) : '-',
+        state: hasValue ? t('otlp.metrics.inspector.sample-state.present') : t('otlp.metrics.inspector.sample-state.empty')
+      };
+    });
+}
+
+export function buildMetricSeriesAttributeRows(
+  series: OtlpMetricSeriesView | null | undefined,
+  search: string
+): OtlpMetricSeriesAttributeRow[] {
+  if (!series) return [];
+  const normalizedSearch = search.trim().toLowerCase();
+  return Object.entries(series.labels)
+    .map(([name, value]) => ({
+      key: name,
+      name,
+      value: value.trim()
+    }))
+    .filter(row => row.value)
+    .filter(row => !normalizedSearch || `${row.name} ${row.value}`.toLowerCase().includes(normalizedSearch))
+    .sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }));
 }
 
 export function buildMetricSeriesLinkedRecordRows(
@@ -515,6 +946,7 @@ export function buildMetricsHandoffLinks(
 
   const entityParams = new URLSearchParams();
   if (serviceName) entityParams.set('search', serviceName);
+  const signalDraft = buildMetricsAlertRuleDraft(query, signalContext, selectedSeries);
 
   return {
     intakeHref: intakeParams.toString() ? `/ingestion/otlp?${intakeParams.toString()}` : '/ingestion/otlp',
@@ -523,6 +955,7 @@ export function buildMetricsHandoffLinks(
     entitiesHref: entityParams.toString() ? `/entities?${entityParams.toString()}` : '/entities',
     entityHref: buildSignalEntityHref(signalContext, serviceName),
     alertHandlingHref: buildSignalAlertHandlingHref('metrics', signalContext),
-    alertRulesHref: buildSignalAlertRulesHref('metrics', signalContext)
+    alertRulesHref: buildSignalAlertRulesHref('metrics', signalContext, signalDraft),
+    dashboardHref: buildSignalDashboardHref('metrics', signalContext, signalDraft)
   };
 }

@@ -129,6 +129,7 @@ import {
   HzSearchFieldFrame,
   HzSearchFieldIcon,
   HzSegmentedTabs,
+  HzSignalSummaryStrip,
   HzSignalTrendBars,
   HzSignalWorkbenchShell,
   HzSelectableRows,
@@ -3736,7 +3737,7 @@ export default function HertzBeatUiLabPage() {
                     data-hz-ui-lab-metrics-chart-title-label="shared"
                     data-metrics-chart-title-label-owner="hertzbeat-ui-panel-title-label"
                   >
-                    Trend band
+                    Time series
                   </HzPanelTitleLabel>
                   <HzActionGroup
                     layout="end-wrap"
@@ -4709,26 +4710,21 @@ export default function HertzBeatUiLabPage() {
             </HzPanelSurface>
             <HzWorkbenchLayout
               as="div"
-              variant="summary-trend"
+              variant="chart-stack"
               data-hz-ui-lab-signal-summary-trend-layout="shared"
               data-signal-summary-trend-layout-owner="hertzbeat-ui-workbench-layout"
               className="border-x-0 border-b border-t-0 p-2 lg:border-r"
             >
-              {[
-                { id: 'total', label: 'Traces', value: 42, tone: 'info' as const },
-                { id: 'errors', label: 'Errors', value: 3, tone: 'warning' as const },
-                { id: 'rows', label: 'Rows', value: 8, tone: 'neutral' as const },
-                { id: 'latest', label: 'Latest', value: 'now', tone: 'success' as const }
-              ].map(item => (
-                <HzStatCell
-                  key={item.id}
-                  label={item.label}
-                  value={item.value}
-                  tone={item.tone}
-                  variant="tile"
-                  data-hz-ui-lab-summary-trend-stat={item.id}
-                />
-              ))}
+              <HzSignalSummaryStrip
+                data-hz-ui-lab-signal-summary-strip="shared"
+                data-signal-summary-strip-owner="hertzbeat-ui-signal-summary-strip"
+                items={[
+                  { id: 'total', label: 'Traces', value: 42, tone: 'info' },
+                  { id: 'errors', label: 'Errors', value: 3, tone: 'warning', trend: '+1' },
+                  { id: 'rows', label: 'Rows', value: 8, tone: 'neutral' },
+                  { id: 'latest', label: 'Latest', value: 'now', tone: 'success' }
+                ]}
+              />
               <HzSignalTrendBars
                 data-hz-ui-lab-summary-trend-bars="shared"
                 title="Trace trend"

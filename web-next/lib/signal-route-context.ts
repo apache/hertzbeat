@@ -35,6 +35,16 @@ export const SIGNAL_ROUTE_CONTEXT_PARAM_KEYS = [
   'source',
   'collector',
   'template',
+  'alertName',
+  'alertQuery',
+  'alertQueryType',
+  'alertExpression',
+  'alertDatasource',
+  'alertTemplate',
+  'panelQuery',
+  'panelQueryType',
+  'panelExpression',
+  'panelDatasource',
   'codeRepo',
   'codeProvider',
   'codePath',
@@ -45,6 +55,15 @@ export const SIGNAL_ROUTE_CONTEXT_PARAM_KEYS = [
 export type SignalRouteContextKey = (typeof SIGNAL_ROUTE_CONTEXT_PARAM_KEYS)[number];
 
 export type SignalRouteContext = Partial<Record<SignalRouteContextKey, string>>;
+
+export type SignalAlertRuleDraftContext = {
+  name?: string;
+  query?: string;
+  queryType?: string;
+  expression?: string;
+  datasource?: string;
+  template?: string;
+};
 
 const SIGNAL_TIME_CONTEXT_PARAM_KEYS = new Set<SignalRouteContextKey>([
   'start',
@@ -316,10 +335,23 @@ export function buildSignalEntityHref(context: SignalRouteContext, fallbackSearc
   return withQuery('/entities', params);
 }
 
-export function buildSignalAlertRulesHref(signal: 'metrics' | 'logs' | 'traces', context: SignalRouteContext) {
+export function buildSignalAlertRulesHref(
+  signal: 'metrics' | 'logs' | 'traces',
+  context: SignalRouteContext,
+  draft?: SignalAlertRuleDraftContext
+) {
   const params = new URLSearchParams();
   params.set('signal', signal);
-  appendSignalRouteContext(params, context);
+  params.set('intent', 'create');
+  appendSignalRouteContext(params, {
+    ...context,
+    alertName: draft?.name || context.alertName,
+    alertQuery: draft?.query || context.alertQuery,
+    alertQueryType: draft?.queryType || context.alertQueryType,
+    alertExpression: draft?.expression || context.alertExpression,
+    alertDatasource: draft?.datasource || context.alertDatasource,
+    alertTemplate: draft?.template || context.alertTemplate
+  });
   return withQuery('/alert/setting', params);
 }
 
@@ -333,6 +365,28 @@ export function buildSignalAlertHandlingHref(signal: 'metrics' | 'logs' | 'trace
   }
   appendSignalRouteContext(params, context);
   return withQuery('/alert', params);
+}
+
+export function buildSignalDashboardHref(
+  signal: 'metrics' | 'logs' | 'traces',
+  context: SignalRouteContext,
+  draft?: SignalAlertRuleDraftContext
+) {
+  const params = new URLSearchParams();
+  params.set('intent', 'add-panel');
+  params.set('signal', signal);
+  const panelTitle = normalizeValue(context.serviceName || context.entityName);
+  if (panelTitle) {
+    params.set('panelTitle', panelTitle);
+  }
+  appendSignalRouteContext(params, {
+    ...context,
+    panelQuery: draft?.query || context.panelQuery,
+    panelQueryType: draft?.queryType || context.panelQueryType,
+    panelExpression: draft?.expression || context.panelExpression,
+    panelDatasource: draft?.datasource || context.panelDatasource
+  });
+  return withQuery('/dashboard', params);
 }
 
 export type SignalEntityContextRow = {

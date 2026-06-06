@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { StageSection, SupportPanel } from '@/components/observability';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
@@ -28,6 +29,13 @@ import { OverviewDetailDialog } from '../../components/overview/overview-detail-
 import { OverviewProblemFocusDialog } from '../../components/overview/overview-problem-focus-dialog';
 import { ThreeSignalDeskShell } from '../../components/pages/three-signal-desk-shell';
 import { buildOverviewSignalDeskHref } from '../../lib/overview/navigation';
+import {
+  appendSignalRouteContext,
+  buildSignalEntityContextRows,
+  readSignalRouteContext,
+  type SearchParamReader,
+  type SignalRouteContext
+} from '../../lib/signal-route-context';
 
 export type OverviewData = {
   summary: DashboardSummary;
@@ -58,6 +66,178 @@ type OverviewRequestState<T> = {
   data: T;
   failed: boolean;
 };
+
+type DashboardPanelDraft = {
+  signal: 'logs' | 'traces' | 'metrics';
+  signalLabelKey: string;
+  panelTitle: string;
+  explorerHref: string;
+  panelQuery?: string;
+  panelQueryType?: string;
+  panelExpression?: string;
+  panelDatasource?: string;
+  context: SignalRouteContext;
+};
+
+export type SavedDashboardPanelDraft = DashboardPanelDraft & {
+  id: string;
+  createdAt: number;
+};
+
+type DashboardPanelDraftStorage = Pick<Storage, 'getItem' | 'setItem'>;
+
+type DashboardPanelDraftQueryRow = {
+  label: string;
+  value: string;
+  meta: string;
+};
+
+export const DASHBOARD_PANEL_DRAFT_STORAGE_KEY = 'hertzbeat.dashboard.panel-drafts';
+const DASHBOARD_PANEL_DRAFT_LIMIT = 6;
+
+const DASHBOARD_DRAFT_SIGNAL_PATHS: Record<DashboardPanelDraft['signal'], string> = {
+  logs: '/log/manage',
+  traces: '/trace/manage',
+  metrics: '/ingestion/otlp/metrics'
+};
+
+const DASHBOARD_DRAFT_SIGNAL_LABEL_KEYS: Record<DashboardPanelDraft['signal'], string> = {
+  logs: 'dashboard.add-panel.signal.logs',
+  traces: 'dashboard.add-panel.signal.traces',
+  metrics: 'dashboard.add-panel.signal.metrics'
+};
+
+function firstRouteText(...values: Array<string | null | undefined>) {
+  return values.find((value): value is string => value != null && value.trim() !== '')?.trim();
+}
+
+function compactDashboardPanelDraftText(value: string | null | undefined) {
+  const normalized = firstRouteText(value);
+  if (!normalized) return undefined;
+  return normalized.length > 240 ? `${normalized.slice(0, 237)}...` : normalized;
+}
+
+function buildDashboardPanelDraftQueryRows(
+  draft: DashboardPanelDraft,
+  t: (key: string, params?: Record<string, string | number | null | undefined>) => string
+): DashboardPanelDraftQueryRow[] {
+  const rows: DashboardPanelDraftQueryRow[] = [];
+  if (draft.panelExpression) {
+    rows.push({
+      label: t('dashboard.add-panel.expression.label'),
+      value: draft.panelExpression,
+      meta: draft.panelDatasource || draft.panelQueryType || t('dashboard.add-panel.expression.meta')
+    });
+  }
+  if (draft.panelQuery) {
+    rows.push({
+      label: t('dashboard.add-panel.query.label'),
+      value: draft.panelQuery,
+      meta: draft.panelQueryType || t('dashboard.add-panel.query.meta')
+    });
+  }
+  return rows;
+}
+
+function readDashboardPanelDraft(searchParams: SearchParamReader): DashboardPanelDraft | null {
+  if (searchParams.get('intent') !== 'add-panel') {
+    return null;
+  }
+  const signal = searchParams.get('signal');
+  if (signal !== 'logs' && signal !== 'traces' && signal !== 'metrics') {
+    return null;
+  }
+
+  const context = readSignalRouteContext(searchParams);
+  const panelQuery = compactDashboardPanelDraftText(context.panelQuery);
+  const panelExpression = compactDashboardPanelDraftText(context.panelExpression);
+  const panelQueryType = firstRouteText(context.panelQueryType);
+  const panelDatasource = firstRouteText(context.panelDatasource);
+  const panelTitle = firstRouteText(searchParams.get('panelTitle'), context.serviceName, context.entityName, signal)
+    || signal;
+  const explorerParams = new URLSearchParams();
+  appendSignalRouteContext(explorerParams, {
+    ...context,
+    returnTo: '/overview'
+  });
+  const explorerQuery = explorerParams.toString();
+
+  return {
+    signal,
+    signalLabelKey: DASHBOARD_DRAFT_SIGNAL_LABEL_KEYS[signal],
+    panelTitle,
+    explorerHref: `${DASHBOARD_DRAFT_SIGNAL_PATHS[signal]}${explorerQuery ? `?${explorerQuery}` : ''}`,
+    panelQuery,
+    panelQueryType,
+    panelExpression,
+    panelDatasource,
+    context
+  };
+}
+
+function isSavedDashboardPanelDraft(value: unknown): value is SavedDashboardPanelDraft {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const candidate = value as Partial<SavedDashboardPanelDraft>;
+  return typeof candidate.id === 'string'
+    && Number.isFinite(candidate.createdAt)
+    && (candidate.signal === 'logs' || candidate.signal === 'traces' || candidate.signal === 'metrics')
+    && typeof candidate.panelTitle === 'string'
+    && typeof candidate.explorerHref === 'string'
+    && (candidate.panelQuery == null || typeof candidate.panelQuery === 'string')
+    && (candidate.panelQueryType == null || typeof candidate.panelQueryType === 'string')
+    && (candidate.panelExpression == null || typeof candidate.panelExpression === 'string')
+    && (candidate.panelDatasource == null || typeof candidate.panelDatasource === 'string')
+    && Boolean(candidate.context)
+    && typeof candidate.context === 'object';
+}
+
+function browserDraftStorage(): DashboardPanelDraftStorage | undefined {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+  return window.localStorage;
+}
+
+export function readSavedDashboardPanelDrafts(storage: DashboardPanelDraftStorage | undefined = browserDraftStorage()) {
+  if (!storage) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(storage.getItem(DASHBOARD_PANEL_DRAFT_STORAGE_KEY) || '[]');
+    return Array.isArray(parsed)
+      ? parsed.filter(isSavedDashboardPanelDraft).slice(0, DASHBOARD_PANEL_DRAFT_LIMIT)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeSavedDashboardPanelDrafts(
+  drafts: SavedDashboardPanelDraft[],
+  storage: DashboardPanelDraftStorage | undefined = browserDraftStorage()
+) {
+  const nextDrafts = drafts.filter(isSavedDashboardPanelDraft).slice(0, DASHBOARD_PANEL_DRAFT_LIMIT);
+  if (storage) {
+    storage.setItem(DASHBOARD_PANEL_DRAFT_STORAGE_KEY, JSON.stringify(nextDrafts));
+  }
+  return nextDrafts;
+}
+
+export function saveDashboardPanelDraft(
+  draft: DashboardPanelDraft,
+  currentDrafts: SavedDashboardPanelDraft[],
+  storage: DashboardPanelDraftStorage | undefined = browserDraftStorage(),
+  now = Date.now()
+) {
+  const savedDraft: SavedDashboardPanelDraft = {
+    ...draft,
+    id: `${draft.signal}:${now}:${draft.panelTitle}`,
+    createdAt: now
+  };
+  return writeSavedDashboardPanelDrafts([savedDraft, ...currentDrafts], storage);
+}
 
 async function loadOverviewRequest<T>(read: () => Promise<T>, fallback: T): Promise<OverviewRequestState<T>> {
   try {
@@ -124,16 +304,21 @@ function problemFocusBadgeVariant(severityTone: 'default' | 'success' | 'warning
 
 export default function OverviewPage() {
   const { t } = useI18n();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [refreshNonce, setRefreshNonce] = React.useState(0);
   const [problemFocusDialogOpen, setProblemFocusDialogOpen] = React.useState(false);
   const [selectedSummaryCard, setSelectedSummaryCard] = React.useState<OverviewSummaryItem | null>(null);
   const [selectedImpactedEntity, setSelectedImpactedEntity] = React.useState<OverviewImpactedItem | null>(null);
+  const [savedDashboardPanelDrafts, setSavedDashboardPanelDrafts] = React.useState<SavedDashboardPanelDraft[]>(
+    readSavedDashboardPanelDrafts
+  );
   const lastReadyOverviewDataRef = React.useRef<OverviewData | null>(null);
   const overviewCacheKey = React.useMemo(
     () => ['overview', OVERVIEW_SUMMARY_URL, OVERVIEW_ALERT_LIST_URL, refreshNonce].join(':'),
     [refreshNonce]
   );
+  const dashboardPanelDraft = React.useMemo(() => readDashboardPanelDraft(searchParams), [searchParams]);
   const load = React.useCallback(async (): Promise<OverviewData> => {
     return queryClient.fetchQuery({
       queryKey: queryKeys.overview.console({
@@ -162,6 +347,13 @@ export default function OverviewPage() {
     setProblemFocusDialogOpen(false);
     setSelectedSummaryCard(null);
     setSelectedImpactedEntity(entity);
+  }
+
+  function saveCurrentDashboardPanelDraft() {
+    if (!dashboardPanelDraft) {
+      return;
+    }
+    setSavedDashboardPanelDrafts(currentDrafts => saveDashboardPanelDraft(dashboardPanelDraft, currentDrafts));
   }
 
   return (
@@ -252,6 +444,12 @@ export default function OverviewPage() {
               description: item.description,
               href: item.route
             }));
+        const dashboardPanelDraftContextRows = dashboardPanelDraft
+          ? [
+              ...buildSignalEntityContextRows(dashboardPanelDraft.context, {}, t),
+              ...buildDashboardPanelDraftQueryRows(dashboardPanelDraft, t)
+            ]
+          : [];
 
         return (
           <>
@@ -308,6 +506,98 @@ export default function OverviewPage() {
                     ) : undefined
                   }
                 />
+
+                {dashboardPanelDraft ? (
+                  <SupportPanel
+                    title={t('dashboard.add-panel.title')}
+                    subtitle={t('dashboard.add-panel.description', {
+                      signal: t(dashboardPanelDraft.signalLabelKey),
+                      title: dashboardPanelDraft.panelTitle
+                    })}
+                    chrome="plain"
+                    expanded
+                  >
+                    <div
+                      className="grid gap-3"
+                      data-overview-dashboard-panel-draft="true"
+                      data-overview-dashboard-panel-draft-signal={dashboardPanelDraft.signal}
+                      data-overview-dashboard-panel-draft-owner="overview-add-panel-intent"
+                    >
+                      <div className="flex flex-wrap items-center gap-2 text-[12px] text-[var(--ops-text-secondary)]">
+                        <span
+                          className="rounded-[3px] border border-[var(--ops-border-color)] px-2 py-1 font-semibold text-[var(--ops-text-primary)]"
+                          data-overview-dashboard-panel-draft-title="true"
+                        >
+                          {dashboardPanelDraft.panelTitle}
+                        </span>
+                        <span data-overview-dashboard-panel-draft-signal-label="true">
+                          {t(dashboardPanelDraft.signalLabelKey)}
+                        </span>
+                      </div>
+                      <div
+                        className="grid gap-2 sm:grid-cols-2"
+                        data-overview-dashboard-panel-draft-context="true"
+                      >
+                        {dashboardPanelDraftContextRows.map(row => (
+                          <div key={`${row.label}:${row.value}`} className="rounded-[3px] border border-[var(--ops-border-color)] px-2.5 py-2">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ops-text-tertiary)]">
+                              {row.label}
+                            </div>
+                            <div className="mt-1 truncate text-[12px] font-semibold text-[var(--ops-text-primary)]">
+                              {row.value}
+                            </div>
+                            <div className="mt-1 truncate text-[11px] text-[var(--ops-text-tertiary)]">
+                              {row.meta}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2" data-overview-dashboard-panel-draft-actions="true">
+                        <OverviewSectionAction
+                          onClick={saveCurrentDashboardPanelDraft}
+                          label={t('dashboard.add-panel.action.save-draft')}
+                          variant="primary"
+                        />
+                        <OverviewSectionAction
+                          href={dashboardPanelDraft.explorerHref}
+                          label={t('dashboard.add-panel.action.open-explorer')}
+                        />
+                        <OverviewSectionAction
+                          href="/alerts"
+                          label={t('dashboard.problem-focus.review-alerts')}
+                        />
+                      </div>
+                      {savedDashboardPanelDrafts.length > 0 ? (
+                        <div
+                          className="grid gap-2"
+                          data-overview-dashboard-panel-draft-list="true"
+                          data-overview-dashboard-panel-draft-list-count={savedDashboardPanelDrafts.length}
+                        >
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ops-text-tertiary)]">
+                            {t('dashboard.add-panel.saved-title')}
+                          </div>
+                          <div className="grid gap-1">
+                            {savedDashboardPanelDrafts.map(savedDraft => (
+                              <Link
+                                key={savedDraft.id}
+                                href={savedDraft.explorerHref}
+                                className="grid gap-0.5 rounded-[3px] border border-[var(--ops-border-color)] px-2.5 py-2 text-[12px] hover:border-[var(--ops-border-strong)]"
+                                data-overview-dashboard-panel-draft-list-item={savedDraft.signal}
+                              >
+                                <span className="font-semibold text-[var(--ops-text-primary)]">
+                                  {savedDraft.panelTitle}
+                                </span>
+                                <span className="text-[11px] text-[var(--ops-text-tertiary)]">
+                                  {t(savedDraft.signalLabelKey)}
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </SupportPanel>
+                ) : null}
 
                 {viewModel.showSetupGuide ? (
                   <SupportPanel title={t('dashboard.empty.title')} subtitle={t('dashboard.empty.copy')} chrome="plain" expanded>

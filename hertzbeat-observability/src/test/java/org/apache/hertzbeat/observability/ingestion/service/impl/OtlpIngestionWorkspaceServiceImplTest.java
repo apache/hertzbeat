@@ -138,6 +138,31 @@ class OtlpIngestionWorkspaceServiceImplTest {
         return METRIC_PROMQL_GROUP_BY + "({" + filter + "})";
     }
 
+    private static String temporalGroupedMetricPromql(String function, String filter) {
+        return METRIC_PROMQL_GROUP_BY + "(" + function + "({" + filter + "}[5m]))";
+    }
+
+    private static List<DatasourceQueryData.SchemaData> metricFrames(int count) {
+        List<DatasourceQueryData.SchemaData> frames = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            frames.add(new DatasourceQueryData.SchemaData(
+                    new DatasourceQueryData.MetricSchema(
+                            List.of(
+                                    new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                    new DatasourceQueryData.MetricField("__value__", "number", null)
+                            ),
+                            Map.of(
+                                    "__name__", "http_server_request_duration_count",
+                                    "service_name", "service-" + index
+                            ),
+                            Map.of()
+                    ),
+                    Collections.singletonList(new Object[] {1000L, (double) index})
+            ));
+        }
+        return frames;
+    }
+
     @Test
     void overviewAggregatesSignalStatusAndServiceCount() {
         LogEntry logEntry = LogEntry.builder()
@@ -617,6 +642,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -635,6 +661,311 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 anyLong(),
                 anyString()
         );
+    }
+
+    @Test
+    void metricsConsoleAddsSafeLabelMatchersFromFilterToGeneratedPromql() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                2_000L,
+                "http_server_request_duration_count",
+                "sum",
+                "1",
+                14.0,
+                Map.of("span.kind", "server", "http.route", "/checkout/{id}")
+        );
+        String expectedQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
+                + "span_kind=\"server\", http_route=~\"/checkout.*\"");
+        DatasourceQueryData emptyQueryData = new DatasourceQueryData("otlp-metrics-console", 200, null, List.of());
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> promqlSuccess(emptyQueryData));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                null,
+                "span.kind=\"server\" and http.route=~\"/checkout.*\"",
+                null,
+                null
+        );
+
+        assertEquals(expectedQuery, console.getQuery());
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-metrics-console"),
+                eq(expectedQuery),
+                anyLong(),
+                anyLong(),
+                anyString()
+        );
+    }
+
+    @Test
+    void metricsConsoleAppliesFilterWhenQueryIsExplicitMetricName() {
+        String expectedQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
+                + "http_route=\"/checkout\"");
+        DatasourceQueryData emptyQueryData = new DatasourceQueryData("otlp-metrics-console", 200, null, List.of());
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> promqlSuccess(emptyQueryData));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "http.server.request.duration.count",
+                "http.route=\"/checkout\"",
+                null,
+                null
+        );
+
+        assertEquals(expectedQuery, console.getQuery());
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-metrics-console"),
+                eq(expectedQuery),
+                anyLong(),
+                anyLong(),
+                anyString()
+        );
+    }
+
+    @Test
+    void metricsConsoleAppliesTemporalAggregationWhenQueryIsSimpleMetricName() {
+        String expectedQuery = temporalGroupedMetricPromql("rate", "__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
+                + "http_route=\"/checkout\"");
+        DatasourceQueryData emptyQueryData = new DatasourceQueryData("otlp-metrics-console", 200, null, List.of());
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> promqlSuccess(emptyQueryData));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "http.server.request.duration.count",
+                "http.route=\"/checkout\"",
+                null,
+                null,
+                "rate",
+                "60",
+                null
+        );
+
+        assertEquals(expectedQuery, console.getQuery());
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-metrics-console"),
+                eq(expectedQuery),
+                anyLong(),
+                anyLong(),
+                eq("60s")
+        );
+    }
+
+    @Test
+    void metricsConsoleAppliesSeriesLimitToReturnedFramesAndStats() {
+        DatasourceQueryData queryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                List.of(
+                        new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of("__name__", "http_server_request_duration_count", "service_name", "checkout"),
+                                        Map.of()
+                                ),
+                                Collections.singletonList(new Object[] {1000L, 12.0})
+                        ),
+                        new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of("__name__", "http_server_request_duration_count", "service_name", "billing"),
+                                        Map.of()
+                                ),
+                                Collections.singletonList(new Object[] {1000L, 9.0})
+                        )
+                )
+        );
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenReturn(promqlSuccess(queryData));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "http.server.request.duration.count",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "1"
+        );
+
+        assertEquals(1, console.getResults().getFrames().size());
+        assertEquals("checkout", console.getResults().getFrames().get(0).getSchema().getLabels().get("service_name"));
+        assertEquals(1, console.getStats().getTotalSeries());
+        assertEquals(1, console.getStats().getNonEmptySeries());
+    }
+
+    @Test
+    void metricsConsoleAppliesDefaultSeriesLimitWhenLimitMissing() {
+        DatasourceQueryData queryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                metricFrames(101)
+        );
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenReturn(promqlSuccess(queryData));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "http.server.request.duration.count",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertEquals(100, console.getResults().getFrames().size());
+        assertEquals(100, console.getStats().getTotalSeries());
+        assertEquals("service-99", console.getResults().getFrames().get(99).getSchema().getLabels().get("service_name"));
+    }
+
+    @Test
+    void metricsConsoleCapsOversizedSeriesLimit() {
+        DatasourceQueryData queryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                metricFrames(101)
+        );
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenReturn(promqlSuccess(queryData));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "http.server.request.duration.count",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "50000"
+        );
+
+        assertEquals(100, console.getResults().getFrames().size());
+        assertEquals(100, console.getStats().getTotalSeries());
+        assertEquals("service-99", console.getResults().getFrames().get(99).getSchema().getLabels().get("service_name"));
+    }
+
+    @Test
+    void metricsConsoleNormalizesZeroSeriesLimitToDefault() {
+        DatasourceQueryData queryData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                metricFrames(101)
+        );
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenReturn(promqlSuccess(queryData));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "http.server.request.duration.count",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "0"
+        );
+
+        assertEquals(100, console.getResults().getFrames().size());
+        assertEquals(100, console.getStats().getTotalSeries());
     }
 
     @Test
@@ -679,6 +1010,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 null,
                 1000L,
                 2000L,
+                null,
                 null,
                 null,
                 null,
@@ -762,6 +1094,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -830,6 +1163,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -893,6 +1227,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 null,
                 1000L,
                 2000L,
+                null,
                 null,
                 null,
                 null,
@@ -971,6 +1306,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 "demo",
                 null,
                 null,
+                null,
                 null
         );
 
@@ -1041,6 +1377,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 "checkout",
                 "hertzbeat-demo",
                 "demo",
+                null,
                 null,
                 null,
                 null
@@ -1121,6 +1458,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 "checkout",
                 "hertzbeat-demo",
                 "demo",
+                null,
                 null,
                 null,
                 null
@@ -1209,6 +1547,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 "checkout",
                 "storefront",
                 "demo",
+                null,
                 null,
                 null,
                 null

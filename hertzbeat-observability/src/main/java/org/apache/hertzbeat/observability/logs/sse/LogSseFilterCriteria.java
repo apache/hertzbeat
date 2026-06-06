@@ -82,6 +82,15 @@ public class LogSseFilterCriteria {
     @Schema(description = "A unique identifier for a span.", example = "1234567890", accessMode = READ_WRITE)
     private String spanId;
 
+    @Schema(description = "OTel service.name resource attribute.", example = "checkout", accessMode = READ_WRITE)
+    private String serviceName;
+
+    @Schema(description = "OTel service.namespace resource attribute.", example = "payments", accessMode = READ_WRITE)
+    private String serviceNamespace;
+
+    @Schema(description = "OTel deployment.environment.name resource attribute.", example = "prod", accessMode = READ_WRITE)
+    private String environment;
+
     /**
      * Workspace boundary captured from the authenticated request.
      */
@@ -139,7 +148,24 @@ public class LogSseFilterCriteria {
         if (StringUtils.hasText(spanId) && !spanId.equalsIgnoreCase(log.getSpanId())) {
             return false;
         }
+        if (!matchesServiceContext(log)) {
+            return false;
+        }
         return true;
+    }
+
+    private boolean matchesServiceContext(LogEntry log) {
+        return matchesOptionalValue(resolveValue(log, "service.name", "service_name"), serviceName)
+                && matchesOptionalValue(resolveValue(log, "service.namespace", "service_namespace"), serviceNamespace)
+                && matchesOptionalValue(resolveValue(log,
+                        "deployment.environment.name", "deployment_environment_name", "environment"), environment);
+    }
+
+    private boolean matchesOptionalValue(String actualValue, String expectedValue) {
+        if (!StringUtils.hasText(expectedValue)) {
+            return true;
+        }
+        return StringUtils.hasText(actualValue) && expectedValue.trim().equalsIgnoreCase(actualValue);
     }
 
     private boolean matchesWorkspace(LogEntry log) {
@@ -152,6 +178,30 @@ public class LogSseFilterCriteria {
             return AuthTokenScopes.DEFAULT_WORKSPACE_ID.equals(normalizedWorkspaceId);
         }
         return normalizedWorkspaceId.equals(AuthTokenScopes.normalizeWorkspaceId(logWorkspaceId));
+    }
+
+    private String resolveValue(LogEntry log, String... keys) {
+        if (log == null || keys == null || keys.length == 0) {
+            return null;
+        }
+        String value = resolveValue(log.getResource(), keys);
+        if (!StringUtils.hasText(value)) {
+            value = resolveValue(log.getAttributes(), keys);
+        }
+        return value;
+    }
+
+    private String resolveValue(Map<String, Object> source, String... keys) {
+        if (source == null || source.isEmpty()) {
+            return null;
+        }
+        for (String key : keys) {
+            Object value = source.get(key);
+            if (value != null && StringUtils.hasText(String.valueOf(value))) {
+                return String.valueOf(value).trim();
+            }
+        }
+        return null;
     }
 
     private String resolveWorkspaceId(Map<String, Object> resource) {

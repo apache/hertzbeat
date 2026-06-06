@@ -67,7 +67,8 @@ class TraceQueryControllerTest {
                 Map.of("service.name", "checkout")
         );
         when(entityTraceQueryService.queryTraceList(
-                1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod", 2, 50, true))
+                1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
+                "service.version=1.2.3", "GET /checkout", 100L, 500L, 2, 50, true, null))
                 .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(2, 50), 1));
 
         mockMvc.perform(get("/api/traces/list")
@@ -79,6 +80,10 @@ class TraceQueryControllerTest {
                         .param("serviceName", "checkout")
                         .param("serviceNamespace", "commerce")
                         .param("environment", "prod")
+                        .param("resourceFilter", "service.version=1.2.3")
+                        .param("operationName", "GET /checkout")
+                        .param("minDurationMs", "100")
+                        .param("maxDurationMs", "500")
                         .param("hideInternal", "true")
                         .param("pageIndex", "2")
                         .param("pageSize", "50"))
@@ -88,14 +93,54 @@ class TraceQueryControllerTest {
                 .andExpect(jsonPath("$.data.content[0].serviceName").value("checkout"));
 
         verify(entityTraceQueryService).queryTraceList(
-                1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod", 2, 50, true);
+                1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
+                "service.version=1.2.3", "GET /checkout", 100L, 500L, 2, 50, true, null);
+    }
+
+    @Test
+    void shouldForwardSpanScopeToTraceListQuery() throws Exception {
+        TraceListItemDto item = new TraceListItemDto(
+                "trace-entry",
+                "span-entry",
+                "checkout",
+                "commerce",
+                "POST /checkout",
+                2_000_000L,
+                "STATUS_CODE_OK",
+                1_710_000_000_000L,
+                0,
+                Map.of("service.name", "checkout")
+        );
+        when(entityTraceQueryService.queryTraceList(
+                null, 100L, 200L, null, false, "checkout", null, "prod",
+                null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint"))
+                .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(0, 20), 1));
+
+        mockMvc.perform(get("/api/traces/list")
+                        .param("start", "100")
+                        .param("end", "200")
+                        .param("errorOnly", "false")
+                        .param("serviceName", "checkout")
+                        .param("environment", "prod")
+                        .param("operationName", "POST /checkout")
+                        .param("minDurationMs", "100")
+                        .param("maxDurationMs", "500")
+                        .param("spanScope", "entrypoint"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.content[0].traceId").value("trace-entry"));
+
+        verify(entityTraceQueryService).queryTraceList(
+                null, 100L, 200L, null, false, "checkout", null, "prod",
+                null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint");
     }
 
     @Test
     void shouldForwardHideInternalFilterToTraceOverviewQuery() throws Exception {
         TraceOverviewDto overview = new TraceOverviewDto(2, 1, 1_710_000_000_000L, true);
         when(entityTraceQueryService.getTraceOverview(
-                9L, 100L, 200L, "trace-9", false, "payments", "core", "stage", true))
+                9L, 100L, 200L, "trace-9", false, "payments", "core", "stage",
+                "service.version=2.0.0", "POST /pay", 200L, 900L, true, null))
                 .thenReturn(overview);
 
         mockMvc.perform(get("/api/traces/stats/overview")
@@ -107,6 +152,10 @@ class TraceQueryControllerTest {
                         .param("serviceName", "payments")
                         .param("serviceNamespace", "core")
                         .param("environment", "stage")
+                        .param("resourceFilter", "service.version=2.0.0")
+                        .param("operationName", "POST /pay")
+                        .param("minDurationMs", "200")
+                        .param("maxDurationMs", "900")
                         .param("hideInternal", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
@@ -115,6 +164,86 @@ class TraceQueryControllerTest {
                 .andExpect(jsonPath("$.data.hasActiveTrace").value(true));
 
         verify(entityTraceQueryService).getTraceOverview(
-                9L, 100L, 200L, "trace-9", false, "payments", "core", "stage", true);
+                9L, 100L, 200L, "trace-9", false, "payments", "core", "stage",
+                "service.version=2.0.0", "POST /pay", 200L, 900L, true, null);
+    }
+
+    @Test
+    void shouldForwardSpanScopeToTraceOverviewQuery() throws Exception {
+        TraceOverviewDto overview = new TraceOverviewDto(3, 0, 1_710_000_000_000L, true);
+        when(entityTraceQueryService.getTraceOverview(
+                null, 100L, 200L, null, false, "checkout", null, "prod",
+                null, "POST /checkout", 100L, 500L, null, "entrypoint"))
+                .thenReturn(overview);
+
+        mockMvc.perform(get("/api/traces/stats/overview")
+                        .param("start", "100")
+                        .param("end", "200")
+                        .param("errorOnly", "false")
+                        .param("serviceName", "checkout")
+                        .param("environment", "prod")
+                        .param("operationName", "POST /checkout")
+                        .param("minDurationMs", "100")
+                        .param("maxDurationMs", "500")
+                        .param("spanScope", "entrypoint"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.totalTraceCount").value(3));
+
+        verify(entityTraceQueryService).getTraceOverview(
+                null, 100L, 200L, null, false, "checkout", null, "prod",
+                null, "POST /checkout", 100L, 500L, null, "entrypoint");
+    }
+
+    @Test
+    void shouldForwardTraceGroupByStatsFiltersToService() throws Exception {
+        Map<String, Object> result = Map.of(
+                "groupBy", "resource:service.version",
+                "groups", List.of(Map.of(
+                        "value", "1.2.3",
+                        "traceCount", 12L,
+                        "errorTraceCount", 2L,
+                        "latencyAvgMs", 84.5d,
+                        "latencyP95Ms", 210.0d
+                ))
+        );
+        when(entityTraceQueryService.getTraceGroupByStats(
+                3L, 100L, 200L, "trace-3", true, "checkout", "commerce", "prod",
+                "host.name=checkout-1", "GET /checkout", 100L, 500L,
+                "resource:service.version", 7, "latency-p95-desc", 5, true, "entrypoint"))
+                .thenReturn(result);
+
+        mockMvc.perform(get("/api/traces/stats/group-by")
+                        .param("entityId", "3")
+                        .param("start", "100")
+                        .param("end", "200")
+                        .param("traceId", "trace-3")
+                        .param("errorOnly", "true")
+                        .param("serviceName", "checkout")
+                        .param("serviceNamespace", "commerce")
+                        .param("environment", "prod")
+                        .param("resourceFilter", "host.name=checkout-1")
+                        .param("operationName", "GET /checkout")
+                        .param("minDurationMs", "100")
+                        .param("maxDurationMs", "500")
+                        .param("groupBy", "resource:service.version")
+                        .param("limit", "7")
+                        .param("orderBy", "latency-p95-desc")
+                        .param("minCount", "5")
+                        .param("spanScope", "entrypoint")
+                        .param("hideInternal", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.groupBy").value("resource:service.version"))
+                .andExpect(jsonPath("$.data.groups[0].value").value("1.2.3"))
+                .andExpect(jsonPath("$.data.groups[0].traceCount").value(12))
+                .andExpect(jsonPath("$.data.groups[0].errorTraceCount").value(2))
+                .andExpect(jsonPath("$.data.groups[0].latencyAvgMs").value(84.5))
+                .andExpect(jsonPath("$.data.groups[0].latencyP95Ms").value(210.0));
+
+        verify(entityTraceQueryService).getTraceGroupByStats(
+                3L, 100L, 200L, "trace-3", true, "checkout", "commerce", "prod",
+                "host.name=checkout-1", "GET /checkout", 100L, 500L,
+                "resource:service.version", 7, "latency-p95-desc", 5, true, "entrypoint");
     }
 }

@@ -25,7 +25,9 @@ import org.apache.hertzbeat.base.dao.LabelDao;
 import org.apache.hertzbeat.base.service.LabelService;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,6 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
@@ -204,6 +207,51 @@ class AlertDefineServiceTest {
 
         assertEquals(1, result.size());
         assertEquals(0.2D, result.get(0).get("__value__"));
+    }
+
+    @Test
+    void getDefinePreviewValidatesRealtimeLogExpression() {
+        HistoryDataReader historyDataReader = Mockito.mock(HistoryDataReader.class);
+        ReflectionTestUtils.setField(this.alertDefineService, "historyDataReaders", List.of(historyDataReader));
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(
+                any(), any(), any(), any(), any(), any(), any(), eq(0), eq(50)))
+                .thenReturn(List.of(
+                        LogEntry.builder()
+                                .timeUnixNano(1710000000000000000L)
+                                .severityText("INFO")
+                                .body("checkout started")
+                                .build(),
+                        LogEntry.builder()
+                                .timeUnixNano(1710000001000000000L)
+                                .severityText("ERROR")
+                                .body("checkout timeout")
+                                .traceId("trace-1")
+                                .spanId("span-1")
+                                .build()
+                ));
+
+        List<Map<String, Object>> result = alertDefineService.getDefinePreview(
+                "jexl",
+                LOG_ALERT_THRESHOLD_TYPE_REALTIME,
+                "log.severityText == 'ERROR' && contains(log.body, 'timeout')");
+
+        assertEquals(1, result.size());
+        assertEquals("log_sample", result.get(0).get("preview_mode"));
+        assertEquals(LOG_ALERT_THRESHOLD_TYPE_REALTIME, result.get(0).get("type"));
+        assertEquals("ERROR", result.get(0).get("severityText"));
+        assertEquals("checkout timeout", result.get(0).get("body"));
+        assertEquals("trace-1", result.get(0).get("traceId"));
+    }
+
+    @Test
+    void getDefinePreviewRejectsInvalidRealtimeLogExpression() {
+        AlertExpressionException exception = assertThrows(AlertExpressionException.class,
+                () -> alertDefineService.getDefinePreview(
+                        "jexl",
+                        LOG_ALERT_THRESHOLD_TYPE_REALTIME,
+                        "log.severityText =="));
+
+        assertTrue(exception.getMessage().startsWith("Realtime alert expression is invalid:"));
     }
 
     @Test

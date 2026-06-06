@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.observability.traces.service;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.common.observability.model.ObservedEntityContext;
 import org.apache.hertzbeat.common.observability.dto.trace.EntityTraceQueryHintDto;
 import org.apache.hertzbeat.common.observability.dto.trace.EntityTraceSummaryDto;
@@ -47,6 +48,25 @@ public interface EntityTraceQueryService {
                                           String serviceName, String serviceNamespace, String environment,
                                           int pageIndex, int pageSize, Boolean hideInternal);
 
+    Page<TraceListItemDto> queryTraceList(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                          String serviceName, String serviceNamespace, String environment,
+                                          String operationName, Long minDurationMs, Long maxDurationMs,
+                                          int pageIndex, int pageSize, Boolean hideInternal);
+
+    Page<TraceListItemDto> queryTraceList(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                          String serviceName, String serviceNamespace, String environment,
+                                          String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
+                                          int pageIndex, int pageSize, Boolean hideInternal);
+
+    default Page<TraceListItemDto> queryTraceList(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                                  String serviceName, String serviceNamespace, String environment,
+                                                  String resourceFilter, String operationName, Long minDurationMs,
+                                                  Long maxDurationMs, int pageIndex, int pageSize, Boolean hideInternal,
+                                                  String spanScope) {
+        return queryTraceList(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal);
+    }
+
     TraceDetailDto getTraceDetail(Long entityId, String traceId);
 
     List<TraceSpanNodeDto> getTraceSpans(Long entityId, String traceId);
@@ -58,4 +78,37 @@ public interface EntityTraceQueryService {
 
     TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
                                       String serviceName, String serviceNamespace, String environment, Boolean hideInternal);
+
+    TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                      String serviceName, String serviceNamespace, String environment,
+                                      String operationName, Long minDurationMs, Long maxDurationMs, Boolean hideInternal);
+
+    TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                      String serviceName, String serviceNamespace, String environment,
+                                      String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
+                                      Boolean hideInternal);
+
+    default TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                              String serviceName, String serviceNamespace, String environment,
+                                              String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
+                                              Boolean hideInternal, String spanScope) {
+        return getTraceOverview(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal);
+    }
+
+    Map<String, Object> getTraceGroupByStats(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                             String serviceName, String serviceNamespace, String environment,
+                                             String resourceFilter, String operationName, Long minDurationMs,
+                                             Long maxDurationMs, String groupBy, Integer limit, String orderBy,
+                                             Integer minCount, Boolean hideInternal);
+
+    default Map<String, Object> getTraceGroupByStats(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                                     String serviceName, String serviceNamespace, String environment,
+                                                     String resourceFilter, String operationName, Long minDurationMs,
+                                                     Long maxDurationMs, String groupBy, Integer limit, String orderBy,
+                                                     Integer minCount, Boolean hideInternal, String spanScope) {
+        return getTraceGroupByStats(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace,
+                environment, resourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy,
+                minCount, hideInternal);
+    }
 }

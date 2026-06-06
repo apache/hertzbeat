@@ -13,14 +13,16 @@ import {
   AlertSettingCreateDialog,
   buildAlertSettingDraftFromDefine,
   createDefaultAlertSettingDraft,
+  type AlertSettingCreateDraft,
   type AlertSettingCreateKind,
   type AlertSettingCreateMode,
-  type AlertSettingCreatePayload
+  type AlertSettingCreatePayload,
+  type AlertSettingCreatePreviewFeedback
 } from '../../../components/pages/alert-setting-create-dialog';
 import { HzConfirmDialog } from '../../../components/ui/hz-confirm-dialog';
 import { useI18n } from '../../../components/providers/i18n-provider';
 import { getCurrentLocale } from '../../../lib/api-client';
-import { api } from '../../../lib/alert-api-facade';
+import { api, type AlertDefinePreviewRow } from '../../../lib/alert-api-facade';
 import {
   buildAlertDefineExportUrl,
   buildAlertDefineImportUrl,
@@ -39,6 +41,7 @@ import {
   type AlertSettingRouteState
 } from '../../../lib/alert-setting/query-state';
 import { formatTime } from '../../../lib/format';
+import type { SignalRouteContext } from '../../../lib/signal-route-context';
 
 type SettingDeleteRequest = {
   kind: 'single' | 'batch';
@@ -62,8 +65,49 @@ type AlertSettingSaveFeedback = {
 const ALERT_SETTING_SETTLED_CACHE_TTL_MS = 10_000;
 const EMPTY_ALERT_SETTING_ROUTE_STATE: AlertSettingRouteState = {
   signal: null,
+  createIntent: null,
   signalContext: {}
 };
+
+export function buildAlertSettingCreateDraftSeed(
+  signal: string | null | undefined,
+  labelsText: string,
+  context: SignalRouteContext = {}
+): Partial<AlertSettingCreateDraft> {
+  const seed: Partial<AlertSettingCreateDraft> = { labelsText };
+  const name = context.alertName?.trim();
+  const expression = context.alertExpression?.trim();
+  const datasource = context.alertDatasource?.trim();
+  const template = context.alertTemplate?.trim();
+  if (name) seed.name = name;
+  if (expression) seed.expr = expression;
+  if (datasource) seed.datasource = datasource;
+  if (template) seed.template = template;
+  if (signal === 'logs') {
+    return { ...seed, kind: 'realtime', dataType: 'log' };
+  }
+  if (signal === 'metrics') {
+    return { ...seed, kind: 'realtime', dataType: 'metric' };
+  }
+  if (signal === 'traces') {
+    return { ...seed, kind: 'periodic', dataType: 'trace' };
+  }
+  return seed;
+}
+
+export function resolveAlertSettingInitialCreateMode(
+  signal: string | null | undefined,
+  createIntent: AlertSettingRouteState['createIntent'],
+  draftSeed: Partial<AlertSettingCreateDraft>
+): AlertSettingCreateMode | 'closed' {
+  if (createIntent !== 'create') {
+    return 'closed';
+  }
+  if ((signal === 'metrics' || signal === 'logs' || signal === 'traces') && draftSeed.expr?.trim()) {
+    return 'authoring';
+  }
+  return 'type';
+}
 
 function resolveDownloadFilename(contentDisposition: string | null, fallbackName: string) {
   const match = contentDisposition?.match(/filename\*?=(?:UTF-8'')?("?)([^";]+)\1/i);
@@ -78,10 +122,14 @@ function resolveDownloadFilename(contentDisposition: string | null, fallbackName
 export default function AlertSettingPage({ initialRouteState }: { initialRouteState?: AlertSettingRouteState } = {}) {
   const { t } = useI18n();
   const alertSettingRouteState = initialRouteState ?? EMPTY_ALERT_SETTING_ROUTE_STATE;
-  const { signal, signalContext } = alertSettingRouteState;
+  const { signal, createIntent, signalContext } = alertSettingRouteState;
   const evidenceContext = useMemo(
     () => buildAlertSettingEvidenceContext(signal, signalContext, t),
     [signal, signalContext, t]
+  );
+  const initialCreateDraftSeed = useMemo(
+    () => buildAlertSettingCreateDraftSeed(signal, evidenceContext?.labelsText || '', signalContext),
+    [signal, evidenceContext, signalContext]
   );
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
@@ -89,9 +137,13 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
   const [pageSize, setPageSize] = useState(8);
   const [refreshKey, setRefreshKey] = useState(0);
   const [checkedIds, setCheckedIds] = useState<number[]>([]);
-  const [createMode, setCreateMode] = useState<AlertSettingCreateMode | 'closed'>('closed');
-  const [createDraft, setCreateDraft] = useState(() => createDefaultAlertSettingDraft('realtime'));
+  const [createMode, setCreateMode] = useState<AlertSettingCreateMode | 'closed'>(
+    () => resolveAlertSettingInitialCreateMode(signal, createIntent, initialCreateDraftSeed)
+  );
+  const [createDraft, setCreateDraft] = useState(() => createDefaultAlertSettingDraft(initialCreateDraftSeed.kind || 'realtime', initialCreateDraftSeed));
   const [creating, setCreating] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const [previewFeedback, setPreviewFeedback] = useState<AlertSettingCreatePreviewFeedback | null>(null);
   const [deleteRequest, setDeleteRequest] = useState<SettingDeleteRequest | null>(null);
   const [deletePending, setDeletePending] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -124,7 +176,9 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
 
   function openTypeSelection() {
     setSaveFeedback(null);
-    setCreateDraft(createDefaultAlertSettingDraft('realtime', { labelsText: evidenceContext?.labelsText || '' }));
+    setPreviewFeedback(null);
+    const draftSeed = buildAlertSettingCreateDraftSeed(signal, evidenceContext?.labelsText || '', signalContext);
+    setCreateDraft(createDefaultAlertSettingDraft(draftSeed.kind || 'realtime', draftSeed));
     setCreateMode('type');
   }
 
@@ -132,12 +186,68 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
     setCreateMode('closed');
     setCreating(false);
     setSaveFeedback(null);
+    setPreviewing(false);
+    setPreviewFeedback(null);
   }
 
   function selectCreateType(kind: AlertSettingCreateKind) {
     setSaveFeedback(null);
+    setPreviewFeedback(null);
     setCreateDraft(current => createDefaultAlertSettingDraft(kind, current));
     setCreateMode('authoring');
+  }
+
+  function updateCreateDraft(nextDraft: AlertSettingCreateDraft) {
+    setPreviewFeedback(null);
+    setCreateDraft(nextDraft);
+  }
+
+  function buildPreviewSuccessFeedback(rows: AlertDefinePreviewRow[]): AlertSettingCreatePreviewFeedback {
+    if (rows.length === 0) {
+      return {
+        tone: 'warning',
+        title: t('alert.setting.preview.empty.title'),
+        description: t('alert.setting.preview.empty.description'),
+        rows,
+        contract: 'empty'
+      };
+    }
+    return {
+      tone: 'success',
+      title: t('alert.setting.preview.success.title', { count: rows.length }),
+      description: t('alert.setting.preview.success.description'),
+      rows,
+      contract: 'success'
+    };
+  }
+
+  async function previewCreate(payload: AlertSettingCreatePayload) {
+    setSaveFeedback(null);
+    const supportsPreview = payload.type.startsWith('periodic_') || payload.type === 'realtime_log';
+    if (!supportsPreview) {
+      setPreviewFeedback({
+        tone: 'warning',
+        title: t('alert.setting.preview.unsupported.title'),
+        description: t('alert.setting.preview.unsupported.description'),
+        contract: 'unsupported'
+      });
+      return;
+    }
+    setPreviewing(true);
+    setPreviewFeedback(null);
+    try {
+      const rows = await api.alertSettings.preview(payload.datasource, payload.type, payload.expr);
+      setPreviewFeedback(buildPreviewSuccessFeedback(rows));
+    } catch (error) {
+      setPreviewFeedback({
+        tone: 'critical',
+        title: t('alert.setting.preview.failed.title'),
+        description: error instanceof Error ? error.message : undefined,
+        contract: 'failed'
+      });
+    } finally {
+      setPreviewing(false);
+    }
   }
 
   async function submitCreate(payload: AlertSettingCreatePayload) {
@@ -374,6 +484,7 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
         async function handleEdit(defineId: number) {
           const define = await loadAlertDefineDetailFromFacade(api.alertSettings.detail, defineId);
           setSaveFeedback(null);
+          setPreviewFeedback(null);
           setCreateDraft(buildAlertSettingDraftFromDefine(define));
           setCreateMode('authoring');
         }
@@ -444,12 +555,18 @@ export default function AlertSettingPage({ initialRouteState }: { initialRouteSt
               draft={createDraft}
               submitting={creating}
               saveFeedback={saveFeedback}
+              previewing={previewing}
+              previewFeedback={previewFeedback}
               evidenceReturnHref={evidenceContext?.returnHref}
               onClose={closeCreateFlow}
               onSelectType={selectCreateType}
-              onDraftChange={setCreateDraft}
-              onBackToType={() => setCreateMode('type')}
+              onDraftChange={updateCreateDraft}
+              onBackToType={() => {
+                setPreviewFeedback(null);
+                setCreateMode('type');
+              }}
               onSubmit={submitCreate}
+              onPreview={previewCreate}
             />
             <div data-alert-delete-confirm={deleteRequest ? 'open' : 'closed'}>
               <HzConfirmDialog

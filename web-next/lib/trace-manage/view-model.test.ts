@@ -4,7 +4,9 @@ import {
   buildSelectedSpanEventRows,
   buildSelectedSpanFacts,
   buildSelectedSpanLinkRows,
+  buildTraceAttributeRows,
   buildTraceCodeNavigationUrl,
+  buildTraceAlertRuleDraft,
   buildTraceAttributionDiagnostics,
   buildTraceExplorerRows,
   buildTraceExplorerState,
@@ -43,6 +45,7 @@ describe('trace view model', () => {
         service: 'checkout',
         namespace: 'payments',
         duration: '420ms',
+        durationMs: '420',
         status: 'ERROR',
         statusTone: 'danger',
         startTime: '2026-04-16 22:00:00'
@@ -267,6 +270,36 @@ describe('trace view model', () => {
     ]);
   });
 
+  it('builds selected span attribute rows with stable sorting and readable values', () => {
+    expect(
+      buildTraceAttributeRows(
+        {
+          'http.route': '/checkout/:id',
+          'db.statement': 'select * from orders',
+          'messaging.retry': 2,
+          'array.value': ['a', 'b'],
+          'object.value': { nested: true }
+        } as any,
+        t('trace.manage.drawer.attributes.span.meta'),
+        t
+      )
+    ).toEqual([
+      { title: 'array.value', copy: 'a, b', meta: t('trace.manage.drawer.attributes.span.meta') },
+      { title: 'db.statement', copy: 'select * from orders', meta: t('trace.manage.drawer.attributes.span.meta') },
+      { title: 'http.route', copy: '/checkout/:id', meta: t('trace.manage.drawer.attributes.span.meta') },
+      { title: 'messaging.retry', copy: '2', meta: t('trace.manage.drawer.attributes.span.meta') },
+      { title: 'object.value', copy: t('trace.manage.event.attributes.object'), meta: t('trace.manage.drawer.attributes.span.meta') }
+    ]);
+
+    expect(buildTraceAttributeRows({}, t('trace.manage.drawer.attributes.resource.meta'), t)).toEqual([
+      {
+        title: t('trace.manage.drawer.attributes.empty.title'),
+        copy: t('trace.manage.drawer.attributes.empty.copy'),
+        meta: t('trace.manage.drawer.attributes.resource.meta')
+      }
+    ]);
+  });
+
   it('builds HertzBeat attribution diagnostics for trace detail without entity id', () => {
     expect(
       buildTraceAttributionDiagnostics(
@@ -334,6 +367,37 @@ describe('trace view model', () => {
   });
 
   it('builds logs, metrics, and entity handoff links with shared route context', () => {
+    const routeContext = {
+      entityId: '7',
+      entityName: 'Checkout API',
+      returnTo: '/entities/7',
+      environment: 'prod',
+      timeRange: 'last-1h',
+      refresh: '30',
+      live: 'false',
+      tz: 'Asia/Shanghai',
+      source: 'otlp',
+      collector: 'collector-a',
+      template: 'spring-boot',
+      monitorId: '42',
+      monitorName: 'HTTPS Probe',
+      monitorApp: 'website',
+      monitorInstance: 'example.com:443'
+    };
+    const alertDraft = buildTraceAlertRuleDraft(
+      {
+        traceId: '',
+        spanId: '',
+        serviceName: 'checkout',
+        resourceFilter: 'deployment.environment.name="prod"',
+        operationName: 'POST /checkout',
+        minDurationMs: '250',
+        maxDurationMs: '',
+        errorOnly: true,
+        spanScope: 'root'
+      } as any,
+      { ...routeContext, serviceNamespace: 'payments' }
+    );
     const result = buildTraceHandoffLinks(
       {
         traceId: 'trace-1',
@@ -343,23 +407,8 @@ describe('trace view model', () => {
         durationNanos: 2_000_000
       } as any,
       { spanId: 'span-1', serviceName: 'checkout' } as any,
-      {
-        entityId: '7',
-        entityName: 'Checkout API',
-        returnTo: '/entities/7',
-        environment: 'prod',
-        timeRange: 'last-1h',
-        refresh: '30',
-        live: 'false',
-        tz: 'Asia/Shanghai',
-        source: 'otlp',
-        collector: 'collector-a',
-        template: 'spring-boot',
-        monitorId: '42',
-        monitorName: 'HTTPS Probe',
-        monitorApp: 'website',
-        monitorInstance: 'example.com:443'
-      }
+      routeContext,
+      { alertDraft }
     );
 
     expect(result.entitiesHref).toBe('/entities?search=checkout');
@@ -442,11 +491,26 @@ describe('trace view model', () => {
 
     const alertParams = new URL(result.alertRulesHref, 'https://example.com').searchParams;
     expect(alertParams.get('signal')).toBe('traces');
+    expect(alertParams.get('intent')).toBe('create');
     expect(alertParams.get('entityId')).toBe('7');
     expect(alertParams.get('serviceName')).toBe('checkout');
     expect(alertParams.get('environment')).toBe('prod');
     expect(alertParams.get('timeRange')).toBe('last-1h');
     expect(alertParams.get('source')).toBe('otlp');
+    expect(alertParams.get('alertName')).toBe('checkout trace alert');
+    expect(alertParams.get('alertQueryType')).toBe('traces');
+    expect(alertParams.get('alertDatasource')).toBe('sql');
+    expect(alertParams.get('alertTemplate')).toBe('Trace error rate detected ${service_name} ${operation}: ${__value__}');
+    expect(alertParams.get('alertExpression')).toContain('FROM hertzbeat_apm_red_1m');
+    expect(alertParams.get('alertExpression')).toContain("WHERE service_name = 'checkout'");
+    expect(alertParams.get('alertExpression')).toContain("AND operation = 'POST /checkout'");
+    expect(alertParams.get('alertExpression')).toContain("AND entity_id = '7'");
+    expect(alertParams.get('alertExpression')).toContain("AND service_namespace = 'payments'");
+    expect(alertParams.get('alertExpression')).toContain("AND deployment_environment = 'prod'");
+    expect(alertParams.get('alertExpression')).toContain('HAVING __value__ > 0');
+    expect(alertParams.get('alertQuery')).toContain('serviceName=checkout');
+    expect(alertParams.get('alertQuery')).toContain('operationName=POST /checkout');
+    expect(alertParams.get('alertQuery')).toContain('errorOnly=true');
 
     const alertHandlingHref = new URL(result.alertHandlingHref, 'https://example.com');
     expect(alertHandlingHref.pathname).toBe('/alert');
@@ -458,6 +522,110 @@ describe('trace view model', () => {
     expect(alertHandlingHref.searchParams.get('environment')).toBe('prod');
     expect(alertHandlingHref.searchParams.get('timeRange')).toBe('last-1h');
     expect(alertHandlingHref.searchParams.get('source')).toBe('otlp');
+
+    const dashboardHref = new URL(result.dashboardHref, 'https://example.com');
+    expect(dashboardHref.pathname).toBe('/dashboard');
+    expect(dashboardHref.searchParams.get('intent')).toBe('add-panel');
+    expect(dashboardHref.searchParams.get('signal')).toBe('traces');
+    expect(dashboardHref.searchParams.get('panelTitle')).toBe('checkout');
+    expect(dashboardHref.searchParams.get('entityId')).toBe('7');
+    expect(dashboardHref.searchParams.get('serviceName')).toBe('checkout');
+    expect(dashboardHref.searchParams.get('environment')).toBe('prod');
+    expect(dashboardHref.searchParams.get('timeRange')).toBe('last-1h');
+    expect(dashboardHref.searchParams.get('source')).toBe('otlp');
+    expect(dashboardHref.searchParams.get('panelQueryType')).toBe('traces');
+    expect(dashboardHref.searchParams.get('panelDatasource')).toBe('sql');
+    expect(dashboardHref.searchParams.get('panelExpression')).toContain('FROM hertzbeat_apm_red_1m');
+    expect(dashboardHref.searchParams.get('panelQuery')).toContain('serviceName=checkout');
+    expect(dashboardHref.searchParams.get('panelQuery')).toContain('operationName=POST /checkout');
+  });
+
+  it('does not invent trace alert SQL when the query has no error-only service scope', () => {
+    expect(buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: '',
+      operationName: '',
+      errorOnly: true,
+      spanScope: 'root'
+    } as any).expression).toBeUndefined();
+    expect(buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: `checkout' OR 1=1`,
+      operationName: '',
+      errorOnly: true,
+      spanScope: 'root'
+    } as any).expression).toBeUndefined();
+    expect(buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: 'checkout',
+      operationName: `POST /checkout'; DROP TABLE hertzbeat_apm_red_1m; --`,
+      errorOnly: true,
+      spanScope: 'root'
+    } as any).expression).toBeUndefined();
+    expect(buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: 'checkout',
+      operationName: '',
+      errorOnly: false,
+      spanScope: 'root'
+    } as any).expression).toBeUndefined();
+  });
+
+  it('builds a scoped trace latency alert SQL from minimum duration filters', () => {
+    const draft = buildTraceAlertRuleDraft(
+      {
+        traceId: '',
+        spanId: '',
+        serviceName: 'checkout',
+        resourceFilter: '',
+        operationName: 'POST /checkout',
+        minDurationMs: '250',
+        maxDurationMs: '',
+        errorOnly: false,
+        spanScope: 'root'
+      } as any,
+      {
+        entityId: '7',
+        serviceNamespace: 'payments',
+        environment: 'prod'
+      }
+    );
+
+    expect(draft.datasource).toBe('sql');
+    expect(draft.template).toBe('Trace latency detected ${service_name} ${operation}: ${__value__} ms');
+    expect(draft.expression).toContain('SUM(duration_sum_nano) / NULLIF(SUM(duration_count), 0) / 1000000 AS __value__');
+    expect(draft.expression).toContain('FROM hertzbeat_apm_red_1m');
+    expect(draft.expression).toContain("WHERE service_name = 'checkout'");
+    expect(draft.expression).toContain("AND operation = 'POST /checkout'");
+    expect(draft.expression).toContain("AND entity_id = '7'");
+    expect(draft.expression).toContain("AND service_namespace = 'payments'");
+    expect(draft.expression).toContain("AND deployment_environment = 'prod'");
+    expect(draft.expression).toContain('HAVING __value__ >= 250');
+  });
+
+  it('does not invent trace latency SQL from unsafe duration or optional filters', () => {
+    expect(buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: 'checkout',
+      operationName: 'POST /checkout',
+      minDurationMs: '250 OR 1=1',
+      errorOnly: false,
+      spanScope: 'root'
+    } as any).expression).toBeUndefined();
+    expect(buildTraceAlertRuleDraft({
+      traceId: '',
+      spanId: '',
+      serviceName: 'checkout',
+      operationName: `POST /checkout'; DROP TABLE hertzbeat_apm_red_1m; --`,
+      minDurationMs: '250',
+      errorOnly: false,
+      spanScope: 'root'
+    } as any).expression).toBeUndefined();
   });
 
   it('uses trace detail and selected span HertzBeat attributes when route entity context is missing', () => {

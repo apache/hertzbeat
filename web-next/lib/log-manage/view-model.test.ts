@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildLogCodeNavigationUrl,
+  buildLogAlertRuleDraft,
   buildLogAttributionDiagnostics,
   buildLogExplorerRows,
   buildLogHandoffLinks,
+  buildLogMetricsPreviewTargets,
+  buildLogAttributeRows,
   buildRelatedTraceRowCopy,
   buildSelectedLogFacts,
   buildSelectedLogRows,
@@ -112,6 +115,44 @@ describe('log view model', () => {
       { label: t('log.stream.timestamp'), value: '2026-04-10 10:00:00' },
       { label: t('log.stream.trace-id-full'), value: 'abc123', monospace: true },
       { label: t('log.stream.span-id-full'), value: 'span123', monospace: true }
+    ]);
+  });
+
+  it('builds selected log attribute rows from resource and log attributes', () => {
+    expect(
+      buildLogAttributeRows(
+        {
+          resource: {
+            'service.name': 'checkout',
+            'deployment.environment.name': 'prod'
+          },
+          attributes: {
+            'http.route': '/checkout/:id',
+            'retry.count': 2,
+            'array.value': ['a', 'b'],
+            'object.value': { nested: true }
+          }
+        },
+        t
+      )
+    ).toEqual([
+      { key: 'attribute-array.value', source: t('log.manage.attributes.source.attribute'), name: 'array.value', value: 'a, b' },
+      { key: 'attribute-http.route', source: t('log.manage.attributes.source.attribute'), name: 'http.route', value: '/checkout/:id' },
+      { key: 'attribute-object.value', source: t('log.manage.attributes.source.attribute'), name: 'object.value', value: t('log.manage.attributes.value.object') },
+      { key: 'attribute-retry.count', source: t('log.manage.attributes.source.attribute'), name: 'retry.count', value: '2' },
+      { key: 'resource-deployment.environment.name', source: t('log.manage.attributes.source.resource'), name: 'deployment.environment.name', value: 'prod' },
+      { key: 'resource-service.name', source: t('log.manage.attributes.source.resource'), name: 'service.name', value: 'checkout' }
+    ]);
+  });
+
+  it('builds an explicit empty log attribute row when no fields exist', () => {
+    expect(buildLogAttributeRows(null, t)).toEqual([
+      {
+        key: 'empty',
+        source: '-',
+        name: t('log.manage.attributes.empty.name'),
+        value: t('log.manage.attributes.empty.value')
+      }
     ]);
   });
 
@@ -234,30 +275,54 @@ describe('log view model', () => {
   });
 
   it('builds trace, metrics, and entity handoff links', () => {
+    const routeContext = {
+      entityId: '7',
+      entityName: 'Checkout API',
+      returnTo: '/entities/7',
+      environment: 'prod',
+      timeRange: 'last-1h',
+      refresh: '30',
+      live: 'false',
+      tz: 'Asia/Shanghai',
+      source: 'otlp',
+      collector: 'collector-a',
+      template: 'spring-boot',
+      monitorId: '42',
+      monitorName: 'HTTPS Probe',
+      monitorApp: 'website',
+      monitorInstance: 'example.com:443'
+    };
+    const alertDraft = buildLogAlertRuleDraft(
+      {
+        search: 'checkout failed',
+        logContent: '',
+        traceId: '',
+        spanId: '',
+        severityNumber: '',
+        severityText: 'ERROR',
+        resourceFilter: 'service.name="checkout"',
+        attributeFilter: 'http.status_code=500'
+      } as any,
+      routeContext
+    );
     const result = buildLogHandoffLinks(
       {
         traceId: 'trace-1',
         spanId: 'span-1',
         timeUnixNano: 1_710_000_000_000_000_000,
-        resource: { 'service.name': 'checkout', 'service.namespace': 'payments' }
+        resource: {
+          'service.name': 'checkout',
+          'service.namespace': 'payments',
+          'deployment.environment.name': 'prod',
+          'k8s.namespace.name': 'shop',
+          'k8s.pod.name': 'checkout-7d9',
+          'k8s.node.name': 'node-a',
+          'k8s.container.name': 'checkout',
+          'host.name': 'node-a'
+        }
       } as any,
-      {
-        entityId: '7',
-        entityName: 'Checkout API',
-        returnTo: '/entities/7',
-        environment: 'prod',
-        timeRange: 'last-1h',
-        refresh: '30',
-        live: 'false',
-        tz: 'Asia/Shanghai',
-        source: 'otlp',
-        collector: 'collector-a',
-        template: 'spring-boot',
-        monitorId: '42',
-        monitorName: 'HTTPS Probe',
-        monitorApp: 'website',
-        monitorInstance: 'example.com:443'
-      }
+      routeContext,
+      { alertDraft }
     );
 
     expect(result.entitiesHref).toBe('/entities?search=checkout');
@@ -326,6 +391,9 @@ describe('log view model', () => {
     expect(metricsParams.get('monitorName')).toBe('HTTPS Probe');
     expect(metricsParams.get('monitorApp')).toBe('website');
     expect(metricsParams.get('monitorInstance')).toBe('example.com:443');
+    expect(metricsParams.get('filter')).toBe(
+      'k8s.namespace.name="shop" and k8s.pod.name="checkout-7d9" and k8s.node.name="node-a" and k8s.container.name="checkout" and host.name="node-a"'
+    );
 
     const entityHref = new URL(result.entityHref, 'https://example.com');
     expect(entityHref.pathname).toBe('/entities/7');
@@ -340,11 +408,23 @@ describe('log view model', () => {
 
     const alertParams = new URL(result.alertRulesHref, 'https://example.com').searchParams;
     expect(alertParams.get('signal')).toBe('logs');
+    expect(alertParams.get('intent')).toBe('create');
     expect(alertParams.get('entityId')).toBe('7');
     expect(alertParams.get('serviceName')).toBe('checkout');
     expect(alertParams.get('environment')).toBe('prod');
     expect(alertParams.get('timeRange')).toBe('last-1h');
     expect(alertParams.get('source')).toBe('otlp');
+    expect(alertParams.get('alertName')).toBe('Log alert');
+    expect(alertParams.get('alertQueryType')).toBe('logs');
+    expect(alertParams.get('alertExpression')).toBe(
+      "log.severityText == 'ERROR' && contains(log.body, 'checkout failed') && "
+      + "log.resource['deployment.environment.name'] == 'prod' && log.resource['service.name'] == 'checkout' && "
+      + "log.attributes['http.status_code'] == 500"
+    );
+    expect(alertParams.get('alertTemplate')).toBe('Log matched: {{log.body}}');
+    expect(alertParams.get('alertQuery')).toContain('search=checkout failed');
+    expect(alertParams.get('alertQuery')).toContain('resourceFilter=service.name="checkout"');
+    expect(alertParams.get('alertQuery')).toContain('attributeFilter=http.status_code=500');
 
     const alertHandlingHref = new URL(result.alertHandlingHref, 'https://example.com');
     expect(alertHandlingHref.pathname).toBe('/alert');
@@ -356,6 +436,178 @@ describe('log view model', () => {
     expect(alertHandlingHref.searchParams.get('environment')).toBe('prod');
     expect(alertHandlingHref.searchParams.get('timeRange')).toBe('last-1h');
     expect(alertHandlingHref.searchParams.get('source')).toBe('otlp');
+
+    const dashboardHref = new URL(result.dashboardHref, 'https://example.com');
+    expect(dashboardHref.pathname).toBe('/dashboard');
+    expect(dashboardHref.searchParams.get('intent')).toBe('add-panel');
+    expect(dashboardHref.searchParams.get('signal')).toBe('logs');
+    expect(dashboardHref.searchParams.get('panelTitle')).toBe('checkout');
+    expect(dashboardHref.searchParams.get('entityId')).toBe('7');
+    expect(dashboardHref.searchParams.get('serviceName')).toBe('checkout');
+    expect(dashboardHref.searchParams.get('environment')).toBe('prod');
+    expect(dashboardHref.searchParams.get('timeRange')).toBe('last-1h');
+    expect(dashboardHref.searchParams.get('source')).toBe('otlp');
+    expect(dashboardHref.searchParams.get('panelQueryType')).toBe('logs');
+    expect(dashboardHref.searchParams.get('panelQuery')).toContain('search=checkout failed');
+    expect(dashboardHref.searchParams.get('panelQuery')).toContain('resourceFilter=service.name="checkout"');
+  });
+
+  it('builds executable log alert expressions for bounded content searches', () => {
+    expect(buildLogAlertRuleDraft({
+      search: 'checkout failed',
+      logContent: '',
+      traceId: '',
+      spanId: '',
+      severityNumber: '',
+      severityText: '',
+      resourceFilter: '',
+      attributeFilter: ''
+    } as any)).toMatchObject({
+      name: 'Log alert',
+      queryType: 'logs',
+      query: 'search=checkout failed',
+      expression: "contains(log.body, 'checkout failed')",
+      template: 'Log matched: {{log.body}}'
+    });
+    expect(buildLogAlertRuleDraft({
+      search: 'generic timeout',
+      logContent: 'db down',
+      traceId: '',
+      spanId: '',
+      severityNumber: '',
+      severityText: '',
+      resourceFilter: '',
+      attributeFilter: ''
+    } as any).expression).toBe("contains(log.body, 'db down')");
+    expect(buildLogAlertRuleDraft({
+      search: '',
+      logContent: '',
+      traceId: '',
+      spanId: '',
+      severityNumber: '',
+      severityText: `ERROR' || true`,
+      resourceFilter: '',
+      attributeFilter: ''
+    } as any).expression).toBeUndefined();
+    expect(buildLogAlertRuleDraft({
+      search: 'checkout failed',
+      logContent: '',
+      traceId: '',
+      spanId: '',
+      severityNumber: '',
+      severityText: `ERROR' || true`,
+      resourceFilter: '',
+      attributeFilter: ''
+    } as any).expression).toBeUndefined();
+  });
+
+  it('builds bounded executable log alert expressions from simple filters', () => {
+    expect(buildLogAlertRuleDraft(
+      {
+        search: 'checkout failed',
+        logContent: '',
+        traceId: '',
+        spanId: '',
+        severityNumber: '',
+        severityText: 'error',
+        resourceFilter: 'service.name="checkout" and deployment.environment.name!=staging',
+        attributeFilter: 'http.status_code=500, http.route:/checkout/{id}, http.target!="/health"'
+      } as any,
+      {
+        serviceName: 'checkout',
+        environment: 'prod'
+      }
+    )).toMatchObject({
+      expression:
+        "log.severityText == 'ERROR' && contains(log.body, 'checkout failed') && "
+        + "log.resource['service.name'] == 'checkout' && log.resource['deployment.environment.name'] == 'prod' && "
+        + "log.resource['deployment.environment.name'] != 'staging' && log.attributes['http.status_code'] == 500 && "
+        + "log.attributes['http.route'] == '/checkout/{id}' && log.attributes['http.target'] != '/health'",
+      template: 'Log matched: {{log.body}}'
+    });
+  });
+
+  it('keeps trace and span scope in executable log alert expressions', () => {
+    expect(buildLogAlertRuleDraft(
+      {
+        search: 'checkout failed',
+        logContent: '',
+        traceId: 'trace-123',
+        spanId: '',
+        severityNumber: '',
+        severityText: 'ERROR',
+        resourceFilter: '',
+        attributeFilter: ''
+      } as any,
+      {
+        spanId: 'span-456'
+      }
+    )).toMatchObject({
+      expression:
+        "log.severityText == 'ERROR' && contains(log.body, 'checkout failed') && "
+        + "log.traceId == 'trace-123' && log.spanId == 'span-456'",
+      template: 'Log matched: {{log.body}}'
+    });
+  });
+
+  it('suppresses executable log alert expressions for unsafe trace scope values', () => {
+    expect(buildLogAlertRuleDraft({
+      search: 'checkout failed',
+      logContent: '',
+      traceId: `trace-123' || true`,
+      spanId: '',
+      severityNumber: '',
+      severityText: '',
+      resourceFilter: '',
+      attributeFilter: ''
+    } as any).expression).toBeUndefined();
+  });
+
+  it('suppresses executable log alert expressions for unsafe content searches', () => {
+    expect(buildLogAlertRuleDraft({
+      search: 'first line\nsecond line',
+      logContent: '',
+      traceId: '',
+      spanId: '',
+      severityNumber: '',
+      severityText: '',
+      resourceFilter: '',
+      attributeFilter: ''
+    } as any).expression).toBeUndefined();
+  });
+
+  it('suppresses executable log alert expressions when filters are not simple equality clauses', () => {
+    expect(buildLogAlertRuleDraft({
+      search: '',
+      logContent: '',
+      traceId: '',
+      spanId: '',
+      severityNumber: '',
+      severityText: 'ERROR',
+      resourceFilter: 'service.name="checkout" or service.name="billing"',
+      attributeFilter: ''
+    } as any).expression).toBeUndefined();
+  });
+
+  it('selects bounded log detail metrics preview targets from resource filter context', () => {
+    const k8sAndHostHref =
+      '/ingestion/otlp/metrics?serviceName=checkout&filter='
+      + encodeURIComponent('k8s.pod.name="checkout-7d9" and host.name="node-a"');
+    expect(buildLogMetricsPreviewTargets(k8sAndHostHref)).toEqual([
+      { family: 'cpu', query: 'container.cpu.usage', source: 'k8s' },
+      { family: 'memory', query: 'container.memory.working_set', source: 'k8s' },
+      { family: 'cpu', query: 'system.cpu.utilization', source: 'host' },
+      { family: 'memory', query: 'system.memory.usage', source: 'host' }
+    ]);
+
+    const hostOnlyHref = '/ingestion/otlp/metrics?serviceName=node-exporter&filter=' + encodeURIComponent('host.name="node-a"');
+    expect(buildLogMetricsPreviewTargets(hostOnlyHref)).toEqual([
+      { family: 'cpu', query: 'system.cpu.utilization', source: 'host' },
+      { family: 'memory', query: 'system.memory.usage', source: 'host' }
+    ]);
+
+    expect(buildLogMetricsPreviewTargets('/ingestion/otlp/metrics?serviceName=checkout')).toEqual([]);
+    expect(buildLogMetricsPreviewTargets(null)).toEqual([]);
   });
 
   it('uses HertzBeat entity attributes from the selected log for exact entity handoff', () => {
@@ -394,7 +646,7 @@ describe('log view model', () => {
     expect(metricsParams.get('template')).toBe('hertzbeat-self');
   });
 
-  it('can override the trace return path with the current log workspace route', () => {
+  it('can override trace and metrics return paths with the current log workspace route', () => {
     const currentLogReturnTo =
       `/log/manage?traceId=trace-1&spanId=span-1&view=stream&start=1709999100000&end=1710000060000&returnTo=%2Foverview&returnLabel=${encodeURIComponent(t('menu.log.manage'))}`;
     const result = buildLogHandoffLinks(
@@ -412,6 +664,7 @@ describe('log view model', () => {
       },
       {
         traceReturnTo: currentLogReturnTo,
+        metricsReturnTo: currentLogReturnTo,
         traceReturnLabel: t('menu.trace.manage'),
         intakeReturnLabel: t('log.manage.route.action.intake')
       }
@@ -427,7 +680,9 @@ describe('log view model', () => {
     expect(traceParams.get('returnLabel')).toBeNull();
 
     const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
-    expect(metricsParams.get('returnTo')).toBe('/overview');
+    expect(metricsParams.get('returnTo')).toBe(
+      '/log/manage?traceId=trace-1&spanId=span-1&view=stream&start=1709999100000&end=1710000060000&returnTo=%2Foverview'
+    );
     expect(metricsParams.get('returnLabel')).toBeNull();
   });
 

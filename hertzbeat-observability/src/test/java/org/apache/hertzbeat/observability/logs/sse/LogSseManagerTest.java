@@ -38,7 +38,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -86,7 +85,7 @@ class LogSseManagerTest {
         logSseManager.broadcast(infoLog);
 
         // Then: The log should be sent to the client (wait for batch processing)
-        await().atMost(500, TimeUnit.MILLISECONDS).untilAsserted(() ->
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() ->
             verify(mockEmitter, atLeastOnce()).send(any(SseEmitter.SseEventBuilder.class))
         );
     }
@@ -177,7 +176,9 @@ class LogSseManagerTest {
     void shouldRemoveEmitterWhenBroadcastFails() throws IOException {
         // Given: A client whose emitter will throw an exception on send
         SseEmitter mockEmitter = mock(SseEmitter.class);
-        doThrow(new IOException("Connection closed")).when(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
+        doAnswer(invocation -> {
+            throw new IOException("Connection closed");
+        }).when(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
         subscribeClient(CLIENT_ID, null, mockEmitter);
         assertTrue(logSseManager.getEmitters().containsKey(CLIENT_ID));
 

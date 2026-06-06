@@ -43,6 +43,27 @@ describe('log manage route state', () => {
     expect(route).not.toContain('returnLabel=');
   });
 
+  it('preserves resource and log attribute filters when applying a query', () => {
+    const route = buildLogManageRoute(
+      readSignalRouteContext(createSearchParams('timeRange=last-1h&source=otlp')),
+      {
+        search: '',
+        logContent: '',
+        traceId: '',
+        spanId: '',
+        severityNumber: '',
+        severityText: '',
+        resourceFilter: 'service.version=1.2.3',
+        attributeFilter: 'http.route:/checkout/:id'
+      },
+      'list'
+    );
+
+    expect(route).toBe(
+      '/log/manage?resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout%2F%3Aid&view=list&timeRange=last-1h&source=otlp'
+    );
+  });
+
   it('overrides only the shared time context when applying the visible time control', () => {
     const route = buildLogManageRoute(
       readSignalRouteContext(createSearchParams(

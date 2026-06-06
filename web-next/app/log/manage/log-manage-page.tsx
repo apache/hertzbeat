@@ -4,35 +4,63 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link';
 import {
   BarChart3,
+  BellPlus,
   BellRing,
+  Check,
+  Copy,
+  Download,
   Eye,
+  Filter,
   ListChecks,
   PauseCircle,
+  Pencil,
   Play,
   PlayCircle,
+  Replace,
   RotateCcw,
+  Save,
   Search,
   ScrollText,
   Server,
   Trash2,
   Wifi,
   WifiOff,
-  Workflow
+  Workflow,
+  X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { HzActionGroup, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzControlStack, HzDataTable, HzDetailAside, HzDetailBodyStack, HzDetailRows, HzEmptyState, HzInput, HzLogStreamLiveRow, HzPanelHeader, HzPanelSurface, HzScrollViewport, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalTrendBars, HzSignalWorkbenchShell, HzStateNotice, HzStatCell, HzStatusBadge, HzWorkbenchLayout, type HzStatusTone } from '@hertzbeat/ui';
+import { HzActionGroup, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzCheckbox, HzControlStack, HzDataCellText, HzDataTable, HzDetailAside, HzDetailBodyStack, HzDetailRows, HzEmptyState, HzInput, HzLogStreamLiveRow, HzPaginationBar, HzPanelHeader, HzPanelSurface, HzScrollViewport, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalSummaryStrip, HzSignalTrendBars, HzSignalWorkbenchShell, HzStateNotice, HzStatusBadge, HzWorkbenchLayout, type HzStatusTone } from '@hertzbeat/ui';
 import { LogRelatedTraceDialog } from '../../../components/log-manage/log-related-trace-dialog';
 import { LogStreamDetailDialog } from '../../../components/log-manage/log-stream-detail-dialog';
 import { buildTimeRangeControlLabels, TimeRangeControl } from '@/components/observability/time-range-control';
 import { useI18n } from '@/components/providers/i18n-provider';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
 import { apiMessageGet } from '@/lib/api-client';
+import { copyTextToClipboard } from '@/lib/browser-clipboard';
 import { bodyText, formatTime } from '@/lib/format';
+import { buildLogCsv, buildLogExportFilename, buildLogJsonl, type LogExportExtraColumn, type LogExportFormat } from '@/lib/log-manage/export';
 import { logSeverityTone, severityLabel, type LogSeverityTone } from '@/lib/log-manage/display-mapping';
 import {
   buildLogStreamUrl,
   buildLogUrls,
+  DEFAULT_LOG_DISPLAY_FORMAT,
+  DEFAULT_LOG_LIST_PAGE_INDEX,
+  DEFAULT_LOG_LIST_PAGE_SIZE,
+  DEFAULT_LOG_MAX_LINES,
+  DEFAULT_LOG_TABLE_COLUMNS,
+  LOG_DISPLAY_FORMAT_PARAM,
+  MAX_LOG_FIELD_COLUMNS,
+  LOG_LIST_PAGE_SIZE_OPTIONS,
+  LOG_MAX_LINES_PARAM,
+  LOG_TABLE_COLUMN_KEYS,
   resolveBrowserLogStreamUrl,
+  resolveLogListPageIndex,
+  resolveLogListPageSize,
+  resolveLogMaxLines,
+  type LogDisplayFormat,
+  type LogFieldColumnKey,
+  type LogGroupOrder,
+  type LogTableColumnKey,
   type LogManageRouteState,
   type LogQueryState,
   type LogWorkbenchView
@@ -48,19 +76,24 @@ import {
   STREAM_VIEWPORT_ROW_HEIGHT
 } from '../../../lib/log-manage/stream-viewport';
 import {
+  buildLogAttributeRows,
+  buildLogAlertRuleDraft,
   buildLogCodeNavigationUrl,
   buildLogAttributionDiagnostics,
   buildLogExplorerRows,
   buildLogHandoffLinks,
+  buildLogMetricsPreviewTargets,
   buildSelectedLogFacts,
   buildSelectedLogRows,
-  type LogAttributionDiagnostic
+  type LogAttributionDiagnostic,
+  type LogAttributeRow,
+  type LogExplorerRow
 } from '@/lib/log-manage/view-model';
 import { buildSignalEntityContextRows, type SignalRouteContext } from '@/lib/signal-route-context';
 import { loadTraceDetailBundle } from '../../../lib/trace-manage/controller';
 import { buildSelectedSpanFacts, buildTraceWaterfallRows } from '../../../lib/trace-manage/view-model';
 import { resolveAppliedTimeContext, sanitizeTimeContext, type TimeContext } from '@/lib/time-context';
-import type { LogEntry, LogOverview, LogTraceCoverage, LogTrendStats, PageResult, TraceDetail } from '@/lib/types';
+import type { LogEntry, LogOverview, LogTraceCoverage, LogTrendStats, OtlpMetricsConsole, PageResult, TraceDetail } from '@/lib/types';
 import { buildLogManageRoute, buildResetLogManageRoute } from './route-state';
 
 type LogManageData = {
@@ -68,6 +101,7 @@ type LogManageData = {
   list: PageResult<LogEntry>;
   trend: LogTrendStats;
   coverage: LogTraceCoverage;
+  group: LogGroupStats;
   query: LogQueryState;
   loadStatus?: {
     state: 'degraded';
@@ -75,9 +109,89 @@ type LogManageData = {
   };
 };
 
+type LogGroupStats = {
+  groupBy: string;
+  groups: Array<{
+    value: string;
+    count: number;
+  }>;
+};
+
 type BackendLogOverview = LogOverview & {
   totalCount?: number;
   errorCount?: number;
+};
+
+type LogSavedQueryView = {
+  id: string;
+  label: string;
+  description: string;
+  route: string;
+  createdAt: number;
+};
+
+type LogExportRowLimit = 'current' | '10000' | '30000' | '50000';
+
+type LogDetailContextPayload = {
+  targetTimeUnixNano: number;
+  limit: number;
+  direction?: 'before' | 'after';
+  cursorLogTimeUnixNano?: number | string;
+  before?: LogEntry[];
+  selected?: LogEntry | null;
+  after?: LogEntry[];
+  hasMoreBefore?: boolean;
+  hasMoreAfter?: boolean;
+};
+
+type LogDetailContextState = {
+  loading: boolean;
+  error: string | null;
+  data: LogDetailContextPayload | null;
+};
+
+type LogDetailMetricsPreviewState = {
+  loading: boolean;
+  error: string | null;
+  data: OtlpMetricsConsole[] | null;
+};
+
+type LogDetailContextFilters = {
+  resourceFilter?: string;
+  attributeFilter?: string;
+};
+
+type LogDetailContextLoadRequest = {
+  direction: 'before' | 'after';
+  cursorLogTimeUnixNano: string;
+};
+
+type LogDetailContextRow = {
+  key: string;
+  relation: 'before' | 'selected' | 'after';
+  relationLabel: string;
+  time: string;
+  severity: string;
+  body: string;
+  service: string;
+};
+
+type LogDetailMetricsPreviewRow = {
+  title: string;
+  copy: string;
+  meta?: string;
+  query?: string;
+  family: 'cpu' | 'memory' | 'other';
+  familyLabel: string;
+  source: 'pod' | 'node' | 'resource';
+  sourceValue?: string;
+  href?: string;
+  bars: Array<{
+    key: string;
+    heightPct: number;
+    label: string;
+    valueLabel: string;
+  }>;
 };
 
 export type LogManagePageProps = {
@@ -106,6 +220,740 @@ const maxStreamEntries = 10000;
 const maxPendingStreamEntries = 1000;
 const LOG_MANAGE_SETTLED_CACHE_TTL_MS = 10_000;
 const LOG_MANAGE_API_TIMEOUT_MS = 3_500;
+const LOG_SAVED_QUERY_VIEW_STORAGE_KEY = 'hertzbeat.log-manage.saved-query-views';
+const LOG_SAVED_QUERY_VIEW_LIMIT = 5;
+const LOG_EXPORT_ROW_LIMITS: LogExportRowLimit[] = ['current', '10000', '30000', '50000'];
+const LOG_EXPORT_FETCH_PAGE_SIZE = 1000;
+const LOG_CONTEXT_WINDOW_MS = 5 * 60 * 1000;
+const LOG_CONTEXT_LIST_PAGE_SIZE = '20';
+const LOG_DETAIL_CONTEXT_DEFAULT_LIMIT = 10;
+const LOG_DETAIL_CONTEXT_LIMIT_STEP = 10;
+
+function isSafeLogAttributeFilterKey(key: string) {
+  return /^[A-Za-z0-9_.:-]+$/.test(key.trim());
+}
+
+function isSafeLogAttributeFilterValue(value: string) {
+  const trimmed = value.trim();
+  return Boolean(trimmed && trimmed !== '-' && !trimmed.includes(',') && !/\s+and\s+/i.test(trimmed));
+}
+
+function resolveLogAttributeFilterKind(row: LogAttributeRow): 'resource' | 'attribute' | null {
+  if (row.key.startsWith('resource-')) return 'resource';
+  if (row.key.startsWith('attribute-')) return 'attribute';
+  return null;
+}
+
+function buildLogAttributeFilterExpression(row: LogAttributeRow, objectValueLabel: string) {
+  const kind = resolveLogAttributeFilterKind(row);
+  const key = row.name.trim();
+  const value = row.value.trim();
+  if (!kind || value === objectValueLabel || !isSafeLogAttributeFilterKey(key) || !isSafeLogAttributeFilterValue(value)) {
+    return null;
+  }
+  return { kind, expression: kind === 'attribute' ? `${key}:${value}` : `${key}=${value}` };
+}
+
+function buildLogAttributeExcludeExpression(row: LogAttributeRow, objectValueLabel: string) {
+  const kind = resolveLogAttributeFilterKind(row);
+  const key = row.name.trim();
+  const value = row.value.trim();
+  if (!kind || value === objectValueLabel || !isSafeLogAttributeFilterKey(key) || !isSafeLogAttributeFilterValue(value)) {
+    return null;
+  }
+  return { kind, expression: `${key}!=${value}` };
+}
+
+function buildLogAttributeGroupBy(row: LogAttributeRow) {
+  const kind = resolveLogAttributeFilterKind(row);
+  const key = row.name.trim();
+  if (!kind || !isSafeLogAttributeFilterKey(key)) {
+    return null;
+  }
+  return { kind, groupBy: kind === 'attribute' ? `attribute:${key}` : `resource:${key}` };
+}
+
+function buildLogAttributeFieldColumn(row: LogAttributeRow): LogFieldColumnKey | null {
+  const kind = resolveLogAttributeFilterKind(row);
+  const key = row.name.trim();
+  if (!kind || !isSafeLogAttributeFilterKey(key)) {
+    return null;
+  }
+  return `${kind}:${key}` as LogFieldColumnKey;
+}
+
+function buildLogGroupResultFilter(groupBy: string, value: string) {
+  const normalizedGroupBy = groupBy.trim();
+  const normalizedValue = value.trim();
+  if (!isSafeLogAttributeFilterValue(normalizedValue)) {
+    return null;
+  }
+  if (normalizedGroupBy === 'severity' || normalizedGroupBy === 'severity_text') {
+    return { kind: 'severity' as const, value: normalizedValue };
+  }
+  if (normalizedGroupBy === 'service.name' || normalizedGroupBy === 'service_name') {
+    return { kind: 'service' as const, value: normalizedValue };
+  }
+  if (normalizedGroupBy.startsWith('resource:')) {
+    const key = normalizedGroupBy.slice('resource:'.length);
+    if (!isSafeLogAttributeFilterKey(key)) return null;
+    return { kind: 'resource' as const, expression: `${key}=${normalizedValue}` };
+  }
+  if (normalizedGroupBy.startsWith('attribute:')) {
+    const key = normalizedGroupBy.slice('attribute:'.length);
+    if (!isSafeLogAttributeFilterKey(key)) return null;
+    return { kind: 'attribute' as const, expression: `${key}:${normalizedValue}` };
+  }
+  if (!isSafeLogAttributeFilterKey(normalizedGroupBy)) {
+    return null;
+  }
+  return { kind: 'resource' as const, expression: `${normalizedGroupBy}=${normalizedValue}` };
+}
+
+function mergeLogAttributeFilterExpression(currentFilter: string | undefined, expression: string) {
+  const trimmedFilter = currentFilter?.trim() || '';
+  if (!trimmedFilter) return expression;
+  const compactFilter = trimmedFilter.replace(/\s+/g, '');
+  const compactExpression = expression.replace(/\s+/g, '');
+  if (compactFilter.includes(compactExpression)) {
+    return trimmedFilter;
+  }
+  return `${trimmedFilter} and ${expression}`;
+}
+
+function resolveNextLogColumns(columns: LogTableColumnKey[] | undefined, column: LogTableColumnKey, checked: boolean) {
+  const current = new Set(columns || DEFAULT_LOG_TABLE_COLUMNS);
+  if (checked) {
+    current.add(column);
+  } else if (current.size > 1) {
+    current.delete(column);
+  }
+  return LOG_TABLE_COLUMN_KEYS.filter(key => current.has(key));
+}
+
+function parseLogFieldColumn(column: LogFieldColumnKey) {
+  const separatorIndex = column.indexOf(':');
+  const source = column.slice(0, separatorIndex);
+  const name = column.slice(separatorIndex + 1);
+  if ((source !== 'resource' && source !== 'attribute') || !name) return null;
+  return { source, name };
+}
+
+function stringifyLogFieldColumnValue(value: unknown) {
+  if (value == null || value === '') return '-';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function readLogFieldColumnValue(entry: LogEntry | null | undefined, column: LogFieldColumnKey) {
+  const parsed = parseLogFieldColumn(column);
+  if (!parsed) return '-';
+  const source = parsed.source === 'resource' ? entry?.resource : entry?.attributes;
+  return stringifyLogFieldColumnValue(source?.[parsed.name]);
+}
+
+function buildLogLineShareHref(currentLogReturnHref: string, row: LogExplorerRow, entry?: LogEntry | null) {
+  const url = new URL(currentLogReturnHref || '/log/manage', 'http://localhost');
+  const traceId = row.traceId !== '-' ? row.traceId.trim() : '';
+  const spanId = row.spanId !== '-' ? row.spanId.trim() : '';
+  if (traceId) url.searchParams.set('traceId', traceId);
+  if (spanId) url.searchParams.set('spanId', spanId);
+  if (Number.isFinite(entry?.timeUnixNano)) {
+    url.searchParams.set('logTimeUnixNano', String(entry?.timeUnixNano));
+  }
+  const queryString = url.searchParams.toString();
+  return queryString ? `${url.pathname}?${queryString}` : url.pathname;
+}
+
+function buildLogContextRoute(entry: LogEntry | null, routeContext: SignalRouteContext) {
+  if (!Number.isFinite(entry?.timeUnixNano)) {
+    return null;
+  }
+  const timestampMs = Math.floor(Number(entry?.timeUnixNano) / 1_000_000);
+  const serviceName = readFirstLogAttribute(entry, ['service.name', 'service_name']) || routeContext.serviceName;
+  const environment = readFirstLogAttribute(entry, [
+    'deployment.environment.name',
+    'deployment_environment_name',
+    'environment'
+  ]) || routeContext.environment;
+  const nextContext: SignalRouteContext = {
+    ...routeContext,
+    start: String(Math.max(0, timestampMs - LOG_CONTEXT_WINDOW_MS)),
+    end: String(timestampMs + LOG_CONTEXT_WINDOW_MS),
+    timeRange: undefined,
+    from: undefined,
+    to: undefined,
+    live: 'false',
+    ...(serviceName ? { serviceName } : {}),
+    ...(environment ? { environment } : {})
+  };
+  return buildLogManageRoute(
+    nextContext,
+    {
+      ...EMPTY_QUERY,
+      logTimeUnixNano: String(entry?.timeUnixNano),
+      listPageSize: LOG_CONTEXT_LIST_PAGE_SIZE,
+      listPageIndex: DEFAULT_LOG_LIST_PAGE_INDEX
+    },
+    'list'
+  );
+}
+
+function buildLogContextApiUrl(
+  entry: LogEntry | null,
+  routeContext: SignalRouteContext,
+  query: LogQueryState,
+  limit: number,
+  contextFilters: LogDetailContextFilters,
+  loadRequest?: LogDetailContextLoadRequest | null
+) {
+  if (!Number.isFinite(entry?.timeUnixNano)) {
+    return null;
+  }
+  const serviceName = readFirstLogAttribute(entry, ['service.name', 'service_name']) || routeContext.serviceName;
+  const serviceNamespace = readFirstLogAttribute(entry, ['service.namespace', 'service_namespace']) || routeContext.serviceNamespace;
+  const environment = readFirstLogAttribute(entry, [
+    'deployment.environment.name',
+    'deployment_environment_name',
+    'environment'
+  ]) || routeContext.environment;
+  const params = new URLSearchParams({
+    logTimeUnixNano: String(entry?.timeUnixNano),
+    limit: String(limit)
+  });
+  if (loadRequest) {
+    params.set('direction', loadRequest.direction);
+    params.set('cursorLogTimeUnixNano', loadRequest.cursorLogTimeUnixNano);
+  }
+  if (serviceName) params.set('serviceName', serviceName);
+  if (serviceNamespace) params.set('serviceNamespace', serviceNamespace);
+  if (environment) params.set('environment', environment);
+  const resourceFilter = contextFilters.resourceFilter
+    ? mergeLogAttributeFilterExpression(query.resourceFilter, contextFilters.resourceFilter)
+    : query.resourceFilter?.trim();
+  const attributeFilter = contextFilters.attributeFilter
+    ? mergeLogAttributeFilterExpression(query.attributeFilter, contextFilters.attributeFilter)
+    : query.attributeFilter?.trim();
+  if (resourceFilter) params.set('resourceFilter', resourceFilter);
+  if (attributeFilter) params.set('attributeFilter', attributeFilter);
+  return `/logs/context?${params.toString()}`;
+}
+
+function logContextEntryKey(entry: LogEntry, index: number) {
+  return [
+    entry.timeUnixNano == null ? `no-time-${index}` : String(entry.timeUnixNano),
+    entry.traceId?.trim() || 'no-trace',
+    entry.spanId?.trim() || 'no-span',
+    bodyText(entry.body)
+  ].join(':');
+}
+
+function mergeLogContextEntries(entries: LogEntry[], incoming: LogEntry[] = []) {
+  const seen = new Set<string>();
+  return [...entries, ...incoming]
+    .filter((entry, index) => {
+      const key = logContextEntryKey(entry, index);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((left, right) => Number(left.timeUnixNano || 0) - Number(right.timeUnixNano || 0));
+}
+
+function mergeLogDetailContextPayload(
+  current: LogDetailContextPayload | null,
+  incoming: LogDetailContextPayload | null,
+  loadRequest: LogDetailContextLoadRequest | null
+): LogDetailContextPayload | null {
+  if (!incoming) return current;
+  if (!loadRequest || !current) return incoming;
+  if (loadRequest.direction === 'before') {
+    return {
+      ...current,
+      before: mergeLogContextEntries(incoming.before || [], current.before || []),
+      hasMoreBefore: incoming.hasMoreBefore,
+      hasMoreAfter: current.hasMoreAfter
+    };
+  }
+  return {
+    ...current,
+    after: mergeLogContextEntries(current.after || [], incoming.after || []),
+    hasMoreBefore: current.hasMoreBefore,
+    hasMoreAfter: incoming.hasMoreAfter
+  };
+}
+
+function readLogDetailContextCursor(
+  payload: LogDetailContextPayload | null,
+  direction: LogDetailContextLoadRequest['direction'],
+  fallbackSelected: LogEntry | null
+) {
+  const rows = direction === 'before' ? payload?.before || [] : payload?.after || [];
+  const cursorEntry = direction === 'before' ? rows[0] : rows[rows.length - 1];
+  const cursor = cursorEntry?.timeUnixNano ?? payload?.selected?.timeUnixNano ?? fallbackSelected?.timeUnixNano ?? payload?.targetTimeUnixNano;
+  return Number.isFinite(Number(cursor)) ? String(cursor) : '';
+}
+
+function logDetailContextRelationLabel(relation: LogDetailContextRow['relation'], t: LogManageTranslate) {
+  if (relation === 'before') return t('log.manage.stream.detail.context.before');
+  if (relation === 'selected') return t('log.manage.stream.detail.context.selected');
+  return t('log.manage.stream.detail.context.after');
+}
+
+function buildLogDetailContextRows(
+  payload: LogDetailContextPayload | null,
+  fallbackSelected: LogEntry | null,
+  t: LogManageTranslate
+): LogDetailContextRow[] {
+  if (!payload) return [];
+  const before = payload.before || [];
+  const selected = payload.selected || fallbackSelected;
+  const after = payload.after || [];
+  const rows = [
+    ...before.map((entry, index) => ({ relation: 'before' as const, entry, index })),
+    ...(selected ? [{ relation: 'selected' as const, entry: selected, index: 0 }] : []),
+    ...after.map((entry, index) => ({ relation: 'after' as const, entry, index }))
+  ];
+  return rows.map(row => ({
+    key: `${row.relation}-${row.entry.timeUnixNano ?? row.index}-${row.index}`,
+    relation: row.relation,
+    relationLabel: logDetailContextRelationLabel(row.relation, t),
+    time: Number.isFinite(row.entry.timeUnixNano) ? formatTime(Number(row.entry.timeUnixNano) / 1_000_000) : '-',
+    severity: severityLabel(row.entry),
+    body: bodyText(row.entry.body),
+    service: readFirstLogAttribute(row.entry, ['service.name', 'service_name']) || '-'
+  }));
+}
+
+function buildLogMetricsCorrelationRows(entry: LogEntry | null, routeContext: SignalRouteContext, t: LogManageTranslate) {
+  if (!entry) return [];
+  const rows = [
+    {
+      title: t('log.manage.stream.detail.metrics.service'),
+      copy: readFirstLogAttribute(entry, ['service.name', 'service_name']) || routeContext.serviceName,
+      meta: 'resource.service.name'
+    },
+    {
+      title: t('log.manage.stream.detail.metrics.service-namespace'),
+      copy: readFirstLogAttribute(entry, ['service.namespace', 'service_namespace']) || routeContext.serviceNamespace,
+      meta: 'resource.service.namespace'
+    },
+    {
+      title: t('log.manage.stream.detail.metrics.environment'),
+      copy: readFirstLogAttribute(entry, ['deployment.environment.name', 'deployment_environment_name', 'environment']) || routeContext.environment,
+      meta: 'resource.deployment.environment.name'
+    },
+    {
+      title: t('log.manage.stream.detail.metrics.k8s-namespace'),
+      copy: readFirstLogAttribute(entry, ['k8s.namespace.name', 'k8s_namespace_name']),
+      meta: 'resource.k8s.namespace.name'
+    },
+    {
+      title: t('log.manage.stream.detail.metrics.pod'),
+      copy: readFirstLogAttribute(entry, ['k8s.pod.name', 'k8s_pod_name']),
+      meta: 'resource.k8s.pod.name'
+    },
+    {
+      title: t('log.manage.stream.detail.metrics.node'),
+      copy: readFirstLogAttribute(entry, ['k8s.node.name', 'k8s_node_name']),
+      meta: 'resource.k8s.node.name'
+    },
+    {
+      title: t('log.manage.stream.detail.metrics.container'),
+      copy: readFirstLogAttribute(entry, ['k8s.container.name', 'container.name', 'k8s_container_name']),
+      meta: 'resource.k8s.container.name'
+    },
+    {
+      title: t('log.manage.stream.detail.metrics.host'),
+      copy: readFirstLogAttribute(entry, ['host.name', 'host_name']),
+      meta: 'resource.host.name'
+    }
+  ];
+  return rows.filter((row): row is { title: string; copy: string; meta: string } => Boolean(row.copy));
+}
+
+function buildLogMetricsPreviewApiUrl(metricsHref: string | null | undefined, queryOverride?: string) {
+  if (!metricsHref) return null;
+  const href = new URL(metricsHref, 'http://localhost');
+  const sourceParams = href.searchParams;
+  const params = new URLSearchParams();
+  [
+    'query',
+    'filter',
+    'aggregation',
+    'temporalAggregation',
+    'groupBy',
+    'step',
+    'limit',
+    'timeRange',
+    'from',
+    'to',
+    'start',
+    'end',
+    'refresh',
+    'live',
+    'tz',
+    'timezone',
+    'entityId',
+    'entityName',
+    'serviceName',
+    'serviceNamespace',
+    'environment',
+    'source',
+    'collector',
+    'template',
+    'traceId',
+    'spanId'
+  ].forEach(key => {
+    const value = sourceParams.get(key)?.trim();
+    if (value) params.set(key, value);
+  });
+  if (!params.get('serviceName') && !params.get('entityId')) return null;
+  if (queryOverride?.trim()) params.set('query', queryOverride.trim());
+  if (!params.get('limit')) params.set('limit', '4');
+  return `/ingestion/otlp/metrics/console?${params.toString()}`;
+}
+
+function logMetricPreviewTargetSource(target: ReturnType<typeof buildLogMetricsPreviewTargets>[number]) {
+  return target.source === 'k8s' ? 'pod' : 'node';
+}
+
+function normalizeMetricPreviewLabelKey(key: string) {
+  return key.trim().replace(/[^A-Za-z0-9_:]/g, '_').replace(/_+/g, '_');
+}
+
+function readLogMetricsPreviewFilterMatchers(metricsHref: string | null | undefined) {
+  if (!metricsHref) return [];
+  const filter = new URL(metricsHref, 'http://localhost').searchParams.get('filter') || '';
+  const matchers: Array<{ key: string; normalizedKey: string; value: string }> = [];
+  filter.split(/(?:\s+and\s+|,\s*)/i).forEach(part => {
+    const match = part.trim().match(/^([A-Za-z_:][A-Za-z0-9_.:-]*)\s*=\s*"([^"]+)"$/);
+    if (!match) return;
+    matchers.push({
+      key: match[1],
+      normalizedKey: normalizeMetricPreviewLabelKey(match[1]),
+      value: match[2]
+    });
+  });
+  return matchers;
+}
+
+function scoreLogMetricsPreviewFrameForFilter(
+  labels: Record<string, string>,
+  matchers: ReturnType<typeof readLogMetricsPreviewFilterMatchers>
+) {
+  if (matchers.length === 0) return 0;
+  const normalizedLabels = new Map<string, string>();
+  Object.entries(labels).forEach(([key, value]) => {
+    normalizedLabels.set(key, value);
+    normalizedLabels.set(normalizeMetricPreviewLabelKey(key), value);
+  });
+  return matchers.reduce((score, matcher) => {
+    const value = normalizedLabels.get(matcher.key) || normalizedLabels.get(matcher.normalizedKey);
+    return value === matcher.value ? score + 1 : score;
+  }, 0);
+}
+
+function buildLogMetricsPreviewDiscoveredFallbackQueries(
+  metricsHref: string | null | undefined,
+  seedPayload: OtlpMetricsConsole | null | undefined
+) {
+  const filterMatchers = readLogMetricsPreviewFilterMatchers(metricsHref);
+  const queriesBySourceFamily = new Map<string, { query: string; score: number }>();
+  (seedPayload?.results?.frames || []).forEach(frame => {
+    const labels = frame.schema?.labels || {};
+    const query = labels.__name__?.trim();
+    if (!query) return;
+    const family = resolveLogMetricPreviewFamily(frame);
+    if (family === 'other') return;
+    const source = resolveLogMetricPreviewSource(frame);
+    const key = `${source}:${family}`;
+    const score = scoreLogMetricsPreviewFrameForFilter(labels, filterMatchers);
+    const existing = queriesBySourceFamily.get(key);
+    if (!existing || score > existing.score) {
+      queriesBySourceFamily.set(key, { query, score });
+    }
+  });
+  return new Map(Array.from(queriesBySourceFamily.entries()).map(([key, value]) => [key, value.query]));
+}
+
+function buildLogMetricsPreviewFallbackApiUrls(metricsHref: string | null | undefined, seedPayload: OtlpMetricsConsole | null | undefined) {
+  const discoveredCoverage = new Set<string>();
+  (seedPayload?.results?.frames || [])
+    .filter(hasMetricPreviewSamples)
+    .forEach(frame => {
+      const labels = frame.schema?.labels || {};
+      if (!labels.__name__) return;
+      discoveredCoverage.add(`${resolveLogMetricPreviewSource(frame)}:${resolveLogMetricPreviewFamily(frame)}`);
+    });
+  const discoveredFallbackQueries = buildLogMetricsPreviewDiscoveredFallbackQueries(metricsHref, seedPayload);
+  const urls = buildLogMetricsPreviewTargets(metricsHref)
+    .filter(target => !discoveredCoverage.has(`${logMetricPreviewTargetSource(target)}:${target.family}`))
+    .map(target => {
+      const sourceFamily = `${logMetricPreviewTargetSource(target)}:${target.family}`;
+      return buildLogMetricsPreviewApiUrl(metricsHref, discoveredFallbackQueries.get(sourceFamily) || target.query);
+    });
+  const seen = new Set<string>();
+  return urls.filter((url): url is string => Boolean(url && !seen.has(url) && seen.add(url)));
+}
+
+function collectFulfilledMetricsPreviewPayloads(results: PromiseSettledResult<OtlpMetricsConsole>[]) {
+  return results
+    .filter((result): result is PromiseFulfilledResult<OtlpMetricsConsole> => result.status === 'fulfilled' && Boolean(result.value))
+    .map(result => result.value);
+}
+
+function firstRejectedMetricsPreviewReason(results: PromiseSettledResult<OtlpMetricsConsole>[]) {
+  return results.find((result): result is PromiseRejectedResult => result.status === 'rejected')?.reason;
+}
+
+function buildLogMetricsPreviewExplorerHref(metricsHref: string | null | undefined, query: string | null | undefined) {
+  if (!metricsHref || !query?.trim()) return undefined;
+  const href = new URL(metricsHref, 'http://localhost');
+  href.searchParams.set('query', query.trim());
+  const queryString = href.searchParams.toString();
+  return queryString ? `${href.pathname}?${queryString}` : href.pathname;
+}
+
+function latestMetricFrameSample(frame: NonNullable<NonNullable<OtlpMetricsConsole['results']>['frames']>[number]) {
+  const samples = frame.data || [];
+  for (let index = samples.length - 1; index >= 0; index -= 1) {
+    const sample = samples[index];
+    const timestamp = Number(sample?.[0]);
+    const value = sample?.[1] == null || sample?.[1] === '' ? null : Number(sample?.[1]);
+    if (Number.isFinite(timestamp) && (value == null || Number.isFinite(value))) {
+      return { timestamp, value };
+    }
+  }
+  return null;
+}
+
+function hasMetricPreviewSamples(frame: NonNullable<NonNullable<OtlpMetricsConsole['results']>['frames']>[number]) {
+  return (frame.data || []).some(sample => {
+    const timestamp = Number(sample?.[0]);
+    const value = sample?.[1] == null || sample?.[1] === '' ? null : Number(sample?.[1]);
+    return Number.isFinite(timestamp) && value != null && Number.isFinite(value);
+  });
+}
+
+function resolveLogMetricPreviewFamily(
+  frame: NonNullable<NonNullable<OtlpMetricsConsole['results']>['frames']>[number],
+): 'cpu' | 'memory' | 'other' {
+  const labels = frame.schema?.labels || {};
+  const meta = frame.schema?.meta || {};
+  const searchable = [
+    labels.__name__,
+    labels.name,
+    labels.metric,
+    labels.metric_name,
+    labels['otel.metric.description'],
+    labels.description,
+    typeof meta.description === 'string' ? meta.description : undefined,
+    typeof meta.help === 'string' ? meta.help : undefined
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(' ')
+    .toLowerCase();
+  if (/\bcpu\b|cpu_|_cpu|cpu\.|\.cpu|processor/.test(searchable)) {
+    return 'cpu';
+  }
+  if (/\bmemory\b|memory_|_memory|memory\.|\.memory|\bmem\b|working[_\s-]?set|\brss\b/.test(searchable)) {
+    return 'memory';
+  }
+  return 'other';
+}
+
+function logMetricPreviewFamilyLabel(family: 'cpu' | 'memory' | 'other', t: LogManageTranslate) {
+  if (family === 'cpu') return t('log.manage.stream.detail.metrics.preview-family.cpu');
+  if (family === 'memory') return t('log.manage.stream.detail.metrics.preview-family.memory');
+  return t('log.manage.stream.detail.metrics.preview-family.other');
+}
+
+function resolveLogMetricPreviewSource(
+  frame: NonNullable<NonNullable<OtlpMetricsConsole['results']>['frames']>[number]
+): 'pod' | 'node' | 'resource' {
+  const labels = frame.schema?.labels || {};
+  if (labels['k8s.pod.name'] || labels.k8s_pod_name || labels['k8s.container.name'] || labels.k8s_container_name) {
+    return 'pod';
+  }
+  if (labels['host.name'] || labels.host_name || labels['k8s.node.name'] || labels.k8s_node_name) {
+    return 'node';
+  }
+  return 'resource';
+}
+
+function logMetricPreviewSourceLabel(source: 'pod' | 'node' | 'resource', t: LogManageTranslate) {
+  if (source === 'pod') return t('log.manage.stream.detail.metrics.preview-source.pod');
+  if (source === 'node') return t('log.manage.stream.detail.metrics.preview-source.node');
+  return t('log.manage.stream.detail.metrics.preview-source.resource');
+}
+
+function resolveLogMetricPreviewSourceValue(
+  frame: NonNullable<NonNullable<OtlpMetricsConsole['results']>['frames']>[number],
+  source: 'pod' | 'node' | 'resource'
+) {
+  const labels = frame.schema?.labels || {};
+  if (source === 'pod') {
+    return labels['k8s.pod.name'] || labels.k8s_pod_name || labels['k8s.container.name'] || labels.k8s_container_name;
+  }
+  if (source === 'node') {
+    return labels['host.name'] || labels.host_name || labels['k8s.node.name'] || labels.k8s_node_name;
+  }
+  return labels['service.name'] || labels.service_name || labels.__name__;
+}
+
+function logMetricPreviewFamilyRank(family: 'cpu' | 'memory' | 'other') {
+  if (family === 'cpu') return 0;
+  if (family === 'memory') return 1;
+  return 2;
+}
+
+function logMetricPreviewSourceRank(source: 'pod' | 'node' | 'resource') {
+  if (source === 'pod') return 0;
+  if (source === 'node') return 1;
+  return 2;
+}
+
+function buildLogMetricPreviewBars(frame: NonNullable<NonNullable<OtlpMetricsConsole['results']>['frames']>[number]) {
+  const points = (frame.data || [])
+    .map((sample, index) => {
+      const timestamp = Number(sample?.[0]);
+      const value = sample?.[1] == null || sample?.[1] === '' ? null : Number(sample?.[1]);
+      return {
+        key: `${timestamp || index}-${index}`,
+        timestamp,
+        value: Number.isFinite(value) ? (value as number) : null
+      };
+    })
+    .filter(point => Number.isFinite(point.timestamp) && point.value != null)
+    .slice(-8);
+  const max = Math.max(...points.map(point => Math.abs(point.value || 0)), 0);
+  return points.map(point => ({
+    key: point.key,
+    heightPct: max > 0 ? Math.max(8, Math.min(100, Math.round((Math.abs(point.value || 0) / max) * 100))) : 8,
+    label: formatTime(point.timestamp),
+    valueLabel: String(point.value)
+  }));
+}
+
+function buildLogMetricsPreviewRows(
+  data: OtlpMetricsConsole[] | null,
+  t: LogManageTranslate,
+  metricsHref?: string | null
+): LogDetailMetricsPreviewRow[] {
+  const seenFrames = new Set<string>();
+  const frames = (data || [])
+    .flatMap(console => console.results?.frames || [])
+    .filter(hasMetricPreviewSamples)
+    .map((frame, index) => ({
+      frame,
+      index,
+      family: resolveLogMetricPreviewFamily(frame),
+      source: resolveLogMetricPreviewSource(frame)
+    }))
+    .filter(item => {
+      const { frame } = item;
+      const labels = frame.schema?.labels || {};
+      const frameKey = JSON.stringify(Object.keys(labels).sort().map(key => [key, labels[key]]));
+      if (seenFrames.has(frameKey)) return false;
+      seenFrames.add(frameKey);
+      return true;
+    })
+    .sort((left, right) => {
+      const sourceDelta = logMetricPreviewSourceRank(left.source) - logMetricPreviewSourceRank(right.source);
+      if (sourceDelta !== 0) return sourceDelta;
+      const familyDelta = logMetricPreviewFamilyRank(left.family) - logMetricPreviewFamilyRank(right.family);
+      if (familyDelta !== 0) return familyDelta;
+      return left.index - right.index;
+    })
+    .map(item => item.frame)
+    .slice(0, 6);
+  return frames.map((frame, index) => {
+    const labels = frame.schema?.labels || {};
+    const sample = latestMetricFrameSample(frame);
+    const sampleCount = frame.data?.length || 0;
+    const family = resolveLogMetricPreviewFamily(frame);
+    const familyLabel = logMetricPreviewFamilyLabel(family, t);
+    const source = resolveLogMetricPreviewSource(frame);
+    const sourceLabel = logMetricPreviewSourceLabel(source, t);
+    const sourceValue = resolveLogMetricPreviewSourceValue(frame, source);
+    const sampleMeta = t('log.manage.stream.detail.metrics.preview-samples', { count: sampleCount });
+    const timeMeta = sample?.timestamp ? formatTime(sample.timestamp) : '';
+    const metricMeta = `${sourceLabel} · ${familyLabel} · ${sampleMeta}`;
+    return {
+      title: labels.__name__ || t('log.manage.stream.detail.metrics.preview-series', { index: index + 1 }),
+      query: labels.__name__,
+      copy: sample?.value == null ? '-' : String(sample.value),
+      meta: timeMeta ? `${metricMeta} · ${timeMeta}` : metricMeta,
+      family,
+      familyLabel,
+      source,
+      sourceValue,
+      href: buildLogMetricsPreviewExplorerHref(metricsHref, labels.__name__),
+      bars: buildLogMetricPreviewBars(frame)
+    };
+  });
+}
+
+function readLogEntryTimeUnixNano(entry?: LogEntry | null) {
+  return Number.isFinite(entry?.timeUnixNano) ? String(entry?.timeUnixNano) : '';
+}
+
+function matchesRequestedLogLine(entry: LogEntry, requested: { traceId: string; spanId: string; logTimeUnixNano: string }) {
+  if (requested.logTimeUnixNano && readLogEntryTimeUnixNano(entry) !== requested.logTimeUnixNano) return false;
+  if (requested.traceId && entry.traceId?.trim() !== requested.traceId) return false;
+  if (requested.spanId && entry.spanId?.trim() !== requested.spanId) return false;
+  return Boolean(requested.traceId || requested.logTimeUnixNano);
+}
+
+function logColumnLabel(column: LogTableColumnKey, t: LogManageTranslate) {
+  if (column === 'time') return t('log.manage.list.column.time');
+  if (column === 'severity') return t('log.manage.list.column.severity');
+  if (column === 'service') return t('log.manage.list.column.service');
+  if (column === 'body') return t('log.manage.list.column.body');
+  if (column === 'trace-id') return t('log.manage.detail.trace-id');
+  return t('log.manage.detail.span-id');
+}
+
+function logDisplayFormatLabel(format: LogDisplayFormat, t: LogManageTranslate) {
+  if (format === 'raw') return t('log.manage.display.format.raw');
+  if (format === 'column') return t('log.manage.display.format.column');
+  return t('log.manage.display.format.default');
+}
+
+function normalizeLogDisplayFormat(value: string): LogDisplayFormat {
+  if (value === 'raw' || value === 'column') return value;
+  return DEFAULT_LOG_DISPLAY_FORMAT;
+}
+
+function normalizeLogMaxLines(value: string | undefined) {
+  return resolveLogMaxLines({ get: name => (name === LOG_MAX_LINES_PARAM ? value || '' : null) });
+}
+
+function logBodyTextClass(displayFormat: LogDisplayFormat) {
+  if (displayFormat === 'raw') return 'block min-w-0 whitespace-pre-wrap break-words font-mono text-[12px] leading-5 text-[#e8edf5]';
+  if (displayFormat === 'column') return 'block min-w-0 truncate font-mono text-[12px] text-[#e8edf5]';
+  return 'block min-w-0 overflow-hidden font-mono text-[12px] leading-5 text-[#e8edf5]';
+}
+
+function logBodyTextStyle(displayFormat: LogDisplayFormat, maxLines: string): React.CSSProperties | undefined {
+  if (displayFormat !== DEFAULT_LOG_DISPLAY_FORMAT) return undefined;
+  return {
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: Number(maxLines)
+  };
+}
+
+function buildLogBodySearchTerm(message: string) {
+  const normalizedMessage = message.replace(/\s+/g, ' ').trim();
+  if (!normalizedMessage || normalizedMessage === '-') return null;
+  return normalizedMessage.length > 96 ? normalizedMessage.slice(0, 96).trim() : normalizedMessage;
+}
 
 function logSeverityStatusTone(severityTone: LogSeverityTone): HzStatusTone {
   if (severityTone === 'danger') return 'critical';
@@ -160,6 +1008,10 @@ function emptyLogManageData(query: LogQueryState, message: string): LogManageDat
         withoutTrace: 0,
         withSpan: 0
       }
+    },
+    group: {
+      groupBy: query.groupBy || '',
+      groups: []
     },
     query,
     loadStatus: {
@@ -216,9 +1068,123 @@ type RelatedTracePreviewState = {
 
 type LogManageTranslate = ReturnType<typeof useI18n>['t'];
 
+function isLogSavedQueryView(value: unknown): value is LogSavedQueryView {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<LogSavedQueryView>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.label === 'string' &&
+    typeof candidate.description === 'string' &&
+    typeof candidate.route === 'string' &&
+    candidate.route.startsWith('/log/manage') &&
+    typeof candidate.createdAt === 'number'
+  );
+}
+
+function readLogSavedQueryViews(): LogSavedQueryView[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(LOG_SAVED_QUERY_VIEW_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter(isLogSavedQueryView).slice(0, LOG_SAVED_QUERY_VIEW_LIMIT) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLogSavedQueryViews(views: LogSavedQueryView[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(LOG_SAVED_QUERY_VIEW_STORAGE_KEY, JSON.stringify(views.slice(0, LOG_SAVED_QUERY_VIEW_LIMIT)));
+  } catch {
+    // Ignore quota or privacy-mode failures; the current route remains shareable.
+  }
+}
+
+function compactLogSavedViewValue(value: string | undefined, limit = 32) {
+  const trimmed = value?.trim();
+  if (!trimmed) return '';
+  return trimmed.length > limit ? `${trimmed.slice(0, limit - 1)}...` : trimmed;
+}
+
+function isDefaultLogSavedViewColumns(columns: LogTableColumnKey[] | undefined) {
+  const nextColumns = columns || DEFAULT_LOG_TABLE_COLUMNS;
+  return (
+    nextColumns.length === DEFAULT_LOG_TABLE_COLUMNS.length &&
+    DEFAULT_LOG_TABLE_COLUMNS.every((column, index) => nextColumns[index] === column)
+  );
+}
+
+function buildLogSavedViewDescription(query: LogQueryState, routeContext: SignalRouteContext, currentView: LogWorkbenchView, t: LogManageTranslate) {
+  const displayFormat = query.displayFormat || DEFAULT_LOG_DISPLAY_FORMAT;
+  const maxLines = query.maxLines || DEFAULT_LOG_MAX_LINES;
+  const parts = [
+    `${t('log.manage.saved-view.field.view')}: ${currentView}`,
+    query.search.trim() ? `${t('log.manage.saved-view.field.search')}: ${compactLogSavedViewValue(query.search)}` : '',
+    query.severityText.trim() ? `${t('log.manage.saved-view.field.severity')}: ${compactLogSavedViewValue(query.severityText)}` : '',
+    routeContext.serviceName?.trim() ? `${t('log.manage.saved-view.field.service')}: ${compactLogSavedViewValue(routeContext.serviceName)}` : '',
+    routeContext.environment?.trim() ? `${t('log.manage.saved-view.field.environment')}: ${compactLogSavedViewValue(routeContext.environment)}` : '',
+    query.resourceFilter?.trim() ? `${t('log.manage.saved-view.field.resource-filter')}: ${compactLogSavedViewValue(query.resourceFilter)}` : '',
+    query.attributeFilter?.trim() ? `${t('log.manage.saved-view.field.attribute-filter')}: ${compactLogSavedViewValue(query.attributeFilter)}` : '',
+    query.groupBy?.trim() ? `${t('log.manage.saved-view.field.group-by')}: ${compactLogSavedViewValue(query.groupBy)}` : '',
+    query.groupLimit?.trim() ? `${t('log.manage.saved-view.field.group-limit')}: ${compactLogSavedViewValue(query.groupLimit)}` : '',
+    query.groupOrder?.trim() ? `${t('log.manage.saved-view.field.group-order')}: ${compactLogSavedViewValue(query.groupOrder)}` : '',
+    query.groupMinCount?.trim() ? `${t('log.manage.saved-view.field.group-min-count')}: ${compactLogSavedViewValue(query.groupMinCount)}` : '',
+    !isDefaultLogSavedViewColumns(query.columns) ? `${t('log.manage.saved-view.field.columns')}: ${query.columns?.join(',')}` : '',
+    displayFormat !== DEFAULT_LOG_DISPLAY_FORMAT ? `${t('log.manage.saved-view.field.format')}: ${displayFormat}` : '',
+    maxLines !== DEFAULT_LOG_MAX_LINES ? `${t('log.manage.saved-view.field.max-lines')}: ${maxLines}` : '',
+    query.listPageSize && query.listPageSize !== DEFAULT_LOG_LIST_PAGE_SIZE ? `${t('log.manage.saved-view.field.list-page-size')}: ${query.listPageSize}` : '',
+    query.listPageIndex && query.listPageIndex !== DEFAULT_LOG_LIST_PAGE_INDEX ? `${t('log.manage.saved-view.field.list-page-index')}: ${query.listPageIndex}` : ''
+  ].filter(Boolean);
+  return parts.join(' | ') || t('log.manage.saved-view.description.empty');
+}
+
+function buildLogSavedViewLabel(query: LogQueryState, routeContext: SignalRouteContext, t: LogManageTranslate) {
+  return (
+    compactLogSavedViewValue(query.search, 42)
+    || compactLogSavedViewValue(routeContext.serviceName, 42)
+    || compactLogSavedViewValue(query.severityText, 42)
+    || compactLogSavedViewValue(query.groupBy, 42)
+    || t('log.manage.saved-view.current-label')
+  );
+}
+
+function createLogSavedQueryView(
+  query: LogQueryState,
+  routeContext: SignalRouteContext,
+  currentView: LogWorkbenchView,
+  route: string,
+  t: LogManageTranslate
+): LogSavedQueryView {
+  const now = Date.now();
+  return {
+    id: `log-query-${now}`,
+    label: buildLogSavedViewLabel(query, routeContext, t),
+    description: buildLogSavedViewDescription(query, routeContext, currentView, t),
+    route,
+    createdAt: now
+  };
+}
+
 function readLogAttribute(source: Record<string, unknown> | undefined, key: string) {
   const value = source?.[key];
   return typeof value === 'string' ? value.trim() || undefined : undefined;
+}
+
+function readFirstLogAttribute(entry: LogEntry | null | undefined, keys: string[]) {
+  for (const key of keys) {
+    const value = readLogAttribute(entry?.resource, key) || readLogAttribute(entry?.attributes, key);
+    if (value) return value;
+  }
+  return undefined;
+}
+
+function uniqueCompactValues(values: Array<string | undefined>, limit = 3) {
+  const seen = new Set<string>();
+  return values
+    .map(value => value?.trim())
+    .filter((value): value is string => Boolean(value && !seen.has(value) && seen.add(value)))
+    .slice(0, limit);
 }
 
 function hasExactLogEntity(entry: LogEntry | null, routeContext: SignalRouteContext) {
@@ -407,6 +1373,7 @@ function LogManageExplorer({
   draft,
   setDraft,
   applyQuery,
+  applyRouteContext,
   resetQuery,
   switchView,
   currentView,
@@ -414,6 +1381,7 @@ function LogManageExplorer({
   routeContext,
   timeContext,
   applyTimeContext,
+  restoreSavedViewRoute,
   currentLogReturnHref
 }: {
   data: LogManageData;
@@ -421,6 +1389,7 @@ function LogManageExplorer({
   draft: LogQueryState;
   setDraft: React.Dispatch<React.SetStateAction<LogQueryState>>;
   applyQuery: (nextQuery?: LogQueryState) => void;
+  applyRouteContext: (nextContext: SignalRouteContext) => void;
   resetQuery: () => void;
   switchView: (view: LogWorkbenchView) => void;
   currentView: LogWorkbenchView;
@@ -428,9 +1397,15 @@ function LogManageExplorer({
   routeContext: SignalRouteContext;
   timeContext: TimeContext;
   applyTimeContext: (timeContext: TimeContext) => void;
+  restoreSavedViewRoute: (route: string) => void;
   currentLogReturnHref: string;
 }) {
   const { t } = useI18n();
+  const [savedQueryViews, setSavedQueryViews] = useState<LogSavedQueryView[]>(readLogSavedQueryViews);
+  const [editingSavedQueryViewId, setEditingSavedQueryViewId] = useState<string | null>(null);
+  const [savedQueryViewLabelDraft, setSavedQueryViewLabelDraft] = useState('');
+  const [logExportFormat, setLogExportFormat] = useState<LogExportFormat>('csv');
+  const [logExportRowLimit, setLogExportRowLimit] = useState<LogExportRowLimit>('current');
   const rows = buildLogExplorerRows(data.list.content || [], {
     bodyText,
     formatTime,
@@ -444,16 +1419,36 @@ function LogManageExplorer({
   const latestObservedAt = data.overview.latestObservedAt ? formatTime(data.overview.latestObservedAt) : '-';
   const traceCoverage = data.coverage.traceCoverage?.withBothTraceAndSpan ?? 0;
   const trendBars = Object.entries(data.trend.hourlyStats || {}).slice(-12);
+  const groupRows = data.group?.groups || [];
+  const activeGroupBy = query.groupBy?.trim() || data.group?.groupBy || '';
+  const listPageIndex = Math.max(0, Number.isFinite(data.list.pageIndex) ? Number(data.list.pageIndex) : Number(draft.listPageIndex || DEFAULT_LOG_LIST_PAGE_INDEX) || 0);
+  const listPageSize = Math.max(1, Number.isFinite(data.list.pageSize) ? Number(data.list.pageSize) : Number(draft.listPageSize || DEFAULT_LOG_LIST_PAGE_SIZE) || Number(DEFAULT_LOG_LIST_PAGE_SIZE));
+  const listTotalElements = Math.max(0, Number.isFinite(data.list.totalElements) ? Number(data.list.totalElements) : rows.length);
+  const listTotalPages = Math.max(1, Math.ceil(listTotalElements / listPageSize));
+  const listPageStart = listTotalElements === 0 ? 0 : listPageIndex * listPageSize + 1;
+  const listPageEnd = listTotalElements === 0 ? 0 : Math.min(listTotalElements, (listPageIndex + 1) * listPageSize);
+  const isStreamView = currentView === 'stream';
+  const showsLogTimeSeries = currentView === 'list' || currentView === 'time-series';
+  const showsLogTable = currentView === 'list' || currentView === 'table';
+  const visibleLogColumns = draft.columns || DEFAULT_LOG_TABLE_COLUMNS;
+  const visibleLogFieldColumns = useMemo(() => draft.fieldColumns || [], [draft.fieldColumns]);
+  const visibleLogColumnSet = useMemo(() => new Set(visibleLogColumns), [visibleLogColumns]);
+  const displayFormat = normalizeLogDisplayFormat(draft.displayFormat || DEFAULT_LOG_DISPLAY_FORMAT);
+  const maxLines = normalizeLogMaxLines(draft.maxLines || DEFAULT_LOG_MAX_LINES);
   const activeRow = rows[0];
   const activeEntry = data.list.content?.[0] ?? null;
+  const alertDraft = buildLogAlertRuleDraft(query, routeContext);
   const handoffLinks = buildLogHandoffLinks(activeEntry, routeContext, {
     intakeReturnTo: currentLogReturnHref,
-    traceReturnTo: currentLogReturnHref
+    traceReturnTo: currentLogReturnHref,
+    metricsReturnTo: currentLogReturnHref,
+    alertDraft
   });
   const activeServiceName = activeEntry?.resource?.['service.name']?.toString() || activeRow?.service;
   const activeServiceNamespace = activeEntry?.resource?.['service.namespace']?.toString();
   const activeEnvironment = activeEntry?.resource?.['deployment.environment.name']?.toString();
   const activeAttributionDiagnostics = buildLogAttributionDiagnostics(activeEntry, t);
+  const activeLogAttributeRows = buildLogAttributeRows(activeEntry, t);
   const activeLogEvidenceRows = [
     [t('log.manage.evidence.time.title'), activeRow?.timestamp || '-', t('log.manage.evidence.time.meta')],
     [t('log.manage.evidence.severity.title'), activeRow?.severity || '-', selectedSeverity || t('log.manage.evidence.severity.current-filter')],
@@ -474,6 +1469,19 @@ function LogManageExplorer({
   const [selectedStreamKey, setSelectedStreamKey] = useState<string | null>(null);
   const [persistedStreamItem, setPersistedStreamItem] = useState<StreamLogItem | null>(null);
   const [detailSelection, setDetailSelection] = useState<DetailSelection | null>(null);
+  const [detailContextState, setDetailContextState] = useState<LogDetailContextState>({
+    loading: false,
+    error: null,
+    data: null
+  });
+  const [detailMetricsPreviewState, setDetailMetricsPreviewState] = useState<LogDetailMetricsPreviewState>({
+    loading: false,
+    error: null,
+    data: null
+  });
+  const [detailContextFilters, setDetailContextFilters] = useState<LogDetailContextFilters>({});
+  const [detailContextLimit, setDetailContextLimit] = useState(LOG_DETAIL_CONTEXT_DEFAULT_LIMIT);
+  const [detailContextLoadRequest, setDetailContextLoadRequest] = useState<LogDetailContextLoadRequest | null>(null);
   const [relatedTracePreview, setRelatedTracePreview] = useState<RelatedTracePreviewState>({
     open: false,
     loading: false,
@@ -518,18 +1526,56 @@ function LogManageExplorer({
   const selectedStreamAttributionDiagnostics = buildLogAttributionDiagnostics(selectedStreamEntry, t);
   const streamHandoffLinks = buildLogHandoffLinks(selectedStreamEntry, routeContext, {
     intakeReturnTo: currentLogReturnHref,
-    traceReturnTo: currentLogReturnHref
+    traceReturnTo: currentLogReturnHref,
+    metricsReturnTo: currentLogReturnHref,
+    alertDraft
   });
   const detailLog = detailSelection?.entry ?? null;
   const detailHandoffLinks = buildLogHandoffLinks(detailLog, routeContext, {
     intakeReturnTo: currentLogReturnHref,
-    traceReturnTo: currentLogReturnHref
+    traceReturnTo: currentLogReturnHref,
+    metricsReturnTo: currentLogReturnHref,
+    alertDraft
   });
   const detailRows = buildSelectedLogRows(detailLog, t, bodyText, formatTime, severityLabel);
   const detailFacts = buildSelectedLogFacts(detailLog, t, formatTime, severityLabel);
+  const detailAttributeRows = buildLogAttributeRows(detailLog, t);
   const detailAttributionDiagnostics = buildLogAttributionDiagnostics(detailLog, t);
+  const detailMetricsRows = buildLogMetricsCorrelationRows(detailLog, routeContext, t);
   const detailJson = stringifyLogEntry(detailLog);
+  const detailRaw = detailLog ? bodyText(detailLog.body) : '';
   const detailCodeHref = buildLogCodeNavigationUrl(detailLog);
+  const detailContextRoute = buildLogContextRoute(detailLog, routeContext);
+  const detailContextUrl = useMemo(
+    () => buildLogContextApiUrl(
+      detailLog,
+      routeContext,
+      query,
+      detailContextLoadRequest ? LOG_DETAIL_CONTEXT_LIMIT_STEP : detailContextLimit,
+      detailContextFilters,
+      detailContextLoadRequest
+    ),
+    [detailContextFilters, detailContextLimit, detailContextLoadRequest, detailLog, query, routeContext]
+  );
+  const detailMetricsPreviewBaseUrl = useMemo(
+    () => buildLogMetricsPreviewApiUrl(detailLog ? detailHandoffLinks.metricsHref : null),
+    [detailHandoffLinks.metricsHref, detailLog]
+  );
+  const detailContextRows = useMemo(
+    () => buildLogDetailContextRows(detailContextState.data, detailLog, t),
+    [detailContextState.data, detailLog, t]
+  );
+  const detailMetricsPreviewRows = useMemo(
+    () => buildLogMetricsPreviewRows(detailMetricsPreviewState.data, t, detailHandoffLinks.metricsHref),
+    [detailHandoffLinks.metricsHref, detailMetricsPreviewState.data, t]
+  );
+  const detailMetricsPreviewEmpty =
+    detailMetricsPreviewState.data && detailMetricsPreviewRows.length === 0
+      ? detailMetricsPreviewState.data
+          .map(payload => payload.errorMessage || payload.emptyStateReason)
+          .find((message): message is string => Boolean(message))
+        || t('log.manage.stream.detail.metrics.preview-empty')
+      : null;
   const relatedTraceDetail = relatedTracePreview.detail;
   const relatedTraceSelectedSpan =
     relatedTraceDetail?.spans.find(span => span.spanId === relatedTracePreview.selectedSpanId) || relatedTraceDetail?.spans[0] || null;
@@ -544,7 +1590,9 @@ function LogManageExplorer({
       : null;
   const relatedTraceWorkspaceHref = buildLogHandoffLinks(relatedTraceWorkspaceEntry, routeContext, {
     intakeReturnTo: currentLogReturnHref,
-    traceReturnTo: currentLogReturnHref
+    traceReturnTo: currentLogReturnHref,
+    metricsReturnTo: currentLogReturnHref,
+    alertDraft
   }).traceHref;
   const relatedTraceRows = buildTraceWaterfallRows(
     relatedTraceDetail,
@@ -589,10 +1637,117 @@ function LogManageExplorer({
   const canOpenStreamEntity = hasExactLogEntity(selectedStreamEntry, routeContext);
   const canOpenDetailEntity = hasExactLogEntity(detailLog, routeContext);
   const requestedTraceId = query.traceId.trim() || routeContext.traceId?.trim() || '';
+  const requestedSpanId = query.spanId.trim() || routeContext.spanId?.trim() || '';
+  const requestedLogTimeUnixNano = query.logTimeUnixNano?.trim() || '';
+  const serviceQuickFilterValues = uniqueCompactValues([
+    routeContext.serviceName,
+    ...data.list.content.map(entry => readFirstLogAttribute(entry, ['service.name', 'service_name']))
+  ]);
+  const environmentQuickFilterValues = uniqueCompactValues([
+    routeContext.environment,
+    ...data.list.content.map(entry => readFirstLogAttribute(entry, ['deployment.environment.name', 'deployment_environment_name', 'environment']))
+  ]);
 
   useEffect(() => {
     setIsStreamPaused(routeContext.live === 'false');
   }, [routeContext.live]);
+
+  useEffect(() => {
+    setDetailContextLimit(LOG_DETAIL_CONTEXT_DEFAULT_LIMIT);
+    setDetailContextFilters({});
+    setDetailContextLoadRequest(null);
+  }, [detailLog?.timeUnixNano]);
+
+  useEffect(() => {
+    if (!detailContextUrl) {
+      setDetailContextState({ loading: false, error: null, data: null });
+      return undefined;
+    }
+
+    let cancelled = false;
+    const activeLoadRequest = detailContextLoadRequest;
+    setDetailContextState(previous => ({
+      loading: true,
+      error: null,
+      data: activeLoadRequest ? previous.data : null
+    }));
+    apiMessageGetWithTimeout<LogDetailContextPayload>(detailContextUrl)
+      .then(payload => {
+        if (cancelled) return;
+        setDetailContextState(previous => ({
+          loading: false,
+          error: null,
+          data: mergeLogDetailContextPayload(previous.data, payload || null, activeLoadRequest)
+        }));
+      })
+      .catch(error => {
+        if (cancelled) return;
+        setDetailContextState({
+          loading: false,
+          error: describeLogManageLoadFailure(error),
+          data: null
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detailContextLoadRequest, detailContextUrl]);
+
+  useEffect(() => {
+    if (!detailMetricsPreviewBaseUrl) {
+      setDetailMetricsPreviewState({ loading: false, error: null, data: null });
+      return undefined;
+    }
+
+    let cancelled = false;
+    setDetailMetricsPreviewState({ loading: true, error: null, data: null });
+    apiMessageGetWithTimeout<OtlpMetricsConsole>(detailMetricsPreviewBaseUrl)
+      .then(basePayload => {
+        if (cancelled) return;
+        const fallbackUrls = buildLogMetricsPreviewFallbackApiUrls(detailLog ? detailHandoffLinks.metricsHref : null, basePayload);
+        if (fallbackUrls.length === 0) {
+          setDetailMetricsPreviewState({ loading: false, error: null, data: basePayload ? [basePayload] : [] });
+          return;
+        }
+        Promise.allSettled(fallbackUrls.map(url => apiMessageGetWithTimeout<OtlpMetricsConsole>(url)))
+          .then(results => {
+            if (cancelled) return;
+            const payloads = collectFulfilledMetricsPreviewPayloads(results);
+            setDetailMetricsPreviewState({
+              loading: false,
+              error: null,
+              data: [basePayload, ...payloads].filter(Boolean)
+            });
+          });
+      })
+      .catch(error => {
+        if (cancelled) return;
+        const fallbackUrls = buildLogMetricsPreviewFallbackApiUrls(detailLog ? detailHandoffLinks.metricsHref : null, null);
+        if (fallbackUrls.length === 0) {
+          setDetailMetricsPreviewState({ loading: false, error: describeLogManageLoadFailure(error), data: null });
+          return;
+        }
+        Promise.allSettled(fallbackUrls.map(url => apiMessageGetWithTimeout<OtlpMetricsConsole>(url)))
+          .then(results => {
+            if (cancelled) return;
+            const payloads = collectFulfilledMetricsPreviewPayloads(results);
+            if (payloads.length > 0) {
+              setDetailMetricsPreviewState({ loading: false, error: null, data: payloads });
+              return;
+            }
+            setDetailMetricsPreviewState({
+              loading: false,
+              error: describeLogManageLoadFailure(firstRejectedMetricsPreviewReason(results) || error),
+              data: null
+            });
+          });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detailHandoffLinks.metricsHref, detailLog, detailMetricsPreviewBaseUrl]);
 
   useEffect(() => {
     isStreamPausedRef.current = isStreamPaused;
@@ -710,18 +1865,444 @@ function LogManageExplorer({
     applyQuery(nextQuery);
   };
 
+  const applyLogTableColumn = (column: LogTableColumnKey, checked: boolean) => {
+    const nextColumns = resolveNextLogColumns(draft.columns, column, checked);
+    const nextQuery = { ...draft, columns: nextColumns };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  };
+
+  const applyLogDisplayFormat = (value: string) => {
+    const nextQuery = { ...draft, displayFormat: normalizeLogDisplayFormat(value) };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  };
+
+  const applyLogMaxLines = (value: string) => {
+    const nextQuery = { ...draft, maxLines: normalizeLogMaxLines(value) };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  };
+
+  const applyLogListPageSize = (value: string) => {
+    const listPageSize = resolveLogListPageSize({ get: name => (name === 'listPageSize' ? value : null) });
+    const nextQuery = {
+      ...draft,
+      listPageSize,
+      listPageIndex: DEFAULT_LOG_LIST_PAGE_INDEX
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  };
+
+  const applyLogListPageIndex = (nextPageIndex: number) => {
+    const nextQuery = {
+      ...draft,
+      listPageIndex: resolveLogListPageIndex({ get: name => (name === 'listPageIndex' ? String(Math.max(0, nextPageIndex)) : null) })
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  };
+
+  const applyLogQuickRouteContext = (key: 'serviceName' | 'environment', value: string) => {
+    const currentValue = routeContext[key]?.trim();
+    const nextContext = { ...routeContext };
+    if (currentValue === value) {
+      delete nextContext[key];
+    } else {
+      nextContext[key] = value;
+    }
+    applyRouteContext(nextContext);
+  };
+
+  const applyLogRowServiceFilter = (serviceName: string) => {
+    const normalizedServiceName = serviceName.trim();
+    if (!normalizedServiceName || normalizedServiceName === '-') return;
+    applyRouteContext({ ...routeContext, serviceName: normalizedServiceName });
+  };
+
+  const applyLogRowSeverityFilter = (severity: string) => {
+    const normalizedSeverity = severity.trim().toUpperCase();
+    if (!normalizedSeverity || normalizedSeverity === '-' || normalizedSeverity === 'LOG') return;
+    const nextQuery = {
+      ...draft,
+      severityText: normalizedSeverity
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  };
+
+  const applyLogRowBodyFilter = (message: string) => {
+    const searchTerm = buildLogBodySearchTerm(message);
+    if (!searchTerm) return;
+    const nextQuery = {
+      ...draft,
+      search: searchTerm
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  };
+
+  const applyLogRowTraceIdFilter = (traceId: string) => {
+    const normalizedTraceId = traceId.trim();
+    if (!normalizedTraceId || normalizedTraceId === '-') return;
+    const nextQuery = {
+      ...draft,
+      traceId: normalizedTraceId
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  };
+
+  const applyLogRowSpanIdFilter = (spanId: string) => {
+    const normalizedSpanId = spanId.trim();
+    if (!normalizedSpanId || normalizedSpanId === '-') return;
+    const nextQuery = {
+      ...draft,
+      spanId: normalizedSpanId
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  };
+
+  const buildLogExportFieldColumns = (exportRows: LogExplorerRow[], exportEntries: Array<LogEntry | null | undefined>): LogExportExtraColumn[] => {
+    return visibleLogFieldColumns.map(fieldColumn => ({
+      key: fieldColumn,
+      valuesByRowKey: Object.fromEntries(exportRows.map((row, index) => [
+        row.key,
+        readLogFieldColumnValue(exportEntries[index], fieldColumn)
+      ]))
+    }));
+  };
+
+  const triggerLogExportDownload = (exportRows: LogExplorerRow[], exportEntries: Array<LogEntry | null | undefined>) => {
+    if (typeof window === 'undefined' || exportRows.length === 0) return;
+    const keyedExportRows = exportRows.map((row, index) => ({
+      ...row,
+      key: `export-${index}-${row.key}`
+    }));
+    const exportFieldColumns = buildLogExportFieldColumns(keyedExportRows, exportEntries);
+    const content = logExportFormat === 'jsonl'
+      ? buildLogJsonl(keyedExportRows, visibleLogColumns, exportFieldColumns)
+      : buildLogCsv(keyedExportRows, visibleLogColumns, exportFieldColumns);
+    const type = logExportFormat === 'jsonl' ? 'application/x-ndjson;charset=utf-8' : 'text/csv;charset=utf-8';
+    const blob = new Blob([content], { type });
+    const href = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = href;
+    anchor.download = buildLogExportFilename(logExportFormat);
+    anchor.rel = 'noopener';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(href);
+  };
+
+  const downloadCurrentLogRows = async () => {
+    if (typeof window === 'undefined' || rows.length === 0) return;
+    if (logExportRowLimit === 'current') {
+      triggerLogExportDownload(rows, rows.map(row => logEntryByRowKey.get(row.key)));
+      return;
+    }
+    const baseExportListUrl = buildLogUrls({
+      ...query,
+      listPageIndex: DEFAULT_LOG_LIST_PAGE_INDEX
+    }, routeContext).listUrl;
+    const exportRowLimit = Number(logExportRowLimit);
+    const exportEntries: LogEntry[] = [];
+    for (let pageIndex = 0; exportEntries.length < exportRowLimit; pageIndex += 1) {
+      const remainingRows = exportRowLimit - exportEntries.length;
+      const pageSize = Math.min(LOG_EXPORT_FETCH_PAGE_SIZE, remainingRows);
+      const exportListUrl = new URL(baseExportListUrl, 'http://localhost');
+      exportListUrl.searchParams.set('pageIndex', String(pageIndex));
+      exportListUrl.searchParams.set('pageSize', String(pageSize));
+      const exportListPath = `${exportListUrl.pathname}?${exportListUrl.searchParams.toString()}`;
+      const exportList = await apiMessageGetWithTimeout<PageResult<LogEntry>>(exportListPath);
+      const pageEntries = (exportList.content || []).slice(0, remainingRows);
+      exportEntries.push(...pageEntries);
+      const totalElements = Number(exportList.totalElements);
+      if (pageEntries.length < pageSize || (Number.isFinite(totalElements) && exportEntries.length >= totalElements)) {
+        break;
+      }
+    }
+    const exportRows = buildLogExplorerRows(exportEntries, {
+      bodyText,
+      formatTime,
+      severityLabel
+    });
+    triggerLogExportDownload(exportRows, exportEntries);
+  };
+
+  const applyLogAttributeFilter = useCallback((row: LogAttributeRow) => {
+    const filter = buildLogAttributeFilterExpression(row, t('log.manage.attributes.value.object'));
+    if (!filter) return;
+    const nextQuery: LogQueryState = {
+      ...draft,
+      ...(filter.kind === 'resource'
+        ? { resourceFilter: mergeLogAttributeFilterExpression(draft.resourceFilter, filter.expression) }
+        : { attributeFilter: mergeLogAttributeFilterExpression(draft.attributeFilter, filter.expression) })
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft, t]);
+
+  const applyLogContextAttributeFilter = useCallback((row: LogAttributeRow) => {
+    const filter = buildLogAttributeFilterExpression(row, t('log.manage.attributes.value.object'));
+    if (!filter) return;
+    setDetailContextLimit(LOG_DETAIL_CONTEXT_DEFAULT_LIMIT);
+    setDetailContextLoadRequest(null);
+    setDetailContextFilters(previous => ({
+      ...previous,
+      ...(filter.kind === 'resource'
+        ? { resourceFilter: mergeLogAttributeFilterExpression(previous.resourceFilter, filter.expression) }
+        : { attributeFilter: mergeLogAttributeFilterExpression(previous.attributeFilter, filter.expression) })
+    }));
+  }, [t]);
+
+  const excludeLogAttributeFilter = useCallback((row: LogAttributeRow) => {
+    const filter = buildLogAttributeExcludeExpression(row, t('log.manage.attributes.value.object'));
+    if (!filter) return;
+    const nextQuery: LogQueryState = {
+      ...draft,
+      ...(filter.kind === 'resource'
+        ? { resourceFilter: mergeLogAttributeFilterExpression(draft.resourceFilter, filter.expression) }
+        : { attributeFilter: mergeLogAttributeFilterExpression(draft.attributeFilter, filter.expression) })
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft, t]);
+
+  const replaceLogAttributeFilter = useCallback((row: LogAttributeRow) => {
+    const filter = buildLogAttributeFilterExpression(row, t('log.manage.attributes.value.object'));
+    if (!filter) return;
+    const nextQuery: LogQueryState = {
+      ...draft,
+      ...(filter.kind === 'resource'
+        ? { resourceFilter: filter.expression }
+        : { attributeFilter: filter.expression })
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft, t]);
+
+  const groupLogAttribute = useCallback((row: LogAttributeRow) => {
+    const group = buildLogAttributeGroupBy(row);
+    if (!group) return;
+    const nextQuery: LogQueryState = {
+      ...draft,
+      groupBy: group.groupBy
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
+  const applyLogAttributeFieldColumn = useCallback((row: LogAttributeRow) => {
+    const fieldColumn = buildLogAttributeFieldColumn(row);
+    if (!fieldColumn) return;
+    const currentColumns = draft.fieldColumns || [];
+    const alreadyVisible = currentColumns.includes(fieldColumn);
+    const nextFieldColumns = alreadyVisible
+      ? currentColumns.filter(column => column !== fieldColumn)
+      : [...currentColumns.filter(column => column !== fieldColumn), fieldColumn].slice(0, MAX_LOG_FIELD_COLUMNS);
+    const nextQuery: LogQueryState = {
+      ...draft,
+      ...(nextFieldColumns.length ? { fieldColumns: nextFieldColumns } : { fieldColumns: undefined })
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
+  const applyLogGroupLimit = useCallback((value: string) => {
+    const nextQuery: LogQueryState = {
+      ...draft,
+      groupLimit: value.trim() || undefined
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
+  const applyLogGroupOrder = useCallback((value: string) => {
+    const nextQuery: LogQueryState = {
+      ...draft,
+      groupOrder: value === 'count-asc' ? 'count-asc' : undefined
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
+  const applyLogGroupMinCount = useCallback((value: string) => {
+    const nextQuery: LogQueryState = {
+      ...draft,
+      groupMinCount: value.trim() || undefined
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
+  const applyLogGroupResultFilter = useCallback((value: string) => {
+    const filter = buildLogGroupResultFilter(activeGroupBy, value);
+    if (!filter) return;
+    if (filter.kind === 'service') {
+      applyRouteContext({ ...routeContext, serviceName: filter.value });
+      return;
+    }
+    const nextQuery: LogQueryState = {
+      ...draft,
+      ...(filter.kind === 'severity'
+        ? { severityText: filter.value }
+        : filter.kind === 'resource'
+          ? { resourceFilter: mergeLogAttributeFilterExpression(draft.resourceFilter, filter.expression) }
+          : { attributeFilter: mergeLogAttributeFilterExpression(draft.attributeFilter, filter.expression) })
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [activeGroupBy, applyQuery, applyRouteContext, draft, routeContext, setDraft]);
+
+  const renderLogAttributeFilterAction = useCallback((row: LogAttributeRow) => {
+    const filter = buildLogAttributeFilterExpression(row, t('log.manage.attributes.value.object'));
+    const excludeFilter = buildLogAttributeExcludeExpression(row, t('log.manage.attributes.value.object'));
+    const group = buildLogAttributeGroupBy(row);
+    const fieldColumn = buildLogAttributeFieldColumn(row);
+    const fieldColumnVisible = Boolean(fieldColumn && visibleLogFieldColumns.includes(fieldColumn));
+    if (!filter && !excludeFilter && !group && !fieldColumn) return null;
+    return (
+      <span className="inline-flex flex-wrap gap-1">
+        {fieldColumn ? (
+          <HzButton
+            data-log-manage-attribute-field-column-action={fieldColumnVisible ? 'remove' : 'add'}
+            data-log-manage-attribute-field-column-owner="hertzbeat-ui-button"
+            data-log-manage-attribute-field-column={fieldColumn}
+            data-log-manage-attribute-filter-name={row.name}
+            data-log-manage-attribute-filter-value={row.value}
+            size="sm"
+            intent="secondary"
+            onClick={() => applyLogAttributeFieldColumn(row)}
+            aria-label={fieldColumnVisible
+              ? t('log.manage.attributes.remove-column-action.aria', { name: row.name })
+              : t('log.manage.attributes.add-column-action.aria', { name: row.name })}
+          >
+            <HzButtonIcon
+              icon={fieldColumnVisible ? X : ListChecks}
+              data-log-manage-attribute-field-column-icon={fieldColumnVisible ? 'remove' : 'add'}
+              data-log-manage-attribute-field-column-icon-owner="hertzbeat-ui-button-icon"
+            />
+            {fieldColumnVisible ? t('log.manage.attributes.remove-column-action') : t('log.manage.attributes.add-column-action')}
+          </HzButton>
+        ) : null}
+        {filter ? (
+          <>
+            <HzButton
+              data-log-stream-detail-context-filter-action={filter.kind}
+              data-log-stream-detail-context-filter-owner="hertzbeat-ui-button"
+              data-log-manage-attribute-filter-name={row.name}
+              data-log-manage-attribute-filter-value={row.value}
+              size="sm"
+              intent="secondary"
+              onClick={() => applyLogContextAttributeFilter(row)}
+              aria-label={t('log.manage.attributes.context-filter-action.aria', { name: row.name, value: row.value })}
+            >
+              <HzButtonIcon
+                icon={ScrollText}
+                data-log-stream-detail-context-filter-icon="context-filter"
+                data-log-stream-detail-context-filter-icon-owner="hertzbeat-ui-button-icon"
+              />
+              {t('log.manage.attributes.context-filter-action')}
+            </HzButton>
+            <HzButton
+              data-log-manage-attribute-filter-action={filter.kind}
+              data-log-manage-attribute-filter-owner="hertzbeat-ui-button"
+              data-log-manage-attribute-filter-name={row.name}
+              data-log-manage-attribute-filter-value={row.value}
+              size="sm"
+              intent="secondary"
+              onClick={() => applyLogAttributeFilter(row)}
+              aria-label={t('log.manage.attributes.filter-action.aria', { name: row.name, value: row.value })}
+            >
+              <HzButtonIcon
+                icon={Filter}
+                data-log-manage-attribute-filter-action-icon="filter"
+                data-log-manage-attribute-filter-action-icon-owner="hertzbeat-ui-button-icon"
+              />
+              {t('log.manage.attributes.filter-action')}
+            </HzButton>
+            <HzButton
+              data-log-manage-attribute-filter-replace-action={filter.kind}
+              data-log-manage-attribute-filter-replace-owner="hertzbeat-ui-button"
+              data-log-manage-attribute-filter-name={row.name}
+              data-log-manage-attribute-filter-value={row.value}
+              size="sm"
+              intent="secondary"
+              onClick={() => replaceLogAttributeFilter(row)}
+              aria-label={t('log.manage.attributes.replace-action.aria', { name: row.name, value: row.value })}
+            >
+              <HzButtonIcon
+                icon={Replace}
+                data-log-manage-attribute-filter-replace-icon="replace"
+                data-log-manage-attribute-filter-replace-icon-owner="hertzbeat-ui-button-icon"
+              />
+              {t('log.manage.attributes.replace-action')}
+            </HzButton>
+          </>
+        ) : null}
+        {excludeFilter ? (
+          <HzButton
+            data-log-manage-attribute-filter-out-action={excludeFilter.kind}
+            data-log-manage-attribute-filter-out-owner="hertzbeat-ui-button"
+            data-log-manage-attribute-filter-name={row.name}
+            data-log-manage-attribute-filter-value={row.value}
+            size="sm"
+            intent="secondary"
+            onClick={() => excludeLogAttributeFilter(row)}
+            aria-label={t('log.manage.attributes.filter-out-action.aria', { name: row.name, value: row.value })}
+          >
+            <HzButtonIcon
+              icon={X}
+              data-log-manage-attribute-filter-out-icon="exclude"
+              data-log-manage-attribute-filter-out-icon-owner="hertzbeat-ui-button-icon"
+            />
+            {t('log.manage.attributes.filter-out-action')}
+          </HzButton>
+        ) : null}
+        {group ? (
+          <HzButton
+            data-log-manage-attribute-group-action={group.kind}
+            data-log-manage-attribute-group-owner="hertzbeat-ui-button"
+            data-log-manage-attribute-filter-name={row.name}
+            data-log-manage-attribute-filter-value={row.value}
+            size="sm"
+            intent="secondary"
+            onClick={() => groupLogAttribute(row)}
+            aria-label={t('log.manage.attributes.group-action.aria', { name: row.name })}
+          >
+            <HzButtonIcon
+              icon={BarChart3}
+              data-log-manage-attribute-group-icon="group"
+              data-log-manage-attribute-group-icon-owner="hertzbeat-ui-button-icon"
+            />
+            {t('log.manage.attributes.group-action')}
+          </HzButton>
+        ) : null}
+      </span>
+    );
+  }, [applyLogAttributeFieldColumn, applyLogAttributeFilter, applyLogContextAttributeFilter, excludeLogAttributeFilter, groupLogAttribute, replaceLogAttributeFilter, t, visibleLogFieldColumns]);
+
   const openLogDetails = (entry: LogEntry | null, source: 'history' | 'stream', selectionState: 'attached' | 'detached' = 'attached') => {
     if (!entry) return;
     setDetailSelection({ entry, source, selectionState });
   };
 
   useEffect(() => {
-    if (!requestedTraceId || detailSelection) {
+    const requestedLogLine = {
+      traceId: requestedTraceId,
+      spanId: requestedSpanId,
+      logTimeUnixNano: requestedLogTimeUnixNano
+    };
+    if ((!requestedLogLine.traceId && !requestedLogLine.logTimeUnixNano) || detailSelection) {
       return;
     }
 
-    if (currentView === 'list') {
-      const matchIndex = (data.list.content || []).findIndex(entry => entry.traceId?.trim() === requestedTraceId);
+    if (showsLogTable) {
+      const matchIndex = (data.list.content || []).findIndex(entry => matchesRequestedLogLine(entry, requestedLogLine));
       if (matchIndex < 0) {
         return;
       }
@@ -735,8 +2316,8 @@ function LogManageExplorer({
       return;
     }
 
-    if (currentView === 'stream') {
-      const item = visibleStreamItems.find(streamItem => streamItem.entry.traceId?.trim() === requestedTraceId);
+    if (isStreamView) {
+      const item = visibleStreamItems.find(streamItem => matchesRequestedLogLine(streamItem.entry, requestedLogLine));
       if (!item) {
         return;
       }
@@ -749,7 +2330,7 @@ function LogManageExplorer({
       setPersistedStreamItem(item);
       setDetailSelection({ entry: item.entry, source: 'stream', selectionState: 'attached' });
     }
-  }, [currentView, data.list.content, detailSelection, requestedTraceId, visibleStreamItems]);
+  }, [data.list.content, detailSelection, isStreamView, requestedLogTimeUnixNano, requestedSpanId, requestedTraceId, showsLogTable, visibleStreamItems]);
 
   const openTraceDrilldownFromLog = (
     entry: LogEntry | null,
@@ -835,53 +2416,290 @@ function LogManageExplorer({
     }
   };
 
+  const saveCurrentLogQueryView = () => {
+    const nextView = createLogSavedQueryView(query, routeContext, currentView, currentLogReturnHref, t);
+    setSavedQueryViews(previous => {
+      const nextViews = [nextView, ...previous.filter(view => view.route !== nextView.route)].slice(0, LOG_SAVED_QUERY_VIEW_LIMIT);
+      writeLogSavedQueryViews(nextViews);
+      return nextViews;
+    });
+  };
+
+  const copyCurrentLogQueryView = () => {
+    void copyTextToClipboard(currentLogReturnHref);
+  };
+
+  const copyLogLineLink = (row: LogExplorerRow) => {
+    void copyTextToClipboard(buildLogLineShareHref(currentLogReturnHref, row, logEntryByRowKey.get(row.key)));
+  };
+
+  const deleteLogSavedQueryView = (viewId: string) => {
+    setSavedQueryViews(previous => {
+      const nextViews = previous.filter(view => view.id !== viewId);
+      writeLogSavedQueryViews(nextViews);
+      return nextViews;
+    });
+  };
+
+  const updateLogSavedQueryView = (viewId: string) => {
+    const nextSnapshot = createLogSavedQueryView(query, routeContext, currentView, currentLogReturnHref, t);
+    setSavedQueryViews(previous => {
+      const nextViews = previous.map(view => (
+        view.id === viewId
+          ? { ...nextSnapshot, id: view.id, label: view.label, createdAt: view.createdAt }
+          : view
+      ));
+      writeLogSavedQueryViews(nextViews);
+      return nextViews;
+    });
+  };
+
+  const startRenameLogSavedQueryView = (view: LogSavedQueryView) => {
+    setEditingSavedQueryViewId(view.id);
+    setSavedQueryViewLabelDraft(view.label);
+  };
+
+  const cancelRenameLogSavedQueryView = () => {
+    setEditingSavedQueryViewId(null);
+    setSavedQueryViewLabelDraft('');
+  };
+
+  const saveRenameLogSavedQueryView = (viewId: string) => {
+    const nextLabel = savedQueryViewLabelDraft.trim();
+    if (!nextLabel) {
+      cancelRenameLogSavedQueryView();
+      return;
+    }
+    setSavedQueryViews(previous => {
+      const nextViews = previous.map(view => (view.id === viewId ? { ...view, label: nextLabel } : view));
+      writeLogSavedQueryViews(nextViews);
+      return nextViews;
+    });
+    cancelRenameLogSavedQueryView();
+  };
+
   const renderViewSwitch = () =>
     showViewToggle ? (
-      <HzPanelSurface
-        data-log-manage-view-switch="stream-history"
-        data-log-manage-panel-surface="view-switch"
-        data-log-manage-view-switch-panel-surface-owner="hertzbeat-ui-panel-surface"
-        padding="view-switch"
-      >
-        <HzWorkbenchLayout
-          as="div"
-          variant="view-switch"
-          data-log-manage-view-switch-layout="shared-view-switch"
-          data-log-manage-view-switch-layout-owner="hertzbeat-ui-workbench-layout"
+      <>
+        <HzPanelSurface
+          data-log-manage-view-switch="explorer-views"
+          data-log-manage-panel-surface="view-switch"
+          data-log-manage-view-switch-panel-surface-owner="hertzbeat-ui-panel-surface"
+          padding="view-switch"
         >
-          <div className="text-[12px] font-semibold text-[#8792a5]">{t('log.manage.stream.view-switch.title')}</div>
-          <HzActionGroup
-            layout="end-wrap"
-            data-log-manage-view-toggle-group="shared-action-group"
-            data-log-manage-view-toggle-group-owner="hertzbeat-ui-action-group"
+          <HzWorkbenchLayout
+            as="div"
+            variant="view-switch"
+            data-log-manage-view-switch-layout="shared-view-switch"
+            data-log-manage-view-switch-layout-owner="hertzbeat-ui-workbench-layout"
           >
-            <HzButton
-              data-log-manage-view-toggle-control="shared-hz-button"
-              data-log-manage-view-option="stream"
-              data-log-manage-view-active={currentView === 'stream'}
-              aria-pressed={currentView === 'stream'}
-              intent={currentView === 'stream' ? 'primary' : 'secondary'}
-              size="md"
-              onClick={() => switchView('stream')}
+            <div className="text-[12px] font-semibold text-[#8792a5]">{t('log.manage.stream.view-switch.title')}</div>
+            <HzActionGroup
+              layout="end-wrap"
+              data-log-manage-view-toggle-group="shared-action-group"
+              data-log-manage-view-toggle-group-owner="hertzbeat-ui-action-group"
             >
-              <Wifi className="h-4 w-4" aria-hidden="true" />
-              {t('log.manage.stream.view.stream')}
-            </HzButton>
-            <HzButton
-              data-log-manage-view-toggle-control="shared-hz-button"
-              data-log-manage-view-option="list"
-              data-log-manage-view-active={currentView === 'list'}
-              aria-pressed={currentView === 'list'}
-              intent={currentView === 'list' ? 'primary' : 'secondary'}
-              size="md"
-              onClick={() => switchView('list')}
+              <HzButton
+                data-log-manage-view-toggle-control="shared-hz-button"
+                data-log-manage-view-option="stream"
+                data-log-manage-view-active={isStreamView}
+                aria-pressed={isStreamView}
+                intent={isStreamView ? 'primary' : 'secondary'}
+                size="md"
+                onClick={() => switchView('stream')}
+              >
+                <Wifi className="h-4 w-4" aria-hidden="true" />
+                {t('log.manage.stream.view.stream')}
+              </HzButton>
+              <HzButton
+                data-log-manage-view-toggle-control="shared-hz-button"
+                data-log-manage-view-option="list"
+                data-log-manage-view-active={currentView === 'list'}
+                aria-pressed={currentView === 'list'}
+                intent={currentView === 'list' ? 'primary' : 'secondary'}
+                size="md"
+                onClick={() => switchView('list')}
+              >
+                <ScrollText className="h-4 w-4" aria-hidden="true" />
+                {t('log.manage.stream.view.list')}
+              </HzButton>
+              <HzButton
+                data-log-manage-view-toggle-control="shared-hz-button"
+                data-log-manage-view-option="time-series"
+                data-log-manage-view-active={currentView === 'time-series'}
+                aria-pressed={currentView === 'time-series'}
+                intent={currentView === 'time-series' ? 'primary' : 'secondary'}
+                size="md"
+                onClick={() => switchView('time-series')}
+              >
+                <BarChart3 className="h-4 w-4" aria-hidden="true" />
+                {t('log.manage.stream.view.time-series')}
+              </HzButton>
+              <HzButton
+                data-log-manage-view-toggle-control="shared-hz-button"
+                data-log-manage-view-option="table"
+                data-log-manage-view-active={currentView === 'table'}
+                aria-pressed={currentView === 'table'}
+                intent={currentView === 'table' ? 'primary' : 'secondary'}
+                size="md"
+                onClick={() => switchView('table')}
+              >
+                <ListChecks className="h-4 w-4" aria-hidden="true" />
+                {t('log.manage.stream.view.table')}
+              </HzButton>
+            </HzActionGroup>
+          </HzWorkbenchLayout>
+        </HzPanelSurface>
+        <HzPanelSurface
+          data-log-manage-saved-views="route-query-views"
+          data-log-manage-saved-views-owner="hertzbeat-ui-panel-surface"
+          padding="view-switch"
+          variant="view-switch"
+        >
+          <HzWorkbenchLayout
+            as="div"
+            variant="view-switch"
+            data-log-manage-saved-view-layout="shared-view-switch"
+            data-log-manage-saved-view-layout-owner="hertzbeat-ui-workbench-layout"
+          >
+            <div className="min-w-[128px] text-[12px] font-semibold text-[#8792a5]">{t('log.manage.saved-view.title')}</div>
+            <HzActionGroup
+              layout="end-wrap"
+              data-log-manage-saved-view-action-group="shared-action-group"
+              data-log-manage-saved-view-action-group-owner="hertzbeat-ui-action-group"
             >
-              <ScrollText className="h-4 w-4" aria-hidden="true" />
-              {t('log.manage.stream.view.history')}
-            </HzButton>
-          </HzActionGroup>
-        </HzWorkbenchLayout>
-      </HzPanelSurface>
+              <HzButton
+                type="button"
+                intent="secondary"
+                size="md"
+                onClick={saveCurrentLogQueryView}
+                data-log-manage-saved-view-action="save-current"
+                data-log-manage-saved-view-action-owner="hertzbeat-ui-button"
+              >
+                <Save className="h-4 w-4" aria-hidden="true" />
+                {t('log.manage.saved-view.save-current')}
+              </HzButton>
+              <HzButton
+                type="button"
+                intent="secondary"
+                size="md"
+                title={t('log.manage.saved-view.copy-current')}
+                aria-label={t('log.manage.saved-view.copy-current')}
+                onClick={copyCurrentLogQueryView}
+                data-log-manage-saved-view-copy-action="current"
+                data-log-manage-saved-view-copy-owner="hertzbeat-ui-button"
+              >
+                <Copy className="h-4 w-4" aria-hidden="true" />
+              </HzButton>
+              {savedQueryViews.length ? (
+                savedQueryViews.map(view => {
+                  const active = view.route === currentLogReturnHref;
+                  const editing = editingSavedQueryViewId === view.id;
+                  return (
+                    <React.Fragment key={view.id}>
+                      {editing ? (
+                        <>
+                          <HzInput
+                            value={savedQueryViewLabelDraft}
+                            onChange={event => setSavedQueryViewLabelDraft(event.target.value)}
+                            onInput={event => setSavedQueryViewLabelDraft(event.currentTarget.value)}
+                            aria-label={t('log.manage.saved-view.rename-label')}
+                            data-log-manage-saved-view-rename-input={view.id}
+                            data-log-manage-saved-view-rename-input-owner="hertzbeat-ui-input"
+                          />
+                          <HzButton
+                            type="button"
+                            intent="primary"
+                            size="md"
+                            title={t('log.manage.saved-view.rename-save')}
+                            aria-label={t('log.manage.saved-view.rename-save')}
+                            data-log-manage-saved-view-rename-save-action={view.id}
+                            data-log-manage-saved-view-rename-save-owner="hertzbeat-ui-button"
+                            onClick={() => saveRenameLogSavedQueryView(view.id)}
+                          >
+                            <Check className="h-4 w-4" aria-hidden="true" />
+                          </HzButton>
+                          <HzButton
+                            type="button"
+                            intent="secondary"
+                            size="md"
+                            title={t('log.manage.saved-view.rename-cancel')}
+                            aria-label={t('log.manage.saved-view.rename-cancel')}
+                            data-log-manage-saved-view-rename-cancel-action={view.id}
+                            data-log-manage-saved-view-rename-cancel-owner="hertzbeat-ui-button"
+                            onClick={cancelRenameLogSavedQueryView}
+                          >
+                            <X className="h-4 w-4" aria-hidden="true" />
+                          </HzButton>
+                        </>
+                      ) : (
+                        <>
+                          <HzButton
+                            type="button"
+                            intent={active ? 'primary' : 'secondary'}
+                            size="md"
+                            title={view.description}
+                            data-log-manage-saved-view-select-action={view.id}
+                            data-log-manage-saved-view-select-owner="hertzbeat-ui-button"
+                            data-log-manage-saved-view-active={active ? 'true' : 'false'}
+                            onClick={() => restoreSavedViewRoute(view.route)}
+                          >
+                            <ListChecks className="h-4 w-4" aria-hidden="true" />
+                            <span className="min-w-0 truncate">{view.label}</span>
+                          </HzButton>
+                          <HzButton
+                            type="button"
+                            intent="secondary"
+                            size="md"
+                            title={t('log.manage.saved-view.rename')}
+                            aria-label={t('log.manage.saved-view.rename')}
+                            data-log-manage-saved-view-rename-action={view.id}
+                            data-log-manage-saved-view-rename-owner="hertzbeat-ui-button"
+                            onClick={() => startRenameLogSavedQueryView(view)}
+                          >
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
+                          </HzButton>
+                          <HzButton
+                            type="button"
+                            intent="secondary"
+                            size="md"
+                            title={t('log.manage.saved-view.update')}
+                            aria-label={t('log.manage.saved-view.update')}
+                            data-log-manage-saved-view-update-action={view.id}
+                            data-log-manage-saved-view-update-owner="hertzbeat-ui-button"
+                            onClick={() => updateLogSavedQueryView(view.id)}
+                          >
+                            <Replace className="h-4 w-4" aria-hidden="true" />
+                          </HzButton>
+                        </>
+                      )}
+                      <HzButton
+                        type="button"
+                        intent="secondary"
+                        size="md"
+                        title={t('common.button.delete')}
+                        aria-label={t('common.button.delete')}
+                        data-log-manage-saved-view-delete-action={view.id}
+                        data-log-manage-saved-view-delete-owner="hertzbeat-ui-button"
+                        onClick={() => deleteLogSavedQueryView(view.id)}
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </HzButton>
+                    </React.Fragment>
+                  );
+                })
+              ) : (
+                <span
+                  className="min-w-0 truncate text-[12px] text-[#727b8c]"
+                  data-log-manage-saved-view-empty="local-route-snapshots"
+                >
+                  {t('log.manage.saved-view.empty')}
+                </span>
+              )}
+            </HzActionGroup>
+          </HzWorkbenchLayout>
+        </HzPanelSurface>
+      </>
     ) : null;
 
   const renderDetailDialog = () => (
@@ -940,10 +2758,52 @@ function LogManageExplorer({
               {t('log.manage.stream.action.view-code')}
             </HzButtonLink>
           ) : null}
+          {detailContextRoute ? (
+            <HzButton
+              data-log-stream-detail-context-action="show-context"
+              data-log-stream-detail-context-owner="hertzbeat-ui-button"
+              size="md"
+              intent="secondary"
+              onClick={() => {
+                restoreSavedViewRoute(detailContextRoute);
+                setDetailSelection(null);
+              }}
+              aria-label={t('log.manage.stream.action.show-context.aria')}
+            >
+              <HzButtonIcon
+                icon={ScrollText}
+                data-log-stream-detail-context-icon="context"
+                data-log-stream-detail-context-icon-owner="hertzbeat-ui-button-icon"
+              />
+              {t('log.manage.stream.action.show-context')}
+            </HzButton>
+          ) : null}
         </div>
       }
       rows={detailRows}
+      metricsRows={detailMetricsRows}
+      metricsHref={detailHandoffLinks.metricsHref}
+      metricsPreviewRows={detailMetricsPreviewRows}
+      metricsPreviewLoading={detailMetricsPreviewState.loading}
+      metricsPreviewError={detailMetricsPreviewState.error}
+      metricsPreviewEmpty={detailMetricsPreviewEmpty}
+      contextRows={detailContextRows}
+      contextLoading={detailContextState.loading}
+      contextError={detailContextState.error}
+      contextHasMoreBefore={Boolean(detailContextState.data?.hasMoreBefore)}
+      contextHasMoreAfter={Boolean(detailContextState.data?.hasMoreAfter)}
+      onLoadMoreContext={direction => {
+        const cursorLogTimeUnixNano = readLogDetailContextCursor(detailContextState.data, direction, detailLog);
+        if (!cursorLogTimeUnixNano) return;
+        setDetailContextLoadRequest({ direction, cursorLogTimeUnixNano });
+      }}
+      attributeRows={detailAttributeRows}
+      renderAttributeAction={renderLogAttributeFilterAction}
       json={detailJson}
+      raw={detailRaw}
+      onCopyJson={value => void copyTextToClipboard(value)}
+      onCopyRaw={value => void copyTextToClipboard(value)}
+      onCopyMetricQuery={value => void copyTextToClipboard(value)}
     />
   );
 
@@ -1327,6 +3187,22 @@ function LogManageExplorer({
                   />
                   {t('log.manage.route.action.alerts')}
                 </HzButtonLink>
+                <HzButtonLink component={Link} href={handoffLinks.alertRulesHref} size="md" data-log-manage-header-action="create-alert">
+                  <HzButtonIcon
+                    icon={BellPlus}
+                    data-log-manage-header-action-icon="create-alert"
+                    data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
+                  />
+                  {t('explorer.actions.create-alert')}
+                </HzButtonLink>
+                <HzButtonLink component={Link} href={handoffLinks.dashboardHref} size="md" data-log-manage-header-action="add-dashboard">
+                  <HzButtonIcon
+                    icon={BarChart3}
+                    data-log-manage-header-action-icon="add-dashboard"
+                    data-log-manage-header-action-icon-owner="hertzbeat-ui-button-icon"
+                  />
+                  {t('explorer.actions.add-dashboard')}
+                </HzButtonLink>
                 <HzButtonLink component={Link} href="/setting/define" size="md" data-log-manage-header-action="templates">
                   <HzButtonIcon
                     icon={ListChecks}
@@ -1387,7 +3263,7 @@ function LogManageExplorer({
             />
             <HzButton data-log-manage-run-query-action="true" intent="primary" size="md" onClick={() => applyQuery()}>
               <Play className="h-4 w-4" aria-hidden="true" />
-              {currentView === 'stream' ? t('log.manage.query.run.stream') : t('log.manage.query.run.history')}
+              {isStreamView ? t('log.manage.query.run.stream') : t('log.manage.query.run.history')}
             </HzButton>
             <HzButton data-log-manage-reset-action="true" intent="secondary" size="md" onClick={resetQuery}>
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
@@ -1423,6 +3299,55 @@ function LogManageExplorer({
               data-log-manage-query-body-input-owner="hertzbeat-ui-input"
             />
           </div>
+          <HzControlStack
+            layout="inline-wrap"
+            spacing="top-2"
+            data-log-manage-quick-filter-controls="logs-quick-filters"
+            data-log-manage-quick-filter-controls-owner="hertzbeat-ui-control-stack"
+          >
+            {quickSeverityFilters.map(severity => (
+              <HzButton
+                key={severity}
+                data-log-manage-quick-filter="severity"
+                data-log-manage-quick-filter-owner="hertzbeat-ui-button"
+                data-log-manage-quick-filter-value={severity}
+                data-log-manage-quick-filter-active={selectedSeverity === severity}
+                intent={selectedSeverity === severity ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => applySeverity(severity)}
+              >
+                {t('log.manage.quick-filter.severity')}: {severity}
+              </HzButton>
+            ))}
+            {serviceQuickFilterValues.map(serviceName => (
+              <HzButton
+                key={`service-${serviceName}`}
+                data-log-manage-quick-filter="serviceName"
+                data-log-manage-quick-filter-owner="hertzbeat-ui-button"
+                data-log-manage-quick-filter-value={serviceName}
+                data-log-manage-quick-filter-active={routeContext.serviceName === serviceName}
+                intent={routeContext.serviceName === serviceName ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => applyLogQuickRouteContext('serviceName', serviceName)}
+              >
+                {t('log.manage.quick-filter.service')}: {serviceName}
+              </HzButton>
+            ))}
+            {environmentQuickFilterValues.map(environment => (
+              <HzButton
+                key={`environment-${environment}`}
+                data-log-manage-quick-filter="environment"
+                data-log-manage-quick-filter-owner="hertzbeat-ui-button"
+                data-log-manage-quick-filter-value={environment}
+                data-log-manage-quick-filter-active={routeContext.environment === environment}
+                intent={routeContext.environment === environment ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => applyLogQuickRouteContext('environment', environment)}
+              >
+                {t('log.manage.quick-filter.environment')}: {environment}
+              </HzButton>
+            ))}
+          </HzControlStack>
         </HzPanelSurface>
 
         {data.loadStatus?.state === 'degraded' ? (
@@ -1436,31 +3361,28 @@ function LogManageExplorer({
           />
         ) : null}
 
-        {currentView === 'stream' ? renderStreamStage() : null}
+        {isStreamView ? renderStreamStage() : null}
 
-        {currentView === 'list' ? (
+        {showsLogTimeSeries ? (
         <HzPanelSurface
           data-log-manage-chart-band="hertzbeat-ui-chart-band"
           data-log-manage-panel-surface="chart"
+          data-log-manage-explorer-view="time-series"
+          data-log-manage-explorer-view-owner="hertzbeat-ui-signal-time-series"
           data-log-manage-chart-padding-owner="hertzbeat-ui-panel-surface"
           padding="chart"
         >
-          <div className="grid gap-3 lg:grid-cols-[repeat(4,minmax(0,160px))_minmax(0,1fr)]">
-            {[
-              { id: 'total', label: t('log.manage.summary.total'), value: data.overview.totalLogs },
-              { id: 'errors', label: t('log.manage.summary.errors'), value: data.overview.errorLogs },
-              { id: 'trace-coverage', label: t('log.manage.summary.trace-coverage'), value: traceCoverage },
-              { id: 'latest', label: t('log.manage.summary.latest'), value: latestObservedAt }
-            ].map(item => (
-              <HzStatCell
-                key={item.id}
-                data-log-manage-summary-stat-owner="hertzbeat-ui-stat-cell"
-                data-log-manage-summary-stat={item.id}
-                label={item.label}
-                value={item.value}
-                variant="tile"
-              />
-            ))}
+          <div className="grid gap-3">
+            <HzSignalSummaryStrip
+              data-log-manage-summary-strip="inline-signal-summary"
+              data-log-manage-summary-strip-owner="hertzbeat-ui-signal-summary-strip"
+              items={[
+                { id: 'total', label: t('log.manage.summary.total'), value: data.overview.totalLogs },
+                { id: 'errors', label: t('log.manage.summary.errors'), value: data.overview.errorLogs, tone: data.overview.errorLogs > 0 ? 'critical' : 'neutral' },
+                { id: 'trace-coverage', label: t('log.manage.summary.trace-coverage'), value: traceCoverage },
+                { id: 'latest', label: t('log.manage.summary.latest'), value: latestObservedAt }
+              ]}
+            />
             <HzSignalTrendBars
               data-log-manage-signal-trend-owner="hertzbeat-ui-signal-trend-bars"
               title={t('log.manage.trend.title')}
@@ -1482,7 +3404,96 @@ function LogManageExplorer({
         </HzPanelSurface>
         ) : null}
 
-        {currentView === 'list' ? (
+        {showsLogTable && activeGroupBy ? (
+          <HzPanelSurface
+            data-log-manage-group-panel="hertzbeat-ui-log-group-panel"
+            data-log-manage-group-panel-owner="hertzbeat-ui-panel-surface"
+            data-log-manage-group-by={activeGroupBy}
+          >
+            <HzPanelHeader
+              data-log-manage-group-header-owner="hertzbeat-ui-panel-header"
+              title={(
+                <>
+                  <BarChart3 className="h-4 w-4" aria-hidden="true" />
+                  {t('log.manage.group.title')}
+                </>
+              )}
+              meta={<HzStatusBadge data-log-manage-group-count-owner="hertzbeat-ui-status-badge" tone="neutral" size="xs">{t('log.manage.group.count', { count: groupRows.length })}</HzStatusBadge>}
+            />
+            <div className="px-4 pb-4">
+              <div className="mb-2 text-[12px] text-[var(--color-text-subtle)]">
+                {t('log.manage.group.meta', { groupBy: activeGroupBy })}
+              </div>
+              <div className="mb-3 grid gap-2 sm:grid-cols-[160px_190px_160px]">
+                <HzInput
+                  inputMode="numeric"
+                  value={draft.groupLimit || ''}
+                  onChange={event => applyLogGroupLimit(event.target.value)}
+                  onInput={event => applyLogGroupLimit(event.currentTarget.value)}
+                  placeholder={t('log.manage.group.limit.placeholder')}
+                  aria-label={t('log.manage.group.limit.aria')}
+                  data-log-manage-group-limit-input="true"
+                  data-log-manage-group-limit-input-owner="hertzbeat-ui-input"
+                />
+                <HzSelect
+                  value={draft.groupOrder || 'count-desc'}
+                  onChange={event => applyLogGroupOrder(event.target.value)}
+                  aria-label={t('log.manage.group.order.aria')}
+                  data-log-manage-group-order-select="true"
+                  data-log-manage-group-order-select-owner="hertzbeat-ui-select"
+                  options={[
+                    { value: 'count-desc' satisfies LogGroupOrder, label: t('log.manage.group.order.count-desc') },
+                    { value: 'count-asc' satisfies LogGroupOrder, label: t('log.manage.group.order.count-asc') }
+                  ]}
+                  optionDataAttributes={option => ({
+                    'data-log-manage-group-order-option': option.value
+                  })}
+                />
+                <HzInput
+                  inputMode="numeric"
+                  value={draft.groupMinCount || ''}
+                  onChange={event => applyLogGroupMinCount(event.target.value)}
+                  onInput={event => applyLogGroupMinCount(event.currentTarget.value)}
+                  placeholder={t('log.manage.group.min-count.placeholder')}
+                  aria-label={t('log.manage.group.min-count.aria')}
+                  data-log-manage-group-min-count-input="true"
+                  data-log-manage-group-min-count-input-owner="hertzbeat-ui-input"
+                />
+              </div>
+              {groupRows.length > 0 ? (
+                <div className="grid gap-2" data-log-manage-group-results="true">
+                  {groupRows.map(row => (
+                    <div
+                      key={`${activeGroupBy}-${row.value}`}
+                      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[6px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-muted)] px-3 py-2 text-[12px]"
+                      data-log-manage-group-result={row.value}
+                    >
+                      <HzButton
+                        data-log-manage-group-filter-action={activeGroupBy}
+                        data-log-manage-group-filter-value={row.value}
+                        data-log-manage-group-filter-owner="hertzbeat-ui-button"
+                        intent="ghost"
+                        size="xs"
+                        onClick={() => applyLogGroupResultFilter(row.value)}
+                        className="min-w-0 justify-start truncate font-mono"
+                        aria-label={t('log.manage.group.filter-action.aria', { groupBy: activeGroupBy, value: row.value })}
+                      >
+                        {row.value}
+                      </HzButton>
+                      <span className="font-semibold text-[var(--color-text-primary)]">{row.count}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[12px] text-[var(--color-text-subtle)]" data-log-manage-group-empty="true">
+                  {t('log.manage.group.empty')}
+                </div>
+              )}
+            </div>
+          </HzPanelSurface>
+        ) : null}
+
+        {showsLogTable ? (
         <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_320px]">
           <HzPanelSurface
             data-log-manage-log-list="hertzbeat-ui-dense-log-list"
@@ -1499,7 +3510,121 @@ function LogManageExplorer({
                 </>
               )}
               meta={<HzStatusBadge data-log-manage-table-count-badge-owner="hertzbeat-ui-status-badge" tone="neutral" size="xs">{t('log.manage.list.count', { count: rows.length })}</HzStatusBadge>}
+              actions={(
+                <HzActionGroup
+                  layout="inline-wrap"
+                  data-log-manage-export-actions="current-page"
+                  data-log-manage-export-actions-owner="hertzbeat-ui-action-group"
+                >
+                  <HzSelect
+                    aria-label={t('log.manage.list.export-format.aria')}
+                    value={logExportFormat}
+                    onChange={event => setLogExportFormat(event.target.value === 'jsonl' ? 'jsonl' : 'csv')}
+                    width="log-severity"
+                    triggerTone="signal-query"
+                    data-log-manage-export-format-select="true"
+                    data-log-manage-export-format-owner="hertzbeat-ui-select"
+                    data-log-manage-export-format-value={logExportFormat}
+                    options={[
+                      { value: 'csv' satisfies LogExportFormat, label: t('log.manage.list.export-format.csv') },
+                      { value: 'jsonl' satisfies LogExportFormat, label: t('log.manage.list.export-format.jsonl') }
+                    ]}
+                    optionDataAttributes={option => ({
+                      'data-log-manage-export-format-option': option.value
+                    })}
+                  />
+                  <HzSelect
+                    aria-label={t('log.manage.list.export-row-limit.aria')}
+                    value={logExportRowLimit}
+                    onChange={event => setLogExportRowLimit(LOG_EXPORT_ROW_LIMITS.includes(event.target.value as LogExportRowLimit) ? event.target.value as LogExportRowLimit : 'current')}
+                    width="log-severity"
+                    triggerTone="signal-query"
+                    data-log-manage-export-row-limit-select="true"
+                    data-log-manage-export-row-limit-owner="hertzbeat-ui-select"
+                    data-log-manage-export-row-limit-value={logExportRowLimit}
+                    options={LOG_EXPORT_ROW_LIMITS.map(value => ({
+                      value,
+                      label: value === 'current' ? t('log.manage.list.export-row-limit.current') : t('log.manage.list.export-row-limit.option', { count: value })
+                    }))}
+                    optionDataAttributes={option => ({
+                      'data-log-manage-export-row-limit-option': option.value
+                    })}
+                  />
+                  <HzButton
+                    type="button"
+                    size="sm"
+                    intent="ghost"
+                    disabled={rows.length === 0}
+                    onClick={downloadCurrentLogRows}
+                    data-log-manage-download-csv-action="current-page"
+                    data-log-manage-download-csv-owner="hertzbeat-ui-button"
+                    data-log-manage-download-csv-row-count={rows.length}
+                    data-log-manage-download-row-limit={logExportRowLimit}
+                    data-log-manage-download-format={logExportFormat}
+                    aria-label={t('log.manage.list.download-csv.aria', { format: logExportFormat.toUpperCase() })}
+                  >
+                    <HzButtonIcon
+                      icon={Download}
+                      data-log-manage-download-csv-icon="download"
+                      data-log-manage-download-csv-icon-owner="hertzbeat-ui-button-icon"
+                    />
+                    {t('log.manage.list.download-csv')}
+                  </HzButton>
+                </HzActionGroup>
+              )}
             />
+            <HzControlStack
+              layout="inline-wrap"
+              spacing="top-2"
+              className="px-4 pb-2"
+              data-log-manage-table-column-controls="customize-columns"
+              data-log-manage-table-column-controls-owner="hertzbeat-ui-control-stack"
+              data-log-manage-table-visible-columns={visibleLogColumns.join(',')}
+              data-log-manage-table-visible-field-columns={visibleLogFieldColumns.join(',')}
+              data-log-manage-display-format={displayFormat}
+              data-log-manage-display-max-lines={maxLines}
+            >
+              <HzSelect
+                aria-label={t('log.manage.display.format.aria')}
+                value={displayFormat}
+                onChange={event => applyLogDisplayFormat(event.target.value)}
+                width="log-severity"
+                triggerTone="signal-query"
+                data-log-manage-display-control="format"
+                data-log-manage-display-control-owner="hertzbeat-ui-select"
+                data-log-manage-display-format-param={LOG_DISPLAY_FORMAT_PARAM}
+                options={[
+                  { value: 'default', label: logDisplayFormatLabel('default', t) },
+                  { value: 'raw', label: logDisplayFormatLabel('raw', t) },
+                  { value: 'column', label: logDisplayFormatLabel('column', t) }
+                ]}
+              />
+              <HzInput
+                aria-label={t('log.manage.display.max-lines.aria')}
+                value={maxLines}
+                onChange={event => applyLogMaxLines(event.target.value)}
+                inputMode="numeric"
+                width="metrics-query-step"
+                data-log-manage-display-control="max-lines"
+                data-log-manage-display-control-owner="hertzbeat-ui-input"
+                data-log-manage-display-max-lines-param={LOG_MAX_LINES_PARAM}
+              />
+              {LOG_TABLE_COLUMN_KEYS.map(column => {
+                const checked = visibleLogColumnSet.has(column);
+                return (
+                  <HzCheckbox
+                    key={column}
+                    checked={checked}
+                    disabled={checked && visibleLogColumns.length === 1}
+                    label={logColumnLabel(column, t)}
+                    data-log-manage-table-column-option={column}
+                    data-log-manage-table-column-option-owner="hertzbeat-ui-checkbox"
+                    data-log-manage-table-column-option-checked={checked}
+                    onChange={event => applyLogTableColumn(column, event.currentTarget.checked)}
+                  />
+                );
+              })}
+            </HzControlStack>
             <HzDataTable
               data-log-manage-table-chrome-owner="hertzbeat-ui-data-table"
               variant="embedded"
@@ -1528,7 +3653,29 @@ function LogManageExplorer({
                   key: 'severity',
                   header: t('log.manage.list.column.severity'),
                   width: '116px',
-                  render: row => (
+                  render: row => row.severity !== '-' && row.severity !== 'LOG' ? (
+                    <HzButton
+                      type="button"
+                      size="xs"
+                      intent="ghost"
+                      data-log-manage-table-severity-filter-action={row.severity}
+                      data-log-manage-table-severity-filter-owner="hertzbeat-ui-button"
+                      aria-label={t('log.manage.table.severity-filter-action.aria', { severity: row.severity })}
+                      onClick={event => {
+                        event.stopPropagation();
+                        applyLogRowSeverityFilter(row.severity);
+                      }}
+                      className="min-w-0 justify-start"
+                    >
+                      <HzStatusBadge
+                        data-log-manage-severity-tone={row.severityTone}
+                        data-log-manage-severity-badge-owner="hertzbeat-ui-status-badge"
+                        tone={logSeverityStatusTone(row.severityTone)}
+                      >
+                        {row.severity}
+                      </HzStatusBadge>
+                    </HzButton>
+                  ) : (
                     <HzStatusBadge
                       data-log-manage-severity-tone={row.severityTone}
                       data-log-manage-severity-badge-owner="hertzbeat-ui-status-badge"
@@ -1542,43 +3689,252 @@ function LogManageExplorer({
                   key: 'service',
                   header: t('log.manage.list.column.service'),
                   width: '180px',
-                  render: row => <span className="font-semibold text-[#e6edf7]">{row.service}</span>
+                  render: row => row.service !== '-' ? (
+                    <HzButton
+                      type="button"
+                      size="xs"
+                      intent="ghost"
+                      data-log-manage-table-service-filter-action={row.service}
+                      data-log-manage-table-service-filter-owner="hertzbeat-ui-button"
+                      aria-label={t('log.manage.table.service-filter-action.aria', { service: row.service })}
+                      onClick={event => {
+                        event.stopPropagation();
+                        applyLogRowServiceFilter(row.service);
+                      }}
+                      className="min-w-0 justify-start truncate font-semibold"
+                    >
+                      {row.service}
+                    </HzButton>
+                  ) : (
+                    <HzDataCellText
+                      data-log-manage-table-service-cell-owner="hertzbeat-ui-data-cell-text"
+                      variant="title"
+                    >
+                      {row.service}
+                    </HzDataCellText>
+                  )
                 },
                 {
                   key: 'body',
                   header: t('log.manage.list.column.body'),
-                  render: row => (
-                    <span className="min-w-0">
-                      <span className="block truncate font-mono text-[12px] text-[#e8edf5]">{row.message}</span>
-                      <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#7f8a9d]">
-                        <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                        {t('log.manage.stream.action.view-log')}
+                  render: row => {
+                    const bodySearchTerm = buildLogBodySearchTerm(row.message);
+                    return (
+                    <span
+                      className="min-w-0"
+                      data-log-manage-table-body-format={displayFormat}
+                      data-log-manage-table-body-max-lines={maxLines}
+                      data-log-manage-table-body-owner="hertzbeat-ui-log-display"
+                    >
+                      <span
+                        className={logBodyTextClass(displayFormat)}
+                        style={logBodyTextStyle(displayFormat, maxLines)}
+                        data-log-manage-table-body-text="true"
+                      >
+                        {row.message}
                       </span>
+                      <HzActionGroup
+                        layout="inline-wrap"
+                        className="mt-1"
+                        data-log-manage-table-body-actions="view-filter"
+                        data-log-manage-table-body-actions-owner="hertzbeat-ui-action-group"
+                      >
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#7f8a9d]">
+                          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                          {t('log.manage.stream.action.view-log')}
+                        </span>
+                        {bodySearchTerm ? (
+                          <HzButton
+                            type="button"
+                            size="xs"
+                            intent="ghost"
+                            data-log-manage-table-body-filter-action="true"
+                            data-log-manage-table-body-filter-owner="hertzbeat-ui-button"
+                            data-log-manage-table-body-filter-value={bodySearchTerm}
+                            aria-label={t('log.manage.table.body-filter-action.aria', { value: bodySearchTerm })}
+                            onClick={event => {
+                              event.stopPropagation();
+                              applyLogRowBodyFilter(row.message);
+                            }}
+                            className="min-w-0 justify-start"
+                          >
+                            <HzButtonIcon
+                              icon={Filter}
+                              data-log-manage-table-body-filter-action-icon="filter"
+                              data-log-manage-table-body-filter-action-icon-owner="hertzbeat-ui-button-icon"
+                            />
+                            {t('log.manage.table.body-filter-action')}
+                          </HzButton>
+                        ) : null}
+                        <HzButton
+                          type="button"
+                          size="xs"
+                          intent="ghost"
+                          data-log-manage-row-copy-link-action="true"
+                          data-log-manage-row-copy-link-owner="hertzbeat-ui-button"
+                          data-log-manage-row-copy-link-trace-id={row.traceId}
+                          data-log-manage-row-copy-link-span-id={row.spanId}
+                          aria-label={t('log.manage.table.copy-link-action.aria', { traceId: row.traceId })}
+                          onClick={event => {
+                            event.stopPropagation();
+                            copyLogLineLink(row);
+                          }}
+                          className="min-w-0 justify-start"
+                        >
+                          <HzButtonIcon
+                            icon={Copy}
+                            data-log-manage-row-copy-link-action-icon="copy"
+                            data-log-manage-row-copy-link-action-icon-owner="hertzbeat-ui-button-icon"
+                          />
+                          {t('log.manage.table.copy-link-action')}
+                        </HzButton>
+                      </HzActionGroup>
                     </span>
-                  )
+                    );
+                  }
                 },
                 {
-                  key: 'trace',
+                  key: 'trace-id',
                   header: t('log.manage.list.column.trace'),
                   width: '220px',
                   render: row => (
-                    <HzButton
-                      data-log-manage-row-trace-detail-action="true"
-                      data-log-manage-row-control="shared-hz-button"
-                      intent="ghost"
-                      size="xs"
-                      disabled={row.traceId === '-'}
-                      title={row.traceId === '-' ? missingTraceHandoffTitle : undefined}
-                      aria-label={row.traceId === '-' ? missingTraceHandoffTitle : undefined}
-                      data-log-manage-row-trace-detail-action-disabled={row.traceId === '-' ? 'missing-trace-id' : undefined}
-                      onClick={() => openLogDetails(logEntryByRowKey.get(row.key) ?? null, 'history')}
-                      className="max-w-[180px] justify-start truncate font-mono"
+                    <HzActionGroup
+                      layout="inline-wrap"
+                      data-log-manage-table-trace-id-actions="detail-filter"
+                      data-log-manage-table-trace-id-actions-owner="hertzbeat-ui-action-group"
                     >
-                      {row.traceId}
+                      <HzButton
+                        data-log-manage-row-trace-detail-action="true"
+                        data-log-manage-row-control="shared-hz-button"
+                        intent="ghost"
+                        size="xs"
+                        disabled={row.traceId === '-'}
+                        title={row.traceId === '-' ? missingTraceHandoffTitle : undefined}
+                        aria-label={row.traceId === '-' ? missingTraceHandoffTitle : undefined}
+                        data-log-manage-row-trace-detail-action-disabled={row.traceId === '-' ? 'missing-trace-id' : undefined}
+                        onClick={() => openLogDetails(logEntryByRowKey.get(row.key) ?? null, 'history')}
+                        className="max-w-[180px] justify-start truncate font-mono"
+                      >
+                        {row.traceId}
+                      </HzButton>
+                      {row.traceId !== '-' ? (
+                        <HzButton
+                          type="button"
+                          size="xs"
+                          intent="ghost"
+                          data-log-manage-table-trace-id-filter-action={row.traceId}
+                          data-log-manage-table-trace-id-filter-owner="hertzbeat-ui-button"
+                          aria-label={t('log.manage.table.trace-id-filter-action.aria', { traceId: row.traceId })}
+                          onClick={event => {
+                            event.stopPropagation();
+                            applyLogRowTraceIdFilter(row.traceId);
+                          }}
+                          className="min-w-0 justify-start"
+                        >
+                          <HzButtonIcon
+                            icon={Filter}
+                            data-log-manage-table-trace-id-filter-action-icon="filter"
+                            data-log-manage-table-trace-id-filter-action-icon-owner="hertzbeat-ui-button-icon"
+                          />
+                          {t('log.manage.table.body-filter-action')}
+                        </HzButton>
+                      ) : null}
+                    </HzActionGroup>
+                  )
+                },
+                {
+                  key: 'span-id',
+                  header: t('log.manage.detail.span-id'),
+                  width: '180px',
+                  render: row => row.spanId !== '-' ? (
+                    <HzButton
+                      type="button"
+                      size="xs"
+                      intent="ghost"
+                      data-log-manage-table-span-id-filter-action={row.spanId}
+                      data-log-manage-table-span-id-filter-owner="hertzbeat-ui-button"
+                      aria-label={t('log.manage.table.span-id-filter-action.aria', { spanId: row.spanId })}
+                      onClick={() => applyLogRowSpanIdFilter(row.spanId)}
+                      className="max-w-[160px] justify-start truncate font-mono"
+                    >
+                      <span className="truncate" data-log-manage-span-id-cell-owner="hertzbeat-ui-data-table-cell">{row.spanId}</span>
                     </HzButton>
+                  ) : (
+                    <span className="font-mono text-[12px] text-[#cbd5e1]" data-log-manage-span-id-cell-owner="hertzbeat-ui-data-table-cell">{row.spanId}</span>
                   )
                 }
-              ]}
+              ]
+                .filter(column => visibleLogColumnSet.has(column.key as LogTableColumnKey))
+                .concat(
+                  visibleLogFieldColumns.map(fieldColumn => ({
+                    key: `field:${fieldColumn}`,
+                    header: fieldColumn,
+                    width: '190px',
+                    render: row => {
+                      const value = readLogFieldColumnValue(logEntryByRowKey.get(row.key), fieldColumn);
+                      return (
+                        <HzDataCellText
+                          data-log-manage-table-field-column={fieldColumn}
+                          data-log-manage-table-field-column-owner="hertzbeat-ui-data-cell-text"
+                          data-log-manage-table-field-column-value={value}
+                          variant="mono"
+                        >
+                          {value}
+                        </HzDataCellText>
+                      );
+                    }
+                  }))
+                )}
+            />
+            <HzPaginationBar
+              data-log-manage-list-pagination="shared-pagination-bar"
+              data-log-manage-list-pagination-owner="hertzbeat-ui-pagination-bar"
+              data-log-manage-list-page-size={listPageSize}
+              data-log-manage-list-page-index={listPageIndex}
+              data-log-manage-list-total-elements={listTotalElements}
+              summary={t('common.pagination.summary', {
+                page: listPageIndex + 1,
+                totalPages: listTotalPages,
+                from: listPageStart,
+                to: listPageEnd,
+                total: listTotalElements
+              })}
+              pageSizeLabel={t('common.page-size')}
+              pageSizeValue={String(listPageSize)}
+              pageSizeOptions={LOG_LIST_PAGE_SIZE_OPTIONS.map(value => ({
+                value,
+                label: t('log.manage.list.page-size.option', { count: value })
+              }))}
+              onPageSizeChange={applyLogListPageSize}
+              pageJumpLabel={t('common.page')}
+              pageJumpValue={String(listPageIndex + 1)}
+              pageJumpMax={listTotalPages}
+              onPageJumpChange={value => {
+                const page = Number(value);
+                if (!Number.isInteger(page)) return;
+                applyLogListPageIndex(page - 1);
+              }}
+              previousLabel={t('common.previous-page')}
+              nextLabel={t('common.next-page')}
+              previousDisabled={listPageIndex <= 0}
+              nextDisabled={listPageIndex >= listTotalPages - 1}
+              onPrevious={() => applyLogListPageIndex(listPageIndex - 1)}
+              onNext={() => applyLogListPageIndex(listPageIndex + 1)}
+              pageSizeSelectProps={{
+                'data-log-manage-list-page-size-select': 'true',
+                optionDataAttributes: option => ({
+                  'data-log-manage-list-page-size-option': option.value
+                })
+              }}
+              pageJumpInputProps={{
+                'data-log-manage-list-page-jump': 'true'
+              }}
+              previousButtonProps={{
+                'data-log-manage-list-pagination-previous': 'true'
+              }}
+              nextButtonProps={{
+                'data-log-manage-list-pagination-next': 'true'
+              }}
             />
           </HzPanelSurface>
 
@@ -1629,6 +3985,39 @@ function LogManageExplorer({
                 }))}
               />
               <LogAttributionDiagnosticsPanel rows={activeAttributionDiagnostics} t={t} />
+              <HzDataTable
+                data-log-manage-selected-attributes="log-attributes"
+                data-log-manage-selected-attributes-owner="hertzbeat-ui-data-table"
+                variant="embedded"
+                rows={activeLogAttributeRows}
+                getRowKey={row => row.key}
+                columns={[
+                  {
+                    key: 'source',
+                    header: t('log.manage.attributes.column.source'),
+                    width: '112px',
+                    render: row => row.source
+                  },
+                  {
+                    key: 'name',
+                    header: t('log.manage.attributes.column.name'),
+                    width: '180px',
+                    render: row => <span className="font-mono text-[12px]">{row.name}</span>
+                  },
+                  {
+                    key: 'value',
+                    header: t('log.manage.attributes.column.value'),
+                    render: row => <span className="font-mono text-[12px]">{row.value}</span>
+                  },
+                  {
+                    key: 'filter',
+                    header: t('log.manage.attributes.column.actions'),
+                    width: '252px',
+                    render: row => renderLogAttributeFilterAction(row)
+                  }
+                ]}
+                className="mt-4"
+              />
               <HzControlStack
                 data-log-manage-history-detail-action-stack="shared-control-stack"
                 data-log-manage-history-detail-action-stack-owner="hertzbeat-ui-control-stack"
@@ -1713,7 +4102,8 @@ export default function LogManagePage({
       logUrls.overviewUrl,
       logUrls.listUrl,
       logUrls.trendUrl,
-      logUrls.coverageUrl
+      logUrls.coverageUrl,
+      logUrls.groupByUrl
     ].join('|'),
     [currentView, logUrls]
   );
@@ -1735,15 +4125,19 @@ export default function LogManagePage({
   }, [currentView, logTimeContext, query, routeContext, router]);
 
   const load = useCallback(async (): Promise<LogManageData> => {
-    const { listUrl, overviewUrl, trendUrl, coverageUrl } = logUrls;
+    const { listUrl, overviewUrl, trendUrl, coverageUrl, groupByUrl } = logUrls;
     try {
-      const [overview, list, trend, coverage] = await Promise.all([
+      const shouldLoadGroupBy = Boolean(query.groupBy?.trim());
+      const [overview, list, trend, coverage, group] = await Promise.all([
         apiMessageGetWithTimeout<BackendLogOverview>(overviewUrl),
         apiMessageGetWithTimeout<PageResult<LogEntry>>(listUrl),
         apiMessageGetWithTimeout<LogTrendStats>(trendUrl),
-        apiMessageGetWithTimeout<LogTraceCoverage>(coverageUrl)
+        apiMessageGetWithTimeout<LogTraceCoverage>(coverageUrl),
+        shouldLoadGroupBy
+          ? apiMessageGetWithTimeout<LogGroupStats>(groupByUrl)
+          : Promise.resolve({ groupBy: '', groups: [] })
       ]);
-      return { overview: normalizeLogOverview(overview), list, trend, coverage, query };
+      return { overview: normalizeLogOverview(overview), list, trend, coverage, group, query };
     } catch (error) {
       return emptyLogManageData(query, describeLogManageLoadFailure(error));
     }
@@ -1769,6 +4163,10 @@ export default function LogManagePage({
           router.replace(buildRouteWithContext(nextQuery, currentView));
         };
 
+        const applyRouteContext = (nextContext: SignalRouteContext) => {
+          router.replace(buildLogManageRoute(nextContext, query, currentView));
+        };
+
         const switchView = (view: LogWorkbenchView) => {
           router.replace(buildRouteWithContext(query, view));
         };
@@ -1780,6 +4178,7 @@ export default function LogManagePage({
             draft={draft}
             setDraft={setDraft}
             applyQuery={applyQuery}
+            applyRouteContext={applyRouteContext}
             resetQuery={resetQuery}
             switchView={switchView}
             currentView={currentView}
@@ -1787,6 +4186,7 @@ export default function LogManagePage({
             routeContext={routeContext}
             timeContext={logTimeContext}
             applyTimeContext={applyLogTimeContext}
+            restoreSavedViewRoute={route => router.replace(route)}
             currentLogReturnHref={buildLogManageRoute(routeContext, query, currentView)}
           />
         );

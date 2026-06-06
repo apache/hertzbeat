@@ -45,4 +45,31 @@ describe('dashboard alias route', () => {
       '/overview?start=10&end=20&entityId=7&entityName=checkout&returnTo=%2Fmonitors&serviceName=checkout&environment=prod'
     );
   });
+
+  it('preserves dashboard add-panel intent while redirecting to overview', async () => {
+    redirect.mockImplementation((target: string) => {
+      throw new Error(`redirect:${target}`);
+    });
+
+    const { default: DashboardAliasPage } = await import('./page');
+
+    await expect(
+      DashboardAliasPage({
+        searchParams: Promise.resolve({
+          intent: 'add-panel',
+          signal: 'metrics',
+          panelTitle: 'checkout latency',
+          entityId: '7',
+          serviceName: 'checkout',
+          timeRange: 'last-1h',
+          source: 'otlp'
+        })
+      })
+    ).rejects.toThrow(
+      'redirect:/overview?intent=add-panel&signal=metrics&panelTitle=checkout+latency&entityId=7&serviceName=checkout&timeRange=last-1h&source=otlp'
+    );
+    expect(redirect).toHaveBeenLastCalledWith(
+      '/overview?intent=add-panel&signal=metrics&panelTitle=checkout+latency&entityId=7&serviceName=checkout&timeRange=last-1h&source=otlp'
+    );
+  });
 });

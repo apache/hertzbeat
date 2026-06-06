@@ -185,7 +185,7 @@
         "textSnippets": [
           "Log workbench",
           "Severity",
-          "Trend band",
+          "Log volume time series",
           "Recent logs",
           "Run query"
         ],
@@ -401,7 +401,7 @@
         "textSnippets": [
           "Metric workbench",
           "Metric query",
-          "Trend band",
+          "Metric time series",
           "Recent series",
           "Detail panel",
           "Run query"
@@ -2351,7 +2351,7 @@
         "textSnippets": [
           "Log workbench",
           "Severity",
-          "Trend band",
+          "Log volume time series",
           "Run query"
         ],
         "actionLabels": [

@@ -31,15 +31,95 @@ describe('otlp metrics controller', () => {
     expect(
       buildOtlpMetricsConsoleUrl({
         query: 'http_server_duration_milliseconds_count',
+        filter: 'service.name="checkout"',
         aggregation: 'sum',
+        temporalAggregation: 'rate',
         groupBy: 'service_name',
+        step: '60',
+        limit: '25',
         traceId: 'trace-1',
         spanId: 'span-1',
         serviceName: 'checkout',
         start: '1000',
         end: '2000'
       })
-    ).toBe('/ingestion/otlp/metrics/console?query=http_server_duration_milliseconds_count&aggregation=sum&groupBy=service_name&traceId=trace-1&spanId=span-1&serviceName=checkout&start=1000&end=2000');
+    ).toBe('/ingestion/otlp/metrics/console?query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&step=60&limit=25&traceId=trace-1&spanId=span-1&serviceName=checkout&start=1000&end=2000');
+  });
+
+  it('keeps client-only metrics inspector and selected series state out of the console endpoint', () => {
+    expect(queryStateFromParams(new URLSearchParams('query=http.server.duration&inspector=table&series=http.server.duration-1&inventorySearch=checkout&inventorySort=time-series&inventoryPageSize=20&inventoryPageIndex=2&seriesAttributeSearch=deployment'))).toMatchObject({
+      query: 'http.server.duration',
+      inspector: 'table',
+      series: 'http.server.duration-1',
+      inventorySearch: 'checkout',
+      inventorySort: 'time-series',
+      inventoryPageSize: '20',
+      inventoryPageIndex: '2',
+      seriesAttributeSearch: 'deployment'
+    });
+    expect(queryStateFromParams(new URLSearchParams('inventoryPageSize=7&inventoryPageIndex=-1'))).toMatchObject({
+      inventoryPageSize: undefined,
+      inventoryPageIndex: undefined
+    });
+    expect(queryStateFromParams(new URLSearchParams('inspector=heatmap'))).toMatchObject({
+      inspector: 'graph'
+    });
+
+    expect(
+      buildOtlpMetricsConsoleUrl({
+      query: 'http.server.duration',
+      inspector: 'table',
+      series: 'http.server.duration-1',
+      inventorySearch: 'checkout',
+      inventorySort: 'time-series',
+      inventoryPageSize: '20',
+      inventoryPageIndex: '2',
+      seriesAttributeSearch: 'deployment'
+    })
+    ).toBe('/ingestion/otlp/metrics/console?query=http.server.duration');
+  });
+
+  it('keeps chart display settings in route state but out of the metrics console endpoint', () => {
+    expect(queryStateFromParams(new URLSearchParams('warningThreshold=75.5&criticalThreshold=90&expectedRange=on&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000'))).toMatchObject({
+      warningThreshold: '75.5',
+      criticalThreshold: '90',
+      expectedRange: 'on',
+      legendFormat: '{{service.name}} - p95',
+      formula: 'A * 1000'
+    });
+    expect(queryStateFromParams(new URLSearchParams('warningThreshold=abc&criticalThreshold=Infinity&expectedRange=yes'))).toMatchObject({
+      warningThreshold: undefined,
+      criticalThreshold: undefined,
+      expectedRange: undefined
+    });
+
+    expect(
+      buildOtlpMetricsConsoleUrl({
+        query: 'http.server.duration',
+      warningThreshold: '75.5',
+      criticalThreshold: '90',
+      expectedRange: 'on',
+      legendFormat: '{{service.name}} - p95',
+      formula: 'A * 1000'
+    })
+    ).toBe('/ingestion/otlp/metrics/console?query=http.server.duration');
+  });
+
+  it('rejects invalid metrics builder numeric controls before calling the console endpoint', () => {
+    expect(
+      buildOtlpMetricsConsoleUrl({
+        query: 'http_server_duration_milliseconds_count',
+        step: '0',
+        limit: '12.5',
+        filter: 'service.name="checkout"'
+      })
+    ).toBe('/ingestion/otlp/metrics/console?query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22');
+
+    expect(queryStateFromParams(new URLSearchParams('step=0&limit=12.5&filter=service.name%3D%22checkout%22'))).toMatchObject({
+      step: undefined,
+      limit: undefined,
+      filter: 'service.name="checkout"'
+    });
   });
 
   it('rejects decimal time bounds before calling the metrics console endpoint', () => {
@@ -76,13 +156,26 @@ describe('otlp metrics controller', () => {
 
   it('reads metrics query state from search params', () => {
     const params = new URLSearchParams(
-      'query=http_server_duration_milliseconds_count&aggregation=sum&groupBy=service_name&timeRange=last-1h&collector=collector-a&template=spring-boot&traceId=trace-1&spanId=span-1&serviceName=checkout&returnTo=%2Flog%2Fmanage%3FreturnLabel%3DLogs&returnLabel=Metrics&environment=prod'
+      'query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=25&timeRange=last-1h&collector=collector-a&template=spring-boot&traceId=trace-1&spanId=span-1&serviceName=checkout&returnTo=%2Flog%2Fmanage%3FreturnLabel%3DLogs&returnLabel=Metrics&environment=prod'
     );
     expect(queryStateFromParams(params)).toEqual({
       query: 'http_server_duration_milliseconds_count',
+      filter: 'service.name="checkout"',
       aggregation: 'sum',
+      temporalAggregation: 'rate',
       groupBy: 'service_name',
+      legendFormat: '{{service.name}} - p95',
+      formula: 'A * 1000',
+      step: '60',
+      limit: '25',
+      inventorySearch: undefined,
+      inventorySort: undefined,
+      seriesAttributeSearch: undefined,
+      inspector: 'graph',
+      warningThreshold: undefined,
+      criticalThreshold: undefined,
       timeRange: 'last-1h',
+      source: undefined,
       collector: 'collector-a',
       template: 'spring-boot',
       traceId: 'trace-1',

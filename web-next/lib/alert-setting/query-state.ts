@@ -5,6 +5,7 @@ export type AlertSettingSearchParams = SearchParamsRecord;
 
 export type AlertSettingRouteState = {
   signal: string | null;
+  createIntent: 'create' | null;
   signalContext: SignalRouteContext;
 };
 
@@ -46,9 +47,11 @@ export function buildDefineListUrl(search: string, pageIndex = 0, pageSize = 8, 
 
 export function readAlertSettingRouteState(searchParams: AlertSettingSearchParams = {}): AlertSettingRouteState {
   const reader = createCompatSearchParamReader(searchParams);
+  const intent = reader.get('intent');
 
   return {
     signal: reader.get('signal'),
+    createIntent: intent === 'create' ? 'create' : null,
     signalContext: readSignalRouteContext(reader)
   };
 }

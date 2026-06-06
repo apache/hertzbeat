@@ -20,6 +20,7 @@ package org.apache.hertzbeat.observability.traces.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceDetailDto;
@@ -57,11 +58,18 @@ public class TraceQueryController {
             @RequestParam(value = "serviceName", required = false) String serviceName,
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @RequestParam(value = "operationName", required = false) String operationName,
+            @RequestParam(value = "minDurationMs", required = false) Long minDurationMs,
+            @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
+            @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal,
             @RequestParam(value = "pageIndex", defaultValue = "0") Integer pageIndex,
             @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize) {
         Page<TraceListItemDto> page = entityTraceQueryService.queryTraceList(
-                entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment, pageIndex, pageSize, hideInternal);
+                entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal,
+                spanScope);
         return ResponseEntity.ok(Message.success(page));
     }
 
@@ -76,9 +84,42 @@ public class TraceQueryController {
             @RequestParam(value = "serviceName", required = false) String serviceName,
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @RequestParam(value = "operationName", required = false) String operationName,
+            @RequestParam(value = "minDurationMs", required = false) Long minDurationMs,
+            @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
+            @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceOverview(
-                entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment, hideInternal)));
+                entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, spanScope)));
+    }
+
+    @GetMapping("/stats/group-by")
+    @Operation(summary = "Trace group-by statistics")
+    public ResponseEntity<Message<Map<String, Object>>> groupBy(
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @RequestParam(value = "start", required = false) Long start,
+            @RequestParam(value = "end", required = false) Long end,
+            @RequestParam(value = "traceId", required = false) String traceId,
+            @RequestParam(value = "errorOnly", required = false) Boolean errorOnly,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @RequestParam(value = "operationName", required = false) String operationName,
+            @RequestParam(value = "minDurationMs", required = false) Long minDurationMs,
+            @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
+            @RequestParam(value = "groupBy") String groupBy,
+            @RequestParam(value = "limit", required = false) Integer limit,
+            @RequestParam(value = "orderBy", required = false) String orderBy,
+            @RequestParam(value = "minCount", required = false) Integer minCount,
+            @RequestParam(value = "spanScope", required = false) String spanScope,
+            @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
+        return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceGroupByStats(
+                entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy, minCount,
+                hideInternal, spanScope)));
     }
 
     @GetMapping("/{traceId}")

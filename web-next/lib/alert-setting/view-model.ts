@@ -14,6 +14,8 @@ export type AlertSettingEvidenceContext = {
   title: string;
   copy: string;
   labelsText: string;
+  sourceQuery?: string;
+  sourceQueryType?: string;
   returnHref?: string;
   rows: SignalEntityContextRow[];
 };
@@ -55,6 +57,12 @@ function buildAlertSettingPrefillLabels(signal: string | undefined, context: Sig
     .join(', ');
 }
 
+function compactSourceQuery(value: string | null | undefined) {
+  const normalized = firstText(value);
+  if (!normalized) return undefined;
+  return normalized.length > 240 ? `${normalized.slice(0, 237)}...` : normalized;
+}
+
 function formatAlertDefineType(type: string | undefined, t: Translator) {
   switch (type) {
     case 'periodic_metric':
@@ -80,6 +88,15 @@ export function buildAlertSettingEvidenceContext(
   const labelsText = buildAlertSettingPrefillLabels(normalizedSignal, context);
   const returnHref = stripReturnLabelFromHref(context.returnTo);
   const rows = buildSignalEntityContextRows(context, {}, t);
+  const sourceQuery = compactSourceQuery(context.alertQuery);
+  const sourceQueryType = firstText(context.alertQueryType);
+  if (sourceQuery) {
+    rows.push({
+      label: t('alert.rule.evidence.query.label'),
+      value: sourceQuery,
+      meta: sourceQueryType || t('alert.rule.evidence.query.meta')
+    });
+  }
   if (!normalizedSignal && !labelsText && !returnHref) {
     return null;
   }
@@ -90,6 +107,8 @@ export function buildAlertSettingEvidenceContext(
     title: t('alert.rule.evidence.setting.title', { signal: signalName }),
     copy: t('alert.rule.evidence.setting.copy'),
     labelsText,
+    sourceQuery,
+    sourceQueryType,
     returnHref,
     rows
   };

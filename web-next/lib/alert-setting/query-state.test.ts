@@ -50,10 +50,12 @@ describe('alert setting query state', () => {
         source: ['otlp', 'manual'],
         traceId: ['trace-123', 'trace-456'],
         spanId: ['span-123', 'span-456'],
+        intent: ['create', 'ignored'],
         returnTo: ['/log/manage?traceId=trace-123&returnLabel=Logs', '//evil.example']
       })
     ).toEqual({
       signal: 'logs',
+      createIntent: 'create',
       signalContext: {
         entityId: '7',
         entityName: 'Checkout API',
@@ -72,6 +74,7 @@ describe('alert setting query state', () => {
   it('keeps the alert setting route evidence empty when URL context is absent', () => {
     expect(readAlertSettingRouteState()).toEqual({
       signal: null,
+      createIntent: null,
       signalContext: {}
     });
   });

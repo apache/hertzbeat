@@ -158,6 +158,33 @@ class LogSseFilterCriteriaTest {
     }
 
     @Test
+    void testMatchesWithServiceContextFilters() {
+        LogEntry checkoutProdLog = LogEntry.builder()
+                .severityText("INFO")
+                .body("checkout log")
+                .resource(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "payments",
+                        "deployment.environment.name", "prod"))
+                .build();
+        LogEntry paymentStagingLog = LogEntry.builder()
+                .severityText("INFO")
+                .body("payment log")
+                .resource(java.util.Map.of(
+                        "service.name", "payment",
+                        "service.namespace", "payments",
+                        "deployment.environment.name", "staging"))
+                .build();
+
+        filterCriteria.setServiceName("checkout");
+        filterCriteria.setServiceNamespace("payments");
+        filterCriteria.setEnvironment("prod");
+
+        assertTrue(filterCriteria.matches(checkoutProdLog));
+        assertFalse(filterCriteria.matches(paymentStagingLog));
+    }
+
+    @Test
     void testMatchesWithEmptyStringFilters() {
         // Test empty string filters
         filterCriteria.setSeverityText("");

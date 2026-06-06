@@ -80,6 +80,7 @@ describe('alert api facade', () => {
       })
     );
     mockApiMessagePayload({ id: 7, name: 'cpu threshold' });
+    mockApiMessagePayload([{ __value__: 0.92, service_name: 'checkout' }]);
     mockApiMessagePayload({ id: 8 });
     mockApiMessagePayload(undefined);
     mockApiMessagePayload(undefined);
@@ -91,6 +92,9 @@ describe('alert api facade', () => {
     });
     await expect(api.alertSettings.datasourceStatus()).resolves.toEqual({ code: 0, data: { promql: true } });
     await expect(api.alertSettings.detail(7)).resolves.toEqual({ id: 7, name: 'cpu threshold' });
+    await expect(api.alertSettings.preview('sql', 'periodic_trace', "SELECT 1 AS __value__ FROM hertzbeat_apm_red_1m")).resolves.toEqual([
+      { __value__: 0.92, service_name: 'checkout' }
+    ]);
     await expect(api.alertSettings.create({ name: 'memory threshold' })).resolves.toEqual({ id: 8 });
     await expect(api.alertSettings.update({ id: 7, enable: false })).resolves.toBeUndefined();
     await expect(api.alertSettings.delete([7, 8])).resolves.toBeUndefined();
@@ -101,7 +105,12 @@ describe('alert api facade', () => {
       expect.objectContaining({ credentials: 'same-origin', cache: 'no-store' })
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
-      7,
+      5,
+      '/api/alert/define/preview/sql?type=periodic_trace&expr=SELECT%201%20AS%20__value__%20FROM%20hertzbeat_apm_red_1m',
+      expect.objectContaining({ credentials: 'same-origin', cache: 'no-store' })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      8,
       '/api/alert/defines?ids=7&ids=8',
       expect.objectContaining({ method: 'DELETE' })
     );

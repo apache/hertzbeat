@@ -99,7 +99,7 @@ describe('parity route manifest', () => {
         'input',
         'button'
       ]),
-      textSnippets: expect.arrayContaining(['Log workbench', 'Severity', 'Trend band', 'Run query']),
+      textSnippets: expect.arrayContaining(['Log workbench', 'Severity', 'Log volume time series', 'Run query']),
       actionLabels: ['Run query', 'Save view', 'Create alert', 'Add to dashboard'],
       minimumVerificationCommand:
         'npm exec vitest run app/events/page.test.ts app/log/manage/page.test.tsx app/compatibility-entrypoints.chrome.test.ts lib/log-manage/query-state.test.ts lib/log-manage/view-model.test.ts lib/parity/route-manifest.test.ts'
@@ -409,7 +409,7 @@ describe('parity route manifest', () => {
         'input',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['Metric workbench', 'Metric query', 'Trend band', 'Recent series', 'Detail panel', 'Run query']),
+      textSnippets: expect.arrayContaining(['Metric workbench', 'Metric query', 'Metric time series', 'Recent series', 'Detail panel', 'Run query']),
       actionLabels: ['Run query', 'Collector cluster', 'Monitor templates', 'Threshold rules'],
       minimumVerificationCommand:
         'npm exec vitest run app/ingestion/otlp/metrics/page.test.tsx lib/otlp-metrics/view-model.test.ts lib/parity/route-manifest.test.ts'
@@ -469,7 +469,7 @@ describe('parity route manifest', () => {
         'input',
         'a'
       ]),
-      textSnippets: expect.arrayContaining(['Log workbench', 'Severity', 'Trend band', 'Recent logs', 'Run query']),
+      textSnippets: expect.arrayContaining(['Log workbench', 'Severity', 'Log volume time series', 'Recent logs', 'Run query']),
       actionLabels: ['Run query', 'Save view', 'Create alert', 'Add to dashboard'],
       minimumVerificationCommand:
         'npm exec vitest run app/log/manage/page.test.tsx lib/log-manage/view-model.test.ts lib/parity/route-manifest.test.ts'

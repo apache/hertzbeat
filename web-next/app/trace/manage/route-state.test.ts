@@ -18,12 +18,17 @@ describe('trace manage route state', () => {
         traceId: 'trace-123',
         spanId: 'span-456',
         serviceName: 'checkout',
-        errorOnly: true
+        resourceFilter: 'service.version=1.2.3',
+        operationName: 'GET /checkout',
+        minDurationMs: '100',
+        maxDurationMs: '500',
+        errorOnly: true,
+        spanScope: 'root'
       }
     );
 
     expect(route).toBe(
-      '/trace/manage?traceId=trace-123&spanId=span-456&serviceName=checkout&errorOnly=true&start=1713200000000&end=1713203600000&timeRange=last-1h&refresh=30&live=false&tz=Asia%2FShanghai&entityId=42&entityName=checkout&returnTo=%2Foverview&serviceNamespace=payments&environment=prod&codeRepo=https%3A%2F%2Fexample.test%2Frepo&codeProvider=github&codePath=src%2Ftrace.ts&codeSearch=TraceService&codeLabel=source'
+      '/trace/manage?traceId=trace-123&spanId=span-456&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=GET+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&start=1713200000000&end=1713203600000&timeRange=last-1h&refresh=30&live=false&tz=Asia%2FShanghai&entityId=42&entityName=checkout&returnTo=%2Foverview&serviceNamespace=payments&environment=prod&codeRepo=https%3A%2F%2Fexample.test%2Frepo&codeProvider=github&codePath=src%2Ftrace.ts&codeSearch=TraceService&codeLabel=source'
     );
     expect(route).not.toContain('returnLabel=');
   });
@@ -37,6 +42,25 @@ describe('trace manage route state', () => {
     expect(route).not.toContain('returnLabel=');
   });
 
+  it('keeps customized trace table columns in the shared route', () => {
+    const route = buildTraceManageRoute(
+      readSignalRouteContext(createSearchParams('timeRange=last-1h&entityId=42&serviceNamespace=payments')),
+      {
+        traceId: 'trace-123',
+        spanId: '',
+        serviceName: 'checkout',
+        errorOnly: false,
+        spanScope: 'root',
+        columns: ['service', 'duration', 'trace-id']
+      },
+      { view: 'table' }
+    );
+
+    expect(route).toBe(
+      '/trace/manage?traceId=trace-123&serviceName=checkout&columns=start%2Cservice%2Cduration%2Ctrace-id&view=table&timeRange=last-1h&entityId=42&serviceNamespace=payments'
+    );
+  });
+
   it('overrides only the shared time context when applying the visible time control', () => {
     const route = buildTraceManageRoute(
       readSignalRouteContext(createSearchParams(
@@ -46,7 +70,8 @@ describe('trace manage route state', () => {
         traceId: 'trace-123',
         spanId: '',
         serviceName: 'checkout',
-        errorOnly: false
+        errorOnly: false,
+        spanScope: 'root'
       },
       {
         timeRange: 'last-45m',

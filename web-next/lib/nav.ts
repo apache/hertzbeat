@@ -267,7 +267,7 @@ export const routeCatalog: RouteCatalogEntry[] = [
   {
     key: 'otlp-metrics',
     labelKey: 'menu.ingestion.metrics',
-    label: 'OTLP metrics',
+    label: 'Metrics workbench',
     href: '/ingestion/otlp/metrics',
     icon: 'otlp-metrics',
     navSectionKey: 'observability',

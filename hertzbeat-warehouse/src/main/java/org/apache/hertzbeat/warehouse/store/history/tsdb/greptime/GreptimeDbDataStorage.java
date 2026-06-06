@@ -630,11 +630,43 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                                         String severityText, String searchContent,
                                                         Set<String> excludedServiceNames,
                                                         boolean requireServiceName) {
+        return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName, null, null, null, null);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment) {
+        return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        Map<String, String> resourceFilters,
+                                                        Map<String, String> attributeFilters) {
         try {
             StringBuilder sql = new StringBuilder("SELECT ").append(NATIVE_LOG_SELECT_COLUMNS)
                     .append(" FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
             sql.append(" ORDER BY timestamp DESC");
 
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
@@ -673,11 +705,61 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                                                       Set<String> excludedServiceNames,
                                                                       boolean requireServiceName,
                                                                       String workspaceId) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName,
+                workspaceId, null, null, null);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId,
+                                                                      Map<String, String> resourceFilters,
+                                                                      Map<String, String> attributeFilters) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName,
+                workspaceId, null, null, null, resourceFilters, attributeFilters);
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId,
+                                                                      String serviceName,
+                                                                      String serviceNamespace,
+                                                                      String environment) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, offset, limit, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit,
+                                                                      Set<String> excludedServiceNames,
+                                                                      boolean requireServiceName,
+                                                                      String workspaceId,
+                                                                      String serviceName,
+                                                                      String serviceNamespace,
+                                                                      String environment,
+                                                                      Map<String, String> resourceFilters,
+                                                                      Map<String, String> attributeFilters) {
         try {
             StringBuilder sql = new StringBuilder("SELECT ").append(NATIVE_LOG_SELECT_COLUMNS)
                     .append(" FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName, workspaceId);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
             sql.append(" ORDER BY timestamp DESC");
 
             // Add pagination
@@ -721,10 +803,56 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                              Set<String> excludedServiceNames,
                                              boolean requireServiceName,
                                              String workspaceId) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId, null, null, null);
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             Map<String, String> resourceFilters,
+                                             Map<String, String> attributeFilters) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                null, null, null, resourceFilters, attributeFilters);
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             String serviceName,
+                                             String serviceNamespace,
+                                             String environment) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             String serviceName,
+                                             String serviceNamespace,
+                                             String environment,
+                                             Map<String, String> resourceFilters,
+                                             Map<String, String> attributeFilters) {
         try {
             StringBuilder sql = new StringBuilder("SELECT COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName, workspaceId);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
 
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows != null && !rows.isEmpty()) {
@@ -757,6 +885,37 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                                         Set<String> excludedServiceNames,
                                                         boolean requireServiceName,
                                                         String workspaceId) {
+        return countLogsBySeverityBuckets(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId, null, null, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment) {
+        return countLogsBySeverityBuckets(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public Map<String, Long> countLogsBySeverityBuckets(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent,
+                                                        Set<String> excludedServiceNames,
+                                                        boolean requireServiceName,
+                                                        String workspaceId,
+                                                        String serviceName,
+                                                        String serviceNamespace,
+                                                        String environment,
+                                                        Map<String, String> resourceFilters,
+                                                        Map<String, String> attributeFilters) {
         try {
             StringBuilder sql = new StringBuilder("SELECT ")
                     .append("COUNT(*) as totalCount, ")
@@ -768,7 +927,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .append("SUM(CASE WHEN severity_number >= 1 AND severity_number <= 4 THEN 1 ELSE 0 END) as traceCount ")
                     .append("FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName, workspaceId);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows == null || rows.isEmpty()) {
                 return Map.of();
@@ -806,6 +966,37 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                                    Set<String> excludedServiceNames,
                                                    boolean requireServiceName,
                                                    String workspaceId) {
+        return countLogTraceCoverage(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId, null, null, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                   String spanId, Integer severityNumber,
+                                                   String severityText, String searchContent,
+                                                   Set<String> excludedServiceNames,
+                                                   boolean requireServiceName,
+                                                   String workspaceId,
+                                                   String serviceName,
+                                                   String serviceNamespace,
+                                                   String environment) {
+        return countLogTraceCoverage(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public Map<String, Long> countLogTraceCoverage(Long startTime, Long endTime, String traceId,
+                                                   String spanId, Integer severityNumber,
+                                                   String severityText, String searchContent,
+                                                   Set<String> excludedServiceNames,
+                                                   boolean requireServiceName,
+                                                   String workspaceId,
+                                                   String serviceName,
+                                                   String serviceNamespace,
+                                                   String environment,
+                                                   Map<String, String> resourceFilters,
+                                                   Map<String, String> attributeFilters) {
         try {
             StringBuilder sql = new StringBuilder("SELECT ")
                     .append("COUNT(*) as totalCount, ")
@@ -815,7 +1006,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .append("AND span_id IS NOT NULL AND span_id != '' THEN 1 ELSE 0 END) as withBothTraceAndSpan ")
                     .append("FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName, workspaceId);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows == null || rows.isEmpty()) {
                 return Map.of();
@@ -852,11 +1044,43 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                              Set<String> excludedServiceNames,
                                              boolean requireServiceName,
                                              String workspaceId) {
+        return countLogsByHour(startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId, null, null, null);
+    }
+
+    @Override
+    public Map<String, Long> countLogsByHour(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             String serviceName,
+                                             String serviceNamespace,
+                                             String environment) {
+        return countLogsByHour(startTime, endTime, traceId, spanId, severityNumber,
+                severityText, searchContent, excludedServiceNames, requireServiceName,
+                workspaceId, serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    @Override
+    public Map<String, Long> countLogsByHour(Long startTime, Long endTime, String traceId,
+                                             String spanId, Integer severityNumber,
+                                             String severityText, String searchContent,
+                                             Set<String> excludedServiceNames,
+                                             boolean requireServiceName,
+                                             String workspaceId,
+                                             String serviceName,
+                                             String serviceNamespace,
+                                             String environment,
+                                             Map<String, String> resourceFilters,
+                                             Map<String, String> attributeFilters) {
         try {
             StringBuilder sql = new StringBuilder("SELECT date_bin('1 hour', timestamp) as hour, ")
                     .append("COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
             buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
-                    searchContent, excludedServiceNames, requireServiceName, workspaceId);
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
             sql.append(" GROUP BY hour ORDER BY hour ASC");
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows == null || rows.isEmpty()) {
@@ -872,6 +1096,52 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return result;
         } catch (Exception e) {
             log.error("[warehouse greptime-log] countLogsByHour error: {}", e.getMessage(), e);
+            return Map.of();
+        }
+    }
+
+    @Override
+    public Map<String, Long> countLogsByGroup(Long startTime, Long endTime, String traceId,
+                                              String spanId, Integer severityNumber,
+                                              String severityText, String searchContent,
+                                              Set<String> excludedServiceNames,
+                                              boolean requireServiceName,
+                                              String workspaceId,
+                                              String serviceName,
+                                              String serviceNamespace,
+                                              String environment,
+                                              Map<String, String> resourceFilters,
+                                              Map<String, String> attributeFilters,
+                                              String groupBy) {
+        String groupExpression = logGroupByExpression(groupBy);
+        if (!StringUtils.hasText(groupExpression)) {
+            return Map.of();
+        }
+        try {
+            String normalizedGroupExpression = "COALESCE(NULLIF(" + groupExpression + ", ''), 'unknown')";
+            StringBuilder sql = new StringBuilder("SELECT ")
+                    .append(normalizedGroupExpression)
+                    .append(" as groupValue, COUNT(*) as count FROM ")
+                    .append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                    searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters);
+            sql.append(" GROUP BY groupValue ORDER BY count DESC LIMIT 20");
+            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            if (rows == null || rows.isEmpty()) {
+                return Map.of();
+            }
+            Map<String, Long> result = new java.util.LinkedHashMap<>();
+            for (Map<String, Object> row : rows) {
+                String value = String.valueOf(columnValue(row, "groupValue"));
+                if (!StringUtils.hasText(value) || "null".equalsIgnoreCase(value)) {
+                    value = "unknown";
+                }
+                result.put(value, normalizeLong(columnValue(row, "count")));
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("[warehouse greptime-log] countLogsByGroup error: {}", e.getMessage(), e);
             return Map.of();
         }
     }
@@ -955,6 +1225,27 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                                      String spanId, Integer severityNumber, String severityText, String searchContent,
                                      Set<String> excludedServiceNames, boolean requireServiceName,
                                      String workspaceId) {
+        buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId, null, null, null);
+    }
+
+    private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String searchContent,
+                                     Set<String> excludedServiceNames, boolean requireServiceName,
+                                     String workspaceId, String serviceName,
+                                     String serviceNamespace, String environment) {
+        buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText,
+                searchContent, excludedServiceNames, requireServiceName, workspaceId,
+                serviceName, serviceNamespace, environment, Map.of(), Map.of());
+    }
+
+    private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
+                                     String spanId, Integer severityNumber, String severityText, String searchContent,
+                                     Set<String> excludedServiceNames, boolean requireServiceName,
+                                     String workspaceId, String serviceName,
+                                     String serviceNamespace, String environment,
+                                     Map<String, String> resourceFilters,
+                                     Map<String, String> attributeFilters) {
         List<String> conditions = new ArrayList<>();
 
         if (startTime != null && endTime != null) {
@@ -987,6 +1278,23 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             conditions.add("matches_term(body, '" + escaped + "')");
         }
 
+        if (StringUtils.hasText(serviceName)) {
+            conditions.add("service_name = '" + safeString(serviceName.trim()) + "'");
+        }
+
+        String serviceNamespaceCondition = resourceAttributeCondition("service.namespace", serviceNamespace);
+        if (StringUtils.hasText(serviceNamespaceCondition)) {
+            conditions.add(serviceNamespaceCondition);
+        }
+
+        String environmentCondition = resourceAttributeCondition("deployment.environment.name", environment);
+        if (StringUtils.hasText(environmentCondition)) {
+            conditions.add(environmentCondition);
+        }
+
+        appendJsonAttributeConditions(conditions, "resource_attributes", resourceFilters);
+        appendJsonAttributeConditions(conditions, "log_attributes", attributeFilters);
+
         if (requireServiceName) {
             conditions.add("service_name IS NOT NULL");
             conditions.add("service_name != ''");
@@ -1012,6 +1320,71 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (!conditions.isEmpty()) {
             sql.append(" WHERE ").append(String.join(" AND ", conditions));
         }
+    }
+
+    private String resourceAttributeCondition(String key, String value) {
+        return jsonAttributeCondition("resource_attributes", key, value);
+    }
+
+    private void appendJsonAttributeConditions(List<String> conditions, String columnName, Map<String, String> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return;
+        }
+        filters.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> jsonAttributeCondition(columnName, entry.getKey(), entry.getValue()))
+                .filter(StringUtils::hasText)
+                .forEach(conditions::add);
+    }
+
+    private String jsonAttributeCondition(String columnName, String key, String value) {
+        if (!StringUtils.hasText(key) || !StringUtils.hasText(value)) {
+            return null;
+        }
+        String trimmedValue = value.trim();
+        boolean negate = trimmedValue.startsWith("!");
+        String expectedValue = negate ? trimmedValue.substring(1) : trimmedValue;
+        if (!StringUtils.hasText(expectedValue)) {
+            return null;
+        }
+        String attributeExpression = "json_get_string(" + columnName + ", '$[\"" + safeString(key.trim()) + "\"]')";
+        String expectedCondition = attributeExpression + " = '" + safeString(expectedValue) + "'";
+        if (negate) {
+            return "(" + attributeExpression + " IS NULL OR "
+                    + attributeExpression + " != '" + safeString(expectedValue) + "')";
+        }
+        return expectedCondition;
+    }
+
+    private String logGroupByExpression(String groupBy) {
+        if (!StringUtils.hasText(groupBy)) {
+            return null;
+        }
+        String normalized = groupBy.trim();
+        if (!normalized.matches("[A-Za-z0-9_.:-]+")) {
+            return null;
+        }
+        String lower = normalized.toLowerCase(Locale.ROOT);
+        if ("service.name".equals(lower) || "service_name".equals(lower)) {
+            return "service_name";
+        }
+        if ("severity".equals(lower) || "severity_text".equals(lower)) {
+            return "severity_text";
+        }
+        if (lower.startsWith("resource:")) {
+            return jsonAttributeExpression("resource_attributes", normalized.substring("resource:".length()));
+        }
+        if (lower.startsWith("attribute:")) {
+            return jsonAttributeExpression("log_attributes", normalized.substring("attribute:".length()));
+        }
+        return jsonAttributeExpression("resource_attributes", normalized);
+    }
+
+    private String jsonAttributeExpression(String columnName, String key) {
+        if (!StringUtils.hasText(key) || !key.matches("[A-Za-z0-9_.:-]+")) {
+            return null;
+        }
+        return "json_get_string(" + columnName + ", '$[\"" + safeString(key.trim()) + "\"]')";
     }
 
     private String workspaceCondition(String workspaceId) {
