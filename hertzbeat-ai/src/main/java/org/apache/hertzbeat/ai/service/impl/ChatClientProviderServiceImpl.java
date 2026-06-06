@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -70,8 +71,6 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     @Qualifier("hertzbeatTools")
     private ToolCallbackProvider toolCallbackProvider;
     
-    private boolean isConfigured = false;
-
     @Value("classpath:/prompt/system-message.st")
     private Resource systemResource;
 
@@ -177,11 +176,16 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
     @Override
     public boolean isConfigured() {
-        if (!isConfigured) {
+        try {
             GeneralConfig providerConfig = generalConfigDao.findByType("provider");
+            if (providerConfig == null || !StringUtils.hasText(providerConfig.getContent())) {
+                return false;
+            }
             ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
-            isConfigured = modelProviderConfig != null && modelProviderConfig.getApiKey() != null;   
+            return modelProviderConfig != null && StringUtils.hasText(modelProviderConfig.getApiKey());
+        } catch (RuntimeException e) {
+            log.warn("LLM Provider configuration cannot be read", e);
+            return false;
         }
-        return isConfigured;
     }
 }

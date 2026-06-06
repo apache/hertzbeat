@@ -18,7 +18,10 @@
 package org.apache.hertzbeat.ai.config;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -27,9 +30,20 @@ import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.support.GenericApplicationContext;
 
 class LlmConfigTest {
+
+    @Test
+    void openAiChatClientSkipsMissingProviderConfig() {
+        GeneralConfigDao generalConfigDao = mock(GeneralConfigDao.class);
+        when(generalConfigDao.findByType("provider")).thenReturn(null);
+
+        LlmConfig llmConfig = new LlmConfig(generalConfigDao, new GenericApplicationContext());
+
+        assertNull(assertDoesNotThrow(llmConfig::openAiChatClient));
+    }
 
     @Test
     void openAiChatClientSkipsBlankApiKey() {
@@ -39,6 +53,71 @@ class LlmConfigTest {
         LlmConfig llmConfig = new LlmConfig(generalConfigDao, new GenericApplicationContext());
 
         assertNull(assertDoesNotThrow(llmConfig::openAiChatClient));
+    }
+
+    @Test
+    void openAiChatClientSkipsInvalidProviderContent() {
+        GeneralConfigDao generalConfigDao = mock(GeneralConfigDao.class);
+        when(generalConfigDao.findByType("provider")).thenReturn(GeneralConfig.builder()
+                .type("provider")
+                .content("{")
+                .build());
+
+        LlmConfig llmConfig = new LlmConfig(generalConfigDao, new GenericApplicationContext());
+
+        assertNull(assertDoesNotThrow(llmConfig::openAiChatClient));
+    }
+
+    @Test
+    void openAiChatClientCreatesClientWithConfiguredApiKey() {
+        GeneralConfigDao generalConfigDao = mock(GeneralConfigDao.class);
+        when(generalConfigDao.findByType("provider")).thenReturn(providerConfig("sk-test"));
+
+        LlmConfig llmConfig = new LlmConfig(generalConfigDao, new GenericApplicationContext());
+
+        assertNotNull(assertDoesNotThrow(llmConfig::openAiChatClient));
+    }
+
+    @Test
+    void applicationContextStartsWithoutProviderConfig() {
+        GeneralConfigDao generalConfigDao = mock(GeneralConfigDao.class);
+        when(generalConfigDao.findByType("provider")).thenReturn(null);
+
+        new ApplicationContextRunner()
+                .withBean(GeneralConfigDao.class, () -> generalConfigDao)
+                .withUserConfiguration(LlmConfig.class)
+                .run(context -> {
+                    assertFalse(context.containsBean(LlmConfig.OPEN_AI_CHAT_CLIENT_BEAN_NAME));
+                    assertNull(context.getStartupFailure());
+                });
+    }
+
+    @Test
+    void applicationContextStartsWithoutBlankApiKey() {
+        GeneralConfigDao generalConfigDao = mock(GeneralConfigDao.class);
+        when(generalConfigDao.findByType("provider")).thenReturn(providerConfig(" "));
+
+        new ApplicationContextRunner()
+                .withBean(GeneralConfigDao.class, () -> generalConfigDao)
+                .withUserConfiguration(LlmConfig.class)
+                .run(context -> {
+                    assertFalse(context.containsBean(LlmConfig.OPEN_AI_CHAT_CLIENT_BEAN_NAME));
+                    assertNull(context.getStartupFailure());
+                });
+    }
+
+    @Test
+    void applicationContextRegistersClientWithConfiguredApiKey() {
+        GeneralConfigDao generalConfigDao = mock(GeneralConfigDao.class);
+        when(generalConfigDao.findByType("provider")).thenReturn(providerConfig("sk-test"));
+
+        new ApplicationContextRunner()
+                .withBean(GeneralConfigDao.class, () -> generalConfigDao)
+                .withUserConfiguration(LlmConfig.class)
+                .run(context -> {
+                    assertTrue(context.containsBean(LlmConfig.OPEN_AI_CHAT_CLIENT_BEAN_NAME));
+                    assertNull(context.getStartupFailure());
+                });
     }
 
     private static GeneralConfig providerConfig(String apiKey) {

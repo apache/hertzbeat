@@ -20,6 +20,8 @@ package org.apache.hertzbeat.ai.config;
 
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.credential.BearerTokenCredential;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
@@ -32,7 +34,6 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.util.StringUtils;
@@ -45,6 +46,8 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class LlmConfig {
 
+    static final String OPEN_AI_CHAT_CLIENT_BEAN_NAME = "openAiChatClient";
+
     private final GeneralConfigDao generalConfigDao;
 
     private ApplicationContext applicationContext;
@@ -54,10 +57,11 @@ public class LlmConfig {
         this.applicationContext = applicationContext;
     }
 
-    /**
-     * Create ChatClient bean with all dependencies created internally
-     */
-    @Bean
+    @PostConstruct
+    public void registerInitialChatClient() {
+        registerChatClient();
+    }
+
     public ChatClient openAiChatClient() {
         return createChatClient();
     }
@@ -66,6 +70,15 @@ public class LlmConfig {
      * Create ChatClient with all necessary components
      */
     private ChatClient createChatClient() {
+        try {
+            return createConfiguredChatClient();
+        } catch (RuntimeException e) {
+            log.warn("LLM Provider configuration cannot create ChatClient, ChatClient bean will not be created", e);
+            return null;
+        }
+    }
+
+    private ChatClient createConfiguredChatClient() {
 
         GeneralConfig providerConfig = generalConfigDao.findByType("provider");
         if (providerConfig == null || providerConfig.getContent() == null) {
@@ -105,13 +118,14 @@ public class LlmConfig {
 
         OpenAIClient openAiClient = OpenAIOkHttpClient.builder()
                 .baseUrl(modelProviderConfig.getBaseUrl())
-                .apiKey(modelProviderConfig.getApiKey())
+                .credential(BearerTokenCredential.create(modelProviderConfig.getApiKey()))
                 .build();
 
         // Create Chat Options
         OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
                 .model(modelProviderConfig.getModel())
                 .temperature(0.3)
+                .apiKey(modelProviderConfig.getApiKey())
                 .build();
 
         // Create Chat Model
@@ -132,13 +146,17 @@ public class LlmConfig {
     public void onAiProviderConfigChange(AiProviderConfigChangeEvent event) {
         log.info("Provider configuration change event received, refreshing ChatClient bean");
 
+        registerChatClient();
+    }
+
+    private void registerChatClient() {
         try {
             ConfigurableApplicationContext configurableContext = (ConfigurableApplicationContext) applicationContext;
             DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) configurableContext.getBeanFactory();
 
             // Remove the existing ChatClient bean
-            if (beanFactory.containsSingleton("openAiChatClient")) {
-                beanFactory.destroySingleton("openAiChatClient");
+            if (beanFactory.containsSingleton(OPEN_AI_CHAT_CLIENT_BEAN_NAME)) {
+                beanFactory.destroySingleton(OPEN_AI_CHAT_CLIENT_BEAN_NAME);
                 log.info("Existing ChatClient bean destroyed");
             }
 
@@ -150,7 +168,7 @@ public class LlmConfig {
             }
 
             // Register the new ChatClient bean
-            beanFactory.registerSingleton("openAiChatClient", newChatClient);
+            beanFactory.registerSingleton(OPEN_AI_CHAT_CLIENT_BEAN_NAME, newChatClient);
 
             log.info("ChatClient bean refreshed successfully with new AI provider configuration");
 
