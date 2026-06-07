@@ -25,7 +25,7 @@
 	</parent>
 	<artifactId>hertzbeat-ai</artifactId>
 	<properties>
-		<spring-ai.version>2.0.0-RC1</spring-ai.version>
+		<spring-ai.version>2.0.0-M7</spring-ai.version>
 		<java.version>21</java.version>
 	</properties>
 

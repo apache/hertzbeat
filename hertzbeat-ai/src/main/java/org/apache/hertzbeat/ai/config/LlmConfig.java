@@ -19,8 +19,6 @@
 package org.apache.hertzbeat.ai.config;
 
 import com.openai.client.OpenAIClient;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.observation.ObservationRegistry;
 import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.Map;
@@ -132,10 +130,7 @@ public class LlmConfig {
                 Duration.ofSeconds(60),
                 10,
                 null,
-                Map.of(),
-                ObservationRegistry.NOOP,
-                Metrics.globalRegistry,
-                null);
+                Map.of());
 
         // Create Chat Options
         OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
