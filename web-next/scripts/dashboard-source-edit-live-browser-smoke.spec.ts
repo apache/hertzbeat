@@ -3,6 +3,7 @@ import { expect, test, type APIRequestContext, type Page } from 'playwright/test
 import {
   buildSignalDashboardCompositionFromDrafts,
   buildSignalDashboardExecutionPlans,
+  buildSignalServiceOverviewDashboard,
   createSignalDashboardPanelDraftFromRuntimeBreakout,
   createSignalDashboardPanelDraftFromRuntimeEvidence,
   type SignalDashboardRuntimeSyncTooltipRow
@@ -154,6 +155,23 @@ function uniqueSavedViewKey() {
 
 function uniqueSavedViewReplayDashboardKey() {
   return `${DASHBOARD_KEY_PREFIX}-saved-view-replay-${randomBytes(4).toString('hex')}`;
+}
+
+function serviceOverviewRoute() {
+  return [
+    '/dashboard?serviceName=checkout',
+    'serviceNamespace=payments',
+    'environment=prod',
+    'entityId=4200',
+    'entityType=service',
+    'entityName=Checkout%20API',
+    'source=otlp',
+    'collector=collector-a',
+    'template=spring-boot',
+    'timeRange=last-1h',
+    'refresh=30',
+    'live=true'
+  ].join('&');
 }
 
 function titleFromRoute(signalCase: SignalCase, route: string) {
@@ -467,6 +485,121 @@ function assertPlanMatchesReplayExpectation(
 }
 
 test.describe('live dashboard source edit browser smoke', () => {
+  test('saves a service overview dashboard from URL service and entity context', async ({ page }) => {
+    test.setTimeout(BROWSER_SMOKE_TIMEOUT);
+
+    const expectedDashboard = buildSignalServiceOverviewDashboard({
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      environment: 'prod',
+      entityId: '4200',
+      entityType: 'service',
+      entityName: 'Checkout API',
+      source: 'otlp',
+      collector: 'collector-a',
+      template: 'spring-boot',
+      timeRange: 'last-1h',
+      refresh: '30',
+      live: 'true'
+    });
+    const dashboardKey = expectedDashboard.dashboardKey;
+    await authenticate(page);
+    await page.context().request.delete(`${baseUrl}/api/signal/dashboard/${encodeURIComponent(dashboardKey)}`, {
+      failOnStatusCode: false
+    });
+
+    try {
+      await page.goto(`${baseUrl}${serviceOverviewRoute()}`, {
+        timeout: BROWSER_SMOKE_TIMEOUT,
+        waitUntil: 'domcontentloaded'
+      });
+
+      const serviceOverviewAction = page.locator('[data-dashboard-service-overview-action="save"]').first();
+      await expect(page.locator('[data-dashboard-service-overview-context="ready"]')).toHaveAttribute(
+        'data-dashboard-service-overview-service',
+        'checkout',
+        { timeout: WORKBENCH_READY_TIMEOUT }
+      );
+      await expect(serviceOverviewAction).toHaveAttribute('data-dashboard-service-overview-action-state', 'ready');
+      await expect(serviceOverviewAction).toHaveAttribute('data-dashboard-service-overview-action-service', 'checkout');
+      await serviceOverviewAction.click();
+
+      await expect(page).toHaveURL(/dashboard=service-checkout-overview/, {
+        timeout: WORKBENCH_READY_TIMEOUT
+      });
+      await expect(page.locator('[data-dashboard-composition-preview-panel]')).toHaveCount(18, {
+        timeout: WORKBENCH_READY_TIMEOUT
+      });
+
+      await expect.poll(async () => {
+        const persisted = await loadDashboard(page.context().request, dashboardKey);
+        return parseWidgets(persisted).length;
+      }, {
+        timeout: WORKBENCH_READY_TIMEOUT
+      }).toBe(18);
+
+      const persistedDashboard = await loadDashboard(page.context().request, dashboardKey);
+      const persistedWidgets = parseWidgets(persistedDashboard);
+      const persistedVariables = parseVariables(persistedDashboard);
+      expect(persistedDashboard).toEqual(expect.objectContaining({
+        dashboardKey: 'service-checkout-overview',
+        title: 'Checkout API service overview',
+        tags: 'service,apm,metrics,logs,traces,alerts'
+      }));
+      expect(persistedWidgets.map(widget => widget.title)).toEqual(expect.arrayContaining([
+        'Service overview request rate: service.name=checkout',
+        'Service overview error rate: service.name=checkout',
+        'Service overview apdex: service.name=checkout',
+        'Service overview log errors: service.name=checkout',
+        'Service overview exceptions: service.name=checkout',
+        'Service overview firing alerts: service.name=checkout'
+      ]));
+      expect(persistedVariables).toEqual(expect.arrayContaining([
+        expect.objectContaining({ name: 'service.name', type: 'query', value: 'checkout' }),
+        expect.objectContaining({ name: 'service.namespace', type: 'query', value: 'payments' }),
+        expect.objectContaining({ name: 'deployment.environment.name', type: 'query', value: 'prod' }),
+        expect.objectContaining({ name: 'hertzbeat.entity_id', type: 'dynamic', value: '4200' }),
+        expect.objectContaining({ name: 'hertzbeat.entity_type', type: 'dynamic', value: 'service' }),
+        expect.objectContaining({ name: 'hertzbeat.template', type: 'dynamic', value: 'spring-boot' })
+      ]));
+
+      const plans = buildSignalDashboardExecutionPlans(persistedDashboard);
+      const planForTitle = (titleNeedle: string) => {
+        const widget = persistedWidgets.find(item => item.title.includes(titleNeedle));
+        expect(widget, `service overview widget ${titleNeedle} should exist`).toBeTruthy();
+        return plans.find(plan => plan.panelId === widget?.id);
+      };
+      expect(plans.map(plan => plan.signal)).toEqual(expect.arrayContaining(['metrics', 'logs', 'traces', 'alerts']));
+      expect(planForTitle('request rate')).toEqual(expect.objectContaining({
+        signal: 'metrics',
+        state: 'ready',
+        primaryUrl: expect.stringContaining('/ingestion/otlp/metrics/console')
+      }));
+      expect(planForTitle('request rate')?.primaryUrl).toEqual(expect.stringContaining('entityType=service'));
+      expect(planForTitle('apdex')?.primaryUrl).toEqual(expect.stringContaining('template=service-apdex'));
+      expect(planForTitle('log errors')?.primaryUrl).toEqual(expect.stringContaining('/logs/list'));
+      expect(planForTitle('log errors')?.primaryUrl).toEqual(expect.stringContaining('severityText=ERROR'));
+      expect(planForTitle('exceptions')?.primaryUrl).toEqual(expect.stringContaining('/traces/stats/group-by'));
+      expect(planForTitle('exceptions')?.primaryUrl).toEqual(expect.stringContaining('groupBy=exception.type'));
+      expect(planForTitle('firing alerts')?.primaryUrl).toEqual(expect.stringContaining('/alerts/group'));
+      expect(planForTitle('firing alerts')?.primaryUrl).toEqual(expect.stringContaining('status=firing'));
+
+      const requestRatePanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Service overview request rate' }).first();
+      await expect(requestRatePanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'metrics');
+      await expect(requestRatePanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /entityType=service/);
+      await expect(requestRatePanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /temporalAggregation=rate/);
+
+      const alertPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Service overview firing alerts' }).first();
+      await expect(alertPanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'alerts');
+      await expect(alertPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /\/alerts\/group\?/);
+      await expect(alertPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /status=firing/);
+    } finally {
+      await page.context().request.delete(`${baseUrl}/api/signal/dashboard/${encodeURIComponent(dashboardKey)}`, {
+        failOnStatusCode: false
+      });
+    }
+  });
+
   test('promotes logs, traces, and metrics saved views into a persisted replay dashboard', async ({ page }) => {
     test.setTimeout(BROWSER_SMOKE_TIMEOUT);
 

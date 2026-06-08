@@ -17,7 +17,7 @@ describe('three-signal live proof script contract', () => {
     expect(source).toContain('TRACE_ID="${TRACE_ID}" HERTZBEAT_BASE="${HERTZBEAT_BASE}" bash script/dev/verify-otlp-three-signal-demo.sh');
     expect(source).toContain('DASHBOARD_SOURCE_EDIT_LIVE_BROWSER_BASE_URL="${FRONTEND_BASE}"');
     expect(source).toContain('npm exec -- playwright test scripts/dashboard-source-edit-live-browser-smoke.spec.ts -g "${PLAYWRIGHT_GREP}"');
-    expect(source).toContain('promotes logs, traces, and metrics saved views into a persisted replay dashboard');
+    expect(source).toContain('promotes logs, traces, and metrics saved views into a persisted replay dashboard|saves a service overview dashboard from URL service and entity context');
     expect(source).toContain('trap cleanup EXIT');
     expect(source).toContain('kill "${BACKEND_PID}"');
     expect(source).toContain('kill "${FRONTEND_WRAPPER_PID}"');
