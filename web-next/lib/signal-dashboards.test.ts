@@ -25,6 +25,7 @@ import {
   saveSignalDashboard,
   selectSignalDashboardVariableOption,
   buildSignalDashboardPanelRuntimeRenderDescriptor,
+  buildSignalServiceOverviewDashboard,
   createSignalDashboardPanelDraftFromFilterSelection,
   createSignalDashboardPanelDraftsFromFilterSelection,
   createSignalDashboardPanelDraftFromRuntimeBreakout,
@@ -163,6 +164,79 @@ describe('signal dashboards API client', () => {
       'logs-logs-panel': 'logs-panel',
       'metrics-metrics-panel': 'metrics-panel'
     });
+  });
+
+  it('builds a service overview dashboard from HertzBeat entity context', () => {
+    const dashboard = buildSignalServiceOverviewDashboard({
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      environment: 'prod',
+      entityId: '4200',
+      entityType: 'service',
+      entityName: 'Checkout API',
+      source: 'otlp',
+      collector: 'collector-a',
+      template: 'spring-boot',
+      timeRange: 'last-1h',
+      refresh: '30',
+      live: 'true'
+    });
+    const panels = parseSignalDashboardPreviewPanels(dashboard);
+    const variables = parseSignalDashboardVariables(dashboard);
+    const plans = buildSignalDashboardExecutionPlans(dashboard);
+
+    expect(dashboard).toEqual(expect.objectContaining({
+      dashboardKey: 'service-checkout-overview',
+      title: 'Checkout API service overview',
+      tags: 'service,apm,metrics,logs,traces,alerts'
+    }));
+    expect(panels).toHaveLength(18);
+    expect(variables).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'service.name', type: 'query', value: 'checkout' }),
+      expect.objectContaining({ name: 'service.namespace', type: 'query', value: 'payments' }),
+      expect.objectContaining({ name: 'deployment.environment.name', type: 'query', value: 'prod' }),
+      expect.objectContaining({ name: 'hertzbeat.entity_id', type: 'dynamic', value: '4200' }),
+      expect.objectContaining({ name: 'hertzbeat.entity_type', type: 'dynamic', value: 'service' }),
+      expect.objectContaining({ name: 'hertzbeat.template', type: 'dynamic', value: 'spring-boot' })
+    ]));
+    expect(panels.map(panel => panel.widget.title)).toEqual([
+      'Service overview: service.name=checkout',
+      'Service overview table: service.name=checkout',
+      'Service overview latency p95: service.name=checkout',
+      'Service overview request rate: service.name=checkout',
+      'Service overview error rate: service.name=checkout',
+      'Service overview apdex: service.name=checkout',
+      'Service overview db calls rate: service.name=checkout',
+      'Service overview db call duration: service.name=checkout',
+      'Service overview external calls rate: service.name=checkout',
+      'Service overview external call duration: service.name=checkout',
+      'Service overview key operations: service.name=checkout',
+      'Service overview logs: service.name=checkout',
+      'Service overview log errors: service.name=checkout',
+      'Service overview traces: service.name=checkout',
+      'Service overview trace errors: service.name=checkout',
+      'Service overview exceptions: service.name=checkout',
+      'Service overview exception messages: service.name=checkout',
+      'Service overview firing alerts: service.name=checkout'
+    ]);
+    expect(plans[2]).toEqual(expect.objectContaining({
+      signal: 'metrics',
+      primaryUrl: expect.stringContaining('/ingestion/otlp/metrics/console?')
+    }));
+    expect(plans[2]?.primaryUrl).toContain('query=http.server.duration');
+    expect(plans[2]?.primaryUrl).toContain('entityType=service');
+    expect(plans[3]?.primaryUrl).toContain('query=http_server_duration_milliseconds_count');
+    expect(plans[3]?.primaryUrl).toContain('temporalAggregation=rate');
+    expect(plans[5]?.apiUrls).toEqual(expect.objectContaining({
+      apdexTolerating: expect.stringContaining('le%3D%222.0%22'),
+      apdexTotal: expect.stringContaining('query=http.server.duration.count')
+    }));
+    expect(plans[12]?.primaryUrl).toContain('/logs/list?');
+    expect(plans[12]?.primaryUrl).toContain('severityText=ERROR');
+    expect(plans[15]?.primaryUrl).toContain('/traces/stats/group-by?');
+    expect(plans[15]?.primaryUrl).toContain('groupBy=exception.type');
+    expect(plans[17]?.primaryUrl).toContain('/alerts/group?');
+    expect(plans.every(plan => plan.state === 'ready')).toBe(true);
   });
 
   it('merges suggested panel drafts into an existing dashboard composition', () => {

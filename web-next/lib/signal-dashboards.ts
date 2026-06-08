@@ -382,6 +382,23 @@ type BuildSignalDashboardCompositionInput = {
   drafts: SignalDashboardPanelDraft[];
 };
 
+type BuildSignalServiceOverviewDashboardInput = {
+  serviceName: string;
+  serviceNamespace?: string;
+  environment?: string;
+  entityId?: string;
+  entityType?: string;
+  entityName?: string;
+  source?: string;
+  collector?: string;
+  template?: string;
+  timeRange?: string;
+  start?: string;
+  end?: string;
+  refresh?: string;
+  live?: string;
+};
+
 type ResolveSignalDashboardPreviewOptions = {
   timeRange?: SignalDashboardTimeRange;
   now?: number;
@@ -1859,6 +1876,72 @@ export function createSignalDashboardPanelDraftsFromFilterSelection(input: {
     seenDraftKeys.add(key);
     return true;
   });
+}
+
+function serviceOverviewRoute(input: BuildSignalServiceOverviewDashboardInput) {
+  const url = new URL('/ingestion/otlp/metrics', 'http://hertzbeat.local');
+  url.searchParams.set('query', 'http.server.duration');
+  url.searchParams.set('serviceName', input.serviceName);
+  [
+    ['serviceNamespace', input.serviceNamespace],
+    ['environment', input.environment],
+    ['entityId', input.entityId],
+    ['entityType', input.entityType],
+    ['entityName', input.entityName],
+    ['source', input.source],
+    ['collector', input.collector],
+    ['template', input.template],
+    ['timeRange', input.timeRange],
+    ['start', input.start],
+    ['end', input.end],
+    ['refresh', input.refresh],
+    ['live', input.live]
+  ].forEach(([key, value]) => {
+    if (value) url.searchParams.set(key, value);
+  });
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function serviceOverviewVariableType(name: string): SignalDashboardVariableType {
+  return name === 'service.name' || name === 'service.namespace' || name === 'deployment.environment.name'
+    ? 'query'
+    : name.startsWith('hertzbeat.') ? 'dynamic' : 'textbox';
+}
+
+export function buildSignalServiceOverviewDashboard(input: BuildSignalServiceOverviewDashboardInput): SignalDashboard {
+  const serviceName = input.serviceName.trim();
+  if (!serviceName) {
+    throw new Error('Service overview dashboard requires a service name');
+  }
+  const serviceLabel = input.entityName?.trim() || serviceName;
+  const sourceRoute = serviceOverviewRoute({ ...input, serviceName });
+  const drafts = createSignalDashboardPanelDraftsFromFilterSelection({
+    variable: {
+      name: 'service.name',
+      type: 'query',
+      value: serviceName,
+      options: [serviceName],
+      multi: false
+    },
+    signal: 'metrics',
+    route: sourceRoute,
+    titlePrefix: 'Service overview'
+  });
+  const dashboard = buildSignalDashboardCompositionFromDrafts({
+    dashboardKey: normalizeSignalDashboardKey(`service-${serviceName}-overview`),
+    title: `${serviceLabel} service overview`,
+    description: `Service-level RED, Apdex, logs, traces, exceptions, and alerts for ${serviceLabel}.`,
+    tags: ['service', 'apm', 'metrics', 'logs', 'traces', 'alerts'],
+    drafts
+  });
+  return updateSignalDashboardVariables(
+    dashboard,
+    parseSignalDashboardVariables(dashboard).map(variable => ({
+      ...variable,
+      type: serviceOverviewVariableType(variable.name),
+      options: variable.value ? [variable.value] : variable.options
+    }))
+  );
 }
 
 function errorMessage(error: unknown) {
