@@ -25,6 +25,7 @@ import {
   saveSignalDashboard,
   selectSignalDashboardVariableOption,
   buildSignalDashboardPanelRuntimeRenderDescriptor,
+  buildSignalOperationDrilldownDashboard,
   buildSignalServiceOverviewDashboard,
   createSignalDashboardPanelDraftFromFilterSelection,
   createSignalDashboardPanelDraftsFromFilterSelection,
@@ -236,6 +237,71 @@ describe('signal dashboards API client', () => {
     expect(plans[15]?.primaryUrl).toContain('/traces/stats/group-by?');
     expect(plans[15]?.primaryUrl).toContain('groupBy=exception.type');
     expect(plans[17]?.primaryUrl).toContain('/alerts/group?');
+    expect(plans.every(plan => plan.state === 'ready')).toBe(true);
+  });
+
+  it('builds an operation drilldown dashboard without promoting operation to an entity', () => {
+    const dashboard = buildSignalOperationDrilldownDashboard({
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      environment: 'prod',
+      operationName: 'POST /checkout',
+      entityId: '4200',
+      entityType: 'service',
+      entityName: 'Checkout API',
+      source: 'otlp',
+      collector: 'collector-a',
+      template: 'spring-boot',
+      timeRange: 'last-1h'
+    });
+    const panels = parseSignalDashboardPreviewPanels(dashboard);
+    const variables = parseSignalDashboardVariables(dashboard);
+    const plans = buildSignalDashboardExecutionPlans(dashboard);
+
+    expect(dashboard).toEqual(expect.objectContaining({
+      dashboardKey: 'service-checkout-operation-post-checkout-drilldown',
+      title: 'Checkout API POST /checkout operation drilldown',
+      tags: 'service,operation,apm,metrics,logs,traces'
+    }));
+    expect(panels).toHaveLength(8);
+    expect(panels.map(panel => panel.widget.title)).toEqual([
+      'Operation drilldown latency p95: operation.name=POST /checkout',
+      'Operation drilldown request rate: operation.name=POST /checkout',
+      'Operation drilldown error rate: operation.name=POST /checkout',
+      'Operation drilldown logs: operation.name=POST /checkout',
+      'Operation drilldown log errors: operation.name=POST /checkout',
+      'Operation drilldown traces: operation.name=POST /checkout',
+      'Operation drilldown trace errors: operation.name=POST /checkout',
+      'Operation drilldown exceptions: operation.name=POST /checkout'
+    ]);
+    expect(variables).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'service.name', type: 'query', value: 'checkout' }),
+      expect.objectContaining({ name: 'service.namespace', type: 'query', value: 'payments' }),
+      expect.objectContaining({ name: 'deployment.environment.name', type: 'query', value: 'prod' }),
+      expect.objectContaining({ name: 'operation.name', type: 'query', value: 'POST /checkout' }),
+      expect.objectContaining({ name: 'hertzbeat.entity_id', type: 'dynamic', value: '4200' }),
+      expect.objectContaining({ name: 'hertzbeat.entity_type', type: 'dynamic', value: 'service' })
+    ]));
+    expect(variables.find(variable => variable.name === 'operation.name')?.type).toBe('query');
+    expect(variables.find(variable => variable.name === 'hertzbeat.entity_type')?.value).toBe('service');
+    expect(variables.some(variable => variable.name === 'hertzbeat.operation_entity')).toBe(false);
+
+    expect(plans[0]).toEqual(expect.objectContaining({
+      signal: 'metrics',
+      primaryUrl: expect.stringContaining('/ingestion/otlp/metrics/console?')
+    }));
+    expect(plans[0]?.primaryUrl).toContain('query=http.server.duration');
+    expect(plans[0]?.primaryUrl).toContain('operation%3D%22POST+%2Fcheckout%22');
+    expect(plans[1]?.primaryUrl).toContain('temporalAggregation=rate');
+    expect(plans[2]?.primaryUrl).toContain('status_code%3D%22STATUS_CODE_ERROR%22');
+    expect(plans[3]?.primaryUrl).toContain('/logs/list?');
+    expect(plans[3]?.primaryUrl).toContain('attributeFilter=http.route%3APOST+%2Fcheckout');
+    expect(plans[4]?.primaryUrl).toContain('severityText=ERROR');
+    expect(plans[5]?.primaryUrl).toContain('/traces/list?');
+    expect(plans[5]?.primaryUrl).toContain('operationName=POST+%2Fcheckout');
+    expect(plans[6]?.primaryUrl).toContain('errorOnly=true');
+    expect(plans[7]?.primaryUrl).toContain('/traces/stats/group-by?');
+    expect(plans[7]?.primaryUrl).toContain('groupBy=exception.type');
     expect(plans.every(plan => plan.state === 'ready')).toBe(true);
   });
 
@@ -1750,7 +1816,7 @@ describe('signal dashboards API client', () => {
   });
 
   it('builds a synchronized dashboard tooltip from metrics, table, and trace rows', () => {
-    const [logsPlan, tracePlan, metricsPlan, dbMetricsPlan, externalMetricsPlan] = buildSignalDashboardExecutionPlans({
+    const [logsPlan, tracePlan, metricsPlan, dbMetricsPlan, externalMetricsPlan, operationMetricsPlan] = buildSignalDashboardExecutionPlans({
       dashboardKey: 'sync',
       title: 'Sync dashboard',
       description: 'Runtime sync',
@@ -1761,7 +1827,8 @@ describe('signal dashboards API client', () => {
         { id: 'trace-panel', signal: 'traces', title: 'Trace', visualization: 'table', route: '/trace/manage?view=table' },
         { id: 'metrics-panel', signal: 'metrics', title: 'Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=cpu' },
         { id: 'db-metrics-panel', signal: 'metrics', title: 'DB Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=signoz_db_latency_count&serviceName=checkout&groupBy=db.system' },
-        { id: 'external-metrics-panel', signal: 'metrics', title: 'External Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=signoz_external_call_latency_count&serviceName=checkout&groupBy=external.service.address' }
+        { id: 'external-metrics-panel', signal: 'metrics', title: 'External Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=signoz_external_call_latency_count&serviceName=checkout&groupBy=external.service.address' },
+        { id: 'operation-metrics-panel', signal: 'metrics', title: 'Service key operations', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=http.server.duration&serviceName=checkout&serviceNamespace=payments&groupBy=operation' }
       ])
     });
     const logsDescriptor = buildSignalDashboardPanelRuntimeRenderDescriptor(logsPlan, {
@@ -1868,18 +1935,33 @@ describe('signal dashboards API client', () => {
         }
       }
     });
+    const operationMetricsDescriptor = buildSignalDashboardPanelRuntimeRenderDescriptor(operationMetricsPlan, {
+      panelId: 'operation-metrics-panel',
+      state: 'ready',
+      primaryUrl: operationMetricsPlan.primaryUrl,
+      data: {
+        stats: { totalSeries: 1, nonEmptySeries: 1 },
+        results: {
+          frames: [{
+            schema: { labels: { __name__: 'http.server.duration', 'service.name': 'checkout', 'service.namespace': 'payments', operation: 'POST /checkout' } },
+            data: [[1000, 180], [2000, 240]]
+          }]
+        }
+      }
+    });
 
     const syncTooltip = buildSignalDashboardRuntimeSyncTooltip([
       logsDescriptor,
       traceDescriptor,
       metricsDescriptor,
       dbMetricsDescriptor,
-      externalMetricsDescriptor
+      externalMetricsDescriptor,
+      operationMetricsDescriptor
     ], '2000', { timeRange: { start: '1000', end: '3000' }, returnTo: '/dashboard?start=1000&end=3000' });
     expect(syncTooltip).toEqual({
       timestamp: '2000',
       state: 'active',
-      rowCount: 6,
+      rowCount: 7,
       rows: [
         expect.objectContaining({
           panelId: 'logs-panel',
@@ -1962,6 +2044,18 @@ describe('signal dashboards API client', () => {
           resourceFilter: 'external.service.address=payments.internal',
           relatedSignal: 'traces',
           relatedHandoffHref: '/trace/manage?view=list&spanScope=all&serviceName=checkout&serviceNamespace=payments&resourceFilter=external.service.address%3Dpayments.internal&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
+        }),
+        expect.objectContaining({
+          panelId: 'operation-metrics-panel',
+          signal: 'metrics',
+          source: 'metrics-point',
+          label: 'http.server.duration',
+          value: '240',
+          serviceName: 'checkout',
+          serviceNamespace: 'payments',
+          operationName: 'POST /checkout',
+          relatedSignal: 'traces',
+          relatedHandoffHref: '/trace/manage?view=list&spanScope=all&serviceName=checkout&serviceNamespace=payments&operationName=POST+%2Fcheckout&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
         })
       ]
     });
