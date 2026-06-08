@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.manager.pojo.dto.EntityMonitorBindingCandidate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -177,5 +178,38 @@ class EntityIdentityResolutionServiceTest {
         assertEquals(301L, candidates.getFirst().getEntityId());
         verify(entityWorkspaceAccessService).findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(301L, 302L));
         verify(entityWorkspaceAccessService, never()).currentRequestWorkspaceId();
+    }
+
+    @Test
+    void resolveMonitorBindingCandidatesKeepsRuntimeSignalDimensionsOutOfIdentityLookup() {
+        Monitor monitor = Monitor.builder()
+                .id(503L)
+                .app("springboot3")
+                .name("checkout-api")
+                .labels(Map.of(
+                        "service.name", "checkout-api",
+                        "http.route", "/checkout",
+                        "trace_id", "6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b",
+                        "span.name", "POST /checkout"
+                ))
+                .build();
+        when(entityIdentityReadModelService.findMatchingIdentities(anySet(), anySet()))
+                .thenReturn(List.of());
+
+        List<EntityMonitorBindingCandidate> candidates =
+                identityResolutionService.resolveMonitorBindingCandidates(monitor);
+
+        assertTrue(candidates.isEmpty());
+        ArgumentCaptor<Set<String>> identityKeysCaptor = ArgumentCaptor.forClass(Set.class);
+        verify(entityIdentityReadModelService).findMatchingIdentities(identityKeysCaptor.capture(), anySet());
+        Set<String> identityKeys = identityKeysCaptor.getValue();
+        assertTrue(identityKeys.contains("service.name"));
+        assertTrue(identityKeys.contains("monitor.name"));
+        assertTrue(identityKeys.contains("monitor.app"));
+        assertTrue(identityKeys.stream().noneMatch("http.route"::equals));
+        assertTrue(identityKeys.stream().noneMatch("trace_id"::equals));
+        assertTrue(identityKeys.stream().noneMatch("span.name"::equals));
+        assertEquals(0, identityResolutionService.defaultIdentityPriority("http.route"));
+        assertEquals(0, identityResolutionService.defaultIdentityPriority("trace_id"));
     }
 }

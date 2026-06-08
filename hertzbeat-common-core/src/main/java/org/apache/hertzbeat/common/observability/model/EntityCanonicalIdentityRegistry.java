@@ -47,6 +47,25 @@ public final class EntityCanonicalIdentityRegistry {
             "cloud.resource_id"
     );
 
+    public static final List<String> RUNTIME_SIGNAL_DIMENSION_KEYS = List.of(
+            "trace.id",
+            "trace_id",
+            "span.id",
+            "span_id",
+            "span.name",
+            "span_name",
+            "root_span_name",
+            "operation",
+            "operation.name",
+            "http.route",
+            "http.target",
+            "http.url",
+            "exception.type",
+            "exception.message",
+            "log.severity",
+            "severity.text"
+    );
+
     private static final Map<String, Integer> CANONICAL_PRIORITY = Map.ofEntries(
             Map.entry("service.instance.id", 140),
             Map.entry("host.id", 140),
@@ -71,7 +90,14 @@ public final class EntityCanonicalIdentityRegistry {
         return identityKey != null && CANONICAL_PRIORITY.containsKey(identityKey);
     }
 
+    public static boolean isRuntimeSignalDimensionKey(String identityKey) {
+        return identityKey != null && RUNTIME_SIGNAL_DIMENSION_KEYS.contains(identityKey);
+    }
+
     public static int defaultPriority(String identityKey) {
+        if (isRuntimeSignalDimensionKey(identityKey)) {
+            return 0;
+        }
         return CANONICAL_PRIORITY.getOrDefault(identityKey, 40);
     }
 }

@@ -33,4 +33,19 @@ class EntityCanonicalIdentityRegistryTest {
         assertEquals(140, EntityCanonicalIdentityRegistry.defaultPriority("service.instance.id"));
         assertEquals(40, EntityCanonicalIdentityRegistry.defaultPriority("custom.key"));
     }
+
+    @Test
+    void shouldKeepRuntimeSignalDimensionsOutOfStableEntityIdentities() {
+        assertTrue(EntityCanonicalIdentityRegistry.isRuntimeSignalDimensionKey("trace_id"));
+        assertTrue(EntityCanonicalIdentityRegistry.isRuntimeSignalDimensionKey("span.name"));
+        assertTrue(EntityCanonicalIdentityRegistry.isRuntimeSignalDimensionKey("http.route"));
+        assertTrue(EntityCanonicalIdentityRegistry.isRuntimeSignalDimensionKey("exception.type"));
+
+        assertFalse(EntityCanonicalIdentityRegistry.isCanonicalOtelResourceKey("trace_id"));
+        assertFalse(EntityCanonicalIdentityRegistry.isCanonicalOtelResourceKey("span.name"));
+        assertFalse(EntityCanonicalIdentityRegistry.isCanonicalOtelResourceKey("http.route"));
+        assertFalse(EntityCanonicalIdentityRegistry.isCanonicalOtelResourceKey("exception.type"));
+        assertEquals(0, EntityCanonicalIdentityRegistry.defaultPriority("trace_id"));
+        assertEquals(0, EntityCanonicalIdentityRegistry.defaultPriority("http.route"));
+    }
 }

@@ -148,6 +148,9 @@ public class EntityIdentityResolutionService {
     }
 
     public int defaultIdentityPriority(String identityKey) {
+        if (EntityCanonicalIdentityRegistry.isRuntimeSignalDimensionKey(identityKey)) {
+            return 0;
+        }
         if (EntityCanonicalIdentityRegistry.isCanonicalOtelResourceKey(identityKey)) {
             return EntityCanonicalIdentityRegistry.defaultPriority(identityKey);
         }
