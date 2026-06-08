@@ -313,7 +313,7 @@ function epochMillisFromUnixNano(value: number | string | null | undefined) {
   const raw = String(value).trim();
   if (!raw) return undefined;
   if (/^\d+$/.test(raw)) {
-    return Number(BigInt(raw) / 1_000_000n);
+    return Number(BigInt(raw) / BigInt(1000000));
   }
   const numeric = Number(raw);
   if (!Number.isFinite(numeric) || numeric <= 0) return undefined;
@@ -425,10 +425,78 @@ function buildLogAlertValueLiteral(value: string, quoted: boolean) {
   return `'${escapeLogAlertStringLiteral(value)}'`;
 }
 
+function isSafeLogAlertKey(value: string) {
+  return /^[A-Za-z0-9_.:-]+$/.test(value);
+}
+
+function isSafeLogAlertTextValue(value: string) {
+  return value.length > 0 && value.length <= 160 && !/[\r\n\t]/.test(value);
+}
+
+function splitLogAlertFilterClauses(value: string) {
+  const clauses: string[] = [];
+  let quote: '"' | "'" | null = null;
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+    if (quote) {
+      if (char === '\\') {
+        index += 1;
+      } else if (char === quote) {
+        quote = null;
+      }
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === '(') {
+      depth += 1;
+      continue;
+    }
+    if (char === ')') {
+      depth = Math.max(0, depth - 1);
+      continue;
+    }
+    if (depth === 0 && char === ',') {
+      clauses.push(value.slice(start, index).trim());
+      start = index + 1;
+      continue;
+    }
+    if (
+      depth === 0
+      && /\s/.test(char)
+      && /\s+and\s+/i.test(value.slice(index, index + 5))
+    ) {
+      clauses.push(value.slice(start, index).trim());
+      start = index + 5;
+      index += 4;
+    }
+  }
+  clauses.push(value.slice(start).trim());
+  return clauses.filter(Boolean);
+}
+
+function splitLogAlertListValues(value: string) {
+  return splitLogAlertFilterClauses(value).map(item => {
+    const normalized = item.trim();
+    const quotedMatch = normalized.match(/^(?:"([^"\\\r\n]*)"|'([^'\\\r\n]*)')$/);
+    if (quotedMatch) {
+      return { value: quotedMatch[1] ?? quotedMatch[2] ?? '', quoted: true };
+    }
+    if (/^[A-Za-z0-9_.:/{}-]+$/.test(normalized)) {
+      return { value: normalized, quoted: false };
+    }
+    return null;
+  });
+}
+
 function buildLogAttributeAlertExpression(source: 'resource' | 'attributes', key: string, value: string | undefined) {
   const normalizedKey = key.trim();
   const normalizedValue = value?.trim();
-  if (!/^[A-Za-z0-9_.:-]+$/.test(normalizedKey) || !normalizedValue) return undefined;
+  if (!isSafeLogAlertKey(normalizedKey) || !normalizedValue) return undefined;
   return `${buildLogAlertMapAccessor(source, normalizedKey)} == '${escapeLogAlertStringLiteral(normalizedValue)}'`;
 }
 
@@ -442,6 +510,37 @@ function buildLogDirectFieldAlertExpression(field: 'traceId' | 'spanId', value: 
 function parseLogFilterAlertClause(source: 'resource' | 'attributes', clause: string) {
   const normalized = clause.trim();
   if (!normalized) return undefined;
+
+  const existsMatch = normalized.match(/^([A-Za-z0-9_.:-]+)\s+EXISTS$/i);
+  if (existsMatch) {
+    return `${buildLogAlertMapAccessor(source, existsMatch[1])} != ''`;
+  }
+
+  const containsMatch = normalized.match(/^([A-Za-z0-9_.:-]+)\s+CONTAINS\s*(?:"([^"\\\r\n]*)"|'([^'\\\r\n]*)'|([A-Za-z0-9_.:/{}-]+))$/i);
+  if (containsMatch) {
+    const key = containsMatch[1];
+    const value = containsMatch[2] ?? containsMatch[3] ?? containsMatch[4] ?? '';
+    if (!isSafeLogAlertKey(key) || !isSafeLogAlertTextValue(value)) {
+      return undefined;
+    }
+    const accessor = source === 'attributes' && key.toLowerCase() === 'body'
+      ? 'log.body'
+      : buildLogAlertMapAccessor(source, key);
+    return `contains(${accessor}, '${escapeLogAlertStringLiteral(value)}')`;
+  }
+
+  const listMatch = normalized.match(/^([A-Za-z0-9_.:-]+)\s+(NOT\s+IN|IN)\s*\(([\s\S]*)\)$/i);
+  if (listMatch) {
+    const values = splitLogAlertListValues(listMatch[3]);
+    if (values.length === 0 || values.some(value => !value || !value.value.trim())) {
+      return undefined;
+    }
+    const accessor = buildLogAlertMapAccessor(source, listMatch[1]);
+    const isNotIn = /\bNOT\s+IN\b/i.test(listMatch[2]);
+    const operator = isNotIn ? '!=' : '==';
+    const joiner = isNotIn ? ' && ' : ' || ';
+    return `(${values.map(value => `${accessor} ${operator} ${buildLogAlertValueLiteral(value!.value, value!.quoted)}`).join(joiner)})`;
+  }
 
   const quotedMatch = normalized.match(/^([A-Za-z0-9_.:-]+)\s*(!=|=|:)\s*(?:"([^"\\\r\n]*)"|'([^'\\\r\n]*)')$/);
   if (quotedMatch) {
@@ -462,7 +561,7 @@ function buildLogFilterAlertExpressions(source: 'resource' | 'attributes', filte
   const normalized = filter?.trim();
   if (!normalized) return [];
 
-  const clauses = normalized.split(/\s+and\s+|\s*,\s*/i).map(clause => clause.trim()).filter(Boolean);
+  const clauses = splitLogAlertFilterClauses(normalized);
   if (clauses.length === 0) return [];
 
   const expressions = clauses.map(clause => parseLogFilterAlertClause(source, clause));

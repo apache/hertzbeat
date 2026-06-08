@@ -183,6 +183,7 @@ describe('trace query state codec', () => {
         { traceId: 'abc123', spanId: 'span456', serviceName: 'checkout', errorOnly: true, spanScope: 'root' },
         {
           entityId: '42',
+          entityType: 'service',
           serviceNamespace: 'payments',
           environment: 'prod',
           timeRange: 'last-1h',
@@ -196,9 +197,9 @@ describe('trace query state codec', () => {
       )
     ).toEqual({
       listUrl:
-        '/traces/list?pageIndex=0&pageSize=8&traceId=abc123&serviceName=checkout&errorOnly=true&spanScope=root&entityId=42&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000',
+        '/traces/list?pageIndex=0&pageSize=8&traceId=abc123&serviceName=checkout&errorOnly=true&spanScope=root&entityId=42&entityType=service&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000',
       overviewUrl:
-        '/traces/stats/overview?traceId=abc123&serviceName=checkout&errorOnly=true&spanScope=root&entityId=42&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000'
+        '/traces/stats/overview?traceId=abc123&serviceName=checkout&errorOnly=true&spanScope=root&entityId=42&entityType=service&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000'
     });
   });
 

@@ -349,7 +349,7 @@ function buildMetricThresholdMarkLine(thresholds: OtlpMetricThresholdConfig | nu
       : {
           yAxis: thresholds.warning,
           name: thresholds.warningLabel,
-          lineStyle: { color: '#f2c94c', type: 'dashed', width: 1.5 },
+          lineStyle: { color: '#f2c94c', type: 'dashed' as const, width: 1.5 },
           label: { color: '#f2c94c', formatter: `${thresholds.warningLabel} {c}` }
         },
     thresholds.critical == null
@@ -357,7 +357,7 @@ function buildMetricThresholdMarkLine(thresholds: OtlpMetricThresholdConfig | nu
       : {
           yAxis: thresholds.critical,
           name: thresholds.criticalLabel,
-          lineStyle: { color: '#ef6f6c', type: 'dashed', width: 1.5 },
+          lineStyle: { color: '#ef6f6c', type: 'dashed' as const, width: 1.5 },
           label: { color: '#ef6f6c', formatter: `${thresholds.criticalLabel} {c}` }
         }
   ].filter((item): item is NonNullable<typeof item> => item != null);
@@ -419,7 +419,7 @@ function buildMetricExpectedRangeSeries(expectedRange: OtlpMetricExpectedRangeCo
   return [
     {
       name: expectedRange.lowerLabel,
-      type: 'line',
+      type: 'line' as const,
       stack,
       silent: true,
       showSymbol: false,
@@ -432,7 +432,7 @@ function buildMetricExpectedRangeSeries(expectedRange: OtlpMetricExpectedRangeCo
     },
     {
       name: expectedRange.label,
-      type: 'line',
+      type: 'line' as const,
       stack,
       silent: true,
       showSymbol: false,
@@ -545,7 +545,7 @@ export function buildMetricsChartOption(
       ...expectedRangeSeries,
       ...seriesList.slice(0, 6).map((series, index) => ({
         name: formatMetricLegendName(series, legendFormat),
-        type: 'line',
+        type: 'line' as const,
         smooth: true,
         connectNulls: true,
         showSymbol: false,

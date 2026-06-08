@@ -7,9 +7,21 @@ type RouteContext = {
   params: Promise<{ path?: string[] }>;
 };
 
+function backendPathFromRequest(request: NextRequest) {
+  const pathname = new URL(request.url).pathname;
+  const apiPrefix = '/api';
+  if (pathname === apiPrefix) {
+    return '/';
+  }
+  if (pathname.startsWith(`${apiPrefix}/`)) {
+    return pathname.slice(apiPrefix.length);
+  }
+  return pathname;
+}
+
 async function proxy(request: NextRequest, context: RouteContext) {
-  const params = await context.params;
-  return proxyBackendApiRequest(request, `/${params.path?.join('/') || ''}`);
+  await context.params;
+  return proxyBackendApiRequest(request, backendPathFromRequest(request));
 }
 
 export const GET = proxy;

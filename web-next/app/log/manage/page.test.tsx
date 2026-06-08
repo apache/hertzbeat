@@ -14,6 +14,7 @@ import type { LogManageRouteState, LogQueryState, LogWorkbenchView } from '@/lib
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const apiMessageGet = vi.hoisted(() => vi.fn());
+const originalFetch = globalThis.fetch;
 
 const mockState = vi.hoisted(() => ({
   searchParams: new URLSearchParams(),
@@ -260,6 +261,21 @@ vi.mock('@/lib/log-manage/query-state', () => ({
 }));
 
 vi.mock('@/lib/signal-route-context', () => ({
+  isDashboardReturnContext: (href?: string | null) => href?.startsWith('/dashboard') || false,
+  readSignalPanelEditContext: () => {
+    if (mockState.searchParams.get('intent') !== 'edit-panel') return null;
+    const dashboardKey = mockState.searchParams.get('dashboardKey') || undefined;
+    const panelId = mockState.searchParams.get('panelId') || undefined;
+    if (!dashboardKey || !panelId) return null;
+    return {
+      intent: 'edit-panel',
+      dashboardKey,
+      panelId,
+      draftKey: mockState.searchParams.get('draftKey') || undefined,
+      returnTo: mockState.searchParams.get('returnTo') || undefined,
+      returnLabel: mockState.searchParams.get('returnLabel') || undefined
+    };
+  },
   buildSignalEntityContextRows: () => {
     const t = createTranslatorMock({ locale: 'zh-CN' });
 
@@ -554,6 +570,12 @@ function renderInteractiveLogManagePage(initialRouteState = buildLogManageRouteS
   interactionRoot?.render(<LogManagePage initialRouteState={initialRouteState} />);
 }
 
+async function flushDashboardEditPromises() {
+  for (let index = 0; index < 8; index += 1) {
+    await Promise.resolve();
+  }
+}
+
 beforeEach(() => {
   mockState.searchParams = new URLSearchParams();
   mockState.replace.mockReset();
@@ -573,6 +595,7 @@ afterEach(() => {
   interactionContainer?.remove();
   interactionRoot = null;
   interactionContainer = null;
+  globalThis.fetch = originalFetch;
 });
 
 describe('log manage page', () => {
@@ -659,6 +682,13 @@ describe('log manage page', () => {
     expect(source).toContain("'data-log-manage-row-detail-action': 'true'");
     expect(source).toContain('data-log-manage-row-trace-detail-action="true"');
     expect(source).toContain('LogStreamDetailDialog');
+    expect(source).toContain('overlayProps={{');
+    expect(source).toContain("'data-log-manage-detail-source-context': sourceContextKind");
+    expect(source).toContain("'data-log-manage-detail-auto-open-key': autoOpenedTraceDetailKeyRef.current || ''");
+    expect(source).toContain("'data-log-manage-detail-requested-trace': requestedTraceId");
+    expect(source).toContain("'data-log-manage-detail-requested-span': requestedSpanId");
+    expect(source).toContain("'data-log-manage-detail-selected-trace': detailLog?.traceId || ''");
+    expect(source).toContain("'data-log-manage-detail-selected-span': detailLog?.spanId || ''");
     expect(source).toContain('buildLogAttributionDiagnostics(detailLog, t)');
     expect(source).toContain('attributionDiagnostics={detailAttributionDiagnostics}');
     expect(source).toContain('HzAttributeDiagnostics');
@@ -734,6 +764,41 @@ describe('log manage page', () => {
     expect(source).toContain('HzSignalWorkbenchShell');
     expect(source).toContain('data-log-manage-shell-owner="hertzbeat-ui-signal-workbench-shell"');
     expect(source).toContain('data-log-manage-shell-chrome="topology-workbench"');
+    expect(source).toContain('isDashboardReturnContext(routeContext.returnTo)');
+    expect(source).toContain('data-log-manage-source-context={sourceContextKind}');
+    expect(source).toContain('data-log-manage-source-context-return={routeContext.returnTo || \'\'}');
+    expect(source).toContain('data-log-manage-source-context-trace={requestedTraceId}');
+    expect(source).toContain('data-log-manage-source-context-span={requestedSpanId}');
+    expect(source).toContain('data-log-manage-source-context-service={routeContext.serviceName || \'\'}');
+    expect(source).toContain('readSignalPanelEditContext(searchParams)');
+    expect(source).toContain('appendLogPanelEditContext(route, panelEditContext)');
+    expect(source).toContain('const replaceLogHref = useCallback((route: string) => {');
+    expect(source).toContain('router.replace(appendLogPanelEditContext(route, panelEditContext))');
+    expect(source).toContain('if (!panelEditContext && logManageRouteState.shouldCleanUrl)');
+    expect(source).toContain("panelEditContext\n    ? 'dashboard-panel-edit'");
+    expect(source).toContain('data-log-manage-panel-edit-context={panelEditContext?.intent || \'none\'}');
+    expect(source).toContain('data-log-manage-panel-edit-dashboard={panelEditContext?.dashboardKey || \'\'}');
+    expect(source).toContain('data-log-manage-panel-edit-panel={panelEditContext?.panelId || \'\'}');
+    expect(source).toContain('data-log-manage-panel-edit-draft={panelEditContext?.draftKey || \'\'}');
+    expect(source).toContain('data-log-manage-panel-edit-return={panelEditContext?.returnTo || \'\'}');
+    expect(source).toContain('applySignalDashboardPanelEditContext(createSignalDashboardPanelDraft({');
+    expect(source).toContain('}), panelEditContext)');
+    expect(source).toContain('saveSignalDashboardPanelEditContext(panelEditContext, draft)');
+    expect(source).toContain("t(panelEditContext ? 'log.manage.dashboard-panel-draft.update-current' : 'log.manage.dashboard-panel-draft.add-current')");
+    expect(source).toContain("data-log-manage-dashboard-panel-draft-action={panelEditContext ? 'update-current' : 'add-current'}");
+    expect(source).toContain("data-log-manage-dashboard-panel-draft-action-mode={panelEditContext ? 'edit-panel' : 'new-panel'}");
+    expect(source).toContain('data-log-manage-dashboard-panel-draft-action-dashboard={panelEditContext?.dashboardKey || \'\'}');
+    expect(source).toContain('data-log-manage-dashboard-panel-draft-action-panel={panelEditContext?.panelId || \'\'}');
+    expect(source).toContain('data-log-manage-dashboard-panel-draft-action-draft={panelEditContext?.draftKey || \'\'}');
+    expect(source).toContain('data-log-manage-dashboard-panel-draft-status-mode={panelEditContext ? \'edit-panel\' : \'new-panel\'}');
+    expect(source).toContain('data-log-manage-dashboard-panel-draft-status-dashboard={panelEditContext?.dashboardKey || \'\'}');
+    expect(source).toContain('data-log-manage-dashboard-panel-draft-status-panel={panelEditContext?.panelId || \'\'}');
+    expect(source).toContain("`log.manage.dashboard-panel-draft.update-${dashboardPanelDraftState}`");
+    expect(source).toContain('data-log-manage-dashboard-panel-draft-return-action="dashboard"');
+    expect(source).toContain('data-log-manage-dashboard-panel-draft-return-action-owner="hertzbeat-ui-button-link"');
+    expect(source).toContain('data-log-manage-dashboard-panel-draft-return-action-dashboard={panelEditContext.dashboardKey || \'\'}');
+    expect(source).toContain('data-log-manage-dashboard-panel-draft-return-action-panel={panelEditContext.panelId || \'\'}');
+    expect(source).toContain("t('log.manage.dashboard-panel-draft.return-dashboard')");
     expect(source).toContain('layout="topology-workbench"');
     expect(source).not.toContain('mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-6 py-6');
   });
@@ -1561,18 +1626,57 @@ describe('log manage page', () => {
     mockState.searchParams = new URLSearchParams(
       'view=list&search=timeout&severityText=ERROR&serviceName=checkout&environment=prod&columns=service,body,span-id&format=raw&maxLines=3'
     );
+    const savedViewRequests: Array<{ path: string; method: string; body?: Record<string, unknown> }> = [];
+    let serverSavedViews: Record<string, unknown>[] = [];
+    const savedViewFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(input);
+      const method = String(init?.method || 'GET').toUpperCase();
+      const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined;
+      savedViewRequests.push({ path, method, body });
+      if (path.endsWith('/api/signal/saved-view/logs') && method === 'GET') {
+        return new Response(JSON.stringify({ code: 0, data: serverSavedViews }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (path.endsWith('/api/signal/saved-view') && method === 'PUT') {
+        if (body) {
+          serverSavedViews = [body, ...serverSavedViews.filter(view => view.viewKey !== body.viewKey)];
+        }
+        return new Response(JSON.stringify({ code: 0, data: body }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (path.includes('/api/signal/saved-view/logs/') && method === 'DELETE') {
+        const viewKey = decodeURIComponent(path.split('/').pop() || '');
+        serverSavedViews = serverSavedViews.filter(view => view.viewKey !== viewKey);
+        return new Response(JSON.stringify({ code: 0, data: null }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return new Response(JSON.stringify({ code: 1, msg: `Unexpected request ${method} ${path}` }), { status: 500 });
+    });
+    globalThis.fetch = savedViewFetch as typeof fetch;
     interactionContainer = document.createElement('div');
     document.body.appendChild(interactionContainer);
     interactionRoot = createRoot(interactionContainer);
 
     await act(async () => {
       renderInteractiveLogManagePage();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const savedViewPanel = interactionContainer.querySelector('[data-log-manage-saved-views="route-query-views"]') as HTMLElement | null;
     expect(savedViewPanel).toBeTruthy();
     expect(savedViewPanel?.getAttribute('data-log-manage-saved-views-owner')).toBe('hertzbeat-ui-panel-surface');
+    expect(savedViewPanel?.getAttribute('data-log-manage-saved-view-persistence')).toBe('server-first');
+    expect(savedViewPanel?.getAttribute('data-log-manage-saved-view-persistence-owner')).toBe('hertzbeat-api');
+    expect(savedViewPanel?.getAttribute('data-log-manage-saved-view-storage-key')).toBe('hertzbeat.log-manage.saved-query-views');
+
+    const persistenceCopy = interactionContainer.querySelector('[data-log-manage-saved-view-persistence-copy="server-first"]') as HTMLElement | null;
+    expect(persistenceCopy?.textContent).toContain(createTranslatorMock({ locale: 'zh-CN' })('log.manage.saved-view.persistence.server'));
 
     const saveAction = interactionContainer.querySelector('[data-log-manage-saved-view-action="save-current"]') as HTMLButtonElement | null;
     expect(saveAction).toBeTruthy();
@@ -1602,9 +1706,52 @@ describe('log manage page', () => {
     expect(clipboardWrites[0]).toContain('maxLines=3');
     expect(clipboardWrites[0]).toContain('view=list');
 
+    const dashboardPanelDraftAction = interactionContainer.querySelector('[data-log-manage-dashboard-panel-draft-action="add-current"]') as HTMLButtonElement | null;
+    expect(dashboardPanelDraftAction).toBeTruthy();
+    expect(dashboardPanelDraftAction?.getAttribute('data-log-manage-dashboard-panel-draft-action-owner')).toBe('hertzbeat-ui-button');
+    globalThis.fetch = vi.fn(async (input, init) => {
+      const path = String(input);
+      if (path.includes('/api/signal/dashboard-panel-draft')) {
+        return new Response(JSON.stringify({
+          code: 0,
+          data: {
+            signal: 'logs',
+            draftKey: 'logs-panel-checkout',
+            title: 'timeout',
+            description: 'list',
+            visualization: 'list',
+            route: '/log/manage?search=timeout'
+          }
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return savedViewFetch(input, init);
+    }) as typeof fetch;
+
+    await act(async () => {
+      dashboardPanelDraftAction?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const dashboardPanelDraftRequest = vi.mocked(globalThis.fetch).mock.calls.find(call =>
+      String(call[0]).includes('/api/signal/dashboard-panel-draft')
+    );
+    expect(dashboardPanelDraftRequest).toBeTruthy();
+    const dashboardPanelDraftBody = JSON.parse(String(dashboardPanelDraftRequest?.[1]?.body));
+    expect(dashboardPanelDraftBody).toEqual(expect.objectContaining({
+      signal: 'logs',
+      title: 'timeout',
+      visualization: 'list',
+      querySnapshot: expect.stringContaining('/log/manage?search=timeout')
+    }));
+    expect(dashboardPanelDraftBody.route).toContain('severityText=ERROR');
+    const dashboardPanelDraftStatus = interactionContainer.querySelector('[data-log-manage-dashboard-panel-draft-status="saved"]') as HTMLElement | null;
+    expect(dashboardPanelDraftStatus?.textContent).toContain(createTranslatorMock({ locale: 'zh-CN' })('log.manage.dashboard-panel-draft.saved'));
+    globalThis.fetch = savedViewFetch as typeof fetch;
+
     await act(async () => {
       saveAction?.click();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const savedViews = JSON.parse(window.localStorage.getItem('hertzbeat.log-manage.saved-query-views') || '[]');
@@ -1623,6 +1770,15 @@ describe('log manage page', () => {
     expect(savedViews[0]?.route).toContain('view=list');
     expect(savedViews[0]?.route).toContain('serviceName=checkout');
     expect(savedViews[0]?.route).toContain('environment=prod');
+    const saveRequest = savedViewRequests.find(request => request.method === 'PUT' && request.body?.route === savedViews[0]?.route);
+    expect(saveRequest?.path).toBe('/api/signal/saved-view');
+    expect(saveRequest?.body).toEqual(expect.objectContaining({
+      signal: 'logs',
+      viewKey: savedViews[0]?.id,
+      querySnapshot: savedViews[0]?.route,
+      payload: expect.stringContaining('createdAt')
+    }));
+    expect(interactionContainer.querySelector('[data-log-manage-saved-views="route-query-views"]')?.getAttribute('data-log-manage-saved-view-persistence')).toBe('server-first');
 
     const renameSavedViewAction = interactionContainer.querySelector('[data-log-manage-saved-view-rename-action]') as HTMLButtonElement | null;
     expect(renameSavedViewAction).toBeTruthy();
@@ -1649,7 +1805,7 @@ describe('log manage page', () => {
 
     await act(async () => {
       renameSaveAction?.click();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const renamedViews = JSON.parse(window.localStorage.getItem('hertzbeat.log-manage.saved-query-views') || '[]');
@@ -1665,7 +1821,7 @@ describe('log manage page', () => {
       interactionContainer.innerHTML = '';
       interactionRoot = createRoot(interactionContainer);
       renderInteractiveLogManagePage();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const updateSavedViewAction = interactionContainer.querySelector('[data-log-manage-saved-view-update-action]') as HTMLButtonElement | null;
@@ -1674,7 +1830,7 @@ describe('log manage page', () => {
 
     await act(async () => {
       updateSavedViewAction?.click();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const updatedViews = JSON.parse(window.localStorage.getItem('hertzbeat.log-manage.saved-query-views') || '[]');
@@ -1731,10 +1887,137 @@ describe('log manage page', () => {
 
     await act(async () => {
       deleteSavedViewAction?.click();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     expect(JSON.parse(window.localStorage.getItem('hertzbeat.log-manage.saved-query-views') || '[]')).toHaveLength(0);
+    expect(savedViewRequests.some(request => request.method === 'DELETE' && request.path.includes('/api/signal/saved-view/logs/'))).toBe(true);
+    expect(interactionContainer.querySelector('[data-log-manage-saved-views="route-query-views"]')?.getAttribute('data-log-manage-saved-view-persistence')).toBe('server-first');
+  });
+
+  it('updates the originating dashboard widget when saving logs in panel edit mode', async () => {
+    mockState.searchParams = new URLSearchParams(
+      'intent=edit-panel&dashboardKey=signals-overview&panelId=logs-errors&draftKey=logs-draft-errors&returnTo=%2Fdashboard%3Fdashboard%3Dsignals-overview&returnLabel=Signals%20overview&view=list&search=timeout&severityText=ERROR&serviceName=checkout&environment=prod&columns=service,body,span-id&format=raw&maxLines=3'
+    );
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      renderInteractiveLogManagePage();
+      await Promise.resolve();
+    });
+
+    const dashboardPanelDraftAction = interactionContainer.querySelector('[data-log-manage-dashboard-panel-draft-action="update-current"]') as HTMLButtonElement | null;
+    expect(dashboardPanelDraftAction).toBeTruthy();
+    expect(dashboardPanelDraftAction?.getAttribute('data-log-manage-dashboard-panel-draft-action-mode')).toBe('edit-panel');
+    expect(dashboardPanelDraftAction?.getAttribute('data-log-manage-dashboard-panel-draft-action-dashboard')).toBe('signals-overview');
+    expect(dashboardPanelDraftAction?.getAttribute('data-log-manage-dashboard-panel-draft-action-panel')).toBe('logs-errors');
+    const tableViewAction = interactionContainer.querySelector('[data-log-manage-view-option="table"]') as HTMLButtonElement | null;
+    expect(tableViewAction).toBeTruthy();
+    mockState.replace.mockClear();
+
+    await act(async () => {
+      tableViewAction?.click();
+      await Promise.resolve();
+    });
+
+    const tableRoute = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(tableRoute).toContain('view=table');
+    expect(tableRoute).toContain('intent=edit-panel');
+    expect(tableRoute).toContain('dashboardKey=signals-overview');
+    expect(tableRoute).toContain('panelId=logs-errors');
+    expect(tableRoute).toContain('draftKey=logs-draft-errors');
+    expect(tableRoute).toContain('returnTo=%2Fdashboard%3Fdashboard%3Dsignals-overview');
+    expect(tableRoute).toContain('returnLabel=Signals+overview');
+    const savedDashboards: unknown[] = [];
+    globalThis.fetch = vi.fn(async (input, init) => {
+      const path = String(input);
+      const method = String(init?.method || 'GET').toUpperCase();
+      if (path.includes('/api/signal/dashboard-panel-draft') && method === 'PUT') {
+        return new Response(JSON.stringify({ code: 0, data: JSON.parse(String(init?.body)) }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (path.endsWith('/api/signal/dashboard') && method === 'GET') {
+        return new Response(JSON.stringify({
+          code: 0,
+          data: [{
+            dashboardKey: 'signals-overview',
+            title: 'Signals overview',
+            description: 'Signals',
+            tags: 'logs',
+            layout: JSON.stringify([{ i: 'logs-errors', x: 0, y: 0, w: 6, h: 4 }]),
+            widgets: JSON.stringify([{
+              id: 'logs-errors',
+              draftKey: 'logs-draft-errors',
+              signal: 'logs',
+              title: 'Old errors',
+              visualization: 'table',
+              route: '/log/manage?search=old',
+              querySnapshot: '/log/manage?search=old'
+            }]),
+            panelMap: JSON.stringify({ 'logs-errors': 'logs-draft-errors' })
+          }]
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (path.endsWith('/api/signal/dashboard') && method === 'PUT') {
+        const dashboard = JSON.parse(String(init?.body));
+        savedDashboards.push(dashboard);
+        return new Response(JSON.stringify({ code: 0, data: dashboard }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return new Response(JSON.stringify({ code: 1, msg: `Unexpected request ${method} ${path}` }), { status: 500 });
+    }) as typeof fetch;
+
+    await act(async () => {
+      dashboardPanelDraftAction?.click();
+      await flushDashboardEditPromises();
+    });
+
+    const draftRequest = vi.mocked(globalThis.fetch).mock.calls.find(call =>
+      String(call[0]).includes('/api/signal/dashboard-panel-draft')
+    );
+    const draftBody = JSON.parse(String(draftRequest?.[1]?.body));
+    expect(draftBody).toEqual(expect.objectContaining({
+      signal: 'logs',
+      draftKey: 'logs-draft-errors',
+      visualization: 'list',
+      querySnapshot: expect.stringContaining('/log/manage?search=timeout')
+    }));
+    expect(draftBody.route).toContain('severityText=ERROR');
+    expect(JSON.parse(draftBody.payload)).toEqual(expect.objectContaining({
+      dashboardPanelEdit: expect.objectContaining({
+        intent: 'edit-panel',
+        dashboardKey: 'signals-overview',
+        panelId: 'logs-errors',
+        draftKey: 'logs-draft-errors',
+        returnTo: '/dashboard?dashboard=signals-overview',
+        returnLabel: 'Signals overview'
+      })
+    }));
+    expect(savedDashboards).toHaveLength(1);
+    const savedDashboard = savedDashboards[0] as { widgets: string; panelMap: string };
+    const savedWidget = JSON.parse(savedDashboard.widgets)[0];
+    expect(savedWidget).toEqual(expect.objectContaining({
+      id: 'logs-errors',
+      draftKey: 'logs-draft-errors',
+      signal: 'logs',
+      visualization: 'list',
+      route: expect.stringContaining('search=timeout')
+    }));
+    expect(savedWidget.route).toContain('severityText=ERROR');
+    expect(JSON.parse(savedWidget.payload).dashboardPanelEdit).toEqual(expect.objectContaining({
+      dashboardKey: 'signals-overview',
+      panelId: 'logs-errors'
+    }));
+    expect(JSON.parse(savedDashboard.panelMap)).toEqual({ 'logs-errors': 'logs-draft-errors' });
+    const dashboardPanelDraftStatus = interactionContainer.querySelector('[data-log-manage-dashboard-panel-draft-status="saved"]') as HTMLElement | null;
+    expect(dashboardPanelDraftStatus?.getAttribute('data-log-manage-dashboard-panel-draft-status-mode')).toBe('edit-panel');
+    expect(dashboardPanelDraftStatus?.textContent).toContain(createTranslatorMock({ locale: 'zh-CN' })('log.manage.dashboard-panel-draft.update-saved'));
   });
 
   it('copies a shareable link for the selected log row from the list table actions', async () => {
@@ -2481,6 +2764,157 @@ describe('log manage page', () => {
     expect(metricsPreview?.textContent).toContain('container.memory.working_set');
     expect(metricsPreview?.textContent).toContain('system.cpu.utilization');
     expect(metricsPreview?.textContent).toContain('system.memory.usage');
+  });
+
+  it('uses backend related metrics candidates before static fallback targets when the broad metrics query fails', async () => {
+    mockState.searchParams = new URLSearchParams('view=table&search=timeout&severityText=ERROR');
+    apiMessageGet.mockImplementation((path: string) => {
+      if (path.startsWith('/ingestion/otlp/metrics/related')) {
+        return Promise.resolve({
+          source: 'backend-related-metrics',
+          candidateCount: 4,
+          candidates: [
+            {
+              query: 'backend.pod.cpu',
+              source: 'pod',
+              family: 'cpu',
+              matchedLabels: ['k8s_pod_name'],
+              resourceMatch: { k8s_pod_name: 'checkout-7d9' }
+            },
+            {
+              query: 'backend.pod.memory',
+              source: 'pod',
+              family: 'memory',
+              matchedLabels: ['k8s_pod_name'],
+              resourceMatch: { k8s_pod_name: 'checkout-7d9' }
+            },
+            {
+              query: 'backend.node.cpu',
+              source: 'host',
+              family: 'cpu',
+              matchedLabels: ['host_name'],
+              resourceMatch: { host_name: 'node-a' }
+            },
+            {
+              query: 'backend.node.memory',
+              source: 'host',
+              family: 'memory',
+              matchedLabels: ['host_name'],
+              resourceMatch: { host_name: 'node-a' }
+            }
+          ]
+        });
+      }
+      if (path.startsWith('/ingestion/otlp/metrics/console')) {
+        const queryName = new URL(path, 'http://localhost').searchParams.get('query');
+        const metricPayload = (metricName: string, labels: Record<string, string>, values: number[]) => Promise.resolve({
+          query: metricName,
+          datasource: 'prometheus',
+          stats: { totalSeries: 1, nonEmptySeries: 1, latestObservedAt: 1713200000000 },
+          context: { serviceName: 'checkout', serviceNamespace: 'payments', start: 1713199100000, end: 1713200060000 },
+          results: {
+            msg: 'ok',
+            frames: [
+              {
+                schema: { labels: { __name__: metricName, ...labels } },
+                data: values.map((value, index) => [1713199940000 + index * 60000, value])
+              }
+            ]
+          }
+        });
+        if (!queryName) {
+          return Promise.reject(new Error('broad query unavailable'));
+        }
+        if (queryName === 'backend.pod.cpu') {
+          return metricPayload(queryName, { 'k8s.pod.name': 'checkout-7d9', 'k8s.node.name': 'node-a' }, [0.22, 0.44]);
+        }
+        if (queryName === 'backend.pod.memory') {
+          return metricPayload(queryName, { 'k8s.pod.name': 'checkout-7d9', 'k8s.node.name': 'node-a' }, [512, 1024]);
+        }
+        if (queryName === 'backend.node.cpu') {
+          return metricPayload(queryName, { 'host.name': 'node-a' }, [0.33, 0.66]);
+        }
+        if (queryName === 'backend.node.memory') {
+          return metricPayload(queryName, { 'host.name': 'node-a' }, [2048, 4096]);
+        }
+      }
+      if (path.startsWith('/logs/context')) {
+        return Promise.resolve({
+          targetTimeUnixNano: 1713200000000000000,
+          limit: 10,
+          before: [],
+          selected: null,
+          after: [],
+          hasMoreBefore: false,
+          hasMoreAfter: false
+        });
+      }
+      return Promise.resolve({});
+    });
+    mockState.renderData = {
+      ...mockState.renderData,
+      list: {
+        ...mockState.renderData.list,
+        content: [
+          {
+            ...mockState.renderData.list.content[0],
+            resource: {
+              ...mockState.renderData.list.content[0].resource,
+              'service.namespace': 'payments',
+              'k8s.namespace.name': 'shop',
+              'k8s.pod.name': 'checkout-7d9',
+              'k8s.node.name': 'node-a',
+              'k8s.container.name': 'checkout',
+              'host.name': 'node-a'
+            }
+          }
+        ]
+      }
+    };
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      renderInteractiveLogManagePage();
+      await Promise.resolve();
+    });
+
+    const detailAction = interactionContainer.querySelector('[data-log-manage-row-detail-action="true"]') as HTMLElement | null;
+    expect(detailAction).toBeTruthy();
+
+    await act(async () => {
+      detailAction?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const relatedCalls = apiMessageGet.mock.calls.filter(call => String(call[0]).startsWith('/ingestion/otlp/metrics/related'));
+    expect(relatedCalls).toHaveLength(1);
+    const relatedHref = decodeURIComponent(String(relatedCalls[0]?.[0] || ''));
+    expect(relatedHref).toContain('serviceName=checkout');
+    expect(relatedHref).toContain('k8s.pod.name="checkout-7d9"');
+    expect(relatedHref).toContain('host.name="node-a"');
+    const metricsPreviewCalls = apiMessageGet.mock.calls.filter(call => String(call[0]).startsWith('/ingestion/otlp/metrics/console'));
+    expect(metricsPreviewCalls.map(call => new URL(String(call[0]), 'http://localhost').searchParams.get('query'))).toEqual([
+      null,
+      'backend.pod.cpu',
+      'backend.pod.memory',
+      'backend.node.cpu',
+      'backend.node.memory'
+    ]);
+    expect(metricsPreviewCalls.map(call => String(call[0]))).not.toContain(expect.stringContaining('container.cpu.usage'));
+    expect(metricsPreviewCalls.map(call => String(call[0]))).not.toContain(expect.stringContaining('system.cpu.utilization'));
+    const metricsPreview = interactionContainer.querySelector('[data-log-stream-detail-metrics-preview="source-backed-series"]') as HTMLElement | null;
+    expect(metricsPreview).toBeTruthy();
+    expect(metricsPreview?.textContent).toContain('backend.pod.cpu');
+    expect(metricsPreview?.textContent).toContain('backend.pod.memory');
+    expect(metricsPreview?.textContent).toContain('backend.node.cpu');
+    expect(metricsPreview?.textContent).toContain('backend.node.memory');
   });
 
   it('opens a service-scoped context window around the selected log from the detail dialog', async () => {
@@ -3576,20 +4010,44 @@ describe('log manage page', () => {
     }
   });
 
-  it('returns an explicit degraded empty state when the log API blocks the initial route load', async () => {
+  it('returns an explicit degraded empty state when the log list API blocks the initial route load', async () => {
     mockState.searchParams = new URLSearchParams('view=list');
-    apiMessageGet.mockRejectedValueOnce(new Error('Log API request timed out after 3500ms'));
+    apiMessageGet
+      .mockResolvedValueOnce(mockState.renderData.overview)
+      .mockRejectedValueOnce(new Error('Log API request timed out after 20000ms'))
+      .mockResolvedValueOnce(mockState.renderData.trend)
+      .mockResolvedValueOnce(mockState.renderData.coverage);
     renderLogManagePage();
     const result = await mockState.lastLoad?.() as any;
 
     expect(result.loadStatus).toEqual({
       state: 'degraded',
-      message: 'Log API request timed out after 3500ms'
+      message: 'Log API request timed out after 20000ms'
     });
     expect(result.list.content).toEqual([]);
     expect(result.overview.totalLogs).toBe(0);
     expect(result.trend.hourlyStats).toEqual({});
     expect(result.coverage.traceCoverage.withTrace).toBe(0);
+  });
+
+  it('keeps live log rows when non-list summary endpoints degrade', async () => {
+    mockState.searchParams = new URLSearchParams('view=list&traceId=trace-123&serviceName=checkout');
+    apiMessageGet
+      .mockRejectedValueOnce(new Error('Log overview request timed out after 12000ms'))
+      .mockResolvedValueOnce(mockState.renderData.list)
+      .mockResolvedValueOnce(mockState.renderData.trend)
+      .mockResolvedValueOnce(mockState.renderData.coverage);
+    renderLogManagePage();
+    const result = await mockState.lastLoad?.() as any;
+
+    expect(result.loadStatus).toEqual({
+      state: 'degraded',
+      message: 'Log overview request timed out after 12000ms'
+    });
+    expect(result.list.content).toEqual(mockState.renderData.list.content);
+    expect(result.list.totalElements).toBe(mockState.renderData.list.totalElements);
+    expect(result.trend.hourlyStats).toEqual(mockState.renderData.trend.hourlyStats);
+    expect(result.coverage.traceCoverage.withTrace).toBe(mockState.renderData.coverage.traceCoverage.withTrace);
   });
 
   it('normalizes live log overview counters before rendering status cards', async () => {

@@ -89,9 +89,15 @@ describe('log stream detail dialog', () => {
         raw="timeout on db"
         onCopyJson={() => undefined}
         onCopyRaw={() => undefined}
+        overlayProps={{
+          'data-log-manage-detail-source-context': 'dashboard-evidence',
+          'data-log-manage-detail-auto-open-key': 'trace-123:span-456'
+        }}
       />
     );
 
+    expect(html).toContain('data-log-manage-detail-source-context="dashboard-evidence"');
+    expect(html).toContain('data-log-manage-detail-auto-open-key="trace-123:span-456"');
     expect(html).toContain('data-log-stream-detail-dialog="true"');
     expect(html).toContain('data-log-stream-detail-dialog-body-owner="hertzbeat-ui-dialog-body-layout"');
     expect(html).toContain('data-hz-ui="dialog-body-layout"');

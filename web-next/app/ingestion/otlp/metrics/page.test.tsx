@@ -31,9 +31,16 @@ const mockState = vi.hoisted(() => ({
 const apiMessageGet = vi.fn();
 const loadOtlpMetricsConsole = vi.fn();
 const zhT = createTranslatorMock({ locale: 'zh-CN' });
+const originalFetch = globalThis.fetch;
 
 function tZh(key: string, params?: TranslationParams) {
   return zhT(key, params);
+}
+
+async function flushDashboardEditPromises() {
+  for (let index = 0; index < 8; index += 1) {
+    await Promise.resolve();
+  }
 }
 
 vi.mock('next/link', () => ({
@@ -132,6 +139,11 @@ vi.mock('@/lib/otlp-metrics/controller', () => ({
     inventoryPageSize: params.get('inventoryPageSize') || undefined,
     inventoryPageIndex: params.get('inventoryPageIndex') || undefined,
     seriesAttributeSearch: params.get('seriesAttributeSearch') || undefined,
+    relatedMetricSource: params.get('relatedMetricSource') || undefined,
+    relatedMetricFamily: params.get('relatedMetricFamily') || undefined,
+    relatedMetricReason: params.get('relatedMetricReason') || undefined,
+    relatedMetricMatchedLabels: params.get('relatedMetricMatchedLabels') || undefined,
+    relatedMetricResourceMatch: params.get('relatedMetricResourceMatch') || undefined,
     step: params.get('step') || undefined,
     limit: params.get('limit') || undefined,
     timeRange: params.get('timeRange') || undefined,
@@ -161,6 +173,21 @@ vi.mock('@/lib/otlp-metrics/controller', () => ({
 }));
 
 vi.mock('@/lib/signal-route-context', () => ({
+  isDashboardReturnContext: (href?: string | null) => href?.startsWith('/dashboard') || false,
+  readSignalPanelEditContext: () => {
+    if (mockState.searchParams.get('intent') !== 'edit-panel') return null;
+    const dashboardKey = mockState.searchParams.get('dashboardKey') || undefined;
+    const panelId = mockState.searchParams.get('panelId') || undefined;
+    if (!dashboardKey || !panelId) return null;
+    return {
+      intent: 'edit-panel',
+      dashboardKey,
+      panelId,
+      draftKey: mockState.searchParams.get('draftKey') || undefined,
+      returnTo: mockState.searchParams.get('returnTo') || undefined,
+      returnLabel: mockState.searchParams.get('returnLabel') || undefined
+    };
+  },
   buildSignalEntityContextRows: () => [
     { label: tZh('signal.context.entity.label'), value: 'checkout', meta: 'entityId 7' },
     { label: tZh('signal.context.service.label'), value: 'checkout', meta: 'payments' },
@@ -452,6 +479,7 @@ afterEach(() => {
   interactionRoot = null;
   interactionContainer?.remove();
   interactionContainer = null;
+  globalThis.fetch = originalFetch;
 });
 
 describe('otlp metrics page', () => {
@@ -600,6 +628,41 @@ describe('otlp metrics page', () => {
     expect(source).toContain('HzSignalWorkbenchShell');
     expect(source).toContain('data-otlp-metrics-shell-owner="hertzbeat-ui-signal-workbench-shell"');
     expect(source).toContain('layout="topology-workbench"');
+    expect(source).toContain('isDashboardReturnContext(query.returnTo || routeContext.returnTo)');
+    expect(source).toContain('data-otlp-metrics-source-context={sourceContextKind}');
+    expect(source).toContain('data-otlp-metrics-source-context-return={query.returnTo || routeContext.returnTo || \'\'}');
+    expect(source).toContain('data-otlp-metrics-source-context-trace={query.traceId || routeContext.traceId || \'\'}');
+    expect(source).toContain('data-otlp-metrics-source-context-span={query.spanId || routeContext.spanId || \'\'}');
+    expect(source).toContain('data-otlp-metrics-source-context-service={query.serviceName || routeContext.serviceName || \'\'}');
+    expect(source).toContain('readSignalPanelEditContext(searchParams)');
+    expect(source).toContain('appendMetricsPanelEditContext(route, panelEditContext)');
+    expect(source).toContain('const replaceMetricsHref = useCallback((route: string) => {');
+    expect(source).toContain('router.replace(appendMetricsPanelEditContext(route, panelEditContext))');
+    expect(source).toContain('if (!panelEditContext && hasMetricsDisplayReturnLabel(searchParams))');
+    expect(source).toContain("panelEditContext\n          ? 'dashboard-panel-edit'");
+    expect(source).toContain('data-otlp-metrics-panel-edit-context={panelEditContext?.intent || \'none\'}');
+    expect(source).toContain('data-otlp-metrics-panel-edit-dashboard={panelEditContext?.dashboardKey || \'\'}');
+    expect(source).toContain('data-otlp-metrics-panel-edit-panel={panelEditContext?.panelId || \'\'}');
+    expect(source).toContain('data-otlp-metrics-panel-edit-draft={panelEditContext?.draftKey || \'\'}');
+    expect(source).toContain('data-otlp-metrics-panel-edit-return={panelEditContext?.returnTo || \'\'}');
+    expect(source).toContain('applySignalDashboardPanelEditContext(createSignalDashboardPanelDraft({');
+    expect(source).toContain('}), panelEditContext)');
+    expect(source).toContain('saveSignalDashboardPanelEditContext(panelEditContext, panelDraft)');
+    expect(source).toContain("t(panelEditContext ? 'otlp.metrics.dashboard-panel-draft.update-current' : 'otlp.metrics.dashboard-panel-draft.add-current')");
+    expect(source).toContain("data-otlp-metrics-dashboard-panel-draft-action={panelEditContext ? 'update-current' : 'add-current'}");
+    expect(source).toContain("data-otlp-metrics-dashboard-panel-draft-action-mode={panelEditContext ? 'edit-panel' : 'new-panel'}");
+    expect(source).toContain('data-otlp-metrics-dashboard-panel-draft-action-dashboard={panelEditContext?.dashboardKey || \'\'}');
+    expect(source).toContain('data-otlp-metrics-dashboard-panel-draft-action-panel={panelEditContext?.panelId || \'\'}');
+    expect(source).toContain('data-otlp-metrics-dashboard-panel-draft-action-draft={panelEditContext?.draftKey || \'\'}');
+    expect(source).toContain('data-otlp-metrics-dashboard-panel-draft-status-mode={panelEditContext ? \'edit-panel\' : \'new-panel\'}');
+    expect(source).toContain('data-otlp-metrics-dashboard-panel-draft-status-dashboard={panelEditContext?.dashboardKey || \'\'}');
+    expect(source).toContain('data-otlp-metrics-dashboard-panel-draft-status-panel={panelEditContext?.panelId || \'\'}');
+    expect(source).toContain("`otlp.metrics.dashboard-panel-draft.update-${dashboardPanelDraftState}`");
+    expect(source).toContain('data-otlp-metrics-dashboard-panel-draft-return-action="dashboard"');
+    expect(source).toContain('data-otlp-metrics-dashboard-panel-draft-return-action-owner="hertzbeat-ui-button-link"');
+    expect(source).toContain('data-otlp-metrics-dashboard-panel-draft-return-action-dashboard={panelEditContext.dashboardKey || \'\'}');
+    expect(source).toContain('data-otlp-metrics-dashboard-panel-draft-return-action-panel={panelEditContext.panelId || \'\'}');
+    expect(source).toContain("t('otlp.metrics.dashboard-panel-draft.return-dashboard')");
     expect(source).toContain('data-otlp-metrics-header="hertzbeat-ui-compact-header"');
     expect(source).toContain('data-otlp-metrics-header-owner="hertzbeat-ui-panel-surface"');
     expect(source).toContain('data-otlp-metrics-header-layout="compact-title-with-aligned-toolbar"');
@@ -930,10 +993,25 @@ describe('otlp metrics page', () => {
     expect(source).toContain('selectedSeriesContextDetailRows');
     expect(source).toContain('selectedSeriesEvidenceDetailRows');
     expect(source).toContain('entityContextDetailRows');
+    expect(source).toContain('const selectedMetricSeriesRouteContext: Partial<SignalRouteContext> = selectedMetricSeries');
+    expect(source).toContain('const selectedMetricSourceMatch =');
+    expect(source).toContain('data-otlp-metrics-detail-source-context={sourceContextKind}');
+    expect(source).toContain('data-otlp-metrics-detail-source-match={selectedMetricSourceMatch}');
+    expect(source).toContain('data-otlp-metrics-detail-selected-series={selectedMetricSeries.key}');
+    expect(source).toContain('data-otlp-metrics-detail-requested-trace={requestedMetricTraceId}');
+    expect(source).toContain('data-otlp-metrics-detail-requested-span={requestedMetricSpanId}');
+    expect(source).toContain('data-otlp-metrics-detail-requested-service={requestedMetricServiceName}');
+    expect(source).toContain('data-otlp-metrics-detail-selected-trace={selectedMetricTraceId}');
+    expect(source).toContain('data-otlp-metrics-detail-selected-span={selectedMetricSpanId}');
+    expect(source).toContain('data-otlp-metrics-detail-selected-service={selectedMetricServiceName}');
     expect(source).toContain('data-otlp-metrics-selected-series-context="selected-series-attribution"');
     expect(source).toContain('data-otlp-metrics-selected-series-context-owner="hertzbeat-ui-detail-rows"');
     expect(source).toContain('data-otlp-metrics-selected-series-evidence="real-sample-evidence"');
     expect(source).toContain('data-otlp-metrics-selected-series-evidence-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('data-otlp-metrics-selected-series-evidence-series={selectedMetricSeries.key}');
+    expect(source).toContain('data-otlp-metrics-selected-series-evidence-trace={selectedMetricTraceId}');
+    expect(source).toContain('data-otlp-metrics-selected-series-evidence-span={selectedMetricSpanId}');
+    expect(source).toContain('data-otlp-metrics-selected-series-evidence-samples={selectedSeriesEvidenceRows.length}');
     expect(source).toContain('data-otlp-metrics-inspector-toggle="graph-table"');
     expect(source).toContain('data-otlp-metrics-inspector-toggle-owner="hertzbeat-ui-action-group"');
     expect(source).toContain('data-otlp-metrics-inspector-view={metricsInspectorView}');
@@ -941,6 +1019,10 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-inspector-action="table"');
     expect(source).toContain('data-otlp-metrics-inspector-sample-table="selected-series-samples"');
     expect(source).toContain('data-otlp-metrics-inspector-sample-table-owner="hertzbeat-ui-data-table"');
+    expect(source).toContain('data-otlp-metrics-inspector-sample-table-series={selectedMetricSeries.key}');
+    expect(source).toContain('data-otlp-metrics-inspector-sample-table-samples={selectedSeriesSampleRows.length}');
+    expect(source).toContain('data-otlp-metrics-inspector-sample-table-trace={selectedMetricTraceId}');
+    expect(source).toContain('data-otlp-metrics-inspector-sample-table-span={selectedMetricSpanId}');
     expect(source).toContain("header: t('otlp.metrics.inspector.column.timestamp')");
     expect(source).toContain("header: t('otlp.metrics.inspector.column.raw-timestamp')");
     expect(source).toContain("header: t('otlp.metrics.inspector.column.value')");
@@ -2462,8 +2544,40 @@ describe('otlp metrics page', () => {
   it('saves and restores the current metrics explorer query view from shared UI controls', async () => {
     window.localStorage.removeItem('hertzbeat.otlp-metrics.saved-query-views');
     mockState.searchParams = new URLSearchParams(
-      'query=http.server.duration&series=checkout_latency-0&filter=service.name%3D%22checkout%22&aggregation=p95&temporalAggregation=rate&groupBy=route&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=10&inspector=table&warningThreshold=75&criticalThreshold=90&expectedRange=on&serviceName=checkout&entityId=7&environment=prod&timeRange=last-1h'
+      'query=http.server.duration&series=checkout_latency-0&filter=service.name%3D%22checkout%22&aggregation=p95&temporalAggregation=rate&groupBy=route&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=10&inspector=table&warningThreshold=75&criticalThreshold=90&expectedRange=on&serviceName=checkout&entityId=7&environment=prod&timeRange=last-1h&relatedMetricSource=pod&relatedMetricFamily=latency&relatedMetricReason=resource-filter&relatedMetricMatchedLabels=k8s_pod_name&relatedMetricResourceMatch=%7B%22k8s_pod_name%22%3A%22checkout-7d9%22%7D'
     );
+    const savedViewRequests: Array<{ path: string; method: string; body?: Record<string, unknown> }> = [];
+    let serverSavedViews: Record<string, unknown>[] = [];
+    globalThis.fetch = vi.fn(async (input, init) => {
+      const path = String(input);
+      const method = String(init?.method || 'GET').toUpperCase();
+      const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined;
+      savedViewRequests.push({ path, method, body });
+      if (path.endsWith('/api/signal/saved-view/metrics') && method === 'GET') {
+        return new Response(JSON.stringify({ code: 0, data: serverSavedViews }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (path.endsWith('/api/signal/saved-view') && method === 'PUT') {
+        if (body) {
+          serverSavedViews = [body, ...serverSavedViews.filter(view => view.viewKey !== body.viewKey)];
+        }
+        return new Response(JSON.stringify({ code: 0, data: body }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (path.includes('/api/signal/saved-view/metrics/') && method === 'DELETE') {
+        const viewKey = decodeURIComponent(path.split('/').pop() || '');
+        serverSavedViews = serverSavedViews.filter(view => view.viewKey !== viewKey);
+        return new Response(JSON.stringify({ code: 0, data: null }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return new Response(JSON.stringify({ code: 1, msg: `Unexpected request ${method} ${path}` }), { status: 500 });
+    }) as typeof fetch;
     const { default: OtlpMetricsPage } = await import('./page');
     interactionContainer = document.createElement('div');
     document.body.appendChild(interactionContainer);
@@ -2471,12 +2585,18 @@ describe('otlp metrics page', () => {
 
     await act(async () => {
       interactionRoot?.render(<OtlpMetricsPage />);
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const savedViewPanel = interactionContainer.querySelector('[data-otlp-metrics-saved-views="route-query-views"]') as HTMLElement | null;
     expect(savedViewPanel).toBeTruthy();
     expect(savedViewPanel?.getAttribute('data-otlp-metrics-saved-views-owner')).toBe('hertzbeat-ui-panel-surface');
+    expect(savedViewPanel?.getAttribute('data-otlp-metrics-saved-view-persistence')).toBe('server-first');
+    expect(savedViewPanel?.getAttribute('data-otlp-metrics-saved-view-persistence-owner')).toBe('hertzbeat-api');
+    expect(savedViewPanel?.getAttribute('data-otlp-metrics-saved-view-storage-key')).toBe('hertzbeat.otlp-metrics.saved-query-views');
+
+    const persistenceCopy = interactionContainer.querySelector('[data-otlp-metrics-saved-view-persistence-copy="server-first"]') as HTMLElement | null;
+    expect(persistenceCopy?.textContent).toContain(zhT('otlp.metrics.saved-view.persistence.server'));
 
     const saveAction = interactionContainer.querySelector('[data-otlp-metrics-saved-view-action="save-current"]') as HTMLButtonElement | null;
     expect(saveAction).toBeTruthy();
@@ -2493,6 +2613,18 @@ describe('otlp metrics page', () => {
     const copyAction = interactionContainer.querySelector('[data-otlp-metrics-saved-view-copy-action="current"]') as HTMLButtonElement | null;
     expect(copyAction).toBeTruthy();
     expect(copyAction?.getAttribute('data-otlp-metrics-saved-view-copy-owner')).toBe('hertzbeat-ui-button');
+    const dashboardPanelDraftAction = interactionContainer.querySelector('[data-otlp-metrics-dashboard-panel-draft-action="add-current"]') as HTMLButtonElement | null;
+    expect(dashboardPanelDraftAction).toBeTruthy();
+    expect(dashboardPanelDraftAction?.getAttribute('data-otlp-metrics-dashboard-panel-draft-action-owner')).toBe('hertzbeat-ui-button');
+    const relatedCandidateContext = interactionContainer.querySelector('[data-otlp-metrics-related-candidate-context="backend-related-metric-candidate"]') as HTMLElement | null;
+    expect(relatedCandidateContext).toBeTruthy();
+    expect(relatedCandidateContext?.getAttribute('data-otlp-metrics-related-candidate-context-owner')).toBe('hertzbeat-ui-detail-rows');
+    expect(relatedCandidateContext?.getAttribute('data-otlp-metrics-related-candidate-source')).toBe('pod');
+    expect(relatedCandidateContext?.getAttribute('data-otlp-metrics-related-candidate-family')).toBe('latency');
+    expect(relatedCandidateContext?.getAttribute('data-otlp-metrics-related-candidate-reason')).toBe('resource-filter');
+    expect(relatedCandidateContext?.getAttribute('data-otlp-metrics-related-candidate-labels')).toBe('k8s_pod_name');
+    expect(relatedCandidateContext?.textContent).toContain(zhT('otlp.metrics.related-candidate.title'));
+    expect(relatedCandidateContext?.textContent).toContain('checkout-7d9');
 
     await act(async () => {
       copyAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -2506,7 +2638,7 @@ describe('otlp metrics page', () => {
 
     await act(async () => {
       saveAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const savedViews = JSON.parse(window.localStorage.getItem('hertzbeat.otlp-metrics.saved-query-views') || '[]');
@@ -2539,6 +2671,20 @@ describe('otlp metrics page', () => {
     expect(savedParams.get('entityId')).toBe('7');
     expect(savedParams.get('environment')).toBe('prod');
     expect(savedParams.get('timeRange')).toBe('last-1h');
+    expect(savedParams.get('relatedMetricSource')).toBe('pod');
+    expect(savedParams.get('relatedMetricFamily')).toBe('latency');
+    expect(savedParams.get('relatedMetricReason')).toBe('resource-filter');
+    expect(savedParams.get('relatedMetricMatchedLabels')).toBe('k8s_pod_name');
+    expect(savedParams.get('relatedMetricResourceMatch')).toBe('{"k8s_pod_name":"checkout-7d9"}');
+    const saveRequest = savedViewRequests.find(request => request.method === 'PUT' && request.body?.route === savedViews[0]?.route);
+    expect(saveRequest?.path).toBe('/api/signal/saved-view');
+    expect(saveRequest?.body).toEqual(expect.objectContaining({
+      signal: 'metrics',
+      viewKey: savedViews[0]?.id,
+      querySnapshot: savedViews[0]?.route,
+      payload: expect.stringContaining('createdAt')
+    }));
+    expect(interactionContainer.querySelector('[data-otlp-metrics-saved-views="route-query-views"]')?.getAttribute('data-otlp-metrics-saved-view-persistence')).toBe('server-first');
 
     const renameSavedViewAction = interactionContainer.querySelector('[data-otlp-metrics-saved-view-rename-action]') as HTMLButtonElement | null;
     expect(renameSavedViewAction).toBeTruthy();
@@ -2565,7 +2711,7 @@ describe('otlp metrics page', () => {
 
     await act(async () => {
       renameSaveAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const renamedViews = JSON.parse(window.localStorage.getItem('hertzbeat.otlp-metrics.saved-query-views') || '[]');
@@ -2590,7 +2736,7 @@ describe('otlp metrics page', () => {
 
     await act(async () => {
       updateSavedViewAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const updatedViews = JSON.parse(window.localStorage.getItem('hertzbeat.otlp-metrics.saved-query-views') || '[]');
@@ -2654,10 +2800,150 @@ describe('otlp metrics page', () => {
 
     await act(async () => {
       deleteSavedViewAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     expect(JSON.parse(window.localStorage.getItem('hertzbeat.otlp-metrics.saved-query-views') || '[]')).toHaveLength(0);
+    expect(savedViewRequests.some(request => request.method === 'DELETE' && request.path.includes('/api/signal/saved-view/metrics/'))).toBe(true);
+    expect(interactionContainer.querySelector('[data-otlp-metrics-saved-views="route-query-views"]')?.getAttribute('data-otlp-metrics-saved-view-persistence')).toBe('server-first');
+  });
+
+  it('updates the originating dashboard widget when saving metrics in panel edit mode', async () => {
+    mockState.searchParams = new URLSearchParams(
+      'intent=edit-panel&dashboardKey=signals-overview&panelId=metrics-latency&draftKey=metrics-draft-latency&returnTo=%2Fdashboard%3Fdashboard%3Dsignals-overview&returnLabel=Signals%20overview&query=http.server.duration&series=checkout_latency-0&filter=service.name%3D%22checkout%22&aggregation=p95&temporalAggregation=rate&groupBy=route&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=10&inspector=table&serviceName=checkout&entityId=7&environment=prod&timeRange=last-1h&relatedMetricSource=pod&relatedMetricFamily=latency&relatedMetricReason=resource-filter&relatedMetricMatchedLabels=k8s_pod_name&relatedMetricResourceMatch=%7B%22k8s_pod_name%22%3A%22checkout-7d9%22%7D'
+    );
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const dashboardPanelDraftAction = interactionContainer.querySelector('[data-otlp-metrics-dashboard-panel-draft-action="update-current"]') as HTMLButtonElement | null;
+    expect(dashboardPanelDraftAction).toBeTruthy();
+    expect(dashboardPanelDraftAction?.getAttribute('data-otlp-metrics-dashboard-panel-draft-action-mode')).toBe('edit-panel');
+    expect(dashboardPanelDraftAction?.getAttribute('data-otlp-metrics-dashboard-panel-draft-action-dashboard')).toBe('signals-overview');
+    expect(dashboardPanelDraftAction?.getAttribute('data-otlp-metrics-dashboard-panel-draft-action-panel')).toBe('metrics-latency');
+    const queryInput = interactionContainer.querySelector('[data-otlp-metrics-query-input="true"]') as HTMLInputElement | null;
+    const runQueryAction = interactionContainer.querySelector('[data-otlp-metrics-run-query-action="true"]') as HTMLButtonElement | null;
+    expect(queryInput).toBeTruthy();
+    expect(runQueryAction).toBeTruthy();
+
+    await act(async () => {
+      queryInput!.value = 'process.runtime.jvm.memory.used';
+      queryInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      await Promise.resolve();
+    });
+    await act(async () => {
+      runQueryAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const editedRoute = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(editedRoute).toContain('query=process.runtime.jvm.memory.used');
+    expect(editedRoute).toContain('intent=edit-panel');
+    expect(editedRoute).toContain('dashboardKey=signals-overview');
+    expect(editedRoute).toContain('panelId=metrics-latency');
+    expect(editedRoute).toContain('draftKey=metrics-draft-latency');
+    expect(editedRoute).toContain('returnTo=%2Fdashboard%3Fdashboard%3Dsignals-overview');
+    expect(editedRoute).toContain('returnLabel=Signals+overview');
+    const savedDashboards: unknown[] = [];
+    globalThis.fetch = vi.fn(async (input, init) => {
+      const path = String(input);
+      const method = String(init?.method || 'GET').toUpperCase();
+      if (path.includes('/api/signal/dashboard-panel-draft') && method === 'PUT') {
+        return new Response(JSON.stringify({ code: 0, data: JSON.parse(String(init?.body)) }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (path.endsWith('/api/signal/dashboard') && method === 'GET') {
+        return new Response(JSON.stringify({
+          code: 0,
+          data: [{
+            dashboardKey: 'signals-overview',
+            title: 'Signals overview',
+            description: 'Signals',
+            tags: 'metrics',
+            layout: JSON.stringify([{ i: 'metrics-latency', x: 0, y: 0, w: 6, h: 4 }]),
+            widgets: JSON.stringify([{
+              id: 'metrics-latency',
+              draftKey: 'metrics-draft-latency',
+              signal: 'metrics',
+              title: 'Old latency',
+              visualization: 'graph',
+              route: '/ingestion/otlp/metrics?query=old',
+              querySnapshot: '/ingestion/otlp/metrics?query=old'
+            }]),
+            panelMap: JSON.stringify({ 'metrics-latency': 'metrics-draft-latency' })
+          }]
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (path.endsWith('/api/signal/dashboard') && method === 'PUT') {
+        const dashboard = JSON.parse(String(init?.body));
+        savedDashboards.push(dashboard);
+        return new Response(JSON.stringify({ code: 0, data: dashboard }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return new Response(JSON.stringify({ code: 1, msg: `Unexpected request ${method} ${path}` }), { status: 500 });
+    }) as typeof fetch;
+
+    await act(async () => {
+      dashboardPanelDraftAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await flushDashboardEditPromises();
+    });
+
+    const draftRequest = vi.mocked(globalThis.fetch).mock.calls.find(call =>
+      String(call[0]).includes('/api/signal/dashboard-panel-draft')
+    );
+    const draftBody = JSON.parse(String(draftRequest?.[1]?.body));
+    expect(draftBody).toEqual(expect.objectContaining({
+      signal: 'metrics',
+      draftKey: 'metrics-draft-latency',
+      visualization: 'table',
+      querySnapshot: expect.stringContaining('/ingestion/otlp/metrics?')
+    }));
+    expect(draftBody.route).toContain('query=http.server.duration');
+    expect(draftBody.route).toContain('aggregation=p95');
+    expect(draftBody.route).toContain('relatedMetricSource=pod');
+    expect(draftBody.route).toContain('relatedMetricFamily=latency');
+    expect(draftBody.route).toContain('relatedMetricReason=resource-filter');
+    expect(draftBody.route).toContain('relatedMetricMatchedLabels=k8s_pod_name');
+    expect(new URL(draftBody.route, 'http://localhost').searchParams.get('relatedMetricResourceMatch')).toBe('{"k8s_pod_name":"checkout-7d9"}');
+    expect(JSON.parse(draftBody.payload).dashboardPanelEdit).toEqual(expect.objectContaining({
+      intent: 'edit-panel',
+      dashboardKey: 'signals-overview',
+      panelId: 'metrics-latency',
+      draftKey: 'metrics-draft-latency',
+      returnTo: '/dashboard?dashboard=signals-overview',
+      returnLabel: 'Signals overview'
+    }));
+    expect(savedDashboards).toHaveLength(1);
+    const savedDashboard = savedDashboards[0] as { widgets: string; panelMap: string };
+    const savedWidget = JSON.parse(savedDashboard.widgets)[0];
+    expect(savedWidget).toEqual(expect.objectContaining({
+      id: 'metrics-latency',
+      draftKey: 'metrics-draft-latency',
+      signal: 'metrics',
+      visualization: 'table',
+      route: expect.stringContaining('query=http.server.duration')
+    }));
+    expect(savedWidget.route).toContain('aggregation=p95');
+    expect(savedWidget.route).toContain('relatedMetricSource=pod');
+    expect(new URL(savedWidget.route, 'http://localhost').searchParams.get('relatedMetricResourceMatch')).toBe('{"k8s_pod_name":"checkout-7d9"}');
+    expect(JSON.parse(savedWidget.payload).dashboardPanelEdit).toEqual(expect.objectContaining({
+      dashboardKey: 'signals-overview',
+      panelId: 'metrics-latency'
+    }));
+    expect(JSON.parse(savedDashboard.panelMap)).toEqual({ 'metrics-latency': 'metrics-draft-latency' });
+    const dashboardPanelDraftStatus = interactionContainer.querySelector('[data-otlp-metrics-dashboard-panel-draft-status="saved"]') as HTMLElement | null;
+    expect(dashboardPanelDraftStatus?.getAttribute('data-otlp-metrics-dashboard-panel-draft-status-mode')).toBe('edit-panel');
+    expect(dashboardPanelDraftStatus?.textContent).toContain(zhT('otlp.metrics.dashboard-panel-draft.update-saved'));
   });
 
   it('renders searchable selected metric attributes from real series labels', async () => {
@@ -3144,6 +3430,18 @@ describe('otlp metrics page', () => {
     const html = renderToStaticMarkup(<OtlpMetricsPage />);
 
     expect(html).toContain('data-otlp-metrics-series-row-selected="true"');
+    expect(html).toContain('data-otlp-metrics-detail-source-context="direct"');
+    expect(html).toContain('data-otlp-metrics-detail-source-match="trace-span"');
+    expect(html).toContain('data-otlp-metrics-detail-selected-series="http_server_duration-1"');
+    expect(html).toContain('data-otlp-metrics-detail-requested-trace="trace-target"');
+    expect(html).toContain('data-otlp-metrics-detail-requested-span="span-target"');
+    expect(html).toContain('data-otlp-metrics-detail-requested-service="checkout"');
+    expect(html).toContain('data-otlp-metrics-detail-selected-trace="trace-target"');
+    expect(html).toContain('data-otlp-metrics-detail-selected-span="span-target"');
+    expect(html).toContain('data-otlp-metrics-detail-selected-service="checkout"');
+    expect(html).toContain('data-otlp-metrics-selected-series-evidence-series="http_server_duration-1"');
+    expect(html).toContain('data-otlp-metrics-selected-series-evidence-trace="trace-target"');
+    expect(html).toContain('data-otlp-metrics-selected-series-evidence-span="span-target"');
     expect(html).toContain('trace-target');
     expect(html).toContain('span-target');
     expect(html).toContain('collector-target');

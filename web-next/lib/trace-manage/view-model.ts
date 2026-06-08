@@ -151,7 +151,7 @@ function toEpochMillis(value?: number | string | null): number | undefined {
   if (!trimmed) return undefined;
   if (/^\d+$/.test(trimmed)) {
     if (trimmed.length > 15) {
-      return Number(BigInt(trimmed) / 1_000_000n);
+      return Number(BigInt(trimmed) / BigInt(1000000));
     }
     return Number(trimmed);
   }
@@ -193,7 +193,7 @@ function buildSpanEventMarkers(
 ): TraceWaterfallEventMarker[] {
   const eventItems = events || [];
   return eventItems
-    .map((event, index) => {
+    .map((event, index): TraceWaterfallEventMarker => {
       const eventMs = toEpochMillis(event.timeUnixNano) ?? spanStartMs + (spanDurationMs * (index + 1)) / (eventItems.length + 1);
       return {
         key: `${spanId}:event:${index}`,
@@ -396,12 +396,12 @@ function toEventEpochMillis(value?: number | string | null) {
   if (value == null) return undefined;
   if (typeof value === 'number') {
     if (!Number.isFinite(value) || value <= 0) return undefined;
-    return Number(value > 1_000_000_000_000_000 ? BigInt(Math.trunc(value)) / 1_000_000n : BigInt(Math.trunc(value)));
+    return Number(value > 1_000_000_000_000_000 ? BigInt(Math.trunc(value)) / BigInt(1000000) : BigInt(Math.trunc(value)));
   }
   const trimmed = value.trim();
   if (!trimmed) return undefined;
   if (/^\d+$/.test(trimmed)) {
-    return Number(trimmed.length > 15 ? BigInt(trimmed) / 1_000_000n : BigInt(trimmed));
+    return Number(trimmed.length > 15 ? BigInt(trimmed) / BigInt(1000000) : BigInt(trimmed));
   }
   const parsed = Date.parse(trimmed);
   return Number.isNaN(parsed) ? undefined : parsed;
@@ -438,6 +438,54 @@ function readTraceSignalAttribute(
       readTraceText(detail?.resourceAttributes, key)
     ])
   );
+}
+
+function escapeMetricFilterValue(value: string) {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function buildMetricFilterExpression(name: string, value: string | undefined) {
+  const trimmedName = name.trim();
+  const trimmedValue = value?.trim();
+  if (!trimmedName || !trimmedValue || trimmedValue === '-') return undefined;
+  return `${trimmedName}="${escapeMetricFilterValue(trimmedValue)}"`;
+}
+
+function buildTraceMetricsResourceFilter(detail: TraceDetail | null, selectedSpan: TraceSpanNode | null) {
+  const expressions = [
+    buildMetricFilterExpression('k8s.namespace.name', readTraceSignalAttribute(
+      detail,
+      selectedSpan,
+      'k8s.namespace.name',
+      'k8s_namespace_name'
+    )),
+    buildMetricFilterExpression('k8s.pod.name', readTraceSignalAttribute(
+      detail,
+      selectedSpan,
+      'k8s.pod.name',
+      'k8s_pod_name'
+    )),
+    buildMetricFilterExpression('k8s.node.name', readTraceSignalAttribute(
+      detail,
+      selectedSpan,
+      'k8s.node.name',
+      'k8s_node_name'
+    )),
+    buildMetricFilterExpression('k8s.container.name', firstText(
+      readTraceSignalAttribute(detail, selectedSpan, 'k8s.container.name', 'k8s_container_name'),
+      readTraceSignalAttribute(detail, selectedSpan, 'container.name', 'container_name')
+    )),
+    buildMetricFilterExpression('host.name', readTraceSignalAttribute(
+      detail,
+      selectedSpan,
+      'host.name',
+      'host_name'
+    ))
+  ];
+  const seen = new Set<string>();
+  return expressions
+    .filter((expression): expression is string => Boolean(expression && !seen.has(expression) && seen.add(expression)))
+    .join(' and ');
 }
 
 function durationNanosToWholeMillis(value?: number | null) {
@@ -800,6 +848,7 @@ export function buildTraceHandoffLinks(
     routeContext.template,
     readTraceSignalAttribute(detail, selectedSpan, 'template', 'hertzbeat.template', 'hertzbeat_template', 'hertzbeat.monitor_template', 'hertzbeat_monitor_template')
   );
+  const metricsFilter = buildTraceMetricsResourceFilter(detail, selectedSpan);
   const routeStart = readEpochMillisRouteParam(routeContext.start);
   const routeEnd = readEpochMillisRouteParam(routeContext.end);
   const detailStart = toRouteEpochMillis(detail?.startTime);
@@ -849,6 +898,7 @@ export function buildTraceHandoffLinks(
   if (spanId) metricsParams.set('spanId', spanId);
   if (serviceName) metricsParams.set('serviceName', serviceName);
   if (serviceNamespace) metricsParams.set('serviceNamespace', serviceNamespace);
+  if (metricsFilter) metricsParams.set('filter', metricsFilter);
   appendSignalRouteContext(metricsParams, metricsContext);
 
   const entityParams = new URLSearchParams();

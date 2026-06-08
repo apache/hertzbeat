@@ -254,6 +254,10 @@ function appendTraceQueryContext(params: URLSearchParams, routeContext: SignalRo
   if (entityId) {
     params.set('entityId', entityId);
   }
+  const entityType = routeContext.entityType?.trim();
+  if (entityType && /^[A-Za-z0-9_.:-]+$/.test(entityType)) {
+    params.set('entityType', entityType);
+  }
 
   const contextKeys = ['serviceNamespace', 'environment', 'start', 'end'] as const;
 
@@ -324,7 +328,7 @@ function appendTraceDurationParams(params: URLSearchParams, query: TraceQuerySta
 }
 
 function appendTraceResourceFilterParam(params: URLSearchParams, query: TraceQueryState) {
-  const resourceFilter = query.resourceFilter?.trim();
+  const resourceFilter = query.resourceFilter?.trim() || '';
   if (resourceFilter) {
     params.set('resourceFilter', resourceFilter);
   }

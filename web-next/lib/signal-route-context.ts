@@ -56,6 +56,15 @@ export type SignalRouteContextKey = (typeof SIGNAL_ROUTE_CONTEXT_PARAM_KEYS)[num
 
 export type SignalRouteContext = Partial<Record<SignalRouteContextKey, string>>;
 
+export type SignalPanelEditContext = {
+  intent: 'edit-panel';
+  dashboardKey?: string;
+  panelId?: string;
+  draftKey?: string;
+  returnTo?: string;
+  returnLabel?: string;
+};
+
 export type SignalAlertRuleDraftContext = {
   name?: string;
   query?: string;
@@ -64,6 +73,53 @@ export type SignalAlertRuleDraftContext = {
   datasource?: string;
   template?: string;
 };
+
+export function buildSignalAlertMatchLabels(signal: string | undefined, context: SignalRouteContext) {
+  return [
+    ['hertzbeat.signal', signal],
+    ['hertzbeat.entity.id', context.entityId],
+    ['hertzbeat.entity.type', context.entityType],
+    ['service.name', context.serviceName],
+    ['service.namespace', context.serviceNamespace],
+    ['deployment.environment', context.environment],
+    ['trace_id', context.traceId],
+    ['span_id', context.spanId],
+    ['hertzbeat.source', context.source],
+    ['hertzbeat.collector', context.collector],
+    ['hertzbeat.template', context.template],
+    ['hertzbeat.monitor.id', context.monitorId],
+    ['hertzbeat.monitor.app', context.monitorApp],
+    ['hertzbeat.monitor.instance', context.monitorInstance],
+    ['hertzbeat.alert.datasource', context.alertDatasource],
+    ['hertzbeat.alert.query_type', context.alertQueryType],
+    ['hertzbeat.alert.template', context.alertTemplate]
+  ]
+    .map(([key, value]) => {
+      const normalizedValue = firstText(value);
+      return normalizedValue ? `${key}:${normalizedValue}` : undefined;
+    })
+    .filter((value): value is string => Boolean(value))
+    .join(', ');
+}
+
+export function buildSignalAlertGroupKeys(signal: string | undefined, context: SignalRouteContext) {
+  return [
+    ['hertzbeat.signal', signal],
+    ['hertzbeat.entity.id', context.entityId],
+    ['hertzbeat.entity.type', context.entityType],
+    ['service.name', context.serviceName],
+    ['service.namespace', context.serviceNamespace],
+    ['deployment.environment', context.environment],
+    ['hertzbeat.source', context.source],
+    ['hertzbeat.collector', context.collector],
+    ['hertzbeat.monitor.app', context.monitorApp],
+    ['hertzbeat.alert.datasource', context.alertDatasource],
+    ['hertzbeat.alert.query_type', context.alertQueryType]
+  ]
+    .map(([key, value]) => (firstText(value) ? key : undefined))
+    .filter((value): value is string => Boolean(value))
+    .join(', ');
+}
 
 const SIGNAL_TIME_CONTEXT_PARAM_KEYS = new Set<SignalRouteContextKey>([
   'start',
@@ -156,6 +212,26 @@ export function readSignalRouteContext(searchParams: SearchParamReader): SignalR
     })
   );
   return nextContext;
+}
+
+export function readSignalPanelEditContext(searchParams: SearchParamReader): SignalPanelEditContext | null {
+  if (normalizeValue(searchParams.get('intent')) !== 'edit-panel') {
+    return null;
+  }
+  const dashboardKey = normalizeValue(searchParams.get('dashboardKey'));
+  const panelId = normalizeValue(searchParams.get('panelId'));
+  const draftKey = normalizeValue(searchParams.get('draftKey'));
+  if (!dashboardKey || !panelId) {
+    return null;
+  }
+  return {
+    intent: 'edit-panel',
+    dashboardKey,
+    panelId,
+    draftKey,
+    returnTo: stripReturnLabelFromHref(searchParams.get('returnTo')),
+    returnLabel: normalizeValue(searchParams.get('returnLabel'))
+  };
 }
 
 export function copySignalRouteContextParams(searchParams: SearchParamReader, nextParams: URLSearchParams) {
@@ -321,6 +397,17 @@ export function stripReturnLabelFromHref(href: string | null | undefined, depth 
   }
 }
 
+export function isDashboardReturnContext(href: string | null | undefined) {
+  const normalizedHref = stripReturnLabelFromHref(href);
+  if (!normalizedHref || !normalizedHref.startsWith('/') || normalizedHref.startsWith('//')) return false;
+  try {
+    const url = new URL(normalizedHref, 'http://hertzbeat.local');
+    return url.origin === 'http://hertzbeat.local' && url.pathname === '/dashboard';
+  } catch {
+    return false;
+  }
+}
+
 export function buildSignalEntityHref(context: SignalRouteContext, fallbackSearch?: string) {
   const params = new URLSearchParams();
   appendSignalRouteContext(params, context);
@@ -365,6 +452,19 @@ export function buildSignalAlertHandlingHref(signal: 'metrics' | 'logs' | 'trace
   }
   appendSignalRouteContext(params, context);
   return withQuery('/alert', params);
+}
+
+export function buildSignalAlertWorkspaceHref(
+  mode: 'notice' | 'group' | 'silence' | 'inhibit',
+  signal: 'metrics' | 'logs' | 'traces' | undefined,
+  context: SignalRouteContext
+) {
+  const params = new URLSearchParams();
+  if (signal) {
+    params.set('signal', signal);
+  }
+  appendSignalRouteContext(params, context);
+  return withQuery(`/alert/${mode}`, params);
 }
 
 export function buildSignalDashboardHref(

@@ -3,14 +3,29 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { BarChart3, BellPlus, BellRing, Check, Copy, Download, Filter, ListChecks, Pencil, Play, Replace, RotateCcw, Save, Search, ScrollText, Server, Timer, Trash2, Workflow, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { HzActionGroup, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzCheckbox, HzChipGroup, HzControlStack, HzDataCellText, HzDataTable, HzDetailRows, HzDialogBodyLayout, HzDialogEventNotice, HzDialogEventText, HzDialogMetaItem, HzDisabledActionShell, HzEmptyState, HzInput, HzPanelHeader, HzPanelSurface, HzQueryActionGroup, HzQueryStatusSelect, HzQueryTokenField, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalSummaryStrip, HzSignalTrendBars, HzSignalWorkbenchShell, HzStateNotice, HzStatusBadge, HzTableRowActionButton, HzWorkbenchHeaderCopy, HzWorkbenchLayout, type HzStatusTone } from '@hertzbeat/ui';
 import { buildTimeRangeControlLabels, TimeRangeControl } from '@/components/observability/time-range-control';
 import { ClientWorkbench } from '@/components/workbench/client-workbench';
 import { useI18n } from '@/components/providers/i18n-provider';
 import { apiMessageGet } from '@/lib/api-client';
 import { copyTextToClipboard } from '@/lib/browser-clipboard';
-import { formatDurationNanos, formatTime } from '@/lib/format';
+import { bodyText, formatDurationNanos, formatTime } from '@/lib/format';
+import {
+  createSignalDashboardPanelDraft,
+  applySignalDashboardPanelEditContext,
+  saveSignalDashboardPanelDraft,
+  type SignalDashboardPanelVisualization
+} from '@/lib/signal-dashboard-panel-drafts';
+import { saveSignalDashboardPanelEditContext } from '@/lib/signal-dashboards';
+import {
+  buildSignalSavedViewKey,
+  deleteSignalSavedQueryView,
+  loadSignalSavedQueryViews,
+  saveSignalSavedQueryView,
+  type SignalSavedQueryView,
+  type SignalSavedQueryViewPersistenceMode
+} from '@/lib/signal-saved-views';
 import { buildTraceCsv, buildTraceExportFilename, buildTraceJsonl, type TraceExportFormat } from '@/lib/trace-manage/export';
 import { DEFAULT_TRACE_LIST_PAGE_INDEX, DEFAULT_TRACE_LIST_PAGE_SIZE, DEFAULT_TRACE_TABLE_COLUMNS, TRACE_LIST_PAGE_SIZE_OPTIONS, TRACE_TABLE_COLUMN_KEYS, buildTraceUrls, type TraceExplorerView, type TraceGroupOrder, type TraceManageRouteState, type TraceQueryState, type TraceSpanScope, type TraceTableColumnKey } from '@/lib/trace-manage/query-state';
 import {
@@ -25,9 +40,9 @@ import {
   buildTraceWaterfallRows,
   type TraceExplorerRow
 } from '@/lib/trace-manage/view-model';
-import { buildSignalEntityContextRows, type SignalRouteContext } from '@/lib/signal-route-context';
+import { buildSignalEntityContextRows, isDashboardReturnContext, readSignalPanelEditContext, type SignalPanelEditContext, type SignalRouteContext } from '@/lib/signal-route-context';
 import { resolveAppliedTimeContext, sanitizeTimeContext, type TimeContext } from '@/lib/time-context';
-import type { PageResult, TraceDetail, TraceListItem, TraceOverview } from '@/lib/types';
+import type { LogEntry, OtlpRelatedMetrics, PageResult, TraceDetail, TraceListItem, TraceOverview, TraceSpanNode } from '@/lib/types';
 import { ObservabilityStatusState, ObservabilityWaterfall, type ObservabilityWaterfallTick } from '../../../components/observability';
 import { OverlayDialog } from '../../../components/workbench/overlay-dialog';
 import { loadTraceDetailBundle } from '../../../lib/trace-manage/controller';
@@ -56,15 +71,10 @@ type TraceGroupRow = {
   latencyP95Ms: number;
 };
 
-type TraceSavedQueryView = {
-  id: string;
-  label: string;
-  description: string;
-  route: string;
-  createdAt: number;
-};
+type TraceSavedQueryView = SignalSavedQueryView;
 
 type TraceExportRowLimit = 'current' | '10000' | '30000' | '50000';
+type TraceDashboardPanelDraftState = 'idle' | 'saving' | 'saved' | 'failed';
 
 const EMPTY_TRACE_OVERVIEW: TraceOverview = {
   totalTraceCount: 0,
@@ -81,11 +91,15 @@ function normalizeTraceOverview(overview: TraceOverview | null | undefined): Tra
 }
 
 function normalizeTraceList(list: PageResult<TraceListItem> | null | undefined): PageResult<TraceListItem> {
+  const totalElements = list?.totalElements;
+  const pageIndex = list?.pageIndex;
+  const pageSize = list?.pageSize;
+
   return {
     content: Array.isArray(list?.content) ? list.content : [],
-    totalElements: Number.isFinite(list?.totalElements) ? list.totalElements : 0,
-    pageIndex: Number.isFinite(list?.pageIndex) ? list.pageIndex : 0,
-    pageSize: Number.isFinite(list?.pageSize) ? list.pageSize : 8
+    totalElements: typeof totalElements === 'number' && Number.isFinite(totalElements) ? totalElements : 0,
+    pageIndex: typeof pageIndex === 'number' && Number.isFinite(pageIndex) ? pageIndex : 0,
+    pageSize: typeof pageSize === 'number' && Number.isFinite(pageSize) ? pageSize : 8
   };
 }
 
@@ -153,9 +167,13 @@ const EMPTY_TRACE_MANAGE_ROUTE_STATE: TraceManageRouteState = {
 };
 
 const TRACE_MANAGE_SETTLED_CACHE_TTL_MS = 10_000;
-const TRACE_MANAGE_API_TIMEOUT_MS = 5_000;
+const TRACE_MANAGE_API_TIMEOUT_MS = 20_000;
 const TRACE_SAVED_QUERY_VIEW_STORAGE_KEY = 'hertzbeat.trace-manage.saved-query-views';
 const TRACE_SAVED_QUERY_VIEW_LIMIT = 5;
+const TRACE_SAVED_QUERY_VIEW_PERSISTENCE_OWNER: Record<SignalSavedQueryViewPersistenceMode, string> = {
+  'server-first': 'hertzbeat-api',
+  'local-fallback': 'browser-local-storage'
+};
 const TRACE_EXPORT_ROW_LIMITS: TraceExportRowLimit[] = ['current', '10000', '30000', '50000'];
 const TRACE_EXPORT_FETCH_PAGE_SIZE = 1000;
 
@@ -191,7 +209,131 @@ type TraceDetailDrawerState = {
   selectedSpanId?: string | null;
   selectedEventKey?: string | null;
 };
+type TraceRelatedMetricsState = {
+  loading: boolean;
+  error?: string | null;
+  data: OtlpRelatedMetrics | null;
+};
+type TraceRelatedLogsState = {
+  loading: boolean;
+  error?: string | null;
+  data: PageResult<LogEntry> | null;
+};
 type TraceTranslator = ReturnType<typeof useI18n>['t'];
+
+function buildTraceRelatedMetricsApiUrl(metricsHref: string | null | undefined) {
+  if (!metricsHref) return null;
+  const href = new URL(metricsHref, 'http://localhost');
+  const sourceParams = href.searchParams;
+  const params = new URLSearchParams();
+  [
+    'filter',
+    'start',
+    'end',
+    'entityId',
+    'entityType',
+    'entityName',
+    'serviceName',
+    'serviceNamespace',
+    'environment'
+  ].forEach(key => {
+    const value = sourceParams.get(key)?.trim();
+    if (value) params.set(key, value);
+  });
+  if (!params.get('serviceName') && !params.get('entityId')) return null;
+  params.set('limit', '8');
+  return `/ingestion/otlp/metrics/related?${params.toString()}`;
+}
+
+function buildTraceRelatedLogsApiUrl(logsHref: string | null | undefined) {
+  if (!logsHref) return null;
+  const href = new URL(logsHref, 'http://localhost');
+  const sourceParams = href.searchParams;
+  const params = new URLSearchParams();
+  [
+    'traceId',
+    'spanId',
+    'serviceName',
+    'serviceNamespace',
+    'environment',
+    'entityId',
+    'entityName',
+    'collector',
+    'template',
+    'source',
+    'resourceFilter',
+    'attributeFilter',
+    'start',
+    'end',
+    'timeRange',
+    'tz'
+  ].forEach(key => {
+    const value = sourceParams.get(key)?.trim();
+    if (value) params.set(key, value);
+  });
+  if (!params.get('traceId') && !params.get('serviceName') && !params.get('entityId')) return null;
+  params.set('pageIndex', '0');
+  params.set('pageSize', '3');
+  return `/logs/list?${params.toString()}`;
+}
+
+function buildTraceRelatedLogHref(logsHref: string | null | undefined, entry: LogEntry) {
+  if (!logsHref) return undefined;
+  const href = new URL(logsHref, 'http://localhost');
+  const traceId = entry.traceId?.trim();
+  const spanId = entry.spanId?.trim();
+  if (traceId) href.searchParams.set('traceId', traceId);
+  if (spanId) href.searchParams.set('spanId', spanId);
+  return `${href.pathname}?${href.searchParams.toString()}`;
+}
+
+function formatTraceRelatedLogTime(entry: LogEntry) {
+  const timeUnixNano = Number(entry.timeUnixNano);
+  if (!Number.isFinite(timeUnixNano) || timeUnixNano <= 0) return '-';
+  return formatTime(Math.floor(timeUnixNano / 1_000_000));
+}
+
+function traceRelatedLogSeverity(entry: LogEntry) {
+  return entry.severityText?.trim() || (Number.isFinite(Number(entry.severityNumber)) ? String(entry.severityNumber) : 'LOG');
+}
+
+function buildTraceRelatedMetricHref(metricsHref: string | null | undefined, query: string | null | undefined) {
+  const normalizedQuery = query?.trim();
+  if (!metricsHref || !normalizedQuery) return undefined;
+  const href = new URL(metricsHref, 'http://localhost');
+  href.searchParams.set('query', normalizedQuery);
+  return `${href.pathname}?${href.searchParams.toString()}`;
+}
+
+function buildTraceRelatedMetricCandidateHref(
+  metricsHref: string | null | undefined,
+  candidate: NonNullable<OtlpRelatedMetrics['candidates']>[number]
+) {
+  const href = buildTraceRelatedMetricHref(metricsHref, candidate.query);
+  if (!href) return undefined;
+  const url = new URL(href, 'http://localhost');
+  const source = candidate.source?.trim();
+  const family = candidate.family?.trim();
+  const reason = candidate.reason?.trim();
+  const matchedLabels = (candidate.matchedLabels || [])
+    .map(label => label.trim())
+    .filter(Boolean)
+    .join(',');
+  const resourceMatch = Object.fromEntries(
+    Object.entries(candidate.resourceMatch || {})
+      .map(([key, value]) => [key.trim(), value.trim()] as const)
+      .filter(([key, value]) => key && value)
+      .sort(([left], [right]) => left.localeCompare(right))
+  );
+  if (source) url.searchParams.set('relatedMetricSource', source);
+  if (family) url.searchParams.set('relatedMetricFamily', family);
+  if (reason) url.searchParams.set('relatedMetricReason', reason);
+  if (matchedLabels) url.searchParams.set('relatedMetricMatchedLabels', matchedLabels);
+  if (Object.keys(resourceMatch).length) {
+    url.searchParams.set('relatedMetricResourceMatch', JSON.stringify(resourceMatch));
+  }
+  return `${url.pathname}?${url.searchParams.toString()}`;
+}
 
 function isTraceSavedQueryView(value: unknown): value is TraceSavedQueryView {
   if (!value || typeof value !== 'object') return false;
@@ -281,12 +423,16 @@ function createTraceSavedQueryView(
 ): TraceSavedQueryView {
   const now = Date.now();
   return {
-    id: `trace-query-${now}`,
+    id: buildSignalSavedViewKey('traces', route),
     label: buildTraceSavedViewLabel(query, routeContext, t),
     description: buildTraceSavedViewDescription(query, routeContext, currentView, t),
     route,
     createdAt: now
   };
+}
+
+function resolveTraceDashboardPanelVisualization(view: TraceExplorerView): SignalDashboardPanelVisualization {
+  return view;
 }
 
 function hasNavigationId(value?: string | null) {
@@ -448,6 +594,18 @@ function buildTraceReturnHref(routeContext: SignalRouteContext, query: TraceQuer
   return buildTraceManageRoute(routeContext, query, { view });
 }
 
+function appendTracePanelEditContext(route: string, panelEditContext: SignalPanelEditContext | null) {
+  if (!panelEditContext) return route;
+  const url = new URL(route || '/trace/manage', 'http://localhost');
+  url.searchParams.set('intent', panelEditContext.intent);
+  if (panelEditContext.dashboardKey) url.searchParams.set('dashboardKey', panelEditContext.dashboardKey);
+  if (panelEditContext.panelId) url.searchParams.set('panelId', panelEditContext.panelId);
+  if (panelEditContext.draftKey) url.searchParams.set('draftKey', panelEditContext.draftKey);
+  if (panelEditContext.returnTo) url.searchParams.set('returnTo', panelEditContext.returnTo);
+  if (panelEditContext.returnLabel) url.searchParams.set('returnLabel', panelEditContext.returnLabel);
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 function buildSelectedTraceReturnHref(
   currentTraceReturnHref: string,
   detail: TraceDetail | null | undefined,
@@ -579,6 +737,7 @@ function TraceWaterfallDrawer({
   query,
   routeContext,
   currentTraceReturnHref,
+  autoOpenKey,
   onClose,
   onSelectSpan,
   onSelectEvent,
@@ -591,6 +750,7 @@ function TraceWaterfallDrawer({
   query: TraceQueryState;
   routeContext: SignalRouteContext;
   currentTraceReturnHref: string;
+  autoOpenKey?: string;
   onClose: () => void;
   onSelectSpan: (spanId: string) => void;
   onSelectEvent: (eventKey: string | null, spanId?: string) => void;
@@ -631,17 +791,92 @@ function TraceWaterfallDrawer({
     metricsReturnTo: selectedTraceReturnHref,
     alertDraft: buildTraceAlertRuleDraft(query, handoffRouteContext)
   });
+  const relatedMetricsUrl = useMemo(
+    () => buildTraceRelatedMetricsApiUrl(detail ? handoffLinks.metricsHref : null),
+    [detail, handoffLinks.metricsHref]
+  );
+  const relatedLogsUrl = useMemo(
+    () => buildTraceRelatedLogsApiUrl(detail ? handoffLinks.logsHref : null),
+    [detail, handoffLinks.logsHref]
+  );
+  const [relatedMetricsState, setRelatedMetricsState] = useState<TraceRelatedMetricsState>({
+    loading: false,
+    error: null,
+    data: null
+  });
+  const [relatedLogsState, setRelatedLogsState] = useState<TraceRelatedLogsState>({
+    loading: false,
+    error: null,
+    data: null
+  });
+  useEffect(() => {
+    if (!state.open || !relatedMetricsUrl) {
+      setRelatedMetricsState({ loading: false, error: null, data: null });
+      return undefined;
+    }
+
+    let cancelled = false;
+    setRelatedMetricsState({ loading: true, error: null, data: null });
+    apiMessageGetWithTimeout<OtlpRelatedMetrics>(relatedMetricsUrl)
+      .then(payload => {
+        if (cancelled) return;
+        setRelatedMetricsState({ loading: false, error: null, data: payload || null });
+      })
+      .catch(error => {
+        if (cancelled) return;
+        setRelatedMetricsState({ loading: false, error: describeTraceManageLoadFailure(error), data: null });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [relatedMetricsUrl, state.open]);
+  useEffect(() => {
+    if (!state.open || !relatedLogsUrl) {
+      setRelatedLogsState({ loading: false, error: null, data: null });
+      return undefined;
+    }
+
+    let cancelled = false;
+    setRelatedLogsState({ loading: true, error: null, data: null });
+    apiMessageGetWithTimeout<PageResult<LogEntry>>(relatedLogsUrl)
+      .then(payload => {
+        if (cancelled) return;
+        setRelatedLogsState({ loading: false, error: null, data: payload || null });
+      })
+      .catch(error => {
+        if (cancelled) return;
+        setRelatedLogsState({ loading: false, error: describeTraceManageLoadFailure(error), data: null });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [relatedLogsUrl, state.open]);
   const traceEventCount = waterfallRows.reduce((count, row) => count + (row.events?.length || 0), 0);
   const missingTraceHandoffTitle = t('trace.manage.handoff.logs-disabled');
   const missingEntityHandoffTitle = t('trace.manage.handoff.entity-disabled');
   const canOpenLogs = hasNavigationId(detail?.traceId);
   const canOpenEntity = handoffLinks.entityHref.startsWith('/entities/');
   const selectedSpanOperationName = selectedSpan?.spanName?.trim() || '';
+  const requestedTraceId = firstNavigationId(query.traceId, routeContext.traceId);
+  const requestedSpanId = firstNavigationId(query.spanId, routeContext.spanId);
+  const drawerSourceContextKind = isDashboardReturnContext(routeContext.returnTo)
+    ? 'dashboard-evidence'
+    : routeContext.returnTo
+      ? 'return-source'
+      : 'direct';
   const selectedFacts = selectedTraceEvent ? buildTraceWaterfallEventFacts(selectedTraceEvent, t) : [
     ...selectedSpanFacts,
     ...selectedSpanEvents.map(row => ({ ...row, title: `${t('trace.manage.drawer.event-prefix')} · ${row.title}` })),
     ...selectedSpanLinks.map(row => ({ ...row, title: `${t('trace.manage.drawer.link-prefix')} · ${row.title}` }))
   ];
+  const relatedMetricCandidates = (relatedMetricsState.data?.candidates || [])
+    .filter(candidate => candidate?.query?.trim())
+    .slice(0, 8);
+  const relatedLogEntries = (relatedLogsState.data?.content || [])
+    .filter(entry => entry && typeof entry === 'object')
+    .slice(0, 3);
   const showSelectedSpan = () => onSelectEvent(null, selectedTraceEvent?.row.key);
 
   return (
@@ -652,6 +887,15 @@ function TraceWaterfallDrawer({
       maxWidthClassName="max-w-[1120px]"
       kicker={t('trace.manage.drawer.kicker')}
       title={selectedSpan?.spanName || detail?.rootSpanName || detail?.traceId || t('trace.manage.drawer.title-fallback')}
+      overlayProps={{
+        'data-trace-manage-drawer-source-context': drawerSourceContextKind,
+        'data-trace-manage-drawer-auto-open-key': autoOpenKey || '',
+        'data-trace-manage-drawer-requested-trace': requestedTraceId || '',
+        'data-trace-manage-drawer-requested-span': requestedSpanId || '',
+        'data-trace-manage-drawer-selected-trace': detail?.traceId || '',
+        'data-trace-manage-drawer-selected-span': selectedSpan?.spanId || state.selectedSpanId || '',
+        'data-trace-manage-drawer-selected-event': state.selectedEventKey || ''
+      }}
       footer={
         <HzActionGroup
           data-trace-manage-drawer-action-group="handoff-actions"
@@ -827,6 +1071,117 @@ function TraceWaterfallDrawer({
               >
                 <TraceAttributionDiagnostics rows={attributionDiagnostics} />
                 <HzDetailRows
+                  data-trace-manage-drawer-related-logs="backend-related-logs"
+                  data-trace-manage-drawer-related-logs-owner="hertzbeat-ui-detail-rows"
+                  data-trace-manage-drawer-related-logs-url={relatedLogsUrl || ''}
+                  data-trace-manage-drawer-related-logs-state={relatedLogsState.loading ? 'loading' : relatedLogsState.error ? 'error' : relatedLogEntries.length > 0 ? 'ready' : 'empty'}
+                  aria-label={t('trace.manage.drawer.related-logs.aria')}
+                  heading={t('trace.manage.drawer.related-logs.title')}
+                  rows={
+                    relatedLogsState.loading
+                      ? [{
+                        key: 'loading',
+                        title: t('trace.manage.drawer.related-logs.loading.title'),
+                        copy: t('trace.manage.drawer.related-logs.loading.copy'),
+                        meta: relatedLogsUrl || '-'
+                      }]
+                      : relatedLogsState.error
+                        ? [{
+                          key: 'error',
+                          title: t('trace.manage.drawer.related-logs.error.title'),
+                          copy: relatedLogsState.error,
+                          meta: t('trace.manage.drawer.related-logs.error.meta')
+                        }]
+                        : relatedLogEntries.length > 0
+                          ? relatedLogEntries.map((entry, index) => {
+                            const traceId = entry.traceId?.trim() || detail.traceId;
+                            const spanId = entry.spanId?.trim() || '';
+                            const href = buildTraceRelatedLogHref(handoffLinks.logsHref, entry);
+                            return {
+                              key: `${traceId || 'trace'}-${spanId || 'span'}-${index}`,
+                              title: traceRelatedLogSeverity(entry),
+                              copy: bodyText(entry.body),
+                              meta: [formatTraceRelatedLogTime(entry), spanId || traceId].filter(value => value && value !== '-').join(' · ') || '-',
+                              action: href ? (
+                                <HzButtonLink
+                                  component={Link}
+                                  href={href}
+                                  size="sm"
+                                  data-trace-manage-drawer-related-log-action="open-logs"
+                                  data-trace-manage-drawer-related-log-action-owner="hertzbeat-ui-button-link"
+                                  data-trace-manage-drawer-related-log-trace={traceId}
+                                  data-trace-manage-drawer-related-log-span={spanId}
+                                >
+                                  {t('trace.manage.drawer.related-logs.action')}
+                                </HzButtonLink>
+                              ) : null
+                            };
+                          })
+                          : [{
+                            key: 'empty',
+                            title: t('trace.manage.drawer.related-logs.empty.title'),
+                            copy: t('trace.manage.drawer.related-logs.empty.copy'),
+                            meta: relatedLogsUrl || '-'
+                          }]
+                  }
+                />
+                <HzDetailRows
+                  data-trace-manage-drawer-related-metrics="backend-related-metrics"
+                  data-trace-manage-drawer-related-metrics-owner="hertzbeat-ui-detail-rows"
+                  data-trace-manage-drawer-related-metrics-url={relatedMetricsUrl || ''}
+                  data-trace-manage-drawer-related-metrics-state={relatedMetricsState.loading ? 'loading' : relatedMetricsState.error ? 'error' : relatedMetricCandidates.length > 0 ? 'ready' : 'empty'}
+                  aria-label={t('trace.manage.drawer.related-metrics.aria')}
+                  heading={t('trace.manage.drawer.related-metrics.title')}
+                  rows={
+                    relatedMetricsState.loading
+                      ? [{
+                        key: 'loading',
+                        title: t('trace.manage.drawer.related-metrics.loading.title'),
+                        copy: t('trace.manage.drawer.related-metrics.loading.copy'),
+                        meta: relatedMetricsUrl || '-'
+                      }]
+                      : relatedMetricsState.error
+                        ? [{
+                          key: 'error',
+                          title: t('trace.manage.drawer.related-metrics.error.title'),
+                          copy: relatedMetricsState.error,
+                          meta: t('trace.manage.drawer.related-metrics.error.meta')
+                        }]
+                        : relatedMetricCandidates.length > 0
+                          ? relatedMetricCandidates.map(candidate => {
+                            const queryName = candidate.query?.trim() || '';
+                            const href = buildTraceRelatedMetricCandidateHref(handoffLinks.metricsHref, candidate);
+                            return {
+                              key: `${candidate.source || 'metric'}-${candidate.family || 'other'}-${queryName}`,
+                              title: queryName,
+                              copy: [candidate.source, candidate.family].filter(Boolean).join(' · ') || t('trace.manage.drawer.related-metrics.candidate.meta'),
+                              meta: candidate.reason || t('trace.manage.drawer.related-metrics.candidate.meta'),
+                              action: href ? (
+                                <HzButtonLink
+                                  component={Link}
+                                  href={href}
+                                  size="sm"
+                                  data-trace-manage-drawer-related-metric-action="open-metrics"
+                                  data-trace-manage-drawer-related-metric-action-owner="hertzbeat-ui-button-link"
+                                  data-trace-manage-drawer-related-metric-query={queryName}
+                                  data-trace-manage-drawer-related-metric-source={candidate.source || ''}
+                                  data-trace-manage-drawer-related-metric-family={candidate.family || ''}
+                                  data-trace-manage-drawer-related-metric-reason={candidate.reason || ''}
+                                >
+                                  {t('trace.manage.drawer.related-metrics.action')}
+                                </HzButtonLink>
+                              ) : null
+                            };
+                          })
+                          : [{
+                            key: 'empty',
+                            title: t('trace.manage.drawer.related-metrics.empty.title'),
+                            copy: t('trace.manage.drawer.related-metrics.empty.copy'),
+                            meta: relatedMetricsUrl || '-'
+                          }]
+                  }
+                />
+                <HzDetailRows
                   data-trace-manage-drawer-span-attributes="span-attributes"
                   data-trace-manage-drawer-span-attributes-owner="hertzbeat-ui-detail-rows"
                   aria-label={t('trace.manage.drawer.attributes.span.aria')}
@@ -973,7 +1328,8 @@ function TraceExplorer({
   timeContext,
   applyTimeContext,
   restoreSavedViewRoute,
-  currentTraceReturnHref
+  currentTraceReturnHref,
+  panelEditContext
 }: {
   data: TraceManageData;
   draft: TraceQueryState;
@@ -987,13 +1343,37 @@ function TraceExplorer({
   applyTimeContext: (timeContext: TimeContext) => void;
   restoreSavedViewRoute: (route: string) => void;
   currentTraceReturnHref: string;
+  panelEditContext: SignalPanelEditContext | null;
 }) {
   const { t } = useI18n();
   const [savedQueryViews, setSavedQueryViews] = useState<TraceSavedQueryView[]>(readTraceSavedQueryViews);
+  const [savedQueryViewPersistenceMode, setSavedQueryViewPersistenceMode] = useState<SignalSavedQueryViewPersistenceMode>('local-fallback');
   const [editingSavedQueryViewId, setEditingSavedQueryViewId] = useState<string | null>(null);
   const [savedQueryViewLabelDraft, setSavedQueryViewLabelDraft] = useState('');
   const [traceExportFormat, setTraceExportFormat] = useState<TraceExportFormat>('csv');
   const [traceExportRowLimit, setTraceExportRowLimit] = useState<TraceExportRowLimit>('current');
+  const [dashboardPanelDraftState, setDashboardPanelDraftState] = useState<TraceDashboardPanelDraftState>('idle');
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadSignalSavedQueryViews('traces')
+      .then(views => {
+        if (cancelled) return;
+        const nextViews = views.filter(isTraceSavedQueryView).slice(0, TRACE_SAVED_QUERY_VIEW_LIMIT);
+        setSavedQueryViews(nextViews);
+        writeTraceSavedQueryViews(nextViews);
+        setSavedQueryViewPersistenceMode('server-first');
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSavedQueryViewPersistenceMode('local-fallback');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const rows = useMemo(() => buildTraceExplorerRows(data.list.content || [], formatDurationNanos, formatTime), [data.list.content]);
   const listPageIndex = Math.max(0, Number.isFinite(data.list.pageIndex) ? Number(data.list.pageIndex) : Number(draft.listPageIndex || 0) || 0);
   const listPageSize = Math.max(1, Number.isFinite(data.list.pageSize) ? Number(data.list.pageSize) : Number(draft.listPageSize || DEFAULT_TRACE_LIST_PAGE_SIZE) || Number(DEFAULT_TRACE_LIST_PAGE_SIZE));
@@ -1042,6 +1422,13 @@ function TraceExplorer({
   const missingEntityHandoffTitle = t('trace.manage.handoff.entity-disabled');
   const canOpenLogs = hasNavigationId(selectedTrace.traceId) || hasNavigationId(draft.traceId) || hasNavigationId(routeContext.traceId);
   const canOpenEntity = hasNavigationId(routeContext.entityId);
+  const sourceContextKind = panelEditContext
+    ? 'dashboard-panel-edit'
+    : isDashboardReturnContext(routeContext.returnTo)
+    ? 'dashboard-evidence'
+    : routeContext.returnTo
+      ? 'return-source'
+      : 'direct';
   const entityContextRows = buildSignalEntityContextRows(routeContext, {
     serviceName: selectedTrace.service !== '-' ? selectedTrace.service : draft.serviceName,
     serviceNamespace: selectedTrace.namespace !== '-' ? selectedTrace.namespace : routeContext.serviceNamespace,
@@ -1216,11 +1603,43 @@ function TraceExplorer({
       writeTraceSavedQueryViews(nextViews);
       return nextViews;
     });
+    void saveSignalSavedQueryView('traces', nextView)
+      .then(savedView => {
+        setSavedQueryViewPersistenceMode('server-first');
+        setSavedQueryViews(previous => {
+          const nextViews = [savedView, ...previous.filter(view => view.id !== nextView.id && view.route !== savedView.route)].slice(0, TRACE_SAVED_QUERY_VIEW_LIMIT);
+          writeTraceSavedQueryViews(nextViews);
+          return nextViews;
+        });
+      })
+      .catch(() => {
+        setSavedQueryViewPersistenceMode('local-fallback');
+      });
   }, [currentTraceReturnHref, currentView, draft, routeContext, t]);
 
   const copyCurrentTraceQueryView = useCallback(() => {
     void copyTextToClipboard(currentTraceReturnHref);
   }, [currentTraceReturnHref]);
+
+  const addCurrentTraceQueryToDashboard = useCallback(() => {
+    const snapshot = createTraceSavedQueryView(draft, routeContext, currentView, currentTraceReturnHref, t);
+    const panelDraft = applySignalDashboardPanelEditContext(createSignalDashboardPanelDraft({
+      signal: 'traces',
+      title: snapshot.label,
+      description: snapshot.description,
+      visualization: resolveTraceDashboardPanelVisualization(currentView),
+      route: currentTraceReturnHref,
+      payload: {
+        source: 'trace-explorer',
+        view: currentView
+      }
+    }), panelEditContext);
+    setDashboardPanelDraftState('saving');
+    void saveSignalDashboardPanelDraft(panelDraft)
+      .then(() => saveSignalDashboardPanelEditContext(panelEditContext, panelDraft))
+      .then(() => setDashboardPanelDraftState('saved'))
+      .catch(() => setDashboardPanelDraftState('failed'));
+  }, [currentTraceReturnHref, currentView, draft, panelEditContext, routeContext, t]);
 
   const deleteTraceSavedQueryView = useCallback((viewId: string) => {
     setSavedQueryViews(previous => {
@@ -1228,6 +1647,11 @@ function TraceExplorer({
       writeTraceSavedQueryViews(nextViews);
       return nextViews;
     });
+    void deleteSignalSavedQueryView('traces', viewId)
+      .then(() => setSavedQueryViewPersistenceMode('server-first'))
+      .catch(() => {
+        setSavedQueryViewPersistenceMode('local-fallback');
+      });
   }, []);
 
   const updateTraceSavedQueryView = useCallback((viewId: string) => {
@@ -1239,6 +1663,21 @@ function TraceExplorer({
           : view
       ));
       writeTraceSavedQueryViews(nextViews);
+      const updatedView = nextViews.find(view => view.id === viewId);
+      if (updatedView) {
+        void saveSignalSavedQueryView('traces', updatedView)
+          .then(savedView => {
+            setSavedQueryViewPersistenceMode('server-first');
+            setSavedQueryViews(currentViews => {
+              const syncedViews = currentViews.map(view => (view.id === viewId ? savedView : view));
+              writeTraceSavedQueryViews(syncedViews);
+              return syncedViews;
+            });
+          })
+          .catch(() => {
+            setSavedQueryViewPersistenceMode('local-fallback');
+          });
+      }
       return nextViews;
     });
   }, [currentTraceReturnHref, currentView, draft, routeContext, t]);
@@ -1262,6 +1701,21 @@ function TraceExplorer({
     setSavedQueryViews(previous => {
       const nextViews = previous.map(view => (view.id === viewId ? { ...view, label: nextLabel } : view));
       writeTraceSavedQueryViews(nextViews);
+      const renamedView = nextViews.find(view => view.id === viewId);
+      if (renamedView) {
+        void saveSignalSavedQueryView('traces', renamedView)
+          .then(savedView => {
+            setSavedQueryViewPersistenceMode('server-first');
+            setSavedQueryViews(currentViews => {
+              const syncedViews = currentViews.map(view => (view.id === viewId ? savedView : view));
+              writeTraceSavedQueryViews(syncedViews);
+              return syncedViews;
+            });
+          })
+          .catch(() => {
+            setSavedQueryViewPersistenceMode('local-fallback');
+          });
+      }
       return nextViews;
     });
     cancelRenameTraceSavedQueryView();
@@ -1598,6 +2052,16 @@ function TraceExplorer({
       data-trace-manage-style-baseline="hertzbeat-ui-matte"
       data-trace-manage-shell-owner="hertzbeat-ui-signal-workbench-shell"
       data-trace-manage-shell-chrome="topology-workbench"
+      data-trace-manage-source-context={sourceContextKind}
+      data-trace-manage-source-context-return={routeContext.returnTo || ''}
+      data-trace-manage-source-context-trace={requestedTraceId}
+      data-trace-manage-source-context-span={requestedSpanId}
+      data-trace-manage-source-context-service={draft.serviceName || routeContext.serviceName || ''}
+      data-trace-manage-panel-edit-context={panelEditContext?.intent || 'none'}
+      data-trace-manage-panel-edit-dashboard={panelEditContext?.dashboardKey || ''}
+      data-trace-manage-panel-edit-panel={panelEditContext?.panelId || ''}
+      data-trace-manage-panel-edit-draft={panelEditContext?.draftKey || ''}
+      data-trace-manage-panel-edit-return={panelEditContext?.returnTo || ''}
       layout="topology-workbench"
     >
         <HzPanelSurface
@@ -2054,6 +2518,9 @@ function TraceExplorer({
         <HzPanelSurface
           data-trace-manage-saved-views="route-query-views"
           data-trace-manage-saved-views-owner="hertzbeat-ui-panel-surface"
+          data-trace-manage-saved-view-persistence={savedQueryViewPersistenceMode}
+          data-trace-manage-saved-view-persistence-owner={TRACE_SAVED_QUERY_VIEW_PERSISTENCE_OWNER[savedQueryViewPersistenceMode]}
+          data-trace-manage-saved-view-storage-key={TRACE_SAVED_QUERY_VIEW_STORAGE_KEY}
           padding="view-switch"
           variant="view-switch"
         >
@@ -2063,7 +2530,30 @@ function TraceExplorer({
             data-trace-manage-saved-view-layout="shared-view-switch"
             data-trace-manage-saved-view-layout-owner="hertzbeat-ui-workbench-layout"
           >
-            <div className="min-w-[128px] text-[12px] font-semibold text-[#8792a5]">{t('trace.manage.saved-view.title')}</div>
+            <div className="min-w-[176px]">
+              <div className="text-[12px] font-semibold text-[#8792a5]">{t('trace.manage.saved-view.title')}</div>
+              <div
+                className="mt-1 text-[11px] text-[#626b7c]"
+                data-trace-manage-saved-view-persistence-copy={savedQueryViewPersistenceMode}
+              >
+                {t(savedQueryViewPersistenceMode === 'server-first'
+                  ? 'trace.manage.saved-view.persistence.server'
+                  : 'trace.manage.saved-view.persistence.local')}
+              </div>
+              {dashboardPanelDraftState !== 'idle' ? (
+                <div
+                  className="mt-1 text-[11px] text-[#8792a5]"
+                  data-trace-manage-dashboard-panel-draft-status={dashboardPanelDraftState}
+                  data-trace-manage-dashboard-panel-draft-status-mode={panelEditContext ? 'edit-panel' : 'new-panel'}
+                  data-trace-manage-dashboard-panel-draft-status-dashboard={panelEditContext?.dashboardKey || ''}
+                  data-trace-manage-dashboard-panel-draft-status-panel={panelEditContext?.panelId || ''}
+                >
+                  {t(panelEditContext
+                    ? `trace.manage.dashboard-panel-draft.update-${dashboardPanelDraftState}`
+                    : `trace.manage.dashboard-panel-draft.${dashboardPanelDraftState}`)}
+                </div>
+              ) : null}
+            </div>
             <HzActionGroup
               layout="end-wrap"
               data-trace-manage-saved-view-action-group="shared-action-group"
@@ -2092,6 +2582,45 @@ function TraceExplorer({
               >
                 <Copy className="h-4 w-4" aria-hidden="true" />
               </HzButton>
+              <HzButton
+                type="button"
+                intent="secondary"
+                size="md"
+                title={t(panelEditContext ? 'trace.manage.dashboard-panel-draft.update-current' : 'trace.manage.dashboard-panel-draft.add-current')}
+                aria-label={t(panelEditContext ? 'trace.manage.dashboard-panel-draft.update-current' : 'trace.manage.dashboard-panel-draft.add-current')}
+                onClick={addCurrentTraceQueryToDashboard}
+                data-trace-manage-dashboard-panel-draft-action={panelEditContext ? 'update-current' : 'add-current'}
+                data-trace-manage-dashboard-panel-draft-action-owner="hertzbeat-ui-button"
+                data-trace-manage-dashboard-panel-draft-action-mode={panelEditContext ? 'edit-panel' : 'new-panel'}
+                data-trace-manage-dashboard-panel-draft-action-dashboard={panelEditContext?.dashboardKey || ''}
+                data-trace-manage-dashboard-panel-draft-action-panel={panelEditContext?.panelId || ''}
+                data-trace-manage-dashboard-panel-draft-action-draft={panelEditContext?.draftKey || ''}
+              >
+                <HzButtonIcon
+                  icon={BarChart3}
+                  data-trace-manage-dashboard-panel-draft-action-icon="add-current"
+                  data-trace-manage-dashboard-panel-draft-action-icon-owner="hertzbeat-ui-button-icon"
+                />
+              </HzButton>
+              {panelEditContext?.returnTo ? (
+                <HzButtonLink
+                  component={Link}
+                  href={panelEditContext.returnTo}
+                  intent="secondary"
+                  size="md"
+                  data-trace-manage-dashboard-panel-draft-return-action="dashboard"
+                  data-trace-manage-dashboard-panel-draft-return-action-owner="hertzbeat-ui-button-link"
+                  data-trace-manage-dashboard-panel-draft-return-action-dashboard={panelEditContext.dashboardKey || ''}
+                  data-trace-manage-dashboard-panel-draft-return-action-panel={panelEditContext.panelId || ''}
+                >
+                  <HzButtonIcon
+                    icon={BarChart3}
+                    data-trace-manage-dashboard-panel-draft-return-action-icon="dashboard"
+                    data-trace-manage-dashboard-panel-draft-return-action-icon-owner="hertzbeat-ui-button-icon"
+                  />
+                  {t('trace.manage.dashboard-panel-draft.return-dashboard')}
+                </HzButtonLink>
+              ) : null}
               {savedQueryViews.length ? (
                 savedQueryViews.map(view => {
                   const active = view.route === currentTraceReturnHref;
@@ -2739,6 +3268,7 @@ function TraceExplorer({
           query={draft}
           routeContext={routeContext}
           currentTraceReturnHref={currentTraceReturnHref}
+          autoOpenKey={autoOpenedTraceDetailKeyRef.current || ''}
           onClose={closeTraceDetailDrawer}
           onSelectSpan={spanId => setTraceDetailDrawer(previous => ({ ...previous, selectedSpanId: spanId, selectedEventKey: null }))}
           onSelectEvent={(eventKey, spanId) => setTraceDetailDrawer(previous => ({ ...previous, selectedSpanId: spanId || previous.selectedSpanId, selectedEventKey: eventKey }))}
@@ -2759,10 +3289,15 @@ export default function TraceManagePage({
   const traceManageRouteState = initialRouteState ?? EMPTY_TRACE_MANAGE_ROUTE_STATE;
   const { t } = useI18n();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [draft, setDraft] = useState<TraceQueryState>(() => traceManageRouteState.initialQuery);
   const [query, setQuery] = useState<TraceQueryState>(() => traceManageRouteState.initialQuery);
   const currentView = traceManageRouteState.currentView;
   const routeContext = traceManageRouteState.routeContext;
+  const panelEditContext = useMemo(() => readSignalPanelEditContext(searchParams), [searchParams]);
+  const replaceTraceHref = useCallback((route: string) => {
+    router.replace(appendTracePanelEditContext(route, panelEditContext));
+  }, [panelEditContext, router]);
   const traceTimeContext = useMemo(() => sanitizeTimeContext({
     timeRange: routeContext.timeRange || 'last-30m',
     start: routeContext.start,
@@ -2804,29 +3339,29 @@ export default function TraceManagePage({
 
   const applyQuery = useCallback((nextQuery: TraceQueryState = draft) => {
     setQuery(nextQuery);
-    router.replace(buildTraceManageRoute(routeContext, nextQuery, { view: currentView }));
-  }, [currentView, draft, routeContext, router]);
+    replaceTraceHref(buildTraceManageRoute(routeContext, nextQuery, { view: currentView }));
+  }, [currentView, draft, replaceTraceHref, routeContext]);
 
   const applyTraceTimeContext = useCallback((timeContext: TimeContext) => {
     const appliedContext = resolveAppliedTimeContext(timeContext, traceTimeContext);
-    router.replace(buildTraceManageRoute(routeContext, query, { view: currentView, timeContext: appliedContext }));
-  }, [currentView, query, routeContext, router, traceTimeContext]);
+    replaceTraceHref(buildTraceManageRoute(routeContext, query, { view: currentView, timeContext: appliedContext }));
+  }, [currentView, query, replaceTraceHref, routeContext, traceTimeContext]);
 
   const resetQuery = useCallback(() => {
     setDraft(emptyTraceQuery);
     setQuery(emptyTraceQuery);
-    router.replace(buildResetTraceManageRoute(routeContext, currentView));
-  }, [currentView, routeContext, router]);
+    replaceTraceHref(buildResetTraceManageRoute(routeContext, currentView));
+  }, [currentView, replaceTraceHref, routeContext]);
 
   const switchView = useCallback((view: TraceExplorerView) => {
-    router.replace(buildTraceManageRoute(routeContext, query, { view }));
-  }, [query, routeContext, router]);
+    replaceTraceHref(buildTraceManageRoute(routeContext, query, { view }));
+  }, [query, replaceTraceHref, routeContext]);
 
   useEffect(() => {
-    if (traceManageRouteState.shouldCleanUrl) {
+    if (!panelEditContext && traceManageRouteState.shouldCleanUrl) {
       router.replace(buildTraceManageRoute(routeContext, query, { view: currentView }));
     }
-  }, [currentView, query, routeContext, router, traceManageRouteState.shouldCleanUrl]);
+  }, [currentView, panelEditContext, query, routeContext, router, traceManageRouteState.shouldCleanUrl]);
 
   return (
     <ClientWorkbench
@@ -2847,8 +3382,9 @@ export default function TraceManagePage({
           routeContext={routeContext}
           timeContext={traceTimeContext}
           applyTimeContext={applyTraceTimeContext}
-          restoreSavedViewRoute={route => router.replace(route)}
+          restoreSavedViewRoute={replaceTraceHref}
           currentTraceReturnHref={buildTraceReturnHref(routeContext, query, currentView)}
+          panelEditContext={panelEditContext}
         />
       )}
     </ClientWorkbench>

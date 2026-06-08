@@ -323,9 +323,18 @@ function appendLogTimeContext(params: URLSearchParams, routeContext: SignalRoute
 
 function appendLogQuickFilterContext(params: URLSearchParams, routeContext: SignalRouteContext = {}) {
   const serviceName = routeContext.serviceName?.trim();
+  const serviceNamespace = routeContext.serviceNamespace?.trim();
   const environment = routeContext.environment?.trim();
   if (serviceName) params.set('serviceName', serviceName);
+  if (serviceNamespace) params.set('serviceNamespace', serviceNamespace);
   if (environment) params.set('environment', environment);
+}
+
+function appendLogEntityContextParams(params: URLSearchParams, routeContext: SignalRouteContext = {}) {
+  const entityId = routeContext.entityId?.trim();
+  const entityType = routeContext.entityType?.trim();
+  if (entityId && /^\d+$/.test(entityId)) params.set('entityId', entityId);
+  if (entityType && /^[A-Za-z0-9_.:-]+$/.test(entityType)) params.set('entityType', entityType);
 }
 
 export function buildLogRouteUrl(query: LogQueryState, options?: { view?: LogWorkbenchView }): string {
@@ -384,8 +393,10 @@ export function buildLogUrls(query: LogQueryState, routeContext: SignalRouteCont
   const severityNumber = normalizeSeverityNumberParam(query.severityNumber);
   if (severityNumber) listParams.set('severityNumber', severityNumber);
   if (query.severityText.trim()) listParams.set('severityText', query.severityText.trim());
-  if (query.resourceFilter?.trim()) listParams.set('resourceFilter', query.resourceFilter.trim());
+  const resourceFilter = query.resourceFilter?.trim() || '';
+  if (resourceFilter) listParams.set('resourceFilter', resourceFilter);
   if (query.attributeFilter?.trim()) listParams.set('attributeFilter', query.attributeFilter.trim());
+  appendLogEntityContextParams(listParams, routeContext);
   appendLogQuickFilterContext(listParams, routeContext);
   appendLogTimeContext(listParams, routeContext);
 
@@ -395,8 +406,9 @@ export function buildLogUrls(query: LogQueryState, routeContext: SignalRouteCont
   if (query.spanId.trim()) statsParams.set('spanId', query.spanId.trim());
   if (severityNumber) statsParams.set('severityNumber', severityNumber);
   if (query.severityText.trim()) statsParams.set('severityText', query.severityText.trim());
-  if (query.resourceFilter?.trim()) statsParams.set('resourceFilter', query.resourceFilter.trim());
+  if (resourceFilter) statsParams.set('resourceFilter', resourceFilter);
   if (query.attributeFilter?.trim()) statsParams.set('attributeFilter', query.attributeFilter.trim());
+  appendLogEntityContextParams(statsParams, routeContext);
   appendLogQuickFilterContext(statsParams, routeContext);
   appendLogTimeContext(statsParams, routeContext);
   const qs = statsParams.toString();

@@ -31,6 +31,11 @@ export type OtlpMetricsQueryState = SignalRouteContext & {
   inventoryPageSize?: string;
   inventoryPageIndex?: string;
   seriesAttributeSearch?: string;
+  relatedMetricSource?: string;
+  relatedMetricFamily?: string;
+  relatedMetricReason?: string;
+  relatedMetricMatchedLabels?: string;
+  relatedMetricResourceMatch?: string;
 };
 
 export type SearchParamReader = {
@@ -89,6 +94,7 @@ export function queryStateFromParams(params: SearchParamReader): OtlpMetricsQuer
     collector: params.get('collector') || undefined,
     template: params.get('template') || undefined,
     entityId: readEntityIdRouteParam(params.get('entityId')),
+    entityType: params.get('entityType') || undefined,
     entityName: params.get('entityName') || undefined,
     returnTo: stripReturnLabelFromHref(params.get('returnTo')) || undefined,
     traceId: params.get('traceId') || undefined,
@@ -102,6 +108,11 @@ export function queryStateFromParams(params: SearchParamReader): OtlpMetricsQuer
     inventoryPageSize: readMetricsInventoryPageSize(params.get('inventoryPageSize')),
     inventoryPageIndex: params.get('inventoryPageIndex') === '0' ? undefined : readPositiveIntegerRouteParam(params.get('inventoryPageIndex')),
     seriesAttributeSearch: params.get('seriesAttributeSearch') || undefined,
+    relatedMetricSource: params.get('relatedMetricSource') || undefined,
+    relatedMetricFamily: params.get('relatedMetricFamily') || undefined,
+    relatedMetricReason: params.get('relatedMetricReason') || undefined,
+    relatedMetricMatchedLabels: params.get('relatedMetricMatchedLabels') || undefined,
+    relatedMetricResourceMatch: params.get('relatedMetricResourceMatch') || undefined,
     serviceName: params.get('serviceName') || undefined,
     serviceNamespace: params.get('serviceNamespace') || undefined,
     environment: params.get('environment') || undefined,
@@ -132,6 +143,7 @@ export function buildOtlpMetricsConsoleUrl(query: OtlpMetricsQueryState) {
       if (key === 'formula') return;
       if (key === 'inventorySearch' || key === 'inventorySort' || key === 'inventoryPageSize' || key === 'inventoryPageIndex') return;
       if (key === 'seriesAttributeSearch') return;
+      if (key === 'relatedMetricSource' || key === 'relatedMetricFamily' || key === 'relatedMetricReason' || key === 'relatedMetricMatchedLabels' || key === 'relatedMetricResourceMatch') return;
       if (key === 'warningThreshold' || key === 'criticalThreshold') return;
       if (key === 'expectedRange') return;
       if (key === 'entityId') {

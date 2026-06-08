@@ -100,6 +100,7 @@ export interface LogEntry {
 export interface LogOverview {
   totalLogs: number;
   errorLogs: number;
+  hasActiveLog?: boolean | null;
   latestObservedAt?: number | null;
   distinctTraceCount: number;
   droppedCount?: number | null;
@@ -338,6 +339,7 @@ export interface OtlpMetricsConsole {
   queryMode?: string;
   context?: {
     entityId?: number | null;
+    entityType?: string | null;
     entityName?: string | null;
     serviceName?: string | null;
     serviceNamespace?: string | null;
@@ -368,6 +370,26 @@ export interface OtlpMetricsConsole {
       data?: Array<Array<number | string | null>>;
     }>;
   };
+}
+
+export interface OtlpRelatedMetrics {
+  context?: OtlpMetricsConsole['context'];
+  filter?: string | null;
+  source?: string | null;
+  candidateCount?: number;
+  resourceMatchers?: Array<{
+    label?: string | null;
+    operator?: string | null;
+    value?: string | null;
+  }>;
+  candidates?: Array<{
+    query?: string | null;
+    source?: string | null;
+    family?: string | null;
+    reason?: string | null;
+    matchedLabels?: string[];
+    resourceMatch?: Record<string, string>;
+  }>;
 }
 
 export interface AppCount {
@@ -508,7 +530,7 @@ export interface EntityDetailDto {
   alertSummary?: EntityAlertSummary;
   monitorSummary?: EntityMonitorSummary;
   logSummary?: EntityLogSummary;
-  traceSummary?: EntityTraceSummary;
+  traceSummary?: EntityTraceSummary & { latestSpanId?: string | null };
   unifiedEvidenceSummary?: EntityUnifiedEvidenceSummary;
   signalEvidence?: EntitySignalEvidenceBundle;
   boundMonitors?: Monitor[];

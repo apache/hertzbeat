@@ -527,6 +527,50 @@ describe('log view model', () => {
     });
   });
 
+  it('keeps Signoz-like IN and NOT IN filters in executable log alert expressions', () => {
+    expect(buildLogAlertRuleDraft(
+      {
+        search: 'checkout failed',
+        logContent: '',
+        traceId: '',
+        spanId: '',
+        severityNumber: '',
+        severityText: '',
+        resourceFilter: 'service.name IN ("checkout", "billing") and deployment.environment.name NOT IN ("dev", "staging")',
+        attributeFilter: "http.status_code IN (500, 503), http.route NOT IN ('/health', '/ready')"
+      } as any
+    )).toMatchObject({
+      expression:
+        "contains(log.body, 'checkout failed') && "
+        + "(log.resource['service.name'] == 'checkout' || log.resource['service.name'] == 'billing') && "
+        + "(log.resource['deployment.environment.name'] != 'dev' && log.resource['deployment.environment.name'] != 'staging') && "
+        + "(log.attributes['http.status_code'] == 500 || log.attributes['http.status_code'] == 503) && "
+        + "(log.attributes['http.route'] != '/health' && log.attributes['http.route'] != '/ready')",
+      template: 'Log matched: {{log.body}}'
+    });
+  });
+
+  it('keeps Signoz-like CONTAINS and EXISTS filters in executable log alert expressions', () => {
+    expect(buildLogAlertRuleDraft(
+      {
+        search: '',
+        logContent: '',
+        traceId: '',
+        spanId: '',
+        severityNumber: '',
+        severityText: '',
+        resourceFilter: "service.name EXISTS and k8s.pod.name CONTAINS 'checkout'",
+        attributeFilter: "body CONTAINS 'timed out', http.route EXISTS, error.message CONTAINS \"inventory\""
+      } as any
+    )).toMatchObject({
+      expression:
+        "log.resource['service.name'] != '' && contains(log.resource['k8s.pod.name'], 'checkout') && "
+        + "contains(log.body, 'timed out') && log.attributes['http.route'] != '' && "
+        + "contains(log.attributes['error.message'], 'inventory')",
+      template: 'Log matched: {{log.body}}'
+    });
+  });
+
   it('keeps trace and span scope in executable log alert expressions', () => {
     expect(buildLogAlertRuleDraft(
       {

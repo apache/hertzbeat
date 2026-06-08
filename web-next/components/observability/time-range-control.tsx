@@ -10,7 +10,7 @@ import {
 } from '../../lib/time-context';
 import { cn } from '../../lib/utils';
 import { Input } from '../ui/input';
-import { Select } from '../ui/select';
+import { Select, type SelectProps } from '../ui/select';
 
 type TimeRangePresetOption = {
   value: string;
@@ -20,6 +20,15 @@ type TimeRangePresetOption = {
 type TimeRangeControlTranslator = (key: string) => string;
 type TimeRangePresetLabels = Partial<Record<TimeContextPreset, string>>;
 type TimeRangeControlVariant = 'toolbar' | 'narrow-rail';
+type TimeRangeControlButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  [key: `data-${string}`]: string | number | boolean | undefined;
+};
+type TimeRangeControlSelectProps = Omit<
+  SelectProps,
+  'children' | 'className' | 'containerClassName' | 'defaultValue' | 'onChange' | 'onValueChange' | 'value'
+> & {
+  [key: `data-${string}`]: string | number | boolean | undefined;
+};
 
 const DEFAULT_TIME_RANGE_PRESET_LABELS: Record<TimeContextPreset, string> = {
   'last-30m': 'Last 30 minutes',
@@ -238,9 +247,9 @@ export type TimeRangeControlProps = Omit<React.HTMLAttributes<HTMLDivElement>, '
   labels?: Partial<TimeRangeControlLabels>;
   showAbsoluteFields?: boolean;
   variant?: TimeRangeControlVariant;
-  presetSelectProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
+  presetSelectProps?: TimeRangeControlSelectProps;
   presetOptionDataAttribute?: string;
-  refreshActionProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
+  refreshActionProps?: TimeRangeControlButtonProps;
 };
 
 export function TimeRangeControl({

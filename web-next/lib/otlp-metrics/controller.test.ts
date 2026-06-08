@@ -14,6 +14,7 @@ describe('otlp metrics controller', () => {
 
     await expect(loadOtlpMetricsConsole(apiGet as any, {
       entityId: '7',
+      entityType: 'service',
       entityName: 'Checkout API',
       serviceName: 'checkout',
       serviceNamespace: 'commerce',
@@ -23,7 +24,7 @@ describe('otlp metrics controller', () => {
     })).rejects.toThrow('404');
 
     expect(apiGet).toHaveBeenCalledWith(
-      '/ingestion/otlp/metrics/console?entityId=7&entityName=Checkout+API&serviceName=checkout&serviceNamespace=commerce&environment=prod&start=1712730000000&end=1712733600000'
+      '/ingestion/otlp/metrics/console?entityId=7&entityType=service&entityName=Checkout+API&serviceName=checkout&serviceNamespace=commerce&environment=prod&start=1712730000000&end=1712733600000'
     );
   });
 
@@ -156,7 +157,7 @@ describe('otlp metrics controller', () => {
 
   it('reads metrics query state from search params', () => {
     const params = new URLSearchParams(
-      'query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=25&timeRange=last-1h&collector=collector-a&template=spring-boot&traceId=trace-1&spanId=span-1&serviceName=checkout&returnTo=%2Flog%2Fmanage%3FreturnLabel%3DLogs&returnLabel=Metrics&environment=prod'
+      'query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=25&timeRange=last-1h&collector=collector-a&template=spring-boot&traceId=trace-1&spanId=span-1&entityType=service&serviceName=checkout&returnTo=%2Flog%2Fmanage%3FreturnLabel%3DLogs&returnLabel=Metrics&environment=prod'
     );
     expect(queryStateFromParams(params)).toEqual({
       query: 'http_server_duration_milliseconds_count',
@@ -171,6 +172,11 @@ describe('otlp metrics controller', () => {
       inventorySearch: undefined,
       inventorySort: undefined,
       seriesAttributeSearch: undefined,
+      relatedMetricSource: undefined,
+      relatedMetricFamily: undefined,
+      relatedMetricReason: undefined,
+      relatedMetricMatchedLabels: undefined,
+      relatedMetricResourceMatch: undefined,
       inspector: 'graph',
       warningThreshold: undefined,
       criticalThreshold: undefined,
@@ -180,6 +186,7 @@ describe('otlp metrics controller', () => {
       template: 'spring-boot',
       traceId: 'trace-1',
       spanId: 'span-1',
+      entityType: 'service',
       serviceName: 'checkout',
       serviceNamespace: undefined,
       entityId: undefined,
@@ -213,5 +220,23 @@ describe('otlp metrics controller', () => {
     expect(
       buildOtlpMetricsConsoleUrl(dirtyQuery)
     ).toBe('/ingestion/otlp/metrics/console?traceId=trace-1&returnTo=%2Flog%2Fmanage&serviceName=checkout');
+  });
+
+  it('keeps related metric candidate metadata out of the metrics console endpoint', () => {
+    const query = queryStateFromParams(new URLSearchParams(
+      'query=container.cpu.usage&filter=k8s.pod.name%3D%22checkout-7d9%22&relatedMetricSource=pod&relatedMetricFamily=cpu&relatedMetricReason=resource-filter&relatedMetricMatchedLabels=k8s_pod_name&relatedMetricResourceMatch=%7B%22k8s_pod_name%22%3A%22checkout-7d9%22%7D'
+    ));
+    expect(query).toMatchObject({
+      query: 'container.cpu.usage',
+      filter: 'k8s.pod.name="checkout-7d9"',
+      relatedMetricSource: 'pod',
+      relatedMetricFamily: 'cpu',
+      relatedMetricReason: 'resource-filter',
+      relatedMetricMatchedLabels: 'k8s_pod_name',
+      relatedMetricResourceMatch: '{"k8s_pod_name":"checkout-7d9"}'
+    });
+    expect(buildOtlpMetricsConsoleUrl(query)).toBe(
+      '/ingestion/otlp/metrics/console?query=container.cpu.usage&filter=k8s.pod.name%3D%22checkout-7d9%22'
+    );
   });
 });

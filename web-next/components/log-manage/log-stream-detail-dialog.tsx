@@ -60,6 +60,9 @@ type ContextRow = {
 };
 
 type DetailSectionKey = 'overview' | 'json' | 'context' | 'metrics';
+type LogStreamDetailDialogOverlayProps = {
+  [key: `data-${string}`]: string | number | boolean | undefined;
+};
 
 const LOG_DETAIL_SECTION_IDS: Record<DetailSectionKey, string> = {
   overview: 'log-detail-section-overview',
@@ -100,7 +103,8 @@ export function LogStreamDetailDialog({
   raw,
   onCopyJson,
   onCopyRaw,
-  onCopyMetricQuery
+  onCopyMetricQuery,
+  overlayProps
 }: {
   open: boolean;
   onClose: () => void;
@@ -134,6 +138,7 @@ export function LogStreamDetailDialog({
   onCopyJson?: (json: string) => void;
   onCopyRaw?: (raw: string) => void;
   onCopyMetricQuery?: (query: string) => void;
+  overlayProps?: LogStreamDetailDialogOverlayProps;
 }) {
   const { t } = useI18n();
   const [attributeSearch, setAttributeSearch] = React.useState('');
@@ -169,7 +174,7 @@ export function LogStreamDetailDialog({
   const showMetricsSection = metricsRows.length > 0;
   const showContextSection = contextLoading || Boolean(contextError) || contextRows.length > 0;
   const showJsonSection = Boolean(json);
-  const detailSections: Array<{ key: DetailSectionKey; id: string; label: string; visible: boolean }> = [
+  const detailSections = ([
     {
       key: 'overview',
       id: LOG_DETAIL_SECTION_IDS.overview,
@@ -194,7 +199,7 @@ export function LogStreamDetailDialog({
       label: t('log.manage.stream.detail.section.metrics'),
       visible: showMetricsSection
     }
-  ].filter(section => section.visible);
+  ] satisfies Array<{ key: DetailSectionKey; id: string; label: string; visible: boolean }>).filter(section => section.visible);
 
   return (
     <OverlayDialog
@@ -204,6 +209,7 @@ export function LogStreamDetailDialog({
       title={subtitle || title}
       placement="right"
       maxWidthClassName="max-w-[720px]"
+      overlayProps={overlayProps}
     >
       <HzDialogBodyLayout
         data-log-stream-detail-dialog="true"
@@ -669,7 +675,7 @@ export function LogStreamDetailDialog({
                           key: 'filter',
                           header: t('log.manage.attributes.column.filter'),
                           width: '108px',
-                          render: row => renderAttributeAction(row)
+                          render: (row: AttributeRow) => renderAttributeAction(row)
                         }
                       ]
                     : [])
@@ -723,7 +729,9 @@ export function LogStreamDetailDialog({
                   data-log-stream-detail-raw-copy-owner="hertzbeat-ui-button"
                   size="sm"
                   intent="secondary"
-                  onClick={() => onCopyRaw?.(raw)}
+                  onClick={() => {
+                    if (raw) onCopyRaw?.(raw);
+                  }}
                   aria-label={t('log.manage.stream.detail.copy-raw.aria')}
                 >
                   <HzButtonIcon

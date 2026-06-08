@@ -4,6 +4,8 @@ import {
   buildSignalAlertHandlingHref,
   buildSignalEntityContextRows,
   copySignalRouteContextParams,
+  isDashboardReturnContext,
+  readSignalPanelEditContext,
   readSignalRouteContext
 } from './signal-route-context';
 
@@ -137,6 +139,37 @@ describe('signal route context', () => {
       serviceName: 'checkout'
     });
     expect((context as Record<string, string | undefined>).returnLabel).toBeUndefined();
+  });
+
+  it('reads dashboard panel edit context without polluting shared signal route context', () => {
+    const params = new URLSearchParams(
+      'intent=edit-panel&dashboardKey=signals-overview&panelId=metrics-panel-1&draftKey=metrics-panel-draft&returnTo=%2Fdashboard%3Fstart%3D10%26returnLabel%3DDashboard&returnLabel=Signals'
+    );
+
+    expect(readSignalPanelEditContext(params)).toEqual({
+      intent: 'edit-panel',
+      dashboardKey: 'signals-overview',
+      panelId: 'metrics-panel-1',
+      draftKey: 'metrics-panel-draft',
+      returnTo: '/dashboard?start=10',
+      returnLabel: 'Signals'
+    });
+    expect(readSignalRouteContext(params)).toEqual({
+      returnTo: '/dashboard?start=10'
+    });
+  });
+
+  it('ignores incomplete dashboard panel edit context', () => {
+    expect(readSignalPanelEditContext(new URLSearchParams('intent=edit-panel&dashboardKey=signals-overview'))).toBeNull();
+    expect(readSignalPanelEditContext(new URLSearchParams('intent=add-panel&dashboardKey=signals-overview&panelId=metrics-panel-1'))).toBeNull();
+  });
+
+  it('detects dashboard return contexts after stripping display labels', () => {
+    expect(isDashboardReturnContext('/dashboard?start=10&end=20&returnLabel=Dashboard')).toBe(true);
+    expect(isDashboardReturnContext('/dashboard')).toBe(true);
+    expect(isDashboardReturnContext('/overview?returnTo=%2Fdashboard')).toBe(false);
+    expect(isDashboardReturnContext('https://example.com/dashboard')).toBe(false);
+    expect(isDashboardReturnContext('//example.com/dashboard')).toBe(false);
   });
 
   it('builds alert handling links for firing alert closure instead of threshold-rule configuration', () => {

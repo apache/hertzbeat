@@ -6,7 +6,7 @@ export default async function TraceManageRoutePage({
   searchParams
 }: {
   searchParams?: Promise<TraceManageSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const routeState = readTraceManageRouteState(resolvedSearchParams);
   return <TraceManagePage initialRouteState={routeState} />;

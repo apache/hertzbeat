@@ -13,6 +13,7 @@ import type { TraceManageRouteState, TraceQueryState } from '@/lib/trace-manage/
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const apiMessageGet = vi.hoisted(() => vi.fn());
+const originalFetch = globalThis.fetch;
 
 const mockState = vi.hoisted(() => ({
   searchParams: new URLSearchParams(),
@@ -119,6 +120,21 @@ vi.mock('@/lib/api-client', () => ({
 }));
 
 vi.mock('@/lib/signal-route-context', () => ({
+  isDashboardReturnContext: (href?: string | null) => href?.startsWith('/dashboard') || false,
+  readSignalPanelEditContext: () => {
+    if (mockState.searchParams.get('intent') !== 'edit-panel') return null;
+    const dashboardKey = mockState.searchParams.get('dashboardKey') || undefined;
+    const panelId = mockState.searchParams.get('panelId') || undefined;
+    if (!dashboardKey || !panelId) return null;
+    return {
+      intent: 'edit-panel',
+      dashboardKey,
+      panelId,
+      draftKey: mockState.searchParams.get('draftKey') || undefined,
+      returnTo: mockState.searchParams.get('returnTo') || undefined,
+      returnLabel: mockState.searchParams.get('returnLabel') || undefined
+    };
+  },
   readEpochMillisRouteParam: (value: string | null | undefined) => {
     if (!value) return undefined;
     const trimmed = value.trim();
@@ -471,6 +487,12 @@ function renderInteractiveTraceManagePage(initialRouteState = buildTraceManageRo
   interactionRoot?.render(<TraceManagePage initialRouteState={initialRouteState} />);
 }
 
+async function flushDashboardEditPromises() {
+  for (let index = 0; index < 8; index += 1) {
+    await Promise.resolve();
+  }
+}
+
 beforeEach(() => {
   mockState.searchParams = new URLSearchParams();
   mockState.replace.mockReset();
@@ -493,6 +515,7 @@ afterEach(() => {
   interactionContainer?.remove();
   interactionRoot = null;
   interactionContainer = null;
+  globalThis.fetch = originalFetch;
 });
 
 describe('trace manage page', () => {
@@ -784,18 +807,56 @@ describe('trace manage page', () => {
     mockState.searchParams = new URLSearchParams(
       'view=table&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=POST%20%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&environment=prod&spanScope=entrypoint&columns=service,duration,trace-id'
     );
+    const savedViewRequests: Array<{ path: string; method: string; body?: Record<string, unknown> }> = [];
+    let serverSavedViews: Record<string, unknown>[] = [];
+    globalThis.fetch = vi.fn(async (input, init) => {
+      const path = String(input);
+      const method = String(init?.method || 'GET').toUpperCase();
+      const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined;
+      savedViewRequests.push({ path, method, body });
+      if (path.endsWith('/api/signal/saved-view/traces') && method === 'GET') {
+        return new Response(JSON.stringify({ code: 0, data: serverSavedViews }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (path.endsWith('/api/signal/saved-view') && method === 'PUT') {
+        if (body) {
+          serverSavedViews = [body, ...serverSavedViews.filter(view => view.viewKey !== body.viewKey)];
+        }
+        return new Response(JSON.stringify({ code: 0, data: body }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (path.includes('/api/signal/saved-view/traces/') && method === 'DELETE') {
+        const viewKey = decodeURIComponent(path.split('/').pop() || '');
+        serverSavedViews = serverSavedViews.filter(view => view.viewKey !== viewKey);
+        return new Response(JSON.stringify({ code: 0, data: null }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return new Response(JSON.stringify({ code: 1, msg: `Unexpected request ${method} ${path}` }), { status: 500 });
+    }) as typeof fetch;
     interactionContainer = document.createElement('div');
     document.body.appendChild(interactionContainer);
     interactionRoot = createRoot(interactionContainer);
 
     await act(async () => {
       renderInteractiveTraceManagePage();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const savedViewPanel = interactionContainer.querySelector('[data-trace-manage-saved-views="route-query-views"]') as HTMLElement | null;
     expect(savedViewPanel).toBeTruthy();
     expect(savedViewPanel?.getAttribute('data-trace-manage-saved-views-owner')).toBe('hertzbeat-ui-panel-surface');
+    expect(savedViewPanel?.getAttribute('data-trace-manage-saved-view-persistence')).toBe('server-first');
+    expect(savedViewPanel?.getAttribute('data-trace-manage-saved-view-persistence-owner')).toBe('hertzbeat-api');
+    expect(savedViewPanel?.getAttribute('data-trace-manage-saved-view-storage-key')).toBe('hertzbeat.trace-manage.saved-query-views');
+
+    const persistenceCopy = interactionContainer.querySelector('[data-trace-manage-saved-view-persistence-copy="server-first"]') as HTMLElement | null;
+    expect(persistenceCopy?.textContent).toContain(createTranslatorMock()('trace.manage.saved-view.persistence.server'));
 
     const saveAction = interactionContainer.querySelector('[data-trace-manage-saved-view-action="save-current"]') as HTMLButtonElement | null;
     expect(saveAction).toBeTruthy();
@@ -812,6 +873,9 @@ describe('trace manage page', () => {
     const copyAction = interactionContainer.querySelector('[data-trace-manage-saved-view-copy-action="current"]') as HTMLButtonElement | null;
     expect(copyAction).toBeTruthy();
     expect(copyAction?.getAttribute('data-trace-manage-saved-view-copy-owner')).toBe('hertzbeat-ui-button');
+    const dashboardPanelDraftAction = interactionContainer.querySelector('[data-trace-manage-dashboard-panel-draft-action="add-current"]') as HTMLButtonElement | null;
+    expect(dashboardPanelDraftAction).toBeTruthy();
+    expect(dashboardPanelDraftAction?.getAttribute('data-trace-manage-dashboard-panel-draft-action-owner')).toBe('hertzbeat-ui-button');
 
     await act(async () => {
       copyAction?.click();
@@ -826,7 +890,7 @@ describe('trace manage page', () => {
 
     await act(async () => {
       saveAction?.click();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const savedViews = JSON.parse(window.localStorage.getItem('hertzbeat.trace-manage.saved-query-views') || '[]');
@@ -846,6 +910,15 @@ describe('trace manage page', () => {
     expect(savedViews[0]?.route).toContain('columns=start%2Cservice%2Cduration%2Ctrace-id');
     expect(savedViews[0]?.route).toContain('view=table');
     expect(savedViews[0]?.route).toContain('environment=prod');
+    const saveRequest = savedViewRequests.find(request => request.method === 'PUT' && request.body?.route === savedViews[0]?.route);
+    expect(saveRequest?.path).toBe('/api/signal/saved-view');
+    expect(saveRequest?.body).toEqual(expect.objectContaining({
+      signal: 'traces',
+      viewKey: savedViews[0]?.id,
+      querySnapshot: savedViews[0]?.route,
+      payload: expect.stringContaining('createdAt')
+    }));
+    expect(interactionContainer.querySelector('[data-trace-manage-saved-views="route-query-views"]')?.getAttribute('data-trace-manage-saved-view-persistence')).toBe('server-first');
 
     const renameSavedViewAction = interactionContainer.querySelector('[data-trace-manage-saved-view-rename-action]') as HTMLButtonElement | null;
     expect(renameSavedViewAction).toBeTruthy();
@@ -872,7 +945,7 @@ describe('trace manage page', () => {
 
     await act(async () => {
       renameSaveAction?.click();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const renamedViews = JSON.parse(window.localStorage.getItem('hertzbeat.trace-manage.saved-query-views') || '[]');
@@ -888,7 +961,7 @@ describe('trace manage page', () => {
       interactionContainer.innerHTML = '';
       interactionRoot = createRoot(interactionContainer);
       renderInteractiveTraceManagePage();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const updateSavedViewAction = interactionContainer.querySelector('[data-trace-manage-saved-view-update-action]') as HTMLButtonElement | null;
@@ -897,7 +970,7 @@ describe('trace manage page', () => {
 
     await act(async () => {
       updateSavedViewAction?.click();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     const updatedViews = JSON.parse(window.localStorage.getItem('hertzbeat.trace-manage.saved-query-views') || '[]');
@@ -954,10 +1027,135 @@ describe('trace manage page', () => {
 
     await act(async () => {
       deleteSavedViewAction?.click();
-      await Promise.resolve();
+      await flushDashboardEditPromises();
     });
 
     expect(JSON.parse(window.localStorage.getItem('hertzbeat.trace-manage.saved-query-views') || '[]')).toHaveLength(0);
+    expect(savedViewRequests.some(request => request.method === 'DELETE' && request.path.includes('/api/signal/saved-view/traces/'))).toBe(true);
+    expect(interactionContainer.querySelector('[data-trace-manage-saved-views="route-query-views"]')?.getAttribute('data-trace-manage-saved-view-persistence')).toBe('server-first');
+  }, 15000);
+
+  it('updates the originating dashboard widget when saving traces in panel edit mode', async () => {
+    mockState.searchParams = new URLSearchParams(
+      'intent=edit-panel&dashboardKey=signals-overview&panelId=trace-errors&draftKey=trace-draft-errors&returnTo=%2Fdashboard%3Fdashboard%3Dsignals-overview&returnLabel=Signals%20overview&view=table&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=POST%20%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&environment=prod&spanScope=entrypoint&columns=service,duration,trace-id'
+    );
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      renderInteractiveTraceManagePage();
+      await Promise.resolve();
+    });
+
+    const dashboardPanelDraftAction = interactionContainer.querySelector('[data-trace-manage-dashboard-panel-draft-action="update-current"]') as HTMLButtonElement | null;
+    expect(dashboardPanelDraftAction).toBeTruthy();
+    expect(dashboardPanelDraftAction?.getAttribute('data-trace-manage-dashboard-panel-draft-action-mode')).toBe('edit-panel');
+    expect(dashboardPanelDraftAction?.getAttribute('data-trace-manage-dashboard-panel-draft-action-dashboard')).toBe('signals-overview');
+    expect(dashboardPanelDraftAction?.getAttribute('data-trace-manage-dashboard-panel-draft-action-panel')).toBe('trace-errors');
+    const timeSeriesViewAction = interactionContainer.querySelector('[data-trace-manage-view-option="time-series"]') as HTMLButtonElement | null;
+    expect(timeSeriesViewAction).toBeTruthy();
+    mockState.replace.mockClear();
+
+    await act(async () => {
+      timeSeriesViewAction?.click();
+      await Promise.resolve();
+    });
+
+    const timeSeriesRoute = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    expect(timeSeriesRoute).toContain('view=time-series');
+    expect(timeSeriesRoute).toContain('intent=edit-panel');
+    expect(timeSeriesRoute).toContain('dashboardKey=signals-overview');
+    expect(timeSeriesRoute).toContain('panelId=trace-errors');
+    expect(timeSeriesRoute).toContain('draftKey=trace-draft-errors');
+    expect(timeSeriesRoute).toContain('returnTo=%2Fdashboard%3Fdashboard%3Dsignals-overview');
+    expect(timeSeriesRoute).toContain('returnLabel=Signals+overview');
+    const savedDashboards: unknown[] = [];
+    globalThis.fetch = vi.fn(async (input, init) => {
+      const path = String(input);
+      const method = String(init?.method || 'GET').toUpperCase();
+      if (path.includes('/api/signal/dashboard-panel-draft') && method === 'PUT') {
+        return new Response(JSON.stringify({ code: 0, data: JSON.parse(String(init?.body)) }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (path.endsWith('/api/signal/dashboard') && method === 'GET') {
+        return new Response(JSON.stringify({
+          code: 0,
+          data: [{
+            dashboardKey: 'signals-overview',
+            title: 'Signals overview',
+            description: 'Signals',
+            tags: 'traces',
+            layout: JSON.stringify([{ i: 'trace-errors', x: 0, y: 0, w: 6, h: 4 }]),
+            widgets: JSON.stringify([{
+              id: 'trace-errors',
+              draftKey: 'trace-draft-errors',
+              signal: 'traces',
+              title: 'Old trace errors',
+              visualization: 'trace',
+              route: '/trace/manage?serviceName=old',
+              querySnapshot: '/trace/manage?serviceName=old'
+            }]),
+            panelMap: JSON.stringify({ 'trace-errors': 'trace-draft-errors' })
+          }]
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (path.endsWith('/api/signal/dashboard') && method === 'PUT') {
+        const dashboard = JSON.parse(String(init?.body));
+        savedDashboards.push(dashboard);
+        return new Response(JSON.stringify({ code: 0, data: dashboard }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return new Response(JSON.stringify({ code: 1, msg: `Unexpected request ${method} ${path}` }), { status: 500 });
+    }) as typeof fetch;
+
+    await act(async () => {
+      dashboardPanelDraftAction?.click();
+      await flushDashboardEditPromises();
+    });
+
+    const draftRequest = vi.mocked(globalThis.fetch).mock.calls.find(call =>
+      String(call[0]).includes('/api/signal/dashboard-panel-draft')
+    );
+    const draftBody = JSON.parse(String(draftRequest?.[1]?.body));
+    expect(draftBody).toEqual(expect.objectContaining({
+      signal: 'traces',
+      draftKey: 'trace-draft-errors',
+      visualization: 'table',
+      querySnapshot: expect.stringContaining('/trace/manage?serviceName=checkout')
+    }));
+    expect(draftBody.route).toContain('operationName=POST+%2Fcheckout');
+    expect(JSON.parse(draftBody.payload).dashboardPanelEdit).toEqual(expect.objectContaining({
+      intent: 'edit-panel',
+      dashboardKey: 'signals-overview',
+      panelId: 'trace-errors',
+      draftKey: 'trace-draft-errors',
+      returnTo: '/dashboard?dashboard=signals-overview',
+      returnLabel: 'Signals overview'
+    }));
+    expect(savedDashboards).toHaveLength(1);
+    const savedDashboard = savedDashboards[0] as { widgets: string; panelMap: string };
+    const savedWidget = JSON.parse(savedDashboard.widgets)[0];
+    expect(savedWidget).toEqual(expect.objectContaining({
+      id: 'trace-errors',
+      draftKey: 'trace-draft-errors',
+      signal: 'traces',
+      visualization: 'table',
+      route: expect.stringContaining('serviceName=checkout')
+    }));
+    expect(savedWidget.route).toContain('operationName=POST+%2Fcheckout');
+    expect(JSON.parse(savedWidget.payload).dashboardPanelEdit).toEqual(expect.objectContaining({
+      dashboardKey: 'signals-overview',
+      panelId: 'trace-errors'
+    }));
+    expect(JSON.parse(savedDashboard.panelMap)).toEqual({ 'trace-errors': 'trace-draft-errors' });
+    const dashboardPanelDraftStatus = interactionContainer.querySelector('[data-trace-manage-dashboard-panel-draft-status="saved"]') as HTMLElement | null;
+    expect(dashboardPanelDraftStatus?.getAttribute('data-trace-manage-dashboard-panel-draft-status-mode')).toBe('edit-panel');
+    expect(dashboardPanelDraftStatus?.textContent).toContain(createTranslatorMock()('trace.manage.dashboard-panel-draft.update-saved'));
   }, 15000);
 
   it('downloads trace rows in bounded pages with the selected format and visible columns from a shared UI action', async () => {
@@ -1186,7 +1384,7 @@ describe('trace manage page', () => {
     const loadedData = await mockState.lastLoad?.();
 
     expect(source).toContain('function apiMessageGetWithTimeout');
-    expect(source).toContain('TRACE_MANAGE_API_TIMEOUT_MS');
+    expect(source).toContain('const TRACE_MANAGE_API_TIMEOUT_MS = 20_000');
     expect(source).toContain('data-trace-manage-api-degraded="true"');
     expect(source).toContain('data-trace-manage-api-degraded-owner="hertzbeat-ui-state-notice"');
     expect(source).toContain("title={t('trace.manage.api.degraded.title')}");
@@ -1387,6 +1585,41 @@ describe('trace manage page', () => {
     expect(source).toContain("title={t('trace.manage.route.title')}");
     expect(source).toContain("copy={t('trace.manage.route.subtitle')}");
     expect(source).toContain('data-trace-manage-shell-chrome="topology-workbench"');
+    expect(source).toContain('isDashboardReturnContext(routeContext.returnTo)');
+    expect(source).toContain('data-trace-manage-source-context={sourceContextKind}');
+    expect(source).toContain('data-trace-manage-source-context-return={routeContext.returnTo || \'\'}');
+    expect(source).toContain('data-trace-manage-source-context-trace={requestedTraceId}');
+    expect(source).toContain('data-trace-manage-source-context-span={requestedSpanId}');
+    expect(source).toContain('data-trace-manage-source-context-service={draft.serviceName || routeContext.serviceName || \'\'}');
+    expect(source).toContain('readSignalPanelEditContext(searchParams)');
+    expect(source).toContain('appendTracePanelEditContext(route, panelEditContext)');
+    expect(source).toContain('const replaceTraceHref = useCallback((route: string) => {');
+    expect(source).toContain('router.replace(appendTracePanelEditContext(route, panelEditContext))');
+    expect(source).toContain('if (!panelEditContext && traceManageRouteState.shouldCleanUrl)');
+    expect(source).toContain("panelEditContext\n    ? 'dashboard-panel-edit'");
+    expect(source).toContain('data-trace-manage-panel-edit-context={panelEditContext?.intent || \'none\'}');
+    expect(source).toContain('data-trace-manage-panel-edit-dashboard={panelEditContext?.dashboardKey || \'\'}');
+    expect(source).toContain('data-trace-manage-panel-edit-panel={panelEditContext?.panelId || \'\'}');
+    expect(source).toContain('data-trace-manage-panel-edit-draft={panelEditContext?.draftKey || \'\'}');
+    expect(source).toContain('data-trace-manage-panel-edit-return={panelEditContext?.returnTo || \'\'}');
+    expect(source).toContain('applySignalDashboardPanelEditContext(createSignalDashboardPanelDraft({');
+    expect(source).toContain('}), panelEditContext)');
+    expect(source).toContain('saveSignalDashboardPanelEditContext(panelEditContext, panelDraft)');
+    expect(source).toContain("t(panelEditContext ? 'trace.manage.dashboard-panel-draft.update-current' : 'trace.manage.dashboard-panel-draft.add-current')");
+    expect(source).toContain("data-trace-manage-dashboard-panel-draft-action={panelEditContext ? 'update-current' : 'add-current'}");
+    expect(source).toContain("data-trace-manage-dashboard-panel-draft-action-mode={panelEditContext ? 'edit-panel' : 'new-panel'}");
+    expect(source).toContain('data-trace-manage-dashboard-panel-draft-action-dashboard={panelEditContext?.dashboardKey || \'\'}');
+    expect(source).toContain('data-trace-manage-dashboard-panel-draft-action-panel={panelEditContext?.panelId || \'\'}');
+    expect(source).toContain('data-trace-manage-dashboard-panel-draft-action-draft={panelEditContext?.draftKey || \'\'}');
+    expect(source).toContain('data-trace-manage-dashboard-panel-draft-status-mode={panelEditContext ? \'edit-panel\' : \'new-panel\'}');
+    expect(source).toContain('data-trace-manage-dashboard-panel-draft-status-dashboard={panelEditContext?.dashboardKey || \'\'}');
+    expect(source).toContain('data-trace-manage-dashboard-panel-draft-status-panel={panelEditContext?.panelId || \'\'}');
+    expect(source).toContain("`trace.manage.dashboard-panel-draft.update-${dashboardPanelDraftState}`");
+    expect(source).toContain('data-trace-manage-dashboard-panel-draft-return-action="dashboard"');
+    expect(source).toContain('data-trace-manage-dashboard-panel-draft-return-action-owner="hertzbeat-ui-button-link"');
+    expect(source).toContain('data-trace-manage-dashboard-panel-draft-return-action-dashboard={panelEditContext.dashboardKey || \'\'}');
+    expect(source).toContain('data-trace-manage-dashboard-panel-draft-return-action-panel={panelEditContext.panelId || \'\'}');
+    expect(source).toContain("t('trace.manage.dashboard-panel-draft.return-dashboard')");
     expect(source).toContain('layout="topology-workbench"');
     expect(source).not.toContain('mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-6 py-6');
     expect(source).toContain('data-trace-manage-time-toolbar-owner="hertzbeat-ui-workbench-layout"');
@@ -1546,6 +1779,19 @@ describe('trace manage page', () => {
     expect(source).toContain('data-trace-manage-drawer-resource-group-action="true"');
     expect(source).toContain('data-trace-manage-drawer-resource-group-action-owner="hertzbeat-ui-button"');
     expect(source).toContain("t('trace.manage.drawer.attributes.group-action')");
+    expect(source).toContain('type TraceRelatedLogsState = {');
+    expect(source).toContain('function buildTraceRelatedLogsApiUrl(');
+    expect(source).toContain("apiMessageGetWithTimeout<PageResult<LogEntry>>(relatedLogsUrl)");
+    expect(source).toContain('data-trace-manage-drawer-related-logs="backend-related-logs"');
+    expect(source).toContain('data-trace-manage-drawer-related-logs-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('data-trace-manage-drawer-related-logs-url={relatedLogsUrl || \'\'}');
+    expect(source).toContain('data-trace-manage-drawer-related-logs-state={relatedLogsState.loading ? \'loading\' : relatedLogsState.error ? \'error\' : relatedLogEntries.length > 0 ? \'ready\' : \'empty\'}');
+    expect(source).toContain("heading={t('trace.manage.drawer.related-logs.title')}");
+    expect(source).toContain("aria-label={t('trace.manage.drawer.related-logs.aria')}");
+    expect(source).toContain('data-trace-manage-drawer-related-log-action="open-logs"');
+    expect(source).toContain('data-trace-manage-drawer-related-log-action-owner="hertzbeat-ui-button-link"');
+    expect(source).toContain('data-trace-manage-drawer-related-log-trace={traceId}');
+    expect(source).toContain('data-trace-manage-drawer-related-log-span={spanId}');
     expect(source).toContain('data-trace-manage-group-panel="hertzbeat-ui-trace-group-results"');
     expect(source).toContain('data-trace-manage-group-table="hertzbeat-ui-trace-group-table"');
     expect(source).toContain("heading={t('trace.manage.drawer.attributes.resource.title')}");
@@ -1553,6 +1799,14 @@ describe('trace manage page', () => {
     expect(source).toContain('ObservabilityWaterfall');
     expect(source).toContain('autoOpenedTraceDetailKeyRef');
     expect(source).toContain('requestedTraceId');
+    expect(source).toContain('autoOpenKey={autoOpenedTraceDetailKeyRef.current || \'\'}');
+    expect(source).toContain('const drawerSourceContextKind = isDashboardReturnContext(routeContext.returnTo)');
+    expect(source).toContain("'data-trace-manage-drawer-source-context': drawerSourceContextKind");
+    expect(source).toContain("'data-trace-manage-drawer-auto-open-key': autoOpenKey || ''");
+    expect(source).toContain("'data-trace-manage-drawer-requested-trace': requestedTraceId || ''");
+    expect(source).toContain("'data-trace-manage-drawer-requested-span': requestedSpanId || ''");
+    expect(source).toContain("'data-trace-manage-drawer-selected-trace': detail?.traceId || ''");
+    expect(source).toContain("'data-trace-manage-drawer-selected-span': selectedSpan?.spanId || state.selectedSpanId || ''");
     expect(source).toContain('const traceEventCount = waterfallRows.reduce');
     expect(source).toContain("t('trace.manage.drawer.stat.events')");
     expect(source).toContain("t('trace.manage.drawer.link-prefix')");

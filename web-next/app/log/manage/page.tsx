@@ -6,7 +6,7 @@ export default async function LogManageRoutePage({
   searchParams
 }: {
   searchParams?: Promise<LogManageSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const routeState = readLogManageRouteState(resolvedSearchParams);
   return <LogManagePage initialRouteState={routeState} />;

@@ -19,7 +19,10 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace })
+  useRouter: () => ({ replace }),
+  useSearchParams: () => ({
+    get: () => null
+  })
 }));
 
 vi.mock('@/components/providers/i18n-provider', () => ({
@@ -53,6 +56,8 @@ function monitorTraceRouteState(): TraceManageRouteState {
       monitorName: 'Dreamy_Elk_68Ae_copy_copy_copy_copy',
       monitorApp: 'mysql',
       monitorInstance: '127.0.0.1:3306',
+      collector: 'collector-demo-a',
+      template: 'spring-boot',
       source: 'monitor'
     },
     shouldCleanUrl: false
@@ -172,7 +177,12 @@ describe('TraceManagePage client loading', () => {
           startTime: 1713200000000,
           resourceAttributes: {
             'service.namespace': 'payments',
-            'deployment.environment.name': 'prod'
+            'deployment.environment.name': 'prod',
+            'k8s.namespace.name': 'shop',
+            'k8s.pod.name': 'checkout-7d9',
+            'k8s.node.name': 'node-a',
+            'container.name': 'checkout',
+            'host.name': 'node-a'
           },
           spanAttributes: {
             'http.route': '/checkout/:id',
@@ -181,7 +191,46 @@ describe('TraceManagePage client loading', () => {
           events: [],
           links: []
         }
-      ]);
+      ])
+      .mockResolvedValueOnce({
+        source: 'backend-related-metrics',
+        candidateCount: 2,
+        candidates: [
+          {
+            query: 'container.cpu.usage',
+            source: 'pod',
+            family: 'cpu',
+            reason: 'resource-filter',
+            matchedLabels: ['k8s_pod_name'],
+            resourceMatch: { k8s_pod_name: 'checkout-7d9' }
+          },
+          {
+            query: 'system.cpu.utilization',
+            source: 'host',
+            family: 'cpu',
+            reason: 'resource-filter',
+            matchedLabels: ['host_name'],
+            resourceMatch: { host_name: 'node-a' }
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        content: [
+          {
+            timeUnixNano: 1_713_200_000_100_000_000,
+            severityText: 'ERROR',
+            body: 'checkout payment timeout',
+            traceId: 'trace-attrs',
+            spanId: 'span-root',
+            resource: {
+              'service.name': 'checkout'
+            }
+          }
+        ],
+        totalElements: 1,
+        pageIndex: 0,
+        pageSize: 3
+      });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -198,6 +247,8 @@ describe('TraceManagePage client loading', () => {
 
     await act(async () => {
       openDetailAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
@@ -220,6 +271,57 @@ describe('TraceManagePage client loading', () => {
     expect(resourceAttributes?.textContent).toContain('prod');
     expect(resourceAttributes?.textContent).toContain('service.namespace');
     expect(resourceAttributes?.textContent).toContain('payments');
+
+    const relatedMetricsCall = apiMessageGet.mock.calls.find(call => String(call[0]).startsWith('/ingestion/otlp/metrics/related'));
+    expect(relatedMetricsCall).toBeTruthy();
+    const relatedMetricsHref = decodeURIComponent(String(relatedMetricsCall?.[0] || ''));
+    expect(relatedMetricsHref).toContain('serviceName=checkout');
+    expect(relatedMetricsHref).toContain('serviceNamespace=payments');
+    expect(relatedMetricsHref).toContain('k8s.pod.name="checkout-7d9"');
+    expect(relatedMetricsHref).toContain('host.name="node-a"');
+    const relatedLogsCall = apiMessageGet.mock.calls.find(call => String(call[0]).startsWith('/logs/list'));
+    expect(relatedLogsCall).toBeTruthy();
+    const relatedLogsHref = decodeURIComponent(String(relatedLogsCall?.[0] || ''));
+    expect(relatedLogsHref).toContain('traceId=trace-attrs');
+    expect(relatedLogsHref).toContain('spanId=span-root');
+    expect(relatedLogsHref).toContain('serviceName=checkout');
+    expect(relatedLogsHref).toContain('serviceNamespace=payments');
+    expect(relatedLogsHref).toContain('collector=collector-demo-a');
+    expect(relatedLogsHref).toContain('template=spring-boot');
+    expect(relatedLogsHref).toContain('source=monitor');
+    expect(relatedLogsHref).toContain('pageSize=3');
+    const relatedLogs = document.body.querySelector('[data-trace-manage-drawer-related-logs="backend-related-logs"]') as HTMLElement | null;
+    expect(relatedLogs?.getAttribute('data-trace-manage-drawer-related-logs-state')).toBe('ready');
+    expect(relatedLogs?.getAttribute('data-trace-manage-drawer-related-logs-owner')).toBe('hertzbeat-ui-detail-rows');
+    expect(relatedLogs?.textContent).toContain('Related logs');
+    expect(relatedLogs?.textContent).toContain('checkout payment timeout');
+    const logAction = relatedLogs?.querySelector('[data-trace-manage-drawer-related-log-action="open-logs"]') as HTMLAnchorElement | null;
+    expect(logAction?.getAttribute('href')).toContain('/log/manage?');
+    expect(logAction?.getAttribute('href')).toContain('traceId=trace-attrs');
+    expect(logAction?.getAttribute('href')).toContain('spanId=span-root');
+    expect(logAction?.getAttribute('href')).toContain('collector=collector-demo-a');
+    expect(logAction?.getAttribute('href')).toContain('template=spring-boot');
+    expect(logAction?.getAttribute('href')).toContain('source=monitor');
+    expect(logAction?.getAttribute('data-trace-manage-drawer-related-log-trace')).toBe('trace-attrs');
+    expect(logAction?.getAttribute('data-trace-manage-drawer-related-log-span')).toBe('span-root');
+    const relatedMetrics = document.body.querySelector('[data-trace-manage-drawer-related-metrics="backend-related-metrics"]') as HTMLElement | null;
+    expect(relatedMetrics?.getAttribute('data-trace-manage-drawer-related-metrics-state')).toBe('ready');
+    expect(relatedMetrics?.textContent).toContain('Related metrics');
+    expect(relatedMetrics?.textContent).toContain('container.cpu.usage');
+    expect(relatedMetrics?.textContent).toContain('system.cpu.utilization');
+    const metricAction = relatedMetrics?.querySelector('[data-trace-manage-drawer-related-metric-query="container.cpu.usage"]') as HTMLAnchorElement | null;
+    expect(metricAction?.getAttribute('href')).toContain('/ingestion/otlp/metrics?');
+    expect(metricAction?.getAttribute('href')).toContain('query=container.cpu.usage');
+    expect(metricAction?.getAttribute('data-trace-manage-drawer-related-metric-source')).toBe('pod');
+    expect(metricAction?.getAttribute('data-trace-manage-drawer-related-metric-family')).toBe('cpu');
+    expect(metricAction?.getAttribute('data-trace-manage-drawer-related-metric-reason')).toBe('resource-filter');
+    expect(decodeURIComponent(metricAction?.getAttribute('href') || '')).toContain('k8s.pod.name="checkout-7d9"');
+    const metricActionParams = new URL(metricAction?.getAttribute('href') || '', 'http://localhost').searchParams;
+    expect(metricActionParams.get('relatedMetricSource')).toBe('pod');
+    expect(metricActionParams.get('relatedMetricFamily')).toBe('cpu');
+    expect(metricActionParams.get('relatedMetricReason')).toBe('resource-filter');
+    expect(metricActionParams.get('relatedMetricMatchedLabels')).toBe('k8s_pod_name');
+    expect(metricActionParams.get('relatedMetricResourceMatch')).toBe('{"k8s_pod_name":"checkout-7d9"}');
   });
 
   it('narrows trace table rows by service from the row cell', async () => {

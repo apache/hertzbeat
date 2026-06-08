@@ -1,11 +1,12 @@
-import { redirect } from 'next/navigation';
-import { buildDashboardCompatRouteUrl, type SearchParamsRecord } from '../../lib/dashboard/navigation';
+import React from 'react';
+import DashboardDraftWorkspace from './dashboard-draft-workspace';
+import type { SearchParamsRecord } from '../../lib/dashboard/navigation';
 
-export default async function DashboardAliasPage({
+export default async function DashboardPage({
   searchParams
 }: {
   searchParams?: Promise<SearchParamsRecord>;
 }) {
   const resolvedSearchParams = await searchParams;
-  redirect(buildDashboardCompatRouteUrl(resolvedSearchParams));
+  return <DashboardDraftWorkspace initialContext={resolvedSearchParams || {}} />;
 }

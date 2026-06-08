@@ -256,15 +256,37 @@ describe('log query state codec', () => {
           live: 'false',
           tz: 'Asia/Shanghai',
           serviceName: 'checkout',
+          serviceNamespace: 'payments',
           environment: 'prod'
         }
       )
     ).toEqual({
-      listUrl: '/logs/list?pageIndex=0&pageSize=8&search=timeout&serviceName=checkout&environment=prod&start=1713200000000&end=1713203600000',
-      overviewUrl: '/logs/stats/overview?search=timeout&serviceName=checkout&environment=prod&start=1713200000000&end=1713203600000',
-      trendUrl: '/logs/stats/trend?search=timeout&serviceName=checkout&environment=prod&start=1713200000000&end=1713203600000',
-      coverageUrl: '/logs/stats/trace-coverage?search=timeout&serviceName=checkout&environment=prod&start=1713200000000&end=1713203600000',
-      groupByUrl: '/logs/stats/group-by?search=timeout&serviceName=checkout&environment=prod&start=1713200000000&end=1713203600000'
+      listUrl: '/logs/list?pageIndex=0&pageSize=8&search=timeout&serviceName=checkout&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000',
+      overviewUrl: '/logs/stats/overview?search=timeout&serviceName=checkout&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000',
+      trendUrl: '/logs/stats/trend?search=timeout&serviceName=checkout&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000',
+      coverageUrl: '/logs/stats/trace-coverage?search=timeout&serviceName=checkout&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000',
+      groupByUrl: '/logs/stats/group-by?search=timeout&serviceName=checkout&serviceNamespace=payments&environment=prod&start=1713200000000&end=1713203600000'
+    });
+  });
+
+  it('threads the strong entity id into log list and stats APIs', () => {
+    expect(
+      buildLogUrls(
+        { search: 'timeout', logContent: '', traceId: '', spanId: '', severityNumber: '', severityText: '' },
+        {
+          entityId: '42',
+          entityType: 'service',
+          serviceName: 'checkout',
+          serviceNamespace: 'payments',
+          environment: 'prod'
+        }
+      )
+    ).toEqual({
+      listUrl: '/logs/list?pageIndex=0&pageSize=8&search=timeout&entityId=42&entityType=service&serviceName=checkout&serviceNamespace=payments&environment=prod',
+      overviewUrl: '/logs/stats/overview?search=timeout&entityId=42&entityType=service&serviceName=checkout&serviceNamespace=payments&environment=prod',
+      trendUrl: '/logs/stats/trend?search=timeout&entityId=42&entityType=service&serviceName=checkout&serviceNamespace=payments&environment=prod',
+      coverageUrl: '/logs/stats/trace-coverage?search=timeout&entityId=42&entityType=service&serviceName=checkout&serviceNamespace=payments&environment=prod',
+      groupByUrl: '/logs/stats/group-by?search=timeout&entityId=42&entityType=service&serviceName=checkout&serviceNamespace=payments&environment=prod'
     });
   });
 

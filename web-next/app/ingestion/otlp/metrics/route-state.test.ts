@@ -25,6 +25,7 @@ describe('otlp metrics route state', () => {
     const localizedReturnLabel = t('log.manage.route.title');
     const route = buildOtlpMetricsRoute({
       entityId: '7',
+      entityType: 'service',
       entityName: 'checkout',
       returnTo: `/log/manage?returnLabel=${localizedReturnLabel}`,
       traceId: 'trace-123',
@@ -49,7 +50,7 @@ describe('otlp metrics route state', () => {
     });
 
     expect(route).toBe(
-      '/ingestion/otlp/metrics?entityId=7&entityName=checkout&returnTo=%2Flog%2Fmanage&traceId=trace-123&spanId=span-456&query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=25&timeRange=last-1h&serviceName=checkout&serviceNamespace=payments&environment=prod&collector=collector-a&template=spring-boot&start=1712730000000&end=1712733600000'
+      '/ingestion/otlp/metrics?entityId=7&entityType=service&entityName=checkout&returnTo=%2Flog%2Fmanage&traceId=trace-123&spanId=span-456&query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=25&timeRange=last-1h&serviceName=checkout&serviceNamespace=payments&environment=prod&collector=collector-a&template=spring-boot&start=1712730000000&end=1712733600000'
     );
     expect(route).not.toContain('returnLabel=');
     expect(route).not.toContain(encodeURIComponent(localizedReturnLabel));
@@ -117,6 +118,26 @@ describe('otlp metrics route state', () => {
         series: 'http.server.duration-1'
       })
     ).toBe('/ingestion/otlp/metrics?query=http.server.duration&series=http.server.duration-1&inspector=table');
+  });
+
+  it('keeps related metric candidate metadata in the workbench URL', () => {
+    const route = buildOtlpMetricsRoute({
+      query: 'container.cpu.usage',
+      filter: 'k8s.pod.name="checkout-7d9"',
+      relatedMetricSource: 'pod',
+      relatedMetricFamily: 'cpu',
+      relatedMetricReason: 'resource-filter',
+      relatedMetricMatchedLabels: 'k8s_pod_name',
+      relatedMetricResourceMatch: '{"k8s_pod_name":"checkout-7d9"}'
+    });
+    const params = new URL(route, 'http://localhost').searchParams;
+    expect(params.get('query')).toBe('container.cpu.usage');
+    expect(params.get('filter')).toBe('k8s.pod.name="checkout-7d9"');
+    expect(params.get('relatedMetricSource')).toBe('pod');
+    expect(params.get('relatedMetricFamily')).toBe('cpu');
+    expect(params.get('relatedMetricReason')).toBe('resource-filter');
+    expect(params.get('relatedMetricMatchedLabels')).toBe('k8s_pod_name');
+    expect(params.get('relatedMetricResourceMatch')).toBe('{"k8s_pod_name":"checkout-7d9"}');
   });
 
   it('keeps chart display settings in the metrics workbench URL', () => {

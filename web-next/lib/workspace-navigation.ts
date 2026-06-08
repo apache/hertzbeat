@@ -28,7 +28,8 @@ const EMPTY_TRACE_QUERY: TraceQueryState = {
   traceId: '',
   spanId: '',
   serviceName: '',
-  errorOnly: false
+  errorOnly: false,
+  spanScope: 'root'
 };
 
 function appendStringParams(params: URLSearchParams, values: Record<string, string | undefined>) {

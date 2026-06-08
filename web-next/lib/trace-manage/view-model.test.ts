@@ -792,6 +792,49 @@ describe('trace view model', () => {
     expect(alertHandlingHref.searchParams.get('template')).toBe('postgres');
   });
 
+  it('carries selected span resource attributes into trace-to-metrics handoffs', () => {
+    const result = buildTraceHandoffLinks(
+      {
+        traceId: 'trace-resource-context',
+        serviceName: 'checkout',
+        serviceNamespace: 'payments',
+        startTime: 1000,
+        durationNanos: 2_000_000,
+        resourceAttributes: {
+          'host.name': 'node-a'
+        }
+      } as any,
+      {
+        spanId: 'span-api',
+        serviceName: 'checkout',
+        resourceAttributes: {
+          'service.namespace': 'payments',
+          'deployment.environment.name': 'prod',
+          'k8s.namespace.name': 'shop',
+          'k8s.pod.name': 'checkout-7d9',
+          'k8s.node.name': 'node-a',
+          'container.name': 'checkout',
+          'host.name': 'node-a'
+        }
+      } as any,
+      {
+        entityId: '42',
+        entityName: 'Checkout API',
+        source: 'otlp'
+      }
+    );
+
+    const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
+    expect(metricsParams.get('traceId')).toBe('trace-resource-context');
+    expect(metricsParams.get('spanId')).toBe('span-api');
+    expect(metricsParams.get('serviceName')).toBe('checkout');
+    expect(metricsParams.get('serviceNamespace')).toBe('payments');
+    expect(metricsParams.get('entityId')).toBe('42');
+    expect(metricsParams.get('filter')).toBe(
+      'k8s.namespace.name="shop" and k8s.pod.name="checkout-7d9" and k8s.node.name="node-a" and k8s.container.name="checkout" and host.name="node-a"'
+    );
+  });
+
   it('lets the related-logs handoff override the return path back to the active trace workbench', () => {
     const activeTraceReturnTo =
       `/trace/manage?traceId=trace-1&spanId=span-1&serviceName=checkout&errorOnly=true&returnTo=%2Foverview&returnLabel=${encodeURIComponent(t('menu.trace.manage'))}`;

@@ -28,7 +28,7 @@ import {
   Workflow,
   X
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { HzActionGroup, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzCheckbox, HzControlStack, HzDataCellText, HzDataTable, HzDetailAside, HzDetailBodyStack, HzDetailRows, HzEmptyState, HzInput, HzLogStreamLiveRow, HzPaginationBar, HzPanelHeader, HzPanelSurface, HzScrollViewport, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalSummaryStrip, HzSignalTrendBars, HzSignalWorkbenchShell, HzStateNotice, HzStatusBadge, HzWorkbenchLayout, type HzStatusTone } from '@hertzbeat/ui';
 import { LogRelatedTraceDialog } from '../../../components/log-manage/log-related-trace-dialog';
 import { LogStreamDetailDialog } from '../../../components/log-manage/log-stream-detail-dialog';
@@ -40,6 +40,21 @@ import { copyTextToClipboard } from '@/lib/browser-clipboard';
 import { bodyText, formatTime } from '@/lib/format';
 import { buildLogCsv, buildLogExportFilename, buildLogJsonl, type LogExportExtraColumn, type LogExportFormat } from '@/lib/log-manage/export';
 import { logSeverityTone, severityLabel, type LogSeverityTone } from '@/lib/log-manage/display-mapping';
+import { saveSignalDashboardPanelEditContext } from '@/lib/signal-dashboards';
+import {
+  createSignalDashboardPanelDraft,
+  applySignalDashboardPanelEditContext,
+  saveSignalDashboardPanelDraft,
+  type SignalDashboardPanelVisualization
+} from '@/lib/signal-dashboard-panel-drafts';
+import {
+  buildSignalSavedViewKey,
+  deleteSignalSavedQueryView,
+  loadSignalSavedQueryViews,
+  saveSignalSavedQueryView,
+  type SignalSavedQueryView,
+  type SignalSavedQueryViewPersistenceMode
+} from '@/lib/signal-saved-views';
 import {
   buildLogStreamUrl,
   buildLogUrls,
@@ -89,11 +104,11 @@ import {
   type LogAttributeRow,
   type LogExplorerRow
 } from '@/lib/log-manage/view-model';
-import { buildSignalEntityContextRows, type SignalRouteContext } from '@/lib/signal-route-context';
+import { buildSignalEntityContextRows, isDashboardReturnContext, readSignalPanelEditContext, type SignalPanelEditContext, type SignalRouteContext } from '@/lib/signal-route-context';
 import { loadTraceDetailBundle } from '../../../lib/trace-manage/controller';
 import { buildSelectedSpanFacts, buildTraceWaterfallRows } from '../../../lib/trace-manage/view-model';
 import { resolveAppliedTimeContext, sanitizeTimeContext, type TimeContext } from '@/lib/time-context';
-import type { LogEntry, LogOverview, LogTraceCoverage, LogTrendStats, OtlpMetricsConsole, PageResult, TraceDetail } from '@/lib/types';
+import type { LogEntry, LogOverview, LogTraceCoverage, LogTrendStats, OtlpMetricsConsole, OtlpRelatedMetrics, PageResult, TraceDetail } from '@/lib/types';
 import { buildLogManageRoute, buildResetLogManageRoute } from './route-state';
 
 type LogManageData = {
@@ -122,15 +137,10 @@ type BackendLogOverview = LogOverview & {
   errorCount?: number;
 };
 
-type LogSavedQueryView = {
-  id: string;
-  label: string;
-  description: string;
-  route: string;
-  createdAt: number;
-};
+type LogSavedQueryView = SignalSavedQueryView;
 
 type LogExportRowLimit = 'current' | '10000' | '30000' | '50000';
+type LogDashboardPanelDraftState = 'idle' | 'saving' | 'saved' | 'failed';
 
 type LogDetailContextPayload = {
   targetTimeUnixNano: number;
@@ -219,9 +229,13 @@ const quickSeverityFilters = ['ERROR', 'WARN', 'INFO', 'DEBUG'];
 const maxStreamEntries = 10000;
 const maxPendingStreamEntries = 1000;
 const LOG_MANAGE_SETTLED_CACHE_TTL_MS = 10_000;
-const LOG_MANAGE_API_TIMEOUT_MS = 3_500;
+const LOG_MANAGE_API_TIMEOUT_MS = 20_000;
 const LOG_SAVED_QUERY_VIEW_STORAGE_KEY = 'hertzbeat.log-manage.saved-query-views';
 const LOG_SAVED_QUERY_VIEW_LIMIT = 5;
+const LOG_SAVED_QUERY_VIEW_PERSISTENCE_OWNER: Record<SignalSavedQueryViewPersistenceMode, string> = {
+  'server-first': 'hertzbeat-api',
+  'local-fallback': 'browser-local-storage'
+};
 const LOG_EXPORT_ROW_LIMITS: LogExportRowLimit[] = ['current', '10000', '30000', '50000'];
 const LOG_EXPORT_FETCH_PAGE_SIZE = 1000;
 const LOG_CONTEXT_WINDOW_MS = 5 * 60 * 1000;
@@ -429,6 +443,9 @@ function buildLogContextApiUrl(
     params.set('direction', loadRequest.direction);
     params.set('cursorLogTimeUnixNano', loadRequest.cursorLogTimeUnixNano);
   }
+  if (routeContext.entityId && /^\d+$/.test(routeContext.entityId.trim())) {
+    params.set('entityId', routeContext.entityId.trim());
+  }
   if (serviceName) params.set('serviceName', serviceName);
   if (serviceNamespace) params.set('serviceNamespace', serviceNamespace);
   if (environment) params.set('environment', environment);
@@ -618,6 +635,32 @@ function buildLogMetricsPreviewApiUrl(metricsHref: string | null | undefined, qu
   return `/ingestion/otlp/metrics/console?${params.toString()}`;
 }
 
+function buildLogMetricsRelatedApiUrl(metricsHref: string | null | undefined) {
+  if (!metricsHref) return null;
+  const href = new URL(metricsHref, 'http://localhost');
+  const sourceParams = href.searchParams;
+  const params = new URLSearchParams();
+  [
+    'filter',
+    'timeRange',
+    'from',
+    'to',
+    'start',
+    'end',
+    'entityId',
+    'entityName',
+    'serviceName',
+    'serviceNamespace',
+    'environment'
+  ].forEach(key => {
+    const value = sourceParams.get(key)?.trim();
+    if (value) params.set(key, value);
+  });
+  if (!params.get('serviceName') && !params.get('entityId')) return null;
+  params.set('limit', '8');
+  return `/ingestion/otlp/metrics/related?${params.toString()}`;
+}
+
 function logMetricPreviewTargetSource(target: ReturnType<typeof buildLogMetricsPreviewTargets>[number]) {
   return target.source === 'k8s' ? 'pod' : 'node';
 }
@@ -681,7 +724,34 @@ function buildLogMetricsPreviewDiscoveredFallbackQueries(
   return new Map(Array.from(queriesBySourceFamily.entries()).map(([key, value]) => [key, value.query]));
 }
 
-function buildLogMetricsPreviewFallbackApiUrls(metricsHref: string | null | undefined, seedPayload: OtlpMetricsConsole | null | undefined) {
+function normalizeRelatedMetricsCandidateSource(source: string | null | undefined): 'pod' | 'node' | 'resource' {
+  const normalized = source?.trim().toLowerCase() || '';
+  if (normalized === 'pod' || normalized === 'k8s' || normalized === 'container') return 'pod';
+  if (normalized === 'node' || normalized === 'host') return 'node';
+  return 'resource';
+}
+
+function buildLogMetricsPreviewRelatedFallbackQueries(relatedPayload: OtlpRelatedMetrics | null | undefined) {
+  const queriesBySourceFamily = new Map<string, string>();
+  (relatedPayload?.candidates || []).forEach(candidate => {
+    const query = candidate.query?.trim();
+    const family = candidate.family?.trim().toLowerCase();
+    if (!query || (family !== 'cpu' && family !== 'memory')) return;
+    const source = normalizeRelatedMetricsCandidateSource(candidate.source);
+    if (source === 'resource') return;
+    const key = `${source}:${family}`;
+    if (!queriesBySourceFamily.has(key)) {
+      queriesBySourceFamily.set(key, query);
+    }
+  });
+  return queriesBySourceFamily;
+}
+
+function buildLogMetricsPreviewFallbackApiUrls(
+  metricsHref: string | null | undefined,
+  seedPayload: OtlpMetricsConsole | null | undefined,
+  relatedPayload?: OtlpRelatedMetrics | null
+) {
   const discoveredCoverage = new Set<string>();
   (seedPayload?.results?.frames || [])
     .filter(hasMetricPreviewSamples)
@@ -691,11 +761,15 @@ function buildLogMetricsPreviewFallbackApiUrls(metricsHref: string | null | unde
       discoveredCoverage.add(`${resolveLogMetricPreviewSource(frame)}:${resolveLogMetricPreviewFamily(frame)}`);
     });
   const discoveredFallbackQueries = buildLogMetricsPreviewDiscoveredFallbackQueries(metricsHref, seedPayload);
+  const relatedFallbackQueries = buildLogMetricsPreviewRelatedFallbackQueries(relatedPayload);
   const urls = buildLogMetricsPreviewTargets(metricsHref)
     .filter(target => !discoveredCoverage.has(`${logMetricPreviewTargetSource(target)}:${target.family}`))
     .map(target => {
       const sourceFamily = `${logMetricPreviewTargetSource(target)}:${target.family}`;
-      return buildLogMetricsPreviewApiUrl(metricsHref, discoveredFallbackQueries.get(sourceFamily) || target.query);
+      return buildLogMetricsPreviewApiUrl(
+        metricsHref,
+        discoveredFallbackQueries.get(sourceFamily) || relatedFallbackQueries.get(sourceFamily) || target.query
+      );
     });
   const seen = new Set<string>();
   return urls.filter((url): url is string => Boolean(url && !seen.has(url) && seen.add(url)));
@@ -1158,12 +1232,28 @@ function createLogSavedQueryView(
 ): LogSavedQueryView {
   const now = Date.now();
   return {
-    id: `log-query-${now}`,
+    id: buildSignalSavedViewKey('logs', route),
     label: buildLogSavedViewLabel(query, routeContext, t),
     description: buildLogSavedViewDescription(query, routeContext, currentView, t),
     route,
     createdAt: now
   };
+}
+
+function resolveLogDashboardPanelVisualization(view: LogWorkbenchView): SignalDashboardPanelVisualization {
+  return view === 'time-series' || view === 'table' ? view : 'list';
+}
+
+function appendLogPanelEditContext(route: string, panelEditContext: SignalPanelEditContext | null) {
+  if (!panelEditContext) return route;
+  const url = new URL(route || '/log/manage', 'http://localhost');
+  url.searchParams.set('intent', panelEditContext.intent);
+  if (panelEditContext.dashboardKey) url.searchParams.set('dashboardKey', panelEditContext.dashboardKey);
+  if (panelEditContext.panelId) url.searchParams.set('panelId', panelEditContext.panelId);
+  if (panelEditContext.draftKey) url.searchParams.set('draftKey', panelEditContext.draftKey);
+  if (panelEditContext.returnTo) url.searchParams.set('returnTo', panelEditContext.returnTo);
+  if (panelEditContext.returnLabel) url.searchParams.set('returnLabel', panelEditContext.returnLabel);
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 function readLogAttribute(source: Record<string, unknown> | undefined, key: string) {
@@ -1382,7 +1472,8 @@ function LogManageExplorer({
   timeContext,
   applyTimeContext,
   restoreSavedViewRoute,
-  currentLogReturnHref
+  currentLogReturnHref,
+  panelEditContext
 }: {
   data: LogManageData;
   query: LogQueryState;
@@ -1399,13 +1490,37 @@ function LogManageExplorer({
   applyTimeContext: (timeContext: TimeContext) => void;
   restoreSavedViewRoute: (route: string) => void;
   currentLogReturnHref: string;
+  panelEditContext: SignalPanelEditContext | null;
 }) {
   const { t } = useI18n();
   const [savedQueryViews, setSavedQueryViews] = useState<LogSavedQueryView[]>(readLogSavedQueryViews);
+  const [savedQueryViewPersistenceMode, setSavedQueryViewPersistenceMode] = useState<SignalSavedQueryViewPersistenceMode>('local-fallback');
   const [editingSavedQueryViewId, setEditingSavedQueryViewId] = useState<string | null>(null);
   const [savedQueryViewLabelDraft, setSavedQueryViewLabelDraft] = useState('');
   const [logExportFormat, setLogExportFormat] = useState<LogExportFormat>('csv');
   const [logExportRowLimit, setLogExportRowLimit] = useState<LogExportRowLimit>('current');
+  const [dashboardPanelDraftState, setDashboardPanelDraftState] = useState<LogDashboardPanelDraftState>('idle');
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadSignalSavedQueryViews('logs')
+      .then(views => {
+        if (cancelled) return;
+        const nextViews = views.filter(isLogSavedQueryView).slice(0, LOG_SAVED_QUERY_VIEW_LIMIT);
+        setSavedQueryViews(nextViews);
+        writeLogSavedQueryViews(nextViews);
+        setSavedQueryViewPersistenceMode('server-first');
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSavedQueryViewPersistenceMode('local-fallback');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const rows = buildLogExplorerRows(data.list.content || [], {
     bodyText,
     formatTime,
@@ -1561,6 +1676,10 @@ function LogManageExplorer({
     () => buildLogMetricsPreviewApiUrl(detailLog ? detailHandoffLinks.metricsHref : null),
     [detailHandoffLinks.metricsHref, detailLog]
   );
+  const detailMetricsRelatedUrl = useMemo(
+    () => buildLogMetricsRelatedApiUrl(detailLog ? detailHandoffLinks.metricsHref : null),
+    [detailHandoffLinks.metricsHref, detailLog]
+  );
   const detailContextRows = useMemo(
     () => buildLogDetailContextRows(detailContextState.data, detailLog, t),
     [detailContextState.data, detailLog, t]
@@ -1597,7 +1716,8 @@ function LogManageExplorer({
   const relatedTraceRows = buildTraceWaterfallRows(
     relatedTraceDetail,
     relatedTraceSelectedSpan?.spanId || relatedTracePreview.selectedSpanId,
-    formatTraceDurationNanos
+    formatTraceDurationNanos,
+    t
   );
   const relatedTraceEventCount = relatedTraceRows.reduce((count, row) => count + (row.events?.length || 0), 0);
   const relatedTraceSelectedFacts = buildSelectedSpanFacts(
@@ -1639,6 +1759,13 @@ function LogManageExplorer({
   const requestedTraceId = query.traceId.trim() || routeContext.traceId?.trim() || '';
   const requestedSpanId = query.spanId.trim() || routeContext.spanId?.trim() || '';
   const requestedLogTimeUnixNano = query.logTimeUnixNano?.trim() || '';
+  const sourceContextKind = panelEditContext
+    ? 'dashboard-panel-edit'
+    : isDashboardReturnContext(routeContext.returnTo)
+    ? 'dashboard-evidence'
+    : routeContext.returnTo
+      ? 'return-source'
+      : 'direct';
   const serviceQuickFilterValues = uniqueCompactValues([
     routeContext.serviceName,
     ...data.list.content.map(entry => readFirstLogAttribute(entry, ['service.name', 'service_name']))
@@ -1701,17 +1828,26 @@ function LogManageExplorer({
     }
 
     let cancelled = false;
+    const loadRelatedMetrics = () =>
+      detailMetricsRelatedUrl
+        ? apiMessageGetWithTimeout<OtlpRelatedMetrics>(detailMetricsRelatedUrl).catch(() => null)
+        : Promise.resolve(null);
     setDetailMetricsPreviewState({ loading: true, error: null, data: null });
     apiMessageGetWithTimeout<OtlpMetricsConsole>(detailMetricsPreviewBaseUrl)
       .then(basePayload => {
         if (cancelled) return;
-        const fallbackUrls = buildLogMetricsPreviewFallbackApiUrls(detailLog ? detailHandoffLinks.metricsHref : null, basePayload);
-        if (fallbackUrls.length === 0) {
-          setDetailMetricsPreviewState({ loading: false, error: null, data: basePayload ? [basePayload] : [] });
-          return;
-        }
-        Promise.allSettled(fallbackUrls.map(url => apiMessageGetWithTimeout<OtlpMetricsConsole>(url)))
-          .then(results => {
+        loadRelatedMetrics().then(relatedPayload => {
+          if (cancelled) return;
+          const fallbackUrls = buildLogMetricsPreviewFallbackApiUrls(
+            detailLog ? detailHandoffLinks.metricsHref : null,
+            basePayload,
+            relatedPayload
+          );
+          if (fallbackUrls.length === 0) {
+            setDetailMetricsPreviewState({ loading: false, error: null, data: basePayload ? [basePayload] : [] });
+            return;
+          }
+          Promise.allSettled(fallbackUrls.map(url => apiMessageGetWithTimeout<OtlpMetricsConsole>(url))).then(results => {
             if (cancelled) return;
             const payloads = collectFulfilledMetricsPreviewPayloads(results);
             setDetailMetricsPreviewState({
@@ -1720,16 +1856,22 @@ function LogManageExplorer({
               data: [basePayload, ...payloads].filter(Boolean)
             });
           });
+        });
       })
       .catch(error => {
         if (cancelled) return;
-        const fallbackUrls = buildLogMetricsPreviewFallbackApiUrls(detailLog ? detailHandoffLinks.metricsHref : null, null);
-        if (fallbackUrls.length === 0) {
-          setDetailMetricsPreviewState({ loading: false, error: describeLogManageLoadFailure(error), data: null });
-          return;
-        }
-        Promise.allSettled(fallbackUrls.map(url => apiMessageGetWithTimeout<OtlpMetricsConsole>(url)))
-          .then(results => {
+        loadRelatedMetrics().then(relatedPayload => {
+          if (cancelled) return;
+          const fallbackUrls = buildLogMetricsPreviewFallbackApiUrls(
+            detailLog ? detailHandoffLinks.metricsHref : null,
+            null,
+            relatedPayload
+          );
+          if (fallbackUrls.length === 0) {
+            setDetailMetricsPreviewState({ loading: false, error: describeLogManageLoadFailure(error), data: null });
+            return;
+          }
+          Promise.allSettled(fallbackUrls.map(url => apiMessageGetWithTimeout<OtlpMetricsConsole>(url))).then(results => {
             if (cancelled) return;
             const payloads = collectFulfilledMetricsPreviewPayloads(results);
             if (payloads.length > 0) {
@@ -1742,12 +1884,13 @@ function LogManageExplorer({
               data: null
             });
           });
+        });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [detailHandoffLinks.metricsHref, detailLog, detailMetricsPreviewBaseUrl]);
+  }, [detailHandoffLinks.metricsHref, detailLog, detailMetricsPreviewBaseUrl, detailMetricsRelatedUrl]);
 
   useEffect(() => {
     isStreamPausedRef.current = isStreamPaused;
@@ -2354,7 +2497,8 @@ function LogManageExplorer({
   };
 
   const openRelatedTracePreview = async (entry: LogEntry | null) => {
-    const traceId = entry?.traceId?.trim();
+    if (!entry) return;
+    const traceId = entry.traceId?.trim();
     if (!traceId) return;
     setRelatedTracePreview({
       open: true,
@@ -2423,10 +2567,42 @@ function LogManageExplorer({
       writeLogSavedQueryViews(nextViews);
       return nextViews;
     });
+    void saveSignalSavedQueryView('logs', nextView)
+      .then(savedView => {
+        setSavedQueryViewPersistenceMode('server-first');
+        setSavedQueryViews(previous => {
+          const nextViews = [savedView, ...previous.filter(view => view.id !== nextView.id && view.route !== savedView.route)].slice(0, LOG_SAVED_QUERY_VIEW_LIMIT);
+          writeLogSavedQueryViews(nextViews);
+          return nextViews;
+        });
+      })
+      .catch(() => {
+        setSavedQueryViewPersistenceMode('local-fallback');
+      });
   };
 
   const copyCurrentLogQueryView = () => {
     void copyTextToClipboard(currentLogReturnHref);
+  };
+
+  const addCurrentLogQueryToDashboard = () => {
+    const snapshot = createLogSavedQueryView(query, routeContext, currentView, currentLogReturnHref, t);
+    const draft = applySignalDashboardPanelEditContext(createSignalDashboardPanelDraft({
+      signal: 'logs',
+      title: snapshot.label,
+      description: snapshot.description,
+      visualization: resolveLogDashboardPanelVisualization(currentView),
+      route: currentLogReturnHref,
+      payload: {
+        source: 'logs-explorer',
+        view: currentView
+      }
+    }), panelEditContext);
+    setDashboardPanelDraftState('saving');
+    void saveSignalDashboardPanelDraft(draft)
+      .then(() => saveSignalDashboardPanelEditContext(panelEditContext, draft))
+      .then(() => setDashboardPanelDraftState('saved'))
+      .catch(() => setDashboardPanelDraftState('failed'));
   };
 
   const copyLogLineLink = (row: LogExplorerRow) => {
@@ -2439,6 +2615,11 @@ function LogManageExplorer({
       writeLogSavedQueryViews(nextViews);
       return nextViews;
     });
+    void deleteSignalSavedQueryView('logs', viewId)
+      .then(() => setSavedQueryViewPersistenceMode('server-first'))
+      .catch(() => {
+        setSavedQueryViewPersistenceMode('local-fallback');
+      });
   };
 
   const updateLogSavedQueryView = (viewId: string) => {
@@ -2450,6 +2631,21 @@ function LogManageExplorer({
           : view
       ));
       writeLogSavedQueryViews(nextViews);
+      const updatedView = nextViews.find(view => view.id === viewId);
+      if (updatedView) {
+        void saveSignalSavedQueryView('logs', updatedView)
+          .then(savedView => {
+            setSavedQueryViewPersistenceMode('server-first');
+            setSavedQueryViews(currentViews => {
+              const syncedViews = currentViews.map(view => (view.id === viewId ? savedView : view));
+              writeLogSavedQueryViews(syncedViews);
+              return syncedViews;
+            });
+          })
+          .catch(() => {
+            setSavedQueryViewPersistenceMode('local-fallback');
+          });
+      }
       return nextViews;
     });
   };
@@ -2473,6 +2669,21 @@ function LogManageExplorer({
     setSavedQueryViews(previous => {
       const nextViews = previous.map(view => (view.id === viewId ? { ...view, label: nextLabel } : view));
       writeLogSavedQueryViews(nextViews);
+      const renamedView = nextViews.find(view => view.id === viewId);
+      if (renamedView) {
+        void saveSignalSavedQueryView('logs', renamedView)
+          .then(savedView => {
+            setSavedQueryViewPersistenceMode('server-first');
+            setSavedQueryViews(currentViews => {
+              const syncedViews = currentViews.map(view => (view.id === viewId ? savedView : view));
+              writeLogSavedQueryViews(syncedViews);
+              return syncedViews;
+            });
+          })
+          .catch(() => {
+            setSavedQueryViewPersistenceMode('local-fallback');
+          });
+      }
       return nextViews;
     });
     cancelRenameLogSavedQueryView();
@@ -2553,6 +2764,9 @@ function LogManageExplorer({
         <HzPanelSurface
           data-log-manage-saved-views="route-query-views"
           data-log-manage-saved-views-owner="hertzbeat-ui-panel-surface"
+          data-log-manage-saved-view-persistence={savedQueryViewPersistenceMode}
+          data-log-manage-saved-view-persistence-owner={LOG_SAVED_QUERY_VIEW_PERSISTENCE_OWNER[savedQueryViewPersistenceMode]}
+          data-log-manage-saved-view-storage-key={LOG_SAVED_QUERY_VIEW_STORAGE_KEY}
           padding="view-switch"
           variant="view-switch"
         >
@@ -2562,7 +2776,30 @@ function LogManageExplorer({
             data-log-manage-saved-view-layout="shared-view-switch"
             data-log-manage-saved-view-layout-owner="hertzbeat-ui-workbench-layout"
           >
-            <div className="min-w-[128px] text-[12px] font-semibold text-[#8792a5]">{t('log.manage.saved-view.title')}</div>
+            <div className="min-w-[176px]">
+              <div className="text-[12px] font-semibold text-[#8792a5]">{t('log.manage.saved-view.title')}</div>
+              <div
+                className="mt-1 text-[11px] text-[#626b7c]"
+                data-log-manage-saved-view-persistence-copy={savedQueryViewPersistenceMode}
+              >
+                {t(savedQueryViewPersistenceMode === 'server-first'
+                  ? 'log.manage.saved-view.persistence.server'
+                  : 'log.manage.saved-view.persistence.local')}
+              </div>
+              {dashboardPanelDraftState !== 'idle' ? (
+                <div
+                  className="mt-1 text-[11px] text-[#8792a5]"
+                  data-log-manage-dashboard-panel-draft-status={dashboardPanelDraftState}
+                  data-log-manage-dashboard-panel-draft-status-mode={panelEditContext ? 'edit-panel' : 'new-panel'}
+                  data-log-manage-dashboard-panel-draft-status-dashboard={panelEditContext?.dashboardKey || ''}
+                  data-log-manage-dashboard-panel-draft-status-panel={panelEditContext?.panelId || ''}
+                >
+                  {t(panelEditContext
+                    ? `log.manage.dashboard-panel-draft.update-${dashboardPanelDraftState}`
+                    : `log.manage.dashboard-panel-draft.${dashboardPanelDraftState}`)}
+                </div>
+              ) : null}
+            </div>
             <HzActionGroup
               layout="end-wrap"
               data-log-manage-saved-view-action-group="shared-action-group"
@@ -2591,6 +2828,45 @@ function LogManageExplorer({
               >
                 <Copy className="h-4 w-4" aria-hidden="true" />
               </HzButton>
+              <HzButton
+                type="button"
+                intent="secondary"
+                size="md"
+                title={t(panelEditContext ? 'log.manage.dashboard-panel-draft.update-current' : 'log.manage.dashboard-panel-draft.add-current')}
+                aria-label={t(panelEditContext ? 'log.manage.dashboard-panel-draft.update-current' : 'log.manage.dashboard-panel-draft.add-current')}
+                onClick={addCurrentLogQueryToDashboard}
+                data-log-manage-dashboard-panel-draft-action={panelEditContext ? 'update-current' : 'add-current'}
+                data-log-manage-dashboard-panel-draft-action-owner="hertzbeat-ui-button"
+                data-log-manage-dashboard-panel-draft-action-mode={panelEditContext ? 'edit-panel' : 'new-panel'}
+                data-log-manage-dashboard-panel-draft-action-dashboard={panelEditContext?.dashboardKey || ''}
+                data-log-manage-dashboard-panel-draft-action-panel={panelEditContext?.panelId || ''}
+                data-log-manage-dashboard-panel-draft-action-draft={panelEditContext?.draftKey || ''}
+              >
+                <HzButtonIcon
+                  icon={BarChart3}
+                  data-log-manage-dashboard-panel-draft-action-icon="add-current"
+                  data-log-manage-dashboard-panel-draft-action-icon-owner="hertzbeat-ui-button-icon"
+                />
+              </HzButton>
+              {panelEditContext?.returnTo ? (
+                <HzButtonLink
+                  component={Link}
+                  href={panelEditContext.returnTo}
+                  intent="secondary"
+                  size="md"
+                  data-log-manage-dashboard-panel-draft-return-action="dashboard"
+                  data-log-manage-dashboard-panel-draft-return-action-owner="hertzbeat-ui-button-link"
+                  data-log-manage-dashboard-panel-draft-return-action-dashboard={panelEditContext.dashboardKey || ''}
+                  data-log-manage-dashboard-panel-draft-return-action-panel={panelEditContext.panelId || ''}
+                >
+                  <HzButtonIcon
+                    icon={BarChart3}
+                    data-log-manage-dashboard-panel-draft-return-action-icon="dashboard"
+                    data-log-manage-dashboard-panel-draft-return-action-icon-owner="hertzbeat-ui-button-icon"
+                  />
+                  {t('log.manage.dashboard-panel-draft.return-dashboard')}
+                </HzButtonLink>
+              ) : null}
               {savedQueryViews.length ? (
                 savedQueryViews.map(view => {
                   const active = view.route === currentLogReturnHref;
@@ -2710,6 +2986,14 @@ function LogManageExplorer({
       subtitle={resolveLogDetailTitle(detailLog, t)}
       traceId={detailLog?.traceId}
       selectionState={detailSelection?.selectionState}
+      overlayProps={{
+        'data-log-manage-detail-source-context': sourceContextKind,
+        'data-log-manage-detail-auto-open-key': autoOpenedTraceDetailKeyRef.current || '',
+        'data-log-manage-detail-requested-trace': requestedTraceId,
+        'data-log-manage-detail-requested-span': requestedSpanId,
+        'data-log-manage-detail-selected-trace': detailLog?.traceId || '',
+        'data-log-manage-detail-selected-span': detailLog?.spanId || ''
+      }}
       warning={detailSelection?.selectionState === 'detached' ? t('log.manage.stream.detail.detached-warning') : undefined}
       facts={detailFacts}
       attributionDiagnostics={detailAttributionDiagnostics}
@@ -3092,6 +3376,16 @@ function LogManageExplorer({
       data-log-manage-style-baseline="hertzbeat-ui-matte"
       data-log-manage-shell-owner="hertzbeat-ui-signal-workbench-shell"
       data-log-manage-shell-chrome="topology-workbench"
+      data-log-manage-source-context={sourceContextKind}
+      data-log-manage-source-context-return={routeContext.returnTo || ''}
+      data-log-manage-source-context-trace={requestedTraceId}
+      data-log-manage-source-context-span={requestedSpanId}
+      data-log-manage-source-context-service={routeContext.serviceName || ''}
+      data-log-manage-panel-edit-context={panelEditContext?.intent || 'none'}
+      data-log-manage-panel-edit-dashboard={panelEditContext?.dashboardKey || ''}
+      data-log-manage-panel-edit-panel={panelEditContext?.panelId || ''}
+      data-log-manage-panel-edit-draft={panelEditContext?.draftKey || ''}
+      data-log-manage-panel-edit-return={panelEditContext?.returnTo || ''}
       layout="topology-workbench"
     >
         <HzPanelSurface
@@ -3647,13 +3941,13 @@ function LogManageExplorer({
                   key: 'time',
                   header: t('log.manage.list.column.time'),
                   width: '176px',
-                  render: row => <span className="font-mono text-[12px] text-[#cbd5e1]">{row.timestamp}</span>
+                  render: (row: LogExplorerRow) => <span className="font-mono text-[12px] text-[#cbd5e1]">{row.timestamp}</span>
                 },
                 {
                   key: 'severity',
                   header: t('log.manage.list.column.severity'),
                   width: '116px',
-                  render: row => row.severity !== '-' && row.severity !== 'LOG' ? (
+                  render: (row: LogExplorerRow) => row.severity !== '-' && row.severity !== 'LOG' ? (
                     <HzButton
                       type="button"
                       size="xs"
@@ -3689,7 +3983,7 @@ function LogManageExplorer({
                   key: 'service',
                   header: t('log.manage.list.column.service'),
                   width: '180px',
-                  render: row => row.service !== '-' ? (
+                  render: (row: LogExplorerRow) => row.service !== '-' ? (
                     <HzButton
                       type="button"
                       size="xs"
@@ -3717,7 +4011,7 @@ function LogManageExplorer({
                 {
                   key: 'body',
                   header: t('log.manage.list.column.body'),
-                  render: row => {
+                  render: (row: LogExplorerRow) => {
                     const bodySearchTerm = buildLogBodySearchTerm(row.message);
                     return (
                     <span
@@ -3797,7 +4091,7 @@ function LogManageExplorer({
                   key: 'trace-id',
                   header: t('log.manage.list.column.trace'),
                   width: '220px',
-                  render: row => (
+                  render: (row: LogExplorerRow) => (
                     <HzActionGroup
                       layout="inline-wrap"
                       data-log-manage-table-trace-id-actions="detail-filter"
@@ -3846,7 +4140,7 @@ function LogManageExplorer({
                   key: 'span-id',
                   header: t('log.manage.detail.span-id'),
                   width: '180px',
-                  render: row => row.spanId !== '-' ? (
+                  render: (row: LogExplorerRow) => row.spanId !== '-' ? (
                     <HzButton
                       type="button"
                       size="xs"
@@ -3870,7 +4164,7 @@ function LogManageExplorer({
                     key: `field:${fieldColumn}`,
                     header: fieldColumn,
                     width: '190px',
-                    render: row => {
+                    render: (row: LogExplorerRow) => {
                       const value = readLogFieldColumnValue(logEntryByRowKey.get(row.key), fieldColumn);
                       return (
                         <HzDataCellText
@@ -3996,24 +4290,24 @@ function LogManageExplorer({
                     key: 'source',
                     header: t('log.manage.attributes.column.source'),
                     width: '112px',
-                    render: row => row.source
+                    render: (row: LogAttributeRow) => row.source
                   },
                   {
                     key: 'name',
                     header: t('log.manage.attributes.column.name'),
                     width: '180px',
-                    render: row => <span className="font-mono text-[12px]">{row.name}</span>
+                    render: (row: LogAttributeRow) => <span className="font-mono text-[12px]">{row.name}</span>
                   },
                   {
                     key: 'value',
                     header: t('log.manage.attributes.column.value'),
-                    render: row => <span className="font-mono text-[12px]">{row.value}</span>
+                    render: (row: LogAttributeRow) => <span className="font-mono text-[12px]">{row.value}</span>
                   },
                   {
                     key: 'filter',
                     header: t('log.manage.attributes.column.actions'),
                     width: '252px',
-                    render: row => renderLogAttributeFilterAction(row)
+                    render: (row: LogAttributeRow) => renderLogAttributeFilterAction(row)
                   }
                 ]}
                 className="mt-4"
@@ -4081,11 +4375,16 @@ export default function LogManagePage({
 }: LogManagePageProps & { initialRouteState?: LogManageRouteState } = {}) {
   const logManageRouteState = initialRouteState ?? EMPTY_LOG_MANAGE_ROUTE_STATE;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [draft, setDraft] = useState<LogQueryState>(() => logManageRouteState.initialQuery);
   const [query, setQuery] = useState<LogQueryState>(() => logManageRouteState.initialQuery);
   const { t } = useI18n();
   const currentView = forcedView ?? logManageRouteState.currentView;
   const routeContext = logManageRouteState.routeContext;
+  const panelEditContext = useMemo(() => readSignalPanelEditContext(searchParams), [searchParams]);
+  const replaceLogHref = useCallback((route: string) => {
+    router.replace(appendLogPanelEditContext(route, panelEditContext));
+  }, [panelEditContext, router]);
   const logTimeContext = useMemo(() => sanitizeTimeContext({
     timeRange: routeContext.timeRange || 'last-30m',
     start: routeContext.start,
@@ -4114,33 +4413,48 @@ export default function LogManagePage({
   );
 
   useEffect(() => {
-    if (logManageRouteState.shouldCleanUrl) {
+    if (!panelEditContext && logManageRouteState.shouldCleanUrl) {
       router.replace(buildLogManageRoute(routeContext, query, currentView));
     }
-  }, [currentView, logManageRouteState.shouldCleanUrl, query, routeContext, router]);
+  }, [currentView, logManageRouteState.shouldCleanUrl, panelEditContext, query, routeContext, router]);
 
   const applyLogTimeContext = useCallback((timeContext: TimeContext) => {
     const appliedContext = resolveAppliedTimeContext(timeContext, logTimeContext);
-    router.replace(buildLogManageRoute(routeContext, query, currentView, appliedContext));
-  }, [currentView, logTimeContext, query, routeContext, router]);
+    replaceLogHref(buildLogManageRoute(routeContext, query, currentView, appliedContext));
+  }, [currentView, logTimeContext, query, replaceLogHref, routeContext]);
 
   const load = useCallback(async (): Promise<LogManageData> => {
     const { listUrl, overviewUrl, trendUrl, coverageUrl, groupByUrl } = logUrls;
-    try {
-      const shouldLoadGroupBy = Boolean(query.groupBy?.trim());
-      const [overview, list, trend, coverage, group] = await Promise.all([
-        apiMessageGetWithTimeout<BackendLogOverview>(overviewUrl),
-        apiMessageGetWithTimeout<PageResult<LogEntry>>(listUrl),
-        apiMessageGetWithTimeout<LogTrendStats>(trendUrl),
-        apiMessageGetWithTimeout<LogTraceCoverage>(coverageUrl),
-        shouldLoadGroupBy
-          ? apiMessageGetWithTimeout<LogGroupStats>(groupByUrl)
-          : Promise.resolve({ groupBy: '', groups: [] })
-      ]);
-      return { overview: normalizeLogOverview(overview), list, trend, coverage, group, query };
-    } catch (error) {
-      return emptyLogManageData(query, describeLogManageLoadFailure(error));
+    const shouldLoadGroupBy = Boolean(query.groupBy?.trim());
+    const fallback = emptyLogManageData(query, '');
+    const [overviewResult, listResult, trendResult, coverageResult, groupResult] = await Promise.allSettled([
+      apiMessageGetWithTimeout<BackendLogOverview>(overviewUrl),
+      apiMessageGetWithTimeout<PageResult<LogEntry>>(listUrl),
+      apiMessageGetWithTimeout<LogTrendStats>(trendUrl),
+      apiMessageGetWithTimeout<LogTraceCoverage>(coverageUrl),
+      shouldLoadGroupBy
+        ? apiMessageGetWithTimeout<LogGroupStats>(groupByUrl)
+        : Promise.resolve({ groupBy: '', groups: [] })
+    ]);
+    const rejectedMessages = [overviewResult, listResult, trendResult, coverageResult, groupResult]
+      .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+      .map(result => describeLogManageLoadFailure(result.reason));
+
+    if (listResult.status === 'rejected') {
+      return emptyLogManageData(query, describeLogManageLoadFailure(listResult.reason));
     }
+
+    return {
+      overview: overviewResult.status === 'fulfilled' ? normalizeLogOverview(overviewResult.value) : fallback.overview,
+      list: listResult.value,
+      trend: trendResult.status === 'fulfilled' ? trendResult.value : fallback.trend,
+      coverage: coverageResult.status === 'fulfilled' ? coverageResult.value : fallback.coverage,
+      group: groupResult.status === 'fulfilled' ? groupResult.value : fallback.group,
+      query,
+      ...(rejectedMessages.length > 0
+        ? { loadStatus: { state: 'degraded' as const, message: rejectedMessages.join('; ') } }
+        : {})
+    };
   }, [logUrls, query]);
 
   return (
@@ -4154,21 +4468,21 @@ export default function LogManagePage({
         const resetQuery = () => {
           setDraft(EMPTY_QUERY);
           setQuery(EMPTY_QUERY);
-          router.replace(buildResetLogManageRoute(routeContext, currentView));
+          replaceLogHref(buildResetLogManageRoute(routeContext, currentView));
         };
 
         const applyQuery = (override?: LogQueryState) => {
           const nextQuery = override ? { ...override } : { ...draft };
           setQuery(nextQuery);
-          router.replace(buildRouteWithContext(nextQuery, currentView));
+          replaceLogHref(buildRouteWithContext(nextQuery, currentView));
         };
 
         const applyRouteContext = (nextContext: SignalRouteContext) => {
-          router.replace(buildLogManageRoute(nextContext, query, currentView));
+          replaceLogHref(buildLogManageRoute(nextContext, query, currentView));
         };
 
         const switchView = (view: LogWorkbenchView) => {
-          router.replace(buildRouteWithContext(query, view));
+          replaceLogHref(buildRouteWithContext(query, view));
         };
 
         return (
@@ -4186,8 +4500,9 @@ export default function LogManagePage({
             routeContext={routeContext}
             timeContext={logTimeContext}
             applyTimeContext={applyLogTimeContext}
-            restoreSavedViewRoute={route => router.replace(route)}
+            restoreSavedViewRoute={replaceLogHref}
             currentLogReturnHref={buildLogManageRoute(routeContext, query, currentView)}
+            panelEditContext={panelEditContext}
           />
         );
       }}

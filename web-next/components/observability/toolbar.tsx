@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Input } from '../ui/input';
-import { Select } from '../ui/select';
+import { Select, type SelectProps } from '../ui/select';
 import { cn } from '../../lib/utils';
 
 type ToolbarRowProps = {
@@ -70,7 +70,7 @@ export const ToolbarInput = React.forwardRef<HTMLInputElement, ToolbarInputProps
 
 ToolbarInput.displayName = 'ToolbarInput';
 
-export interface ToolbarNativeSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
+export interface ToolbarNativeSelectProps extends SelectProps {}
 
 export const ToolbarNativeSelect = React.forwardRef<HTMLSelectElement, ToolbarNativeSelectProps>(({ className, children, ...props }, ref) => (
   <Select

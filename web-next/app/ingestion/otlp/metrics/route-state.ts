@@ -23,6 +23,7 @@ const METRICS_INVENTORY_PAGE_SIZE_OPTIONS = ['5', '10', '20', '50'] as const;
 
 const METRICS_ROUTE_KEYS: Array<keyof OtlpMetricsQueryState> = [
   'entityId',
+  'entityType',
   'entityName',
   'returnTo',
   'traceId',
@@ -46,6 +47,11 @@ const METRICS_ROUTE_KEYS: Array<keyof OtlpMetricsQueryState> = [
   'inventoryPageSize',
   'inventoryPageIndex',
   'seriesAttributeSearch',
+  'relatedMetricSource',
+  'relatedMetricFamily',
+  'relatedMetricReason',
+  'relatedMetricMatchedLabels',
+  'relatedMetricResourceMatch',
   'timeRange',
   'from',
   'to',
