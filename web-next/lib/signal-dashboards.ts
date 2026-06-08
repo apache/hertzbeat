@@ -399,6 +399,10 @@ type BuildSignalServiceOverviewDashboardInput = {
   live?: string;
 };
 
+type BuildSignalOperationDrilldownDashboardInput = BuildSignalServiceOverviewDashboardInput & {
+  operationName: string;
+};
+
 type ResolveSignalDashboardPreviewOptions = {
   timeRange?: SignalDashboardTimeRange;
   now?: number;
@@ -625,6 +629,7 @@ export function buildSignalDashboardVariablesFromDrafts(drafts: SignalDashboardP
     addDraftVariable(variables, 'hertzbeat.source', collectRouteParam(draft.route, 'source'), 'Signal source context from panel drafts');
     addDraftVariable(variables, 'hertzbeat.collector', collectRouteParam(draft.route, 'collector'), 'Collector context from panel drafts');
     addDraftVariable(variables, 'hertzbeat.template', collectRouteParam(draft.route, 'template'), 'Template context from panel drafts');
+    addDraftVariable(variables, 'operation.name', collectRouteParam(draft.route, 'operationName'), 'Operation context from panel drafts');
   }
   return [...variables.values()];
 }
@@ -1908,6 +1913,58 @@ function serviceOverviewVariableType(name: string): SignalDashboardVariableType 
     : name.startsWith('hertzbeat.') ? 'dynamic' : 'textbox';
 }
 
+function operationDrilldownVariableType(name: string): SignalDashboardVariableType {
+  return name === 'operation.name' || name === 'service.name' || name === 'service.namespace' || name === 'deployment.environment.name'
+    ? 'query'
+    : name.startsWith('hertzbeat.') ? 'dynamic' : 'textbox';
+}
+
+function operationMetricRoute(input: {
+  sourceRoute: string;
+  serviceName: string;
+  operationName: string;
+  query: string;
+  values: Record<string, string>;
+}) {
+  return serviceMetricRedRoute({
+    sourceRoute: input.sourceRoute,
+    serviceName: input.serviceName,
+    query: input.query,
+    values: {
+      filter: serviceMetricFilter({
+        sourceRoute: input.sourceRoute,
+        serviceName: input.serviceName,
+        clauses: [`operation="${input.operationName}"`]
+      }),
+      ...input.values
+    }
+  });
+}
+
+function operationTraceRoute(sourceRoute: string, serviceName: string, operationName: string, values: Record<string, string>) {
+  return routeWithSearchParams(serviceCompanionRoute({
+    sourceRoute,
+    signal: 'traces',
+    serviceName,
+    visualization: values.view === 'time-series' ? 'time-series' : 'table'
+  }), {
+    operationName,
+    ...values
+  });
+}
+
+function operationLogRoute(sourceRoute: string, serviceName: string, operationName: string, values: Record<string, string>) {
+  return routeWithSearchParams(serviceCompanionRoute({
+    sourceRoute,
+    signal: 'logs',
+    serviceName,
+    visualization: values.view === 'table' ? 'table' : 'list'
+  }), {
+    attributeFilter: `http.route:${operationName}`,
+    ...values
+  });
+}
+
 export function buildSignalServiceOverviewDashboard(input: BuildSignalServiceOverviewDashboardInput): SignalDashboard {
   const serviceName = input.serviceName.trim();
   if (!serviceName) {
@@ -1939,6 +1996,196 @@ export function buildSignalServiceOverviewDashboard(input: BuildSignalServiceOve
     parseSignalDashboardVariables(dashboard).map(variable => ({
       ...variable,
       type: serviceOverviewVariableType(variable.name),
+      options: variable.value ? [variable.value] : variable.options
+    }))
+  );
+}
+
+export function buildSignalOperationDrilldownDashboard(input: BuildSignalOperationDrilldownDashboardInput): SignalDashboard {
+  const serviceName = input.serviceName.trim();
+  const operationName = input.operationName.trim();
+  if (!serviceName || !operationName) {
+    throw new Error('Operation drilldown dashboard requires a service name and operation name');
+  }
+  const serviceLabel = input.entityName?.trim() || serviceName;
+  const sourceRoute = routeWithSearchParams(serviceOverviewRoute({ ...input, serviceName }), {
+    operationName
+  });
+  const filterLabel = `operation.name=${operationName}`;
+  const drafts = [
+    createSignalDashboardPanelDraft({
+      signal: 'metrics',
+      title: `Operation drilldown latency p95: ${filterLabel}`,
+      description: `${filterLabel} · latency p95`,
+      visualization: 'graph',
+      route: operationMetricRoute({
+        sourceRoute,
+        serviceName,
+        operationName,
+        query: 'http.server.duration',
+        values: {
+          aggregation: 'p95',
+          groupBy: 'operation',
+          legendFormat: '{{operation}} - p95',
+          formula: 'A * 1000'
+        }
+      }),
+      payload: {
+        source: 'signal-dashboard-operation-drilldown',
+        templateKey: 'operation-latency-p95',
+        serviceName,
+        operationName
+      }
+    }),
+    createSignalDashboardPanelDraft({
+      signal: 'metrics',
+      title: `Operation drilldown request rate: ${filterLabel}`,
+      description: `${filterLabel} · request rate`,
+      visualization: 'graph',
+      route: operationMetricRoute({
+        sourceRoute,
+        serviceName,
+        operationName,
+        query: 'http_server_duration_milliseconds_count',
+        values: {
+          aggregation: 'sum',
+          temporalAggregation: 'rate',
+          groupBy: 'operation',
+          legendFormat: '{{operation}} - rps'
+        }
+      }),
+      payload: {
+        source: 'signal-dashboard-operation-drilldown',
+        templateKey: 'operation-request-rate',
+        serviceName,
+        operationName
+      }
+    }),
+    createSignalDashboardPanelDraft({
+      signal: 'metrics',
+      title: `Operation drilldown error rate: ${filterLabel}`,
+      description: `${filterLabel} · error rate`,
+      visualization: 'graph',
+      route: operationMetricRoute({
+        sourceRoute,
+        serviceName,
+        operationName,
+        query: 'http_server_duration_milliseconds_count',
+        values: {
+          filter: serviceMetricFilter({
+            sourceRoute,
+            serviceName,
+            clauses: [`operation="${operationName}"`, 'status_code="STATUS_CODE_ERROR"']
+          }),
+          aggregation: 'sum',
+          temporalAggregation: 'rate',
+          groupBy: 'status_code',
+          legendFormat: '{{operation}} - errors'
+        }
+      }),
+      payload: {
+        source: 'signal-dashboard-operation-drilldown',
+        templateKey: 'operation-error-rate',
+        serviceName,
+        operationName
+      }
+    }),
+    createSignalDashboardPanelDraft({
+      signal: 'logs',
+      title: `Operation drilldown logs: ${filterLabel}`,
+      description: `${filterLabel} · logs`,
+      visualization: 'list',
+      route: operationLogRoute(sourceRoute, serviceName, operationName, {
+        view: 'list'
+      }),
+      payload: {
+        source: 'signal-dashboard-operation-drilldown',
+        templateKey: 'operation-logs',
+        serviceName,
+        operationName
+      }
+    }),
+    createSignalDashboardPanelDraft({
+      signal: 'logs',
+      title: `Operation drilldown log errors: ${filterLabel}`,
+      description: `${filterLabel} · log errors`,
+      visualization: 'table',
+      route: operationLogRoute(sourceRoute, serviceName, operationName, {
+        severityText: 'ERROR',
+        view: 'table'
+      }),
+      payload: {
+        source: 'signal-dashboard-operation-drilldown',
+        templateKey: 'operation-log-errors',
+        serviceName,
+        operationName
+      }
+    }),
+    createSignalDashboardPanelDraft({
+      signal: 'traces',
+      title: `Operation drilldown traces: ${filterLabel}`,
+      description: `${filterLabel} · traces`,
+      visualization: 'table',
+      route: operationTraceRoute(sourceRoute, serviceName, operationName, {
+        view: 'table'
+      }),
+      payload: {
+        source: 'signal-dashboard-operation-drilldown',
+        templateKey: 'operation-traces',
+        serviceName,
+        operationName
+      }
+    }),
+    createSignalDashboardPanelDraft({
+      signal: 'traces',
+      title: `Operation drilldown trace errors: ${filterLabel}`,
+      description: `${filterLabel} · trace errors`,
+      visualization: 'table',
+      route: operationTraceRoute(sourceRoute, serviceName, operationName, {
+        errorOnly: 'true',
+        view: 'table'
+      }),
+      payload: {
+        source: 'signal-dashboard-operation-drilldown',
+        templateKey: 'operation-trace-errors',
+        serviceName,
+        operationName
+      }
+    }),
+    createSignalDashboardPanelDraft({
+      signal: 'traces',
+      title: `Operation drilldown exceptions: ${filterLabel}`,
+      description: `${filterLabel} · exceptions`,
+      visualization: 'list',
+      route: operationTraceRoute(sourceRoute, serviceName, operationName, {
+        template: 'service-exceptions',
+        errorOnly: 'true',
+        spanScope: 'all',
+        groupBy: 'exception.type',
+        groupOrder: 'error-count-desc',
+        groupLimit: '8',
+        view: 'list'
+      }),
+      payload: {
+        source: 'signal-dashboard-operation-drilldown',
+        templateKey: 'operation-exceptions',
+        serviceName,
+        operationName
+      }
+    })
+  ];
+  const dashboard = buildSignalDashboardCompositionFromDrafts({
+    dashboardKey: normalizeSignalDashboardKey(`service-${serviceName}-operation-${operationName}-drilldown`),
+    title: `${serviceLabel} ${operationName} operation drilldown`,
+    description: `Operation-level RED, logs, traces, and exceptions for ${operationName} in ${serviceLabel}.`,
+    tags: ['service', 'operation', 'apm', 'metrics', 'logs', 'traces'],
+    drafts
+  });
+  return updateSignalDashboardVariables(
+    dashboard,
+    parseSignalDashboardVariables(dashboard).map(variable => ({
+      ...variable,
+      type: operationDrilldownVariableType(variable.name),
       options: variable.value ? [variable.value] : variable.options
     }))
   );
