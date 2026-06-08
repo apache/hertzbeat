@@ -194,7 +194,8 @@ describe('TraceManagePage client loading', () => {
       ])
       .mockResolvedValueOnce({
         source: 'backend-related-metrics',
-        candidateCount: 2,
+        operationName: 'POST /checkout',
+        candidateCount: 3,
         candidates: [
           {
             query: 'container.cpu.usage',
@@ -211,6 +212,14 @@ describe('TraceManagePage client loading', () => {
             reason: 'resource-filter',
             matchedLabels: ['host_name'],
             resourceMatch: { host_name: 'node-a' }
+          },
+          {
+            query: 'http.server.duration',
+            source: 'operation',
+            family: 'latency',
+            reason: 'operation-context',
+            matchedLabels: ['operation_name'],
+            resourceMatch: { operation_name: 'POST /checkout', http_route: 'POST /checkout' }
           }
         ]
       })
@@ -275,8 +284,10 @@ describe('TraceManagePage client loading', () => {
     const relatedMetricsCall = apiMessageGet.mock.calls.find(call => String(call[0]).startsWith('/ingestion/otlp/metrics/related'));
     expect(relatedMetricsCall).toBeTruthy();
     const relatedMetricsHref = decodeURIComponent(String(relatedMetricsCall?.[0] || ''));
+    const relatedMetricsParams = new URL(String(relatedMetricsCall?.[0] || ''), 'http://localhost').searchParams;
     expect(relatedMetricsHref).toContain('serviceName=checkout');
     expect(relatedMetricsHref).toContain('serviceNamespace=payments');
+    expect(relatedMetricsParams.get('operationName')).toBe('POST /checkout');
     expect(relatedMetricsHref).toContain('k8s.pod.name="checkout-7d9"');
     expect(relatedMetricsHref).toContain('host.name="node-a"');
     const relatedLogsCall = apiMessageGet.mock.calls.find(call => String(call[0]).startsWith('/logs/list'));
@@ -309,6 +320,7 @@ describe('TraceManagePage client loading', () => {
     expect(relatedMetrics?.textContent).toContain('Related metrics');
     expect(relatedMetrics?.textContent).toContain('container.cpu.usage');
     expect(relatedMetrics?.textContent).toContain('system.cpu.utilization');
+    expect(relatedMetrics?.textContent).toContain('http.server.duration');
     const metricAction = relatedMetrics?.querySelector('[data-trace-manage-drawer-related-metric-query="container.cpu.usage"]') as HTMLAnchorElement | null;
     expect(metricAction?.getAttribute('href')).toContain('/ingestion/otlp/metrics?');
     expect(metricAction?.getAttribute('href')).toContain('query=container.cpu.usage');
@@ -322,6 +334,10 @@ describe('TraceManagePage client loading', () => {
     expect(metricActionParams.get('relatedMetricReason')).toBe('resource-filter');
     expect(metricActionParams.get('relatedMetricMatchedLabels')).toBe('k8s_pod_name');
     expect(metricActionParams.get('relatedMetricResourceMatch')).toBe('{"k8s_pod_name":"checkout-7d9"}');
+    const operationMetricAction = relatedMetrics?.querySelector('[data-trace-manage-drawer-related-metric-query="http.server.duration"]') as HTMLAnchorElement | null;
+    expect(operationMetricAction?.getAttribute('data-trace-manage-drawer-related-metric-source')).toBe('operation');
+    expect(operationMetricAction?.getAttribute('data-trace-manage-drawer-related-metric-reason')).toBe('operation-context');
+    expect(new URL(operationMetricAction?.getAttribute('href') || '', 'http://localhost').searchParams.get('operationName')).toBe('POST /checkout');
   });
 
   it('narrows trace table rows by service from the row cell', async () => {

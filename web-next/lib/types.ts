@@ -375,6 +375,7 @@ export interface OtlpMetricsConsole {
 export interface OtlpRelatedMetrics {
   context?: OtlpMetricsConsole['context'];
   filter?: string | null;
+  operationName?: string | null;
   source?: string | null;
   candidateCount?: number;
   resourceMatchers?: Array<{

@@ -41,5 +41,6 @@ public interface OtlpIngestionWorkspaceService {
                                             String temporalAggregation, String step, String limit);
 
     OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, String entityType, Long start, Long end, String serviceName,
-                                            String serviceNamespace, String environment, String filter, String limit);
+                                            String serviceNamespace, String environment, String filter,
+                                            String operationName, String limit);
 }

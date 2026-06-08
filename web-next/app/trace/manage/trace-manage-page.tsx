@@ -235,7 +235,8 @@ function buildTraceRelatedMetricsApiUrl(metricsHref: string | null | undefined) 
     'entityName',
     'serviceName',
     'serviceNamespace',
-    'environment'
+    'environment',
+    'operationName'
   ].forEach(key => {
     const value = sourceParams.get(key)?.trim();
     if (value) params.set(key, value);

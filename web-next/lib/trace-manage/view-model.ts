@@ -848,6 +848,7 @@ export function buildTraceHandoffLinks(
     routeContext.template,
     readTraceSignalAttribute(detail, selectedSpan, 'template', 'hertzbeat.template', 'hertzbeat_template', 'hertzbeat.monitor_template', 'hertzbeat_monitor_template')
   );
+  const operationName = firstText(selectedSpan?.spanName, detail?.rootSpanName, routeContext.operationName);
   const metricsFilter = buildTraceMetricsResourceFilter(detail, selectedSpan);
   const routeStart = readEpochMillisRouteParam(routeContext.start);
   const routeEnd = readEpochMillisRouteParam(routeContext.end);
@@ -898,6 +899,7 @@ export function buildTraceHandoffLinks(
   if (spanId) metricsParams.set('spanId', spanId);
   if (serviceName) metricsParams.set('serviceName', serviceName);
   if (serviceNamespace) metricsParams.set('serviceNamespace', serviceNamespace);
+  if (operationName) metricsParams.set('operationName', operationName);
   if (metricsFilter) metricsParams.set('filter', metricsFilter);
   appendSignalRouteContext(metricsParams, metricsContext);
 

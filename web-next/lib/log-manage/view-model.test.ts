@@ -722,6 +722,33 @@ describe('log view model', () => {
     expect(metricsParams.get('template')).toBe('hertzbeat-self');
   });
 
+  it('keeps selected log operation context in metrics handoffs', () => {
+    const result = buildLogHandoffLinks(
+      {
+        traceId: 'trace-operation',
+        spanId: 'span-operation',
+        timeUnixNano: 1_710_000_000_000_000_000,
+        resource: {
+          'service.name': 'checkout',
+          'service.namespace': 'payments'
+        },
+        attributes: {
+          'http.route': 'POST /checkout'
+        }
+      } as any,
+      {
+        entityId: '7',
+        entityType: 'service',
+        entityName: 'Checkout API'
+      }
+    );
+
+    const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
+    expect(metricsParams.get('operationName')).toBe('POST /checkout');
+    expect(metricsParams.get('serviceName')).toBe('checkout');
+    expect(metricsParams.get('entityType')).toBe('service');
+  });
+
   it('can override trace and metrics return paths with the current log workspace route', () => {
     const currentLogReturnTo =
       `/log/manage?traceId=trace-1&spanId=span-1&view=stream&start=1709999100000&end=1710000060000&returnTo=%2Foverview&returnLabel=${encodeURIComponent(t('menu.log.manage'))}`;

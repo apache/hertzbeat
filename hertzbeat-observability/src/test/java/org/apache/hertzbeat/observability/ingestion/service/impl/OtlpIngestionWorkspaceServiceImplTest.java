@@ -986,6 +986,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 "commerce",
                 "prod",
                 "k8s.pod.name=\"checkout-7d9\" and host.name=\"node-a\"",
+                null,
                 "8"
         );
 
@@ -1008,6 +1009,48 @@ class OtlpIngestionWorkspaceServiceImplTest {
                         && "host".equals(candidate.getSource())
                         && "node-a".equals(candidate.getResourceMatch().get("host_name"))));
         assertEquals(related.getCandidates().size(), related.getCandidateCount());
+    }
+
+    @Test
+    void relatedMetricsReturnsOperationScopedServiceCandidates() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                2_000L,
+                "http.server.duration",
+                "histogram",
+                "ms",
+                14.0,
+                Map.of()
+        );
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of());
+
+        OtlpRelatedMetricsDto related = otlpIngestionWorkspaceService.getRelatedMetrics(
+                42L,
+                "service",
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "k8s.pod.name=\"checkout-7d9\"",
+                "POST /checkout",
+                "8"
+        );
+
+        assertEquals("POST /checkout", related.getOperationName());
+        assertTrue(related.getCandidates().stream().anyMatch(candidate ->
+                "http_server_duration".equals(candidate.getQuery())
+                        && "operation".equals(candidate.getSource())
+                        && "latency".equals(candidate.getFamily())
+                        && "operation-context".equals(candidate.getReason())
+                        && candidate.getMatchedLabels().contains("operation_name")
+                        && "POST /checkout".equals(candidate.getResourceMatch().get("operation_name"))
+                        && "POST /checkout".equals(candidate.getResourceMatch().get("http_route"))));
     }
 
     @Test

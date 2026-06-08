@@ -778,7 +778,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     @Override
     public OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, String entityType, Long start, Long end, String serviceName,
                                                    String serviceNamespace, String environment,
-                                                   String filter, String limit) {
+                                                   String filter, String operationName, String limit) {
         long resolvedEnd = end == null || end <= 0 ? System.currentTimeMillis() : end;
         long resolvedStart = start == null || start <= 0 || start >= resolvedEnd
                 ? resolvedEnd - DEFAULT_CONSOLE_LOOKBACK_MILLIS
@@ -788,13 +788,15 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 entityId, entityType, resolvedStart, resolvedEnd, serviceName, serviceNamespace, environment
         );
         String normalizedFilter = trimToNull(filter);
+        String normalizedOperationName = trimToNull(operationName);
         List<OtlpRelatedMetricsDto.ResourceMatcher> resourceMatchers = parseRelatedMetricResourceMatchers(normalizedFilter);
         List<OtlpRelatedMetricsDto.Candidate> candidates = buildRelatedMetricCandidates(
-                context, resourceMatchers, resolvedLimit
+                context, resourceMatchers, normalizedOperationName, resolvedLimit
         );
         return new OtlpRelatedMetricsDto(
                 context,
                 normalizedFilter,
+                normalizedOperationName,
                 "backend-related-metrics",
                 candidates.size(),
                 resourceMatchers,
@@ -805,12 +807,13 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     public OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, Long start, Long end, String serviceName,
                                                    String serviceNamespace, String environment,
                                                    String filter, String limit) {
-        return getRelatedMetrics(entityId, null, start, end, serviceName, serviceNamespace, environment, filter, limit);
+        return getRelatedMetrics(entityId, null, start, end, serviceName, serviceNamespace, environment, filter, null, limit);
     }
 
     private List<OtlpRelatedMetricsDto.Candidate> buildRelatedMetricCandidates(
             OtlpMetricsConsoleDto.Context context,
             List<OtlpRelatedMetricsDto.ResourceMatcher> resourceMatchers,
+            String operationName,
             int limit) {
         LinkedHashMap<String, OtlpRelatedMetricsDto.Candidate> candidates = new LinkedHashMap<>();
         Map<String, String> resourceMatch = resourceMatcherValueMap(resourceMatchers);
@@ -837,11 +840,15 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             addRelatedMetricCandidate(
                     candidates,
                     normalizePromqlMetricName(metricName),
-                    "service",
+                    StringUtils.hasText(operationName) ? "operation" : "service",
                     relatedMetricFamily(metricName),
-                    "service-context",
-                    serviceContextLabels(context),
-                    serviceContextResourceMatch(context)
+                    StringUtils.hasText(operationName) ? "operation-context" : "service-context",
+                    StringUtils.hasText(operationName)
+                            ? operationContextLabels(context, operationName)
+                            : serviceContextLabels(context),
+                    StringUtils.hasText(operationName)
+                            ? operationContextResourceMatch(context, operationName)
+                            : serviceContextResourceMatch(context)
             );
             if (candidates.size() >= limit) {
                 return List.copyOf(candidates.values());
@@ -951,6 +958,15 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return List.copyOf(labels);
     }
 
+    private List<String> operationContextLabels(OtlpMetricsConsoleDto.Context context, String operationName) {
+        List<String> labels = new ArrayList<>(serviceContextLabels(context));
+        if (StringUtils.hasText(operationName)) {
+            labels.add("operation_name");
+            labels.add("http_route");
+        }
+        return List.copyOf(new LinkedHashSet<>(labels));
+    }
+
     private Map<String, String> serviceContextResourceMatch(OtlpMetricsConsoleDto.Context context) {
         if (context == null || !StringUtils.hasText(context.getServiceName())) {
             return Map.of();
@@ -968,6 +984,16 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         }
         if (StringUtils.hasText(context.getEntityType())) {
             values.put("hertzbeat_entity_type", context.getEntityType());
+        }
+        return values;
+    }
+
+    private Map<String, String> operationContextResourceMatch(OtlpMetricsConsoleDto.Context context, String operationName) {
+        LinkedHashMap<String, String> values = new LinkedHashMap<>(serviceContextResourceMatch(context));
+        String normalizedOperationName = trimToNull(operationName);
+        if (StringUtils.hasText(normalizedOperationName)) {
+            values.put("operation_name", normalizedOperationName);
+            values.put("http_route", normalizedOperationName);
         }
         return values;
     }

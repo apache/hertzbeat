@@ -32,6 +32,7 @@ export const SIGNAL_ROUTE_CONTEXT_PARAM_KEYS = [
   'monitorInstance',
   'traceId',
   'spanId',
+  'operationName',
   'source',
   'collector',
   'template',

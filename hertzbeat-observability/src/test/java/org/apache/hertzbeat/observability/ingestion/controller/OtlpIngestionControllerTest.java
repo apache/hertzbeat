@@ -266,6 +266,7 @@ class OtlpIngestionControllerTest {
                 new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
                         1000L, 2000L),
                 "k8s.pod.name=\"checkout-7d9\"",
+                "POST /checkout",
                 "backend-related-metrics",
                 1,
                 List.of(new OtlpRelatedMetricsDto.ResourceMatcher("k8s_pod_name", "=", "checkout-7d9")),
@@ -279,7 +280,7 @@ class OtlpIngestionControllerTest {
                 ))
         );
         when(otlpIngestionWorkspaceService.getRelatedMetrics(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
-                "k8s.pod.name=\"checkout-7d9\"", "8")).thenReturn(related);
+                "k8s.pod.name=\"checkout-7d9\"", "POST /checkout", "8")).thenReturn(related);
 
         mockMvc.perform(get("/api/ingestion/otlp/metrics/related")
                         .param("entityId", "42")
@@ -290,11 +291,13 @@ class OtlpIngestionControllerTest {
                         .param("serviceNamespace", "commerce")
                         .param("environment", "prod")
                         .param("filter", "k8s.pod.name=\"checkout-7d9\"")
+                        .param("operationName", "POST /checkout")
                         .param("limit", "8"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.context.entityId").value(42))
                 .andExpect(jsonPath("$.data.context.entityType").value("service"))
+                .andExpect(jsonPath("$.data.operationName").value("POST /checkout"))
                 .andExpect(jsonPath("$.data.source").value("backend-related-metrics"))
                 .andExpect(jsonPath("$.data.resourceMatchers[0].label").value("k8s_pod_name"))
                 .andExpect(jsonPath("$.data.candidates[0].query").value("container.cpu.usage"))
@@ -302,6 +305,6 @@ class OtlpIngestionControllerTest {
 
         verify(otlpIngestionWorkspaceService)
                 .getRelatedMetrics(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
-                        "k8s.pod.name=\"checkout-7d9\"", "8");
+                        "k8s.pod.name=\"checkout-7d9\"", "POST /checkout", "8");
     }
 }

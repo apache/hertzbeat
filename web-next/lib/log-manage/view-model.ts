@@ -705,6 +705,12 @@ export function buildLogHandoffLinks(
   );
   const traceId = firstText(selectedLog?.traceId, routeContext.traceId);
   const spanId = firstText(selectedLog?.spanId, routeContext.spanId);
+  const operationName = firstText(
+    readAttribute(selectedLog?.attributes, 'operation.name'),
+    readAttribute(selectedLog?.attributes, 'span.name'),
+    readAttribute(selectedLog?.attributes, 'http.route'),
+    routeContext.operationName
+  );
   const metricsFilter = buildLogMetricsResourceFilter(selectedLog);
   const signalDraft = options?.alertDraft;
   const signalContext: SignalRouteContext = {
@@ -750,6 +756,7 @@ export function buildLogHandoffLinks(
   if (spanId) metricsParams.set('spanId', spanId);
   if (serviceName) metricsParams.set('serviceName', serviceName);
   if (serviceNamespace) metricsParams.set('serviceNamespace', serviceNamespace);
+  if (operationName) metricsParams.set('operationName', operationName);
   if (metricsFilter) metricsParams.set('filter', metricsFilter);
   appendSignalRouteContext(metricsParams, metricsContext);
 

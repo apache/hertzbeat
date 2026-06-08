@@ -35,6 +35,8 @@ public class OtlpRelatedMetricsDto {
 
     private String filter;
 
+    private String operationName;
+
     private String source;
 
     private int candidateCount;

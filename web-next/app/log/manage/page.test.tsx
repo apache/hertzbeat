@@ -556,7 +556,8 @@ function buildLogManageRouteState(): LogManageRouteState {
       tz: mockState.searchParams.get('tz') || undefined,
       source: mockState.searchParams.get('source') || undefined,
       traceId: mockState.searchParams.get('traceId') || undefined,
-      spanId: mockState.searchParams.get('spanId') || undefined
+      spanId: mockState.searchParams.get('spanId') || undefined,
+      operationName: mockState.searchParams.get('operationName') || undefined
     },
     shouldCleanUrl: Boolean(mockState.searchParams.get('returnLabel') || mockState.searchParams.get('returnTo')?.includes('returnLabel='))
   };
@@ -2767,7 +2768,7 @@ describe('log manage page', () => {
   });
 
   it('uses backend related metrics candidates before static fallback targets when the broad metrics query fails', async () => {
-    mockState.searchParams = new URLSearchParams('view=table&search=timeout&severityText=ERROR');
+    mockState.searchParams = new URLSearchParams('view=table&search=timeout&severityText=ERROR&operationName=POST%20%2Fcheckout');
     apiMessageGet.mockImplementation((path: string) => {
       if (path.startsWith('/ingestion/otlp/metrics/related')) {
         return Promise.resolve({
@@ -2866,6 +2867,10 @@ describe('log manage page', () => {
               'k8s.node.name': 'node-a',
               'k8s.container.name': 'checkout',
               'host.name': 'node-a'
+            },
+            attributes: {
+              ...mockState.renderData.list.content[0].attributes,
+              'http.route': 'POST /checkout'
             }
           }
         ]
@@ -2896,7 +2901,9 @@ describe('log manage page', () => {
     const relatedCalls = apiMessageGet.mock.calls.filter(call => String(call[0]).startsWith('/ingestion/otlp/metrics/related'));
     expect(relatedCalls).toHaveLength(1);
     const relatedHref = decodeURIComponent(String(relatedCalls[0]?.[0] || ''));
+    const relatedParams = new URL(String(relatedCalls[0]?.[0] || ''), 'http://localhost').searchParams;
     expect(relatedHref).toContain('serviceName=checkout');
+    expect(relatedParams.get('operationName')).toBe('POST /checkout');
     expect(relatedHref).toContain('k8s.pod.name="checkout-7d9"');
     expect(relatedHref).toContain('host.name="node-a"');
     const metricsPreviewCalls = apiMessageGet.mock.calls.filter(call => String(call[0]).startsWith('/ingestion/otlp/metrics/console'));

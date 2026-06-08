@@ -107,8 +107,9 @@ public class OtlpIngestionController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "operationName", required = false) String operationName,
             @RequestParam(value = "limit", required = false) String limit) {
         return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getRelatedMetrics(
-                entityId, entityType, start, end, serviceName, serviceNamespace, environment, filter, limit)));
+                entityId, entityType, start, end, serviceName, serviceNamespace, environment, filter, operationName, limit)));
     }
 }

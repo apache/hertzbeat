@@ -635,7 +635,7 @@ function buildLogMetricsPreviewApiUrl(metricsHref: string | null | undefined, qu
   return `/ingestion/otlp/metrics/console?${params.toString()}`;
 }
 
-function buildLogMetricsRelatedApiUrl(metricsHref: string | null | undefined) {
+function buildLogMetricsRelatedApiUrl(metricsHref: string | null | undefined, operationName?: string | null) {
   if (!metricsHref) return null;
   const href = new URL(metricsHref, 'http://localhost');
   const sourceParams = href.searchParams;
@@ -651,11 +651,16 @@ function buildLogMetricsRelatedApiUrl(metricsHref: string | null | undefined) {
     'entityName',
     'serviceName',
     'serviceNamespace',
-    'environment'
+    'environment',
+    'operationName'
   ].forEach(key => {
     const value = sourceParams.get(key)?.trim();
     if (value) params.set(key, value);
   });
+  const operationNameFallback = operationName?.trim();
+  if (!params.get('operationName') && operationNameFallback) {
+    params.set('operationName', operationNameFallback);
+  }
   if (!params.get('serviceName') && !params.get('entityId')) return null;
   params.set('limit', '8');
   return `/ingestion/otlp/metrics/related?${params.toString()}`;
@@ -1677,8 +1682,8 @@ function LogManageExplorer({
     [detailHandoffLinks.metricsHref, detailLog]
   );
   const detailMetricsRelatedUrl = useMemo(
-    () => buildLogMetricsRelatedApiUrl(detailLog ? detailHandoffLinks.metricsHref : null),
-    [detailHandoffLinks.metricsHref, detailLog]
+    () => buildLogMetricsRelatedApiUrl(detailLog ? detailHandoffLinks.metricsHref : null, routeContext.operationName),
+    [detailHandoffLinks.metricsHref, detailLog, routeContext.operationName]
   );
   const detailContextRows = useMemo(
     () => buildLogDetailContextRows(detailContextState.data, detailLog, t),

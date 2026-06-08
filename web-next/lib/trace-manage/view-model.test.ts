@@ -745,6 +745,7 @@ describe('trace view model', () => {
       } as any,
       {
         spanId: 'span-db',
+        spanName: 'POST /checkout',
         serviceName: 'checkout',
         resourceAttributes: {
           'deployment.environment.name': 'prod-east',
@@ -778,6 +779,7 @@ describe('trace view model', () => {
     expect(metricsParams.get('entityName')).toBe('Checkout DB');
     expect(metricsParams.get('collector')).toBe('collector-b');
     expect(metricsParams.get('template')).toBe('postgres');
+    expect(metricsParams.get('operationName')).toBe('POST /checkout');
 
     const entityHref = new URL(result.entityHref, 'https://example.com');
     expect(entityHref.pathname).toBe('/entities/43');
