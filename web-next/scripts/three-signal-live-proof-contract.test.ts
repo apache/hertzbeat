@@ -11,13 +11,14 @@ describe('three-signal live proof script contract', () => {
     expect(source).toContain('script/dev/start-workspace-backend.sh');
     expect(source).toContain('script/dev/start-mixed-frontend.sh');
     expect(source).toContain('BACKEND_READY_PATH="${BACKEND_READY_PATH:-/actuator/health}"');
+    expect(source).toContain('READY_ATTEMPTS="${READY_ATTEMPTS:-300}"');
     expect(source).toContain('"readyPath": "${BACKEND_READY_PATH}"');
     expect(source).toContain('wait_for_http "${HERTZBEAT_BASE}${BACKEND_READY_PATH}"');
     expect(source).toContain('|| "${status}" == "401"');
     expect(source).toContain('TRACE_ID="${TRACE_ID}" HERTZBEAT_BASE="${HERTZBEAT_BASE}" bash script/dev/verify-otlp-three-signal-demo.sh');
     expect(source).toContain('DASHBOARD_SOURCE_EDIT_LIVE_BROWSER_BASE_URL="${FRONTEND_BASE}"');
     expect(source).toContain('npm exec -- playwright test scripts/dashboard-source-edit-live-browser-smoke.spec.ts -g "${PLAYWRIGHT_GREP}"');
-    expect(source).toContain('promotes logs, traces, and metrics saved views into a persisted replay dashboard|saves a service overview dashboard from URL service and entity context');
+    expect(source).toContain('promotes logs, traces, and metrics saved views into a persisted replay dashboard|saves a service overview dashboard from URL service and entity context|saves an operation drilldown dashboard from URL operation context');
     expect(source).toContain('trap cleanup EXIT');
     expect(source).toContain('kill "${BACKEND_PID}"');
     expect(source).toContain('kill "${FRONTEND_WRAPPER_PID}"');

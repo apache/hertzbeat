@@ -26,6 +26,8 @@ describe('live dashboard source edit browser smoke contract', () => {
     expect(source).toContain("promotes logs, traces, and metrics saved views into a persisted replay dashboard");
     expect(source).toContain("saves a service overview dashboard from URL service and entity context");
     expect(source).toContain("buildSignalServiceOverviewDashboard");
+    expect(source).toContain("saves an operation drilldown dashboard from URL operation context");
+    expect(source).toContain("buildSignalOperationDrilldownDashboard");
     expect(source).toContain("data-dashboard-service-overview-action=\"save\"");
     expect(source).toContain("data-dashboard-service-overview-context=\"ready\"");
     expect(source).toContain("Checkout API service overview");
@@ -36,6 +38,15 @@ describe('live dashboard source edit browser smoke contract', () => {
     expect(source).toContain("'Service overview log errors: service.name=checkout'");
     expect(source).toContain("'Service overview exceptions: service.name=checkout'");
     expect(source).toContain("'Service overview firing alerts: service.name=checkout'");
+    expect(source).toContain("data-dashboard-operation-drilldown-action=\"save\"");
+    expect(source).toContain("data-dashboard-operation-drilldown-context=\"ready\"");
+    expect(source).toContain("service-checkout-operation-post-checkout-drilldown");
+    expect(source).toContain("Checkout API POST /checkout operation drilldown");
+    expect(source).toContain("'Operation drilldown latency p95: operation.name=POST /checkout'");
+    expect(source).toContain("'Operation drilldown traces: operation.name=POST /checkout'");
+    expect(source).toContain("operation%3D%22POST+%2Fcheckout%22");
+    expect(source).toContain("attributeFilter=http.route%3APOST+%2Fcheckout");
+    expect(source).toContain("operationName=POST+%2Fcheckout");
     expect(source).toContain("expect.objectContaining({ name: 'hertzbeat.entity_id', type: 'dynamic', value: '4200' })");
     expect(source).toContain("expect.objectContaining({ name: 'hertzbeat.entity_type', type: 'dynamic', value: 'service' })");
     expect(source).toContain("buildSignalDashboardExecutionPlans(persistedDashboard)");

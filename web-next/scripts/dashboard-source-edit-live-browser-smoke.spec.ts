@@ -3,6 +3,7 @@ import { expect, test, type APIRequestContext, type Page } from 'playwright/test
 import {
   buildSignalDashboardCompositionFromDrafts,
   buildSignalDashboardExecutionPlans,
+  buildSignalOperationDrilldownDashboard,
   buildSignalServiceOverviewDashboard,
   createSignalDashboardPanelDraftFromRuntimeBreakout,
   createSignalDashboardPanelDraftFromRuntimeEvidence,
@@ -162,6 +163,24 @@ function serviceOverviewRoute() {
     '/dashboard?serviceName=checkout',
     'serviceNamespace=payments',
     'environment=prod',
+    'entityId=4200',
+    'entityType=service',
+    'entityName=Checkout%20API',
+    'source=otlp',
+    'collector=collector-a',
+    'template=spring-boot',
+    'timeRange=last-1h',
+    'refresh=30',
+    'live=true'
+  ].join('&');
+}
+
+function operationDrilldownRoute() {
+  return [
+    '/dashboard?serviceName=checkout',
+    'serviceNamespace=payments',
+    'environment=prod',
+    'operationName=POST%20%2Fcheckout',
     'entityId=4200',
     'entityType=service',
     'entityName=Checkout%20API',
@@ -593,6 +612,121 @@ test.describe('live dashboard source edit browser smoke', () => {
       await expect(alertPanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'alerts');
       await expect(alertPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /\/alerts\/group\?/);
       await expect(alertPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /status=firing/);
+    } finally {
+      await page.context().request.delete(`${baseUrl}/api/signal/dashboard/${encodeURIComponent(dashboardKey)}`, {
+        failOnStatusCode: false
+      });
+    }
+  });
+
+  test('saves an operation drilldown dashboard from URL operation context', async ({ page }) => {
+    test.setTimeout(BROWSER_SMOKE_TIMEOUT);
+
+    const expectedDashboard = buildSignalOperationDrilldownDashboard({
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      environment: 'prod',
+      operationName: 'POST /checkout',
+      entityId: '4200',
+      entityType: 'service',
+      entityName: 'Checkout API',
+      source: 'otlp',
+      collector: 'collector-a',
+      template: 'spring-boot',
+      timeRange: 'last-1h',
+      refresh: '30',
+      live: 'true'
+    });
+    const dashboardKey = expectedDashboard.dashboardKey;
+    await authenticate(page);
+    await page.context().request.delete(`${baseUrl}/api/signal/dashboard/${encodeURIComponent(dashboardKey)}`, {
+      failOnStatusCode: false
+    });
+
+    try {
+      await page.goto(`${baseUrl}${operationDrilldownRoute()}`, {
+        timeout: BROWSER_SMOKE_TIMEOUT,
+        waitUntil: 'domcontentloaded'
+      });
+
+      const operationDrilldownAction = page.locator('[data-dashboard-operation-drilldown-action="save"]').first();
+      await expect(page.locator('[data-dashboard-operation-drilldown-context="ready"]')).toHaveAttribute(
+        'data-dashboard-operation-drilldown-operation',
+        'POST /checkout',
+        { timeout: WORKBENCH_READY_TIMEOUT }
+      );
+      await expect(operationDrilldownAction).toHaveAttribute('data-dashboard-operation-drilldown-action-state', 'ready');
+      await expect(operationDrilldownAction).toHaveAttribute('data-dashboard-operation-drilldown-action-service', 'checkout');
+      await expect(operationDrilldownAction).toHaveAttribute('data-dashboard-operation-drilldown-action-operation', 'POST /checkout');
+      await operationDrilldownAction.click();
+
+      await expect(page).toHaveURL(/dashboard=service-checkout-operation-post-checkout-drilldown/, {
+        timeout: WORKBENCH_READY_TIMEOUT
+      });
+      await expect(page.locator('[data-dashboard-composition-preview-panel]')).toHaveCount(8, {
+        timeout: WORKBENCH_READY_TIMEOUT
+      });
+
+      await expect.poll(async () => {
+        const persisted = await loadDashboard(page.context().request, dashboardKey);
+        return parseWidgets(persisted).length;
+      }, {
+        timeout: WORKBENCH_READY_TIMEOUT
+      }).toBe(8);
+
+      const persistedDashboard = await loadDashboard(page.context().request, dashboardKey);
+      const persistedWidgets = parseWidgets(persistedDashboard);
+      const persistedVariables = parseVariables(persistedDashboard);
+      expect(persistedDashboard).toEqual(expect.objectContaining({
+        dashboardKey: 'service-checkout-operation-post-checkout-drilldown',
+        title: 'Checkout API POST /checkout operation drilldown',
+        tags: 'service,operation,apm,metrics,logs,traces'
+      }));
+      expect(persistedWidgets.map(widget => widget.title)).toEqual([
+        'Operation drilldown latency p95: operation.name=POST /checkout',
+        'Operation drilldown request rate: operation.name=POST /checkout',
+        'Operation drilldown error rate: operation.name=POST /checkout',
+        'Operation drilldown logs: operation.name=POST /checkout',
+        'Operation drilldown log errors: operation.name=POST /checkout',
+        'Operation drilldown traces: operation.name=POST /checkout',
+        'Operation drilldown trace errors: operation.name=POST /checkout',
+        'Operation drilldown exceptions: operation.name=POST /checkout'
+      ]);
+      expect(persistedVariables).toEqual(expect.arrayContaining([
+        expect.objectContaining({ name: 'operation.name', type: 'query', value: 'POST /checkout' }),
+        expect.objectContaining({ name: 'service.name', type: 'query', value: 'checkout' }),
+        expect.objectContaining({ name: 'service.namespace', type: 'query', value: 'payments' }),
+        expect.objectContaining({ name: 'hertzbeat.entity_id', type: 'dynamic', value: '4200' }),
+        expect.objectContaining({ name: 'hertzbeat.entity_type', type: 'dynamic', value: 'service' })
+      ]));
+
+      const plans = buildSignalDashboardExecutionPlans(persistedDashboard);
+      const planForTitle = (titleNeedle: string) => {
+        const widget = persistedWidgets.find(item => item.title.includes(titleNeedle));
+        expect(widget, `operation drilldown widget ${titleNeedle} should exist`).toBeTruthy();
+        return plans.find(plan => plan.panelId === widget?.id);
+      };
+      expect(plans.map(plan => plan.signal)).toEqual(expect.arrayContaining(['metrics', 'logs', 'traces']));
+      expect(planForTitle('latency p95')).toEqual(expect.objectContaining({
+        signal: 'metrics',
+        state: 'ready',
+        primaryUrl: expect.stringContaining('operation%3D%22POST+%2Fcheckout%22')
+      }));
+      expect(planForTitle('logs')?.primaryUrl).toEqual(expect.stringContaining('/logs/list'));
+      expect(planForTitle('logs')?.primaryUrl).toEqual(expect.stringContaining('attributeFilter=http.route%3APOST+%2Fcheckout'));
+      expect(planForTitle('traces')?.primaryUrl).toEqual(expect.stringContaining('/traces/list'));
+      expect(planForTitle('traces')?.primaryUrl).toEqual(expect.stringContaining('operationName=POST+%2Fcheckout'));
+      expect(planForTitle('exceptions')?.primaryUrl).toEqual(expect.stringContaining('/traces/stats/group-by'));
+      expect(planForTitle('exceptions')?.primaryUrl).toEqual(expect.stringContaining('groupBy=exception.type'));
+
+      const latencyPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Operation drilldown latency p95' }).first();
+      await expect(latencyPanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'metrics');
+      await expect(latencyPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /operation%3D%22POST\+%2Fcheckout%22/);
+      await expect(latencyPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /entityType=service/);
+
+      const tracesPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Operation drilldown traces' }).first();
+      await expect(tracesPanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'traces');
+      await expect(tracesPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /operationName=POST\+%2Fcheckout/);
     } finally {
       await page.context().request.delete(`${baseUrl}/api/signal/dashboard/${encodeURIComponent(dashboardKey)}`, {
         failOnStatusCode: false

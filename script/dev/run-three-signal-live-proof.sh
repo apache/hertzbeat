@@ -15,9 +15,9 @@ HERTZBEAT_PASSWORD="${HERTZBEAT_PASSWORD:-hertzbeat}"
 SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL:-jdbc:h2:mem:hb_live_smoke;MODE=MYSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}"
 BACKEND_LOG="${BACKEND_LOG:-/tmp/hb-three-signal-live-backend.log}"
 FRONTEND_LOG="${FRONTEND_LOG:-/tmp/hb-three-signal-live-frontend.log}"
-PLAYWRIGHT_GREP="${PLAYWRIGHT_GREP:-promotes logs, traces, and metrics saved views into a persisted replay dashboard|saves a service overview dashboard from URL service and entity context}"
+PLAYWRIGHT_GREP="${PLAYWRIGHT_GREP:-promotes logs, traces, and metrics saved views into a persisted replay dashboard|saves a service overview dashboard from URL service and entity context|saves an operation drilldown dashboard from URL operation context}"
 BACKEND_READY_PATH="${BACKEND_READY_PATH:-/actuator/health}"
-READY_ATTEMPTS="${READY_ATTEMPTS:-90}"
+READY_ATTEMPTS="${READY_ATTEMPTS:-300}"
 READY_SLEEP_SECONDS="${READY_SLEEP_SECONDS:-2}"
 
 DRY_RUN=false
