@@ -31,6 +31,7 @@ import {
   buildSignalDashboardRuntimeSyncCrosshair,
   buildSignalDashboardRuntimeSyncTooltip,
   buildSignalDashboardVariableOptions,
+  buildSignalServiceOverviewDashboard,
   createSignalDashboardPanelDraftsFromFilterSelection,
   createSignalDashboardPanelDraftFromRuntimeBreakout,
   createSignalDashboardPanelDraftFromRuntimeEvidence,
@@ -774,6 +775,7 @@ export default function DashboardDraftWorkspace({
   const [dashboardDescriptionDraft, setDashboardDescriptionDraft] = useState('');
   const [savingPreviewLayout, setSavingPreviewLayout] = useState(false);
   const [savingVariables, setSavingVariables] = useState(false);
+  const [savingServiceOverview, setSavingServiceOverview] = useState(false);
   const [variableNameDraft, setVariableNameDraft] = useState('service.name');
   const [variableTypeDraft, setVariableTypeDraft] = useState<SignalDashboardVariableType>('textbox');
   const [variableValueDraft, setVariableValueDraft] = useState('');
@@ -794,6 +796,21 @@ export default function DashboardDraftWorkspace({
     () => readDashboardVariableUrlOverrides(initialContext),
     [initialContext]
   );
+  const serviceOverviewContext = useMemo(() => {
+    const serviceName = firstParamValue(initialContext.serviceName)?.trim() || '';
+    if (!serviceName) return null;
+    return {
+      serviceName,
+      serviceNamespace: firstParamValue(initialContext.serviceNamespace)?.trim() || undefined,
+      environment: firstParamValue(initialContext.environment)?.trim() || undefined,
+      entityId: firstParamValue(initialContext.entityId)?.trim() || undefined,
+      entityType: firstParamValue(initialContext.entityType)?.trim() || undefined,
+      entityName: firstParamValue(initialContext.entityName)?.trim() || undefined,
+      source: firstParamValue(initialContext.source)?.trim() || undefined,
+      collector: firstParamValue(initialContext.collector)?.trim() || undefined,
+      template: firstParamValue(initialContext.template)?.trim() || undefined
+    };
+  }, [initialContext]);
   const defaultDashboardTitle = t('dashboard.composition.default-title');
   const defaultDashboardDescription = t('dashboard.composition.default-description');
   const runtimeTableLabels = useMemo(() => ({
@@ -1108,6 +1125,29 @@ export default function DashboardDraftWorkspace({
       setCompositionState('error');
     } finally {
       setSavingPreviewLayout(false);
+    }
+  };
+
+  const saveServiceOverviewDashboard = async () => {
+    if (!serviceOverviewContext) return;
+    setSavingServiceOverview(true);
+    setCompositionState('saving');
+    try {
+      const dashboard = buildSignalServiceOverviewDashboard({
+        ...serviceOverviewContext,
+        ...dashboardTimeRange
+      });
+      const saved = await saveSignalDashboard(dashboard);
+      setDashboardKeyDraft(saved.dashboardKey);
+      setDashboardTitleDraft(saved.title);
+      setDashboardDescriptionDraft(saved.description || defaultDashboardDescription);
+      replaceDashboardDeepLink(saved.dashboardKey);
+      setDashboards(current => [saved, ...current.filter(item => item.dashboardKey !== saved.dashboardKey)]);
+      setCompositionState('saved');
+    } catch {
+      setCompositionState('error');
+    } finally {
+      setSavingServiceOverview(false);
     }
   };
 
@@ -1924,6 +1964,8 @@ export default function DashboardDraftWorkspace({
             clip
             data-dashboard-composition-preview-owner="hertzbeat-ui-panel-surface"
             data-dashboard-composition-preview-key={selectedDashboard?.dashboardKey || normalizeSignalDashboardKey(dashboardKeyDraft || dashboardTitleDraft)}
+            data-dashboard-service-overview-context={serviceOverviewContext ? 'ready' : 'missing'}
+            data-dashboard-service-overview-service={serviceOverviewContext?.serviceName || ''}
             data-dashboard-composition-preview-panels={previewPanels.length}
             data-dashboard-composition-time-range-mode={dashboardTimeRangeMode}
             data-dashboard-composition-time-range-start={dashboardTimeRange.start}
@@ -1980,6 +2022,19 @@ export default function DashboardDraftWorkspace({
               >
                 <Save size={13} />
                 {t('dashboard.composition.action.save-preview-layout')}
+              </HzButton>
+              <HzButton
+                type="button"
+                size="sm"
+                intent="secondary"
+                disabled={!serviceOverviewContext || savingServiceOverview}
+                onClick={() => void saveServiceOverviewDashboard()}
+                data-dashboard-service-overview-action="save"
+                data-dashboard-service-overview-action-state={serviceOverviewContext ? 'ready' : 'missing'}
+                data-dashboard-service-overview-action-service={serviceOverviewContext?.serviceName || ''}
+              >
+                <LayoutDashboard size={13} />
+                {t('dashboard.composition.action.save-service-overview')}
               </HzButton>
             </div>
             <div

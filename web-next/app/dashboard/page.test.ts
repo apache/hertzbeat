@@ -126,6 +126,16 @@ describe('dashboard panel draft workspace route', () => {
     expect(workspaceSource).toContain('loadSignalDashboards');
     expect(workspaceSource).toContain('saveSignalDashboard');
     expect(workspaceSource).toContain('deleteSignalDashboard');
+    expect(workspaceSource).toContain('buildSignalServiceOverviewDashboard');
+    expect(workspaceSource).toContain('const serviceOverviewContext = useMemo(');
+    expect(workspaceSource).toContain('const serviceName = firstParamValue(initialContext.serviceName)?.trim()');
+    expect(workspaceSource).toContain('const saveServiceOverviewDashboard = async () =>');
+    expect(workspaceSource).toContain('buildSignalServiceOverviewDashboard({');
+    expect(workspaceSource).toContain('data-dashboard-service-overview-context');
+    expect(workspaceSource).toContain('data-dashboard-service-overview-service');
+    expect(workspaceSource).toContain('data-dashboard-service-overview-action="save"');
+    expect(workspaceSource).toContain('data-dashboard-service-overview-action-state');
+    expect(workspaceSource).toContain('dashboard.composition.action.save-service-overview');
     expect(workspaceSource).toContain('normalizeSignalDashboardKey');
     expect(workspaceSource).toContain('buildDashboardVariableDeepLinkHref');
     expect(workspaceSource).toContain('buildDashboardTimeRangeDeepLinkHref');
