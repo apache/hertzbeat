@@ -97,6 +97,10 @@ public class OtlpEntityIdentityResolver {
     }
 
     public Optional<String> resolveEntityId(Map<String, String> resourceAttributes, String workspaceId) {
+        return resolveEntity(resourceAttributes, workspaceId).map(entity -> String.valueOf(entity.getId()));
+    }
+
+    private Optional<ObserveEntity> resolveEntity(Map<String, String> resourceAttributes, String workspaceId) {
         ObservabilityWorkspaceQueryGateway workspaceQueryGateway = workspaceQueryGateway();
         String safeWorkspaceId = StringUtils.trimToNull(workspaceId);
         if (workspaceQueryGateway == null || safeWorkspaceId == null || resourceAttributes == null
@@ -133,7 +137,7 @@ public class OtlpEntityIdentityResolver {
             if (topEntityIds.size() != 1) {
                 return Optional.empty();
             }
-            return Optional.of(String.valueOf(topEntityIds.getFirst()));
+            return Optional.ofNullable(entities.get(topEntityIds.getFirst()));
         } catch (RuntimeException ex) {
             log.warn("Failed to resolve OTLP resource entity identity for workspace {}: {}",
                     safeWorkspaceId, ex.toString());
@@ -146,13 +150,26 @@ public class OtlpEntityIdentityResolver {
         if (StringUtils.isNotBlank(resourceAttributes.get(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID))) {
             return resource;
         }
-        Optional<String> entityId = resolveEntityId(resourceAttributes, workspaceId);
-        if (entityId.isEmpty()) {
+        Optional<ObserveEntity> entity = resolveEntity(resourceAttributes, workspaceId);
+        if (entity.isEmpty() || entity.get().getId() == null) {
             return resource;
         }
-        return resource.toBuilder()
-                .addAttributes(stringAttribute(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID, entityId.get()))
-                .build();
+        ObserveEntity resolvedEntity = entity.get();
+        Resource.Builder resourceBuilder = resource.toBuilder()
+                .addAttributes(stringAttribute(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID,
+                        String.valueOf(resolvedEntity.getId())));
+        String entityType = StringUtils.trimToNull(resolvedEntity.getType());
+        if (entityType != null) {
+            resourceBuilder.addAttributes(stringAttribute(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE,
+                    entityType));
+        }
+        String entityName = StringUtils.trimToNull(
+                StringUtils.defaultIfBlank(resolvedEntity.getDisplayName(), resolvedEntity.getName()));
+        if (entityName != null) {
+            resourceBuilder.addAttributes(stringAttribute(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_NAME,
+                    entityName));
+        }
+        return resourceBuilder.build();
     }
 
     private ObservabilityWorkspaceQueryGateway workspaceQueryGateway() {

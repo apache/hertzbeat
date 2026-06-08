@@ -33,10 +33,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
+import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
 import org.apache.hertzbeat.observability.logs.service.impl.LogQueryServiceImpl;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.junit.jupiter.api.AfterEach;
@@ -256,6 +260,213 @@ class LogQueryControllerTest {
     }
 
     @Test
+    void testListLogsPrefersEntityIdentityOverConflictingRouteContext() throws Exception {
+        ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
+        this.logQueryController = new LogQueryController(
+                new LogQueryServiceImpl(List.of(historyDataReader), Optional.of(workspaceQueryGateway)));
+        this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
+        EntityIdentity serviceName = EntityIdentity.builder()
+                .entityId(42L)
+                .identityKey("service.name")
+                .identityValue("checkout")
+                .primaryIdentity(true)
+                .priority(90)
+                .build();
+        EntityIdentity serviceNamespace = EntityIdentity.builder()
+                .entityId(42L)
+                .identityKey("service.namespace")
+                .identityValue("payments")
+                .priority(30)
+                .build();
+        EntityIdentity environment = EntityIdentity.builder()
+                .entityId(42L)
+                .identityKey("deployment.environment.name")
+                .identityValue("prod")
+                .priority(20)
+                .build();
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(Optional.of(ObserveEntity.builder()
+                .id(42L)
+                .type("service")
+                .name("checkout")
+                .namespace("payments")
+                .environment("prod")
+                .build()));
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L))
+                .thenReturn(List.of(serviceName, serviceNamespace, environment));
+        LogEntry checkoutProdLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("checkout prod log")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "payments",
+                        "deployment.environment.name", "prod")))
+                .build();
+        LogEntry billingStagingLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityText("INFO")
+                .body("billing staging log")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "billing",
+                        "service.namespace", "wrong-namespace",
+                        "deployment.environment.name", "staging")))
+                .build();
+        when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), eq(null), eq("checkout"), eq("payments"), eq("prod")))
+                .thenReturn(2L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
+                any(), eq(0), eq(20), anySet(), eq(false), eq(null), eq("checkout"), eq("payments"), eq("prod")))
+                .thenReturn(List.of(checkoutProdLog, billingStagingLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("entityId", "42")
+                        .param("serviceName", "billing")
+                        .param("serviceNamespace", "wrong-namespace")
+                        .param("environment", "staging"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("checkout prod log"));
+    }
+
+    @Test
+    void testLogStatsPreferEntityIdentityOverConflictingRouteContext() throws Exception {
+        ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
+        this.logQueryController = new LogQueryController(
+                new LogQueryServiceImpl(List.of(historyDataReader), Optional.of(workspaceQueryGateway)));
+        this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(Optional.of(ObserveEntity.builder()
+                .id(42L)
+                .type("service")
+                .name("checkout")
+                .namespace("payments")
+                .environment("prod")
+                .build()));
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of(
+                EntityIdentity.builder()
+                        .entityId(42L)
+                        .identityKey("service.name")
+                        .identityValue("checkout")
+                        .primaryIdentity(true)
+                        .priority(90)
+                        .build(),
+                EntityIdentity.builder()
+                        .entityId(42L)
+                        .identityKey("service.namespace")
+                        .identityValue("payments")
+                        .priority(30)
+                        .build(),
+                EntityIdentity.builder()
+                        .entityId(42L)
+                        .identityKey("deployment.environment.name")
+                        .identityValue("prod")
+                        .priority(20)
+                        .build()
+        ));
+        Map<String, String> expectedResourceFilters = Map.of("service.version", "1.2.3");
+        Map<String, String> expectedAttributeFilters = Map.of("http.route", "/checkout");
+        when(historyDataReader.countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), org.mockito.ArgumentMatchers.isNull(), eq("checkout"), eq("payments"), eq("prod"),
+                eq(expectedResourceFilters), eq(expectedAttributeFilters)))
+                .thenReturn(Map.of(
+                        "totalCount", 3L,
+                        "infoCount", 2L,
+                        "errorCount", 1L,
+                        "fatalCount", 0L,
+                        "warnCount", 0L,
+                        "debugCount", 0L,
+                        "traceCount", 0L
+                ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview")
+                        .param("entityId", "42")
+                        .param("serviceName", "billing")
+                        .param("serviceNamespace", "wrong-namespace")
+                        .param("environment", "staging")
+                        .param("resourceFilter", "service.name=billing,deployment.environment.name=staging,service.version=1.2.3")
+                        .param("attributeFilter", "http.route:/checkout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(3))
+                .andExpect(jsonPath("$.data.infoCount").value(2))
+                .andExpect(jsonPath("$.data.errorCount").value(1));
+
+        verify(historyDataReader).countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), org.mockito.ArgumentMatchers.isNull(), eq("checkout"), eq("payments"), eq("prod"),
+                eq(expectedResourceFilters), eq(expectedAttributeFilters));
+    }
+
+    @Test
+    void testLogContextPrefersEntityIdentityOverConflictingRouteContext() throws Exception {
+        ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
+        this.logQueryController = new LogQueryController(
+                new LogQueryServiceImpl(List.of(historyDataReader), Optional.of(workspaceQueryGateway)));
+        this.mockMvc = MockMvcBuilders.standaloneSetup(logQueryController).build();
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(Optional.of(ObserveEntity.builder()
+                .id(42L)
+                .type("service")
+                .name("checkout")
+                .namespace("payments")
+                .environment("prod")
+                .build()));
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of(
+                EntityIdentity.builder()
+                        .entityId(42L)
+                        .identityKey("service.name")
+                        .identityValue("checkout")
+                        .primaryIdentity(true)
+                        .priority(90)
+                        .build(),
+                EntityIdentity.builder()
+                        .entityId(42L)
+                        .identityKey("service.namespace")
+                        .identityValue("payments")
+                        .priority(30)
+                        .build(),
+                EntityIdentity.builder()
+                        .entityId(42L)
+                        .identityKey("deployment.environment.name")
+                        .identityValue("prod")
+                        .priority(20)
+                        .build()
+        ));
+        long selectedTime = 1734005477630000000L;
+        LogEntry selectedLog = LogEntry.builder()
+                .timeUnixNano(selectedTime)
+                .severityText("INFO")
+                .body("checkout selected")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "payments",
+                        "deployment.environment.name", "prod",
+                        "service.version", "1.2.3")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        Map<String, String> expectedResourceFilters = Map.of("service.version", "1.2.3");
+        Map<String, String> expectedAttributeFilters = Map.of("http.route", "/checkout");
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), org.mockito.ArgumentMatchers.isNull(), eq("checkout"), eq("payments"), eq("prod"),
+                eq(expectedResourceFilters), eq(expectedAttributeFilters)))
+                .thenReturn(List.of(selectedLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/context")
+                        .param("entityId", "42")
+                        .param("logTimeUnixNano", String.valueOf(selectedTime))
+                        .param("serviceName", "billing")
+                        .param("serviceNamespace", "wrong-namespace")
+                        .param("environment", "staging")
+                        .param("resourceFilter", "service.name=billing,deployment.environment.name=staging,service.version=1.2.3")
+                        .param("attributeFilter", "http.route:/checkout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.selected.body").value("checkout selected"));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), org.mockito.ArgumentMatchers.isNull(), eq("checkout"), eq("payments"), eq("prod"),
+                eq(expectedResourceFilters), eq(expectedAttributeFilters));
+    }
+
+    @Test
     void testListLogsHideInternalFiltersCollectorNoise() throws Exception {
         LogEntry internalLog = LogEntry.builder()
                 .timeUnixNano(1734005477630000000L)
@@ -421,10 +632,15 @@ class LogQueryControllerTest {
                 .resource(new HashMap<>(java.util.Map.of(
                         "service.name", "checkout",
                         "service.version", "1.2.3",
+                        "hertzbeat.entity_type", "service",
                         "hertzbeat.workspace_id", "team-a")))
                 .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
                 .build();
 
+        Map<String, String> expectedResourceFilters = Map.of(
+                "service.version", "1.2.3",
+                "hertzbeat.entity_type", "service"
+        );
         AuthTokenRequestContext.bindWorkspaceId("team-a");
         when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
                 anySet(), eq(false), eq("team-a"), org.mockito.ArgumentMatchers.<Map<String, String>>any(),
@@ -436,6 +652,7 @@ class LogQueryControllerTest {
                 .thenReturn(List.of(filteredLog));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("entityType", "service")
                         .param("resourceFilter", "service.version=1.2.3")
                         .param("attributeFilter", "http.route:/checkout"))
                 .andExpect(status().isOk())
@@ -444,11 +661,11 @@ class LogQueryControllerTest {
                 .andExpect(jsonPath("$.data.content[0].body").value("team-a checkout log"));
 
         verify(historyDataReader).countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
-                anySet(), eq(false), eq("team-a"), eq(Map.of("service.version", "1.2.3")),
+                anySet(), eq(false), eq("team-a"), eq(expectedResourceFilters),
                 eq(Map.of("http.route", "/checkout")));
         verify(historyDataReader).queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
                 any(), eq(0), eq(20), anySet(), eq(false), eq("team-a"),
-                eq(Map.of("service.version", "1.2.3")), eq(Map.of("http.route", "/checkout")));
+                eq(expectedResourceFilters), eq(Map.of("http.route", "/checkout")));
     }
 
     @Test

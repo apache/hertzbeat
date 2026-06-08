@@ -127,6 +127,49 @@ class EntityIdentityWriteModelServiceTest {
     }
 
     @Test
+    void replaceIdentitiesKeepsOtelServiceNameAlignedWithEntityNameNotDisplayName() {
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(4200L)
+                .type("service")
+                .name("checkout")
+                .displayName("Checkout API")
+                .namespace("hertzbeat-demo")
+                .environment("demo")
+                .build();
+        EntityIdentity serviceName = EntityIdentity.builder()
+                .identityType("otel_resource")
+                .identityKey("service.name")
+                .identityValue("checkout")
+                .primaryIdentity(true)
+                .build();
+        EntityIdentity namespace = EntityIdentity.builder()
+                .identityType("otel_resource")
+                .identityKey("service.namespace")
+                .identityValue("hertzbeat-demo")
+                .build();
+        EntityIdentity environment = EntityIdentity.builder()
+                .identityType("otel_resource")
+                .identityKey("deployment.environment.name")
+                .identityValue("demo")
+                .build();
+
+        identityWriteModelService.replaceIdentities(entity, List.of(serviceName, namespace, environment));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<EntityIdentity>> identitiesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(entityIdentityDao).saveAll(identitiesCaptor.capture());
+        List<EntityIdentity> rows = identitiesCaptor.getValue();
+        assertEquals(3, rows.size());
+
+        EntityIdentity serviceNameRow = rows.getFirst();
+        assertEquals(4200L, serviceNameRow.getEntityId());
+        assertEquals("service.name", serviceNameRow.getIdentityKey());
+        assertEquals("checkout", serviceNameRow.getIdentityValue());
+        assertEquals("checkout", serviceNameRow.getNormalizedValue());
+        assertTrue(serviceNameRow.isPrimaryIdentity());
+    }
+
+    @Test
     void replaceIdentitiesBuildsDefaultIdentityRowsWhenInputIsEmpty() {
         ObserveEntity entity = ObserveEntity.builder()
                 .id(8L)

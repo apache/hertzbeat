@@ -47,6 +47,16 @@ public interface LogQueryService {
                 serviceName, serviceNamespace, environment, pageIndex, pageSize, hideInternal, hideNoise);
     }
 
+    default Page<LogEntry> list(Long entityId, Long start, Long end, String traceId, String spanId,
+                                Integer severityNumber, String severityText, String search,
+                                String serviceName, String serviceNamespace, String environment,
+                                String resourceFilter, String attributeFilter,
+                                Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise) {
+        return list(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                pageIndex, pageSize, hideInternal, hideNoise);
+    }
+
     default Map<String, Object> overviewStats(Long start, Long end, String traceId, String spanId,
                                               Integer severityNumber, String severityText, String search,
                                               boolean hideInternal, boolean hideNoise) {
@@ -66,6 +76,16 @@ public interface LogQueryService {
                                               boolean hideInternal, boolean hideNoise) {
         return overviewStats(start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, hideInternal, hideNoise);
+    }
+
+    default Map<String, Object> overviewStats(Long entityId, Long start, Long end, String traceId, String spanId,
+                                              Integer severityNumber, String severityText, String search,
+                                              String serviceName, String serviceNamespace, String environment,
+                                              String resourceFilter, String attributeFilter,
+                                              boolean hideInternal, boolean hideNoise) {
+        return overviewStats(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                hideInternal, hideNoise);
     }
 
     default Map<String, Object> traceCoverageStats(Long start, Long end, String traceId, String spanId,
@@ -89,6 +109,16 @@ public interface LogQueryService {
                 serviceName, serviceNamespace, environment, hideInternal, hideNoise);
     }
 
+    default Map<String, Object> traceCoverageStats(Long entityId, Long start, Long end, String traceId, String spanId,
+                                                   Integer severityNumber, String severityText, String search,
+                                                   String serviceName, String serviceNamespace, String environment,
+                                                   String resourceFilter, String attributeFilter,
+                                                   boolean hideInternal, boolean hideNoise) {
+        return traceCoverageStats(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                hideInternal, hideNoise);
+    }
+
     default Map<String, Object> trendStats(Long start, Long end, String traceId, String spanId,
                                            Integer severityNumber, String severityText, String search,
                                            boolean hideInternal, boolean hideNoise) {
@@ -110,12 +140,33 @@ public interface LogQueryService {
                 serviceName, serviceNamespace, environment, hideInternal, hideNoise);
     }
 
+    default Map<String, Object> trendStats(Long entityId, Long start, Long end, String traceId, String spanId,
+                                           Integer severityNumber, String severityText, String search,
+                                           String serviceName, String serviceNamespace, String environment,
+                                           String resourceFilter, String attributeFilter,
+                                           boolean hideInternal, boolean hideNoise) {
+        return trendStats(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                hideInternal, hideNoise);
+    }
+
     Map<String, Object> groupByStats(Long start, Long end, String traceId, String spanId,
                                      Integer severityNumber, String severityText, String search,
                                      String serviceName, String serviceNamespace, String environment,
                                      String resourceFilter, String attributeFilter, String groupBy,
                                      Integer limit, String orderBy, Integer minCount,
                                      boolean hideInternal, boolean hideNoise);
+
+    default Map<String, Object> groupByStats(Long entityId, Long start, Long end, String traceId, String spanId,
+                                             Integer severityNumber, String severityText, String search,
+                                             String serviceName, String serviceNamespace, String environment,
+                                             String resourceFilter, String attributeFilter, String groupBy,
+                                             Integer limit, String orderBy, Integer minCount,
+                                             boolean hideInternal, boolean hideNoise) {
+        return groupByStats(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter, groupBy,
+                limit, orderBy, minCount, hideInternal, hideNoise);
+    }
 
     Map<String, Object> context(Long logTimeUnixNano, Long start, Long end,
                                 String serviceName, String serviceNamespace, String environment,
@@ -129,5 +180,15 @@ public interface LogQueryService {
                                         boolean hideInternal, boolean hideNoise) {
         return context(logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
                 resourceFilter, attributeFilter, limit, hideInternal, hideNoise);
+    }
+
+    default Map<String, Object> context(Long entityId, Long logTimeUnixNano, Long start, Long end,
+                                        String serviceName, String serviceNamespace, String environment,
+                                        String resourceFilter, String attributeFilter,
+                                        Integer limit, String direction, Long cursorLogTimeUnixNano,
+                                        boolean hideInternal, boolean hideNoise) {
+        return context(logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
+                resourceFilter, attributeFilter, limit, direction, cursorLogTimeUnixNano,
+                hideInternal, hideNoise);
     }
 }

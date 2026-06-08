@@ -36,6 +36,8 @@ public final class OtlpResourceSemanticAttributes {
     public static final String K8S_POD_NAME = "k8s.pod.name";
     public static final String K8S_CONTAINER_NAME = "k8s.container.name";
     public static final String HERTZBEAT_ENTITY_ID = "hertzbeat.entity_id";
+    public static final String HERTZBEAT_ENTITY_TYPE = "hertzbeat.entity_type";
+    public static final String HERTZBEAT_ENTITY_NAME = "hertzbeat.entity_name";
     public static final String HERTZBEAT_WORKSPACE_ID = "hertzbeat.workspace_id";
 
     public static final List<String> PRIMARY_OTEL_IDENTITY_KEYS = List.of(
@@ -46,6 +48,8 @@ public final class OtlpResourceSemanticAttributes {
 
     public static final List<String> HERTZBEAT_CONTEXT_KEYS = List.of(
             HERTZBEAT_ENTITY_ID,
+            HERTZBEAT_ENTITY_TYPE,
+            HERTZBEAT_ENTITY_NAME,
             HERTZBEAT_WORKSPACE_ID
     );
 
@@ -62,6 +66,8 @@ public final class OtlpResourceSemanticAttributes {
             K8S_POD_NAME,
             K8S_CONTAINER_NAME,
             HERTZBEAT_ENTITY_ID,
+            HERTZBEAT_ENTITY_TYPE,
+            HERTZBEAT_ENTITY_NAME,
             HERTZBEAT_WORKSPACE_ID
     );
 

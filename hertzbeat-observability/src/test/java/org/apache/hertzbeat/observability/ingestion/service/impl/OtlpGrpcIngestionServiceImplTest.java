@@ -3386,9 +3386,13 @@ class OtlpGrpcIngestionServiceImplTest {
 
             verify(greptimeOtlpForwarder).forwardLogsGrpc(org.mockito.ArgumentMatchers.argThat(forwarded ->
                     "42".equals(logResourceAttributes(forwarded).get("hertzbeat.entity_id"))
+                            && "service".equals(logResourceAttributes(forwarded).get("hertzbeat.entity_type"))
+                            && "checkout".equals(logResourceAttributes(forwarded).get("hertzbeat.entity_name"))
                             && "prod-west".equals(logResourceAttributes(forwarded).get("hertzbeat.workspace_id"))));
             verify(otlpLogProtocolAdapter).publishRealtimeSignals(org.mockito.ArgumentMatchers.argThat(published ->
                     "42".equals(logResourceAttributes(published).get("hertzbeat.entity_id"))
+                            && "service".equals(logResourceAttributes(published).get("hertzbeat.entity_type"))
+                            && "checkout".equals(logResourceAttributes(published).get("hertzbeat.entity_name"))
                             && "prod-west".equals(logResourceAttributes(published).get("hertzbeat.workspace_id"))));
         } finally {
             AuthTokenRequestContext.clear();
@@ -3888,6 +3892,8 @@ class OtlpGrpcIngestionServiceImplTest {
                                             attribute -> attribute.getValue().getStringValue(),
                                             (left, right) -> right));
                             return "42".equals(attributes.get("hertzbeat.entity_id"))
+                                    && "service".equals(attributes.get("hertzbeat.entity_type"))
+                                    && "checkout".equals(attributes.get("hertzbeat.entity_name"))
                                     && "prod-west".equals(attributes.get("hertzbeat.workspace_id"));
                         } catch (Exception ex) {
                             return false;
@@ -3897,6 +3903,8 @@ class OtlpGrpcIngestionServiceImplTest {
             verify(observabilitySignalIntakeGateway).recordOtlpMetricIntake(
                     org.mockito.ArgumentMatchers.argThat(resource ->
                             "42".equals(resource.get("hertzbeat.entity_id"))
+                                    && "service".equals(resource.get("hertzbeat.entity_type"))
+                                    && "checkout".equals(resource.get("hertzbeat.entity_name"))
                                     && "prod-west".equals(resource.get("hertzbeat.workspace_id"))),
                     eq(1_710_000_000_000L),
                     eq("checkout.requests"),

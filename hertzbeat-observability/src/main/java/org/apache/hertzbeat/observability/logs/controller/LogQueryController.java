@@ -21,12 +21,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
+import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -51,6 +53,10 @@ public class LogQueryController {
     @Operation(summary = "Query logs by time range with optional filters",
             description = "Query logs by [start,end] in ms and optional filters with pagination. Returns paginated log entries sorted by timestamp in descending order.")
     public ResponseEntity<Message<Page<LogEntry>>> list(
+            @Parameter(description = "Observed entity ID for entity-first context resolution", example = "87584674384")
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @Parameter(description = "Observed entity type for entity-first resource filtering", example = "service")
+            @RequestParam(value = "entityType", required = false) String entityType,
             @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000")
             @RequestParam(value = "start", required = false) Long start,
             @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000")
@@ -83,8 +89,9 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        Page<LogEntry> result = logQueryService.list(start, end, traceId, spanId, severityNumber, severityText, search,
-                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
+        Page<LogEntry> result = logQueryService.list(entityId, start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
                 pageIndex, pageSize, hideInternal, hideNoise);
         return ResponseEntity.ok(Message.success(result));
     }
@@ -93,6 +100,10 @@ public class LogQueryController {
     @Operation(summary = "Query log context around a selected log",
             description = "Return surrounding logs around a selected log timestamp. The response contains bounded before, selected, and after rows for log-detail context inspection.")
     public ResponseEntity<Message<Map<String, Object>>> context(
+            @Parameter(description = "Observed entity ID for entity-first context resolution", example = "87584674384")
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @Parameter(description = "Observed entity type for entity-first resource filtering", example = "service")
+            @RequestParam(value = "entityType", required = false) String entityType,
             @Parameter(description = "Selected log timestamp in nanoseconds", example = "1734005477630000000")
             @RequestParam(value = "logTimeUnixNano") Long logTimeUnixNano,
             @Parameter(description = "Optional context window start timestamp in milliseconds", example = "1734005177000")
@@ -119,15 +130,20 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(logQueryService.context(
-                logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
-                resourceFilter, attributeFilter, limit, direction, cursorLogTimeUnixNano, hideInternal, hideNoise)));
+                entityId, logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
+                scopedResourceFilter, attributeFilter, limit, direction, cursorLogTimeUnixNano, hideInternal, hideNoise)));
     }
 
     @GetMapping("/stats/overview")
     @Operation(summary = "Log overview statistics",
             description = "Overall counts and basic statistics with filters. Provides counts by severity levels according to OpenTelemetry standard.")
     public ResponseEntity<Message<Map<String, Object>>> overviewStats(
+            @Parameter(description = "Observed entity ID for entity-first context resolution", example = "87584674384")
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @Parameter(description = "Observed entity type for entity-first resource filtering", example = "service")
+            @RequestParam(value = "entityType", required = false) String entityType,
             @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000")
             @RequestParam(value = "start", required = false) Long start,
             @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000")
@@ -156,9 +172,10 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(logQueryService.overviewStats(
-                start, end, traceId, spanId, severityNumber, severityText, search,
-                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                entityId, start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
                 hideInternal, hideNoise)));
     }
 
@@ -166,6 +183,10 @@ public class LogQueryController {
     @Operation(summary = "Trace coverage statistics",
             description = "Statistics about trace information availability. Shows how many logs have trace IDs, span IDs, or both for distributed tracing analysis.")
     public ResponseEntity<Message<Map<String, Object>>> traceCoverageStats(
+            @Parameter(description = "Observed entity ID for entity-first context resolution", example = "87584674384")
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @Parameter(description = "Observed entity type for entity-first resource filtering", example = "service")
+            @RequestParam(value = "entityType", required = false) String entityType,
             @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000")
             @RequestParam(value = "start", required = false) Long start,
             @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000")
@@ -194,9 +215,10 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(logQueryService.traceCoverageStats(
-                start, end, traceId, spanId, severityNumber, severityText, search,
-                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                entityId, start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
                 hideInternal, hideNoise)));
     }
 
@@ -204,6 +226,10 @@ public class LogQueryController {
     @Operation(summary = "Log trend over time",
             description = "Count logs by hour intervals with filters. Groups logs by hour and provides time-series data for trend analysis.")
     public ResponseEntity<Message<Map<String, Object>>> trendStats(
+            @Parameter(description = "Observed entity ID for entity-first context resolution", example = "87584674384")
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @Parameter(description = "Observed entity type for entity-first resource filtering", example = "service")
+            @RequestParam(value = "entityType", required = false) String entityType,
             @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000")
             @RequestParam(value = "start", required = false) Long start,
             @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000")
@@ -232,9 +258,10 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(logQueryService.trendStats(
-                start, end, traceId, spanId, severityNumber, severityText, search,
-                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter,
+                entityId, start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
                 hideInternal, hideNoise)));
     }
 
@@ -242,6 +269,10 @@ public class LogQueryController {
     @Operation(summary = "Log field group statistics",
             description = "Count logs grouped by a resource attribute, log attribute, or supported native log field.")
     public ResponseEntity<Message<Map<String, Object>>> groupByStats(
+            @Parameter(description = "Observed entity ID for entity-first context resolution", example = "87584674384")
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @Parameter(description = "Observed entity type for entity-first resource filtering", example = "service")
+            @RequestParam(value = "entityType", required = false) String entityType,
             @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000")
             @RequestParam(value = "start", required = false) Long start,
             @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000")
@@ -278,9 +309,26 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
+        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(logQueryService.groupByStats(
-                start, end, traceId, spanId, severityNumber, severityText, search,
-                serviceName, serviceNamespace, environment, resourceFilter, attributeFilter, groupBy,
+                entityId, start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter, groupBy,
                 limit, orderBy, minCount, hideInternal, hideNoise)));
+    }
+
+    private String mergeEntityTypeResourceFilter(String entityType, String resourceFilter) {
+        String normalizedResourceFilter = StringUtils.trimWhitespace(resourceFilter);
+        String normalizedEntityType = StringUtils.trimWhitespace(entityType);
+        if (!StringUtils.hasText(normalizedEntityType) || !normalizedEntityType.matches("[A-Za-z0-9_.:-]+")) {
+            return normalizedResourceFilter;
+        }
+        if (StringUtils.hasText(normalizedResourceFilter)
+                && normalizedResourceFilter.contains(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE)) {
+            return normalizedResourceFilter;
+        }
+        String entityTypeFilter = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE + "=\"" + normalizedEntityType + "\"";
+        return StringUtils.hasText(normalizedResourceFilter)
+                ? normalizedResourceFilter + " and " + entityTypeFilter
+                : entityTypeFilter;
     }
 }

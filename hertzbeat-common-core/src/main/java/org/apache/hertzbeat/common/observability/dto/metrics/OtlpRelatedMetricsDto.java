@@ -17,72 +17,65 @@
 
 package org.apache.hertzbeat.common.observability.dto.metrics;
 
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 
 /**
- * Aggregated OTLP metrics console response.
+ * Backend-owned related metrics discovery for a signal/resource context.
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OtlpMetricsConsoleDto {
+public class OtlpRelatedMetricsDto {
 
-    private Context context;
+    private OtlpMetricsConsoleDto.Context context;
 
-    private String query;
+    private String filter;
 
-    private String datasource;
+    private String source;
 
-    private String queryMode;
+    private int candidateCount;
 
-    private DatasourceQueryData results;
+    private List<ResourceMatcher> resourceMatchers;
 
-    private Stats stats;
-
-    private String emptyStateReason;
-
-    private String errorMessage;
+    private List<Candidate> candidates;
 
     /**
-     * Resolved OTLP metrics console context.
+     * Parsed resource matcher used to correlate metrics with logs or traces.
      */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Context {
+    public static class ResourceMatcher {
 
-        private Long entityId;
+        private String label;
 
-        private String entityType;
+        private String operator;
 
-        private String entityName;
-
-        private String serviceName;
-
-        private String serviceNamespace;
-
-        private String environment;
-
-        private Long start;
-
-        private Long end;
+        private String value;
     }
 
     /**
-     * OTLP metrics console statistics.
+     * Related metric candidate that can be queried by the metrics console.
      */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Stats {
+    public static class Candidate {
 
-        private int totalSeries;
+        private String query;
 
-        private int nonEmptySeries;
+        private String source;
 
-        private Long latestObservedAt;
+        private String family;
+
+        private String reason;
+
+        private List<String> matchedLabels;
+
+        private Map<String, String> resourceMatch;
     }
 }

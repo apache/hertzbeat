@@ -23,22 +23,27 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * Request-scoped HertzBeat correlation values to inject into OTLP records.
  */
-public record OtlpCorrelationContext(String ingestId, String entityId, String workspaceId) {
+public record OtlpCorrelationContext(String ingestId, String entityId, String entityType, String workspaceId) {
 
     public OtlpCorrelationContext {
         ingestId = StringUtils.trimToNull(ingestId);
         entityId = StringUtils.trimToNull(entityId);
+        entityType = StringUtils.trimToNull(entityType);
         workspaceId = StringUtils.trimToNull(workspaceId);
     }
 
+    public OtlpCorrelationContext(String ingestId, String entityId, String workspaceId) {
+        this(ingestId, entityId, null, workspaceId);
+    }
+
     public static OtlpCorrelationContext empty() {
-        return new OtlpCorrelationContext(null, null, null);
+        return new OtlpCorrelationContext(null, null, null, null);
     }
 
     OtlpCorrelationContext withIngestId() {
         if (StringUtils.isNotBlank(ingestId)) {
             return this;
         }
-        return new OtlpCorrelationContext(UUID.randomUUID().toString(), entityId, workspaceId);
+        return new OtlpCorrelationContext(UUID.randomUUID().toString(), entityId, entityType, workspaceId);
     }
 }

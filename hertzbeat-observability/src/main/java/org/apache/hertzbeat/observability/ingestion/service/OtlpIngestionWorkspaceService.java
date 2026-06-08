@@ -22,6 +22,7 @@ import org.apache.hertzbeat.common.observability.dto.binding.OtlpEntityBindingSu
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuideDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
 
 /**
  * OTLP ingestion workspace aggregation service.
@@ -34,8 +35,11 @@ public interface OtlpIngestionWorkspaceService {
 
     OtlpEntityBindingSummaryDto getBindingSummary();
 
-    OtlpMetricsConsoleDto getMetricsConsole(Long entityId, Long start, Long end, String serviceName,
+    OtlpMetricsConsoleDto getMetricsConsole(Long entityId, String entityType, Long start, Long end, String serviceName,
                                             String serviceNamespace, String environment, String query,
                                             String filter, String groupBy, String aggregation,
                                             String temporalAggregation, String step, String limit);
+
+    OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, String entityType, Long start, Long end, String serviceName,
+                                            String serviceNamespace, String environment, String filter, String limit);
 }

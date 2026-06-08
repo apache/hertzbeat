@@ -193,3 +193,72 @@ CREATE INDEX idx_hzb_auth_token_workspace ON hzb_auth_token(workspace_id);
 CREATE INDEX idx_hzb_auth_token_scope_workspace ON hzb_auth_token(token_scope, workspace_id);
 CREATE INDEX idx_hzb_auth_token_status ON hzb_auth_token(status);
 CREATE INDEX idx_hzb_auth_token_revoked_by ON hzb_auth_token(revoked_by);
+
+CREATE TABLE hzb_signal_saved_view (
+    id BIGSERIAL PRIMARY KEY,
+    creator VARCHAR(255) NOT NULL,
+    signal VARCHAR(32) NOT NULL,
+    view_key VARCHAR(128) NOT NULL,
+    label VARCHAR(255) NOT NULL,
+    description VARCHAR(512),
+    route VARCHAR(2048) NOT NULL,
+    query_snapshot TEXT,
+    payload TEXT,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX uk_hzb_signal_saved_view_signal_key
+    ON hzb_signal_saved_view(signal, view_key);
+
+CREATE INDEX idx_hzb_signal_saved_view_signal
+    ON hzb_signal_saved_view(signal);
+
+CREATE INDEX idx_hzb_signal_saved_view_update
+    ON hzb_signal_saved_view(update_time);
+
+CREATE TABLE hzb_signal_dashboard_panel_draft (
+    id BIGSERIAL PRIMARY KEY,
+    creator VARCHAR(255) NOT NULL,
+    signal VARCHAR(32) NOT NULL,
+    draft_key VARCHAR(128) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(512),
+    visualization VARCHAR(32) NOT NULL,
+    route VARCHAR(2048) NOT NULL,
+    query_snapshot TEXT,
+    payload TEXT,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX uk_hzb_signal_dashboard_panel_draft_creator_signal_key
+    ON hzb_signal_dashboard_panel_draft(creator, signal, draft_key);
+
+CREATE INDEX idx_hzb_signal_dashboard_panel_draft_creator_signal
+    ON hzb_signal_dashboard_panel_draft(creator, signal);
+
+CREATE INDEX idx_hzb_signal_dashboard_panel_draft_update
+    ON hzb_signal_dashboard_panel_draft(update_time);
+
+CREATE TABLE hzb_signal_dashboard (
+    id BIGSERIAL PRIMARY KEY,
+    creator VARCHAR(255) NOT NULL,
+    dashboard_key VARCHAR(128) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(512),
+    tags VARCHAR(512),
+    layout TEXT NOT NULL,
+    widgets TEXT NOT NULL,
+    variables TEXT,
+    panel_map TEXT,
+    version VARCHAR(32),
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX uk_hzb_signal_dashboard_key
+    ON hzb_signal_dashboard(dashboard_key);
+
+CREATE INDEX idx_hzb_signal_dashboard_update
+    ON hzb_signal_dashboard(update_time);

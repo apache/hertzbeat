@@ -68,7 +68,8 @@ class TraceQueryControllerTest {
         );
         when(entityTraceQueryService.queryTraceList(
                 1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
-                "service.version=1.2.3", "GET /checkout", 100L, 500L, 2, 50, true, null))
+                "service.version=1.2.3 and hertzbeat.entity_type=\"service\"", "GET /checkout",
+                100L, 500L, 2, 50, true, null))
                 .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(2, 50), 1));
 
         mockMvc.perform(get("/api/traces/list")
@@ -76,6 +77,7 @@ class TraceQueryControllerTest {
                         .param("start", "100")
                         .param("end", "200")
                         .param("traceId", "trace-1")
+                        .param("entityType", "service")
                         .param("errorOnly", "true")
                         .param("serviceName", "checkout")
                         .param("serviceNamespace", "commerce")
@@ -94,7 +96,8 @@ class TraceQueryControllerTest {
 
         verify(entityTraceQueryService).queryTraceList(
                 1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
-                "service.version=1.2.3", "GET /checkout", 100L, 500L, 2, 50, true, null);
+                "service.version=1.2.3 and hertzbeat.entity_type=\"service\"", "GET /checkout",
+                100L, 500L, 2, 50, true, null);
     }
 
     @Test

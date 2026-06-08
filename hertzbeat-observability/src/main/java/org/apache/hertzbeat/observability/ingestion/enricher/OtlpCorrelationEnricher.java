@@ -61,6 +61,7 @@ public class OtlpCorrelationEnricher {
     public static final String LOG_RECORD_UID_ATTRIBUTE = "log.record.uid";
     public static final String INGEST_ID_ATTRIBUTE = "hertzbeat.ingest_id";
     public static final String ENTITY_ID_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID;
+    public static final String ENTITY_TYPE_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE;
     public static final String WORKSPACE_ID_ATTRIBUTE = OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID;
 
     private static final String CONTENT_ENCODING_GZIP = "gzip";
@@ -121,7 +122,9 @@ public class OtlpCorrelationEnricher {
         ExportMetricsServiceRequest source =
                 request == null ? ExportMetricsServiceRequest.getDefaultInstance() : request;
         OtlpCorrelationContext resolvedContext = context == null ? OtlpCorrelationContext.empty() : context;
-        if (StringUtils.isBlank(resolvedContext.entityId()) && StringUtils.isBlank(resolvedContext.workspaceId())) {
+        if (StringUtils.isBlank(resolvedContext.entityId())
+                && StringUtils.isBlank(resolvedContext.entityType())
+                && StringUtils.isBlank(resolvedContext.workspaceId())) {
             return source;
         }
         ExportMetricsServiceRequest.Builder requestBuilder = source.toBuilder().clearResourceMetrics();
@@ -161,7 +164,9 @@ public class OtlpCorrelationEnricher {
     public ExportTraceServiceRequest enrichTraces(ExportTraceServiceRequest request, OtlpCorrelationContext context) {
         ExportTraceServiceRequest source = request == null ? ExportTraceServiceRequest.getDefaultInstance() : request;
         OtlpCorrelationContext resolvedContext = context == null ? OtlpCorrelationContext.empty() : context;
-        if (StringUtils.isBlank(resolvedContext.entityId()) && StringUtils.isBlank(resolvedContext.workspaceId())) {
+        if (StringUtils.isBlank(resolvedContext.entityId())
+                && StringUtils.isBlank(resolvedContext.entityType())
+                && StringUtils.isBlank(resolvedContext.workspaceId())) {
             return source;
         }
         ExportTraceServiceRequest.Builder requestBuilder = source.toBuilder().clearResourceSpans();
@@ -174,11 +179,14 @@ public class OtlpCorrelationEnricher {
     }
 
     private Resource enrichResource(Resource resource, OtlpCorrelationContext context) {
-        if (StringUtils.isBlank(context.entityId()) && StringUtils.isBlank(context.workspaceId())) {
+        if (StringUtils.isBlank(context.entityId())
+                && StringUtils.isBlank(context.entityType())
+                && StringUtils.isBlank(context.workspaceId())) {
             return resource;
         }
         List<KeyValue> attributes = new ArrayList<>(resource.getAttributesList());
         upsertStringAttributeIfPresent(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
+        upsertStringAttributeIfPresent(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
         return resource.toBuilder()
                 .clearAttributes()
@@ -189,6 +197,7 @@ public class OtlpCorrelationEnricher {
     private Resource enrichMetricResource(Resource resource, OtlpCorrelationContext context) {
         List<KeyValue> attributes = new ArrayList<>(resource.getAttributesList());
         upsertStringAttributeIfPresent(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
+        upsertStringAttributeIfPresent(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
         return resource.toBuilder()
                 .clearAttributes()
@@ -199,6 +208,7 @@ public class OtlpCorrelationEnricher {
     private Resource enrichTraceResource(Resource resource, OtlpCorrelationContext context) {
         List<KeyValue> attributes = new ArrayList<>(resource.getAttributesList());
         addStringAttributeIfMissing(attributes, ENTITY_ID_ATTRIBUTE, context.entityId());
+        addStringAttributeIfMissing(attributes, ENTITY_TYPE_ATTRIBUTE, context.entityType());
         upsertStringAttributeIfPresent(attributes, WORKSPACE_ID_ATTRIBUTE, context.workspaceId());
         return resource.toBuilder()
                 .clearAttributes()

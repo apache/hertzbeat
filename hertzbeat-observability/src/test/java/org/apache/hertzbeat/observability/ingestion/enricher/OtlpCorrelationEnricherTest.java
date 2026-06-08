@@ -107,20 +107,22 @@ class OtlpCorrelationEnricherTest {
         assertDoesNotThrow(OtlpCorrelationEnricher::new);
 
         ExportLogsServiceRequest enriched = enricher.enrichLogs(logsRequest(List.of(logRecord("body-one"))),
-                new OtlpCorrelationContext("ingest-1", "entity-1", "workspace-1"));
+                new OtlpCorrelationContext("ingest-1", "entity-1", "service", "workspace-1"));
 
         Map<String, String> attributes = logAttributes(enriched, 0);
         Map<String, String> resourceAttributes = resourceAttributes(enriched);
         assertFalse(attributes.containsKey("hertzbeat.entity_id"));
+        assertFalse(attributes.containsKey("hertzbeat.entity_type"));
         assertFalse(attributes.containsKey("hertzbeat.workspace_id"));
         assertEquals("entity-1", resourceAttributes.get("hertzbeat.entity_id"));
+        assertEquals("service", resourceAttributes.get("hertzbeat.entity_type"));
         assertEquals("workspace-1", resourceAttributes.get("hertzbeat.workspace_id"));
     }
 
     @Test
     void trimsCorrelationContextValuesBeforePromotingGreptimeResourceDimensionsAcrossSignals() {
         OtlpCorrelationContext context = new OtlpCorrelationContext(
-                " ingest-1 ", " entity-1 ", " workspace-1 ");
+                " ingest-1 ", " entity-1 ", " service ", " workspace-1 ");
 
         ExportLogsServiceRequest logs = enricher.enrichLogs(logsRequest(List.of(logRecord("body-one"))), context);
         ExportMetricsServiceRequest metrics = enricher.enrichMetrics(metricsRequest(), context);
@@ -128,10 +130,13 @@ class OtlpCorrelationEnricherTest {
 
         assertEquals("ingest-1", logAttributes(logs, 0).get("hertzbeat.ingest_id"));
         assertEquals("entity-1", resourceAttributes(logs).get("hertzbeat.entity_id"));
+        assertEquals("service", resourceAttributes(logs).get("hertzbeat.entity_type"));
         assertEquals("workspace-1", resourceAttributes(logs).get("hertzbeat.workspace_id"));
         assertEquals("entity-1", metricResourceAttributes(metrics).get("hertzbeat.entity_id"));
+        assertEquals("service", metricResourceAttributes(metrics).get("hertzbeat.entity_type"));
         assertEquals("workspace-1", metricResourceAttributes(metrics).get("hertzbeat.workspace_id"));
         assertEquals("entity-1", traceResourceAttributes(traces).get("hertzbeat.entity_id"));
+        assertEquals("service", traceResourceAttributes(traces).get("hertzbeat.entity_type"));
         assertEquals("workspace-1", traceResourceAttributes(traces).get("hertzbeat.workspace_id"));
     }
 
@@ -258,13 +263,15 @@ class OtlpCorrelationEnricherTest {
                 stringAttribute("hertzbeat.entity_id", "upstream-entity"));
 
         ExportTraceServiceRequest enriched = enricher.enrichTraces(request,
-                new OtlpCorrelationContext("ignored-for-traces", "entity-1", "workspace-1"));
+                new OtlpCorrelationContext("ignored-for-traces", "entity-1", "service", "workspace-1"));
 
         Map<String, String> resourceAttributes = traceResourceAttributes(enriched);
         assertEquals("checkout", resourceAttributes.get("service.name"));
         assertEquals("upstream-entity", resourceAttributes.get("hertzbeat.entity_id"));
+        assertEquals("service", resourceAttributes.get("hertzbeat.entity_type"));
         assertEquals("workspace-1", resourceAttributes.get("hertzbeat.workspace_id"));
         assertFalse(traceSpanAttributes(enriched).containsKey("hertzbeat.entity_id"));
+        assertFalse(traceSpanAttributes(enriched).containsKey("hertzbeat.entity_type"));
         assertFalse(traceSpanAttributes(enriched).containsKey("hertzbeat.workspace_id"));
     }
 
@@ -290,11 +297,12 @@ class OtlpCorrelationEnricherTest {
                 stringAttribute("hertzbeat.workspace_id", "spoofed"));
 
         ExportMetricsServiceRequest enriched = enricher.enrichMetrics(request,
-                new OtlpCorrelationContext("ignored-for-metrics", "entity-1", "workspace-1"));
+                new OtlpCorrelationContext("ignored-for-metrics", "entity-1", "service", "workspace-1"));
 
         Map<String, String> resourceAttributes = metricResourceAttributes(enriched);
         assertEquals("checkout", resourceAttributes.get("service.name"));
         assertEquals("entity-1", resourceAttributes.get("hertzbeat.entity_id"));
+        assertEquals("service", resourceAttributes.get("hertzbeat.entity_type"));
         assertEquals("workspace-1", resourceAttributes.get("hertzbeat.workspace_id"));
     }
 

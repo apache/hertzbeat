@@ -29,12 +29,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
+import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
+import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQueryGateway;
 import org.apache.hertzbeat.observability.ingestion.enricher.OtlpCorrelationEnricher;
 import org.apache.hertzbeat.observability.logs.service.LogQueryService;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
@@ -87,13 +91,25 @@ public class LogQueryServiceImpl implements LogQueryService {
             AuthTokenScopes.CLAIM_WORKSPACE_ID,
             "workspace.id"
     );
+    private static final Set<String> ENTITY_SCOPE_RESOURCE_KEYS = Set.of(
+            "service.name",
+            "service.namespace",
+            "deployment.environment.name"
+    );
 
     private final List<HistoryDataReader> historyDataReaders;
+    private final ObservabilityWorkspaceQueryGateway workspaceQueryGateway;
 
     @Autowired
-    public LogQueryServiceImpl(List<HistoryDataReader> historyDataReaders) {
+    public LogQueryServiceImpl(List<HistoryDataReader> historyDataReaders,
+                               Optional<ObservabilityWorkspaceQueryGateway> workspaceQueryGateway) {
         this.historyDataReaders = historyDataReaders == null ? List.of()
                 : historyDataReaders.stream().filter(Objects::nonNull).toList();
+        this.workspaceQueryGateway = workspaceQueryGateway.orElse(null);
+    }
+
+    public LogQueryServiceImpl(List<HistoryDataReader> historyDataReaders) {
+        this(historyDataReaders, Optional.empty());
     }
 
     @Override
@@ -120,6 +136,21 @@ public class LogQueryServiceImpl implements LogQueryService {
     }
 
     @Override
+    public Page<LogEntry> list(Long entityId, Long start, Long end, String traceId, String spanId,
+                               Integer severityNumber, String severityText, String search,
+                               String serviceName, String serviceNamespace, String environment,
+                               String resourceFilter, String attributeFilter,
+                               Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise) {
+        LogServiceContext context = resolveEntityFirstLogServiceContext(entityId, serviceName, serviceNamespace, environment);
+        Map<String, String> resourceFilters = removeEntityScopeResourceFilters(
+                context, parseLogAttributeFilter(resourceFilter));
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        return getPagedLogs(start, end, traceId, spanId, severityNumber, severityText, search,
+                context.serviceName(), context.serviceNamespace(), context.environment(), resourceFilters, attributeFilters,
+                pageIndex, pageSize, hideInternal, hideNoise);
+    }
+
+    @Override
     public Map<String, Object> overviewStats(Long start, Long end, String traceId, String spanId,
                                              Integer severityNumber, String severityText, String search,
                                              String serviceName, String serviceNamespace, String environment,
@@ -136,6 +167,31 @@ public class LogQueryServiceImpl implements LogQueryService {
                                              boolean hideInternal, boolean hideNoise) {
         Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
         Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        return overviewStatsWithFilters(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, hideInternal, hideNoise);
+    }
+
+    @Override
+    public Map<String, Object> overviewStats(Long entityId, Long start, Long end, String traceId, String spanId,
+                                             Integer severityNumber, String severityText, String search,
+                                             String serviceName, String serviceNamespace, String environment,
+                                             String resourceFilter, String attributeFilter,
+                                             boolean hideInternal, boolean hideNoise) {
+        LogServiceContext context = resolveEntityFirstLogServiceContext(entityId, serviceName, serviceNamespace, environment);
+        Map<String, String> resourceFilters = removeEntityScopeResourceFilters(
+                context, parseLogAttributeFilter(resourceFilter));
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        return overviewStatsWithFilters(start, end, traceId, spanId, severityNumber, severityText, search,
+                context.serviceName(), context.serviceNamespace(), context.environment(), resourceFilters, attributeFilters,
+                hideInternal, hideNoise);
+    }
+
+    private Map<String, Object> overviewStatsWithFilters(Long start, Long end, String traceId, String spanId,
+                                                         Integer severityNumber, String severityText, String search,
+                                                         String serviceName, String serviceNamespace, String environment,
+                                                         Map<String, String> resourceFilters,
+                                                         Map<String, String> attributeFilters,
+                                                         boolean hideInternal, boolean hideNoise) {
         Map<String, Long> aggregate = readSeverityBuckets(start, end, traceId, spanId, severityNumber,
                 severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
                 hideInternal, hideNoise);
@@ -183,6 +239,31 @@ public class LogQueryServiceImpl implements LogQueryService {
                                                   boolean hideInternal, boolean hideNoise) {
         Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
         Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        return traceCoverageStatsWithFilters(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, hideInternal, hideNoise);
+    }
+
+    @Override
+    public Map<String, Object> traceCoverageStats(Long entityId, Long start, Long end, String traceId, String spanId,
+                                                  Integer severityNumber, String severityText, String search,
+                                                  String serviceName, String serviceNamespace, String environment,
+                                                  String resourceFilter, String attributeFilter,
+                                                  boolean hideInternal, boolean hideNoise) {
+        LogServiceContext context = resolveEntityFirstLogServiceContext(entityId, serviceName, serviceNamespace, environment);
+        Map<String, String> resourceFilters = removeEntityScopeResourceFilters(
+                context, parseLogAttributeFilter(resourceFilter));
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        return traceCoverageStatsWithFilters(start, end, traceId, spanId, severityNumber, severityText, search,
+                context.serviceName(), context.serviceNamespace(), context.environment(), resourceFilters, attributeFilters,
+                hideInternal, hideNoise);
+    }
+
+    private Map<String, Object> traceCoverageStatsWithFilters(Long start, Long end, String traceId, String spanId,
+                                                              Integer severityNumber, String severityText, String search,
+                                                              String serviceName, String serviceNamespace, String environment,
+                                                              Map<String, String> resourceFilters,
+                                                              Map<String, String> attributeFilters,
+                                                              boolean hideInternal, boolean hideNoise) {
         Map<String, Long> aggregate = readTraceCoverage(start, end, traceId, spanId, severityNumber,
                 severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
                 hideInternal, hideNoise);
@@ -230,6 +311,31 @@ public class LogQueryServiceImpl implements LogQueryService {
                                           boolean hideInternal, boolean hideNoise) {
         Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
         Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        return trendStatsWithFilters(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, hideInternal, hideNoise);
+    }
+
+    @Override
+    public Map<String, Object> trendStats(Long entityId, Long start, Long end, String traceId, String spanId,
+                                          Integer severityNumber, String severityText, String search,
+                                          String serviceName, String serviceNamespace, String environment,
+                                          String resourceFilter, String attributeFilter,
+                                          boolean hideInternal, boolean hideNoise) {
+        LogServiceContext context = resolveEntityFirstLogServiceContext(entityId, serviceName, serviceNamespace, environment);
+        Map<String, String> resourceFilters = removeEntityScopeResourceFilters(
+                context, parseLogAttributeFilter(resourceFilter));
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        return trendStatsWithFilters(start, end, traceId, spanId, severityNumber, severityText, search,
+                context.serviceName(), context.serviceNamespace(), context.environment(), resourceFilters, attributeFilters,
+                hideInternal, hideNoise);
+    }
+
+    private Map<String, Object> trendStatsWithFilters(Long start, Long end, String traceId, String spanId,
+                                                      Integer severityNumber, String severityText, String search,
+                                                      String serviceName, String serviceNamespace, String environment,
+                                                      Map<String, String> resourceFilters,
+                                                      Map<String, String> attributeFilters,
+                                                      boolean hideInternal, boolean hideNoise) {
         Map<String, Long> aggregate = readHourlyStats(start, end, traceId, spanId, severityNumber,
                 severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
                 hideInternal, hideNoise);
@@ -274,6 +380,39 @@ public class LogQueryServiceImpl implements LogQueryService {
         }
         Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
         Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        return groupByStats(start, end, traceId, spanId, severityNumber, severityText, search,
+                serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, normalizedGroupBy,
+                resolvedLimit, orderBy, resolvedMinCount, hideInternal, hideNoise);
+    }
+
+    @Override
+    public Map<String, Object> groupByStats(Long entityId, Long start, Long end, String traceId, String spanId,
+                                            Integer severityNumber, String severityText, String search,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            String resourceFilter, String attributeFilter, String groupBy,
+                                            Integer limit, String orderBy, Integer minCount,
+                                            boolean hideInternal, boolean hideNoise) {
+        String normalizedGroupBy = normalizeGroupBy(groupBy);
+        int resolvedLimit = resolveGroupByLimit(limit);
+        long resolvedMinCount = resolveGroupByMinCount(minCount);
+        if (!StringUtils.hasText(normalizedGroupBy)) {
+            return groupByResult("", Map.of(), resolvedLimit, orderBy, resolvedMinCount);
+        }
+        LogServiceContext context = resolveEntityFirstLogServiceContext(entityId, serviceName, serviceNamespace, environment);
+        Map<String, String> resourceFilters = removeEntityScopeResourceFilters(
+                context, parseLogAttributeFilter(resourceFilter));
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        return groupByStats(start, end, traceId, spanId, severityNumber, severityText, search,
+                context.serviceName(), context.serviceNamespace(), context.environment(), resourceFilters, attributeFilters,
+                normalizedGroupBy, resolvedLimit, orderBy, resolvedMinCount, hideInternal, hideNoise);
+    }
+
+    private Map<String, Object> groupByStats(Long start, Long end, String traceId, String spanId,
+                                            Integer severityNumber, String severityText, String search,
+                                            String serviceName, String serviceNamespace, String environment,
+                                            Map<String, String> resourceFilters, Map<String, String> attributeFilters,
+                                            String normalizedGroupBy, int resolvedLimit, String orderBy,
+                                            long resolvedMinCount, boolean hideInternal, boolean hideNoise) {
         Map<String, Long> aggregate = readGroupStats(start, end, traceId, spanId, severityNumber,
                 severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
                 normalizedGroupBy, hideInternal, hideNoise);
@@ -303,6 +442,31 @@ public class LogQueryServiceImpl implements LogQueryService {
                                        String resourceFilter, String attributeFilter,
                                        Integer limit, String direction, Long cursorLogTimeUnixNano,
                                        boolean hideInternal, boolean hideNoise) {
+        return contextWithFilters(logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
+                parseLogAttributeFilter(resourceFilter), parseLogAttributeFilter(attributeFilter), limit, direction,
+                cursorLogTimeUnixNano, hideInternal, hideNoise);
+    }
+
+    @Override
+    public Map<String, Object> context(Long entityId, Long logTimeUnixNano, Long start, Long end,
+                                       String serviceName, String serviceNamespace, String environment,
+                                       String resourceFilter, String attributeFilter,
+                                       Integer limit, String direction, Long cursorLogTimeUnixNano,
+                                       boolean hideInternal, boolean hideNoise) {
+        LogServiceContext context = resolveEntityFirstLogServiceContext(entityId, serviceName, serviceNamespace, environment);
+        Map<String, String> resourceFilters = removeEntityScopeResourceFilters(
+                context, parseLogAttributeFilter(resourceFilter));
+        return contextWithFilters(logTimeUnixNano, start, end, context.serviceName(), context.serviceNamespace(),
+                context.environment(), resourceFilters, parseLogAttributeFilter(attributeFilter), limit, direction,
+                cursorLogTimeUnixNano, hideInternal, hideNoise);
+    }
+
+    private Map<String, Object> contextWithFilters(Long logTimeUnixNano, Long start, Long end,
+                                                   String serviceName, String serviceNamespace, String environment,
+                                                   Map<String, String> resourceFilters,
+                                                   Map<String, String> attributeFilters,
+                                                   Integer limit, String direction, Long cursorLogTimeUnixNano,
+                                                   boolean hideInternal, boolean hideNoise) {
         long targetTimeUnixNano = logTimeUnixNano == null ? 0L : logTimeUnixNano;
         String normalizedDirection = normalizeContextDirection(direction);
         boolean beforePage = "before".equals(normalizedDirection);
@@ -317,8 +481,6 @@ public class LogQueryServiceImpl implements LogQueryService {
             resolvedEnd = previousStart;
         }
         int resolvedLimit = resolveContextLimit(limit);
-        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
-        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
         List<LogEntry> contextLogs = getFilteredLogs(resolvedStart, resolvedEnd, null, null, null, null, null,
                 serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
                 hideInternal, hideNoise);
@@ -915,6 +1077,55 @@ public class LogQueryServiceImpl implements LogQueryService {
         return new PageImpl<>(Collections.emptyList(), pageRequest, 0);
     }
 
+    private LogServiceContext resolveEntityFirstLogServiceContext(Long entityId, String serviceName,
+                                                                  String serviceNamespace, String environment) {
+        String resolvedServiceName = trimToNull(serviceName);
+        String resolvedServiceNamespace = trimToNull(serviceNamespace);
+        String resolvedEnvironment = trimToNull(environment);
+        if (entityId == null || workspaceQueryGateway == null) {
+            return new LogServiceContext(resolvedServiceName, resolvedServiceNamespace, resolvedEnvironment);
+        }
+        Optional<ObserveEntity> entity = workspaceQueryGateway.findEntityById(entityId);
+        Set<String> resolvedIdentityKeys = new LinkedHashSet<>();
+        for (EntityIdentity identity : rankedEntityIdentities(workspaceQueryGateway.findIdentitiesByEntityId(entityId))) {
+            if (!StringUtils.hasText(identity.getIdentityKey()) || !StringUtils.hasText(identity.getIdentityValue())) {
+                continue;
+            }
+            if (!resolvedIdentityKeys.add(identity.getIdentityKey())) {
+                continue;
+            }
+            switch (identity.getIdentityKey()) {
+                case "service.name" -> resolvedServiceName = trimToNull(identity.getIdentityValue());
+                case "service.namespace" -> resolvedServiceNamespace = trimToNull(identity.getIdentityValue());
+                case "deployment.environment.name" -> resolvedEnvironment = trimToNull(identity.getIdentityValue());
+                default -> {
+                }
+            }
+        }
+        if (!StringUtils.hasText(resolvedServiceName) && entity.isPresent()
+                && "service".equalsIgnoreCase(trimToNull(entity.get().getType()))) {
+            resolvedServiceName = trimToNull(entity.get().getName());
+        }
+        if (!StringUtils.hasText(resolvedServiceNamespace) && entity.isPresent()) {
+            resolvedServiceNamespace = trimToNull(entity.get().getNamespace());
+        }
+        if (!StringUtils.hasText(resolvedEnvironment) && entity.isPresent()) {
+            resolvedEnvironment = trimToNull(entity.get().getEnvironment());
+        }
+        return new LogServiceContext(resolvedServiceName, resolvedServiceNamespace, resolvedEnvironment);
+    }
+
+    private List<EntityIdentity> rankedEntityIdentities(List<EntityIdentity> identities) {
+        if (identities == null || identities.isEmpty()) {
+            return List.of();
+        }
+        return identities.stream()
+                .sorted(Comparator.comparing(EntityIdentity::isPrimaryIdentity).reversed()
+                        .thenComparing(EntityIdentity::getPriority, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(EntityIdentity::getId, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+    }
+
     private Set<String> hiddenServiceNames(boolean hideInternal, boolean hideNoise) {
         if (!hideInternal && !hideNoise) {
             return Collections.emptySet();
@@ -931,6 +1142,13 @@ public class LogQueryServiceImpl implements LogQueryService {
 
     private boolean shouldRequireServiceName(boolean hideInternal, boolean hideNoise) {
         return hideInternal || hideNoise;
+    }
+
+    private String trimToNull(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private record LogServiceContext(String serviceName, String serviceNamespace, String environment) {
     }
 
     private boolean hasServiceContext(String serviceName, String serviceNamespace, String environment) {
@@ -982,6 +1200,30 @@ public class LogQueryServiceImpl implements LogQueryService {
             filters.put(key, negate ? LOG_FILTER_NEGATION_PREFIX + value : value);
         }
         return filters.isEmpty() ? Collections.emptyMap() : Map.copyOf(filters);
+    }
+
+    private Map<String, String> removeEntityScopeResourceFilters(LogServiceContext context,
+                                                                 Map<String, String> resourceFilters) {
+        if (context == null || resourceFilters == null || resourceFilters.isEmpty()) {
+            return resourceFilters;
+        }
+        Map<String, String> filtered = new LinkedHashMap<>();
+        resourceFilters.forEach((key, value) -> {
+            if (ENTITY_SCOPE_RESOURCE_KEYS.contains(key) && hasResolvedEntityScopeValue(context, key)) {
+                return;
+            }
+            filtered.put(key, value);
+        });
+        return filtered.isEmpty() ? Collections.emptyMap() : Map.copyOf(filtered);
+    }
+
+    private boolean hasResolvedEntityScopeValue(LogServiceContext context, String key) {
+        return switch (key) {
+            case "service.name" -> StringUtils.hasText(context.serviceName());
+            case "service.namespace" -> StringUtils.hasText(context.serviceNamespace());
+            case "deployment.environment.name" -> StringUtils.hasText(context.environment());
+            default -> false;
+        };
     }
 
     private String stripFilterQuotes(String value) {

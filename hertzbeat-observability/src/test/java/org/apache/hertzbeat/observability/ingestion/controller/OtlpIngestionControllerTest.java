@@ -32,6 +32,7 @@ import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuid
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionRedSummaryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
 import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
 import org.junit.jupiter.api.BeforeEach;
@@ -202,7 +203,8 @@ class OtlpIngestionControllerTest {
     @Test
     void shouldReturnWrappedMetricsConsolePayload() throws Exception {
         OtlpMetricsConsoleDto console = new OtlpMetricsConsoleDto(
-                new OtlpMetricsConsoleDto.Context(42L, "Checkout API", "checkout", "commerce", "prod", 1000L, 2000L),
+                new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
+                        1000L, 2000L),
                 "sum by (__name__) ({service_name=\"checkout\"})",
                 "Greptime-promql",
                 "promql",
@@ -228,12 +230,13 @@ class OtlpIngestionControllerTest {
                 null,
                 null
         );
-        when(otlpIngestionWorkspaceService.getMetricsConsole(42L, 1000L, 2000L, "checkout", "commerce", "prod",
+        when(otlpIngestionWorkspaceService.getMetricsConsole(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
                 null, "span.kind=\"server\"", null, null, "rate", "60", "1"))
                 .thenReturn(console);
 
         mockMvc.perform(get("/api/ingestion/otlp/metrics/console")
                         .param("entityId", "42")
+                        .param("entityType", "service")
                         .param("start", "1000")
                         .param("end", "2000")
                         .param("serviceName", "checkout")
@@ -246,13 +249,59 @@ class OtlpIngestionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.context.entityId").value(42))
+                .andExpect(jsonPath("$.data.context.entityType").value("service"))
                 .andExpect(jsonPath("$.data.query").value("sum by (__name__) ({service_name=\"checkout\"})"))
                 .andExpect(jsonPath("$.data.datasource").value("Greptime-promql"))
                 .andExpect(jsonPath("$.data.stats.totalSeries").value(1))
                 .andExpect(jsonPath("$.data.results.frames[0].schema.labels.__name__").value("http_server_requests_seconds_count"));
 
         verify(otlpIngestionWorkspaceService)
-                .getMetricsConsole(42L, 1000L, 2000L, "checkout", "commerce", "prod",
+                .getMetricsConsole(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
                         null, "span.kind=\"server\"", null, null, "rate", "60", "1");
+    }
+
+    @Test
+    void shouldReturnWrappedRelatedMetricsPayload() throws Exception {
+        OtlpRelatedMetricsDto related = new OtlpRelatedMetricsDto(
+                new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
+                        1000L, 2000L),
+                "k8s.pod.name=\"checkout-7d9\"",
+                "backend-related-metrics",
+                1,
+                List.of(new OtlpRelatedMetricsDto.ResourceMatcher("k8s_pod_name", "=", "checkout-7d9")),
+                List.of(new OtlpRelatedMetricsDto.Candidate(
+                        "container.cpu.usage",
+                        "pod",
+                        "cpu",
+                        "resource-filter",
+                        List.of("k8s_pod_name"),
+                        java.util.Map.of("k8s_pod_name", "checkout-7d9")
+                ))
+        );
+        when(otlpIngestionWorkspaceService.getRelatedMetrics(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
+                "k8s.pod.name=\"checkout-7d9\"", "8")).thenReturn(related);
+
+        mockMvc.perform(get("/api/ingestion/otlp/metrics/related")
+                        .param("entityId", "42")
+                        .param("entityType", "service")
+                        .param("start", "1000")
+                        .param("end", "2000")
+                        .param("serviceName", "checkout")
+                        .param("serviceNamespace", "commerce")
+                        .param("environment", "prod")
+                        .param("filter", "k8s.pod.name=\"checkout-7d9\"")
+                        .param("limit", "8"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.context.entityId").value(42))
+                .andExpect(jsonPath("$.data.context.entityType").value("service"))
+                .andExpect(jsonPath("$.data.source").value("backend-related-metrics"))
+                .andExpect(jsonPath("$.data.resourceMatchers[0].label").value("k8s_pod_name"))
+                .andExpect(jsonPath("$.data.candidates[0].query").value("container.cpu.usage"))
+                .andExpect(jsonPath("$.data.candidates[0].source").value("pod"));
+
+        verify(otlpIngestionWorkspaceService)
+                .getRelatedMetrics(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
+                        "k8s.pod.name=\"checkout-7d9\"", "8");
     }
 }

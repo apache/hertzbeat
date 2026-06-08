@@ -299,7 +299,7 @@ class EntityTraceQueryServiceImplTest {
         ));
         when(traceQueryRepository.queryRecentTraceRows(
                 eq(1500), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
-                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(),
@@ -552,6 +552,89 @@ class EntityTraceQueryServiceImplTest {
                 eq("prod"), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), eq("team-a"),
                 org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(), eq(true));
+    }
+
+    @Test
+    void traceQueriesPreferEntityIdentityOverConflictingRouteContext() {
+        long now = System.currentTimeMillis();
+        long start = now - 120_000;
+        long end = now;
+        AuthTokenRequestContext.bindWorkspaceId("team-a");
+        ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();
+        when(workspaceQueryGateway.findEntityById(1L)).thenReturn(Optional.of(entity));
+        when(workspaceQueryGateway.findIdentitiesByEntityId(1L)).thenReturn(List.of(
+                identity(1L, "service.name", "checkout-service", 100, true),
+                identity(1L, "service.namespace", "commerce", 80, false),
+                identity(1L, "deployment.environment.name", "prod", 70, false)
+        ));
+        when(traceQueryRepository.supportsTraceListRows()).thenReturn(true);
+        when(traceQueryRepository.supportsTraceOverviewRows()).thenReturn(true);
+        when(traceQueryRepository.supportsTraceGroupByRows()).thenReturn(true);
+        when(traceQueryRepository.queryTraceListRows(
+                eq(start), eq(end), eq(false), eq("checkout-service"), eq("commerce"),
+                eq("prod"), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("team-a"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(false), eq(0), eq(20))).thenReturn(List.of(traceListRow(
+                "trace-entity",
+                "span-root",
+                "/checkout",
+                "checkout-service",
+                "commerce",
+                "STATUS_CODE_OK",
+                now - 30_000,
+                8_000_000L,
+                0,
+                1L,
+                Map.of("service.name", "checkout-service",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod",
+                        "hertzbeat.workspace_id", "team-a"))));
+        when(traceQueryRepository.queryTraceOverviewRows(
+                eq(start), eq(end), eq(false), eq("checkout-service"), eq("commerce"),
+                eq("prod"), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("team-a"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(false))).thenReturn(Map.of(
+                "total_trace_count", 1L,
+                "error_trace_count", 0L,
+                "latest_observed_at", now - 30_000
+        ));
+        when(traceQueryRepository.queryTraceGroupByRows(
+                eq(start), eq(end), eq(false), eq("checkout-service"), eq("commerce"),
+                eq("prod"), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("team-a"), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(false), eq("service.name"), org.mockito.ArgumentMatchers.isNull(), eq(1L), eq(20)))
+                .thenReturn(List.of(Map.of(
+                        "group_value", "checkout-service",
+                        "trace_count", 1L,
+                        "error_trace_count", 0L,
+                        "latency_avg_ms", 8.0d,
+                        "latency_p95_ms", 8.0d
+                )));
+
+        String conflictingResourceFilter = "service.name=stale-route,deployment.environment.name=staging,http.route:/checkout";
+        var page = entityTraceQueryService.queryTraceList(1L, start, end, null,
+                false, "stale-route", "wrong-namespace", "staging",
+                conflictingResourceFilter, null, null, null, 0, 20, false);
+        TraceOverviewDto overview = entityTraceQueryService.getTraceOverview(1L, start, end, null,
+                false, "stale-route", "wrong-namespace", "staging",
+                conflictingResourceFilter, null, null, null, false);
+        Map<String, Object> groups = entityTraceQueryService.getTraceGroupByStats(1L, start, end, null,
+                false, "stale-route", "wrong-namespace", "staging",
+                conflictingResourceFilter, null, null, null, "service.name", null, null, null, false);
+
+        assertEquals("trace-entity", page.getContent().getFirst().getTraceId());
+        assertEquals(1, overview.getTotalTraceCount());
+        assertEquals(1, ((List<Map<String, Object>>) groups.get("groups")).size());
+        ArgumentCaptor<Map<String, Set<String>>> listFilterCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(traceQueryRepository).queryTraceListRows(
+                eq(start), eq(end), eq(false), eq("checkout-service"), eq("commerce"),
+                eq("prod"), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("team-a"), listFilterCaptor.capture(),
+                eq(false), eq(0), eq(20));
+        assertEquals(Set.of("checkout-service"), listFilterCaptor.getValue().get("service.name"));
+        assertEquals(Set.of("commerce"), listFilterCaptor.getValue().get("service.namespace"));
+        assertEquals(Set.of("prod"), listFilterCaptor.getValue().get("deployment.environment.name"));
+        assertEquals(Set.of("/checkout"), listFilterCaptor.getValue().get("http.route"));
     }
 
     @Test

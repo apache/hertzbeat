@@ -68,6 +68,8 @@ class OtlpEntityIdentityResolverTest {
 
         Map<String, String> attributes = metricResourceAttributes(enriched);
         assertEquals("42", attributes.get("hertzbeat.entity_id"));
+        assertEquals("service", attributes.get("hertzbeat.entity_type"));
+        assertEquals("Checkout API", attributes.get("hertzbeat.entity_name"));
         assertEquals(" Checkout ", attributes.get("service.name"));
     }
 
@@ -155,6 +157,7 @@ class OtlpEntityIdentityResolverTest {
                 .workspaceId(workspaceId)
                 .type("service")
                 .name("checkout")
+                .displayName("Checkout API")
                 .status("unknown")
                 .build();
     }

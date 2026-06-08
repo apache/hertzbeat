@@ -57,7 +57,8 @@ class OtlpWorkspaceDtoMigrationTest {
                 List.of(new OtlpIngestionOverviewDto.RecentSignalEvent("logs", "error", "checkout failed", 2L))
         );
         OtlpMetricsConsoleDto console = new OtlpMetricsConsoleDto(
-                new OtlpMetricsConsoleDto.Context(1L, "checkout", "checkout", "commerce", "prod", 1000L, 2000L),
+                new OtlpMetricsConsoleDto.Context(1L, "service", "checkout", "checkout", "commerce", "prod",
+                        1000L, 2000L),
                 "sum(rate(http_requests_total[5m]))",
                 "greptime",
                 "promql",

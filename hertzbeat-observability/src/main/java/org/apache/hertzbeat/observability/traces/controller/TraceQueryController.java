@@ -27,9 +27,11 @@ import org.apache.hertzbeat.common.observability.dto.trace.TraceDetailDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanNodeDto;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,6 +53,7 @@ public class TraceQueryController {
     @Operation(summary = "Query traces with entity context and canonical resource filters")
     public ResponseEntity<Message<Page<TraceListItemDto>>> list(
             @RequestParam(value = "entityId", required = false) Long entityId,
+            @RequestParam(value = "entityType", required = false) String entityType,
             @RequestParam(value = "start", required = false) Long start,
             @RequestParam(value = "end", required = false) Long end,
             @RequestParam(value = "traceId", required = false) String traceId,
@@ -66,9 +69,10 @@ public class TraceQueryController {
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal,
             @RequestParam(value = "pageIndex", defaultValue = "0") Integer pageIndex,
             @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize) {
+        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
         Page<TraceListItemDto> page = entityTraceQueryService.queryTraceList(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
-                resourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal,
+                scopedResourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal,
                 spanScope);
         return ResponseEntity.ok(Message.success(page));
     }
@@ -77,6 +81,7 @@ public class TraceQueryController {
     @Operation(summary = "Trace overview statistics")
     public ResponseEntity<Message<TraceOverviewDto>> overview(
             @RequestParam(value = "entityId", required = false) Long entityId,
+            @RequestParam(value = "entityType", required = false) String entityType,
             @RequestParam(value = "start", required = false) Long start,
             @RequestParam(value = "end", required = false) Long end,
             @RequestParam(value = "traceId", required = false) String traceId,
@@ -90,15 +95,17 @@ public class TraceQueryController {
             @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
+        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceOverview(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
-                resourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, spanScope)));
+                scopedResourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, spanScope)));
     }
 
     @GetMapping("/stats/group-by")
     @Operation(summary = "Trace group-by statistics")
     public ResponseEntity<Message<Map<String, Object>>> groupBy(
             @RequestParam(value = "entityId", required = false) Long entityId,
+            @RequestParam(value = "entityType", required = false) String entityType,
             @RequestParam(value = "start", required = false) Long start,
             @RequestParam(value = "end", required = false) Long end,
             @RequestParam(value = "traceId", required = false) String traceId,
@@ -116,9 +123,10 @@ public class TraceQueryController {
             @RequestParam(value = "minCount", required = false) Integer minCount,
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
+        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceGroupByStats(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
-                resourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy, minCount,
+                scopedResourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy, minCount,
                 hideInternal, spanScope)));
     }
 
@@ -134,5 +142,21 @@ public class TraceQueryController {
     public ResponseEntity<Message<List<TraceSpanNodeDto>>> spans(@PathVariable("traceId") String traceId,
                                                                  @RequestParam(value = "entityId", required = false) Long entityId) {
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceSpans(entityId, traceId)));
+    }
+
+    private String mergeEntityTypeResourceFilter(String entityType, String resourceFilter) {
+        String normalizedResourceFilter = StringUtils.trimWhitespace(resourceFilter);
+        String normalizedEntityType = StringUtils.trimWhitespace(entityType);
+        if (!StringUtils.hasText(normalizedEntityType) || !normalizedEntityType.matches("[A-Za-z0-9_.:-]+")) {
+            return normalizedResourceFilter;
+        }
+        if (StringUtils.hasText(normalizedResourceFilter)
+                && normalizedResourceFilter.contains(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE)) {
+            return normalizedResourceFilter;
+        }
+        String entityTypeFilter = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE + "=\"" + normalizedEntityType + "\"";
+        return StringUtils.hasText(normalizedResourceFilter)
+                ? normalizedResourceFilter + " and " + entityTypeFilter
+                : entityTypeFilter;
     }
 }

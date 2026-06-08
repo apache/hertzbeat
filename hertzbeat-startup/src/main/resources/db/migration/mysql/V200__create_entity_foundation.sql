@@ -172,3 +172,56 @@ CREATE TABLE hzb_auth_token (
     INDEX idx_hzb_auth_token_status (status),
     INDEX idx_hzb_auth_token_revoked_by (revoked_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE hzb_signal_saved_view (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    creator VARCHAR(255) NOT NULL COMMENT 'Saved view creator',
+    signal VARCHAR(32) NOT NULL COMMENT 'Signal type: logs, traces, or metrics',
+    view_key VARCHAR(128) NOT NULL COMMENT 'Stable saved view key',
+    label VARCHAR(255) NOT NULL COMMENT 'Saved view display label',
+    description VARCHAR(512) COMMENT 'Saved view description',
+    route VARCHAR(2048) NOT NULL COMMENT 'Explorer route snapshot',
+    query_snapshot TEXT COMMENT 'Query-state snapshot JSON',
+    payload TEXT COMMENT 'Additional saved view payload JSON',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+    UNIQUE KEY uk_hzb_signal_saved_view_signal_key (signal, view_key),
+    INDEX idx_hzb_signal_saved_view_signal (signal),
+    INDEX idx_hzb_signal_saved_view_update (update_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE hzb_signal_dashboard_panel_draft (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    creator VARCHAR(255) NOT NULL COMMENT 'Panel draft creator',
+    signal VARCHAR(32) NOT NULL COMMENT 'Signal type: logs, traces, or metrics',
+    draft_key VARCHAR(128) NOT NULL COMMENT 'Stable dashboard panel draft key',
+    title VARCHAR(255) NOT NULL COMMENT 'Dashboard panel title',
+    description VARCHAR(512) COMMENT 'Dashboard panel description',
+    visualization VARCHAR(32) NOT NULL COMMENT 'Dashboard panel visualization type',
+    route VARCHAR(2048) NOT NULL COMMENT 'Explorer route snapshot',
+    query_snapshot TEXT COMMENT 'Query-state snapshot JSON',
+    payload TEXT COMMENT 'Additional dashboard panel payload JSON',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+    UNIQUE KEY uk_hzb_signal_dashboard_panel_draft_creator_signal_key (creator, signal, draft_key),
+    INDEX idx_hzb_signal_dashboard_panel_draft_creator_signal (creator, signal),
+    INDEX idx_hzb_signal_dashboard_panel_draft_update (update_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE hzb_signal_dashboard (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    creator VARCHAR(255) NOT NULL COMMENT 'Dashboard creator',
+    dashboard_key VARCHAR(128) NOT NULL COMMENT 'Stable dashboard key',
+    title VARCHAR(255) NOT NULL COMMENT 'Dashboard title',
+    description VARCHAR(512) COMMENT 'Dashboard description',
+    tags VARCHAR(512) COMMENT 'Comma-separated dashboard tags',
+    layout TEXT NOT NULL COMMENT 'Dashboard layout JSON',
+    widgets TEXT NOT NULL COMMENT 'Dashboard widgets JSON',
+    variables TEXT COMMENT 'Dashboard variables JSON',
+    panel_map TEXT COMMENT 'Dashboard panel grouping JSON',
+    version VARCHAR(32) COMMENT 'Dashboard schema version',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+    UNIQUE KEY uk_hzb_signal_dashboard_key (dashboard_key),
+    INDEX idx_hzb_signal_dashboard_update (update_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
