@@ -31,6 +31,7 @@ import {
   buildSignalDashboardRuntimeSyncCrosshair,
   buildSignalDashboardRuntimeSyncTooltip,
   buildSignalDashboardVariableOptions,
+  buildSignalOperationDrilldownDashboard,
   buildSignalServiceOverviewDashboard,
   createSignalDashboardPanelDraftsFromFilterSelection,
   createSignalDashboardPanelDraftFromRuntimeBreakout,
@@ -776,6 +777,7 @@ export default function DashboardDraftWorkspace({
   const [savingPreviewLayout, setSavingPreviewLayout] = useState(false);
   const [savingVariables, setSavingVariables] = useState(false);
   const [savingServiceOverview, setSavingServiceOverview] = useState(false);
+  const [savingOperationDrilldown, setSavingOperationDrilldown] = useState(false);
   const [variableNameDraft, setVariableNameDraft] = useState('service.name');
   const [variableTypeDraft, setVariableTypeDraft] = useState<SignalDashboardVariableType>('textbox');
   const [variableValueDraft, setVariableValueDraft] = useState('');
@@ -811,6 +813,14 @@ export default function DashboardDraftWorkspace({
       template: firstParamValue(initialContext.template)?.trim() || undefined
     };
   }, [initialContext]);
+  const operationDrilldownContext = useMemo(() => {
+    const operationName = firstParamValue(initialContext.operationName)?.trim() || '';
+    if (!serviceOverviewContext || !operationName) return null;
+    return {
+      ...serviceOverviewContext,
+      operationName
+    };
+  }, [initialContext, serviceOverviewContext]);
   const defaultDashboardTitle = t('dashboard.composition.default-title');
   const defaultDashboardDescription = t('dashboard.composition.default-description');
   const runtimeTableLabels = useMemo(() => ({
@@ -1148,6 +1158,29 @@ export default function DashboardDraftWorkspace({
       setCompositionState('error');
     } finally {
       setSavingServiceOverview(false);
+    }
+  };
+
+  const saveOperationDrilldownDashboard = async () => {
+    if (!operationDrilldownContext) return;
+    setSavingOperationDrilldown(true);
+    setCompositionState('saving');
+    try {
+      const dashboard = buildSignalOperationDrilldownDashboard({
+        ...operationDrilldownContext,
+        ...dashboardTimeRange
+      });
+      const saved = await saveSignalDashboard(dashboard);
+      setDashboardKeyDraft(saved.dashboardKey);
+      setDashboardTitleDraft(saved.title);
+      setDashboardDescriptionDraft(saved.description || defaultDashboardDescription);
+      replaceDashboardDeepLink(saved.dashboardKey);
+      setDashboards(current => [saved, ...current.filter(item => item.dashboardKey !== saved.dashboardKey)]);
+      setCompositionState('saved');
+    } catch {
+      setCompositionState('error');
+    } finally {
+      setSavingOperationDrilldown(false);
     }
   };
 
@@ -1966,6 +1999,8 @@ export default function DashboardDraftWorkspace({
             data-dashboard-composition-preview-key={selectedDashboard?.dashboardKey || normalizeSignalDashboardKey(dashboardKeyDraft || dashboardTitleDraft)}
             data-dashboard-service-overview-context={serviceOverviewContext ? 'ready' : 'missing'}
             data-dashboard-service-overview-service={serviceOverviewContext?.serviceName || ''}
+            data-dashboard-operation-drilldown-context={operationDrilldownContext ? 'ready' : 'missing'}
+            data-dashboard-operation-drilldown-operation={operationDrilldownContext?.operationName || ''}
             data-dashboard-composition-preview-panels={previewPanels.length}
             data-dashboard-composition-time-range-mode={dashboardTimeRangeMode}
             data-dashboard-composition-time-range-start={dashboardTimeRange.start}
@@ -2035,6 +2070,20 @@ export default function DashboardDraftWorkspace({
               >
                 <LayoutDashboard size={13} />
                 {t('dashboard.composition.action.save-service-overview')}
+              </HzButton>
+              <HzButton
+                type="button"
+                size="sm"
+                intent="secondary"
+                disabled={!operationDrilldownContext || savingOperationDrilldown}
+                onClick={() => void saveOperationDrilldownDashboard()}
+                data-dashboard-operation-drilldown-action="save"
+                data-dashboard-operation-drilldown-action-state={operationDrilldownContext ? 'ready' : 'missing'}
+                data-dashboard-operation-drilldown-action-service={operationDrilldownContext?.serviceName || ''}
+                data-dashboard-operation-drilldown-action-operation={operationDrilldownContext?.operationName || ''}
+              >
+                <ExternalLink size={13} />
+                {t('dashboard.composition.action.save-operation-drilldown')}
               </HzButton>
             </div>
             <div

@@ -354,7 +354,8 @@ function metricsPayload(query: string) {
         schema: {
           labels: {
             'service.name': 'checkout',
-            'deployment.environment.name': 'prod'
+            'deployment.environment.name': 'prod',
+            operation: 'POST /checkout'
           }
         },
         data: [
@@ -1461,11 +1462,16 @@ test.describe('dashboard source edit browser smoke', () => {
     await expect(runtimeTooltipRow).toHaveAttribute('data-dashboard-composition-runtime-sync-tooltip-row-handoff', /serviceName=checkout/);
     await expect(runtimeTooltipRow).toHaveAttribute('data-dashboard-composition-runtime-sync-tooltip-row-related-handoff', /\/trace\/manage/);
     await expect(runtimeTooltipRow).toHaveAttribute('data-dashboard-composition-runtime-sync-tooltip-row-related-handoff', /serviceName=checkout/);
+    await expect(runtimeTooltipRow).toHaveAttribute('data-dashboard-composition-runtime-sync-tooltip-row-related-handoff', /operationName=POST\+%2Fcheckout/);
     await expect(runtimeTooltipRow).toHaveAttribute('data-dashboard-composition-runtime-sync-tooltip-row-related-handoff', /spanScope=all/);
     await expect(runtimeTooltipRow).toHaveAttribute('data-dashboard-composition-runtime-sync-tooltip-row-breakout-attributes', /[1-9]/);
     await expect(runtimeTooltipRow.locator('[data-dashboard-composition-runtime-sync-tooltip-row-action="open-related"]')).toHaveAttribute(
       'data-dashboard-composition-runtime-sync-tooltip-row-action-href',
       /\/trace\/manage/
+    );
+    await expect(runtimeTooltipRow.locator('[data-dashboard-composition-runtime-sync-tooltip-row-action="open-related"]')).toHaveAttribute(
+      'data-dashboard-composition-runtime-sync-tooltip-row-action-href',
+      /operationName=POST\+%2Fcheckout/
     );
     await expect(runtimeTooltipRow.locator('[data-dashboard-composition-runtime-sync-tooltip-row-action="breakout-panel-draft"]').first()).toHaveAttribute(
       'data-dashboard-composition-runtime-sync-tooltip-row-action-attribute',
@@ -1711,6 +1717,93 @@ test.describe('dashboard source edit browser smoke', () => {
       expect.stringContaining('/api/logs/list'),
       expect.stringContaining('/api/traces/stats/group-by'),
       expect.stringContaining('/api/alerts/group')
+    ]));
+  });
+
+  test('saves an operation drilldown dashboard from URL operation context', async ({ page }) => {
+    test.setTimeout(BROWSER_SMOKE_TIMEOUT);
+    const smokeState = await installDashboardServiceOverviewMocks(page);
+
+    await page.goto(routeUrl('/dashboard?serviceName=checkout&serviceNamespace=payments&environment=prod&operationName=POST%20%2Fcheckout&entityId=4200&entityType=service&entityName=Checkout%20API&source=otlp&collector=collector-a&template=spring-boot&timeRange=last-1h'), {
+      timeout: BROWSER_SMOKE_TIMEOUT,
+      waitUntil: 'domcontentloaded'
+    });
+
+    const operationDrilldownAction = page.locator('[data-dashboard-operation-drilldown-action="save"]').first();
+    await expect(page.locator('[data-dashboard-operation-drilldown-context="ready"]')).toHaveAttribute(
+      'data-dashboard-operation-drilldown-operation',
+      'POST /checkout',
+      { timeout: WORKBENCH_READY_TIMEOUT }
+    );
+    await expect(operationDrilldownAction).toHaveAttribute('data-dashboard-operation-drilldown-action-state', 'ready');
+    await expect(operationDrilldownAction).toHaveAttribute('data-dashboard-operation-drilldown-action-service', 'checkout');
+    await expect(operationDrilldownAction).toHaveAttribute('data-dashboard-operation-drilldown-action-operation', 'POST /checkout');
+    await operationDrilldownAction.click();
+
+    await expect.poll(() => smokeState.savedDashboards, {
+      timeout: WORKBENCH_READY_TIMEOUT
+    }).toHaveLength(1);
+    const [savedDashboard] = smokeState.savedDashboards;
+    const savedWidgets = JSON.parse(String(savedDashboard.widgets || '[]')) as Array<Record<string, unknown>>;
+    const savedVariables = JSON.parse(String(savedDashboard.variables || '[]')) as Array<Record<string, unknown>>;
+    expect(savedDashboard).toEqual(expect.objectContaining({
+      dashboardKey: 'service-checkout-operation-post-checkout-drilldown',
+      title: 'Checkout API POST /checkout operation drilldown',
+      tags: 'service,operation,apm,metrics,logs,traces'
+    }));
+    expect(savedWidgets).toHaveLength(8);
+    expect(savedWidgets.map(widget => widget.title)).toEqual([
+      'Operation drilldown latency p95: operation.name=POST /checkout',
+      'Operation drilldown request rate: operation.name=POST /checkout',
+      'Operation drilldown error rate: operation.name=POST /checkout',
+      'Operation drilldown logs: operation.name=POST /checkout',
+      'Operation drilldown log errors: operation.name=POST /checkout',
+      'Operation drilldown traces: operation.name=POST /checkout',
+      'Operation drilldown trace errors: operation.name=POST /checkout',
+      'Operation drilldown exceptions: operation.name=POST /checkout'
+    ]);
+    expect(savedVariables).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'operation.name', type: 'query', value: 'POST /checkout' }),
+      expect.objectContaining({ name: 'service.name', type: 'query', value: 'checkout' }),
+      expect.objectContaining({ name: 'hertzbeat.entity_id', type: 'dynamic', value: '4200' }),
+      expect.objectContaining({ name: 'hertzbeat.entity_type', type: 'dynamic', value: 'service' })
+    ]));
+
+    await expect(page).toHaveURL(/dashboard=service-checkout-operation-post-checkout-drilldown/, {
+      timeout: WORKBENCH_READY_TIMEOUT
+    });
+    await expect(page.locator('[data-dashboard-composition-preview-panel]')).toHaveCount(8, {
+      timeout: WORKBENCH_READY_TIMEOUT
+    });
+
+    const latencyPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Operation drilldown latency p95' }).first();
+    await expect(latencyPanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'metrics');
+    await expect(latencyPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /operation%3D%22POST\+%2Fcheckout%22/);
+    await expect(latencyPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /entityType=service/);
+
+    const logsPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Operation drilldown logs' }).first();
+    await expect(logsPanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'logs');
+    await expect(logsPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /\/logs\/list\?/);
+    await expect(logsPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /attributeFilter=http.route%3APOST\+%2Fcheckout/);
+
+    const tracesPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Operation drilldown traces' }).first();
+    await expect(tracesPanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'traces');
+    await expect(tracesPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /\/traces\/list\?/);
+    await expect(tracesPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /operationName=POST\+%2Fcheckout/);
+
+    const exceptionsPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Operation drilldown exceptions' }).first();
+    await expect(exceptionsPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /\/traces\/stats\/group-by\?/);
+    await expect(exceptionsPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /groupBy=exception.type/);
+
+    await expect.poll(() => smokeState.executedUrls.some(url =>
+      url.includes('/api/ingestion/otlp/metrics/console') && url.includes('operation%3D%22POST+%2Fcheckout%22')
+    ), {
+      timeout: WORKBENCH_READY_TIMEOUT
+    }).toBe(true);
+    expect(smokeState.executedUrls).toEqual(expect.arrayContaining([
+      expect.stringContaining('/api/logs/list'),
+      expect.stringContaining('/api/traces/list'),
+      expect.stringContaining('/api/traces/stats/group-by')
     ]));
   });
 
