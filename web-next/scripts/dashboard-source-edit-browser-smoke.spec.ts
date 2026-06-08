@@ -649,6 +649,162 @@ async function installDashboardVariableMocks(page: Page) {
   };
 }
 
+async function installDashboardServiceOverviewMocks(page: Page) {
+  let dashboard: Record<string, unknown> | null = null;
+  const savedDashboards: Array<Record<string, unknown>> = [];
+  const executedUrls: string[] = [];
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem('Authorization', 'dashboard-service-overview-smoke-token');
+    window.localStorage.setItem('refresh-token', 'dashboard-service-overview-smoke-refresh');
+    window.localStorage.setItem('hb.lang', 'en-US');
+    window.localStorage.setItem('layout.lang', 'en-US');
+  });
+
+  await page.route('**/*', async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const path = url.pathname;
+    const method = request.method().toUpperCase();
+
+    if (!path.startsWith('/api/')) {
+      await route.continue();
+      return;
+    }
+
+    if (path === '/api/account/session') {
+      await fulfillJson(route, {
+        authenticated: true,
+        user: { id: 1, name: 'admin' }
+      });
+      return;
+    }
+
+    if (path === '/api/account/auth/refresh') {
+      await fulfillJson(route, apiMessage({
+        token: 'dashboard-service-overview-smoke-token',
+        refreshToken: 'dashboard-service-overview-smoke-refresh'
+      }));
+      return;
+    }
+
+    if (path.startsWith('/api/signal/dashboard-panel-draft/') && method === 'GET') {
+      await fulfillJson(route, apiMessage([]));
+      return;
+    }
+
+    if (path.startsWith('/api/signal/saved-view/') && method === 'GET') {
+      await fulfillJson(route, apiMessage([]));
+      return;
+    }
+
+    if (path === '/api/signal/dashboard' && method === 'GET') {
+      await fulfillJson(route, apiMessage(dashboard ? [dashboard] : []));
+      return;
+    }
+
+    if (path === '/api/signal/dashboard' && method === 'PUT') {
+      dashboard = JSON.parse(request.postData() || '{}') as Record<string, unknown>;
+      savedDashboards.push(dashboard);
+      await fulfillJson(route, apiMessage(dashboard));
+      return;
+    }
+
+    if (path === '/api/ingestion/otlp/metrics/console') {
+      executedUrls.push(`${path}${url.search}`);
+      await fulfillJson(route, apiMessage(metricsPayload(url.searchParams.get('query') || 'http.server.duration')));
+      return;
+    }
+
+    if (path === '/api/logs/list') {
+      executedUrls.push(`${path}${url.search}`);
+      await fulfillJson(route, apiMessage(logListPayload()));
+      return;
+    }
+
+    if (path === '/api/logs/stats/overview') {
+      await fulfillJson(route, apiMessage(logOverviewPayload()));
+      return;
+    }
+
+    if (path === '/api/logs/stats/trend') {
+      await fulfillJson(route, apiMessage({ hourlyStats: { '10:00': 1 } }));
+      return;
+    }
+
+    if (path === '/api/logs/stats/trace-coverage') {
+      await fulfillJson(route, apiMessage({ traceCoverage: { withTrace: 1, withSpan: 1, withBothTraceAndSpan: 1 } }));
+      return;
+    }
+
+    if (path === '/api/logs/stats/group-by') {
+      executedUrls.push(`${path}${url.search}`);
+      await fulfillJson(route, apiMessage(logGroupPayload()));
+      return;
+    }
+
+    if (path === '/api/traces/list') {
+      executedUrls.push(`${path}${url.search}`);
+      await fulfillJson(route, apiMessage(traceListPayload()));
+      return;
+    }
+
+    if (path === '/api/traces/stats/overview') {
+      await fulfillJson(route, apiMessage(traceOverviewPayload()));
+      return;
+    }
+
+    if (path === '/api/traces/stats/group-by') {
+      executedUrls.push(`${path}${url.search}`);
+      await fulfillJson(route, apiMessage(traceGroupPayload()));
+      return;
+    }
+
+    if (path === '/api/alerts/group') {
+      executedUrls.push(`${path}${url.search}`);
+      await fulfillJson(route, apiMessage({
+        content: [{
+          id: 7,
+          status: 'firing',
+          groupKey: 'checkout-alerts',
+          commonLabels: {
+            alertname: 'HighErrorRate',
+            'service.name': 'checkout',
+            severity: 'critical'
+          },
+          commonAnnotations: {
+            summary: 'Checkout error rate is high'
+          },
+          gmtUpdate: 1713200000000
+        }],
+        totalElements: 1,
+        pageIndex: 0,
+        pageSize: 8
+      }));
+      return;
+    }
+
+    if (path === '/api/alerts/summary') {
+      await fulfillJson(route, apiMessage({
+        total: 4,
+        dealNum: 1,
+        rate: 25,
+        priorityWarningNum: 1,
+        priorityCriticalNum: 2,
+        priorityEmergencyNum: 1
+      }));
+      return;
+    }
+
+    await fulfillJson(route, apiMessage({}));
+  });
+
+  return {
+    executedUrls,
+    savedDashboards
+  };
+}
+
 async function installDashboardRuntimeBreakoutMocks(page: Page) {
   const dashboard = buildRuntimeBreakoutDashboard();
   const runtimeBreakoutDrafts: Array<Record<string, unknown>> = [];
@@ -1467,6 +1623,95 @@ test.describe('dashboard source edit browser smoke', () => {
       breakoutAttribute: 'resource:service.name',
       breakoutAttributeValue: 'checkout'
     }));
+  });
+
+  test('saves a service overview dashboard from URL service and entity context', async ({ page }) => {
+    test.setTimeout(BROWSER_SMOKE_TIMEOUT);
+    const smokeState = await installDashboardServiceOverviewMocks(page);
+
+    await page.goto(routeUrl('/dashboard?serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout%20API&source=otlp&collector=collector-a&template=spring-boot&timeRange=last-1h&refresh=30&live=true'), {
+      timeout: BROWSER_SMOKE_TIMEOUT,
+      waitUntil: 'domcontentloaded'
+    });
+
+    const serviceOverviewAction = page.locator('[data-dashboard-service-overview-action="save"]').first();
+    await expect(page.locator('[data-dashboard-service-overview-context="ready"]')).toHaveAttribute(
+      'data-dashboard-service-overview-service',
+      'checkout',
+      { timeout: WORKBENCH_READY_TIMEOUT }
+    );
+    await expect(serviceOverviewAction).toHaveAttribute('data-dashboard-service-overview-action-state', 'ready');
+    await expect(serviceOverviewAction).toHaveAttribute('data-dashboard-service-overview-action-service', 'checkout');
+    await serviceOverviewAction.click();
+
+    await expect.poll(() => smokeState.savedDashboards, {
+      timeout: WORKBENCH_READY_TIMEOUT
+    }).toHaveLength(1);
+    const [savedDashboard] = smokeState.savedDashboards;
+    const savedWidgets = JSON.parse(String(savedDashboard.widgets || '[]')) as Array<Record<string, unknown>>;
+    const savedVariables = JSON.parse(String(savedDashboard.variables || '[]')) as Array<Record<string, unknown>>;
+    expect(savedDashboard).toEqual(expect.objectContaining({
+      dashboardKey: 'service-checkout-overview',
+      title: 'Checkout API service overview',
+      tags: 'service,apm,metrics,logs,traces,alerts'
+    }));
+    expect(savedWidgets).toHaveLength(18);
+    expect(savedWidgets.map(widget => widget.title)).toEqual(expect.arrayContaining([
+      'Service overview request rate: service.name=checkout',
+      'Service overview error rate: service.name=checkout',
+      'Service overview apdex: service.name=checkout',
+      'Service overview log errors: service.name=checkout',
+      'Service overview exceptions: service.name=checkout',
+      'Service overview firing alerts: service.name=checkout'
+    ]));
+    expect(savedVariables).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'service.name', type: 'query', value: 'checkout' }),
+      expect.objectContaining({ name: 'service.namespace', type: 'query', value: 'payments' }),
+      expect.objectContaining({ name: 'hertzbeat.entity_id', type: 'dynamic', value: '4200' }),
+      expect.objectContaining({ name: 'hertzbeat.entity_type', type: 'dynamic', value: 'service' }),
+      expect.objectContaining({ name: 'hertzbeat.template', type: 'dynamic', value: 'spring-boot' })
+    ]));
+
+    await expect(page).toHaveURL(/dashboard=service-checkout-overview/, {
+      timeout: WORKBENCH_READY_TIMEOUT
+    });
+    await expect(page.locator('[data-dashboard-composition-preview-panel]')).toHaveCount(18, {
+      timeout: WORKBENCH_READY_TIMEOUT
+    });
+
+    const requestRatePanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Service overview request rate' }).first();
+    await expect(requestRatePanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'metrics');
+    await expect(requestRatePanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /query=http_server_duration_milliseconds_count/);
+    await expect(requestRatePanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /temporalAggregation=rate/);
+    await expect(requestRatePanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /entityType=service/);
+
+    const apdexPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Service overview apdex' }).first();
+    await expect(apdexPanel).toHaveAttribute('data-dashboard-composition-execution-endpoints', '3');
+    await expect(apdexPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /template=service-apdex/);
+
+    const logErrorsPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Service overview log errors' }).first();
+    await expect(logErrorsPanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'logs');
+    await expect(logErrorsPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /\/logs\/list\?/);
+    await expect(logErrorsPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /severityText=ERROR/);
+
+    const exceptionPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Service overview exceptions' }).first();
+    await expect(exceptionPanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'traces');
+    await expect(exceptionPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /\/traces\/stats\/group-by\?/);
+    await expect(exceptionPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /groupBy=exception.type/);
+
+    const alertPanel = page.locator('[data-dashboard-composition-preview-panel]').filter({ hasText: 'Service overview firing alerts' }).first();
+    await expect(alertPanel).toHaveAttribute('data-dashboard-composition-preview-signal', 'alerts');
+    await expect(alertPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /\/alerts\/group\?/);
+    await expect(alertPanel).toHaveAttribute('data-dashboard-composition-execution-primary-url', /status=firing/);
+
+    await expect.poll(() => smokeState.executedUrls.some(url => url.includes('/api/ingestion/otlp/metrics/console') && url.includes('entityType=service')), {
+      timeout: WORKBENCH_READY_TIMEOUT
+    }).toBe(true);
+    expect(smokeState.executedUrls).toEqual(expect.arrayContaining([
+      expect.stringContaining('/api/logs/list'),
+      expect.stringContaining('/api/traces/stats/group-by'),
+      expect.stringContaining('/api/alerts/group')
+    ]));
   });
 
   for (const signalCase of SIGNAL_CASES) {
