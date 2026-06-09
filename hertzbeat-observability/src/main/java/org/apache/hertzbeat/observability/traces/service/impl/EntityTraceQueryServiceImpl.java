@@ -551,6 +551,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         Long maxDurationNanos = durationMillisToNanos(maxDurationMs);
         if (!StringUtils.hasText(traceId) && !resourceFilters.requiresRowFallback()
                 && attributeFilters.isEmpty()
+                && !isTraceAttributeGroupBy(normalizedGroupBy)
                 && traceQueryRepository.supportsTraceGroupByRows()) {
             List<Map<String, Object>> rows = StringUtils.hasText(normalizedSpanScope)
                     ? traceQueryRepository.queryTraceGroupByRows(
@@ -593,10 +594,15 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             result.put("groups", rows.stream().map(this::toTraceGroupResult).toList());
             return result;
         }
-        Page<TraceListItemDto> traces = queryTraceList(entityId, start, end, traceId, errorOnly, queryScope.serviceName(),
-                queryScope.serviceNamespace(), queryScope.environment(), resourceFilter, operationName, minDurationMs, maxDurationMs,
-                0, TRACE_LIST_SAMPLE_LIMIT, hideInternal, normalizedSpanScope, attributeFilter);
-        result.put("groups", buildTraceGroupResults(traces.getContent(), normalizedGroupBy, resolvedLimit, orderBy, resolvedMinCount));
+        List<TraceAggregate> traces = aggregateTraceRows(queryRowsForList(traceId, start, end, queryScope.serviceName(),
+                queryScope.serviceNamespace(), queryScope.environment(), operationName, minDurationNanos,
+                maxDurationNanos, pushedResourceFilters, hideInternal)).stream()
+                .filter(trace -> matchesSpanScope(trace, normalizedSpanScope))
+                .filter(trace -> matchesTraceFilters(trace, identityValues, resourceFilters, start, end, traceId, errorOnly,
+                        queryScope.serviceName(), queryScope.serviceNamespace(), queryScope.environment(), operationName,
+                        minDurationNanos, maxDurationNanos, hideInternal, attributeFilters))
+                .toList();
+        result.put("groups", buildTraceAggregateGroupResults(traces, normalizedGroupBy, resolvedLimit, orderBy, resolvedMinCount));
         return result;
     }
 
@@ -621,6 +627,24 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         }
         return grouped.entrySet().stream()
                 .map(entry -> toTraceGroupResult(entry.getKey(), entry.getValue()))
+                .filter(group -> ((Long) group.get("traceCount")) >= minCount)
+                .sorted(resolveTraceGroupComparator(orderBy))
+                .limit(limit)
+                .toList();
+    }
+
+    private List<Map<String, Object>> buildTraceAggregateGroupResults(List<TraceAggregate> traces, String groupBy,
+                                                                      int limit, String orderBy, long minCount) {
+        if (CollectionUtils.isEmpty(traces)) {
+            return List.of();
+        }
+        Map<String, List<TraceAggregate>> grouped = new LinkedHashMap<>();
+        for (TraceAggregate trace : traces) {
+            String value = defaultText(resolveTraceAggregateGroupValue(trace, groupBy), "unknown");
+            grouped.computeIfAbsent(value, ignored -> new ArrayList<>()).add(trace);
+        }
+        return grouped.entrySet().stream()
+                .map(entry -> toTraceAggregateGroupResult(entry.getKey(), entry.getValue()))
                 .filter(group -> ((Long) group.get("traceCount")) >= minCount)
                 .sorted(resolveTraceGroupComparator(orderBy))
                 .limit(limit)
@@ -670,6 +694,24 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return group;
     }
 
+    private Map<String, Object> toTraceAggregateGroupResult(String value, List<TraceAggregate> traces) {
+        Map<String, Object> group = new LinkedHashMap<>();
+        List<Long> durations = traces.stream()
+                .map(TraceAggregate::getDurationNanos)
+                .filter(Objects::nonNull)
+                .filter(duration -> duration >= 0)
+                .sorted()
+                .toList();
+        group.put("value", value);
+        group.put("traceCount", (long) traces.size());
+        group.put("errorTraceCount", traces.stream().filter(trace -> isErrorStatus(trace.getStatus())).count());
+        group.put("latencyAvgMs", durations.isEmpty() ? 0.0d
+                : durations.stream().mapToDouble(Long::doubleValue).average().orElse(0.0d) / 1_000_000.0d);
+        group.put("latencyP95Ms", durations.isEmpty() ? 0.0d
+                : durations.get(Math.min(durations.size() - 1, (int) Math.ceil(durations.size() * 0.95d) - 1)) / 1_000_000.0d);
+        return group;
+    }
+
     private String resolveTraceListGroupValue(TraceListItemDto trace, String groupBy) {
         if (trace == null || !StringUtils.hasText(groupBy)) {
             return null;
@@ -688,6 +730,38 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         }
         if (groupBy.startsWith("resource:")) {
             return resourceAttributes.get(groupBy.substring("resource:".length()));
+        }
+        return resourceAttributes.get(groupBy);
+    }
+
+    private String resolveTraceAggregateGroupValue(TraceAggregate trace, String groupBy) {
+        if (trace == null || !StringUtils.hasText(groupBy)) {
+            return null;
+        }
+        Map<String, String> resourceAttributes = trace.getResourceAttributes() == null
+                ? Collections.emptyMap()
+                : trace.getResourceAttributes();
+        if ("service.name".equals(groupBy)) {
+            return defaultText(trace.getServiceName(), resourceAttributes.get("service.name"));
+        }
+        if ("operation.name".equals(groupBy)) {
+            return trace.getRootSpanName();
+        }
+        if ("status".equals(groupBy)) {
+            return isErrorStatus(trace.getStatus()) ? "ERROR" : "OK";
+        }
+        if (groupBy.startsWith("resource:")) {
+            return resourceAttributes.get(groupBy.substring("resource:".length()));
+        }
+        if (groupBy.startsWith("attribute:")) {
+            String key = groupBy.substring("attribute:".length());
+            return trace.spans.stream()
+                    .map(TraceSpanNodeDto::getSpanAttributes)
+                    .filter(attributes -> !CollectionUtils.isEmpty(attributes))
+                    .map(attributes -> attributes.get(key))
+                    .filter(StringUtils::hasText)
+                    .findFirst()
+                    .orElse(null);
         }
         return resourceAttributes.get(groupBy);
     }
@@ -711,7 +785,15 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             String key = normalized.substring("resource:".length());
             return isSafeResourceFilterKey(key) ? "resource:" + key : null;
         }
+        if (normalized.startsWith("attribute:")) {
+            String key = normalized.substring("attribute:".length());
+            return isSafeResourceFilterKey(key) ? "attribute:" + key : null;
+        }
         return isSafeResourceFilterKey(normalized) ? normalized : null;
+    }
+
+    private boolean isTraceAttributeGroupBy(String groupBy) {
+        return StringUtils.hasText(groupBy) && groupBy.startsWith("attribute:");
     }
 
     private TraceOverviewDto toTraceOverview(Map<String, Object> row) {

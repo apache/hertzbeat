@@ -244,6 +244,83 @@ class EntityTraceQueryServiceImplTest {
     }
 
     @Test
+    void getTraceGroupByStatsGroupsBySpanAttributesWithRowFallback() {
+        long now = System.currentTimeMillis();
+        long start = now - 120_000;
+        long end = now;
+        Map<String, Object> checkoutRoot = traceRow("trace-checkout", "span-root-1", null, "GET /checkout",
+                "checkout-service", "STATUS_CODE_OK", now - 10_000, 20_000_000L,
+                Map.of("service.name", "checkout-service"));
+        checkoutRoot.put("span_attributes", Map.of("span.kind", "server"));
+        Map<String, Object> checkoutChild = traceRow("trace-checkout", "span-child-1", "span-root-1", "GET /checkout/{id}",
+                "checkout-service", "STATUS_CODE_OK", now - 9_000, 5_000_000L,
+                Map.of("service.name", "checkout-service"));
+        checkoutChild.put("span_attributes", Map.of("http.route", "/checkout/{id}"));
+        Map<String, Object> inventoryRoot = traceRow("trace-inventory", "span-root-2", null, "GET /inventory",
+                "checkout-service", "STATUS_CODE_ERROR", now - 8_000, 30_000_000L,
+                Map.of("service.name", "checkout-service"));
+        inventoryRoot.put("span_attributes", Map.of("http.route", "/inventory"));
+        Map<String, Object> unknownRoot = traceRow("trace-unknown", "span-root-3", null, "GET /unknown",
+                "checkout-service", "STATUS_CODE_OK", now - 7_000, 10_000_000L,
+                Map.of("service.name", "checkout-service"));
+        unknownRoot.put("span_attributes", Map.of("span.kind", "server"));
+        when(traceQueryRepository.queryRecentTraceRows(
+                eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(false))).thenReturn(List.of(checkoutRoot, checkoutChild, inventoryRoot, unknownRoot));
+
+        Map<String, Object> result = entityTraceQueryService.getTraceGroupByStats(
+                null,
+                start,
+                end,
+                null,
+                false,
+                "checkout-service",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "attribute:http.route",
+                10,
+                "trace-count-desc",
+                1,
+                false,
+                "all");
+
+        assertEquals("attribute:http.route", result.get("groupBy"));
+        List<Map<String, Object>> groups = (List<Map<String, Object>>) result.get("groups");
+        assertEquals(3, groups.size());
+        assertEquals("/checkout/{id}", groups.get(0).get("value"));
+        assertEquals(1L, groups.get(0).get("traceCount"));
+        assertEquals(0L, groups.get(0).get("errorTraceCount"));
+        assertEquals("/inventory", groups.get(1).get("value"));
+        assertEquals(1L, groups.get(1).get("traceCount"));
+        assertEquals(1L, groups.get(1).get("errorTraceCount"));
+        assertEquals("unknown", groups.get(2).get("value"));
+        assertEquals(1L, groups.get(2).get("traceCount"));
+        verify(traceQueryRepository).queryRecentTraceRows(
+                eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(false));
+        verify(traceQueryRepository, never()).queryTraceGroupByRows(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
     void queryTraceListAndDetailRespectEntityBinding() {
         long now = System.currentTimeMillis();
         ObserveEntity entity = ObserveEntity.builder().id(1L).type("service").name("checkout-service").build();

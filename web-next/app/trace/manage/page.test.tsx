@@ -809,6 +809,33 @@ describe('trace manage page', () => {
     expect(String(mockState.replace.mock.calls[0]?.[0])).toContain('groupBy=resource%3Aservice.version');
   }, 15000);
 
+  it('filters trace attribute group result values back into the attribute filter route', async () => {
+    mockState.searchParams = new URLSearchParams('view=list&groupBy=attribute:http.route');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      renderInteractiveTraceManagePage();
+      await Promise.resolve();
+    });
+
+    const attributeValueAction = interactionContainer.querySelector(
+      '[data-trace-manage-group-filter-action="attribute:http.route"][data-trace-manage-group-filter-value="1.2.3"]'
+    ) as HTMLButtonElement | null;
+    expect(attributeValueAction).toBeTruthy();
+    expect(attributeValueAction?.getAttribute('data-trace-manage-group-filter-owner')).toBe('hertzbeat-ui-button');
+    mockState.replace.mockClear();
+
+    await act(async () => {
+      attributeValueAction?.click();
+      await Promise.resolve();
+    });
+
+    expect(String(mockState.replace.mock.calls[0]?.[0])).toContain('attributeFilter=http.route%3D1.2.3');
+    expect(String(mockState.replace.mock.calls[0]?.[0])).toContain('groupBy=attribute%3Ahttp.route');
+  }, 15000);
+
   it('saves and restores the current trace explorer query view from shared UI controls', async () => {
     window.localStorage.removeItem('hertzbeat.trace-manage.saved-query-views');
     mockState.searchParams = new URLSearchParams(
@@ -1767,11 +1794,13 @@ describe('trace manage page', () => {
     expect(source).toContain('selectedResourceAttributeRows');
     expect(source).toContain('buildTraceResourceFilterExpression');
     expect(source).toContain('buildTraceSpanAttributeFilterExpression');
+    expect(source).toContain('buildTraceSpanAttributeGroupBy');
     expect(source).toContain('mergeTraceResourceFilterExpression');
     expect(source).toContain('applyTraceResourceFilter');
     expect(source).toContain('replaceTraceResourceFilter');
     expect(source).toContain('applyTraceSpanAttributeFilter');
     expect(source).toContain('replaceTraceSpanAttributeFilter');
+    expect(source).toContain('applyTraceSpanAttributeGroupBy');
     expect(source).toContain('buildTraceResourceGroupBy');
     expect(source).toContain('applyTraceResourceGroupBy');
     expect(source).toContain('data-trace-manage-drawer-span-attributes="span-attributes"');
@@ -1780,6 +1809,8 @@ describe('trace manage page', () => {
     expect(source).toContain('data-trace-manage-drawer-span-attribute-filter-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-replace-action="true"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-replace-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain('data-trace-manage-drawer-span-attribute-group-action="true"');
+    expect(source).toContain('data-trace-manage-drawer-span-attribute-group-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('attributeFilter: mergeTraceResourceFilterExpression(draft.attributeFilter, expression)');
     expect(source).toContain('attributeFilter: expression');
     expect(source).toContain("heading={t('trace.manage.drawer.attributes.span.title')}");

@@ -510,6 +510,14 @@ function buildTraceSpanAttributeFilterExpression(name: React.ReactNode, value: R
   return buildTraceResourceFilterExpression(name, value);
 }
 
+function buildTraceSpanAttributeGroupBy(name: React.ReactNode) {
+  const key = String(name ?? '').trim();
+  if (!isSafeTraceResourceFilterKey(key)) {
+    return null;
+  }
+  return `attribute:${key}`;
+}
+
 function buildTraceResourceGroupBy(name: React.ReactNode) {
   const key = String(name ?? '').trim();
   if (!isSafeTraceResourceFilterKey(key)) {
@@ -537,6 +545,11 @@ function buildTraceGroupResultFilter(groupBy: string, value: string) {
     const key = normalizedGroupBy.slice('resource:'.length);
     if (!isSafeTraceResourceFilterKey(key)) return null;
     return { kind: 'resource' as const, expression: `${key}=${normalizedValue}` };
+  }
+  if (normalizedGroupBy.startsWith('attribute:')) {
+    const key = normalizedGroupBy.slice('attribute:'.length);
+    if (!isSafeTraceResourceFilterKey(key)) return null;
+    return { kind: 'attribute' as const, expression: `${key}=${normalizedValue}` };
   }
   if (!isSafeTraceResourceFilterKey(normalizedGroupBy)) {
     return null;
@@ -751,6 +764,7 @@ function TraceWaterfallDrawer({
   onApplyOperationFilter,
   onApplySpanAttributeFilter,
   onReplaceSpanAttributeFilter,
+  onApplySpanAttributeGroupBy,
   onApplyResourceFilter,
   onReplaceResourceFilter,
   onApplyResourceGroupBy
@@ -766,6 +780,7 @@ function TraceWaterfallDrawer({
   onApplyOperationFilter: (operationName: string) => void;
   onApplySpanAttributeFilter: (name: string, value: string) => void;
   onReplaceSpanAttributeFilter: (name: string, value: string) => void;
+  onApplySpanAttributeGroupBy: (name: string) => void;
   onApplyResourceFilter: (name: string, value: string) => void;
   onReplaceResourceFilter: (name: string, value: string) => void;
   onApplyResourceGroupBy: (name: string) => void;
@@ -1202,38 +1217,56 @@ function TraceWaterfallDrawer({
                     title: row.title,
                     copy: row.copy,
                     meta: row.meta,
-                    action: buildTraceSpanAttributeFilterExpression(row.title, row.copy) ? (
+                    action: buildTraceSpanAttributeFilterExpression(row.title, row.copy) || buildTraceSpanAttributeGroupBy(row.title) ? (
                       <HzActionGroup
                         data-trace-manage-drawer-span-attribute-action-group="filter-group"
                         data-trace-manage-drawer-span-attribute-action-group-owner="hertzbeat-ui-action-group"
                         layout="end-wrap"
                       >
-                        <HzButton
-                          data-trace-manage-drawer-span-attribute-filter-action="true"
-                          data-trace-manage-drawer-span-attribute-filter-action-owner="hertzbeat-ui-button"
-                          data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                          data-trace-manage-drawer-span-attribute-filter-value={row.copy}
-                          size="sm"
-                          intent="secondary"
-                          onClick={() => onApplySpanAttributeFilter(row.title, row.copy)}
-                          aria-label={t('trace.manage.drawer.attributes.filter-action.aria', { name: row.title, value: row.copy })}
-                        >
-                          <HzButtonIcon icon={Filter} data-trace-manage-drawer-span-attribute-filter-action-icon="filter" data-trace-manage-drawer-span-attribute-filter-action-icon-owner="hertzbeat-ui-button-icon" />
-                          {t('trace.manage.drawer.attributes.filter-action')}
-                        </HzButton>
-                        <HzButton
-                          data-trace-manage-drawer-span-attribute-replace-action="true"
-                          data-trace-manage-drawer-span-attribute-replace-action-owner="hertzbeat-ui-button"
-                          data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                          data-trace-manage-drawer-span-attribute-filter-value={row.copy}
-                          size="sm"
-                          intent="secondary"
-                          onClick={() => onReplaceSpanAttributeFilter(row.title, row.copy)}
-                          aria-label={t('trace.manage.drawer.attributes.replace-action.aria', { name: row.title, value: row.copy })}
-                        >
-                          <HzButtonIcon icon={Replace} data-trace-manage-drawer-span-attribute-replace-action-icon="replace" data-trace-manage-drawer-span-attribute-replace-action-icon-owner="hertzbeat-ui-button-icon" />
-                          {t('trace.manage.drawer.attributes.replace-action')}
-                        </HzButton>
+                        {buildTraceSpanAttributeFilterExpression(row.title, row.copy) ? (
+                          <>
+                            <HzButton
+                              data-trace-manage-drawer-span-attribute-filter-action="true"
+                              data-trace-manage-drawer-span-attribute-filter-action-owner="hertzbeat-ui-button"
+                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
+                              data-trace-manage-drawer-span-attribute-filter-value={row.copy}
+                              size="sm"
+                              intent="secondary"
+                              onClick={() => onApplySpanAttributeFilter(row.title, row.copy)}
+                              aria-label={t('trace.manage.drawer.attributes.filter-action.aria', { name: row.title, value: row.copy })}
+                            >
+                              <HzButtonIcon icon={Filter} data-trace-manage-drawer-span-attribute-filter-action-icon="filter" data-trace-manage-drawer-span-attribute-filter-action-icon-owner="hertzbeat-ui-button-icon" />
+                              {t('trace.manage.drawer.attributes.filter-action')}
+                            </HzButton>
+                            <HzButton
+                              data-trace-manage-drawer-span-attribute-replace-action="true"
+                              data-trace-manage-drawer-span-attribute-replace-action-owner="hertzbeat-ui-button"
+                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
+                              data-trace-manage-drawer-span-attribute-filter-value={row.copy}
+                              size="sm"
+                              intent="secondary"
+                              onClick={() => onReplaceSpanAttributeFilter(row.title, row.copy)}
+                              aria-label={t('trace.manage.drawer.attributes.replace-action.aria', { name: row.title, value: row.copy })}
+                            >
+                              <HzButtonIcon icon={Replace} data-trace-manage-drawer-span-attribute-replace-action-icon="replace" data-trace-manage-drawer-span-attribute-replace-action-icon-owner="hertzbeat-ui-button-icon" />
+                              {t('trace.manage.drawer.attributes.replace-action')}
+                            </HzButton>
+                          </>
+                        ) : null}
+                        {buildTraceSpanAttributeGroupBy(row.title) ? (
+                          <HzButton
+                            data-trace-manage-drawer-span-attribute-group-action="true"
+                            data-trace-manage-drawer-span-attribute-group-action-owner="hertzbeat-ui-button"
+                            data-trace-manage-drawer-span-attribute-group-name={row.title}
+                            size="sm"
+                            intent="secondary"
+                            onClick={() => onApplySpanAttributeGroupBy(row.title)}
+                            aria-label={t('trace.manage.drawer.attributes.group-action.aria', { name: row.title })}
+                          >
+                            <HzButtonIcon icon={BarChart3} data-trace-manage-drawer-span-attribute-group-action-icon="group" data-trace-manage-drawer-span-attribute-group-action-icon-owner="hertzbeat-ui-button-icon" />
+                            {t('trace.manage.drawer.attributes.group-action')}
+                          </HzButton>
+                        ) : null}
                       </HzActionGroup>
                     ) : null
                   }))}
@@ -1821,6 +1854,17 @@ function TraceExplorer({
     applyQuery(nextQuery);
   }, [applyQuery, draft, setDraft]);
 
+  const applyTraceSpanAttributeGroupBy = useCallback((name: string) => {
+    const groupBy = buildTraceSpanAttributeGroupBy(name);
+    if (!groupBy) return;
+    const nextQuery: TraceQueryState = {
+      ...draft,
+      groupBy
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
   const applyTraceResourceGroupBy = useCallback((name: string) => {
     const groupBy = buildTraceResourceGroupBy(name);
     if (!groupBy) return;
@@ -1873,7 +1917,9 @@ function TraceExplorer({
           ? { operationName: filter.value }
           : filter.kind === 'status'
             ? { errorOnly: filter.errorOnly }
-            : { resourceFilter: mergeTraceResourceFilterExpression(draft.resourceFilter, filter.expression) })
+            : filter.kind === 'attribute'
+              ? { attributeFilter: mergeTraceResourceFilterExpression(draft.attributeFilter, filter.expression) }
+              : { resourceFilter: mergeTraceResourceFilterExpression(draft.resourceFilter, filter.expression) })
     };
     setDraft(nextQuery);
     applyQuery(nextQuery);
@@ -3355,6 +3401,7 @@ function TraceExplorer({
           onApplyOperationFilter={operationName => applyTraceQuickFilter('operationName', operationName)}
           onApplySpanAttributeFilter={applyTraceSpanAttributeFilter}
           onReplaceSpanAttributeFilter={replaceTraceSpanAttributeFilter}
+          onApplySpanAttributeGroupBy={applyTraceSpanAttributeGroupBy}
           onApplyResourceFilter={applyTraceResourceFilter}
           onReplaceResourceFilter={replaceTraceResourceFilter}
           onApplyResourceGroupBy={applyTraceResourceGroupBy}
