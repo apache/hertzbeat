@@ -69,7 +69,7 @@ public class TraceQueryController {
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal,
             @RequestParam(value = "pageIndex", defaultValue = "0") Integer pageIndex,
             @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize) {
-        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
+        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
         Page<TraceListItemDto> page = entityTraceQueryService.queryTraceList(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedResourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal,
@@ -95,7 +95,7 @@ public class TraceQueryController {
             @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
-        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
+        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceOverview(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedResourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, spanScope)));
@@ -123,7 +123,7 @@ public class TraceQueryController {
             @RequestParam(value = "minCount", required = false) Integer minCount,
             @RequestParam(value = "spanScope", required = false) String spanScope,
             @RequestParam(value = "hideInternal", required = false) Boolean hideInternal) {
-        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
+        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceGroupByStats(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedResourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy, minCount,
@@ -144,19 +144,28 @@ public class TraceQueryController {
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceSpans(entityId, traceId)));
     }
 
-    private String mergeEntityTypeResourceFilter(String entityType, String resourceFilter) {
+    private String mergeEntityContextResourceFilter(Long entityId, String entityType, String resourceFilter) {
         String normalizedResourceFilter = StringUtils.trimWhitespace(resourceFilter);
+        String scopedResourceFilter = normalizedResourceFilter;
+        if (entityId != null && entityId > 0 && (StringUtils.hasText(scopedResourceFilter)
+                ? !scopedResourceFilter.contains(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID)
+                : true)) {
+            String entityIdFilter = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID + "=\"" + entityId + "\"";
+            scopedResourceFilter = StringUtils.hasText(scopedResourceFilter)
+                    ? scopedResourceFilter + " and " + entityIdFilter
+                    : entityIdFilter;
+        }
         String normalizedEntityType = StringUtils.trimWhitespace(entityType);
         if (!StringUtils.hasText(normalizedEntityType) || !normalizedEntityType.matches("[A-Za-z0-9_.:-]+")) {
-            return normalizedResourceFilter;
+            return scopedResourceFilter;
         }
-        if (StringUtils.hasText(normalizedResourceFilter)
-                && normalizedResourceFilter.contains(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE)) {
-            return normalizedResourceFilter;
+        if (StringUtils.hasText(scopedResourceFilter)
+                && scopedResourceFilter.contains(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE)) {
+            return scopedResourceFilter;
         }
         String entityTypeFilter = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE + "=\"" + normalizedEntityType + "\"";
-        return StringUtils.hasText(normalizedResourceFilter)
-                ? normalizedResourceFilter + " and " + entityTypeFilter
+        return StringUtils.hasText(scopedResourceFilter)
+                ? scopedResourceFilter + " and " + entityTypeFilter
                 : entityTypeFilter;
     }
 }
