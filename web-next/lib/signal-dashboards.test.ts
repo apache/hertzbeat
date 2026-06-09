@@ -2271,6 +2271,64 @@ describe('signal dashboards API client', () => {
     }));
   });
 
+  it('builds RPC metric point handoffs with service and method operation context', () => {
+    const [rpcMetricsPlan] = buildSignalDashboardExecutionPlans({
+      dashboardKey: 'rpc-sync',
+      title: 'RPC sync dashboard',
+      description: 'Runtime sync',
+      tags: 'metrics',
+      layout: '[]',
+      widgets: JSON.stringify([
+        {
+          id: 'rpc-metrics-panel',
+          signal: 'metrics',
+          title: 'RPC latency',
+          visualization: 'time-series',
+          route: '/ingestion/otlp/metrics?query=rpc.server.duration&serviceName=checkout&groupBy=rpc.service,rpc.method'
+        }
+      ])
+    });
+    const rpcMetricsDescriptor = buildSignalDashboardPanelRuntimeRenderDescriptor(rpcMetricsPlan, {
+      panelId: 'rpc-metrics-panel',
+      state: 'ready',
+      primaryUrl: rpcMetricsPlan.primaryUrl,
+      data: {
+        stats: { totalSeries: 1, nonEmptySeries: 1 },
+        results: {
+          frames: [{
+            schema: {
+              labels: {
+                __name__: 'rpc.server.duration',
+                'service.name': 'checkout',
+                'service.namespace': 'payments',
+                'rpc.service': 'payments.CheckoutService',
+                'rpc.method': 'Authorize'
+              }
+            },
+            data: [[1000, 32], [2000, 45]]
+          }]
+        }
+      }
+    });
+
+    const syncTooltip = buildSignalDashboardRuntimeSyncTooltip(
+      [rpcMetricsDescriptor],
+      '2000',
+      { timeRange: { start: '1000', end: '3000' }, returnTo: '/dashboard?start=1000&end=3000' }
+    );
+
+    expect(syncTooltip.rows[0]).toEqual(expect.objectContaining({
+      panelId: 'rpc-metrics-panel',
+      signal: 'metrics',
+      source: 'metrics-point',
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      operationName: 'payments.CheckoutService/Authorize',
+      relatedSignal: 'traces',
+      relatedHandoffHref: '/trace/manage?view=list&spanScope=all&serviceName=checkout&serviceNamespace=payments&operationName=payments.CheckoutService%2FAuthorize&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
+    }));
+  });
+
   it('creates panel drafts from runtime evidence rows with source context', () => {
     const draft = createSignalDashboardPanelDraftFromRuntimeEvidence({
       row: {

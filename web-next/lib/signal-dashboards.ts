@@ -3394,6 +3394,15 @@ function metricLabelValue(labels: Record<string, string>, names: string[]) {
   return '';
 }
 
+function metricOperationName(labels: Record<string, string>) {
+  const explicitOperationName = metricLabelValue(labels, ['operation', 'operationName', 'operation_name', 'http.route']);
+  if (explicitOperationName) return explicitOperationName;
+  const rpcMethod = metricLabelValue(labels, ['rpc.method', 'rpc_method']);
+  if (!rpcMethod) return '';
+  const rpcService = metricLabelValue(labels, ['rpc.service', 'rpc_service']);
+  return rpcService ? `${rpcService}/${rpcMethod}` : rpcMethod;
+}
+
 function metricResourceFilter(key: string, value: string) {
   if (!key || !value) return '';
   return `${key}=${value}`;
@@ -3448,7 +3457,7 @@ function syncTooltipMetricRelatedHandoff(
   const serviceNamespace = metricLabelValue(labels, ['service.namespace', 'serviceNamespace', 'service_namespace']);
   const dbSystem = metricLabelValue(labels, ['db.system', 'dbSystem', 'db_system']);
   const externalAddress = metricLabelValue(labels, ['external.service.address', 'externalServiceAddress', 'external_service_address', 'server.address', 'net.peer.name']);
-  const operationName = metricLabelValue(labels, ['operation', 'operationName', 'operation_name', 'http.route', 'rpc.method']);
+  const operationName = metricOperationName(labels);
   const resourceFilter = dbSystem
     ? metricResourceFilter('db.system', dbSystem)
     : externalAddress ? metricResourceFilter('external.service.address', externalAddress) : '';
