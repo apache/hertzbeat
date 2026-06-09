@@ -2605,6 +2605,8 @@ function buildTraceGroupResourceExpression(groupBy: string, value: string) {
     normalizedGroupBy === 'operation' ||
     normalizedGroupBy === 'operation.name' ||
     normalizedGroupBy === 'span.name' ||
+    normalizedGroupBy === 'span_name' ||
+    normalizedGroupBy === 'root_span_name' ||
     normalizedGroupBy === 'http.route' ||
     normalizedGroupBy === 'http.target' ||
     normalizedGroupBy === 'http.url' ||
