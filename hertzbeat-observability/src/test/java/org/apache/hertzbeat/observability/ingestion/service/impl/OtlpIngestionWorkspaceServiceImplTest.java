@@ -1186,7 +1186,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
         when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of());
         when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
         when(metricQueryRepository.queryPromqlRange(
-                eq("otlp-related-metrics"),
+                anyString(),
                 anyString(),
                 anyLong(),
                 anyLong(),
@@ -1233,6 +1233,96 @@ class OtlpIngestionWorkspaceServiceImplTest {
         verify(metricQueryRepository).queryPromqlRange(
                 eq("otlp-related-metrics"),
                 argThat(query -> query.contains("__name__=\"http_server_duration\"")
+                        && query.contains("service_name=\"checkout\"")
+                        && query.contains("service_namespace=\"commerce\"")),
+                eq(1_000L),
+                eq(2_000L),
+                anyString()
+        );
+    }
+
+    @Test
+    void relatedMetricsDiscoversCandidateNamesFromPromqlSeriesInventory() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                2_000L,
+                "stale.intake.metric",
+                "gauge",
+                "1",
+                1.0,
+                Map.of()
+        );
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of());
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                anyString(),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> {
+            String refId = invocation.getArgument(0);
+            String query = invocation.getArgument(1);
+            if ("otlp-related-metrics-inventory".equals(refId)) {
+                return promqlSuccess(new DatasourceQueryData(
+                        "otlp-related-metrics-inventory",
+                        200,
+                        null,
+                        List.of(new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(new DatasourceQueryData.MetricField("__value__", "number", null)),
+                                        Map.of("__name__", "rpc_server_duration_milliseconds"),
+                                        Map.of()
+                                ),
+                                Collections.singletonList(new Object[] {7.0})
+                        ))
+                ));
+            }
+            if (query.contains("__name__=\"rpc_server_duration_milliseconds\"")) {
+                return promqlSuccess(new DatasourceQueryData(
+                        "otlp-related-metrics",
+                        200,
+                        null,
+                        List.of(new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of("__name__", "rpc_server_duration_milliseconds"),
+                                        Map.of()
+                                ),
+                                Collections.singletonList(new Object[] {2_000L, 7.0})
+                        ))
+                ));
+            }
+            return promqlSuccess(new DatasourceQueryData("otlp-related-metrics", 200, null, List.of()));
+        });
+
+        OtlpRelatedMetricsDto related = otlpIngestionWorkspaceService.getRelatedMetrics(
+                42L,
+                "service",
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                null,
+                null,
+                "8"
+        );
+
+        assertFalse(related.getCandidates().isEmpty());
+        assertEquals("rpc_server_duration_milliseconds", related.getCandidates().getFirst().getQuery());
+        assertEquals("promql-series", related.getCandidates().getFirst().getReason());
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-related-metrics-inventory"),
+                argThat(query -> query.contains("sum by (__name__)")
                         && query.contains("service_name=\"checkout\"")
                         && query.contains("service_namespace=\"commerce\"")),
                 eq(1_000L),

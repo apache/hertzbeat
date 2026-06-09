@@ -92,6 +92,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     private static final String DEFAULT_METRICS_AGGREGATION = "sum";
     private static final String METRICS_CONSOLE_REF_ID = "otlp-metrics-console";
     private static final String RELATED_METRICS_REF_ID = "otlp-related-metrics";
+    private static final String RELATED_METRICS_INVENTORY_REF_ID = "otlp-related-metrics-inventory";
     private static final Pattern METRICS_FILTER_MATCHER = Pattern.compile(
             "\\s*([A-Za-z_:][A-Za-z0-9_.:-]*)\\s*(=~|!~|!=|=)\\s*(?:\"((?:\\\\.|[^\"\\\\])*)\"|'((?:\\\\.|[^'\\\\])*)'|([^,\\s]+))\\s*"
     );
@@ -848,7 +849,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             addRelatedMetricCandidate(candidates, "system.memory.usage", "host", "memory",
                     "resource-filter", hostLabels, resourceMatch);
         }
-        for (String metricName : candidateMetricNames(context)) {
+        for (String metricName : relatedMetricCandidateNames(context, start, end)) {
             addRelatedMetricCandidate(
                     candidates,
                     normalizePromqlMetricName(metricName),
@@ -876,6 +877,75 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return rawCandidates.stream().limit(limit).toList();
     }
 
+    private List<String> relatedMetricCandidateNames(OtlpMetricsConsoleDto.Context context, long start, long end) {
+        List<String> candidates = new ArrayList<>();
+        if (metricQueryRepository.hasPromqlExecutor()) {
+            candidates.addAll(collectPromqlRelatedMetricNames(context, start, end));
+        }
+        candidates.addAll(candidateMetricNames(context));
+        return normalizeCandidateMetricNames(candidates);
+    }
+
+    private List<String> collectPromqlRelatedMetricNames(OtlpMetricsConsoleDto.Context context, long start, long end) {
+        String query = buildRelatedMetricInventoryQuery(context);
+        if (!StringUtils.hasText(query)) {
+            return List.of();
+        }
+        MetricQueryRepository.PromqlRangeQueryResult result = metricQueryRepository.queryPromqlRange(
+                RELATED_METRICS_INVENTORY_REF_ID,
+                query,
+                start,
+                end,
+                resolvePromqlStep(start, end, null)
+        );
+        if (result == null) {
+            return List.of();
+        }
+        if (result.errorMessage() != null) {
+            log.debug("query related metric inventory failed: {}", result.errorMessage());
+            return List.of();
+        }
+        return extractMetricNamesFromQueryData(result.results());
+    }
+
+    private String buildRelatedMetricInventoryQuery(OtlpMetricsConsoleDto.Context context) {
+        if (context == null || !StringUtils.hasText(context.getServiceName())) {
+            return null;
+        }
+        List<String> matchers = new ArrayList<>();
+        matchers.add("service_name=\"" + escapePromqlLabelValue(context.getServiceName()) + "\"");
+        if (StringUtils.hasText(context.getServiceNamespace())) {
+            matchers.add("service_namespace=\"" + escapePromqlLabelValue(context.getServiceNamespace()) + "\"");
+        }
+        if (StringUtils.hasText(context.getEnvironment())) {
+            matchers.add("deployment_environment_name=\"" + escapePromqlLabelValue(context.getEnvironment()) + "\"");
+        }
+        if (context.getEntityId() != null) {
+            matchers.add("hertzbeat_entity_id=\"" + escapePromqlLabelValue(String.valueOf(context.getEntityId())) + "\"");
+        }
+        if (StringUtils.hasText(context.getEntityType())) {
+            matchers.add("hertzbeat_entity_type=\"" + escapePromqlLabelValue(context.getEntityType()) + "\"");
+        }
+        return "sum by (__name__) ({" + String.join(", ", matchers) + "})";
+    }
+
+    private List<String> extractMetricNamesFromQueryData(DatasourceQueryData results) {
+        if (results == null || CollectionUtils.isEmpty(results.getFrames())) {
+            return List.of();
+        }
+        LinkedHashSet<String> metricNames = new LinkedHashSet<>();
+        for (DatasourceQueryData.SchemaData frame : results.getFrames()) {
+            if (frame == null || frame.getSchema() == null || CollectionUtils.isEmpty(frame.getSchema().getLabels())) {
+                continue;
+            }
+            String metricName = trimToNull(frame.getSchema().getLabels().get("__name__"));
+            if (StringUtils.hasText(metricName)) {
+                metricNames.add(metricName);
+            }
+        }
+        return List.copyOf(metricNames);
+    }
+
     private List<OtlpRelatedMetricsDto.Candidate> filterPromqlAvailableRelatedMetricCandidates(
             List<OtlpRelatedMetricsDto.Candidate> candidates,
             long start,
@@ -895,6 +965,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                         end,
                         step
                 );
+                if (result == null) {
+                    continue;
+                }
                 if (result.errorMessage() != null) {
                     log.debug("query related metric candidate failed: {}", result.errorMessage());
                     continue;
