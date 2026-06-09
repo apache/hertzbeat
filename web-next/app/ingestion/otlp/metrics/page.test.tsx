@@ -1035,6 +1035,11 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-attribute-table-owner="hertzbeat-ui-data-table"');
     expect(source).toContain("header: t('otlp.metrics.attributes.column.name')");
     expect(source).toContain("header: t('otlp.metrics.attributes.column.value')");
+    expect(source).toContain("header: t('otlp.metrics.attributes.column.exclude')");
+    expect(source).toContain('buildMetricAttributeExcludeFilterExpression');
+    expect(source).toContain('applyMetricAttributeExcludeFilter');
+    expect(source).toContain('data-otlp-metrics-attribute-filter-out-action={row.name}');
+    expect(source).toContain('data-otlp-metrics-attribute-filter-out-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('boundary="top"');
     expect(source).not.toContain('className="mt-3 border-t border-[#252b35] pt-3"');
     expect(source).toContain('data-otlp-metrics-linked-record-summary="log-trace-alert-links"');
@@ -3013,6 +3018,25 @@ describe('otlp metrics page', () => {
     expect(filterParams.get('environment')).toBe('prod');
     expect(filterParams.get('traceId')).toBe('trace-checkout');
     expect(filterParams.get('spanId')).toBe('span-checkout');
+
+    const serviceExcludeAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-filter-out-action="service.name"]') as HTMLButtonElement | null;
+    expect(serviceExcludeAction?.getAttribute('data-otlp-metrics-attribute-filter-out-action-owner')).toBe('hertzbeat-ui-button');
+    expect(serviceExcludeAction?.getAttribute('aria-label')).toContain('service.name');
+
+    await act(async () => {
+      serviceExcludeAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const excludeHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    const excludeParams = new URL(excludeHref, 'http://localhost').searchParams;
+    expect(excludeParams.get('filter')).toContain('service.name!="checkout"');
+    expect(excludeParams.get('series')).toBe('checkout_latency-0');
+    expect(excludeParams.get('entityId')).toBe('7');
+    expect(excludeParams.get('serviceName')).toBe('checkout');
+    expect(excludeParams.get('environment')).toBe('prod');
+    expect(excludeParams.get('traceId')).toBe('trace-checkout');
+    expect(excludeParams.get('spanId')).toBe('span-checkout');
 
     const routeGroupAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-group-action="route"]') as HTMLButtonElement | null;
     expect(routeGroupAction?.getAttribute('data-otlp-metrics-attribute-group-action-owner')).toBe('hertzbeat-ui-button');

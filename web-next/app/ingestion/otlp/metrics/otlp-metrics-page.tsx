@@ -117,6 +117,13 @@ function buildMetricAttributeFilterExpression(name: string, value: string) {
   return `${trimmedName}="${escapeMetricFilterValue(trimmedValue)}"`;
 }
 
+function buildMetricAttributeExcludeFilterExpression(name: string, value: string) {
+  const trimmedName = name.trim();
+  const trimmedValue = value.trim();
+  if (!trimmedName || !trimmedValue) return null;
+  return `${trimmedName}!="${escapeMetricFilterValue(trimmedValue)}"`;
+}
+
 function mergeMetricFilterExpression(currentFilter: string, expression: string) {
   const trimmedFilter = currentFilter.trim();
   if (!trimmedFilter) return expression;
@@ -790,6 +797,17 @@ export default function OtlpMetricsPage() {
 
   const applyMetricAttributeFilter = useCallback((name: string, value: string, series?: OtlpMetricSeriesView | null) => {
     const expression = buildMetricAttributeFilterExpression(name, value);
+    if (!expression) return;
+    const nextDraft = {
+      ...draft,
+      filter: mergeMetricFilterExpression(draft.filter, expression)
+    };
+    setDraft(nextDraft);
+    replaceMetricsRoute(nextDraft, undefined, series?.key || query.series, series ? buildMetricSeriesRouteContext(series) : {});
+  }, [draft, query.series, replaceMetricsRoute]);
+
+  const applyMetricAttributeExcludeFilter = useCallback((name: string, value: string, series?: OtlpMetricSeriesView | null) => {
+    const expression = buildMetricAttributeExcludeFilterExpression(name, value);
     if (!expression) return;
     const nextDraft = {
       ...draft,
@@ -2582,6 +2600,28 @@ export default function OtlpMetricsPage() {
                                   data-otlp-metrics-attribute-filter-action-icon-owner="hertzbeat-ui-button-icon"
                                 />
                                 {t('otlp.metrics.attributes.filter-action')}
+                              </HzButton>
+                            )
+                          },
+                          {
+                            key: 'exclude',
+                            header: t('otlp.metrics.attributes.column.exclude'),
+                            render: row => (
+                              <HzButton
+                                type="button"
+                                size="xs"
+                                intent="ghost"
+                                data-otlp-metrics-attribute-filter-out-action={row.name}
+                                data-otlp-metrics-attribute-filter-out-action-owner="hertzbeat-ui-button"
+                                aria-label={t('otlp.metrics.attributes.filter-out-action.aria', { name: row.name, value: row.value })}
+                                onClick={() => applyMetricAttributeExcludeFilter(row.name, row.value, selectedMetricSeries)}
+                              >
+                                <HzButtonIcon
+                                  icon={X}
+                                  data-otlp-metrics-attribute-filter-out-action-icon={row.name}
+                                  data-otlp-metrics-attribute-filter-out-action-icon-owner="hertzbeat-ui-button-icon"
+                                />
+                                {t('otlp.metrics.attributes.filter-out-action')}
                               </HzButton>
                             )
                           },
