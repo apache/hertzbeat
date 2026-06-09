@@ -1823,7 +1823,7 @@ describe('signal dashboards API client', () => {
       tags: 'logs,traces,metrics',
       layout: '[]',
       widgets: JSON.stringify([
-        { id: 'logs-panel', signal: 'logs', title: 'Logs', visualization: 'table', route: '/log/manage?view=table' },
+        { id: 'logs-panel', signal: 'logs', title: 'Logs', visualization: 'table', route: '/log/manage?view=table&attributeFilter=region%3Aus' },
         { id: 'trace-panel', signal: 'traces', title: 'Trace', visualization: 'table', route: '/trace/manage?view=table' },
         { id: 'metrics-panel', signal: 'metrics', title: 'Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=cpu' },
         { id: 'db-metrics-panel', signal: 'metrics', title: 'DB Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=signoz_db_latency_count&serviceName=checkout&groupBy=db.system' },
@@ -1976,6 +1976,7 @@ describe('signal dashboards API client', () => {
           spanId: 'span-log',
           serviceName: 'checkout',
           serviceNamespace: 'payments',
+          attributeFilter: 'region:us',
           breakoutAttributes: expect.arrayContaining([
             expect.objectContaining({ name: 'resource:service.name', value: 'checkout' }),
             expect.objectContaining({ name: 'resource:service.namespace', value: 'payments' }),
@@ -2069,6 +2070,7 @@ describe('signal dashboards API client', () => {
       { name: 'service.name', type: 'query', value: '' },
       { name: 'service.namespace', type: 'query', value: '' },
       { name: 'deployment.environment.name', type: 'query', value: '' },
+      { name: 'attributeFilter', type: 'textbox', value: '' },
       { name: 'hertzbeat.entity_id', type: 'textbox', value: '' },
       { name: 'hertzbeat.entity_type', type: 'dynamic', value: '' },
       { name: 'hertzbeat.entity_name', type: 'query', value: '' },
@@ -2081,6 +2083,7 @@ describe('signal dashboards API client', () => {
       expect.objectContaining({ variableName: 'service.name', value: 'checkout', source: 'service' }),
       expect.objectContaining({ variableName: 'service.namespace', value: 'payments', source: 'serviceNamespace' }),
       expect.objectContaining({ variableName: 'deployment.environment.name', value: 'prod', source: 'environment' }),
+      expect.objectContaining({ variableName: 'attributeFilter', value: 'region:us', source: 'attributeFilter' }),
       expect.objectContaining({ variableName: 'hertzbeat.entity_id', value: '4200', source: 'entityId' }),
       expect.objectContaining({ variableName: 'hertzbeat.entity_type', value: 'service', source: 'entityType' }),
       expect.objectContaining({ variableName: 'hertzbeat.entity_name', value: 'Checkout API', source: 'entityName' }),
@@ -2130,6 +2133,7 @@ describe('signal dashboards API client', () => {
       expect.objectContaining({ variableName: 'service.name', value: 'checkout', source: 'service', variableType: 'query' }),
       expect.objectContaining({ variableName: 'service.namespace', value: 'payments', source: 'serviceNamespace', variableType: 'query' }),
       expect.objectContaining({ variableName: 'deployment.environment.name', value: 'prod', source: 'environment', variableType: 'query' }),
+      expect.objectContaining({ variableName: 'attributeFilter', value: 'region:us', source: 'attributeFilter', variableType: 'textbox' }),
       expect.objectContaining({ variableName: 'hertzbeat.entity_id', value: '4200', source: 'entityId', variableType: 'textbox' }),
       expect.objectContaining({ variableName: 'hertzbeat.entity_type', value: 'service', source: 'entityType', variableType: 'dynamic' }),
       expect.objectContaining({ variableName: 'hertzbeat.entity_name', value: 'Checkout API', source: 'entityName', variableType: 'query' }),
@@ -2143,6 +2147,7 @@ describe('signal dashboards API client', () => {
       { name: 'service.name', type: 'query', value: '' },
       { name: 'service.namespace', type: 'query', value: '' },
       { name: 'deployment.environment.name', type: 'query', value: '' },
+      { name: 'attributeFilter', type: 'textbox', value: '' },
       { name: 'hertzbeat.entity_id', type: 'textbox', value: '' },
       { name: 'hertzbeat.entity_type', type: 'dynamic', value: '' },
       { name: 'hertzbeat.entity_name', type: 'query', value: '' },
@@ -2216,7 +2221,7 @@ describe('signal dashboards API client', () => {
     expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/log/manage?view=table', syncTooltip.rows[0], {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'
-    })).toBe('/log/manage?view=table&traceId=trace-1&spanId=span-log&serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000');
+    })).toBe('/log/manage?view=table&traceId=trace-1&spanId=span-log&serviceName=checkout&serviceNamespace=payments&attributeFilter=region%3Aus&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000');
     expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/trace/manage?view=list', syncTooltip.rows[4], {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'

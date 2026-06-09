@@ -259,6 +259,7 @@ export type SignalDashboardRuntimeSyncTooltipRow = {
   serviceName?: string;
   serviceNamespace?: string;
   resourceFilter?: string;
+  attributeFilter?: string;
   operationName?: string;
   relatedSignal?: 'logs' | 'traces';
   relatedHandoffHref?: string;
@@ -311,6 +312,7 @@ export type SignalDashboardRuntimeEvidenceFilterSource =
   | 'environment'
   | 'operation'
   | 'resourceFilter'
+  | 'attributeFilter'
   | 'traceId'
   | 'spanId'
   | 'entityId'
@@ -3435,6 +3437,24 @@ function syncTooltipRelatedHref(path: string, params: URLSearchParams, returnTo:
   return `${path}?${params.toString()}`;
 }
 
+function syncTooltipRouteDrilldownContext(route: string | undefined) {
+  const normalizedRoute = route?.trim();
+  if (!normalizedRoute) return {};
+  try {
+    const params = new URL(normalizedRoute, 'http://hertzbeat.local').searchParams;
+    const resourceFilter = syncTooltipIdentifier(params.get('resourceFilter') || undefined);
+    const attributeFilter = syncTooltipIdentifier(params.get('attributeFilter') || undefined);
+    const operationName = syncTooltipIdentifier(params.get('operationName') || undefined);
+    return {
+      ...(resourceFilter ? { resourceFilter } : {}),
+      ...(attributeFilter ? { attributeFilter } : {}),
+      ...(operationName ? { operationName } : {})
+    };
+  } catch {
+    return {};
+  }
+}
+
 function metricLabelValue(labels: Record<string, string>, names: string[]) {
   for (const name of names) {
     const value = syncTooltipIdentifier(labels[name]);
@@ -3613,6 +3633,7 @@ const SERVICE_NAMESPACE_VARIABLE_NAMES = new Set(['service.namespace', 'servicen
 const ENVIRONMENT_VARIABLE_NAMES = new Set(['deployment.environment.name', 'deployment_environment_name', 'environment']);
 const OPERATION_VARIABLE_NAMES = new Set(['operation.name', 'operationname', 'operation_name', 'operation']);
 const RESOURCE_FILTER_VARIABLE_NAMES = new Set(['resourcefilter', 'resource.filter', 'resource_filter']);
+const ATTRIBUTE_FILTER_VARIABLE_NAMES = new Set(['attributefilter', 'attribute.filter', 'attribute_filter']);
 const TRACE_ID_VARIABLE_NAMES = new Set(['traceid', 'trace.id', 'trace_id']);
 const SPAN_ID_VARIABLE_NAMES = new Set(['spanid', 'span.id', 'span_id']);
 const ENTITY_ID_VARIABLE_NAMES = new Set(['hertzbeat.entity_id', 'hertzbeat.entity.id', 'entityid', 'entity.id', 'entity_id']);
@@ -3629,6 +3650,7 @@ function evidenceFilterSourceForVariableName(name: string): SignalDashboardRunti
   if (ENVIRONMENT_VARIABLE_NAMES.has(normalizedName)) return 'environment';
   if (OPERATION_VARIABLE_NAMES.has(normalizedName)) return 'operation';
   if (RESOURCE_FILTER_VARIABLE_NAMES.has(normalizedName)) return 'resourceFilter';
+  if (ATTRIBUTE_FILTER_VARIABLE_NAMES.has(normalizedName)) return 'attributeFilter';
   if (TRACE_ID_VARIABLE_NAMES.has(normalizedName)) return 'traceId';
   if (SPAN_ID_VARIABLE_NAMES.has(normalizedName)) return 'spanId';
   if (ENTITY_ID_VARIABLE_NAMES.has(normalizedName)) return 'entityId';
@@ -3651,6 +3673,7 @@ function evidenceFilterValues(row: SignalDashboardRuntimeSyncTooltipRow): Record
     environment: breakoutValue(row, ['deployment.environment.name', 'environment']),
     operation: syncTooltipIdentifier(row.operationName),
     resourceFilter: syncTooltipIdentifier(row.resourceFilter),
+    attributeFilter: syncTooltipIdentifier(row.attributeFilter),
     traceId: syncTooltipIdentifier(row.traceId),
     spanId: syncTooltipIdentifier(row.spanId),
     entityId: breakoutValue(row, ['hertzbeat.entity_id', 'hertzbeat.entity.id', 'entity.id', 'entity_id']),
@@ -3683,6 +3706,10 @@ export function buildSignalDashboardRuntimeEvidenceSourceHandoff(
     const normalizedResourceFilter = syncTooltipIdentifier(row.resourceFilter);
     if (normalizedResourceFilter && (url.pathname === '/trace/manage' || url.pathname === '/log/manage') && !url.searchParams.get('resourceFilter')) {
       url.searchParams.set('resourceFilter', normalizedResourceFilter);
+    }
+    const normalizedAttributeFilter = syncTooltipIdentifier(row.attributeFilter);
+    if (normalizedAttributeFilter && url.pathname === '/log/manage' && !url.searchParams.get('attributeFilter')) {
+      url.searchParams.set('attributeFilter', normalizedAttributeFilter);
     }
     const normalizedOperationName = syncTooltipIdentifier(row.operationName);
     if (normalizedOperationName && url.pathname === '/trace/manage' && !url.searchParams.get('operationName')) {
@@ -3752,6 +3779,7 @@ export function buildSignalDashboardRuntimeEvidenceFilterSuggestions(
     { source: 'environment', variableName: 'deployment.environment.name', variableType: 'query' },
     { source: 'operation', variableName: 'operation.name', variableType: 'query' },
     { source: 'resourceFilter', variableName: 'resourceFilter', variableType: 'textbox' },
+    { source: 'attributeFilter', variableName: 'attributeFilter', variableType: 'textbox' },
     { source: 'entityId', variableName: 'hertzbeat.entity_id', variableType: 'textbox' },
     { source: 'entityType', variableName: 'hertzbeat.entity_type', variableType: 'dynamic' },
     { source: 'entityName', variableName: 'hertzbeat.entity_name', variableType: 'query' },
@@ -3818,6 +3846,7 @@ export function buildSignalDashboardRuntimeSyncTooltip(
         meta: row.traceId,
         serviceName: row.service,
         serviceNamespace: row.serviceNamespace,
+        ...syncTooltipRouteDrilldownContext(renderer.primaryUrl),
         breakoutAttributes: row.breakoutAttributes,
         ...syncTooltipRelatedHandoff(renderer.signal, row.traceId, row.spanId, options, {
           serviceName: row.service,
@@ -3837,6 +3866,7 @@ export function buildSignalDashboardRuntimeSyncTooltip(
         meta: row.duration,
         serviceName: row.service,
         serviceNamespace: row.serviceNamespace,
+        ...syncTooltipRouteDrilldownContext(renderer.primaryUrl),
         breakoutAttributes: row.breakoutAttributes,
         ...syncTooltipRelatedHandoff(renderer.signal, row.traceId, row.spanId, options, {
           serviceName: row.service,
