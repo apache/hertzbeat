@@ -30,6 +30,7 @@ const mockState = vi.hoisted(() => ({
 
 const apiMessageGet = vi.fn();
 const loadOtlpMetricsConsole = vi.fn();
+const loadOtlpMetricsInventory = vi.fn();
 const zhT = createTranslatorMock({ locale: 'zh-CN' });
 const originalFetch = globalThis.fetch;
 
@@ -107,6 +108,7 @@ vi.mock('@/lib/format', () => ({
 
 vi.mock('@/lib/otlp-metrics/controller', () => ({
   loadOtlpMetricsConsole,
+  loadOtlpMetricsInventory,
   buildOtlpMetricsConsoleUrl: (query: Record<string, unknown> = {}) => {
     const params = new URLSearchParams();
     Object.entries(query).forEach(([key, value]) => {
@@ -124,6 +126,17 @@ vi.mock('@/lib/otlp-metrics/controller', () => ({
     });
     const search = params.toString();
     return `/api/otlp/v1/metrics${search ? `?${search}` : ''}`;
+  },
+  buildOtlpMetricsInventoryUrl: (query: Record<string, unknown> = {}) => {
+    const params = new URLSearchParams();
+    ['entityId', 'entityType', 'serviceName', 'serviceNamespace', 'environment', 'start', 'end', 'limit'].forEach(key => {
+      const value = query[key];
+      if (value !== undefined && value !== null && value !== '') {
+        params.set(key, String(value));
+      }
+    });
+    const search = params.toString();
+    return `/api/otlp/v1/metrics/inventory${search ? `?${search}` : ''}`;
   },
   queryStateFromParams: (params: { get(key: string): string | null }) => ({
     query: params.get('query') || undefined,
@@ -150,6 +163,7 @@ vi.mock('@/lib/otlp-metrics/controller', () => ({
     collector: params.get('collector') || undefined,
     template: params.get('template') || undefined,
     entityId: params.get('entityId') || undefined,
+    entityType: params.get('entityType') || undefined,
     entityName: params.get('entityName') || undefined,
     returnTo: params.get('returnTo') || undefined,
     traceId: params.get('traceId') || undefined,
@@ -399,10 +413,40 @@ vi.mock('@/lib/otlp-metrics/view-model', () => ({
       : tZh('otlp.metrics.series.entity-missing'),
     entityState: series.labels['hertzbeat.entity_id'] || series.labels.hertzbeat_entity_id ? 'present' : 'missing'
   })),
+  buildMetricInventorySourceRows: (inventory: any) => (inventory?.items || []).map((item: any) => ({
+    title: item.metricName,
+    copy: item.labels?.service_name || inventory.context?.serviceName || '-',
+    meta: '-',
+    description: '-',
+    metricType: item.family || '-',
+    unit: '-',
+    pointCount: 0,
+    sampleCount: 0,
+    timeSeriesCount: item.timeSeriesCount ?? 0,
+    latestObservedAt: item.latestObservedAt ?? null,
+    entityLabel: inventory.context?.entityName || '-',
+    entityMeta: inventory.context?.entityId
+      ? tZh('otlp.metrics.series.entity-id', { entityId: inventory.context.entityId })
+      : tZh('otlp.metrics.series.entity-missing'),
+    entityState: inventory.context?.entityId ? 'present' : 'missing',
+    inventorySource: inventory.source,
+    inventoryLabels: item.labels || {},
+    series: null
+  })),
   buildMetricInventoryRows: (rows: any[], search: string, sort: string) => {
     const normalizedSearch = search.trim().toLowerCase();
     const filteredRows = normalizedSearch
-      ? rows.filter(row => [row.title, row.copy, row.meta, row.entityLabel, row.entityMeta, row.series?.name, ...Object.values(row.series?.labels || {})].join(' ').toLowerCase().includes(normalizedSearch))
+      ? rows.filter(row => [
+          row.title,
+          row.copy,
+          row.meta,
+          row.entityLabel,
+          row.entityMeta,
+          row.inventorySource,
+          row.series?.name,
+          ...Object.values(row.series?.labels || {}),
+          ...Object.values(row.inventoryLabels || {})
+        ].join(' ').toLowerCase().includes(normalizedSearch))
       : [...rows];
     return filteredRows.sort((left, right) => {
       if (sort === 'latest') return (right.series?.latestValue ?? Number.NEGATIVE_INFINITY) - (left.series?.latestValue ?? Number.NEGATIVE_INFINITY);
@@ -464,7 +508,9 @@ beforeEach(() => {
   mockState.metricSeries = [];
   apiMessageGet.mockReset();
   loadOtlpMetricsConsole.mockReset();
+  loadOtlpMetricsInventory.mockReset();
   loadOtlpMetricsConsole.mockResolvedValue(mockState.renderData);
+  loadOtlpMetricsInventory.mockResolvedValue(null);
 });
 
 let interactionRoot: Root | null = null;
@@ -875,7 +921,9 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-series-table-summary-owner="hertzbeat-ui-status-badge"');
     expect(source).toContain('data-otlp-metrics-inventory-count="filtered-series"');
     expect(source).toContain('metricInventorySummary');
-    expect(source).toContain('buildMetricInventoryRows(metricSeriesTableRows, metricInventorySearch, metricInventorySort)');
+    expect(source).toContain('buildMetricInventorySourceRows(mergedData.inventory, t)');
+    expect(source).toContain('const metricInventoryBaseRows = sourceMetricInventoryRows.length > 0 ? sourceMetricInventoryRows : metricSeriesTableRows');
+    expect(source).toContain('buildMetricInventoryRows(metricInventoryBaseRows, metricInventorySearch, metricInventorySort)');
     expect(source).toContain('metricInventoryPageRows');
     expect(source).toContain('HzPaginationBar');
     expect(source).toContain("const metricInventorySearch = query.inventorySearch || ''");
@@ -906,7 +954,7 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-inventory="metric-inventory"');
     expect(source).toContain('data-otlp-metrics-inventory-owner="hertzbeat-ui-data-table"');
     expect(source).toContain('data-otlp-metrics-inventory-filtered-count={metricInventoryRows.length}');
-    expect(source).toContain('data-otlp-metrics-inventory-total-count={metricSeriesTableRows.length}');
+    expect(source).toContain('data-otlp-metrics-inventory-total-count={metricInventoryBaseRows.length}');
     expect(source).toContain('data-otlp-metrics-inventory-page-size={metricInventoryPageSize}');
     expect(source).toContain('data-otlp-metrics-inventory-page-index={clampedMetricInventoryPageIndex}');
     expect(source).toContain('rows={metricInventoryPageRows}');
@@ -2024,6 +2072,58 @@ describe('otlp metrics page', () => {
       end: undefined,
       inspector: 'graph'
     }));
+  });
+
+  it('loads source-backed metrics inventory with the same entity and service context', async () => {
+    mockState.searchParams = new URLSearchParams('entityId=7&entityType=service&serviceName=checkout&serviceNamespace=commerce&environment=prod&start=1000&end=2000&limit=20');
+    loadOtlpMetricsInventory.mockResolvedValue({
+      source: 'promql-inventory',
+      context: { entityId: 7, entityType: 'service', serviceName: 'checkout', serviceNamespace: 'commerce', environment: 'prod', start: 1000, end: 2000 },
+      items: [
+        {
+          metricName: 'http_server_duration',
+          family: 'latency',
+          timeSeriesCount: 3,
+          latestObservedAt: 2000,
+          labels: { service_name: 'checkout', http_route: '/checkout' }
+        }
+      ]
+    });
+    const { default: OtlpMetricsPage } = await import('./page');
+    renderToStaticMarkup(<OtlpMetricsPage />);
+    const data = await mockState.lastLoad?.();
+
+    expect(loadOtlpMetricsInventory).toHaveBeenCalledWith(apiMessageGet, expect.objectContaining({
+      entityId: '7',
+      entityType: 'service',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      environment: 'prod',
+      start: '1000',
+      end: '2000',
+      limit: '20'
+    }));
+    expect(data).toMatchObject({
+      inventory: {
+        source: 'promql-inventory',
+        items: [expect.objectContaining({ metricName: 'http_server_duration' })]
+      }
+    });
+  });
+
+  it('falls back to console metrics when the inventory endpoint is unavailable', async () => {
+    mockState.searchParams = new URLSearchParams('serviceName=checkout');
+    loadOtlpMetricsInventory.mockRejectedValue(new Error('inventory unavailable'));
+    const { default: OtlpMetricsPage } = await import('./page');
+    renderToStaticMarkup(<OtlpMetricsPage />);
+    const data = await mockState.lastLoad?.();
+
+    expect(loadOtlpMetricsConsole).toHaveBeenCalled();
+    expect(loadOtlpMetricsInventory).toHaveBeenCalled();
+    expect(data).toMatchObject({
+      datasource: 'prometheus',
+      inventory: null
+    });
   });
 
   it('keeps the context handoff links when opened from traced entity context', async () => {

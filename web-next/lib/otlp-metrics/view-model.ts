@@ -12,7 +12,7 @@ import {
 import { buildChartDataZoomTimeContext, type ChartDataZoomRange, type TimeContext } from '../time-context';
 import type { OtlpMetricsQueryState } from './controller';
 import type { EChartsOption } from 'echarts';
-import type { OtlpMetricsConsole } from '@/lib/types';
+import type { OtlpMetricsConsole, OtlpMetricsInventory } from '@/lib/types';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
 
@@ -35,12 +35,16 @@ export type OtlpMetricInventoryRow = {
   meta?: string;
   entityLabel?: string;
   entityMeta?: string;
+  entityState?: 'present' | 'missing';
   pointCount?: number;
   sampleCount?: number;
   timeSeriesCount?: number;
+  latestObservedAt?: number | null;
   description?: string;
   metricType?: string;
   unit?: string;
+  inventorySource?: string;
+  inventoryLabels?: Record<string, string>;
   series?: OtlpMetricSeriesView | null;
 };
 
@@ -620,9 +624,59 @@ export function buildMetricSeriesRows(seriesList: OtlpMetricSeriesView[], t: Tra
   });
 }
 
+export function buildMetricInventorySourceRows(
+  inventory: OtlpMetricsInventory | null | undefined,
+  t: Translator
+): OtlpMetricInventoryRow[] {
+  return (inventory?.items || [])
+    .map(item => {
+      const metricName = item.metricName?.trim();
+      if (!metricName) return null;
+      const labels = item.labels || {};
+      const context = inventory?.context || {};
+      const entityId = readEntityIdRouteParam(firstText(
+        labels['hertzbeat.entity_id'],
+        labels.hertzbeat_entity_id,
+        labels['entity.id'],
+        labels.entity_id,
+        context.entityId == null ? undefined : String(context.entityId)
+      ));
+      return {
+        title: metricName,
+        copy: firstText(labels['service.name'], labels.service_name, labels.serviceName, context.serviceName)
+          || t('otlp.metrics.series.unknown-service'),
+        meta: '-',
+        description: '-',
+        metricType: item.family || '-',
+        unit: '-',
+        pointCount: 0,
+        sampleCount: 0,
+        timeSeriesCount: item.timeSeriesCount ?? 0,
+        latestObservedAt: item.latestObservedAt ?? null,
+        entityLabel: firstText(
+          labels['hertzbeat.entity_name'],
+          labels.hertzbeat_entity_name,
+          labels['entity.name'],
+          labels.entity_name,
+          context.entityName,
+          entityId
+        ) || '-',
+        entityMeta: entityId ? t('otlp.metrics.series.entity-id', { entityId }) : t('otlp.metrics.series.entity-missing'),
+        entityState: entityId ? 'present' : 'missing',
+        inventorySource: inventory?.source || undefined,
+        inventoryLabels: labels,
+        series: null
+      } satisfies OtlpMetricInventoryRow;
+    })
+    .filter((row): row is OtlpMetricInventoryRow => row != null);
+}
+
 function buildMetricInventorySearchText(row: OtlpMetricInventoryRow) {
   const labelText = row.series
     ? Object.entries(row.series.labels).flatMap(([key, value]) => [key, value])
+    : [];
+  const inventoryLabelText = row.inventoryLabels
+    ? Object.entries(row.inventoryLabels).flatMap(([key, value]) => [key, value])
     : [];
   return [
     row.title,
@@ -633,8 +687,10 @@ function buildMetricInventorySearchText(row: OtlpMetricInventoryRow) {
     row.description,
     row.metricType,
     row.unit,
+    row.inventorySource,
     row.series?.name,
-    ...labelText
+    ...labelText,
+    ...inventoryLabelText
   ]
     .filter((value): value is string => typeof value === 'string' && value.trim() !== '')
     .join(' ')
@@ -646,7 +702,7 @@ function metricInventoryName(row: OtlpMetricInventoryRow) {
 }
 
 function metricInventoryLatestValue(row: OtlpMetricInventoryRow) {
-  const value = row.series?.latestValue ?? Number(row.meta);
+  const value = row.series?.latestValue ?? row.latestObservedAt ?? Number(row.meta);
   return Number.isFinite(value) ? value : Number.NEGATIVE_INFINITY;
 }
 

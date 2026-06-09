@@ -12,7 +12,7 @@ import { useI18n } from '@/components/providers/i18n-provider';
 import { apiMessageGet } from '@/lib/api-client';
 import { copyTextToClipboard } from '@/lib/browser-clipboard';
 import { formatTime } from '@/lib/format';
-import { buildOtlpMetricsConsoleUrl, loadOtlpMetricsConsole, queryStateFromParams, type OtlpMetricsQueryState } from '@/lib/otlp-metrics/controller';
+import { buildOtlpMetricsConsoleUrl, buildOtlpMetricsInventoryUrl, loadOtlpMetricsConsole, loadOtlpMetricsInventory, queryStateFromParams, type OtlpMetricsQueryState } from '@/lib/otlp-metrics/controller';
 import { buildOtlpMetricsCsv, buildOtlpMetricsExportFilename, buildOtlpMetricsJsonl, type OtlpMetricsExportFormat, type OtlpMetricsExportScope } from '@/lib/otlp-metrics/export';
 import {
   createSignalDashboardPanelDraft,
@@ -43,6 +43,7 @@ import {
   buildMetricSeriesRows,
   buildMetricSeriesSampleRows,
   buildMetricSeriesViews,
+  buildMetricInventorySourceRows,
   buildMetricInventoryRows,
   applyMetricsFormula,
   buildMetricsChartOption,
@@ -55,7 +56,7 @@ import {
   type OtlpMetricInventorySort,
   type OtlpMetricSeriesView
 } from '@/lib/otlp-metrics/view-model';
-import type { OtlpMetricsConsole } from '@/lib/types';
+import type { OtlpMetricsConsole, OtlpMetricsInventory } from '@/lib/types';
 import { buildOtlpMetricsRoute, hasMetricsDisplayReturnLabel } from './route-state';
 
 type OtlpMetricsTranslate = ReturnType<typeof useI18n>['t'];
@@ -63,6 +64,9 @@ type OtlpMetricsTranslate = ReturnType<typeof useI18n>['t'];
 type MetricsSavedQueryView = SignalSavedQueryView;
 type MetricsDashboardPanelDraftState = 'idle' | 'saving' | 'saved' | 'failed';
 type MetricAttributeOperator = 'filter' | 'contains' | 'not-contains' | 'in' | 'not-in' | 'exclude' | 'exists' | 'not-exists' | 'replace' | 'group';
+type OtlpMetricsWorkbenchData = OtlpMetricsConsole & {
+  inventory?: OtlpMetricsInventory | null;
+};
 
 const METRICS_SAVED_QUERY_VIEW_STORAGE_KEY = 'hertzbeat.otlp-metrics.saved-query-views';
 const METRICS_SAVED_QUERY_VIEW_LIMIT = 5;
@@ -463,8 +467,17 @@ export default function OtlpMetricsPage() {
     router.replace(appendMetricsPanelEditContext(route, panelEditContext));
   }, [panelEditContext, router]);
   const currentMetricsRoute = useMemo(() => buildOtlpMetricsRoute(query), [query]);
-  const workbenchCacheKey = useMemo(() => buildOtlpMetricsConsoleUrl(query), [query]);
-  const load = useCallback(async (): Promise<OtlpMetricsConsole> => loadOtlpMetricsConsole(apiMessageGet, query), [query]);
+  const workbenchCacheKey = useMemo(
+    () => `${buildOtlpMetricsConsoleUrl(query)}|${buildOtlpMetricsInventoryUrl(query)}`,
+    [query]
+  );
+  const load = useCallback(async (): Promise<OtlpMetricsWorkbenchData> => {
+    const [consoleData, inventory] = await Promise.all([
+      loadOtlpMetricsConsole(apiMessageGet, query),
+      loadOtlpMetricsInventory(apiMessageGet, query).catch(() => null)
+    ]);
+    return { ...consoleData, inventory };
+  }, [query]);
   const initialDraft = useMemo(() => ({
     query: query.query || '',
     filter: query.filter || '',
@@ -1260,7 +1273,23 @@ export default function OtlpMetricsPage() {
           pointCount: metricSeries[index]?.points.length ?? 0,
           series: metricSeries[index]
         }));
-        const metricInventoryRows = buildMetricInventoryRows(metricSeriesTableRows, metricInventorySearch, metricInventorySort);
+        const sourceMetricInventoryRows = buildMetricInventorySourceRows(mergedData.inventory, t).map((row, index) => {
+          const matchingSeriesRow = metricSeriesTableRows.find(seriesRow =>
+            seriesRow.title === row.title || seriesRow.series?.name === row.title
+          );
+          return {
+            ...(matchingSeriesRow || {}),
+            ...row,
+            rowKey: matchingSeriesRow?.rowKey || `inventory-${row.title}-${index}`,
+            series: matchingSeriesRow?.series || row.series || null,
+            meta: matchingSeriesRow?.meta || row.meta,
+            pointCount: matchingSeriesRow?.pointCount ?? row.pointCount,
+            sampleCount: matchingSeriesRow?.sampleCount ?? row.sampleCount,
+            timeSeriesCount: row.timeSeriesCount ?? matchingSeriesRow?.timeSeriesCount
+          };
+        });
+        const metricInventoryBaseRows = sourceMetricInventoryRows.length > 0 ? sourceMetricInventoryRows : metricSeriesTableRows;
+        const metricInventoryRows = buildMetricInventoryRows(metricInventoryBaseRows, metricInventorySearch, metricInventorySort);
         const metricInventoryPageSizeNumber = Number(metricInventoryPageSize);
         const metricInventoryTotalPages = Math.max(1, Math.ceil(metricInventoryRows.length / metricInventoryPageSizeNumber));
         const clampedMetricInventoryPageIndex = Math.min(Number(metricInventoryPageIndex), metricInventoryTotalPages - 1);
@@ -1276,8 +1305,8 @@ export default function OtlpMetricsPage() {
           total: metricInventoryRows.length
         });
         const metricInventorySummary = metricInventorySearch.trim()
-          ? t('otlp.metrics.inventory.filtered-count', { filtered: metricInventoryRows.length, total: metricSeriesTableRows.length })
-          : t('otlp.metrics.scope.series-count', { count: metricSeriesTableRows.length });
+          ? t('otlp.metrics.inventory.filtered-count', { filtered: metricInventoryRows.length, total: metricInventoryBaseRows.length })
+          : t('otlp.metrics.scope.series-count', { count: metricInventoryBaseRows.length });
         const firstSeries = (selectedMetricSeriesIndex >= 0 ? seriesRows[selectedMetricSeriesIndex] : undefined) ?? seriesRows[0] ?? {
           title: mergedData.query || t('otlp.metrics.query.unselected'),
           copy: mergedData.context?.serviceName || routeContext.serviceName || '-',
@@ -2262,7 +2291,7 @@ export default function OtlpMetricsPage() {
                     data-otlp-metrics-inventory="metric-inventory"
                     data-otlp-metrics-inventory-owner="hertzbeat-ui-data-table"
                     data-otlp-metrics-inventory-filtered-count={metricInventoryRows.length}
-                    data-otlp-metrics-inventory-total-count={metricSeriesTableRows.length}
+                    data-otlp-metrics-inventory-total-count={metricInventoryBaseRows.length}
                     data-otlp-metrics-inventory-page-size={metricInventoryPageSize}
                     data-otlp-metrics-inventory-page-index={clampedMetricInventoryPageIndex}
                     variant="embedded"

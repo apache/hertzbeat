@@ -7,6 +7,7 @@ import {
   buildContextRows,
   buildMetricsExplorerState,
   buildMetricsHandoffLinks,
+  buildMetricInventorySourceRows,
   buildMetricInventoryRows,
   buildMetricSeriesRows,
   buildMetricSeriesSampleRows,
@@ -501,6 +502,59 @@ describe('otlp metrics view model', () => {
       'http_requests_total',
       'db_latency',
       'cache_hits'
+    ]);
+  });
+
+  it('builds source-backed metric inventory rows from the backend inventory contract', () => {
+    const rows = buildMetricInventorySourceRows(
+      {
+        source: 'promql-inventory',
+        context: {
+          entityId: 7,
+          entityType: 'service',
+          entityName: 'Checkout API',
+          serviceName: 'checkout',
+          serviceNamespace: 'commerce',
+          environment: 'prod',
+          start: 1000,
+          end: 2000
+        },
+        total: 1,
+        items: [
+          {
+            metricName: 'http_server_duration',
+            family: 'latency',
+            timeSeriesCount: 3,
+            latestObservedAt: 2000,
+            labels: {
+              service_name: 'checkout',
+              http_route: '/checkout'
+            }
+          }
+        ]
+      },
+      t
+    );
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        title: 'http_server_duration',
+        copy: 'checkout',
+        metricType: 'latency',
+        timeSeriesCount: 3,
+        latestObservedAt: 2000,
+        entityLabel: 'Checkout API',
+        entityMeta: t('otlp.metrics.series.entity-id', { entityId: '7' }),
+        inventorySource: 'promql-inventory',
+        inventoryLabels: {
+          service_name: 'checkout',
+          http_route: '/checkout'
+        },
+        series: null
+      })
+    ]);
+    expect(buildMetricInventoryRows(rows, 'checkout', 'latest').map(row => row.title)).toEqual([
+      'http_server_duration'
     ]);
   });
 
