@@ -403,6 +403,72 @@ class LogQueryControllerTest {
     }
 
     @Test
+    void testOverviewStatsAppliesInAndNotInFiltersWithRowFallback() throws Exception {
+        LogEntry infoLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityNumber(9)
+                .severityText("INFO")
+                .body("stable checkout info")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-1")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry errorLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("stable checkout error")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-2")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry canaryLog = LogEntry.builder()
+                .timeUnixNano(1734005477650000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("canary checkout error")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-canary")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .timeUnixNano(1734005477660000000L)
+                .severityNumber(13)
+                .severityText("WARN")
+                .body("cart checkout warn")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-3")))
+                .attributes(new HashMap<>(Map.of("http.route", "/cart")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(infoLog, errorLog, canaryLog, cartLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview")
+                        .param("resourceFilter", "service.version IN ('1.2.3', '1.2.4') "
+                                + "and host.name NOT IN ('checkout-canary')")
+                        .param("attributeFilter", "http.route IN ('/checkout')"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(2))
+                .andExpect(jsonPath("$.data.infoCount").value(1))
+                .andExpect(jsonPath("$.data.errorCount").value(1))
+                .andExpect(jsonPath("$.data.warnCount").value(0));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogsBySeverityBuckets(any(), any(), any(), any(),
+                any(), any(), any(), anySet(), eq(false));
+    }
+
+    @Test
     void testLogContextPrefersEntityIdentityOverConflictingRouteContext() throws Exception {
         ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
         this.logQueryController = new LogQueryController(
