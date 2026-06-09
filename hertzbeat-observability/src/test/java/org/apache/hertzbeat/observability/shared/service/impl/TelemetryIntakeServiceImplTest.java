@@ -435,6 +435,12 @@ class TelemetryIntakeServiceImplTest {
         assertEquals("checkout failed in repository", evidence.getFirst().getBody());
         assertEquals("trace-1", evidence.getFirst().getTraceId());
         assertEquals("checkout", evidence.getFirst().getIdentitySnapshot().getServiceName());
+        assertEquals("88", evidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_id"));
+        assertEquals("service", evidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_type"));
+        assertEquals("checkout", evidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_name"));
         assertTrue(evidence.getFirst().getBindingResult().isBound());
         assertEquals(3, evidence.getFirst().getBindingResult().getMatchedIdentityCount());
         verify(logQueryRepository).queryLogs(1000L, 2000L, "trace-1", "span-1", 20);
@@ -475,6 +481,14 @@ class TelemetryIntakeServiceImplTest {
         assertEquals("checkout", evidence.getFirst().getIdentitySnapshot().getServiceName());
         assertEquals("commerce", evidence.getFirst().getIdentitySnapshot().getServiceNamespace());
         assertEquals("prod", evidence.getFirst().getIdentitySnapshot().getEnvironmentName());
+        assertEquals("88", evidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_id"));
+        assertEquals("service", evidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_type"));
+        assertEquals("checkout", evidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_name"));
+        assertEquals("team-a", evidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.workspace_id"));
         assertTrue(evidence.getFirst().getBindingResult().isBound());
         assertEquals(3, evidence.getFirst().getBindingResult().getMatchedIdentityCount());
     }
@@ -540,6 +554,10 @@ class TelemetryIntakeServiceImplTest {
         assertEquals(1, logEvidence.size());
         assertEquals(88L, logEvidence.getFirst().getEntityId());
         assertEquals("checkout failed", logEvidence.getFirst().getBody());
+        assertEquals("88", logEvidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_id"));
+        assertEquals("service", logEvidence.getFirst().getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_type"));
         assertEquals("team-a", logEvidence.getFirst().getResource().get("hertzbeat_workspace_id"));
         assertEquals(1, traceSummary.getRecentTraceCount());
         assertEquals(1, traceSummary.getRecentErrorTraceCount());
@@ -741,6 +759,12 @@ class TelemetryIntakeServiceImplTest {
         assertNotNull(metricEvidence.getAttributes());
         assertEquals("partial", metricEvidence.getAttributes().get("otlp.metric.compatibility"));
         assertTrue(metricEvidence.getAttributes().get("otlp.metric.summary.quantiles").contains("\"quantile\":0.95"));
+        assertEquals("102", metricEvidence.getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_id"));
+        assertEquals("service", metricEvidence.getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_type"));
+        assertEquals("checkout", metricEvidence.getIdentitySnapshot()
+                .getCanonicalIdentities().get("hertzbeat.entity_name"));
         assertNotNull(metricEvidence.getOtelContext());
         assertTrue(metricEvidence.getOtelContext().contains("partial support"));
         assertTrue(metricEvidence.getOtelContext().contains("Summary quantiles"));

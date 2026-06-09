@@ -95,6 +95,8 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
     private static final String OTLP_METRIC_HISTOGRAM_BUCKET_COUNTS = "otlp.metric.histogram.bucket_counts";
     private static final String OTLP_METRIC_HISTOGRAM_EXPLICIT_BOUNDS = "otlp.metric.histogram.explicit_bounds";
     private static final String HERTZBEAT_ENTITY_ID = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID;
+    private static final String HERTZBEAT_ENTITY_TYPE = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE;
+    private static final String HERTZBEAT_ENTITY_NAME = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_NAME;
     private static final String HERTZBEAT_WORKSPACE_ID = OtlpResourceSemanticAttributes.HERTZBEAT_WORKSPACE_ID;
     private static final Set<String> WORKSPACE_INFRA_SERVICE_NAMES = Set.of(
             "otelcol-contrib",
@@ -620,15 +622,17 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
             if (!matchesEntitySignal(signal.canonicalIdentities(), entityIdentityKeys, entityIdentityValues, entityId)) {
                 continue;
             }
+            Map<String, String> snapshotIdentities =
+                    enrichCanonicalIdentitiesWithEntityContext(signal.canonicalIdentities(), entityContext);
             TelemetryIdentitySnapshot identitySnapshot = new TelemetryIdentitySnapshot(
                     SOURCE_OTLP,
                     SIGNAL_LOGS,
-                    signal.canonicalIdentities(),
-                    signal.canonicalIdentities().get("service.name"),
-                    signal.canonicalIdentities().get("service.namespace"),
-                    signal.canonicalIdentities().get("deployment.environment.name"),
-                    signal.canonicalIdentities().get("service.instance.id"),
-                    signal.canonicalIdentities().get("host.name"),
+                    snapshotIdentities,
+                    snapshotIdentities.get("service.name"),
+                    snapshotIdentities.get("service.namespace"),
+                    snapshotIdentities.get("deployment.environment.name"),
+                    snapshotIdentities.get("service.instance.id"),
+                    snapshotIdentities.get("host.name"),
                     signal.observedAt()
             );
             List<String> searchTerms = preferredHint == null || CollectionUtils.isEmpty(preferredHint.getSearchTerms())
@@ -739,15 +743,17 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
             }
             Map<String, String> resource = extractStringMap(log == null ? null : log.getResource());
             Map<String, String> attributes = extractStringMap(log == null ? null : log.getAttributes());
+            Map<String, String> snapshotIdentities =
+                    enrichCanonicalIdentitiesWithEntityContext(canonicalIdentities, entityContext);
             TelemetryIdentitySnapshot identitySnapshot = new TelemetryIdentitySnapshot(
                     SOURCE_OTLP,
                     SIGNAL_LOGS,
-                    canonicalIdentities,
-                    canonicalIdentities.get("service.name"),
-                    canonicalIdentities.get("service.namespace"),
-                    canonicalIdentities.get("deployment.environment.name"),
-                    canonicalIdentities.get("service.instance.id"),
-                    canonicalIdentities.get("host.name"),
+                    snapshotIdentities,
+                    snapshotIdentities.get("service.name"),
+                    snapshotIdentities.get("service.namespace"),
+                    snapshotIdentities.get("deployment.environment.name"),
+                    snapshotIdentities.get("service.instance.id"),
+                    snapshotIdentities.get("host.name"),
                     resolveObservedAt(log)
             );
             String body = log == null || log.getBody() == null ? null : String.valueOf(log.getBody());
@@ -1102,25 +1108,17 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                         .ifPresent(value -> canonicalIdentities.put(key, value));
             }
         }
-        long entityId = entityId(entityContext);
-        if (entityId > 0) {
-            canonicalIdentities.putIfAbsent(HERTZBEAT_ENTITY_ID, String.valueOf(entityId));
-        }
-        String workspaceId = entityContext == null || entityContext.getEntity() == null
-                ? null
-                : trimToNull(entityContext.getEntity().getWorkspaceId());
-        if (workspaceId != null) {
-            canonicalIdentities.putIfAbsent(HERTZBEAT_WORKSPACE_ID, workspaceId);
-        }
+        Map<String, String> enrichedIdentities =
+                enrichCanonicalIdentitiesWithEntityContext(canonicalIdentities, entityContext);
         return new TelemetryIdentitySnapshot(
                 source,
                 signal,
-                canonicalIdentities,
-                canonicalIdentities.get("service.name"),
-                canonicalIdentities.get("service.namespace"),
-                canonicalIdentities.get("deployment.environment.name"),
-                canonicalIdentities.get("service.instance.id"),
-                canonicalIdentities.get("host.name"),
+                enrichedIdentities,
+                enrichedIdentities.get("service.name"),
+                enrichedIdentities.get("service.namespace"),
+                enrichedIdentities.get("deployment.environment.name"),
+                enrichedIdentities.get("service.instance.id"),
+                enrichedIdentities.get("host.name"),
                 observedAt
         );
     }
@@ -1172,8 +1170,38 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
             }
         }
         putCanonicalResourceValue(canonical, values, HERTZBEAT_ENTITY_ID);
+        putCanonicalResourceValue(canonical, values, HERTZBEAT_ENTITY_TYPE);
+        putCanonicalResourceValue(canonical, values, HERTZBEAT_ENTITY_NAME);
         putCanonicalResourceValue(canonical, values, HERTZBEAT_WORKSPACE_ID);
         return canonical;
+    }
+
+    private Map<String, String> enrichCanonicalIdentitiesWithEntityContext(Map<String, String> canonicalIdentities,
+                                                                           ObservedEntityContext entityContext) {
+        Map<String, String> enriched = new LinkedHashMap<>();
+        if (!CollectionUtils.isEmpty(canonicalIdentities)) {
+            enriched.putAll(canonicalIdentities);
+        }
+        if (entityContext == null || entityContext.getEntity() == null) {
+            return enriched;
+        }
+        long entityId = entityId(entityContext);
+        if (entityId > 0) {
+            enriched.putIfAbsent(HERTZBEAT_ENTITY_ID, String.valueOf(entityId));
+        }
+        String entityType = trimToNull(entityContext.getEntity().getType());
+        if (entityType != null) {
+            enriched.putIfAbsent(HERTZBEAT_ENTITY_TYPE, entityType);
+        }
+        String entityName = firstNonBlank(entityContext.getEntity().getDisplayName(), entityContext.getEntity().getName());
+        if (entityName != null) {
+            enriched.putIfAbsent(HERTZBEAT_ENTITY_NAME, entityName);
+        }
+        String workspaceId = trimToNull(entityContext.getEntity().getWorkspaceId());
+        if (workspaceId != null) {
+            enriched.putIfAbsent(HERTZBEAT_WORKSPACE_ID, workspaceId);
+        }
+        return enriched;
     }
 
     private void putCanonicalResourceValue(Map<String, String> canonical, Map<?, ?> values, String key) {
@@ -1210,15 +1238,17 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
             if (!matchesEntitySignal(signal.canonicalIdentities(), entityIdentityKeys, entityIdentityValues, entityId)) {
                 continue;
             }
+            Map<String, String> snapshotIdentities =
+                    enrichCanonicalIdentitiesWithEntityContext(signal.canonicalIdentities(), entityContext);
             TelemetryIdentitySnapshot snapshot = new TelemetryIdentitySnapshot(
                     SOURCE_OTLP,
                     SIGNAL_METRICS,
-                    signal.canonicalIdentities(),
-                    signal.canonicalIdentities().get("service.name"),
-                    signal.canonicalIdentities().get("service.namespace"),
-                    signal.canonicalIdentities().get("deployment.environment.name"),
-                    signal.canonicalIdentities().get("service.instance.id"),
-                    signal.canonicalIdentities().get("host.name"),
+                    snapshotIdentities,
+                    snapshotIdentities.get("service.name"),
+                    snapshotIdentities.get("service.namespace"),
+                    snapshotIdentities.get("deployment.environment.name"),
+                    snapshotIdentities.get("service.instance.id"),
+                    snapshotIdentities.get("host.name"),
                     signal.observedAt()
             );
             result.add(new MetricEvidence(
@@ -1231,7 +1261,7 @@ public class TelemetryIntakeServiceImpl implements TelemetryEvidenceGateway {
                     signal.metricName(),
                     buildBindingResult(entityContext, SOURCE_OTLP, SIGNAL_METRICS),
                     buildMetricCorrelationHint(entityContext, snapshot, signal.observedAt(), signal.metricName()),
-                    buildCodeNavigationHint(entityContext, signal.canonicalIdentities(), filterMetricSignalAttributes(signal.attributes()),
+                    buildCodeNavigationHint(entityContext, snapshotIdentities, filterMetricSignalAttributes(signal.attributes()),
                             buildFallbackSearchTerms(signal.metricName(), snapshot.getServiceName()), signal.metricName()),
                     signal.metricName(),
                     defaultText(signal.metricName(), "OTLP Metric"),
