@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { BarChart3, Check, Copy, Download, Filter, Pencil, Play, Replace, RotateCcw, Save, Search, Table2, Trash2, Workflow, X } from 'lucide-react';
+import { Ban, BarChart3, Check, Copy, Download, Filter, Pencil, Play, Replace, RotateCcw, Save, Search, Table2, Trash2, Workflow, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { HzActionGroup, HzAssistiveMarker, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzChipGroup, HzCollapsibleSection, HzContextHandoff, HzControlStack, HzDataCellStack, HzDataCellText, HzDataMetaText, HzDataTable, HzDetailRows, HzDisabledActionShell, HzEmptyState, HzInput, HzPaginationBar, HzPanelHeader, HzPanelSection, HzPanelSurface, HzPanelTitleLabel, HzQueryActionGroup, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalSummaryStrip, HzSignalWorkbenchShell, HzStateNotice, HzStatusBadge, HzTrendBar, HzTrendFrame, HzWorkbenchHeaderCopy, HzWorkbenchLayout } from '@hertzbeat/ui';
 import { EChartsPanel, type EChartsDataZoomRange } from '@/components/observability/echarts-panel';
@@ -128,6 +128,12 @@ function buildMetricAttributeExistsFilterExpression(name: string) {
   const trimmedName = name.trim();
   if (!trimmedName) return null;
   return `${trimmedName} EXISTS`;
+}
+
+function buildMetricAttributeNotExistsFilterExpression(name: string) {
+  const trimmedName = name.trim();
+  if (!trimmedName) return null;
+  return `${trimmedName} NOT EXISTS`;
 }
 
 function mergeMetricFilterExpression(currentFilter: string, expression: string) {
@@ -825,6 +831,17 @@ export default function OtlpMetricsPage() {
 
   const applyMetricAttributeExistsFilter = useCallback((name: string, series?: OtlpMetricSeriesView | null) => {
     const expression = buildMetricAttributeExistsFilterExpression(name);
+    if (!expression) return;
+    const nextDraft = {
+      ...draft,
+      filter: mergeMetricFilterExpression(draft.filter, expression)
+    };
+    setDraft(nextDraft);
+    replaceMetricsRoute(nextDraft, undefined, series?.key || query.series, series ? buildMetricSeriesRouteContext(series) : {});
+  }, [draft, query.series, replaceMetricsRoute]);
+
+  const applyMetricAttributeNotExistsFilter = useCallback((name: string, series?: OtlpMetricSeriesView | null) => {
+    const expression = buildMetricAttributeNotExistsFilterExpression(name);
     if (!expression) return;
     const nextDraft = {
       ...draft,
@@ -2661,6 +2678,28 @@ export default function OtlpMetricsPage() {
                                   data-otlp-metrics-attribute-exists-action-icon-owner="hertzbeat-ui-button-icon"
                                 />
                                 {t('otlp.metrics.attributes.exists-action')}
+                              </HzButton>
+                            )
+                          },
+                          {
+                            key: 'not-exists',
+                            header: t('otlp.metrics.attributes.column.not-exists'),
+                            render: row => (
+                              <HzButton
+                                type="button"
+                                size="xs"
+                                intent="ghost"
+                                data-otlp-metrics-attribute-not-exists-action={row.name}
+                                data-otlp-metrics-attribute-not-exists-action-owner="hertzbeat-ui-button"
+                                aria-label={t('otlp.metrics.attributes.not-exists-action.aria', { name: row.name })}
+                                onClick={() => applyMetricAttributeNotExistsFilter(row.name, selectedMetricSeries)}
+                              >
+                                <HzButtonIcon
+                                  icon={Ban}
+                                  data-otlp-metrics-attribute-not-exists-action-icon={row.name}
+                                  data-otlp-metrics-attribute-not-exists-action-icon-owner="hertzbeat-ui-button-icon"
+                                />
+                                {t('otlp.metrics.attributes.not-exists-action')}
                               </HzButton>
                             )
                           },
