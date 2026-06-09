@@ -822,6 +822,61 @@ class OtlpIngestionWorkspaceServiceImplTest {
     }
 
     @Test
+    void metricsConsoleTranslatesFriendlyLabelOperatorsToPromqlMatchers() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                2_000L,
+                "http_server_request_duration_count",
+                "sum",
+                "1",
+                14.0,
+                Map.of("span.kind", "server", "http.route", "/checkout/{id}")
+        );
+        String expectedQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
+                + "span_kind=~\"^(?:server|consumer)$\", http_route=~\".*checkout.*\", "
+                + "host_name!~\".*canary.*\", cloud_region!~\"^(?:us-west-1|us-west-2)$\", "
+                + "k8s_pod_name=~\".+\", service_instance_id!~\".+\"");
+        DatasourceQueryData emptyQueryData = new DatasourceQueryData("otlp-metrics-console", 200, null, List.of());
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> promqlSuccess(emptyQueryData));
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                null,
+                "span.kind IN ('server', \"consumer\") and http.route CONTAINS checkout "
+                        + "and host.name NOT CONTAINS canary and cloud.region NOT IN ('us-west-1', 'us-west-2') "
+                        + "and k8s.pod.name EXISTS and service.instance.id NOT EXISTS",
+                null,
+                null
+        );
+
+        assertEquals(expectedQuery, console.getQuery());
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-metrics-console"),
+                eq(expectedQuery),
+                anyLong(),
+                anyLong(),
+                anyString()
+        );
+    }
+
+    @Test
     void metricsConsoleAppliesRequestedEntityIdentityAsPromqlResourceMatcher() {
         observabilitySignalIntakeGateway.recordOtlpMetricIntake(
                 Map.of(

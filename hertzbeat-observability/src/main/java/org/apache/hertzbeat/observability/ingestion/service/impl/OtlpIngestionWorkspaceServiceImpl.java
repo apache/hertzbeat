@@ -94,6 +94,15 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     private static final Pattern METRICS_FILTER_MATCHER = Pattern.compile(
             "\\s*([A-Za-z_:][A-Za-z0-9_.:-]*)\\s*(=~|!~|!=|=)\\s*(?:\"((?:\\\\.|[^\"\\\\])*)\"|'((?:\\\\.|[^'\\\\])*)'|([^,\\s]+))\\s*"
     );
+    private static final Pattern METRICS_FILTER_LIST_OPERATOR_PATTERN = Pattern.compile(
+            "\\s*([A-Za-z_:][A-Za-z0-9_.:-]*)\\s+(NOT\\s+IN|IN)\\s*(\\(.+\\))\\s*",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern METRICS_FILTER_TEXT_OPERATOR_PATTERN = Pattern.compile(
+            "\\s*([A-Za-z_:][A-Za-z0-9_.:-]*)\\s+(NOT\\s+CONTAINS|CONTAINS)\\s+(.+)\\s*",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern METRICS_FILTER_PRESENCE_OPERATOR_PATTERN = Pattern.compile(
+            "\\s*([A-Za-z_:][A-Za-z0-9_.:-]*)\\s+(NOT\\s+EXISTS|EXISTS)\\s*",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern SIMPLE_METRIC_NAME = Pattern.compile("[A-Za-z_:][A-Za-z0-9_:.-]*");
     private static final int DEFAULT_RECENT_SERVICE_LIMIT = 6;
     private static final int DEFAULT_RECENT_UNBOUND_CANDIDATE_LIMIT = 6;
@@ -1865,9 +1874,14 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             return List.of();
         }
         List<String> matchers = new ArrayList<>();
-        for (String rawClause : normalized.split("(?i)\\s+and\\s+|\\s*,\\s*")) {
+        for (String rawClause : splitMetricsFilterClauses(normalized)) {
             String clause = trimToNull(rawClause);
             if (!StringUtils.hasText(clause)) {
+                continue;
+            }
+            String parsedMatcher = parseMetricsFriendlyFilterMatcher(clause, excludedLabels);
+            if (StringUtils.hasText(parsedMatcher)) {
+                matchers.add(parsedMatcher);
                 continue;
             }
             Matcher matcher = METRICS_FILTER_MATCHER.matcher(clause);
@@ -1888,6 +1902,198 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             matchers.add(labelName + matcher.group(2) + "\"" + escapePromqlLabelValue(labelValue) + "\"");
         }
         return matchers;
+    }
+
+    private String parseMetricsFriendlyFilterMatcher(String clause, Set<String> excludedLabels) {
+        String listMatcher = parseMetricsListFilterMatcher(clause, excludedLabels);
+        if (StringUtils.hasText(listMatcher)) {
+            return listMatcher;
+        }
+        String textMatcher = parseMetricsTextFilterMatcher(clause, excludedLabels);
+        if (StringUtils.hasText(textMatcher)) {
+            return textMatcher;
+        }
+        return parseMetricsPresenceFilterMatcher(clause, excludedLabels);
+    }
+
+    private String parseMetricsListFilterMatcher(String clause, Set<String> excludedLabels) {
+        Matcher matcher = METRICS_FILTER_LIST_OPERATOR_PATTERN.matcher(clause);
+        if (!matcher.matches()) {
+            return null;
+        }
+        String labelName = normalizePromqlLabelName(matcher.group(1));
+        if (!isPromqlLabelName(labelName) || excludedLabels.contains(labelName)) {
+            return null;
+        }
+        String valueList = trimToNull(matcher.group(3));
+        if (!StringUtils.hasText(valueList) || valueList.length() < 2
+                || !valueList.startsWith("(") || !valueList.endsWith(")")) {
+            return null;
+        }
+        List<String> values = splitMetricsFilterListValues(valueList.substring(1, valueList.length() - 1)).stream()
+                .map(value -> stripMetricsFilterQuotes(trimToNull(value)))
+                .filter(StringUtils::hasText)
+                .toList();
+        if (values.isEmpty()) {
+            return null;
+        }
+        String regex = "^(?:" + values.stream()
+                .map(this::escapePromqlRegexValue)
+                .collect(java.util.stream.Collectors.joining("|")) + ")$";
+        String operator = trimToNull(matcher.group(2));
+        String promqlOperator = operator != null && operator.replaceAll("\\s+", " ").equalsIgnoreCase("not in")
+                ? "!~"
+                : "=~";
+        return labelName + promqlOperator + "\"" + escapePromqlLabelValue(regex) + "\"";
+    }
+
+    private String parseMetricsTextFilterMatcher(String clause, Set<String> excludedLabels) {
+        Matcher matcher = METRICS_FILTER_TEXT_OPERATOR_PATTERN.matcher(clause);
+        if (!matcher.matches()) {
+            return null;
+        }
+        String labelName = normalizePromqlLabelName(matcher.group(1));
+        if (!isPromqlLabelName(labelName) || excludedLabels.contains(labelName)) {
+            return null;
+        }
+        String value = stripMetricsFilterQuotes(trimToNull(matcher.group(3)));
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        String regex = ".*" + escapePromqlRegexValue(value) + ".*";
+        String operator = trimToNull(matcher.group(2));
+        String promqlOperator = operator != null && operator.replaceAll("\\s+", " ").equalsIgnoreCase("not contains")
+                ? "!~"
+                : "=~";
+        return labelName + promqlOperator + "\"" + escapePromqlLabelValue(regex) + "\"";
+    }
+
+    private String parseMetricsPresenceFilterMatcher(String clause, Set<String> excludedLabels) {
+        Matcher matcher = METRICS_FILTER_PRESENCE_OPERATOR_PATTERN.matcher(clause);
+        if (!matcher.matches()) {
+            return null;
+        }
+        String labelName = normalizePromqlLabelName(matcher.group(1));
+        if (!isPromqlLabelName(labelName) || excludedLabels.contains(labelName)) {
+            return null;
+        }
+        String operator = trimToNull(matcher.group(2));
+        String promqlOperator = operator != null && operator.replaceAll("\\s+", " ").equalsIgnoreCase("not exists")
+                ? "!~"
+                : "=~";
+        return labelName + promqlOperator + "\".+\"";
+    }
+
+    private List<String> splitMetricsFilterClauses(String filter) {
+        List<String> clauses = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        int depth = 0;
+        char quote = 0;
+        for (int index = 0; index < filter.length(); index++) {
+            char character = filter.charAt(index);
+            if (quote != 0) {
+                current.append(character);
+                if (character == quote) {
+                    quote = 0;
+                }
+                continue;
+            }
+            if (character == '\'' || character == '"') {
+                quote = character;
+                current.append(character);
+                continue;
+            }
+            if (character == '(') {
+                depth++;
+                current.append(character);
+                continue;
+            }
+            if (character == ')') {
+                depth = Math.max(0, depth - 1);
+                current.append(character);
+                continue;
+            }
+            if (depth == 0 && character == ',') {
+                addMetricsFilterClause(clauses, current);
+                continue;
+            }
+            if (depth == 0 && isMetricsFilterAndDelimiter(filter, index)) {
+                addMetricsFilterClause(clauses, current);
+                index += 4;
+                continue;
+            }
+            current.append(character);
+        }
+        addMetricsFilterClause(clauses, current);
+        return clauses;
+    }
+
+    private List<String> splitMetricsFilterListValues(String values) {
+        List<String> result = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        char quote = 0;
+        for (int index = 0; index < values.length(); index++) {
+            char character = values.charAt(index);
+            if (quote != 0) {
+                current.append(character);
+                if (character == quote) {
+                    quote = 0;
+                }
+                continue;
+            }
+            if (character == '\'' || character == '"') {
+                quote = character;
+                current.append(character);
+                continue;
+            }
+            if (character == ',') {
+                addMetricsFilterClause(result, current);
+                continue;
+            }
+            current.append(character);
+        }
+        addMetricsFilterClause(result, current);
+        return result;
+    }
+
+    private void addMetricsFilterClause(List<String> clauses, StringBuilder current) {
+        String clause = trimToNull(current.toString());
+        if (StringUtils.hasText(clause)) {
+            clauses.add(clause);
+        }
+        current.setLength(0);
+    }
+
+    private boolean isMetricsFilterAndDelimiter(String value, int index) {
+        return index + 5 <= value.length() && value.regionMatches(true, index, " and ", 0, 5);
+    }
+
+    private String stripMetricsFilterQuotes(String value) {
+        if (value == null || value.length() < 2) {
+            return value;
+        }
+        char first = value.charAt(0);
+        char last = value.charAt(value.length() - 1);
+        if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+            return trimToNull(value.substring(1, value.length() - 1));
+        }
+        return value;
+    }
+
+    private String escapePromqlRegexValue(String value) {
+        String normalized = trimToNull(value);
+        if (!StringUtils.hasText(normalized)) {
+            return "";
+        }
+        StringBuilder escaped = new StringBuilder();
+        for (int index = 0; index < normalized.length(); index++) {
+            char character = normalized.charAt(index);
+            if ("\\.^$|?*+()[]{}".indexOf(character) >= 0) {
+                escaped.append('\\');
+            }
+            escaped.append(character);
+        }
+        return escaped.toString();
     }
 
     private String normalizePromqlLabelName(String label) {
