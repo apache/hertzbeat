@@ -307,6 +307,7 @@ export type SignalDashboardRuntimeMetricsTooltip = {
 export type SignalDashboardRuntimeEvidenceFilterSource =
   | 'service'
   | 'serviceNamespace'
+  | 'environment'
   | 'traceId'
   | 'spanId'
   | 'entityId'
@@ -3331,12 +3332,54 @@ function syncTooltipIdentifier(value: string | undefined) {
   return trimmed;
 }
 
+function syncTooltipBreakoutValue(attributes: SignalDashboardRuntimeBreakoutAttribute[] | undefined, names: string[]) {
+  const normalizedNames = new Set(names.flatMap(name => {
+    const normalizedName = normalizeBreakoutAttributeName(name);
+    return normalizedName
+      ? [normalizedName, `resource:${normalizedName}`, `attribute:${normalizedName}`]
+      : [];
+  }));
+  return syncTooltipIdentifier(attributes
+    ?.find(attribute => normalizedNames.has(normalizeBreakoutAttributeName(attribute.name)))
+    ?.value);
+}
+
+function syncTooltipRelatedContextFromBreakoutAttributes(attributes: SignalDashboardRuntimeBreakoutAttribute[] | undefined) {
+  return {
+    environment: syncTooltipBreakoutValue(attributes, ['deployment.environment.name', 'environment']),
+    entityId: syncTooltipBreakoutValue(attributes, ['hertzbeat.entity_id', 'hertzbeat.entity.id', 'entity.id', 'entity_id']),
+    entityType: syncTooltipBreakoutValue(attributes, ['hertzbeat.entity_type', 'hertzbeat.entity.type', 'entity.type', 'entity_type']),
+    entityName: syncTooltipBreakoutValue(attributes, ['hertzbeat.entity_name', 'hertzbeat.entity.name', 'entity.name', 'entity_name']),
+    signalSource: syncTooltipBreakoutValue(attributes, ['hertzbeat.source', 'source', 'signal.source']),
+    collector: syncTooltipBreakoutValue(attributes, ['hertzbeat.collector', 'collector']),
+    template: syncTooltipBreakoutValue(attributes, ['hertzbeat.template', 'template'])
+  };
+}
+
+function applySyncTooltipRelatedContext(params: URLSearchParams, context: ReturnType<typeof syncTooltipRelatedContextFromBreakoutAttributes>) {
+  if (context.environment) params.set('environment', context.environment);
+  if (context.entityId) params.set('entityId', context.entityId);
+  if (context.entityType) params.set('entityType', context.entityType);
+  if (context.entityName) params.set('entityName', context.entityName);
+  if (context.signalSource) params.set('source', context.signalSource);
+  if (context.collector) params.set('collector', context.collector);
+  if (context.template) params.set('template', context.template);
+}
+
 function syncTooltipRelatedHandoff(
   signal: string,
   traceId: string,
   spanId: string,
   options: SignalDashboardRuntimeSyncTooltipOptions = {},
-  context: { serviceName?: string; serviceNamespace?: string } = {}
+  context: { serviceName?: string; serviceNamespace?: string } & ReturnType<typeof syncTooltipRelatedContextFromBreakoutAttributes> = {
+    environment: '',
+    entityId: '',
+    entityType: '',
+    entityName: '',
+    signalSource: '',
+    collector: '',
+    template: ''
+  }
 ) {
   const nextTraceId = syncTooltipIdentifier(traceId);
   if (!nextTraceId) return {};
@@ -3351,6 +3394,7 @@ function syncTooltipRelatedHandoff(
     if (nextSpanId) params.set('spanId', nextSpanId);
     if (serviceName) params.set('serviceName', serviceName);
     if (serviceNamespace) params.set('serviceNamespace', serviceNamespace);
+    applySyncTooltipRelatedContext(params, context);
     return {
       traceId: nextTraceId,
       ...(nextSpanId ? { spanId: nextSpanId } : {}),
@@ -3368,6 +3412,7 @@ function syncTooltipRelatedHandoff(
     if (nextSpanId) params.set('spanId', nextSpanId);
     if (serviceName) params.set('serviceName', serviceName);
     if (serviceNamespace) params.set('serviceNamespace', serviceNamespace);
+    applySyncTooltipRelatedContext(params, context);
     return {
       traceId: nextTraceId,
       ...(nextSpanId ? { spanId: nextSpanId } : {}),
@@ -3499,6 +3544,7 @@ function syncTooltipMetricRelatedHandoff(
 
 const SERVICE_VARIABLE_NAMES = new Set(['service.name', 'servicename', 'service']);
 const SERVICE_NAMESPACE_VARIABLE_NAMES = new Set(['service.namespace', 'servicenamespace', 'service_namespace']);
+const ENVIRONMENT_VARIABLE_NAMES = new Set(['deployment.environment.name', 'deployment_environment_name', 'environment']);
 const TRACE_ID_VARIABLE_NAMES = new Set(['traceid', 'trace.id', 'trace_id']);
 const SPAN_ID_VARIABLE_NAMES = new Set(['spanid', 'span.id', 'span_id']);
 const ENTITY_ID_VARIABLE_NAMES = new Set(['hertzbeat.entity_id', 'hertzbeat.entity.id', 'entityid', 'entity.id', 'entity_id']);
@@ -3512,6 +3558,7 @@ function evidenceFilterSourceForVariableName(name: string): SignalDashboardRunti
   const normalizedName = normalizeSignalDashboardVariableName(name).toLowerCase();
   if (SERVICE_VARIABLE_NAMES.has(normalizedName)) return 'service';
   if (SERVICE_NAMESPACE_VARIABLE_NAMES.has(normalizedName)) return 'serviceNamespace';
+  if (ENVIRONMENT_VARIABLE_NAMES.has(normalizedName)) return 'environment';
   if (TRACE_ID_VARIABLE_NAMES.has(normalizedName)) return 'traceId';
   if (SPAN_ID_VARIABLE_NAMES.has(normalizedName)) return 'spanId';
   if (ENTITY_ID_VARIABLE_NAMES.has(normalizedName)) return 'entityId';
@@ -3524,21 +3571,14 @@ function evidenceFilterSourceForVariableName(name: string): SignalDashboardRunti
 }
 
 function breakoutValue(row: SignalDashboardRuntimeSyncTooltipRow, names: string[]) {
-  const normalizedNames = new Set(names.flatMap(name => {
-    const normalizedName = normalizeBreakoutAttributeName(name);
-    return normalizedName
-      ? [normalizedName, `resource:${normalizedName}`, `attribute:${normalizedName}`]
-      : [];
-  }));
-  return syncTooltipIdentifier(row.breakoutAttributes
-    ?.find(attribute => normalizedNames.has(normalizeBreakoutAttributeName(attribute.name)))
-    ?.value);
+  return syncTooltipBreakoutValue(row.breakoutAttributes, names);
 }
 
 function evidenceFilterValues(row: SignalDashboardRuntimeSyncTooltipRow): Record<SignalDashboardRuntimeEvidenceFilterSource, string> {
   return {
     service: row.signal === 'metrics' ? syncTooltipIdentifier(row.serviceName) : row.signal === 'logs' || row.signal === 'traces' ? syncTooltipIdentifier(row.label) : '',
     serviceNamespace: syncTooltipIdentifier(row.serviceNamespace),
+    environment: breakoutValue(row, ['deployment.environment.name', 'environment']),
     traceId: syncTooltipIdentifier(row.traceId),
     spanId: syncTooltipIdentifier(row.spanId),
     entityId: breakoutValue(row, ['hertzbeat.entity_id', 'hertzbeat.entity.id', 'entity.id', 'entity_id']),
@@ -3567,6 +3607,9 @@ export function buildSignalDashboardRuntimeEvidenceSourceHandoff(
     }
     if (valuesBySource.serviceNamespace && !url.searchParams.get('serviceNamespace')) {
       url.searchParams.set('serviceNamespace', valuesBySource.serviceNamespace);
+    }
+    if (valuesBySource.environment && !url.searchParams.get('environment')) {
+      url.searchParams.set('environment', valuesBySource.environment);
     }
     if (valuesBySource.entityId && !url.searchParams.get('entityId')) {
       url.searchParams.set('entityId', valuesBySource.entityId);
@@ -3626,6 +3669,7 @@ export function buildSignalDashboardRuntimeEvidenceFilterSuggestions(
   const suggestions: { source: SignalDashboardRuntimeEvidenceFilterSource; variableName: string; variableType: SignalDashboardVariableType }[] = [
     { source: 'service', variableName: 'service.name', variableType: 'query' },
     { source: 'serviceNamespace', variableName: 'service.namespace', variableType: 'query' },
+    { source: 'environment', variableName: 'deployment.environment.name', variableType: 'query' },
     { source: 'entityId', variableName: 'hertzbeat.entity_id', variableType: 'textbox' },
     { source: 'entityName', variableName: 'hertzbeat.entity_name', variableType: 'query' },
     { source: 'signalSource', variableName: 'hertzbeat.source', variableType: 'dynamic' },
@@ -3694,7 +3738,8 @@ export function buildSignalDashboardRuntimeSyncTooltip(
         breakoutAttributes: row.breakoutAttributes,
         ...syncTooltipRelatedHandoff(renderer.signal, row.traceId, row.spanId, options, {
           serviceName: row.service,
-          serviceNamespace: row.serviceNamespace
+          serviceNamespace: row.serviceNamespace,
+          ...syncTooltipRelatedContextFromBreakoutAttributes(row.breakoutAttributes)
         })
       }));
     const waterfallRows = renderer.traceWaterfallRows
@@ -3712,7 +3757,8 @@ export function buildSignalDashboardRuntimeSyncTooltip(
         breakoutAttributes: row.breakoutAttributes,
         ...syncTooltipRelatedHandoff(renderer.signal, row.traceId, row.spanId, options, {
           serviceName: row.service,
-          serviceNamespace: row.serviceNamespace
+          serviceNamespace: row.serviceNamespace,
+          ...syncTooltipRelatedContextFromBreakoutAttributes(row.breakoutAttributes)
         })
       }));
     return [...metricRows, ...tableRows, ...waterfallRows];
