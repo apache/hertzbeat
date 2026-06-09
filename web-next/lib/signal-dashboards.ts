@@ -2718,7 +2718,13 @@ function buildLogGroupRelatedHandoff(plan: SignalDashboardPanelExecutionPlan, gr
   ]);
   target.searchParams.set('view', 'list');
   if (normalizedGroupBy.startsWith('attribute:')) {
-    target.searchParams.set('attributeFilter', mergeTraceResourceFilterExpression(target.searchParams.get('attributeFilter'), `${normalizedGroupBy.slice('attribute:'.length)}=${normalizedValue}`));
+    target.searchParams.set(
+      'attributeFilter',
+      mergeTraceResourceFilterExpression(
+        target.searchParams.get('attributeFilter'),
+        `${normalizedGroupBy.slice('attribute:'.length)}:${normalizedValue}`
+      )
+    );
   } else {
     const key = normalizedGroupBy.startsWith('resource:') ? normalizedGroupBy.slice('resource:'.length) : normalizedGroupBy;
     target.searchParams.set('resourceFilter', mergeTraceResourceFilterExpression(target.searchParams.get('resourceFilter'), `${key}=${normalizedValue}`));

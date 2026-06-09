@@ -2542,6 +2542,48 @@ describe('signal dashboards API client', () => {
     }));
   });
 
+  it('maps log attribute groups to log attribute-filter drilldowns with entity context', async () => {
+    const [logPlan] = buildSignalDashboardExecutionPlans({
+      dashboardKey: 'log-attribute-breakouts',
+      title: 'Log attribute breakouts',
+      description: 'Grouped log panels',
+      tags: 'logs',
+      layout: '[]',
+      widgets: JSON.stringify([
+        {
+          id: 'log-route-breakout',
+          signal: 'logs',
+          title: 'Logs by route',
+          visualization: 'list',
+          route: '/log/manage?view=list&serviceName=checkout&serviceNamespace=payments&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&groupBy=attribute:http.route&groupLimit=8'
+        }
+      ])
+    });
+
+    const logResult = await executeSignalDashboardPanelPlan(logPlan, async url => {
+      expect(url).toBe('/logs/stats/group-by?entityId=4200&entityType=service&serviceName=checkout&serviceNamespace=payments&groupBy=attribute%3Ahttp.route&limit=8');
+      return {
+        groupBy: 'attribute:http.route',
+        groups: [{
+          value: 'POST /checkout',
+          count: 9,
+          errorCount: 3
+        }]
+      };
+    });
+    const logRenderer = buildSignalDashboardPanelRuntimeRenderDescriptor(logPlan, logResult);
+
+    expect(logRenderer.rows[0]).toEqual(expect.objectContaining({
+      key: 'log-route-breakout:group:0',
+      title: 'POST /checkout',
+      copy: '9 logs · 3 errors',
+      meta: 'attribute:http.route',
+      relatedSignal: 'logs',
+      relatedHandoffHref: '/log/manage?serviceName=checkout&serviceNamespace=payments&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&view=list&attributeFilter=http.route%3APOST+%2Fcheckout'
+    }));
+    expect(logRenderer.rows[0]?.relatedHandoffHref).not.toContain('attributeFilter=http.route%3D');
+  });
+
   it('unwraps backend message envelopes for group-by dashboard panels before rendering', async () => {
     const [logPlan, tracePlan] = buildSignalDashboardExecutionPlans({
       dashboardKey: 'wrapped-breakouts',
