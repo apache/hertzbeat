@@ -606,7 +606,7 @@ public class EntityObservabilityGatewayImpl implements EntityObservabilityGatewa
                 CollectionUtils.isEmpty(logEvidence) ? null : logEvidence.getFirst();
         TraceEvidence preferredTraceEvidence =
                 CollectionUtils.isEmpty(traceEvidence) ? null : traceEvidence.getFirst();
-        return new EntityResponseHandoffsInfo(
+        EntityResponseHandoffsInfo handoffs = new EntityResponseHandoffsInfo(
                 buildEntityAlertHandoff(request.getReturnTo(), request.getReturnLabel(),
                         request.getEntityContext(), request.getActiveAlerts()),
                 buildEntityMonitorHandoff(request.getReturnTo(), request.getReturnLabel(),
@@ -624,6 +624,38 @@ public class EntityObservabilityGatewayImpl implements EntityObservabilityGatewa
                         request.isOwnerReady(), request.isRunbookReady(),
                         request.isRelationReady(), request.isTelemetryReady())
         );
+        applyEntityContextToResponseHandoffs(handoffs, request.getEntityContext());
+        return handoffs;
+    }
+
+    private void applyEntityContextToResponseHandoffs(EntityResponseHandoffsInfo handoffs,
+                                                      ObservedEntityContext entityContext) {
+        if (handoffs == null || entityContext == null || entityContext.getEntity() == null) {
+            return;
+        }
+        applyEntityContextToResponseHandoff(handoffs.getAlerts(), entityContext);
+        applyEntityContextToResponseHandoff(handoffs.getMonitors(), entityContext);
+        applyEntityContextToResponseHandoff(handoffs.getLogs(), entityContext);
+        applyEntityContextToResponseHandoff(handoffs.getTraces(), entityContext);
+        applyEntityContextToResponseHandoff(handoffs.getDiscovery(), entityContext);
+        applyEntityContextToResponseHandoff(handoffs.getEditor(), entityContext);
+    }
+
+    private void applyEntityContextToResponseHandoff(EntityResponseHandoffInfo handoff,
+                                                    ObservedEntityContext entityContext) {
+        if (handoff == null || entityContext == null || entityContext.getEntity() == null) {
+            return;
+        }
+        ObserveEntity entity = entityContext.getEntity();
+        if (handoff.getEntityId() == null) {
+            handoff.setEntityId(entity.getId());
+        }
+        if (!StringUtils.hasText(handoff.getEntityType())) {
+            handoff.setEntityType(trimToNull(entity.getType()));
+        }
+        if (!StringUtils.hasText(handoff.getEntityName())) {
+            handoff.setEntityName(firstNonBlank(entity.getDisplayName(), entity.getName()));
+        }
     }
 
     @Override

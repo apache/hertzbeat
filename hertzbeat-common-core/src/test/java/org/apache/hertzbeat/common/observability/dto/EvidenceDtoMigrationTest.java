@@ -69,9 +69,11 @@ class EvidenceDtoMigrationTest {
         );
 
         EntityResponseHandoffInfo traceHandoff = new EntityResponseHandoffInfo(
-                "trace-1", "open", "critical", "checkout", "trace content", "trace-1", "span-1",
-                "checkout", "commerce", "ERROR", "trace_id='trace-1'", "platform", "checkout-system",
-                "prod", 1000L, 2000L, "otlp", "trace", codeNavigationHint, "/entities/1", "Back to entity"
+                "trace-1", "open", "critical", "checkout", "trace content",
+                1L, "service", "Checkout API", "trace-1", "span-1", "checkout", "commerce",
+                "ERROR", "trace_id='trace-1'",
+                "platform", "checkout-system", "prod", 1000L, 2000L, "otlp", "trace",
+                codeNavigationHint, "/entities/1", "Back to entity"
         );
         EntityResponseHandoffsInfo handoffsInfo = new EntityResponseHandoffsInfo(
                 null, null, null, traceHandoff, null, null
@@ -81,5 +83,8 @@ class EvidenceDtoMigrationTest {
         assertEquals("trace-1", logEvidence.getTraceId());
         assertEquals("checkout", traceEvidence.getServiceName());
         assertEquals("trace-1", handoffsInfo.getTraces().getTraceId());
+        assertEquals(1L, handoffsInfo.getTraces().getEntityId());
+        assertEquals("service", handoffsInfo.getTraces().getEntityType());
+        assertEquals("Checkout API", handoffsInfo.getTraces().getEntityName());
     }
 }

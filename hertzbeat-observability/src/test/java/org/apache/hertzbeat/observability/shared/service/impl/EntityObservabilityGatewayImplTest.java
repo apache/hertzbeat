@@ -727,6 +727,8 @@ class EntityObservabilityGatewayImplTest {
     @Test
     void buildEntityResponseHandoffsShouldAssembleAllTargetsFromRequest() {
         ObserveEntity entity = new ObserveEntity();
+        entity.setId(1L);
+        entity.setType("service");
         entity.setName("checkout");
         entity.setDisplayName("Checkout service");
         EntityIdentity identity = EntityIdentity.builder()
@@ -766,6 +768,17 @@ class EntityObservabilityGatewayImplTest {
         assertEquals("trace-1", handoffs.getTraces().getSearch());
         assertEquals("checkout-system", handoffs.getDiscovery().getSystem());
         assertEquals("ownership", handoffs.getEditor().getFocus());
+        for (EntityResponseHandoffInfo handoff : List.of(
+                handoffs.getAlerts(),
+                handoffs.getMonitors(),
+                handoffs.getLogs(),
+                handoffs.getTraces(),
+                handoffs.getDiscovery(),
+                handoffs.getEditor())) {
+            assertEquals(1L, handoff.getEntityId());
+            assertEquals("service", handoff.getEntityType());
+            assertEquals("Checkout service", handoff.getEntityName());
+        }
     }
 
     @Test

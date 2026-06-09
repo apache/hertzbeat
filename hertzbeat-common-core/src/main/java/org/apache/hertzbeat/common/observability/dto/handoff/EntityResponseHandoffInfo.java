@@ -40,6 +40,12 @@ public class EntityResponseHandoffInfo {
 
     private String content;
 
+    private Long entityId;
+
+    private String entityType;
+
+    private String entityName;
+
     private String traceId;
 
     private String spanId;
