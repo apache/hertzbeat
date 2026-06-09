@@ -97,6 +97,57 @@ Optional strict assertions can be added with:
 - `TOPOLOGY_G6_BROWSER_EXPECTED_WIDE_ZOOM`
 - `TOPOLOGY_G6_BROWSER_EXPECTED_OPERATOR_BOUNDS`
 
+## Three-Signal SigNoz-Alignment Alpha Cutoff
+
+HertzBeat 2.0 treats SigNoz as a product-shape reference for the alpha
+observability workspace, not as a full parity claim. The alpha cutoff is the
+operator workflow where metrics, logs, and traces can stay attached to the same
+HertzBeat entity context, be saved as reusable views, be composed into
+dashboards, and drill from service or operation metrics into related traces and
+logs.
+
+This alpha scope includes:
+
+- OTLP metrics, logs, and traces carrying HertzBeat entity context through
+  `entityId`, `entityType`, `entityName`, service, namespace, environment,
+  collector, template, and source query parameters.
+- Saved query views, dashboard panel drafts, dashboard variables, and persisted
+  dashboards for metrics, logs, and traces.
+- A service overview dashboard with RED-style metrics, Apdex, database calls,
+  external calls, key operations, logs, log errors, traces, trace errors,
+  exceptions, exception messages, and firing alerts.
+- An operation drilldown dashboard from `operationName` context, with metrics
+  filtered by `operation`, logs filtered by `http.route`, traces filtered by
+  `operationName`, and exceptions grouped by `exception.type`.
+- Runtime dashboard evidence flows from metric/log/trace points into related
+  signal handoffs, evidence panel drafts, and breakout panel drafts.
+- Stable entity binding from OpenTelemetry resource identity such as
+  `service.name`, host, and Kubernetes pod attributes.
+
+This alpha scope does not claim full SigNoz parity. In particular, it does not
+claim public dashboard sharing, Terraform-managed dashboards, a prebuilt
+dashboard template marketplace, a ClickHouse SQL dashboard builder, a log
+pipeline builder, cost-meter dashboards, full flamegraph parity, or automatic
+APM RED metric derivation from traces beyond the explicit telemetry/query data
+seeded or stored in the current HertzBeat runtime.
+
+Runtime signal dimensions such as `trace_id`, `span.name`, `http.route`,
+`operation`, `operationName`, `exception.type`, and `exception.message` are
+filter, group-by, handoff, and drilldown dimensions. They must not be promoted
+into long-lived `ObserveEntity` identities unless a later design explicitly
+adds an endpoint or operation entity model.
+
+The focused live proof for this cutoff is:
+
+```shell
+TRACE_ID=6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b bash script/dev/run-three-signal-live-proof.sh
+```
+
+That proof starts a non-persistent H2 backend, seeds OTLP metrics/logs/traces,
+verifies entity binding and signal query breakouts, starts `web-next`, and runs
+live browser checks for saved-view dashboard replay, service overview, and
+operation drilldown.
+
 ## Local Scale Proof Data
 
 Large topology scale proof data is not seeded by default. The local demo seeder
@@ -117,6 +168,9 @@ required alpha setup.
 
 - The Next.js frontend is still an alpha preview and may not yet match every
   legacy Angular workflow.
+- Three-signal work is scoped to the alpha cutoff above. Do not describe it as
+  full SigNoz parity unless a later release adds and proves the omitted product
+  capabilities.
 - Topology large-graph behavior is optimized for inspection with render
   windows, table drilldown, and optional browser smoke. Continue filing cases
   where real data feels confusing or slow.
