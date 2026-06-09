@@ -1790,6 +1790,10 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             matchers.add("deployment_environment_name=\"" + escapePromqlLabelValue(context.getEnvironment()) + "\"");
             scopedLabels.add("deployment_environment_name");
         }
+        if (context.getEntityId() != null) {
+            matchers.add("hertzbeat_entity_id=\"" + escapePromqlLabelValue(String.valueOf(context.getEntityId())) + "\"");
+            scopedLabels.add("hertzbeat_entity_id");
+        }
         if (StringUtils.hasText(context.getEntityType())) {
             matchers.add("hertzbeat_entity_type=\"" + escapePromqlLabelValue(context.getEntityType()) + "\"");
             scopedLabels.add("hertzbeat_entity_type");
@@ -1820,6 +1824,10 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         if (StringUtils.hasText(context.getEnvironment())) {
             matchers.add("deployment_environment_name=\"" + escapePromqlLabelValue(context.getEnvironment()) + "\"");
             scopedLabels.add("deployment_environment_name");
+        }
+        if (context.getEntityId() != null) {
+            matchers.add("hertzbeat_entity_id=\"" + escapePromqlLabelValue(String.valueOf(context.getEntityId())) + "\"");
+            scopedLabels.add("hertzbeat_entity_id");
         }
         if (StringUtils.hasText(context.getEntityType())) {
             matchers.add("hertzbeat_entity_type=\"" + escapePromqlLabelValue(context.getEntityType()) + "\"");

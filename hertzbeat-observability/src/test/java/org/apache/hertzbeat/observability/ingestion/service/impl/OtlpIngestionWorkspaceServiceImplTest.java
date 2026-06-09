@@ -718,7 +718,8 @@ class OtlpIngestionWorkspaceServiceImplTest {
         when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.of(entity));
         when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of(serviceName, serviceNamespace));
         String checkoutQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
-                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\"");
+                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
+                + "hertzbeat_entity_id=\"42\"");
         stubPromqlQuery(checkoutQuery,
                 new DatasourceQueryData(
                         "otlp-metrics-console",
@@ -821,12 +822,13 @@ class OtlpIngestionWorkspaceServiceImplTest {
     }
 
     @Test
-    void metricsConsoleAppliesRequestedEntityTypeAsPromqlResourceMatcher() {
+    void metricsConsoleAppliesRequestedEntityIdentityAsPromqlResourceMatcher() {
         observabilitySignalIntakeGateway.recordOtlpMetricIntake(
                 Map.of(
                         "service.name", "checkout",
                         "service.namespace", "commerce",
                         "deployment.environment.name", "prod",
+                        "hertzbeat.entity_id", "42",
                         "hertzbeat.entity_type", "service"
                 ),
                 2_000L,
@@ -838,7 +840,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
         );
         String expectedQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
                 + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
-                + "hertzbeat_entity_type=\"service\"");
+                + "hertzbeat_entity_id=\"42\", hertzbeat_entity_type=\"service\"");
         DatasourceQueryData emptyQueryData = new DatasourceQueryData("otlp-metrics-console", 200, null, List.of());
         when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
         when(metricQueryRepository.queryPromqlRange(
@@ -860,7 +862,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 "commerce",
                 "prod",
                 null,
-                "hertzbeat.entity_type=\"host\"",
+                "hertzbeat.entity_id=\"99\" and hertzbeat.entity_type=\"host\"",
                 null,
                 null,
                 null,
@@ -868,6 +870,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
                 null
         );
 
+        assertEquals(42L, console.getContext().getEntityId());
         assertEquals("service", console.getContext().getEntityType());
         assertEquals(expectedQuery, console.getQuery());
         verify(metricQueryRepository).queryPromqlRange(
@@ -912,7 +915,8 @@ class OtlpIngestionWorkspaceServiceImplTest {
         when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.empty());
         when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of(serviceName, serviceNamespace, environment));
         String checkoutQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
-                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\"");
+                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
+                + "hertzbeat_entity_id=\"42\"");
         stubPromqlQuery(checkoutQuery,
                 new DatasourceQueryData(
                         "otlp-metrics-console",
