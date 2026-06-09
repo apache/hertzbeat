@@ -506,6 +506,7 @@ beforeEach(() => {
   mockState.replace.mockReset();
   mockState.lastLoad = null;
   mockState.metricSeries = [];
+  (mockState.renderData as any).inventory = undefined;
   apiMessageGet.mockReset();
   loadOtlpMetricsConsole.mockReset();
   loadOtlpMetricsInventory.mockReset();
@@ -2601,6 +2602,62 @@ describe('otlp metrics page', () => {
     expect(params.get('spanId')).toBe('span-checkout');
     expect(params.get('collector')).toBe('collector-a');
     expect(params.get('template')).toBe('spring-boot');
+  });
+
+  it('loads a source-only inventory metric into the route-backed query builder', async () => {
+    mockState.searchParams = new URLSearchParams('serviceName=checkout&serviceNamespace=payments&environment=prod&timeRange=last-1h');
+    mockState.metricSeries = [];
+    (mockState.renderData as any).inventory = {
+      source: 'promql-inventory',
+      context: {
+        entityId: 7,
+        entityName: 'Checkout API',
+        serviceName: 'checkout',
+        serviceNamespace: 'payments',
+        environment: 'prod'
+      },
+      items: [
+        {
+          metricName: 'source.only.latency',
+          family: 'latency',
+          timeSeriesCount: 4,
+          latestObservedAt: 2000,
+          labels: {
+            service_name: 'checkout',
+            http_route: '/checkout'
+          }
+        }
+      ]
+    };
+
+    const { default: OtlpMetricsPage } = await import('./page');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      interactionRoot?.render(<OtlpMetricsPage />);
+      await Promise.resolve();
+    });
+
+    const queryAction = interactionContainer.querySelector('[data-otlp-metrics-inventory-query-action="inventory-source.only.latency-0"]') as HTMLButtonElement | null;
+    expect(queryAction).not.toBeNull();
+    expect(queryAction?.getAttribute('data-otlp-metrics-inventory-query-source')).toBe('promql-inventory');
+    expect(queryAction?.textContent).toContain('source.only.latency');
+
+    await act(async () => {
+      queryAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const href = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    const params = new URL(href, 'http://localhost').searchParams;
+    expect(params.get('query')).toBe('source.only.latency');
+    expect(params.get('series')).toBeNull();
+    expect(params.get('serviceName')).toBe('checkout');
+    expect(params.get('serviceNamespace')).toBe('payments');
+    expect(params.get('environment')).toBe('prod');
+    expect(params.get('timeRange')).toBe('last-1h');
   });
 
   it('renders a route-backed table inspector for selected metric raw samples', async () => {

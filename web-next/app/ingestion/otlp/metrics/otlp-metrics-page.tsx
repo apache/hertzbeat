@@ -2299,7 +2299,11 @@ export default function OtlpMetricsPage() {
                     getRowKey={row => row.rowKey}
                     selectedRowKey={selectedMetricSeries?.key}
                     onRowClick={row => {
-                      if (row.series) applySelectedMetricSeries(row.series);
+                      if (row.series) {
+                        applySelectedMetricSeries(row.series);
+                        return;
+                      }
+                      applyMetricInventoryQuery(row.title, null);
                     }}
                     getRowProps={row => ({
                       'data-otlp-metrics-series-row': 'selectable-series',
@@ -2319,24 +2323,23 @@ export default function OtlpMetricsPage() {
                       {
                         key: 'name',
                         header: t('otlp.metrics.series.context.metric-name'),
-                        render: row => row.series ? (
+                        render: row => (
                           <HzButton
                             type="button"
                             size="xs"
                             intent="ghost"
-                            data-otlp-metrics-inventory-query-action={row.series.key}
+                            data-otlp-metrics-inventory-query-action={row.series?.key || row.rowKey}
                             data-otlp-metrics-inventory-query-action-owner="hertzbeat-ui-button"
+                            data-otlp-metrics-inventory-query-source={row.series ? 'console-series' : row.inventorySource || 'source-inventory'}
                             aria-label={t('otlp.metrics.inventory.query-action.aria', { metric: row.title })}
                             onClick={event => {
                               event.stopPropagation();
-                              applyMetricInventoryQuery(row.title, row.series);
+                              applyMetricInventoryQuery(row.title, row.series || null);
                             }}
                             className="min-w-0 justify-start truncate font-mono"
                           >
                             {row.title}
                           </HzButton>
-                        ) : (
-                          <HzDataCellText variant="title" display="block">{row.title}</HzDataCellText>
                         )
                       },
                       {
