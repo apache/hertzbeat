@@ -278,6 +278,15 @@ function buildLogAttributeExcludeExpression(row: LogAttributeRow, objectValueLab
   return { kind, expression: `${key}!=${value}` };
 }
 
+function buildLogAttributeExistsExpression(row: LogAttributeRow) {
+  const kind = resolveLogAttributeFilterKind(row);
+  const key = row.name.trim();
+  if (!kind || !isSafeLogAttributeFilterKey(key)) {
+    return null;
+  }
+  return { kind, expression: `${key} EXISTS` };
+}
+
 function buildLogAttributeGroupBy(row: LogAttributeRow) {
   const kind = resolveLogAttributeFilterKind(row);
   const key = row.name.trim();
@@ -2220,6 +2229,19 @@ function LogManageExplorer({
     applyQuery(nextQuery);
   }, [applyQuery, draft, setDraft, t]);
 
+  const applyLogAttributeExistsFilter = useCallback((row: LogAttributeRow) => {
+    const filter = buildLogAttributeExistsExpression(row);
+    if (!filter) return;
+    const nextQuery: LogQueryState = {
+      ...draft,
+      ...(filter.kind === 'resource'
+        ? { resourceFilter: mergeLogAttributeFilterExpression(draft.resourceFilter, filter.expression) }
+        : { attributeFilter: mergeLogAttributeFilterExpression(draft.attributeFilter, filter.expression) })
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
   const replaceLogAttributeFilter = useCallback((row: LogAttributeRow) => {
     const filter = buildLogAttributeFilterExpression(row, t('log.manage.attributes.value.object'));
     if (!filter) return;
@@ -2309,10 +2331,11 @@ function LogManageExplorer({
   const renderLogAttributeFilterAction = useCallback((row: LogAttributeRow) => {
     const filter = buildLogAttributeFilterExpression(row, t('log.manage.attributes.value.object'));
     const excludeFilter = buildLogAttributeExcludeExpression(row, t('log.manage.attributes.value.object'));
+    const existsFilter = buildLogAttributeExistsExpression(row);
     const group = buildLogAttributeGroupBy(row);
     const fieldColumn = buildLogAttributeFieldColumn(row);
     const fieldColumnVisible = Boolean(fieldColumn && visibleLogFieldColumns.includes(fieldColumn));
-    if (!filter && !excludeFilter && !group && !fieldColumn) return null;
+    if (!filter && !excludeFilter && !existsFilter && !group && !fieldColumn) return null;
     return (
       <span className="inline-flex flex-wrap gap-1">
         {fieldColumn ? (
@@ -2411,6 +2434,25 @@ function LogManageExplorer({
             {t('log.manage.attributes.filter-out-action')}
           </HzButton>
         ) : null}
+        {existsFilter ? (
+          <HzButton
+            data-log-manage-attribute-exists-action={existsFilter.kind}
+            data-log-manage-attribute-exists-owner="hertzbeat-ui-button"
+            data-log-manage-attribute-filter-name={row.name}
+            data-log-manage-attribute-filter-value={row.value}
+            size="sm"
+            intent="secondary"
+            onClick={() => applyLogAttributeExistsFilter(row)}
+            aria-label={t('log.manage.attributes.exists-action.aria', { name: row.name })}
+          >
+            <HzButtonIcon
+              icon={Check}
+              data-log-manage-attribute-exists-icon="exists"
+              data-log-manage-attribute-exists-icon-owner="hertzbeat-ui-button-icon"
+            />
+            {t('log.manage.attributes.exists-action')}
+          </HzButton>
+        ) : null}
         {group ? (
           <HzButton
             data-log-manage-attribute-group-action={group.kind}
@@ -2432,7 +2474,7 @@ function LogManageExplorer({
         ) : null}
       </span>
     );
-  }, [applyLogAttributeFieldColumn, applyLogAttributeFilter, applyLogContextAttributeFilter, excludeLogAttributeFilter, groupLogAttribute, replaceLogAttributeFilter, t, visibleLogFieldColumns]);
+  }, [applyLogAttributeExistsFilter, applyLogAttributeFieldColumn, applyLogAttributeFilter, applyLogContextAttributeFilter, excludeLogAttributeFilter, groupLogAttribute, replaceLogAttributeFilter, t, visibleLogFieldColumns]);
 
   const openLogDetails = (entry: LogEntry | null, source: 'history' | 'stream', selectionState: 'attached' | 'detached' = 'attached') => {
     if (!entry) return;

@@ -641,6 +641,10 @@ describe('log manage page', () => {
     expect(source).toContain('data-log-manage-entity-context-owner="hertzbeat-ui-detail-rows"');
     expect(source).toContain('data-log-manage-selected-evidence-owner="hertzbeat-ui-detail-rows"');
     expect(source).toContain('data-log-manage-detail-facts-owner="hertzbeat-ui-detail-rows"');
+    expect(source).toContain('buildLogAttributeExistsExpression');
+    expect(source).toContain('applyLogAttributeExistsFilter');
+    expect(source).toContain('data-log-manage-attribute-exists-action={existsFilter.kind}');
+    expect(source).toContain('data-log-manage-attribute-exists-owner="hertzbeat-ui-button"');
     expect(source).toContain('data-log-manage-stream-selected-detail-owner="hertzbeat-ui-detail-rows"');
     expect(source).toContain('data-log-manage-stream-detail-action-stack="shared-control-stack"');
     expect(source).toContain('data-log-manage-stream-detail-action-stack-owner="hertzbeat-ui-control-stack"');
@@ -3387,6 +3391,35 @@ describe('log manage page', () => {
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(String(mockState.replace.mock.calls[0]?.[0])).toContain('attributeFilter=http.route%21%3D%2Fcheckout%2F%3Aid');
+
+      const existsResourceAction = interactionContainer.querySelector(
+        '[data-log-manage-attribute-exists-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
+      ) as HTMLButtonElement | null;
+      const existsAttributeAction = interactionContainer.querySelector(
+        '[data-log-manage-attribute-exists-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
+      ) as HTMLButtonElement | null;
+      expect(existsResourceAction).toBeTruthy();
+      expect(existsAttributeAction).toBeTruthy();
+      expect(existsResourceAction?.getAttribute('data-log-manage-attribute-exists-owner')).toBe('hertzbeat-ui-button');
+      expect(existsAttributeAction?.getAttribute('data-log-manage-attribute-exists-owner')).toBe('hertzbeat-ui-button');
+
+      mockState.replace.mockClear();
+      await act(async () => {
+        existsResourceAction?.click();
+        await Promise.resolve();
+      });
+
+      expect(mockState.replace).toHaveBeenCalledTimes(1);
+      expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('resourceFilter')).toContain('service.version EXISTS');
+
+      mockState.replace.mockClear();
+      await act(async () => {
+        existsAttributeAction?.click();
+        await Promise.resolve();
+      });
+
+      expect(mockState.replace).toHaveBeenCalledTimes(1);
+      expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route EXISTS');
     } finally {
       mockState.renderData.list.content = originalContent;
     }

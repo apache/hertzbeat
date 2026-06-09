@@ -1794,15 +1794,19 @@ describe('trace manage page', () => {
     expect(source).toContain('selectedResourceAttributeRows');
     expect(source).toContain('buildTraceResourceFilterExpression');
     expect(source).toContain('buildTraceResourceExcludeFilterExpression');
+    expect(source).toContain('buildTraceResourceExistsFilterExpression');
     expect(source).toContain('buildTraceSpanAttributeFilterExpression');
     expect(source).toContain('buildTraceSpanAttributeExcludeFilterExpression');
+    expect(source).toContain('buildTraceSpanAttributeExistsFilterExpression');
     expect(source).toContain('buildTraceSpanAttributeGroupBy');
     expect(source).toContain('mergeTraceResourceFilterExpression');
     expect(source).toContain('applyTraceResourceFilter');
     expect(source).toContain('excludeTraceResourceFilter');
+    expect(source).toContain('applyTraceResourceExistsFilter');
     expect(source).toContain('replaceTraceResourceFilter');
     expect(source).toContain('applyTraceSpanAttributeFilter');
     expect(source).toContain('excludeTraceSpanAttributeFilter');
+    expect(source).toContain('applyTraceSpanAttributeExistsFilter');
     expect(source).toContain('replaceTraceSpanAttributeFilter');
     expect(source).toContain('applyTraceSpanAttributeGroupBy');
     expect(source).toContain('buildTraceResourceGroupBy');
@@ -1813,6 +1817,8 @@ describe('trace manage page', () => {
     expect(source).toContain('data-trace-manage-drawer-span-attribute-filter-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-filter-out-action="true"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-filter-out-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain('data-trace-manage-drawer-span-attribute-exists-action="true"');
+    expect(source).toContain('data-trace-manage-drawer-span-attribute-exists-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-replace-action="true"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-replace-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-group-action="true"');
@@ -1829,6 +1835,9 @@ describe('trace manage page', () => {
     expect(source).toContain('data-trace-manage-drawer-resource-filter-out-action="true"');
     expect(source).toContain('data-trace-manage-drawer-resource-filter-out-action-owner="hertzbeat-ui-button"');
     expect(source).toContain("t('trace.manage.drawer.attributes.filter-out-action')");
+    expect(source).toContain('data-trace-manage-drawer-resource-exists-action="true"');
+    expect(source).toContain('data-trace-manage-drawer-resource-exists-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain("t('trace.manage.drawer.attributes.exists-action')");
     expect(source).toContain('data-trace-manage-drawer-resource-replace-action="true"');
     expect(source).toContain('data-trace-manage-drawer-resource-replace-action-owner="hertzbeat-ui-button"');
     expect(source).toContain("t('trace.manage.drawer.attributes.replace-action')");

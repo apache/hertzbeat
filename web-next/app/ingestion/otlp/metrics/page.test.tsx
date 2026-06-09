@@ -1036,10 +1036,15 @@ describe('otlp metrics page', () => {
     expect(source).toContain("header: t('otlp.metrics.attributes.column.name')");
     expect(source).toContain("header: t('otlp.metrics.attributes.column.value')");
     expect(source).toContain("header: t('otlp.metrics.attributes.column.exclude')");
+    expect(source).toContain("header: t('otlp.metrics.attributes.column.exists')");
     expect(source).toContain('buildMetricAttributeExcludeFilterExpression');
+    expect(source).toContain('buildMetricAttributeExistsFilterExpression');
     expect(source).toContain('applyMetricAttributeExcludeFilter');
+    expect(source).toContain('applyMetricAttributeExistsFilter');
     expect(source).toContain('data-otlp-metrics-attribute-filter-out-action={row.name}');
     expect(source).toContain('data-otlp-metrics-attribute-filter-out-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain('data-otlp-metrics-attribute-exists-action={row.name}');
+    expect(source).toContain('data-otlp-metrics-attribute-exists-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('boundary="top"');
     expect(source).not.toContain('className="mt-3 border-t border-[#252b35] pt-3"');
     expect(source).toContain('data-otlp-metrics-linked-record-summary="log-trace-alert-links"');
@@ -3037,6 +3042,25 @@ describe('otlp metrics page', () => {
     expect(excludeParams.get('environment')).toBe('prod');
     expect(excludeParams.get('traceId')).toBe('trace-checkout');
     expect(excludeParams.get('spanId')).toBe('span-checkout');
+
+    const serviceExistsAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-exists-action="service.name"]') as HTMLButtonElement | null;
+    expect(serviceExistsAction?.getAttribute('data-otlp-metrics-attribute-exists-action-owner')).toBe('hertzbeat-ui-button');
+    expect(serviceExistsAction?.getAttribute('aria-label')).toContain('service.name');
+
+    await act(async () => {
+      serviceExistsAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    const existsHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    const existsParams = new URL(existsHref, 'http://localhost').searchParams;
+    expect(existsParams.get('filter')).toContain('service.name EXISTS');
+    expect(existsParams.get('series')).toBe('checkout_latency-0');
+    expect(existsParams.get('entityId')).toBe('7');
+    expect(existsParams.get('serviceName')).toBe('checkout');
+    expect(existsParams.get('environment')).toBe('prod');
+    expect(existsParams.get('traceId')).toBe('trace-checkout');
+    expect(existsParams.get('spanId')).toBe('span-checkout');
 
     const routeGroupAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-group-action="route"]') as HTMLButtonElement | null;
     expect(routeGroupAction?.getAttribute('data-otlp-metrics-attribute-group-action-owner')).toBe('hertzbeat-ui-button');

@@ -515,12 +515,24 @@ function buildTraceResourceExcludeFilterExpression(name: React.ReactNode, value:
   return `${key}!=${filterValue}`;
 }
 
+function buildTraceResourceExistsFilterExpression(name: React.ReactNode) {
+  const key = String(name ?? '').trim();
+  if (!isSafeTraceResourceFilterKey(key)) {
+    return null;
+  }
+  return `${key} EXISTS`;
+}
+
 function buildTraceSpanAttributeFilterExpression(name: React.ReactNode, value: React.ReactNode) {
   return buildTraceResourceFilterExpression(name, value);
 }
 
 function buildTraceSpanAttributeExcludeFilterExpression(name: React.ReactNode, value: React.ReactNode) {
   return buildTraceResourceExcludeFilterExpression(name, value);
+}
+
+function buildTraceSpanAttributeExistsFilterExpression(name: React.ReactNode) {
+  return buildTraceResourceExistsFilterExpression(name);
 }
 
 function buildTraceSpanAttributeGroupBy(name: React.ReactNode) {
@@ -777,10 +789,12 @@ function TraceWaterfallDrawer({
   onApplyOperationFilter,
   onApplySpanAttributeFilter,
   onExcludeSpanAttributeFilter,
+  onApplySpanAttributeExistsFilter,
   onReplaceSpanAttributeFilter,
   onApplySpanAttributeGroupBy,
   onApplyResourceFilter,
   onExcludeResourceFilter,
+  onApplyResourceExistsFilter,
   onReplaceResourceFilter,
   onApplyResourceGroupBy
 }: {
@@ -795,10 +809,12 @@ function TraceWaterfallDrawer({
   onApplyOperationFilter: (operationName: string) => void;
   onApplySpanAttributeFilter: (name: string, value: string) => void;
   onExcludeSpanAttributeFilter: (name: string, value: string) => void;
+  onApplySpanAttributeExistsFilter: (name: string) => void;
   onReplaceSpanAttributeFilter: (name: string, value: string) => void;
   onApplySpanAttributeGroupBy: (name: string) => void;
   onApplyResourceFilter: (name: string, value: string) => void;
   onExcludeResourceFilter: (name: string, value: string) => void;
+  onApplyResourceExistsFilter: (name: string) => void;
   onReplaceResourceFilter: (name: string, value: string) => void;
   onApplyResourceGroupBy: (name: string) => void;
 }) {
@@ -1234,7 +1250,7 @@ function TraceWaterfallDrawer({
                     title: row.title,
                     copy: row.copy,
                     meta: row.meta,
-                    action: buildTraceSpanAttributeFilterExpression(row.title, row.copy) || buildTraceSpanAttributeExcludeFilterExpression(row.title, row.copy) || buildTraceSpanAttributeGroupBy(row.title) ? (
+                    action: buildTraceSpanAttributeFilterExpression(row.title, row.copy) || buildTraceSpanAttributeExcludeFilterExpression(row.title, row.copy) || buildTraceSpanAttributeExistsFilterExpression(row.title) || buildTraceSpanAttributeGroupBy(row.title) ? (
                       <HzActionGroup
                         data-trace-manage-drawer-span-attribute-action-group="filter-group"
                         data-trace-manage-drawer-span-attribute-action-group-owner="hertzbeat-ui-action-group"
@@ -1267,6 +1283,18 @@ function TraceWaterfallDrawer({
                             >
                               <HzButtonIcon icon={X} data-trace-manage-drawer-span-attribute-filter-out-action-icon="exclude" data-trace-manage-drawer-span-attribute-filter-out-action-icon-owner="hertzbeat-ui-button-icon" />
                               {t('trace.manage.drawer.attributes.filter-out-action')}
+                            </HzButton>
+                            <HzButton
+                              data-trace-manage-drawer-span-attribute-exists-action="true"
+                              data-trace-manage-drawer-span-attribute-exists-action-owner="hertzbeat-ui-button"
+                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
+                              size="sm"
+                              intent="secondary"
+                              onClick={() => onApplySpanAttributeExistsFilter(row.title)}
+                              aria-label={t('trace.manage.drawer.attributes.exists-action.aria', { name: row.title })}
+                            >
+                              <HzButtonIcon icon={Check} data-trace-manage-drawer-span-attribute-exists-action-icon="exists" data-trace-manage-drawer-span-attribute-exists-action-icon-owner="hertzbeat-ui-button-icon" />
+                              {t('trace.manage.drawer.attributes.exists-action')}
                             </HzButton>
                             <HzButton
                               data-trace-manage-drawer-span-attribute-replace-action="true"
@@ -1311,7 +1339,7 @@ function TraceWaterfallDrawer({
                     title: row.title,
                     copy: row.copy,
                     meta: row.meta,
-                    action: buildTraceResourceFilterExpression(row.title, row.copy) || buildTraceResourceExcludeFilterExpression(row.title, row.copy) || buildTraceResourceGroupBy(row.title) ? (
+                    action: buildTraceResourceFilterExpression(row.title, row.copy) || buildTraceResourceExcludeFilterExpression(row.title, row.copy) || buildTraceResourceExistsFilterExpression(row.title) || buildTraceResourceGroupBy(row.title) ? (
                       <HzActionGroup
                         data-trace-manage-drawer-resource-action-group="filter-group"
                         data-trace-manage-drawer-resource-action-group-owner="hertzbeat-ui-action-group"
@@ -1344,6 +1372,18 @@ function TraceWaterfallDrawer({
                           >
                             <HzButtonIcon icon={X} data-trace-manage-drawer-resource-filter-out-action-icon="exclude" data-trace-manage-drawer-resource-filter-out-action-icon-owner="hertzbeat-ui-button-icon" />
                             {t('trace.manage.drawer.attributes.filter-out-action')}
+                          </HzButton>
+                          <HzButton
+                            data-trace-manage-drawer-resource-exists-action="true"
+                            data-trace-manage-drawer-resource-exists-action-owner="hertzbeat-ui-button"
+                            data-trace-manage-drawer-resource-filter-name={row.title}
+                            size="sm"
+                            intent="secondary"
+                            onClick={() => onApplyResourceExistsFilter(row.title)}
+                            aria-label={t('trace.manage.drawer.attributes.exists-action.aria', { name: row.title })}
+                          >
+                            <HzButtonIcon icon={Check} data-trace-manage-drawer-resource-exists-action-icon="exists" data-trace-manage-drawer-resource-exists-action-icon-owner="hertzbeat-ui-button-icon" />
+                            {t('trace.manage.drawer.attributes.exists-action')}
                           </HzButton>
                           <HzButton
                             data-trace-manage-drawer-resource-replace-action="true"
@@ -1875,6 +1915,17 @@ function TraceExplorer({
     applyQuery(nextQuery);
   }, [applyQuery, draft, setDraft]);
 
+  const applyTraceResourceExistsFilter = useCallback((name: string) => {
+    const expression = buildTraceResourceExistsFilterExpression(name);
+    if (!expression) return;
+    const nextQuery: TraceQueryState = {
+      ...draft,
+      resourceFilter: mergeTraceResourceFilterExpression(draft.resourceFilter, expression)
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
   const replaceTraceResourceFilter = useCallback((name: string, value: string) => {
     const expression = buildTraceResourceFilterExpression(name, value);
     if (!expression) return;
@@ -1899,6 +1950,17 @@ function TraceExplorer({
 
   const excludeTraceSpanAttributeFilter = useCallback((name: string, value: string) => {
     const expression = buildTraceSpanAttributeExcludeFilterExpression(name, value);
+    if (!expression) return;
+    const nextQuery: TraceQueryState = {
+      ...draft,
+      attributeFilter: mergeTraceResourceFilterExpression(draft.attributeFilter, expression)
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
+  const applyTraceSpanAttributeExistsFilter = useCallback((name: string) => {
+    const expression = buildTraceSpanAttributeExistsFilterExpression(name);
     if (!expression) return;
     const nextQuery: TraceQueryState = {
       ...draft,
@@ -3466,10 +3528,12 @@ function TraceExplorer({
           onApplyOperationFilter={operationName => applyTraceQuickFilter('operationName', operationName)}
           onApplySpanAttributeFilter={applyTraceSpanAttributeFilter}
           onExcludeSpanAttributeFilter={excludeTraceSpanAttributeFilter}
+          onApplySpanAttributeExistsFilter={applyTraceSpanAttributeExistsFilter}
           onReplaceSpanAttributeFilter={replaceTraceSpanAttributeFilter}
           onApplySpanAttributeGroupBy={applyTraceSpanAttributeGroupBy}
           onApplyResourceFilter={applyTraceResourceFilter}
           onExcludeResourceFilter={excludeTraceResourceFilter}
+          onApplyResourceExistsFilter={applyTraceResourceExistsFilter}
           onReplaceResourceFilter={replaceTraceResourceFilter}
           onApplyResourceGroupBy={applyTraceResourceGroupBy}
         />

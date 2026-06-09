@@ -124,6 +124,12 @@ function buildMetricAttributeExcludeFilterExpression(name: string, value: string
   return `${trimmedName}!="${escapeMetricFilterValue(trimmedValue)}"`;
 }
 
+function buildMetricAttributeExistsFilterExpression(name: string) {
+  const trimmedName = name.trim();
+  if (!trimmedName) return null;
+  return `${trimmedName} EXISTS`;
+}
+
 function mergeMetricFilterExpression(currentFilter: string, expression: string) {
   const trimmedFilter = currentFilter.trim();
   if (!trimmedFilter) return expression;
@@ -808,6 +814,17 @@ export default function OtlpMetricsPage() {
 
   const applyMetricAttributeExcludeFilter = useCallback((name: string, value: string, series?: OtlpMetricSeriesView | null) => {
     const expression = buildMetricAttributeExcludeFilterExpression(name, value);
+    if (!expression) return;
+    const nextDraft = {
+      ...draft,
+      filter: mergeMetricFilterExpression(draft.filter, expression)
+    };
+    setDraft(nextDraft);
+    replaceMetricsRoute(nextDraft, undefined, series?.key || query.series, series ? buildMetricSeriesRouteContext(series) : {});
+  }, [draft, query.series, replaceMetricsRoute]);
+
+  const applyMetricAttributeExistsFilter = useCallback((name: string, series?: OtlpMetricSeriesView | null) => {
+    const expression = buildMetricAttributeExistsFilterExpression(name);
     if (!expression) return;
     const nextDraft = {
       ...draft,
@@ -2622,6 +2639,28 @@ export default function OtlpMetricsPage() {
                                   data-otlp-metrics-attribute-filter-out-action-icon-owner="hertzbeat-ui-button-icon"
                                 />
                                 {t('otlp.metrics.attributes.filter-out-action')}
+                              </HzButton>
+                            )
+                          },
+                          {
+                            key: 'exists',
+                            header: t('otlp.metrics.attributes.column.exists'),
+                            render: row => (
+                              <HzButton
+                                type="button"
+                                size="xs"
+                                intent="ghost"
+                                data-otlp-metrics-attribute-exists-action={row.name}
+                                data-otlp-metrics-attribute-exists-action-owner="hertzbeat-ui-button"
+                                aria-label={t('otlp.metrics.attributes.exists-action.aria', { name: row.name })}
+                                onClick={() => applyMetricAttributeExistsFilter(row.name, selectedMetricSeries)}
+                              >
+                                <HzButtonIcon
+                                  icon={Check}
+                                  data-otlp-metrics-attribute-exists-action-icon={row.name}
+                                  data-otlp-metrics-attribute-exists-action-icon-owner="hertzbeat-ui-button-icon"
+                                />
+                                {t('otlp.metrics.attributes.exists-action')}
                               </HzButton>
                             )
                           },
