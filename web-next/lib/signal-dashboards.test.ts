@@ -2408,6 +2408,9 @@ describe('signal dashboards API client', () => {
         meta: 'ERROR',
         traceId: 'trace-1',
         spanId: 'span-log',
+        operationName: 'POST /checkout',
+        resourceFilter: 'service.version=1.2.3',
+        attributeFilter: 'region:us',
         relatedSignal: 'traces'
       },
       route: '/log/manage?view=table&traceId=trace-1&spanId=span-log&serviceName=checkout&start=1000&end=3000',
@@ -2431,6 +2434,9 @@ describe('signal dashboards API client', () => {
       evidenceValue: 'checkout timeout',
       traceId: 'trace-1',
       spanId: 'span-log',
+      operationName: 'POST /checkout',
+      resourceFilter: 'service.version=1.2.3',
+      attributeFilter: 'region:us',
       relatedSignal: 'traces'
     }));
     expect(createSignalDashboardPanelDraftFromRuntimeEvidence({

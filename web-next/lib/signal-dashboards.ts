@@ -1254,6 +1254,9 @@ export function createSignalDashboardPanelDraftFromRuntimeEvidence(input: {
       evidenceValue: input.row.value,
       ...(input.row.traceId ? { traceId: input.row.traceId } : {}),
       ...(input.row.spanId ? { spanId: input.row.spanId } : {}),
+      ...(input.row.operationName ? { operationName: input.row.operationName } : {}),
+      ...(input.row.resourceFilter ? { resourceFilter: input.row.resourceFilter } : {}),
+      ...(input.row.attributeFilter ? { attributeFilter: input.row.attributeFilter } : {}),
       ...(input.row.relatedSignal ? { relatedSignal: input.row.relatedSignal } : {})
     }
   });
