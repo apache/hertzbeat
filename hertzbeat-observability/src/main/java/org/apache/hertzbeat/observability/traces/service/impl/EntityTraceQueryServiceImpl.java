@@ -1059,9 +1059,12 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             return Collections.emptyMap();
         }
         Map<String, Set<String>> filters = new LinkedHashMap<>();
-        for (String clause : resourceFilter.split("(?i)\\s+and\\s+|\\s*,\\s*")) {
+        for (String clause : splitResourceFilterClauses(resourceFilter)) {
             String trimmedClause = trimText(clause);
             if (!StringUtils.hasText(trimmedClause)) {
+                continue;
+            }
+            if (appendResourceFilterInValues(filters, trimmedClause)) {
                 continue;
             }
             int separatorIndex = resourceFilterSeparatorIndex(trimmedClause);
@@ -1076,6 +1079,119 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             filters.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(value);
         }
         return filters;
+    }
+
+    private boolean appendResourceFilterInValues(Map<String, Set<String>> filters, String clause) {
+        int inIndex = resourceFilterInOperatorIndex(clause);
+        if (inIndex <= 0) {
+            return false;
+        }
+        String key = trimText(clause.substring(0, inIndex));
+        String valueList = trimText(clause.substring(inIndex + 4));
+        if (!isSafeResourceFilterKey(key) || !StringUtils.hasText(valueList)
+                || !valueList.startsWith("(") || !valueList.endsWith(")")) {
+            return false;
+        }
+        for (String value : splitResourceFilterListValues(valueList.substring(1, valueList.length() - 1))) {
+            String normalizedValue = stripResourceFilterQuotes(trimText(value));
+            if (StringUtils.hasText(normalizedValue)) {
+                filters.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(normalizedValue);
+            }
+        }
+        return filters.containsKey(key);
+    }
+
+    private int resourceFilterInOperatorIndex(String clause) {
+        String normalized = clause == null ? null : clause.toLowerCase(Locale.ROOT);
+        if (!StringUtils.hasText(normalized)) {
+            return -1;
+        }
+        int index = normalized.indexOf(" in ");
+        return index < 0 ? -1 : index;
+    }
+
+    private List<String> splitResourceFilterClauses(String resourceFilter) {
+        List<String> clauses = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        int depth = 0;
+        char quote = 0;
+        for (int index = 0; index < resourceFilter.length(); index++) {
+            char character = resourceFilter.charAt(index);
+            if (quote != 0) {
+                current.append(character);
+                if (character == quote) {
+                    quote = 0;
+                }
+                continue;
+            }
+            if (character == '\'' || character == '"') {
+                quote = character;
+                current.append(character);
+                continue;
+            }
+            if (character == '(') {
+                depth++;
+                current.append(character);
+                continue;
+            }
+            if (character == ')') {
+                depth = Math.max(0, depth - 1);
+                current.append(character);
+                continue;
+            }
+            if (depth == 0 && character == ',') {
+                addResourceFilterClause(clauses, current);
+                continue;
+            }
+            if (depth == 0 && isResourceFilterAndDelimiter(resourceFilter, index)) {
+                addResourceFilterClause(clauses, current);
+                index += 4;
+                continue;
+            }
+            current.append(character);
+        }
+        addResourceFilterClause(clauses, current);
+        return clauses;
+    }
+
+    private List<String> splitResourceFilterListValues(String values) {
+        List<String> result = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        char quote = 0;
+        for (int index = 0; index < values.length(); index++) {
+            char character = values.charAt(index);
+            if (quote != 0) {
+                current.append(character);
+                if (character == quote) {
+                    quote = 0;
+                }
+                continue;
+            }
+            if (character == '\'' || character == '"') {
+                quote = character;
+                current.append(character);
+                continue;
+            }
+            if (character == ',') {
+                addResourceFilterClause(result, current);
+                continue;
+            }
+            current.append(character);
+        }
+        addResourceFilterClause(result, current);
+        return result;
+    }
+
+    private void addResourceFilterClause(List<String> clauses, StringBuilder current) {
+        String clause = trimText(current.toString());
+        if (StringUtils.hasText(clause)) {
+            clauses.add(clause);
+        }
+        current.setLength(0);
+    }
+
+    private boolean isResourceFilterAndDelimiter(String value, int index) {
+        return index + 5 <= value.length() && value.regionMatches(true, index, " and ", 0, 5);
     }
 
     private int resourceFilterSeparatorIndex(String clause) {

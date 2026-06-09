@@ -200,7 +200,7 @@ class EntityTraceQueryServiceImplTest {
                 "checkout",
                 "commerce",
                 "prod",
-                "host.name=checkout-1",
+                "host.name IN (\"checkout-1\", 'checkout-2') and k8s.namespace.name:commerce",
                 "GET /checkout",
                 100L,
                 500L,
@@ -239,7 +239,8 @@ class EntityTraceQueryServiceImplTest {
                 eq("latency-p95-desc"),
                 eq(5L),
                 eq(7));
-        assertEquals(Set.of("checkout-1"), filterCaptor.getValue().get("host.name"));
+        assertEquals(Set.of("checkout-1", "checkout-2"), filterCaptor.getValue().get("host.name"));
+        assertEquals(Set.of("commerce"), filterCaptor.getValue().get("k8s.namespace.name"));
     }
 
     @Test
