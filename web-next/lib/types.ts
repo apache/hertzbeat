@@ -534,10 +534,46 @@ export interface EntityDetailDto {
   traceSummary?: EntityTraceSummary & { latestSpanId?: string | null };
   unifiedEvidenceSummary?: EntityUnifiedEvidenceSummary;
   signalEvidence?: EntitySignalEvidenceBundle;
+  responseHandoffs?: EntityResponseHandoffsInfo;
   boundMonitors?: Monitor[];
   activeAlerts?: unknown[];
   nextActions?: EntityNextAction[];
   noiseControlSummary?: EntityNoiseControlSummary;
+}
+
+export interface EntityResponseHandoffInfo {
+  search?: string | null;
+  status?: string | null;
+  severity?: string | null;
+  app?: string | null;
+  content?: string | null;
+  entityId?: number | string | null;
+  entityType?: string | null;
+  entityName?: string | null;
+  traceId?: string | null;
+  spanId?: string | null;
+  serviceName?: string | null;
+  serviceNamespace?: string | null;
+  severityText?: string | null;
+  query?: string | null;
+  owner?: string | null;
+  system?: string | null;
+  environment?: string | null;
+  start?: number | string | null;
+  end?: number | string | null;
+  source?: string | null;
+  focus?: string | null;
+  returnTo?: string | null;
+  returnLabel?: string | null;
+}
+
+export interface EntityResponseHandoffsInfo {
+  alerts?: EntityResponseHandoffInfo | null;
+  monitors?: EntityResponseHandoffInfo | null;
+  logs?: EntityResponseHandoffInfo | null;
+  traces?: EntityResponseHandoffInfo | null;
+  discovery?: EntityResponseHandoffInfo | null;
+  editor?: EntityResponseHandoffInfo | null;
 }
 
 export interface EntitySignalEvidenceBundle {

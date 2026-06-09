@@ -296,6 +296,182 @@ describe('entity detail view model', () => {
     ]);
   });
 
+  it('lets backend response handoffs seed signal routes without overriding inherited route context', () => {
+    const detail = {
+      entity: {
+        entity: {
+          id: 42,
+          type: 'service',
+          name: 'checkout',
+          displayName: 'Checkout',
+          environment: 'prod'
+        }
+      },
+      responseHandoffs: {
+        monitors: {
+          entityId: 42,
+          entityType: 'service',
+          entityName: 'Checkout API',
+          serviceName: 'checkout-metric',
+          serviceNamespace: 'commerce',
+          environment: 'prod',
+          start: 1713200000000,
+          end: 1713202700000,
+          source: 'monitor'
+        },
+        logs: {
+          entityId: 42,
+          entityType: 'service',
+          entityName: 'Checkout API',
+          serviceName: 'checkout-log',
+          serviceNamespace: 'commerce',
+          environment: 'prod',
+          traceId: 'trace-log',
+          spanId: 'span-log',
+          start: 1713200000000,
+          end: 1713202700000,
+          source: 'otlp'
+        },
+        traces: {
+          entityId: 42,
+          entityType: 'service',
+          entityName: 'Checkout API',
+          serviceName: 'checkout-trace',
+          serviceNamespace: 'commerce',
+          environment: 'prod',
+          traceId: 'trace-trace',
+          spanId: 'span-trace',
+          start: 1713200000000,
+          end: 1713202700000,
+          source: 'otlp'
+        }
+      }
+    } as any;
+
+    const links = buildEntityContextHandoffLinks(detail, 'last-1h');
+    const metrics = new URL(links.find(link => link.key === 'metrics')?.copy || '/', 'http://localhost').searchParams;
+    expect(metrics.get('entityType')).toBe('service');
+    expect(metrics.get('entityName')).toBe('Checkout API');
+    expect(metrics.get('serviceName')).toBe('checkout-metric');
+    expect(metrics.get('serviceNamespace')).toBe('commerce');
+    expect(metrics.get('start')).toBe('1713200000000');
+    expect(metrics.get('end')).toBe('1713202700000');
+    expect(metrics.get('source')).toBe('monitor');
+
+    const logs = new URL(links.find(link => link.key === 'logs')?.copy || '/', 'http://localhost').searchParams;
+    expect(logs.get('serviceName')).toBe('checkout-log');
+    expect(logs.get('traceId')).toBe('trace-log');
+    expect(logs.get('spanId')).toBe('span-log');
+    expect(logs.get('source')).toBe('otlp');
+
+    const traces = new URL(links.find(link => link.key === 'traces')?.copy || '/', 'http://localhost').searchParams;
+    expect(traces.get('serviceName')).toBe('checkout-trace');
+    expect(traces.get('traceId')).toBe('trace-trace');
+    expect(traces.get('spanId')).toBe('span-trace');
+
+    const inheritedLinks = buildEntityContextHandoffLinks(detail, {
+      entityName: 'Route Checkout',
+      serviceName: 'route-service',
+      serviceNamespace: 'route-namespace',
+      environment: 'route-env',
+      traceId: 'route-trace',
+      spanId: 'route-span',
+      start: '10',
+      end: '20',
+      source: 'route-source'
+    });
+    const inheritedLogs = new URL(inheritedLinks.find(link => link.key === 'logs')?.copy || '/', 'http://localhost').searchParams;
+    expect(inheritedLogs.get('entityName')).toBe('Route Checkout');
+    expect(inheritedLogs.get('serviceName')).toBe('route-service');
+    expect(inheritedLogs.get('serviceNamespace')).toBe('route-namespace');
+    expect(inheritedLogs.get('environment')).toBe('route-env');
+    expect(inheritedLogs.get('traceId')).toBe('route-trace');
+    expect(inheritedLogs.get('spanId')).toBe('route-span');
+    expect(inheritedLogs.get('start')).toBe('10');
+    expect(inheritedLogs.get('end')).toBe('20');
+    expect(inheritedLogs.get('source')).toBe('route-source');
+  });
+
+  it('builds host entity handoff links with resource filters instead of inventing a service name', () => {
+    const links = buildEntityContextHandoffLinks(
+      {
+        entity: {
+          entity: {
+            id: 4201,
+            name: 'checkout-node-a',
+            displayName: 'Checkout Node A',
+            type: 'host'
+          },
+          identities: [{ key: 'host.name', value: 'checkout-node-a' }]
+        }
+      } as any,
+      'last-30m'
+    );
+
+    const metrics = new URL(links[0]?.copy || '/', 'http://localhost');
+    expect(metrics.pathname).toBe('/ingestion/otlp/metrics');
+    expect(metrics.searchParams.get('entityId')).toBe('4201');
+    expect(metrics.searchParams.get('serviceName')).toBeNull();
+    expect(metrics.searchParams.get('filter')).toBe('host.name="checkout-node-a"');
+
+    const logs = new URL(links[1]?.copy || '/', 'http://localhost');
+    expect(logs.pathname).toBe('/log/manage');
+    expect(logs.searchParams.get('serviceName')).toBeNull();
+    expect(logs.searchParams.get('resourceFilter')).toBe('host.name="checkout-node-a"');
+
+    const traces = new URL(links[2]?.copy || '/', 'http://localhost');
+    expect(traces.pathname).toBe('/trace/manage');
+    expect(traces.searchParams.get('serviceName')).toBeNull();
+    expect(traces.searchParams.get('resourceFilter')).toBe('host.name="checkout-node-a"');
+  });
+
+  it('builds k8s workload handoff links with inherited service context and pod resource filters', () => {
+    const links = buildEntityContextHandoffLinks(
+      {
+        entity: {
+          entity: {
+            id: 4202,
+            name: 'checkout-v1-78dfd',
+            displayName: 'Checkout Pod',
+            type: 'k8s_workload',
+            namespace: 'payments'
+          },
+          identities: [
+            { key: 'k8s.namespace.name', value: 'payments' },
+            { key: 'k8s.pod.name', value: 'checkout-v1-78dfd' },
+            { key: 'container.name', value: 'checkout' }
+          ]
+        }
+      } as any,
+      {
+        timeRange: 'last-45m',
+        source: 'otlp',
+        collector: 'collector-demo-a',
+        template: 'spring-boot',
+        serviceName: 'checkout',
+        serviceNamespace: 'hertzbeat-demo',
+        environment: 'demo',
+        returnTo: '/entities/4200'
+      }
+    );
+    const expectedFilter = 'k8s.namespace.name="payments" and k8s.pod.name="checkout-v1-78dfd" and container.name="checkout"';
+
+    const metrics = new URL(links[0]?.copy || '/', 'http://localhost');
+    expect(metrics.searchParams.get('entityId')).toBe('4202');
+    expect(metrics.searchParams.get('serviceName')).toBe('checkout');
+    expect(metrics.searchParams.get('serviceNamespace')).toBe('hertzbeat-demo');
+    expect(metrics.searchParams.get('source')).toBe('otlp');
+    expect(metrics.searchParams.get('filter')).toBe(expectedFilter);
+
+    const logs = new URL(links[1]?.copy || '/', 'http://localhost');
+    expect(logs.searchParams.get('resourceFilter')).toBe(expectedFilter);
+    expect(logs.searchParams.get('collector')).toBe('collector-demo-a');
+
+    const traces = new URL(links[2]?.copy || '/', 'http://localhost');
+    expect(traces.searchParams.get('resourceFilter')).toBe(expectedFilter);
+    expect(traces.searchParams.get('template')).toBe('spring-boot');
+  });
+
   it('builds alert, topology, and runbook handoffs only from real entity evidence', () => {
     const rows = buildEntityEvidenceHandoffRows(
       {
@@ -491,7 +667,12 @@ describe('entity detail view model', () => {
       { title: 'Current alert #1', copy: 'error rate high', meta: 'firing · severity=critical', tone: 'danger' }
     ]);
     expect(buildRelationshipRows(detail)).toEqual([
-      { title: 'calls', copy: 'mysql-prod', meta: 'mysql-1' },
+      {
+        title: 'calls',
+        copy: 'mysql-prod',
+        meta: 'mysql-1',
+        href: '/entities/mysql-1?entityId=mysql-1&entityName=mysql-prod&timeRange=last-1h'
+      },
       { title: 'owned-by', copy: 'payment-app', meta: 'Upstream/downstream relationship' }
     ]);
     expect(buildCollectionSourceRows(detail)).toEqual([
@@ -499,6 +680,60 @@ describe('entity detail view model', () => {
       { title: 'Identities', copy: '1 identities', meta: 'service.name=checkout' },
       { title: 'Template binding', copy: '1 bindings', meta: 'spring-boot' },
       { title: 'Labels', copy: '1 labels', meta: 'k8s.namespace.name=prod' }
+    ]);
+  });
+
+  it('keeps OTLP entity relation drilldowns linked to target entities with signal context', () => {
+    const detail = {
+      entity: {
+        entity: {
+          id: 4200,
+          name: 'checkout',
+          displayName: 'Checkout API',
+          source: 'otlp'
+        },
+        relations: [
+          {
+            relationType: 'runs_on',
+            targetEntityId: 4201,
+            targetRef: 'host:checkout-node-a',
+            relationSource: 'otel_resource',
+            status: 'confirmed'
+          },
+          {
+            relationType: 'deployed_on',
+            targetEntityId: 4202,
+            targetRef: 'k8s_workload:payments/checkout-v1-78dfd',
+            relationSource: 'otel_resource',
+            status: 'confirmed'
+          }
+        ]
+      }
+    } as any;
+
+    expect(
+      buildRelationshipRows(detail, {
+        timeRange: 'last-45m',
+        source: 'otlp',
+        collector: 'collector-demo-a',
+        template: 'spring-boot',
+        serviceName: 'checkout',
+        serviceNamespace: 'hertzbeat-demo',
+        environment: 'demo'
+      })
+    ).toEqual([
+      {
+        title: 'runs_on',
+        copy: 'host:checkout-node-a',
+        meta: '4201',
+        href: '/entities/4201?entityId=4201&entityName=host%3Acheckout-node-a&serviceName=checkout&environment=demo&timeRange=last-45m&source=otlp&collector=collector-demo-a&template=spring-boot&serviceNamespace=hertzbeat-demo&returnTo=%2Fentities%2F4200'
+      },
+      {
+        title: 'deployed_on',
+        copy: 'k8s_workload:payments/checkout-v1-78dfd',
+        meta: '4202',
+        href: '/entities/4202?entityId=4202&entityName=k8s_workload%3Apayments%2Fcheckout-v1-78dfd&serviceName=checkout&environment=demo&timeRange=last-45m&source=otlp&collector=collector-demo-a&template=spring-boot&serviceNamespace=hertzbeat-demo&returnTo=%2Fentities%2F4200'
+      }
     ]);
   });
 

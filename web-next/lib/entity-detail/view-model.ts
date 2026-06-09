@@ -1,4 +1,4 @@
-import type { Entity, EntityDetailDto, EntityLinkRef } from '@/lib/types';
+import type { Entity, EntityDetailDto, EntityLinkRef, EntityResponseHandoffInfo } from '@/lib/types';
 import { buildCollectorHealthEvidence } from '../collector-health-evidence';
 import { interpolate, type TranslationParams } from '../i18n';
 import { SUPPLEMENTAL_MESSAGES } from '../i18n-runtime-messages';
@@ -35,6 +35,13 @@ type DetailRow = {
 
 type HandoffRow = DetailRow & {
   key: string;
+};
+
+type SignalHandoffKind = 'metrics' | 'logs' | 'traces';
+
+type EntityResourceScope = {
+  metricsFilter: string;
+  resourceFilter: string;
 };
 
 type EvidenceHandoffRow = DetailRow & {
@@ -178,7 +185,7 @@ function localizeActionText(
 export function buildSummaryRows(
   detail: Pick<EntityDetailDto, 'evidenceSummary' | 'monitorSummary' | 'logSummary' | 'traceSummary' | 'signalEvidence' | 'boundMonitors'>,
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
-) {
+): DetailRow[] {
   const boundMonitorCount = detail.monitorSummary?.totalBoundMonitors ?? detail.boundMonitors?.length ?? 0;
   const downMonitorCount = detail.evidenceSummary?.downMonitorCount ?? 0;
   const logSummary = getSignalLogSummary(detail);
@@ -542,6 +549,83 @@ function normalizeUnknownText(value: unknown) {
   return undefined;
 }
 
+function responseHandoffForSignal(detail: EntityDetailDto, signal?: SignalHandoffKind): EntityResponseHandoffInfo | null {
+  if (signal === 'metrics') return detail.responseHandoffs?.monitors || null;
+  if (signal === 'logs') return detail.responseHandoffs?.logs || null;
+  if (signal === 'traces') return detail.responseHandoffs?.traces || null;
+  return null;
+}
+
+function normalizeEntityType(entity: Entity) {
+  return normalizeUnknownText(entity.type)?.toLowerCase().replaceAll('-', '_');
+}
+
+function isKnownResourceEntity(entity: Entity) {
+  const type = normalizeEntityType(entity);
+  return type === 'host' || type === 'k8s_workload' || type === 'k8s_pod' || type === 'kubernetes_workload';
+}
+
+function collectEntityIdentityValues(detail: EntityDetailDto) {
+  const values = new Map<string, string>();
+  const put = (key: unknown, value: unknown) => {
+    const normalizedKey = normalizeUnknownText(key);
+    const normalizedValue = normalizeUnknownText(value);
+    if (normalizedKey && normalizedValue && !values.has(normalizedKey)) {
+      values.set(normalizedKey, normalizedValue);
+    }
+  };
+
+  (detail.entity?.identities || []).forEach(identity => {
+    if (!identity || typeof identity !== 'object') return;
+    const record = identity as Record<string, unknown>;
+    put(record.key || record.name || record.identityKey, record.value || record.identityValue);
+  });
+
+  const labels = detail.entity?.entity?.labels;
+  if (labels && typeof labels === 'object' && !Array.isArray(labels)) {
+    Object.entries(labels as Record<string, unknown>).forEach(([key, value]) => put(key, value));
+  }
+
+  return values;
+}
+
+function quoteResourceFilterValue(value: string) {
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
+function buildResourceFilterExpression(pairs: Array<[string, string | undefined]>) {
+  return pairs
+    .map(([key, value]) => (value ? `${key}=${quoteResourceFilterValue(value)}` : undefined))
+    .filter((value): value is string => Boolean(value))
+    .join(' and ');
+}
+
+function buildEntityResourceScope(detail: EntityDetailDto): EntityResourceScope | null {
+  const entity = getEntityRecord(detail);
+  const type = normalizeEntityType(entity);
+  const identityValues = collectEntityIdentityValues(detail);
+
+  if (type === 'host') {
+    const hostName = identityValues.get('host.name') || normalizeUnknownText(entity.name);
+    const filter = buildResourceFilterExpression([['host.name', hostName]]);
+    return filter ? { metricsFilter: filter, resourceFilter: filter } : null;
+  }
+
+  if (type === 'k8s_workload' || type === 'k8s_pod' || type === 'kubernetes_workload') {
+    const namespace = identityValues.get('k8s.namespace.name') || normalizeUnknownText(entity.namespace);
+    const pod = identityValues.get('k8s.pod.name') || normalizeUnknownText(entity.name);
+    const container = identityValues.get('container.name');
+    const filter = buildResourceFilterExpression([
+      ['k8s.namespace.name', namespace],
+      ['k8s.pod.name', pod],
+      ['container.name', container]
+    ]);
+    return filter ? { metricsFilter: filter, resourceFilter: filter } : null;
+  }
+
+  return null;
+}
+
 function resolveEntityTimeContext(context: EntityDetailTimeContext | undefined): SignalRouteContext {
   if (!context) return { timeRange: 'last-1h' };
   return typeof context === 'string' ? { timeRange: context } : context;
@@ -579,29 +663,55 @@ function appendPreservedEntityContext(params: URLSearchParams, routeContext: Sig
   });
 }
 
+function appendResponseHandoffContext(params: URLSearchParams, handoff: EntityResponseHandoffInfo | null) {
+  if (!handoff) return;
+  addContextParam(params, 'start', normalizeUnknownText(handoff.start));
+  addContextParam(params, 'end', normalizeUnknownText(handoff.end));
+  addContextParam(params, 'source', normalizeUnknownText(handoff.source));
+}
+
 function buildContextParams(
   detail: EntityDetailDto,
   timeContext: EntityDetailTimeContext,
-  options: { includeTrace?: boolean; includeEntityName?: boolean; includeReturnTo?: boolean } = {}
+  options: { includeTrace?: boolean; includeEntityName?: boolean; includeReturnTo?: boolean; signal?: SignalHandoffKind } = {}
 ) {
   const entity = getEntityRecord(detail);
   const routeContext = resolveEntityTimeContext(timeContext);
-  const entityId = entity.id != null ? String(entity.id) : '';
-  const entityName = entity.displayName || entity.name || '';
-  const serviceName = normalizeContextText(routeContext.serviceName) || entity.name || entity.displayName || '';
+  const responseHandoff = responseHandoffForSignal(detail, options.signal);
+  const responseEntityName = normalizeUnknownText(responseHandoff?.entityName);
+  const routeEntityName = normalizeContextText(routeContext.entityName);
+  const entityId = normalizeContextText(routeContext.entityId) || normalizeUnknownText(responseHandoff?.entityId) || (entity.id != null ? String(entity.id) : '');
+  const entityName = routeEntityName || responseEntityName || entity.displayName || entity.name || '';
+  const entityType = normalizeContextText(routeContext.entityType) || normalizeUnknownText(responseHandoff?.entityType) || normalizeEntityType(entity);
+  const resourceScope = buildEntityResourceScope(detail);
+  const serviceName =
+    normalizeContextText(routeContext.serviceName) ||
+    normalizeUnknownText(responseHandoff?.serviceName) ||
+    (isKnownResourceEntity(entity) ? '' : entity.name || entity.displayName || '');
+  const serviceNamespace = normalizeContextText(routeContext.serviceNamespace) || normalizeUnknownText(responseHandoff?.serviceNamespace);
+  const environment = normalizeContextText(routeContext.environment) || normalizeUnknownText(responseHandoff?.environment) || entity.environment;
   const traceSummary = getSignalTraceSummary(detail);
   const timeRange = normalizeContextText(routeContext.timeRange) || 'last-1h';
   const params = new URLSearchParams();
 
   addContextParam(params, 'entityId', entityId);
-  if (options.includeEntityName) addContextParam(params, 'entityName', entityName);
+  addContextParam(params, 'entityType', entityType);
+  if (options.includeEntityName || routeEntityName || responseEntityName) addContextParam(params, 'entityName', entityName);
   addContextParam(params, 'serviceName', serviceName);
-  addContextParam(params, 'environment', normalizeContextText(routeContext.environment) || entity.environment);
+  addContextParam(params, 'serviceNamespace', serviceNamespace);
+  addContextParam(params, 'environment', environment);
   addContextParam(params, 'timeRange', timeRange);
+  appendResponseHandoffContext(params, responseHandoff);
   appendPreservedEntityContext(params, routeContext);
+  if (options.signal === 'metrics' && resourceScope?.metricsFilter) {
+    addContextParam(params, 'filter', resourceScope.metricsFilter);
+  }
+  if ((options.signal === 'logs' || options.signal === 'traces') && resourceScope?.resourceFilter) {
+    addContextParam(params, 'resourceFilter', resourceScope.resourceFilter);
+  }
   if (options.includeTrace) {
-    addContextParam(params, 'traceId', normalizeContextText(routeContext.traceId) || traceSummary?.latestTraceId);
-    addContextParam(params, 'spanId', normalizeContextText(routeContext.spanId) || traceSummary?.latestSpanId);
+    addContextParam(params, 'traceId', normalizeContextText(routeContext.traceId) || normalizeUnknownText(responseHandoff?.traceId) || traceSummary?.latestTraceId);
+    addContextParam(params, 'spanId', normalizeContextText(routeContext.spanId) || normalizeUnknownText(responseHandoff?.spanId) || traceSummary?.latestSpanId);
   }
   if (options.includeReturnTo && entityId) {
     params.set('returnTo', `/entities/${entityId}`);
@@ -622,26 +732,28 @@ export function buildEntityContextHandoffLinks(
   const entity = getEntityRecord(detail);
   const entityId = entity.id != null ? String(entity.id) : '';
   const shared = buildContextParams(detail, timeContext);
-  const sharedWithTrace = buildContextParams(detail, timeContext, { includeTrace: true });
+  const metricsQuery = buildContextParams(detail, timeContext, { signal: 'metrics' });
+  const logsQuery = buildContextParams(detail, timeContext, { includeTrace: true, signal: 'logs' });
+  const tracesQuery = buildContextParams(detail, timeContext, { includeTrace: true, signal: 'traces' });
   const monitorQuery = buildContextParams(detail, timeContext, { includeEntityName: true, includeReturnTo: true });
 
   return [
     {
       key: 'metrics',
       title: t('entities.detail.handoff.metrics.title'),
-      copy: withQuery('/ingestion/otlp/metrics', shared),
+      copy: withQuery('/ingestion/otlp/metrics', metricsQuery),
       meta: t('entities.detail.handoff.metrics.meta')
     },
     {
       key: 'logs',
       title: t('entities.detail.handoff.logs.title'),
-      copy: withQuery('/log/manage', sharedWithTrace),
+      copy: withQuery('/log/manage', logsQuery),
       meta: t('entities.detail.handoff.logs.meta')
     },
     {
       key: 'traces',
       title: t('entities.detail.handoff.traces.title'),
-      copy: withQuery('/trace/manage', sharedWithTrace),
+      copy: withQuery('/trace/manage', tracesQuery),
       meta: t('entities.detail.handoff.traces.meta')
     },
     {
@@ -809,6 +921,7 @@ export function buildCurrentAlertRows(
 
 export function buildRelationshipRows(
   detail: EntityDetailDto,
+  timeContext: EntityDetailTimeContext = 'last-1h',
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ): DetailRow[] {
   const relations = (detail.entity?.relations || []) as Array<Record<string, unknown>>;
@@ -823,19 +936,49 @@ export function buildRelationshipRows(
     ];
   }
 
-  return relations.map(relation => ({
-    title: String(relation.type || relation.relationType || 'related'),
-    copy: String(
-      relation.targetEntityName ||
-      relation.targetName ||
-      relation.targetEntityId ||
-      t('entities.detail.relationship-row.unknown-target')
-    ),
-    meta:
-      relation.targetEntityId != null
-        ? String(relation.targetEntityId)
-        : t('entities.detail.relationship-row.default-meta')
-  }));
+  const sourceEntity = getEntityRecord(detail);
+  const sourceEntityId = normalizeUnknownText(sourceEntity.id);
+  const routeContext = resolveEntityTimeContext(timeContext);
+  const timeRange = normalizeContextText(routeContext.timeRange) || 'last-1h';
+
+  return relations.map(relation => {
+    const targetEntityId = normalizeUnknownText(relation.targetEntityId) || normalizeUnknownText(relation.targetId);
+    const targetEntityName =
+      normalizeUnknownText(relation.targetEntityName) ||
+      normalizeUnknownText(relation.targetName) ||
+      normalizeUnknownText(relation.targetRef) ||
+      targetEntityId ||
+      t('entities.detail.relationship-row.unknown-target');
+    const params = new URLSearchParams();
+
+    if (targetEntityId) {
+      addContextParam(params, 'entityId', targetEntityId);
+      addContextParam(params, 'entityName', targetEntityName);
+      addContextParam(params, 'serviceName', normalizeContextText(routeContext.serviceName));
+      addContextParam(params, 'environment', normalizeContextText(routeContext.environment));
+      addContextParam(params, 'timeRange', timeRange);
+      appendPreservedEntityContext(params, routeContext);
+      if (sourceEntityId) {
+        params.set('returnTo', `/entities/${sourceEntityId}`);
+      }
+    }
+
+    return {
+      title: String(relation.type || relation.relationType || 'related'),
+      copy: String(
+        relation.targetEntityName ||
+        relation.targetName ||
+        relation.targetRef ||
+        relation.targetEntityId ||
+        t('entities.detail.relationship-row.unknown-target')
+      ),
+      meta:
+        relation.targetEntityId != null
+          ? String(relation.targetEntityId)
+          : t('entities.detail.relationship-row.default-meta'),
+      href: targetEntityId ? withQuery(`/entities/${targetEntityId}`, params.toString()) : undefined
+    };
+  });
 }
 
 function identitySummary(identities: unknown[]) {
