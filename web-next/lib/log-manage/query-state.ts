@@ -443,6 +443,7 @@ export function buildLogStreamUrl(query: LogQueryState, routeContext: SignalRout
   const severityNumber = normalizeSeverityNumberParam(query.severityNumber);
   if (severityNumber) params.set('severityNumber', severityNumber);
   if (query.severityText.trim()) params.set('severityText', query.severityText.trim());
+  appendLogEntityContextParams(params, routeContext);
   appendLogQuickFilterContext(params, routeContext);
   const qs = params.toString();
   return qs ? `/api/logs/sse/subscribe?${qs}` : '/api/logs/sse/subscribe';

@@ -165,7 +165,9 @@ class LogSseFilterCriteriaTest {
                 .resource(java.util.Map.of(
                         "service.name", "checkout",
                         "service.namespace", "payments",
-                        "deployment.environment.name", "prod"))
+                        "deployment.environment.name", "prod",
+                        "hertzbeat.entity_id", "42",
+                        "hertzbeat.entity_type", "service"))
                 .build();
         LogEntry paymentStagingLog = LogEntry.builder()
                 .severityText("INFO")
@@ -173,12 +175,16 @@ class LogSseFilterCriteriaTest {
                 .resource(java.util.Map.of(
                         "service.name", "payment",
                         "service.namespace", "payments",
-                        "deployment.environment.name", "staging"))
+                        "deployment.environment.name", "staging",
+                        "hertzbeat.entity_id", "43",
+                        "hertzbeat.entity_type", "service"))
                 .build();
 
         filterCriteria.setServiceName("checkout");
         filterCriteria.setServiceNamespace("payments");
         filterCriteria.setEnvironment("prod");
+        filterCriteria.setEntityId("42");
+        filterCriteria.setEntityType("service");
 
         assertTrue(filterCriteria.matches(checkoutProdLog));
         assertFalse(filterCriteria.matches(paymentStagingLog));

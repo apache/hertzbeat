@@ -101,6 +101,8 @@ class LogSseControllerTest {
         String severityNumber = "17";
         String traceId = "abcdef1234567890abcdef1234567890";
         String spanId = "abcdef1234567890";
+        String entityId = "42";
+        String entityType = "service";
 
         // When: A request is made with all filter parameters
         mockMvc.perform(get("/api/logs/sse/subscribe")
@@ -108,6 +110,8 @@ class LogSseControllerTest {
                         .param("severityNumber", severityNumber)
                         .param("traceId", traceId)
                         .param("spanId", spanId)
+                        .param("entityId", entityId)
+                        .param("entityType", entityType)
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
                 .andExpect(status().isOk());
 
@@ -119,6 +123,8 @@ class LogSseControllerTest {
         Assertions.assertEquals(capturedCriteria.getSeverityNumber(), Integer.parseInt(severityNumber));
         Assertions.assertEquals(capturedCriteria.getTraceId(), traceId);
         Assertions.assertEquals(capturedCriteria.getSpanId(), spanId);
+        Assertions.assertEquals(capturedCriteria.getEntityId(), entityId);
+        Assertions.assertEquals(capturedCriteria.getEntityType(), entityType);
     }
 
     @Test

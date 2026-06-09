@@ -312,8 +312,19 @@ describe('log query state codec', () => {
     expect(buildLogStreamUrl({ search: 'timeout', logContent: 'db down', traceId: 'abc123', spanId: 'span456', severityNumber: '17', severityText: 'ERROR' })).toBe(
       '/api/logs/sse/subscribe?logContent=db+down&traceId=abc123&spanId=span456&severityNumber=17&severityText=ERROR'
     );
-    expect(buildLogStreamUrl({ search: 'timeout', logContent: '', traceId: '', spanId: '', severityNumber: '', severityText: 'ERROR' }, { serviceName: 'checkout', environment: 'prod' })).toBe(
-      '/api/logs/sse/subscribe?logContent=timeout&severityText=ERROR&serviceName=checkout&environment=prod'
+    expect(
+      buildLogStreamUrl(
+        { search: 'timeout', logContent: '', traceId: '', spanId: '', severityNumber: '', severityText: 'ERROR' },
+        {
+          entityId: '42',
+          entityType: 'service',
+          serviceName: 'checkout',
+          serviceNamespace: 'payments',
+          environment: 'prod'
+        }
+      )
+    ).toBe(
+      '/api/logs/sse/subscribe?logContent=timeout&severityText=ERROR&entityId=42&entityType=service&serviceName=checkout&serviceNamespace=payments&environment=prod'
     );
   });
 

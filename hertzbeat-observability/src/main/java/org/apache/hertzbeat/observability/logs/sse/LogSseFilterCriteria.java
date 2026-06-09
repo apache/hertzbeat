@@ -91,6 +91,12 @@ public class LogSseFilterCriteria {
     @Schema(description = "OTel deployment.environment.name resource attribute.", example = "prod", accessMode = READ_WRITE)
     private String environment;
 
+    @Schema(description = "HertzBeat entity id resource attribute.", example = "42", accessMode = READ_WRITE)
+    private String entityId;
+
+    @Schema(description = "HertzBeat entity type resource attribute.", example = "service", accessMode = READ_WRITE)
+    private String entityType;
+
     /**
      * Workspace boundary captured from the authenticated request.
      */
@@ -158,7 +164,9 @@ public class LogSseFilterCriteria {
         return matchesOptionalValue(resolveValue(log, "service.name", "service_name"), serviceName)
                 && matchesOptionalValue(resolveValue(log, "service.namespace", "service_namespace"), serviceNamespace)
                 && matchesOptionalValue(resolveValue(log,
-                        "deployment.environment.name", "deployment_environment_name", "environment"), environment);
+                        "deployment.environment.name", "deployment_environment_name", "environment"), environment)
+                && matchesOptionalValue(resolveValue(log, "hertzbeat.entity_id", "hertzbeat_entity_id"), entityId)
+                && matchesOptionalValue(resolveValue(log, "hertzbeat.entity_type", "hertzbeat_entity_type"), entityType);
     }
 
     private boolean matchesOptionalValue(String actualValue, String expectedValue) {
