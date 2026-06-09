@@ -3399,6 +3399,49 @@ describe('signal dashboards API client', () => {
     expect(renderer.rows[0]?.relatedHandoffHref).not.toContain('resourceFilter=operation');
   });
 
+  it('maps trace http route groups to operation drilldown without creating route entities', async () => {
+    const [plan] = buildSignalDashboardExecutionPlans({
+      dashboardKey: 'signals-overview',
+      title: 'Signals overview',
+      description: 'Signals',
+      tags: 'traces',
+      layout: '[]',
+      widgets: JSON.stringify([
+        {
+          id: 'traces-routes',
+          signal: 'traces',
+          title: 'Routes',
+          visualization: 'list',
+          route: '/trace/manage?serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&spanScope=all&groupBy=http.route&groupLimit=8'
+        }
+      ])
+    });
+
+    const result = await executeSignalDashboardPanelPlan(plan, async url => {
+      expect(url).toBe('/traces/stats/group-by?serviceName=checkout&spanScope=all&entityId=4200&entityType=service&serviceNamespace=payments&environment=prod&groupBy=http.route&limit=8');
+      return {
+        groupBy: 'http.route',
+        groups: [{
+          value: 'POST /checkout',
+          traceCount: 7,
+          errorTraceCount: 1,
+          latencyP95Ms: 180
+        }]
+      };
+    });
+    const renderer = buildSignalDashboardPanelRuntimeRenderDescriptor(plan, result);
+
+    expect(renderer.rows[0]).toEqual(expect.objectContaining({
+      key: 'traces-routes:group:0',
+      title: 'POST /checkout',
+      copy: '7 traces · 1 errors',
+      meta: 'http.route · p95 180ms',
+      relatedSignal: 'traces',
+      relatedHandoffHref: '/trace/manage?serviceName=checkout&spanScope=all&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&serviceNamespace=payments&source=otlp&collector=collector-a&template=spring-boot&view=list&operationName=POST+%2Fcheckout'
+    }));
+    expect(renderer.rows[0]?.relatedHandoffHref).not.toContain('resourceFilter=http.route');
+  });
+
   it('renders backend-compatible trace group payload variants', async () => {
     const [plan] = buildSignalDashboardExecutionPlans({
       dashboardKey: 'signals-overview',

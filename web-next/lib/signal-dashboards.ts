@@ -2601,7 +2601,14 @@ function buildTraceGroupResourceExpression(groupBy: string, value: string) {
   if (normalizedGroupBy === 'service.name' || normalizedGroupBy === 'service_name') {
     return { kind: 'service' as const, value: normalizedValue };
   }
-  if (normalizedGroupBy === 'operation' || normalizedGroupBy === 'operation.name' || normalizedGroupBy === 'span.name') {
+  if (
+    normalizedGroupBy === 'operation' ||
+    normalizedGroupBy === 'operation.name' ||
+    normalizedGroupBy === 'span.name' ||
+    normalizedGroupBy === 'http.route' ||
+    normalizedGroupBy === 'route' ||
+    normalizedGroupBy === 'attribute:http.route'
+  ) {
     return { kind: 'operation' as const, value: normalizedValue };
   }
   if (normalizedGroupBy === 'status') {
