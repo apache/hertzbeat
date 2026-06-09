@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Ban, BarChart3, Check, Copy, Download, Filter, Pencil, Play, Replace, RotateCcw, Save, Search, Table2, Trash2, Workflow, X } from 'lucide-react';
+import { Ban, BarChart3, Check, Copy, Download, Filter, ListChecks, Pencil, Play, Replace, RotateCcw, Save, Search, Table2, Trash2, Workflow, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { HzActionGroup, HzAssistiveMarker, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzChipGroup, HzCollapsibleSection, HzContextHandoff, HzControlStack, HzDataCellStack, HzDataCellText, HzDataMetaText, HzDataTable, HzDetailRows, HzDisabledActionShell, HzEmptyState, HzInput, HzPaginationBar, HzPanelHeader, HzPanelSection, HzPanelSurface, HzPanelTitleLabel, HzQueryActionGroup, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalSummaryStrip, HzSignalWorkbenchShell, HzStateNotice, HzStatusBadge, HzTrendBar, HzTrendFrame, HzWorkbenchHeaderCopy, HzWorkbenchLayout } from '@hertzbeat/ui';
 import { EChartsPanel, type EChartsDataZoomRange } from '@/components/observability/echarts-panel';
@@ -136,6 +136,20 @@ function buildMetricAttributeNotContainsFilterExpression(name: string, value: st
   const trimmedValue = value.trim();
   if (!trimmedName || !trimmedValue) return null;
   return `${trimmedName} NOT CONTAINS ${escapeMetricFilterValue(trimmedValue)}`;
+}
+
+function buildMetricAttributeInFilterExpression(name: string, value: string) {
+  const trimmedName = name.trim();
+  const trimmedValue = value.trim();
+  if (!trimmedName || !trimmedValue) return null;
+  return `${trimmedName} IN ("${escapeMetricFilterValue(trimmedValue)}")`;
+}
+
+function buildMetricAttributeNotInFilterExpression(name: string, value: string) {
+  const trimmedName = name.trim();
+  const trimmedValue = value.trim();
+  if (!trimmedName || !trimmedValue) return null;
+  return `${trimmedName} NOT IN ("${escapeMetricFilterValue(trimmedValue)}")`;
 }
 
 function buildMetricAttributeExistsFilterExpression(name: string) {
@@ -856,6 +870,28 @@ export default function OtlpMetricsPage() {
 
   const applyMetricAttributeNotContainsFilter = useCallback((name: string, value: string, series?: OtlpMetricSeriesView | null) => {
     const expression = buildMetricAttributeNotContainsFilterExpression(name, value);
+    if (!expression) return;
+    const nextDraft = {
+      ...draft,
+      filter: mergeMetricFilterExpression(draft.filter, expression)
+    };
+    setDraft(nextDraft);
+    replaceMetricsRoute(nextDraft, undefined, series?.key || query.series, series ? buildMetricSeriesRouteContext(series) : {});
+  }, [draft, query.series, replaceMetricsRoute]);
+
+  const applyMetricAttributeInFilter = useCallback((name: string, value: string, series?: OtlpMetricSeriesView | null) => {
+    const expression = buildMetricAttributeInFilterExpression(name, value);
+    if (!expression) return;
+    const nextDraft = {
+      ...draft,
+      filter: mergeMetricFilterExpression(draft.filter, expression)
+    };
+    setDraft(nextDraft);
+    replaceMetricsRoute(nextDraft, undefined, series?.key || query.series, series ? buildMetricSeriesRouteContext(series) : {});
+  }, [draft, query.series, replaceMetricsRoute]);
+
+  const applyMetricAttributeNotInFilter = useCallback((name: string, value: string, series?: OtlpMetricSeriesView | null) => {
+    const expression = buildMetricAttributeNotInFilterExpression(name, value);
     if (!expression) return;
     const nextDraft = {
       ...draft,
@@ -2714,6 +2750,50 @@ export default function OtlpMetricsPage() {
                                   data-otlp-metrics-attribute-not-contains-action-icon-owner="hertzbeat-ui-button-icon"
                                 />
                                 {t('otlp.metrics.attributes.not-contains-action')}
+                              </HzButton>
+                            )
+                          },
+                          {
+                            key: 'in',
+                            header: t('otlp.metrics.attributes.column.in'),
+                            render: row => (
+                              <HzButton
+                                type="button"
+                                size="xs"
+                                intent="ghost"
+                                data-otlp-metrics-attribute-in-action={row.name}
+                                data-otlp-metrics-attribute-in-action-owner="hertzbeat-ui-button"
+                                aria-label={t('otlp.metrics.attributes.in-action.aria', { name: row.name, value: row.value })}
+                                onClick={() => applyMetricAttributeInFilter(row.name, row.value, selectedMetricSeries)}
+                              >
+                                <HzButtonIcon
+                                  icon={ListChecks}
+                                  data-otlp-metrics-attribute-in-action-icon={row.name}
+                                  data-otlp-metrics-attribute-in-action-icon-owner="hertzbeat-ui-button-icon"
+                                />
+                                {t('otlp.metrics.attributes.in-action')}
+                              </HzButton>
+                            )
+                          },
+                          {
+                            key: 'not-in',
+                            header: t('otlp.metrics.attributes.column.not-in'),
+                            render: row => (
+                              <HzButton
+                                type="button"
+                                size="xs"
+                                intent="ghost"
+                                data-otlp-metrics-attribute-not-in-action={row.name}
+                                data-otlp-metrics-attribute-not-in-action-owner="hertzbeat-ui-button"
+                                aria-label={t('otlp.metrics.attributes.not-in-action.aria', { name: row.name, value: row.value })}
+                                onClick={() => applyMetricAttributeNotInFilter(row.name, row.value, selectedMetricSeries)}
+                              >
+                                <HzButtonIcon
+                                  icon={Ban}
+                                  data-otlp-metrics-attribute-not-in-action-icon={row.name}
+                                  data-otlp-metrics-attribute-not-in-action-icon-owner="hertzbeat-ui-button-icon"
+                                />
+                                {t('otlp.metrics.attributes.not-in-action')}
                               </HzButton>
                             )
                           },

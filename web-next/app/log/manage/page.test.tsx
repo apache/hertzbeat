@@ -659,6 +659,12 @@ describe('log manage page', () => {
     expect(source).toContain('buildLogAttributeNotContainsExpression');
     expect(source).toContain('applyLogAttributeNotContainsFilter');
     expect(source).toContain('data-log-manage-attribute-not-contains-action={notContainsFilter.kind}');
+    expect(source).toContain('buildLogAttributeInExpression');
+    expect(source).toContain('applyLogAttributeInFilter');
+    expect(source).toContain('data-log-manage-attribute-in-action={inFilter.kind}');
+    expect(source).toContain('buildLogAttributeNotInExpression');
+    expect(source).toContain('applyLogAttributeNotInFilter');
+    expect(source).toContain('data-log-manage-attribute-not-in-action={notInFilter.kind}');
     expect(source).toContain('data-log-manage-attribute-exists-action={existsFilter.kind}');
     expect(source).toContain('data-log-manage-attribute-not-exists-action={notExistsFilter.kind}');
     expect(source).toContain('buildLogAttributeNotExistsExpression');
@@ -3574,6 +3580,64 @@ describe('log manage page', () => {
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route NOT CONTAINS /checkout/:id');
+
+      const inResourceAction = interactionContainer.querySelector(
+        '[data-log-manage-attribute-in-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
+      ) as HTMLButtonElement | null;
+      const inAttributeAction = interactionContainer.querySelector(
+        '[data-log-manage-attribute-in-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
+      ) as HTMLButtonElement | null;
+      expect(inResourceAction).toBeTruthy();
+      expect(inAttributeAction).toBeTruthy();
+      expect(inResourceAction?.getAttribute('data-log-manage-attribute-in-owner')).toBe('hertzbeat-ui-button');
+      expect(inAttributeAction?.getAttribute('data-log-manage-attribute-in-owner')).toBe('hertzbeat-ui-button');
+
+      mockState.replace.mockClear();
+      await act(async () => {
+        inResourceAction?.click();
+        await Promise.resolve();
+      });
+
+      expect(mockState.replace).toHaveBeenCalledTimes(1);
+      expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('resourceFilter')).toContain('service.version IN ("1.2.3")');
+
+      mockState.replace.mockClear();
+      await act(async () => {
+        inAttributeAction?.click();
+        await Promise.resolve();
+      });
+
+      expect(mockState.replace).toHaveBeenCalledTimes(1);
+      expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route IN ("/checkout/:id")');
+
+      const notInResourceAction = interactionContainer.querySelector(
+        '[data-log-manage-attribute-not-in-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
+      ) as HTMLButtonElement | null;
+      const notInAttributeAction = interactionContainer.querySelector(
+        '[data-log-manage-attribute-not-in-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
+      ) as HTMLButtonElement | null;
+      expect(notInResourceAction).toBeTruthy();
+      expect(notInAttributeAction).toBeTruthy();
+      expect(notInResourceAction?.getAttribute('data-log-manage-attribute-not-in-owner')).toBe('hertzbeat-ui-button');
+      expect(notInAttributeAction?.getAttribute('data-log-manage-attribute-not-in-owner')).toBe('hertzbeat-ui-button');
+
+      mockState.replace.mockClear();
+      await act(async () => {
+        notInResourceAction?.click();
+        await Promise.resolve();
+      });
+
+      expect(mockState.replace).toHaveBeenCalledTimes(1);
+      expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('resourceFilter')).toContain('service.version NOT IN ("1.2.3")');
+
+      mockState.replace.mockClear();
+      await act(async () => {
+        notInAttributeAction?.click();
+        await Promise.resolve();
+      });
+
+      expect(mockState.replace).toHaveBeenCalledTimes(1);
+      expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route NOT IN ("/checkout/:id")');
     } finally {
       mockState.renderData.list.content = originalContent;
     }
