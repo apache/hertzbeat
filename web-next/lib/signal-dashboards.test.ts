@@ -2117,6 +2117,13 @@ describe('signal dashboards API client', () => {
       expect.objectContaining({ variableName: 'hertzbeat.collector', value: 'collector-a', source: 'collector' }),
       expect.objectContaining({ variableName: 'hertzbeat.template', value: 'spring-boot', source: 'template' })
     ]);
+    expect(buildSignalDashboardRuntimeEvidenceFilters([
+      { name: 'operation.name', type: 'query', value: '' },
+      { name: 'service.name', type: 'query', value: '' }
+    ], syncTooltip.rows[6])).toEqual([
+      expect.objectContaining({ variableName: 'operation.name', value: 'POST /checkout', source: 'operation' }),
+      expect.objectContaining({ variableName: 'service.name', value: 'checkout', source: 'service' })
+    ]);
     expect(buildSignalDashboardRuntimeEvidenceFilterSuggestions([], syncTooltip.rows[0])).toEqual([
       expect.objectContaining({ variableName: 'service.name', value: 'checkout', source: 'service', variableType: 'query' }),
       expect.objectContaining({ variableName: 'service.namespace', value: 'payments', source: 'serviceNamespace', variableType: 'query' }),
@@ -2148,6 +2155,18 @@ describe('signal dashboards API client', () => {
       expect.objectContaining({ variableName: 'service.name', value: 'checkout', source: 'service', variableType: 'query' }),
       expect.objectContaining({ variableName: 'service.namespace', value: 'payments', source: 'serviceNamespace', variableType: 'query' }),
       expect.objectContaining({ variableName: 'deployment.environment.name', value: 'prod', source: 'environment', variableType: 'query' }),
+      expect.objectContaining({ variableName: 'hertzbeat.entity_id', value: '4200', source: 'entityId', variableType: 'textbox' }),
+      expect.objectContaining({ variableName: 'hertzbeat.entity_type', value: 'service', source: 'entityType', variableType: 'dynamic' }),
+      expect.objectContaining({ variableName: 'hertzbeat.entity_name', value: 'Checkout API', source: 'entityName', variableType: 'query' }),
+      expect.objectContaining({ variableName: 'hertzbeat.source', value: 'otlp', source: 'signalSource', variableType: 'dynamic' }),
+      expect.objectContaining({ variableName: 'hertzbeat.collector', value: 'collector-a', source: 'collector', variableType: 'dynamic' }),
+      expect.objectContaining({ variableName: 'hertzbeat.template', value: 'spring-boot', source: 'template', variableType: 'dynamic' })
+    ]);
+    expect(buildSignalDashboardRuntimeEvidenceFilterSuggestions([], syncTooltip.rows[6])).toEqual([
+      expect.objectContaining({ variableName: 'service.name', value: 'checkout', source: 'service', variableType: 'query' }),
+      expect.objectContaining({ variableName: 'service.namespace', value: 'payments', source: 'serviceNamespace', variableType: 'query' }),
+      expect.objectContaining({ variableName: 'deployment.environment.name', value: 'prod', source: 'environment', variableType: 'query' }),
+      expect.objectContaining({ variableName: 'operation.name', value: 'POST /checkout', source: 'operation', variableType: 'query' }),
       expect.objectContaining({ variableName: 'hertzbeat.entity_id', value: '4200', source: 'entityId', variableType: 'textbox' }),
       expect.objectContaining({ variableName: 'hertzbeat.entity_type', value: 'service', source: 'entityType', variableType: 'dynamic' }),
       expect.objectContaining({ variableName: 'hertzbeat.entity_name', value: 'Checkout API', source: 'entityName', variableType: 'query' }),
