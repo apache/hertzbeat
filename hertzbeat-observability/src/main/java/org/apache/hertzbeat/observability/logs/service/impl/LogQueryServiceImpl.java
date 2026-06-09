@@ -75,12 +75,17 @@ public class LogQueryServiceImpl implements LogQueryService {
     private static final String LOG_FILTER_NOT_IN_PREFIX = "__hz_not_in__:";
     private static final String LOG_FILTER_CONTAINS_PREFIX = "__hz_contains__:";
     private static final String LOG_FILTER_NOT_CONTAINS_PREFIX = "__hz_not_contains__:";
+    private static final String LOG_FILTER_EXISTS_PREFIX = "__hz_exists__";
+    private static final String LOG_FILTER_NOT_EXISTS_PREFIX = "__hz_not_exists__";
     private static final String LOG_FILTER_VALUE_DELIMITER = "\u001F";
     private static final Pattern LOG_FILTER_LIST_OPERATOR_PATTERN = Pattern.compile(
             "^\\s*([A-Za-z0-9._:-]+)\\s+(NOT\\s+IN|IN)\\s*(\\(.+\\))\\s*$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern LOG_FILTER_TEXT_OPERATOR_PATTERN = Pattern.compile(
             "^\\s*([A-Za-z0-9._:-]+)\\s+(NOT\\s+CONTAINS|CONTAINS)\\s+(.+)\\s*$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern LOG_FILTER_PRESENCE_OPERATOR_PATTERN = Pattern.compile(
+            "^\\s*([A-Za-z0-9._:-]+)\\s+(NOT\\s+EXISTS|EXISTS)\\s*$",
             Pattern.CASE_INSENSITIVE);
 
     private static final Set<String> WORKSPACE_INFRA_SERVICE_NAMES = Set.of(
@@ -1228,7 +1233,8 @@ public class LogQueryServiceImpl implements LogQueryService {
                 continue;
             }
             if (allowListOperators && (appendLogFilterListValues(filters, token)
-                    || appendLogFilterTextValue(filters, token))) {
+                    || appendLogFilterTextValue(filters, token)
+                    || appendLogFilterPresenceValue(filters, token))) {
                 continue;
             }
             boolean negate = false;
@@ -1294,6 +1300,22 @@ public class LogQueryServiceImpl implements LogQueryService {
                 ? LOG_FILTER_NOT_CONTAINS_PREFIX
                 : LOG_FILTER_CONTAINS_PREFIX;
         filters.put(key, prefix + value);
+        return true;
+    }
+
+    private boolean appendLogFilterPresenceValue(Map<String, String> filters, String token) {
+        Matcher matcher = LOG_FILTER_PRESENCE_OPERATOR_PATTERN.matcher(token);
+        if (!matcher.matches()) {
+            return false;
+        }
+        String key = matcher.group(1).trim();
+        String operator = matcher.group(2).trim().replaceAll("\\s+", " ");
+        if (!isSafeAttributeKey(key)) {
+            return false;
+        }
+        filters.put(key, "not exists".equalsIgnoreCase(operator)
+                ? LOG_FILTER_NOT_EXISTS_PREFIX
+                : LOG_FILTER_EXISTS_PREFIX);
         return true;
     }
 
@@ -1462,10 +1484,17 @@ public class LogQueryServiceImpl implements LogQueryService {
             return expectedAttributes.values().stream().allMatch(this::isExclusionLogAttributeFilter);
         }
         return expectedAttributes.entrySet().stream()
-                .allMatch(entry -> matchesAttributeFilter(resolveMapValue(source, entry.getKey()), entry.getValue()));
+                .allMatch(entry -> matchesAttributeFilter(resolveMapValue(source, entry.getKey()), entry.getValue(),
+                        source.containsKey(entry.getKey())));
     }
 
-    private boolean matchesAttributeFilter(String actualValue, String expectedValue) {
+    private boolean matchesAttributeFilter(String actualValue, String expectedValue, boolean keyExists) {
+        if (isExistsLogAttributeFilter(expectedValue)) {
+            return keyExists;
+        }
+        if (isNotExistsLogAttributeFilter(expectedValue)) {
+            return !keyExists;
+        }
         if (isInLogAttributeFilter(expectedValue)) {
             return splitListLogAttributeValues(expectedValue.substring(LOG_FILTER_IN_PREFIX.length())).stream()
                     .anyMatch(expected -> matchesOptionalResourceValue(actualValue, expected));
@@ -1494,12 +1523,13 @@ public class LogQueryServiceImpl implements LogQueryService {
 
     private boolean isExclusionLogAttributeFilter(String expectedValue) {
         return isNegatedLogAttributeFilter(expectedValue) || isNotInLogAttributeFilter(expectedValue)
-                || isNotContainsLogAttributeFilter(expectedValue);
+                || isNotContainsLogAttributeFilter(expectedValue) || isNotExistsLogAttributeFilter(expectedValue);
     }
 
     private boolean isComplexLogAttributeFilter(String expectedValue) {
         return isInLogAttributeFilter(expectedValue) || isNotInLogAttributeFilter(expectedValue)
-                || isContainsLogAttributeFilter(expectedValue) || isNotContainsLogAttributeFilter(expectedValue);
+                || isContainsLogAttributeFilter(expectedValue) || isNotContainsLogAttributeFilter(expectedValue)
+                || isExistsLogAttributeFilter(expectedValue) || isNotExistsLogAttributeFilter(expectedValue);
     }
 
     private boolean isInLogAttributeFilter(String expectedValue) {
@@ -1516,6 +1546,14 @@ public class LogQueryServiceImpl implements LogQueryService {
 
     private boolean isNotContainsLogAttributeFilter(String expectedValue) {
         return expectedValue != null && expectedValue.startsWith(LOG_FILTER_NOT_CONTAINS_PREFIX);
+    }
+
+    private boolean isExistsLogAttributeFilter(String expectedValue) {
+        return LOG_FILTER_EXISTS_PREFIX.equals(expectedValue);
+    }
+
+    private boolean isNotExistsLogAttributeFilter(String expectedValue) {
+        return LOG_FILTER_NOT_EXISTS_PREFIX.equals(expectedValue);
     }
 
     private List<String> splitListLogAttributeValues(String encodedValues) {

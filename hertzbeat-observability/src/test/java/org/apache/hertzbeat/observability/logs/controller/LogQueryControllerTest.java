@@ -539,6 +539,57 @@ class LogQueryControllerTest {
     }
 
     @Test
+    void testOverviewStatsAppliesExistsAndNotExistsFiltersWithRowFallback() throws Exception {
+        LogEntry matchingLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("checkout error with typed failure")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3")))
+                .attributes(new HashMap<>(Map.of("error.type", "payment.failure")))
+                .build();
+        LogEntry missingErrorTypeLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityNumber(9)
+                .severityText("INFO")
+                .body("checkout info without error type")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4")))
+                .attributes(new HashMap<>(Map.of("http.route", "/api/checkout")))
+                .build();
+        LogEntry environmentLog = LogEntry.builder()
+                .timeUnixNano(1734005477650000000L)
+                .severityNumber(17)
+                .severityText("ERROR")
+                .body("checkout error with environment")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.5",
+                        "deployment.environment.name", "prod")))
+                .attributes(new HashMap<>(Map.of("error.type", "payment.failure")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(matchingLog, missingErrorTypeLog, environmentLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/overview")
+                        .param("resourceFilter", "deployment.environment.name NOT EXISTS")
+                        .param("attributeFilter", "error.type EXISTS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.totalCount").value(1))
+                .andExpect(jsonPath("$.data.errorCount").value(1))
+                .andExpect(jsonPath("$.data.infoCount").value(0));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogsBySeverityBuckets(any(), any(), any(), any(),
+                any(), any(), any(), anySet(), eq(false));
+    }
+
+    @Test
     void testLogContextPrefersEntityIdentityOverConflictingRouteContext() throws Exception {
         ObservabilityWorkspaceQueryGateway workspaceQueryGateway = org.mockito.Mockito.mock(ObservabilityWorkspaceQueryGateway.class);
         this.logQueryController = new LogQueryController(
