@@ -1168,6 +1168,80 @@ class OtlpIngestionWorkspaceServiceImplTest {
     }
 
     @Test
+    void relatedMetricsPrefersPromqlAvailableCandidatesWhenExecutorExists() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                2_000L,
+                "http.server.duration",
+                "histogram",
+                "ms",
+                14.0,
+                Map.of()
+        );
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of());
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-related-metrics"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> {
+            String query = invocation.getArgument(1);
+            if (query.contains("__name__=\"http_server_duration\"")) {
+                return promqlSuccess(new DatasourceQueryData(
+                        "otlp-related-metrics",
+                        200,
+                        null,
+                        List.of(new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of("__name__", "http_server_duration"),
+                                        Map.of()
+                                ),
+                                Collections.singletonList(new Object[] {2_000L, 14.0})
+                        ))
+                ));
+            }
+            return promqlSuccess(new DatasourceQueryData("otlp-related-metrics", 200, null, List.of()));
+        });
+
+        OtlpRelatedMetricsDto related = otlpIngestionWorkspaceService.getRelatedMetrics(
+                42L,
+                "service",
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "k8s.pod.name=\"checkout-7d9\" and host.name=\"node-a\"",
+                null,
+                "8"
+        );
+
+        assertFalse(related.getCandidates().isEmpty());
+        assertEquals("http_server_duration", related.getCandidates().getFirst().getQuery());
+        assertEquals("promql-series", related.getCandidates().getFirst().getReason());
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-related-metrics"),
+                argThat(query -> query.contains("__name__=\"http_server_duration\"")
+                        && query.contains("service_name=\"checkout\"")
+                        && query.contains("service_namespace=\"commerce\"")),
+                eq(1_000L),
+                eq(2_000L),
+                anyString()
+        );
+    }
+
+    @Test
     void metricsConsoleAppliesFilterWhenQueryIsExplicitMetricName() {
         String expectedQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
                 + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "

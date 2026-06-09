@@ -91,6 +91,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     private static final String DEFAULT_METRICS_GROUP_BY = String.join(", ", METRICS_ENTITY_CONTEXT_GROUP_LABELS);
     private static final String DEFAULT_METRICS_AGGREGATION = "sum";
     private static final String METRICS_CONSOLE_REF_ID = "otlp-metrics-console";
+    private static final String RELATED_METRICS_REF_ID = "otlp-related-metrics";
     private static final Pattern METRICS_FILTER_MATCHER = Pattern.compile(
             "\\s*([A-Za-z_:][A-Za-z0-9_.:-]*)\\s*(=~|!~|!=|=)\\s*(?:\"((?:\\\\.|[^\"\\\\])*)\"|'((?:\\\\.|[^'\\\\])*)'|([^,\\s]+))\\s*"
     );
@@ -800,7 +801,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         String normalizedOperationName = trimToNull(operationName);
         List<OtlpRelatedMetricsDto.ResourceMatcher> resourceMatchers = parseRelatedMetricResourceMatchers(normalizedFilter);
         List<OtlpRelatedMetricsDto.Candidate> candidates = buildRelatedMetricCandidates(
-                context, resourceMatchers, normalizedOperationName, resolvedLimit
+                context, resourceMatchers, normalizedOperationName, resolvedStart, resolvedEnd, resolvedLimit
         );
         return new OtlpRelatedMetricsDto(
                 context,
@@ -823,6 +824,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             OtlpMetricsConsoleDto.Context context,
             List<OtlpRelatedMetricsDto.ResourceMatcher> resourceMatchers,
             String operationName,
+            long start,
+            long end,
             int limit) {
         LinkedHashMap<String, OtlpRelatedMetricsDto.Candidate> candidates = new LinkedHashMap<>();
         Map<String, String> resourceMatch = resourceMatcherValueMap(resourceMatchers);
@@ -859,11 +862,102 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                             ? operationContextResourceMatch(context, operationName)
                             : serviceContextResourceMatch(context)
             );
-            if (candidates.size() >= limit) {
-                return List.copyOf(candidates.values());
+        }
+        List<OtlpRelatedMetricsDto.Candidate> rawCandidates = candidates.values().stream()
+                .limit(MAX_RELATED_METRICS_LIMIT)
+                .toList();
+        if (metricQueryRepository.hasPromqlExecutor()) {
+            List<OtlpRelatedMetricsDto.Candidate> availableCandidates =
+                    filterPromqlAvailableRelatedMetricCandidates(rawCandidates, start, end, limit);
+            if (!availableCandidates.isEmpty()) {
+                return availableCandidates;
             }
         }
-        return candidates.values().stream().limit(limit).toList();
+        return rawCandidates.stream().limit(limit).toList();
+    }
+
+    private List<OtlpRelatedMetricsDto.Candidate> filterPromqlAvailableRelatedMetricCandidates(
+            List<OtlpRelatedMetricsDto.Candidate> candidates,
+            long start,
+            long end,
+            int limit) {
+        if (CollectionUtils.isEmpty(candidates) || limit <= 0) {
+            return List.of();
+        }
+        String step = resolvePromqlStep(start, end, null);
+        List<OtlpRelatedMetricsDto.Candidate> available = new ArrayList<>();
+        for (OtlpRelatedMetricsDto.Candidate candidate : candidates) {
+            for (String query : buildRelatedMetricAvailabilityQueries(candidate)) {
+                MetricQueryRepository.PromqlRangeQueryResult result = metricQueryRepository.queryPromqlRange(
+                        RELATED_METRICS_REF_ID,
+                        query,
+                        start,
+                        end,
+                        step
+                );
+                if (result.errorMessage() != null) {
+                    log.debug("query related metric candidate failed: {}", result.errorMessage());
+                    continue;
+                }
+                if (buildMetricsConsoleStats(result.results()).getNonEmptySeries() > 0) {
+                    available.add(new OtlpRelatedMetricsDto.Candidate(
+                            candidate.getQuery(),
+                            candidate.getSource(),
+                            candidate.getFamily(),
+                            "promql-series",
+                            candidate.getMatchedLabels(),
+                            candidate.getResourceMatch()
+                    ));
+                    break;
+                }
+            }
+            if (available.size() >= limit) {
+                break;
+            }
+        }
+        return available;
+    }
+
+    private List<String> buildRelatedMetricAvailabilityQueries(OtlpRelatedMetricsDto.Candidate candidate) {
+        if (candidate == null || !StringUtils.hasText(candidate.getQuery())) {
+            return List.of();
+        }
+        String metricName = normalizePromqlMetricName(candidate.getQuery());
+        if (!StringUtils.hasText(metricName)) {
+            return List.of();
+        }
+        Map<String, String> resourceMatch = candidate.getResourceMatch() == null
+                ? Map.of()
+                : candidate.getResourceMatch();
+        if ("operation".equals(candidate.getSource())
+                && StringUtils.hasText(resourceMatch.get("operation_name"))
+                && StringUtils.hasText(resourceMatch.get("http_route"))) {
+            LinkedHashMap<String, String> operationNameMatch = new LinkedHashMap<>(resourceMatch);
+            operationNameMatch.remove("http_route");
+            LinkedHashMap<String, String> httpRouteMatch = new LinkedHashMap<>(resourceMatch);
+            httpRouteMatch.remove("operation_name");
+            return List.of(
+                    buildRelatedMetricAvailabilityQuery(metricName, operationNameMatch),
+                    buildRelatedMetricAvailabilityQuery(metricName, httpRouteMatch)
+            );
+        }
+        return List.of(buildRelatedMetricAvailabilityQuery(metricName, resourceMatch));
+    }
+
+    private String buildRelatedMetricAvailabilityQuery(String metricName, Map<String, String> resourceMatch) {
+        List<String> matchers = new ArrayList<>();
+        matchers.add("__name__=\"" + escapePromqlLabelValue(metricName) + "\"");
+        if (!CollectionUtils.isEmpty(resourceMatch)) {
+            for (Map.Entry<String, String> entry : resourceMatch.entrySet()) {
+                String label = normalizePromqlLabelName(entry.getKey());
+                String value = trimToNull(entry.getValue());
+                if (!isPromqlLabelName(label) || !StringUtils.hasText(value)) {
+                    continue;
+                }
+                matchers.add(label + "=\"" + escapePromqlLabelValue(value) + "\"");
+            }
+        }
+        return "sum by (__name__) ({" + String.join(", ", matchers) + "})";
     }
 
     private void addRelatedMetricCandidate(LinkedHashMap<String, OtlpRelatedMetricsDto.Candidate> candidates,
