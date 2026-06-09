@@ -392,8 +392,8 @@ public class LogQueryServiceImpl implements LogQueryService {
         if (!StringUtils.hasText(normalizedGroupBy)) {
             return groupByResult("", Map.of(), resolvedLimit, orderBy, resolvedMinCount);
         }
-        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
-        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter, true);
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter, true);
         return groupByStats(start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, normalizedGroupBy,
                 resolvedLimit, orderBy, resolvedMinCount, hideInternal, hideNoise);
@@ -414,8 +414,8 @@ public class LogQueryServiceImpl implements LogQueryService {
         }
         LogServiceContext context = resolveEntityFirstLogServiceContext(entityId, serviceName, serviceNamespace, environment);
         Map<String, String> resourceFilters = removeEntityScopeResourceFilters(
-                context, parseLogAttributeFilter(resourceFilter));
-        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+                context, parseLogAttributeFilter(resourceFilter, true));
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter, true);
         return groupByStats(start, end, traceId, spanId, severityNumber, severityText, search,
                 context.serviceName(), context.serviceNamespace(), context.environment(), resourceFilters, attributeFilters,
                 normalizedGroupBy, resolvedLimit, orderBy, resolvedMinCount, hideInternal, hideNoise);
@@ -427,9 +427,12 @@ public class LogQueryServiceImpl implements LogQueryService {
                                             Map<String, String> resourceFilters, Map<String, String> attributeFilters,
                                             String normalizedGroupBy, int resolvedLimit, String orderBy,
                                             long resolvedMinCount, boolean hideInternal, boolean hideNoise) {
-        Map<String, Long> aggregate = readGroupStats(start, end, traceId, spanId, severityNumber,
-                severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
-                normalizedGroupBy, hideInternal, hideNoise);
+        Map<String, Long> aggregate = null;
+        if (!hasComplexAttributeFilters(resourceFilters, attributeFilters)) {
+            aggregate = readGroupStats(start, end, traceId, spanId, severityNumber,
+                    severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                    normalizedGroupBy, hideInternal, hideNoise);
+        }
         if (aggregate != null) {
             return groupByResult(normalizedGroupBy, aggregate, resolvedLimit, orderBy, resolvedMinCount);
         }
