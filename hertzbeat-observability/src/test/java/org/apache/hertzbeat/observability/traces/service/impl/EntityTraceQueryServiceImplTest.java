@@ -343,6 +343,7 @@ class EntityTraceQueryServiceImplTest {
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
                 detailIdentityFilterCaptor.capture(), eq(false));
+        assertEquals(Set.of("1"), detailIdentityFilterCaptor.getValue().get("hertzbeat.entity_id"));
         assertEquals(Set.of("checkout-service"), detailIdentityFilterCaptor.getValue().get("service.name"));
     }
 

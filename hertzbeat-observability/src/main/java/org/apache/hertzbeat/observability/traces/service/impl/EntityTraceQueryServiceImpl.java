@@ -55,6 +55,7 @@ import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanEventDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanLinkDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceSpanNodeDto;
 import org.apache.hertzbeat.observability.ingestion.enricher.OtlpCorrelationEnricher;
+import org.apache.hertzbeat.observability.ingestion.semantic.OtlpResourceSemanticAttributes;
 import org.apache.hertzbeat.observability.traces.service.EntityTraceQueryService;
 import org.apache.hertzbeat.warehouse.repository.TraceQueryRepository;
 import org.springframework.data.domain.Page;
@@ -1148,20 +1149,27 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
     }
 
     private Map<String, Set<String>> canonicalIdentityValues(ObservedEntityContext entityContext) {
-        if (entityContext == null || CollectionUtils.isEmpty(entityContext.getIdentities())) {
+        if (entityContext == null) {
             return Collections.emptyMap();
         }
         Map<String, Set<String>> values = new LinkedHashMap<>();
-        for (EntityIdentity identity : entityContext.getIdentities()) {
-            String key = trimText(identity.getIdentityKey());
-            String value = trimText(identity.getIdentityValue());
-            if (!StringUtils.hasText(key) || !StringUtils.hasText(value)
-                    || !EntityCanonicalIdentityRegistry.isCanonicalOtelResourceKey(key)) {
-                continue;
-            }
-            values.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(value);
+        if (entityContext.getEntity() != null && entityContext.getEntity().getId() != null
+                && entityContext.getEntity().getId() > 0) {
+            values.computeIfAbsent(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID, ignored -> new LinkedHashSet<>())
+                    .add(String.valueOf(entityContext.getEntity().getId()));
         }
-        return values;
+        if (!CollectionUtils.isEmpty(entityContext.getIdentities())) {
+            for (EntityIdentity identity : entityContext.getIdentities()) {
+                String key = trimText(identity.getIdentityKey());
+                String value = trimText(identity.getIdentityValue());
+                if (!StringUtils.hasText(key) || !StringUtils.hasText(value)
+                        || !EntityCanonicalIdentityRegistry.isCanonicalOtelResourceKey(key)) {
+                    continue;
+                }
+                values.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(value);
+            }
+        }
+        return values.isEmpty() ? Collections.emptyMap() : values;
     }
 
     private List<String> preferredSearchTerms(Map<String, Set<String>> identityValues) {
