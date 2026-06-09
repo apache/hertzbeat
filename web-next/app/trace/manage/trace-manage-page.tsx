@@ -506,8 +506,21 @@ function buildTraceResourceFilterExpression(name: React.ReactNode, value: React.
   return `${key}=${filterValue}`;
 }
 
+function buildTraceResourceExcludeFilterExpression(name: React.ReactNode, value: React.ReactNode) {
+  const key = String(name ?? '').trim();
+  const filterValue = String(value ?? '').trim();
+  if (!isSafeTraceResourceFilterKey(key) || !isSafeTraceResourceFilterValue(filterValue)) {
+    return null;
+  }
+  return `${key}!=${filterValue}`;
+}
+
 function buildTraceSpanAttributeFilterExpression(name: React.ReactNode, value: React.ReactNode) {
   return buildTraceResourceFilterExpression(name, value);
+}
+
+function buildTraceSpanAttributeExcludeFilterExpression(name: React.ReactNode, value: React.ReactNode) {
+  return buildTraceResourceExcludeFilterExpression(name, value);
 }
 
 function buildTraceSpanAttributeGroupBy(name: React.ReactNode) {
@@ -763,9 +776,11 @@ function TraceWaterfallDrawer({
   onSelectEvent,
   onApplyOperationFilter,
   onApplySpanAttributeFilter,
+  onExcludeSpanAttributeFilter,
   onReplaceSpanAttributeFilter,
   onApplySpanAttributeGroupBy,
   onApplyResourceFilter,
+  onExcludeResourceFilter,
   onReplaceResourceFilter,
   onApplyResourceGroupBy
 }: {
@@ -779,9 +794,11 @@ function TraceWaterfallDrawer({
   onSelectEvent: (eventKey: string | null, spanId?: string) => void;
   onApplyOperationFilter: (operationName: string) => void;
   onApplySpanAttributeFilter: (name: string, value: string) => void;
+  onExcludeSpanAttributeFilter: (name: string, value: string) => void;
   onReplaceSpanAttributeFilter: (name: string, value: string) => void;
   onApplySpanAttributeGroupBy: (name: string) => void;
   onApplyResourceFilter: (name: string, value: string) => void;
+  onExcludeResourceFilter: (name: string, value: string) => void;
   onReplaceResourceFilter: (name: string, value: string) => void;
   onApplyResourceGroupBy: (name: string) => void;
 }) {
@@ -1217,7 +1234,7 @@ function TraceWaterfallDrawer({
                     title: row.title,
                     copy: row.copy,
                     meta: row.meta,
-                    action: buildTraceSpanAttributeFilterExpression(row.title, row.copy) || buildTraceSpanAttributeGroupBy(row.title) ? (
+                    action: buildTraceSpanAttributeFilterExpression(row.title, row.copy) || buildTraceSpanAttributeExcludeFilterExpression(row.title, row.copy) || buildTraceSpanAttributeGroupBy(row.title) ? (
                       <HzActionGroup
                         data-trace-manage-drawer-span-attribute-action-group="filter-group"
                         data-trace-manage-drawer-span-attribute-action-group-owner="hertzbeat-ui-action-group"
@@ -1237,6 +1254,19 @@ function TraceWaterfallDrawer({
                             >
                               <HzButtonIcon icon={Filter} data-trace-manage-drawer-span-attribute-filter-action-icon="filter" data-trace-manage-drawer-span-attribute-filter-action-icon-owner="hertzbeat-ui-button-icon" />
                               {t('trace.manage.drawer.attributes.filter-action')}
+                            </HzButton>
+                            <HzButton
+                              data-trace-manage-drawer-span-attribute-filter-out-action="true"
+                              data-trace-manage-drawer-span-attribute-filter-out-action-owner="hertzbeat-ui-button"
+                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
+                              data-trace-manage-drawer-span-attribute-filter-value={row.copy}
+                              size="sm"
+                              intent="secondary"
+                              onClick={() => onExcludeSpanAttributeFilter(row.title, row.copy)}
+                              aria-label={t('trace.manage.drawer.attributes.filter-out-action.aria', { name: row.title, value: row.copy })}
+                            >
+                              <HzButtonIcon icon={X} data-trace-manage-drawer-span-attribute-filter-out-action-icon="exclude" data-trace-manage-drawer-span-attribute-filter-out-action-icon-owner="hertzbeat-ui-button-icon" />
+                              {t('trace.manage.drawer.attributes.filter-out-action')}
                             </HzButton>
                             <HzButton
                               data-trace-manage-drawer-span-attribute-replace-action="true"
@@ -1281,7 +1311,7 @@ function TraceWaterfallDrawer({
                     title: row.title,
                     copy: row.copy,
                     meta: row.meta,
-                    action: buildTraceResourceFilterExpression(row.title, row.copy) || buildTraceResourceGroupBy(row.title) ? (
+                    action: buildTraceResourceFilterExpression(row.title, row.copy) || buildTraceResourceExcludeFilterExpression(row.title, row.copy) || buildTraceResourceGroupBy(row.title) ? (
                       <HzActionGroup
                         data-trace-manage-drawer-resource-action-group="filter-group"
                         data-trace-manage-drawer-resource-action-group-owner="hertzbeat-ui-action-group"
@@ -1301,6 +1331,19 @@ function TraceWaterfallDrawer({
                           >
                             <HzButtonIcon icon={Filter} data-trace-manage-drawer-resource-filter-action-icon="filter" data-trace-manage-drawer-resource-filter-action-icon-owner="hertzbeat-ui-button-icon" />
                             {t('trace.manage.drawer.attributes.filter-action')}
+                          </HzButton>
+                          <HzButton
+                            data-trace-manage-drawer-resource-filter-out-action="true"
+                            data-trace-manage-drawer-resource-filter-out-action-owner="hertzbeat-ui-button"
+                            data-trace-manage-drawer-resource-filter-name={row.title}
+                            data-trace-manage-drawer-resource-filter-value={row.copy}
+                            size="sm"
+                            intent="secondary"
+                            onClick={() => onExcludeResourceFilter(row.title, row.copy)}
+                            aria-label={t('trace.manage.drawer.attributes.filter-out-action.aria', { name: row.title, value: row.copy })}
+                          >
+                            <HzButtonIcon icon={X} data-trace-manage-drawer-resource-filter-out-action-icon="exclude" data-trace-manage-drawer-resource-filter-out-action-icon-owner="hertzbeat-ui-button-icon" />
+                            {t('trace.manage.drawer.attributes.filter-out-action')}
                           </HzButton>
                           <HzButton
                             data-trace-manage-drawer-resource-replace-action="true"
@@ -1821,6 +1864,17 @@ function TraceExplorer({
     applyQuery(nextQuery);
   }, [applyQuery, draft, setDraft]);
 
+  const excludeTraceResourceFilter = useCallback((name: string, value: string) => {
+    const expression = buildTraceResourceExcludeFilterExpression(name, value);
+    if (!expression) return;
+    const nextQuery: TraceQueryState = {
+      ...draft,
+      resourceFilter: mergeTraceResourceFilterExpression(draft.resourceFilter, expression)
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
   const replaceTraceResourceFilter = useCallback((name: string, value: string) => {
     const expression = buildTraceResourceFilterExpression(name, value);
     if (!expression) return;
@@ -1834,6 +1888,17 @@ function TraceExplorer({
 
   const applyTraceSpanAttributeFilter = useCallback((name: string, value: string) => {
     const expression = buildTraceSpanAttributeFilterExpression(name, value);
+    if (!expression) return;
+    const nextQuery: TraceQueryState = {
+      ...draft,
+      attributeFilter: mergeTraceResourceFilterExpression(draft.attributeFilter, expression)
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft]);
+
+  const excludeTraceSpanAttributeFilter = useCallback((name: string, value: string) => {
+    const expression = buildTraceSpanAttributeExcludeFilterExpression(name, value);
     if (!expression) return;
     const nextQuery: TraceQueryState = {
       ...draft,
@@ -3400,9 +3465,11 @@ function TraceExplorer({
           onSelectEvent={(eventKey, spanId) => setTraceDetailDrawer(previous => ({ ...previous, selectedSpanId: spanId || previous.selectedSpanId, selectedEventKey: eventKey }))}
           onApplyOperationFilter={operationName => applyTraceQuickFilter('operationName', operationName)}
           onApplySpanAttributeFilter={applyTraceSpanAttributeFilter}
+          onExcludeSpanAttributeFilter={excludeTraceSpanAttributeFilter}
           onReplaceSpanAttributeFilter={replaceTraceSpanAttributeFilter}
           onApplySpanAttributeGroupBy={applyTraceSpanAttributeGroupBy}
           onApplyResourceFilter={applyTraceResourceFilter}
+          onExcludeResourceFilter={excludeTraceResourceFilter}
           onReplaceResourceFilter={replaceTraceResourceFilter}
           onApplyResourceGroupBy={applyTraceResourceGroupBy}
         />
