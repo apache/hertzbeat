@@ -50,6 +50,7 @@ import org.apache.hertzbeat.common.observability.dto.binding.OtlpEntityBindingSu
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuideDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilitySignalIntakeGateway;
@@ -1320,6 +1321,75 @@ class OtlpIngestionWorkspaceServiceImplTest {
         assertFalse(related.getCandidates().isEmpty());
         assertEquals("rpc_server_duration_milliseconds", related.getCandidates().getFirst().getQuery());
         assertEquals("promql-series", related.getCandidates().getFirst().getReason());
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-related-metrics-inventory"),
+                argThat(query -> query.contains("sum by (__name__)")
+                        && query.contains("service_name=\"checkout\"")
+                        && query.contains("service_namespace=\"commerce\"")),
+                eq(1_000L),
+                eq(2_000L),
+                anyString()
+        );
+    }
+
+    @Test
+    void metricsInventoryReturnsPromqlSeriesBackedItems() {
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of());
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-related-metrics-inventory"),
+                anyString(),
+                eq(1_000L),
+                eq(2_000L),
+                anyString()
+        )).thenReturn(promqlSuccess(new DatasourceQueryData(
+                "otlp-related-metrics-inventory",
+                200,
+                null,
+                List.of(
+                        new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of("__name__", "http_server_duration", "service_name", "checkout", "http_route", "/checkout"),
+                                        Map.of()
+                                ),
+                                Collections.singletonList(new Object[] {1_000L, 12.0})
+                        ),
+                        new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of("__name__", "http_server_duration", "service_name", "checkout", "http_route", "/cart"),
+                                        Map.of()
+                                ),
+                                Collections.singletonList(new Object[] {2_000L, 14.0})
+                        )
+                )
+        )));
+
+        OtlpMetricsInventoryDto inventory = otlpIngestionWorkspaceService.getMetricsInventory(
+                42L,
+                "service",
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "20"
+        );
+
+        assertEquals("promql-inventory", inventory.getSource());
+        assertEquals(1, inventory.getTotal());
+        assertEquals("http_server_duration", inventory.getItems().getFirst().getMetricName());
+        assertEquals("latency", inventory.getItems().getFirst().getFamily());
+        assertEquals(2, inventory.getItems().getFirst().getTimeSeriesCount());
+        assertEquals(2_000L, inventory.getItems().getFirst().getLatestObservedAt());
         verify(metricQueryRepository).queryPromqlRange(
                 eq("otlp-related-metrics-inventory"),
                 argThat(query -> query.contains("sum by (__name__)")

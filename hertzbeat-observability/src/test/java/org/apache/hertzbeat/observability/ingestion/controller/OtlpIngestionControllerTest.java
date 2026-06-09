@@ -32,6 +32,7 @@ import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuid
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionRedSummaryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
 import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
@@ -258,6 +259,47 @@ class OtlpIngestionControllerTest {
         verify(otlpIngestionWorkspaceService)
                 .getMetricsConsole(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
                         null, "span.kind=\"server\"", null, null, "rate", "60", "1");
+    }
+
+    @Test
+    void shouldReturnWrappedMetricsInventoryPayload() throws Exception {
+        OtlpMetricsInventoryDto inventory = new OtlpMetricsInventoryDto(
+                new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
+                        1000L, 2000L),
+                "promql-inventory",
+                1,
+                List.of(new OtlpMetricsInventoryDto.Item(
+                        "http_server_duration",
+                        "latency",
+                        2,
+                        2000L,
+                        java.util.Map.of("__name__", "http_server_duration", "service_name", "checkout")
+                ))
+        );
+        when(otlpIngestionWorkspaceService.getMetricsInventory(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod", "20"))
+                .thenReturn(inventory);
+
+        mockMvc.perform(get("/api/ingestion/otlp/metrics/inventory")
+                        .param("entityId", "42")
+                        .param("entityType", "service")
+                        .param("start", "1000")
+                        .param("end", "2000")
+                        .param("serviceName", "checkout")
+                        .param("serviceNamespace", "commerce")
+                        .param("environment", "prod")
+                        .param("limit", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.context.entityId").value(42))
+                .andExpect(jsonPath("$.data.source").value("promql-inventory"))
+                .andExpect(jsonPath("$.data.total").value(1))
+                .andExpect(jsonPath("$.data.items[0].metricName").value("http_server_duration"))
+                .andExpect(jsonPath("$.data.items[0].family").value("latency"))
+                .andExpect(jsonPath("$.data.items[0].timeSeriesCount").value(2))
+                .andExpect(jsonPath("$.data.items[0].labels.service_name").value("checkout"));
+
+        verify(otlpIngestionWorkspaceService)
+                .getMetricsInventory(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod", "20");
     }
 
     @Test

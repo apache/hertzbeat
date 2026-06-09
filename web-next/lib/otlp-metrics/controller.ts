@@ -1,6 +1,6 @@
 import { readEntityIdRouteParam, readEpochMillisRouteParam, stripReturnLabelFromHref, type SignalRouteContext } from '../signal-route-context';
 import { normalizeTimeContextValue } from '../time-context';
-import type { OtlpMetricsConsole } from '@/lib/types';
+import type { OtlpMetricsConsole, OtlpMetricsInventory } from '@/lib/types';
 
 type ApiGetter = <T>(url: string) => Promise<T>;
 
@@ -172,6 +172,47 @@ export function buildOtlpMetricsConsoleUrl(query: OtlpMetricsQueryState) {
   return params.size > 0 ? `/ingestion/otlp/metrics/console?${params.toString()}` : '/ingestion/otlp/metrics/console';
 }
 
+export function buildOtlpMetricsInventoryUrl(query: OtlpMetricsQueryState = {}) {
+  const params = new URLSearchParams();
+  const contextKeys = [
+    'entityId',
+    'entityType',
+    'serviceName',
+    'serviceNamespace',
+    'environment',
+    'start',
+    'end',
+    'limit'
+  ] as const;
+  contextKeys.forEach(key => {
+    const value = query[key];
+    if (value == null || String(value).trim() === '') {
+      return;
+    }
+    if (key === 'entityId') {
+      const entityId = readEntityIdRouteParam(String(value));
+      if (entityId) params.set(key, entityId);
+      return;
+    }
+    if (key === 'start' || key === 'end') {
+      const timeValue = normalizeTimeContextValue(key, String(value));
+      if (timeValue) params.set(key, timeValue);
+      return;
+    }
+    if (key === 'limit') {
+      const positiveInteger = readPositiveIntegerRouteParam(String(value));
+      if (positiveInteger) params.set(key, positiveInteger);
+      return;
+    }
+    params.set(key, String(value));
+  });
+  return params.size > 0 ? `/ingestion/otlp/metrics/inventory?${params.toString()}` : '/ingestion/otlp/metrics/inventory';
+}
+
 export async function loadOtlpMetricsConsole(apiGet: ApiGetter, query: OtlpMetricsQueryState = {}) {
   return apiGet<OtlpMetricsConsole>(buildOtlpMetricsConsoleUrl(query));
+}
+
+export async function loadOtlpMetricsInventory(apiGet: ApiGetter, query: OtlpMetricsQueryState = {}) {
+  return apiGet<OtlpMetricsInventory>(buildOtlpMetricsInventoryUrl(query));
 }

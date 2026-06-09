@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildOtlpMetricsConsoleUrl, loadOtlpMetricsConsole, queryStateFromParams } from './controller';
+import {
+  buildOtlpMetricsConsoleUrl,
+  buildOtlpMetricsInventoryUrl,
+  loadOtlpMetricsConsole,
+  loadOtlpMetricsInventory,
+  queryStateFromParams
+} from './controller';
 
 describe('otlp metrics controller', () => {
   it('loads metrics console data from the existing endpoint', async () => {
@@ -45,6 +51,52 @@ describe('otlp metrics controller', () => {
         end: '2000'
       })
     ).toBe('/ingestion/otlp/metrics/console?query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&step=60&limit=25&traceId=trace-1&spanId=span-1&serviceName=checkout&start=1000&end=2000');
+  });
+
+  it('builds and loads metrics inventory from entity and service context only', async () => {
+    const apiGet = vi.fn().mockResolvedValue({
+      source: 'promql-inventory',
+      items: [{ metricName: 'http_server_duration', family: 'latency' }]
+    });
+    const query = {
+      entityId: '7',
+      entityType: 'service',
+      serviceName: 'checkout',
+      serviceNamespace: 'commerce',
+      environment: 'prod',
+      start: '1000',
+      end: '2000',
+      limit: '20',
+      query: 'ignored',
+      filter: 'ignored',
+      inventorySearch: 'ignored',
+      inventorySort: 'time-series',
+      relatedMetricSource: 'ignored'
+    } as const;
+
+    expect(buildOtlpMetricsInventoryUrl(query)).toBe(
+      '/ingestion/otlp/metrics/inventory?entityId=7&entityType=service&serviceName=checkout&serviceNamespace=commerce&environment=prod&start=1000&end=2000&limit=20'
+    );
+    await expect(loadOtlpMetricsInventory(apiGet as any, query)).resolves.toEqual({
+      source: 'promql-inventory',
+      items: [{ metricName: 'http_server_duration', family: 'latency' }]
+    });
+    expect(apiGet).toHaveBeenCalledWith(
+      '/ingestion/otlp/metrics/inventory?entityId=7&entityType=service&serviceName=checkout&serviceNamespace=commerce&environment=prod&start=1000&end=2000&limit=20'
+    );
+  });
+
+  it('rejects invalid inventory entity, time, and limit params before calling the endpoint', () => {
+    expect(
+      buildOtlpMetricsInventoryUrl({
+        entityId: '7.5',
+        entityType: 'service',
+        serviceName: 'checkout',
+        start: '1777484896189.989',
+        end: '1777485856189.989',
+        limit: '0'
+      })
+    ).toBe('/ingestion/otlp/metrics/inventory?entityType=service&serviceName=checkout');
   });
 
   it('keeps client-only metrics inspector and selected series state out of the console endpoint', () => {

@@ -372,6 +372,19 @@ export interface OtlpMetricsConsole {
   };
 }
 
+export interface OtlpMetricsInventory {
+  context?: OtlpMetricsConsole['context'];
+  source?: string | null;
+  total?: number;
+  items?: Array<{
+    metricName?: string | null;
+    family?: string | null;
+    timeSeriesCount?: number;
+    latestObservedAt?: number | null;
+    labels?: Record<string, string>;
+  }>;
+}
+
 export interface OtlpRelatedMetrics {
   context?: OtlpMetricsConsole['context'];
   filter?: string | null;

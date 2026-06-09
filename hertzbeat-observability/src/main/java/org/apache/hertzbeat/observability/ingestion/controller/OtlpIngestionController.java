@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuid
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionRedSummaryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
 import org.apache.hertzbeat.observability.ingestion.red.OtlpIngestionRedSummaryService;
 import org.apache.hertzbeat.observability.ingestion.service.OtlpIngestionWorkspaceService;
@@ -94,6 +95,21 @@ public class OtlpIngestionController {
         return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getMetricsConsole(
                 entityId, entityType, start, end, serviceName, serviceNamespace, environment, query, filter, groupBy, aggregation,
                 temporalAggregation, step, limit)));
+    }
+
+    @GetMapping("/metrics/inventory")
+    @Operation(summary = "OTLP metrics inventory for a service or entity context")
+    public ResponseEntity<Message<OtlpMetricsInventoryDto>> metricsInventory(
+            @RequestParam(value = "entityId", required = false) Long entityId,
+            @RequestParam(value = "entityType", required = false) String entityType,
+            @RequestParam(value = "start", required = false) Long start,
+            @RequestParam(value = "end", required = false) Long end,
+            @RequestParam(value = "serviceName", required = false) String serviceName,
+            @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
+            @RequestParam(value = "environment", required = false) String environment,
+            @RequestParam(value = "limit", required = false) String limit) {
+        return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getMetricsInventory(
+                entityId, entityType, start, end, serviceName, serviceNamespace, environment, limit)));
     }
 
     @GetMapping("/metrics/related")

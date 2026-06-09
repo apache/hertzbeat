@@ -47,6 +47,7 @@ import org.apache.hertzbeat.common.observability.dto.binding.TelemetryIdentitySn
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuideDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
 import org.apache.hertzbeat.common.observability.model.EntityCanonicalIdentityRegistry;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
@@ -787,6 +788,37 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
     }
 
     @Override
+    public OtlpMetricsInventoryDto getMetricsInventory(Long entityId, String entityType, Long start, Long end,
+                                                       String serviceName, String serviceNamespace, String environment,
+                                                       String limit) {
+        long resolvedEnd = end == null || end <= 0 ? System.currentTimeMillis() : end;
+        long resolvedStart = start == null || start <= 0 || start >= resolvedEnd
+                ? resolvedEnd - DEFAULT_CONSOLE_LOOKBACK_MILLIS
+                : start;
+        int resolvedLimit = resolveRelatedMetricsLimit(limit);
+        OtlpMetricsConsoleDto.Context context = resolveMetricsConsoleContext(
+                entityId, entityType, resolvedStart, resolvedEnd, serviceName, serviceNamespace, environment
+        );
+        List<OtlpMetricsInventoryDto.Item> items = metricQueryRepository.hasPromqlExecutor()
+                ? collectPromqlMetricsInventoryItems(context, resolvedStart, resolvedEnd, resolvedLimit)
+                : List.of();
+        if (!items.isEmpty()) {
+            return new OtlpMetricsInventoryDto(context, "promql-inventory", items.size(), items);
+        }
+        List<OtlpMetricsInventoryDto.Item> fallbackItems = candidateMetricNames(context).stream()
+                .limit(resolvedLimit)
+                .map(metricName -> new OtlpMetricsInventoryDto.Item(
+                        metricName,
+                        relatedMetricFamily(metricName),
+                        0,
+                        null,
+                        serviceContextResourceMatch(context)
+                ))
+                .toList();
+        return new OtlpMetricsInventoryDto(context, "recent-intake-fallback", fallbackItems.size(), fallbackItems);
+    }
+
+    @Override
     public OtlpRelatedMetricsDto getRelatedMetrics(Long entityId, String entityType, Long start, Long end, String serviceName,
                                                    String serviceNamespace, String environment,
                                                    String filter, String operationName, String limit) {
@@ -884,6 +916,59 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         }
         candidates.addAll(candidateMetricNames(context));
         return normalizeCandidateMetricNames(candidates);
+    }
+
+    private List<OtlpMetricsInventoryDto.Item> collectPromqlMetricsInventoryItems(
+            OtlpMetricsConsoleDto.Context context,
+            long start,
+            long end,
+            int limit) {
+        String query = buildRelatedMetricInventoryQuery(context);
+        if (!StringUtils.hasText(query)) {
+            return List.of();
+        }
+        MetricQueryRepository.PromqlRangeQueryResult result = metricQueryRepository.queryPromqlRange(
+                RELATED_METRICS_INVENTORY_REF_ID,
+                query,
+                start,
+                end,
+                resolvePromqlStep(start, end, null)
+        );
+        if (result == null) {
+            return List.of();
+        }
+        if (result.errorMessage() != null) {
+            log.debug("query OTLP metrics inventory failed: {}", result.errorMessage());
+            return List.of();
+        }
+        return buildPromqlMetricInventoryItems(result.results()).stream()
+                .limit(limit)
+                .toList();
+    }
+
+    private List<OtlpMetricsInventoryDto.Item> buildPromqlMetricInventoryItems(DatasourceQueryData results) {
+        if (results == null || CollectionUtils.isEmpty(results.getFrames())) {
+            return List.of();
+        }
+        LinkedHashMap<String, MetricInventoryAccumulator> accumulators = new LinkedHashMap<>();
+        for (DatasourceQueryData.SchemaData frame : results.getFrames()) {
+            if (frame == null || frame.getSchema() == null || CollectionUtils.isEmpty(frame.getSchema().getLabels())) {
+                continue;
+            }
+            Map<String, String> labels = frame.getSchema().getLabels();
+            String metricName = trimToNull(labels.get("__name__"));
+            if (!StringUtils.hasText(metricName)) {
+                continue;
+            }
+            MetricInventoryAccumulator accumulator = accumulators.computeIfAbsent(
+                    metricName,
+                    key -> new MetricInventoryAccumulator(metricName, labels)
+            );
+            accumulator.addFrame(frame);
+        }
+        return accumulators.values().stream()
+                .map(MetricInventoryAccumulator::toItem)
+                .toList();
     }
 
     private List<String> collectPromqlRelatedMetricNames(OtlpMetricsConsoleDto.Context context, long start, long end) {
@@ -2464,6 +2549,45 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         }
         groupLabels.addAll(METRICS_ENTITY_CONTEXT_GROUP_LABELS);
         return String.join(", ", groupLabels);
+    }
+
+    private final class MetricInventoryAccumulator {
+
+        private final String metricName;
+        private final Map<String, String> labels;
+        private int timeSeriesCount;
+        private Long latestObservedAt;
+
+        private MetricInventoryAccumulator(String metricName, Map<String, String> labels) {
+            this.metricName = normalizePromqlMetricName(metricName);
+            this.labels = labels == null ? Map.of() : Map.copyOf(labels);
+        }
+
+        private void addFrame(DatasourceQueryData.SchemaData frame) {
+            timeSeriesCount++;
+            if (CollectionUtils.isEmpty(frame.getData())) {
+                return;
+            }
+            for (Object[] row : frame.getData()) {
+                if (row == null || row.length == 0) {
+                    continue;
+                }
+                Long rowTimestamp = numberToLong(row[0]);
+                if (rowTimestamp != null && (latestObservedAt == null || rowTimestamp > latestObservedAt)) {
+                    latestObservedAt = rowTimestamp;
+                }
+            }
+        }
+
+        private OtlpMetricsInventoryDto.Item toItem() {
+            return new OtlpMetricsInventoryDto.Item(
+                    metricName,
+                    relatedMetricFamily(metricName),
+                    timeSeriesCount,
+                    latestObservedAt,
+                    labels
+            );
+        }
     }
 
     private String normalizeMetricsGroupByLabel(String label) {

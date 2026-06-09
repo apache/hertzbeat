@@ -25,6 +25,7 @@ import org.apache.hertzbeat.common.observability.dto.binding.TelemetryIdentitySn
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionGuideDto;
 import org.apache.hertzbeat.common.observability.dto.ingestion.OtlpIngestionOverviewDto;
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsConsoleDto;
+import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventoryDto;
 import org.apache.hertzbeat.common.observability.dto.log.EntityLogQueryHint;
 import org.apache.hertzbeat.common.observability.dto.log.EntityLogSummaryInfo;
 import org.apache.hertzbeat.common.observability.dto.trace.EntityTraceQueryHintDto;
@@ -66,6 +67,18 @@ class OtlpWorkspaceDtoMigrationTest {
                 new OtlpMetricsConsoleDto.Stats(1, 1, 2000L),
                 null,
                 null
+        );
+        OtlpMetricsInventoryDto inventory = new OtlpMetricsInventoryDto(
+                console.getContext(),
+                "promql-inventory",
+                1,
+                List.of(new OtlpMetricsInventoryDto.Item(
+                        "http_server_duration",
+                        "latency",
+                        2,
+                        2000L,
+                        Map.of("__name__", "http_server_duration", "service_name", "checkout")
+                ))
         );
         OtlpEntityBindingSummaryDto bindingSummary = new OtlpEntityBindingSummaryDto(
                 List.of("service.name"),
@@ -119,6 +132,7 @@ class OtlpWorkspaceDtoMigrationTest {
         assertEquals("HTTP", guide.getHttpProtocolLabel());
         assertEquals(2, overview.getActiveSignalCount());
         assertEquals("greptime", console.getDatasource());
+        assertEquals("http_server_duration", inventory.getItems().getFirst().getMetricName());
         assertEquals("checkout", bindingSummary.getRecentServices().getFirst());
         assertEquals("checkout", identitySnapshot.getServiceName());
         assertEquals("trace-id", traceQueryHint.getTraceId());
