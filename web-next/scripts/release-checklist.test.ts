@@ -16,8 +16,10 @@ function releaseFiles(overrides = {}) {
       scripts: {
         'verify:full':
           'npm run build && npm run release:budget && npm run release:compose && npm run release:checklist && npm run verify',
+        verify: 'npm run lint && npm run test && npm run i18n:report && npm run route:matrix && npm run three-signal:cutoff',
         'release:budget': 'node ./scripts/release-budget.mjs',
-        'release:compose': 'node ./scripts/release-compose.mjs'
+        'release:compose': 'node ./scripts/release-compose.mjs',
+        'three-signal:cutoff': 'node ./scripts/three-signal-alpha-cutoff-report.mjs'
       }
     },
     workflow: 'run: npm run verify:full\nrun: npm run parity:smoke:baseline',
@@ -29,6 +31,7 @@ function releaseFiles(overrides = {}) {
     gateway: `${gatewayRoutes}\nlocation ^~ /api/ {\n proxy_pass http://hertzbeat:1157;\n}\nlocation / {\n proxy_pass http://hertzbeat:1157;\n}`,
     releaseBudget: 'DEFAULT_RELEASE_BUDGET_BYTES\nevaluateReleaseBudget',
     releaseCompose: 'verifyReleaseComposeConfig\nHERTZBEAT_ROLLBACK_VERSION',
+    threeSignalAlphaCutoff: 'verifyThreeSignalAlphaCutoff',
     ...overrides
   };
 }
@@ -44,7 +47,8 @@ describe('release checklist gate', () => {
       'compose-version-convergence',
       'promotion-rollback-config',
       'bundle-budget',
-      'release-ingress-route-ownership'
+      'release-ingress-route-ownership',
+      'three-signal-alpha-cutoff-evidence'
     ]);
   });
 
@@ -60,5 +64,25 @@ describe('release checklist gate', () => {
       false,
     );
     expect(() => verifyReleaseChecklist(files)).toThrow('release-ingress-route-ownership');
+  });
+
+  it('fails when the three-signal alpha cutoff evidence report is not wired into verify', () => {
+    const files = releaseFiles({
+      packageJson: {
+        scripts: {
+          'verify:full':
+            'npm run build && npm run release:budget && npm run release:compose && npm run release:checklist && npm run verify',
+          verify: 'npm run lint && npm run test && npm run i18n:report && npm run route:matrix',
+          'release:budget': 'node ./scripts/release-budget.mjs',
+          'release:compose': 'node ./scripts/release-compose.mjs',
+          'three-signal:cutoff': 'node ./scripts/three-signal-alpha-cutoff-report.mjs'
+        }
+      }
+    });
+
+    expect(evaluateReleaseChecklist(files).find(result => result.key === 'three-signal-alpha-cutoff-evidence')?.passed).toBe(
+      false,
+    );
+    expect(() => verifyReleaseChecklist(files)).toThrow('three-signal-alpha-cutoff-evidence');
   });
 });

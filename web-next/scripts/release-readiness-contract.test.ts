@@ -37,6 +37,10 @@ function readReleaseChecklistScript(): string {
   return readFileSync(resolve(webNextRoot, 'scripts/release-checklist.mjs'), 'utf8');
 }
 
+function readThreeSignalAlphaCutoffScript(): string {
+  return readFileSync(resolve(webNextRoot, 'scripts/three-signal-alpha-cutoff-report.mjs'), 'utf8');
+}
+
 function readNextObservabilityGateway(): string {
   return readFileSync(
     resolve(repoRoot, 'script/docker-compose/hertzbeat-postgresql-victoria-metrics-next-observability/nginx/default.conf'),
@@ -133,6 +137,7 @@ describe('release-readiness validation baseline', () => {
     );
     expect(releaseChecklistScript).toContain('RELEASE_CHECKLIST_ITEMS');
     expect(releaseChecklistScript).toContain('verifyReleaseChecklist');
+    expect(releaseChecklistScript).toContain('three-signal-alpha-cutoff-evidence');
 
     for (const routePrefix of ['/_next/', '/overview', '/entities', '/alert', '/topology', '/setting']) {
       expect(gateway).toContain(`location ^~ ${routePrefix}`);
@@ -140,6 +145,17 @@ describe('release-readiness validation baseline', () => {
     expect(gateway).toContain('proxy_pass http://web-next:4200;');
     expect(gateway).toContain('location ^~ /api/');
     expect(gateway).toContain('proxy_pass http://hertzbeat:1157;');
+  });
+
+  it('keeps the three-signal alpha cutoff evidence report in frontend verification', () => {
+    const packageJson = readPackageJson();
+    const releaseChecklistScript = readReleaseChecklistScript();
+    const threeSignalAlphaCutoffScript = readThreeSignalAlphaCutoffScript();
+
+    expect(packageJson.scripts?.['three-signal:cutoff']).toBe('node ./scripts/three-signal-alpha-cutoff-report.mjs');
+    expect(packageJson.scripts?.verify).toContain('npm run three-signal:cutoff');
+    expect(releaseChecklistScript).toContain('threeSignalAlphaCutoff');
+    expect(threeSignalAlphaCutoffScript).toContain('verifyThreeSignalAlphaCutoff');
   });
 
   it('keeps the web-next release image aligned with CI Node runtime', () => {

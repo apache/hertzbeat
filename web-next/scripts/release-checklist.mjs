@@ -69,6 +69,14 @@ export const RELEASE_CHECKLIST_ITEMS = [
       files.gateway.includes('location ^~ /api/') &&
       files.gateway.includes('location /') &&
       files.gateway.includes('proxy_pass http://hertzbeat:1157;')
+  },
+  {
+    key: 'three-signal-alpha-cutoff-evidence',
+    label: 'Three-signal alpha cutoff evidence report runs in frontend verification',
+    verify: files =>
+      files.packageJson.scripts?.['three-signal:cutoff'] === 'node ./scripts/three-signal-alpha-cutoff-report.mjs' &&
+      files.packageJson.scripts?.verify?.includes('npm run three-signal:cutoff') &&
+      files.threeSignalAlphaCutoff.includes('verifyThreeSignalAlphaCutoff')
   }
 ];
 
@@ -84,7 +92,8 @@ export function readReleaseChecklistFiles(rootDir = repoRoot) {
     compose: readRepoFile('script/docker-compose/hertzbeat-postgresql-victoria-metrics-next-observability/docker-compose.yaml'),
     gateway: readRepoFile('script/docker-compose/hertzbeat-postgresql-victoria-metrics-next-observability/nginx/default.conf'),
     releaseBudget: readRepoFile('web-next/scripts/release-budget.mjs'),
-    releaseCompose: readRepoFile('web-next/scripts/release-compose.mjs')
+    releaseCompose: readRepoFile('web-next/scripts/release-compose.mjs'),
+    threeSignalAlphaCutoff: readRepoFile('web-next/scripts/three-signal-alpha-cutoff-report.mjs')
   };
 }
 
