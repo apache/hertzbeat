@@ -3442,6 +3442,49 @@ describe('signal dashboards API client', () => {
     expect(renderer.rows[0]?.relatedHandoffHref).not.toContain('resourceFilter=http.route');
   });
 
+  it('maps trace http target groups to operation drilldown without creating target entities', async () => {
+    const [plan] = buildSignalDashboardExecutionPlans({
+      dashboardKey: 'signals-overview',
+      title: 'Signals overview',
+      description: 'Signals',
+      tags: 'traces',
+      layout: '[]',
+      widgets: JSON.stringify([
+        {
+          id: 'traces-targets',
+          signal: 'traces',
+          title: 'HTTP targets',
+          visualization: 'list',
+          route: '/trace/manage?serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&spanScope=all&groupBy=http.target&groupLimit=8'
+        }
+      ])
+    });
+
+    const result = await executeSignalDashboardPanelPlan(plan, async url => {
+      expect(url).toBe('/traces/stats/group-by?serviceName=checkout&spanScope=all&entityId=4200&entityType=service&serviceNamespace=payments&environment=prod&groupBy=http.target&limit=8');
+      return {
+        groupBy: 'http.target',
+        groups: [{
+          value: '/checkout/42',
+          traceCount: 4,
+          errorTraceCount: 1,
+          latencyP95Ms: 95
+        }]
+      };
+    });
+    const renderer = buildSignalDashboardPanelRuntimeRenderDescriptor(plan, result);
+
+    expect(renderer.rows[0]).toEqual(expect.objectContaining({
+      key: 'traces-targets:group:0',
+      title: '/checkout/42',
+      copy: '4 traces · 1 errors',
+      meta: 'http.target · p95 95ms',
+      relatedSignal: 'traces',
+      relatedHandoffHref: '/trace/manage?serviceName=checkout&spanScope=all&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&serviceNamespace=payments&source=otlp&collector=collector-a&template=spring-boot&view=list&operationName=%2Fcheckout%2F42'
+    }));
+    expect(renderer.rows[0]?.relatedHandoffHref).not.toContain('resourceFilter=http.target');
+  });
+
   it('renders backend-compatible trace group payload variants', async () => {
     const [plan] = buildSignalDashboardExecutionPlans({
       dashboardKey: 'signals-overview',
