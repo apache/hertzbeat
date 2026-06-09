@@ -64,6 +64,16 @@ public interface EntityTraceQueryService {
                                                   Long maxDurationMs, int pageIndex, int pageSize, Boolean hideInternal,
                                                   String spanScope) {
         return queryTraceList(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal,
+                spanScope, null);
+    }
+
+    default Page<TraceListItemDto> queryTraceList(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                                  String serviceName, String serviceNamespace, String environment,
+                                                  String resourceFilter, String operationName, Long minDurationMs,
+                                                  Long maxDurationMs, int pageIndex, int pageSize, Boolean hideInternal,
+                                                  String spanScope, String attributeFilter) {
+        return queryTraceList(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 resourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal);
     }
 
@@ -93,6 +103,14 @@ public interface EntityTraceQueryService {
                                               String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
                                               Boolean hideInternal, String spanScope) {
         return getTraceOverview(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, spanScope, null);
+    }
+
+    default TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                              String serviceName, String serviceNamespace, String environment,
+                                              String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
+                                              Boolean hideInternal, String spanScope, String attributeFilter) {
+        return getTraceOverview(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 resourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal);
     }
 
@@ -107,6 +125,17 @@ public interface EntityTraceQueryService {
                                                      String resourceFilter, String operationName, Long minDurationMs,
                                                      Long maxDurationMs, String groupBy, Integer limit, String orderBy,
                                                      Integer minCount, Boolean hideInternal, String spanScope) {
+        return getTraceGroupByStats(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace,
+                environment, resourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy,
+                minCount, hideInternal, spanScope, null);
+    }
+
+    default Map<String, Object> getTraceGroupByStats(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                                     String serviceName, String serviceNamespace, String environment,
+                                                     String resourceFilter, String operationName, Long minDurationMs,
+                                                     Long maxDurationMs, String groupBy, Integer limit, String orderBy,
+                                                     Integer minCount, Boolean hideInternal, String spanScope,
+                                                     String attributeFilter) {
         return getTraceGroupByStats(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace,
                 environment, resourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy,
                 minCount, hideInternal);

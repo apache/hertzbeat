@@ -62,6 +62,7 @@ public class TraceQueryController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @RequestParam(value = "operationName", required = false) String operationName,
             @RequestParam(value = "minDurationMs", required = false) Long minDurationMs,
             @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
@@ -73,7 +74,7 @@ public class TraceQueryController {
         Page<TraceListItemDto> page = entityTraceQueryService.queryTraceList(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedResourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal,
-                spanScope);
+                spanScope, attributeFilter);
         return ResponseEntity.ok(Message.success(page));
     }
 
@@ -90,6 +91,7 @@ public class TraceQueryController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @RequestParam(value = "operationName", required = false) String operationName,
             @RequestParam(value = "minDurationMs", required = false) Long minDurationMs,
             @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
@@ -98,7 +100,8 @@ public class TraceQueryController {
         String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceOverview(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
-                scopedResourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, spanScope)));
+                scopedResourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, spanScope,
+                attributeFilter)));
     }
 
     @GetMapping("/stats/group-by")
@@ -114,6 +117,7 @@ public class TraceQueryController {
             @RequestParam(value = "serviceNamespace", required = false) String serviceNamespace,
             @RequestParam(value = "environment", required = false) String environment,
             @RequestParam(value = "resourceFilter", required = false) String resourceFilter,
+            @RequestParam(value = "attributeFilter", required = false) String attributeFilter,
             @RequestParam(value = "operationName", required = false) String operationName,
             @RequestParam(value = "minDurationMs", required = false) Long minDurationMs,
             @RequestParam(value = "maxDurationMs", required = false) Long maxDurationMs,
@@ -127,7 +131,7 @@ public class TraceQueryController {
         return ResponseEntity.ok(Message.success(entityTraceQueryService.getTraceGroupByStats(
                 entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
                 scopedResourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy, minCount,
-                hideInternal, spanScope)));
+                hideInternal, spanScope, attributeFilter)));
     }
 
     @GetMapping("/{traceId}")

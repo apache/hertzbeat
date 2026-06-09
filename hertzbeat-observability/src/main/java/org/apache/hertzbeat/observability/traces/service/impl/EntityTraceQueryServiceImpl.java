@@ -242,11 +242,23 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                  String resourceFilter, String operationName, Long minDurationMs,
                                                  Long maxDurationMs, int pageIndex, int pageSize,
                                                  Boolean hideInternal, String spanScope) {
+        return queryTraceList(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, pageIndex, pageSize, hideInternal,
+                spanScope, null);
+    }
+
+    @Override
+    public Page<TraceListItemDto> queryTraceList(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                                 String serviceName, String serviceNamespace, String environment,
+                                                 String resourceFilter, String operationName, Long minDurationMs,
+                                                 Long maxDurationMs, int pageIndex, int pageSize,
+                                                 Boolean hideInternal, String spanScope, String attributeFilter) {
         ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
         Map<String, Set<String>> identityValues = canonicalIdentityValues(entityContext);
         TraceQueryScope queryScope = resolveTraceQueryScope(entityContext, identityValues, serviceName, serviceNamespace, environment);
         ResourceFilterSet resourceFilters = removeEntityScopeResourceFilters(
                 identityValues, parseResourceFilters(resourceFilter));
+        ResourceFilterSet attributeFilters = parseResourceFilters(attributeFilter);
         Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters.pushableInclude());
         PageRequest pageRequest = PageRequest.of(normalizeTraceListPageIndex(pageIndex), normalizeTraceListPageSize(pageSize));
         int repositoryOffset = Math.toIntExact(Math.min(pageRequest.getOffset(), Integer.MAX_VALUE));
@@ -254,6 +266,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         Long maxDurationNanos = durationMillisToNanos(maxDurationMs);
         String normalizedSpanScope = normalizeSpanScope(spanScope);
         if (!StringUtils.hasText(traceId) && !resourceFilters.requiresRowFallback()
+                && attributeFilters.isEmpty()
                 && traceQueryRepository.supportsTraceListRows()) {
             List<Map<String, Object>> rows = StringUtils.hasText(normalizedSpanScope)
                     ? traceQueryRepository.queryTraceListRows(
@@ -305,7 +318,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 .filter(trace -> matchesSpanScope(trace, normalizedSpanScope))
                 .filter(trace -> matchesTraceFilters(trace, identityValues, resourceFilters, start, end, traceId, errorOnly,
                         queryScope.serviceName(), queryScope.serviceNamespace(), queryScope.environment(), operationName,
-                        minDurationNanos, maxDurationNanos, hideInternal))
+                        minDurationNanos, maxDurationNanos, hideInternal, attributeFilters))
                 .sorted(Comparator.comparing(TraceAggregate::getStartTime, Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
         int safeStart = Math.min(repositoryOffset, filtered.size());
@@ -376,16 +389,27 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                              String serviceName, String serviceNamespace, String environment,
                                              String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
                                              Boolean hideInternal, String spanScope) {
+        return getTraceOverview(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace, environment,
+                resourceFilter, operationName, minDurationMs, maxDurationMs, hideInternal, spanScope, null);
+    }
+
+    @Override
+    public TraceOverviewDto getTraceOverview(Long entityId, Long start, Long end, String traceId, Boolean errorOnly,
+                                             String serviceName, String serviceNamespace, String environment,
+                                             String resourceFilter, String operationName, Long minDurationMs, Long maxDurationMs,
+                                             Boolean hideInternal, String spanScope, String attributeFilter) {
         ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
         Map<String, Set<String>> identityValues = canonicalIdentityValues(entityContext);
         TraceQueryScope queryScope = resolveTraceQueryScope(entityContext, identityValues, serviceName, serviceNamespace, environment);
         ResourceFilterSet resourceFilters = removeEntityScopeResourceFilters(
                 identityValues, parseResourceFilters(resourceFilter));
+        ResourceFilterSet attributeFilters = parseResourceFilters(attributeFilter);
         Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters.pushableInclude());
         Long minDurationNanos = durationMillisToNanos(minDurationMs);
         Long maxDurationNanos = durationMillisToNanos(maxDurationMs);
         String normalizedSpanScope = normalizeSpanScope(spanScope);
         if (StringUtils.hasText(traceId) && !resourceFilters.requiresRowFallback()
+                && attributeFilters.isEmpty()
                 && traceQueryRepository.supportsTraceIdOverviewRows()) {
             Map<String, Object> row = StringUtils.hasText(normalizedSpanScope)
                     ? traceQueryRepository.queryTraceIdOverviewRows(
@@ -425,6 +449,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             }
         }
         if (!StringUtils.hasText(traceId) && !resourceFilters.requiresRowFallback()
+                && attributeFilters.isEmpty()
                 && traceQueryRepository.supportsTraceOverviewRows()) {
             Map<String, Object> row = StringUtils.hasText(normalizedSpanScope)
                     ? traceQueryRepository.queryTraceOverviewRows(
@@ -464,7 +489,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         Page<TraceListItemDto> result = queryTraceList(entityId, start, end, traceId, errorOnly,
                 queryScope.serviceName(), queryScope.serviceNamespace(), queryScope.environment(),
                 resourceFilter, operationName, minDurationMs, maxDurationMs, 0, TRACE_LIST_SAMPLE_LIMIT, hideInternal,
-                normalizedSpanScope);
+                normalizedSpanScope, attributeFilter);
         Long latestObservedAt = result.getContent().stream()
                 .map(TraceListItemDto::getStartTime)
                 .filter(Objects::nonNull)
@@ -493,6 +518,18 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                                     Long minDurationMs, Long maxDurationMs, String groupBy,
                                                     Integer limit, String orderBy, Integer minCount, Boolean hideInternal,
                                                     String spanScope) {
+        return getTraceGroupByStats(entityId, start, end, traceId, errorOnly, serviceName, serviceNamespace,
+                environment, resourceFilter, operationName, minDurationMs, maxDurationMs, groupBy, limit, orderBy,
+                minCount, hideInternal, spanScope, null);
+    }
+
+    @Override
+    public Map<String, Object> getTraceGroupByStats(Long entityId, Long start, Long end, String traceId,
+                                                    Boolean errorOnly, String serviceName, String serviceNamespace,
+                                                    String environment, String resourceFilter, String operationName,
+                                                    Long minDurationMs, Long maxDurationMs, String groupBy,
+                                                    Integer limit, String orderBy, Integer minCount, Boolean hideInternal,
+                                                    String spanScope, String attributeFilter) {
         String normalizedGroupBy = normalizeTraceGroupBy(groupBy);
         int resolvedLimit = resolveTraceGroupByLimit(limit);
         long resolvedMinCount = resolveTraceGroupByMinCount(minCount);
@@ -508,10 +545,12 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         TraceQueryScope queryScope = resolveTraceQueryScope(entityContext, identityValues, serviceName, serviceNamespace, environment);
         ResourceFilterSet resourceFilters = removeEntityScopeResourceFilters(
                 identityValues, parseResourceFilters(resourceFilter));
+        ResourceFilterSet attributeFilters = parseResourceFilters(attributeFilter);
         Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters.pushableInclude());
         Long minDurationNanos = durationMillisToNanos(minDurationMs);
         Long maxDurationNanos = durationMillisToNanos(maxDurationMs);
         if (!StringUtils.hasText(traceId) && !resourceFilters.requiresRowFallback()
+                && attributeFilters.isEmpty()
                 && traceQueryRepository.supportsTraceGroupByRows()) {
             List<Map<String, Object>> rows = StringUtils.hasText(normalizedSpanScope)
                     ? traceQueryRepository.queryTraceGroupByRows(
@@ -556,7 +595,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         }
         Page<TraceListItemDto> traces = queryTraceList(entityId, start, end, traceId, errorOnly, queryScope.serviceName(),
                 queryScope.serviceNamespace(), queryScope.environment(), resourceFilter, operationName, minDurationMs, maxDurationMs,
-                0, TRACE_LIST_SAMPLE_LIMIT, hideInternal, normalizedSpanScope);
+                0, TRACE_LIST_SAMPLE_LIMIT, hideInternal, normalizedSpanScope, attributeFilter);
         result.put("groups", buildTraceGroupResults(traces.getContent(), normalizedGroupBy, resolvedLimit, orderBy, resolvedMinCount));
         return result;
     }
@@ -921,7 +960,8 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                                         ResourceFilterSet resourceFilters, Long start, Long end,
                                         String traceId, Boolean errorOnly, String serviceName, String serviceNamespace,
                                         String environment, String operationName, Long minDurationNanos,
-                                        Long maxDurationNanos, Boolean hideInternal) {
+                                        Long maxDurationNanos, Boolean hideInternal,
+                                        ResourceFilterSet attributeFilters) {
         if (trace == null) {
             return false;
         }
@@ -964,7 +1004,8 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         if (!identityValues.isEmpty() && !matchesEntity(trace, identityValues)) {
             return false;
         }
-        return resourceFilters.isEmpty() || matchesResourceFilters(trace, resourceFilters);
+        return (resourceFilters.isEmpty() || matchesResourceFilters(trace, resourceFilters))
+                && matchesSpanAttributeFilters(trace, attributeFilters);
     }
 
     private String normalizeSpanScope(String spanScope) {
@@ -1059,6 +1100,59 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
     private boolean matchesResourceFilters(TraceAggregate trace, ResourceFilterSet resourceFilters) {
         return matchesIncludedResourceFilters(trace, resourceFilters.include())
                 && matchesExcludedResourceFilters(trace, resourceFilters.exclude());
+    }
+
+    private boolean matchesSpanAttributeFilters(TraceAggregate trace, ResourceFilterSet attributeFilters) {
+        if (attributeFilters == null || attributeFilters.isEmpty()) {
+            return true;
+        }
+        if (trace == null || CollectionUtils.isEmpty(trace.spans)) {
+            return false;
+        }
+        return trace.spans.stream()
+                .anyMatch(span -> matchesFilterMap(span.getSpanAttributes(), attributeFilters));
+    }
+
+    private boolean matchesFilterMap(Map<String, String> values, ResourceFilterSet filters) {
+        Map<String, String> source = values == null ? Collections.emptyMap() : values;
+        return matchesIncludedFilterMap(source, filters.include())
+                && matchesExcludedFilterMap(source, filters.exclude());
+    }
+
+    private boolean matchesIncludedFilterMap(Map<String, String> source, Map<String, Set<String>> filters) {
+        if (filters.isEmpty()) {
+            return true;
+        }
+        for (Map.Entry<String, Set<String>> entry : filters.entrySet()) {
+            String actual = trimText(source.get(entry.getKey()));
+            boolean keyExists = source.containsKey(entry.getKey());
+            boolean matched = entry.getValue().stream()
+                    .filter(StringUtils::hasText)
+                    .anyMatch(expected -> matchesResourceFilterValue(actual, expected, keyExists));
+            if (!matched) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean matchesExcludedFilterMap(Map<String, String> source, Map<String, Set<String>> filters) {
+        if (filters.isEmpty()) {
+            return true;
+        }
+        for (Map.Entry<String, Set<String>> entry : filters.entrySet()) {
+            String actual = trimText(source.get(entry.getKey()));
+            if (!StringUtils.hasText(actual)) {
+                continue;
+            }
+            boolean excluded = entry.getValue().stream()
+                    .filter(StringUtils::hasText)
+                    .anyMatch(expected -> matchesExactResourceFilterValue(actual, expected));
+            if (excluded) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean matchesIncludedResourceFilters(TraceAggregate trace, Map<String, Set<String>> resourceFilters) {

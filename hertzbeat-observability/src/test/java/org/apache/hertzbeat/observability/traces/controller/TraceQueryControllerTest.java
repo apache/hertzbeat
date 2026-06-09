@@ -69,7 +69,7 @@ class TraceQueryControllerTest {
         when(entityTraceQueryService.queryTraceList(
                 1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
                 "service.version=1.2.3 and hertzbeat.entity_id=\"1\" and hertzbeat.entity_type=\"service\"", "GET /checkout",
-                100L, 500L, 2, 50, true, null))
+                100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout"))
                 .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(2, 50), 1));
 
         mockMvc.perform(get("/api/traces/list")
@@ -83,6 +83,7 @@ class TraceQueryControllerTest {
                         .param("serviceNamespace", "commerce")
                         .param("environment", "prod")
                         .param("resourceFilter", "service.version=1.2.3")
+                        .param("attributeFilter", "http.route CONTAINS checkout")
                         .param("operationName", "GET /checkout")
                         .param("minDurationMs", "100")
                         .param("maxDurationMs", "500")
@@ -97,7 +98,7 @@ class TraceQueryControllerTest {
         verify(entityTraceQueryService).queryTraceList(
                 1L, 100L, 200L, "trace-1", true, "checkout", "commerce", "prod",
                 "service.version=1.2.3 and hertzbeat.entity_id=\"1\" and hertzbeat.entity_type=\"service\"", "GET /checkout",
-                100L, 500L, 2, 50, true, null);
+                100L, 500L, 2, 50, true, null, "http.route CONTAINS checkout");
     }
 
     @Test
@@ -116,7 +117,7 @@ class TraceQueryControllerTest {
         );
         when(entityTraceQueryService.queryTraceList(
                 null, 100L, 200L, null, false, "checkout", null, "prod",
-                null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint"))
+                null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint", null))
                 .thenReturn(new PageImpl<>(List.of(item), PageRequest.of(0, 20), 1));
 
         mockMvc.perform(get("/api/traces/list")
@@ -135,7 +136,7 @@ class TraceQueryControllerTest {
 
         verify(entityTraceQueryService).queryTraceList(
                 null, 100L, 200L, null, false, "checkout", null, "prod",
-                null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint");
+                null, "POST /checkout", 100L, 500L, 0, 20, null, "entrypoint", null);
     }
 
     @Test
@@ -143,7 +144,7 @@ class TraceQueryControllerTest {
         TraceOverviewDto overview = new TraceOverviewDto(2, 1, 1_710_000_000_000L, true);
         when(entityTraceQueryService.getTraceOverview(
                 9L, 100L, 200L, "trace-9", false, "payments", "core", "stage",
-                "service.version=2.0.0 and hertzbeat.entity_id=\"9\"", "POST /pay", 200L, 900L, true, null))
+                "service.version=2.0.0 and hertzbeat.entity_id=\"9\"", "POST /pay", 200L, 900L, true, null, null))
                 .thenReturn(overview);
 
         mockMvc.perform(get("/api/traces/stats/overview")
@@ -168,7 +169,7 @@ class TraceQueryControllerTest {
 
         verify(entityTraceQueryService).getTraceOverview(
                 9L, 100L, 200L, "trace-9", false, "payments", "core", "stage",
-                "service.version=2.0.0 and hertzbeat.entity_id=\"9\"", "POST /pay", 200L, 900L, true, null);
+                "service.version=2.0.0 and hertzbeat.entity_id=\"9\"", "POST /pay", 200L, 900L, true, null, null);
     }
 
     @Test
@@ -176,7 +177,7 @@ class TraceQueryControllerTest {
         TraceOverviewDto overview = new TraceOverviewDto(3, 0, 1_710_000_000_000L, true);
         when(entityTraceQueryService.getTraceOverview(
                 null, 100L, 200L, null, false, "checkout", null, "prod",
-                null, "POST /checkout", 100L, 500L, null, "entrypoint"))
+                null, "POST /checkout", 100L, 500L, null, "entrypoint", null))
                 .thenReturn(overview);
 
         mockMvc.perform(get("/api/traces/stats/overview")
@@ -195,7 +196,7 @@ class TraceQueryControllerTest {
 
         verify(entityTraceQueryService).getTraceOverview(
                 null, 100L, 200L, null, false, "checkout", null, "prod",
-                null, "POST /checkout", 100L, 500L, null, "entrypoint");
+                null, "POST /checkout", 100L, 500L, null, "entrypoint", null);
     }
 
     @Test
@@ -213,7 +214,7 @@ class TraceQueryControllerTest {
         when(entityTraceQueryService.getTraceGroupByStats(
                 3L, 100L, 200L, "trace-3", true, "checkout", "commerce", "prod",
                 "host.name=checkout-1 and hertzbeat.entity_id=\"3\"", "GET /checkout", 100L, 500L,
-                "resource:service.version", 7, "latency-p95-desc", 5, true, "entrypoint"))
+                "resource:service.version", 7, "latency-p95-desc", 5, true, "entrypoint", null))
                 .thenReturn(result);
 
         mockMvc.perform(get("/api/traces/stats/group-by")
@@ -247,6 +248,6 @@ class TraceQueryControllerTest {
         verify(entityTraceQueryService).getTraceGroupByStats(
                 3L, 100L, 200L, "trace-3", true, "checkout", "commerce", "prod",
                 "host.name=checkout-1 and hertzbeat.entity_id=\"3\"", "GET /checkout", 100L, 500L,
-                "resource:service.version", 7, "latency-p95-desc", 5, true, "entrypoint");
+                "resource:service.version", 7, "latency-p95-desc", 5, true, "entrypoint", null);
     }
 }
