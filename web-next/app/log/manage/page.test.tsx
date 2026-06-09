@@ -581,6 +581,31 @@ function renderInteractiveLogManagePage(initialRouteState = buildLogManageRouteS
   interactionRoot?.render(<LogManagePage initialRouteState={initialRouteState} />);
 }
 
+async function applyLogAttributeOperator(kind: 'resource' | 'attribute', name: string, operator: string) {
+  const operatorRoot = interactionContainer?.querySelector(
+    `[data-log-manage-attribute-operator-action="${kind}"][data-log-manage-attribute-filter-name="${name}"]`
+  ) as HTMLElement | null;
+  expect(operatorRoot).toBeTruthy();
+  expect(operatorRoot?.getAttribute('data-log-manage-attribute-operator-owner')).toBe('hertzbeat-ui-select');
+  expect(operatorRoot?.getAttribute('data-hz-ui')).toBe('select');
+
+  await act(async () => {
+    (operatorRoot?.querySelector('[data-hz-ui="select-trigger"]') as HTMLButtonElement | null)?.click();
+    await Promise.resolve();
+  });
+
+  const option = operatorRoot?.querySelector(
+    `[data-log-manage-attribute-operator-option="${operator}"][data-log-manage-attribute-operator-kind="${kind}"][data-log-manage-attribute-filter-name="${name}"]`
+  ) as HTMLButtonElement | null;
+  expect(option).toBeTruthy();
+
+  await act(async () => {
+    option?.click();
+    await Promise.resolve();
+  });
+  return String(mockState.replace.mock.calls.at(-1)?.[0]);
+}
+
 async function flushDashboardEditPromises() {
   for (let index = 0; index < 8; index += 1) {
     await Promise.resolve();
@@ -655,20 +680,22 @@ describe('log manage page', () => {
     expect(source).toContain('applyLogAttributeExistsFilter');
     expect(source).toContain('buildLogAttributeContainsExpression');
     expect(source).toContain('applyLogAttributeContainsFilter');
-    expect(source).toContain('data-log-manage-attribute-contains-action={containsFilter.kind}');
     expect(source).toContain('buildLogAttributeNotContainsExpression');
     expect(source).toContain('applyLogAttributeNotContainsFilter');
-    expect(source).toContain('data-log-manage-attribute-not-contains-action={notContainsFilter.kind}');
     expect(source).toContain('buildLogAttributeInExpression');
     expect(source).toContain('applyLogAttributeInFilter');
-    expect(source).toContain('data-log-manage-attribute-in-action={inFilter.kind}');
     expect(source).toContain('buildLogAttributeNotInExpression');
     expect(source).toContain('applyLogAttributeNotInFilter');
-    expect(source).toContain('data-log-manage-attribute-not-in-action={notInFilter.kind}');
-    expect(source).toContain('data-log-manage-attribute-exists-action={existsFilter.kind}');
-    expect(source).toContain('data-log-manage-attribute-not-exists-action={notExistsFilter.kind}');
     expect(source).toContain('buildLogAttributeNotExistsExpression');
-    expect(source).toContain('data-log-manage-attribute-exists-owner="hertzbeat-ui-button"');
+    expect(source).toContain('buildLogAttributeOperatorOptions');
+    expect(source).toContain('logAttributeOperatorDataAttributes');
+    expect(source).toContain('applyLogAttributeOperator');
+    expect(source).toContain('data-log-manage-attribute-operator-action={kind}');
+    expect(source).toContain('data-log-manage-attribute-operator-owner="hertzbeat-ui-select"');
+    expect(source).toContain('optionDataAttributes={option => logAttributeOperatorDataAttributes(option.value as LogAttributeOperator, kind, row)}');
+    expect(source).not.toContain('data-log-manage-attribute-exists-owner="hertzbeat-ui-button"');
+    expect(source).not.toContain('data-log-manage-attribute-contains-owner="hertzbeat-ui-button"');
+    expect(source).not.toContain('data-log-manage-attribute-group-owner="hertzbeat-ui-button"');
     expect(source).toContain('data-log-manage-stream-selected-detail-owner="hertzbeat-ui-detail-rows"');
     expect(source).toContain('data-log-manage-stream-detail-action-stack="shared-control-stack"');
     expect(source).toContain('data-log-manage-stream-detail-action-stack-owner="hertzbeat-ui-control-stack"');
@@ -3259,16 +3286,10 @@ describe('log manage page', () => {
       await Promise.resolve();
     });
 
-    const contextFilterAction = interactionContainer.querySelector(
-      '[data-log-stream-detail-context-filter-action="attribute"][data-log-manage-attribute-filter-name="region"]'
-    ) as HTMLButtonElement | null;
-    expect(contextFilterAction).toBeTruthy();
-    expect(contextFilterAction?.getAttribute('data-log-stream-detail-context-filter-owner')).toBe('hertzbeat-ui-button');
     mockState.replace.mockClear();
 
+    await applyLogAttributeOperator('attribute', 'region', 'context');
     await act(async () => {
-      contextFilterAction?.click();
-      await Promise.resolve();
       await Promise.resolve();
     });
 
@@ -3377,31 +3398,25 @@ describe('log manage page', () => {
         await Promise.resolve();
       });
 
-      const resourceAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-filter-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
-      ) as HTMLButtonElement | null;
-      const attributeAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-filter-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
-      ) as HTMLButtonElement | null;
-      expect(resourceAction).toBeTruthy();
-      expect(attributeAction).toBeTruthy();
-      expect(resourceAction?.getAttribute('data-log-manage-attribute-filter-owner')).toBe('hertzbeat-ui-button');
-      expect(attributeAction?.getAttribute('data-log-manage-attribute-filter-owner')).toBe('hertzbeat-ui-button');
+      const resourceOperator = interactionContainer.querySelector(
+        '[data-log-manage-attribute-operator-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
+      ) as HTMLElement | null;
+      const attributeOperator = interactionContainer.querySelector(
+        '[data-log-manage-attribute-operator-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
+      ) as HTMLElement | null;
+      expect(resourceOperator).toBeTruthy();
+      expect(attributeOperator).toBeTruthy();
+      expect(resourceOperator?.getAttribute('data-log-manage-attribute-operator-owner')).toBe('hertzbeat-ui-select');
+      expect(attributeOperator?.getAttribute('data-log-manage-attribute-operator-owner')).toBe('hertzbeat-ui-select');
       mockState.replace.mockClear();
 
-      await act(async () => {
-        resourceAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('resource', 'service.version', 'filter');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(String(mockState.replace.mock.calls[0]?.[0])).toContain('resourceFilter=service.version%3D1.2.3');
 
       mockState.replace.mockClear();
-      await act(async () => {
-        attributeAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('attribute', 'http.route', 'filter');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(String(mockState.replace.mock.calls[0]?.[0])).toContain('attributeFilter=http.route%3A%2Fcheckout%2F%3Aid');
@@ -3436,205 +3451,87 @@ describe('log manage page', () => {
         await Promise.resolve();
       });
 
-      const excludeResourceAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-filter-out-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
-      ) as HTMLButtonElement | null;
-      const excludeAttributeAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-filter-out-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
-      ) as HTMLButtonElement | null;
-      expect(excludeResourceAction).toBeTruthy();
-      expect(excludeAttributeAction).toBeTruthy();
-      expect(excludeResourceAction?.getAttribute('data-log-manage-attribute-filter-out-owner')).toBe('hertzbeat-ui-button');
-      expect(excludeAttributeAction?.getAttribute('data-log-manage-attribute-filter-out-owner')).toBe('hertzbeat-ui-button');
       mockState.replace.mockClear();
 
-      await act(async () => {
-        excludeResourceAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('resource', 'service.version', 'exclude');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(String(mockState.replace.mock.calls[0]?.[0])).toContain('resourceFilter=service.version%21%3D1.2.3');
 
       mockState.replace.mockClear();
-      await act(async () => {
-        excludeAttributeAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('attribute', 'http.route', 'exclude');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(String(mockState.replace.mock.calls[0]?.[0])).toContain('attributeFilter=http.route%21%3D%2Fcheckout%2F%3Aid');
 
-      const existsResourceAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-exists-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
-      ) as HTMLButtonElement | null;
-      const existsAttributeAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-exists-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
-      ) as HTMLButtonElement | null;
-      expect(existsResourceAction).toBeTruthy();
-      expect(existsAttributeAction).toBeTruthy();
-      expect(existsResourceAction?.getAttribute('data-log-manage-attribute-exists-owner')).toBe('hertzbeat-ui-button');
-      expect(existsAttributeAction?.getAttribute('data-log-manage-attribute-exists-owner')).toBe('hertzbeat-ui-button');
-
       mockState.replace.mockClear();
-      await act(async () => {
-        existsResourceAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('resource', 'service.version', 'exists');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('resourceFilter')).toContain('service.version EXISTS');
 
       mockState.replace.mockClear();
-      await act(async () => {
-        existsAttributeAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('attribute', 'http.route', 'exists');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route EXISTS');
 
-      const notExistsResourceAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-not-exists-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
-      ) as HTMLButtonElement | null;
-      const notExistsAttributeAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-not-exists-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
-      ) as HTMLButtonElement | null;
-      expect(notExistsResourceAction).toBeTruthy();
-      expect(notExistsAttributeAction).toBeTruthy();
-      expect(notExistsResourceAction?.getAttribute('data-log-manage-attribute-not-exists-owner')).toBe('hertzbeat-ui-button');
-      expect(notExistsAttributeAction?.getAttribute('data-log-manage-attribute-not-exists-owner')).toBe('hertzbeat-ui-button');
-
       mockState.replace.mockClear();
-      await act(async () => {
-        notExistsResourceAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('resource', 'service.version', 'not-exists');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('resourceFilter')).toContain('service.version NOT EXISTS');
 
       mockState.replace.mockClear();
-      await act(async () => {
-        notExistsAttributeAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('attribute', 'http.route', 'not-exists');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route NOT EXISTS');
 
-      const containsResourceAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-contains-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
-      ) as HTMLButtonElement | null;
-      const containsAttributeAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-contains-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
-      ) as HTMLButtonElement | null;
-      expect(containsResourceAction).toBeTruthy();
-      expect(containsAttributeAction).toBeTruthy();
-      expect(containsResourceAction?.getAttribute('data-log-manage-attribute-contains-owner')).toBe('hertzbeat-ui-button');
-      expect(containsAttributeAction?.getAttribute('data-log-manage-attribute-contains-owner')).toBe('hertzbeat-ui-button');
-
       mockState.replace.mockClear();
-      await act(async () => {
-        containsResourceAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('resource', 'service.version', 'contains');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('resourceFilter')).toContain('service.version CONTAINS 1.2.3');
 
       mockState.replace.mockClear();
-      await act(async () => {
-        containsAttributeAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('attribute', 'http.route', 'contains');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route CONTAINS /checkout/:id');
 
-      const notContainsResourceAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-not-contains-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
-      ) as HTMLButtonElement | null;
-      const notContainsAttributeAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-not-contains-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
-      ) as HTMLButtonElement | null;
-      expect(notContainsResourceAction).toBeTruthy();
-      expect(notContainsAttributeAction).toBeTruthy();
-      expect(notContainsResourceAction?.getAttribute('data-log-manage-attribute-not-contains-owner')).toBe('hertzbeat-ui-button');
-      expect(notContainsAttributeAction?.getAttribute('data-log-manage-attribute-not-contains-owner')).toBe('hertzbeat-ui-button');
-
       mockState.replace.mockClear();
-      await act(async () => {
-        notContainsResourceAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('resource', 'service.version', 'not-contains');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('resourceFilter')).toContain('service.version NOT CONTAINS 1.2.3');
 
       mockState.replace.mockClear();
-      await act(async () => {
-        notContainsAttributeAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('attribute', 'http.route', 'not-contains');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route NOT CONTAINS /checkout/:id');
 
-      const inResourceAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-in-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
-      ) as HTMLButtonElement | null;
-      const inAttributeAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-in-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
-      ) as HTMLButtonElement | null;
-      expect(inResourceAction).toBeTruthy();
-      expect(inAttributeAction).toBeTruthy();
-      expect(inResourceAction?.getAttribute('data-log-manage-attribute-in-owner')).toBe('hertzbeat-ui-button');
-      expect(inAttributeAction?.getAttribute('data-log-manage-attribute-in-owner')).toBe('hertzbeat-ui-button');
-
       mockState.replace.mockClear();
-      await act(async () => {
-        inResourceAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('resource', 'service.version', 'in');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('resourceFilter')).toContain('service.version IN ("1.2.3")');
 
       mockState.replace.mockClear();
-      await act(async () => {
-        inAttributeAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('attribute', 'http.route', 'in');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route IN ("/checkout/:id")');
 
-      const notInResourceAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-not-in-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
-      ) as HTMLButtonElement | null;
-      const notInAttributeAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-not-in-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
-      ) as HTMLButtonElement | null;
-      expect(notInResourceAction).toBeTruthy();
-      expect(notInAttributeAction).toBeTruthy();
-      expect(notInResourceAction?.getAttribute('data-log-manage-attribute-not-in-owner')).toBe('hertzbeat-ui-button');
-      expect(notInAttributeAction?.getAttribute('data-log-manage-attribute-not-in-owner')).toBe('hertzbeat-ui-button');
-
       mockState.replace.mockClear();
-      await act(async () => {
-        notInResourceAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('resource', 'service.version', 'not-in');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('resourceFilter')).toContain('service.version NOT IN ("1.2.3")');
 
       mockState.replace.mockClear();
-      await act(async () => {
-        notInAttributeAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('attribute', 'http.route', 'not-in');
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route NOT IN ("/checkout/:id")');
@@ -3671,32 +3568,16 @@ describe('log manage page', () => {
         await Promise.resolve();
       });
 
-      const replaceResourceAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-filter-replace-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
-      ) as HTMLButtonElement | null;
-      const replaceAttributeAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-filter-replace-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
-      ) as HTMLButtonElement | null;
-      expect(replaceResourceAction).toBeTruthy();
-      expect(replaceAttributeAction).toBeTruthy();
-      expect(replaceResourceAction?.getAttribute('data-log-manage-attribute-filter-replace-owner')).toBe('hertzbeat-ui-button');
-      expect(replaceAttributeAction?.getAttribute('data-log-manage-attribute-filter-replace-owner')).toBe('hertzbeat-ui-button');
       mockState.replace.mockClear();
 
-      await act(async () => {
-        replaceResourceAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('resource', 'service.version', 'replace');
 
       const resourceRoute = String(mockState.replace.mock.calls[0]?.[0]);
       expect(resourceRoute).toContain('resourceFilter=service.version%3D1.2.3');
       expect(resourceRoute).not.toContain('resourceFilter=service.version%3D1.0.0');
 
       mockState.replace.mockClear();
-      await act(async () => {
-        replaceAttributeAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('attribute', 'http.route', 'replace');
 
       const attributeRoute = String(mockState.replace.mock.calls[0]?.[0]);
       expect(attributeRoute).toContain('attributeFilter=http.route%3A%2Fcheckout%2F%3Aid');
@@ -3732,32 +3613,16 @@ describe('log manage page', () => {
         await Promise.resolve();
       });
 
-      const groupResourceAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-group-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
-      ) as HTMLButtonElement | null;
-      const groupAttributeAction = interactionContainer.querySelector(
-        '[data-log-manage-attribute-group-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
-      ) as HTMLButtonElement | null;
-      expect(groupResourceAction).toBeTruthy();
-      expect(groupAttributeAction).toBeTruthy();
-      expect(groupResourceAction?.getAttribute('data-log-manage-attribute-group-owner')).toBe('hertzbeat-ui-button');
-      expect(groupAttributeAction?.getAttribute('data-log-manage-attribute-group-owner')).toBe('hertzbeat-ui-button');
       mockState.replace.mockClear();
 
-      await act(async () => {
-        groupResourceAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('resource', 'service.version', 'group');
 
       const resourceRoute = String(mockState.replace.mock.calls[0]?.[0]);
       expect(resourceRoute).toContain('groupBy=resource%3Aservice.version');
       expect(resourceRoute).not.toContain('groupBy=resource%3Aservice.namespace');
 
       mockState.replace.mockClear();
-      await act(async () => {
-        groupAttributeAction?.click();
-        await Promise.resolve();
-      });
+      await applyLogAttributeOperator('attribute', 'http.route', 'group');
 
       const attributeRoute = String(mockState.replace.mock.calls[0]?.[0]);
       expect(attributeRoute).toContain('groupBy=attribute%3Ahttp.route');

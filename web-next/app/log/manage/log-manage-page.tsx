@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link';
 import {
   BarChart3,
-  Ban,
   BellPlus,
   BellRing,
   Check,
@@ -142,6 +141,7 @@ type LogSavedQueryView = SignalSavedQueryView;
 
 type LogExportRowLimit = 'current' | '10000' | '30000' | '50000';
 type LogDashboardPanelDraftState = 'idle' | 'saving' | 'saved' | 'failed';
+type LogAttributeOperator = 'context' | 'filter' | 'replace' | 'exclude' | 'contains' | 'not-contains' | 'in' | 'not-in' | 'exists' | 'not-exists' | 'group';
 
 type LogDetailContextPayload = {
   targetTimeUnixNano: number;
@@ -240,6 +240,19 @@ const LOG_SAVED_QUERY_VIEW_PERSISTENCE_OWNER: Record<SignalSavedQueryViewPersist
   'local-fallback': 'browser-local-storage'
 };
 const LOG_EXPORT_ROW_LIMITS: LogExportRowLimit[] = ['current', '10000', '30000', '50000'];
+const LOG_ATTRIBUTE_OPERATOR_LABEL_KEYS: Record<LogAttributeOperator, string> = {
+  context: 'log.manage.attributes.operator.context',
+  filter: 'log.manage.attributes.operator.filter',
+  replace: 'log.manage.attributes.operator.replace',
+  exclude: 'log.manage.attributes.operator.exclude',
+  contains: 'log.manage.attributes.operator.contains',
+  'not-contains': 'log.manage.attributes.operator.not-contains',
+  in: 'log.manage.attributes.operator.in',
+  'not-in': 'log.manage.attributes.operator.not-in',
+  exists: 'log.manage.attributes.operator.exists',
+  'not-exists': 'log.manage.attributes.operator.not-exists',
+  group: 'log.manage.attributes.operator.group'
+};
 const LOG_EXPORT_FETCH_PAGE_SIZE = 1000;
 const LOG_CONTEXT_WINDOW_MS = 5 * 60 * 1000;
 const LOG_CONTEXT_LIST_PAGE_SIZE = '20';
@@ -1211,6 +1224,46 @@ type RelatedTracePreviewState = {
 };
 
 type LogManageTranslate = ReturnType<typeof useI18n>['t'];
+
+function buildLogAttributeOperatorOptions(t: LogManageTranslate, operators: LogAttributeOperator[]) {
+  return operators.map(operator => ({
+    value: operator,
+    label: t(LOG_ATTRIBUTE_OPERATOR_LABEL_KEYS[operator] as Parameters<LogManageTranslate>[0])
+  }));
+}
+
+function logAttributeOperatorDataAttributes(operator: LogAttributeOperator, kind: 'resource' | 'attribute', row: LogAttributeRow) {
+  const base = {
+    'data-log-manage-attribute-operator-option': operator,
+    'data-log-manage-attribute-operator-kind': kind,
+    'data-log-manage-attribute-filter-name': row.name,
+    'data-log-manage-attribute-filter-value': row.value
+  };
+  switch (operator) {
+    case 'context':
+      return { ...base, 'data-log-stream-detail-context-filter-action': kind, 'data-log-stream-detail-context-filter-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'filter':
+      return { ...base, 'data-log-manage-attribute-filter-action': kind, 'data-log-manage-attribute-filter-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'replace':
+      return { ...base, 'data-log-manage-attribute-filter-replace-action': kind, 'data-log-manage-attribute-filter-replace-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'exclude':
+      return { ...base, 'data-log-manage-attribute-filter-out-action': kind, 'data-log-manage-attribute-filter-out-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'contains':
+      return { ...base, 'data-log-manage-attribute-contains-action': kind, 'data-log-manage-attribute-contains-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'not-contains':
+      return { ...base, 'data-log-manage-attribute-not-contains-action': kind, 'data-log-manage-attribute-not-contains-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'in':
+      return { ...base, 'data-log-manage-attribute-in-action': kind, 'data-log-manage-attribute-in-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'not-in':
+      return { ...base, 'data-log-manage-attribute-not-in-action': kind, 'data-log-manage-attribute-not-in-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'exists':
+      return { ...base, 'data-log-manage-attribute-exists-action': kind, 'data-log-manage-attribute-exists-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'not-exists':
+      return { ...base, 'data-log-manage-attribute-not-exists-action': kind, 'data-log-manage-attribute-not-exists-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'group':
+      return { ...base, 'data-log-manage-attribute-group-action': kind, 'data-log-manage-attribute-group-owner': 'hertzbeat-ui-select-menu-option' };
+  }
+}
 
 function isLogSavedQueryView(value: unknown): value is LogSavedQueryView {
   if (!value || typeof value !== 'object') return false;
@@ -2387,6 +2440,56 @@ function LogManageExplorer({
     applyQuery(nextQuery);
   }, [applyQuery, draft, setDraft]);
 
+  const applyLogAttributeOperator = useCallback((operator: LogAttributeOperator, row: LogAttributeRow) => {
+    switch (operator) {
+      case 'context':
+        applyLogContextAttributeFilter(row);
+        break;
+      case 'filter':
+        applyLogAttributeFilter(row);
+        break;
+      case 'replace':
+        replaceLogAttributeFilter(row);
+        break;
+      case 'exclude':
+        excludeLogAttributeFilter(row);
+        break;
+      case 'contains':
+        applyLogAttributeContainsFilter(row);
+        break;
+      case 'not-contains':
+        applyLogAttributeNotContainsFilter(row);
+        break;
+      case 'in':
+        applyLogAttributeInFilter(row);
+        break;
+      case 'not-in':
+        applyLogAttributeNotInFilter(row);
+        break;
+      case 'exists':
+        applyLogAttributeExistsFilter(row);
+        break;
+      case 'not-exists':
+        applyLogAttributeNotExistsFilter(row);
+        break;
+      case 'group':
+        groupLogAttribute(row);
+        break;
+    }
+  }, [
+    applyLogAttributeContainsFilter,
+    applyLogAttributeExistsFilter,
+    applyLogAttributeFilter,
+    applyLogAttributeInFilter,
+    applyLogAttributeNotContainsFilter,
+    applyLogAttributeNotExistsFilter,
+    applyLogAttributeNotInFilter,
+    applyLogContextAttributeFilter,
+    excludeLogAttributeFilter,
+    groupLogAttribute,
+    replaceLogAttributeFilter
+  ]);
+
   const applyLogAttributeFieldColumn = useCallback((row: LogAttributeRow) => {
     const fieldColumn = buildLogAttributeFieldColumn(row);
     if (!fieldColumn) return;
@@ -2450,6 +2553,7 @@ function LogManageExplorer({
   }, [activeGroupBy, applyQuery, applyRouteContext, draft, routeContext, setDraft]);
 
   const renderLogAttributeFilterAction = useCallback((row: LogAttributeRow) => {
+    const kind = resolveLogAttributeFilterKind(row);
     const filter = buildLogAttributeFilterExpression(row, t('log.manage.attributes.value.object'));
     const excludeFilter = buildLogAttributeExcludeExpression(row, t('log.manage.attributes.value.object'));
     const containsFilter = buildLogAttributeContainsExpression(row, t('log.manage.attributes.value.object'));
@@ -2461,7 +2565,18 @@ function LogManageExplorer({
     const group = buildLogAttributeGroupBy(row);
     const fieldColumn = buildLogAttributeFieldColumn(row);
     const fieldColumnVisible = Boolean(fieldColumn && visibleLogFieldColumns.includes(fieldColumn));
-    if (!filter && !excludeFilter && !containsFilter && !notContainsFilter && !inFilter && !notInFilter && !existsFilter && !notExistsFilter && !group && !fieldColumn) return null;
+    const availableOperators: LogAttributeOperator[] = [
+      ...(filter ? ['context', 'filter', 'replace'] as const : []),
+      ...(excludeFilter ? ['exclude'] as const : []),
+      ...(containsFilter ? ['contains'] as const : []),
+      ...(notContainsFilter ? ['not-contains'] as const : []),
+      ...(inFilter ? ['in'] as const : []),
+      ...(notInFilter ? ['not-in'] as const : []),
+      ...(existsFilter ? ['exists'] as const : []),
+      ...(notExistsFilter ? ['not-exists'] as const : []),
+      ...(group ? ['group'] as const : [])
+    ];
+    if (!availableOperators.length && !fieldColumn) return null;
     return (
       <span className="inline-flex flex-wrap gap-1">
         {fieldColumn ? (
@@ -2486,216 +2601,25 @@ function LogManageExplorer({
             {fieldColumnVisible ? t('log.manage.attributes.remove-column-action') : t('log.manage.attributes.add-column-action')}
           </HzButton>
         ) : null}
-        {filter ? (
-          <>
-            <HzButton
-              data-log-stream-detail-context-filter-action={filter.kind}
-              data-log-stream-detail-context-filter-owner="hertzbeat-ui-button"
-              data-log-manage-attribute-filter-name={row.name}
-              data-log-manage-attribute-filter-value={row.value}
-              size="sm"
-              intent="secondary"
-              onClick={() => applyLogContextAttributeFilter(row)}
-              aria-label={t('log.manage.attributes.context-filter-action.aria', { name: row.name, value: row.value })}
-            >
-              <HzButtonIcon
-                icon={ScrollText}
-                data-log-stream-detail-context-filter-icon="context-filter"
-                data-log-stream-detail-context-filter-icon-owner="hertzbeat-ui-button-icon"
-              />
-              {t('log.manage.attributes.context-filter-action')}
-            </HzButton>
-            <HzButton
-              data-log-manage-attribute-filter-action={filter.kind}
-              data-log-manage-attribute-filter-owner="hertzbeat-ui-button"
-              data-log-manage-attribute-filter-name={row.name}
-              data-log-manage-attribute-filter-value={row.value}
-              size="sm"
-              intent="secondary"
-              onClick={() => applyLogAttributeFilter(row)}
-              aria-label={t('log.manage.attributes.filter-action.aria', { name: row.name, value: row.value })}
-            >
-              <HzButtonIcon
-                icon={Filter}
-                data-log-manage-attribute-filter-action-icon="filter"
-                data-log-manage-attribute-filter-action-icon-owner="hertzbeat-ui-button-icon"
-              />
-              {t('log.manage.attributes.filter-action')}
-            </HzButton>
-            <HzButton
-              data-log-manage-attribute-filter-replace-action={filter.kind}
-              data-log-manage-attribute-filter-replace-owner="hertzbeat-ui-button"
-              data-log-manage-attribute-filter-name={row.name}
-              data-log-manage-attribute-filter-value={row.value}
-              size="sm"
-              intent="secondary"
-              onClick={() => replaceLogAttributeFilter(row)}
-              aria-label={t('log.manage.attributes.replace-action.aria', { name: row.name, value: row.value })}
-            >
-              <HzButtonIcon
-                icon={Replace}
-                data-log-manage-attribute-filter-replace-icon="replace"
-                data-log-manage-attribute-filter-replace-icon-owner="hertzbeat-ui-button-icon"
-              />
-              {t('log.manage.attributes.replace-action')}
-            </HzButton>
-          </>
-        ) : null}
-        {excludeFilter ? (
-          <HzButton
-            data-log-manage-attribute-filter-out-action={excludeFilter.kind}
-            data-log-manage-attribute-filter-out-owner="hertzbeat-ui-button"
+        {kind && availableOperators.length ? (
+          <HzSelect
+            data-log-manage-attribute-operator-action={kind}
+            data-log-manage-attribute-operator-owner="hertzbeat-ui-select"
             data-log-manage-attribute-filter-name={row.name}
             data-log-manage-attribute-filter-value={row.value}
             size="sm"
-            intent="secondary"
-            onClick={() => excludeLogAttributeFilter(row)}
-            aria-label={t('log.manage.attributes.filter-out-action.aria', { name: row.name, value: row.value })}
-          >
-            <HzButtonIcon
-              icon={X}
-              data-log-manage-attribute-filter-out-icon="exclude"
-              data-log-manage-attribute-filter-out-icon-owner="hertzbeat-ui-button-icon"
-            />
-            {t('log.manage.attributes.filter-out-action')}
-          </HzButton>
-        ) : null}
-        {containsFilter ? (
-          <HzButton
-            data-log-manage-attribute-contains-action={containsFilter.kind}
-            data-log-manage-attribute-contains-owner="hertzbeat-ui-button"
-            data-log-manage-attribute-filter-name={row.name}
-            data-log-manage-attribute-filter-value={row.value}
-            size="sm"
-            intent="secondary"
-            onClick={() => applyLogAttributeContainsFilter(row)}
-            aria-label={t('log.manage.attributes.contains-action.aria', { name: row.name, value: row.value })}
-          >
-            <HzButtonIcon
-              icon={Search}
-              data-log-manage-attribute-contains-icon="contains"
-              data-log-manage-attribute-contains-icon-owner="hertzbeat-ui-button-icon"
-            />
-            {t('log.manage.attributes.contains-action')}
-          </HzButton>
-        ) : null}
-        {notContainsFilter ? (
-          <HzButton
-            data-log-manage-attribute-not-contains-action={notContainsFilter.kind}
-            data-log-manage-attribute-not-contains-owner="hertzbeat-ui-button"
-            data-log-manage-attribute-filter-name={row.name}
-            data-log-manage-attribute-filter-value={row.value}
-            size="sm"
-            intent="secondary"
-            onClick={() => applyLogAttributeNotContainsFilter(row)}
-            aria-label={t('log.manage.attributes.not-contains-action.aria', { name: row.name, value: row.value })}
-          >
-            <HzButtonIcon
-              icon={Ban}
-              data-log-manage-attribute-not-contains-icon="not-contains"
-              data-log-manage-attribute-not-contains-icon-owner="hertzbeat-ui-button-icon"
-            />
-            {t('log.manage.attributes.not-contains-action')}
-          </HzButton>
-        ) : null}
-        {inFilter ? (
-          <HzButton
-            data-log-manage-attribute-in-action={inFilter.kind}
-            data-log-manage-attribute-in-owner="hertzbeat-ui-button"
-            data-log-manage-attribute-filter-name={row.name}
-            data-log-manage-attribute-filter-value={row.value}
-            size="sm"
-            intent="secondary"
-            onClick={() => applyLogAttributeInFilter(row)}
-            aria-label={t('log.manage.attributes.in-action.aria', { name: row.name, value: row.value })}
-          >
-            <HzButtonIcon
-              icon={ListChecks}
-              data-log-manage-attribute-in-icon="in"
-              data-log-manage-attribute-in-icon-owner="hertzbeat-ui-button-icon"
-            />
-            {t('log.manage.attributes.in-action')}
-          </HzButton>
-        ) : null}
-        {notInFilter ? (
-          <HzButton
-            data-log-manage-attribute-not-in-action={notInFilter.kind}
-            data-log-manage-attribute-not-in-owner="hertzbeat-ui-button"
-            data-log-manage-attribute-filter-name={row.name}
-            data-log-manage-attribute-filter-value={row.value}
-            size="sm"
-            intent="secondary"
-            onClick={() => applyLogAttributeNotInFilter(row)}
-            aria-label={t('log.manage.attributes.not-in-action.aria', { name: row.name, value: row.value })}
-          >
-            <HzButtonIcon
-              icon={Ban}
-              data-log-manage-attribute-not-in-icon="not-in"
-              data-log-manage-attribute-not-in-icon-owner="hertzbeat-ui-button-icon"
-            />
-            {t('log.manage.attributes.not-in-action')}
-          </HzButton>
-        ) : null}
-        {existsFilter ? (
-          <HzButton
-            data-log-manage-attribute-exists-action={existsFilter.kind}
-            data-log-manage-attribute-exists-owner="hertzbeat-ui-button"
-            data-log-manage-attribute-filter-name={row.name}
-            data-log-manage-attribute-filter-value={row.value}
-            size="sm"
-            intent="secondary"
-            onClick={() => applyLogAttributeExistsFilter(row)}
-            aria-label={t('log.manage.attributes.exists-action.aria', { name: row.name })}
-          >
-            <HzButtonIcon
-              icon={Check}
-              data-log-manage-attribute-exists-icon="exists"
-              data-log-manage-attribute-exists-icon-owner="hertzbeat-ui-button-icon"
-            />
-            {t('log.manage.attributes.exists-action')}
-          </HzButton>
-        ) : null}
-        {notExistsFilter ? (
-          <HzButton
-            data-log-manage-attribute-not-exists-action={notExistsFilter.kind}
-            data-log-manage-attribute-not-exists-owner="hertzbeat-ui-button"
-            data-log-manage-attribute-filter-name={row.name}
-            data-log-manage-attribute-filter-value={row.value}
-            size="sm"
-            intent="secondary"
-            onClick={() => applyLogAttributeNotExistsFilter(row)}
-            aria-label={t('log.manage.attributes.not-exists-action.aria', { name: row.name })}
-          >
-            <HzButtonIcon
-              icon={Ban}
-              data-log-manage-attribute-not-exists-icon="not-exists"
-              data-log-manage-attribute-not-exists-icon-owner="hertzbeat-ui-button-icon"
-            />
-            {t('log.manage.attributes.not-exists-action')}
-          </HzButton>
-        ) : null}
-        {group ? (
-          <HzButton
-            data-log-manage-attribute-group-action={group.kind}
-            data-log-manage-attribute-group-owner="hertzbeat-ui-button"
-            data-log-manage-attribute-filter-name={row.name}
-            data-log-manage-attribute-filter-value={row.value}
-            size="sm"
-            intent="secondary"
-            onClick={() => groupLogAttribute(row)}
-            aria-label={t('log.manage.attributes.group-action.aria', { name: row.name })}
-          >
-            <HzButtonIcon
-              icon={BarChart3}
-              data-log-manage-attribute-group-icon="group"
-              data-log-manage-attribute-group-icon-owner="hertzbeat-ui-button-icon"
-            />
-            {t('log.manage.attributes.group-action')}
-          </HzButton>
+            width="log-severity"
+            value=""
+            placeholder={t('log.manage.attributes.operator.placeholder')}
+            aria-label={t('log.manage.attributes.operator-action.aria', { name: row.name, value: row.value })}
+            options={buildLogAttributeOperatorOptions(t, availableOperators)}
+            optionDataAttributes={option => logAttributeOperatorDataAttributes(option.value as LogAttributeOperator, kind, row)}
+            onChange={event => applyLogAttributeOperator(event.target.value as LogAttributeOperator, row)}
+          />
         ) : null}
       </span>
     );
-  }, [applyLogAttributeContainsFilter, applyLogAttributeExistsFilter, applyLogAttributeFieldColumn, applyLogAttributeFilter, applyLogAttributeInFilter, applyLogAttributeNotContainsFilter, applyLogAttributeNotExistsFilter, applyLogAttributeNotInFilter, applyLogContextAttributeFilter, excludeLogAttributeFilter, groupLogAttribute, replaceLogAttributeFilter, t, visibleLogFieldColumns]);
+  }, [applyLogAttributeFieldColumn, applyLogAttributeOperator, t, visibleLogFieldColumns]);
 
   const openLogDetails = (entry: LogEntry | null, source: 'history' | 'stream', selectionState: 'attached' | 'detached' = 'attached') => {
     if (!entry) return;
