@@ -300,7 +300,8 @@ class LogQueryControllerTest {
                 .resource(new HashMap<>(Map.of(
                         "service.name", "checkout",
                         "service.namespace", "payments",
-                        "deployment.environment.name", "prod")))
+                        "deployment.environment.name", "prod",
+                        "hertzbeat.entity_id", "42")))
                 .build();
         LogEntry billingStagingLog = LogEntry.builder()
                 .timeUnixNano(1734005477640000000L)
@@ -311,11 +312,14 @@ class LogQueryControllerTest {
                         "service.namespace", "wrong-namespace",
                         "deployment.environment.name", "staging")))
                 .build();
+        Map<String, String> expectedResourceFilters = Map.of("hertzbeat.entity_id", "42");
         when(historyDataReader.countLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
-                anySet(), eq(false), eq(null), eq("checkout"), eq("payments"), eq("prod")))
+                anySet(), eq(false), eq(null), eq("checkout"), eq("payments"), eq("prod"),
+                eq(expectedResourceFilters), eq(Map.of())))
                 .thenReturn(2L);
         when(historyDataReader.queryLogsByMultipleConditionsWithPagination(any(), any(), any(), any(), any(), any(),
-                any(), eq(0), eq(20), anySet(), eq(false), eq(null), eq("checkout"), eq("payments"), eq("prod")))
+                any(), eq(0), eq(20), anySet(), eq(false), eq(null), eq("checkout"), eq("payments"), eq("prod"),
+                eq(expectedResourceFilters), eq(Map.of())))
                 .thenReturn(List.of(checkoutProdLog, billingStagingLog));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
@@ -363,7 +367,9 @@ class LogQueryControllerTest {
                         .priority(20)
                         .build()
         ));
-        Map<String, String> expectedResourceFilters = Map.of("service.version", "1.2.3");
+        Map<String, String> expectedResourceFilters = Map.of(
+                "service.version", "1.2.3",
+                "hertzbeat.entity_id", "42");
         Map<String, String> expectedAttributeFilters = Map.of("http.route", "/checkout");
         when(historyDataReader.countLogsBySeverityBuckets(any(), any(), any(), any(), any(), any(), any(),
                 anySet(), eq(false), org.mockito.ArgumentMatchers.isNull(), eq("checkout"), eq("payments"), eq("prod"),
@@ -439,10 +445,13 @@ class LogQueryControllerTest {
                         "service.name", "checkout",
                         "service.namespace", "payments",
                         "deployment.environment.name", "prod",
-                        "service.version", "1.2.3")))
+                        "service.version", "1.2.3",
+                        "hertzbeat.entity_id", "42")))
                 .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
                 .build();
-        Map<String, String> expectedResourceFilters = Map.of("service.version", "1.2.3");
+        Map<String, String> expectedResourceFilters = Map.of(
+                "service.version", "1.2.3",
+                "hertzbeat.entity_id", "42");
         Map<String, String> expectedAttributeFilters = Map.of("http.route", "/checkout");
         when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
                 anySet(), eq(false), org.mockito.ArgumentMatchers.isNull(), eq("checkout"), eq("payments"), eq("prod"),
@@ -632,6 +641,7 @@ class LogQueryControllerTest {
                 .resource(new HashMap<>(java.util.Map.of(
                         "service.name", "checkout",
                         "service.version", "1.2.3",
+                        "hertzbeat.entity_id", "42",
                         "hertzbeat.entity_type", "service",
                         "hertzbeat.workspace_id", "team-a")))
                 .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
@@ -639,6 +649,7 @@ class LogQueryControllerTest {
 
         Map<String, String> expectedResourceFilters = Map.of(
                 "service.version", "1.2.3",
+                "hertzbeat.entity_id", "42",
                 "hertzbeat.entity_type", "service"
         );
         AuthTokenRequestContext.bindWorkspaceId("team-a");
@@ -652,6 +663,7 @@ class LogQueryControllerTest {
                 .thenReturn(List.of(filteredLog));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("entityId", "42")
                         .param("entityType", "service")
                         .param("resourceFilter", "service.version=1.2.3")
                         .param("attributeFilter", "http.route:/checkout"))

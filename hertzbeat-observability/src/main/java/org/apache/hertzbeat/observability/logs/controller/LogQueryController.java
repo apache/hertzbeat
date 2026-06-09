@@ -89,7 +89,7 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
+        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
         Page<LogEntry> result = logQueryService.list(entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
                 pageIndex, pageSize, hideInternal, hideNoise);
@@ -130,7 +130,7 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
+        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(logQueryService.context(
                 entityId, logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
                 scopedResourceFilter, attributeFilter, limit, direction, cursorLogTimeUnixNano, hideInternal, hideNoise)));
@@ -172,7 +172,7 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
+        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(logQueryService.overviewStats(
                 entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
@@ -215,7 +215,7 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
+        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(logQueryService.traceCoverageStats(
                 entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
@@ -258,7 +258,7 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
+        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(logQueryService.trendStats(
                 entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter,
@@ -309,26 +309,35 @@ public class LogQueryController {
             @RequestParam(value = "hideInternal", required = false, defaultValue = "false") boolean hideInternal,
             @Parameter(description = "Hide demo infrastructure noise logs such as kafka/load-generator when focusing on business requests", example = "true")
             @RequestParam(value = "hideNoise", required = false, defaultValue = "false") boolean hideNoise) {
-        String scopedResourceFilter = mergeEntityTypeResourceFilter(entityType, resourceFilter);
+        String scopedResourceFilter = mergeEntityContextResourceFilter(entityId, entityType, resourceFilter);
         return ResponseEntity.ok(Message.success(logQueryService.groupByStats(
                 entityId, start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, scopedResourceFilter, attributeFilter, groupBy,
                 limit, orderBy, minCount, hideInternal, hideNoise)));
     }
 
-    private String mergeEntityTypeResourceFilter(String entityType, String resourceFilter) {
+    private String mergeEntityContextResourceFilter(Long entityId, String entityType, String resourceFilter) {
         String normalizedResourceFilter = StringUtils.trimWhitespace(resourceFilter);
+        String scopedResourceFilter = normalizedResourceFilter;
+        if (entityId != null && entityId > 0 && (StringUtils.hasText(scopedResourceFilter)
+                ? !scopedResourceFilter.contains(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID)
+                : true)) {
+            String entityIdFilter = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID + "=\"" + entityId + "\"";
+            scopedResourceFilter = StringUtils.hasText(scopedResourceFilter)
+                    ? scopedResourceFilter + " and " + entityIdFilter
+                    : entityIdFilter;
+        }
         String normalizedEntityType = StringUtils.trimWhitespace(entityType);
         if (!StringUtils.hasText(normalizedEntityType) || !normalizedEntityType.matches("[A-Za-z0-9_.:-]+")) {
-            return normalizedResourceFilter;
+            return scopedResourceFilter;
         }
-        if (StringUtils.hasText(normalizedResourceFilter)
-                && normalizedResourceFilter.contains(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE)) {
-            return normalizedResourceFilter;
+        if (StringUtils.hasText(scopedResourceFilter)
+                && scopedResourceFilter.contains(OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE)) {
+            return scopedResourceFilter;
         }
         String entityTypeFilter = OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE + "=\"" + normalizedEntityType + "\"";
-        return StringUtils.hasText(normalizedResourceFilter)
-                ? normalizedResourceFilter + " and " + entityTypeFilter
+        return StringUtils.hasText(scopedResourceFilter)
+                ? scopedResourceFilter + " and " + entityTypeFilter
                 : entityTypeFilter;
     }
 }
