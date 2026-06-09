@@ -1801,11 +1801,13 @@ describe('trace manage page', () => {
     expect(source).toContain('buildTraceResourceFilterExpression');
     expect(source).toContain('buildTraceResourceExcludeFilterExpression');
     expect(source).toContain('buildTraceResourceContainsFilterExpression');
+    expect(source).toContain('buildTraceResourceNotContainsFilterExpression');
     expect(source).toContain('buildTraceResourceExistsFilterExpression');
     expect(source).toContain('buildTraceResourceNotExistsFilterExpression');
     expect(source).toContain('buildTraceSpanAttributeFilterExpression');
     expect(source).toContain('buildTraceSpanAttributeExcludeFilterExpression');
     expect(source).toContain('buildTraceSpanAttributeContainsFilterExpression');
+    expect(source).toContain('buildTraceSpanAttributeNotContainsFilterExpression');
     expect(source).toContain('buildTraceSpanAttributeExistsFilterExpression');
     expect(source).toContain('buildTraceSpanAttributeNotExistsFilterExpression');
     expect(source).toContain('buildTraceSpanAttributeGroupBy');
@@ -1813,12 +1815,14 @@ describe('trace manage page', () => {
     expect(source).toContain('applyTraceResourceFilter');
     expect(source).toContain('excludeTraceResourceFilter');
     expect(source).toContain('applyTraceResourceContainsFilter');
+    expect(source).toContain('applyTraceResourceNotContainsFilter');
     expect(source).toContain('applyTraceResourceExistsFilter');
     expect(source).toContain('applyTraceResourceNotExistsFilter');
     expect(source).toContain('replaceTraceResourceFilter');
     expect(source).toContain('applyTraceSpanAttributeFilter');
     expect(source).toContain('excludeTraceSpanAttributeFilter');
     expect(source).toContain('applyTraceSpanAttributeContainsFilter');
+    expect(source).toContain('applyTraceSpanAttributeNotContainsFilter');
     expect(source).toContain('applyTraceSpanAttributeExistsFilter');
     expect(source).toContain('applyTraceSpanAttributeNotExistsFilter');
     expect(source).toContain('replaceTraceSpanAttributeFilter');
@@ -1833,6 +1837,8 @@ describe('trace manage page', () => {
     expect(source).toContain('data-trace-manage-drawer-span-attribute-filter-out-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-contains-action="true"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-contains-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain('data-trace-manage-drawer-span-attribute-not-contains-action="true"');
+    expect(source).toContain('data-trace-manage-drawer-span-attribute-not-contains-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-exists-action="true"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-exists-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('data-trace-manage-drawer-span-attribute-not-exists-action="true"');
@@ -1856,6 +1862,9 @@ describe('trace manage page', () => {
     expect(source).toContain('data-trace-manage-drawer-resource-contains-action="true"');
     expect(source).toContain('data-trace-manage-drawer-resource-contains-action-owner="hertzbeat-ui-button"');
     expect(source).toContain("t('trace.manage.drawer.attributes.contains-action')");
+    expect(source).toContain('data-trace-manage-drawer-resource-not-contains-action="true"');
+    expect(source).toContain('data-trace-manage-drawer-resource-not-contains-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain("t('trace.manage.drawer.attributes.not-contains-action')");
     expect(source).toContain('data-trace-manage-drawer-resource-exists-action="true"');
     expect(source).toContain('data-trace-manage-drawer-resource-exists-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('data-trace-manage-drawer-resource-not-exists-action="true"');
