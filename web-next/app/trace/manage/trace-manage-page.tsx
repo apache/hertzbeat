@@ -148,6 +148,7 @@ const emptyTraceQuery: TraceQueryState = {
   spanId: '',
   serviceName: '',
   resourceFilter: '',
+  attributeFilter: '',
   operationName: '',
   minDurationMs: '',
   maxDurationMs: '',
@@ -389,6 +390,7 @@ function buildTraceSavedViewDescription(query: TraceQueryState, routeContext: Si
     query.serviceName.trim() ? `${t('trace.manage.saved-view.field.service')}: ${compactTraceSavedViewValue(query.serviceName)}` : '',
     query.operationName?.trim() ? `${t('trace.manage.saved-view.field.operation')}: ${compactTraceSavedViewValue(query.operationName)}` : '',
     query.resourceFilter?.trim() ? `${t('trace.manage.saved-view.field.resource-filter')}: ${compactTraceSavedViewValue(query.resourceFilter)}` : '',
+    query.attributeFilter?.trim() ? `${t('trace.manage.saved-view.field.attribute-filter')}: ${compactTraceSavedViewValue(query.attributeFilter)}` : '',
     query.minDurationMs?.trim() ? `${t('trace.manage.saved-view.field.min-duration')}: ${compactTraceSavedViewValue(query.minDurationMs)}ms` : '',
     query.maxDurationMs?.trim() ? `${t('trace.manage.saved-view.field.max-duration')}: ${compactTraceSavedViewValue(query.maxDurationMs)}ms` : '',
     query.errorOnly ? t('trace.manage.saved-view.field.errors-only') : '',
@@ -2256,6 +2258,19 @@ function TraceExplorer({
                 'data-trace-manage-query-token-field': 'resource-filter',
                 'data-trace-manage-query-token-field-owner': 'hertzbeat-ui-query-token-field',
                 'data-trace-manage-resource-filter-input-owner': 'hertzbeat-ui-query-token-field'
+              }}
+            />
+            <HzQueryTokenField
+              width="trace-id"
+              aria-label={t('trace.manage.route.query.attribute-filter')}
+              value={draft.attributeFilter || ''}
+              onChange={event => setDraft(updateDraftField('attributeFilter', event.target.value))}
+              placeholder={t('trace.manage.route.query.attribute-filter')}
+              data-trace-manage-attribute-filter-input="true"
+              fieldProps={{
+                'data-trace-manage-query-token-field': 'attribute-filter',
+                'data-trace-manage-query-token-field-owner': 'hertzbeat-ui-query-token-field',
+                'data-trace-manage-attribute-filter-input-owner': 'hertzbeat-ui-query-token-field'
               }}
             />
             <HzQueryTokenField

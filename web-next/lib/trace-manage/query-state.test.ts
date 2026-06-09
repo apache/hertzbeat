@@ -3,12 +3,13 @@ import { DEFAULT_TRACE_TABLE_COLUMNS, buildTraceRouteUrl, buildTraceUrls, queryS
 
 describe('trace query state codec', () => {
   it('reads query state from search params', () => {
-    const params = new URLSearchParams('traceId=abc123&spanId=span456&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=GET%20%2Fcheckout&minDurationMs=100&maxDurationMs=500&groupBy=resource%3Aservice.version&groupLimit=7&groupOrder=latency-p95-desc&groupMinCount=5&errorOnly=true');
+    const params = new URLSearchParams('traceId=abc123&spanId=span456&serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%20CONTAINS%20checkout&operationName=GET%20%2Fcheckout&minDurationMs=100&maxDurationMs=500&groupBy=resource%3Aservice.version&groupLimit=7&groupOrder=latency-p95-desc&groupMinCount=5&errorOnly=true');
     expect(queryStateFromParams(params)).toEqual({
       traceId: 'abc123',
       spanId: 'span456',
       serviceName: 'checkout',
       resourceFilter: 'service.version=1.2.3',
+      attributeFilter: 'http.route CONTAINS checkout',
       operationName: 'GET /checkout',
       minDurationMs: '100',
       maxDurationMs: '500',
@@ -30,6 +31,7 @@ describe('trace query state codec', () => {
       spanId: [' span-456 ', 'span-ignored'],
       serviceName: [' checkout ', 'payments'],
       resourceFilter: [' service.version=1.2.3 ', 'service.version=ignored'],
+      attributeFilter: [' http.route CONTAINS checkout ', 'http.route CONTAINS ignored'],
       groupBy: [' resource:service.version ', 'resource:host.name'],
       groupLimit: [' 7 ', '12'],
       groupOrder: [' error-count-desc ', 'latency-p95-desc'],
@@ -51,6 +53,7 @@ describe('trace query state codec', () => {
       spanId: 'span-456',
       serviceName: 'checkout',
       resourceFilter: 'service.version=1.2.3',
+      attributeFilter: 'http.route CONTAINS checkout',
       operationName: '',
       minDurationMs: '',
       maxDurationMs: '',
@@ -143,6 +146,7 @@ describe('trace query state codec', () => {
         spanId: 'span456',
         serviceName: 'checkout',
         resourceFilter: 'service.version=1.2.3',
+        attributeFilter: 'http.route CONTAINS checkout',
         operationName: 'GET /checkout',
         minDurationMs: '100',
         maxDurationMs: '500',
@@ -156,9 +160,9 @@ describe('trace query state codec', () => {
         listPageIndex: '2'
       })
     ).toEqual({
-      listUrl: '/traces/list?pageIndex=2&pageSize=50&traceId=abc123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=GET+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root',
-      overviewUrl: '/traces/stats/overview?traceId=abc123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=GET+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root',
-      groupByUrl: '/traces/stats/group-by?traceId=abc123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=GET+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root&groupBy=resource%3Aservice.version&limit=7&orderBy=latency-p95-desc&minCount=5'
+      listUrl: '/traces/list?pageIndex=2&pageSize=50&traceId=abc123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route+CONTAINS+checkout&operationName=GET+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root',
+      overviewUrl: '/traces/stats/overview?traceId=abc123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route+CONTAINS+checkout&operationName=GET+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root',
+      groupByUrl: '/traces/stats/group-by?traceId=abc123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route+CONTAINS+checkout&operationName=GET+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root&groupBy=resource%3Aservice.version&limit=7&orderBy=latency-p95-desc&minCount=5'
     });
     expect(buildTraceRouteUrl({ traceId: 'abc123', spanId: 'span456', serviceName: 'checkout', errorOnly: false, spanScope: 'root', listPageSize: '50', listPageIndex: '2' })).toBe(
       '/trace/manage?traceId=abc123&spanId=span456&serviceName=checkout&listPageSize=50&listPageIndex=2'

@@ -13,6 +13,7 @@ export type TraceQueryState = {
   spanId: string;
   serviceName: string;
   resourceFilter?: string;
+  attributeFilter?: string;
   operationName?: string;
   minDurationMs?: string;
   maxDurationMs?: string;
@@ -97,6 +98,7 @@ export function queryStateFromParams(searchParams: SearchParamReader): TraceQuer
     spanId: readSearchParam(searchParams, 'spanId'),
     serviceName: readSearchParam(searchParams, 'serviceName'),
     resourceFilter: readSearchParam(searchParams, 'resourceFilter'),
+    attributeFilter: readSearchParam(searchParams, 'attributeFilter'),
     operationName: readSearchParam(searchParams, 'operationName'),
     minDurationMs: readNonNegativeIntegerSearchParam(searchParams, 'minDurationMs'),
     maxDurationMs: readNonNegativeIntegerSearchParam(searchParams, 'maxDurationMs'),
@@ -224,6 +226,7 @@ export function buildTraceRouteUrl(query: TraceQueryState, options?: { view?: Tr
   if (query.spanId.trim()) params.set('spanId', query.spanId.trim());
   if (query.serviceName.trim()) params.set('serviceName', query.serviceName.trim());
   if (query.resourceFilter?.trim()) params.set('resourceFilter', query.resourceFilter.trim());
+  if (query.attributeFilter?.trim()) params.set('attributeFilter', query.attributeFilter.trim());
   if (query.operationName?.trim()) params.set('operationName', query.operationName.trim());
   const minDurationMs = readNonNegativeDurationValue(query.minDurationMs);
   const maxDurationMs = readNonNegativeDurationValue(query.maxDurationMs);
@@ -278,7 +281,7 @@ export function buildTraceUrls(
   const listParams = new URLSearchParams({ pageIndex: listPageIndex, pageSize: listPageSize });
   if (query.traceId.trim()) listParams.set('traceId', query.traceId.trim());
   if (query.serviceName.trim()) listParams.set('serviceName', query.serviceName.trim());
-  appendTraceResourceFilterParam(listParams, query);
+  appendTraceFilterParams(listParams, query);
   if (query.operationName?.trim()) listParams.set('operationName', query.operationName.trim());
   appendTraceDurationParams(listParams, query);
   if (query.errorOnly) listParams.set('errorOnly', 'true');
@@ -288,7 +291,7 @@ export function buildTraceUrls(
   const overviewParams = new URLSearchParams();
   if (query.traceId.trim()) overviewParams.set('traceId', query.traceId.trim());
   if (query.serviceName.trim()) overviewParams.set('serviceName', query.serviceName.trim());
-  appendTraceResourceFilterParam(overviewParams, query);
+  appendTraceFilterParams(overviewParams, query);
   if (query.operationName?.trim()) overviewParams.set('operationName', query.operationName.trim());
   appendTraceDurationParams(overviewParams, query);
   if (query.errorOnly) overviewParams.set('errorOnly', 'true');
@@ -327,9 +330,13 @@ function appendTraceDurationParams(params: URLSearchParams, query: TraceQuerySta
   if (maxDurationMs) params.set('maxDurationMs', maxDurationMs);
 }
 
-function appendTraceResourceFilterParam(params: URLSearchParams, query: TraceQueryState) {
+function appendTraceFilterParams(params: URLSearchParams, query: TraceQueryState) {
   const resourceFilter = query.resourceFilter?.trim() || '';
   if (resourceFilter) {
     params.set('resourceFilter', resourceFilter);
+  }
+  const attributeFilter = query.attributeFilter?.trim() || '';
+  if (attributeFilter) {
+    params.set('attributeFilter', attributeFilter);
   }
 }

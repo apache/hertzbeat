@@ -772,6 +772,7 @@ export function buildTraceAlertRuleDraft(query: TraceQueryState, routeContext: S
     ['spanId', query.spanId || routeContext.spanId],
     ['serviceName', query.serviceName || routeContext.serviceName],
     ['resourceFilter', query.resourceFilter],
+    ['attributeFilter', query.attributeFilter],
     ['operationName', query.operationName],
     ['minDurationMs', query.minDurationMs],
     ['maxDurationMs', query.maxDurationMs],

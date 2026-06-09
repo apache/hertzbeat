@@ -220,6 +220,7 @@ vi.mock('@/lib/trace-manage/query-state', () => {
     if (query.spanId) params.set('spanId', query.spanId);
     if (query.serviceName) params.set('serviceName', query.serviceName);
     if (query.resourceFilter) params.set('resourceFilter', query.resourceFilter);
+    if (query.attributeFilter) params.set('attributeFilter', query.attributeFilter);
     if (query.operationName) params.set('operationName', query.operationName);
     if (query.minDurationMs) params.set('minDurationMs', query.minDurationMs);
     if (query.maxDurationMs) params.set('maxDurationMs', query.maxDurationMs);
@@ -253,6 +254,10 @@ vi.mock('@/lib/trace-manage/query-state', () => {
     if (query.resourceFilter) {
       listParams.set('resourceFilter', query.resourceFilter);
       overviewParams.set('resourceFilter', query.resourceFilter);
+    }
+    if (query.attributeFilter) {
+      listParams.set('attributeFilter', query.attributeFilter);
+      overviewParams.set('attributeFilter', query.attributeFilter);
     }
     if (query.operationName) {
       listParams.set('operationName', query.operationName);
@@ -294,6 +299,7 @@ vi.mock('@/lib/trace-manage/query-state', () => {
     spanId: searchParams.get('spanId') || '',
     serviceName: searchParams.get('serviceName') || '',
     resourceFilter: searchParams.get('resourceFilter') || '',
+    attributeFilter: searchParams.get('attributeFilter') || '',
     operationName: searchParams.get('operationName') || '',
     minDurationMs: searchParams.get('minDurationMs') || '',
     maxDurationMs: searchParams.get('maxDurationMs') || '',
@@ -417,6 +423,7 @@ function buildTraceManageRouteState(): TraceManageRouteState {
     spanId: mockState.searchParams.get('spanId') || '',
     serviceName: mockState.searchParams.get('serviceName') || '',
     resourceFilter: mockState.searchParams.get('resourceFilter') || '',
+    attributeFilter: mockState.searchParams.get('attributeFilter') || '',
     operationName: mockState.searchParams.get('operationName') || '',
     minDurationMs: mockState.searchParams.get('minDurationMs') || '',
     maxDurationMs: mockState.searchParams.get('maxDurationMs') || '',
@@ -520,7 +527,7 @@ afterEach(() => {
 
 describe('trace manage page', () => {
   it('renders the OTLP cold trace workbench and keeps the filtered trace endpoints', async () => {
-    mockState.searchParams = new URLSearchParams('traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=POST%20%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true');
+    mockState.searchParams = new URLSearchParams('traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%20CONTAINS%20checkout&operationName=POST%20%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true');
     apiMessageGet
       .mockResolvedValueOnce({ totalTraceCount: 8, errorTraceCount: 2, latestObservedAt: 1713200000000, hasActiveTrace: true })
       .mockResolvedValueOnce({ content: [] });
@@ -531,7 +538,7 @@ describe('trace manage page', () => {
     expect(html).toContain('data-trace-manage-route="otlp-hertzbeat-ui-trace-workbench"');
     expect(html).toContain('data-loading-copy="Loading trace workbench"');
     expect(html).toContain(
-      'data-cache-key="trace-manage:list:/traces/list?pageIndex=0&amp;pageSize=8&amp;traceId=trace-123&amp;serviceName=checkout&amp;resourceFilter=service.version%3D1.2.3&amp;operationName=POST+%2Fcheckout&amp;minDurationMs=100&amp;maxDurationMs=500&amp;errorOnly=true&amp;spanScope=root|/traces/stats/overview?traceId=trace-123&amp;serviceName=checkout&amp;resourceFilter=service.version%3D1.2.3&amp;operationName=POST+%2Fcheckout&amp;minDurationMs=100&amp;maxDurationMs=500&amp;errorOnly=true&amp;spanScope=root|no-group|last-30m'
+      'data-cache-key="trace-manage:list:/traces/list?pageIndex=0&amp;pageSize=8&amp;traceId=trace-123&amp;serviceName=checkout&amp;resourceFilter=service.version%3D1.2.3&amp;attributeFilter=http.route+CONTAINS+checkout&amp;operationName=POST+%2Fcheckout&amp;minDurationMs=100&amp;maxDurationMs=500&amp;errorOnly=true&amp;spanScope=root|/traces/stats/overview?traceId=trace-123&amp;serviceName=checkout&amp;resourceFilter=service.version%3D1.2.3&amp;attributeFilter=http.route+CONTAINS+checkout&amp;operationName=POST+%2Fcheckout&amp;minDurationMs=100&amp;maxDurationMs=500&amp;errorOnly=true&amp;spanScope=root|no-group|last-30m'
     );
     expect(html).toContain('data-cache-settled-ttl="10000"');
     expect(html).toContain('data-trace-manage-style-baseline="hertzbeat-ui-matte"');
@@ -722,13 +729,13 @@ describe('trace manage page', () => {
     expect(html).not.toContain('Create an Alert');
     expect(html).not.toContain('Add to Dashboard');
     expect(apiMessageGet.mock.calls).toEqual([
-      ['/traces/stats/overview?traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=POST+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root', { signal: expect.any(AbortSignal) }],
-      ['/traces/list?pageIndex=0&pageSize=8&traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&operationName=POST+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root', { signal: expect.any(AbortSignal) }]
+      ['/traces/stats/overview?traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route+CONTAINS+checkout&operationName=POST+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root', { signal: expect.any(AbortSignal) }],
+      ['/traces/list?pageIndex=0&pageSize=8&traceId=trace-123&serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route+CONTAINS+checkout&operationName=POST+%2Fcheckout&minDurationMs=100&maxDurationMs=500&errorOnly=true&spanScope=root', { signal: expect.any(AbortSignal) }]
     ]);
   }, 60000);
 
   it('loads and renders trace group-by results when the route has an active groupBy', async () => {
-    mockState.searchParams = new URLSearchParams('serviceName=checkout&resourceFilter=service.version%3D1.2.3&groupBy=resource%3Aservice.version&groupLimit=7&groupOrder=latency-p95-desc&groupMinCount=5');
+    mockState.searchParams = new URLSearchParams('serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%20CONTAINS%20checkout&groupBy=resource%3Aservice.version&groupLimit=7&groupOrder=latency-p95-desc&groupMinCount=5');
     apiMessageGet
       .mockResolvedValueOnce({ totalTraceCount: 8, errorTraceCount: 2, latestObservedAt: 1713200000000, hasActiveTrace: true })
       .mockResolvedValueOnce({ content: [] })
@@ -749,7 +756,7 @@ describe('trace manage page', () => {
     await mockState.lastLoad?.();
 
     expect(html).toContain('data-cache-key="trace-manage:list:');
-    expect(html).toContain('/traces/stats/group-by?serviceName=checkout&amp;resourceFilter=service.version%3D1.2.3&amp;spanScope=root&amp;groupBy=resource%3Aservice.version&amp;limit=7&amp;orderBy=latency-p95-desc&amp;minCount=5');
+    expect(html).toContain('/traces/stats/group-by?serviceName=checkout&amp;resourceFilter=service.version%3D1.2.3&amp;attributeFilter=http.route+CONTAINS+checkout&amp;spanScope=root&amp;groupBy=resource%3Aservice.version&amp;limit=7&amp;orderBy=latency-p95-desc&amp;minCount=5');
     expect(html).toContain('data-trace-manage-group-panel="hertzbeat-ui-trace-group-results"');
     expect(html).toContain('data-trace-manage-group-panel-owner="hertzbeat-ui-panel-surface"');
     expect(html).toContain('data-trace-manage-group-by="resource:service.version"');
@@ -769,9 +776,9 @@ describe('trace manage page', () => {
     expect(html).toContain('84.5ms');
     expect(html).toContain('210ms');
     expect(apiMessageGet.mock.calls).toEqual([
-      ['/traces/stats/overview?serviceName=checkout&resourceFilter=service.version%3D1.2.3&spanScope=root', { signal: expect.any(AbortSignal) }],
-      ['/traces/list?pageIndex=0&pageSize=8&serviceName=checkout&resourceFilter=service.version%3D1.2.3&spanScope=root', { signal: expect.any(AbortSignal) }],
-      ['/traces/stats/group-by?serviceName=checkout&resourceFilter=service.version%3D1.2.3&spanScope=root&groupBy=resource%3Aservice.version&limit=7&orderBy=latency-p95-desc&minCount=5', { signal: expect.any(AbortSignal) }]
+      ['/traces/stats/overview?serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route+CONTAINS+checkout&spanScope=root', { signal: expect.any(AbortSignal) }],
+      ['/traces/list?pageIndex=0&pageSize=8&serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route+CONTAINS+checkout&spanScope=root', { signal: expect.any(AbortSignal) }],
+      ['/traces/stats/group-by?serviceName=checkout&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route+CONTAINS+checkout&spanScope=root&groupBy=resource%3Aservice.version&limit=7&orderBy=latency-p95-desc&minCount=5', { signal: expect.any(AbortSignal) }]
     ]);
   }, 15000);
 
