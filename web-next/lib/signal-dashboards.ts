@@ -3671,6 +3671,7 @@ export function buildSignalDashboardRuntimeEvidenceFilterSuggestions(
     { source: 'serviceNamespace', variableName: 'service.namespace', variableType: 'query' },
     { source: 'environment', variableName: 'deployment.environment.name', variableType: 'query' },
     { source: 'entityId', variableName: 'hertzbeat.entity_id', variableType: 'textbox' },
+    { source: 'entityType', variableName: 'hertzbeat.entity_type', variableType: 'dynamic' },
     { source: 'entityName', variableName: 'hertzbeat.entity_name', variableType: 'query' },
     { source: 'signalSource', variableName: 'hertzbeat.source', variableType: 'dynamic' },
     { source: 'collector', variableName: 'hertzbeat.collector', variableType: 'dynamic' },
