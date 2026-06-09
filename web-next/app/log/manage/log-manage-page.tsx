@@ -214,6 +214,8 @@ const EMPTY_QUERY: LogQueryState = {
   logContent: '',
   traceId: '',
   spanId: '',
+  resourceFilter: '',
+  attributeFilter: '',
   severityNumber: '',
   severityText: ''
 };
@@ -3638,6 +3640,24 @@ function LogManageExplorer({
               width="log-query-body"
               data-log-manage-query-body-input="shared-log-body-input"
               data-log-manage-query-body-input-owner="hertzbeat-ui-input"
+            />
+            <HzInput
+              aria-label={t('log.manage.query.resource-filter.aria')}
+              value={draft.resourceFilter || ''}
+              onChange={event => setDraft(updateDraftField('resourceFilter', event.target.value))}
+              placeholder={t('log.manage.query.resource-filter.placeholder')}
+              width="log-query-filter"
+              data-log-manage-query-resource-filter-input="true"
+              data-log-manage-query-resource-filter-input-owner="hertzbeat-ui-input"
+            />
+            <HzInput
+              aria-label={t('log.manage.query.attribute-filter.aria')}
+              value={draft.attributeFilter || ''}
+              onChange={event => setDraft(updateDraftField('attributeFilter', event.target.value))}
+              placeholder={t('log.manage.query.attribute-filter.placeholder')}
+              width="log-query-filter"
+              data-log-manage-query-attribute-filter-input="true"
+              data-log-manage-query-attribute-filter-input-owner="hertzbeat-ui-input"
             />
           </div>
           <HzControlStack

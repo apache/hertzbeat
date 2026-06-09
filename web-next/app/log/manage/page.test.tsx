@@ -493,6 +493,16 @@ function tZh(key: string, params?: TranslationParams) {
   return zhT(key, params);
 }
 
+function htmlAttributeValue(value: string) {
+  return value.replace(/"/g, '&quot;');
+}
+
+function typeInputValue(input: HTMLInputElement, value: string) {
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+  valueSetter?.call(input, value);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 function buildLogManageRouteState(): LogManageRouteState {
   const query: LogQueryState = {
     search: mockState.searchParams.get('search') || mockState.searchParams.get('content') || '',
@@ -1104,7 +1114,14 @@ describe('log manage page', () => {
     expect(html).toContain('data-log-manage-query-body-input="shared-log-body-input"');
     expect(html).toContain('data-log-manage-query-body-input-owner="hertzbeat-ui-input"');
     expect(html).toContain('data-hz-input-width="log-query-body"');
+    expect(html).toContain('data-log-manage-query-resource-filter-input="true"');
+    expect(html).toContain('data-log-manage-query-resource-filter-input-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-log-manage-query-attribute-filter-input="true"');
+    expect(html).toContain('data-log-manage-query-attribute-filter-input-owner="hertzbeat-ui-input"');
+    expect(html).toContain('data-hz-input-width="log-query-filter"');
     expect(html).toContain('placeholder="service.name = &quot;checkout&quot;"');
+    expect(html).toContain(`placeholder="${htmlAttributeValue(tZh('log.manage.query.resource-filter.placeholder'))}"`);
+    expect(html).toContain(`placeholder="${htmlAttributeValue(tZh('log.manage.query.attribute-filter.placeholder'))}"`);
     expect(html).toContain('data-log-manage-quick-filter-controls="logs-quick-filters"');
     expect(html).toContain('data-log-manage-quick-filter-controls-owner="hertzbeat-ui-control-stack"');
     expect(html).toContain('data-log-manage-quick-filter="severity"');
@@ -1255,6 +1272,48 @@ describe('log manage page', () => {
     expect(html).toContain('data-log-manage-table-span-id-filter-owner="hertzbeat-ui-button"');
     expect(html).toContain(tZh('log.manage.table.span-id-filter-action.aria', { spanId: 'span-456' }));
     expect(html).toContain('span-456');
+  });
+
+  it('applies typed log resource and attribute filters from the shared query row', async () => {
+    mockState.searchParams = new URLSearchParams('view=list');
+    interactionContainer = document.createElement('div');
+    document.body.appendChild(interactionContainer);
+    interactionRoot = createRoot(interactionContainer);
+
+    await act(async () => {
+      renderInteractiveLogManagePage();
+      await Promise.resolve();
+    });
+
+    const resourceInput = interactionContainer.querySelector('[data-log-manage-query-resource-filter-input="true"]') as HTMLInputElement | null;
+    const attributeInput = interactionContainer.querySelector('[data-log-manage-query-attribute-filter-input="true"]') as HTMLInputElement | null;
+    expect(resourceInput).toBeTruthy();
+    expect(attributeInput).toBeTruthy();
+    expect(resourceInput?.getAttribute('data-log-manage-query-resource-filter-input-owner')).toBe('hertzbeat-ui-input');
+    expect(attributeInput?.getAttribute('data-log-manage-query-attribute-filter-input-owner')).toBe('hertzbeat-ui-input');
+
+    await act(async () => {
+      typeInputValue(resourceInput!, 'service.version=1.2.3');
+      typeInputValue(attributeInput!, 'http.route CONTAINS checkout');
+      await Promise.resolve();
+    });
+
+    const runAction = interactionContainer.querySelector('[data-log-manage-run-query-action="true"]') as HTMLButtonElement | null;
+    expect(runAction).toBeTruthy();
+    mockState.replace.mockClear();
+
+    await act(async () => {
+      runAction?.click();
+      await Promise.resolve();
+    });
+
+    const route = String(mockState.replace.mock.calls[0]?.[0]);
+    const params = new URL(route, 'http://localhost').searchParams;
+    expect(mockState.replace).toHaveBeenCalledTimes(1);
+    expect(params.get('resourceFilter')).toBe('service.version=1.2.3');
+    expect(params.get('attributeFilter')).toBe('http.route CONTAINS checkout');
+    expect(params.get('view')).toBe('list');
+    expect(params.get('source')).toBe('otlp');
   });
 
   it('renders route-backed log resource and attribute field columns', async () => {
