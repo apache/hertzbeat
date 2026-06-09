@@ -281,6 +281,16 @@ function buildLogAttributeExcludeExpression(row: LogAttributeRow, objectValueLab
   return { kind, expression: `${key}!=${value}` };
 }
 
+function buildLogAttributeContainsExpression(row: LogAttributeRow, objectValueLabel: string) {
+  const kind = resolveLogAttributeFilterKind(row);
+  const key = row.name.trim();
+  const value = row.value.trim();
+  if (!kind || value === objectValueLabel || !isSafeLogAttributeFilterKey(key) || !isSafeLogAttributeFilterValue(value)) {
+    return null;
+  }
+  return { kind, expression: `${key} CONTAINS ${value}` };
+}
+
 function buildLogAttributeExistsExpression(row: LogAttributeRow) {
   const kind = resolveLogAttributeFilterKind(row);
   const key = row.name.trim();
@@ -2241,6 +2251,19 @@ function LogManageExplorer({
     applyQuery(nextQuery);
   }, [applyQuery, draft, setDraft, t]);
 
+  const applyLogAttributeContainsFilter = useCallback((row: LogAttributeRow) => {
+    const filter = buildLogAttributeContainsExpression(row, t('log.manage.attributes.value.object'));
+    if (!filter) return;
+    const nextQuery: LogQueryState = {
+      ...draft,
+      ...(filter.kind === 'resource'
+        ? { resourceFilter: mergeLogAttributeFilterExpression(draft.resourceFilter, filter.expression) }
+        : { attributeFilter: mergeLogAttributeFilterExpression(draft.attributeFilter, filter.expression) })
+    };
+    setDraft(nextQuery);
+    applyQuery(nextQuery);
+  }, [applyQuery, draft, setDraft, t]);
+
   const applyLogAttributeExistsFilter = useCallback((row: LogAttributeRow) => {
     const filter = buildLogAttributeExistsExpression(row);
     if (!filter) return;
@@ -2356,12 +2379,13 @@ function LogManageExplorer({
   const renderLogAttributeFilterAction = useCallback((row: LogAttributeRow) => {
     const filter = buildLogAttributeFilterExpression(row, t('log.manage.attributes.value.object'));
     const excludeFilter = buildLogAttributeExcludeExpression(row, t('log.manage.attributes.value.object'));
+    const containsFilter = buildLogAttributeContainsExpression(row, t('log.manage.attributes.value.object'));
     const existsFilter = buildLogAttributeExistsExpression(row);
     const notExistsFilter = buildLogAttributeNotExistsExpression(row);
     const group = buildLogAttributeGroupBy(row);
     const fieldColumn = buildLogAttributeFieldColumn(row);
     const fieldColumnVisible = Boolean(fieldColumn && visibleLogFieldColumns.includes(fieldColumn));
-    if (!filter && !excludeFilter && !existsFilter && !notExistsFilter && !group && !fieldColumn) return null;
+    if (!filter && !excludeFilter && !containsFilter && !existsFilter && !notExistsFilter && !group && !fieldColumn) return null;
     return (
       <span className="inline-flex flex-wrap gap-1">
         {fieldColumn ? (
@@ -2460,6 +2484,25 @@ function LogManageExplorer({
             {t('log.manage.attributes.filter-out-action')}
           </HzButton>
         ) : null}
+        {containsFilter ? (
+          <HzButton
+            data-log-manage-attribute-contains-action={containsFilter.kind}
+            data-log-manage-attribute-contains-owner="hertzbeat-ui-button"
+            data-log-manage-attribute-filter-name={row.name}
+            data-log-manage-attribute-filter-value={row.value}
+            size="sm"
+            intent="secondary"
+            onClick={() => applyLogAttributeContainsFilter(row)}
+            aria-label={t('log.manage.attributes.contains-action.aria', { name: row.name, value: row.value })}
+          >
+            <HzButtonIcon
+              icon={Search}
+              data-log-manage-attribute-contains-icon="contains"
+              data-log-manage-attribute-contains-icon-owner="hertzbeat-ui-button-icon"
+            />
+            {t('log.manage.attributes.contains-action')}
+          </HzButton>
+        ) : null}
         {existsFilter ? (
           <HzButton
             data-log-manage-attribute-exists-action={existsFilter.kind}
@@ -2519,7 +2562,7 @@ function LogManageExplorer({
         ) : null}
       </span>
     );
-  }, [applyLogAttributeExistsFilter, applyLogAttributeFieldColumn, applyLogAttributeFilter, applyLogAttributeNotExistsFilter, applyLogContextAttributeFilter, excludeLogAttributeFilter, groupLogAttribute, replaceLogAttributeFilter, t, visibleLogFieldColumns]);
+  }, [applyLogAttributeContainsFilter, applyLogAttributeExistsFilter, applyLogAttributeFieldColumn, applyLogAttributeFilter, applyLogAttributeNotExistsFilter, applyLogContextAttributeFilter, excludeLogAttributeFilter, groupLogAttribute, replaceLogAttributeFilter, t, visibleLogFieldColumns]);
 
   const openLogDetails = (entry: LogEntry | null, source: 'history' | 'stream', selectionState: 'attached' | 'detached' = 'attached') => {
     if (!entry) return;

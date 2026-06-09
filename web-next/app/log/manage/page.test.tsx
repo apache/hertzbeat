@@ -653,6 +653,9 @@ describe('log manage page', () => {
     expect(source).toContain('data-log-manage-detail-facts-owner="hertzbeat-ui-detail-rows"');
     expect(source).toContain('buildLogAttributeExistsExpression');
     expect(source).toContain('applyLogAttributeExistsFilter');
+    expect(source).toContain('buildLogAttributeContainsExpression');
+    expect(source).toContain('applyLogAttributeContainsFilter');
+    expect(source).toContain('data-log-manage-attribute-contains-action={containsFilter.kind}');
     expect(source).toContain('data-log-manage-attribute-exists-action={existsFilter.kind}');
     expect(source).toContain('data-log-manage-attribute-not-exists-action={notExistsFilter.kind}');
     expect(source).toContain('buildLogAttributeNotExistsExpression');
@@ -3510,6 +3513,35 @@ describe('log manage page', () => {
 
       expect(mockState.replace).toHaveBeenCalledTimes(1);
       expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route NOT EXISTS');
+
+      const containsResourceAction = interactionContainer.querySelector(
+        '[data-log-manage-attribute-contains-action="resource"][data-log-manage-attribute-filter-name="service.version"]'
+      ) as HTMLButtonElement | null;
+      const containsAttributeAction = interactionContainer.querySelector(
+        '[data-log-manage-attribute-contains-action="attribute"][data-log-manage-attribute-filter-name="http.route"]'
+      ) as HTMLButtonElement | null;
+      expect(containsResourceAction).toBeTruthy();
+      expect(containsAttributeAction).toBeTruthy();
+      expect(containsResourceAction?.getAttribute('data-log-manage-attribute-contains-owner')).toBe('hertzbeat-ui-button');
+      expect(containsAttributeAction?.getAttribute('data-log-manage-attribute-contains-owner')).toBe('hertzbeat-ui-button');
+
+      mockState.replace.mockClear();
+      await act(async () => {
+        containsResourceAction?.click();
+        await Promise.resolve();
+      });
+
+      expect(mockState.replace).toHaveBeenCalledTimes(1);
+      expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('resourceFilter')).toContain('service.version CONTAINS 1.2.3');
+
+      mockState.replace.mockClear();
+      await act(async () => {
+        containsAttributeAction?.click();
+        await Promise.resolve();
+      });
+
+      expect(mockState.replace).toHaveBeenCalledTimes(1);
+      expect(new URL(String(mockState.replace.mock.calls[0]?.[0]), 'http://localhost').searchParams.get('attributeFilter')).toContain('http.route CONTAINS /checkout/:id');
     } finally {
       mockState.renderData.list.content = originalContent;
     }
