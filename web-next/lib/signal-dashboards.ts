@@ -1224,6 +1224,26 @@ function runtimeEvidencePanelLabel(
   return row.label || row.signal;
 }
 
+function runtimeEvidencePayloadContext(row: SignalDashboardRuntimeSyncTooltipRow) {
+  const values = evidenceFilterValues(row);
+  return {
+    ...(values.service ? { serviceName: values.service } : {}),
+    ...(values.serviceNamespace ? { serviceNamespace: values.serviceNamespace } : {}),
+    ...(values.environment ? { environment: values.environment } : {}),
+    ...(values.entityId ? { entityId: values.entityId } : {}),
+    ...(values.entityType ? { entityType: values.entityType } : {}),
+    ...(values.entityName ? { entityName: values.entityName } : {}),
+    ...(values.signalSource ? { signalSource: values.signalSource } : {}),
+    ...(values.collector ? { collector: values.collector } : {}),
+    ...(values.template ? { template: values.template } : {}),
+    ...(values.operation ? { operationName: values.operation } : {}),
+    ...(values.resourceFilter ? { resourceFilter: values.resourceFilter } : {}),
+    ...(values.attributeFilter ? { attributeFilter: values.attributeFilter } : {}),
+    ...(values.traceId ? { traceId: values.traceId } : {}),
+    ...(values.spanId ? { spanId: values.spanId } : {})
+  };
+}
+
 export function createSignalDashboardPanelDraftFromRuntimeEvidence(input: {
   row: SignalDashboardRuntimeSyncTooltipRow;
   route: string;
@@ -1252,11 +1272,7 @@ export function createSignalDashboardPanelDraftFromRuntimeEvidence(input: {
       evidenceLabel,
       evidenceSeriesLabel: input.row.label,
       evidenceValue: input.row.value,
-      ...(input.row.traceId ? { traceId: input.row.traceId } : {}),
-      ...(input.row.spanId ? { spanId: input.row.spanId } : {}),
-      ...(input.row.operationName ? { operationName: input.row.operationName } : {}),
-      ...(input.row.resourceFilter ? { resourceFilter: input.row.resourceFilter } : {}),
-      ...(input.row.attributeFilter ? { attributeFilter: input.row.attributeFilter } : {}),
+      ...runtimeEvidencePayloadContext(input.row),
       ...(input.row.relatedSignal ? { relatedSignal: input.row.relatedSignal } : {})
     }
   });
@@ -1314,11 +1330,7 @@ export function createSignalDashboardPanelDraftFromRuntimeBreakout(input: {
       evidenceSource: input.row.source,
       evidenceLabel,
       evidenceValue: input.row.value,
-      ...(input.row.traceId ? { traceId: input.row.traceId } : {}),
-      ...(input.row.spanId ? { spanId: input.row.spanId } : {}),
-      ...(input.row.operationName ? { operationName: input.row.operationName } : {}),
-      ...(input.row.resourceFilter ? { resourceFilter: input.row.resourceFilter } : {}),
-      ...(input.row.attributeFilter ? { attributeFilter: input.row.attributeFilter } : {}),
+      ...runtimeEvidencePayloadContext(input.row),
       breakoutAttribute: attributeName,
       ...(attributeValue ? { breakoutAttributeValue: attributeValue } : {})
     }

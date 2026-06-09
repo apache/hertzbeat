@@ -2411,9 +2411,19 @@ describe('signal dashboards API client', () => {
         traceId: 'trace-1',
         spanId: 'span-log',
         operationName: 'POST /checkout',
+        serviceNamespace: 'payments',
         resourceFilter: 'service.version=1.2.3',
         attributeFilter: 'region:us',
-        relatedSignal: 'traces'
+        relatedSignal: 'traces',
+        breakoutAttributes: [
+          { key: 'resource:deployment.environment.name:prod', name: 'resource:deployment.environment.name', value: 'prod' },
+          { key: 'resource:hertzbeat.entity_id:4200', name: 'resource:hertzbeat.entity_id', value: '4200' },
+          { key: 'resource:hertzbeat.entity_type:service', name: 'resource:hertzbeat.entity_type', value: 'service' },
+          { key: 'resource:hertzbeat.entity_name:Checkout API', name: 'resource:hertzbeat.entity_name', value: 'Checkout API' },
+          { key: 'resource:hertzbeat.source:otlp', name: 'resource:hertzbeat.source', value: 'otlp' },
+          { key: 'resource:hertzbeat.collector:collector-a', name: 'resource:hertzbeat.collector', value: 'collector-a' },
+          { key: 'resource:hertzbeat.template:spring-boot', name: 'resource:hertzbeat.template', value: 'spring-boot' }
+        ]
       },
       route: '/log/manage?view=table&traceId=trace-1&spanId=span-log&serviceName=checkout&start=1000&end=3000',
       titlePrefix: 'Evidence panel'
@@ -2434,6 +2444,15 @@ describe('signal dashboards API client', () => {
       evidenceSource: 'table-row',
       evidenceLabel: 'checkout',
       evidenceValue: 'checkout timeout',
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      environment: 'prod',
+      entityId: '4200',
+      entityType: 'service',
+      entityName: 'Checkout API',
+      signalSource: 'otlp',
+      collector: 'collector-a',
+      template: 'spring-boot',
       traceId: 'trace-1',
       spanId: 'span-log',
       operationName: 'POST /checkout',
@@ -2486,7 +2505,16 @@ describe('signal dashboards API client', () => {
         label: 'signoz_db_latency_count',
         value: '7',
         meta: '2000',
-        resourceFilter: 'db.system=postgresql'
+        serviceName: 'checkout',
+        serviceNamespace: 'payments',
+        resourceFilter: 'db.system=postgresql',
+        breakoutAttributes: [
+          { key: 'label:deployment.environment.name:prod', name: 'deployment.environment.name', value: 'prod' },
+          { key: 'label:hertzbeat.entity_id:4200', name: 'hertzbeat.entity_id', value: '4200' },
+          { key: 'label:hertzbeat.entity_type:service', name: 'hertzbeat.entity_type', value: 'service' },
+          { key: 'label:hertzbeat.entity_name:Checkout API', name: 'hertzbeat.entity_name', value: 'Checkout API' },
+          { key: 'label:hertzbeat.source:otlp', name: 'hertzbeat.source', value: 'otlp' }
+        ]
       },
       route: '/ingestion/otlp/metrics?query=signoz_db_latency_count&serviceName=checkout&series=postgresql&inspector=graph&start=1000&end=3000',
       attribute: {
@@ -2512,6 +2540,13 @@ describe('signal dashboards API client', () => {
       evidenceSource: 'metrics-point',
       evidenceLabel: 'signoz_db_latency_count',
       evidenceValue: '7',
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      environment: 'prod',
+      entityId: '4200',
+      entityType: 'service',
+      entityName: 'Checkout API',
+      signalSource: 'otlp',
       resourceFilter: 'db.system=postgresql',
       breakoutAttribute: 'db.system',
       breakoutAttributeValue: 'postgresql'
