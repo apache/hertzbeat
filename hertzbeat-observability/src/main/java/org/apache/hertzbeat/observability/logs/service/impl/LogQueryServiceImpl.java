@@ -452,7 +452,7 @@ public class LogQueryServiceImpl implements LogQueryService {
                                        Integer limit, String direction, Long cursorLogTimeUnixNano,
                                        boolean hideInternal, boolean hideNoise) {
         return contextWithFilters(logTimeUnixNano, start, end, serviceName, serviceNamespace, environment,
-                parseLogAttributeFilter(resourceFilter), parseLogAttributeFilter(attributeFilter), limit, direction,
+                parseLogAttributeFilter(resourceFilter, true), parseLogAttributeFilter(attributeFilter, true), limit, direction,
                 cursorLogTimeUnixNano, hideInternal, hideNoise);
     }
 
@@ -464,9 +464,9 @@ public class LogQueryServiceImpl implements LogQueryService {
                                        boolean hideInternal, boolean hideNoise) {
         LogServiceContext context = resolveEntityFirstLogServiceContext(entityId, serviceName, serviceNamespace, environment);
         Map<String, String> resourceFilters = removeEntityScopeResourceFilters(
-                context, parseLogAttributeFilter(resourceFilter));
+                context, parseLogAttributeFilter(resourceFilter, true));
         return contextWithFilters(logTimeUnixNano, start, end, context.serviceName(), context.serviceNamespace(),
-                context.environment(), resourceFilters, parseLogAttributeFilter(attributeFilter), limit, direction,
+                context.environment(), resourceFilters, parseLogAttributeFilter(attributeFilter, true), limit, direction,
                 cursorLogTimeUnixNano, hideInternal, hideNoise);
     }
 
@@ -763,6 +763,11 @@ public class LogQueryServiceImpl implements LogQueryService {
                                            Map<String, String> attributeFilters,
                                            boolean hideInternal, boolean hideNoise) {
         boolean hasAttributeFilters = hasAttributeFilters(resourceFilters, attributeFilters);
+        if (hasComplexAttributeFilters(resourceFilters, attributeFilters)) {
+            return getRowFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                    hideInternal, hideNoise);
+        }
         for (HistoryDataReader historyDataReader : historyDataReaders) {
             try {
                 List<LogEntry> logs;

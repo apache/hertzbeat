@@ -857,6 +857,73 @@ class LogQueryControllerTest {
     }
 
     @Test
+    void testContextLogsAppliesInAndNotInFiltersWithRowFallback() throws Exception {
+        long selectedTime = 1734005477630000000L;
+        LogEntry selectedLog = LogEntry.builder()
+                .timeUnixNano(selectedTime)
+                .severityText("ERROR")
+                .body("stable checkout selected")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-1")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry beforeLog = LogEntry.builder()
+                .timeUnixNano(selectedTime - 1_000_000L)
+                .severityText("INFO")
+                .body("stable checkout before")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-2")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry canaryLog = LogEntry.builder()
+                .timeUnixNano(selectedTime + 1_000_000L)
+                .severityText("INFO")
+                .body("canary checkout after")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-canary")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .timeUnixNano(selectedTime + 2_000_000L)
+                .severityText("INFO")
+                .body("cart checkout after")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-3")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/cart")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(cartLog, canaryLog, selectedLog, beforeLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/context")
+                        .param("logTimeUnixNano", String.valueOf(selectedTime))
+                        .param("resourceFilter", "service.version IN ('1.2.3', '1.2.4') "
+                                + "and host.name NOT IN ('checkout-canary')")
+                        .param("attributeFilter", "http.route IN ('/checkout')")
+                        .param("limit", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.before.length()").value(1))
+                .andExpect(jsonPath("$.data.before[0].body").value("stable checkout before"))
+                .andExpect(jsonPath("$.data.selected.body").value("stable checkout selected"))
+                .andExpect(jsonPath("$.data.after.length()").value(0));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).queryLogsByMultipleConditions(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), any(), any(), any(), any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any());
+    }
+
+    @Test
     void testContextLogsReturnsDirectionalRowsAfterCursor() throws Exception {
         long selectedTime = 1734005477630000000L;
         long cursorTime = selectedTime + 1_000_000L;
