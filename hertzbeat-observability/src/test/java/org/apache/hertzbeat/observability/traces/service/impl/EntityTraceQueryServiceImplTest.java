@@ -620,6 +620,75 @@ class EntityTraceQueryServiceImplTest {
     }
 
     @Test
+    void queryTraceListAppliesContainsAndPresenceResourceFiltersWithRowFallback() {
+        long now = System.currentTimeMillis();
+        long start = now - 120_000;
+        long end = now;
+        when(traceQueryRepository.queryRecentTraceRows(
+                eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(false))).thenReturn(List.of(
+                traceRow("trace-stable", "span-root-1", null, "GET /checkout", "checkout-service", "STATUS_CODE_OK",
+                        now - 10_000, 2_000_000L,
+                        Map.of("service.name", "checkout-service",
+                                "service.version", "1.2.3",
+                                "host.name", "checkout-1",
+                                "cloud.region", "us-east-1")),
+                traceRow("trace-no-version", "span-root-2", null, "GET /checkout", "checkout-service", "STATUS_CODE_OK",
+                        now - 9_000, 2_000_000L,
+                        Map.of("service.name", "checkout-service",
+                                "host.name", "checkout-2",
+                                "cloud.region", "us-east-1")),
+                traceRow("trace-env", "span-root-3", null, "GET /checkout", "checkout-service", "STATUS_CODE_OK",
+                        now - 8_000, 2_000_000L,
+                        Map.of("service.name", "checkout-service",
+                                "service.version", "1.2.3",
+                                "host.name", "checkout-3",
+                                "deployment.environment.name", "prod",
+                                "cloud.region", "us-east-1")),
+                traceRow("trace-west", "span-root-4", null, "GET /checkout", "checkout-service", "STATUS_CODE_OK",
+                        now - 7_000, 2_000_000L,
+                        Map.of("service.name", "checkout-service",
+                                "service.version", "1.2.3",
+                                "host.name", "checkout-west",
+                                "cloud.region", "us-west-2")),
+                traceRow("trace-inventory", "span-root-5", null, "GET /inventory", "checkout-service", "STATUS_CODE_OK",
+                        now - 6_000, 2_000_000L,
+                        Map.of("service.name", "checkout-service",
+                                "service.version", "1.2.3",
+                                "host.name", "inventory-1",
+                                "cloud.region", "us-east-1"))
+        ));
+
+        var page = entityTraceQueryService.queryTraceList(null, start, end, null,
+                false, "checkout-service", null, null,
+                "service.version=1.2.3 and host.name CONTAINS checkout "
+                        + "and deployment.environment.name NOT EXISTS and cloud.region NOT CONTAINS west",
+                null, null, null, 0, 20, false);
+
+        assertEquals(1, page.getTotalElements());
+        assertEquals("trace-stable", page.getContent().getFirst().getTraceId());
+        ArgumentCaptor<Map<String, Set<String>>> pushedFilterCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(traceQueryRepository).queryRecentTraceRows(
+                eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), pushedFilterCaptor.capture(), eq(false));
+        assertEquals(Map.of("service.version", Set.of("1.2.3")), pushedFilterCaptor.getValue());
+        verify(traceQueryRepository, never()).queryTraceListRows(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
     void traceQueriesPreferEntityIdentityOverConflictingRouteContext() {
         long now = System.currentTimeMillis();
         long start = now - 120_000;
