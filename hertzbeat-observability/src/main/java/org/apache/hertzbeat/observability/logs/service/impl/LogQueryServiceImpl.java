@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -31,6 +32,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
@@ -67,6 +70,12 @@ public class LogQueryServiceImpl implements LogQueryService {
     private static final int MAX_CONTEXT_LIMIT = 50;
     private static final long DEFAULT_CONTEXT_WINDOW_MS = 300_000L;
     private static final String LOG_FILTER_NEGATION_PREFIX = "!";
+    private static final String LOG_FILTER_IN_PREFIX = "__hz_in__:";
+    private static final String LOG_FILTER_NOT_IN_PREFIX = "__hz_not_in__:";
+    private static final String LOG_FILTER_VALUE_DELIMITER = "\u001F";
+    private static final Pattern LOG_FILTER_LIST_OPERATOR_PATTERN = Pattern.compile(
+            "^\\s*([A-Za-z0-9._:-]+)\\s+(NOT\\s+IN|IN)\\s*(\\(.+\\))\\s*$",
+            Pattern.CASE_INSENSITIVE);
 
     private static final Set<String> WORKSPACE_INFRA_SERVICE_NAMES = Set.of(
             "otelcol-contrib",
@@ -128,8 +137,8 @@ public class LogQueryServiceImpl implements LogQueryService {
                                String serviceName, String serviceNamespace, String environment,
                                String resourceFilter, String attributeFilter,
                                Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise) {
-        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
-        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter, true);
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter, true);
         return getPagedLogs(start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
                 pageIndex, pageSize, hideInternal, hideNoise);
@@ -143,8 +152,8 @@ public class LogQueryServiceImpl implements LogQueryService {
                                Integer pageIndex, Integer pageSize, boolean hideInternal, boolean hideNoise) {
         LogServiceContext context = resolveEntityFirstLogServiceContext(entityId, serviceName, serviceNamespace, environment);
         Map<String, String> resourceFilters = removeEntityScopeResourceFilters(
-                context, parseLogAttributeFilter(resourceFilter));
-        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+                context, parseLogAttributeFilter(resourceFilter, true));
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter, true);
         return getPagedLogs(start, end, traceId, spanId, severityNumber, severityText, search,
                 context.serviceName(), context.serviceNamespace(), context.environment(), resourceFilters, attributeFilters,
                 pageIndex, pageSize, hideInternal, hideNoise);
@@ -831,6 +840,12 @@ public class LogQueryServiceImpl implements LogQueryService {
         Sort sort = Sort.by(Sort.Direction.DESC, "timeUnixNano");
         PageRequest pageRequest = PageRequest.of(resolvedPageIndex, resolvedPageSize, sort);
 
+        if (hasComplexAttributeFilters(resourceFilters, attributeFilters)) {
+            return getRowFilteredPagedLogs(start, end, traceId, spanId, severityNumber, severityText, search,
+                    serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                    pageRequest, offset, resolvedPageSize, hideInternal, hideNoise);
+        }
+
         if (hasWorkspaceContext()) {
             return getWorkspacePagedLogs(start, end, traceId, spanId, severityNumber, severityText, search,
                     serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
@@ -1169,14 +1184,28 @@ public class LogQueryServiceImpl implements LogQueryService {
                 || (attributeFilters != null && !attributeFilters.isEmpty());
     }
 
+    private boolean hasComplexAttributeFilters(Map<String, String> resourceFilters, Map<String, String> attributeFilters) {
+        return hasComplexAttributeFilterValues(resourceFilters) || hasComplexAttributeFilterValues(attributeFilters);
+    }
+
+    private boolean hasComplexAttributeFilterValues(Map<String, String> filters) {
+        return filters != null && filters.values().stream().anyMatch(this::isListLogAttributeFilter);
+    }
+
     private Map<String, String> parseLogAttributeFilter(String filterExpression) {
+        return parseLogAttributeFilter(filterExpression, false);
+    }
+
+    private Map<String, String> parseLogAttributeFilter(String filterExpression, boolean allowListOperators) {
         if (!StringUtils.hasText(filterExpression)) {
             return Collections.emptyMap();
         }
         Map<String, String> filters = new HashMap<>();
-        String[] tokens = filterExpression.trim().split("(?i)\\s+and\\s+|\\s*,\\s*");
-        for (String token : tokens) {
+        for (String token : splitLogFilterClauses(filterExpression)) {
             if (!StringUtils.hasText(token)) {
+                continue;
+            }
+            if (allowListOperators && appendLogFilterListValues(filters, token)) {
                 continue;
             }
             boolean negate = false;
@@ -1200,6 +1229,115 @@ public class LogQueryServiceImpl implements LogQueryService {
             filters.put(key, negate ? LOG_FILTER_NEGATION_PREFIX + value : value);
         }
         return filters.isEmpty() ? Collections.emptyMap() : Map.copyOf(filters);
+    }
+
+    private boolean appendLogFilterListValues(Map<String, String> filters, String token) {
+        Matcher matcher = LOG_FILTER_LIST_OPERATOR_PATTERN.matcher(token);
+        if (!matcher.matches()) {
+            return false;
+        }
+        String key = matcher.group(1).trim();
+        String operator = matcher.group(2).trim().replaceAll("\\s+", " ");
+        String valueList = matcher.group(3).trim();
+        if (!isSafeAttributeKey(key) || valueList.length() < 2
+                || !valueList.startsWith("(") || !valueList.endsWith(")")) {
+            return false;
+        }
+        List<String> values = splitLogFilterListValues(valueList.substring(1, valueList.length() - 1)).stream()
+                .map(value -> stripFilterQuotes(value.trim()))
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
+        if (values.isEmpty()) {
+            return false;
+        }
+        String prefix = "not in".equalsIgnoreCase(operator) ? LOG_FILTER_NOT_IN_PREFIX : LOG_FILTER_IN_PREFIX;
+        filters.put(key, prefix + String.join(LOG_FILTER_VALUE_DELIMITER, values));
+        return true;
+    }
+
+    private List<String> splitLogFilterClauses(String filterExpression) {
+        List<String> clauses = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        int depth = 0;
+        char quote = 0;
+        for (int index = 0; index < filterExpression.length(); index++) {
+            char character = filterExpression.charAt(index);
+            if (quote != 0) {
+                current.append(character);
+                if (character == quote) {
+                    quote = 0;
+                }
+                continue;
+            }
+            if (character == '\'' || character == '"') {
+                quote = character;
+                current.append(character);
+                continue;
+            }
+            if (character == '(') {
+                depth++;
+                current.append(character);
+                continue;
+            }
+            if (character == ')') {
+                depth = Math.max(0, depth - 1);
+                current.append(character);
+                continue;
+            }
+            if (depth == 0 && character == ',') {
+                addLogFilterClause(clauses, current);
+                continue;
+            }
+            if (depth == 0 && isLogFilterAndDelimiter(filterExpression, index)) {
+                addLogFilterClause(clauses, current);
+                index += 4;
+                continue;
+            }
+            current.append(character);
+        }
+        addLogFilterClause(clauses, current);
+        return clauses;
+    }
+
+    private List<String> splitLogFilterListValues(String values) {
+        List<String> result = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        char quote = 0;
+        for (int index = 0; index < values.length(); index++) {
+            char character = values.charAt(index);
+            if (quote != 0) {
+                current.append(character);
+                if (character == quote) {
+                    quote = 0;
+                }
+                continue;
+            }
+            if (character == '\'' || character == '"') {
+                quote = character;
+                current.append(character);
+                continue;
+            }
+            if (character == ',') {
+                addLogFilterClause(result, current);
+                continue;
+            }
+            current.append(character);
+        }
+        addLogFilterClause(result, current);
+        return result;
+    }
+
+    private void addLogFilterClause(List<String> clauses, StringBuilder current) {
+        String clause = current.toString().trim();
+        if (StringUtils.hasText(clause)) {
+            clauses.add(clause);
+        }
+        current.setLength(0);
+    }
+
+    private boolean isLogFilterAndDelimiter(String value, int index) {
+        return index + 5 <= value.length() && value.regionMatches(true, index, " and ", 0, 5);
     }
 
     private Map<String, String> removeEntityScopeResourceFilters(LogServiceContext context,
@@ -1280,13 +1418,21 @@ public class LogQueryServiceImpl implements LogQueryService {
             return true;
         }
         if (source == null || source.isEmpty()) {
-            return expectedAttributes.values().stream().allMatch(this::isNegatedLogAttributeFilter);
+            return expectedAttributes.values().stream().allMatch(this::isExclusionLogAttributeFilter);
         }
         return expectedAttributes.entrySet().stream()
                 .allMatch(entry -> matchesAttributeFilter(resolveMapValue(source, entry.getKey()), entry.getValue()));
     }
 
     private boolean matchesAttributeFilter(String actualValue, String expectedValue) {
+        if (isInLogAttributeFilter(expectedValue)) {
+            return splitListLogAttributeValues(expectedValue.substring(LOG_FILTER_IN_PREFIX.length())).stream()
+                    .anyMatch(expected -> matchesOptionalResourceValue(actualValue, expected));
+        }
+        if (isNotInLogAttributeFilter(expectedValue)) {
+            return splitListLogAttributeValues(expectedValue.substring(LOG_FILTER_NOT_IN_PREFIX.length())).stream()
+                    .noneMatch(expected -> matchesOptionalResourceValue(actualValue, expected));
+        }
         if (isNegatedLogAttributeFilter(expectedValue)) {
             return !matchesOptionalResourceValue(actualValue, expectedValue.substring(LOG_FILTER_NEGATION_PREFIX.length()));
         }
@@ -1295,6 +1441,31 @@ public class LogQueryServiceImpl implements LogQueryService {
 
     private boolean isNegatedLogAttributeFilter(String expectedValue) {
         return expectedValue != null && expectedValue.startsWith(LOG_FILTER_NEGATION_PREFIX);
+    }
+
+    private boolean isExclusionLogAttributeFilter(String expectedValue) {
+        return isNegatedLogAttributeFilter(expectedValue) || isNotInLogAttributeFilter(expectedValue);
+    }
+
+    private boolean isListLogAttributeFilter(String expectedValue) {
+        return isInLogAttributeFilter(expectedValue) || isNotInLogAttributeFilter(expectedValue);
+    }
+
+    private boolean isInLogAttributeFilter(String expectedValue) {
+        return expectedValue != null && expectedValue.startsWith(LOG_FILTER_IN_PREFIX);
+    }
+
+    private boolean isNotInLogAttributeFilter(String expectedValue) {
+        return expectedValue != null && expectedValue.startsWith(LOG_FILTER_NOT_IN_PREFIX);
+    }
+
+    private List<String> splitListLogAttributeValues(String encodedValues) {
+        if (!StringUtils.hasText(encodedValues)) {
+            return List.of();
+        }
+        return List.of(encodedValues.split(Pattern.quote(LOG_FILTER_VALUE_DELIMITER), -1)).stream()
+                .filter(StringUtils::hasText)
+                .toList();
     }
 
     private boolean shouldHideWorkspaceLog(LogEntry logEntry, boolean hideInternal, boolean hideNoise) {

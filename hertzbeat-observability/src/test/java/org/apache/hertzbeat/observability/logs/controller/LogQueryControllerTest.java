@@ -720,6 +720,69 @@ class LogQueryControllerTest {
     }
 
     @Test
+    void testListLogsAppliesInAndNotInFiltersWithRowFallback() throws Exception {
+        LogEntry stableLog = LogEntry.builder()
+                .timeUnixNano(1734005477630000000L)
+                .severityText("INFO")
+                .body("stable checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-1")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry canaryLog = LogEntry.builder()
+                .timeUnixNano(1734005477640000000L)
+                .severityText("INFO")
+                .body("canary checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-canary")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .timeUnixNano(1734005477650000000L)
+                .severityText("INFO")
+                .body("cart checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-2")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/cart")))
+                .build();
+        LogEntry otherVersionLog = LogEntry.builder()
+                .timeUnixNano(1734005477660000000L)
+                .severityText("INFO")
+                .body("other checkout log")
+                .resource(new HashMap<>(java.util.Map.of(
+                        "service.name", "checkout",
+                        "service.version", "2.0.0",
+                        "host.name", "checkout-3")))
+                .attributes(new HashMap<>(java.util.Map.of("http.route", "/checkout")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(stableLog, canaryLog, cartLog, otherVersionLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/list")
+                        .param("resourceFilter", "service.version IN (\"1.2.3\", '1.2.4') "
+                                + "and host.name NOT IN ('checkout-canary')")
+                        .param("attributeFilter", "http.route IN ('/checkout')"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].body").value("stable checkout log"))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).queryLogsByMultipleConditionsWithPagination(any(), any(),
+                any(), any(), any(), any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
     void testContextLogsReturnsSelectedLogWithBoundedBeforeAndAfterRows() throws Exception {
         long selectedTime = 1734005477630000000L;
         LogEntry olderClosestLog = LogEntry.builder()
