@@ -232,6 +232,7 @@ export type SignalDashboardPanelRuntimeRenderDescriptor = {
   signal: string;
   visualization: string;
   state: SignalDashboardPanelExecutionResult['state'];
+  primaryUrl?: string;
   kind: SignalDashboardPanelRuntimeSummary['kind'];
   mode: SignalDashboardPanelRuntimePreview['mode'];
   itemCount: number;
@@ -3312,6 +3313,7 @@ export function buildSignalDashboardPanelRuntimeRenderDescriptor(
     signal: summary.signal,
     visualization: summary.visualization,
     state: summary.state,
+    primaryUrl: result?.primaryUrl || plan.primaryUrl,
     kind: summary.kind,
     mode: preview.mode,
     itemCount: summary.itemCount,
@@ -3465,6 +3467,53 @@ function metricHertzBeatHandoffContext(labels: Record<string, string>) {
   };
 }
 
+function metricRouteHandoffContext(route: string | undefined) {
+  const normalizedRoute = route?.trim();
+  const emptyContext = {
+    serviceName: '',
+    serviceNamespace: '',
+    environment: '',
+    entityId: '',
+    entityType: '',
+    entityName: '',
+    source: '',
+    collector: '',
+    template: ''
+  };
+  if (!normalizedRoute) return emptyContext;
+  try {
+    const params = new URL(normalizedRoute, 'http://hertzbeat.local').searchParams;
+    return {
+      serviceName: syncTooltipIdentifier(params.get('serviceName') || undefined),
+      serviceNamespace: syncTooltipIdentifier(params.get('serviceNamespace') || undefined),
+      environment: syncTooltipIdentifier(params.get('environment') || undefined),
+      entityId: syncTooltipIdentifier(params.get('entityId') || undefined),
+      entityType: syncTooltipIdentifier(params.get('entityType') || undefined),
+      entityName: syncTooltipIdentifier(params.get('entityName') || undefined),
+      source: syncTooltipIdentifier(params.get('source') || undefined),
+      collector: syncTooltipIdentifier(params.get('collector') || undefined),
+      template: syncTooltipIdentifier(params.get('template') || undefined)
+    };
+  } catch {
+    return emptyContext;
+  }
+}
+
+function metricRouteBreakoutLabels(route: string | undefined): Record<string, string> {
+  const context = metricRouteHandoffContext(route);
+  return Object.fromEntries([
+    ['service.name', context.serviceName],
+    ['service.namespace', context.serviceNamespace],
+    ['deployment.environment.name', context.environment],
+    ['hertzbeat.entity_id', context.entityId],
+    ['hertzbeat.entity_type', context.entityType],
+    ['hertzbeat.entity_name', context.entityName],
+    ['hertzbeat.source', context.source],
+    ['hertzbeat.collector', context.collector],
+    ['hertzbeat.template', context.template]
+  ].filter((entry): entry is [string, string] => Boolean(entry[1])));
+}
+
 const METRIC_BREAKOUT_ATTRIBUTE_PRIORITY = [
   'service.name',
   'service.namespace',
@@ -3486,17 +3535,21 @@ const METRIC_BREAKOUT_ATTRIBUTE_PRIORITY = [
   'net.peer.name'
 ];
 
-function metricBreakoutAttributes(labels: Record<string, string>): SignalDashboardRuntimeBreakoutAttribute[] {
+function metricBreakoutAttributes(labels: Record<string, string>, route: string | undefined): SignalDashboardRuntimeBreakoutAttribute[] {
+  const mergedLabels = {
+    ...metricRouteBreakoutLabels(route),
+    ...labels
+  };
   const seen = new Set<string>();
   const orderedNames = [
     ...METRIC_BREAKOUT_ATTRIBUTE_PRIORITY,
-    ...Object.keys(labels).sort()
+    ...Object.keys(mergedLabels).sort()
   ];
   return orderedNames.flatMap(name => {
     const attributeName = normalizeBreakoutAttributeName(name);
     if (!attributeName || attributeName === '__name__' || seen.has(attributeName)) return [];
     seen.add(attributeName);
-    const value = syncTooltipIdentifier(labels[name]);
+    const value = syncTooltipIdentifier(mergedLabels[name]);
     if (!value) return [];
     return [{
       key: `${attributeName}:${value}`,
@@ -3508,14 +3561,25 @@ function metricBreakoutAttributes(labels: Record<string, string>): SignalDashboa
 
 function syncTooltipMetricRelatedHandoff(
   labels: Record<string, string>,
+  route: string | undefined,
   options: SignalDashboardRuntimeSyncTooltipOptions = {}
 ) {
-  const serviceName = metricLabelValue(labels, ['service.name', 'serviceName', 'service_name', 'service']);
-  const serviceNamespace = metricLabelValue(labels, ['service.namespace', 'serviceNamespace', 'service_namespace']);
+  const routeContext = metricRouteHandoffContext(route);
+  const serviceName = metricLabelValue(labels, ['service.name', 'serviceName', 'service_name', 'service']) || routeContext.serviceName;
+  const serviceNamespace = metricLabelValue(labels, ['service.namespace', 'serviceNamespace', 'service_namespace']) || routeContext.serviceNamespace;
   const dbSystem = metricLabelValue(labels, ['db.system', 'dbSystem', 'db_system']);
   const externalAddress = metricLabelValue(labels, ['external.service.address', 'externalServiceAddress', 'external_service_address', 'server.address', 'net.peer.name']);
   const operationName = metricOperationName(labels);
-  const hertzBeatContext = metricHertzBeatHandoffContext(labels);
+  const labelContext = metricHertzBeatHandoffContext(labels);
+  const hertzBeatContext = {
+    environment: labelContext.environment || routeContext.environment,
+    entityId: labelContext.entityId || routeContext.entityId,
+    entityType: labelContext.entityType || routeContext.entityType,
+    entityName: labelContext.entityName || routeContext.entityName,
+    source: labelContext.source || routeContext.source,
+    collector: labelContext.collector || routeContext.collector,
+    template: labelContext.template || routeContext.template
+  };
   const resourceFilter = dbSystem
     ? metricResourceFilter('db.system', dbSystem)
     : externalAddress ? metricResourceFilter('external.service.address', externalAddress) : '';
@@ -3720,8 +3784,8 @@ export function buildSignalDashboardRuntimeSyncTooltip(
           label: series.label,
           value: String(point.value),
           meta: String(point.timestamp),
-          breakoutAttributes: metricBreakoutAttributes(series.labels),
-          ...syncTooltipMetricRelatedHandoff(series.labels, options)
+          breakoutAttributes: metricBreakoutAttributes(series.labels, renderer.primaryUrl),
+          ...syncTooltipMetricRelatedHandoff(series.labels, renderer.primaryUrl, options)
         }));
     }) || [];
     const tableRows = renderer.tableRows

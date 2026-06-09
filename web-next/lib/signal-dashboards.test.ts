@@ -1828,7 +1828,7 @@ describe('signal dashboards API client', () => {
         { id: 'metrics-panel', signal: 'metrics', title: 'Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=cpu' },
         { id: 'db-metrics-panel', signal: 'metrics', title: 'DB Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=signoz_db_latency_count&serviceName=checkout&groupBy=db.system' },
         { id: 'external-metrics-panel', signal: 'metrics', title: 'External Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=signoz_external_call_latency_count&serviceName=checkout&groupBy=external.service.address' },
-        { id: 'operation-metrics-panel', signal: 'metrics', title: 'Service key operations', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=http.server.duration&serviceName=checkout&serviceNamespace=payments&groupBy=operation' }
+        { id: 'operation-metrics-panel', signal: 'metrics', title: 'Service key operations', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=http.server.duration&serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&groupBy=operation' }
       ])
     });
     const logsDescriptor = buildSignalDashboardPanelRuntimeRenderDescriptor(logsPlan, {
@@ -2061,7 +2061,7 @@ describe('signal dashboards API client', () => {
           serviceNamespace: 'payments',
           operationName: 'POST /checkout',
           relatedSignal: 'traces',
-          relatedHandoffHref: '/trace/manage?view=list&spanScope=all&serviceName=checkout&serviceNamespace=payments&operationName=POST+%2Fcheckout&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
+          relatedHandoffHref: '/trace/manage?view=list&spanScope=all&serviceName=checkout&serviceNamespace=payments&operationName=POST+%2Fcheckout&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
         })
       ]
     });
@@ -2176,6 +2176,21 @@ describe('signal dashboards API client', () => {
         expect.objectContaining({ name: 'external.service.address', value: 'payments.internal' })
       ]
     }));
+    expect(syncTooltip.rows[6]).toEqual(expect.objectContaining({
+      operationName: 'POST /checkout',
+      breakoutAttributes: expect.arrayContaining([
+        expect.objectContaining({ name: 'service.name', value: 'checkout' }),
+        expect.objectContaining({ name: 'service.namespace', value: 'payments' }),
+        expect.objectContaining({ name: 'deployment.environment.name', value: 'prod' }),
+        expect.objectContaining({ name: 'hertzbeat.entity_id', value: '4200' }),
+        expect.objectContaining({ name: 'hertzbeat.entity_type', value: 'service' }),
+        expect.objectContaining({ name: 'hertzbeat.entity_name', value: 'Checkout API' }),
+        expect.objectContaining({ name: 'hertzbeat.source', value: 'otlp' }),
+        expect.objectContaining({ name: 'hertzbeat.collector', value: 'collector-a' }),
+        expect.objectContaining({ name: 'hertzbeat.template', value: 'spring-boot' }),
+        expect.objectContaining({ name: 'operation', value: 'POST /checkout' })
+      ])
+    }));
     expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/log/manage?view=table', syncTooltip.rows[0], {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'
@@ -2188,6 +2203,10 @@ describe('signal dashboards API client', () => {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'
     })).toBe('/trace/manage?serviceName=payments&traceId=trace-1&spanId=span-root&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000');
+    expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/trace/manage?view=list', syncTooltip.rows[6], {
+      timeRange: { start: '1000', end: '3000' },
+      returnTo: '/dashboard?start=1000&end=3000'
+    })).toBe('/trace/manage?view=list&serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000');
     expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/ingestion/otlp/metrics?query=cpu.usage', syncTooltip.rows[3], {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'
