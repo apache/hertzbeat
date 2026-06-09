@@ -897,12 +897,13 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             return List.of();
         }
         List<OtlpRelatedMetricsDto.ResourceMatcher> matchers = new ArrayList<>();
-        for (String rawClause : normalized.split("(?i)\\s+and\\s+|\\s*,\\s*")) {
+        for (String rawClause : splitMetricsFilterClauses(normalized)) {
             String clause = trimToNull(rawClause);
             if (!StringUtils.hasText(clause)) {
                 continue;
             }
-            Matcher matcher = METRICS_FILTER_MATCHER.matcher(clause);
+            String parsedMatcher = parseMetricsFriendlyFilterMatcher(clause, Set.of());
+            Matcher matcher = METRICS_FILTER_MATCHER.matcher(StringUtils.hasText(parsedMatcher) ? parsedMatcher : clause);
             if (!matcher.matches()) {
                 continue;
             }

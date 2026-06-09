@@ -1071,6 +1071,61 @@ class OtlpIngestionWorkspaceServiceImplTest {
     }
 
     @Test
+    void relatedMetricsParsesFriendlyResourceFilterOperators() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                2_000L,
+                "http.server.duration",
+                "histogram",
+                "ms",
+                14.0,
+                Map.of()
+        );
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of());
+
+        OtlpRelatedMetricsDto related = otlpIngestionWorkspaceService.getRelatedMetrics(
+                42L,
+                "service",
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "k8s.pod.name IN ('checkout-7d9', \"checkout-8f1\") and host.name CONTAINS node "
+                        + "and cloud.region NOT IN ('us-west-1', 'us-west-2') and service.instance.id EXISTS",
+                null,
+                "8"
+        );
+
+        assertEquals("k8s_pod_name", related.getResourceMatchers().get(0).getLabel());
+        assertEquals("=~", related.getResourceMatchers().get(0).getOperator());
+        assertEquals("^(?:checkout-7d9|checkout-8f1)$", related.getResourceMatchers().get(0).getValue());
+        assertTrue(related.getResourceMatchers().stream().anyMatch(matcher ->
+                "host_name".equals(matcher.getLabel())
+                        && "=~".equals(matcher.getOperator())
+                        && ".*node.*".equals(matcher.getValue())));
+        assertTrue(related.getResourceMatchers().stream().anyMatch(matcher ->
+                "cloud_region".equals(matcher.getLabel())
+                        && "!~".equals(matcher.getOperator())
+                        && "^(?:us-west-1|us-west-2)$".equals(matcher.getValue())));
+        assertTrue(related.getResourceMatchers().stream().anyMatch(matcher ->
+                "service_instance_id".equals(matcher.getLabel())
+                        && "=~".equals(matcher.getOperator())
+                        && ".+".equals(matcher.getValue())));
+        assertTrue(related.getCandidates().stream().anyMatch(candidate ->
+                "container.cpu.usage".equals(candidate.getQuery())
+                        && candidate.getMatchedLabels().contains("k8s_pod_name")));
+        assertTrue(related.getCandidates().stream().anyMatch(candidate ->
+                "system.cpu.utilization".equals(candidate.getQuery())
+                        && candidate.getMatchedLabels().contains("host_name")));
+    }
+
+    @Test
     void relatedMetricsReturnsOperationScopedServiceCandidates() {
         observabilitySignalIntakeGateway.recordOtlpMetricIntake(
                 Map.of(
