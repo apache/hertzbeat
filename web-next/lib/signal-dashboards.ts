@@ -3408,6 +3408,18 @@ function metricResourceFilter(key: string, value: string) {
   return `${key}=${value}`;
 }
 
+function metricHertzBeatHandoffContext(labels: Record<string, string>) {
+  return {
+    environment: metricLabelValue(labels, ['deployment.environment.name', 'deployment_environment_name', 'environment']),
+    entityId: metricLabelValue(labels, ['hertzbeat.entity_id', 'hertzbeat.entity.id', 'entity_id', 'entity.id', 'entityId']),
+    entityType: metricLabelValue(labels, ['hertzbeat.entity_type', 'hertzbeat.entity.type', 'entity_type', 'entity.type', 'entityType']),
+    entityName: metricLabelValue(labels, ['hertzbeat.entity_name', 'hertzbeat.entity.name', 'entity_name', 'entity.name', 'entityName']),
+    source: metricLabelValue(labels, ['hertzbeat.source', 'signal.source', 'signal_source', 'source']),
+    collector: metricLabelValue(labels, ['hertzbeat.collector', 'collector']),
+    template: metricLabelValue(labels, ['hertzbeat.template', 'template'])
+  };
+}
+
 const METRIC_BREAKOUT_ATTRIBUTE_PRIORITY = [
   'service.name',
   'service.namespace',
@@ -3458,15 +3470,23 @@ function syncTooltipMetricRelatedHandoff(
   const dbSystem = metricLabelValue(labels, ['db.system', 'dbSystem', 'db_system']);
   const externalAddress = metricLabelValue(labels, ['external.service.address', 'externalServiceAddress', 'external_service_address', 'server.address', 'net.peer.name']);
   const operationName = metricOperationName(labels);
+  const hertzBeatContext = metricHertzBeatHandoffContext(labels);
   const resourceFilter = dbSystem
     ? metricResourceFilter('db.system', dbSystem)
     : externalAddress ? metricResourceFilter('external.service.address', externalAddress) : '';
-  if (!serviceName && !resourceFilter && !operationName) return {};
+  if (!serviceName && !resourceFilter && !operationName && !hertzBeatContext.entityId && !hertzBeatContext.entityName) return {};
   const params = new URLSearchParams({ view: 'list', spanScope: 'all' });
   if (serviceName) params.set('serviceName', serviceName);
   if (serviceNamespace) params.set('serviceNamespace', serviceNamespace);
   if (resourceFilter) params.set('resourceFilter', resourceFilter);
   if (operationName) params.set('operationName', operationName);
+  if (hertzBeatContext.environment) params.set('environment', hertzBeatContext.environment);
+  if (hertzBeatContext.entityId) params.set('entityId', hertzBeatContext.entityId);
+  if (hertzBeatContext.entityType) params.set('entityType', hertzBeatContext.entityType);
+  if (hertzBeatContext.entityName) params.set('entityName', hertzBeatContext.entityName);
+  if (hertzBeatContext.source) params.set('source', hertzBeatContext.source);
+  if (hertzBeatContext.collector) params.set('collector', hertzBeatContext.collector);
+  if (hertzBeatContext.template) params.set('template', hertzBeatContext.template);
   return {
     ...(serviceName ? { serviceName } : {}),
     ...(serviceNamespace ? { serviceNamespace } : {}),

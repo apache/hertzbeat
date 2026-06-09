@@ -2031,7 +2031,7 @@ describe('signal dashboards API client', () => {
           serviceNamespace: 'payments',
           resourceFilter: 'db.system=postgresql',
           relatedSignal: 'traces',
-          relatedHandoffHref: '/trace/manage?view=list&spanScope=all&serviceName=checkout&serviceNamespace=payments&resourceFilter=db.system%3Dpostgresql&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
+          relatedHandoffHref: '/trace/manage?view=list&spanScope=all&serviceName=checkout&serviceNamespace=payments&resourceFilter=db.system%3Dpostgresql&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
         }),
         expect.objectContaining({
           panelId: 'external-metrics-panel',
