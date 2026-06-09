@@ -62,6 +62,7 @@ type OtlpMetricsTranslate = ReturnType<typeof useI18n>['t'];
 
 type MetricsSavedQueryView = SignalSavedQueryView;
 type MetricsDashboardPanelDraftState = 'idle' | 'saving' | 'saved' | 'failed';
+type MetricAttributeOperator = 'filter' | 'contains' | 'not-contains' | 'in' | 'not-in' | 'exclude' | 'exists' | 'not-exists' | 'replace' | 'group';
 
 const METRICS_SAVED_QUERY_VIEW_STORAGE_KEY = 'hertzbeat.otlp-metrics.saved-query-views';
 const METRICS_SAVED_QUERY_VIEW_LIMIT = 5;
@@ -73,6 +74,43 @@ const DEFAULT_METRIC_INVENTORY_PAGE_SIZE = '10';
 const DEFAULT_METRIC_INVENTORY_PAGE_INDEX = '0';
 const METRIC_INVENTORY_PAGE_SIZE_OPTIONS = ['5', '10', '20', '50'] as const;
 const METRICS_EXPORT_SCOPES: OtlpMetricsExportScope[] = ['all', 'selected'];
+const METRIC_ATTRIBUTE_OPERATORS: MetricAttributeOperator[] = ['filter', 'contains', 'not-contains', 'in', 'not-in', 'exclude', 'exists', 'not-exists', 'replace', 'group'];
+
+function buildMetricAttributeOperatorOptions(t: OtlpMetricsTranslate) {
+  return METRIC_ATTRIBUTE_OPERATORS.map(operator => ({
+    value: operator,
+    label: t(`otlp.metrics.attributes.operator.${operator}` as const)
+  }));
+}
+
+function metricAttributeOperatorDataAttributes(operator: MetricAttributeOperator, name: string) {
+  const base = {
+    'data-otlp-metrics-attribute-operator-option': operator,
+    'data-otlp-metrics-attribute-operator-name': name
+  };
+  switch (operator) {
+    case 'filter':
+      return { ...base, 'data-otlp-metrics-attribute-filter-action': name, 'data-otlp-metrics-attribute-filter-action-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'contains':
+      return { ...base, 'data-otlp-metrics-attribute-contains-action': name, 'data-otlp-metrics-attribute-contains-action-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'not-contains':
+      return { ...base, 'data-otlp-metrics-attribute-not-contains-action': name, 'data-otlp-metrics-attribute-not-contains-action-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'in':
+      return { ...base, 'data-otlp-metrics-attribute-in-action': name, 'data-otlp-metrics-attribute-in-action-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'not-in':
+      return { ...base, 'data-otlp-metrics-attribute-not-in-action': name, 'data-otlp-metrics-attribute-not-in-action-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'exclude':
+      return { ...base, 'data-otlp-metrics-attribute-filter-out-action': name, 'data-otlp-metrics-attribute-filter-out-action-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'exists':
+      return { ...base, 'data-otlp-metrics-attribute-exists-action': name, 'data-otlp-metrics-attribute-exists-action-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'not-exists':
+      return { ...base, 'data-otlp-metrics-attribute-not-exists-action': name, 'data-otlp-metrics-attribute-not-exists-action-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'replace':
+      return { ...base, 'data-otlp-metrics-attribute-replace-action': name, 'data-otlp-metrics-attribute-replace-action-owner': 'hertzbeat-ui-select-menu-option' };
+    case 'group':
+      return { ...base, 'data-otlp-metrics-attribute-group-action': name, 'data-otlp-metrics-attribute-group-action-owner': 'hertzbeat-ui-select-menu-option' };
+  }
+}
 
 function resolveMetricInventoryPageSize(value?: string) {
   return METRIC_INVENTORY_PAGE_SIZE_OPTIONS.find(option => option === value) || DEFAULT_METRIC_INVENTORY_PAGE_SIZE;
@@ -969,6 +1007,52 @@ export default function OtlpMetricsPage() {
     replaceMetricsRoute(nextDraft, undefined, series?.key || query.series, series ? buildMetricSeriesRouteContext(series) : {});
   }, [draft, query.series, replaceMetricsRoute]);
 
+  const applyMetricAttributeOperator = useCallback((operator: MetricAttributeOperator, name: string, value: string, series?: OtlpMetricSeriesView | null) => {
+    switch (operator) {
+      case 'filter':
+        applyMetricAttributeFilter(name, value, series);
+        break;
+      case 'contains':
+        applyMetricAttributeContainsFilter(name, value, series);
+        break;
+      case 'not-contains':
+        applyMetricAttributeNotContainsFilter(name, value, series);
+        break;
+      case 'in':
+        applyMetricAttributeInFilter(name, value, series);
+        break;
+      case 'not-in':
+        applyMetricAttributeNotInFilter(name, value, series);
+        break;
+      case 'exclude':
+        applyMetricAttributeExcludeFilter(name, value, series);
+        break;
+      case 'exists':
+        applyMetricAttributeExistsFilter(name, series);
+        break;
+      case 'not-exists':
+        applyMetricAttributeNotExistsFilter(name, series);
+        break;
+      case 'replace':
+        applyMetricAttributeReplaceFilter(name, value, series);
+        break;
+      case 'group':
+        applyMetricAttributeGroupBy(name, series);
+        break;
+    }
+  }, [
+    applyMetricAttributeContainsFilter,
+    applyMetricAttributeExcludeFilter,
+    applyMetricAttributeExistsFilter,
+    applyMetricAttributeFilter,
+    applyMetricAttributeGroupBy,
+    applyMetricAttributeInFilter,
+    applyMetricAttributeNotContainsFilter,
+    applyMetricAttributeNotExistsFilter,
+    applyMetricAttributeNotInFilter,
+    applyMetricAttributeReplaceFilter
+  ]);
+
   const applyMetricsTimeContext = useCallback((timeContext: TimeContext) => {
     const sanitized = sanitizeTimeContext(timeContext);
     setDraft(previous => ({
@@ -1039,6 +1123,7 @@ export default function OtlpMetricsPage() {
         const selectedSeriesEvidenceRows = buildMetricSeriesEvidenceRows(selectedMetricSeries, formatTime, t);
         const selectedSeriesSampleRows = buildMetricSeriesSampleRows(selectedMetricSeries, formatTime, t);
         const selectedSeriesAttributeRows = buildMetricSeriesAttributeRows(selectedMetricSeries, metricAttributeSearch);
+        const metricAttributeOperatorOptions = buildMetricAttributeOperatorOptions(t);
         const selectedSeriesContextDetailRows = selectedSeriesContextRows.map(row => ({
           key: row.label,
           title: row.label,
@@ -2688,223 +2773,21 @@ export default function OtlpMetricsPage() {
                             render: row => <HzDataCellText variant="meta" display="block" casing="plain">{row.value}</HzDataCellText>
                           },
                           {
-                            key: 'filter',
-                            header: t('otlp.metrics.attributes.column.filter'),
+                            key: 'operator',
+                            header: t('otlp.metrics.attributes.column.operator'),
                             render: row => (
-                              <HzButton
-                                type="button"
-                                size="xs"
-                                intent="ghost"
-                                data-otlp-metrics-attribute-filter-action={row.name}
-                                data-otlp-metrics-attribute-filter-action-owner="hertzbeat-ui-button"
-                                aria-label={t('otlp.metrics.attributes.filter-action.aria', { name: row.name, value: row.value })}
-                                onClick={() => applyMetricAttributeFilter(row.name, row.value, selectedMetricSeries)}
-                              >
-                                <HzButtonIcon
-                                  icon={Filter}
-                                  data-otlp-metrics-attribute-filter-action-icon={row.name}
-                                  data-otlp-metrics-attribute-filter-action-icon-owner="hertzbeat-ui-button-icon"
-                                />
-                                {t('otlp.metrics.attributes.filter-action')}
-                              </HzButton>
-                            )
-                          },
-                          {
-                            key: 'contains',
-                            header: t('otlp.metrics.attributes.column.contains'),
-                            render: row => (
-                              <HzButton
-                                type="button"
-                                size="xs"
-                                intent="ghost"
-                                data-otlp-metrics-attribute-contains-action={row.name}
-                                data-otlp-metrics-attribute-contains-action-owner="hertzbeat-ui-button"
-                                aria-label={t('otlp.metrics.attributes.contains-action.aria', { name: row.name, value: row.value })}
-                                onClick={() => applyMetricAttributeContainsFilter(row.name, row.value, selectedMetricSeries)}
-                              >
-                                <HzButtonIcon
-                                  icon={Search}
-                                  data-otlp-metrics-attribute-contains-action-icon={row.name}
-                                  data-otlp-metrics-attribute-contains-action-icon-owner="hertzbeat-ui-button-icon"
-                                />
-                                {t('otlp.metrics.attributes.contains-action')}
-                              </HzButton>
-                            )
-                          },
-                          {
-                            key: 'not-contains',
-                            header: t('otlp.metrics.attributes.column.not-contains'),
-                            render: row => (
-                              <HzButton
-                                type="button"
-                                size="xs"
-                                intent="ghost"
-                                data-otlp-metrics-attribute-not-contains-action={row.name}
-                                data-otlp-metrics-attribute-not-contains-action-owner="hertzbeat-ui-button"
-                                aria-label={t('otlp.metrics.attributes.not-contains-action.aria', { name: row.name, value: row.value })}
-                                onClick={() => applyMetricAttributeNotContainsFilter(row.name, row.value, selectedMetricSeries)}
-                              >
-                                <HzButtonIcon
-                                  icon={Ban}
-                                  data-otlp-metrics-attribute-not-contains-action-icon={row.name}
-                                  data-otlp-metrics-attribute-not-contains-action-icon-owner="hertzbeat-ui-button-icon"
-                                />
-                                {t('otlp.metrics.attributes.not-contains-action')}
-                              </HzButton>
-                            )
-                          },
-                          {
-                            key: 'in',
-                            header: t('otlp.metrics.attributes.column.in'),
-                            render: row => (
-                              <HzButton
-                                type="button"
-                                size="xs"
-                                intent="ghost"
-                                data-otlp-metrics-attribute-in-action={row.name}
-                                data-otlp-metrics-attribute-in-action-owner="hertzbeat-ui-button"
-                                aria-label={t('otlp.metrics.attributes.in-action.aria', { name: row.name, value: row.value })}
-                                onClick={() => applyMetricAttributeInFilter(row.name, row.value, selectedMetricSeries)}
-                              >
-                                <HzButtonIcon
-                                  icon={ListChecks}
-                                  data-otlp-metrics-attribute-in-action-icon={row.name}
-                                  data-otlp-metrics-attribute-in-action-icon-owner="hertzbeat-ui-button-icon"
-                                />
-                                {t('otlp.metrics.attributes.in-action')}
-                              </HzButton>
-                            )
-                          },
-                          {
-                            key: 'not-in',
-                            header: t('otlp.metrics.attributes.column.not-in'),
-                            render: row => (
-                              <HzButton
-                                type="button"
-                                size="xs"
-                                intent="ghost"
-                                data-otlp-metrics-attribute-not-in-action={row.name}
-                                data-otlp-metrics-attribute-not-in-action-owner="hertzbeat-ui-button"
-                                aria-label={t('otlp.metrics.attributes.not-in-action.aria', { name: row.name, value: row.value })}
-                                onClick={() => applyMetricAttributeNotInFilter(row.name, row.value, selectedMetricSeries)}
-                              >
-                                <HzButtonIcon
-                                  icon={Ban}
-                                  data-otlp-metrics-attribute-not-in-action-icon={row.name}
-                                  data-otlp-metrics-attribute-not-in-action-icon-owner="hertzbeat-ui-button-icon"
-                                />
-                                {t('otlp.metrics.attributes.not-in-action')}
-                              </HzButton>
-                            )
-                          },
-                          {
-                            key: 'exclude',
-                            header: t('otlp.metrics.attributes.column.exclude'),
-                            render: row => (
-                              <HzButton
-                                type="button"
-                                size="xs"
-                                intent="ghost"
-                                data-otlp-metrics-attribute-filter-out-action={row.name}
-                                data-otlp-metrics-attribute-filter-out-action-owner="hertzbeat-ui-button"
-                                aria-label={t('otlp.metrics.attributes.filter-out-action.aria', { name: row.name, value: row.value })}
-                                onClick={() => applyMetricAttributeExcludeFilter(row.name, row.value, selectedMetricSeries)}
-                              >
-                                <HzButtonIcon
-                                  icon={X}
-                                  data-otlp-metrics-attribute-filter-out-action-icon={row.name}
-                                  data-otlp-metrics-attribute-filter-out-action-icon-owner="hertzbeat-ui-button-icon"
-                                />
-                                {t('otlp.metrics.attributes.filter-out-action')}
-                              </HzButton>
-                            )
-                          },
-                          {
-                            key: 'exists',
-                            header: t('otlp.metrics.attributes.column.exists'),
-                            render: row => (
-                              <HzButton
-                                type="button"
-                                size="xs"
-                                intent="ghost"
-                                data-otlp-metrics-attribute-exists-action={row.name}
-                                data-otlp-metrics-attribute-exists-action-owner="hertzbeat-ui-button"
-                                aria-label={t('otlp.metrics.attributes.exists-action.aria', { name: row.name })}
-                                onClick={() => applyMetricAttributeExistsFilter(row.name, selectedMetricSeries)}
-                              >
-                                <HzButtonIcon
-                                  icon={Check}
-                                  data-otlp-metrics-attribute-exists-action-icon={row.name}
-                                  data-otlp-metrics-attribute-exists-action-icon-owner="hertzbeat-ui-button-icon"
-                                />
-                                {t('otlp.metrics.attributes.exists-action')}
-                              </HzButton>
-                            )
-                          },
-                          {
-                            key: 'not-exists',
-                            header: t('otlp.metrics.attributes.column.not-exists'),
-                            render: row => (
-                              <HzButton
-                                type="button"
-                                size="xs"
-                                intent="ghost"
-                                data-otlp-metrics-attribute-not-exists-action={row.name}
-                                data-otlp-metrics-attribute-not-exists-action-owner="hertzbeat-ui-button"
-                                aria-label={t('otlp.metrics.attributes.not-exists-action.aria', { name: row.name })}
-                                onClick={() => applyMetricAttributeNotExistsFilter(row.name, selectedMetricSeries)}
-                              >
-                                <HzButtonIcon
-                                  icon={Ban}
-                                  data-otlp-metrics-attribute-not-exists-action-icon={row.name}
-                                  data-otlp-metrics-attribute-not-exists-action-icon-owner="hertzbeat-ui-button-icon"
-                                />
-                                {t('otlp.metrics.attributes.not-exists-action')}
-                              </HzButton>
-                            )
-                          },
-                          {
-                            key: 'replace',
-                            header: t('otlp.metrics.attributes.column.replace'),
-                            render: row => (
-                              <HzButton
-                                type="button"
-                                size="xs"
-                                intent="ghost"
-                                data-otlp-metrics-attribute-replace-action={row.name}
-                                data-otlp-metrics-attribute-replace-action-owner="hertzbeat-ui-button"
-                                aria-label={t('otlp.metrics.attributes.replace-action.aria', { name: row.name, value: row.value })}
-                                onClick={() => applyMetricAttributeReplaceFilter(row.name, row.value, selectedMetricSeries)}
-                              >
-                                <HzButtonIcon
-                                  icon={Replace}
-                                  data-otlp-metrics-attribute-replace-action-icon={row.name}
-                                  data-otlp-metrics-attribute-replace-action-icon-owner="hertzbeat-ui-button-icon"
-                                />
-                                {t('otlp.metrics.attributes.replace-action')}
-                              </HzButton>
-                            )
-                          },
-                          {
-                            key: 'group',
-                            header: t('otlp.metrics.attributes.column.group'),
-                            render: row => (
-                              <HzButton
-                                type="button"
-                                size="xs"
-                                intent="ghost"
-                                data-otlp-metrics-attribute-group-action={row.name}
-                                data-otlp-metrics-attribute-group-action-owner="hertzbeat-ui-button"
-                                aria-label={t('otlp.metrics.attributes.group-action.aria', { name: row.name })}
-                                onClick={() => applyMetricAttributeGroupBy(row.name, selectedMetricSeries)}
-                              >
-                                <HzButtonIcon
-                                  icon={Workflow}
-                                  data-otlp-metrics-attribute-group-action-icon={row.name}
-                                  data-otlp-metrics-attribute-group-action-icon-owner="hertzbeat-ui-button-icon"
-                                />
-                                {t('otlp.metrics.attributes.group-action')}
-                              </HzButton>
+                              <HzSelect
+                                data-otlp-metrics-attribute-operator-action={row.name}
+                                data-otlp-metrics-attribute-operator-action-owner="hertzbeat-ui-select"
+                                width="metrics-group-by"
+                                size="sm"
+                                value=""
+                                placeholder={t('otlp.metrics.attributes.operator.placeholder')}
+                                aria-label={t('otlp.metrics.attributes.operator-action.aria', { name: row.name, value: row.value })}
+                                options={metricAttributeOperatorOptions}
+                                optionDataAttributes={option => metricAttributeOperatorDataAttributes(option.value as MetricAttributeOperator, row.name)}
+                                onChange={event => applyMetricAttributeOperator(event.target.value as MetricAttributeOperator, row.name, row.value, selectedMetricSeries)}
+                              />
                             )
                           }
                         ]}

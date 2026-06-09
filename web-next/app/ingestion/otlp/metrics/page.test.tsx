@@ -1037,13 +1037,7 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-attribute-table-owner="hertzbeat-ui-data-table"');
     expect(source).toContain("header: t('otlp.metrics.attributes.column.name')");
     expect(source).toContain("header: t('otlp.metrics.attributes.column.value')");
-    expect(source).toContain("header: t('otlp.metrics.attributes.column.contains')");
-    expect(source).toContain("header: t('otlp.metrics.attributes.column.not-contains')");
-    expect(source).toContain("header: t('otlp.metrics.attributes.column.in')");
-    expect(source).toContain("header: t('otlp.metrics.attributes.column.not-in')");
-    expect(source).toContain("header: t('otlp.metrics.attributes.column.exclude')");
-    expect(source).toContain("header: t('otlp.metrics.attributes.column.exists')");
-    expect(source).toContain("header: t('otlp.metrics.attributes.column.not-exists')");
+    expect(source).toContain("header: t('otlp.metrics.attributes.column.operator')");
     expect(source).toContain('buildMetricAttributeExcludeFilterExpression');
     expect(source).toContain('buildMetricAttributeContainsFilterExpression');
     expect(source).toContain('buildMetricAttributeNotContainsFilterExpression');
@@ -1058,20 +1052,15 @@ describe('otlp metrics page', () => {
     expect(source).toContain('applyMetricAttributeNotInFilter');
     expect(source).toContain('applyMetricAttributeExistsFilter');
     expect(source).toContain('applyMetricAttributeNotExistsFilter');
-    expect(source).toContain('data-otlp-metrics-attribute-filter-out-action={row.name}');
-    expect(source).toContain('data-otlp-metrics-attribute-filter-out-action-owner="hertzbeat-ui-button"');
-    expect(source).toContain('data-otlp-metrics-attribute-contains-action={row.name}');
-    expect(source).toContain('data-otlp-metrics-attribute-contains-action-owner="hertzbeat-ui-button"');
-    expect(source).toContain('data-otlp-metrics-attribute-not-contains-action={row.name}');
-    expect(source).toContain('data-otlp-metrics-attribute-not-contains-action-owner="hertzbeat-ui-button"');
-    expect(source).toContain('data-otlp-metrics-attribute-in-action={row.name}');
-    expect(source).toContain('data-otlp-metrics-attribute-in-action-owner="hertzbeat-ui-button"');
-    expect(source).toContain('data-otlp-metrics-attribute-not-in-action={row.name}');
-    expect(source).toContain('data-otlp-metrics-attribute-not-in-action-owner="hertzbeat-ui-button"');
-    expect(source).toContain('data-otlp-metrics-attribute-exists-action={row.name}');
-    expect(source).toContain('data-otlp-metrics-attribute-exists-action-owner="hertzbeat-ui-button"');
-    expect(source).toContain('data-otlp-metrics-attribute-not-exists-action={row.name}');
-    expect(source).toContain('data-otlp-metrics-attribute-not-exists-action-owner="hertzbeat-ui-button"');
+    expect(source).toContain('buildMetricAttributeOperatorOptions');
+    expect(source).toContain('metricAttributeOperatorDataAttributes');
+    expect(source).toContain('applyMetricAttributeOperator');
+    expect(source).toContain('data-otlp-metrics-attribute-operator-action={row.name}');
+    expect(source).toContain('data-otlp-metrics-attribute-operator-action-owner="hertzbeat-ui-select"');
+    expect(source).toContain('optionDataAttributes={option => metricAttributeOperatorDataAttributes(option.value as MetricAttributeOperator, row.name)}');
+    expect(source).not.toContain('data-otlp-metrics-attribute-filter-out-action-owner="hertzbeat-ui-button"');
+    expect(source).not.toContain('data-otlp-metrics-attribute-contains-action-owner="hertzbeat-ui-button"');
+    expect(source).not.toContain('data-otlp-metrics-attribute-group-action-owner="hertzbeat-ui-button"');
     expect(source).toContain('boundary="top"');
     expect(source).not.toContain('className="mt-3 border-t border-[#252b35] pt-3"');
     expect(source).toContain('data-otlp-metrics-linked-record-summary="log-trace-alert-links"');
@@ -3031,19 +3020,38 @@ describe('otlp metrics page', () => {
     expect(attributeTable?.textContent).toContain('checkout');
     expect(attributeTable?.textContent).toContain('route');
 
-    const serviceFilterAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-filter-action="service.name"]') as HTMLButtonElement | null;
-    expect(serviceFilterAction?.getAttribute('data-otlp-metrics-attribute-filter-action-owner')).toBe('hertzbeat-ui-button');
-    expect(serviceFilterAction?.getAttribute('aria-label')).toContain('service.name');
+    const serviceOperator = interactionContainer.querySelector('[data-otlp-metrics-attribute-operator-action="service.name"]') as HTMLElement | null;
+    expect(serviceOperator).not.toBeNull();
+    expect(serviceOperator?.getAttribute('data-otlp-metrics-attribute-operator-action-owner')).toBe('hertzbeat-ui-select');
+    expect(serviceOperator?.getAttribute('data-hz-ui')).toBe('select');
+    expect((serviceOperator?.querySelector('[data-hz-ui="select-trigger"]') as HTMLButtonElement | null)?.getAttribute('aria-label')).toContain('service.name');
 
-    await act(async () => {
-      serviceFilterAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-    });
+    const applyAttributeOperator = async (name: string, operator: string) => {
+      const operatorRoot = interactionContainer.querySelector(`[data-otlp-metrics-attribute-operator-action="${name}"]`) as HTMLElement | null;
+      expect(operatorRoot).not.toBeNull();
+      await act(async () => {
+        (operatorRoot?.querySelector('[data-hz-ui="select-trigger"]') as HTMLButtonElement | null)?.click();
+        await Promise.resolve();
+      });
+      const option = operatorRoot?.querySelector(
+        `[data-otlp-metrics-attribute-operator-option="${operator}"][data-otlp-metrics-attribute-operator-name="${name}"]`
+      ) as HTMLButtonElement | null;
+      expect(option).not.toBeNull();
+      expect(option?.getAttribute(`data-otlp-metrics-attribute-${operator === 'exclude' ? 'filter-out' : operator}-action-owner`)).toBe('hertzbeat-ui-select-menu-option');
+      await act(async () => {
+        option?.click();
+        await Promise.resolve();
+      });
+      const href = String(mockState.replace.mock.calls.at(-1)?.[0]);
+      return {
+        href,
+        params: new URL(href, 'http://localhost').searchParams
+      };
+    };
 
-    const filterHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    const { href: filterHref, params: filterParams } = await applyAttributeOperator('service.name', 'filter');
     expect(filterHref).toContain('/ingestion/otlp/metrics?');
     expect(filterHref).toContain('filter=service.name%3D%22checkout%22');
-    const filterParams = new URL(filterHref, 'http://localhost').searchParams;
     expect(filterParams.get('series')).toBe('checkout_latency-0');
     expect(filterParams.get('entityId')).toBe('7');
     expect(filterParams.get('serviceName')).toBe('checkout');
@@ -3051,17 +3059,7 @@ describe('otlp metrics page', () => {
     expect(filterParams.get('traceId')).toBe('trace-checkout');
     expect(filterParams.get('spanId')).toBe('span-checkout');
 
-    const serviceContainsAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-contains-action="service.name"]') as HTMLButtonElement | null;
-    expect(serviceContainsAction?.getAttribute('data-otlp-metrics-attribute-contains-action-owner')).toBe('hertzbeat-ui-button');
-    expect(serviceContainsAction?.getAttribute('aria-label')).toContain('service.name');
-
-    await act(async () => {
-      serviceContainsAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-    });
-
-    const containsHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
-    const containsParams = new URL(containsHref, 'http://localhost').searchParams;
+    const { params: containsParams } = await applyAttributeOperator('service.name', 'contains');
     expect(containsParams.get('filter')).toContain('service.name CONTAINS checkout');
     expect(containsParams.get('series')).toBe('checkout_latency-0');
     expect(containsParams.get('entityId')).toBe('7');
@@ -3070,17 +3068,7 @@ describe('otlp metrics page', () => {
     expect(containsParams.get('traceId')).toBe('trace-checkout');
     expect(containsParams.get('spanId')).toBe('span-checkout');
 
-    const serviceNotContainsAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-not-contains-action="service.name"]') as HTMLButtonElement | null;
-    expect(serviceNotContainsAction?.getAttribute('data-otlp-metrics-attribute-not-contains-action-owner')).toBe('hertzbeat-ui-button');
-    expect(serviceNotContainsAction?.getAttribute('aria-label')).toContain('service.name');
-
-    await act(async () => {
-      serviceNotContainsAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-    });
-
-    const notContainsHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
-    const notContainsParams = new URL(notContainsHref, 'http://localhost').searchParams;
+    const { params: notContainsParams } = await applyAttributeOperator('service.name', 'not-contains');
     expect(notContainsParams.get('filter')).toContain('service.name NOT CONTAINS checkout');
     expect(notContainsParams.get('series')).toBe('checkout_latency-0');
     expect(notContainsParams.get('entityId')).toBe('7');
@@ -3089,17 +3077,7 @@ describe('otlp metrics page', () => {
     expect(notContainsParams.get('traceId')).toBe('trace-checkout');
     expect(notContainsParams.get('spanId')).toBe('span-checkout');
 
-    const serviceInAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-in-action="service.name"]') as HTMLButtonElement | null;
-    expect(serviceInAction?.getAttribute('data-otlp-metrics-attribute-in-action-owner')).toBe('hertzbeat-ui-button');
-    expect(serviceInAction?.getAttribute('aria-label')).toContain('service.name');
-
-    await act(async () => {
-      serviceInAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-    });
-
-    const inHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
-    const inParams = new URL(inHref, 'http://localhost').searchParams;
+    const { params: inParams } = await applyAttributeOperator('service.name', 'in');
     expect(inParams.get('filter')).toContain('service.name IN ("checkout")');
     expect(inParams.get('series')).toBe('checkout_latency-0');
     expect(inParams.get('entityId')).toBe('7');
@@ -3108,17 +3086,7 @@ describe('otlp metrics page', () => {
     expect(inParams.get('traceId')).toBe('trace-checkout');
     expect(inParams.get('spanId')).toBe('span-checkout');
 
-    const serviceNotInAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-not-in-action="service.name"]') as HTMLButtonElement | null;
-    expect(serviceNotInAction?.getAttribute('data-otlp-metrics-attribute-not-in-action-owner')).toBe('hertzbeat-ui-button');
-    expect(serviceNotInAction?.getAttribute('aria-label')).toContain('service.name');
-
-    await act(async () => {
-      serviceNotInAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-    });
-
-    const notInHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
-    const notInParams = new URL(notInHref, 'http://localhost').searchParams;
+    const { params: notInParams } = await applyAttributeOperator('service.name', 'not-in');
     expect(notInParams.get('filter')).toContain('service.name NOT IN ("checkout")');
     expect(notInParams.get('series')).toBe('checkout_latency-0');
     expect(notInParams.get('entityId')).toBe('7');
@@ -3127,17 +3095,7 @@ describe('otlp metrics page', () => {
     expect(notInParams.get('traceId')).toBe('trace-checkout');
     expect(notInParams.get('spanId')).toBe('span-checkout');
 
-    const serviceExcludeAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-filter-out-action="service.name"]') as HTMLButtonElement | null;
-    expect(serviceExcludeAction?.getAttribute('data-otlp-metrics-attribute-filter-out-action-owner')).toBe('hertzbeat-ui-button');
-    expect(serviceExcludeAction?.getAttribute('aria-label')).toContain('service.name');
-
-    await act(async () => {
-      serviceExcludeAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-    });
-
-    const excludeHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
-    const excludeParams = new URL(excludeHref, 'http://localhost').searchParams;
+    const { params: excludeParams } = await applyAttributeOperator('service.name', 'exclude');
     expect(excludeParams.get('filter')).toContain('service.name!="checkout"');
     expect(excludeParams.get('series')).toBe('checkout_latency-0');
     expect(excludeParams.get('entityId')).toBe('7');
@@ -3146,17 +3104,7 @@ describe('otlp metrics page', () => {
     expect(excludeParams.get('traceId')).toBe('trace-checkout');
     expect(excludeParams.get('spanId')).toBe('span-checkout');
 
-    const serviceExistsAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-exists-action="service.name"]') as HTMLButtonElement | null;
-    expect(serviceExistsAction?.getAttribute('data-otlp-metrics-attribute-exists-action-owner')).toBe('hertzbeat-ui-button');
-    expect(serviceExistsAction?.getAttribute('aria-label')).toContain('service.name');
-
-    await act(async () => {
-      serviceExistsAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-    });
-
-    const existsHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
-    const existsParams = new URL(existsHref, 'http://localhost').searchParams;
+    const { params: existsParams } = await applyAttributeOperator('service.name', 'exists');
     expect(existsParams.get('filter')).toContain('service.name EXISTS');
     expect(existsParams.get('series')).toBe('checkout_latency-0');
     expect(existsParams.get('entityId')).toBe('7');
@@ -3165,17 +3113,7 @@ describe('otlp metrics page', () => {
     expect(existsParams.get('traceId')).toBe('trace-checkout');
     expect(existsParams.get('spanId')).toBe('span-checkout');
 
-    const serviceNotExistsAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-not-exists-action="service.name"]') as HTMLButtonElement | null;
-    expect(serviceNotExistsAction?.getAttribute('data-otlp-metrics-attribute-not-exists-action-owner')).toBe('hertzbeat-ui-button');
-    expect(serviceNotExistsAction?.getAttribute('aria-label')).toContain('service.name');
-
-    await act(async () => {
-      serviceNotExistsAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-    });
-
-    const notExistsHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
-    const notExistsParams = new URL(notExistsHref, 'http://localhost').searchParams;
+    const { params: notExistsParams } = await applyAttributeOperator('service.name', 'not-exists');
     expect(notExistsParams.get('filter')).toContain('service.name NOT EXISTS');
     expect(notExistsParams.get('series')).toBe('checkout_latency-0');
     expect(notExistsParams.get('entityId')).toBe('7');
@@ -3184,19 +3122,9 @@ describe('otlp metrics page', () => {
     expect(notExistsParams.get('traceId')).toBe('trace-checkout');
     expect(notExistsParams.get('spanId')).toBe('span-checkout');
 
-    const routeGroupAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-group-action="route"]') as HTMLButtonElement | null;
-    expect(routeGroupAction?.getAttribute('data-otlp-metrics-attribute-group-action-owner')).toBe('hertzbeat-ui-button');
-    expect(routeGroupAction?.getAttribute('aria-label')).toContain('route');
-
-    await act(async () => {
-      routeGroupAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-    });
-
-    const groupHref = String(mockState.replace.mock.calls.at(-1)?.[0]);
+    const { href: groupHref, params: groupParams } = await applyAttributeOperator('route', 'group');
     expect(groupHref).toContain('filter=service.name%3D%22checkout%22');
     expect(groupHref).toContain('groupBy=route');
-    const groupParams = new URL(groupHref, 'http://localhost').searchParams;
     expect(groupParams.get('series')).toBe('checkout_latency-0');
     expect(groupParams.get('traceId')).toBe('trace-checkout');
     expect(groupParams.get('spanId')).toBe('span-checkout');
@@ -3282,13 +3210,24 @@ describe('otlp metrics page', () => {
       await Promise.resolve();
     });
 
-    const replaceAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-replace-action="service.name"]') as HTMLButtonElement | null;
+    const replaceAction = interactionContainer.querySelector('[data-otlp-metrics-attribute-operator-action="service.name"]') as HTMLElement | null;
     expect(replaceAction).not.toBeNull();
-    expect(replaceAction?.getAttribute('data-otlp-metrics-attribute-replace-action-owner')).toBe('hertzbeat-ui-button');
-    expect(replaceAction?.getAttribute('aria-label')).toContain('service.name');
+    expect(replaceAction?.getAttribute('data-otlp-metrics-attribute-operator-action-owner')).toBe('hertzbeat-ui-select');
+    expect(replaceAction?.getAttribute('data-hz-ui')).toBe('select');
+    expect((replaceAction?.querySelector('[data-hz-ui="select-trigger"]') as HTMLButtonElement | null)?.getAttribute('aria-label')).toContain('service.name');
 
     await act(async () => {
-      replaceAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      (replaceAction?.querySelector('[data-hz-ui="select-trigger"]') as HTMLButtonElement | null)?.click();
+      await Promise.resolve();
+    });
+    const replaceOption = replaceAction?.querySelector(
+      '[data-otlp-metrics-attribute-operator-option="replace"][data-otlp-metrics-attribute-operator-name="service.name"]'
+    ) as HTMLButtonElement | null;
+    expect(replaceOption).not.toBeNull();
+    expect(replaceOption?.getAttribute('data-otlp-metrics-attribute-replace-action-owner')).toBe('hertzbeat-ui-select-menu-option');
+
+    await act(async () => {
+      replaceOption?.click();
       await Promise.resolve();
     });
 
