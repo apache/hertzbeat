@@ -2483,7 +2483,8 @@ describe('signal dashboards API client', () => {
         source: 'metrics-point',
         label: 'signoz_db_latency_count',
         value: '7',
-        meta: '2000'
+        meta: '2000',
+        resourceFilter: 'db.system=postgresql'
       },
       route: '/ingestion/otlp/metrics?query=signoz_db_latency_count&serviceName=checkout&series=postgresql&inspector=graph&start=1000&end=3000',
       attribute: {
@@ -2509,6 +2510,7 @@ describe('signal dashboards API client', () => {
       evidenceSource: 'metrics-point',
       evidenceLabel: 'signoz_db_latency_count',
       evidenceValue: '7',
+      resourceFilter: 'db.system=postgresql',
       breakoutAttribute: 'db.system',
       breakoutAttributeValue: 'postgresql'
     }));
@@ -2521,7 +2523,8 @@ describe('signal dashboards API client', () => {
         label: 'checkout',
         value: 'timeout',
         traceId: 'trace-1',
-        spanId: 'span-1'
+        spanId: 'span-1',
+        attributeFilter: 'region:us'
       },
       route: '/log/manage?view=table&traceId=trace-1&spanId=span-1&serviceName=checkout&serviceNamespace=payments&start=1000&end=3000',
       attribute: {
@@ -2540,6 +2543,9 @@ describe('signal dashboards API client', () => {
     expect(JSON.parse(String(logDraft?.payload))).toEqual(expect.objectContaining({
       source: 'signal-dashboard-runtime-breakout',
       sourcePanelId: 'logs-panel',
+      traceId: 'trace-1',
+      spanId: 'span-1',
+      attributeFilter: 'region:us',
       breakoutAttribute: 'resource:service.name',
       breakoutAttributeValue: 'checkout'
     }));
@@ -2552,7 +2558,8 @@ describe('signal dashboards API client', () => {
         label: 'checkout',
         value: 'POST /checkout',
         traceId: 'trace-1',
-        spanId: 'span-root'
+        spanId: 'span-root',
+        operationName: 'POST /checkout'
       },
       route: '/trace/manage?view=trace&traceId=trace-1&spanId=span-root&serviceName=checkout&serviceNamespace=payments&spanScope=all&start=1000&end=3000',
       attribute: {
@@ -2571,6 +2578,9 @@ describe('signal dashboards API client', () => {
     expect(JSON.parse(String(traceDraft?.payload))).toEqual(expect.objectContaining({
       source: 'signal-dashboard-runtime-breakout',
       sourcePanelId: 'trace-panel',
+      traceId: 'trace-1',
+      spanId: 'span-root',
+      operationName: 'POST /checkout',
       breakoutAttribute: 'resource:service.version',
       breakoutAttributeValue: '1.2.3'
     }));
