@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { BarChart3, Ban, BellPlus, BellRing, Check, Copy, Download, Filter, ListChecks, Pencil, Play, Replace, RotateCcw, Save, Search, ScrollText, Server, Timer, Trash2, Workflow, X } from 'lucide-react';
+import { BarChart3, BellPlus, BellRing, Check, Copy, Download, Filter, ListChecks, Pencil, Play, Replace, RotateCcw, Save, Search, ScrollText, Server, Timer, Trash2, Workflow, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { HzActionGroup, HzAttributeDiagnostics, HzButton, HzButtonIcon, HzButtonLink, HzCheckbox, HzChipGroup, HzControlStack, HzDataCellText, HzDataTable, HzDetailRows, HzDialogBodyLayout, HzDialogEventNotice, HzDialogEventText, HzDialogMetaItem, HzDisabledActionShell, HzEmptyState, HzInput, HzPanelHeader, HzPanelSurface, HzQueryActionGroup, HzQueryStatusSelect, HzQueryTokenField, HzSearchFieldFrame, HzSearchFieldIcon, HzSelect, HzSignalSummaryStrip, HzSignalTrendBars, HzSignalWorkbenchShell, HzStateNotice, HzStatusBadge, HzTableRowActionButton, HzWorkbenchHeaderCopy, HzWorkbenchLayout, type HzStatusTone } from '@hertzbeat/ui';
 import { buildTimeRangeControlLabels, TimeRangeControl } from '@/components/observability/time-range-control';
@@ -75,6 +75,8 @@ type TraceSavedQueryView = SignalSavedQueryView;
 
 type TraceExportRowLimit = 'current' | '10000' | '30000' | '50000';
 type TraceDashboardPanelDraftState = 'idle' | 'saving' | 'saved' | 'failed';
+type TraceAttributeOperator = 'filter' | 'exclude' | 'contains' | 'not-contains' | 'in' | 'not-in' | 'exists' | 'not-exists' | 'replace' | 'group';
+type TraceAttributeScope = 'span' | 'resource';
 
 const EMPTY_TRACE_OVERVIEW: TraceOverview = {
   totalTraceCount: 0,
@@ -221,6 +223,58 @@ type TraceRelatedLogsState = {
   data: PageResult<LogEntry> | null;
 };
 type TraceTranslator = ReturnType<typeof useI18n>['t'];
+
+const TRACE_ATTRIBUTE_OPERATOR_LABEL_KEYS: Record<TraceAttributeOperator, string> = {
+  filter: 'trace.manage.drawer.attributes.operator.filter',
+  exclude: 'trace.manage.drawer.attributes.operator.exclude',
+  contains: 'trace.manage.drawer.attributes.operator.contains',
+  'not-contains': 'trace.manage.drawer.attributes.operator.not-contains',
+  in: 'trace.manage.drawer.attributes.operator.in',
+  'not-in': 'trace.manage.drawer.attributes.operator.not-in',
+  exists: 'trace.manage.drawer.attributes.operator.exists',
+  'not-exists': 'trace.manage.drawer.attributes.operator.not-exists',
+  replace: 'trace.manage.drawer.attributes.operator.replace',
+  group: 'trace.manage.drawer.attributes.operator.group'
+};
+
+function buildTraceAttributeOperatorOptions(t: TraceTranslator, operators: TraceAttributeOperator[]) {
+  return operators.map(operator => ({
+    value: operator,
+    label: t(TRACE_ATTRIBUTE_OPERATOR_LABEL_KEYS[operator] as Parameters<TraceTranslator>[0])
+  }));
+}
+
+function traceDrawerAttributeOperatorDataAttributes(scope: TraceAttributeScope, operator: TraceAttributeOperator, name: string, value: string) {
+  const prefix = scope === 'span' ? 'data-trace-manage-drawer-span-attribute' : 'data-trace-manage-drawer-resource';
+  const base = {
+    [`${prefix}-operator-option`]: operator,
+    [`${prefix}-operator-scope`]: scope,
+    [`${prefix}-filter-name`]: name,
+    [`${prefix}-filter-value`]: value
+  };
+  switch (operator) {
+    case 'filter':
+      return { ...base, [`${prefix}-filter-action`]: 'true', [`${prefix}-filter-action-owner`]: 'hertzbeat-ui-select-menu-option' };
+    case 'exclude':
+      return { ...base, [`${prefix}-filter-out-action`]: 'true', [`${prefix}-filter-out-action-owner`]: 'hertzbeat-ui-select-menu-option' };
+    case 'contains':
+      return { ...base, [`${prefix}-contains-action`]: 'true', [`${prefix}-contains-action-owner`]: 'hertzbeat-ui-select-menu-option' };
+    case 'not-contains':
+      return { ...base, [`${prefix}-not-contains-action`]: 'true', [`${prefix}-not-contains-action-owner`]: 'hertzbeat-ui-select-menu-option' };
+    case 'in':
+      return { ...base, [`${prefix}-in-action`]: 'true', [`${prefix}-in-action-owner`]: 'hertzbeat-ui-select-menu-option' };
+    case 'not-in':
+      return { ...base, [`${prefix}-not-in-action`]: 'true', [`${prefix}-not-in-action-owner`]: 'hertzbeat-ui-select-menu-option' };
+    case 'exists':
+      return { ...base, [`${prefix}-exists-action`]: 'true', [`${prefix}-exists-action-owner`]: 'hertzbeat-ui-select-menu-option' };
+    case 'not-exists':
+      return { ...base, [`${prefix}-not-exists-action`]: 'true', [`${prefix}-not-exists-action-owner`]: 'hertzbeat-ui-select-menu-option' };
+    case 'replace':
+      return { ...base, [`${prefix}-replace-action`]: 'true', [`${prefix}-replace-action-owner`]: 'hertzbeat-ui-select-menu-option' };
+    case 'group':
+      return { ...base, [`${prefix}-group-action`]: 'true', [`${prefix}-group-action-owner`]: 'hertzbeat-ui-select-menu-option', [`${prefix}-group-name`]: name };
+  }
+}
 
 function buildTraceRelatedMetricsApiUrl(metricsHref: string | null | undefined) {
   if (!metricsHref) return null;
@@ -931,6 +985,146 @@ function TraceWaterfallDrawer({
     t('trace.manage.drawer.attributes.resource.meta'),
     t
   );
+  const applyTraceAttributeOperator = useCallback((scope: TraceAttributeScope, operator: TraceAttributeOperator, name: string, value: string) => {
+    if (scope === 'span') {
+      switch (operator) {
+        case 'filter':
+          onApplySpanAttributeFilter(name, value);
+          break;
+        case 'exclude':
+          onExcludeSpanAttributeFilter(name, value);
+          break;
+        case 'contains':
+          onApplySpanAttributeContainsFilter(name, value);
+          break;
+        case 'not-contains':
+          onApplySpanAttributeNotContainsFilter(name, value);
+          break;
+        case 'in':
+          onApplySpanAttributeInFilter(name, value);
+          break;
+        case 'not-in':
+          onApplySpanAttributeNotInFilter(name, value);
+          break;
+        case 'exists':
+          onApplySpanAttributeExistsFilter(name);
+          break;
+        case 'not-exists':
+          onApplySpanAttributeNotExistsFilter(name);
+          break;
+        case 'replace':
+          onReplaceSpanAttributeFilter(name, value);
+          break;
+        case 'group':
+          onApplySpanAttributeGroupBy(name);
+          break;
+      }
+      return;
+    }
+
+    switch (operator) {
+      case 'filter':
+        onApplyResourceFilter(name, value);
+        break;
+      case 'exclude':
+        onExcludeResourceFilter(name, value);
+        break;
+      case 'contains':
+        onApplyResourceContainsFilter(name, value);
+        break;
+      case 'not-contains':
+        onApplyResourceNotContainsFilter(name, value);
+        break;
+      case 'in':
+        onApplyResourceInFilter(name, value);
+        break;
+      case 'not-in':
+        onApplyResourceNotInFilter(name, value);
+        break;
+      case 'exists':
+        onApplyResourceExistsFilter(name);
+        break;
+      case 'not-exists':
+        onApplyResourceNotExistsFilter(name);
+        break;
+      case 'replace':
+        onReplaceResourceFilter(name, value);
+        break;
+      case 'group':
+        onApplyResourceGroupBy(name);
+        break;
+    }
+  }, [
+    onApplyResourceContainsFilter,
+    onApplyResourceExistsFilter,
+    onApplyResourceFilter,
+    onApplyResourceGroupBy,
+    onApplyResourceInFilter,
+    onApplyResourceNotContainsFilter,
+    onApplyResourceNotExistsFilter,
+    onApplyResourceNotInFilter,
+    onApplySpanAttributeContainsFilter,
+    onApplySpanAttributeExistsFilter,
+    onApplySpanAttributeFilter,
+    onApplySpanAttributeGroupBy,
+    onApplySpanAttributeInFilter,
+    onApplySpanAttributeNotContainsFilter,
+    onApplySpanAttributeNotExistsFilter,
+    onApplySpanAttributeNotInFilter,
+    onExcludeResourceFilter,
+    onExcludeSpanAttributeFilter,
+    onReplaceResourceFilter,
+    onReplaceSpanAttributeFilter
+  ]);
+  const renderTraceDrawerAttributeOperator = useCallback((scope: TraceAttributeScope, title: React.ReactNode, copy: React.ReactNode) => {
+    const name = String(title ?? '').trim();
+    const value = String(copy ?? '').trim();
+    const availableOperators: TraceAttributeOperator[] = scope === 'span'
+      ? [
+        ...(buildTraceSpanAttributeFilterExpression(name, value) ? ['filter'] as const : []),
+        ...(buildTraceSpanAttributeExcludeFilterExpression(name, value) ? ['exclude'] as const : []),
+        ...(buildTraceSpanAttributeContainsFilterExpression(name, value) ? ['contains'] as const : []),
+        ...(buildTraceSpanAttributeNotContainsFilterExpression(name, value) ? ['not-contains'] as const : []),
+        ...(buildTraceSpanAttributeInFilterExpression(name, value) ? ['in'] as const : []),
+        ...(buildTraceSpanAttributeNotInFilterExpression(name, value) ? ['not-in'] as const : []),
+        ...(buildTraceSpanAttributeExistsFilterExpression(name) ? ['exists'] as const : []),
+        ...(buildTraceSpanAttributeNotExistsFilterExpression(name) ? ['not-exists'] as const : []),
+        ...(buildTraceSpanAttributeFilterExpression(name, value) ? ['replace'] as const : []),
+        ...(buildTraceSpanAttributeGroupBy(name) ? ['group'] as const : [])
+      ]
+      : [
+        ...(buildTraceResourceFilterExpression(name, value) ? ['filter'] as const : []),
+        ...(buildTraceResourceExcludeFilterExpression(name, value) ? ['exclude'] as const : []),
+        ...(buildTraceResourceContainsFilterExpression(name, value) ? ['contains'] as const : []),
+        ...(buildTraceResourceNotContainsFilterExpression(name, value) ? ['not-contains'] as const : []),
+        ...(buildTraceResourceInFilterExpression(name, value) ? ['in'] as const : []),
+        ...(buildTraceResourceNotInFilterExpression(name, value) ? ['not-in'] as const : []),
+        ...(buildTraceResourceExistsFilterExpression(name) ? ['exists'] as const : []),
+        ...(buildTraceResourceNotExistsFilterExpression(name) ? ['not-exists'] as const : []),
+        ...(buildTraceResourceFilterExpression(name, value) ? ['replace'] as const : []),
+        ...(buildTraceResourceGroupBy(name) ? ['group'] as const : [])
+      ];
+    if (!availableOperators.length) return null;
+    const prefix = scope === 'span' ? 'data-trace-manage-drawer-span-attribute' : 'data-trace-manage-drawer-resource';
+    return (
+      <HzSelect
+        {...{
+          [`${prefix}-operator-action`]: 'true',
+          [`${prefix}-operator-owner`]: 'hertzbeat-ui-select',
+          [`${prefix}-filter-name`]: name,
+          [`${prefix}-filter-value`]: value
+        }}
+        size="sm"
+        width="log-severity"
+        value=""
+        placeholder={t('trace.manage.drawer.attributes.operator.placeholder')}
+        aria-label={t('trace.manage.drawer.attributes.operator-action.aria', { name, value })}
+        options={buildTraceAttributeOperatorOptions(t, availableOperators)}
+        optionDataAttributes={option => traceDrawerAttributeOperatorDataAttributes(scope, option.value as TraceAttributeOperator, name, value)}
+        onChange={event => applyTraceAttributeOperator(scope, event.target.value as TraceAttributeOperator, name, value)}
+      />
+    );
+  }, [applyTraceAttributeOperator, t]);
   const selectedTraceEvent = findTraceWaterfallEvent(waterfallRows, state.selectedEventKey);
   const handoffLinks = buildTraceHandoffLinks(detail, selectedSpan, handoffRouteContext, {
     intakeReturnTo: currentTraceReturnHref,
@@ -1338,147 +1532,7 @@ function TraceWaterfallDrawer({
                     title: row.title,
                     copy: row.copy,
                     meta: row.meta,
-                    action: buildTraceSpanAttributeFilterExpression(row.title, row.copy) || buildTraceSpanAttributeExcludeFilterExpression(row.title, row.copy) || buildTraceSpanAttributeContainsFilterExpression(row.title, row.copy) || buildTraceSpanAttributeNotContainsFilterExpression(row.title, row.copy) || buildTraceSpanAttributeInFilterExpression(row.title, row.copy) || buildTraceSpanAttributeNotInFilterExpression(row.title, row.copy) || buildTraceSpanAttributeExistsFilterExpression(row.title) || buildTraceSpanAttributeNotExistsFilterExpression(row.title) || buildTraceSpanAttributeGroupBy(row.title) ? (
-                      <HzActionGroup
-                        data-trace-manage-drawer-span-attribute-action-group="filter-group"
-                        data-trace-manage-drawer-span-attribute-action-group-owner="hertzbeat-ui-action-group"
-                        layout="end-wrap"
-                      >
-                        {buildTraceSpanAttributeFilterExpression(row.title, row.copy) ? (
-                          <>
-                            <HzButton
-                              data-trace-manage-drawer-span-attribute-filter-action="true"
-                              data-trace-manage-drawer-span-attribute-filter-action-owner="hertzbeat-ui-button"
-                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                              data-trace-manage-drawer-span-attribute-filter-value={row.copy}
-                              size="sm"
-                              intent="secondary"
-                              onClick={() => onApplySpanAttributeFilter(row.title, row.copy)}
-                              aria-label={t('trace.manage.drawer.attributes.filter-action.aria', { name: row.title, value: row.copy })}
-                            >
-                              <HzButtonIcon icon={Filter} data-trace-manage-drawer-span-attribute-filter-action-icon="filter" data-trace-manage-drawer-span-attribute-filter-action-icon-owner="hertzbeat-ui-button-icon" />
-                              {t('trace.manage.drawer.attributes.filter-action')}
-                            </HzButton>
-                            <HzButton
-                              data-trace-manage-drawer-span-attribute-filter-out-action="true"
-                              data-trace-manage-drawer-span-attribute-filter-out-action-owner="hertzbeat-ui-button"
-                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                              data-trace-manage-drawer-span-attribute-filter-value={row.copy}
-                              size="sm"
-                              intent="secondary"
-                              onClick={() => onExcludeSpanAttributeFilter(row.title, row.copy)}
-                              aria-label={t('trace.manage.drawer.attributes.filter-out-action.aria', { name: row.title, value: row.copy })}
-                            >
-                              <HzButtonIcon icon={X} data-trace-manage-drawer-span-attribute-filter-out-action-icon="exclude" data-trace-manage-drawer-span-attribute-filter-out-action-icon-owner="hertzbeat-ui-button-icon" />
-                              {t('trace.manage.drawer.attributes.filter-out-action')}
-                            </HzButton>
-                            <HzButton
-                              data-trace-manage-drawer-span-attribute-contains-action="true"
-                              data-trace-manage-drawer-span-attribute-contains-action-owner="hertzbeat-ui-button"
-                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                              data-trace-manage-drawer-span-attribute-filter-value={row.copy}
-                              size="sm"
-                              intent="secondary"
-                              onClick={() => onApplySpanAttributeContainsFilter(row.title, row.copy)}
-                              aria-label={t('trace.manage.drawer.attributes.contains-action.aria', { name: row.title, value: row.copy })}
-                            >
-                              <HzButtonIcon icon={Search} data-trace-manage-drawer-span-attribute-contains-action-icon="contains" data-trace-manage-drawer-span-attribute-contains-action-icon-owner="hertzbeat-ui-button-icon" />
-                              {t('trace.manage.drawer.attributes.contains-action')}
-                            </HzButton>
-                            <HzButton
-                              data-trace-manage-drawer-span-attribute-not-contains-action="true"
-                              data-trace-manage-drawer-span-attribute-not-contains-action-owner="hertzbeat-ui-button"
-                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                              data-trace-manage-drawer-span-attribute-filter-value={row.copy}
-                              size="sm"
-                              intent="secondary"
-                              onClick={() => onApplySpanAttributeNotContainsFilter(row.title, row.copy)}
-                              aria-label={t('trace.manage.drawer.attributes.not-contains-action.aria', { name: row.title, value: row.copy })}
-                            >
-                              <HzButtonIcon icon={Ban} data-trace-manage-drawer-span-attribute-not-contains-action-icon="not-contains" data-trace-manage-drawer-span-attribute-not-contains-action-icon-owner="hertzbeat-ui-button-icon" />
-                              {t('trace.manage.drawer.attributes.not-contains-action')}
-                            </HzButton>
-                            <HzButton
-                              data-trace-manage-drawer-span-attribute-in-action="true"
-                              data-trace-manage-drawer-span-attribute-in-action-owner="hertzbeat-ui-button"
-                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                              data-trace-manage-drawer-span-attribute-filter-value={row.copy}
-                              size="sm"
-                              intent="secondary"
-                              onClick={() => onApplySpanAttributeInFilter(row.title, row.copy)}
-                              aria-label={t('trace.manage.drawer.attributes.in-action.aria', { name: row.title, value: row.copy })}
-                            >
-                              <HzButtonIcon icon={ListChecks} data-trace-manage-drawer-span-attribute-in-action-icon="in" data-trace-manage-drawer-span-attribute-in-action-icon-owner="hertzbeat-ui-button-icon" />
-                              {t('trace.manage.drawer.attributes.in-action')}
-                            </HzButton>
-                            <HzButton
-                              data-trace-manage-drawer-span-attribute-not-in-action="true"
-                              data-trace-manage-drawer-span-attribute-not-in-action-owner="hertzbeat-ui-button"
-                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                              data-trace-manage-drawer-span-attribute-filter-value={row.copy}
-                              size="sm"
-                              intent="secondary"
-                              onClick={() => onApplySpanAttributeNotInFilter(row.title, row.copy)}
-                              aria-label={t('trace.manage.drawer.attributes.not-in-action.aria', { name: row.title, value: row.copy })}
-                            >
-                              <HzButtonIcon icon={Ban} data-trace-manage-drawer-span-attribute-not-in-action-icon="not-in" data-trace-manage-drawer-span-attribute-not-in-action-icon-owner="hertzbeat-ui-button-icon" />
-                              {t('trace.manage.drawer.attributes.not-in-action')}
-                            </HzButton>
-                            <HzButton
-                              data-trace-manage-drawer-span-attribute-exists-action="true"
-                              data-trace-manage-drawer-span-attribute-exists-action-owner="hertzbeat-ui-button"
-                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                              size="sm"
-                              intent="secondary"
-                              onClick={() => onApplySpanAttributeExistsFilter(row.title)}
-                              aria-label={t('trace.manage.drawer.attributes.exists-action.aria', { name: row.title })}
-                            >
-                              <HzButtonIcon icon={Check} data-trace-manage-drawer-span-attribute-exists-action-icon="exists" data-trace-manage-drawer-span-attribute-exists-action-icon-owner="hertzbeat-ui-button-icon" />
-                              {t('trace.manage.drawer.attributes.exists-action')}
-                            </HzButton>
-                            <HzButton
-                              data-trace-manage-drawer-span-attribute-not-exists-action="true"
-                              data-trace-manage-drawer-span-attribute-not-exists-action-owner="hertzbeat-ui-button"
-                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                              size="sm"
-                              intent="secondary"
-                              onClick={() => onApplySpanAttributeNotExistsFilter(row.title)}
-                              aria-label={t('trace.manage.drawer.attributes.not-exists-action.aria', { name: row.title })}
-                            >
-                              <HzButtonIcon icon={Ban} data-trace-manage-drawer-span-attribute-not-exists-action-icon="not-exists" data-trace-manage-drawer-span-attribute-not-exists-action-icon-owner="hertzbeat-ui-button-icon" />
-                              {t('trace.manage.drawer.attributes.not-exists-action')}
-                            </HzButton>
-                            <HzButton
-                              data-trace-manage-drawer-span-attribute-replace-action="true"
-                              data-trace-manage-drawer-span-attribute-replace-action-owner="hertzbeat-ui-button"
-                              data-trace-manage-drawer-span-attribute-filter-name={row.title}
-                              data-trace-manage-drawer-span-attribute-filter-value={row.copy}
-                              size="sm"
-                              intent="secondary"
-                              onClick={() => onReplaceSpanAttributeFilter(row.title, row.copy)}
-                              aria-label={t('trace.manage.drawer.attributes.replace-action.aria', { name: row.title, value: row.copy })}
-                            >
-                              <HzButtonIcon icon={Replace} data-trace-manage-drawer-span-attribute-replace-action-icon="replace" data-trace-manage-drawer-span-attribute-replace-action-icon-owner="hertzbeat-ui-button-icon" />
-                              {t('trace.manage.drawer.attributes.replace-action')}
-                            </HzButton>
-                          </>
-                        ) : null}
-                        {buildTraceSpanAttributeGroupBy(row.title) ? (
-                          <HzButton
-                            data-trace-manage-drawer-span-attribute-group-action="true"
-                            data-trace-manage-drawer-span-attribute-group-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-span-attribute-group-name={row.title}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onApplySpanAttributeGroupBy(row.title)}
-                            aria-label={t('trace.manage.drawer.attributes.group-action.aria', { name: row.title })}
-                          >
-                            <HzButtonIcon icon={BarChart3} data-trace-manage-drawer-span-attribute-group-action-icon="group" data-trace-manage-drawer-span-attribute-group-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.group-action')}
-                          </HzButton>
-                        ) : null}
-                      </HzActionGroup>
-                    ) : null
+                    action: renderTraceDrawerAttributeOperator('span', row.title, row.copy)
                   }))}
                 />
                 <HzDetailRows
@@ -1491,147 +1545,7 @@ function TraceWaterfallDrawer({
                     title: row.title,
                     copy: row.copy,
                     meta: row.meta,
-                    action: buildTraceResourceFilterExpression(row.title, row.copy) || buildTraceResourceExcludeFilterExpression(row.title, row.copy) || buildTraceResourceContainsFilterExpression(row.title, row.copy) || buildTraceResourceNotContainsFilterExpression(row.title, row.copy) || buildTraceResourceInFilterExpression(row.title, row.copy) || buildTraceResourceNotInFilterExpression(row.title, row.copy) || buildTraceResourceExistsFilterExpression(row.title) || buildTraceResourceNotExistsFilterExpression(row.title) || buildTraceResourceGroupBy(row.title) ? (
-                      <HzActionGroup
-                        data-trace-manage-drawer-resource-action-group="filter-group"
-                        data-trace-manage-drawer-resource-action-group-owner="hertzbeat-ui-action-group"
-                        layout="end-wrap"
-                      >
-                        {buildTraceResourceFilterExpression(row.title, row.copy) ? (
-                          <>
-                          <HzButton
-                            data-trace-manage-drawer-resource-filter-action="true"
-                            data-trace-manage-drawer-resource-filter-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-resource-filter-name={row.title}
-                            data-trace-manage-drawer-resource-filter-value={row.copy}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onApplyResourceFilter(row.title, row.copy)}
-                            aria-label={t('trace.manage.drawer.attributes.filter-action.aria', { name: row.title, value: row.copy })}
-                          >
-                            <HzButtonIcon icon={Filter} data-trace-manage-drawer-resource-filter-action-icon="filter" data-trace-manage-drawer-resource-filter-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.filter-action')}
-                          </HzButton>
-                          <HzButton
-                            data-trace-manage-drawer-resource-filter-out-action="true"
-                            data-trace-manage-drawer-resource-filter-out-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-resource-filter-name={row.title}
-                            data-trace-manage-drawer-resource-filter-value={row.copy}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onExcludeResourceFilter(row.title, row.copy)}
-                            aria-label={t('trace.manage.drawer.attributes.filter-out-action.aria', { name: row.title, value: row.copy })}
-                          >
-                            <HzButtonIcon icon={X} data-trace-manage-drawer-resource-filter-out-action-icon="exclude" data-trace-manage-drawer-resource-filter-out-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.filter-out-action')}
-                          </HzButton>
-                          <HzButton
-                            data-trace-manage-drawer-resource-contains-action="true"
-                            data-trace-manage-drawer-resource-contains-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-resource-filter-name={row.title}
-                            data-trace-manage-drawer-resource-filter-value={row.copy}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onApplyResourceContainsFilter(row.title, row.copy)}
-                            aria-label={t('trace.manage.drawer.attributes.contains-action.aria', { name: row.title, value: row.copy })}
-                          >
-                            <HzButtonIcon icon={Search} data-trace-manage-drawer-resource-contains-action-icon="contains" data-trace-manage-drawer-resource-contains-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.contains-action')}
-                          </HzButton>
-                          <HzButton
-                            data-trace-manage-drawer-resource-not-contains-action="true"
-                            data-trace-manage-drawer-resource-not-contains-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-resource-filter-name={row.title}
-                            data-trace-manage-drawer-resource-filter-value={row.copy}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onApplyResourceNotContainsFilter(row.title, row.copy)}
-                            aria-label={t('trace.manage.drawer.attributes.not-contains-action.aria', { name: row.title, value: row.copy })}
-                          >
-                            <HzButtonIcon icon={Ban} data-trace-manage-drawer-resource-not-contains-action-icon="not-contains" data-trace-manage-drawer-resource-not-contains-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.not-contains-action')}
-                          </HzButton>
-                          <HzButton
-                            data-trace-manage-drawer-resource-in-action="true"
-                            data-trace-manage-drawer-resource-in-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-resource-filter-name={row.title}
-                            data-trace-manage-drawer-resource-filter-value={row.copy}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onApplyResourceInFilter(row.title, row.copy)}
-                            aria-label={t('trace.manage.drawer.attributes.in-action.aria', { name: row.title, value: row.copy })}
-                          >
-                            <HzButtonIcon icon={ListChecks} data-trace-manage-drawer-resource-in-action-icon="in" data-trace-manage-drawer-resource-in-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.in-action')}
-                          </HzButton>
-                          <HzButton
-                            data-trace-manage-drawer-resource-not-in-action="true"
-                            data-trace-manage-drawer-resource-not-in-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-resource-filter-name={row.title}
-                            data-trace-manage-drawer-resource-filter-value={row.copy}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onApplyResourceNotInFilter(row.title, row.copy)}
-                            aria-label={t('trace.manage.drawer.attributes.not-in-action.aria', { name: row.title, value: row.copy })}
-                          >
-                            <HzButtonIcon icon={Ban} data-trace-manage-drawer-resource-not-in-action-icon="not-in" data-trace-manage-drawer-resource-not-in-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.not-in-action')}
-                          </HzButton>
-                          <HzButton
-                            data-trace-manage-drawer-resource-exists-action="true"
-                            data-trace-manage-drawer-resource-exists-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-resource-filter-name={row.title}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onApplyResourceExistsFilter(row.title)}
-                            aria-label={t('trace.manage.drawer.attributes.exists-action.aria', { name: row.title })}
-                          >
-                            <HzButtonIcon icon={Check} data-trace-manage-drawer-resource-exists-action-icon="exists" data-trace-manage-drawer-resource-exists-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.exists-action')}
-                          </HzButton>
-                          <HzButton
-                            data-trace-manage-drawer-resource-not-exists-action="true"
-                            data-trace-manage-drawer-resource-not-exists-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-resource-filter-name={row.title}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onApplyResourceNotExistsFilter(row.title)}
-                            aria-label={t('trace.manage.drawer.attributes.not-exists-action.aria', { name: row.title })}
-                          >
-                            <HzButtonIcon icon={Ban} data-trace-manage-drawer-resource-not-exists-action-icon="not-exists" data-trace-manage-drawer-resource-not-exists-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.not-exists-action')}
-                          </HzButton>
-                          <HzButton
-                            data-trace-manage-drawer-resource-replace-action="true"
-                            data-trace-manage-drawer-resource-replace-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-resource-filter-name={row.title}
-                            data-trace-manage-drawer-resource-filter-value={row.copy}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onReplaceResourceFilter(row.title, row.copy)}
-                            aria-label={t('trace.manage.drawer.attributes.replace-action.aria', { name: row.title, value: row.copy })}
-                          >
-                            <HzButtonIcon icon={Replace} data-trace-manage-drawer-resource-replace-action-icon="replace" data-trace-manage-drawer-resource-replace-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.replace-action')}
-                          </HzButton>
-                          </>
-                        ) : null}
-                        {buildTraceResourceGroupBy(row.title) ? (
-                          <HzButton
-                            data-trace-manage-drawer-resource-group-action="true"
-                            data-trace-manage-drawer-resource-group-action-owner="hertzbeat-ui-button"
-                            data-trace-manage-drawer-resource-group-name={row.title}
-                            size="sm"
-                            intent="secondary"
-                            onClick={() => onApplyResourceGroupBy(row.title)}
-                            aria-label={t('trace.manage.drawer.attributes.group-action.aria', { name: row.title })}
-                          >
-                            <HzButtonIcon icon={BarChart3} data-trace-manage-drawer-resource-group-action-icon="group" data-trace-manage-drawer-resource-group-action-icon-owner="hertzbeat-ui-button-icon" />
-                            {t('trace.manage.drawer.attributes.group-action')}
-                          </HzButton>
-                        ) : null}
-                      </HzActionGroup>
-                    ) : null
+                    action: renderTraceDrawerAttributeOperator('resource', row.title, row.copy)
                   }))}
                 />
                 {selectedTraceEvent ? (

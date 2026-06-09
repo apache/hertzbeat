@@ -85,6 +85,29 @@ describe('TraceManagePage client loading', () => {
     container = null;
   });
 
+  async function applyDrawerResourceOperator(name: string, operator: string) {
+    const operatorRoot = document.body.querySelector(
+      `[data-trace-manage-drawer-resource-operator-action="true"][data-trace-manage-drawer-resource-filter-name="${name}"]`
+    ) as HTMLElement | null;
+    expect(operatorRoot).not.toBeNull();
+    expect(operatorRoot?.getAttribute('data-trace-manage-drawer-resource-operator-owner')).toBe('hertzbeat-ui-select');
+    expect(operatorRoot?.getAttribute('data-hz-ui')).toBe('select');
+
+    await act(async () => {
+      (operatorRoot?.querySelector('[data-hz-ui="select-trigger"]') as HTMLButtonElement | null)?.click();
+      await Promise.resolve();
+    });
+
+    const option = operatorRoot?.querySelector(
+      `[data-trace-manage-drawer-resource-operator-option="${operator}"][data-trace-manage-drawer-resource-filter-name="${name}"]`
+    ) as HTMLButtonElement | null;
+    expect(option).not.toBeNull();
+    await act(async () => {
+      option?.click();
+      await Promise.resolve();
+    });
+  }
+
   it('does not crash when monitor handoff trace APIs return empty or missing payloads', async () => {
     apiMessageGet
       .mockResolvedValueOnce(null)
@@ -708,17 +731,7 @@ describe('TraceManagePage client loading', () => {
       await Promise.resolve();
     });
 
-    const replaceAction = document.body.querySelector(
-      '[data-trace-manage-drawer-resource-replace-action="true"][data-trace-manage-drawer-resource-filter-name="service.namespace"]'
-    ) as HTMLButtonElement | null;
-    expect(replaceAction).not.toBeNull();
-    expect(replaceAction?.getAttribute('data-trace-manage-drawer-resource-replace-action-owner')).toBe('hertzbeat-ui-button');
-    expect(replaceAction?.getAttribute('aria-label')).toContain('service.namespace');
-
-    await act(async () => {
-      replaceAction?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await Promise.resolve();
-    });
+    await applyDrawerResourceOperator('service.namespace', 'replace');
 
     const href = String(replace.mock.calls.at(-1)?.[0]);
     expect(href).toContain('/trace/manage?');
