@@ -499,6 +499,7 @@ describe('otlp metrics page', () => {
 
   it('keeps metrics on the OTLP cold Workbench owner instead of the old external-product explorer stack', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/ingestion/otlp/metrics/otlp-metrics-page.tsx'), 'utf8');
+    const messagesSource = readFileSync(resolve(process.cwd(), 'lib/i18n-runtime-messages.ts'), 'utf8');
 
     expect(source).toContain('data-otlp-metrics-route="otlp-hertzbeat-ui-metrics-workbench"');
     expect(source).toContain('HzSignalWorkbenchShell');
@@ -535,6 +536,7 @@ describe('otlp metrics page', () => {
     expect(source).toContain('data-otlp-metrics-filter-input-owner="hertzbeat-ui-input"');
     expect(source).toContain("aria-label={t('otlp.metrics.filter.aria')}");
     expect(source).toContain("placeholder={t('otlp.metrics.filter.placeholder')}");
+    expect(messagesSource).toContain("'otlp.metrics.filter.placeholder': 'service.name = \"checkout\", http.route CONTAINS checkout, k8s.pod.name EXISTS'");
     expect(source).toContain('width="metrics-filter-expression"');
     expect(source).toContain('data-otlp-metrics-temporal-aggregation-select="true"');
     expect(source).toContain('data-otlp-metrics-temporal-aggregation-select-owner="hertzbeat-ui-select"');

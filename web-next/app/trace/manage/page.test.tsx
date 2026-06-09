@@ -533,6 +533,8 @@ describe('trace manage page', () => {
       .mockResolvedValueOnce({ content: [] });
 
     const html = renderTraceManagePage();
+    const source = readFileSync(resolve(process.cwd(), 'app/trace/manage/trace-manage-page.tsx'), 'utf8');
+    const messagesSource = readFileSync(resolve(process.cwd(), 'lib/i18n-runtime-messages.ts'), 'utf8');
     await mockState.lastLoad?.();
 
     expect(html).toContain('data-trace-manage-route="otlp-hertzbeat-ui-trace-workbench"');
@@ -578,6 +580,10 @@ describe('trace manage page', () => {
     expect(html).toContain('data-hz-input-inset="search-icon"');
     expect(html).toContain('data-trace-manage-query-token-field="trace-id"');
     expect(html).toContain('data-trace-manage-query-token-field="span-id"');
+    expect(source).toContain("placeholder={t('trace.manage.route.query.resource-filter.placeholder')}");
+    expect(source).toContain("placeholder={t('trace.manage.route.query.attribute-filter.placeholder')}");
+    expect(messagesSource).toContain("'trace.manage.route.query.resource-filter.placeholder': 'service.version=1.2.3, host.name CONTAINS checkout, k8s.pod.name EXISTS'");
+    expect(messagesSource).toContain("'trace.manage.route.query.attribute-filter.placeholder': 'http.route CONTAINS checkout, db.system EXISTS, span.kind IN (\"server\", \"consumer\")'");
     expect(html).toContain('data-trace-manage-query-token-field-owner="hertzbeat-ui-query-token-field"');
     expect(html).toContain('data-hz-ui="query-token-field"');
     expect(html).toContain('data-hz-query-token-field-owner="hertzbeat-ui-query-token-field"');

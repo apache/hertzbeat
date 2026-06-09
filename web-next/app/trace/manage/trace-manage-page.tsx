@@ -2489,7 +2489,7 @@ function TraceExplorer({
               aria-label={t('trace.manage.route.query.resource-filter')}
               value={draft.resourceFilter || ''}
               onChange={event => setDraft(updateDraftField('resourceFilter', event.target.value))}
-              placeholder={t('trace.manage.route.query.resource-filter')}
+              placeholder={t('trace.manage.route.query.resource-filter.placeholder')}
               data-trace-manage-resource-filter-input="true"
               fieldProps={{
                 'data-trace-manage-query-token-field': 'resource-filter',
@@ -2502,7 +2502,7 @@ function TraceExplorer({
               aria-label={t('trace.manage.route.query.attribute-filter')}
               value={draft.attributeFilter || ''}
               onChange={event => setDraft(updateDraftField('attributeFilter', event.target.value))}
-              placeholder={t('trace.manage.route.query.attribute-filter')}
+              placeholder={t('trace.manage.route.query.attribute-filter.placeholder')}
               data-trace-manage-attribute-filter-input="true"
               fieldProps={{
                 'data-trace-manage-query-token-field': 'attribute-filter',
