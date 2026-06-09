@@ -29,6 +29,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -1446,6 +1450,73 @@ class LogQueryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.hourlyStats").isMap());
+    }
+
+    @Test
+    void testTrendStatsAppliesInAndNotInFiltersWithRowFallback() throws Exception {
+        long bucketTimeUnixNano = 1734005477630000000L;
+        String bucketKey = LocalDateTime.ofInstant(
+                        Instant.ofEpochMilli(bucketTimeUnixNano / 1_000_000L),
+                        ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00"));
+        LogEntry stableLog = LogEntry.builder()
+                .timeUnixNano(bucketTimeUnixNano)
+                .severityText("INFO")
+                .body("stable checkout trend")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-1")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry secondStableLog = LogEntry.builder()
+                .timeUnixNano(bucketTimeUnixNano + 1_000_000L)
+                .severityText("ERROR")
+                .body("second checkout trend")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-2")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry canaryLog = LogEntry.builder()
+                .timeUnixNano(bucketTimeUnixNano + 2_000_000L)
+                .severityText("WARN")
+                .body("canary checkout trend")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.3",
+                        "host.name", "checkout-canary")))
+                .attributes(new HashMap<>(Map.of("http.route", "/checkout")))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .timeUnixNano(bucketTimeUnixNano + 3_000_000L)
+                .severityText("INFO")
+                .body("cart checkout trend")
+                .resource(new HashMap<>(Map.of(
+                        "service.name", "checkout",
+                        "service.version", "1.2.4",
+                        "host.name", "checkout-3")))
+                .attributes(new HashMap<>(Map.of("http.route", "/cart")))
+                .build();
+        when(historyDataReader.queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any())).thenReturn(List.of(stableLog, secondStableLog, canaryLog, cartLog));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/logs/stats/trend")
+                        .param("resourceFilter", "service.version IN ('1.2.3', '1.2.4') "
+                                + "and host.name NOT IN ('checkout-canary')")
+                        .param("attributeFilter", "http.route IN ('/checkout')"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.hourlyStats.length()").value(1))
+                .andExpect(jsonPath("$.data.hourlyStats['" + bucketKey + "']").value(2));
+
+        verify(historyDataReader).queryLogsByMultipleConditions(any(), any(), any(),
+                any(), any(), any(), any());
+        verify(historyDataReader, never()).countLogsByHour(any(), any(), any(), any(), any(), any(), any(),
+                anySet(), eq(false), any(), any(), any(), any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any(),
+                org.mockito.ArgumentMatchers.<Map<String, String>>any());
     }
 
     @Test

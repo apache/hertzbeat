@@ -320,8 +320,8 @@ public class LogQueryServiceImpl implements LogQueryService {
                                           String serviceName, String serviceNamespace, String environment,
                                           String resourceFilter, String attributeFilter,
                                           boolean hideInternal, boolean hideNoise) {
-        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter);
-        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+        Map<String, String> resourceFilters = parseLogAttributeFilter(resourceFilter, true);
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter, true);
         return trendStatsWithFilters(start, end, traceId, spanId, severityNumber, severityText, search,
                 serviceName, serviceNamespace, environment, resourceFilters, attributeFilters, hideInternal, hideNoise);
     }
@@ -334,8 +334,8 @@ public class LogQueryServiceImpl implements LogQueryService {
                                           boolean hideInternal, boolean hideNoise) {
         LogServiceContext context = resolveEntityFirstLogServiceContext(entityId, serviceName, serviceNamespace, environment);
         Map<String, String> resourceFilters = removeEntityScopeResourceFilters(
-                context, parseLogAttributeFilter(resourceFilter));
-        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter);
+                context, parseLogAttributeFilter(resourceFilter, true));
+        Map<String, String> attributeFilters = parseLogAttributeFilter(attributeFilter, true);
         return trendStatsWithFilters(start, end, traceId, spanId, severityNumber, severityText, search,
                 context.serviceName(), context.serviceNamespace(), context.environment(), resourceFilters, attributeFilters,
                 hideInternal, hideNoise);
@@ -347,9 +347,12 @@ public class LogQueryServiceImpl implements LogQueryService {
                                                       Map<String, String> resourceFilters,
                                                       Map<String, String> attributeFilters,
                                                       boolean hideInternal, boolean hideNoise) {
-        Map<String, Long> aggregate = readHourlyStats(start, end, traceId, spanId, severityNumber,
-                severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
-                hideInternal, hideNoise);
+        Map<String, Long> aggregate = null;
+        if (!hasComplexAttributeFilters(resourceFilters, attributeFilters)) {
+            aggregate = readHourlyStats(start, end, traceId, spanId, severityNumber,
+                    severityText, search, serviceName, serviceNamespace, environment, resourceFilters, attributeFilters,
+                    hideInternal, hideNoise);
+        }
         if (aggregate != null) {
             Map<String, Object> result = new HashMap<>();
             result.put("hourlyStats", aggregate);
