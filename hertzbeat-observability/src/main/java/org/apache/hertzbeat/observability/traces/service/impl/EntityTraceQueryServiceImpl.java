@@ -37,6 +37,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
@@ -91,12 +93,20 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
     private static final BigInteger LONG_MIN_VALUE = BigInteger.valueOf(Long.MIN_VALUE);
     private static final BigDecimal LONG_MAX_DECIMAL = BigDecimal.valueOf(Long.MAX_VALUE);
     private static final BigDecimal LONG_MIN_DECIMAL = BigDecimal.valueOf(Long.MIN_VALUE);
+    private static final Pattern RESOURCE_FILTER_LIST_OPERATOR_PATTERN = Pattern.compile(
+            "^\\s*([A-Za-z0-9._:-]+)\\s+(NOT\\s+IN|IN)\\s*(\\(.+\\))\\s*$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern RESOURCE_FILTER_NOT_EQUALS_PATTERN = Pattern.compile(
+            "^\\s*([A-Za-z0-9._:-]+)\\s*!=\\s*(.+?)\\s*$",
+            Pattern.CASE_INSENSITIVE);
     private static final Set<String> WORKSPACE_RESOURCE_KEYS = Set.of(
             OtlpCorrelationEnricher.WORKSPACE_ID_ATTRIBUTE,
             AuthTokenScopes.CLAIM_WORKSPACE_ID,
             "workspace.id"
     );
     private static final Set<String> ENTITY_SCOPE_RESOURCE_KEYS = Set.of(
+            OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_ID,
+            OtlpResourceSemanticAttributes.HERTZBEAT_ENTITY_TYPE,
             "service.name",
             "service.namespace",
             "deployment.environment.name"
@@ -225,15 +235,16 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
         Map<String, Set<String>> identityValues = canonicalIdentityValues(entityContext);
         TraceQueryScope queryScope = resolveTraceQueryScope(entityContext, identityValues, serviceName, serviceNamespace, environment);
-        Map<String, Set<String>> resourceFilters = removeEntityScopeResourceFilters(
+        ResourceFilterSet resourceFilters = removeEntityScopeResourceFilters(
                 identityValues, parseResourceFilters(resourceFilter));
-        Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters);
+        Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters.include());
         PageRequest pageRequest = PageRequest.of(normalizeTraceListPageIndex(pageIndex), normalizeTraceListPageSize(pageSize));
         int repositoryOffset = Math.toIntExact(Math.min(pageRequest.getOffset(), Integer.MAX_VALUE));
         Long minDurationNanos = durationMillisToNanos(minDurationMs);
         Long maxDurationNanos = durationMillisToNanos(maxDurationMs);
         String normalizedSpanScope = normalizeSpanScope(spanScope);
-        if (!StringUtils.hasText(traceId) && traceQueryRepository.supportsTraceListRows()) {
+        if (!StringUtils.hasText(traceId) && !resourceFilters.hasExclusions()
+                && traceQueryRepository.supportsTraceListRows()) {
             List<Map<String, Object>> rows = StringUtils.hasText(normalizedSpanScope)
                     ? traceQueryRepository.queryTraceListRows(
                             start,
@@ -358,13 +369,14 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
         Map<String, Set<String>> identityValues = canonicalIdentityValues(entityContext);
         TraceQueryScope queryScope = resolveTraceQueryScope(entityContext, identityValues, serviceName, serviceNamespace, environment);
-        Map<String, Set<String>> resourceFilters = removeEntityScopeResourceFilters(
+        ResourceFilterSet resourceFilters = removeEntityScopeResourceFilters(
                 identityValues, parseResourceFilters(resourceFilter));
-        Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters);
+        Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters.include());
         Long minDurationNanos = durationMillisToNanos(minDurationMs);
         Long maxDurationNanos = durationMillisToNanos(maxDurationMs);
         String normalizedSpanScope = normalizeSpanScope(spanScope);
-        if (StringUtils.hasText(traceId) && traceQueryRepository.supportsTraceIdOverviewRows()) {
+        if (StringUtils.hasText(traceId) && !resourceFilters.hasExclusions()
+                && traceQueryRepository.supportsTraceIdOverviewRows()) {
             Map<String, Object> row = StringUtils.hasText(normalizedSpanScope)
                     ? traceQueryRepository.queryTraceIdOverviewRows(
                             traceId,
@@ -402,7 +414,8 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 return overview;
             }
         }
-        if (!StringUtils.hasText(traceId) && traceQueryRepository.supportsTraceOverviewRows()) {
+        if (!StringUtils.hasText(traceId) && !resourceFilters.hasExclusions()
+                && traceQueryRepository.supportsTraceOverviewRows()) {
             Map<String, Object> row = StringUtils.hasText(normalizedSpanScope)
                     ? traceQueryRepository.queryTraceOverviewRows(
                             start,
@@ -483,12 +496,13 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         ObservedEntityContext entityContext = entityId == null ? null : loadEntityContext(entityId);
         Map<String, Set<String>> identityValues = canonicalIdentityValues(entityContext);
         TraceQueryScope queryScope = resolveTraceQueryScope(entityContext, identityValues, serviceName, serviceNamespace, environment);
-        Map<String, Set<String>> resourceFilters = removeEntityScopeResourceFilters(
+        ResourceFilterSet resourceFilters = removeEntityScopeResourceFilters(
                 identityValues, parseResourceFilters(resourceFilter));
-        Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters);
+        Map<String, Set<String>> pushedResourceFilters = mergeResourceFilters(identityValues, resourceFilters.include());
         Long minDurationNanos = durationMillisToNanos(minDurationMs);
         Long maxDurationNanos = durationMillisToNanos(maxDurationMs);
-        if (!StringUtils.hasText(traceId) && traceQueryRepository.supportsTraceGroupByRows()) {
+        if (!StringUtils.hasText(traceId) && !resourceFilters.hasExclusions()
+                && traceQueryRepository.supportsTraceGroupByRows()) {
             List<Map<String, Object>> rows = StringUtils.hasText(normalizedSpanScope)
                     ? traceQueryRepository.queryTraceGroupByRows(
                             start,
@@ -894,7 +908,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
     }
 
     private boolean matchesTraceFilters(TraceAggregate trace, Map<String, Set<String>> identityValues,
-                                        Map<String, Set<String>> resourceFilters, Long start, Long end,
+                                        ResourceFilterSet resourceFilters, Long start, Long end,
                                         String traceId, Boolean errorOnly, String serviceName, String serviceNamespace,
                                         String environment, String operationName, Long minDurationNanos,
                                         Long maxDurationNanos, Boolean hideInternal) {
@@ -1032,7 +1046,12 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return false;
     }
 
-    private boolean matchesResourceFilters(TraceAggregate trace, Map<String, Set<String>> resourceFilters) {
+    private boolean matchesResourceFilters(TraceAggregate trace, ResourceFilterSet resourceFilters) {
+        return matchesIncludedResourceFilters(trace, resourceFilters.include())
+                && matchesExcludedResourceFilters(trace, resourceFilters.exclude());
+    }
+
+    private boolean matchesIncludedResourceFilters(TraceAggregate trace, Map<String, Set<String>> resourceFilters) {
         if (resourceFilters.isEmpty()) {
             return true;
         }
@@ -1054,17 +1073,43 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return true;
     }
 
-    private Map<String, Set<String>> parseResourceFilters(String resourceFilter) {
-        if (!StringUtils.hasText(resourceFilter)) {
-            return Collections.emptyMap();
+    private boolean matchesExcludedResourceFilters(TraceAggregate trace, Map<String, Set<String>> resourceFilters) {
+        if (resourceFilters.isEmpty()) {
+            return true;
         }
-        Map<String, Set<String>> filters = new LinkedHashMap<>();
+        if (trace == null) {
+            return false;
+        }
+        for (Map.Entry<String, Set<String>> entry : resourceFilters.entrySet()) {
+            String actual = trimText(resolveCanonicalValue(trace.getResourceAttributes(), entry.getKey(), trace.getServiceName()));
+            if (!StringUtils.hasText(actual)) {
+                continue;
+            }
+            boolean excluded = entry.getValue().stream()
+                    .filter(StringUtils::hasText)
+                    .anyMatch(expected -> actual.equalsIgnoreCase(expected));
+            if (excluded) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private ResourceFilterSet parseResourceFilters(String resourceFilter) {
+        if (!StringUtils.hasText(resourceFilter)) {
+            return ResourceFilterSet.empty();
+        }
+        Map<String, Set<String>> includeFilters = new LinkedHashMap<>();
+        Map<String, Set<String>> excludeFilters = new LinkedHashMap<>();
         for (String clause : splitResourceFilterClauses(resourceFilter)) {
             String trimmedClause = trimText(clause);
             if (!StringUtils.hasText(trimmedClause)) {
                 continue;
             }
-            if (appendResourceFilterInValues(filters, trimmedClause)) {
+            if (appendResourceFilterListValues(includeFilters, excludeFilters, trimmedClause)) {
+                continue;
+            }
+            if (appendResourceFilterNotEqualsValue(excludeFilters, trimmedClause)) {
                 continue;
             }
             int separatorIndex = resourceFilterSeparatorIndex(trimmedClause);
@@ -1076,38 +1121,49 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             if (!isSafeResourceFilterKey(key) || !StringUtils.hasText(value)) {
                 continue;
             }
-            filters.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(value);
+            includeFilters.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(value);
         }
-        return filters;
+        return new ResourceFilterSet(includeFilters, excludeFilters);
     }
 
-    private boolean appendResourceFilterInValues(Map<String, Set<String>> filters, String clause) {
-        int inIndex = resourceFilterInOperatorIndex(clause);
-        if (inIndex <= 0) {
+    private boolean appendResourceFilterListValues(Map<String, Set<String>> includeFilters,
+                                                   Map<String, Set<String>> excludeFilters,
+                                                   String clause) {
+        Matcher matcher = RESOURCE_FILTER_LIST_OPERATOR_PATTERN.matcher(clause);
+        if (!matcher.matches()) {
             return false;
         }
-        String key = trimText(clause.substring(0, inIndex));
-        String valueList = trimText(clause.substring(inIndex + 4));
-        if (!isSafeResourceFilterKey(key) || !StringUtils.hasText(valueList)
-                || !valueList.startsWith("(") || !valueList.endsWith(")")) {
+        String key = trimText(matcher.group(1));
+        String operator = trimText(matcher.group(2));
+        String valueList = trimText(matcher.group(3));
+        if (!isSafeResourceFilterKey(key) || !StringUtils.hasText(operator) || !StringUtils.hasText(valueList)
+                || valueList.length() < 2 || !valueList.startsWith("(") || !valueList.endsWith(")")) {
             return false;
         }
+        Map<String, Set<String>> target = operator.replaceAll("\\s+", " ").equalsIgnoreCase("not in")
+                ? excludeFilters
+                : includeFilters;
         for (String value : splitResourceFilterListValues(valueList.substring(1, valueList.length() - 1))) {
             String normalizedValue = stripResourceFilterQuotes(trimText(value));
             if (StringUtils.hasText(normalizedValue)) {
-                filters.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(normalizedValue);
+                target.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(normalizedValue);
             }
         }
-        return filters.containsKey(key);
+        return target.containsKey(key);
     }
 
-    private int resourceFilterInOperatorIndex(String clause) {
-        String normalized = clause == null ? null : clause.toLowerCase(Locale.ROOT);
-        if (!StringUtils.hasText(normalized)) {
-            return -1;
+    private boolean appendResourceFilterNotEqualsValue(Map<String, Set<String>> excludeFilters, String clause) {
+        Matcher matcher = RESOURCE_FILTER_NOT_EQUALS_PATTERN.matcher(clause);
+        if (!matcher.matches()) {
+            return false;
         }
-        int index = normalized.indexOf(" in ");
-        return index < 0 ? -1 : index;
+        String key = trimText(matcher.group(1));
+        String value = stripResourceFilterQuotes(trimText(matcher.group(2)));
+        if (!isSafeResourceFilterKey(key) || !StringUtils.hasText(value)) {
+            return false;
+        }
+        excludeFilters.computeIfAbsent(key, ignored -> new LinkedHashSet<>()).add(value);
+        return true;
     }
 
     private List<String> splitResourceFilterClauses(String resourceFilter) {
@@ -1242,8 +1298,19 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         return merged;
     }
 
-    private Map<String, Set<String>> removeEntityScopeResourceFilters(Map<String, Set<String>> identityValues,
-                                                                      Map<String, Set<String>> resourceFilters) {
+    private ResourceFilterSet removeEntityScopeResourceFilters(Map<String, Set<String>> identityValues,
+                                                               ResourceFilterSet resourceFilters) {
+        if (resourceFilters == null || resourceFilters.isEmpty()) {
+            return ResourceFilterSet.empty();
+        }
+        return new ResourceFilterSet(
+                removeEntityScopeResourceFilterMap(identityValues, resourceFilters.include()),
+                removeEntityScopeResourceFilterMap(identityValues, resourceFilters.exclude())
+        );
+    }
+
+    private Map<String, Set<String>> removeEntityScopeResourceFilterMap(Map<String, Set<String>> identityValues,
+                                                                        Map<String, Set<String>> resourceFilters) {
         if (CollectionUtils.isEmpty(identityValues) || CollectionUtils.isEmpty(resourceFilters)) {
             return resourceFilters;
         }
@@ -1615,6 +1682,26 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
 
     private String readText(Map<String, Object> row, String key) {
         return trimText(Objects.toString(row.get(key), null));
+    }
+
+    private record ResourceFilterSet(Map<String, Set<String>> include, Map<String, Set<String>> exclude) {
+
+        private static ResourceFilterSet empty() {
+            return new ResourceFilterSet(Collections.emptyMap(), Collections.emptyMap());
+        }
+
+        private ResourceFilterSet {
+            include = include == null ? Collections.emptyMap() : include;
+            exclude = exclude == null ? Collections.emptyMap() : exclude;
+        }
+
+        private boolean isEmpty() {
+            return include.isEmpty() && exclude.isEmpty();
+        }
+
+        private boolean hasExclusions() {
+            return !exclude.isEmpty();
+        }
     }
 
     private record TraceQueryScope(String serviceName, String serviceNamespace, String environment) {
