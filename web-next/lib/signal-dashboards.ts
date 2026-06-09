@@ -310,6 +310,7 @@ export type SignalDashboardRuntimeEvidenceFilterSource =
   | 'serviceNamespace'
   | 'environment'
   | 'operation'
+  | 'resourceFilter'
   | 'traceId'
   | 'spanId'
   | 'entityId'
@@ -3611,6 +3612,7 @@ const SERVICE_VARIABLE_NAMES = new Set(['service.name', 'servicename', 'service'
 const SERVICE_NAMESPACE_VARIABLE_NAMES = new Set(['service.namespace', 'servicenamespace', 'service_namespace']);
 const ENVIRONMENT_VARIABLE_NAMES = new Set(['deployment.environment.name', 'deployment_environment_name', 'environment']);
 const OPERATION_VARIABLE_NAMES = new Set(['operation.name', 'operationname', 'operation_name', 'operation']);
+const RESOURCE_FILTER_VARIABLE_NAMES = new Set(['resourcefilter', 'resource.filter', 'resource_filter']);
 const TRACE_ID_VARIABLE_NAMES = new Set(['traceid', 'trace.id', 'trace_id']);
 const SPAN_ID_VARIABLE_NAMES = new Set(['spanid', 'span.id', 'span_id']);
 const ENTITY_ID_VARIABLE_NAMES = new Set(['hertzbeat.entity_id', 'hertzbeat.entity.id', 'entityid', 'entity.id', 'entity_id']);
@@ -3626,6 +3628,7 @@ function evidenceFilterSourceForVariableName(name: string): SignalDashboardRunti
   if (SERVICE_NAMESPACE_VARIABLE_NAMES.has(normalizedName)) return 'serviceNamespace';
   if (ENVIRONMENT_VARIABLE_NAMES.has(normalizedName)) return 'environment';
   if (OPERATION_VARIABLE_NAMES.has(normalizedName)) return 'operation';
+  if (RESOURCE_FILTER_VARIABLE_NAMES.has(normalizedName)) return 'resourceFilter';
   if (TRACE_ID_VARIABLE_NAMES.has(normalizedName)) return 'traceId';
   if (SPAN_ID_VARIABLE_NAMES.has(normalizedName)) return 'spanId';
   if (ENTITY_ID_VARIABLE_NAMES.has(normalizedName)) return 'entityId';
@@ -3647,6 +3650,7 @@ function evidenceFilterValues(row: SignalDashboardRuntimeSyncTooltipRow): Record
     serviceNamespace: syncTooltipIdentifier(row.serviceNamespace),
     environment: breakoutValue(row, ['deployment.environment.name', 'environment']),
     operation: syncTooltipIdentifier(row.operationName),
+    resourceFilter: syncTooltipIdentifier(row.resourceFilter),
     traceId: syncTooltipIdentifier(row.traceId),
     spanId: syncTooltipIdentifier(row.spanId),
     entityId: breakoutValue(row, ['hertzbeat.entity_id', 'hertzbeat.entity.id', 'entity.id', 'entity_id']),
@@ -3747,6 +3751,7 @@ export function buildSignalDashboardRuntimeEvidenceFilterSuggestions(
     { source: 'serviceNamespace', variableName: 'service.namespace', variableType: 'query' },
     { source: 'environment', variableName: 'deployment.environment.name', variableType: 'query' },
     { source: 'operation', variableName: 'operation.name', variableType: 'query' },
+    { source: 'resourceFilter', variableName: 'resourceFilter', variableType: 'textbox' },
     { source: 'entityId', variableName: 'hertzbeat.entity_id', variableType: 'textbox' },
     { source: 'entityType', variableName: 'hertzbeat.entity_type', variableType: 'dynamic' },
     { source: 'entityName', variableName: 'hertzbeat.entity_name', variableType: 'query' },
