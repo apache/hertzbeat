@@ -1824,7 +1824,7 @@ describe('signal dashboards API client', () => {
       layout: '[]',
       widgets: JSON.stringify([
         { id: 'logs-panel', signal: 'logs', title: 'Logs', visualization: 'table', route: '/log/manage?view=table&attributeFilter=region%3Aus' },
-        { id: 'trace-panel', signal: 'traces', title: 'Trace', visualization: 'table', route: '/trace/manage?view=table' },
+        { id: 'trace-panel', signal: 'traces', title: 'Trace', visualization: 'table', route: '/trace/manage?view=table&resourceFilter=service.version%3D1.2.3' },
         { id: 'metrics-panel', signal: 'metrics', title: 'Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=cpu' },
         { id: 'db-metrics-panel', signal: 'metrics', title: 'DB Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=signoz_db_latency_count&serviceName=checkout&groupBy=db.system' },
         { id: 'external-metrics-panel', signal: 'metrics', title: 'External Metrics', visualization: 'time-series', route: '/ingestion/otlp/metrics?query=signoz_external_call_latency_count&serviceName=checkout&groupBy=external.service.address' },
@@ -1997,6 +1997,7 @@ describe('signal dashboards API client', () => {
           spanId: 'span-root',
           serviceName: 'checkout',
           serviceNamespace: 'payments',
+          resourceFilter: 'service.version=1.2.3',
           breakoutAttributes: expect.arrayContaining([
             expect.objectContaining({ name: 'resource:service.name', value: 'checkout' }),
             expect.objectContaining({ name: 'resource:service.namespace', value: 'payments' }),
@@ -2005,7 +2006,7 @@ describe('signal dashboards API client', () => {
             expect.objectContaining({ name: 'resource:hertzbeat.source', value: 'otlp' })
           ]),
           relatedSignal: 'logs',
-          relatedHandoffHref: '/log/manage?traceId=trace-1&view=list&spanId=span-root&serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
+          relatedHandoffHref: '/log/manage?traceId=trace-1&view=list&spanId=span-root&serviceName=checkout&serviceNamespace=payments&resourceFilter=service.version%3D1.2.3&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
         }),
         expect.objectContaining({
           panelId: 'trace-panel',
@@ -2017,6 +2018,7 @@ describe('signal dashboards API client', () => {
           spanId: 'span-root',
           serviceName: 'checkout',
           serviceNamespace: 'payments',
+          resourceFilter: 'service.version=1.2.3',
           breakoutAttributes: expect.arrayContaining([
             expect.objectContaining({ name: 'resource:service.name', value: 'checkout' }),
             expect.objectContaining({ name: 'resource:service.namespace', value: 'payments' }),
@@ -2025,7 +2027,7 @@ describe('signal dashboards API client', () => {
             expect.objectContaining({ name: 'resource:hertzbeat.source', value: 'otlp' })
           ]),
           relatedSignal: 'logs',
-          relatedHandoffHref: '/log/manage?traceId=trace-1&view=list&spanId=span-root&serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
+          relatedHandoffHref: '/log/manage?traceId=trace-1&view=list&spanId=span-root&serviceName=checkout&serviceNamespace=payments&resourceFilter=service.version%3D1.2.3&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000'
         }),
         expect.objectContaining({ panelId: 'metrics-panel', signal: 'metrics', source: 'metrics-point', label: 'cpu.usage', value: '0.5' }),
         expect.objectContaining({
@@ -2229,7 +2231,7 @@ describe('signal dashboards API client', () => {
     expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/trace/manage?serviceName=payments', syncTooltip.rows[2], {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'
-    })).toBe('/trace/manage?serviceName=payments&traceId=trace-1&spanId=span-root&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000');
+    })).toBe('/trace/manage?serviceName=payments&traceId=trace-1&spanId=span-root&serviceNamespace=payments&resourceFilter=service.version%3D1.2.3&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000');
     expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/trace/manage?view=list', syncTooltip.rows[6], {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'

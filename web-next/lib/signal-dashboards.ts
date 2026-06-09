@@ -3385,7 +3385,7 @@ function syncTooltipRelatedHandoff(
   traceId: string,
   spanId: string,
   options: SignalDashboardRuntimeSyncTooltipOptions = {},
-  context: { serviceName?: string; serviceNamespace?: string } & ReturnType<typeof syncTooltipRelatedContextFromBreakoutAttributes> = {
+  context: { serviceName?: string; serviceNamespace?: string } & ReturnType<typeof syncTooltipRelatedContextFromBreakoutAttributes> & ReturnType<typeof syncTooltipRouteDrilldownContext> = {
     environment: '',
     entityId: '',
     entityType: '',
@@ -3408,12 +3408,16 @@ function syncTooltipRelatedHandoff(
     if (nextSpanId) params.set('spanId', nextSpanId);
     if (serviceName) params.set('serviceName', serviceName);
     if (serviceNamespace) params.set('serviceNamespace', serviceNamespace);
+    if (context.resourceFilter) params.set('resourceFilter', context.resourceFilter);
+    if (context.operationName) params.set('operationName', context.operationName);
     applySyncTooltipRelatedContext(params, context);
     return {
       traceId: nextTraceId,
       ...(nextSpanId ? { spanId: nextSpanId } : {}),
       ...(serviceName ? { serviceName } : {}),
       ...(serviceNamespace ? { serviceNamespace } : {}),
+      ...(context.resourceFilter ? { resourceFilter: context.resourceFilter } : {}),
+      ...(context.operationName ? { operationName: context.operationName } : {}),
       relatedSignal: 'traces' as const,
       relatedHandoffHref: applySignalDashboardTimeRange(syncTooltipRelatedHref('/trace/manage', params, options.returnTo), options.timeRange)
     };
@@ -3426,12 +3430,16 @@ function syncTooltipRelatedHandoff(
     if (nextSpanId) params.set('spanId', nextSpanId);
     if (serviceName) params.set('serviceName', serviceName);
     if (serviceNamespace) params.set('serviceNamespace', serviceNamespace);
+    if (context.resourceFilter) params.set('resourceFilter', context.resourceFilter);
+    if (context.attributeFilter) params.set('attributeFilter', context.attributeFilter);
     applySyncTooltipRelatedContext(params, context);
     return {
       traceId: nextTraceId,
       ...(nextSpanId ? { spanId: nextSpanId } : {}),
       ...(serviceName ? { serviceName } : {}),
       ...(serviceNamespace ? { serviceNamespace } : {}),
+      ...(context.resourceFilter ? { resourceFilter: context.resourceFilter } : {}),
+      ...(context.attributeFilter ? { attributeFilter: context.attributeFilter } : {}),
       relatedSignal: 'logs' as const,
       relatedHandoffHref: applySignalDashboardTimeRange(syncTooltipRelatedHref('/log/manage', params, options.returnTo), options.timeRange)
     };
@@ -3859,6 +3867,7 @@ export function buildSignalDashboardRuntimeSyncTooltip(
         ...syncTooltipRelatedHandoff(renderer.signal, row.traceId, row.spanId, options, {
           serviceName: row.service,
           serviceNamespace: row.serviceNamespace,
+          ...syncTooltipRouteDrilldownContext(renderer.primaryUrl),
           ...syncTooltipRelatedContextFromBreakoutAttributes(row.breakoutAttributes)
         })
       }));
@@ -3879,6 +3888,7 @@ export function buildSignalDashboardRuntimeSyncTooltip(
         ...syncTooltipRelatedHandoff(renderer.signal, row.traceId, row.spanId, options, {
           serviceName: row.service,
           serviceNamespace: row.serviceNamespace,
+          ...syncTooltipRouteDrilldownContext(renderer.primaryUrl),
           ...syncTooltipRelatedContextFromBreakoutAttributes(row.breakoutAttributes)
         })
       }));
