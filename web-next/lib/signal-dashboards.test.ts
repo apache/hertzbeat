@@ -3314,6 +3314,49 @@ describe('signal dashboards API client', () => {
     }));
   });
 
+  it('maps trace operation groups to operation drilldown without creating operation entities', async () => {
+    const [plan] = buildSignalDashboardExecutionPlans({
+      dashboardKey: 'signals-overview',
+      title: 'Signals overview',
+      description: 'Signals',
+      tags: 'traces',
+      layout: '[]',
+      widgets: JSON.stringify([
+        {
+          id: 'traces-key-operations',
+          signal: 'traces',
+          title: 'Key operations',
+          visualization: 'list',
+          route: '/trace/manage?serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&spanScope=all&groupBy=operation&groupLimit=8'
+        }
+      ])
+    });
+
+    const result = await executeSignalDashboardPanelPlan(plan, async url => {
+      expect(url).toBe('/traces/stats/group-by?serviceName=checkout&spanScope=all&entityId=4200&entityType=service&serviceNamespace=payments&environment=prod&groupBy=operation&limit=8');
+      return {
+        groupBy: 'operation',
+        groups: [{
+          value: 'POST /checkout',
+          traceCount: 11,
+          errorTraceCount: 2,
+          latencyP95Ms: 240
+        }]
+      };
+    });
+    const renderer = buildSignalDashboardPanelRuntimeRenderDescriptor(plan, result);
+
+    expect(renderer.rows[0]).toEqual(expect.objectContaining({
+      key: 'traces-key-operations:group:0',
+      title: 'POST /checkout',
+      copy: '11 traces · 2 errors',
+      meta: 'operation · p95 240ms',
+      relatedSignal: 'traces',
+      relatedHandoffHref: '/trace/manage?serviceName=checkout&spanScope=all&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&serviceNamespace=payments&source=otlp&collector=collector-a&template=spring-boot&view=list&operationName=POST+%2Fcheckout'
+    }));
+    expect(renderer.rows[0]?.relatedHandoffHref).not.toContain('resourceFilter=operation');
+  });
+
   it('renders backend-compatible trace group payload variants', async () => {
     const [plan] = buildSignalDashboardExecutionPlans({
       dashboardKey: 'signals-overview',
