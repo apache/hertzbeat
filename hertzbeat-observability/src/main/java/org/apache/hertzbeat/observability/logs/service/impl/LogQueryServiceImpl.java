@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -72,9 +73,14 @@ public class LogQueryServiceImpl implements LogQueryService {
     private static final String LOG_FILTER_NEGATION_PREFIX = "!";
     private static final String LOG_FILTER_IN_PREFIX = "__hz_in__:";
     private static final String LOG_FILTER_NOT_IN_PREFIX = "__hz_not_in__:";
+    private static final String LOG_FILTER_CONTAINS_PREFIX = "__hz_contains__:";
+    private static final String LOG_FILTER_NOT_CONTAINS_PREFIX = "__hz_not_contains__:";
     private static final String LOG_FILTER_VALUE_DELIMITER = "\u001F";
     private static final Pattern LOG_FILTER_LIST_OPERATOR_PATTERN = Pattern.compile(
             "^\\s*([A-Za-z0-9._:-]+)\\s+(NOT\\s+IN|IN)\\s*(\\(.+\\))\\s*$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern LOG_FILTER_TEXT_OPERATOR_PATTERN = Pattern.compile(
+            "^\\s*([A-Za-z0-9._:-]+)\\s+(NOT\\s+CONTAINS|CONTAINS)\\s+(.+)\\s*$",
             Pattern.CASE_INSENSITIVE);
 
     private static final Set<String> WORKSPACE_INFRA_SERVICE_NAMES = Set.of(
@@ -1205,7 +1211,7 @@ public class LogQueryServiceImpl implements LogQueryService {
     }
 
     private boolean hasComplexAttributeFilterValues(Map<String, String> filters) {
-        return filters != null && filters.values().stream().anyMatch(this::isListLogAttributeFilter);
+        return filters != null && filters.values().stream().anyMatch(this::isComplexLogAttributeFilter);
     }
 
     private Map<String, String> parseLogAttributeFilter(String filterExpression) {
@@ -1221,7 +1227,8 @@ public class LogQueryServiceImpl implements LogQueryService {
             if (!StringUtils.hasText(token)) {
                 continue;
             }
-            if (allowListOperators && appendLogFilterListValues(filters, token)) {
+            if (allowListOperators && (appendLogFilterListValues(filters, token)
+                    || appendLogFilterTextValue(filters, token))) {
                 continue;
             }
             boolean negate = false;
@@ -1269,6 +1276,24 @@ public class LogQueryServiceImpl implements LogQueryService {
         }
         String prefix = "not in".equalsIgnoreCase(operator) ? LOG_FILTER_NOT_IN_PREFIX : LOG_FILTER_IN_PREFIX;
         filters.put(key, prefix + String.join(LOG_FILTER_VALUE_DELIMITER, values));
+        return true;
+    }
+
+    private boolean appendLogFilterTextValue(Map<String, String> filters, String token) {
+        Matcher matcher = LOG_FILTER_TEXT_OPERATOR_PATTERN.matcher(token);
+        if (!matcher.matches()) {
+            return false;
+        }
+        String key = matcher.group(1).trim();
+        String operator = matcher.group(2).trim().replaceAll("\\s+", " ");
+        String value = stripFilterQuotes(matcher.group(3).trim());
+        if (!isSafeAttributeKey(key) || !StringUtils.hasText(value)) {
+            return false;
+        }
+        String prefix = "not contains".equalsIgnoreCase(operator)
+                ? LOG_FILTER_NOT_CONTAINS_PREFIX
+                : LOG_FILTER_CONTAINS_PREFIX;
+        filters.put(key, prefix + value);
         return true;
     }
 
@@ -1449,6 +1474,14 @@ public class LogQueryServiceImpl implements LogQueryService {
             return splitListLogAttributeValues(expectedValue.substring(LOG_FILTER_NOT_IN_PREFIX.length())).stream()
                     .noneMatch(expected -> matchesOptionalResourceValue(actualValue, expected));
         }
+        if (isContainsLogAttributeFilter(expectedValue)) {
+            return matchesContainedResourceValue(actualValue,
+                    expectedValue.substring(LOG_FILTER_CONTAINS_PREFIX.length()));
+        }
+        if (isNotContainsLogAttributeFilter(expectedValue)) {
+            return !matchesContainedResourceValue(actualValue,
+                    expectedValue.substring(LOG_FILTER_NOT_CONTAINS_PREFIX.length()));
+        }
         if (isNegatedLogAttributeFilter(expectedValue)) {
             return !matchesOptionalResourceValue(actualValue, expectedValue.substring(LOG_FILTER_NEGATION_PREFIX.length()));
         }
@@ -1460,11 +1493,13 @@ public class LogQueryServiceImpl implements LogQueryService {
     }
 
     private boolean isExclusionLogAttributeFilter(String expectedValue) {
-        return isNegatedLogAttributeFilter(expectedValue) || isNotInLogAttributeFilter(expectedValue);
+        return isNegatedLogAttributeFilter(expectedValue) || isNotInLogAttributeFilter(expectedValue)
+                || isNotContainsLogAttributeFilter(expectedValue);
     }
 
-    private boolean isListLogAttributeFilter(String expectedValue) {
-        return isInLogAttributeFilter(expectedValue) || isNotInLogAttributeFilter(expectedValue);
+    private boolean isComplexLogAttributeFilter(String expectedValue) {
+        return isInLogAttributeFilter(expectedValue) || isNotInLogAttributeFilter(expectedValue)
+                || isContainsLogAttributeFilter(expectedValue) || isNotContainsLogAttributeFilter(expectedValue);
     }
 
     private boolean isInLogAttributeFilter(String expectedValue) {
@@ -1473,6 +1508,14 @@ public class LogQueryServiceImpl implements LogQueryService {
 
     private boolean isNotInLogAttributeFilter(String expectedValue) {
         return expectedValue != null && expectedValue.startsWith(LOG_FILTER_NOT_IN_PREFIX);
+    }
+
+    private boolean isContainsLogAttributeFilter(String expectedValue) {
+        return expectedValue != null && expectedValue.startsWith(LOG_FILTER_CONTAINS_PREFIX);
+    }
+
+    private boolean isNotContainsLogAttributeFilter(String expectedValue) {
+        return expectedValue != null && expectedValue.startsWith(LOG_FILTER_NOT_CONTAINS_PREFIX);
     }
 
     private List<String> splitListLogAttributeValues(String encodedValues) {
@@ -1510,6 +1553,14 @@ public class LogQueryServiceImpl implements LogQueryService {
         }
         return StringUtils.hasText(actualValue)
                 && actualValue.equalsIgnoreCase(expectedValue.trim());
+    }
+
+    private boolean matchesContainedResourceValue(String actualValue, String expectedValue) {
+        if (!StringUtils.hasText(expectedValue)) {
+            return true;
+        }
+        return StringUtils.hasText(actualValue)
+                && actualValue.toLowerCase(Locale.ROOT).contains(expectedValue.trim().toLowerCase(Locale.ROOT));
     }
 
     private boolean hasWorkspaceContext() {
