@@ -2198,7 +2198,7 @@ describe('signal dashboards API client', () => {
     expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/trace/manage?view=list', syncTooltip.rows[4], {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'
-    })).toBe('/trace/manage?view=list&serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000');
+    })).toBe('/trace/manage?view=list&serviceName=checkout&serviceNamespace=payments&resourceFilter=db.system%3Dpostgresql&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000');
     expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/trace/manage?serviceName=payments', syncTooltip.rows[2], {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'
@@ -2206,7 +2206,7 @@ describe('signal dashboards API client', () => {
     expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/trace/manage?view=list', syncTooltip.rows[6], {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'
-    })).toBe('/trace/manage?view=list&serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000');
+    })).toBe('/trace/manage?view=list&serviceName=checkout&serviceNamespace=payments&operationName=POST+%2Fcheckout&environment=prod&entityId=4200&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&returnTo=%2Fdashboard%3Fstart%3D1000%26end%3D3000&start=1000&end=3000');
     expect(buildSignalDashboardRuntimeEvidenceSourceHandoff('/ingestion/otlp/metrics?query=cpu.usage', syncTooltip.rows[3], {
       timeRange: { start: '1000', end: '3000' },
       returnTo: '/dashboard?start=1000&end=3000'

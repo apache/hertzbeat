@@ -3672,6 +3672,14 @@ export function buildSignalDashboardRuntimeEvidenceSourceHandoff(
     if (valuesBySource.serviceNamespace && !url.searchParams.get('serviceNamespace')) {
       url.searchParams.set('serviceNamespace', valuesBySource.serviceNamespace);
     }
+    const normalizedResourceFilter = syncTooltipIdentifier(row.resourceFilter);
+    if (normalizedResourceFilter && (url.pathname === '/trace/manage' || url.pathname === '/log/manage') && !url.searchParams.get('resourceFilter')) {
+      url.searchParams.set('resourceFilter', normalizedResourceFilter);
+    }
+    const normalizedOperationName = syncTooltipIdentifier(row.operationName);
+    if (normalizedOperationName && url.pathname === '/trace/manage' && !url.searchParams.get('operationName')) {
+      url.searchParams.set('operationName', normalizedOperationName);
+    }
     if (valuesBySource.environment && !url.searchParams.get('environment')) {
       url.searchParams.set('environment', valuesBySource.environment);
     }
