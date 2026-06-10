@@ -224,6 +224,16 @@ function buildMetricsLogsOperationAttributeFilter(
   return buildLogAttributeFilterExpression('span.name', operationName);
 }
 
+function buildMetricsTraceOperationAttributeFilter(
+  selectedSeries: OtlpMetricSeriesView | null | undefined,
+  traceId: string | undefined,
+  spanId: string | undefined
+) {
+  if (traceId || spanId) return undefined;
+  const httpRoute = readSeriesLabel(selectedSeries, 'http.route', 'http_route');
+  return httpRoute ? buildLogAttributeFilterExpression('http.route', httpRoute) : undefined;
+}
+
 export function buildConsoleFacts(
   data: OtlpMetricsConsole,
   t: Translator,
@@ -1046,6 +1056,8 @@ export function buildMetricsHandoffLinks(
   if (spanId) traceParams.set('spanId', spanId);
   if (serviceName) traceParams.set('serviceName', serviceName);
   appendSignalRouteContext(traceParams, signalContext);
+  const traceOperationAttributeFilter = buildMetricsTraceOperationAttributeFilter(selectedSeries, traceId, spanId);
+  if (traceOperationAttributeFilter) traceParams.set('attributeFilter', traceOperationAttributeFilter);
 
   const entityParams = new URLSearchParams();
   if (serviceName) entityParams.set('search', serviceName);

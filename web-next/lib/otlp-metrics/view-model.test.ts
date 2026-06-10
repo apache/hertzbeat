@@ -1120,6 +1120,7 @@ describe('otlp metrics view model', () => {
     expect(traceParams.get('traceId')).toBe('trace-series-42');
     expect(traceParams.get('spanId')).toBe('span-series-42');
     expect(traceParams.get('operationName')).toBe('/inventory/{id}');
+    expect(traceParams.get('attributeFilter')).toBeNull();
     expect(traceParams.get('entityId')).toBe('42');
     expect(traceParams.get('entityType')).toBe('service');
 
@@ -1223,6 +1224,14 @@ describe('otlp metrics view model', () => {
     expect(logParams.get('serviceNamespace')).toBe('payments');
     expect(logParams.get('operationName')).toBe('/checkout/:id');
     expect(logParams.get('attributeFilter')).toBe('http.route="/checkout/:id"');
+
+    const traceParams = new URL(result.tracesHref, 'https://example.com').searchParams;
+    expect(traceParams.get('traceId')).toBeNull();
+    expect(traceParams.get('spanId')).toBeNull();
+    expect(traceParams.get('serviceName')).toBe('checkout');
+    expect(traceParams.get('serviceNamespace')).toBe('payments');
+    expect(traceParams.get('operationName')).toBe('/checkout/:id');
+    expect(traceParams.get('attributeFilter')).toBe('http.route="/checkout/:id"');
   });
 
   it('opens trace-linked metric logs as history records without an extra text search filter', () => {
