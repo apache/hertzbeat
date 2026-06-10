@@ -146,6 +146,7 @@ const SAVED_VIEW_SUMMARY_PARAM_KEYS: Record<SignalSavedViewSignal, string[]> = {
     'filter',
     'traceId',
     'spanId',
+    'operationName',
     'serviceName',
     'serviceNamespace',
     'environment',

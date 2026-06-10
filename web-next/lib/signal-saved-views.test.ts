@@ -140,7 +140,7 @@ describe('signal saved views API client', () => {
       id: 'metrics-latency',
       label: 'Latency',
       description: '',
-      route: '/ingestion/otlp/metrics?query=http.server.duration&series=checkout_latency-0&filter=service.name%3D%22checkout%22&traceId=trace-1&spanId=span-1&serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=7&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&aggregation=p95&temporalAggregation=rate&groupBy=route&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=10&inspector=table&warningThreshold=75&criticalThreshold=90&expectedRange=on&relatedMetricSource=pod&relatedMetricFamily=latency&relatedMetricReason=resource-filter&relatedMetricMatchedLabels=k8s_pod_name&relatedMetricResourceMatch=%7B%22k8s_pod_name%22%3A%22checkout-7d9%22%7D&timeRange=last-1h',
+      route: '/ingestion/otlp/metrics?query=http.server.duration&series=checkout_latency-0&filter=service.name%3D%22checkout%22&traceId=trace-1&spanId=span-1&operationName=POST+%2Fcheckout&serviceName=checkout&serviceNamespace=payments&environment=prod&entityId=7&entityType=service&entityName=Checkout+API&source=otlp&collector=collector-a&template=spring-boot&aggregation=p95&temporalAggregation=rate&groupBy=route&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=10&inspector=table&warningThreshold=75&criticalThreshold=90&expectedRange=on&relatedMetricSource=pod&relatedMetricFamily=latency&relatedMetricReason=resource-filter&relatedMetricMatchedLabels=k8s_pod_name&relatedMetricResourceMatch=%7B%22k8s_pod_name%22%3A%22checkout-7d9%22%7D&timeRange=last-1h',
       createdAt: 1780740000000
     });
 
@@ -190,6 +190,7 @@ describe('signal saved views API client', () => {
       template: 'spring-boot',
       traceId: 'trace-1',
       spanId: 'span-1',
+      operationName: 'POST /checkout',
       series: 'checkout_latency-0',
       filter: 'service.name="checkout"',
       temporalAggregation: 'rate',
@@ -204,6 +205,7 @@ describe('signal saved views API client', () => {
       relatedMetricResourceMatch: '{"k8s_pod_name":"checkout-7d9"}'
     }));
     expect(metricsDraft.description).toContain('temporalAggregation=rate');
+    expect(metricsDraft.description).toContain('operationName=POST /checkout');
     expect(metricsDraft.description).toContain('legendFormat={{service.name}} - p95');
     expect(metricsDraft.description).toContain('relatedMetricSource=pod');
   });
