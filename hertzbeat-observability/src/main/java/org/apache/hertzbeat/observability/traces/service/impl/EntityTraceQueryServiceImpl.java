@@ -1074,7 +1074,7 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
                 && !environment.equalsIgnoreCase(trace.getResourceAttributes().get("deployment.environment.name"))) {
             return false;
         }
-        if (StringUtils.hasText(operationName) && !operationName.equalsIgnoreCase(trace.getRootSpanName())) {
+        if (!matchesTraceOperation(trace, operationName)) {
             return false;
         }
         if (minDurationNanos != null && (trace.getDurationNanos() == null || trace.getDurationNanos() < minDurationNanos)) {
@@ -1088,6 +1088,20 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
         }
         return (resourceFilters.isEmpty() || matchesResourceFilters(trace, resourceFilters))
                 && matchesSpanAttributeFilters(trace, attributeFilters);
+    }
+
+    private boolean matchesTraceOperation(TraceAggregate trace, String operationName) {
+        String normalizedOperationName = StringUtils.trimWhitespace(operationName);
+        if (!StringUtils.hasText(normalizedOperationName)) {
+            return true;
+        }
+        if (normalizedOperationName.equalsIgnoreCase(trace.getRootSpanName())) {
+            return true;
+        }
+        return trace.spans.stream()
+                .map(TraceSpanNodeDto::getSpanName)
+                .filter(StringUtils::hasText)
+                .anyMatch(normalizedOperationName::equalsIgnoreCase);
     }
 
     private String normalizeSpanScope(String spanScope) {

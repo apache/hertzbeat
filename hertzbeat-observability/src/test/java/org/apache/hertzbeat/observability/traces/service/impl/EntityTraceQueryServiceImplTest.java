@@ -542,6 +542,40 @@ class EntityTraceQueryServiceImplTest {
     }
 
     @Test
+    void queryTraceListMatchesOperationNameAgainstChildSpansWithRowFallback() {
+        long now = System.currentTimeMillis();
+        long start = now - 120_000;
+        long end = now;
+        when(traceQueryRepository.queryRecentTraceRows(
+                eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("SELECT cart"),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(true))).thenReturn(List.of(
+                traceRow("trace-cart", "span-root", null, "GET /checkout", "checkout-service", "STATUS_CODE_OK",
+                        now - 10_000, 5_000_000L,
+                        Map.of("service.name", "checkout-service")),
+                traceRow("trace-cart", "span-child", "span-root", "SELECT cart", "checkout-service", "STATUS_CODE_OK",
+                        now - 9_000, 1_000_000L,
+                        Map.of("service.name", "checkout-service"))
+        ));
+
+        var page = entityTraceQueryService.queryTraceList(null, start, end, null,
+                false, "checkout-service", null, null,
+                null, "SELECT cart", null, null, 0, 20, true);
+
+        assertEquals(1, page.getTotalElements());
+        assertEquals("trace-cart", page.getContent().getFirst().getTraceId());
+        assertEquals("GET /checkout", page.getContent().getFirst().getRootSpanName());
+        verify(traceQueryRepository).queryRecentTraceRows(
+                eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), eq("SELECT cart"),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(true));
+    }
+
+    @Test
     void queryTraceListPushesWorkspaceTimeEnvironmentAndEntityFiltersToRepository() {
         long now = System.currentTimeMillis();
         long start = now - 60_000;
