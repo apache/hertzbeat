@@ -871,6 +871,7 @@ export function buildTraceHandoffLinks(
     template,
     traceId,
     spanId,
+    operationName,
     returnTo: stripReturnLabelFromHref(routeContext.returnTo),
     source: routeContext.source || 'otlp',
     start,

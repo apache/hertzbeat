@@ -772,6 +772,7 @@ describe('trace view model', () => {
     expect(logParams.get('environment')).toBe('prod-east');
     expect(logParams.get('collector')).toBe('collector-b');
     expect(logParams.get('template')).toBe('postgres');
+    expect(logParams.get('operationName')).toBe('POST /checkout');
     expect(logParams.get('returnTo')).toBe('/trace/manage?traceId=trace-entity-from-detail');
 
     const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
@@ -786,12 +787,14 @@ describe('trace view model', () => {
     expect(entityHref.searchParams.get('entityName')).toBe('Checkout DB');
     expect(entityHref.searchParams.get('collector')).toBe('collector-b');
     expect(entityHref.searchParams.get('template')).toBe('postgres');
+    expect(entityHref.searchParams.get('operationName')).toBe('POST /checkout');
 
     const alertHandlingHref = new URL(result.alertHandlingHref, 'https://example.com');
     expect(alertHandlingHref.searchParams.get('entityId')).toBe('43');
     expect(alertHandlingHref.searchParams.get('entityName')).toBe('Checkout DB');
     expect(alertHandlingHref.searchParams.get('collector')).toBe('collector-b');
     expect(alertHandlingHref.searchParams.get('template')).toBe('postgres');
+    expect(alertHandlingHref.searchParams.get('operationName')).toBe('POST /checkout');
   });
 
   it('carries selected span resource attributes into trace-to-metrics handoffs', () => {
