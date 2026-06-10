@@ -1042,10 +1042,10 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         String step = resolvePromqlStep(start, end, null);
         List<OtlpRelatedMetricsDto.Candidate> available = new ArrayList<>();
         for (OtlpRelatedMetricsDto.Candidate candidate : candidates) {
-            for (String query : buildRelatedMetricAvailabilityQueries(candidate)) {
+            for (RelatedMetricAvailabilityProbe probe : buildRelatedMetricAvailabilityProbes(candidate)) {
                 MetricQueryRepository.PromqlRangeQueryResult result = metricQueryRepository.queryPromqlRange(
                         RELATED_METRICS_REF_ID,
-                        query,
+                        probe.query(),
                         start,
                         end,
                         step
@@ -1063,8 +1063,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                             candidate.getSource(),
                             candidate.getFamily(),
                             "promql-series",
-                            candidate.getMatchedLabels(),
-                            candidate.getResourceMatch()
+                            probe.matchedLabels(),
+                            probe.resourceMatch()
                     ));
                     break;
                 }
@@ -1076,7 +1076,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         return available;
     }
 
-    private List<String> buildRelatedMetricAvailabilityQueries(OtlpRelatedMetricsDto.Candidate candidate) {
+    private List<RelatedMetricAvailabilityProbe> buildRelatedMetricAvailabilityProbes(OtlpRelatedMetricsDto.Candidate candidate) {
         if (candidate == null || !StringUtils.hasText(candidate.getQuery())) {
             return List.of();
         }
@@ -1095,11 +1095,21 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             LinkedHashMap<String, String> httpRouteMatch = new LinkedHashMap<>(resourceMatch);
             httpRouteMatch.remove("operation_name");
             return List.of(
-                    buildRelatedMetricAvailabilityQuery(metricName, operationNameMatch),
-                    buildRelatedMetricAvailabilityQuery(metricName, httpRouteMatch)
+                    buildRelatedMetricAvailabilityProbe(metricName, candidate, operationNameMatch),
+                    buildRelatedMetricAvailabilityProbe(metricName, candidate, httpRouteMatch)
             );
         }
-        return List.of(buildRelatedMetricAvailabilityQuery(metricName, resourceMatch));
+        return List.of(buildRelatedMetricAvailabilityProbe(metricName, candidate, resourceMatch));
+    }
+
+    private RelatedMetricAvailabilityProbe buildRelatedMetricAvailabilityProbe(String metricName,
+                                                                               OtlpRelatedMetricsDto.Candidate candidate,
+                                                                               Map<String, String> resourceMatch) {
+        return new RelatedMetricAvailabilityProbe(
+                buildRelatedMetricAvailabilityQuery(metricName, resourceMatch),
+                matchedAvailabilityLabels(candidate, resourceMatch),
+                resourceMatch
+        );
     }
 
     private String buildRelatedMetricAvailabilityQuery(String metricName, Map<String, String> resourceMatch) {
@@ -1116,6 +1126,16 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             }
         }
         return "sum by (__name__) ({" + String.join(", ", matchers) + "})";
+    }
+
+    private List<String> matchedAvailabilityLabels(OtlpRelatedMetricsDto.Candidate candidate, Map<String, String> resourceMatch) {
+        if (candidate == null || CollectionUtils.isEmpty(candidate.getMatchedLabels()) || CollectionUtils.isEmpty(resourceMatch)) {
+            return List.of();
+        }
+        Set<String> resourceLabels = resourceMatch.keySet();
+        return candidate.getMatchedLabels().stream()
+                .filter(resourceLabels::contains)
+                .toList();
     }
 
     private void addRelatedMetricCandidate(LinkedHashMap<String, OtlpRelatedMetricsDto.Candidate> candidates,
@@ -2790,5 +2810,10 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                          DatasourceQueryData results,
                                          OtlpMetricsConsoleDto.Stats stats,
                                          String errorMessage) {
+    }
+
+    private record RelatedMetricAvailabilityProbe(String query,
+                                                  List<String> matchedLabels,
+                                                  Map<String, String> resourceMatch) {
     }
 }
