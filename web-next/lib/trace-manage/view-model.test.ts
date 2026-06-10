@@ -916,6 +916,7 @@ describe('trace view model', () => {
     expect(logParams.get('end')).toBe('1100');
     expect(logParams.get('returnTo')).toBe('/trace/manage?traceId=trace-1&spanId=span-root-1');
     expect(logParams.get('returnLabel')).toBeNull();
+    expect(logParams.get('attributeFilter')).toBeNull();
 
     const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
     expect(metricsParams.get('traceId')).toBe('trace-1');
@@ -927,6 +928,40 @@ describe('trace view model', () => {
     expect(metricsParams.get('end')).toBe('1100');
     expect(metricsParams.get('returnTo')).toBe('/trace/manage?traceId=trace-1&spanId=span-root-1');
     expect(metricsParams.get('returnLabel')).toBeNull();
+  });
+
+  it('adds an executable log attribute filter for operation-level trace handoffs', () => {
+    const result = buildTraceHandoffLinks(
+      null,
+      {
+        spanName: 'POST /checkout',
+        serviceName: 'checkout',
+        spanAttributes: {
+          'http.route': '/checkout/:id'
+        }
+      } as any,
+      {
+        serviceName: 'checkout',
+        serviceNamespace: 'payments',
+        environment: 'prod',
+        operationName: 'POST /checkout',
+        start: '1000',
+        end: '1100'
+      },
+      {
+        logsReturnTo: '/trace/manage?serviceName=checkout&operationName=POST%20%2Fcheckout'
+      }
+    );
+
+    const logParams = new URL(result.logsHref, 'https://example.com').searchParams;
+    expect(logParams.get('traceId')).toBeNull();
+    expect(logParams.get('spanId')).toBeNull();
+    expect(logParams.get('serviceName')).toBe('checkout');
+    expect(logParams.get('serviceNamespace')).toBe('payments');
+    expect(logParams.get('environment')).toBe('prod');
+    expect(logParams.get('operationName')).toBe('POST /checkout');
+    expect(logParams.get('attributeFilter')).toBe('http.route="/checkout/:id"');
+    expect(logParams.get('returnTo')).toBe('/trace/manage?serviceName=checkout&operationName=POST+%2Fcheckout');
   });
 
   it('does not round decimal trace detail time bounds into handoff urls', () => {

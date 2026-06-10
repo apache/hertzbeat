@@ -451,6 +451,17 @@ function buildMetricFilterExpression(name: string, value: string | undefined) {
   return `${trimmedName}="${escapeMetricFilterValue(trimmedValue)}"`;
 }
 
+function buildLogAttributeFilterExpression(name: string, value: string | undefined) {
+  const trimmedName = name.trim();
+  const trimmedValue = value?.trim();
+  if (!/^[A-Za-z0-9_.:-]+$/.test(trimmedName) || !trimmedValue || trimmedValue === '-') return undefined;
+  return `${trimmedName}="${escapeMetricFilterValue(trimmedValue)}"`;
+}
+
+function mergeTraceLogAttributeFilters(currentFilter: string | null | undefined, nextFilter: string | undefined) {
+  return [currentFilter?.trim(), nextFilter?.trim()].filter(Boolean).join(' and ') || undefined;
+}
+
 function buildTraceMetricsResourceFilter(detail: TraceDetail | null, selectedSpan: TraceSpanNode | null) {
   const expressions = [
     buildMetricFilterExpression('k8s.namespace.name', readTraceSignalAttribute(
@@ -486,6 +497,19 @@ function buildTraceMetricsResourceFilter(detail: TraceDetail | null, selectedSpa
   return expressions
     .filter((expression): expression is string => Boolean(expression && !seen.has(expression) && seen.add(expression)))
     .join(' and ');
+}
+
+function buildTraceLogsOperationAttributeFilter(
+  detail: TraceDetail | null,
+  selectedSpan: TraceSpanNode | null,
+  operationName: string | undefined,
+  traceId: string | undefined,
+  spanId: string | undefined
+) {
+  if (traceId || spanId) return undefined;
+  const httpRoute = readTraceSignalAttribute(detail, selectedSpan, 'http.route', 'http_route');
+  if (httpRoute) return buildLogAttributeFilterExpression('http.route', httpRoute);
+  return buildLogAttributeFilterExpression('span.name', firstText(selectedSpan?.spanName, detail?.rootSpanName, operationName));
 }
 
 function durationNanosToWholeMillis(value?: number | null) {
@@ -895,6 +919,15 @@ export function buildTraceHandoffLinks(
   if (traceId) logsParams.set('traceId', traceId);
   if (spanId) logsParams.set('spanId', spanId);
   appendSignalRouteContext(logsParams, logsContext);
+  const logOperationAttributeFilter = buildTraceLogsOperationAttributeFilter(
+    detail,
+    selectedSpan,
+    operationName,
+    traceId,
+    spanId
+  );
+  const mergedLogAttributeFilter = mergeTraceLogAttributeFilters(logsParams.get('attributeFilter'), logOperationAttributeFilter);
+  if (mergedLogAttributeFilter) logsParams.set('attributeFilter', mergedLogAttributeFilter);
 
   const metricsParams = new URLSearchParams();
   if (traceId) metricsParams.set('traceId', traceId);
