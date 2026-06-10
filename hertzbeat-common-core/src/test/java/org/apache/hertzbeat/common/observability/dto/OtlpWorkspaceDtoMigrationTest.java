@@ -59,7 +59,7 @@ class OtlpWorkspaceDtoMigrationTest {
         );
         OtlpMetricsConsoleDto console = new OtlpMetricsConsoleDto(
                 new OtlpMetricsConsoleDto.Context(1L, "service", "checkout", "checkout", "commerce", "prod",
-                        1000L, 2000L),
+                        null, 1000L, 2000L),
                 "sum(rate(http_requests_total[5m]))",
                 "greptime",
                 "promql",

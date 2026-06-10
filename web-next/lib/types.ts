@@ -344,6 +344,7 @@ export interface OtlpMetricsConsole {
     serviceName?: string | null;
     serviceNamespace?: string | null;
     environment?: string | null;
+    operationName?: string | null;
     start?: number | null;
     end?: number | null;
   };

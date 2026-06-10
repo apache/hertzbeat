@@ -66,6 +66,8 @@ public class OtlpMetricsConsoleDto {
 
         private String environment;
 
+        private String operationName;
+
         private Long start;
 
         private Long end;

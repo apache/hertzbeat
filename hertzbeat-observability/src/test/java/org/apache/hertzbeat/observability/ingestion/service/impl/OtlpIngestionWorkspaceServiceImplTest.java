@@ -891,6 +891,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
         );
 
         assertEquals(httpRouteQuery, console.getQuery());
+        assertEquals("POST /checkout", console.getContext().getOperationName());
         assertEquals(1, console.getStats().getNonEmptySeries());
         verify(metricQueryRepository).queryPromqlRange(
                 eq("otlp-metrics-console"),
@@ -1244,6 +1245,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
         );
 
         assertEquals("POST /checkout", related.getOperationName());
+        assertEquals("POST /checkout", related.getContext().getOperationName());
         assertTrue(related.getCandidates().stream().anyMatch(candidate ->
                 "http_server_duration".equals(candidate.getQuery())
                         && "operation".equals(candidate.getSource())

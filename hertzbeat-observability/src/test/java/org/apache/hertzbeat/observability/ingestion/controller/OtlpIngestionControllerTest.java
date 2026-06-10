@@ -205,7 +205,7 @@ class OtlpIngestionControllerTest {
     void shouldReturnWrappedMetricsConsolePayload() throws Exception {
         OtlpMetricsConsoleDto console = new OtlpMetricsConsoleDto(
                 new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
-                        1000L, 2000L),
+                        "POST /checkout", 1000L, 2000L),
                 "sum by (__name__) ({service_name=\"checkout\"})",
                 "Greptime-promql",
                 "promql",
@@ -252,6 +252,7 @@ class OtlpIngestionControllerTest {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.context.entityId").value(42))
                 .andExpect(jsonPath("$.data.context.entityType").value("service"))
+                .andExpect(jsonPath("$.data.context.operationName").value("POST /checkout"))
                 .andExpect(jsonPath("$.data.query").value("sum by (__name__) ({service_name=\"checkout\"})"))
                 .andExpect(jsonPath("$.data.datasource").value("Greptime-promql"))
                 .andExpect(jsonPath("$.data.stats.totalSeries").value(1))
@@ -266,7 +267,7 @@ class OtlpIngestionControllerTest {
     void shouldReturnWrappedMetricsInventoryPayload() throws Exception {
         OtlpMetricsInventoryDto inventory = new OtlpMetricsInventoryDto(
                 new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
-                        1000L, 2000L),
+                        null, 1000L, 2000L),
                 "promql-inventory",
                 1,
                 List.of(new OtlpMetricsInventoryDto.Item(
@@ -307,7 +308,7 @@ class OtlpIngestionControllerTest {
     void shouldReturnWrappedRelatedMetricsPayload() throws Exception {
         OtlpRelatedMetricsDto related = new OtlpRelatedMetricsDto(
                 new OtlpMetricsConsoleDto.Context(42L, "service", "Checkout API", "checkout", "commerce", "prod",
-                        1000L, 2000L),
+                        "POST /checkout", 1000L, 2000L),
                 "k8s.pod.name=\"checkout-7d9\"",
                 "POST /checkout",
                 "backend-related-metrics",
@@ -340,6 +341,7 @@ class OtlpIngestionControllerTest {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.context.entityId").value(42))
                 .andExpect(jsonPath("$.data.context.entityType").value("service"))
+                .andExpect(jsonPath("$.data.context.operationName").value("POST /checkout"))
                 .andExpect(jsonPath("$.data.operationName").value("POST /checkout"))
                 .andExpect(jsonPath("$.data.source").value("backend-related-metrics"))
                 .andExpect(jsonPath("$.data.resourceMatchers[0].label").value("k8s_pod_name"))

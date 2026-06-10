@@ -711,6 +711,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         );
         String resolvedQuery = trimToNull(query);
         String normalizedOperationName = trimToNull(operationName);
+        context.setOperationName(normalizedOperationName);
         List<String> resolvedQueries;
         if (!StringUtils.hasText(resolvedQuery)) {
             OtlpMetricsConsoleDto autoResolvedConsole = queryDefaultMetricsConsole(
@@ -871,6 +872,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         );
         String normalizedFilter = trimToNull(filter);
         String normalizedOperationName = trimToNull(operationName);
+        context.setOperationName(normalizedOperationName);
         List<OtlpRelatedMetricsDto.ResourceMatcher> resourceMatchers = parseRelatedMetricResourceMatchers(normalizedFilter);
         List<OtlpRelatedMetricsDto.Candidate> candidates = buildRelatedMetricCandidates(
                 context, resourceMatchers, normalizedOperationName, resolvedStart, resolvedEnd, resolvedLimit
@@ -1926,6 +1928,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 resolvedServiceName,
                 resolvedServiceNamespace,
                 resolvedEnvironment,
+                null,
                 start,
                 end
         );
@@ -1967,6 +1970,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                             trimToNull(snapshot.getServiceName()),
                             trimToNull(snapshot.getServiceNamespace()),
                             trimToNull(snapshot.getEnvironmentName()),
+                            operationName,
                             resolvedStart,
                             resolvedEnd
                     ))
@@ -2505,6 +2509,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 trimToNull(candidate.getServiceName()),
                 trimToNull(candidate.getServiceNamespace()),
                 trimToNull(candidate.getEnvironment()),
+                trimToNull(candidate.getOperationName()),
                 resolvedStart,
                 resolvedEnd
         );
