@@ -671,7 +671,11 @@ function buildLogMetricsCorrelationRows(entry: LogEntry | null, routeContext: Si
   return rows.filter((row): row is { title: string; copy: string; meta: string } => Boolean(row.copy));
 }
 
-function buildLogMetricsPreviewApiUrl(metricsHref: string | null | undefined, queryOverride?: string) {
+function buildLogMetricsPreviewApiUrl(
+  metricsHref: string | null | undefined,
+  queryOverride?: string,
+  operationName?: string | null
+) {
   if (!metricsHref) return null;
   const href = new URL(metricsHref, 'http://localhost');
   const sourceParams = href.searchParams;
@@ -702,11 +706,16 @@ function buildLogMetricsPreviewApiUrl(metricsHref: string | null | undefined, qu
     'collector',
     'template',
     'traceId',
-    'spanId'
+    'spanId',
+    'operationName'
   ].forEach(key => {
     const value = sourceParams.get(key)?.trim();
     if (value) params.set(key, value);
   });
+  const operationNameFallback = operationName?.trim();
+  if (!params.get('operationName') && operationNameFallback) {
+    params.set('operationName', operationNameFallback);
+  }
   if (!params.get('serviceName') && !params.get('entityId')) return null;
   if (queryOverride?.trim()) params.set('query', queryOverride.trim());
   if (!params.get('limit')) params.set('limit', '4');
@@ -833,7 +842,8 @@ function buildLogMetricsPreviewRelatedFallbackQueries(relatedPayload: OtlpRelate
 function buildLogMetricsPreviewFallbackApiUrls(
   metricsHref: string | null | undefined,
   seedPayload: OtlpMetricsConsole | null | undefined,
-  relatedPayload?: OtlpRelatedMetrics | null
+  relatedPayload?: OtlpRelatedMetrics | null,
+  operationName?: string | null
 ) {
   const discoveredCoverage = new Set<string>();
   (seedPayload?.results?.frames || [])
@@ -851,7 +861,8 @@ function buildLogMetricsPreviewFallbackApiUrls(
       const sourceFamily = `${logMetricPreviewTargetSource(target)}:${target.family}`;
       return buildLogMetricsPreviewApiUrl(
         metricsHref,
-        discoveredFallbackQueries.get(sourceFamily) || relatedFallbackQueries.get(sourceFamily) || target.query
+        discoveredFallbackQueries.get(sourceFamily) || relatedFallbackQueries.get(sourceFamily) || target.query,
+        operationName
       );
     });
   const seen = new Set<string>();
@@ -1796,8 +1807,8 @@ function LogManageExplorer({
     [detailContextFilters, detailContextLimit, detailContextLoadRequest, detailLog, query, routeContext]
   );
   const detailMetricsPreviewBaseUrl = useMemo(
-    () => buildLogMetricsPreviewApiUrl(detailLog ? detailHandoffLinks.metricsHref : null),
-    [detailHandoffLinks.metricsHref, detailLog]
+    () => buildLogMetricsPreviewApiUrl(detailLog ? detailHandoffLinks.metricsHref : null, undefined, routeContext.operationName),
+    [detailHandoffLinks.metricsHref, detailLog, routeContext.operationName]
   );
   const detailMetricsRelatedUrl = useMemo(
     () => buildLogMetricsRelatedApiUrl(detailLog ? detailHandoffLinks.metricsHref : null, routeContext.operationName),
@@ -1964,7 +1975,8 @@ function LogManageExplorer({
           const fallbackUrls = buildLogMetricsPreviewFallbackApiUrls(
             detailLog ? detailHandoffLinks.metricsHref : null,
             basePayload,
-            relatedPayload
+            relatedPayload,
+            routeContext.operationName
           );
           if (fallbackUrls.length === 0) {
             setDetailMetricsPreviewState({ loading: false, error: null, data: basePayload ? [basePayload] : [] });
@@ -1988,7 +2000,8 @@ function LogManageExplorer({
           const fallbackUrls = buildLogMetricsPreviewFallbackApiUrls(
             detailLog ? detailHandoffLinks.metricsHref : null,
             null,
-            relatedPayload
+            relatedPayload,
+            routeContext.operationName
           );
           if (fallbackUrls.length === 0) {
             setDetailMetricsPreviewState({ loading: false, error: describeLogManageLoadFailure(error), data: null });
@@ -2013,7 +2026,7 @@ function LogManageExplorer({
     return () => {
       cancelled = true;
     };
-  }, [detailHandoffLinks.metricsHref, detailLog, detailMetricsPreviewBaseUrl, detailMetricsRelatedUrl]);
+  }, [detailHandoffLinks.metricsHref, detailLog, detailMetricsPreviewBaseUrl, detailMetricsRelatedUrl, routeContext.operationName]);
 
   useEffect(() => {
     isStreamPausedRef.current = isStreamPaused;

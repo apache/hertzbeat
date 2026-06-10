@@ -3018,6 +3018,13 @@ describe('log manage page', () => {
       'backend.node.cpu',
       'backend.node.memory'
     ]);
+    expect(metricsPreviewCalls.map(call => new URL(String(call[0]), 'http://localhost').searchParams.get('operationName'))).toEqual([
+      'POST /checkout',
+      'POST /checkout',
+      'POST /checkout',
+      'POST /checkout',
+      'POST /checkout'
+    ]);
     expect(metricsPreviewCalls.map(call => String(call[0]))).not.toContain(expect.stringContaining('container.cpu.usage'));
     expect(metricsPreviewCalls.map(call => String(call[0]))).not.toContain(expect.stringContaining('system.cpu.utilization'));
     const metricsPreview = interactionContainer.querySelector('[data-log-stream-detail-metrics-preview="source-backed-series"]') as HTMLElement | null;
