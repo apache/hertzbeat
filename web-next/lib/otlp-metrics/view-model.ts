@@ -184,6 +184,17 @@ function readSeriesLabel(series: OtlpMetricSeriesView | null | undefined, ...key
   return firstText(...keys.map(key => series.labels[key]));
 }
 
+function escapeLogAttributeFilterValue(value: string) {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function buildLogAttributeFilterExpression(name: string, value: string | undefined) {
+  const trimmedName = name.trim();
+  const trimmedValue = value?.trim();
+  if (!/^[A-Za-z0-9_.:-]+$/.test(trimmedName) || !trimmedValue || trimmedValue === '-') return undefined;
+  return `${trimmedName}="${escapeLogAttributeFilterValue(trimmedValue)}"`;
+}
+
 function buildMetricSeriesSignalContext(series: OtlpMetricSeriesView | null | undefined): SignalRouteContext {
   if (!series) return {};
   return {
@@ -199,6 +210,18 @@ function buildMetricSeriesSignalContext(series: OtlpMetricSeriesView | null | un
     collector: readSeriesLabel(series, 'hertzbeat.collector', 'hertzbeat_collector', 'collector'),
     template: readSeriesLabel(series, 'hertzbeat.template', 'hertzbeat_template', 'hertzbeat.monitor_template', 'hertzbeat_monitor_template', 'template')
   };
+}
+
+function buildMetricsLogsOperationAttributeFilter(
+  selectedSeries: OtlpMetricSeriesView | null | undefined,
+  operationName: string | undefined,
+  traceId: string | undefined,
+  spanId: string | undefined
+) {
+  if (traceId || spanId) return undefined;
+  const httpRoute = readSeriesLabel(selectedSeries, 'http.route', 'http_route');
+  if (httpRoute) return buildLogAttributeFilterExpression('http.route', httpRoute);
+  return buildLogAttributeFilterExpression('span.name', operationName);
 }
 
 export function buildConsoleFacts(
@@ -1005,6 +1028,13 @@ export function buildMetricsHandoffLinks(
   if (traceId) logParams.set('traceId', traceId);
   if (spanId) logParams.set('spanId', spanId);
   appendSignalRouteContext(logParams, signalContext);
+  const logOperationAttributeFilter = buildMetricsLogsOperationAttributeFilter(
+    selectedSeries,
+    operationName,
+    traceId,
+    spanId
+  );
+  if (logOperationAttributeFilter) logParams.set('attributeFilter', logOperationAttributeFilter);
 
   const traceParams = new URLSearchParams();
   if (traceId) traceParams.set('traceId', traceId);

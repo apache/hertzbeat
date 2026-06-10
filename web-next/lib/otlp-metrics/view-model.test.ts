@@ -1109,6 +1109,7 @@ describe('otlp metrics view model', () => {
     expect(logParams.get('traceId')).toBe('trace-series-42');
     expect(logParams.get('spanId')).toBe('span-series-42');
     expect(logParams.get('operationName')).toBe('/inventory/{id}');
+    expect(logParams.get('attributeFilter')).toBeNull();
     expect(logParams.get('collector')).toBe('collector-b');
     expect(logParams.get('template')).toBe('fastapi');
 
@@ -1139,6 +1140,48 @@ describe('otlp metrics view model', () => {
     expect(alertRulesHref.searchParams.get('operationName')).toBe('/inventory/{id}');
     expect(alertRulesHref.searchParams.get('alertQuery')).toContain('entityType=service');
     expect(alertRulesHref.searchParams.get('alertQuery')).toContain('operationName=/inventory/{id}');
+  });
+
+  it('adds an executable log attribute filter for operation-level metric handoffs', () => {
+    const result = buildMetricsHandoffLinks(
+      {
+        context: {
+          serviceName: 'checkout',
+          serviceNamespace: 'payments',
+          environment: 'prod',
+          start: 1000,
+          end: 2000
+        }
+      } as any,
+      {
+        query: 'http_server_duration_milliseconds_count',
+        serviceName: 'checkout',
+        serviceNamespace: 'payments',
+        environment: 'prod'
+      },
+      { source: 'otlp' },
+      {
+        key: 'http-server-duration-checkout',
+        name: 'http.server.duration',
+        labels: {
+          __name__: 'http.server.duration',
+          'service.name': 'checkout',
+          'service.namespace': 'payments',
+          'deployment.environment.name': 'prod',
+          http_route: '/checkout/:id'
+        },
+        points: [[2000, 18]],
+        latestValue: 18
+      }
+    );
+
+    const logParams = new URL(result.logsHref, 'https://example.com').searchParams;
+    expect(logParams.get('traceId')).toBeNull();
+    expect(logParams.get('spanId')).toBeNull();
+    expect(logParams.get('serviceName')).toBe('checkout');
+    expect(logParams.get('serviceNamespace')).toBe('payments');
+    expect(logParams.get('operationName')).toBe('/checkout/:id');
+    expect(logParams.get('attributeFilter')).toBe('http.route="/checkout/:id"');
   });
 
   it('opens trace-linked metric logs as history records without an extra text search filter', () => {
