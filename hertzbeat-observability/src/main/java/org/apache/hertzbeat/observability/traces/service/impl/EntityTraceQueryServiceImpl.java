@@ -1206,7 +1206,24 @@ public class EntityTraceQueryServiceImpl implements EntityTraceQueryService {
             return false;
         }
         return trace.spans.stream()
-                .anyMatch(span -> matchesFilterMap(span.getSpanAttributes(), attributeFilters));
+                .anyMatch(span -> matchesFilterMap(spanAttributeFilterValues(span), attributeFilters));
+    }
+
+    private Map<String, String> spanAttributeFilterValues(TraceSpanNodeDto span) {
+        if (span == null) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> values = new LinkedHashMap<>();
+        if (!CollectionUtils.isEmpty(span.getSpanAttributes())) {
+            values.putAll(span.getSpanAttributes());
+        }
+        String spanName = trimText(span.getSpanName());
+        if (spanName != null) {
+            values.putIfAbsent("span.name", spanName);
+            values.putIfAbsent("span_name", spanName);
+            values.putIfAbsent("spanName", spanName);
+        }
+        return values;
     }
 
     private boolean matchesFilterMap(Map<String, String> values, ResourceFilterSet filters) {

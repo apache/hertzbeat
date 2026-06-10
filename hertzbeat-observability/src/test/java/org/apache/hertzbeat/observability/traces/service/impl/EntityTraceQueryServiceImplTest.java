@@ -849,6 +849,34 @@ class EntityTraceQueryServiceImplTest {
     }
 
     @Test
+    void queryTraceListMatchesSyntheticSpanNameAttributeFilters() {
+        long now = System.currentTimeMillis();
+        long start = now - 120_000;
+        long end = now;
+        when(traceQueryRepository.queryRecentTraceRows(
+                eq(1500), eq(start), eq(end), eq("checkout-service"), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.<Map<String, Set<String>>>any(),
+                eq(false))).thenReturn(List.of(
+                traceRow("trace-checkout", "span-root-1", null, "POST /checkout",
+                        "checkout-service", "STATUS_CODE_OK", now - 10_000, 2_000_000L,
+                        Map.of("service.name", "checkout-service")),
+                traceRow("trace-inventory", "span-root-2", null, "GET /inventory",
+                        "checkout-service", "STATUS_CODE_OK", now - 9_000, 2_000_000L,
+                        Map.of("service.name", "checkout-service"))
+        ));
+
+        var page = entityTraceQueryService.queryTraceList(null, start, end, null,
+                false, "checkout-service", null, null,
+                null, null, null, null, 0, 20, false, null,
+                "span.name=\"POST /checkout\"");
+
+        assertEquals(1, page.getTotalElements());
+        assertEquals("trace-checkout", page.getContent().getFirst().getTraceId());
+    }
+
+    @Test
     void traceQueriesPreferEntityIdentityOverConflictingRouteContext() {
         long now = System.currentTimeMillis();
         long start = now - 120_000;
