@@ -724,6 +724,7 @@ export function buildLogHandoffLinks(
     template,
     traceId,
     spanId,
+    operationName,
     returnTo: stripReturnLabelFromHref(routeContext.returnTo),
     source: routeContext.source || 'otlp',
     start: routeContext.start || String(start),

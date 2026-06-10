@@ -722,7 +722,7 @@ describe('log view model', () => {
     expect(metricsParams.get('template')).toBe('hertzbeat-self');
   });
 
-  it('keeps selected log operation context in metrics handoffs', () => {
+  it('keeps selected log operation context in shared handoffs', () => {
     const result = buildLogHandoffLinks(
       {
         traceId: 'trace-operation',
@@ -743,10 +743,22 @@ describe('log view model', () => {
       }
     );
 
+    const traceParams = new URL(result.traceHref, 'https://example.com').searchParams;
+    expect(traceParams.get('operationName')).toBe('POST /checkout');
+
     const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
     expect(metricsParams.get('operationName')).toBe('POST /checkout');
     expect(metricsParams.get('serviceName')).toBe('checkout');
     expect(metricsParams.get('entityType')).toBe('service');
+
+    const entityHref = new URL(result.entityHref, 'https://example.com');
+    expect(entityHref.searchParams.get('operationName')).toBe('POST /checkout');
+
+    const alertHandlingParams = new URL(result.alertHandlingHref, 'https://example.com').searchParams;
+    expect(alertHandlingParams.get('operationName')).toBe('POST /checkout');
+
+    const alertRuleParams = new URL(result.alertRulesHref, 'https://example.com').searchParams;
+    expect(alertRuleParams.get('operationName')).toBe('POST /checkout');
   });
 
   it('can override trace and metrics return paths with the current log workspace route', () => {
