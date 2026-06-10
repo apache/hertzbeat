@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   appendSignalRouteContext,
   buildSignalAlertHandlingHref,
+  buildSignalAlertGroupKeys,
+  buildSignalAlertMatchLabels,
   buildSignalEntityContextRows,
   copySignalRouteContextParams,
   isDashboardReturnContext,
@@ -170,6 +172,24 @@ describe('signal route context', () => {
     expect(isDashboardReturnContext('/overview?returnTo=%2Fdashboard')).toBe(false);
     expect(isDashboardReturnContext('https://example.com/dashboard')).toBe(false);
     expect(isDashboardReturnContext('//example.com/dashboard')).toBe(false);
+  });
+
+  it('keeps operation context in alert match labels and group keys', () => {
+    const context = {
+      entityId: '7',
+      serviceName: 'checkout',
+      serviceNamespace: 'payments',
+      operationName: 'POST /checkout',
+      environment: 'prod',
+      traceId: 'trace-1'
+    };
+
+    expect(buildSignalAlertMatchLabels('traces', context)).toBe(
+      'hertzbeat.signal:traces, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, operation.name:POST /checkout, deployment.environment:prod, trace_id:trace-1'
+    );
+    expect(buildSignalAlertGroupKeys('traces', context)).toBe(
+      'hertzbeat.signal, hertzbeat.entity.id, service.name, service.namespace, operation.name, deployment.environment'
+    );
   });
 
   it('builds alert handling links for firing alert closure instead of threshold-rule configuration', () => {

@@ -119,10 +119,13 @@ describe('alert setting view model', () => {
         source: 'otlp',
         traceId: 'trace-123',
         spanId: 'span-456',
+        operationName: 'POST /checkout',
         collector: 'collector-a',
         template: 'spring-boot',
         alertQuery: 'operationName=POST /checkout\nerrorOnly=true',
         alertQueryType: 'traces',
+        alertDatasource: 'sql',
+        alertTemplate: 'TraceTemplate',
         returnTo: '/trace/manage?traceId=trace-123&returnLabel=Trace'
       },
       t
@@ -135,13 +138,28 @@ describe('alert setting view model', () => {
       sourceQuery: 'operationName=POST /checkout\nerrorOnly=true',
       sourceQueryType: 'traces',
       labelsText:
-        'hertzbeat.signal:traces, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot'
+        'hertzbeat.signal:traces, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, operation.name:POST /checkout, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot, hertzbeat.alert.datasource:sql, hertzbeat.alert.query_type:traces, hertzbeat.alert.template:TraceTemplate'
     });
     expect(context?.rows.map(row => row.label)).toContain(t('signal.context.trace.label'));
     expect(context?.rows).toContainEqual({
       label: t('alert.rule.evidence.query.label'),
       value: 'operationName=POST /checkout\nerrorOnly=true',
       meta: 'traces'
+    });
+    expect(context?.workflowActions.map(action => action.key)).toEqual(['notice', 'group', 'silence', 'inhibit']);
+    context?.workflowActions.forEach(action => {
+      const url = new URL(action.href, 'http://localhost');
+      expect(url.pathname).toBe(`/alert/${action.key}`);
+      expect(url.searchParams.get('signal')).toBe('traces');
+      expect(url.searchParams.get('traceId')).toBe('trace-123');
+      expect(url.searchParams.get('spanId')).toBe('span-456');
+      expect(url.searchParams.get('operationName')).toBe('POST /checkout');
+      expect(url.searchParams.get('collector')).toBe('collector-a');
+      expect(url.searchParams.get('alertQueryType')).toBe('traces');
+      expect(url.searchParams.get('alertDatasource')).toBe('sql');
+      expect(url.searchParams.get('alertTemplate')).toBe('TraceTemplate');
+      expect(url.searchParams.get('returnTo')).toBe('/trace/manage?traceId=trace-123');
+      expect(url.searchParams.get('returnLabel')).toBeNull();
     });
   });
 
@@ -173,5 +191,11 @@ describe('alert setting view model', () => {
     });
     expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[\u4e00-\u9fff]/);
     expect(context?.rows.map(row => row.label)).toContain('Trace context');
+    expect(context?.workflowActions.map(action => action.label)).toEqual([
+      'Configure notification policy',
+      'Configure grouping',
+      'Create silence',
+      'Create inhibit'
+    ]);
   });
 });
