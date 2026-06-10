@@ -45,7 +45,7 @@ import { resolveAppliedTimeContext, sanitizeTimeContext, type TimeContext } from
 import type { LogEntry, OtlpRelatedMetrics, PageResult, TraceDetail, TraceListItem, TraceOverview, TraceSpanNode } from '@/lib/types';
 import { ObservabilityStatusState, ObservabilityWaterfall, type ObservabilityWaterfallTick } from '../../../components/observability';
 import { OverlayDialog } from '../../../components/workbench/overlay-dialog';
-import { loadTraceDetailBundle } from '../../../lib/trace-manage/controller';
+import { buildTraceRelatedLogsUrlFromHref, loadTraceDetailBundle } from '../../../lib/trace-manage/controller';
 import { buildResetTraceManageRoute, buildTraceManageRoute } from './route-state';
 
 type TraceManageData = {
@@ -302,35 +302,7 @@ function buildTraceRelatedMetricsApiUrl(metricsHref: string | null | undefined) 
 }
 
 function buildTraceRelatedLogsApiUrl(logsHref: string | null | undefined) {
-  if (!logsHref) return null;
-  const href = new URL(logsHref, 'http://localhost');
-  const sourceParams = href.searchParams;
-  const params = new URLSearchParams();
-  [
-    'traceId',
-    'spanId',
-    'serviceName',
-    'serviceNamespace',
-    'environment',
-    'entityId',
-    'entityName',
-    'collector',
-    'template',
-    'source',
-    'resourceFilter',
-    'attributeFilter',
-    'start',
-    'end',
-    'timeRange',
-    'tz'
-  ].forEach(key => {
-    const value = sourceParams.get(key)?.trim();
-    if (value) params.set(key, value);
-  });
-  if (!params.get('traceId') && !params.get('serviceName') && !params.get('entityId')) return null;
-  params.set('pageIndex', '0');
-  params.set('pageSize', '3');
-  return `/logs/list?${params.toString()}`;
+  return buildTraceRelatedLogsUrlFromHref(logsHref, { pageSize: '3' });
 }
 
 function buildTraceRelatedLogHref(logsHref: string | null | undefined, entry: LogEntry) {
