@@ -1087,6 +1087,7 @@ describe('otlp metrics view model', () => {
           span_id: 'span-series-42',
           http_route: '/inventory/{id}',
           'hertzbeat.entity_id': '42',
+          'hertzbeat.entity_type': 'service',
           'hertzbeat.entity_name': 'Inventory API',
           'hertzbeat.collector': 'collector-b',
           'hertzbeat.template': 'fastapi'
@@ -1100,6 +1101,7 @@ describe('otlp metrics view model', () => {
     expect(logParams.get('view')).toBe('list');
     expect(logParams.get('search')).toBeNull();
     expect(logParams.get('entityId')).toBe('42');
+    expect(logParams.get('entityType')).toBe('service');
     expect(logParams.get('entityName')).toBe('Inventory API');
     expect(logParams.get('serviceName')).toBe('inventory');
     expect(logParams.get('serviceNamespace')).toBe('warehouse');
@@ -1118,6 +1120,7 @@ describe('otlp metrics view model', () => {
     expect(traceParams.get('spanId')).toBe('span-series-42');
     expect(traceParams.get('operationName')).toBe('/inventory/{id}');
     expect(traceParams.get('entityId')).toBe('42');
+    expect(traceParams.get('entityType')).toBe('service');
 
     const entityHref = new URL(result.entityHref, 'https://example.com');
     expect(entityHref.pathname).toBe('/entities/42');
@@ -1127,11 +1130,14 @@ describe('otlp metrics view model', () => {
     const alertHandlingHref = new URL(result.alertHandlingHref, 'https://example.com');
     expect(alertHandlingHref.searchParams.get('search')).toBe('inventory');
     expect(alertHandlingHref.searchParams.get('entityId')).toBe('42');
+    expect(alertHandlingHref.searchParams.get('entityType')).toBe('service');
     expect(alertHandlingHref.searchParams.get('serviceName')).toBe('inventory');
     expect(alertHandlingHref.searchParams.get('operationName')).toBe('/inventory/{id}');
 
     const alertRulesHref = new URL(result.alertRulesHref, 'https://example.com');
+    expect(alertRulesHref.searchParams.get('entityType')).toBe('service');
     expect(alertRulesHref.searchParams.get('operationName')).toBe('/inventory/{id}');
+    expect(alertRulesHref.searchParams.get('alertQuery')).toContain('entityType=service');
     expect(alertRulesHref.searchParams.get('alertQuery')).toContain('operationName=/inventory/{id}');
   });
 

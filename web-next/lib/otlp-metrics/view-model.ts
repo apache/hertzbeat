@@ -146,6 +146,7 @@ export function buildMetricsAlertRuleDraft(
     ['aggregation', query.aggregation],
     ['groupBy', query.groupBy],
     ['entityId', query.entityId || routeContext.entityId],
+    ['entityType', query.entityType || routeContext.entityType],
     ['entityName', query.entityName || routeContext.entityName],
     ['serviceName', query.serviceName || routeContext.serviceName],
     ['serviceNamespace', query.serviceNamespace || routeContext.serviceNamespace],
@@ -187,6 +188,7 @@ function buildMetricSeriesSignalContext(series: OtlpMetricSeriesView | null | un
   if (!series) return {};
   return {
     entityId: readEntityIdRouteParam(readSeriesLabel(series, 'hertzbeat.entity_id', 'hertzbeat_entity_id', 'entity.id', 'entity_id')),
+    entityType: readSeriesLabel(series, 'hertzbeat.entity_type', 'hertzbeat_entity_type', 'entity.type', 'entity_type'),
     entityName: readSeriesLabel(series, 'hertzbeat.entity_name', 'hertzbeat_entity_name', 'entity.name', 'entity_name'),
     serviceName: readSeriesLabel(series, 'service.name', 'service_name', 'serviceName'),
     serviceNamespace: readSeriesLabel(series, 'service.namespace', 'service_namespace', 'serviceNamespace'),
@@ -972,6 +974,7 @@ export function buildMetricsHandoffLinks(
     ...routeContext,
     ...query,
     entityId: selectedContext.entityId || query.entityId || (data.context?.entityId != null ? String(data.context.entityId) : routeContext.entityId),
+    entityType: selectedContext.entityType || query.entityType || (data.context?.entityType != null ? String(data.context.entityType) : routeContext.entityType),
     entityName: selectedContext.entityName || query.entityName || firstText(data.context?.entityName ?? undefined, routeContext.entityName),
     serviceName,
     serviceNamespace,
