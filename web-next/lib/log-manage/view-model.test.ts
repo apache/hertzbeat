@@ -745,6 +745,7 @@ describe('log view model', () => {
 
     const traceParams = new URL(result.traceHref, 'https://example.com').searchParams;
     expect(traceParams.get('operationName')).toBe('POST /checkout');
+    expect(traceParams.get('attributeFilter')).toBeNull();
 
     const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
     expect(metricsParams.get('operationName')).toBe('POST /checkout');
@@ -759,6 +760,36 @@ describe('log view model', () => {
 
     const alertRuleParams = new URL(result.alertRulesHref, 'https://example.com').searchParams;
     expect(alertRuleParams.get('operationName')).toBe('POST /checkout');
+  });
+
+  it('adds an executable trace attribute filter for operation-level log handoffs', () => {
+    const result = buildLogHandoffLinks(
+      {
+        traceId: '',
+        spanId: '',
+        timeUnixNano: 1_710_000_000_000_000_000,
+        resource: {
+          'service.name': 'checkout',
+          'service.namespace': 'payments'
+        },
+        attributes: {
+          'http.route': '/checkout/:id'
+        }
+      } as any,
+      {
+        entityId: '7',
+        entityType: 'service',
+        entityName: 'Checkout API'
+      }
+    );
+
+    const traceParams = new URL(result.traceHref, 'https://example.com').searchParams;
+    expect(traceParams.get('traceId')).toBeNull();
+    expect(traceParams.get('spanId')).toBeNull();
+    expect(traceParams.get('serviceName')).toBe('checkout');
+    expect(traceParams.get('serviceNamespace')).toBe('payments');
+    expect(traceParams.get('operationName')).toBe('/checkout/:id');
+    expect(traceParams.get('attributeFilter')).toBe('http.route="/checkout/:id"');
   });
 
   it('can override trace and metrics return paths with the current log workspace route', () => {

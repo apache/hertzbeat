@@ -340,6 +340,23 @@ function buildMetricFilterExpression(name: string, value: string | undefined) {
   return `${trimmedName}="${escapeMetricFilterValue(trimmedValue)}"`;
 }
 
+function buildTraceAttributeFilterExpression(name: string, value: string | undefined) {
+  const trimmedName = name.trim();
+  const trimmedValue = value?.trim();
+  if (!/^[A-Za-z0-9_.:-]+$/.test(trimmedName) || !trimmedValue || trimmedValue === '-') return undefined;
+  return `${trimmedName}="${escapeMetricFilterValue(trimmedValue)}"`;
+}
+
+function buildLogTraceOperationAttributeFilter(selectedLog: LogEntry | null, traceId: string | undefined, spanId: string | undefined) {
+  if (traceId || spanId) return undefined;
+  const httpRoute = firstText(
+    readAttribute(selectedLog?.attributes, 'http.route'),
+    readAttribute(selectedLog?.attributes, 'http_route')
+  );
+  if (httpRoute) return buildTraceAttributeFilterExpression('http.route', httpRoute);
+  return buildTraceAttributeFilterExpression('span.name', readAttribute(selectedLog?.attributes, 'span.name'));
+}
+
 function buildLogMetricsResourceFilter(selectedLog: LogEntry | null) {
   const expressions = [
     buildMetricFilterExpression('k8s.namespace.name', firstText(
@@ -750,6 +767,8 @@ export function buildLogHandoffLinks(
   if (spanId) traceParams.set('spanId', spanId);
   if (traceContext.serviceName) traceParams.set('serviceName', traceContext.serviceName);
   appendSignalRouteContext(traceParams, traceContext);
+  const traceOperationAttributeFilter = buildLogTraceOperationAttributeFilter(selectedLog, traceId, spanId);
+  if (traceOperationAttributeFilter) traceParams.set('attributeFilter', traceOperationAttributeFilter);
   const traceHref = traceParams.toString() ? `/trace/manage?${traceParams.toString()}` : '/trace/manage';
 
   const metricsParams = new URLSearchParams();
