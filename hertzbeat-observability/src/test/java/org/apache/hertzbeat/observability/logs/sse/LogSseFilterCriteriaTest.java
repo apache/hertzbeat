@@ -191,6 +191,58 @@ class LogSseFilterCriteriaTest {
     }
 
     @Test
+    void testMatchesWithResourceAndAttributeFilters() {
+        LogEntry checkoutLog = LogEntry.builder()
+                .severityText("INFO")
+                .body("checkout log")
+                .resource(java.util.Map.of(
+                        "service.version", "1.2.3",
+                        "cloud.region", "us-east-1"))
+                .attributes(java.util.Map.of(
+                        "http.route", "/checkout",
+                        "error.message", "payment timeout"))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .severityText("INFO")
+                .body("cart log")
+                .resource(java.util.Map.of(
+                        "service.version", "1.2.4",
+                        "cloud.region", "eu-west-1"))
+                .attributes(java.util.Map.of(
+                        "http.route", "/cart",
+                        "error.message", "cart timeout"))
+                .build();
+
+        filterCriteria.setResourceFilter("service.version=1.2.3, cloud.region IN ('us-east-1')");
+        filterCriteria.setAttributeFilter("http.route:/checkout and error.message CONTAINS payment");
+
+        assertTrue(filterCriteria.matches(checkoutLog));
+        assertFalse(filterCriteria.matches(cartLog));
+    }
+
+    @Test
+    void testMatchesWithNegativeResourceAndAttributeFilters() {
+        LogEntry checkoutLog = LogEntry.builder()
+                .severityText("INFO")
+                .body("checkout log")
+                .resource(java.util.Map.of("service.version", "1.2.3"))
+                .attributes(java.util.Map.of("http.route", "/checkout"))
+                .build();
+        LogEntry cartLog = LogEntry.builder()
+                .severityText("INFO")
+                .body("cart log")
+                .resource(java.util.Map.of("service.version", "1.2.4"))
+                .attributes(java.util.Map.of("http.route", "/cart"))
+                .build();
+
+        filterCriteria.setResourceFilter("service.version!=1.2.4");
+        filterCriteria.setAttributeFilter("http.route NOT IN ('/cart') and error.message NOT EXISTS");
+
+        assertTrue(filterCriteria.matches(checkoutLog));
+        assertFalse(filterCriteria.matches(cartLog));
+    }
+
+    @Test
     void testMatchesWithEmptyStringFilters() {
         // Test empty string filters
         filterCriteria.setSeverityText("");

@@ -314,7 +314,16 @@ describe('log query state codec', () => {
     );
     expect(
       buildLogStreamUrl(
-        { search: 'timeout', logContent: '', traceId: '', spanId: '', severityNumber: '', severityText: 'ERROR' },
+        {
+          search: 'timeout',
+          logContent: '',
+          traceId: '',
+          spanId: '',
+          severityNumber: '',
+          severityText: 'ERROR',
+          resourceFilter: 'service.version=1.2.3',
+          attributeFilter: 'http.route:/checkout'
+        },
         {
           entityId: '42',
           entityType: 'service',
@@ -324,7 +333,7 @@ describe('log query state codec', () => {
         }
       )
     ).toBe(
-      '/api/logs/sse/subscribe?logContent=timeout&severityText=ERROR&entityId=42&entityType=service&serviceName=checkout&serviceNamespace=payments&environment=prod'
+      '/api/logs/sse/subscribe?logContent=timeout&severityText=ERROR&resourceFilter=service.version%3D1.2.3&attributeFilter=http.route%3A%2Fcheckout&entityId=42&entityType=service&serviceName=checkout&serviceNamespace=payments&environment=prod'
     );
   });
 

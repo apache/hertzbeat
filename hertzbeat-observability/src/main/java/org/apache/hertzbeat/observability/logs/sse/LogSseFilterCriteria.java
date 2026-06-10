@@ -19,8 +19,15 @@
 
 package org.apache.hertzbeat.observability.logs.sse;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -39,6 +46,24 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 @NoArgsConstructor
 @Schema(description = "Log filtering criteria for SSE (Server-Sent Events) log streaming")
 public class LogSseFilterCriteria {
+
+    private static final String LOG_FILTER_NEGATION_PREFIX = "!";
+    private static final String LOG_FILTER_IN_PREFIX = "__in__:";
+    private static final String LOG_FILTER_NOT_IN_PREFIX = "__not_in__:";
+    private static final String LOG_FILTER_CONTAINS_PREFIX = "__contains__:";
+    private static final String LOG_FILTER_NOT_CONTAINS_PREFIX = "__not_contains__:";
+    private static final String LOG_FILTER_EXISTS_PREFIX = "__exists__";
+    private static final String LOG_FILTER_NOT_EXISTS_PREFIX = "__not_exists__";
+    private static final String LOG_FILTER_VALUE_DELIMITER = "\u001F";
+    private static final Pattern LOG_FILTER_LIST_OPERATOR_PATTERN = Pattern.compile(
+            "^([A-Za-z0-9_.:-]+)\\s+(NOT\\s+IN|IN)\\s*(\\(.+\\))$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern LOG_FILTER_TEXT_OPERATOR_PATTERN = Pattern.compile(
+            "^([A-Za-z0-9_.:-]+)\\s+(NOT\\s+CONTAINS|CONTAINS)\\s+(.+)$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern LOG_FILTER_PRESENCE_OPERATOR_PATTERN = Pattern.compile(
+            "^([A-Za-z0-9_.:-]+)\\s+(NOT\\s+EXISTS|EXISTS)$",
+            Pattern.CASE_INSENSITIVE);
 
     private static final Set<String> WORKSPACE_RESOURCE_KEYS = Set.of(
             "hertzbeat.workspace_id",
@@ -96,6 +121,12 @@ public class LogSseFilterCriteria {
 
     @Schema(description = "HertzBeat entity type resource attribute.", example = "service", accessMode = READ_WRITE)
     private String entityType;
+
+    @Schema(description = "Resource attribute filter expression, for example service.version=1.2.3", accessMode = READ_WRITE)
+    private String resourceFilter;
+
+    @Schema(description = "Log attribute filter expression, for example http.route:/checkout", accessMode = READ_WRITE)
+    private String attributeFilter;
 
     /**
      * Workspace boundary captured from the authenticated request.
@@ -157,6 +188,12 @@ public class LogSseFilterCriteria {
         if (!matchesServiceContext(log)) {
             return false;
         }
+        if (!matchesAttributes(log.getResource(), parseLogAttributeFilter(resourceFilter))) {
+            return false;
+        }
+        if (!matchesAttributes(log.getAttributes(), parseLogAttributeFilter(attributeFilter))) {
+            return false;
+        }
         return true;
     }
 
@@ -210,6 +247,262 @@ public class LogSseFilterCriteria {
             }
         }
         return null;
+    }
+
+    private Map<String, String> parseLogAttributeFilter(String filterExpression) {
+        if (!StringUtils.hasText(filterExpression)) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> filters = new LinkedHashMap<>();
+        for (String token : splitLogFilterClauses(filterExpression)) {
+            if (!StringUtils.hasText(token)) {
+                continue;
+            }
+            if (appendLogFilterListValues(filters, token)
+                    || appendLogFilterTextValue(filters, token)
+                    || appendLogFilterPresenceValue(filters, token)) {
+                continue;
+            }
+            boolean negate = false;
+            int separatorIndex = token.indexOf("!=");
+            if (separatorIndex >= 0) {
+                negate = true;
+            } else {
+                separatorIndex = token.indexOf('=');
+            }
+            if (separatorIndex < 0) {
+                separatorIndex = token.indexOf(':');
+            }
+            if (separatorIndex <= 0 || separatorIndex >= token.length() - 1) {
+                continue;
+            }
+            String key = token.substring(0, separatorIndex).trim();
+            String value = stripFilterQuotes(token.substring(separatorIndex + (negate ? 2 : 1)).trim());
+            if (!isSafeAttributeKey(key) || !StringUtils.hasText(value)) {
+                continue;
+            }
+            filters.put(key, negate ? LOG_FILTER_NEGATION_PREFIX + value : value);
+        }
+        return filters.isEmpty() ? Collections.emptyMap() : Map.copyOf(filters);
+    }
+
+    private boolean appendLogFilterListValues(Map<String, String> filters, String token) {
+        Matcher matcher = LOG_FILTER_LIST_OPERATOR_PATTERN.matcher(token);
+        if (!matcher.matches()) {
+            return false;
+        }
+        String key = matcher.group(1).trim();
+        String operator = matcher.group(2).trim().replaceAll("\\s+", " ");
+        String valueList = matcher.group(3).trim();
+        if (!isSafeAttributeKey(key) || valueList.length() < 2
+                || !valueList.startsWith("(") || !valueList.endsWith(")")) {
+            return false;
+        }
+        List<String> values = splitLogFilterListValues(valueList.substring(1, valueList.length() - 1)).stream()
+                .map(value -> stripFilterQuotes(value.trim()))
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
+        if (values.isEmpty()) {
+            return false;
+        }
+        String prefix = "not in".equalsIgnoreCase(operator) ? LOG_FILTER_NOT_IN_PREFIX : LOG_FILTER_IN_PREFIX;
+        filters.put(key, prefix + String.join(LOG_FILTER_VALUE_DELIMITER, values));
+        return true;
+    }
+
+    private boolean appendLogFilterTextValue(Map<String, String> filters, String token) {
+        Matcher matcher = LOG_FILTER_TEXT_OPERATOR_PATTERN.matcher(token);
+        if (!matcher.matches()) {
+            return false;
+        }
+        String key = matcher.group(1).trim();
+        String operator = matcher.group(2).trim().replaceAll("\\s+", " ");
+        String value = stripFilterQuotes(matcher.group(3).trim());
+        if (!isSafeAttributeKey(key) || !StringUtils.hasText(value)) {
+            return false;
+        }
+        filters.put(key, "not contains".equalsIgnoreCase(operator)
+                ? LOG_FILTER_NOT_CONTAINS_PREFIX + value
+                : LOG_FILTER_CONTAINS_PREFIX + value);
+        return true;
+    }
+
+    private boolean appendLogFilterPresenceValue(Map<String, String> filters, String token) {
+        Matcher matcher = LOG_FILTER_PRESENCE_OPERATOR_PATTERN.matcher(token);
+        if (!matcher.matches()) {
+            return false;
+        }
+        String key = matcher.group(1).trim();
+        String operator = matcher.group(2).trim().replaceAll("\\s+", " ");
+        if (!isSafeAttributeKey(key)) {
+            return false;
+        }
+        filters.put(key, "not exists".equalsIgnoreCase(operator)
+                ? LOG_FILTER_NOT_EXISTS_PREFIX
+                : LOG_FILTER_EXISTS_PREFIX);
+        return true;
+    }
+
+    private List<String> splitLogFilterClauses(String filterExpression) {
+        List<String> clauses = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        int depth = 0;
+        char quote = 0;
+        for (int index = 0; index < filterExpression.length(); index++) {
+            char character = filterExpression.charAt(index);
+            if (quote != 0) {
+                current.append(character);
+                if (character == quote) {
+                    quote = 0;
+                }
+                continue;
+            }
+            if (character == '\'' || character == '"') {
+                quote = character;
+                current.append(character);
+                continue;
+            }
+            if (character == '(') {
+                depth++;
+                current.append(character);
+                continue;
+            }
+            if (character == ')') {
+                depth = Math.max(0, depth - 1);
+                current.append(character);
+                continue;
+            }
+            if (depth == 0 && (character == ',' || isLogFilterAndDelimiter(filterExpression, index))) {
+                addLogFilterClause(clauses, current);
+                if (character != ',') {
+                    index += 4;
+                }
+                continue;
+            }
+            current.append(character);
+        }
+        addLogFilterClause(clauses, current);
+        return clauses;
+    }
+
+    private List<String> splitLogFilterListValues(String values) {
+        List<String> result = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        char quote = 0;
+        for (int index = 0; index < values.length(); index++) {
+            char character = values.charAt(index);
+            if (quote != 0) {
+                current.append(character);
+                if (character == quote) {
+                    quote = 0;
+                }
+                continue;
+            }
+            if (character == '\'' || character == '"') {
+                quote = character;
+                current.append(character);
+                continue;
+            }
+            if (character == ',') {
+                addLogFilterClause(result, current);
+                continue;
+            }
+            current.append(character);
+        }
+        addLogFilterClause(result, current);
+        return result;
+    }
+
+    private void addLogFilterClause(List<String> clauses, StringBuilder current) {
+        String clause = current.toString().trim();
+        if (StringUtils.hasText(clause)) {
+            clauses.add(clause);
+        }
+        current.setLength(0);
+    }
+
+    private boolean isLogFilterAndDelimiter(String value, int index) {
+        return index + 5 <= value.length() && value.regionMatches(true, index, " and ", 0, 5);
+    }
+
+    private String stripFilterQuotes(String value) {
+        if (value.length() < 2) {
+            return value;
+        }
+        char first = value.charAt(0);
+        char last = value.charAt(value.length() - 1);
+        if ((first == '\'' && last == '\'') || (first == '"' && last == '"')) {
+            return value.substring(1, value.length() - 1).trim();
+        }
+        return value;
+    }
+
+    private boolean isSafeAttributeKey(String key) {
+        return StringUtils.hasText(key) && key.matches("[A-Za-z0-9_.:-]+");
+    }
+
+    private boolean matchesAttributes(Map<String, Object> source, Map<String, String> expectedAttributes) {
+        if (expectedAttributes == null || expectedAttributes.isEmpty()) {
+            return true;
+        }
+        if (source == null || source.isEmpty()) {
+            return expectedAttributes.values().stream().allMatch(this::isExclusionLogAttributeFilter);
+        }
+        return expectedAttributes.entrySet().stream()
+                .allMatch(entry -> matchesAttributeFilter(resolveValue(source, entry.getKey()), entry.getValue(),
+                        source.containsKey(entry.getKey())));
+    }
+
+    private boolean matchesAttributeFilter(String actualValue, String expectedValue, boolean keyExists) {
+        if (LOG_FILTER_EXISTS_PREFIX.equals(expectedValue)) {
+            return keyExists;
+        }
+        if (LOG_FILTER_NOT_EXISTS_PREFIX.equals(expectedValue)) {
+            return !keyExists;
+        }
+        if (expectedValue != null && expectedValue.startsWith(LOG_FILTER_IN_PREFIX)) {
+            return splitListLogAttributeValues(expectedValue.substring(LOG_FILTER_IN_PREFIX.length())).stream()
+                    .anyMatch(expected -> matchesOptionalValue(actualValue, expected));
+        }
+        if (expectedValue != null && expectedValue.startsWith(LOG_FILTER_NOT_IN_PREFIX)) {
+            return splitListLogAttributeValues(expectedValue.substring(LOG_FILTER_NOT_IN_PREFIX.length())).stream()
+                    .noneMatch(expected -> matchesOptionalValue(actualValue, expected));
+        }
+        if (expectedValue != null && expectedValue.startsWith(LOG_FILTER_CONTAINS_PREFIX)) {
+            return matchesContainedValue(actualValue, expectedValue.substring(LOG_FILTER_CONTAINS_PREFIX.length()));
+        }
+        if (expectedValue != null && expectedValue.startsWith(LOG_FILTER_NOT_CONTAINS_PREFIX)) {
+            return !matchesContainedValue(actualValue, expectedValue.substring(LOG_FILTER_NOT_CONTAINS_PREFIX.length()));
+        }
+        if (expectedValue != null && expectedValue.startsWith(LOG_FILTER_NEGATION_PREFIX)) {
+            return !matchesOptionalValue(actualValue, expectedValue.substring(LOG_FILTER_NEGATION_PREFIX.length()));
+        }
+        return matchesOptionalValue(actualValue, expectedValue);
+    }
+
+    private boolean isExclusionLogAttributeFilter(String expectedValue) {
+        return (expectedValue != null && expectedValue.startsWith(LOG_FILTER_NEGATION_PREFIX))
+                || (expectedValue != null && expectedValue.startsWith(LOG_FILTER_NOT_IN_PREFIX))
+                || (expectedValue != null && expectedValue.startsWith(LOG_FILTER_NOT_CONTAINS_PREFIX))
+                || LOG_FILTER_NOT_EXISTS_PREFIX.equals(expectedValue);
+    }
+
+    private List<String> splitListLogAttributeValues(String encodedValues) {
+        if (!StringUtils.hasText(encodedValues)) {
+            return List.of();
+        }
+        return List.of(encodedValues.split(Pattern.quote(LOG_FILTER_VALUE_DELIMITER), -1)).stream()
+                .filter(StringUtils::hasText)
+                .toList();
+    }
+
+    private boolean matchesContainedValue(String actualValue, String expectedValue) {
+        if (!StringUtils.hasText(expectedValue)) {
+            return true;
+        }
+        return StringUtils.hasText(actualValue)
+                && actualValue.toLowerCase(Locale.ROOT).contains(expectedValue.trim().toLowerCase(Locale.ROOT));
     }
 
     private String resolveWorkspaceId(Map<String, Object> resource) {

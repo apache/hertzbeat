@@ -443,6 +443,9 @@ export function buildLogStreamUrl(query: LogQueryState, routeContext: SignalRout
   const severityNumber = normalizeSeverityNumberParam(query.severityNumber);
   if (severityNumber) params.set('severityNumber', severityNumber);
   if (query.severityText.trim()) params.set('severityText', query.severityText.trim());
+  const resourceFilter = query.resourceFilter?.trim() || '';
+  if (resourceFilter) params.set('resourceFilter', resourceFilter);
+  if (query.attributeFilter?.trim()) params.set('attributeFilter', query.attributeFilter.trim());
   appendLogEntityContextParams(params, routeContext);
   appendLogQuickFilterContext(params, routeContext);
   const qs = params.toString();
