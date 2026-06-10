@@ -99,6 +99,7 @@ export function queryStateFromParams(params: SearchParamReader): OtlpMetricsQuer
     returnTo: stripReturnLabelFromHref(params.get('returnTo')) || undefined,
     traceId: params.get('traceId') || undefined,
     spanId: params.get('spanId') || undefined,
+    operationName: params.get('operationName') || undefined,
     inspector: readMetricsInspectorView(params.get('inspector')),
     warningThreshold: readFiniteNumberRouteParam(params.get('warningThreshold')),
     criticalThreshold: readFiniteNumberRouteParam(params.get('criticalThreshold')),

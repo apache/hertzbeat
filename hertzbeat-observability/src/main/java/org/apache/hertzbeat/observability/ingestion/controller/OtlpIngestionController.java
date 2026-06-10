@@ -91,10 +91,11 @@ public class OtlpIngestionController {
             @RequestParam(value = "aggregation", required = false) String aggregation,
             @RequestParam(value = "temporalAggregation", required = false) String temporalAggregation,
             @RequestParam(value = "step", required = false) String step,
-            @RequestParam(value = "limit", required = false) String limit) {
+            @RequestParam(value = "limit", required = false) String limit,
+            @RequestParam(value = "operationName", required = false) String operationName) {
         return ResponseEntity.ok(Message.success(otlpIngestionWorkspaceService.getMetricsConsole(
                 entityId, entityType, start, end, serviceName, serviceNamespace, environment, query, filter, groupBy, aggregation,
-                temporalAggregation, step, limit)));
+                temporalAggregation, step, limit, operationName)));
     }
 
     @GetMapping("/metrics/inventory")

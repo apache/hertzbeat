@@ -46,11 +46,21 @@ describe('otlp metrics controller', () => {
         limit: '25',
         traceId: 'trace-1',
         spanId: 'span-1',
+        operationName: 'POST /checkout',
         serviceName: 'checkout',
         start: '1000',
         end: '2000'
       })
-    ).toBe('/ingestion/otlp/metrics/console?query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&step=60&limit=25&traceId=trace-1&spanId=span-1&serviceName=checkout&start=1000&end=2000');
+    ).toBe('/ingestion/otlp/metrics/console?query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&step=60&limit=25&traceId=trace-1&spanId=span-1&operationName=POST+%2Fcheckout&serviceName=checkout&start=1000&end=2000');
+  });
+
+  it('reads operation context from trace and log handoffs into metrics console state', () => {
+    const query = queryStateFromParams(new URLSearchParams(
+      'query=http.server.duration&serviceName=checkout&operationName=POST+%2Fcheckout&traceId=trace-1&spanId=span-1'
+    ));
+
+    expect(query.operationName).toBe('POST /checkout');
+    expect(buildOtlpMetricsConsoleUrl(query)).toContain('operationName=POST+%2Fcheckout');
   });
 
   it('builds and loads metrics inventory from entity and service context only', async () => {

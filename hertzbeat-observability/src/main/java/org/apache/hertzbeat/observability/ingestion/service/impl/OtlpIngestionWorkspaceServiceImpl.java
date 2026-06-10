@@ -681,11 +681,20 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         );
     }
 
-    @Override
     public OtlpMetricsConsoleDto getMetricsConsole(Long entityId, String entityType, Long start, Long end,
                                                    String serviceName, String serviceNamespace, String environment,
                                                    String query, String filter, String groupBy, String aggregation,
                                                    String temporalAggregation, String step, String limit) {
+        return getMetricsConsole(entityId, entityType, start, end, serviceName, serviceNamespace, environment, query,
+                filter, groupBy, aggregation, temporalAggregation, step, limit, null);
+    }
+
+    @Override
+    public OtlpMetricsConsoleDto getMetricsConsole(Long entityId, String entityType, Long start, Long end,
+                                                   String serviceName, String serviceNamespace, String environment,
+                                                   String query, String filter, String groupBy, String aggregation,
+                                                   String temporalAggregation, String step, String limit,
+                                                   String operationName) {
         long resolvedEnd = end == null || end <= 0 ? System.currentTimeMillis() : end;
         long resolvedStart = start == null || start <= 0 || start >= resolvedEnd
                 ? resolvedEnd - DEFAULT_CONSOLE_LOOKBACK_MILLIS
@@ -701,6 +710,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                 entityId, entityType, resolvedStart, resolvedEnd, serviceName, serviceNamespace, environment
         );
         String resolvedQuery = trimToNull(query);
+        String normalizedOperationName = trimToNull(operationName);
+        List<String> resolvedQueries;
         if (!StringUtils.hasText(resolvedQuery)) {
             OtlpMetricsConsoleDto autoResolvedConsole = queryDefaultMetricsConsole(
                     context,
@@ -712,17 +723,19 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     resolvedStart,
                     resolvedEnd,
                     resolvedStep,
-                    resolvedSeriesLimit
+                    resolvedSeriesLimit,
+                    normalizedOperationName
             );
             if (autoResolvedConsole != null) {
                 return autoResolvedConsole;
             }
-            resolvedQuery = buildDefaultMetricsQuery(context, filter, groupBy, aggregation, temporalAggregation);
+            resolvedQueries = buildDefaultMetricsQueries(context, filter, groupBy, aggregation, temporalAggregation,
+                    normalizedOperationName);
         } else {
-            resolvedQuery = buildMetricsQueryForExplicitMetric(context, resolvedQuery, filter, groupBy, aggregation,
-                    temporalAggregation);
+            resolvedQueries = buildMetricsQueriesForExplicitMetric(context, resolvedQuery, filter, groupBy, aggregation,
+                    temporalAggregation, normalizedOperationName);
         }
-        if (!StringUtils.hasText(resolvedQuery)) {
+        if (CollectionUtils.isEmpty(resolvedQueries)) {
             return new OtlpMetricsConsoleDto(
                     context,
                     null,
@@ -734,6 +747,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     message("observability.otlp.metrics-console.no-context")
             );
         }
+        resolvedQuery = resolvedQueries.getFirst();
         if (!metricQueryRepository.hasPromqlExecutor()) {
             return new OtlpMetricsConsoleDto(
                     context,
@@ -746,29 +760,54 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     message("observability.otlp.metrics-console.promql-unavailable")
             );
         }
-        MetricsQueryExecution execution = executeMetricsConsoleQuery(resolvedQuery, resolvedStart, resolvedEnd,
-                resolvedStep, resolvedSeriesLimit);
-        if (execution.errorMessage() != null) {
+        MetricsQueryExecution firstEmptyExecution = null;
+        String firstEmptyQuery = null;
+        String lastErrorMessage = null;
+        for (String candidateQuery : resolvedQueries) {
+            MetricsQueryExecution execution = executeMetricsConsoleQuery(candidateQuery, resolvedStart, resolvedEnd,
+                    resolvedStep, resolvedSeriesLimit);
+            if (execution.errorMessage() != null) {
+                lastErrorMessage = execution.errorMessage();
+                continue;
+            }
+            if (execution.stats().getNonEmptySeries() > 0) {
+                return new OtlpMetricsConsoleDto(
+                        context,
+                        candidateQuery,
+                        execution.datasource(),
+                        WarehouseConstants.PROMQL,
+                        execution.results(),
+                        execution.stats(),
+                        deriveMetricsEmptyStateReason(execution.results(), execution.stats()),
+                        execution.results() == null ? null : trimToNull(execution.results().getMsg())
+                );
+            }
+            if (firstEmptyExecution == null) {
+                firstEmptyExecution = execution;
+                firstEmptyQuery = candidateQuery;
+            }
+        }
+        if (firstEmptyExecution == null) {
             return new OtlpMetricsConsoleDto(
                     context,
                     resolvedQuery,
-                    execution.datasource(),
+                    null,
                     WarehouseConstants.PROMQL,
                     null,
                     new OtlpMetricsConsoleDto.Stats(0, 0, null),
                     "load_failed",
-                    execution.errorMessage()
+                    lastErrorMessage
             );
         }
         return new OtlpMetricsConsoleDto(
                 context,
-                resolvedQuery,
-                execution.datasource(),
+                firstEmptyQuery,
+                firstEmptyExecution.datasource(),
                 WarehouseConstants.PROMQL,
-                execution.results(),
-                execution.stats(),
-                deriveMetricsEmptyStateReason(execution.results(), execution.stats()),
-                execution.results() == null ? null : trimToNull(execution.results().getMsg())
+                firstEmptyExecution.results(),
+                firstEmptyExecution.stats(),
+                deriveMetricsEmptyStateReason(firstEmptyExecution.results(), firstEmptyExecution.stats()),
+                firstEmptyExecution.results() == null ? null : trimToNull(firstEmptyExecution.results().getMsg())
         );
     }
 
@@ -1278,6 +1317,10 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             values.put("http_route", normalizedOperationName);
         }
         return values;
+    }
+
+    private List<String> metricsOperationLabels(String operationName) {
+        return StringUtils.hasText(trimToNull(operationName)) ? List.of("operation_name", "http_route") : List.of();
     }
 
     private String relatedMetricFamily(String metricName) {
@@ -1908,7 +1951,8 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                                              long resolvedStart,
                                                              long resolvedEnd,
                                                              String resolvedStep,
-                                                             int resolvedSeriesLimit) {
+                                                             int resolvedSeriesLimit,
+                                                             String operationName) {
         if (!metricQueryRepository.hasPromqlExecutor()) {
             return null;
         }
@@ -1932,32 +1976,30 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         String lastErrorMessage = null;
         for (OtlpMetricsConsoleDto.Context candidateContext : candidateContexts) {
             for (String metricName : candidateMetricNames(candidateContext)) {
-                String candidateQuery = buildMetricsQueryForMetric(candidateContext, metricName, filter, groupBy,
-                        aggregation, temporalAggregation);
-                if (!StringUtils.hasText(candidateQuery)) {
-                    continue;
-                }
-                MetricsQueryExecution execution = executeMetricsConsoleQuery(candidateQuery, resolvedStart,
-                        resolvedEnd, resolvedStep, resolvedSeriesLimit);
-                if (execution.errorMessage() != null) {
-                    lastErrorMessage = execution.errorMessage();
-                    continue;
-                }
-                OtlpMetricsConsoleDto console = new OtlpMetricsConsoleDto(
-                        candidateContext,
-                        candidateQuery,
-                        execution.datasource(),
-                        WarehouseConstants.PROMQL,
-                        execution.results(),
-                        execution.stats(),
-                        deriveMetricsEmptyStateReason(execution.results(), execution.stats()),
-                        execution.results() == null ? null : trimToNull(execution.results().getMsg())
-                );
-                if (execution.stats().getNonEmptySeries() > 0) {
-                    return console;
-                }
-                if (firstEmptyConsole == null) {
-                    firstEmptyConsole = console;
+                for (String candidateQuery : buildMetricsQueriesForMetric(candidateContext, metricName, filter, groupBy,
+                        aggregation, temporalAggregation, operationName)) {
+                    MetricsQueryExecution execution = executeMetricsConsoleQuery(candidateQuery, resolvedStart,
+                            resolvedEnd, resolvedStep, resolvedSeriesLimit);
+                    if (execution.errorMessage() != null) {
+                        lastErrorMessage = execution.errorMessage();
+                        continue;
+                    }
+                    OtlpMetricsConsoleDto console = new OtlpMetricsConsoleDto(
+                            candidateContext,
+                            candidateQuery,
+                            execution.datasource(),
+                            WarehouseConstants.PROMQL,
+                            execution.results(),
+                            execution.stats(),
+                            deriveMetricsEmptyStateReason(execution.results(), execution.stats()),
+                            execution.results() == null ? null : trimToNull(execution.results().getMsg())
+                    );
+                    if (execution.stats().getNonEmptySeries() > 0) {
+                        return console;
+                    }
+                    if (firstEmptyConsole == null) {
+                        firstEmptyConsole = console;
+                    }
                 }
             }
         }
@@ -1984,15 +2026,26 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                             String groupBy,
                                             String aggregation,
                                             String temporalAggregation) {
+        return buildDefaultMetricsQueries(context, filter, groupBy, aggregation, temporalAggregation, null).stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<String> buildDefaultMetricsQueries(OtlpMetricsConsoleDto.Context context,
+                                                    String filter,
+                                                    String groupBy,
+                                                    String aggregation,
+                                                    String temporalAggregation,
+                                                    String operationName) {
         if (context == null || !StringUtils.hasText(context.getServiceName())) {
-            return null;
+            return List.of();
         }
         String preferredMetricName = candidateMetricNames(context).stream().findFirst().orElse(null);
         if (!StringUtils.hasText(preferredMetricName)) {
-            return null;
+            return List.of();
         }
-        return buildMetricsQueryForMetric(context, preferredMetricName, filter, groupBy, aggregation,
-                temporalAggregation);
+        return buildMetricsQueriesForMetric(context, preferredMetricName, filter, groupBy, aggregation,
+                temporalAggregation, operationName);
     }
 
     private List<String> candidateMetricNames(OtlpMetricsConsoleDto.Context context) {
@@ -2051,6 +2104,44 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                               String groupBy,
                                               String aggregation,
                                               String temporalAggregation) {
+        return buildMetricsQueriesForMetric(context, metricName, filter, groupBy, aggregation, temporalAggregation, null)
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<String> buildMetricsQueriesForMetric(OtlpMetricsConsoleDto.Context context,
+                                                      String metricName,
+                                                      String filter,
+                                                      String groupBy,
+                                                      String aggregation,
+                                                      String temporalAggregation,
+                                                      String operationName) {
+        List<String> operationLabels = metricsOperationLabels(operationName);
+        if (operationLabels.isEmpty()) {
+            String query = buildMetricsQueryForMetric(context, metricName, filter, groupBy, aggregation,
+                    temporalAggregation, null, null);
+            return StringUtils.hasText(query) ? List.of(query) : List.of();
+        }
+        List<String> queries = new ArrayList<>();
+        for (String operationLabel : operationLabels) {
+            String query = buildMetricsQueryForMetric(context, metricName, filter, groupBy, aggregation,
+                    temporalAggregation, operationLabel, operationName);
+            if (StringUtils.hasText(query)) {
+                queries.add(query);
+            }
+        }
+        return queries;
+    }
+
+    private String buildMetricsQueryForMetric(OtlpMetricsConsoleDto.Context context,
+                                              String metricName,
+                                              String filter,
+                                              String groupBy,
+                                              String aggregation,
+                                              String temporalAggregation,
+                                              String operationLabel,
+                                              String operationName) {
         if (context == null || !StringUtils.hasText(context.getServiceName())) {
             return null;
         }
@@ -2079,6 +2170,11 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
         if (StringUtils.hasText(context.getEntityType())) {
             matchers.add("hertzbeat_entity_type=\"" + escapePromqlLabelValue(context.getEntityType()) + "\"");
             scopedLabels.add("hertzbeat_entity_type");
+        }
+        String normalizedOperationName = trimToNull(operationName);
+        if (StringUtils.hasText(operationLabel) && StringUtils.hasText(normalizedOperationName)) {
+            matchers.add(operationLabel + "=\"" + escapePromqlLabelValue(normalizedOperationName) + "\"");
+            scopedLabels.add(operationLabel);
         }
         matchers.addAll(parseMetricsFilterMatchers(filter, scopedLabels));
         String selector = "{" + String.join(", ", matchers) + "}";
@@ -2128,13 +2224,26 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                                                       String groupBy,
                                                       String aggregation,
                                                       String temporalAggregation) {
+        return buildMetricsQueriesForExplicitMetric(context, query, filter, groupBy, aggregation, temporalAggregation, null)
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<String> buildMetricsQueriesForExplicitMetric(OtlpMetricsConsoleDto.Context context,
+                                                              String query,
+                                                              String filter,
+                                                              String groupBy,
+                                                              String aggregation,
+                                                              String temporalAggregation,
+                                                              String operationName) {
         String normalizedQuery = trimToNull(query);
         if (!StringUtils.hasText(normalizedQuery) || !SIMPLE_METRIC_NAME.matcher(normalizedQuery).matches()) {
-            return query;
+            return StringUtils.hasText(normalizedQuery) ? List.of(normalizedQuery) : List.of();
         }
-        String generatedQuery = buildMetricsQueryForMetric(context, normalizedQuery, filter, groupBy, aggregation,
-                temporalAggregation);
-        return StringUtils.hasText(generatedQuery) ? generatedQuery : query;
+        List<String> generatedQueries = buildMetricsQueriesForMetric(context, normalizedQuery, filter, groupBy, aggregation,
+                temporalAggregation, operationName);
+        return generatedQueries.isEmpty() ? List.of(normalizedQuery) : generatedQueries;
     }
 
     private List<String> parseMetricsFilterMatchers(String filter) {

@@ -39,7 +39,8 @@ public interface OtlpIngestionWorkspaceService {
     OtlpMetricsConsoleDto getMetricsConsole(Long entityId, String entityType, Long start, Long end, String serviceName,
                                             String serviceNamespace, String environment, String query,
                                             String filter, String groupBy, String aggregation,
-                                            String temporalAggregation, String step, String limit);
+                                            String temporalAggregation, String step, String limit,
+                                            String operationName);
 
     OtlpMetricsInventoryDto getMetricsInventory(Long entityId, String entityType, Long start, Long end,
                                                 String serviceName, String serviceNamespace, String environment,

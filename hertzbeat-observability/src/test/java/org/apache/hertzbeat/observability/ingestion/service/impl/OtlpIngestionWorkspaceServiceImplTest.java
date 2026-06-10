@@ -823,6 +823,92 @@ class OtlpIngestionWorkspaceServiceImplTest {
     }
 
     @Test
+    void metricsConsoleUsesOperationNameWithHttpRouteFallback() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                2_000L,
+                "http_server_request_duration_count",
+                "sum",
+                "1",
+                14.0,
+                Map.of("http.route", "POST /checkout")
+        );
+        String operationNameQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
+                + "operation_name=\"POST /checkout\"");
+        String httpRouteQuery = groupedMetricPromql("__name__=\"http_server_request_duration_count\", "
+                + "service_name=\"checkout\", service_namespace=\"commerce\", deployment_environment_name=\"prod\", "
+                + "http_route=\"POST /checkout\"");
+        DatasourceQueryData emptyQueryData = new DatasourceQueryData("otlp-metrics-console", 200, null, List.of());
+        DatasourceQueryData httpRouteData = new DatasourceQueryData(
+                "otlp-metrics-console",
+                200,
+                null,
+                List.of(new DatasourceQueryData.SchemaData(
+                        new DatasourceQueryData.MetricSchema(
+                                List.of(
+                                        new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                        new DatasourceQueryData.MetricField("__value__", "number", null)
+                                ),
+                                Map.of("__name__", "http_server_request_duration_count"),
+                                Map.of()
+                        ),
+                        Collections.singletonList(new Object[] {2_000L, 14.0})
+                ))
+        );
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                eq("otlp-metrics-console"),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> {
+            String query = invocation.getArgument(1);
+            return promqlSuccess(httpRouteQuery.equals(query) ? httpRouteData : emptyQueryData);
+        });
+
+        OtlpMetricsConsoleDto console = otlpIngestionWorkspaceService.getMetricsConsole(
+                null,
+                null,
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "http_server_request_duration_count",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "POST /checkout"
+        );
+
+        assertEquals(httpRouteQuery, console.getQuery());
+        assertEquals(1, console.getStats().getNonEmptySeries());
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-metrics-console"),
+                eq(operationNameQuery),
+                anyLong(),
+                anyLong(),
+                anyString()
+        );
+        verify(metricQueryRepository).queryPromqlRange(
+                eq("otlp-metrics-console"),
+                eq(httpRouteQuery),
+                anyLong(),
+                anyLong(),
+                anyString()
+        );
+    }
+
+    @Test
     void metricsConsoleTranslatesFriendlyLabelOperatorsToPromqlMatchers() {
         observabilitySignalIntakeGateway.recordOtlpMetricIntake(
                 Map.of(

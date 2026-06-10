@@ -30,6 +30,7 @@ describe('otlp metrics route state', () => {
       returnTo: `/log/manage?returnLabel=${localizedReturnLabel}`,
       traceId: 'trace-123',
       spanId: 'span-456',
+      operationName: 'POST /checkout',
       query: 'http_server_duration_milliseconds_count',
       filter: 'service.name="checkout"',
       aggregation: 'sum',
@@ -50,7 +51,7 @@ describe('otlp metrics route state', () => {
     });
 
     expect(route).toBe(
-      '/ingestion/otlp/metrics?entityId=7&entityType=service&entityName=checkout&returnTo=%2Flog%2Fmanage&traceId=trace-123&spanId=span-456&query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=25&timeRange=last-1h&serviceName=checkout&serviceNamespace=payments&environment=prod&collector=collector-a&template=spring-boot&start=1712730000000&end=1712733600000'
+      '/ingestion/otlp/metrics?entityId=7&entityType=service&entityName=checkout&returnTo=%2Flog%2Fmanage&traceId=trace-123&spanId=span-456&operationName=POST+%2Fcheckout&query=http_server_duration_milliseconds_count&filter=service.name%3D%22checkout%22&aggregation=sum&temporalAggregation=rate&groupBy=service_name&legendFormat=%7B%7Bservice.name%7D%7D+-+p95&formula=A+*+1000&step=60&limit=25&timeRange=last-1h&serviceName=checkout&serviceNamespace=payments&environment=prod&collector=collector-a&template=spring-boot&start=1712730000000&end=1712733600000'
     );
     expect(route).not.toContain('returnLabel=');
     expect(route).not.toContain(encodeURIComponent(localizedReturnLabel));

@@ -28,6 +28,7 @@ const METRICS_ROUTE_KEYS: Array<keyof OtlpMetricsQueryState> = [
   'returnTo',
   'traceId',
   'spanId',
+  'operationName',
   'query',
   'series',
   'filter',

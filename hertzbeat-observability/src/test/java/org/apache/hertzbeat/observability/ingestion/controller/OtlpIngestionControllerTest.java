@@ -232,7 +232,7 @@ class OtlpIngestionControllerTest {
                 null
         );
         when(otlpIngestionWorkspaceService.getMetricsConsole(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
-                null, "span.kind=\"server\"", null, null, "rate", "60", "1"))
+                null, "span.kind=\"server\"", null, null, "rate", "60", "1", "POST /checkout"))
                 .thenReturn(console);
 
         mockMvc.perform(get("/api/ingestion/otlp/metrics/console")
@@ -246,7 +246,8 @@ class OtlpIngestionControllerTest {
                         .param("filter", "span.kind=\"server\"")
                         .param("temporalAggregation", "rate")
                         .param("step", "60")
-                        .param("limit", "1"))
+                        .param("limit", "1")
+                        .param("operationName", "POST /checkout"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.context.entityId").value(42))
@@ -258,7 +259,7 @@ class OtlpIngestionControllerTest {
 
         verify(otlpIngestionWorkspaceService)
                 .getMetricsConsole(42L, "service", 1000L, 2000L, "checkout", "commerce", "prod",
-                        null, "span.kind=\"server\"", null, null, "rate", "60", "1");
+                        null, "span.kind=\"server\"", null, null, "rate", "60", "1", "POST /checkout");
     }
 
     @Test
