@@ -992,7 +992,12 @@ export function buildMetricsHandoffLinks(
   const end = query.end || (data.context?.end != null ? String(data.context.end) : routeContext.end);
   const traceId = firstText(selectedContext.traceId, query.traceId, routeContext.traceId);
   const spanId = firstText(selectedContext.spanId, query.spanId, routeContext.spanId);
-  const operationName = firstText(selectedContext.operationName, query.operationName, routeContext.operationName);
+  const operationName = firstText(
+    selectedContext.operationName,
+    data.context?.operationName ?? undefined,
+    query.operationName,
+    routeContext.operationName
+  );
   const signalContext: SignalRouteContext = {
     ...routeContext,
     ...query,

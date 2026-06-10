@@ -1142,6 +1142,47 @@ describe('otlp metrics view model', () => {
     expect(alertRulesHref.searchParams.get('alertQuery')).toContain('operationName=/inventory/{id}');
   });
 
+  it('preserves backend-resolved metrics operation context in shared handoffs', () => {
+    const result = buildMetricsHandoffLinks(
+      {
+        context: {
+          entityId: 7,
+          entityType: 'service',
+          entityName: 'Checkout API',
+          serviceName: 'checkout',
+          serviceNamespace: 'payments',
+          environment: 'prod',
+          operationName: 'POST /checkout',
+          start: 1000,
+          end: 2000
+        }
+      } as any,
+      {
+        query: 'http.server.duration',
+        filter: 'service.name="checkout"'
+      },
+      {
+        source: 'otlp'
+      }
+    );
+
+    const logParams = new URL(result.logsHref, 'https://example.com').searchParams;
+    expect(logParams.get('operationName')).toBe('POST /checkout');
+    expect(logParams.get('attributeFilter')).toBe('span.name="POST /checkout"');
+
+    const traceParams = new URL(result.tracesHref, 'https://example.com').searchParams;
+    expect(traceParams.get('operationName')).toBe('POST /checkout');
+    expect(traceParams.get('serviceName')).toBe('checkout');
+    expect(traceParams.get('entityType')).toBe('service');
+
+    const alertRulesHref = new URL(result.alertRulesHref, 'https://example.com');
+    expect(alertRulesHref.searchParams.get('operationName')).toBe('POST /checkout');
+    expect(alertRulesHref.searchParams.get('alertQuery')).toContain('operationName=POST /checkout');
+
+    const dashboardHref = new URL(result.dashboardHref, 'https://example.com');
+    expect(dashboardHref.searchParams.get('panelQuery')).toContain('operationName=POST /checkout');
+  });
+
   it('adds an executable log attribute filter for operation-level metric handoffs', () => {
     const result = buildMetricsHandoffLinks(
       {
