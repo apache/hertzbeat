@@ -911,6 +911,7 @@ describe('otlp metrics view model', () => {
       {
         traceId: 'trace-1',
         spanId: 'span-1',
+        operationName: 'POST /checkout',
         query: 'http.server.duration',
         filter: 'service.name="checkout"',
         formula: 'rate(http.server.duration[5m])',
@@ -1004,6 +1005,7 @@ describe('otlp metrics view model', () => {
     expect(alertParams.get('intent')).toBe('create');
     expect(alertParams.get('entityId')).toBe('7');
     expect(alertParams.get('serviceName')).toBe('checkout');
+    expect(alertParams.get('operationName')).toBe('POST /checkout');
     expect(alertParams.get('environment')).toBe('prod');
     expect(alertParams.get('timeRange')).toBe('last-1h');
     expect(alertParams.get('source')).toBe('otlp');
@@ -1013,6 +1015,12 @@ describe('otlp metrics view model', () => {
     expect(alertParams.get('alertDatasource')).toBe('promql');
     expect(alertParams.get('alertQuery')).toContain('query=http.server.duration');
     expect(alertParams.get('alertQuery')).toContain('filter=service.name="checkout"');
+    expect(alertParams.get('alertQuery')).toContain('entityId=7');
+    expect(alertParams.get('alertQuery')).toContain('entityName=Checkout API');
+    expect(alertParams.get('alertQuery')).toContain('serviceNamespace=payments');
+    expect(alertParams.get('alertQuery')).toContain('operationName=POST /checkout');
+    expect(alertParams.get('alertQuery')).toContain('traceId=trace-1');
+    expect(alertParams.get('alertQuery')).toContain('spanId=span-1');
 
     const handlingUrl = new URL(result.alertHandlingHref, 'https://example.com');
     expect(handlingUrl.pathname).toBe('/alert');
@@ -1040,6 +1048,7 @@ describe('otlp metrics view model', () => {
     expect(dashboardHref.searchParams.get('panelDatasource')).toBe('promql');
     expect(dashboardHref.searchParams.get('panelQuery')).toContain('query=http.server.duration');
     expect(dashboardHref.searchParams.get('panelQuery')).toContain('filter=service.name="checkout"');
+    expect(dashboardHref.searchParams.get('panelQuery')).toContain('operationName=POST /checkout');
   });
 
   it('lets a selected metric series drive service, entity, logs, traces, and alert handoffs', () => {
@@ -1076,6 +1085,7 @@ describe('otlp metrics view model', () => {
           'deployment.environment.name': 'prod-east',
           trace_id: 'trace-series-42',
           span_id: 'span-series-42',
+          http_route: '/inventory/{id}',
           'hertzbeat.entity_id': '42',
           'hertzbeat.entity_name': 'Inventory API',
           'hertzbeat.collector': 'collector-b',
@@ -1096,6 +1106,7 @@ describe('otlp metrics view model', () => {
     expect(logParams.get('environment')).toBe('prod-east');
     expect(logParams.get('traceId')).toBe('trace-series-42');
     expect(logParams.get('spanId')).toBe('span-series-42');
+    expect(logParams.get('operationName')).toBe('/inventory/{id}');
     expect(logParams.get('collector')).toBe('collector-b');
     expect(logParams.get('template')).toBe('fastapi');
 
@@ -1105,6 +1116,7 @@ describe('otlp metrics view model', () => {
     expect(traceParams.get('environment')).toBe('prod-east');
     expect(traceParams.get('traceId')).toBe('trace-series-42');
     expect(traceParams.get('spanId')).toBe('span-series-42');
+    expect(traceParams.get('operationName')).toBe('/inventory/{id}');
     expect(traceParams.get('entityId')).toBe('42');
 
     const entityHref = new URL(result.entityHref, 'https://example.com');
@@ -1116,6 +1128,11 @@ describe('otlp metrics view model', () => {
     expect(alertHandlingHref.searchParams.get('search')).toBe('inventory');
     expect(alertHandlingHref.searchParams.get('entityId')).toBe('42');
     expect(alertHandlingHref.searchParams.get('serviceName')).toBe('inventory');
+    expect(alertHandlingHref.searchParams.get('operationName')).toBe('/inventory/{id}');
+
+    const alertRulesHref = new URL(result.alertRulesHref, 'https://example.com');
+    expect(alertRulesHref.searchParams.get('operationName')).toBe('/inventory/{id}');
+    expect(alertRulesHref.searchParams.get('alertQuery')).toContain('operationName=/inventory/{id}');
   });
 
   it('opens trace-linked metric logs as history records without an extra text search filter', () => {

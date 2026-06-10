@@ -145,8 +145,14 @@ export function buildMetricsAlertRuleDraft(
     ['filter', query.filter],
     ['aggregation', query.aggregation],
     ['groupBy', query.groupBy],
+    ['entityId', query.entityId || routeContext.entityId],
+    ['entityName', query.entityName || routeContext.entityName],
     ['serviceName', query.serviceName || routeContext.serviceName],
-    ['environment', query.environment || routeContext.environment]
+    ['serviceNamespace', query.serviceNamespace || routeContext.serviceNamespace],
+    ['operationName', query.operationName || routeContext.operationName],
+    ['environment', query.environment || routeContext.environment],
+    ['traceId', query.traceId || routeContext.traceId],
+    ['spanId', query.spanId || routeContext.spanId]
   ]
     .map(([key, value]) => {
       const normalized = compactAlertDraftValue(value);
@@ -185,6 +191,7 @@ function buildMetricSeriesSignalContext(series: OtlpMetricSeriesView | null | un
     serviceName: readSeriesLabel(series, 'service.name', 'service_name', 'serviceName'),
     serviceNamespace: readSeriesLabel(series, 'service.namespace', 'service_namespace', 'serviceNamespace'),
     environment: readSeriesLabel(series, 'deployment.environment.name', 'deployment_environment_name', 'deployment_environment', 'environment'),
+    operationName: readSeriesLabel(series, 'operationName', 'operation_name', 'operation', 'http.route', 'http_route'),
     traceId: readSeriesLabel(series, 'traceId', 'trace_id', 'trace.id', 'trace_id_hex'),
     spanId: readSeriesLabel(series, 'spanId', 'span_id', 'span.id', 'span_id_hex'),
     collector: readSeriesLabel(series, 'hertzbeat.collector', 'hertzbeat_collector', 'collector'),
@@ -960,6 +967,7 @@ export function buildMetricsHandoffLinks(
   const end = query.end || (data.context?.end != null ? String(data.context.end) : routeContext.end);
   const traceId = firstText(selectedContext.traceId, query.traceId, routeContext.traceId);
   const spanId = firstText(selectedContext.spanId, query.spanId, routeContext.spanId);
+  const operationName = firstText(selectedContext.operationName, query.operationName, routeContext.operationName);
   const signalContext: SignalRouteContext = {
     ...routeContext,
     ...query,
@@ -971,6 +979,7 @@ export function buildMetricsHandoffLinks(
     timeRange: routeContext.timeRange,
     traceId,
     spanId,
+    operationName,
     source: routeContext.source || 'otlp',
     collector: selectedContext.collector || query.collector || routeContext.collector,
     template: selectedContext.template || query.template || routeContext.template,
