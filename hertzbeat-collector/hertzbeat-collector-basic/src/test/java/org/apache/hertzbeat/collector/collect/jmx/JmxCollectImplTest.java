@@ -50,7 +50,7 @@ class JmxCollectImplTest {
             JmxProtocol jmx = JmxProtocol.builder().build();
             jmx.setUrl("/stub/");
             Metrics metrics = Metrics.builder().jmx(jmx).build();
-            
+
             jmxCollect.preCheck(metrics);
         });
     }
@@ -68,4 +68,25 @@ class JmxCollectImplTest {
     void supportProtocol() {
         assert DispatchConstants.PROTOCOL_JMX.equals(jmxCollect.supportProtocol());
     }
+
+    @Test
+    void preCheckShouldAcceptSupportedJmxRmiUrl() {
+        JmxProtocol jmx = JmxProtocol.builder()
+            .url("service:jmx:rmi:///jndi/rmi://127.0.0.1:9999/jmxrmi")
+            .build();
+        Metrics metrics = Metrics.builder().jmx(jmx).build();
+
+        assertDoesNotThrow(() -> jmxCollect.preCheck(metrics));
+    }
+
+    @Test
+    void preCheckShouldRejectUnsafeJndiProtocolInJmxRmiUrl() {
+        JmxProtocol jmx = JmxProtocol.builder()
+            .url("service:jmx:rmi:///jndi/ldap://127.0.0.1:1389/jmxrmi")
+            .build();
+        Metrics metrics = Metrics.builder().jmx(jmx).build();
+
+        assertThrows(IllegalArgumentException.class, () -> jmxCollect.preCheck(metrics));
+    }
+
 }
