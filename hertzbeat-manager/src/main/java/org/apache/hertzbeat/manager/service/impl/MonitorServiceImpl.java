@@ -431,12 +431,6 @@ public class MonitorServiceImpl implements MonitorService {
                 newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
             }
             monitor.setJobId(newJobId);
-
-            // execute only in non paused status
-            try {
-                detectMonitor(monitor, params, collector);
-            } catch (Exception ignored) {
-            }
         }
 
         // After the update is successfully released, refresh the database
@@ -451,6 +445,8 @@ public class MonitorServiceImpl implements MonitorService {
             // force update gmtUpdate time, due the case: monitor not change, param change.
             // we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
+            // preserve the live status owned by the real-time collection path; the modify request must not overwrite it
+            monitor.setStatus(preMonitor.getStatus());
             // update or open grafana dashboard
             if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null) {
                 if (grafanaDashboard.isEnabled()) {

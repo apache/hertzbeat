@@ -65,6 +65,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -632,6 +633,46 @@ class MonitorServiceTest {
 
         assertThrows(MonitorDatabaseException.class,
                 () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
+    }
+
+    @Test
+    void testModifyMonitorPreservesLiveStatus() {
+        long monitorId = 1L;
+        List<Param> params = Collections.singletonList(Param.builder()
+                .field("field")
+                .paramValue("value")
+                .build());
+        Monitor preMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
+                .id(monitorId).status(CommonConstants.MONITOR_UP_CODE).build();
+        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
+                .id(monitorId).status(CommonConstants.MONITOR_PAUSED_CODE).build();
+        Job job = new Job();
+        job.setApp(monitor.getApp());
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(preMonitor));
+        when(tagService.determineNewLabels(any())).thenReturn(Collections.emptyList());
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(1L);
+
+        monitorService.modifyMonitor(monitor, params, null, null);
+
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        verify(monitorDao).save(monitorCaptor.capture());
+        assertEquals(CommonConstants.MONITOR_UP_CODE, monitorCaptor.getValue().getStatus());
+
+        reset(monitorDao, tagService, appService, collectJobScheduling, paramDao, collectorMonitorBindDao);
+        long pausedMonitorId = 2L;
+        Monitor pausedPreMonitor = Monitor.builder().jobId(2L).intervals(1).app("app").name("memory").instance("host")
+                .id(pausedMonitorId).status(CommonConstants.MONITOR_PAUSED_CODE).build();
+        Monitor pausedMonitor = Monitor.builder().jobId(2L).intervals(1).app("app").name("memory").instance("host")
+                .id(pausedMonitorId).status(CommonConstants.MONITOR_UP_CODE).build();
+        when(monitorDao.findById(pausedMonitorId)).thenReturn(Optional.of(pausedPreMonitor));
+        when(tagService.determineNewLabels(any())).thenReturn(Collections.emptyList());
+
+        monitorService.modifyMonitor(pausedMonitor, params, null, null);
+
+        monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        verify(monitorDao).save(monitorCaptor.capture());
+        assertEquals(CommonConstants.MONITOR_PAUSED_CODE, monitorCaptor.getValue().getStatus());
     }
 
     @Test
