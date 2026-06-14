@@ -944,10 +944,43 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             List<OtlpRelatedMetricsDto.Candidate> availableCandidates =
                     filterPromqlAvailableRelatedMetricCandidates(rawCandidates, start, end, limit);
             if (!availableCandidates.isEmpty()) {
-                return availableCandidates;
+                return mergeAvailableRelatedMetricCandidates(availableCandidates, rawCandidates, limit);
             }
         }
         return rawCandidates.stream().limit(limit).toList();
+    }
+
+    private List<OtlpRelatedMetricsDto.Candidate> mergeAvailableRelatedMetricCandidates(
+            List<OtlpRelatedMetricsDto.Candidate> availableCandidates,
+            List<OtlpRelatedMetricsDto.Candidate> rawCandidates,
+            int limit) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        LinkedHashMap<String, OtlpRelatedMetricsDto.Candidate> merged = new LinkedHashMap<>();
+        for (OtlpRelatedMetricsDto.Candidate candidate : availableCandidates) {
+            putRelatedMetricCandidate(merged, candidate, limit);
+        }
+        for (OtlpRelatedMetricsDto.Candidate candidate : rawCandidates) {
+            if (!"resource-filter".equals(candidate.getReason())) {
+                continue;
+            }
+            putRelatedMetricCandidate(merged, candidate, limit);
+        }
+        return merged.values().stream().limit(limit).toList();
+    }
+
+    private void putRelatedMetricCandidate(LinkedHashMap<String, OtlpRelatedMetricsDto.Candidate> candidates,
+                                           OtlpRelatedMetricsDto.Candidate candidate,
+                                           int limit) {
+        if (candidate == null || candidates.size() >= limit) {
+            return;
+        }
+        String query = trimToNull(candidate.getQuery());
+        if (!StringUtils.hasText(query)) {
+            return;
+        }
+        candidates.putIfAbsent(candidate.getSource() + ":" + normalizePromqlMetricName(query), candidate);
     }
 
     private List<String> relatedMetricCandidateNames(OtlpMetricsConsoleDto.Context context, long start, long end) {

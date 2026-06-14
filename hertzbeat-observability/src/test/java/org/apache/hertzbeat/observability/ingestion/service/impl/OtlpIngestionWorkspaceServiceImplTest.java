@@ -1407,6 +1407,85 @@ class OtlpIngestionWorkspaceServiceImplTest {
     }
 
     @Test
+    void relatedMetricsKeepsResourceSuggestionsWhenPromqlFindsServiceCandidates() {
+        observabilitySignalIntakeGateway.recordOtlpMetricIntake(
+                Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "commerce",
+                        "deployment.environment.name", "prod"
+                ),
+                2_000L,
+                "http.server.duration",
+                "histogram",
+                "ms",
+                14.0,
+                Map.of()
+        );
+        when(workspaceQueryGateway.findEntityById(42L)).thenReturn(java.util.Optional.empty());
+        when(workspaceQueryGateway.findIdentitiesByEntityId(42L)).thenReturn(List.of());
+        when(metricQueryRepository.hasPromqlExecutor()).thenReturn(true);
+        when(metricQueryRepository.queryPromqlRange(
+                anyString(),
+                anyString(),
+                anyLong(),
+                anyLong(),
+                anyString()
+        )).thenAnswer(invocation -> {
+            String refId = invocation.getArgument(0);
+            String query = invocation.getArgument(1);
+            if ("otlp-related-metrics-inventory".equals(refId)) {
+                return promqlSuccess(new DatasourceQueryData("otlp-related-metrics-inventory", 200, null, List.of()));
+            }
+            if (query.contains("__name__=\"http_server_duration\"")) {
+                return promqlSuccess(new DatasourceQueryData(
+                        "otlp-related-metrics",
+                        200,
+                        null,
+                        List.of(new DatasourceQueryData.SchemaData(
+                                new DatasourceQueryData.MetricSchema(
+                                        List.of(
+                                                new DatasourceQueryData.MetricField("__ts__", "time", null),
+                                                new DatasourceQueryData.MetricField("__value__", "number", null)
+                                        ),
+                                        Map.of("__name__", "http_server_duration"),
+                                        Map.of()
+                                ),
+                                Collections.singletonList(new Object[] {2_000L, 14.0})
+                        ))
+                ));
+            }
+            return promqlSuccess(new DatasourceQueryData("otlp-related-metrics", 200, null, List.of()));
+        });
+
+        OtlpRelatedMetricsDto related = otlpIngestionWorkspaceService.getRelatedMetrics(
+                42L,
+                "service",
+                1_000L,
+                2_000L,
+                "checkout",
+                "commerce",
+                "prod",
+                "k8s.pod.name=\"checkout-7d9\" and host.name=\"node-a\"",
+                null,
+                "8"
+        );
+
+        assertTrue(related.getCandidates().stream().anyMatch(candidate ->
+                "http_server_duration".equals(candidate.getQuery())
+                        && "promql-series".equals(candidate.getReason())));
+        assertTrue(related.getCandidates().stream().anyMatch(candidate ->
+                "container.cpu.usage".equals(candidate.getQuery())
+                        && "pod".equals(candidate.getSource())
+                        && "resource-filter".equals(candidate.getReason())
+                        && candidate.getMatchedLabels().contains("k8s_pod_name")));
+        assertTrue(related.getCandidates().stream().anyMatch(candidate ->
+                "system.cpu.utilization".equals(candidate.getQuery())
+                        && "host".equals(candidate.getSource())
+                        && "resource-filter".equals(candidate.getReason())
+                        && candidate.getMatchedLabels().contains("host_name")));
+    }
+
+    @Test
     void relatedMetricsDiscoversCandidateNamesFromPromqlSeriesInventory() {
         observabilitySignalIntakeGateway.recordOtlpMetricIntake(
                 Map.of(
