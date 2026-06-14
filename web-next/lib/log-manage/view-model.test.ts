@@ -744,7 +744,7 @@ describe('log view model', () => {
     );
 
     const traceParams = new URL(result.traceHref, 'https://example.com').searchParams;
-    expect(traceParams.get('operationName')).toBe('POST /checkout');
+    expect(traceParams.get('operationName')).toBeNull();
     expect(traceParams.get('attributeFilter')).toBeNull();
 
     const metricsParams = new URL(result.metricsHref, 'https://example.com').searchParams;
@@ -788,7 +788,7 @@ describe('log view model', () => {
     expect(traceParams.get('spanId')).toBeNull();
     expect(traceParams.get('serviceName')).toBe('checkout');
     expect(traceParams.get('serviceNamespace')).toBe('payments');
-    expect(traceParams.get('operationName')).toBe('/checkout/:id');
+    expect(traceParams.get('operationName')).toBeNull();
     expect(traceParams.get('attributeFilter')).toBe('http.route="/checkout/:id"');
   });
 

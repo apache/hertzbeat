@@ -1567,6 +1567,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
         verify(metricQueryRepository).queryPromqlRange(
                 eq("otlp-related-metrics-inventory"),
                 argThat(query -> query.contains("sum by (__name__)")
+                        && query.contains("__name__=~\".+\"")
                         && query.contains("service_name=\"checkout\"")
                         && query.contains("service_namespace=\"commerce\"")),
                 eq(1_000L),
@@ -1636,6 +1637,7 @@ class OtlpIngestionWorkspaceServiceImplTest {
         verify(metricQueryRepository).queryPromqlRange(
                 eq("otlp-related-metrics-inventory"),
                 argThat(query -> query.contains("sum by (__name__)")
+                        && query.contains("__name__=~\".+\"")
                         && query.contains("service_name=\"checkout\"")
                         && query.contains("service_namespace=\"commerce\"")),
                 eq(1_000L),

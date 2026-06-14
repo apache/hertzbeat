@@ -1072,6 +1072,7 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
             return null;
         }
         List<String> matchers = new ArrayList<>();
+        matchers.add("__name__=~\".+\"");
         matchers.add("service_name=\"" + escapePromqlLabelValue(context.getServiceName()) + "\"");
         if (StringUtils.hasText(context.getServiceNamespace())) {
             matchers.add("service_namespace=\"" + escapePromqlLabelValue(context.getServiceNamespace()) + "\"");

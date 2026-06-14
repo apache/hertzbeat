@@ -722,11 +722,15 @@ export function buildLogHandoffLinks(
   );
   const traceId = firstText(selectedLog?.traceId, routeContext.traceId);
   const spanId = firstText(selectedLog?.spanId, routeContext.spanId);
-  const operationName = firstText(
+  const traceOperationName = firstText(
     readAttribute(selectedLog?.attributes, 'operation.name'),
     readAttribute(selectedLog?.attributes, 'span.name'),
-    readAttribute(selectedLog?.attributes, 'http.route'),
     routeContext.operationName
+  );
+  const operationName = firstText(
+    traceOperationName,
+    readAttribute(selectedLog?.attributes, 'http.route'),
+    readAttribute(selectedLog?.attributes, 'http_route')
   );
   const metricsFilter = buildLogMetricsResourceFilter(selectedLog);
   const signalDraft = options?.alertDraft;
@@ -750,6 +754,7 @@ export function buildLogHandoffLinks(
 
   const traceContext: SignalRouteContext = {
     ...signalContext,
+    operationName: traceOperationName,
     returnTo: stripReturnLabelFromHref(options?.traceReturnTo || signalContext.returnTo)
   };
   const metricsContext: SignalRouteContext = {
