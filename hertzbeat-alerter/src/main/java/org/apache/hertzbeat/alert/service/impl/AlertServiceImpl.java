@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
@@ -99,7 +100,9 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
-    public Page<GroupAlert> getGroupAlerts(String status, String search, String severity, String sort, String order, int pageIndex, int pageSize) {
+    public Page<GroupAlert> getGroupAlerts(String status, String search, String severity, String serviceName,
+                                           String serviceNamespace, String environment, String sort, String order,
+                                           int pageIndex, int pageSize) {
         Specification<GroupAlert> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (status != null) {
@@ -132,15 +135,29 @@ public class AlertServiceImpl implements AlertService {
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         String normalizedSeverity = normalizeSeverity(severity);
-        if (normalizedSeverity != null) {
+        String normalizedServiceName = normalizeScopeValue(serviceName);
+        String normalizedServiceNamespace = normalizeScopeValue(serviceNamespace);
+        String normalizedEnvironment = normalizeScopeValue(environment);
+        boolean hasScopeFilter = normalizedServiceName != null || normalizedServiceNamespace != null || normalizedEnvironment != null;
+        if (normalizedSeverity != null || hasScopeFilter) {
             List<GroupAlert> groupAlerts = groupAlertDao.findAll(specification, sortExp);
             List<GroupAlert> filteredAlerts = groupAlerts.stream()
-                    .peek(this::hydrateGroupAlerts)
-                    .filter(groupAlert -> groupAlert.getAlerts().stream().anyMatch(alert -> matchesSeverity(alert, normalizedSeverity)))
+                    .filter(groupAlert -> matchesAlertScope(groupAlert, normalizedServiceName, normalizedServiceNamespace, normalizedEnvironment))
+                    .peek(groupAlert -> {
+                        if (normalizedSeverity != null) {
+                            hydrateGroupAlerts(groupAlert);
+                        }
+                    })
+                    .filter(groupAlert -> normalizedSeverity == null
+                            || groupAlert.getAlerts().stream().anyMatch(alert -> matchesSeverity(alert, normalizedSeverity)))
                     .toList();
             int start = Math.min((int) pageRequest.getOffset(), filteredAlerts.size());
             int end = Math.min(start + pageRequest.getPageSize(), filteredAlerts.size());
-            return new PageImpl<>(filteredAlerts.subList(start, end), pageRequest, filteredAlerts.size());
+            List<GroupAlert> pageContent = filteredAlerts.subList(start, end);
+            if (normalizedSeverity == null) {
+                pageContent.forEach(this::hydrateGroupAlerts);
+            }
+            return new PageImpl<>(pageContent, pageRequest, filteredAlerts.size());
         }
         Page<GroupAlert> groupAlertPage = groupAlertDao.findAll(specification, pageRequest);
         groupAlertPage.getContent().forEach(this::hydrateGroupAlerts);
@@ -253,7 +270,7 @@ public class AlertServiceImpl implements AlertService {
 
     private void hydrateGroupAlerts(GroupAlert groupAlert) {
         List<String> firingAlerts = groupAlert.getAlertFingerprints();
-        List<SingleAlert> singleAlerts = singleAlertDao.findSingleAlertsByFingerprintIn(firingAlerts);
+        List<SingleAlert> singleAlerts = new ArrayList<>(singleAlertDao.findSingleAlertsByFingerprintIn(firingAlerts));
         singleAlerts.sort(Comparator.comparing(SingleAlert::getGmtUpdate, Comparator.nullsLast(Comparator.reverseOrder()))
                 .thenComparing(SingleAlert::getId, Comparator.nullsLast(Comparator.reverseOrder())));
         groupAlert.setAlerts(singleAlerts);
@@ -264,6 +281,40 @@ public class AlertServiceImpl implements AlertService {
             return null;
         }
         return severity.trim().toLowerCase();
+    }
+
+    private String normalizeScopeValue(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private boolean matchesAlertScope(GroupAlert groupAlert, String serviceName, String serviceNamespace, String environment) {
+        return matchesAnyLabelValue(groupAlert, serviceName, "service.name", "service", "serviceName", "job", "instance")
+                && matchesAnyLabelValue(groupAlert, serviceNamespace, "service.namespace", "serviceNamespace", "service_namespace")
+                && matchesAnyLabelValue(groupAlert, environment, "deployment.environment.name", "environment", "deployment.environment");
+    }
+
+    private boolean matchesAnyLabelValue(GroupAlert groupAlert, String expected, String... labelKeys) {
+        if (expected == null) {
+            return true;
+        }
+        return matchesAnyLabelValue(groupAlert == null ? null : groupAlert.getCommonLabels(), expected, labelKeys)
+                || matchesAnyLabelValue(groupAlert == null ? null : groupAlert.getGroupLabels(), expected, labelKeys);
+    }
+
+    private boolean matchesAnyLabelValue(Map<String, String> labels, String expected, String... labelKeys) {
+        if (labels == null || labels.isEmpty()) {
+            return false;
+        }
+        for (String labelKey : labelKeys) {
+            String value = labels.get(labelKey);
+            if (StringUtils.hasText(value) && expected.equals(value.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean matchesSeverity(SingleAlert alert, String severity) {

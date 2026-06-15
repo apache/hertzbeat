@@ -18,7 +18,13 @@
 package org.apache.hertzbeat.manager.service.entity;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.entity.manager.EntityRelation;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
 import org.apache.hertzbeat.common.observability.dto.entity.EntityAlertSummaryInfo;
@@ -61,19 +67,22 @@ public class EntityDetailObservabilityReadModelService {
     private final EntityResponseHandoffReadModelService entityResponseHandoffReadModelService;
     private final EntityNoiseControlReadModelService entityNoiseControlReadModelService;
     private final EntityActivityReadModelService entityActivityReadModelService;
+    private final EntityWorkspaceAccessService entityWorkspaceAccessService;
 
     public EntityDetailObservabilityReadModelService(EntityDetailReadModelService entityDetailReadModelService,
                                                      EntityStatusRefreshService entityStatusRefreshService,
                                                      EntityObservabilityGateway entityObservabilityGateway,
                                                      EntityResponseHandoffReadModelService entityResponseHandoffReadModelService,
                                                      EntityNoiseControlReadModelService entityNoiseControlReadModelService,
-                                                     EntityActivityReadModelService entityActivityReadModelService) {
+                                                     EntityActivityReadModelService entityActivityReadModelService,
+                                                     EntityWorkspaceAccessService entityWorkspaceAccessService) {
         this.entityDetailReadModelService = entityDetailReadModelService;
         this.entityStatusRefreshService = entityStatusRefreshService;
         this.entityObservabilityGateway = entityObservabilityGateway;
         this.entityResponseHandoffReadModelService = entityResponseHandoffReadModelService;
         this.entityNoiseControlReadModelService = entityNoiseControlReadModelService;
         this.entityActivityReadModelService = entityActivityReadModelService;
+        this.entityWorkspaceAccessService = entityWorkspaceAccessService;
     }
 
     public EntityDetailDto buildEntityDetail(long entityId) {
@@ -160,10 +169,101 @@ public class EntityDetailObservabilityReadModelService {
                 resolveRequestWorkspaceAtEvidenceBoundaries
                         ? entityActivityReadModelService.getDefinitionActivities(entityId, 12)
                         : entityActivityReadModelService.getDefinitionActivities(entityId, 12, requestWorkspaceId);
+        List<EntityDetailDto.EntityTopologyNeighborInfo> topologyNeighbors = buildTopologyNeighbors(
+                entityId, entityDto.getRelations(), requestWorkspaceId, resolveRequestWorkspaceAtEvidenceBoundaries);
         return new EntityDetailDto(entityDto, statusInfo, evidenceSummary, alertSummary, monitorSummary, logSummary,
                 traceSummary, metricEvidence, logEvidence, traceEvidence, signalEvidence, unifiedEvidenceSummary,
                 triageRecommendation, opsSummary, nextActions, statusPageSummary, responseHandoffs,
                 noiseControlSummary, boundMonitors, activeAlerts, logQueryHints, traceQueryHints,
-                definitionActivities);
+                topologyNeighbors, definitionActivities);
+    }
+
+    private List<EntityDetailDto.EntityTopologyNeighborInfo> buildTopologyNeighbors(
+            Long entityId,
+            List<EntityRelation> relations,
+            String requestWorkspaceId,
+            boolean resolveRequestWorkspaceAtEvidenceBoundaries) {
+        if (entityId == null || CollectionUtils.isEmpty(relations)) {
+            return List.of();
+        }
+        Set<Long> neighborIds = new LinkedHashSet<>();
+        for (EntityRelation relation : relations) {
+            Long neighborId = neighborEntityId(entityId, relation);
+            if (neighborId != null) {
+                neighborIds.add(neighborId);
+            }
+        }
+        List<ObserveEntity> neighbors = resolveRequestWorkspaceAtEvidenceBoundaries
+                ? entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(neighborIds)
+                : entityWorkspaceAccessService.findAccessibleEntitiesByIds(neighborIds, requestWorkspaceId);
+        Map<Long, ObserveEntity> neighborById = neighbors.stream()
+                .collect(LinkedHashMap::new, (map, neighbor) -> map.put(neighbor.getId(), neighbor), Map::putAll);
+        return relations.stream()
+                .map(relation -> toTopologyNeighbor(entityId, relation, neighborById))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private EntityDetailDto.EntityTopologyNeighborInfo toTopologyNeighbor(
+            Long entityId,
+            EntityRelation relation,
+            Map<Long, ObserveEntity> neighborById) {
+        if (relation == null) {
+            return null;
+        }
+        Long neighborId = neighborEntityId(entityId, relation);
+        ObserveEntity neighbor = neighborId == null ? null : neighborById.get(neighborId);
+        String fallbackName = relation.getTargetRef() == null ? null : relation.getTargetRef().trim();
+        String entityName = neighbor == null ? fallbackName : defaultText(neighbor.getDisplayName(), neighbor.getName());
+        if (neighborId == null && entityName == null) {
+            return null;
+        }
+        return new EntityDetailDto.EntityTopologyNeighborInfo(
+                relation.getId(),
+                neighborId,
+                entityName,
+                neighbor == null ? null : neighbor.getType(),
+                relationDirection(entityId, relation),
+                relation.getRelationType(),
+                relation.getRelationSource(),
+                relation.getStatus(),
+                relation.getScore(),
+                fallbackName
+        );
+    }
+
+    private Long neighborEntityId(Long entityId, EntityRelation relation) {
+        if (relation == null || entityId == null) {
+            return null;
+        }
+        if (Objects.equals(entityId, relation.getSourceEntityId())) {
+            return relation.getTargetEntityId();
+        }
+        if (Objects.equals(entityId, relation.getTargetEntityId())) {
+            return relation.getSourceEntityId();
+        }
+        return null;
+    }
+
+    private String relationDirection(Long entityId, EntityRelation relation) {
+        if (relation == null || entityId == null) {
+            return "related";
+        }
+        if (Objects.equals(entityId, relation.getSourceEntityId())) {
+            return "outgoing";
+        }
+        if (Objects.equals(entityId, relation.getTargetEntityId())) {
+            return "incoming";
+        }
+        return "related";
+    }
+
+    private String defaultText(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
     }
 }

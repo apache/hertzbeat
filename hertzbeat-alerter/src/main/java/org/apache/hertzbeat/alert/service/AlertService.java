@@ -50,7 +50,9 @@ public interface AlertService {
      * @param pageSize      Number of list pagination
      * @return search result
      */
-    Page<GroupAlert> getGroupAlerts(String status, String search, String severity, String sort, String order, int pageIndex, int pageSize);
+    Page<GroupAlert> getGroupAlerts(String status, String search, String severity, String serviceName,
+                                    String serviceNamespace, String environment, String sort, String order,
+                                    int pageIndex, int pageSize);
 
     /**
      * delete the group alarm according to the alarm ID

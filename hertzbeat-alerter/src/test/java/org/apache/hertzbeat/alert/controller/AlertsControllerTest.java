@@ -74,6 +74,9 @@ class AlertsControllerTest {
         String status = "firing";
         String content = "test";
         String severity = "critical";
+        String serviceName = "checkout";
+        String serviceNamespace = "payments";
+        String environment = "prod";
         int pageIndex = 0;
         int pageSize = 10;
 
@@ -82,7 +85,8 @@ class AlertsControllerTest {
                 PageRequest.of(pageIndex, pageSize, Sort.by(sortField).descending()),
                 ids.size()
         );
-        Mockito.when(alertService.getGroupAlerts(status, content, severity, sortField, orderType, pageIndex, pageSize))
+        Mockito.when(alertService.getGroupAlerts(status, content, severity, serviceName, serviceNamespace, environment,
+                        sortField, orderType, pageIndex, pageSize))
                 .thenReturn(alertPage);
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -90,6 +94,9 @@ class AlertsControllerTest {
                         .param("status", status)
                         .param("search", content)
                         .param("severity", severity)
+                        .param("serviceName", serviceName)
+                        .param("serviceNamespace", serviceNamespace)
+                        .param("environment", environment)
                         .param("sort", sortField)
                         .param("order", orderType)
                         .param("pageIndex", String.valueOf(pageIndex))

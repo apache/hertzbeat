@@ -49,4 +49,10 @@ public interface ObservabilityWorkspaceQueryGateway {
     Optional<ObserveEntity> findEntityById(Long entityId);
 
     List<EntityIdentity> findIdentitiesByEntityId(Long entityId);
+
+    default void recordEntityDiscoveryGovernanceActivity(String workspaceId, String action, String status,
+                                                         String summary, String detail,
+                                                         Map<Long, String> entityRefs) {
+        // Optional write boundary for manager-backed governance workflows.
+    }
 }

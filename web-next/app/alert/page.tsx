@@ -7,7 +7,7 @@ export default async function AlertCenterRoutePage({
   searchParams
 }: {
   searchParams?: Promise<AlertCenterSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const routeState = readAlertCenterRouteState(resolvedSearchParams);
   return <AlertCenterPage initialRouteState={routeState} />;

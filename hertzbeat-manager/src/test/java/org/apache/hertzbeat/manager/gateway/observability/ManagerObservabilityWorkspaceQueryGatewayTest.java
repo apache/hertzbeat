@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.gateway.observability;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +32,8 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ObserveEntity;
+import org.apache.hertzbeat.manager.pojo.dto.EntityDiscoveryGovernanceActivityInfo;
+import org.apache.hertzbeat.manager.service.entity.EntityGovernanceStateService;
 import org.apache.hertzbeat.manager.service.entity.EntityIdentityQueryService;
 import org.apache.hertzbeat.manager.service.entity.EntityMonitorBindQueryService;
 import org.apache.hertzbeat.manager.service.entity.EntityWorkspaceQueryService;
@@ -38,6 +41,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,6 +59,9 @@ class ManagerObservabilityWorkspaceQueryGatewayTest {
     @Mock
     private ManagerObservabilityInventoryQueryService inventoryQueryService;
 
+    @Mock
+    private EntityGovernanceStateService entityGovernanceStateService;
+
     private ManagerObservabilityWorkspaceQueryGateway gateway;
 
     @BeforeEach
@@ -63,7 +70,8 @@ class ManagerObservabilityWorkspaceQueryGatewayTest {
                 entityIdentityQueryService,
                 entityWorkspaceQueryService,
                 entityMonitorBindQueryService,
-                inventoryQueryService
+                inventoryQueryService,
+                entityGovernanceStateService
         );
     }
 
@@ -113,5 +121,29 @@ class ManagerObservabilityWorkspaceQueryGatewayTest {
     void returnsEmptyEntityMapWhenIdsAreEmpty() {
         assertTrue(gateway.findEntitiesByIds(Set.of()).isEmpty());
         verify(entityWorkspaceQueryService, org.mockito.Mockito.never()).findEntitiesByIds(org.mockito.Mockito.anyCollection());
+    }
+
+    @Test
+    void recordsDiscoveryGovernanceActivityThroughStateBoundary() {
+        gateway.recordEntityDiscoveryGovernanceActivity(
+                "team-a",
+                "identity_conflict",
+                "needs_governance",
+                "OTLP resource identity matched multiple entities",
+                "service.name=checkout",
+                Map.of(7L, "Checkout API"));
+
+        ArgumentCaptor<EntityDiscoveryGovernanceActivityInfo> activityCaptor =
+                ArgumentCaptor.forClass(EntityDiscoveryGovernanceActivityInfo.class);
+        verify(entityGovernanceStateService).saveDiscoveryGovernanceActivity(activityCaptor.capture(), eq("team-a"));
+        EntityDiscoveryGovernanceActivityInfo activity = activityCaptor.getValue();
+        assertTrue(activity.getId().startsWith("otlp-identity_conflict-"));
+        assertEquals("identity_conflict", activity.getAction());
+        assertEquals("needs_governance", activity.getStatus());
+        assertEquals("OTLP resource identity matched multiple entities", activity.getSummary());
+        assertEquals("service.name=checkout", activity.getDetail());
+        assertEquals(1, activity.getEntityRefs().size());
+        assertEquals(7L, activity.getEntityRefs().getFirst().getEntityId());
+        assertEquals("Checkout API", activity.getEntityRefs().getFirst().getEntityName());
     }
 }

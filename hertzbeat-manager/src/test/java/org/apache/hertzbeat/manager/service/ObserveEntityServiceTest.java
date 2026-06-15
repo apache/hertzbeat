@@ -381,7 +381,8 @@ class ObserveEntityServiceTest {
                 entityObservabilityGateway,
                 entityResponseHandoffReadModelService,
                 entityNoiseControlReadModelService,
-                entityActivityReadModelService);
+                entityActivityReadModelService,
+                entityWorkspaceAccessService);
         ReflectionTestUtils.setField(
                 observeEntityService, "entityDetailObservabilityReadModelService", entityDetailObservabilityReadModelService);
         entitySummaryReadModelService = new EntitySummaryReadModelService(

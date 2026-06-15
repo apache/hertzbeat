@@ -540,6 +540,11 @@ export interface EntityDetailDto {
     monitorBinds?: unknown[];
     relations?: unknown[];
   };
+  detailState?: {
+    state?: 'ready' | 'empty' | 'error' | 'unavailable' | 'unattributed';
+    message?: string | null;
+    reason?: string | null;
+  };
   status?: unknown;
   evidenceSummary?: EntityEvidenceSummary;
   alertSummary?: EntityAlertSummary;
@@ -553,6 +558,7 @@ export interface EntityDetailDto {
   activeAlerts?: unknown[];
   nextActions?: EntityNextAction[];
   noiseControlSummary?: EntityNoiseControlSummary;
+  topologyNeighbors?: unknown[];
 }
 
 export interface EntityResponseHandoffInfo {

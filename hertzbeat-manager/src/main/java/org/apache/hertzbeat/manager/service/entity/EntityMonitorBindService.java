@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.manager.pojo.dto.EntityMonitorBindingCandidate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -38,6 +39,8 @@ import org.springframework.util.StringUtils;
 public class EntityMonitorBindService {
 
     private static final String SOURCE_MANUAL = "manual";
+    private static final String SOURCE_AUTO = "auto";
+    private static final String SOURCE_MONITOR_IDENTITY = "monitor_identity";
     private static final String BIND_ACTIVE = "active";
 
     private final EntityMonitorBindQueryService entityMonitorBindQueryService;
@@ -91,6 +94,37 @@ public class EntityMonitorBindService {
             }
         }
         entityMonitorBindWriteModelService.replaceMonitorBinds(entityId, rows);
+    }
+
+    public void replaceAutoMonitorBinds(Long monitorId, List<EntityMonitorBindingCandidate> candidates) {
+        if (monitorId == null) {
+            return;
+        }
+        Set<Long> manuallyBoundEntityIds = entityMonitorBindQueryService.findMonitorBindsByMonitorId(monitorId)
+                .stream()
+                .filter(bind -> bind != null && !SOURCE_AUTO.equals(bind.getBindType()))
+                .map(EntityMonitorBind::getEntityId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        List<EntityMonitorBind> rows = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(candidates)) {
+            for (EntityMonitorBindingCandidate candidate : candidates) {
+                if (candidate == null || candidate.getEntityId() == null
+                        || manuallyBoundEntityIds.contains(candidate.getEntityId())) {
+                    continue;
+                }
+                rows.add(EntityMonitorBind.builder()
+                        .entityId(candidate.getEntityId())
+                        .monitorId(monitorId)
+                        .bindType(SOURCE_AUTO)
+                        .bindSource(SOURCE_MONITOR_IDENTITY)
+                        .status(BIND_ACTIVE)
+                        .score(candidate.getScore() == null ? 0 : candidate.getScore())
+                        .matchContext(candidate.getMatchedIdentities())
+                        .build());
+            }
+        }
+        entityMonitorBindWriteModelService.replaceAutoMonitorBinds(monitorId, rows);
     }
 
     public List<Monitor> findEntityMonitors(Long entityId) {

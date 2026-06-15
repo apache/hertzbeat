@@ -33,6 +33,10 @@ type DetailRow = {
   tone?: EntityDetailRowTone;
 };
 
+function isUnavailableDetail(detail: Pick<EntityDetailDto, 'detailState'>) {
+  return detail.detailState?.state === 'unavailable';
+}
+
 type HandoffRow = DetailRow & {
   key: string;
 };
@@ -73,6 +77,8 @@ function localizeStatus(status?: string | null, t: EntityDetailViewModelTranslat
       return t('entities.detail.status.healthy');
     case 'unknown':
       return t('entities.detail.status.unknown');
+    case 'unavailable':
+      return t('entities.detail.status.unavailable');
     case 'down':
     case 'critical':
     case 'error':
@@ -90,7 +96,7 @@ function entityDetailStatusTone(status?: string | null): EntityDetailRowTone {
   if (['healthy', 'normal', 'up', 'active'].includes(normalized)) {
     return 'success';
   }
-  if (normalized === 'warning') {
+  if (normalized === 'warning' || normalized === 'unavailable') {
     return 'warning';
   }
   if (['abnormal', 'critical', 'down', 'error', 'offline', 'unhealthy'].includes(normalized)) {
@@ -183,9 +189,32 @@ function localizeActionText(
 }
 
 export function buildSummaryRows(
-  detail: Pick<EntityDetailDto, 'evidenceSummary' | 'monitorSummary' | 'logSummary' | 'traceSummary' | 'signalEvidence' | 'boundMonitors'>,
+  detail: Pick<EntityDetailDto, 'detailState' | 'evidenceSummary' | 'monitorSummary' | 'logSummary' | 'traceSummary' | 'signalEvidence' | 'boundMonitors'>,
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ): DetailRow[] {
+  if (isUnavailableDetail(detail)) {
+    return [
+      {
+        title: t('entities.detail.summary.metrics.title'),
+        copy: t('entities.detail.state.unavailable.copy'),
+        meta: t('entities.detail.state.unavailable.metrics-meta'),
+        tone: 'warning'
+      },
+      {
+        title: t('entities.detail.summary.logs.title'),
+        copy: t('entities.detail.state.unavailable.copy'),
+        meta: t('entities.detail.state.unavailable.logs-meta'),
+        tone: 'warning'
+      },
+      {
+        title: t('entities.detail.summary.traces.title'),
+        copy: t('entities.detail.state.unavailable.copy'),
+        meta: t('entities.detail.state.unavailable.traces-meta'),
+        tone: 'warning'
+      }
+    ];
+  }
+
   const boundMonitorCount = detail.monitorSummary?.totalBoundMonitors ?? detail.boundMonitors?.length ?? 0;
   const downMonitorCount = detail.evidenceSummary?.downMonitorCount ?? 0;
   const logSummary = getSignalLogSummary(detail);
@@ -314,6 +343,54 @@ export function buildEntityHealthModel(
   detail: EntityDetailDto,
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ): DetailRow[] {
+  if (isUnavailableDetail(detail)) {
+    const unavailableCopy = t('entities.detail.state.unavailable.copy');
+    return [
+      {
+        title: t('entities.detail.health.score.title'),
+        copy: unavailableCopy,
+        meta: t('entities.detail.state.unavailable.health-meta'),
+        tone: 'warning'
+      },
+      {
+        title: t('entities.detail.health.availability.title'),
+        copy: unavailableCopy,
+        meta: t('entities.detail.state.unavailable.metrics-meta'),
+        tone: 'warning'
+      },
+      {
+        title: t('entities.detail.health.error-rate.title'),
+        copy: unavailableCopy,
+        meta: t('entities.detail.state.unavailable.traces-meta'),
+        tone: 'warning'
+      },
+      {
+        title: t('entities.detail.health.latency.title'),
+        copy: unavailableCopy,
+        meta: t('entities.detail.state.unavailable.traces-meta'),
+        tone: 'warning'
+      },
+      {
+        title: t('entities.detail.health.alerts.title'),
+        copy: unavailableCopy,
+        meta: t('entities.detail.state.unavailable.alerts-meta'),
+        tone: 'warning'
+      },
+      {
+        title: t('entities.detail.health.anomalies.title'),
+        copy: unavailableCopy,
+        meta: t('entities.detail.state.unavailable.health-meta'),
+        tone: 'warning'
+      },
+      {
+        title: t('entities.detail.health.collector.title'),
+        copy: unavailableCopy,
+        meta: t('entities.detail.state.unavailable.collector-meta'),
+        tone: 'warning'
+      }
+    ];
+  }
+
   const logSummary = getSignalLogSummary(detail);
   const traceSummary = getSignalTraceSummary(detail);
   const totalBoundMonitors = finiteNumber(
@@ -404,9 +481,20 @@ export function buildEntityHealthModel(
 }
 
 export function buildUnifiedEvidenceRows(
-  detail: Pick<EntityDetailDto, 'unifiedEvidenceSummary' | 'traceSummary' | 'signalEvidence'>,
+  detail: Pick<EntityDetailDto, 'detailState' | 'unifiedEvidenceSummary' | 'traceSummary' | 'signalEvidence'>,
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ): DetailRow[] {
+  if (isUnavailableDetail(detail)) {
+    return [
+      {
+        title: t('entities.detail.evidence.coverage.title'),
+        copy: t('entities.detail.state.unavailable.copy'),
+        meta: t('entities.detail.state.unavailable.evidence-meta'),
+        tone: 'warning'
+      }
+    ];
+  }
+
   const summary = getSignalUnifiedEvidenceSummary(detail);
   if (!summary) {
     return [
@@ -803,6 +891,11 @@ function findRunbookLink(entity: Entity): EntityLinkRef | null {
   );
 }
 
+function resolveTopologyRelationEvidence(detail: EntityDetailDto) {
+  const topologyNeighbors = Array.isArray(detail.topologyNeighbors) ? detail.topologyNeighbors : [];
+  return (topologyNeighbors.length > 0 ? topologyNeighbors : detail.entity?.relations || []) as Array<Record<string, unknown>>;
+}
+
 export function buildEntityEvidenceHandoffRows(
   detail: EntityDetailDto,
   timeContext: EntityDetailTimeContext = 'last-1h',
@@ -818,13 +911,20 @@ export function buildEntityEvidenceHandoffRows(
     finiteNumber(detail.evidenceSummary?.activeAlertCount, 0),
     finiteNumber(detail.activeAlerts?.length, 0)
   );
-  const relations = ((detail.entity?.relations || []) as Array<Record<string, unknown>>).filter(Boolean);
+  const relations = resolveTopologyRelationEvidence(detail).filter(Boolean);
   const firstRelation = relations[0];
   const relationType = normalizeUnknownText(firstRelation?.type) || normalizeUnknownText(firstRelation?.relationType);
-  const relationTargetId = normalizeUnknownText(firstRelation?.targetEntityId) || normalizeUnknownText(firstRelation?.targetId);
+  const relationTargetId =
+    normalizeUnknownText(firstRelation?.entityId) ||
+    normalizeUnknownText(firstRelation?.neighborEntityId) ||
+    normalizeUnknownText(firstRelation?.targetEntityId) ||
+    normalizeUnknownText(firstRelation?.targetId);
   const relationTargetName =
+    normalizeUnknownText(firstRelation?.entityName) ||
+    normalizeUnknownText(firstRelation?.neighborEntityName) ||
     normalizeUnknownText(firstRelation?.targetEntityName) ||
     normalizeUnknownText(firstRelation?.targetName) ||
+    normalizeUnknownText(firstRelation?.targetRef) ||
     relationTargetId ||
     t('entities.detail.evidence-handoff.topology.unknown-target');
   const runbookUrl = normalizeUnknownText(entity.runbook);
@@ -924,7 +1024,7 @@ export function buildRelationshipRows(
   timeContext: EntityDetailTimeContext = 'last-1h',
   t: EntityDetailViewModelTranslator = translateEntityDetailViewModel
 ): DetailRow[] {
-  const relations = (detail.entity?.relations || []) as Array<Record<string, unknown>>;
+  const relations = resolveTopologyRelationEvidence(detail);
 
   if (relations.length === 0) {
     return [
@@ -942,8 +1042,14 @@ export function buildRelationshipRows(
   const timeRange = normalizeContextText(routeContext.timeRange) || 'last-1h';
 
   return relations.map(relation => {
-    const targetEntityId = normalizeUnknownText(relation.targetEntityId) || normalizeUnknownText(relation.targetId);
+    const targetEntityId =
+      normalizeUnknownText(relation.entityId) ||
+      normalizeUnknownText(relation.neighborEntityId) ||
+      normalizeUnknownText(relation.targetEntityId) ||
+      normalizeUnknownText(relation.targetId);
     const targetEntityName =
+      normalizeUnknownText(relation.entityName) ||
+      normalizeUnknownText(relation.neighborEntityName) ||
       normalizeUnknownText(relation.targetEntityName) ||
       normalizeUnknownText(relation.targetName) ||
       normalizeUnknownText(relation.targetRef) ||
@@ -966,15 +1072,19 @@ export function buildRelationshipRows(
     return {
       title: String(relation.type || relation.relationType || 'related'),
       copy: String(
+        relation.entityName ||
+        relation.neighborEntityName ||
         relation.targetEntityName ||
         relation.targetName ||
         relation.targetRef ||
+        relation.entityId ||
+        relation.neighborEntityId ||
         relation.targetEntityId ||
         t('entities.detail.relationship-row.unknown-target')
       ),
       meta:
-        relation.targetEntityId != null
-          ? String(relation.targetEntityId)
+        targetEntityId
+          ? targetEntityId
           : t('entities.detail.relationship-row.default-meta'),
       href: targetEntityId ? withQuery(`/entities/${targetEntityId}`, params.toString()) : undefined
     };

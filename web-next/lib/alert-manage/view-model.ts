@@ -508,17 +508,24 @@ function firstNonEmpty(...values: Array<string | undefined | null>) {
   return values.find(value => typeof value === 'string' && value.trim().length > 0)?.trim();
 }
 
-function resolveGroupLabel(group: GroupAlert | null | undefined, key: string) {
-  return firstNonEmpty(
-    group?.commonLabels?.[key],
-    group?.groupLabels?.[key],
-    group?.alerts?.find(alert => alert.labels?.[key])?.labels?.[key]
-  );
+function resolveGroupLabel(group: GroupAlert | null | undefined, ...keys: string[]) {
+  for (const key of keys) {
+    const value = firstNonEmpty(
+      group?.commonLabels?.[key],
+      group?.groupLabels?.[key],
+      group?.alerts?.find(alert => alert.labels?.[key])?.labels?.[key]
+    );
+    if (value) {
+      return value;
+    }
+  }
+  return undefined;
 }
 
 function resolveAlertClosureService(query: AlertQueryState, group: GroupAlert | null | undefined) {
   return firstNonEmpty(
     query.serviceName,
+    resolveGroupLabel(group, 'service.name', 'service_name', 'serviceName'),
     resolveGroupLabel(group, 'service'),
     resolveGroupLabel(group, 'job'),
     query.search,
@@ -527,14 +534,46 @@ function resolveAlertClosureService(query: AlertQueryState, group: GroupAlert | 
   );
 }
 
+function resolveAlertClosureEntityId(query: AlertQueryState, group: GroupAlert | null | undefined) {
+  return firstNonEmpty(
+    query.entityId,
+    resolveGroupLabel(group, 'hertzbeat.entity_id', 'hertzbeat_entity_id', 'entity.id', 'entity_id', 'entityId')
+  );
+}
+
+function resolveAlertClosureEntityName(query: AlertQueryState, group: GroupAlert | null | undefined) {
+  return firstNonEmpty(
+    query.entityName,
+    resolveGroupLabel(group, 'hertzbeat.entity_name', 'hertzbeat_entity_name', 'entity.name', 'entity_name', 'entityName')
+  );
+}
+
+function resolveAlertClosureServiceNamespace(query: AlertQueryState, group: GroupAlert | null | undefined) {
+  return firstNonEmpty(
+    query.serviceNamespace,
+    resolveGroupLabel(group, 'service.namespace', 'service_namespace', 'serviceNamespace')
+  );
+}
+
+function resolveAlertClosureEnvironment(query: AlertQueryState, group: GroupAlert | null | undefined) {
+  return firstNonEmpty(
+    query.environment,
+    resolveGroupLabel(group, 'deployment.environment.name', 'deployment_environment_name', 'environment', 'env')
+  );
+}
+
+function resolveAlertClosureSource(query: AlertQueryState, group: GroupAlert | null | undefined) {
+  return firstNonEmpty(query.source, resolveGroupLabel(group, 'hertzbeat.source', 'source')) || 'otlp';
+}
+
 function buildAlertClosureSignalContext(query: AlertQueryState, serviceName?: string, group?: GroupAlert | null): SignalRouteContext {
   const evidenceTimeContext = buildAlertEvidenceTimeContext(query, group);
   return {
-    entityId: query.entityId || undefined,
-    entityName: query.entityName || undefined,
+    entityId: resolveAlertClosureEntityId(query, group) || undefined,
+    entityName: resolveAlertClosureEntityName(query, group) || undefined,
     serviceName: serviceName || query.serviceName || undefined,
-    serviceNamespace: query.serviceNamespace || undefined,
-    environment: query.environment || undefined,
+    serviceNamespace: resolveAlertClosureServiceNamespace(query, group) || undefined,
+    environment: resolveAlertClosureEnvironment(query, group) || undefined,
     timeRange: evidenceTimeContext.timeRange || undefined,
     start: evidenceTimeContext.start || undefined,
     end: evidenceTimeContext.end || undefined,
@@ -547,7 +586,7 @@ function buildAlertClosureSignalContext(query: AlertQueryState, serviceName?: st
     monitorName: query.monitorName || undefined,
     monitorApp: query.monitorApp || undefined,
     monitorInstance: query.monitorInstance || undefined,
-    source: query.source || 'otlp',
+    source: resolveAlertClosureSource(query, group),
     collector: query.collector || undefined,
     template: query.template || undefined,
     returnTo: stripReturnLabelFromHref(query.returnTo)
@@ -566,8 +605,9 @@ function withOptionalQuery(pathname: string, params: URLSearchParams) {
 
 function buildTopologyEvidenceHref(query: AlertQueryState, serviceName?: string, group?: GroupAlert | null) {
   const returnTo = stripReturnLabelFromHref(query.returnTo);
-  const returnsToTopology = returnTo?.startsWith('/topology');
-  const topologyUrl = new URL(returnsToTopology ? returnTo : '/topology', 'http://localhost');
+  const returnsToTopology = Boolean(returnTo?.startsWith('/topology'));
+  const topologyHref = returnsToTopology && returnTo ? returnTo : '/topology';
+  const topologyUrl = new URL(topologyHref, 'http://localhost');
   const params = topologyUrl.searchParams;
 
   appendAlertEvidenceSignalContext(params, query, serviceName, group);
@@ -610,7 +650,7 @@ export function buildAlertEvidenceClosureRows(
     {
       key: 'entity',
       title: t('alert.center.evidence.entity.title'),
-      copy: query.entityName || query.entityId || serviceName || t('alert.center.evidence.entity.fallback'),
+      copy: signalContext.entityName || signalContext.entityId || serviceName || t('alert.center.evidence.entity.fallback'),
       meta: t('alert.center.evidence.entity.meta'),
       href: buildSignalEntityHref(signalContext, serviceName)
     },
@@ -970,7 +1010,7 @@ export function buildAlertRuleQuickDialogModel(
   const previewLabels = buildAlertRulePreviewLabels(group);
   const previewLabelText = buildPreviewLabelText(previewLabels);
   const entityTitle = query.entityName || query.entityId || t('common.none');
-  const ruleNameBase = query.entityName || query.returnLabel || query.entityId || 'entity';
+  const ruleNameBase = query.entityName || query.serviceName || query.monitorName || query.entityId || 'entity';
   const selectionCount = resolveAlertRuleQuickDialogSelectionCount(group);
   const hasEntityId = typeof query.entityId === 'string' && query.entityId.trim().length > 0;
 

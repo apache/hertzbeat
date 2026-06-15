@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
@@ -38,9 +39,13 @@ import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 /**
  * Test case for {@link AlertService}
@@ -150,6 +155,56 @@ class AlertServiceTest {
         assertNull(singleAlert.getEndAt());
         verify(groupAlertDao, times(1)).saveAll(List.of(groupAlert));
         verify(singleAlertDao, times(1)).saveAll(List.of(singleAlert));
+    }
+
+    @Test
+    void getGroupAlertsFiltersByServiceNamespaceAndEnvironmentLabels() {
+        GroupAlert matching = GroupAlert.builder()
+                .id(1L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .commonLabels(Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "payments",
+                        "deployment.environment.name", "prod"))
+                .alertFingerprints(List.of("fingerprint-1"))
+                .build();
+        GroupAlert wrongNamespace = GroupAlert.builder()
+                .id(2L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .commonLabels(Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "orders",
+                        "deployment.environment.name", "prod"))
+                .alertFingerprints(List.of("fingerprint-2"))
+                .build();
+        GroupAlert wrongEnvironment = GroupAlert.builder()
+                .id(3L)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .commonLabels(Map.of(
+                        "service.name", "checkout",
+                        "service.namespace", "payments",
+                        "deployment.environment.name", "stage"))
+                .alertFingerprints(List.of("fingerprint-3"))
+                .build();
+        when(groupAlertDao.findAll(Mockito.<Specification<GroupAlert>>any(), Mockito.any(Sort.class)))
+                .thenReturn(List.of(matching, wrongNamespace, wrongEnvironment));
+        when(singleAlertDao.findSingleAlertsByFingerprintIn(List.of("fingerprint-1"))).thenReturn(List.of());
+
+        Page<GroupAlert> result = alertService.getGroupAlerts(
+                CommonConstants.ALERT_STATUS_FIRING,
+                null,
+                null,
+                "checkout",
+                "payments",
+                "prod",
+                "gmtUpdate",
+                "desc",
+                0,
+                8);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1L, result.getContent().get(0).getId());
+        verify(groupAlertDao, times(1)).findAll(Mockito.<Specification<GroupAlert>>any(), Mockito.any(Sort.class));
     }
 
     @Test

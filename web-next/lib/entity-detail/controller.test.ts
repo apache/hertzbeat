@@ -34,6 +34,19 @@ describe('entity detail controller', () => {
     await expect(loadEntityDetail(apiGet as any, '123')).resolves.toEqual(buildFallbackEntityDetail('123'));
   });
 
+  it('marks fallback detail as unavailable instead of a real empty entity', () => {
+    const detail = buildFallbackEntityDetail('123');
+
+    expect(detail.detailState).toEqual({
+      state: 'unavailable',
+      message: 'Detail unavailable',
+      reason: 'recoverable-detail-load-failed'
+    });
+    expect(detail.entity?.entity?.status).toBe('unavailable');
+    expect(detail.entity?.entity?.source).toBe('unavailable');
+    expect(detail.entity?.entity?.environment).toBeUndefined();
+  });
+
   it('treats the legacy Entity not exist response as a recoverable detail fallback', async () => {
     const apiGet = vi.fn().mockRejectedValue(new Error('Entity not exist.'));
 

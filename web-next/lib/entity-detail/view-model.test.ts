@@ -64,6 +64,83 @@ describe('entity detail view model', () => {
     ]);
   });
 
+  it('keeps unavailable entity detail separate from empty or healthy signal states', () => {
+    const detail = {
+      detailState: {
+        state: 'unavailable',
+        message: 'Detail unavailable',
+        reason: 'recoverable-detail-load-failed'
+      },
+      entity: {
+        entity: {
+          id: 123,
+          status: 'unavailable'
+        }
+      },
+      evidenceSummary: {
+        activeAlertCount: 0,
+        downMonitorCount: 0,
+        healthyMonitorCount: 0,
+        identityCount: 0,
+        logHintCount: 0
+      },
+      alertSummary: {
+        totalActiveAlerts: 0
+      },
+      monitorSummary: {
+        totalBoundMonitors: 0
+      },
+      traceSummary: {
+        recentTraceCount: 0,
+        recentErrorTraceCount: 0
+      }
+    } as any;
+
+    expect(buildDetailFacts({ id: 123, type: 'service', status: 'unavailable', owner: 'platform' } as any)).toEqual([
+      { label: 'Entity ID', value: '123' },
+      { label: 'Type', value: 'service' },
+      { label: 'Status', value: 'Unavailable' },
+      { label: 'Owner', value: 'platform' }
+    ]);
+    expect(buildSummaryRows(detail)).toEqual([
+      {
+        title: 'Related metrics',
+        copy: 'Detail unavailable',
+        meta: 'Monitor and metric state unavailable.',
+        tone: 'warning'
+      },
+      {
+        title: 'Related logs',
+        copy: 'Detail unavailable',
+        meta: 'Log evidence unavailable.',
+        tone: 'warning'
+      },
+      {
+        title: 'Related traces',
+        copy: 'Detail unavailable',
+        meta: 'Trace evidence unavailable.',
+        tone: 'warning'
+      }
+    ]);
+    expect(buildUnifiedEvidenceRows(detail)).toEqual([
+      {
+        title: 'Evidence coverage',
+        copy: 'Detail unavailable',
+        meta: 'Backend evidence unavailable; not an empty read model.',
+        tone: 'warning'
+      }
+    ]);
+    expect(buildEntityHealthModel(detail).map(row => ({ title: row.title, copy: row.copy, tone: row.tone }))).toEqual([
+      { title: 'Health score', copy: 'Detail unavailable', tone: 'warning' },
+      { title: 'Availability', copy: 'Detail unavailable', tone: 'warning' },
+      { title: 'Error rate', copy: 'Detail unavailable', tone: 'warning' },
+      { title: 'Latency', copy: 'Detail unavailable', tone: 'warning' },
+      { title: 'Current alerts', copy: 'Detail unavailable', tone: 'warning' },
+      { title: 'Recent anomalies', copy: 'Detail unavailable', tone: 'warning' },
+      { title: 'Collection health', copy: 'Detail unavailable', tone: 'warning' }
+    ]);
+  });
+
   it('prefers the shared signal evidence bundle over scattered signal fields', () => {
     const detail = {
       evidenceSummary: { downMonitorCount: 0 },
@@ -551,6 +628,46 @@ describe('entity detail view model', () => {
     expect(buildEntityEvidenceHandoffRows({ entity: { entity: { id: 99, name: 'empty' }, relations: [] }, activeAlerts: [] } as any)).toEqual([]);
   });
 
+  it('uses backend resolved topology neighbors for topology evidence handoffs', () => {
+    const rows = buildEntityEvidenceHandoffRows(
+      {
+        entity: {
+          entity: {
+            id: 4200,
+            name: 'checkout',
+            displayName: 'Checkout API'
+          },
+          relations: [{ relationType: 'runs_on', targetEntityId: 4201, targetRef: 'host:checkout-node-a' }]
+        },
+        topologyNeighbors: [
+          {
+            relationId: 1,
+            entityId: 4201,
+            entityName: 'Checkout Node A',
+            entityType: 'host',
+            direction: 'outgoing',
+            relationType: 'runs_on',
+            relationSource: 'otel_resource',
+            status: 'confirmed',
+            score: 95,
+            targetRef: 'host:checkout-node-a'
+          }
+        ]
+      } as any,
+      { timeRange: 'last-1h', serviceName: 'checkout', environment: 'demo' }
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      key: 'topology',
+      copy: 'Checkout Node A',
+      meta: 'runs_on · 4201'
+    });
+    const topologyHref = new URL(rows[0]?.href || '/', 'http://localhost');
+    expect(topologyHref.searchParams.get('topologyTargetId')).toBe('4201');
+    expect(topologyHref.searchParams.get('topologyTargetName')).toBe('Checkout Node A');
+  });
+
   it('preserves inherited absolute time, refresh, pause, timezone, and monitor context from entity handoffs', () => {
     const links = buildEntityContextHandoffLinks(
       {
@@ -733,6 +850,48 @@ describe('entity detail view model', () => {
         copy: 'k8s_workload:payments/checkout-v1-78dfd',
         meta: '4202',
         href: '/entities/4202?entityId=4202&entityName=k8s_workload%3Apayments%2Fcheckout-v1-78dfd&serviceName=checkout&environment=demo&timeRange=last-45m&source=otlp&collector=collector-demo-a&template=spring-boot&serviceNamespace=hertzbeat-demo&returnTo=%2Fentities%2F4200'
+      }
+    ]);
+  });
+
+  it('prefers backend resolved topology neighbors over raw relation references', () => {
+    const detail = {
+      entity: {
+        entity: {
+          id: 4200,
+          name: 'checkout',
+          displayName: 'Checkout API'
+        },
+        relations: [
+          {
+            relationType: 'depends_on',
+            targetEntityId: 4201,
+            targetRef: 'database:orders/mysql'
+          }
+        ]
+      },
+      topologyNeighbors: [
+        {
+          relationId: 301,
+          entityId: 4201,
+          entityName: 'Orders MySQL',
+          entityType: 'database',
+          direction: 'outgoing',
+          relationType: 'depends_on',
+          relationSource: 'otel_resource',
+          status: 'confirmed',
+          score: 95,
+          targetRef: 'database:orders/mysql'
+        }
+      ]
+    } as any;
+
+    expect(buildRelationshipRows(detail, { timeRange: 'last-30m', serviceName: 'checkout', environment: 'prod' })).toEqual([
+      {
+        title: 'depends_on',
+        copy: 'Orders MySQL',
+        meta: '4201',
+        href: '/entities/4201?entityId=4201&entityName=Orders+MySQL&serviceName=checkout&environment=prod&timeRange=last-30m&returnTo=%2Fentities%2F4200'
       }
     ]);
   });

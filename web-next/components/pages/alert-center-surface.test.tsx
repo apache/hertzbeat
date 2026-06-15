@@ -142,16 +142,16 @@ describe('AlertCenterSurface', () => {
     interactionContainer = null;
   });
 
-  it('renders the OTLP cold-matte alert-center zh-CN header and single query contract', () => {
+  it('renders the OTLP hertzbeat-ui alert-center zh-CN header and single query contract', () => {
     const html = renderSurface();
 
-    expect(html).toContain('data-alert-center-surface="otlp-cold-center-console"');
+    expect(html).toContain('data-alert-center-surface="otlp-hertzbeat-ui-center-console"');
     expect(html).toContain('data-alert-center-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-alert-center-sse-contract="angular-alert-event-refresh"');
     expect(html).toContain('data-alert-center-sse-event-count="0"');
     expect(html).toContain('data-alert-center-sse-highlight="angular-new-alert"');
     expect(html).toContain('data-alert-center-sse-highlight-ids=""');
-    expect(html).toContain('data-alert-center-header="cold-compact-header"');
+    expect(html).toContain('data-alert-center-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-alert-center-command-row="standard-equal-buttons"');
     expect(html).toContain('data-alert-center-facts-strip="angular-platform-facts-strip"');
     expect(html).toContain('data-alert-center-facts-strip-owner="hertzbeat-ui-stat-strip"');
@@ -161,9 +161,9 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain('data-alert-center-fact="resolved"');
     expect(html).toContain('data-alert-center-fact-owner="hertzbeat-ui-stat-cell"');
     expect(html).toContain('data-alert-center-admin-layout="full-width-admin-list"');
-    expect(html).toContain('data-alert-center-toolbar="cold-query-toolbar"');
+    expect(html).toContain('data-alert-center-toolbar="hertzbeat-ui-query-toolbar"');
     expect(html).toContain('data-alert-center-query-toolbar="single-query-form"');
-    expect(html).toContain('data-alert-center-list-shell="cold-alert-list"');
+    expect(html).toContain('data-alert-center-list-shell="hertzbeat-ui-alert-list"');
     expect(html).not.toContain('data-alert-center-summary-rail=');
     expect(html).toContain(zh('alert.workbench.kicker'));
     expect(html).toContain(zh('alert.workbench.title'));
@@ -182,7 +182,7 @@ describe('AlertCenterSurface', () => {
     expect(html).not.toContain('Restoring');
   });
 
-  it('renders a cold dense empty state instead of the old inline state', () => {
+  it('renders a hertzbeat-ui dense empty state instead of the old inline state', () => {
     const html = renderSurface({
       data: {
         summary,
@@ -195,9 +195,9 @@ describe('AlertCenterSurface', () => {
       } as any
     });
 
-    expect(html).toContain('data-alert-center-list-shell="cold-alert-list"');
-    expect(html).toContain('data-alert-center-empty-state="cold-table-empty"');
-    expect(html).toContain('data-alert-center-empty-icon="cold-empty-box"');
+    expect(html).toContain('data-alert-center-list-shell="hertzbeat-ui-alert-list"');
+    expect(html).toContain('data-alert-center-empty-state="hertzbeat-ui-table-empty"');
+    expect(html).toContain('data-alert-center-empty-icon="hertzbeat-ui-empty-box"');
     expect(html).toContain(zh('alert.workbench.empty.title'));
     expect(html).toContain(zh('alert.workbench.empty.copy'));
     expect(html).not.toContain('data-alert-center-empty-action="refresh"');
@@ -247,26 +247,26 @@ describe('AlertCenterSurface', () => {
     });
     const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-center-surface.tsx'), 'utf8');
 
-    expect(html).toContain('data-alert-center-toolbar="cold-query-toolbar"');
+    expect(html).toContain('data-alert-center-toolbar="hertzbeat-ui-query-toolbar"');
     expect(html).toContain('data-alert-center-search-row="shared-compact"');
     expect(html).toContain('data-alert-center-query-toolbar="single-query-form"');
-    expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
-    expect(html).toContain('data-cold-search-layout="compact-detached-button"');
-    expect(html).toContain('data-cold-search-input="fixed-width-direct"');
-    expect(html).toContain('data-cold-search-control="direct-input"');
-    expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
-    expect(html).not.toContain('data-cold-search-input-shell');
-    expect(html).toContain('data-cold-search-filter-slot="inline-before-submit"');
+    expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
+    expect(html).toContain('data-hz-search-layout="compact-detached-button"');
+    expect(html).toContain('data-hz-search-input="fixed-width-direct"');
+    expect(html).toContain('data-hz-search-control="direct-input"');
+    expect(html).toContain('data-hz-search-chrome="no-extra-input-shell"');
+    expect(html).not.toContain('data-hz-search-input-shell');
+    expect(html).toContain('data-hz-search-filter-slot="inline-before-submit"');
     expect(html).toContain('data-alert-center-query-filters="inline-before-submit"');
-    expect(html).toContain('data-cold-search-action="submit"');
+    expect(html).toContain('data-hz-search-action="submit"');
     expect(html).toContain('data-alert-center-select="status"');
     expect(html).toContain('data-alert-center-select="severity"');
     expect(html).toContain('data-alert-center-clear-filters="true"');
-    expect(html.indexOf('data-cold-search-input="fixed-width-direct"')).toBeLessThan(
+    expect(html.indexOf('data-hz-search-input="fixed-width-direct"')).toBeLessThan(
       html.indexOf('data-alert-center-select="status"')
     );
     expect(html.indexOf('data-alert-center-select="severity"')).toBeLessThan(
-      html.indexOf('data-cold-search-action="submit"')
+      html.indexOf('data-hz-search-action="submit"')
     );
     expect(html).not.toContain('data-alert-center-refresh-slot="right"');
     expect(html).not.toContain(`<span>${zh('alert.center.search')}</span>`);
@@ -296,7 +296,7 @@ describe('AlertCenterSurface', () => {
     }, zh);
     const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-center-surface.tsx'), 'utf8');
 
-    expect(html).toContain('data-alert-center-pagination="cold-dense-pagination"');
+    expect(html).toContain('data-alert-center-pagination="hertzbeat-ui-dense-pagination"');
     expect(html).toContain('data-alert-center-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(html).toContain('data-hz-ui="pagination-bar"');
     expect(html).toContain('data-hz-pagination-page-size="select-menu"');
@@ -821,7 +821,7 @@ describe('AlertCenterSurface', () => {
     );
   });
 
-  it('renders cold entity context and noise-control summary shells', () => {
+  it('renders hertzbeat-ui entity context and noise-control summary shells', () => {
     const html = renderSurface({
       data: {
         summary,
@@ -845,8 +845,8 @@ describe('AlertCenterSurface', () => {
       }
     }, t);
 
-    expect(html).toContain('data-alert-entity-context="cold-context-panel"');
-    expect(html).toContain('data-alert-noise-controls="cold-noise-panel"');
+    expect(html).toContain('data-alert-entity-context="hertzbeat-ui-context-panel"');
+    expect(html).toContain('data-alert-noise-controls="hertzbeat-ui-noise-panel"');
     expect(html).toContain('Reviewing this entity');
     expect(html).toContain('Checkout API');
     expect(html).toContain('Back to entity');
@@ -900,7 +900,7 @@ describe('AlertCenterSurface', () => {
     }, zh);
     const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-center-surface.tsx'), 'utf8');
 
-    expect(html).toContain('data-alert-entity-context="cold-context-panel"');
+    expect(html).toContain('data-alert-entity-context="hertzbeat-ui-context-panel"');
     expect(html).toContain(
       'href="/entities/42?tab=alerts&amp;responseResultKind=alerts&amp;responseResultAction=silence&amp;responseResultCount=2#noise"'
     );
@@ -1499,17 +1499,17 @@ describe('AlertCenterSurface', () => {
     expect(html).toContain(t('alert.inhibit.equal_labels'));
   });
 
-  it('pins the alert center shell to the shared cold visual owner instead of page-local primitives', () => {
+  it('pins the alert center shell to the shared hertzbeat-ui visual owner instead of page-local primitives', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-center-surface.tsx'), 'utf8');
 
-    expect(source).toContain('data-alert-center-surface="otlp-cold-center-console"');
+    expect(source).toContain('data-alert-center-surface="otlp-hertzbeat-ui-center-console"');
     expect(source).toContain('data-alert-center-style-baseline={coldCenterVisual.canvasName}');
-    expect(source).toContain('data-alert-center-header="cold-compact-header"');
+    expect(source).toContain('data-alert-center-header="hertzbeat-ui-compact-header"');
     expect(source).toContain('data-alert-center-command-row="standard-equal-buttons"');
-    expect(source).toContain('data-alert-center-toolbar="cold-query-toolbar"');
+    expect(source).toContain('data-alert-center-toolbar="hertzbeat-ui-query-toolbar"');
     expect(source).toContain('data-alert-center-query-toolbar="single-query-form"');
-    expect(source).toContain('data-alert-center-list-shell="cold-alert-list"');
-    expect(source).toContain('data-alert-center-empty-state="cold-table-empty"');
+    expect(source).toContain('data-alert-center-list-shell="hertzbeat-ui-alert-list"');
+    expect(source).toContain('data-alert-center-empty-state="hertzbeat-ui-table-empty"');
     expect(source).toContain('data-alert-center-post-action-filter-contract="angular-retain-filter"');
     expect(source).toContain('data-alert-center-post-action-filter-owner="route-state-contract"');
     expect(source).toContain('data-alert-noise-control-action-label-contract="angular-possible-suppression-counts"');

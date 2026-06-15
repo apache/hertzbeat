@@ -26,6 +26,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -132,6 +133,82 @@ class EntityIdentityResolutionServiceTest {
         assertEquals(160, candidate.getScore());
         assertTrue(candidate.isAlreadyBound());
         assertEquals(Set.of("service.name", "service.namespace"), candidate.getMatchedIdentities().keySet());
+    }
+
+    @Test
+    void refreshAutoMonitorBindsPersistsOnlyUniqueDirectCandidate() {
+        Monitor monitor = Monitor.builder()
+                .id(504L)
+                .app("springboot3")
+                .name("checkout-api")
+                .labels(Map.of("service.name", "checkout-api"))
+                .build();
+        EntityIdentity serviceName = EntityIdentity.builder()
+                .entityId(401L)
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .normalizedValue("checkout-api")
+                .priority(90)
+                .primaryIdentity(true)
+                .build();
+        when(entityIdentityReadModelService.findMatchingIdentities(anySet(), anySet()))
+                .thenReturn(List.of(serviceName));
+        when(entityMonitorBindService.findMonitorBindsByMonitorId(504L)).thenReturn(List.of());
+        ObserveEntity entity = ObserveEntity.builder()
+                .id(401L)
+                .type("service")
+                .name("checkout-api")
+                .displayName("Checkout API")
+                .build();
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(401L)))
+                .thenReturn(List.of(entity));
+
+        identityResolutionService.refreshAutoMonitorBinds(monitor);
+
+        ArgumentCaptor<List<EntityMonitorBindingCandidate>> candidatesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(entityMonitorBindService).replaceAutoMonitorBinds(eq(504L), candidatesCaptor.capture());
+        List<EntityMonitorBindingCandidate> persistedCandidates = candidatesCaptor.getValue();
+        assertEquals(1, persistedCandidates.size());
+        assertEquals(401L, persistedCandidates.getFirst().getEntityId());
+        assertEquals("direct", persistedCandidates.getFirst().getRecommendation());
+    }
+
+    @Test
+    void refreshAutoMonitorBindsClearsAutoBindsWhenDirectCandidatesConflict() {
+        Monitor monitor = Monitor.builder()
+                .id(505L)
+                .app("springboot3")
+                .name("checkout-api")
+                .labels(Map.of("service.name", "checkout-api"))
+                .build();
+        EntityIdentity first = EntityIdentity.builder()
+                .entityId(501L)
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .normalizedValue("checkout-api")
+                .priority(90)
+                .primaryIdentity(true)
+                .build();
+        EntityIdentity second = EntityIdentity.builder()
+                .entityId(502L)
+                .identityKey("service.name")
+                .identityValue("checkout-api")
+                .normalizedValue("checkout-api")
+                .priority(90)
+                .primaryIdentity(true)
+                .build();
+        when(entityIdentityReadModelService.findMatchingIdentities(anySet(), anySet()))
+                .thenReturn(List.of(first, second));
+        when(entityMonitorBindService.findMonitorBindsByMonitorId(505L)).thenReturn(List.of());
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(501L, 502L)))
+                .thenReturn(List.of(
+                        ObserveEntity.builder().id(501L).type("service").name("checkout-api").build(),
+                        ObserveEntity.builder().id(502L).type("service").name("checkout-api-shadow").build()
+                ));
+
+        identityResolutionService.refreshAutoMonitorBinds(monitor);
+
+        verify(entityMonitorBindService).replaceAutoMonitorBinds(505L, Collections.emptyList());
     }
 
     @Test

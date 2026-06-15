@@ -636,6 +636,74 @@ describe('alert view model', () => {
     expect(params.get('returnTo')).toBeNull();
   });
 
+  it('hydrates alert evidence handoffs from OTLP entity labels when route query has no entity context', () => {
+    const query = {
+      search: '',
+      status: 'firing',
+      severity: 'critical',
+      returnTo: '/alert'
+    } as const;
+    const group = {
+      id: 7,
+      status: 'firing',
+      commonLabels: {
+        'hertzbeat.entity_id': '4200',
+        'hertzbeat.entity_name': 'Checkout API',
+        'service.name': 'checkout',
+        'service.namespace': 'hertzbeat-demo',
+        'deployment.environment.name': 'demo',
+        'hertzbeat.source': 'otlp'
+      },
+      groupLabels: { severity: 'critical' },
+      alerts: [
+        {
+          id: 701,
+          status: 'firing',
+          labels: {
+            'hertzbeat.entity_id': '4200',
+            'service.name': 'checkout'
+          }
+        }
+      ]
+    } as any;
+
+    const evidenceRows = buildAlertEvidenceClosureRows(query, group, t);
+    const operationRows = buildAlertClosureOperationRows(query, group, t);
+    const hrefs = [
+      ...evidenceRows.map(row => row.href),
+      ...operationRows
+        .filter(row => row.key !== 'automation')
+        .map(row => row.href)
+        .filter((href): href is string => Boolean(href))
+    ];
+    const automationHref = operationRows.find(row => row.key === 'automation')?.href || '';
+
+    expect(evidenceRows.find(row => row.key === 'entity')?.href).toMatch(/^\/entities\/4200\?/);
+    expect(evidenceRows.find(row => row.key === 'entity')?.copy).toBe('Checkout API');
+    expect(evidenceRows.find(row => row.key === 'logs')?.href).toContain('search=service.name+%3D+%22checkout%22');
+    expect(evidenceRows.find(row => row.key === 'topology')?.href).toContain('/topology?');
+
+    hrefs.forEach(href => {
+      const params = new URL(href, 'http://localhost').searchParams;
+
+      expect(params.get('entityId')).toBe('4200');
+      expect(params.get('entityName')).toBe('Checkout API');
+      expect(params.get('serviceName')).toBe('checkout');
+      expect(params.get('serviceNamespace')).toBe('hertzbeat-demo');
+      expect(params.get('environment')).toBe('demo');
+      expect(params.get('source')).toBe('otlp');
+      expect(params.get('returnLabel')).toBeNull();
+    });
+
+    const automationParams = new URL(automationHref, 'http://localhost').searchParams;
+    expect(automationParams.get('entityId')).toBe('4200');
+    expect(automationParams.get('entityName')).toBe('Checkout API');
+    expect(automationParams.get('serviceName')).toBe('checkout');
+    expect(automationParams.get('serviceNamespace')).toBe('hertzbeat-demo');
+    expect(automationParams.get('environment')).toBe('demo');
+    expect(automationParams.get('source')).toBe('alert');
+  });
+
   it('preserves three-signal alert context when opening rule workspaces from alert closure', () => {
     const query = {
       search: 'checkout',

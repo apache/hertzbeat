@@ -21,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
@@ -39,6 +42,7 @@ import org.apache.hertzbeat.common.observability.gateway.ObservabilityWorkspaceQ
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -71,6 +75,63 @@ class OtlpEntityIdentityResolverTest {
         assertEquals("service", attributes.get("hertzbeat.entity_type"));
         assertEquals("Checkout API", attributes.get("hertzbeat.entity_name"));
         assertEquals(" Checkout ", attributes.get("service.name"));
+    }
+
+    @Test
+    void prefersEntityWithMostCanonicalEvidenceOverBroadPrimaryIdentity() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(anySet(), anySet()))
+                .thenReturn(List.of(
+                        identity(41L, "service.name", "checkout", "checkout", 150, true),
+                        identity(42L, "service.name", "checkout", "checkout", 90, true),
+                        identity(42L, "service.namespace", "commerce", "commerce", 30, false),
+                        identity(42L, "deployment.environment.name", "prod", "prod", 20, false)));
+        when(workspaceQueryGateway.findEntitiesByIds(Set.of(41L, 42L)))
+                .thenReturn(Map.of(
+                        41L, entity(41L, "prod-west", "service", "checkout", "Checkout Broad"),
+                        42L, entity(42L, "prod-west", "service", "checkout", "Checkout API")));
+
+        Optional<String> resolved = resolver.resolveEntityId(Map.of(
+                "service.name", "checkout",
+                "service.namespace", "commerce",
+                "deployment.environment.name", "prod"), "prod-west");
+
+        assertEquals(Optional.of("42"), resolved);
+    }
+
+    @Test
+    void doesNotResolveEntityWhenCanonicalEvidenceIsSplitAcrossEntities() {
+        when(workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(anySet(), anySet()))
+                .thenReturn(List.of(
+                        identity(41L, "service.name", "checkout", "checkout", 90, true),
+                        identity(41L, "deployment.environment.name", "prod", "prod", 20, false),
+                        identity(42L, "service.name", "checkout", "checkout", 90, true),
+                        identity(42L, "service.namespace", "commerce", "commerce", 30, false)));
+        when(workspaceQueryGateway.findEntitiesByIds(Set.of(41L, 42L)))
+                .thenReturn(Map.of(41L, entity(41L, "prod-west"), 42L, entity(42L, "prod-west")));
+
+        Optional<String> resolved = resolver.resolveEntityId(Map.of(
+                "service.name", "checkout",
+                "service.namespace", "commerce",
+                "deployment.environment.name", "prod"), "prod-west");
+
+        assertTrue(resolved.isEmpty());
+        ArgumentCaptor<Map<Long, String>> entityRefsCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(workspaceQueryGateway).recordEntityDiscoveryGovernanceActivity(
+                eq("prod-west"),
+                eq("identity_conflict"),
+                eq("needs_governance"),
+                eq("OTLP resource identity matched multiple entities"),
+                org.mockito.ArgumentMatchers.contains("service.name=checkout"),
+                entityRefsCaptor.capture());
+        assertEquals(Map.of(41L, "Checkout API", 42L, "Checkout API"), entityRefsCaptor.getValue());
+    }
+
+    @Test
+    void keepsResourceUnattributedWhenCanonicalIdentityIsMissing() {
+        Optional<String> resolved = resolver.resolveEntityId(Map.of("http.route", "/checkout"), "prod-west");
+
+        assertTrue(resolved.isEmpty());
+        verifyNoInteractions(workspaceQueryGateway);
     }
 
     @Test
@@ -152,12 +213,16 @@ class OtlpEntityIdentityResolverTest {
     }
 
     private ObserveEntity entity(Long entityId, String workspaceId) {
+        return entity(entityId, workspaceId, "service", "checkout", "Checkout API");
+    }
+
+    private ObserveEntity entity(Long entityId, String workspaceId, String type, String name, String displayName) {
         return ObserveEntity.builder()
                 .id(entityId)
                 .workspaceId(workspaceId)
-                .type("service")
-                .name("checkout")
-                .displayName("Checkout API")
+                .type(type)
+                .name(name)
+                .displayName(displayName)
                 .status("unknown")
                 .build();
     }

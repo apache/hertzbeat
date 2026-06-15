@@ -69,11 +69,15 @@ public class AlertsController {
             @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
             @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,
             @Parameter(description = "Alarm severity", example = "critical") @RequestParam(required = false) String severity,
+            @Parameter(description = "OTLP service.name label", example = "checkout") @RequestParam(required = false) String serviceName,
+            @Parameter(description = "OTLP service.namespace label", example = "payments") @RequestParam(required = false) String serviceNamespace,
+            @Parameter(description = "OTLP deployment.environment.name label", example = "prod") @RequestParam(required = false) String environment,
             @Parameter(description = "Sort field, default id", example = "name") @RequestParam(defaultValue = "gmtUpdate") String sort,
             @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        Page<GroupAlert> alertPage = alertService.getGroupAlerts(status, search, severity, sort, order, pageIndex, pageSize);
+        Page<GroupAlert> alertPage = alertService.getGroupAlerts(status, search, severity, serviceName,
+                serviceNamespace, environment, sort, order, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(alertPage));
     }
 

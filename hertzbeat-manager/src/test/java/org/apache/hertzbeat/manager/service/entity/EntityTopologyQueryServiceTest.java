@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.EntityDefinitionActivity;
+import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -68,6 +69,9 @@ class EntityTopologyQueryServiceTest {
 
     @Mock
     private EntityMonitorQueryService entityMonitorQueryService;
+
+    @Mock
+    private EntityIdentityReadModelService entityIdentityReadModelService;
 
     @Mock
     private TraceCallTopologyQueryService traceCallTopologyQueryService;
@@ -335,6 +339,57 @@ class EntityTopologyQueryServiceTest {
     }
 
     @Test
+    void derivesServicePodHostOwnershipFromCanonicalIdentityEvidence() {
+        ObserveEntity checkout = entity(10L, "service", "checkout-api", "commerce", "prod", "warning");
+        ObserveEntity pod = entity(20L, "k8s_pod", "checkout-v1-7d9", "commerce", "prod", "healthy");
+        ObserveEntity host = entity(30L, "host", "node-a", "commerce", "prod", "healthy");
+        EntityIdentity servicePodIdentity = identity(10L, "k8s.pod.name", "checkout-v1-7d9");
+        EntityIdentity serviceHostIdentity = identity(10L, "host.name", "node-a");
+        EntityIdentity podIdentity = identity(20L, "k8s.pod.name", "checkout-v1-7d9");
+        EntityIdentity podHostIdentity = identity(20L, "host.name", "node-a");
+        EntityIdentity hostIdentity = identity(30L, "host.name", "node-a");
+
+        when(entityWorkspaceAccessService.findAccessibleEntityForRequestWorkspace(10L))
+                .thenReturn(Optional.of(checkout));
+        when(entityRelationQueryService.findEntityRelations(10L)).thenReturn(List.of());
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(argThat(ids ->
+                ids != null && ids.equals(Set.of(10L))))).thenReturn(List.of(checkout));
+        when(entityIdentityReadModelService.findIdentities(10L))
+                .thenReturn(List.of(servicePodIdentity, serviceHostIdentity));
+        when(entityIdentityReadModelService.findMatchingIdentities(
+                Set.of("k8s.pod.name", "host.name"), Set.of("checkout-v1-7d9", "node-a")))
+                .thenReturn(List.of(servicePodIdentity, serviceHostIdentity, podIdentity, podHostIdentity, hostIdentity));
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(Set.of(20L, 30L)))
+                .thenReturn(List.of(pod, host));
+        when(entityIdentityReadModelService.findIdentities(20L)).thenReturn(List.of(podIdentity, podHostIdentity));
+        when(entityIdentityReadModelService.findIdentities(30L)).thenReturn(List.of(hostIdentity));
+        when(entityMonitorBindQueryService.findMonitorBinds(10L)).thenReturn(List.of());
+        when(entityMonitorBindQueryService.findMonitorBinds(20L)).thenReturn(List.of());
+        when(entityMonitorBindQueryService.findMonitorBinds(30L)).thenReturn(List.of());
+
+        EntityTopologyGraphInfo graph = entityTopologyQueryService.buildFocusedTopology(
+                10L, 1, "prod", null);
+
+        assertTrue(graph.getSourceKinds().contains("k8s-workload"));
+        assertTrue(graph.getNodes().stream().anyMatch(node ->
+                Long.valueOf(20L).equals(node.getEntityId()) && "checkout-v1-7d9".equals(node.getEntityName())));
+        assertTrue(graph.getNodes().stream().anyMatch(node ->
+                Long.valueOf(30L).equals(node.getEntityId()) && "node-a".equals(node.getEntityName())));
+        assertTrue(graph.getEdges().stream().anyMatch(edge ->
+                Long.valueOf(10L).equals(edge.getSourceEntityId())
+                        && Long.valueOf(20L).equals(edge.getTargetEntityId())
+                        && "deployed_on".equals(edge.getRelationType())
+                        && "k8s-workload".equals(edge.getRelationSource())
+                        && edge.getEvidenceBadges().contains("k8s.pod.name")));
+        assertTrue(graph.getEdges().stream().anyMatch(edge ->
+                Long.valueOf(20L).equals(edge.getSourceEntityId())
+                        && Long.valueOf(30L).equals(edge.getTargetEntityId())
+                        && "runs_on".equals(edge.getRelationType())
+                        && "k8s-workload".equals(edge.getRelationSource())
+                        && edge.getEvidenceBadges().contains("host.name")));
+    }
+
+    @Test
     void appliesRelationTypeAndEdgePaginationToFocusedTopology() {
         ObserveEntity checkout = entity(10L, "service", "checkout-api", "commerce", "prod", "warning");
         ObserveEntity orders = entity(20L, "database", "orders-db", "commerce", "prod", "healthy");
@@ -535,6 +590,16 @@ class EntityTopologyQueryServiceTest {
                 .relationSource(relationSource)
                 .status("confirmed")
                 .score(score)
+                .build();
+    }
+
+    private static EntityIdentity identity(Long entityId, String key, String value) {
+        return EntityIdentity.builder()
+                .entityId(entityId)
+                .identityKey(key)
+                .identityValue(value)
+                .normalizedValue(value.toLowerCase(java.util.Locale.ROOT))
+                .priority(90)
                 .build();
     }
 }

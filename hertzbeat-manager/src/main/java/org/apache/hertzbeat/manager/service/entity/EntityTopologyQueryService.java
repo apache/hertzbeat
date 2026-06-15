@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.EntityDefinitionActivity;
+import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -52,14 +53,22 @@ public class EntityTopologyQueryService {
     private static final String SOURCE_KIND_ENTITY_RELATION = "entity-relation";
     private static final String SOURCE_KIND_MONITOR_BIND = "monitor-bind";
     private static final String SOURCE_KIND_OTLP_TRACE_CALL = "otlp-trace-call";
+    private static final String SOURCE_KIND_K8S_WORKLOAD = "k8s-workload";
     private static final String RELATION_TYPE_MONITORS = "monitors";
     private static final String RELATION_TYPE_TRACE_CALL = "trace-call";
+    private static final String RELATION_TYPE_DEPLOYED_ON = "deployed_on";
+    private static final String RELATION_TYPE_RUNS_ON = "runs_on";
+    private static final String IDENTITY_K8S_POD_NAME = "k8s.pod.name";
+    private static final String IDENTITY_HOST_NAME = "host.name";
+    private static final String RELATION_ATTRIBUTE_IDENTITY_KEY = "identityKey";
+    private static final String RELATION_ATTRIBUTE_IDENTITY_VALUE = "identityValue";
     private static final String UNKNOWN_STATUS = "unknown";
 
     private final EntityWorkspaceAccessService entityWorkspaceAccessService;
     private final EntityRelationQueryService entityRelationQueryService;
     private final EntityMonitorBindQueryService entityMonitorBindQueryService;
     private final EntityMonitorQueryService entityMonitorQueryService;
+    private final EntityIdentityReadModelService entityIdentityReadModelService;
     private final TraceCallTopologyQueryService traceCallTopologyQueryService;
     private final EntityActivityReadModelService entityActivityReadModelService;
 
@@ -67,12 +76,14 @@ public class EntityTopologyQueryService {
                                       EntityRelationQueryService entityRelationQueryService,
                                       EntityMonitorBindQueryService entityMonitorBindQueryService,
                                       EntityMonitorQueryService entityMonitorQueryService,
+                                      EntityIdentityReadModelService entityIdentityReadModelService,
                                       TraceCallTopologyQueryService traceCallTopologyQueryService,
                                       EntityActivityReadModelService entityActivityReadModelService) {
         this.entityWorkspaceAccessService = entityWorkspaceAccessService;
         this.entityRelationQueryService = entityRelationQueryService;
         this.entityMonitorBindQueryService = entityMonitorBindQueryService;
         this.entityMonitorQueryService = entityMonitorQueryService;
+        this.entityIdentityReadModelService = entityIdentityReadModelService;
         this.traceCallTopologyQueryService = traceCallTopologyQueryService;
         this.entityActivityReadModelService = entityActivityReadModelService;
     }
@@ -130,6 +141,9 @@ public class EntityTopologyQueryService {
         if (!entityById.containsKey(focusEntityId)) {
             return graph;
         }
+        relations = mergeRelations(relations, sourceSelection.includeEntityRelations()
+                ? deriveIdentityOwnershipRelations(entityById, environment)
+                : List.of());
 
         TraceCallTopologyReadModel traceCallReadModel = sourceSelection.includeTraceCalls()
                 ? traceCallTopologyReadModel(entityById.values(), environment, start, end, hideInternal)
@@ -185,6 +199,9 @@ public class EntityTopologyQueryService {
         if (entityById.isEmpty()) {
             return graph;
         }
+        relations = mergeRelations(relations, sourceSelection.includeEntityRelations()
+                ? deriveIdentityOwnershipRelations(entityById, environment)
+                : List.of());
 
         TraceCallTopologyReadModel traceCallReadModel = sourceSelection.includeTraceCalls()
                 ? traceCallTopologyOverviewReadModel(environment, start, end, hideInternal)
@@ -257,7 +274,7 @@ public class EntityTopologyQueryService {
                     "cmdb-manual-label",
                     "database-middleware-connection",
                     "template-dependency",
-                    "k8s-workload" -> new TopologySourceSelection(true, false, false);
+                    SOURCE_KIND_K8S_WORKLOAD -> new TopologySourceSelection(true, false, false);
             case "alert-impact" -> TopologySourceSelection.all();
             default -> TopologySourceSelection.all();
         };
@@ -369,7 +386,8 @@ public class EntityTopologyQueryService {
         String normalized = source.trim().toLowerCase();
         if (SOURCE_KIND_ENTITY_RELATION.equals(normalized)
                 || SOURCE_KIND_MONITOR_BIND.equals(normalized)
-                || SOURCE_KIND_OTLP_TRACE_CALL.equals(normalized)) {
+                || SOURCE_KIND_OTLP_TRACE_CALL.equals(normalized)
+                || SOURCE_KIND_K8S_WORKLOAD.equals(normalized)) {
             sourceKinds.add(normalized);
         }
     }
@@ -399,6 +417,155 @@ public class EntityTopologyQueryService {
                 .sorted(Comparator.comparing(ObserveEntity::getId))
                 .forEach(entity -> entityById.put(entity.getId(), entity));
         return entityById;
+    }
+
+    private List<EntityRelation> deriveIdentityOwnershipRelations(Map<Long, ObserveEntity> entityById,
+                                                                  String environment) {
+        if (entityById.isEmpty() || entityIdentityReadModelService == null) {
+            return List.of();
+        }
+        Map<Long, List<EntityIdentity>> identityByEntityId = loadIdentities(entityById.keySet());
+        expandIdentityOwnershipEntities(entityById, identityByEntityId, environment);
+        identityByEntityId.putAll(loadMissingIdentities(entityById.keySet(), identityByEntityId.keySet()));
+        return buildIdentityOwnershipRelations(entityById, identityByEntityId);
+    }
+
+    private Map<Long, List<EntityIdentity>> loadIdentities(Collection<Long> entityIds) {
+        Map<Long, List<EntityIdentity>> identityByEntityId = new LinkedHashMap<>();
+        for (Long entityId : entityIds) {
+            if (entityId == null) {
+                continue;
+            }
+            List<EntityIdentity> identities = entityIdentityReadModelService.findIdentities(entityId);
+            identityByEntityId.put(entityId, identities == null ? List.of() : identities);
+        }
+        return identityByEntityId;
+    }
+
+    private Map<Long, List<EntityIdentity>> loadMissingIdentities(
+            Collection<Long> entityIds,
+            Collection<Long> loadedEntityIds) {
+        Set<Long> loaded = new LinkedHashSet<>(loadedEntityIds);
+        List<Long> missingIds = entityIds.stream()
+                .filter(Objects::nonNull)
+                .filter(entityId -> !loaded.contains(entityId))
+                .toList();
+        return loadIdentities(missingIds);
+    }
+
+    private void expandIdentityOwnershipEntities(Map<Long, ObserveEntity> entityById,
+                                                 Map<Long, List<EntityIdentity>> identityByEntityId,
+                                                 String environment) {
+        Set<String> identityKeys = new LinkedHashSet<>();
+        Set<String> normalizedValues = new LinkedHashSet<>();
+        for (List<EntityIdentity> identities : identityByEntityId.values()) {
+            for (EntityIdentity identity : identities) {
+                if (isOwnershipIdentity(identity)) {
+                    identityKeys.add(identity.getIdentityKey());
+                    normalizedValues.add(identityValue(identity));
+                }
+            }
+        }
+        normalizedValues.removeIf(value -> !StringUtils.hasText(value));
+        if (identityKeys.isEmpty() || normalizedValues.isEmpty()) {
+            return;
+        }
+        List<EntityIdentity> matches = entityIdentityReadModelService.findMatchingIdentities(identityKeys,
+                normalizedValues);
+        if (matches == null || matches.isEmpty()) {
+            return;
+        }
+        Set<Long> missingEntityIds = matches.stream()
+                .map(EntityIdentity::getEntityId)
+                .filter(Objects::nonNull)
+                .filter(entityId -> !entityById.containsKey(entityId))
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        if (missingEntityIds.isEmpty()) {
+            return;
+        }
+        entityWorkspaceAccessService.findAccessibleEntitiesByIdsForRequestWorkspace(missingEntityIds).stream()
+                .filter(entity -> matchesEnvironment(entity, environment))
+                .sorted(Comparator.comparing(ObserveEntity::getId))
+                .forEach(entity -> entityById.putIfAbsent(entity.getId(), entity));
+    }
+
+    private boolean isOwnershipIdentity(EntityIdentity identity) {
+        if (identity == null || !StringUtils.hasText(identity.getIdentityKey())
+                || !StringUtils.hasText(identityValue(identity))) {
+            return false;
+        }
+        return IDENTITY_K8S_POD_NAME.equals(identity.getIdentityKey())
+                || IDENTITY_HOST_NAME.equals(identity.getIdentityKey());
+    }
+
+    private List<EntityRelation> buildIdentityOwnershipRelations(
+            Map<Long, ObserveEntity> entityById,
+            Map<Long, List<EntityIdentity>> identityByEntityId) {
+        Map<String, List<Long>> podEntityIdsByName = new LinkedHashMap<>();
+        Map<String, List<Long>> hostEntityIdsByName = new LinkedHashMap<>();
+        for (ObserveEntity entity : entityById.values()) {
+            List<EntityIdentity> identities = identityByEntityId.getOrDefault(entity.getId(), List.of());
+            String podName = identityValue(identities, IDENTITY_K8S_POD_NAME);
+            if (StringUtils.hasText(podName) && isPodEntity(entity)) {
+                podEntityIdsByName.computeIfAbsent(podName, ignored -> new ArrayList<>()).add(entity.getId());
+            }
+            String hostName = identityValue(identities, IDENTITY_HOST_NAME);
+            if (StringUtils.hasText(hostName) && isHostEntity(entity)) {
+                hostEntityIdsByName.computeIfAbsent(hostName, ignored -> new ArrayList<>()).add(entity.getId());
+            }
+        }
+
+        Map<String, EntityRelation> relationByKey = new LinkedHashMap<>();
+        for (ObserveEntity entity : entityById.values()) {
+            List<EntityIdentity> identities = identityByEntityId.getOrDefault(entity.getId(), List.of());
+            if (isServiceEntity(entity)) {
+                addIdentityRelations(relationByKey, entity, identityValue(identities, IDENTITY_K8S_POD_NAME),
+                        podEntityIdsByName, RELATION_TYPE_DEPLOYED_ON, IDENTITY_K8S_POD_NAME, entityById);
+                if (!StringUtils.hasText(identityValue(identities, IDENTITY_K8S_POD_NAME))) {
+                    addIdentityRelations(relationByKey, entity, identityValue(identities, IDENTITY_HOST_NAME),
+                            hostEntityIdsByName, RELATION_TYPE_RUNS_ON, IDENTITY_HOST_NAME, entityById);
+                }
+            }
+            if (isPodEntity(entity)) {
+                addIdentityRelations(relationByKey, entity, identityValue(identities, IDENTITY_HOST_NAME),
+                        hostEntityIdsByName, RELATION_TYPE_RUNS_ON, IDENTITY_HOST_NAME, entityById);
+            }
+        }
+        return new ArrayList<>(relationByKey.values());
+    }
+
+    private void addIdentityRelations(Map<String, EntityRelation> relationByKey,
+                                      ObserveEntity source,
+                                      String identityValue,
+                                      Map<String, List<Long>> targetEntityIdsByIdentity,
+                                      String relationType,
+                                      String identityKey,
+                                      Map<Long, ObserveEntity> entityById) {
+        if (!StringUtils.hasText(identityValue)) {
+            return;
+        }
+        for (Long targetEntityId : targetEntityIdsByIdentity.getOrDefault(identityValue, List.of())) {
+            if (Objects.equals(source.getId(), targetEntityId)) {
+                continue;
+            }
+            ObserveEntity target = entityById.get(targetEntityId);
+            if (target == null) {
+                continue;
+            }
+            EntityRelation relation = EntityRelation.builder()
+                    .sourceEntityId(source.getId())
+                    .targetEntityId(targetEntityId)
+                    .targetRef(entityTargetRef(target))
+                    .relationType(relationType)
+                    .relationSource(SOURCE_KIND_K8S_WORKLOAD)
+                    .status("confirmed")
+                    .score(90)
+                    .attributes(Map.of(
+                            RELATION_ATTRIBUTE_IDENTITY_KEY, identityKey,
+                            RELATION_ATTRIBUTE_IDENTITY_VALUE, identityValue))
+                    .build();
+            relationByKey.putIfAbsent(relationKey(relation), relation);
+        }
     }
 
     private List<EntityTopologyGraphInfo.Node> buildNodes(Map<Long, ObserveEntity> entityById,
@@ -477,7 +644,7 @@ public class EntityTopologyQueryService {
                         valueOrUnknown(relation.getRelationSource()),
                         valueOrUnknown(relation.getStatus()),
                         relation.getScore(),
-                        List.of(SOURCE_KIND_ENTITY_RELATION, valueOrUnknown(relation.getRelationSource())),
+                        relationEvidenceBadges(relation),
                         emptyRedMetrics()))
                 .toList());
         edges.addAll(buildMonitorBindEdges(monitorBinds, visibleEntityIds, monitorById));
@@ -914,6 +1081,72 @@ public class EntityTopologyQueryService {
             case 0 -> "warning";
             default -> UNKNOWN_STATUS;
         };
+    }
+
+    private List<EntityRelation> mergeRelations(List<EntityRelation> persistedRelations,
+                                                List<EntityRelation> derivedRelations) {
+        if (derivedRelations.isEmpty()) {
+            return persistedRelations;
+        }
+        Map<String, EntityRelation> relationByKey = new LinkedHashMap<>();
+        persistedRelations.forEach(relation -> relationByKey.putIfAbsent(relationKey(relation), relation));
+        derivedRelations.forEach(relation -> relationByKey.putIfAbsent(relationKey(relation), relation));
+        return new ArrayList<>(relationByKey.values());
+    }
+
+    private List<String> relationEvidenceBadges(EntityRelation relation) {
+        List<String> badges = new ArrayList<>();
+        badges.add(SOURCE_KIND_ENTITY_RELATION);
+        badges.add(valueOrUnknown(relation.getRelationSource()));
+        String identityKey = relation.getAttributes() == null
+                ? null
+                : relation.getAttributes().get(RELATION_ATTRIBUTE_IDENTITY_KEY);
+        if (StringUtils.hasText(identityKey)) {
+            badges.add(identityKey);
+        }
+        return badges;
+    }
+
+    private String identityValue(List<EntityIdentity> identities, String identityKey) {
+        return identities.stream()
+                .filter(identity -> identityKey.equals(identity.getIdentityKey()))
+                .map(this::identityValue)
+                .filter(StringUtils::hasText)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String identityValue(EntityIdentity identity) {
+        if (identity == null) {
+            return null;
+        }
+        if (StringUtils.hasText(identity.getNormalizedValue())) {
+            return identity.getNormalizedValue();
+        }
+        return StringUtils.hasText(identity.getIdentityValue())
+                ? identity.getIdentityValue().trim().toLowerCase(java.util.Locale.ROOT)
+                : null;
+    }
+
+    private boolean isServiceEntity(ObserveEntity entity) {
+        String type = valueOrUnknown(entity.getType()).toLowerCase();
+        return "service".equals(type) || "api".equals(type);
+    }
+
+    private boolean isPodEntity(ObserveEntity entity) {
+        String type = valueOrUnknown(entity.getType()).toLowerCase();
+        return type.contains("pod") || type.contains("workload") || type.startsWith("k8s");
+    }
+
+    private boolean isHostEntity(ObserveEntity entity) {
+        String type = valueOrUnknown(entity.getType()).toLowerCase();
+        return "host".equals(type) || "system".equals(type) || "node".equals(type);
+    }
+
+    private String entityTargetRef(ObserveEntity entity) {
+        return valueOrUnknown(entity.getType()) + ":"
+                + valueOrUnknown(entity.getNamespace()) + "/"
+                + displayName(entity);
     }
 
     private String valueOrUnknown(String value) {

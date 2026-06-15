@@ -94,7 +94,28 @@ public class EntityDetailDto {
 
     private List<EntityTraceQueryHintDto> traceQueryHints;
 
+    private List<EntityTopologyNeighborInfo> topologyNeighbors;
+
     private List<EntityDefinitionActivityInfo> definitionActivities;
+
+    /**
+     * Workspace-scoped neighbor evidence resolved from entity relations.
+     */
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class EntityTopologyNeighborInfo {
+        private Long relationId;
+        private Long entityId;
+        private String entityName;
+        private String entityType;
+        private String direction;
+        private String relationType;
+        private String relationSource;
+        private String status;
+        private Integer score;
+        private String targetRef;
+    }
 
     /**
      * Read-only summary of active silence and inhibit rules that currently match the entity context.

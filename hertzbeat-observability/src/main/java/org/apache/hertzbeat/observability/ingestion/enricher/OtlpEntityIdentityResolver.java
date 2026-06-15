@@ -51,6 +51,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class OtlpEntityIdentityResolver {
 
+    private static final String GOVERNANCE_ACTION_IDENTITY_CONFLICT = "identity_conflict";
+    private static final String GOVERNANCE_STATUS_NEEDS_GOVERNANCE = "needs_governance";
+    private static final String GOVERNANCE_SUMMARY_IDENTITY_CONFLICT =
+            "OTLP resource identity matched multiple entities";
+
     private final List<ObservabilityWorkspaceQueryGateway> workspaceQueryGateways;
 
     public OtlpEntityIdentityResolver(List<ObservabilityWorkspaceQueryGateway> workspaceQueryGateways) {
@@ -115,26 +120,31 @@ public class OtlpEntityIdentityResolver {
             List<EntityIdentity> matchedIdentities = nullToEmpty(
                     workspaceQueryGateway.findIdentitiesByKeysAndNormalizedValues(
                             normalizedIdentities.keySet(), Set.copyOf(normalizedIdentities.values())));
-            Map<Long, Integer> scores = scoreMatchingIdentities(matchedIdentities, normalizedIdentities);
+            Map<Long, EntityIdentityMatch> scores = scoreMatchingIdentities(matchedIdentities, normalizedIdentities);
             if (scores.isEmpty()) {
                 return Optional.empty();
             }
             Map<Long, ObserveEntity> entities =
                     Optional.ofNullable(workspaceQueryGateway.findEntitiesByIds(scores.keySet()))
                             .orElseGet(Collections::emptyMap);
-            Map<Long, Integer> workspaceScores = scores.entrySet().stream()
+            Map<Long, EntityIdentityMatch> workspaceScores = scores.entrySet().stream()
                     .filter(entry -> workspaceMatches(entities.get(entry.getKey()), safeWorkspaceId))
                     .collect(LinkedHashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
             if (workspaceScores.isEmpty()) {
                 return Optional.empty();
             }
-            int topScore = workspaceScores.values().stream().max(Integer::compareTo).orElse(0);
+            int topScore = workspaceScores.values().stream()
+                    .mapToInt(EntityIdentityMatch::matchedIdentityCount)
+                    .max()
+                    .orElse(0);
             List<Long> topEntityIds = workspaceScores.entrySet().stream()
-                    .filter(entry -> entry.getValue() == topScore)
+                    .filter(entry -> entry.getValue().matchedIdentityCount() == topScore)
                     .map(Map.Entry::getKey)
                     .sorted()
                     .toList();
             if (topEntityIds.size() != 1) {
+                recordIdentityConflict(workspaceQueryGateway, safeWorkspaceId, normalizedIdentities,
+                        topEntityIds, entities);
                 return Optional.empty();
             }
             return Optional.ofNullable(entities.get(topEntityIds.getFirst()));
@@ -187,9 +197,9 @@ public class OtlpEntityIdentityResolver {
         return normalized;
     }
 
-    private Map<Long, Integer> scoreMatchingIdentities(List<EntityIdentity> matchedIdentities,
-                                                       Map<String, String> normalizedIdentities) {
-        Map<Long, Integer> scores = new LinkedHashMap<>();
+    private Map<Long, EntityIdentityMatch> scoreMatchingIdentities(List<EntityIdentity> matchedIdentities,
+                                                                  Map<String, String> normalizedIdentities) {
+        Map<Long, EntityIdentityMatch> scores = new LinkedHashMap<>();
         for (EntityIdentity identity : matchedIdentities) {
             if (identity == null || identity.getEntityId() == null
                     || StringUtils.isBlank(identity.getIdentityKey())) {
@@ -199,16 +209,10 @@ public class OtlpEntityIdentityResolver {
             if (expectedValue == null || !expectedValue.equals(normalizedIdentityValue(identity))) {
                 continue;
             }
-            scores.merge(identity.getEntityId(), identityScore(identity), Integer::sum);
+            scores.computeIfAbsent(identity.getEntityId(), ignored -> new EntityIdentityMatch())
+                    .add(identity);
         }
         return scores;
-    }
-
-    private int identityScore(EntityIdentity identity) {
-        int score = identity.getPriority() == null
-                ? EntityCanonicalIdentityRegistry.defaultPriority(identity.getIdentityKey())
-                : identity.getPriority();
-        return identity.isPrimaryIdentity() ? score + 10 : score;
     }
 
     private String normalizedIdentityValue(EntityIdentity identity) {
@@ -226,6 +230,31 @@ public class OtlpEntityIdentityResolver {
         }
         return AuthTokenScopes.normalizeWorkspaceId(workspaceId)
                 .equals(AuthTokenScopes.normalizeWorkspaceId(entity.getWorkspaceId()));
+    }
+
+    private void recordIdentityConflict(ObservabilityWorkspaceQueryGateway workspaceQueryGateway,
+                                        String workspaceId,
+                                        Map<String, String> normalizedIdentities,
+                                        List<Long> candidateEntityIds,
+                                        Map<Long, ObserveEntity> entities) {
+        if (candidateEntityIds == null || candidateEntityIds.size() <= 1) {
+            return;
+        }
+        Map<Long, String> entityRefs = new LinkedHashMap<>();
+        for (Long entityId : candidateEntityIds) {
+            ObserveEntity entity = entities.get(entityId);
+            if (entity == null) {
+                continue;
+            }
+            entityRefs.put(entityId, StringUtils.defaultIfBlank(entity.getDisplayName(), entity.getName()));
+        }
+        workspaceQueryGateway.recordEntityDiscoveryGovernanceActivity(
+                workspaceId,
+                GOVERNANCE_ACTION_IDENTITY_CONFLICT,
+                GOVERNANCE_STATUS_NEEDS_GOVERNANCE,
+                GOVERNANCE_SUMMARY_IDENTITY_CONFLICT,
+                "canonicalIdentities=" + normalizedIdentities + "; candidateEntityIds=" + candidateEntityIds,
+                entityRefs);
     }
 
     private List<EntityIdentity> nullToEmpty(List<EntityIdentity> identities) {
@@ -251,5 +280,18 @@ public class OtlpEntityIdentityResolver {
                 .setKey(key)
                 .setValue(AnyValue.newBuilder().setStringValue(value).build())
                 .build();
+    }
+
+    private static final class EntityIdentityMatch {
+
+        private final Set<String> matchedIdentityKeys = new java.util.LinkedHashSet<>();
+
+        private void add(EntityIdentity identity) {
+            matchedIdentityKeys.add(identity.getIdentityKey());
+        }
+
+        private int matchedIdentityCount() {
+            return matchedIdentityKeys.size();
+        }
     }
 }

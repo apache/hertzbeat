@@ -670,7 +670,7 @@ export const HzAboutModalSurface = React.forwardRef<HTMLDivElement, HzAboutModal
           <div className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-2 border-t border-[var(--hz-ui-line-soft)] pt-4 text-[12px] font-bold">
             {communityLinks.map(link => (
               <a
-                key={link.href}
+                key={`${link.href}-${link.label}`}
                 href={link.href}
                 target="_blank"
                 rel="noreferrer"

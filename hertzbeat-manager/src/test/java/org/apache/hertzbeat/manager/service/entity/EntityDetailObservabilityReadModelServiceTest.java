@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.manager.EntityIdentity;
 import org.apache.hertzbeat.common.entity.manager.EntityRelation;
@@ -104,14 +105,25 @@ class EntityDetailObservabilityReadModelServiceTest {
                 .priority(100)
                 .build();
         EntityRelation relation = EntityRelation.builder()
+                .id(301L)
                 .sourceEntityId(501L)
                 .targetEntityId(601L)
                 .relationType("depends_on")
+                .relationSource("otel_resource")
+                .status("confirmed")
+                .score(95)
                 .build();
         EntityDto entityDto = new EntityDto();
         entityDto.setEntity(entity);
         entityDto.setIdentities(List.of(serviceIdentity));
         entityDto.setRelations(List.of(relation));
+        ObserveEntity neighbor = ObserveEntity.builder()
+                .id(601L)
+                .name("mysql-prod")
+                .displayName("Orders MySQL")
+                .type("database")
+                .workspaceId("team-a")
+                .build();
         Monitor monitor = Monitor.builder()
                 .id(701L)
                 .app("springboot3")
@@ -213,6 +225,8 @@ class EntityDetailObservabilityReadModelServiceTest {
                 .thenReturn(noiseSummary);
         when(entityActivityReadModelService.getDefinitionActivities(501L, 12, "team-a"))
                 .thenReturn(definitionActivities);
+        when(entityWorkspaceAccessService.findAccessibleEntitiesByIds(Set.of(601L), "team-a"))
+                .thenReturn(List.of(neighbor));
 
         EntityDetailDto detail = entityDetailObservabilityReadModelService.buildEntityDetail(entityDto, "team-a");
 
@@ -236,6 +250,16 @@ class EntityDetailObservabilityReadModelServiceTest {
         assertSame(activeAlert, detail.getActiveAlerts().getFirst());
         assertSame(enrichedLogHints, detail.getLogQueryHints());
         assertSame(traceQueryHints, detail.getTraceQueryHints());
+        EntityDetailDto.EntityTopologyNeighborInfo topologyNeighbor = detail.getTopologyNeighbors().getFirst();
+        assertEquals(301L, topologyNeighbor.getRelationId());
+        assertEquals(601L, topologyNeighbor.getEntityId());
+        assertEquals("Orders MySQL", topologyNeighbor.getEntityName());
+        assertEquals("database", topologyNeighbor.getEntityType());
+        assertEquals("outgoing", topologyNeighbor.getDirection());
+        assertEquals("depends_on", topologyNeighbor.getRelationType());
+        assertEquals("otel_resource", topologyNeighbor.getRelationSource());
+        assertEquals("confirmed", topologyNeighbor.getStatus());
+        assertEquals(95, topologyNeighbor.getScore());
         assertSame(definitionActivities, detail.getDefinitionActivities());
         verify(entityResponseHandoffReadModelService).buildResponseHandoffs(
                 eq(501L), any(ObservedEntityContext.class), same(activeAlerts), same(monitors),

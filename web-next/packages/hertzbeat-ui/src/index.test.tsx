@@ -2944,6 +2944,13 @@ describe('@hertzbeat/ui', () => {
     expect(html).toContain('data-hz-about-modal-community-link="shared"');
   });
 
+  it('keeps about community link keys stable when multiple actions share one href', () => {
+    const source = readFileSync(resolve(process.cwd(), 'packages/hertzbeat-ui/src/index.tsx'), 'utf8');
+
+    expect(source).toContain('key={`${link.href}-${link.label}`}');
+    expect(source).not.toContain('key={link.href}');
+  });
+
   it('can opt into an explicit about close button when a non-Angular surface needs one', () => {
     const html = renderToStaticMarkup(
       <HzAboutModalSurface

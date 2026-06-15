@@ -103,6 +103,20 @@ public class EntityIdentityResolutionService {
         return resolveMonitorBindingCandidates(monitor, requestWorkspaceId, false);
     }
 
+    public void refreshAutoMonitorBinds(Monitor monitor) {
+        if (monitor == null || monitor.getId() == null) {
+            return;
+        }
+        List<EntityMonitorBindingCandidate> directCandidates = resolveMonitorBindingCandidates(monitor).stream()
+                .filter(candidate -> RECOMMEND_DIRECT.equals(candidate.getRecommendation()))
+                .toList();
+        if (directCandidates.size() != 1) {
+            entityMonitorBindService.replaceAutoMonitorBinds(monitor.getId(), Collections.emptyList());
+            return;
+        }
+        entityMonitorBindService.replaceAutoMonitorBinds(monitor.getId(), directCandidates);
+    }
+
     private List<EntityMonitorBindingCandidate> resolveMonitorBindingCandidates(Monitor monitor,
                                                                                 String requestWorkspaceId,
                                                                                 boolean useRequestWorkspace) {

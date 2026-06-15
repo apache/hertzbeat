@@ -83,17 +83,17 @@ describe('EntityDetailSurface', () => {
   it('keeps entity detail on the cold full-width Workbench owner without side panels', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/entity-detail-surface.tsx'), 'utf8');
 
-    expect(source).toContain('data-entity-detail-surface="otlp-cold-entity-detail"');
+    expect(source).toContain('data-entity-detail-surface="otlp-hertzbeat-ui-entity-detail"');
     expect(source).toContain('data-entity-detail-style-baseline={coldEntityDetailVisual.canvasName}');
     expect(source).toContain('data-entity-detail-layout="full-width-workbench"');
-    expect(source).toContain('data-entity-detail-header="cold-compact-header"');
+    expect(source).toContain('data-entity-detail-header="hertzbeat-ui-compact-header"');
     expect(source).toContain('data-entity-detail-command-row="standard-equal-buttons"');
-    expect(source).toContain('data-entity-detail-count-strip="cold-inline-counts"');
-    expect(source).toContain('data-entity-detail-signal-grid="cold-detail-grid"');
-    expect(source).toContain('data-entity-detail-overview-panel="cold-overview-panel"');
-    expect(source).toContain('data-entity-detail-related-panel="cold-related-panel"');
-    expect(source).toContain('data-entity-detail-next-panel="cold-next-panel"');
-    expect(source).toContain('data-entity-detail-drilldown-panel="cold-drilldown-panel"');
+    expect(source).toContain('data-entity-detail-count-strip="hertzbeat-ui-inline-counts"');
+    expect(source).toContain('data-entity-detail-signal-grid="hertzbeat-ui-detail-grid"');
+    expect(source).toContain('data-entity-detail-overview-panel="hertzbeat-ui-overview-panel"');
+    expect(source).toContain('data-entity-detail-related-panel="hertzbeat-ui-related-panel"');
+    expect(source).toContain('data-entity-detail-next-panel="hertzbeat-ui-next-panel"');
+    expect(source).toContain('data-entity-detail-drilldown-panel="hertzbeat-ui-drilldown-panel"');
     expect(source).toContain('data-entity-detail-context-center="hertzbeat-entity-context"');
     expect(source).toContain('data-entity-detail-current-alerts="current-alerts"');
     expect(source).toContain('data-entity-detail-relationships-panel="upstream-downstream"');
@@ -119,8 +119,8 @@ describe('EntityDetailSurface', () => {
     expect(source).toContain('data-entity-detail-inherited-context="route-context"');
     expect(source).toContain('data-entity-detail-inherited-context-row={row.label}');
     expect(source).toContain("from '../workbench/overlay-dialog'");
-    expect(source).toContain('data-entity-detail-delete-confirm-trigger="cold-modal"');
-    expect(source).toContain('data-entity-detail-delete-confirm="cold-modal"');
+    expect(source).toContain('data-entity-detail-delete-confirm-trigger="hertzbeat-ui-modal"');
+    expect(source).toContain('data-entity-detail-delete-confirm="hertzbeat-ui-modal"');
     expect(source).toContain("translateEntityDetail('entities.detail.delete.title')");
     expect(source).toContain("translateEntityDetail('entities.detail.delete.kicker')");
     expect(source).toContain("translateEntityDetail('entities.detail.delete.cancel')");
@@ -138,7 +138,7 @@ describe('EntityDetailSurface', () => {
     expect(source).not.toContain('window.confirm');
     expect(source).not.toContain('confirm(');
     expect(source).toContain('buildEntityContextHandoffLinks');
-    expect(source).toContain('data-entity-detail-error="cold-inline-error"');
+    expect(source).toContain('data-entity-detail-error="hertzbeat-ui-inline-error"');
     expect(source).toContain('lg:grid-cols-2');
     expect(source).toContain('hzOpsCatalogVisual');
     expect(source).not.toContain('xl:grid-cols-[minmax(0,1fr)_360px]');
@@ -155,17 +155,17 @@ describe('EntityDetailSurface', () => {
       <EntityDetailSurface detail={detail} actionError={null} isPending={false} onDelete={() => undefined} onRefresh={() => undefined} />
     );
 
-    expect(html).toContain('data-entity-detail-surface="otlp-cold-entity-detail"');
+    expect(html).toContain('data-entity-detail-surface="otlp-hertzbeat-ui-entity-detail"');
     expect(html).toContain('data-entity-detail-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-detail-layout="full-width-workbench"');
-    expect(html).toContain('data-entity-detail-header="cold-compact-header"');
+    expect(html).toContain('data-entity-detail-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-entity-detail-command-row="standard-equal-buttons"');
-    expect(html).toContain('data-entity-detail-count-strip="cold-inline-counts"');
-    expect(html).toContain('data-entity-detail-signal-grid="cold-detail-grid"');
-    expect(html).toContain('data-entity-detail-overview-panel="cold-overview-panel"');
-    expect(html).toContain('data-entity-detail-related-panel="cold-related-panel"');
-    expect(html).toContain('data-entity-detail-next-panel="cold-next-panel"');
-    expect(html).toContain('data-entity-detail-drilldown-panel="cold-drilldown-panel"');
+    expect(html).toContain('data-entity-detail-count-strip="hertzbeat-ui-inline-counts"');
+    expect(html).toContain('data-entity-detail-signal-grid="hertzbeat-ui-detail-grid"');
+    expect(html).toContain('data-entity-detail-overview-panel="hertzbeat-ui-overview-panel"');
+    expect(html).toContain('data-entity-detail-related-panel="hertzbeat-ui-related-panel"');
+    expect(html).toContain('data-entity-detail-next-panel="hertzbeat-ui-next-panel"');
+    expect(html).toContain('data-entity-detail-drilldown-panel="hertzbeat-ui-drilldown-panel"');
     expect(html).toContain('data-entity-detail-context-center="hertzbeat-entity-context"');
     expect(html).toContain('data-entity-detail-current-alerts="current-alerts"');
     expect(html).toContain('data-entity-detail-relationships-panel="upstream-downstream"');
@@ -189,18 +189,18 @@ describe('EntityDetailSurface', () => {
     expect(html).toContain('data-entity-detail-evidence-handoff-source="runbook"');
     expect(html).toContain('data-entity-health-collector-handoff="collector-cluster"');
     expect(html).toContain('data-entity-health-collector-freshness="last-seen"');
-    expect(html).toContain('href="/setting/collector?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
-    expect(html).toContain('href="/ingestion/otlp/metrics?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
-    expect(html).toContain('href="/log/manage?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
-    expect(html).toContain('href="/trace/manage?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
-    expect(html).toContain('href="/alert/setting?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
-    expect(html).toContain('href="/alert?status=firing&amp;entityId=42&amp;entityName=Checkout+API&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h&amp;returnTo=%2Fentities%2F42"');
-    expect(html).toContain('href="/monitors?entityId=42&amp;entityName=Checkout+API&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h&amp;returnTo=%2Fentities%2F42"');
-    expect(html).toContain('href="/topology?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
+    expect(html).toContain('href="/setting/collector?entityId=42&amp;entityType=service&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
+    expect(html).toContain('href="/ingestion/otlp/metrics?entityId=42&amp;entityType=service&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
+    expect(html).toContain('href="/log/manage?entityId=42&amp;entityType=service&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
+    expect(html).toContain('href="/trace/manage?entityId=42&amp;entityType=service&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
+    expect(html).toContain('href="/alert/setting?entityId=42&amp;entityType=service&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
+    expect(html).toContain('href="/alert?status=firing&amp;entityId=42&amp;entityType=service&amp;entityName=Checkout+API&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h&amp;returnTo=%2Fentities%2F42"');
+    expect(html).toContain('href="/monitors?entityId=42&amp;entityType=service&amp;entityName=Checkout+API&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h&amp;returnTo=%2Fentities%2F42"');
+    expect(html).toContain('href="/topology?entityId=42&amp;entityType=service&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
     expect(html).toContain('topologyTargetId=mysql-1');
     expect(html).toContain('topologyTargetName=mysql-prod');
     expect(html).toContain('href="https://runbooks.local/checkout"');
-    expect(html).toContain('href="/entities/42/definition?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
+    expect(html).toContain('href="/entities/42/definition?entityId=42&amp;entityType=service&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-1h"');
     expect(html).toContain('Entity-first investigation');
     expect(html).toContain('Entity detail');
     expect(html).toContain('Context');
@@ -316,12 +316,12 @@ describe('EntityDetailSurface', () => {
       />
     );
 
-    expect(html).toContain(
-      'href="/ingestion/otlp/metrics?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-45m&amp;start=1713200000000&amp;end=1713202700000&amp;refresh=30&amp;live=false&amp;tz=Asia%2FShanghai&amp;source=monitor&amp;monitorId=632051474676992&amp;monitorName=checkout-http&amp;monitorApp=website&amp;monitorInstance=example.com%3A443"'
-    );
-    expect(html).toContain(
-      'href="/topology?entityId=42&amp;serviceName=checkout-api&amp;environment=prod&amp;timeRange=last-45m&amp;start=1713200000000&amp;end=1713202700000&amp;refresh=30&amp;live=false&amp;tz=Asia%2FShanghai&amp;source=monitor&amp;monitorId=632051474676992&amp;monitorName=checkout-http&amp;monitorApp=website&amp;monitorInstance=example.com%3A443"'
-    );
+    expect(html).toContain('href="/ingestion/otlp/metrics?entityId=42&amp;entityType=service&amp;serviceName=checkout-api');
+    expect(html).toContain('timeRange=last-45m&amp;start=1713200000000&amp;end=1713202700000&amp;refresh=30&amp;live=false');
+    expect(html).toContain('source=monitor&amp;monitorId=632051474676992&amp;monitorName=checkout-http');
+    expect(html).toContain('monitorApp=website&amp;monitorInstance=example.com%3A443');
+    expect(html).toContain('href="/topology?entityId=42&amp;entityType=service&amp;serviceName=checkout-api');
+    expect(html).toContain('topologyTargetId=mysql-1&amp;topologyTargetName=mysql-prod');
     expect(html).toContain('data-entity-detail-inherited-context="route-context"');
     expect(html).toContain('data-entity-detail-inherited-context-row="Time range"');
     expect(html).toContain('last-45m');

@@ -48,6 +48,14 @@ public class EntityMonitorBindWriteModelService {
         entityMonitorBindDao.deleteAllByMonitorIdIn(monitorIds);
     }
 
+    public void replaceAutoMonitorBinds(Long monitorId, List<EntityMonitorBind> rows) {
+        entityMonitorBindDao.deleteAllByMonitorIdAndBindType(monitorId, "auto");
+        entityMonitorBindDao.flush();
+        if (!CollectionUtils.isEmpty(rows)) {
+            entityMonitorBindDao.saveAll(rows);
+        }
+    }
+
     public void replaceMonitorBinds(Long entityId, List<EntityMonitorBind> rows) {
         entityMonitorBindDao.deleteAllByEntityId(entityId);
         entityMonitorBindDao.flush();

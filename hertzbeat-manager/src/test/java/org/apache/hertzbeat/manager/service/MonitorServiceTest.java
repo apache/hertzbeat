@@ -57,6 +57,7 @@ import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.component.validator.ParamValidatorManager;
+import org.apache.hertzbeat.manager.service.entity.EntityIdentityResolutionService;
 import org.apache.hertzbeat.manager.service.entity.EntityMonitorBindService;
 import org.apache.hertzbeat.manager.service.entity.OldMonitorAlertBindWriteModelService;
 import org.apache.hertzbeat.manager.service.entity.OldMonitorCatalogQueryService;
@@ -166,6 +167,9 @@ class MonitorServiceTest {
     private EntityMonitorBindService entityMonitorBindService;
 
     @Mock
+    private EntityIdentityResolutionService entityIdentityResolutionService;
+
+    @Mock
     private ApplicationContext applicationContext;
 
     @Mock
@@ -243,6 +247,8 @@ class MonitorServiceTest {
                 monitorService, "oldMonitorServiceDiscoveryExpansionService", oldMonitorServiceDiscoveryExpansionService);
         ReflectionTestUtils.setField(monitorService, "oldMonitorStatusWriteModelService",
                 oldMonitorStatusWriteModelService);
+        ReflectionTestUtils.setField(monitorService, "entityIdentityResolutionService",
+                entityIdentityResolutionService);
     }
 
     private ParamDefineInfo newParamDefine(String field, String type, boolean required) {
@@ -315,6 +321,7 @@ class MonitorServiceTest {
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.saveAll(params)).thenReturn(params);
         assertDoesNotThrow(() -> monitorService.addMonitor(monitor, params, null, null));
+        verify(entityIdentityResolutionService).refreshAutoMonitorBinds(monitor);
     }
 
     @Test
@@ -793,6 +800,7 @@ class MonitorServiceTest {
         assertDoesNotThrow(() -> monitorService.modifyMonitor(monitor, params, null, null));
         verify(monitorDao).save(any(Monitor.class));
         verify(paramDao).saveAll(params);
+        verify(entityIdentityResolutionService).refreshAutoMonitorBinds(monitor);
     }
 
     @Test

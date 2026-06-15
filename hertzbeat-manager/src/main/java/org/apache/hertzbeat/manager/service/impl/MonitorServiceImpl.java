@@ -49,6 +49,7 @@ import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.MetricsFavoriteService;
 import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.manager.service.entity.EntityIdentityResolutionService;
 import org.apache.hertzbeat.manager.service.entity.EntityMonitorBindService;
 import org.apache.hertzbeat.manager.service.entity.OldMonitorAlertBindWriteModelService;
 import org.apache.hertzbeat.manager.service.entity.OldMonitorCatalogQueryService;
@@ -117,6 +118,8 @@ public class MonitorServiceImpl implements MonitorService {
     private MetricsFavoriteService metricsFavoriteService;
     @Autowired
     private EntityMonitorBindService entityMonitorBindService;
+    @Autowired
+    private EntityIdentityResolutionService entityIdentityResolutionService;
     @Autowired
     private OldMonitorAlertBindWriteModelService oldMonitorAlertBindWriteModelService;
     @Autowired
@@ -228,6 +231,7 @@ public class MonitorServiceImpl implements MonitorService {
             }
             oldMonitorCatalogWriteModelService.saveMonitor(monitor);
             oldMonitorParamWriteModelService.saveParams(params);
+            entityIdentityResolutionService.refreshAutoMonitorBinds(monitor);
         } catch (Exception e) {
             log.error("Error while adding monitor: {}", e.getMessage(), e);
             collectJobScheduling.cancelAsyncCollectJob(jobId);
@@ -438,6 +442,7 @@ public class MonitorServiceImpl implements MonitorService {
             }
             oldMonitorCatalogWriteModelService.saveMonitor(monitor);
             oldMonitorParamWriteModelService.saveParams(params);
+            entityIdentityResolutionService.refreshAutoMonitorBinds(monitor);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task

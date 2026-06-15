@@ -190,6 +190,9 @@ export function buildAlertListUrl(query: AlertQueryState): string {
   if (normalizedSearch) params.set('search', normalizedSearch);
   if (normalizedStatus) params.set('status', normalizedStatus);
   if (normalizedSeverity) params.set('severity', normalizedSeverity);
+  if (query.serviceName?.trim()) params.set('serviceName', query.serviceName.trim());
+  if (query.serviceNamespace?.trim()) params.set('serviceNamespace', query.serviceNamespace.trim());
+  if (query.environment?.trim()) params.set('environment', query.environment.trim());
   return `/alerts/group?${params.toString()}`;
 }
 

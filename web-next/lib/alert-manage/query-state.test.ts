@@ -62,6 +62,26 @@ describe('alert query state codec', () => {
     );
   });
 
+  it('builds alert list url with service scope context', () => {
+    expect(
+      buildAlertListUrl({
+        search: 'checkout',
+        status: 'firing',
+        severity: '',
+        pageIndex: 0,
+        pageSize: 8,
+        entityId: '',
+        entityName: '',
+        returnTo: '',
+        serviceName: ' checkout ',
+        serviceNamespace: ' payments ',
+        environment: ' prod '
+      })
+    ).toBe(
+      '/alerts/group?pageIndex=0&pageSize=8&sort=gmtUpdate&order=desc&search=checkout&status=firing&serviceName=checkout&serviceNamespace=payments&environment=prod'
+    );
+  });
+
   it('builds a clean list url when every filter is empty', () => {
     expect(buildAlertListUrl({ search: '   ', status: '', severity: '', entityId: '', entityName: '', returnTo: '' })).toBe(
       '/alerts/group?pageIndex=0&pageSize=8&sort=gmtUpdate&order=desc'

@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.EntityMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.manager.pojo.dto.EntityMonitorBindingCandidate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -120,6 +121,46 @@ class EntityMonitorBindServiceTest {
         assertEquals("active", saved.getStatus());
         assertEquals(100, saved.getScore());
         assertEquals(Map.of("service.name", List.of("checkout-api")), saved.getMatchContext());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void replaceAutoMonitorBindsRefreshesAutoRowsAndKeepsManualBindsProtected() {
+        EntityMonitorBind manualBind = EntityMonitorBind.builder()
+                .entityId(401L)
+                .monitorId(801L)
+                .bindType("manual")
+                .build();
+        EntityMonitorBind staleAutoBind = EntityMonitorBind.builder()
+                .entityId(402L)
+                .monitorId(801L)
+                .bindType("auto")
+                .build();
+        when(entityMonitorBindQueryService.findMonitorBindsByMonitorId(801L))
+                .thenReturn(List.of(manualBind, staleAutoBind));
+        EntityMonitorBindingCandidate manualDuplicate = new EntityMonitorBindingCandidate(
+                401L, "Checkout API", "service", 130, "direct", true,
+                Map.of("service.name", List.of("checkout-api"))
+        );
+        EntityMonitorBindingCandidate freshAuto = new EntityMonitorBindingCandidate(
+                403L, "Checkout Worker", "service", 120, "direct", false,
+                Map.of("service.name", List.of("checkout-worker"))
+        );
+
+        monitorBindService.replaceAutoMonitorBinds(801L, List.of(manualDuplicate, freshAuto));
+
+        ArgumentCaptor<List<EntityMonitorBind>> rowsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(entityMonitorBindWriteModelService).replaceAutoMonitorBinds(eq(801L), rowsCaptor.capture());
+        List<EntityMonitorBind> rows = rowsCaptor.getValue();
+        assertEquals(1, rows.size());
+        EntityMonitorBind saved = rows.getFirst();
+        assertEquals(403L, saved.getEntityId());
+        assertEquals(801L, saved.getMonitorId());
+        assertEquals("auto", saved.getBindType());
+        assertEquals("monitor_identity", saved.getBindSource());
+        assertEquals("active", saved.getStatus());
+        assertEquals(120, saved.getScore());
+        assertEquals(Map.of("service.name", List.of("checkout-worker")), saved.getMatchContext());
     }
 
     @Test

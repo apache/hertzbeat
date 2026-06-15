@@ -41,16 +41,21 @@ export function buildFallbackEntityDetail(entityId: string, t: EntityDetailTrans
             ? t('entities.detail.fallback.display-name', { id: normalizedId })
             : t('entities.detail.fallback.draft-name'),
         type: 'service',
-        status: 'unknown',
+        status: 'unavailable',
         owner: 'platform',
-        environment: 'prod',
+        environment: undefined,
         system: 'catalog',
-        source: 'manual',
+        source: 'unavailable',
         description: t('entities.detail.fallback.description')
       },
       identities: [],
       monitorBinds: [],
       relations: []
+    },
+    detailState: {
+      state: 'unavailable',
+      message: t('entities.detail.state.unavailable.copy'),
+      reason: 'recoverable-detail-load-failed'
     },
     evidenceSummary: {
       activeAlertCount: 0,
@@ -82,6 +87,7 @@ export function buildFallbackEntityDetail(entityId: string, t: EntityDetailTrans
     },
     boundMonitors: [],
     activeAlerts: [],
+    topologyNeighbors: [],
     nextActions: [
       {
         actionType: 'definition',
