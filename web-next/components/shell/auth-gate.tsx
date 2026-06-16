@@ -3,17 +3,12 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { buildLoginRedirectHref, buildLoginReturnTo } from '@/lib/passport-login/controller';
-import { hasClientSessionMarker, readClientSessionState } from '@/lib/session-client';
-
-function shouldOptimisticallyRenderProtectedRoute(pathname: string) {
-  return pathname === '/topology' || pathname.startsWith('/topology/');
-}
+import { readClientSessionState } from '@/lib/session-client';
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const optimisticRender = shouldOptimisticallyRenderProtectedRoute(pathname) && hasClientSessionMarker();
-  const [ready, setReady] = useState(optimisticRender);
-  const [authed, setAuthed] = useState(optimisticRender);
+  const [ready, setReady] = useState(false);
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;

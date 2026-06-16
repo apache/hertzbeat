@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   buildExpectedQueryEntries,
   findMismatchedQueryEntries,
@@ -32,5 +34,29 @@ describe('release-shell smoke helpers', () => {
       )
     ).toBe('http://127.0.0.1:4200/log/manage?search=checkout+timeout&view=stream');
     expect(resolveNextRedirectDigestUrl('<html><body>no redirect digest</body></html>', 'http://127.0.0.1:4200')).toBeNull();
+  });
+
+  it('keeps the release route browser smoke on the required route and console contracts', () => {
+    const source = readFileSync(resolve(process.cwd(), 'scripts/release-route-browser-smoke.spec.ts'), 'utf8');
+
+    [
+      '/overview',
+      '/entities',
+      '/entities/4200',
+      '/ingestion/otlp/metrics',
+      '/log/manage',
+      '/trace/manage',
+      '/topology',
+      '/alert'
+    ].forEach(route => {
+      expect(source).toContain(route);
+    });
+    expect(source).toContain('Maximum update depth exceeded');
+    expect(source).toContain('hydration failed');
+    expect(source).toContain('data-theme');
+    expect(source).toContain('dark-ops');
+    expect(source).toContain('expectReleaseRouteReady');
+    expect(source).toContain('Load failed');
+    expect(source).toContain("currentUrl.pathname).not.toBe('/passport/login')");
   });
 });

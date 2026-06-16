@@ -177,6 +177,14 @@ type LogDetailContextLoadRequest = {
   cursorLogTimeUnixNano: string;
 };
 
+function isEmptyLogDetailContextState(state: LogDetailContextState) {
+  return !state.loading && state.error == null && state.data == null;
+}
+
+function isEmptyLogDetailMetricsPreviewState(state: LogDetailMetricsPreviewState) {
+  return !state.loading && state.error == null && state.data == null;
+}
+
 type LogDetailContextRow = {
   key: string;
   relation: 'before' | 'selected' | 'after';
@@ -1914,14 +1922,16 @@ function LogManageExplorer({
   }, [routeContext.live]);
 
   useEffect(() => {
-    setDetailContextLimit(LOG_DETAIL_CONTEXT_DEFAULT_LIMIT);
-    setDetailContextFilters({});
-    setDetailContextLoadRequest(null);
+    setDetailContextLimit(previous => (previous === LOG_DETAIL_CONTEXT_DEFAULT_LIMIT ? previous : LOG_DETAIL_CONTEXT_DEFAULT_LIMIT));
+    setDetailContextFilters(previous => (previous.resourceFilter || previous.attributeFilter ? {} : previous));
+    setDetailContextLoadRequest(previous => (previous == null ? previous : null));
   }, [detailLog?.timeUnixNano]);
 
   useEffect(() => {
     if (!detailContextUrl) {
-      setDetailContextState({ loading: false, error: null, data: null });
+      setDetailContextState(previous =>
+        isEmptyLogDetailContextState(previous) ? previous : { loading: false, error: null, data: null }
+      );
       return undefined;
     }
 
@@ -1957,7 +1967,9 @@ function LogManageExplorer({
 
   useEffect(() => {
     if (!detailMetricsPreviewBaseUrl) {
-      setDetailMetricsPreviewState({ loading: false, error: null, data: null });
+      setDetailMetricsPreviewState(previous =>
+        isEmptyLogDetailMetricsPreviewState(previous) ? previous : { loading: false, error: null, data: null }
+      );
       return undefined;
     }
 

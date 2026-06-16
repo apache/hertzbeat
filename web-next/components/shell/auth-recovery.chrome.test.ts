@@ -27,14 +27,14 @@ describe('auth recovery posture', () => {
     expect(authGateSource).not.toContain('max-w-lg');
   });
 
-  it('lets topology preheat protected content when a local session marker exists while still verifying the BFF session', () => {
+  it('keeps protected content out of the hydration frame until the BFF session resolves', () => {
     const authGateSource = readFileSync(resolve(process.cwd(), 'components/shell/auth-gate.tsx'), 'utf8');
     const sessionClientSource = readFileSync(resolve(process.cwd(), 'lib/session-client.ts'), 'utf8');
 
-    expect(authGateSource).toContain('shouldOptimisticallyRenderProtectedRoute(pathname)');
-    expect(authGateSource).toContain('hasClientSessionMarker()');
-    expect(authGateSource).toContain("pathname === '/topology' || pathname.startsWith('/topology/')");
-    expect(authGateSource).toContain('useState(optimisticRender)');
+    expect(authGateSource).not.toContain('shouldOptimisticallyRenderProtectedRoute');
+    expect(authGateSource).not.toContain('hasClientSessionMarker()');
+    expect(authGateSource).not.toContain("pathname === '/topology' || pathname.startsWith('/topology/')");
+    expect(authGateSource).toContain('useState(false)');
     expect(authGateSource).toContain('readClientSessionState().then(session =>');
     expect(authGateSource).toContain('window.location.href = buildLoginRedirectHref');
     expect(sessionClientSource).toContain('export function hasClientSessionMarker()');
