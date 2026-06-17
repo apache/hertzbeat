@@ -397,6 +397,7 @@
   "bulletin.help.link": "https://hertzbeat.apache.org/docs/help/bulletin",
   "bulletin.monitor.metrics": "監控指標",
   "bulletin.monitor.name": "監控任務名稱",
+  "bulletin.monitor.name.placeholder": "按名稱 / 標籤 / 值搜尋",
   "bulletin.monitor.type": "監控類型",
   "bulletin.name": "看板名稱",
   "bulletin.name.placeholder": "請輸入自定義看板名稱",
