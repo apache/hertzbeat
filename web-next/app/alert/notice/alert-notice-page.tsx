@@ -1316,6 +1316,54 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                   {receiverMessage}
                 </div>
               ) : null}
+              {noticeEvidenceContext?.receiverTestPreview ? (
+                <div
+                  data-alert-notice-receiver-test-preview="signal-route"
+                  data-alert-notice-receiver-test-preview-owner="signal-alert-handoff"
+                  data-alert-notice-receiver-test-preview-signal={noticeEvidenceContext.signal}
+                  data-alert-notice-receiver-test-preview-labels="provided-labels"
+                  className="rounded-[3px] border border-[#26303d] bg-[#080a0e] px-3 py-2"
+                >
+                  <p className="text-[12px] font-semibold text-[#eef2f7]">{noticeEvidenceContext.receiverTestPreview.title}</p>
+                  <p className="mt-1 text-[12px] leading-5 text-[#9099a7]">{noticeEvidenceContext.receiverTestPreview.copy}</p>
+                  <code
+                    data-alert-notice-receiver-test-preview-labels-text="signal-route"
+                    className="mt-2 block whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-[#aab4c3]"
+                  >
+                    {noticeEvidenceContext.receiverTestPreview.labelsText}
+                  </code>
+                  <div
+                    data-alert-notice-receiver-test-preview-payload="sample-alert"
+                    data-alert-notice-receiver-test-preview-payload-owner="signal-alert-handoff"
+                    className="mt-3 rounded-[3px] border border-[#202a36] bg-[#0c1016] p-2.5"
+                  >
+                    <p className="text-[11px] font-semibold uppercase text-[#8e99aa]">
+                      {noticeEvidenceContext.receiverTestPreview.payloadTitle}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-5 text-[#9099a7]">
+                      {noticeEvidenceContext.receiverTestPreview.payloadCopy}
+                    </p>
+                    <dl className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                      {noticeEvidenceContext.receiverTestPreview.payloadRows.map(row => (
+                        <div
+                          key={row.key}
+                          data-alert-notice-receiver-test-preview-payload-row={row.key}
+                          className="grid grid-cols-[92px_minmax(0,1fr)] gap-2 text-[11px] leading-5"
+                        >
+                          <dt className="font-semibold text-[#7f8999]">{row.label}</dt>
+                          <dd className="min-w-0 truncate text-[#d6deea]" title={row.value}>{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p
+                      data-alert-notice-receiver-test-preview-payload-message="sample-rendered"
+                      className="mt-2 rounded-[3px] border border-[#26303d] bg-[#080a0e] px-2 py-1.5 text-[11px] leading-5 text-[#cbd5e1]"
+                    >
+                      {noticeEvidenceContext.receiverTestPreview.payloadMessage}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
               <AlertNoticeReceiverFields
                 t={t}
                 draft={receiverDraft}
@@ -1398,6 +1446,8 @@ export default function AlertNoticePage({ initialRouteState }: { initialRouteSta
                 receiverOptions={receiverOptions}
                 templateOptions={templateOptions}
                 labelOptions={labelOptions}
+                sourceLabelsText={noticeEvidenceContext?.labelsText}
+                sourceSignal={noticeEvidenceContext?.signal}
                 onDraftChange={setRuleDraft}
               />
             </div>

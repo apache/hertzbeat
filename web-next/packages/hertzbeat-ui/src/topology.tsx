@@ -13,6 +13,9 @@ const controlFocusClassName =
   'focus-visible:border-[var(--hz-ui-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hz-ui-active-soft)]';
 
 export type HzStatusTone = 'neutral' | 'info' | 'success' | 'warning' | 'critical';
+type HzTopologyDataAttributeProps = {
+  [key: `data-${string}`]: string | number | boolean | undefined;
+};
 
 const chartToneColor: Record<HzStatusTone, { stroke: string; fill: string; soft: string }> = {
   neutral: { stroke: '#8f99ab', fill: 'rgba(143,153,171,0.16)', soft: 'rgba(143,153,171,0.28)' },
@@ -333,12 +336,12 @@ export type HzTopologyDetailDrawerFact = {
   factProps?: React.HTMLAttributes<HTMLDivElement>;
 };
 
-export type HzTopologyDetailDrawerAction = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'children'> & {
+export type HzTopologyDetailDrawerAction = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'children'> & HzTopologyDataAttributeProps & {
   id: string;
   label: React.ReactNode;
   emphasis?: 'primary' | 'neutral';
   copy?: React.ReactNode;
-  copyProps?: React.HTMLAttributes<HTMLSpanElement>;
+  copyProps?: React.HTMLAttributes<HTMLSpanElement> | (React.HTMLAttributes<HTMLSpanElement> & HzTopologyDataAttributeProps);
 };
 
 export type HzTopologyDetailDrawerSurface = 'default' | 'framed' | 'flush';
@@ -570,13 +573,13 @@ const topologyPathSummaryMetricClassName: Record<HzStatusTone, string> = {
   critical: 'border-[#61323a] bg-[#2a1318] text-[#ff9aa9]'
 };
 
-export type HzTopologyScopeBarItem = React.HTMLAttributes<HTMLSpanElement> & {
+export type HzTopologyScopeBarItem = React.HTMLAttributes<HTMLSpanElement> & HzTopologyDataAttributeProps & {
   id: string;
   label?: React.ReactNode;
   value: React.ReactNode;
 };
 
-export type HzTopologyScopeBarAction = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+export type HzTopologyScopeBarAction = React.ButtonHTMLAttributes<HTMLButtonElement> & HzTopologyDataAttributeProps & {
   id: string;
   label: React.ReactNode;
   emphasis?: 'primary' | 'neutral';
@@ -2668,7 +2671,7 @@ export type HzTopologyToolbarOption = {
   label: string;
 };
 
-export type HzTopologyToolbarStateItem = React.HTMLAttributes<HTMLSpanElement> & {
+export type HzTopologyToolbarStateItem = React.HTMLAttributes<HTMLSpanElement> & HzTopologyDataAttributeProps & {
   id: string;
   label: React.ReactNode;
   value: React.ReactNode;

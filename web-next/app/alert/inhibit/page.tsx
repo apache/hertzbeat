@@ -7,7 +7,7 @@ export default async function AlertInhibitRoutePage({
   searchParams
 }: {
   searchParams?: Promise<AlertInhibitSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const routeState = readAlertInhibitRouteState(resolvedSearchParams);
   return <AlertInhibitPage initialRouteState={routeState} />;

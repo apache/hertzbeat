@@ -135,6 +135,8 @@ describe('alert group view model', () => {
         source: 'otlp',
         collector: 'edge-collector-a',
         template: 'java-service',
+        alertDatasource: 'sql',
+        alertQueryType: 'metrics',
         returnTo: '/metrics/manage?entityId=service%3Acommerce%2Fcheckout&returnLabel=%E6%8C%87%E6%A0%87%E5%B7%A5%E4%BD%9C%E5%8F%B0'
       },
       t
@@ -144,10 +146,15 @@ describe('alert group view model', () => {
       signal: 'metrics',
       title: groupEvidenceTitle('metrics'),
       returnHref: '/metrics/manage?entityId=service%3Acommerce%2Fcheckout',
-      groupLabelsText: 'hertzbeat.entity.id, service.name, service.namespace, deployment.environment',
+      groupLabelsText: 'hertzbeat.signal, hertzbeat.entity.id, service.name, service.namespace, deployment.environment, hertzbeat.source, hertzbeat.collector, hertzbeat.alert.datasource, hertzbeat.alert.query_type',
       draftPatch: {
         name: groupEvidenceDraftName('metrics', 'checkout'),
-        groupLabelsText: 'hertzbeat.entity.id, service.name, service.namespace, deployment.environment'
+        groupLabelsText: 'hertzbeat.signal, hertzbeat.entity.id, service.name, service.namespace, deployment.environment, hertzbeat.source, hertzbeat.collector, hertzbeat.alert.datasource, hertzbeat.alert.query_type'
+      },
+      groupPreview: {
+        title: t('alert.group.preview.title'),
+        copy: t('alert.group.preview.copy'),
+        groupLabelsText: 'hertzbeat.signal, hertzbeat.entity.id, service.name, service.namespace, deployment.environment, hertzbeat.source, hertzbeat.collector, hertzbeat.alert.datasource, hertzbeat.alert.query_type'
       }
     });
     expect(context?.rows.map(row => row.label)).toContain(t('signal.context.trace.label'));
@@ -168,10 +175,15 @@ describe('alert group view model', () => {
 
     expect(context).toMatchObject({
       title: 'Grouping context from metrics',
-      copy: 'New grouping rules converge by stable labels from the current entity, service, namespace, and environment; trace detail stays as evidence context only.',
+      copy: 'New grouping rules converge by stable signal, service, environment, source, and alert-query labels; trace detail stays as evidence context only.',
       draftPatch: {
         name: 'metrics checkout group'
       }
+    });
+    expect(context?.groupLabelsText).toBe('hertzbeat.signal, hertzbeat.entity.id, service.name, service.namespace, deployment.environment');
+    expect(context?.groupPreview).toMatchObject({
+      title: 'Recommended group-by labels',
+      copy: 'Use these stable label keys to group related signal alerts while keeping high-cardinality trace and span IDs out of notification grouping.'
     });
     expect(`${context?.title} ${context?.copy} ${context?.draftPatch.name}`).not.toMatch(/[\u4e00-\u9fff]/);
     expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[\u4e00-\u9fff]/);

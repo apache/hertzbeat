@@ -36,6 +36,14 @@ import {
   type SearchParamReader,
   type SignalRouteContext
 } from '../../lib/signal-route-context';
+import {
+  createSignalDashboardPanelDraft,
+  deleteSignalDashboardPanelDraft,
+  loadAllSignalDashboardPanelDrafts,
+  saveSignalDashboardPanelDraft,
+  type SignalDashboardPanelDraft,
+  type SignalDashboardPanelVisualization
+} from '../../lib/signal-dashboard-panel-drafts';
 
 export type OverviewData = {
   summary: DashboardSummary;
@@ -67,7 +75,7 @@ type OverviewRequestState<T> = {
   failed: boolean;
 };
 
-type DashboardPanelDraft = {
+export type DashboardPanelDraft = {
   signal: 'logs' | 'traces' | 'metrics';
   signalLabelKey: string;
   panelTitle: string;
@@ -82,6 +90,8 @@ type DashboardPanelDraft = {
 export type SavedDashboardPanelDraft = DashboardPanelDraft & {
   id: string;
   createdAt: number;
+  serverDraftKey?: string;
+  persistence?: 'local' | 'server';
 };
 
 type DashboardPanelDraftStorage = Pick<Storage, 'getItem' | 'setItem'>;
@@ -106,6 +116,22 @@ const DASHBOARD_DRAFT_SIGNAL_LABEL_KEYS: Record<DashboardPanelDraft['signal'], s
   traces: 'dashboard.add-panel.signal.traces',
   metrics: 'dashboard.add-panel.signal.metrics'
 };
+
+const DASHBOARD_DRAFT_DEFAULT_VISUALIZATIONS: Record<DashboardPanelDraft['signal'], SignalDashboardPanelVisualization> = {
+  logs: 'table',
+  traces: 'trace',
+  metrics: 'graph'
+};
+
+const DASHBOARD_DRAFT_SYNC_LABEL_KEYS = {
+  'local-cache': 'dashboard.add-panel.sync.local-cache',
+  'server-loading': 'dashboard.add-panel.sync.server-loading',
+  'server-backed': 'dashboard.add-panel.sync.server-backed',
+  'server-unavailable': 'dashboard.add-panel.sync.server-unavailable',
+  saving: 'dashboard.add-panel.sync.saving',
+  saved: 'dashboard.add-panel.sync.saved',
+  failed: 'dashboard.add-panel.sync.failed'
+} as const;
 
 function firstRouteText(...values: Array<string | null | undefined>) {
   return values.find((value): value is string => value != null && value.trim() !== '')?.trim();
@@ -137,6 +163,98 @@ function buildDashboardPanelDraftQueryRows(
     });
   }
   return rows;
+}
+
+function readDashboardDraftRouteSearchParams(route: string) {
+  const queryStart = route.indexOf('?');
+  if (queryStart < 0) {
+    return new URLSearchParams();
+  }
+  return new URLSearchParams(route.slice(queryStart + 1));
+}
+
+function readDashboardDraftPayloadTimestamp(payload: string | undefined) {
+  if (!payload) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(payload) as { createdAt?: unknown };
+    return typeof parsed.createdAt === 'number' && Number.isFinite(parsed.createdAt)
+      ? parsed.createdAt
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function readDashboardDraftServerTimestamp(draft: SignalDashboardPanelDraft) {
+  const timestamp = firstRouteText(draft.updateTime, draft.createTime);
+  if (!timestamp) {
+    return undefined;
+  }
+  const parsed = Date.parse(timestamp);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+export function signalDashboardPanelDraftToSavedDraft(
+  draft: SignalDashboardPanelDraft
+): SavedDashboardPanelDraft | null {
+  if (draft.signal !== 'logs' && draft.signal !== 'traces' && draft.signal !== 'metrics') {
+    return null;
+  }
+  if (!draft.route || !draft.title || !draft.draftKey) {
+    return null;
+  }
+  const searchParams = readDashboardDraftRouteSearchParams(draft.route);
+  const context = readSignalRouteContext(searchParams);
+  return {
+    id: `${draft.signal}:${draft.draftKey}`,
+    createdAt: readDashboardDraftServerTimestamp(draft) || readDashboardDraftPayloadTimestamp(draft.payload) || Date.now(),
+    signal: draft.signal,
+    signalLabelKey: DASHBOARD_DRAFT_SIGNAL_LABEL_KEYS[draft.signal],
+    panelTitle: draft.title,
+    explorerHref: draft.route,
+    panelQuery: compactDashboardPanelDraftText(context.panelQuery || draft.querySnapshot || draft.description),
+    panelQueryType: firstRouteText(context.panelQueryType, draft.visualization),
+    panelExpression: compactDashboardPanelDraftText(context.panelExpression),
+    panelDatasource: firstRouteText(context.panelDatasource),
+    context,
+    serverDraftKey: draft.draftKey,
+    persistence: 'server'
+  };
+}
+
+function mergeSavedDashboardPanelDrafts(drafts: SavedDashboardPanelDraft[]) {
+  const seen = new Set<string>();
+  const merged: SavedDashboardPanelDraft[] = [];
+  for (const draft of drafts) {
+    const key = draft.serverDraftKey ? `${draft.signal}:${draft.serverDraftKey}` : draft.id;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    merged.push(draft);
+  }
+  return merged
+    .sort((left, right) => right.createdAt - left.createdAt)
+    .slice(0, DASHBOARD_PANEL_DRAFT_LIMIT);
+}
+
+export function createSignalDashboardPanelDraftFromOverviewIntent(
+  draft: DashboardPanelDraft
+): SignalDashboardPanelDraft {
+  const querySummary = firstRouteText(draft.panelExpression, draft.panelQuery, draft.panelQueryType, draft.panelTitle) || draft.panelTitle;
+  return createSignalDashboardPanelDraft({
+    signal: draft.signal,
+    title: draft.panelTitle,
+    description: querySummary,
+    visualization: DASHBOARD_DRAFT_DEFAULT_VISUALIZATIONS[draft.signal],
+    route: draft.explorerHref,
+    payload: {
+      source: 'overview-add-panel-intent',
+      context: draft.context
+    }
+  });
 }
 
 function readDashboardPanelDraft(searchParams: SearchParamReader): DashboardPanelDraft | null {
@@ -189,6 +307,8 @@ function isSavedDashboardPanelDraft(value: unknown): value is SavedDashboardPane
     && (candidate.panelQueryType == null || typeof candidate.panelQueryType === 'string')
     && (candidate.panelExpression == null || typeof candidate.panelExpression === 'string')
     && (candidate.panelDatasource == null || typeof candidate.panelDatasource === 'string')
+    && (candidate.serverDraftKey == null || typeof candidate.serverDraftKey === 'string')
+    && (candidate.persistence == null || candidate.persistence === 'local' || candidate.persistence === 'server')
     && Boolean(candidate.context)
     && typeof candidate.context === 'object';
 }
@@ -234,7 +354,8 @@ export function saveDashboardPanelDraft(
   const savedDraft: SavedDashboardPanelDraft = {
     ...draft,
     id: `${draft.signal}:${now}:${draft.panelTitle}`,
-    createdAt: now
+    createdAt: now,
+    persistence: 'local'
   };
   return writeSavedDashboardPanelDrafts([savedDraft, ...currentDrafts], storage);
 }
@@ -313,12 +434,41 @@ export default function OverviewPage() {
   const [savedDashboardPanelDrafts, setSavedDashboardPanelDrafts] = React.useState<SavedDashboardPanelDraft[]>(
     readSavedDashboardPanelDrafts
   );
+  const [dashboardPanelDraftSyncState, setDashboardPanelDraftSyncState] = React.useState<
+    'local-cache' | 'server-loading' | 'server-backed' | 'server-unavailable' | 'saving' | 'saved' | 'failed'
+  >('local-cache');
   const lastReadyOverviewDataRef = React.useRef<OverviewData | null>(null);
   const overviewCacheKey = React.useMemo(
     () => ['overview', OVERVIEW_SUMMARY_URL, OVERVIEW_ALERT_LIST_URL, refreshNonce].join(':'),
     [refreshNonce]
   );
   const dashboardPanelDraft = React.useMemo(() => readDashboardPanelDraft(searchParams), [searchParams]);
+  React.useEffect(() => {
+    let active = true;
+    setDashboardPanelDraftSyncState('server-loading');
+    loadAllSignalDashboardPanelDrafts()
+      .then(serverDrafts => {
+        if (!active) {
+          return;
+        }
+        const nextDrafts = mergeSavedDashboardPanelDrafts(
+          serverDrafts
+            .map(signalDashboardPanelDraftToSavedDraft)
+            .filter((draft): draft is SavedDashboardPanelDraft => draft != null)
+        );
+        setSavedDashboardPanelDrafts(nextDrafts);
+        writeSavedDashboardPanelDrafts(nextDrafts);
+        setDashboardPanelDraftSyncState('server-backed');
+      })
+      .catch(() => {
+        if (active) {
+          setDashboardPanelDraftSyncState('server-unavailable');
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
   const load = React.useCallback(async (): Promise<OverviewData> => {
     return queryClient.fetchQuery({
       queryKey: queryKeys.overview.console({
@@ -349,11 +499,43 @@ export default function OverviewPage() {
     setSelectedImpactedEntity(entity);
   }
 
-  function saveCurrentDashboardPanelDraft() {
+  async function saveCurrentDashboardPanelDraft() {
     if (!dashboardPanelDraft) {
       return;
     }
-    setSavedDashboardPanelDrafts(currentDrafts => saveDashboardPanelDraft(dashboardPanelDraft, currentDrafts));
+    const localDrafts = saveDashboardPanelDraft(dashboardPanelDraft, savedDashboardPanelDrafts);
+    setSavedDashboardPanelDrafts(localDrafts);
+    setDashboardPanelDraftSyncState('saving');
+    try {
+      const serverDraft = await saveSignalDashboardPanelDraft(
+        createSignalDashboardPanelDraftFromOverviewIntent(dashboardPanelDraft)
+      );
+      const savedServerDraft = signalDashboardPanelDraftToSavedDraft(serverDraft);
+      if (savedServerDraft) {
+        const nextDrafts = mergeSavedDashboardPanelDrafts([savedServerDraft, ...localDrafts]);
+        setSavedDashboardPanelDrafts(nextDrafts);
+        writeSavedDashboardPanelDrafts(nextDrafts);
+      }
+      setDashboardPanelDraftSyncState('saved');
+    } catch {
+      setDashboardPanelDraftSyncState('failed');
+    }
+  }
+
+  async function deleteSavedDashboardPanelDraft(draft: SavedDashboardPanelDraft) {
+    const nextDrafts = writeSavedDashboardPanelDrafts(
+      savedDashboardPanelDrafts.filter(candidate => candidate.id !== draft.id)
+    );
+    setSavedDashboardPanelDrafts(nextDrafts);
+    if (!draft.serverDraftKey) {
+      return;
+    }
+    try {
+      await deleteSignalDashboardPanelDraft(draft.signal, draft.serverDraftKey);
+      setDashboardPanelDraftSyncState('server-backed');
+    } catch {
+      setDashboardPanelDraftSyncState('failed');
+    }
   }
 
   return (
@@ -450,6 +632,13 @@ export default function OverviewPage() {
               ...buildDashboardPanelDraftQueryRows(dashboardPanelDraft, t)
             ]
           : [];
+        const hasDashboardPanelDraftWorkspace = Boolean(dashboardPanelDraft) || savedDashboardPanelDrafts.length > 0;
+        const dashboardPanelDraftSubtitle = dashboardPanelDraft
+          ? t('dashboard.add-panel.description', {
+              signal: t(dashboardPanelDraft.signalLabelKey),
+              title: dashboardPanelDraft.panelTitle
+            })
+          : t('dashboard.add-panel.saved-description');
 
         return (
           <>
@@ -507,66 +696,78 @@ export default function OverviewPage() {
                   }
                 />
 
-                {dashboardPanelDraft ? (
+                {hasDashboardPanelDraftWorkspace ? (
                   <SupportPanel
                     title={t('dashboard.add-panel.title')}
-                    subtitle={t('dashboard.add-panel.description', {
-                      signal: t(dashboardPanelDraft.signalLabelKey),
-                      title: dashboardPanelDraft.panelTitle
-                    })}
+                    subtitle={dashboardPanelDraftSubtitle}
                     chrome="plain"
                     expanded
                   >
                     <div
                       className="grid gap-3"
                       data-overview-dashboard-panel-draft="true"
-                      data-overview-dashboard-panel-draft-signal={dashboardPanelDraft.signal}
+                      data-overview-dashboard-panel-draft-signal={dashboardPanelDraft?.signal}
                       data-overview-dashboard-panel-draft-owner="overview-add-panel-intent"
+                      data-overview-dashboard-panel-draft-persistence={dashboardPanelDraftSyncState}
                     >
                       <div className="flex flex-wrap items-center gap-2 text-[12px] text-[var(--ops-text-secondary)]">
+                        {dashboardPanelDraft ? (
+                          <>
+                            <span
+                              className="rounded-[3px] border border-[var(--ops-border-color)] px-2 py-1 font-semibold text-[var(--ops-text-primary)]"
+                              data-overview-dashboard-panel-draft-title="true"
+                            >
+                              {dashboardPanelDraft.panelTitle}
+                            </span>
+                            <span data-overview-dashboard-panel-draft-signal-label="true">
+                              {t(dashboardPanelDraft.signalLabelKey)}
+                            </span>
+                          </>
+                        ) : null}
                         <span
-                          className="rounded-[3px] border border-[var(--ops-border-color)] px-2 py-1 font-semibold text-[var(--ops-text-primary)]"
-                          data-overview-dashboard-panel-draft-title="true"
+                          className="rounded-[3px] border border-[var(--ops-border-color)] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ops-text-tertiary)]"
+                          data-overview-dashboard-panel-draft-sync-state={dashboardPanelDraftSyncState}
                         >
-                          {dashboardPanelDraft.panelTitle}
-                        </span>
-                        <span data-overview-dashboard-panel-draft-signal-label="true">
-                          {t(dashboardPanelDraft.signalLabelKey)}
+                          {t(DASHBOARD_DRAFT_SYNC_LABEL_KEYS[dashboardPanelDraftSyncState])}
                         </span>
                       </div>
-                      <div
-                        className="grid gap-2 sm:grid-cols-2"
-                        data-overview-dashboard-panel-draft-context="true"
-                      >
-                        {dashboardPanelDraftContextRows.map(row => (
-                          <div key={`${row.label}:${row.value}`} className="rounded-[3px] border border-[var(--ops-border-color)] px-2.5 py-2">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ops-text-tertiary)]">
-                              {row.label}
-                            </div>
-                            <div className="mt-1 truncate text-[12px] font-semibold text-[var(--ops-text-primary)]">
-                              {row.value}
-                            </div>
-                            <div className="mt-1 truncate text-[11px] text-[var(--ops-text-tertiary)]">
-                              {row.meta}
-                            </div>
+                      {dashboardPanelDraft ? (
+                        <>
+                          <div
+                            className="grid gap-2 sm:grid-cols-2"
+                            data-overview-dashboard-panel-draft-context="true"
+                          >
+                            {dashboardPanelDraftContextRows.map(row => (
+                              <div key={`${row.label}:${row.value}`} className="rounded-[3px] border border-[var(--ops-border-color)] px-2.5 py-2">
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ops-text-tertiary)]">
+                                  {row.label}
+                                </div>
+                                <div className="mt-1 truncate text-[12px] font-semibold text-[var(--ops-text-primary)]">
+                                  {row.value}
+                                </div>
+                                <div className="mt-1 truncate text-[11px] text-[var(--ops-text-tertiary)]">
+                                  {row.meta}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap gap-2" data-overview-dashboard-panel-draft-actions="true">
-                        <OverviewSectionAction
-                          onClick={saveCurrentDashboardPanelDraft}
-                          label={t('dashboard.add-panel.action.save-draft')}
-                          variant="primary"
-                        />
-                        <OverviewSectionAction
-                          href={dashboardPanelDraft.explorerHref}
-                          label={t('dashboard.add-panel.action.open-explorer')}
-                        />
-                        <OverviewSectionAction
-                          href="/alerts"
-                          label={t('dashboard.problem-focus.review-alerts')}
-                        />
-                      </div>
+                          <div className="flex flex-wrap gap-2" data-overview-dashboard-panel-draft-actions="true">
+                            <OverviewSectionAction
+                              onClick={saveCurrentDashboardPanelDraft}
+                              label={t('dashboard.add-panel.action.save-draft')}
+                              variant="primary"
+                            />
+                            <OverviewSectionAction
+                              href={dashboardPanelDraft.explorerHref}
+                              label={t('dashboard.add-panel.action.open-explorer')}
+                            />
+                            <OverviewSectionAction
+                              href="/alerts"
+                              label={t('dashboard.problem-focus.review-alerts')}
+                            />
+                          </div>
+                        </>
+                      ) : null}
                       {savedDashboardPanelDrafts.length > 0 ? (
                         <div
                           className="grid gap-2"
@@ -578,19 +779,34 @@ export default function OverviewPage() {
                           </div>
                           <div className="grid gap-1">
                             {savedDashboardPanelDrafts.map(savedDraft => (
-                              <Link
+                              <div
                                 key={savedDraft.id}
-                                href={savedDraft.explorerHref}
-                                className="grid gap-0.5 rounded-[3px] border border-[var(--ops-border-color)] px-2.5 py-2 text-[12px] hover:border-[var(--ops-border-strong)]"
+                                className="grid gap-1 rounded-[3px] border border-[var(--ops-border-color)] px-2.5 py-2 text-[12px]"
                                 data-overview-dashboard-panel-draft-list-item={savedDraft.signal}
+                                data-overview-dashboard-panel-draft-list-item-persistence={savedDraft.persistence || 'local'}
                               >
-                                <span className="font-semibold text-[var(--ops-text-primary)]">
-                                  {savedDraft.panelTitle}
-                                </span>
-                                <span className="text-[11px] text-[var(--ops-text-tertiary)]">
-                                  {t(savedDraft.signalLabelKey)}
-                                </span>
-                              </Link>
+                                <Link
+                                  href={savedDraft.explorerHref}
+                                  className="grid gap-0.5 hover:text-[var(--ops-text-primary)]"
+                                >
+                                  <span className="font-semibold text-[var(--ops-text-primary)]">
+                                    {savedDraft.panelTitle}
+                                  </span>
+                                  <span className="text-[11px] text-[var(--ops-text-tertiary)]">
+                                    {t(savedDraft.signalLabelKey)}
+                                  </span>
+                                </Link>
+                                <div className="flex flex-wrap gap-2">
+                                  <OverviewSectionAction
+                                    href={savedDraft.explorerHref}
+                                    label={t('dashboard.add-panel.action.open-explorer')}
+                                  />
+                                  <OverviewSectionAction
+                                    onClick={() => void deleteSavedDashboardPanelDraft(savedDraft)}
+                                    label={t('dashboard.add-panel.action.delete-draft')}
+                                  />
+                                </div>
+                              </div>
                             ))}
                           </div>
                         </div>

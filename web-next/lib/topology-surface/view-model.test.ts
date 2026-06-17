@@ -208,6 +208,122 @@ describe('topology surface config', () => {
     expect(model.nodes[0].links.metricsHref).toContain('timeRange=last-30m');
   });
 
+  it('focuses service-to-resource entity relations from topology target context', () => {
+    const model = buildTopologyServiceMapFromApiGraph(
+      {
+        apiBacked: true,
+        focusEntityId: 4200,
+        depth: 1,
+        sourceKinds: ['entity-relation'],
+        nodes: [
+          {
+            id: '4200',
+            entityId: 4200,
+            entityName: 'Checkout API',
+            entityType: 'service',
+            namespace: 'payments',
+            environment: 'demo',
+            health: 'warning',
+            focus: true
+          },
+          {
+            id: '4201',
+            entityId: 4201,
+            entityName: 'checkout-node-a',
+            entityType: 'host',
+            namespace: 'payments',
+            environment: 'demo',
+            health: 'healthy'
+          },
+          {
+            id: '4202',
+            entityId: 4202,
+            entityName: 'checkout-v1-78dfd',
+            entityType: 'k8s_workload',
+            namespace: 'payments',
+            environment: 'demo',
+            health: 'healthy'
+          }
+        ],
+        edges: [
+          {
+            id: '8800',
+            relationId: 8800,
+            sourceEntityId: 4200,
+            targetEntityId: 4201,
+            relationType: 'runs_on',
+            relationSource: 'otel-resource-relation',
+            status: 'confirmed',
+            score: 99,
+            evidenceBadges: ['entity-relation', 'otel-resource-relation', 'host.name']
+          },
+          {
+            id: '8801',
+            relationId: 8801,
+            sourceEntityId: 4200,
+            targetEntityId: 4202,
+            relationType: 'deployed_on',
+            relationSource: 'otel-resource-relation',
+            status: 'confirmed',
+            score: 98,
+            evidenceBadges: ['entity-relation', 'otel-resource-relation', 'k8s.pod.name']
+          }
+        ]
+      },
+      {
+        entityId: '4200',
+        entityName: 'Checkout API',
+        serviceName: 'checkout',
+        serviceNamespace: 'payments',
+        environment: 'demo',
+        timeRange: 'last-1h',
+        source: 'otlp',
+        collector: 'collector-demo-a',
+        template: 'spring-boot',
+        topologyTargetId: '4201',
+        topologyTargetName: 'checkout-node-a'
+      }
+    );
+
+    expect(model.activeNodeId).toBe('entity-4200');
+    expect(model.filterContext).toMatchObject({
+      viewMode: 'resource-dependency',
+      hasNarrowing: true
+    });
+    expect(model.selectedEdgeId).toBe('relation-8800');
+    expect(model.selectedEdge).toMatchObject({
+      from: 'entity-4200',
+      to: 'entity-4201',
+      relationshipType: 'resource-ownership',
+      source: 'cmdb-manual-label',
+      selected: true,
+      focus: 'active-path'
+    });
+    expect(model.edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'relation-8801',
+          relationshipType: 'resource-ownership',
+          focus: 'active-path'
+        })
+      ])
+    );
+    expect(model.nodes.find(node => node.id === 'entity-4201')).toMatchObject({ focus: 'related' });
+    expect(model.nodes.find(node => node.id === 'entity-4202')).toMatchObject({ focus: 'related' });
+
+    const selected = model.selectedEdge;
+    [selected?.links.metricsHref, selected?.links.logsHref, selected?.links.tracesHref].forEach(href => {
+      const url = new URL(href || '/', 'http://localhost');
+      expect(url.searchParams.get('entityId')).toBe('4200');
+      expect(url.searchParams.get('serviceName')).toBe('checkout');
+      expect(url.searchParams.get('serviceNamespace')).toBe('payments');
+      expect(url.searchParams.get('viewMode')).toBe('resource-dependency');
+      expect(url.searchParams.get('edgeId')).toBe('relation-8800');
+      expect(url.searchParams.get('collector')).toBe('collector-demo-a');
+      expect(url.searchParams.get('template')).toBe('spring-boot');
+    });
+  });
+
   it('uses trace-call edge sample context for signal drilldowns and return links', () => {
     const model = buildTopologyServiceMapFromApiGraph(
       {

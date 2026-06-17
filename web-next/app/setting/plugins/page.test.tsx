@@ -64,7 +64,7 @@ vi.mock('@/components/workbench/client-workbench', () => ({
 vi.mock('@/components/pages/plugin-manage-surface', () => ({
   PluginManageSurface: ({ data, search, draftPlugin, isUploadDialogOpen, paramDraft, actionMessage, actionError, actionMeta, actionTone, actionKind, loadError, uploadValidation, isUploadPending, isParamPending, isLoadPending, isTogglePending, optimisticEnableStatus, deleteTarget }: any) => (
     <div
-      data-plugin-manage-surface="otlp-cold-plugin-console"
+      data-plugin-manage-surface="otlp-hertzbeat-ui-plugin-console"
       data-plugin-manage-style-baseline="hertzbeat-ui-matte"
       data-plugin-enable-feedback-contract="angular-edit-notify"
       data-plugin-enable-feedback-contract-owner="hertzbeat-ui-inline-feedback"
@@ -253,7 +253,7 @@ describe('setting plugins page', () => {
     const html = renderToStaticMarkup(<SettingPluginsPage />);
 
     expect(html).toContain('data-client-workbench="true"');
-    expect(html).toContain('data-plugin-manage-surface="otlp-cold-plugin-console"');
+    expect(html).toContain('data-plugin-manage-surface="otlp-hertzbeat-ui-plugin-console"');
     expect(html).toContain('data-plugin-manage-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-plugin-enable-feedback-contract="angular-edit-notify"');
     expect(html).toContain('data-plugin-enable-feedback-contract-owner="hertzbeat-ui-inline-feedback"');
@@ -397,7 +397,7 @@ describe('setting plugins page', () => {
     const html = renderToStaticMarkup(<SettingPluginsPage />);
 
     expect(html).toContain('data-client-workbench="true"');
-    expect(html).toContain('data-plugin-manage-surface="otlp-cold-plugin-console"');
+    expect(html).toContain('data-plugin-manage-surface="otlp-hertzbeat-ui-plugin-console"');
     expect(html).toContain('data-plugin-load-failure-contract="angular-console-only-shell"');
     expect(html).toContain('data-plugin-load-failure-owner="plugin-route-controller"');
     expect(html).toContain('data-plugin-load-failure="angular-console-only-shell"');

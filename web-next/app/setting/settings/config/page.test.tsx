@@ -111,10 +111,10 @@ describe('setting config page', () => {
     expect(html).toContain(`data-loading-copy="${t('setting.settings.config.loading')}"`);
     expect(html).toContain('data-settings-console-title="true"');
     expect(html).toContain(t('settings.system-config'));
-    expect(html).toContain('data-setting-config-surface="otlp-cold-system-config"');
+    expect(html).toContain('data-setting-config-surface="otlp-hertzbeat-ui-system-config"');
     expect(html).toContain('data-setting-config-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-setting-config-layout="full-width-settings-form"');
-    expect(html).toContain('data-setting-config-form="cold-settings-form"');
+    expect(html).toContain('data-setting-config-form="hertzbeat-ui-settings-form"');
     expect(html).toContain('data-setting-config-apply-contract="angular-apply-notify-reload"');
     expect(html).toContain('data-setting-config-runtime-locale="underscore-to-hyphen"');
     expect(html).toContain('data-setting-config-select-contract="angular-400px-centered-bold"');

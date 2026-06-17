@@ -189,7 +189,7 @@ export function mapAiChatConversationHistory(
   conversationId?: string | number
 ): AiChatConversationHistoryState {
   const messages = (raw?.messages || [])
-    .map(message => {
+    .map((message): AiChatConversationMessage | null => {
       const content = message.content?.trim();
       if (!content) return null;
       const role = normalizeMessageRole(message.role);

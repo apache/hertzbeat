@@ -178,12 +178,12 @@ describe('setting server page', () => {
     expect(html).toContain('data-client-workbench="true"');
     expect(html).toContain(`data-loading-copy="${t('setting.settings.server.loading')}"`);
     expect(html).toContain('data-settings-console-title="true"');
-    expect(html).toContain('data-settings-server-page="otlp-cold-message-server"');
+    expect(html).toContain('data-settings-server-page="otlp-hertzbeat-ui-message-server"');
     expect(html).toContain('data-settings-server-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-settings-server-layout="full-width-settings-summary"');
     expect(html).toContain('data-settings-server-dialog-width-contract="angular-width-40-percent"');
     expect(html).toContain('data-settings-server-dialog-field-layout-contract="angular-label-7-control-12"');
-    expect(html).toContain('data-settings-server-summary="cold-summary-list"');
+    expect(html).toContain('data-settings-server-summary="hertzbeat-ui-summary-list"');
     expect(html).toContain('data-settings-summary-list="true"');
     expect(html).toContain('data-settings-summary-list-owner="cold-settings-summary-owner"');
     expect(html).toContain('data-settings-summary-list-style="cold-dense-summary-list"');
@@ -240,12 +240,12 @@ describe('setting server page', () => {
     const source = readFileSync(resolve(__dirname, 'setting-server-page.tsx'), 'utf8');
 
     expect(source).toContain('hzOpsCatalogVisual');
-    expect(source).toContain('data-settings-server-page="otlp-cold-message-server"');
+    expect(source).toContain('data-settings-server-page="otlp-hertzbeat-ui-message-server"');
     expect(source).toContain('data-settings-server-style-baseline={coldServerVisual.canvasName}');
     expect(source).toContain('data-settings-server-layout="full-width-settings-summary"');
     expect(source).toContain('data-settings-server-dialog-width-contract="angular-width-40-percent"');
     expect(source).toContain('data-settings-server-dialog-field-layout-contract="angular-label-7-control-12"');
-    expect(source).toContain('data-settings-server-summary="cold-summary-list"');
+    expect(source).toContain('data-settings-server-summary="hertzbeat-ui-summary-list"');
     expect(source).toContain('maxWidthClassName="w-[min(92vw,520px)] md:w-[40vw] md:max-w-[40vw]"');
     expect(source).toContain("'data-settings-server-email-dialog-width': 'angular-width-40-percent'");
     expect(source).toContain("'data-settings-server-sms-dialog-width': 'angular-width-40-percent'");

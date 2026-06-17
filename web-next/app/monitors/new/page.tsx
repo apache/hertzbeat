@@ -13,7 +13,7 @@ export default async function MonitorNewRoutePage({
   searchParams
 }: {
   searchParams?: Promise<MonitorNewSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   if (!hasMonitorNewAppParam(resolvedSearchParams)) {
     redirect(buildMonitorNewDefaultAppRedirectUrl());

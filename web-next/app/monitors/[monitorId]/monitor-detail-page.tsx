@@ -129,8 +129,10 @@ function normalizeMonitorHistoryTimeContext(context: TimeContext, fallback: Time
   const sanitized = sanitizeTimeContext(context);
   const fallbackContext = resolveMonitorHistoryTimeContextFallback(context, fallback);
   const relativeRange = timeRangeToExpressionRange(sanitized.timeRange);
-  const expressionContext = (sanitized.from || relativeRange?.from) && !sanitized.start && !sanitized.end
-    ? { ...sanitized, from: sanitized.from || relativeRange?.from, to: sanitized.to || relativeRange?.to || 'now' }
+  const expressionFrom = sanitized.from || relativeRange?.from || undefined;
+  const expressionTo = sanitized.to || relativeRange?.to || 'now';
+  const expressionContext = expressionFrom && !sanitized.start && !sanitized.end
+    ? { ...sanitized, from: expressionFrom, to: expressionTo }
     : sanitized;
   return resolveAppliedTimeContext(expressionContext, fallbackContext, 'last-1h');
 }

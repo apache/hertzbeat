@@ -81,7 +81,7 @@ describe('AlertSettingSurface', () => {
     }
   };
 
-  it('renders the OTLP cold-matte alert-setting console and define table posture', () => {
+  it('renders the OTLP UI Lab alert-setting console and define table posture', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-setting-surface.tsx'), 'utf8');
     const html = renderToStaticMarkup(
       <AlertSettingSurface
@@ -105,23 +105,23 @@ describe('AlertSettingSurface', () => {
       />
     );
 
-    expect(html).toContain('data-alert-setting-surface="otlp-cold-setting-console"');
+    expect(html).toContain('data-alert-setting-surface="otlp-hertzbeat-ui-setting-console"');
     expect(html).toContain('data-alert-setting-style-baseline="hertzbeat-ui-matte"');
-    expect(html).toContain('data-alert-setting-header="cold-compact-header"');
+    expect(html).toContain('data-alert-setting-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-alert-setting-command-row="standard-equal-buttons"');
     expect(html).toContain('data-alert-setting-admin-layout="full-width-admin-list"');
-    expect(html).toContain('data-alert-setting-toolbar="cold-query-toolbar"');
-    expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
-    expect(html).toContain('data-cold-search-layout="compact-detached-button"');
-    expect(html).toContain('data-cold-search-input="fixed-width-direct"');
-    expect(html).toContain('data-cold-search-control="direct-input"');
-    expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
+    expect(html).toContain('data-alert-setting-toolbar="hertzbeat-ui-query-toolbar"');
+    expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
+    expect(html).toContain('data-hz-search-layout="compact-detached-button"');
+    expect(html).toContain('data-hz-search-input="fixed-width-direct"');
+    expect(html).toContain('data-hz-search-control="direct-input"');
+    expect(html).toContain('data-hz-search-chrome="no-extra-input-shell"');
     expect(html).toContain('data-alert-setting-search-translation-contract="angular-app-entry-search"');
     expect(html).toContain('data-alert-setting-search-translation-owner="alert-setting-query-state"');
     expect(html).toContain('data-alert-setting-search-translation-source="/apps/defines"');
-    expect(html).not.toContain('data-cold-search-input-shell');
-    expect(html).toContain('data-cold-search-action="submit"');
-    expect(html).toContain('data-alert-setting-table-shell="cold-dense-table"');
+    expect(html).not.toContain('data-hz-search-input-shell');
+    expect(html).toContain('data-hz-search-action="submit"');
+    expect(html).toContain('data-alert-setting-table-shell="hertzbeat-ui-dense-table"');
     expect(html).toContain('data-alert-setting-batch-owner="hertzbeat-ui-batch-toolbar"');
     expect(html).toContain('data-alert-setting-import-export-contract="angular-import-export"');
     expect(html).toContain('data-alert-setting-export-trigger-owner="hertzbeat-ui-batch-toolbar"');
@@ -489,9 +489,9 @@ describe('AlertSettingSurface', () => {
       />
     );
 
-    expect(html).toContain('data-alert-setting-table-shell="cold-dense-table"');
-    expect(html).toContain('data-alert-setting-empty-state="cold-table-empty"');
-    expect(html).toContain('data-alert-setting-empty-icon="cold-empty-box"');
+    expect(html).toContain('data-alert-setting-table-shell="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-alert-setting-empty-state="hertzbeat-ui-table-empty"');
+    expect(html).toContain('data-alert-setting-empty-icon="hertzbeat-ui-empty-box"');
     expect(html).toContain(t('alert.setting.empty.title'));
   });
 
@@ -512,6 +512,32 @@ describe('AlertSettingSurface', () => {
           rows: [
             { label: t('signal.context.entity.label'), value: 'Checkout API', meta: 'entityId 7' },
             { label: t('signal.context.trace.label'), value: 'trace-123', meta: 'spanId span-456' }
+          ],
+          workflowActions: [
+            {
+              key: 'notice',
+              label: t('alert.center.operation.notice.label'),
+              copy: t('alert.center.operation.notice.copy'),
+              href: '/alert/notice?signal=traces&traceId=trace-123&returnTo=%2Ftrace%2Fmanage%3FtraceId%3Dtrace-123'
+            },
+            {
+              key: 'group',
+              label: t('alert.center.operation.group.label'),
+              copy: t('alert.center.operation.group.copy'),
+              href: '/alert/group?signal=traces&traceId=trace-123&returnTo=%2Ftrace%2Fmanage%3FtraceId%3Dtrace-123'
+            },
+            {
+              key: 'silence',
+              label: t('alert.center.operation.silence.label'),
+              copy: t('alert.center.operation.silence.copy'),
+              href: '/alert/silence?signal=traces&traceId=trace-123&returnTo=%2Ftrace%2Fmanage%3FtraceId%3Dtrace-123'
+            },
+            {
+              key: 'inhibit',
+              label: t('alert.center.operation.inhibit.label'),
+              copy: t('alert.center.operation.inhibit.copy'),
+              href: '/alert/inhibit?signal=traces&traceId=trace-123&returnTo=%2Ftrace%2Fmanage%3FtraceId%3Dtrace-123'
+            }
           ]
         }}
         onSearchChange={vi.fn()}
@@ -538,6 +564,16 @@ describe('AlertSettingSurface', () => {
     expect(html).toContain('href="/trace/manage?traceId=trace-123"');
     expect(html).toContain(t('signal.context.entity.label'));
     expect(html).toContain(t('signal.context.trace.label'));
+    expect(html).toContain('data-alert-setting-workflow-actions="signal-alert-next-steps"');
+    expect(html).toContain('data-alert-setting-workflow-actions-owner="signal-alert-handoff"');
+    expect(html).toContain('data-alert-setting-workflow-action="notice"');
+    expect(html).toContain('data-alert-setting-workflow-action="group"');
+    expect(html).toContain('data-alert-setting-workflow-action="silence"');
+    expect(html).toContain('data-alert-setting-workflow-action="inhibit"');
+    expect(html).toContain('href="/alert/notice?signal=traces&amp;traceId=trace-123&amp;returnTo=%2Ftrace%2Fmanage%3FtraceId%3Dtrace-123"');
+    expect(html).toContain('href="/alert/group?signal=traces&amp;traceId=trace-123&amp;returnTo=%2Ftrace%2Fmanage%3FtraceId%3Dtrace-123"');
+    expect(html).toContain(t('alert.center.operation.notice.label'));
+    expect(html).toContain(t('alert.center.operation.group.label'));
   });
 
   it('renders alert setting evidence and row label gaps with the localized empty fallback', () => {
@@ -575,7 +611,8 @@ describe('AlertSettingSurface', () => {
           title: alertSettingEvidenceTitle('metrics'),
           copy: t('alert.rule.evidence.setting.copy'),
           labelsText: '',
-          rows: []
+          rows: [],
+          workflowActions: []
         }}
         onSearchChange={vi.fn()}
         onApplyFilter={vi.fn()}

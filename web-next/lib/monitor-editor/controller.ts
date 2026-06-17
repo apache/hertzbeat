@@ -295,7 +295,10 @@ async function loadCollectors(apiGet: ApiGetter) {
 function normalizeCollectorSummaries(response: { content?: CollectorSummary[] }) {
   return (response.content || [])
     .map(item => item.collector)
-    .filter((collector): collector is NonNullable<CollectorSummary['collector']> => Boolean(collector?.name) && !isSystemDefaultCollector(collector.name))
+    .filter((collector): collector is NonNullable<CollectorSummary['collector']> => {
+      if (!collector?.name) return false;
+      return !isSystemDefaultCollector(collector.name);
+    })
     .map(collector => ({
       name: String(collector.name),
       ip: collector.ip,

@@ -351,6 +351,9 @@ describe('alert notice view model', () => {
         spanId: 'span-456',
         collector: 'collector-a',
         template: 'spring-boot',
+        alertDatasource: 'sql',
+        alertQueryType: 'logs',
+        alertTemplate: 'OpsTemplate',
         returnTo: '/log/manage?traceId=trace-123&returnLabel=Logs'
       },
       zhT
@@ -361,13 +364,58 @@ describe('alert notice view model', () => {
       title: noticeEvidenceTitle(zhT, 'logs'),
       returnHref: '/log/manage?traceId=trace-123',
       labelsText:
-        'hertzbeat.signal:logs, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot',
+        'hertzbeat.signal:logs, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot, hertzbeat.alert.datasource:sql, hertzbeat.alert.query_type:logs, hertzbeat.alert.template:OpsTemplate',
       ruleDraftPatch: {
         filterAll: false,
         labelsText:
-          'hertzbeat.signal:logs, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot'
+          'hertzbeat.signal:logs, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot, hertzbeat.alert.datasource:sql, hertzbeat.alert.query_type:logs, hertzbeat.alert.template:OpsTemplate'
+      },
+      receiverTestPreview: {
+        title: zhT('alert.notice.receiver.test-preview.title'),
+        copy: zhT('alert.notice.receiver.test-preview.copy'),
+        labelsText:
+          'hertzbeat.signal:logs, hertzbeat.entity.id:7, service.name:checkout, service.namespace:payments, deployment.environment:prod, trace_id:trace-123, span_id:span-456, hertzbeat.source:otlp, hertzbeat.collector:collector-a, hertzbeat.template:spring-boot, hertzbeat.alert.datasource:sql, hertzbeat.alert.query_type:logs, hertzbeat.alert.template:OpsTemplate',
+        payloadTitle: zhT('alert.notice.receiver.test-preview.payload.title'),
+        payloadCopy: zhT('alert.notice.receiver.test-preview.payload.copy'),
+        payloadMessage: zhT('alert.notice.receiver.test-preview.payload.message', {
+          rule: 'OpsTemplate',
+          signal: zhT('alert.rule.signal.logs'),
+          scope: 'checkout'
+        })
       }
     });
+    expect(context?.receiverTestPreview?.payloadRows).toEqual([
+      {
+        key: 'status',
+        label: zhT('alert.notice.receiver.test-preview.payload.status'),
+        value: zhT('alert.notice.receiver.test-preview.payload.status.firing')
+      },
+      {
+        key: 'rule',
+        label: zhT('alert.notice.receiver.test-preview.payload.rule'),
+        value: 'OpsTemplate'
+      },
+      {
+        key: 'signal',
+        label: zhT('alert.notice.receiver.test-preview.payload.signal'),
+        value: zhT('alert.rule.signal.logs')
+      },
+      {
+        key: 'scope',
+        label: zhT('alert.notice.receiver.test-preview.payload.scope'),
+        value: 'checkout · prod'
+      },
+      {
+        key: 'query',
+        label: zhT('alert.notice.receiver.test-preview.payload.query'),
+        value: 'sql / logs'
+      },
+      {
+        key: 'severity',
+        label: zhT('alert.notice.receiver.test-preview.payload.severity'),
+        value: zhT('alert.notice.receiver.test-preview.payload.severity.sample')
+      }
+    ]);
     expect(context?.rows.map(row => row.label)).toContain(zhT('signal.context.trace.label'));
   });
 
@@ -388,7 +436,15 @@ describe('alert notice view model', () => {
       title: 'Notification policy context from logs',
       copy: 'New notification policies match the current entity, service, environment, and trace labels; validation returns to the original troubleshooting context.'
     });
+    expect(context?.receiverTestPreview).toMatchObject({
+      title: 'Signal alert test context',
+      copy: 'The test message validates this receiver configuration. The labels below are the alert context that notification policies should match.',
+      payloadTitle: 'Sample alert payload preview',
+      payloadCopy: 'Preview only. The receiver test still validates the receiver configuration through the backend.',
+      payloadMessage: 'logs Rule is firing for logs in checkout.'
+    });
     expect(`${context?.title} ${context?.copy}`).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(`${context?.receiverTestPreview?.title} ${context?.receiverTestPreview?.copy} ${context?.receiverTestPreview?.payloadTitle} ${context?.receiverTestPreview?.payloadCopy} ${context?.receiverTestPreview?.payloadMessage}`).not.toMatch(/[\u4e00-\u9fff]/);
     expect(context?.rows.map(row => [row.label, row.value, row.meta].join(' ')).join(' ')).not.toMatch(/[\u4e00-\u9fff]/);
     expect(context?.rows.map(row => row.label)).toContain('Current entity');
   });

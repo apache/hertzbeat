@@ -172,7 +172,7 @@ export function buildTopologyApiUrl(context: TopologyRouteContext = {}) {
   const params = new URLSearchParams();
   const focusEntityId = resolveTopologyApiFocusEntityId(context);
   const relationType = resolveTopologyRelationType(context);
-  const timeBounds = shouldApplyTopologyApiTimeBounds(context, relationType)
+  const timeBounds: { start?: string; end?: string } = shouldApplyTopologyApiTimeBounds(context, relationType)
     ? resolveTopologyApiTimeBounds(context)
     : {};
   if (focusEntityId) params.set('focusEntityId', focusEntityId);

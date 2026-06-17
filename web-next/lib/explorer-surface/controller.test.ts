@@ -18,7 +18,7 @@ function pageResult<T>(content: T[], totalElements = content.length): PageResult
 describe('explorer read controller', () => {
   it('builds the read-only trace and log list URLs used by explorer', () => {
     expect(buildExplorerReadUrls()).toEqual({
-      traces: '/traces/list?pageIndex=0&pageSize=8',
+      traces: '/traces/list?pageIndex=0&pageSize=8&spanScope=root',
       logs: '/logs/list?pageIndex=0&pageSize=8',
       metrics: '/ingestion/otlp/metrics/console?aggregation=avg&groupBy=service_name&timeRange=last-30m'
     });
@@ -30,7 +30,7 @@ describe('explorer read controller', () => {
     expect(query).toEqual({ q: 'checkout', signal: 'trace' });
     expect(buildExplorerRouteUrl(query)).toBe('/explorer?q=checkout&signal=trace');
     expect(buildExplorerReadUrls(query)).toEqual({
-      traces: '/traces/list?pageIndex=0&pageSize=8&serviceName=checkout',
+      traces: '/traces/list?pageIndex=0&pageSize=8&serviceName=checkout&spanScope=root',
       logs: null,
       metrics: null
     });
@@ -130,7 +130,7 @@ describe('explorer read controller', () => {
     expect(data.apiState).toBe('ready');
     expect(data.query).toEqual({ q: 'checkout', signal: 'all' });
     expect(data.sourceUrls).toEqual({
-      traces: '/traces/list?pageIndex=0&pageSize=8&serviceName=checkout',
+      traces: '/traces/list?pageIndex=0&pageSize=8&serviceName=checkout&spanScope=root',
       logs: '/logs/list?pageIndex=0&pageSize=8&search=checkout',
       metrics: '/ingestion/otlp/metrics/console?query=checkout&aggregation=avg&groupBy=service_name&timeRange=last-30m'
     });
@@ -178,7 +178,7 @@ describe('explorer read controller', () => {
     const data = await loadExplorerReadData(t, apiGet, { q: 'cart', signal: 'trace' });
 
     expect(apiGet).toHaveBeenCalledTimes(1);
-    expect(apiGet).toHaveBeenNthCalledWith(1, '/traces/list?pageIndex=0&pageSize=8&serviceName=cart');
+    expect(apiGet).toHaveBeenNthCalledWith(1, '/traces/list?pageIndex=0&pageSize=8&serviceName=cart&spanScope=root');
     expect(data.rows[0]).toMatchObject({
       key: 'trace:trace-2',
       service: 'cart',

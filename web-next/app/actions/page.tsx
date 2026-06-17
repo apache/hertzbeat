@@ -6,7 +6,7 @@ export default async function ActionsRoutePage({
   searchParams
 }: {
   searchParams?: Promise<ActionsSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const suggestionContext = readActionsSuggestionContext(resolvedSearchParams);
   return <ActionsPage suggestionContext={suggestionContext} />;

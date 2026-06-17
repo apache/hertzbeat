@@ -51,39 +51,39 @@ describe('alert surface cold-workbench chrome', () => {
       expect(source).not.toContain('angular-checkbox');
     }
 
-    expect(centerSource).toContain('data-alert-center-surface="otlp-cold-center-console"');
+    expect(centerSource).toContain('data-alert-center-surface="otlp-hertzbeat-ui-center-console"');
     expect(centerSource).toContain('data-alert-center-style-baseline={coldCenterVisual.canvasName}');
     expect(centerSource).toContain('data-alert-center-command-row="standard-equal-buttons"');
-    expect(centerSource).toContain('data-alert-center-toolbar="cold-query-toolbar"');
-    expect(centerSource).toContain('data-alert-center-list-shell="cold-alert-list"');
-    expect(centerSource).toContain('data-alert-center-empty-state="cold-table-empty"');
+    expect(centerSource).toContain('data-alert-center-toolbar="hertzbeat-ui-query-toolbar"');
+    expect(centerSource).toContain('data-alert-center-list-shell="hertzbeat-ui-alert-list"');
+    expect(centerSource).toContain('data-alert-center-empty-state="hertzbeat-ui-table-empty"');
 
-    expect(groupSource).toContain('data-alert-group-surface="otlp-cold-group-console"');
+    expect(groupSource).toContain('data-alert-group-surface="otlp-hertzbeat-ui-group-console"');
     expect(groupSource).toContain('data-alert-group-style-baseline={coldGroupVisual.canvasName}');
     expect(groupSource).toContain('data-alert-group-command-row="standard-equal-buttons"');
-    expect(groupSource).toContain('data-alert-group-toolbar="cold-query-toolbar"');
-    expect(groupSource).toContain('data-alert-group-table-shell="cold-dense-table"');
-    expect(groupSource).toContain('data-alert-group-empty-state="cold-table-empty"');
+    expect(groupSource).toContain('data-alert-group-toolbar="hertzbeat-ui-query-toolbar"');
+    expect(groupSource).toContain('data-alert-group-table-shell="hertzbeat-ui-dense-table"');
+    expect(groupSource).toContain('data-alert-group-empty-state="hertzbeat-ui-table-empty"');
 
-    expect(inhibitSource).toContain('data-alert-inhibit-surface="otlp-cold-inhibit-console"');
+    expect(inhibitSource).toContain('data-alert-inhibit-surface="otlp-hertzbeat-ui-inhibit-console"');
     expect(inhibitSource).toContain('data-alert-inhibit-style-baseline={coldInhibitVisual.canvasName}');
     expect(inhibitSource).toContain('data-alert-inhibit-command-row="standard-equal-buttons"');
-    expect(inhibitSource).toContain('data-alert-inhibit-toolbar="cold-query-toolbar"');
-    expect(inhibitSource).toContain('data-alert-inhibit-table-shell="cold-dense-table"');
-    expect(inhibitSource).toContain('data-alert-inhibit-empty-state="cold-table-empty"');
+    expect(inhibitSource).toContain('data-alert-inhibit-toolbar="hertzbeat-ui-query-toolbar"');
+    expect(inhibitSource).toContain('data-alert-inhibit-table-shell="hertzbeat-ui-dense-table"');
+    expect(inhibitSource).toContain('data-alert-inhibit-empty-state="hertzbeat-ui-table-empty"');
 
-    expect(settingSource).toContain('data-alert-setting-surface="otlp-cold-setting-console"');
+    expect(settingSource).toContain('data-alert-setting-surface="otlp-hertzbeat-ui-setting-console"');
     expect(settingSource).toContain('data-alert-setting-style-baseline={coldSettingVisual.canvasName}');
     expect(settingSource).toContain('data-alert-setting-command-row="standard-equal-buttons"');
-    expect(settingSource).toContain('data-alert-setting-toolbar="cold-query-toolbar"');
-    expect(settingSource).toContain('data-alert-setting-table-shell="cold-dense-table"');
-    expect(settingSource).toContain('data-alert-setting-empty-state="cold-table-empty"');
+    expect(settingSource).toContain('data-alert-setting-toolbar="hertzbeat-ui-query-toolbar"');
+    expect(settingSource).toContain('data-alert-setting-table-shell="hertzbeat-ui-dense-table"');
+    expect(settingSource).toContain('data-alert-setting-empty-state="hertzbeat-ui-table-empty"');
 
-    expect(silenceSource).toContain('data-alert-silence-surface="otlp-cold-silence-console"');
+    expect(silenceSource).toContain('data-alert-silence-surface="otlp-hertzbeat-ui-silence-console"');
     expect(silenceSource).toContain('data-alert-silence-style-baseline={coldSilenceVisual.canvasName}');
     expect(silenceSource).toContain('data-alert-silence-command-row="standard-equal-buttons"');
-    expect(silenceSource).toContain('data-alert-silence-toolbar="cold-query-toolbar"');
-    expect(silenceSource).toContain('data-alert-silence-table-shell="cold-dense-table"');
-    expect(silenceSource).toContain('data-alert-silence-empty-state="cold-table-empty"');
+    expect(silenceSource).toContain('data-alert-silence-toolbar="hertzbeat-ui-query-toolbar"');
+    expect(silenceSource).toContain('data-alert-silence-table-shell="hertzbeat-ui-dense-table"');
+    expect(silenceSource).toContain('data-alert-silence-empty-state="hertzbeat-ui-table-empty"');
   });
 });

@@ -65,7 +65,7 @@ vi.mock('@/components/workbench/client-workbench', () => ({
 
 vi.mock('@/components/pages/entity-discovery-surface', () => ({
   EntityDiscoverySurface: ({ presets, activities, catalog, candidateContext }: any) => (
-    <div data-entity-discovery-surface="otlp-cold-discovery-console">
+    <div data-entity-discovery-surface="otlp-hertzbeat-ui-discovery-console">
       {candidateContext ? (
         <span
           data-page-candidate-source={candidateContext.source}
@@ -109,7 +109,7 @@ describe('EntityDiscoveryPage', () => {
   it('loads discovery workspace data and renders the shared discovery surface', async () => {
     const html = renderToStaticMarkup(<EntityDiscoveryPage />);
 
-    expect(html).toContain('data-entity-discovery-surface="otlp-cold-discovery-console"');
+    expect(html).toContain('data-entity-discovery-surface="otlp-hertzbeat-ui-discovery-console"');
     expect(html).toContain(`data-loading-copy="${expectedT('entities.discovery.loading')}"`);
     expect(html).toContain(
       'data-cache-key="entity-discovery:/entities/discovery/governance-presets?limit=8:/entities/discovery/governance-activities?limit=8:/entities/catalog-suggestions?limit=120"'

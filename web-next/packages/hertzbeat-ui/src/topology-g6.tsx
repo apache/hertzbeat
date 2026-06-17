@@ -2344,7 +2344,7 @@ export function HzTopologyG6Canvas({
         const { Graph } = g6;
         const [width, graphHeight] = [stage.clientWidth || 960, stage.clientHeight || (height === 'compact' ? 420 : 640)];
         const initialGraphData = latestG6GraphRef.current ?? g6Graph;
-        const runtimeGraph = new Graph({
+        const runtimeGraph = new Graph(({
           container: stage,
           width,
           height: graphHeight,
@@ -2362,16 +2362,16 @@ export function HzTopologyG6Canvas({
               ? { type: 'force', preventOverlap: true, nodeSize: 72, linkDistance: 146 }
               : { type: 'dagre', rankdir: 'LR', nodesep: 58, ranksep: 122 },
           node: {
-            type: datum => String(datum.type ?? 'circle'),
-            style: datum => ({ ...datum.style })
+            type: (datum: HzTopologyG6Datum) => String(datum.type ?? 'circle'),
+            style: (datum: HzTopologyG6Datum) => ({ ...datum.style })
           },
           edge: {
-            type: datum => String(datum.type ?? 'cubic-horizontal'),
-            style: datum => ({ ...datum.style })
+            type: (datum: HzTopologyG6Datum) => String(datum.type ?? 'cubic-horizontal'),
+            style: (datum: HzTopologyG6Datum) => ({ ...datum.style })
           },
           behaviors: [],
           theme: 'dark'
-        }) as G6GraphRuntime;
+        }) as unknown as ConstructorParameters<typeof Graph>[0]) as unknown as G6GraphRuntime;
         graphRef.current = runtimeGraph;
         runtimeGraph.on?.('node:click', event => {
           if (shouldSuppressG6SelectionAfterPointerPan()) return;

@@ -58,7 +58,7 @@ describe('AlertNoticeTemplateFields', () => {
     expect(html).toContain('data-alert-notice-template-form-row="preset"');
     expect(html).toContain('data-alert-notice-template-form-row="content"');
     expect(html).toContain('grid-cols-[132px_minmax(0,1fr)]');
-    expect(html).toContain('data-alert-notice-template-type-selector="cold-select"');
+    expect(html).toContain('data-alert-notice-template-type-selector="hertzbeat-ui-select"');
     expect(html).toContain('data-alert-notice-template-type-required="angular-required-select"');
     expect(html).toContain('data-alert-notice-template-type-required-owner="route-validation-contract"');
     expect(html).toContain('data-alert-notice-template-preset-view="readonly-type-pill"');
@@ -102,7 +102,7 @@ describe('AlertNoticeTemplateFields', () => {
     expect(source).toContain('data-alert-notice-template-type-required-owner="route-validation-contract"');
     expect(source).not.toContain("['3', 'alert.notice.type.wechat'");
     expect(source).not.toMatch(/\['0', 'alert\.notice\.type\.sms', '\u77ed\u4fe1'\]/);
-    expect(source).toContain('data-alert-notice-template-type-selector="cold-select"');
+    expect(source).toContain('data-alert-notice-template-type-selector="hertzbeat-ui-select"');
     expect(source).toContain('data-alert-notice-template-preset-view="readonly-type-pill"');
     expect(source).toContain("draft.preset ? t('alert.notice.template.preset.true') : t('alert.notice.template.preset.false')");
     expect(source).toContain('data-alert-notice-template-code-editor="template-content"');

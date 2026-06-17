@@ -157,7 +157,8 @@ function buildTraceQuery(query: ExplorerQueryState): TraceQueryState {
     traceId: '',
     spanId: '',
     serviceName: query.q.trim(),
-    errorOnly: false
+    errorOnly: false,
+    spanScope: 'root'
   };
 }
 

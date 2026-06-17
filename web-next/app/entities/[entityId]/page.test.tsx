@@ -90,13 +90,13 @@ vi.mock('@/components/pages/entity-detail-surface', () => ({
     const entity = detail.entity?.entity || {};
     return (
       <main
-        data-entity-detail-surface="otlp-cold-entity-detail"
+        data-entity-detail-surface="otlp-hertzbeat-ui-entity-detail"
         data-entity-detail-style-baseline="hertzbeat-ui-matte"
         data-entity-detail-layout="full-width-workbench"
         data-entity-detail-route-monitor-id={routeContext?.monitorId || ''}
         data-entity-detail-route-time-range={routeContext?.timeRange || ''}
       >
-        <header data-entity-detail-header="cold-compact-header">
+        <header data-entity-detail-header="hertzbeat-ui-compact-header">
           {surfaceT('entities.detail.header.badge')}
           {surfaceT('entities.detail.header.kicker')}
           <div data-entity-detail-command-row="standard-equal-buttons">
@@ -107,12 +107,12 @@ vi.mock('@/components/pages/entity-detail-surface', () => ({
             <span data-href={`/entities/${entity.id}/edit`}>{surfaceT('entities.detail.action.edit')}</span>
           </div>
         </header>
-        <div data-entity-detail-count-strip="cold-inline-counts" />
-        <div data-entity-detail-signal-grid="cold-detail-grid">
-          <section data-entity-detail-overview-panel="cold-overview-panel">{surfaceT('entities.detail.panel.overview.title')}</section>
-          <section data-entity-detail-related-panel="cold-related-panel">{surfaceT('entities.detail.panel.related.title')}</section>
-          <section data-entity-detail-next-panel="cold-next-panel">{surfaceT('entities.detail.panel.next.title')}</section>
-          <section data-entity-detail-drilldown-panel="cold-drilldown-panel">{surfaceT('entities.detail.panel.drilldown.title')}</section>
+        <div data-entity-detail-count-strip="hertzbeat-ui-inline-counts" />
+        <div data-entity-detail-signal-grid="hertzbeat-ui-detail-grid">
+          <section data-entity-detail-overview-panel="hertzbeat-ui-overview-panel">{surfaceT('entities.detail.panel.overview.title')}</section>
+          <section data-entity-detail-related-panel="hertzbeat-ui-related-panel">{surfaceT('entities.detail.panel.related.title')}</section>
+          <section data-entity-detail-next-panel="hertzbeat-ui-next-panel">{surfaceT('entities.detail.panel.next.title')}</section>
+          <section data-entity-detail-drilldown-panel="hertzbeat-ui-drilldown-panel">{surfaceT('entities.detail.panel.drilldown.title')}</section>
         </div>
       </main>
     );
@@ -157,17 +157,17 @@ describe('EntityDetailPage', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/entities/[entityId]/entity-detail-page.tsx'), 'utf8');
     const html = renderToStaticMarkup(<EntityDetailPage entityId="42" />);
 
-    expect(html).toContain('data-entity-detail-surface="otlp-cold-entity-detail"');
+    expect(html).toContain('data-entity-detail-surface="otlp-hertzbeat-ui-entity-detail"');
     expect(html).toContain('data-entity-detail-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-detail-layout="full-width-workbench"');
-    expect(html).toContain('data-entity-detail-header="cold-compact-header"');
+    expect(html).toContain('data-entity-detail-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-entity-detail-command-row="standard-equal-buttons"');
-    expect(html).toContain('data-entity-detail-count-strip="cold-inline-counts"');
-    expect(html).toContain('data-entity-detail-signal-grid="cold-detail-grid"');
-    expect(html).toContain('data-entity-detail-overview-panel="cold-overview-panel"');
-    expect(html).toContain('data-entity-detail-related-panel="cold-related-panel"');
-    expect(html).toContain('data-entity-detail-next-panel="cold-next-panel"');
-    expect(html).toContain('data-entity-detail-drilldown-panel="cold-drilldown-panel"');
+    expect(html).toContain('data-entity-detail-count-strip="hertzbeat-ui-inline-counts"');
+    expect(html).toContain('data-entity-detail-signal-grid="hertzbeat-ui-detail-grid"');
+    expect(html).toContain('data-entity-detail-overview-panel="hertzbeat-ui-overview-panel"');
+    expect(html).toContain('data-entity-detail-related-panel="hertzbeat-ui-related-panel"');
+    expect(html).toContain('data-entity-detail-next-panel="hertzbeat-ui-next-panel"');
+    expect(html).toContain('data-entity-detail-drilldown-panel="hertzbeat-ui-drilldown-panel"');
     expect(html).toContain(expectedT('entities.detail.header.badge'));
     expect(html).toContain(expectedT('entities.detail.header.kicker'));
     expect(html).toContain(expectedT('entities.detail.action.all-entities'));

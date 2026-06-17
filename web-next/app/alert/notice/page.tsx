@@ -7,7 +7,7 @@ export default async function AlertNoticeRoutePage({
   searchParams
 }: {
   searchParams?: Promise<AlertNoticeSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const routeState = readAlertNoticeRouteState(resolvedSearchParams);
   return <AlertNoticePage initialRouteState={routeState} />;

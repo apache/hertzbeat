@@ -277,7 +277,7 @@ describe('EntityDefinitionWorkspaceSurface', () => {
 
     expect(source).toContain("t('entities.definition.message.backend-fallback', { message: normalized })");
     expect(source).not.toContain('default:\\n      return message;');
-    expect(html).toContain('data-entity-definition-load-error="cold-inline"');
+    expect(html).toContain('data-entity-definition-load-error="hertzbeat-ui-inline"');
     expect(html).toContain(
       t('entities.definition.message.backend-fallback', { message: 'Backend parser saw custom-field drift.' })
     );
@@ -300,18 +300,18 @@ describe('EntityDefinitionWorkspaceSurface', () => {
     expect(html).toContain('data-entity-definition-workspace="definition"');
     expect(html).toContain('data-entity-definition-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-definition-layout="full-width-workbench"');
-    expect(html).toContain('data-entity-definition-editor-shell="otlp-cold-definition-workbench"');
-    expect(html).toContain('data-entity-definition-shell-spacing="cold-tight"');
-    expect(html).toContain('data-entity-definition-shell-height="cold-content"');
-    expect(html).toContain('data-entity-definition-action-row="cold-inline-actions"');
+    expect(html).toContain('data-entity-definition-editor-shell="otlp-hertzbeat-ui-definition-workbench"');
+    expect(html).toContain('data-entity-definition-shell-spacing="hertzbeat-ui-tight"');
+    expect(html).toContain('data-entity-definition-shell-height="hertzbeat-ui-content"');
+    expect(html).toContain('data-entity-definition-action-row="hertzbeat-ui-inline-actions"');
     expect(html).toContain('data-entity-definition-editor-column="true"');
-    expect(html).toContain('data-entity-definition-format-select="cold-compact-select"');
+    expect(html).toContain('data-entity-definition-format-select="hertzbeat-ui-compact-select"');
     expect(html).toContain('data-entity-definition-code-editor="definition"');
-    expect(html).toContain('data-entity-definition-editor-width="cold-fluid"');
+    expect(html).toContain('data-entity-definition-editor-width="hertzbeat-ui-fluid"');
     expect(html).toContain('data-hz-code-editor="codemirror"');
     expect(html).toContain('data-hz-code-editor-language="yaml"');
-    expect(html).toContain('data-entity-definition-context-panel="cold-context-panel"');
-    expect(html).toContain('data-entity-definition-metric-strip="cold-inline-counts"');
+    expect(html).toContain('data-entity-definition-context-panel="hertzbeat-ui-context-panel"');
+    expect(html).toContain('data-entity-definition-metric-strip="hertzbeat-ui-inline-counts"');
     expect(html).toContain('auto-rows-min');
     expect(html).toContain('rounded-[4px]');
     expect(html).toContain(t('entities.definition.workspace.kicker'));
@@ -353,17 +353,17 @@ describe('EntityDefinitionWorkspaceSurface', () => {
       />
     );
 
-    expect(html).toContain('data-entity-definition-editor-shell="otlp-cold-definition-workbench"');
-    expect(html).toContain('data-entity-definition-shell-spacing="cold-tight"');
-    expect(html).toContain('data-entity-definition-shell-height="cold-content"');
+    expect(html).toContain('data-entity-definition-editor-shell="otlp-hertzbeat-ui-definition-workbench"');
+    expect(html).toContain('data-entity-definition-shell-spacing="hertzbeat-ui-tight"');
+    expect(html).toContain('data-entity-definition-shell-height="hertzbeat-ui-content"');
     expect(html).toContain('data-entity-definition-editor-column="true"');
     expect(html).toContain('data-entity-definition-template-panel="true"');
     expect(html).toContain('data-entity-definition-batch-panel="true"');
-    expect(html).toContain('data-entity-definition-format-select="cold-compact-select"');
+    expect(html).toContain('data-entity-definition-format-select="hertzbeat-ui-compact-select"');
     expect(html).toContain('data-entity-definition-code-editor="definition"');
-    expect(html).toContain('data-entity-definition-editor-width="cold-fluid"');
+    expect(html).toContain('data-entity-definition-editor-width="hertzbeat-ui-fluid"');
     expect(html).toContain('data-hz-code-editor="codemirror"');
-    expect(html).toContain('data-entity-definition-context-panel="cold-context-panel"');
+    expect(html).toContain('data-entity-definition-context-panel="hertzbeat-ui-context-panel"');
     expect(html).toContain('auto-rows-min');
     expect(html).not.toContain('lg:grid-cols-[190px_minmax(0,1fr)_460px]');
     expect(html).not.toContain('data-entity-definition-left-rail-density="angular-compact-icons"');
@@ -388,9 +388,9 @@ describe('EntityDefinitionWorkspaceSurface', () => {
       />
     );
 
-    expect(html).toContain('data-entity-definition-load-error="cold-inline"');
-    expect(html).toContain('data-entity-definition-error-state="cold-reference"');
-    expect(html).toContain('data-entity-definition-error-placement="cold-context-panel"');
+    expect(html).toContain('data-entity-definition-load-error="hertzbeat-ui-inline"');
+    expect(html).toContain('data-entity-definition-error-state="hertzbeat-ui-reference"');
+    expect(html).toContain('data-entity-definition-error-placement="hertzbeat-ui-context-panel"');
     expect(html).not.toContain('lg:pt-[91px]');
     expect(html).toContain(t('entities.definition.message.entity-not-exist'));
     expect(html).toContain(t('entity.definition.import.placeholder.yaml'));
@@ -415,21 +415,21 @@ describe('EntityDefinitionWorkspaceSurface', () => {
     expect(html).toContain('data-entity-definition-workspace="import"');
     expect(html).toContain('data-entity-definition-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-definition-layout="full-width-workbench"');
-    expect(html).toContain('data-entity-definition-header-spacing="cold-padded"');
-    expect(html).toContain('data-entity-definition-editor-shell="otlp-cold-import-workbench"');
-    expect(html).toContain('data-entity-definition-shell-spacing="cold-tight"');
-    expect(html).toContain('data-entity-definition-shell-height="cold-content"');
-    expect(html).toContain('data-entity-definition-import-action-row="cold-inline-actions"');
-    expect(html).toContain('data-entity-definition-format-select="cold-compact-select"');
-    expect(html).toContain('data-entity-definition-starter-draft="cold-yaml"');
+    expect(html).toContain('data-entity-definition-header-spacing="hertzbeat-ui-padded"');
+    expect(html).toContain('data-entity-definition-editor-shell="otlp-hertzbeat-ui-import-workbench"');
+    expect(html).toContain('data-entity-definition-shell-spacing="hertzbeat-ui-tight"');
+    expect(html).toContain('data-entity-definition-shell-height="hertzbeat-ui-content"');
+    expect(html).toContain('data-entity-definition-import-action-row="hertzbeat-ui-inline-actions"');
+    expect(html).toContain('data-entity-definition-format-select="hertzbeat-ui-compact-select"');
+    expect(html).toContain('data-entity-definition-starter-draft="hertzbeat-ui-yaml"');
     expect(html).toContain('data-entity-definition-code-editor="import"');
     expect(html).toContain('data-entity-definition-editor-format="yaml"');
-    expect(html).toContain('data-entity-definition-editor-width="cold-fluid"');
+    expect(html).toContain('data-entity-definition-editor-width="hertzbeat-ui-fluid"');
     expect(html).toContain('data-hz-code-editor="codemirror"');
     expect(html).toContain('data-hz-code-editor-language="yaml"');
-    expect(html).toContain('data-entity-definition-context-panel="cold-context-panel"');
+    expect(html).toContain('data-entity-definition-context-panel="hertzbeat-ui-context-panel"');
     expect(html).toContain('data-entity-definition-context-density="minimal-import"');
-    expect(html).toContain('data-entity-definition-metric-strip="cold-inline-counts"');
+    expect(html).toContain('data-entity-definition-metric-strip="hertzbeat-ui-inline-counts"');
     expect(html).toContain('auto-rows-min');
     expect(html).toContain('rounded-[4px]');
     expect(html).toContain(t('entity.definition.format.label'));

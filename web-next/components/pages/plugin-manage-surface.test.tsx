@@ -62,9 +62,9 @@ describe('plugin manage surface', () => {
       />
     );
 
-    expect(html).toContain('data-plugin-manage-surface="otlp-cold-plugin-console"');
+    expect(html).toContain('data-plugin-manage-surface="otlp-hertzbeat-ui-plugin-console"');
     expect(html).toContain('data-plugin-manage-style-baseline="hertzbeat-ui-matte"');
-    expect(html).toContain('data-plugin-header="cold-compact-header"');
+    expect(html).toContain('data-plugin-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-plugin-command-row="standard-equal-buttons"');
     expect(html).toContain('data-plugin-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-plugin-enable-feedback-contract="angular-edit-notify"');
@@ -92,25 +92,25 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-table-loading-owner="angular-nz-table-loading"');
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('Edit Success!');
-    expect(html).toContain('data-plugin-manage-toolbar="cold-table-toolbar"');
+    expect(html).toContain('data-plugin-manage-toolbar="hertzbeat-ui-table-toolbar"');
     expect(html).toContain('data-plugin-manage-search-owner="shared-search-row"');
     expect(html).toContain('data-plugin-search-submit-contract="angular-enter-and-clear"');
     expect(html).toContain('data-plugin-search-clear-contract="angular-cleared-load"');
     expect(html).toContain('data-plugin-search-clear-owner="shared-search-row"');
-    expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
-    expect(html).toContain('data-cold-search-input="fixed-width-direct"');
-    expect(html).toContain('data-cold-search-control="direct-input"');
-    expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
-    expect(html).toContain('data-cold-search-action="submit"');
-    expect(html).toContain('data-cold-search-action="clear"');
-    expect(html).toContain('data-cold-search-trailing-actions="detached-secondary"');
-    expect(html).toContain('data-plugin-manage-table-shell="cold-dense-table"');
+    expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
+    expect(html).toContain('data-hz-search-input="fixed-width-direct"');
+    expect(html).toContain('data-hz-search-control="direct-input"');
+    expect(html).toContain('data-hz-search-chrome="no-extra-input-shell"');
+    expect(html).toContain('data-hz-search-action="submit"');
+    expect(html).toContain('data-hz-search-action="clear"');
+    expect(html).toContain('data-hz-search-trailing-actions="detached-secondary"');
+    expect(html).toContain('data-plugin-manage-table-shell="hertzbeat-ui-dense-table"');
     expect(html).toContain('data-plugin-table-stable-height="viewport-fill-on-empty-or-short"');
     expect(html).toContain('data-plugin-table-fill-stage="viewport-fill-on-empty-or-short"');
-    expect(html).toContain('data-plugin-manage-table="cold-plugin-table"');
+    expect(html).toContain('data-plugin-manage-table="hertzbeat-ui-plugin-table"');
     expect(html).toContain('data-plugin-table-columns="angular-five-column-edit-actions"');
     expect(html).not.toContain(`>${t('setting.plugins.table.params')}</th>`);
-    expect(html).toContain('data-plugin-pagination="cold-dense-pagination"');
+    expect(html).toContain('data-plugin-pagination="hertzbeat-ui-dense-pagination"');
     expect(html).toContain('data-plugin-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(html).toContain('data-plugin-pagination-contract="angular-search-pagination"');
     expect(html).toContain('data-plugin-query-param-order-contract="angular-page-index-size-search"');
@@ -152,13 +152,13 @@ describe('plugin manage surface', () => {
     expect(html).toContain('data-plugin-delete-one="1"');
     expect(html).toContain('data-plugin-delete-one-owner="hertzbeat-ui-table-row-action-button"');
     expect(html).toContain('data-plugin-row-actions="angular-row-actions-contextual"');
-    expect(html).toContain('data-plugin-row-actions-owner="cold-icon-actions"');
+    expect(html).toContain('data-plugin-row-actions-owner="hertzbeat-ui-icon-actions"');
     expect(html).toContain('data-plugin-row-action="params"');
     expect(html).toContain('data-plugin-row-action="delete"');
     expect(html).toContain('data-plugin-row-action-owner="row-contextual-icon-button"');
     expect(html).toContain('data-plugin-row-action-label="smtp"');
     expect(html).not.toContain('data-plugin-summary-rail=');
-    expect(html).not.toContain('data-cold-search-input-shell');
+    expect(html).not.toContain('data-hz-search-input-shell');
     expect(html).toContain(t('menu.advanced.plugins'));
     expect(html).toContain(t('plugin.upload'));
     expect(html).toContain(t('plugin.search'));
@@ -234,14 +234,14 @@ describe('plugin manage surface', () => {
       />
     );
 
-    expect(html).toContain('data-plugin-manage-table-shell="cold-dense-table"');
+    expect(html).toContain('data-plugin-manage-table-shell="hertzbeat-ui-dense-table"');
     expect(html).toContain('data-plugin-table-stable-height="viewport-fill-on-empty-or-short"');
     expect(html).toContain('data-plugin-table-stable-height-owner="route-layout-contract"');
     expect(html).toContain('data-plugin-table-fill-stage="viewport-fill-on-empty-or-short"');
-    expect(html).toContain('data-plugin-manage-table="cold-plugin-table"');
+    expect(html).toContain('data-plugin-manage-table="hertzbeat-ui-plugin-table"');
     expect(html).toContain('colSpan="5"');
-    expect(html).toContain('data-plugin-manage-empty-state="cold-table-empty"');
-    expect(html).toContain('data-plugin-manage-empty-icon="cold-empty-box"');
+    expect(html).toContain('data-plugin-manage-empty-state="hertzbeat-ui-table-empty"');
+    expect(html).toContain('data-plugin-manage-empty-icon="hertzbeat-ui-empty-box"');
     expect(html).toContain(t('common.no-data'));
   });
 
@@ -279,13 +279,13 @@ describe('plugin manage surface', () => {
       />
     );
 
-    expect(html).toContain('data-plugin-manage-surface="otlp-cold-plugin-console"');
+    expect(html).toContain('data-plugin-manage-surface="otlp-hertzbeat-ui-plugin-console"');
     expect(html).toContain('data-plugin-load-failure-contract="angular-console-only-shell"');
     expect(html).toContain('data-plugin-load-failure-owner="plugin-route-controller"');
     expect(html).toContain('data-plugin-load-failure="angular-console-only-shell"');
-    expect(html).toContain('data-plugin-manage-toolbar="cold-table-toolbar"');
-    expect(html).toContain('data-plugin-manage-table-shell="cold-dense-table"');
-    expect(html).toContain('data-plugin-manage-empty-state="cold-table-empty"');
+    expect(html).toContain('data-plugin-manage-toolbar="hertzbeat-ui-table-toolbar"');
+    expect(html).toContain('data-plugin-manage-table-shell="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-plugin-manage-empty-state="hertzbeat-ui-table-empty"');
     expect(html).toContain(t('menu.advanced.plugins'));
     expect(html).not.toContain('backend refused plugin load');
     expect(html).not.toContain('data-observability-status');
@@ -297,9 +297,9 @@ describe('plugin manage surface', () => {
     expect(source).toContain('hzOpsCatalogVisual');
     expect(source).toContain("from '../ui/search-row'");
     expect(source).toContain('inputWidthClassName="w-[360px]"');
-    expect(source).toContain('data-plugin-manage-surface="otlp-cold-plugin-console"');
+    expect(source).toContain('data-plugin-manage-surface="otlp-hertzbeat-ui-plugin-console"');
     expect(source).toContain('data-plugin-manage-style-baseline={coldPluginVisual.canvasName}');
-    expect(source).toContain('data-plugin-header="cold-compact-header"');
+    expect(source).toContain('data-plugin-header="hertzbeat-ui-compact-header"');
     expect(source).toContain('data-plugin-command-row="standard-equal-buttons"');
     expect(source).toContain('data-plugin-admin-layout="full-width-admin-list"');
     expect(source).toContain('data-plugin-enable-feedback-contract="angular-edit-notify"');
@@ -454,7 +454,7 @@ describe('plugin manage surface', () => {
     expect(source).toContain("t('setting.plugins.action.delete-aria', actionLabelParams)");
     expect(source).toContain('data-plugin-param-edit-open={String(original.id)}');
     expect(source).toContain('data-plugin-row-actions="angular-row-actions-contextual"');
-    expect(source).toContain('data-plugin-row-actions-owner="cold-icon-actions"');
+    expect(source).toContain('data-plugin-row-actions-owner="hertzbeat-ui-icon-actions"');
     expect(source).toContain('data-plugin-row-action-owner="row-contextual-icon-button"');
     expect(source).toContain('data-plugin-row-action-label={row.name}');
     expect(source).toContain('const [openRowActionMenuId, setOpenRowActionMenuId] = React.useState<string | null>(null)');
@@ -485,7 +485,7 @@ describe('plugin manage surface', () => {
     expect(source).toContain('HzTextarea');
     expect(source).toContain('HzPaginationBar');
     expect(source).toContain('pageSizeOptions = [8, 15, 25]');
-    expect(source).toContain('data-plugin-pagination="cold-dense-pagination"');
+    expect(source).toContain('data-plugin-pagination="hertzbeat-ui-dense-pagination"');
     expect(source).toContain('data-plugin-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(source).toContain('data-plugin-pagination-contract="angular-search-pagination"');
     expect(source).toContain('data-plugin-query-param-order-contract="angular-page-index-size-search"');
@@ -523,24 +523,24 @@ describe('plugin manage surface', () => {
     expect(source).toContain('data-plugin-delete-one-owner="hertzbeat-ui-table-row-action-button"');
     expect(source).toContain('HzConfirmDialog');
     expect(source).toContain('HzInlineFeedback');
-    expect(source).toContain('data-plugin-manage-toolbar="cold-table-toolbar"');
+    expect(source).toContain('data-plugin-manage-toolbar="hertzbeat-ui-table-toolbar"');
     expect(source).toContain('data-plugin-manage-search-owner="shared-search-row"');
     expect(source).toContain('data-plugin-search-submit-contract="angular-enter-and-clear"');
     expect(source).toContain('data-plugin-search-clear-contract="angular-cleared-load"');
     expect(source).toContain('data-plugin-search-clear-owner="shared-search-row"');
     expect(source).toContain('onClear={onSearchClear}');
-    expect(source).toContain('data-plugin-manage-table-shell="cold-dense-table"');
+    expect(source).toContain('data-plugin-manage-table-shell="hertzbeat-ui-dense-table"');
     expect(source).toContain('data-plugin-table-stable-height="viewport-fill-on-empty-or-short"');
     expect(source).toContain('data-plugin-table-fill-stage="viewport-fill-on-empty-or-short"');
-    expect(source).toContain('data-plugin-manage-table="cold-plugin-table"');
+    expect(source).toContain('data-plugin-manage-table="hertzbeat-ui-plugin-table"');
     expect(source).toContain('data-plugin-table-columns="angular-five-column-edit-actions"');
     expect(source).toContain('colSpan={5}');
     expect(source).not.toContain("t('setting.plugins.table.params')");
-    expect(source).toContain('data-plugin-manage-empty-state="cold-table-empty"');
+    expect(source).toContain('data-plugin-manage-empty-state="hertzbeat-ui-table-empty"');
     expect(source).not.toContain('data-plugin-summary-rail');
     expect(source).not.toContain('coldPluginVisual.search.row');
     expect(source).not.toContain('coldPluginVisual.search.input');
-    expect(source).not.toContain('data-cold-search-input-shell');
+    expect(source).not.toContain('data-hz-search-input-shell');
     expect(source).not.toContain('coldPluginVisual.layout.heroGrid');
     expect(source).not.toContain('coldPluginVisual.layout.railGrid');
     expect(source).not.toContain('coldPluginVisual.signal.band');

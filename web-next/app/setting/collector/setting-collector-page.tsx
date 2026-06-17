@@ -44,7 +44,7 @@ export default function SettingCollectorPage() {
   const [deployCopyMessage, setDeployCopyMessage] = useState<string | null>(null);
   const [isDeployPending, setIsDeployPending] = useState(false);
   const [deployNameValidationVisible, setDeployNameValidationVisible] = useState(false);
-  const deployCopyClearTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const deployCopyClearTimerRef = useRef<number | null>(null);
   const deployGenerationRequestRef = useRef(0);
   const collectorListUrl = useMemo(() => buildCollectorUrl(query), [query]);
   const collectorManageCacheKey = useMemo(

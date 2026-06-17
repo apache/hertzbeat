@@ -96,7 +96,7 @@ vi.mock('@/components/pages/label-manage-surface', () => ({
     } = props;
     return (
     <div
-      data-label-manage-surface="otlp-cold-label-console"
+      data-label-manage-surface="otlp-hertzbeat-ui-label-console"
       data-label-manage-style-baseline="hertzbeat-ui-matte"
       data-label-action-feedback={actionError ? 'angular-action-error' : actionMessage ? 'angular-action-success' : 'none'}
       data-label-save-feedback={actionError ? 'angular-save-error' : actionMessage ? 'angular-save-success' : 'none'}
@@ -161,7 +161,7 @@ vi.mock('@/components/pages/label-manage-surface', () => ({
       data-label-query-param-order-contract="angular-page-index-size-type-search"
       data-label-query-param-order-owner="label-query-state"
       data-label-search-submit="angular-enter-and-clear"
-      data-label-search-submit-owner="cold-search-row"
+      data-label-search-submit-owner="hertzbeat-ui-search-row"
       data-label-search-clear-wired={typeof onSearchClear === 'function' ? 'true' : 'false'}
       data-label-card-grid-contract="angular-card-grid"
       data-label-card-grid-owner="hertzbeat-ui-label-tag"
@@ -249,7 +249,7 @@ describe('setting labels page', () => {
     const html = renderToStaticMarkup(<SettingLabelsPage />);
 
     expect(html).toContain('data-client-workbench="true"');
-    expect(html).toContain('data-label-manage-surface="otlp-cold-label-console"');
+    expect(html).toContain('data-label-manage-surface="otlp-hertzbeat-ui-label-console"');
     expect(html).toContain('data-label-manage-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-label-admin-layout="full-width-admin-list"');
     expect(html).not.toContain('data-label-summary-rail=');
@@ -315,7 +315,7 @@ describe('setting labels page', () => {
     expect(html).toContain('data-label-query-param-order-contract="angular-page-index-size-type-search"');
     expect(html).toContain('data-label-query-param-order-owner="label-query-state"');
     expect(html).toContain('data-label-search-submit="angular-enter-and-clear"');
-    expect(html).toContain('data-label-search-submit-owner="cold-search-row"');
+    expect(html).toContain('data-label-search-submit-owner="hertzbeat-ui-search-row"');
     expect(html).toContain('data-label-search-clear-wired="true"');
     expect(html).toContain('data-label-card-grid-contract="angular-card-grid"');
     expect(html).toContain('data-label-card-grid-owner="hertzbeat-ui-label-tag"');
@@ -337,7 +337,7 @@ describe('setting labels page', () => {
     const html = renderToStaticMarkup(<SettingLabelsPage />);
 
     expect(html).toContain('data-client-workbench="true"');
-    expect(html).toContain('data-label-manage-surface="otlp-cold-label-console"');
+    expect(html).toContain('data-label-manage-surface="otlp-hertzbeat-ui-label-console"');
     expect(html).toContain('data-label-load-failure-contract="angular-console-only-shell"');
     expect(html).toContain('data-label-load-failure-owner="label-route-controller"');
     expect(html).toContain('data-label-load-failure="angular-console-only-shell"');
@@ -412,7 +412,7 @@ describe('setting labels page', () => {
     expect(source).not.toContain('AlertSurfacePanel');
     expect(source).not.toContain('data-label-card-shell');
     expect(source).not.toContain('data-label-toolbar');
-    expect(source).not.toContain('otlp-cold-label-console');
+    expect(source).not.toContain('otlp-hertzbeat-ui-label-console');
   });
 
   it('keeps label management remounts on a short settled cache window while reloads invalidate it', () => {

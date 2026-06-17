@@ -154,7 +154,13 @@ function ExplorerWorksurface({ data, t }: { data: ExplorerReadData; t: Translato
             <HzQueryBar
               query={draft.q}
               onQueryChange={q => setDraft(current => ({ ...current, q }))}
-              inputProps={{ 'aria-label': t('explorer.query.aria'), placeholder: t('explorer.query.placeholder'), 'data-explorer-query-input': 'url-owned' }}
+              inputProps={
+                {
+                  'aria-label': t('explorer.query.aria'),
+                  placeholder: t('explorer.query.placeholder'),
+                  'data-explorer-query-input': 'url-owned'
+                } as React.InputHTMLAttributes<HTMLInputElement>
+              }
               actions={
                 <>
                   <HzSelect

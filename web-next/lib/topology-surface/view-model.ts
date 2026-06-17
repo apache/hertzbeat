@@ -189,6 +189,7 @@ export type TopologyServiceEdge = {
     | 'k8s-ownership'
     | 'database-connection'
     | 'middleware-connection'
+    | 'resource-ownership'
     | 'manual-ownership';
   source: TopologySourceKind;
   label: string;
@@ -244,6 +245,8 @@ export type TopologyRouteContext = SignalRouteContext & {
   pageSize?: string;
   scaleProof?: string;
   search?: string;
+  topologyTargetId?: string;
+  topologyTargetName?: string;
 };
 
 type EntityTopologyApiRedMetrics = Partial<Record<keyof TopologyRedMetrics, number | string | null | undefined>>;
@@ -463,7 +466,7 @@ function buildTopologySourceBase(t?: Translator): Array<Omit<TopologySource, 'ac
   ];
 }
 
-function buildTopologyViewModeBase(t?: Translator): Array<Omit<TopologyViewMode, 'active'>> {
+function buildTopologyViewModeBase(t?: Translator): Array<Omit<TopologyViewMode, 'active' | 'href'>> {
   return [
     { key: 'application', label: translateTopology(t, 'topology.view.application.label'), copy: translateTopology(t, 'topology.view.application.copy') },
     { key: 'service-call', label: translateTopology(t, 'topology.view.service-call.label'), copy: translateTopology(t, 'topology.view.service-call.copy') },
@@ -485,11 +488,17 @@ function buildTopologyNodeRouteContext(
   contextDefaults: SignalRouteContext = {},
   controls: TopologyControlContext = {}
 ): SignalRouteContext {
+  const matchesIncomingEntity = Boolean(
+    (contextDefaults.entityId && contextDefaults.entityId === node.entityId) ||
+    sameText(contextDefaults.entityName, node.label)
+  );
   const signalContext: SignalRouteContext = {
     entityId: node.entityId,
     entityName: node.label,
-    serviceName: node.label,
-    serviceNamespace: node.namespace,
+    serviceName: matchesIncomingEntity ? normalizeContextValue(contextDefaults.serviceName) ?? node.label : node.label,
+    serviceNamespace: matchesIncomingEntity
+      ? normalizeContextValue(contextDefaults.serviceNamespace) ?? node.namespace
+      : node.namespace,
     environment: normalizeContextValue(contextDefaults.environment) ?? node.environment,
     timeRange: normalizeContextValue(contextDefaults.timeRange) ?? TOPOLOGY_TIME_RANGE,
     start: normalizeContextValue(contextDefaults.start),
@@ -618,7 +627,8 @@ function edgeMatchesViewMode(edge: TopologyServiceEdgeSeed, viewMode: TopologyVi
     edge.relationshipType === 'template-dependency' ||
     edge.relationshipType === 'k8s-ownership' ||
     edge.relationshipType === 'database-connection' ||
-    edge.relationshipType === 'middleware-connection'
+    edge.relationshipType === 'middleware-connection' ||
+    edge.relationshipType === 'resource-ownership'
   );
 }
 
@@ -660,6 +670,39 @@ function pickCompatibleEdgeId(
 ) {
   const edge = edges.find(candidate => candidate.id === edgeId);
   return edgeMatchesControls(edge, viewMode, sourceKind) ? edge?.id : undefined;
+}
+
+function topologyNodeMatchesTarget(
+  node: TopologyServiceNode | undefined,
+  targetId: string | undefined,
+  targetName: string | undefined
+) {
+  if (!node) return false;
+  return (
+    (targetId && (node.entityId === targetId || node.id === targetId || node.id === `entity-${targetId}`)) ||
+    (targetName && sameText(node.label, targetName))
+  );
+}
+
+function findTopologyTargetEdgeId(
+  edges: TopologyServiceEdgeSeed[],
+  nodes: TopologyServiceNode[],
+  activeNodeId: string | undefined,
+  context: TopologyRouteContext
+) {
+  const targetId = normalizeContextValue(context.topologyTargetId);
+  const targetName = normalizeContextValue(context.topologyTargetName);
+  if (!targetId && !targetName) return undefined;
+  const nodeById = new Map(nodes.map(node => [node.id, node]));
+  const targetEdge = edges.find(edge => {
+    if (activeNodeId && edge.from !== activeNodeId && edge.to !== activeNodeId) return false;
+    const fromNode = nodeById.get(edge.from);
+    const toNode = nodeById.get(edge.to);
+    if (activeNodeId === edge.from) return topologyNodeMatchesTarget(toNode, targetId, targetName);
+    if (activeNodeId === edge.to) return topologyNodeMatchesTarget(fromNode, targetId, targetName);
+    return topologyNodeMatchesTarget(fromNode, targetId, targetName) || topologyNodeMatchesTarget(toNode, targetId, targetName);
+  });
+  return targetEdge?.id;
 }
 
 function buildSourceEvidenceValue(edge: TopologyServiceEdgeSeed, t?: Translator) {
@@ -817,7 +860,7 @@ function normalizeApiNodeId(apiId: string | undefined, entityId: string | number
   return stableId ? `entity-${stableId}` : undefined;
 }
 
-function normalizeApiSourceKind(value: string | undefined): TopologySourceKind {
+function normalizeApiSourceKind(value: string | null | undefined): TopologySourceKind {
   const normalized = value?.toLowerCase() ?? '';
   if (normalized.includes('trace') || normalized.includes('otlp')) return 'otlp-trace-call';
   if (normalized.includes('monitor')) return 'monitor-ownership';
@@ -862,6 +905,17 @@ function normalizeApiRelationshipType(
   if (normalized.includes('trace') || normalized.includes('call') || normalized.includes('http')) return 'trace-call';
   if (normalized.includes('monitor')) return 'monitors';
   if (normalized.includes('template')) return 'template-dependency';
+  if (
+    normalized.includes('runs_on') ||
+    normalized.includes('deployed_on') ||
+    normalized.includes('resource') ||
+    normalized.includes('host') ||
+    normalized.includes('container') ||
+    normalized.includes('pod') ||
+    normalized.includes('node')
+  ) {
+    return 'resource-ownership';
+  }
   if (normalized.includes('k8s') || normalized.includes('workload')) return 'k8s-ownership';
   if (normalized.includes('database') || normalized.includes('db') || normalized.includes('sql')) return 'database-connection';
   if (normalized.includes('middleware') || normalized.includes('redis') || normalized.includes('cache')) return 'middleware-connection';
@@ -1018,7 +1072,7 @@ function buildApiImpactTimeline(
   t?: Translator
 ): TopologyImpactTimelineEvent[] {
   return (apiTimeline ?? [])
-    .map(event => {
+    .map((event): TopologyImpactTimelineEvent | undefined => {
       const id = normalizeApiText(event.id);
       const title = normalizeApiText(event.title);
       const occurredAt = normalizeApiText(event.occurredAt);
@@ -1052,6 +1106,10 @@ export function buildTopologyServiceMapFromApiGraph(
 
   const incomingContext = normalizeRouteContext(context);
   const contextDefaults: SignalRouteContext = {
+    entityId: incomingContext.entityId,
+    entityName: incomingContext.entityName,
+    serviceName: incomingContext.serviceName,
+    serviceNamespace: incomingContext.serviceNamespace,
     environment: incomingContext.environment,
     timeRange: incomingContext.timeRange,
     start: incomingContext.start,
@@ -1149,17 +1207,23 @@ export function buildTopologyServiceMapFromApiGraph(
     .filter((pair): pair is { edge: TopologyServiceEdgeSeed; apiEdge: EntityTopologyApiEdge } => Boolean(pair));
   const impactTimeline = buildApiImpactTimeline(graph.impactTimeline, edgePairs, sourceLabels, t);
   const edgeBase = edgePairs.map(pair => pair.edge);
+  const targetEdgeId = findTopologyTargetEdgeId(edgeBase, nodes, activeNodeId, incomingContext);
+  const targetEdge = edgeBase.find(edge => edge.id === targetEdgeId);
   const requestedEdgeId = normalizeContextValue(incomingContext.edgeId);
-  const selectedEdgeId = pickCompatibleEdgeId(edgeBase, requestedEdgeId, viewMode, sourceKind);
+  const targetViewMode = targetEdge && edgeMatchesViewMode(targetEdge, 'resource-dependency') ? 'resource-dependency' : undefined;
+  const resolvedViewMode = requestedViewMode ?? targetViewMode ?? viewMode;
+  const selectedEdgeId =
+    pickCompatibleEdgeId(edgeBase, requestedEdgeId, resolvedViewMode, sourceKind)
+    ?? pickCompatibleEdgeId(edgeBase, targetEdgeId, resolvedViewMode, sourceKind);
   const explicitNarrowing = Boolean(requestedViewMode || requestedSourceKind || selectedEdgeId);
-  const linkControlContext: TopologyControlContext = explicitNarrowing ? { viewMode, sourceKind, edgeId: selectedEdgeId } : {};
+  const linkControlContext: TopologyControlContext = explicitNarrowing ? { viewMode: resolvedViewMode, sourceKind, edgeId: selectedEdgeId } : {};
   const linkedNodes = explicitNarrowing
     ? nodes.map(node => defineTopologyNode(node, contextDefaults, linkControlContext, t))
     : nodes;
-  const hasNarrowing = Boolean(activeNodeId || explicitNarrowing || viewMode !== 'application');
+  const hasNarrowing = Boolean(activeNodeId || explicitNarrowing || resolvedViewMode !== 'application');
   const activeNodeRelatedIds = buildRelatedNodeIds(activeNodeId, edgeBase);
   const edges: TopologyServiceEdge[] = edgePairs.map(({ edge, apiEdge }) => {
-    const matchesControl = edgeMatchesViewMode(edge, viewMode) && edgeMatchesSource(edge, sourceKind);
+    const matchesControl = edgeMatchesViewMode(edge, resolvedViewMode) && edgeMatchesSource(edge, sourceKind);
     const matchesActiveNode = Boolean(activeNodeId && (edge.from === activeNodeId || edge.to === activeNodeId));
     const activeByNode = activeNodeId && !explicitNarrowing ? matchesActiveNode : matchesActiveNode && matchesControl;
     const activeByControl = !activeNodeId && Boolean(requestedViewMode || sourceKind) && matchesControl;
@@ -1174,12 +1238,12 @@ export function buildTopologyServiceMapFromApiGraph(
       focus: selected || activeByNode || activeByControl ? 'active-path' : hasNarrowing ? 'context-muted' : 'normal',
       selected,
       drilldownHref: buildTopologyControlHref(incomingContext, {
-        viewMode,
+        viewMode: resolvedViewMode,
         sourceKind,
         edgeId: edge.id
       }),
       evidence,
-      links: buildTopologyEdgeLinks(edge, fromNode, toNode, { ...linkControlContext, edgeId: edge.id }, viewMode, sourceKind, evidence)
+      links: buildTopologyEdgeLinks(edge, fromNode, toNode, { ...linkControlContext, edgeId: edge.id }, resolvedViewMode, sourceKind, evidence)
     };
   });
   const narrowedNodeIds = buildNarrowedNodeIds(edges);
@@ -1191,7 +1255,7 @@ export function buildTopologyServiceMapFromApiGraph(
   });
   const viewModes = viewModeBase.map(mode => ({
     ...mode,
-    active: mode.key === viewMode,
+    active: mode.key === resolvedViewMode,
     href: buildTopologyControlHref(incomingContext, {
       viewMode: mode.key,
       sourceKind,
@@ -1202,12 +1266,12 @@ export function buildTopologyServiceMapFromApiGraph(
     ...source,
     active: source.kind === sourceKind,
     href: buildTopologyControlHref(incomingContext, {
-      viewMode: source.kind === 'alert-impact' ? 'alert-impact' : viewMode,
+      viewMode: source.kind === 'alert-impact' ? 'alert-impact' : resolvedViewMode,
       sourceKind: source.kind,
       edgeId: pickCompatibleEdgeId(
         edgeBase,
         selectedEdgeId,
-        source.kind === 'alert-impact' ? 'alert-impact' : viewMode,
+        source.kind === 'alert-impact' ? 'alert-impact' : resolvedViewMode,
         source.kind
       )
     })
@@ -1216,7 +1280,7 @@ export function buildTopologyServiceMapFromApiGraph(
     environment: normalizeContextValue(incomingContext.environment) ?? activeNode?.environment ?? TOPOLOGY_DEFAULT_ENVIRONMENT,
     timeRange: normalizeContextValue(incomingContext.timeRange) ?? TOPOLOGY_TIME_RANGE,
     search: firstContextText(incomingContext.serviceName, incomingContext.entityName, activeNode?.label),
-    viewMode,
+    viewMode: resolvedViewMode,
     groupBy,
     sourceKind,
     hasIncomingContext: hasRouteContext(incomingContext),
@@ -1232,7 +1296,7 @@ export function buildTopologyServiceMapFromApiGraph(
         timeRange: filterContext.timeRange
       }, t)
     : [];
-  const alertImpactHref = buildAlertImpactHref(incomingContext, viewMode, sourceKind, selectedEdgeId);
+  const alertImpactHref = buildAlertImpactHref(incomingContext, resolvedViewMode, sourceKind, selectedEdgeId);
 
   return {
     dataSource: 'api',
@@ -1256,6 +1320,10 @@ export function buildTopologyServiceMapFromApiGraph(
 export function buildTopologyServiceMap(context: TopologyRouteContext = {}, t?: Translator): TopologyServiceMapModel {
   const incomingContext = normalizeRouteContext(context);
   const contextDefaults: SignalRouteContext = {
+    entityId: incomingContext.entityId,
+    entityName: incomingContext.entityName,
+    serviceName: incomingContext.serviceName,
+    serviceNamespace: incomingContext.serviceNamespace,
     environment: incomingContext.environment,
     timeRange: incomingContext.timeRange,
     start: incomingContext.start,

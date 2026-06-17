@@ -334,7 +334,7 @@ function ColdDateTimePicker({
           <div data-hz-date-time-picker-calendar-shell="fixed-calendar" className="w-[258px] shrink-0 overflow-hidden bg-[#101217]">
             <ReactDatePicker
               selected={selected}
-              onChange={next => setDraftValue(formatDateChange(mode, draftValue, next))}
+              onChange={(next: Date | null) => setDraftValue(formatDateChange(mode, draftValue, next))}
               inline
               locale="zh-CN"
               previousMonthButtonLabel={previousMonthLabel}

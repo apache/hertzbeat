@@ -168,22 +168,22 @@ describe('AlertSilenceSurface', () => {
       />
     );
 
-    expect(html).toContain('data-alert-silence-surface="otlp-cold-silence-console"');
+    expect(html).toContain('data-alert-silence-surface="otlp-hertzbeat-ui-silence-console"');
     expect(html).toContain('data-alert-silence-style-baseline="hertzbeat-ui-matte"');
-    expect(html).toContain('data-alert-silence-header="cold-compact-header"');
+    expect(html).toContain('data-alert-silence-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-alert-silence-command-row="standard-equal-buttons"');
     expect(html).toContain('data-alert-silence-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-alert-silence-delete-selected="toolbar"');
     expect(html).toContain('data-alert-silence-delete-selected-owner="route-no-select-warning"');
-    expect(html).toContain('data-alert-silence-toolbar="cold-query-toolbar"');
-    expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
-    expect(html).toContain('data-cold-search-input="fixed-width-direct"');
-    expect(html).toContain('data-cold-search-control="direct-input"');
-    expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
-    expect(html).not.toContain('data-cold-search-input-shell');
-    expect(html).toContain('data-cold-search-action="submit"');
-    expect(html).toContain('data-alert-silence-table-shell="cold-dense-table"');
-    expect(html).toContain('data-alert-silence-pagination="cold-dense-pagination"');
+    expect(html).toContain('data-alert-silence-toolbar="hertzbeat-ui-query-toolbar"');
+    expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
+    expect(html).toContain('data-hz-search-input="fixed-width-direct"');
+    expect(html).toContain('data-hz-search-control="direct-input"');
+    expect(html).toContain('data-hz-search-chrome="no-extra-input-shell"');
+    expect(html).not.toContain('data-hz-search-input-shell');
+    expect(html).toContain('data-hz-search-action="submit"');
+    expect(html).toContain('data-alert-silence-table-shell="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-alert-silence-pagination="hertzbeat-ui-dense-pagination"');
     expect(html).toContain('data-alert-silence-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(html).toContain('data-hz-ui="pagination-bar"');
     expect(html).toContain('data-hz-pagination-page-size="select-menu"');
@@ -485,12 +485,12 @@ describe('AlertSilenceSurface', () => {
       />
     );
 
-    expect(html).toContain('data-alert-silence-table-shell="cold-dense-table"');
-    expect(html).toContain('data-alert-silence-pagination="cold-dense-pagination"');
-    expect(html).toContain('data-alert-silence-empty-state="cold-table-empty"');
+    expect(html).toContain('data-alert-silence-table-shell="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-alert-silence-pagination="hertzbeat-ui-dense-pagination"');
+    expect(html).toContain('data-alert-silence-empty-state="hertzbeat-ui-table-empty"');
     expect(html).toContain('data-alert-silence-compact-canvas="content-height"');
     expect(html).toContain('min-height:auto');
-    expect(html).toContain('data-alert-silence-empty-icon="cold-empty-box"');
+    expect(html).toContain('data-alert-silence-empty-icon="hertzbeat-ui-empty-box"');
     expect(html).toContain(t('alert.silence.empty.title'));
   });
 
@@ -921,7 +921,7 @@ describe('AlertSilenceSurface', () => {
       />
     );
 
-    expect(html).toContain('data-alert-silence-editor-error-inline="cold-validation"');
+    expect(html).toContain('data-alert-silence-editor-error-inline="hertzbeat-ui-validation"');
     expect(html).toContain('role="alert"');
     expect(html).toContain(t('alert.silence.validation.name'));
   });

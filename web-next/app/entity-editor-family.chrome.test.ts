@@ -82,11 +82,11 @@ describe('entity editor family cold-workbench chrome', () => {
     expect(workbenchPageSource).toContain('text-[var(--ops-text-primary)]');
     expect(workbenchPageSource).toContain('text-[var(--ops-text-secondary)]');
 
-    expect(entityEditorSource).toContain('data-entity-editor-shell="otlp-cold-entity-composer"');
+    expect(entityEditorSource).toContain('data-entity-editor-shell="otlp-hertzbeat-ui-entity-composer"');
     expect(entityEditorSource).toContain('data-entity-editor-style-baseline="hertzbeat-ui-matte"');
-    expect(entityEditorSource).toContain('data-entity-editor-frame="cold-editor-frame"');
-    expect(entityEditorSource).toContain('data-entity-editor-definition-footer="cold-definition-footer"');
-    expect(entityEditorSource).toContain('data-entity-editor-definition-tabs="cold-bottom-tabs"');
+    expect(entityEditorSource).toContain('data-entity-editor-frame="hertzbeat-ui-editor-frame"');
+    expect(entityEditorSource).toContain('data-entity-editor-definition-footer="hertzbeat-ui-definition-footer"');
+    expect(entityEditorSource).toContain('data-entity-editor-definition-tabs="hertzbeat-ui-bottom-tabs"');
 
     expect(entitiesSource).toContain('EntityListSurface');
     expect(entitiesSource).not.toContain('SummaryMetricGrid');

@@ -7,7 +7,7 @@ export default async function TopologyRoutePage({
   searchParams
 }: {
   searchParams?: Promise<TopologySearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const routeContext = readTopologyRouteContext(resolvedSearchParams);
   return (

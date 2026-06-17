@@ -3251,7 +3251,7 @@ describe('monitors page', () => {
     expect(source).toContain('HzInlineFeedback');
     expect(source).toContain('data-monitor-delete-confirm-selected-owner="hertzbeat-ui-inline-feedback"');
     expect(source).toContain('data-monitors-delete-confirm-trigger');
-    expect(source).toContain('data-monitors-delete-confirm="cold-modal"');
+    expect(source).toContain('data-monitors-delete-confirm="hertzbeat-ui-modal"');
     expect(source).toContain("t('monitors.delete.title')");
     expect(source).toContain("t('monitors.delete.copy')");
     expect(source).toContain("t('monitors.delete.confirm')");

@@ -80,7 +80,7 @@ describe('explorer page', () => {
     const { default: ExplorerPage } = await import('./page');
     const html = renderToStaticMarkup(<ExplorerPage />);
 
-    expect(html).toContain('data-explorer-route="otlp-cold-workbench"');
+    expect(html).toContain('data-explorer-route="otlp-hertzbeat-ui-workbench"');
     expect(html).toContain('data-explorer-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-explorer-api-owner="trace-log-bff-query-api"');
     expect(html).toContain('data-explorer-api-state="ready"');
@@ -92,10 +92,10 @@ describe('explorer page', () => {
     expect(html).toContain('data-explorer-shared-frame="hertzbeat-ui"');
     expect(html).toContain('data-hz-ui="explorer-frame"');
     expect(html).toContain('data-hz-density="operator-compact"');
-    expect(html).toContain('data-explorer-query-bar="cold-query-row"');
-    expect(html).toContain('data-explorer-chart-band="cold-chart-band"');
-    expect(html).toContain('data-explorer-result-table="cold-dense-table"');
-    expect(html).toContain('data-explorer-detail-panel="cold-detail-panel"');
+    expect(html).toContain('data-explorer-query-bar="hertzbeat-ui-query-row"');
+    expect(html).toContain('data-explorer-chart-band="hertzbeat-ui-chart-band"');
+    expect(html).toContain('data-explorer-result-table="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-explorer-detail-panel="hertzbeat-ui-detail-panel"');
     expect(html).toContain('data-explorer-result-table-owner="hertzbeat-ui-data-table"');
     expect(html).toContain('data-explorer-signal-tone="trace"');
     expect(html).toContain('data-explorer-signal-tone="log"');
@@ -145,7 +145,7 @@ describe('explorer page', () => {
     expect(source).not.toContain('buildExplorerSurfaceConfig');
     expect(source).not.toContain('buildExplorerResultRows');
     expect(source).not.toContain('data-explorer-floating-actions');
-    expect(source).toContain('data-explorer-route="otlp-cold-workbench"');
+    expect(source).toContain('data-explorer-route="otlp-hertzbeat-ui-workbench"');
     expect(source).toContain('readExplorerQueryState');
     expect(source).toContain('buildExplorerRouteUrl');
     expect(source).toContain('loadExplorerReadData');

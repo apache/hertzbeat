@@ -7,6 +7,7 @@ import {
 } from '../alert-rule-evidence-copy';
 import type { AlertGroupFormDraft } from './controller';
 import {
+  buildSignalAlertGroupKeys,
   buildSignalEntityContextRows,
   stripReturnLabelFromHref,
   type SignalEntityContextRow,
@@ -23,6 +24,11 @@ export type AlertGroupEvidenceContext = {
   returnHref?: string;
   rows: SignalEntityContextRow[];
   draftPatch: Partial<AlertGroupFormDraft>;
+  groupPreview?: {
+    title: string;
+    copy: string;
+    groupLabelsText: string;
+  };
 };
 
 function normalizeSignal(signal: string | null | undefined) {
@@ -45,18 +51,6 @@ function formatAlertGroupSeconds(value: number | null | undefined, t: Translator
   return t('common.duration.seconds', { value: value || 0 });
 }
 
-function buildAlertGroupLabels(context: SignalRouteContext) {
-  return [
-    ['hertzbeat.entity.id', context.entityId],
-    ['service.name', context.serviceName],
-    ['service.namespace', context.serviceNamespace],
-    ['deployment.environment', context.environment]
-  ]
-    .map(([key, value]) => (firstText(value) ? key : undefined))
-    .filter((value): value is string => Boolean(value))
-    .join(', ');
-}
-
 export function buildAlertGroupEvidenceContext(
   signal: string | null | undefined,
   context: SignalRouteContext,
@@ -64,7 +58,7 @@ export function buildAlertGroupEvidenceContext(
 ): AlertGroupEvidenceContext | null {
   const normalizedSignal = normalizeSignal(signal);
   const targetName = firstText(context.serviceName, context.entityName, context.entityId) || buildAlertRuleEvidenceFallbackTarget(t);
-  const groupLabelsText = buildAlertGroupLabels(context);
+  const groupLabelsText = buildSignalAlertGroupKeys(normalizedSignal, context);
   const returnHref = stripReturnLabelFromHref(context.returnTo);
   const rows = buildSignalEntityContextRows(context, {}, t);
   if (!normalizedSignal && !groupLabelsText && !returnHref) {
@@ -81,7 +75,14 @@ export function buildAlertGroupEvidenceContext(
     draftPatch: {
       name: buildAlertRuleEvidenceDraftName('group', normalizedSignal, targetName, t),
       groupLabelsText
-    }
+    },
+    groupPreview: groupLabelsText
+      ? {
+          title: t('alert.group.preview.title'),
+          copy: t('alert.group.preview.copy'),
+          groupLabelsText
+        }
+      : undefined
   };
 }
 

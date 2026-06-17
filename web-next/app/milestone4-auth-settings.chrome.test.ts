@@ -39,9 +39,9 @@ describe('milestone 4 auth/public and settings cold-workbench chrome', () => {
 
     expect(settingTokenSource).toContain('SettingsConsoleTitle');
     expect(settingTokenSource).toContain('hzOpsCatalogVisual');
-    expect(settingTokenSource).toContain('data-setting-token-table-panel="cold-dense-table"');
-    expect(settingTokenSource).toContain('data-setting-token-strip-style="cold-inline-counts"');
-    expect(settingTokenSource).toContain('data-setting-token-row-action="cold-row-action"');
+    expect(settingTokenSource).toContain('data-setting-token-table-panel="hertzbeat-ui-dense-table"');
+    expect(settingTokenSource).toContain('data-setting-token-strip-style="hertzbeat-ui-inline-counts"');
+    expect(settingTokenSource).toContain('data-setting-token-row-action="hertzbeat-ui-row-action"');
     expect(settingTokenSource).toContain('text-[#fca5a5]');
     expect(settingTokenSource).not.toContain('ObservabilityStatusState');
     expect(settingTokenSource).not.toContain('StageSection');

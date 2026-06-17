@@ -6,7 +6,7 @@ export default async function IncidentsRoutePage({
   searchParams
 }: {
   searchParams?: Promise<IncidentWorkbenchSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const initialQuery = readIncidentWorkbenchQuery(resolvedSearchParams);
   return <IncidentsPage initialQuery={initialQuery} />;

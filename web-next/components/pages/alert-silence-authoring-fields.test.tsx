@@ -127,7 +127,7 @@ describe('AlertSilenceAuthoringFields', () => {
       />
     );
 
-    expect(html).toContain('data-cold-weekday-picker-owner="cold-weekday-picker"');
+    expect(html).toContain('data-hz-weekday-picker-owner="hertzbeat-ui-weekday-picker"');
     expect(html).toContain('data-hz-time-range-owner="hertzbeat-ui-time-range"');
     expect(html).toContain('name="silence_days[]"');
     expect(html).toContain('name="silence_period_start"');

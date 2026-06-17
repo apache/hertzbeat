@@ -43,19 +43,19 @@ describe('settings family cold-matte chrome', () => {
     expect(collectorSource).toContain("from '../ui/search-row'");
     expect(collectorSource).toContain('data-collector-search-owner="shared-search-row"');
     expect(collectorSource).toContain('inputWidthClassName="w-[360px]"');
-    expect(collectorSource).toContain('data-collector-table-shell="cold-dense-table"');
+    expect(collectorSource).toContain('data-collector-table-shell="hertzbeat-ui-dense-table"');
     expect(collectorSource).not.toContain('coldCollectorVisual.search.row');
     expect(collectorSource).not.toContain('coldCollectorVisual.search.input');
     expect(collectorSource).not.toContain('WorkbenchTableFrame');
 
     expect(pluginSource).toContain('data-plugin-manage-style-baseline={coldPluginVisual.canvasName}');
-    expect(pluginSource).toContain('data-plugin-manage-table-shell="cold-dense-table"');
+    expect(pluginSource).toContain('data-plugin-manage-table-shell="hertzbeat-ui-dense-table"');
     expect(pluginSource).not.toContain('WorkbenchTableFrame');
 
     expect(labelSource).toContain('data-label-manage-style-baseline={coldLabelVisual.canvasName}');
     expect(labelSource).toContain('data-label-card-grid-contract="angular-card-grid"');
     expect(labelSource).toContain('data-label-card-grid-owner="hertzbeat-ui-label-tag"');
-    expect(labelSource).not.toContain('data-label-table-shell="cold-dense-table"');
+    expect(labelSource).not.toContain('data-label-table-shell="hertzbeat-ui-dense-table"');
     expect(defineSource).toContain('data-setting-define-style-baseline={coldDefineVisual.canvasName}');
     expect(defineSource).toContain('data-setting-define-workspace="cold-define-workspace"');
     expect(defineSource).toContain('HzYamlWorkspace');
@@ -69,10 +69,10 @@ describe('settings family cold-matte chrome', () => {
     expect(statusSource).toContain('data-status-incident-search-owner="shared-search-row"');
     expect(statusSource).not.toContain('coldStatusVisual.search.row');
     expect(statusSource).not.toContain('coldStatusVisual.search.input');
-    expect(statusSource).toContain('data-status-component-table-shell="cold-dense-table"');
-    expect(statusSource).toContain('data-status-incident-table-shell="cold-dense-table"');
+    expect(statusSource).toContain('data-status-component-table-shell="hertzbeat-ui-dense-table"');
+    expect(statusSource).toContain('data-status-incident-table-shell="hertzbeat-ui-dense-table"');
     expect(tokenSource).toContain('data-setting-token-style-baseline={coldTokenVisual.canvasName}');
-    expect(tokenSource).toContain('data-setting-token-table-panel="cold-dense-table"');
+    expect(tokenSource).toContain('data-setting-token-table-panel="hertzbeat-ui-dense-table"');
     expect(tokenSource).not.toContain('components/workbench/primitives');
   });
 });

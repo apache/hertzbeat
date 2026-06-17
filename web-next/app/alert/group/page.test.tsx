@@ -141,6 +141,7 @@ describe('alert group page', () => {
         spanId: 'span-456',
         collector: 'edge-collector-a',
         template: 'java-service',
+        alertQueryType: 'metrics',
         returnTo: '/metrics/manage?entityId=service%3Acommerce%2Fcheckout'
       }
     };
@@ -150,8 +151,8 @@ describe('alert group page', () => {
     expect(html).toContain('data-alert-group-evidence-context="signal-route"');
     expect(html).toContain('data-alert-group-evidence-signal="metrics"');
     expect(html).toContain('data-alert-group-evidence-return="/metrics/manage?entityId=service%3Acommerce%2Fcheckout"');
-    expect(html).toContain('data-alert-group-prefill-labels="hertzbeat.entity.id, service.name, service.namespace, deployment.environment"');
-    expect(html).toContain('data-alert-group-draft-labels="hertzbeat.entity.id, service.name, service.namespace, deployment.environment"');
+    expect(html).toContain('data-alert-group-prefill-labels="hertzbeat.signal, hertzbeat.entity.id, service.name, service.namespace, deployment.environment, hertzbeat.source, hertzbeat.collector, hertzbeat.alert.query_type"');
+    expect(html).toContain('data-alert-group-draft-labels="hertzbeat.signal, hertzbeat.entity.id, service.name, service.namespace, deployment.environment, hertzbeat.source, hertzbeat.collector, hertzbeat.alert.query_type"');
     expect(html).not.toContain('returnLabel=');
     expect(html).not.toContain('trace_id');
     expect(html).not.toContain('span_id');

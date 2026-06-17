@@ -22,6 +22,7 @@ import { buildAlertSilenceDeleteUrl, buildAlertSilenceDetailUrl } from './alert-
 import { buildAlertSilenceUrl, type AlertSilenceListQuery } from './alert-silence/query-state';
 import { buildAlertDefineDeleteUrl, type DatasourceStatusPayload } from './alert-setting/controller';
 import { buildDefineListUrl, type AlertSettingAppEntry } from './alert-setting/query-state';
+import { buildEntityDetailUrl } from './entity-detail/controller';
 import type {
   AlertDefine,
   AlertGroupConverge,
@@ -79,6 +80,7 @@ function buildEntityAlertsUrl(entityId: string | number, query: EntityAlertsQuer
 
 export const api = {
   entities: {
+    detail: <T = unknown>(entityId: string | number) => apiMessageGet<T>(buildEntityDetailUrl(String(entityId))),
     alerts: (entityId: string | number, query?: EntityAlertsQuery) => apiMessageGet<PageResult<SingleAlert>>(buildEntityAlertsUrl(entityId, query))
   },
   alerts: {

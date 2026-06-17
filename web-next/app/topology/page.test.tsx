@@ -1606,6 +1606,69 @@ describe('topology page', () => {
     expect(html).toMatch(/data-topology-edge-id="relation-702"[^>]+data-topology-edge-relationship-type="database-connection"[^>]+data-topology-edge-evidence-badges="entity-relation database-middleware-connection two-hop"/);
   }, 60000);
 
+  it('renders service-to-resource entity relations as resource dependency edges', async () => {
+    const { default: TopologyPage } = await import('./topology-page');
+    const html = renderToStaticMarkup(
+      <TopologyPage
+        routeContext={{
+          entityId: '4200',
+          entityName: 'Checkout API',
+          serviceName: 'checkout',
+          serviceNamespace: 'payments',
+          environment: 'demo',
+          timeRange: 'last-1h',
+          topologyTargetId: '4201',
+          topologyTargetName: 'checkout-node-a'
+        }}
+        apiGraph={{
+          apiBacked: true,
+          focusEntityId: 4200,
+          depth: 1,
+          sourceKinds: ['entity-relation'],
+          nodes: [
+            {
+              id: '4200',
+              entityId: 4200,
+              entityName: 'Checkout API',
+              entityType: 'service',
+              namespace: 'payments',
+              environment: 'demo',
+              health: 'warning',
+              focus: true
+            },
+            {
+              id: '4201',
+              entityId: 4201,
+              entityName: 'checkout-node-a',
+              entityType: 'host',
+              namespace: 'payments',
+              environment: 'demo',
+              health: 'healthy'
+            }
+          ],
+          edges: [
+            {
+              id: '8800',
+              relationId: 8800,
+              sourceEntityId: 4200,
+              targetEntityId: 4201,
+              relationType: 'runs_on',
+              relationSource: 'otel-resource-relation',
+              status: 'confirmed',
+              score: 99,
+              evidenceBadges: ['entity-relation', 'otel-resource-relation', 'host.name']
+            }
+          ]
+        }}
+      />
+    );
+
+    expect(html).toMatch(/data-topology-route="hertzbeat-entity-topology"[^>]+data-topology-active-view-mode="resource-dependency"/);
+    expect(html).toMatch(/data-topology-edge-id="relation-8800"[^>]+data-topology-edge-relationship-type="resource-ownership"[^>]+data-topology-edge-selected="true"/);
+    expect(html).toMatch(/data-topology-edge-link="metrics"[^>]+href="\/ingestion\/otlp\/metrics\?[^"]*viewMode=resource-dependency[^"]*edgeId=relation-8800/);
+    expect(html).toMatch(/data-topology-edge-link="metrics"[^>]+href="\/ingestion\/otlp\/metrics\?[^"]*serviceName=checkout/);
+  }, 60000);
+
   it('exposes trace-derived service graph RED metrics on nodes, edges, and selected evidence', async () => {
     const { default: TopologyPage } = await import('./topology-page');
     const html = renderToStaticMarkup(

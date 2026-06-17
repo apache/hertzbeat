@@ -414,7 +414,7 @@ export function MonitorHistoryChartGrid({
                 'data-monitor-history-panel-source': 'app-yml-metric-catalog',
                 'data-monitor-history-panel-metric': title,
                 'data-monitor-history-panel-unit': item.unit || undefined
-              } as React.HTMLAttributes<HTMLElement>}
+              } as React.ComponentProps<typeof HzMonitorHistoryChartCard>['surfaceProps']}
               onDataZoomChange={nextZoom => {
                 handleChartZoomChange(key, nextZoom);
                 const nextContext = buildHistoryDataZoomPreviewTimeContext(

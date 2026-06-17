@@ -460,6 +460,8 @@ export function AlertGroupSurface({
           onDraftChange={onDraftChange}
           mode="workspace"
           labelOptions={labelOptions}
+          sourceGroupLabelsText={evidenceContext?.groupPreview?.groupLabelsText}
+          sourceSignal={evidenceContext?.signal}
         />
       </OverlayDialog>
     </>

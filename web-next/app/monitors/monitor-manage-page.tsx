@@ -30,6 +30,7 @@ import {
   HzTypePickerDialog,
   type HzExportTypeDialogScope,
   type HzDataColumn,
+  type HzStatusTone,
   type HzTemplateCategory
 } from '@hertzbeat/ui';
 import { getCurrentLocale, type ApiClientError } from '@/lib/api-client';
@@ -219,7 +220,7 @@ export default function MonitorsPage({
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const warmedMonitorEditIdsRef = useRef<Set<number>>(new Set());
   const previousMonitorsRef = useRef<Monitor[]>([]);
-  const disappearedMonitorTimersRef = useRef<Map<number, ReturnType<typeof window.setTimeout>>>(new Map());
+  const disappearedMonitorTimersRef = useRef<Map<number, number>>(new Map());
   const setCheckedIdsImmediate = useCallback((nextOrUpdater: number[] | ((current: number[]) => number[])) => {
     const next = typeof nextOrUpdater === 'function' ? nextOrUpdater(checkedIdsRef.current) : nextOrUpdater;
     checkedIdsRef.current = next;
@@ -1096,7 +1097,7 @@ export default function MonitorsPage({
                       'data-monitor-manage-filter-input-owner': 'hertzbeat-ui-input',
                       'data-monitors-filter-enter-submit': 'search',
                       'data-monitor-filter-enter-submit-owner': 'hertzbeat-ui-input'
-                    } as React.InputHTMLAttributes<HTMLInputElement>
+                    } as React.ComponentProps<typeof HzMonitorFilterBar>['searchInputProps']
                   }
                   labelFilterLabel={t('monitor.search.label')}
                   labelFilterPlaceholder={t('monitor.search.label')}
@@ -1116,7 +1117,7 @@ export default function MonitorsPage({
                       'data-monitor-manage-label-filter-input-owner': 'hertzbeat-ui-input',
                       'data-monitors-filter-enter-submit': 'labels',
                       'data-monitor-label-filter-enter-submit-owner': 'hertzbeat-ui-input'
-                    } as React.InputHTMLAttributes<HTMLInputElement>
+                    } as React.ComponentProps<typeof HzMonitorFilterBar>['labelFilterInputProps']
                   }
                   typeLabel={t('monitor.app')}
                   typeValue={draft.app}

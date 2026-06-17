@@ -71,8 +71,18 @@ vi.mock('../workbench/overlay-dialog', () => ({
 }));
 
 vi.mock('./alert-group-authoring-fields', () => ({
-  AlertGroupAuthoringFields: ({ mode, labelOptions }: any) => (
-    <div data-alert-group-authoring-fields={mode} data-label-options={labelOptions?.keys?.join('|')}>fields</div>
+  AlertGroupAuthoringFields: ({ mode, labelOptions, sourceGroupLabelsText, sourceSignal }: any) => (
+    <div
+      data-alert-group-authoring-fields={mode}
+      data-label-options={labelOptions?.keys?.join('|')}
+      data-alert-group-live-label-preview={sourceGroupLabelsText ? 'signal-route' : 'none'}
+      data-alert-group-live-label-preview-owner={sourceGroupLabelsText ? 'signal-alert-handoff' : undefined}
+      data-alert-group-live-label-preview-status={sourceGroupLabelsText ? 'from-surface-props' : undefined}
+      data-alert-group-live-label-preview-signal={sourceSignal}
+      data-alert-group-live-labels={sourceGroupLabelsText ?? ''}
+    >
+      fields
+    </div>
   )
 }));
 
@@ -128,6 +138,11 @@ describe('AlertGroupSurface', () => {
           rows: [],
           draftPatch: {
             groupLabelsText: 'hertzbeat.entity.id, service.name'
+          },
+          groupPreview: {
+            title: t('alert.group.preview.title'),
+            copy: t('alert.group.preview.copy'),
+            groupLabelsText: 'hertzbeat.entity.id, service.name'
           }
         }}
         draft={{
@@ -163,21 +178,21 @@ describe('AlertGroupSurface', () => {
       />
     );
 
-    expect(html).toContain('data-alert-group-surface="otlp-cold-group-console"');
+    expect(html).toContain('data-alert-group-surface="otlp-hertzbeat-ui-group-console"');
     expect(html).toContain('data-alert-group-style-baseline="hertzbeat-ui-matte"');
-    expect(html).toContain('data-alert-group-header="cold-compact-header"');
+    expect(html).toContain('data-alert-group-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-alert-group-command-row="standard-equal-buttons"');
     expect(html).toContain('data-alert-group-admin-layout="full-width-admin-list"');
-    expect(html).toContain('data-alert-group-toolbar="cold-query-toolbar"');
-    expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
-    expect(html).toContain('data-cold-search-layout="compact-detached-button"');
-    expect(html).toContain('data-cold-search-input="fixed-width-direct"');
-    expect(html).toContain('data-cold-search-control="direct-input"');
-    expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
-    expect(html).not.toContain('data-cold-search-input-shell');
-    expect(html).toContain('data-cold-search-action="submit"');
-    expect(html).toContain('data-alert-group-table-shell="cold-dense-table"');
-    expect(html).toContain('data-alert-group-pagination="cold-dense-pagination"');
+    expect(html).toContain('data-alert-group-toolbar="hertzbeat-ui-query-toolbar"');
+    expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
+    expect(html).toContain('data-hz-search-layout="compact-detached-button"');
+    expect(html).toContain('data-hz-search-input="fixed-width-direct"');
+    expect(html).toContain('data-hz-search-control="direct-input"');
+    expect(html).toContain('data-hz-search-chrome="no-extra-input-shell"');
+    expect(html).not.toContain('data-hz-search-input-shell');
+    expect(html).toContain('data-hz-search-action="submit"');
+    expect(html).toContain('data-alert-group-table-shell="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-alert-group-pagination="hertzbeat-ui-dense-pagination"');
     expect(html).toContain('data-alert-group-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(html).toContain('data-hz-ui="pagination-bar"');
     expect(html).toContain('data-hz-pagination-page-size="select-menu"');
@@ -203,6 +218,10 @@ describe('AlertGroupSurface', () => {
     expect(html).toContain('alertname');
     expect(html).toContain('data-overlay-dialog="true"');
     expect(html).toContain('data-alert-group-authoring-fields="workspace"');
+    expect(html).toContain('data-alert-group-live-label-preview="signal-route"');
+    expect(html).toContain('data-alert-group-live-label-preview-owner="signal-alert-handoff"');
+    expect(html).toContain('data-alert-group-live-label-preview-status="from-surface-props"');
+    expect(html).toContain('data-alert-group-live-label-preview-signal="traces"');
     expect(html).toContain('data-alert-group-editor-return="evidence-context"');
     expect(html).toContain('href="/trace/manage?traceId=trace-123"');
     expect(html).toContain('data-label-options="alertname|instance|job"');
@@ -291,10 +310,10 @@ describe('AlertGroupSurface', () => {
       />
     );
 
-    expect(html).toContain('data-alert-group-table-shell="cold-dense-table"');
-    expect(html).toContain('data-alert-group-pagination="cold-dense-pagination"');
-    expect(html).toContain('data-alert-group-empty-state="cold-table-empty"');
-    expect(html).toContain('data-alert-group-empty-icon="cold-empty-box"');
+    expect(html).toContain('data-alert-group-table-shell="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-alert-group-pagination="hertzbeat-ui-dense-pagination"');
+    expect(html).toContain('data-alert-group-empty-state="hertzbeat-ui-table-empty"');
+    expect(html).toContain('data-alert-group-empty-icon="hertzbeat-ui-empty-box"');
     expect(html).toContain('data-alert-group-empty-copy="true"');
     expect(html).not.toContain('align-top');
     expect(html).not.toContain('pt-[54px]');
@@ -318,7 +337,7 @@ describe('AlertGroupSurface', () => {
           signal: 'metrics',
           title: groupEvidenceTitle('metrics'),
           copy: t('alert.rule.evidence.group.copy'),
-          groupLabelsText: 'hertzbeat.entity.id, service.name, service.namespace, deployment.environment',
+          groupLabelsText: 'hertzbeat.signal, hertzbeat.entity.id, service.name, service.namespace, deployment.environment',
           returnHref: '/metrics/manage?entityId=service%3Acommerce%2Fcheckout',
           rows: [
             { label: t('signal.context.entity.label'), value: 'checkout', meta: 'entityId service:commerce/checkout' },
@@ -326,7 +345,7 @@ describe('AlertGroupSurface', () => {
           ],
           draftPatch: {
             name: groupEvidenceDraftName('metrics', 'checkout'),
-            groupLabelsText: 'hertzbeat.entity.id, service.name, service.namespace, deployment.environment'
+            groupLabelsText: 'hertzbeat.signal, hertzbeat.entity.id, service.name, service.namespace, deployment.environment'
           }
         }}
         draft={{
@@ -357,7 +376,7 @@ describe('AlertGroupSurface', () => {
 
     expect(html).toContain('data-alert-group-evidence-context="signal-route"');
     expect(html).toContain('data-alert-group-evidence-signal="metrics"');
-    expect(html).toContain('data-alert-group-prefill-labels="hertzbeat.entity.id, service.name, service.namespace, deployment.environment"');
+    expect(html).toContain('data-alert-group-prefill-labels="hertzbeat.signal, hertzbeat.entity.id, service.name, service.namespace, deployment.environment"');
     expect(html).toContain(groupEvidenceTitle('metrics'));
     expect(html).toContain(t('alert.rule.evidence.return'));
     expect(html).toContain('href="/metrics/manage?entityId=service%3Acommerce%2Fcheckout"');
@@ -459,7 +478,7 @@ describe('AlertGroupSurface', () => {
       />
     );
 
-    expect(html).toContain('data-alert-group-editor-error-inline="cold-validation"');
+    expect(html).toContain('data-alert-group-editor-error-inline="hertzbeat-ui-validation"');
     expect(html).toContain('role="alert"');
     expect(html).toContain(t('alert.group.validation.name'));
   });

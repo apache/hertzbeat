@@ -4,6 +4,7 @@ import {
   buildAlertRuleEvidenceTitle
 } from '../alert-rule-evidence-copy';
 import {
+  buildSignalAlertMatchLabels,
   buildSignalEntityContextRows,
   stripReturnLabelFromHref,
   type SignalEntityContextRow,
@@ -24,6 +25,19 @@ export type AlertNoticeEvidenceContext = {
   returnHref?: string;
   rows: SignalEntityContextRow[];
   ruleDraftPatch: Partial<NoticeRuleDraft>;
+  receiverTestPreview?: {
+    title: string;
+    copy: string;
+    labelsText: string;
+    payloadTitle: string;
+    payloadCopy: string;
+    payloadRows: Array<{
+      key: string;
+      label: string;
+      value: string;
+    }>;
+    payloadMessage: string;
+  };
 };
 
 const NOTICE_RECEIVER_TYPE_KEYS: Record<string, string> = {
@@ -122,25 +136,90 @@ function firstText(...values: Array<string | null | undefined>) {
   return values.map(value => value?.trim()).find((value): value is string => Boolean(value));
 }
 
-function buildAlertNoticeLabels(signal: string | undefined, context: SignalRouteContext) {
-  return [
-    ['hertzbeat.signal', signal],
-    ['hertzbeat.entity.id', context.entityId],
-    ['service.name', context.serviceName],
-    ['service.namespace', context.serviceNamespace],
-    ['deployment.environment', context.environment],
-    ['trace_id', context.traceId],
-    ['span_id', context.spanId],
-    ['hertzbeat.source', context.source],
-    ['hertzbeat.collector', context.collector],
-    ['hertzbeat.template', context.template]
-  ]
-    .map(([key, value]) => {
-      const normalizedValue = firstText(value);
-      return normalizedValue ? `${key}:${normalizedValue}` : undefined;
+function parseNoticeLabelPairs(labelsText: string) {
+  const labels = new Map<string, string>();
+  labelsText.split(',').forEach(item => {
+    const [rawKey, ...rawValue] = item.split(':');
+    const key = rawKey?.trim();
+    const value = rawValue.join(':').trim();
+    if (key && value) {
+      labels.set(key, value);
+    }
+  });
+  return labels;
+}
+
+function buildAlertNoticeReceiverTestPreview(
+  signal: 'metrics' | 'logs' | 'traces' | undefined,
+  context: SignalRouteContext,
+  labelsText: string,
+  t: Translator
+) {
+  const labels = parseNoticeLabelPairs(labelsText);
+  const signalLabel = signal ? t(`alert.rule.signal.${signal}`) : t('common.none');
+  const ruleName = firstText(context.alertTemplate, context.template, signal ? `${signalLabel} ${t('alert.notice.rules.default')}` : undefined) || t('alert.notice.rules.default');
+  const serviceScope = firstText(
+    labels.get('service.name'),
+    context.serviceName,
+    context.entityName,
+    context.entityId
+  ) || t('common.none');
+  const routingScope = firstText(
+    labels.get('deployment.environment'),
+    labels.get('deployment.environment.name'),
+    context.environment,
+    labels.get('hertzbeat.entity.id'),
+    context.entityId
+  ) || t('common.none');
+  const queryScope = [labels.get('hertzbeat.alert.datasource'), labels.get('hertzbeat.alert.query_type')]
+    .filter(Boolean)
+    .join(' / ') || t('common.none');
+  const severity = firstText(labels.get('severity'), labels.get('hertzbeat.alert.severity')) || t('alert.notice.receiver.test-preview.payload.severity.sample');
+
+  return {
+    title: t('alert.notice.receiver.test-preview.title'),
+    copy: t('alert.notice.receiver.test-preview.copy'),
+    labelsText,
+    payloadTitle: t('alert.notice.receiver.test-preview.payload.title'),
+    payloadCopy: t('alert.notice.receiver.test-preview.payload.copy'),
+    payloadRows: [
+      {
+        key: 'status',
+        label: t('alert.notice.receiver.test-preview.payload.status'),
+        value: t('alert.notice.receiver.test-preview.payload.status.firing')
+      },
+      {
+        key: 'rule',
+        label: t('alert.notice.receiver.test-preview.payload.rule'),
+        value: ruleName
+      },
+      {
+        key: 'signal',
+        label: t('alert.notice.receiver.test-preview.payload.signal'),
+        value: signalLabel
+      },
+      {
+        key: 'scope',
+        label: t('alert.notice.receiver.test-preview.payload.scope'),
+        value: `${serviceScope} · ${routingScope}`
+      },
+      {
+        key: 'query',
+        label: t('alert.notice.receiver.test-preview.payload.query'),
+        value: queryScope
+      },
+      {
+        key: 'severity',
+        label: t('alert.notice.receiver.test-preview.payload.severity'),
+        value: severity
+      }
+    ],
+    payloadMessage: t('alert.notice.receiver.test-preview.payload.message', {
+      rule: ruleName,
+      signal: signalLabel,
+      scope: serviceScope
     })
-    .filter((value): value is string => Boolean(value))
-    .join(', ');
+  };
 }
 
 export function buildAlertNoticeEvidenceContext(
@@ -149,7 +228,7 @@ export function buildAlertNoticeEvidenceContext(
   t: Translator
 ): AlertNoticeEvidenceContext | null {
   const normalizedSignal = normalizeSignal(signal);
-  const labelsText = buildAlertNoticeLabels(normalizedSignal, context);
+  const labelsText = buildSignalAlertMatchLabels(normalizedSignal, context);
   const returnHref = stripReturnLabelFromHref(context.returnTo);
   const rows = buildSignalEntityContextRows(context, {}, t);
   if (!normalizedSignal && !labelsText && !returnHref) {
@@ -166,7 +245,10 @@ export function buildAlertNoticeEvidenceContext(
     ruleDraftPatch: {
       filterAll: false,
       labelsText
-    }
+    },
+    receiverTestPreview: labelsText
+      ? buildAlertNoticeReceiverTestPreview(normalizedSignal, context, labelsText, t)
+      : undefined
   };
 }
 

@@ -250,7 +250,7 @@ describe('EntityEditorSurface', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/entity-editor-surface.tsx'), 'utf8');
 
     expect(source).toContain("import { Textarea } from '@/components/ui/textarea';");
-    expect(source).toContain('data-entity-editor-description-textarea="cold-textarea"');
+    expect(source).toContain('data-entity-editor-description-textarea="hertzbeat-ui-textarea"');
     expect(source).not.toContain('<textarea');
     expect(source).not.toContain('resize-y');
     expect(source).not.toContain('resize:');
@@ -287,23 +287,23 @@ describe('EntityEditorSurface', () => {
     );
 
     expect(html).toContain('<form');
-    expect(html).toContain('data-entity-editor-shell="otlp-cold-entity-composer"');
+    expect(html).toContain('data-entity-editor-shell="otlp-hertzbeat-ui-entity-composer"');
     expect(html).toContain('data-entity-editor-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-editor-layout="full-width-workbench"');
-    expect(html).toContain('data-entity-editor-header="cold-compact-header"');
-    expect(html).toContain('data-entity-editor-header-rhythm="cold-compact"');
-    expect(html).toContain('data-entity-editor-frame="cold-editor-frame"');
+    expect(html).toContain('data-entity-editor-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-entity-editor-header-rhythm="hertzbeat-ui-compact"');
+    expect(html).toContain('data-entity-editor-frame="hertzbeat-ui-editor-frame"');
     expect(html).toContain('data-entity-editor-route-tabs="hertzbeat-ui-segmented-tabs"');
-    expect(html).toContain('data-entity-editor-summary-card="cold-editor-panel"');
-    expect(html).toContain('data-entity-editor-type-strip="cold-catalog-grid"');
-    expect(html).toContain('data-entity-editor-type-strip-layout="cold-compact-grid"');
-    expect(html).toContain('data-entity-editor-type-card-density="cold-compact-card"');
+    expect(html).toContain('data-entity-editor-summary-card="hertzbeat-ui-editor-panel"');
+    expect(html).toContain('data-entity-editor-type-strip="hertzbeat-ui-catalog-grid"');
+    expect(html).toContain('data-entity-editor-type-strip-layout="hertzbeat-ui-compact-grid"');
+    expect(html).toContain('data-entity-editor-type-card-density="hertzbeat-ui-compact-card"');
     expect(html).toContain('data-entity-editor-entry-strip="hertzbeat-ui-segmented-pills"');
-    expect(html).toContain('data-entity-editor-stage-strip="cold-stage-grid"');
-    expect(html).toContain('data-entity-editor-body-placement="cold-deferred-body"');
+    expect(html).toContain('data-entity-editor-stage-strip="hertzbeat-ui-stage-grid"');
+    expect(html).toContain('data-entity-editor-body-placement="hertzbeat-ui-deferred-body"');
     expect(html).not.toContain('data-entity-editor-body="angular-single-stage"');
-    expect(html).toContain('data-entity-editor-definition-tabs="cold-bottom-tabs"');
-    expect(html).toContain('data-entity-editor-definition-footer="cold-definition-footer"');
+    expect(html).toContain('data-entity-editor-definition-tabs="hertzbeat-ui-bottom-tabs"');
+    expect(html).toContain('data-entity-editor-definition-footer="hertzbeat-ui-definition-footer"');
     expect(html).not.toContain('data-entity-editor-page-header-offset="angular-sidebar-flush"');
     expect(html).not.toContain('data-entity-editor-frame="angular-flush"');
     expect(html).not.toContain('data-entity-editor-definition-footer-raise="angular-flush-tabs"');
@@ -344,11 +344,11 @@ describe('EntityEditorSurface', () => {
 
     const source = readFileSync(resolve(process.cwd(), 'components/pages/entity-editor-surface.tsx'), 'utf8');
     expect(source).toContain("from 'lucide-react'");
-    expect(source).toContain('data-entity-editor-shell="otlp-cold-entity-composer"');
+    expect(source).toContain('data-entity-editor-shell="otlp-hertzbeat-ui-entity-composer"');
     expect(source).toContain('data-entity-editor-style-baseline="hertzbeat-ui-matte"');
-    expect(source).toContain('data-entity-editor-frame="cold-editor-frame"');
-    expect(source).toContain('data-entity-editor-definition-footer="cold-definition-footer"');
-    expect(source).toContain('data-entity-editor-type-card-density="cold-compact-card"');
+    expect(source).toContain('data-entity-editor-frame="hertzbeat-ui-editor-frame"');
+    expect(source).toContain('data-entity-editor-definition-footer="hertzbeat-ui-definition-footer"');
+    expect(source).toContain('data-entity-editor-type-card-density="hertzbeat-ui-compact-card"');
     expect(source).not.toContain('useAngularVisual');
     expect(source).not.toContain('angular-');
     expect(source).not.toContain('angularTitle');
@@ -414,23 +414,23 @@ describe('EntityEditorSurface', () => {
       />
     );
 
-    expect(html).toContain('data-entity-editor-shell="otlp-cold-entity-composer"');
+    expect(html).toContain('data-entity-editor-shell="otlp-hertzbeat-ui-entity-composer"');
     expect(html).toContain('data-entity-editor-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-entity-editor-layout="full-width-workbench"');
-    expect(html).toContain('data-entity-editor-header="cold-compact-header"');
-    expect(html).toContain('data-entity-editor-frame="cold-editor-frame"');
-    expect(html).toContain('data-entity-editor-frame-spacing="cold-tight"');
-    expect(html).toContain('data-entity-editor-summary-card="cold-editor-panel"');
-    expect(html).toContain('data-entity-editor-type-strip="cold-catalog-grid"');
+    expect(html).toContain('data-entity-editor-header="hertzbeat-ui-compact-header"');
+    expect(html).toContain('data-entity-editor-frame="hertzbeat-ui-editor-frame"');
+    expect(html).toContain('data-entity-editor-frame-spacing="hertzbeat-ui-tight"');
+    expect(html).toContain('data-entity-editor-summary-card="hertzbeat-ui-editor-panel"');
+    expect(html).toContain('data-entity-editor-type-strip="hertzbeat-ui-catalog-grid"');
     expect(html).toContain('data-entity-editor-entry-strip="hertzbeat-ui-segmented-pills"');
-    expect(html).toContain('data-entity-editor-stage-strip="cold-stage-grid"');
-    expect(html).toContain('data-entity-editor-edit-stage-posture="cold-complete-context"');
+    expect(html).toContain('data-entity-editor-stage-strip="hertzbeat-ui-stage-grid"');
+    expect(html).toContain('data-entity-editor-edit-stage-posture="hertzbeat-ui-complete-context"');
     expect(html).toContain('data-entity-editor-stage-status="relations-ready"');
-    expect(html).toContain('data-entity-editor-body-placement="cold-deferred-body"');
-    expect(html).toContain('data-entity-editor-definition-tabs="cold-bottom-tabs"');
-    expect(html).toContain('data-entity-editor-definition-footer="cold-definition-footer"');
-    expect(html).toContain('data-entity-editor-preview-rail-density="cold-inline-preview"');
-    expect(html).toContain('data-entity-editor-definition-handoff="cold-hidden"');
+    expect(html).toContain('data-entity-editor-body-placement="hertzbeat-ui-deferred-body"');
+    expect(html).toContain('data-entity-editor-definition-tabs="hertzbeat-ui-bottom-tabs"');
+    expect(html).toContain('data-entity-editor-definition-footer="hertzbeat-ui-definition-footer"');
+    expect(html).toContain('data-entity-editor-preview-rail-density="hertzbeat-ui-inline-preview"');
+    expect(html).toContain('data-entity-editor-definition-handoff="hertzbeat-ui-hidden"');
     expect(html).toContain('data-entity-type-icon="service"');
     expect(html).toContain('data-entity-type-icon="database"');
     expect(html).toContain(t('entities.editor.shell.title.edit'));
@@ -444,7 +444,7 @@ describe('EntityEditorSurface', () => {
 
     const source = readFileSync(resolve(process.cwd(), 'components/pages/entity-editor-surface.tsx'), 'utf8');
     expect(source).toContain('data-entity-editor-edit-stage-posture');
-    expect(source).toContain("'cold-complete-context'");
+    expect(source).toContain("'hertzbeat-ui-complete-context'");
     expect(source).not.toContain("'angular-complete-context'");
   });
 

@@ -7,6 +7,7 @@ import {
 } from '../alert-rule-evidence-copy';
 import type { AlertInhibitFormDraft } from './controller';
 import {
+  buildSignalAlertMatchLabels,
   buildSignalEntityContextRows,
   stripReturnLabelFromHref,
   type SignalEntityContextRow,
@@ -43,27 +44,6 @@ function formatAlertInhibitEqualLabels(labels: string[] | null | undefined, empt
   return text || emptyValue;
 }
 
-function buildAlertInhibitLabels(signal: string | undefined, context: SignalRouteContext) {
-  return [
-    ['hertzbeat.signal', signal],
-    ['hertzbeat.entity.id', context.entityId],
-    ['service.name', context.serviceName],
-    ['service.namespace', context.serviceNamespace],
-    ['deployment.environment', context.environment],
-    ['trace_id', context.traceId],
-    ['span_id', context.spanId],
-    ['hertzbeat.source', context.source],
-    ['hertzbeat.collector', context.collector],
-    ['hertzbeat.template', context.template]
-  ]
-    .map(([key, value]) => {
-      const normalizedValue = firstText(value);
-      return normalizedValue ? `${key}:${normalizedValue}` : undefined;
-    })
-    .filter((value): value is string => Boolean(value))
-    .join(', ');
-}
-
 function buildAlertInhibitEqualLabels(context: SignalRouteContext) {
   return [
     ['hertzbeat.entity.id', context.entityId],
@@ -83,7 +63,7 @@ export function buildAlertInhibitEvidenceContext(
 ): AlertInhibitEvidenceContext | null {
   const normalizedSignal = normalizeSignal(signal);
   const targetName = firstText(context.serviceName, context.entityName, context.entityId) || buildAlertRuleEvidenceFallbackTarget(t);
-  const labelsText = buildAlertInhibitLabels(normalizedSignal, context);
+  const labelsText = buildSignalAlertMatchLabels(normalizedSignal, context);
   const equalLabelsText = buildAlertInhibitEqualLabels(context);
   const returnHref = stripReturnLabelFromHref(context.returnTo);
   const rows = buildSignalEntityContextRows(context, {}, t);

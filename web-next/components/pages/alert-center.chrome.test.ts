@@ -18,18 +18,18 @@ describe('alert center cold-workbench chrome', () => {
     const searchRowSource = readFileSync(resolve(process.cwd(), 'components/ui/search-row.tsx'), 'utf8');
 
     expect(source).toContain('hzOpsCatalogVisual');
-    expect(source).toContain('data-alert-center-surface="otlp-cold-center-console"');
+    expect(source).toContain('data-alert-center-surface="otlp-hertzbeat-ui-center-console"');
     expect(source).toContain('data-alert-center-style-baseline={coldCenterVisual.canvasName}');
-    expect(source).toContain('data-alert-center-header="cold-compact-header"');
+    expect(source).toContain('data-alert-center-header="hertzbeat-ui-compact-header"');
     expect(source).toContain('data-alert-center-command-row="standard-equal-buttons"');
     expect(source).toContain('data-alert-center-admin-layout="full-width-admin-list"');
-    expect(source).toContain('data-alert-center-toolbar="cold-query-toolbar"');
+    expect(source).toContain('data-alert-center-toolbar="hertzbeat-ui-query-toolbar"');
     expect(source).toContain('data-alert-center-query-toolbar="single-query-form"');
     expect(source).toContain('data-alert-center-query-filters="inline-before-submit"');
-    expect(searchRowSource).toContain('data-cold-search-filter-slot="inline-before-submit"');
+    expect(searchRowSource).toContain('data-hz-search-filter-slot="inline-before-submit"');
     expect(source).not.toContain('data-alert-center-refresh-slot');
     expect(source).not.toContain('data-alert-center-empty-action');
-    expect(source).toContain('data-alert-center-list-shell="cold-alert-list"');
+    expect(source).toContain('data-alert-center-list-shell="hertzbeat-ui-alert-list"');
     expect(source).toContain('rounded-[4px]');
     expect(source).toContain('rounded-[3px]');
     expect(source).not.toContain('data-alert-center-summary-rail');
@@ -55,9 +55,9 @@ describe('alert center cold-workbench chrome', () => {
   it('keeps the compatibility /alert/center entry as a redirect into the cold /alert owner', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/alert/center/page.tsx'), 'utf8');
 
-    expect(source).toContain('buildAlertCompatRouteUrl(createCompatSearchParamReader(resolvedSearchParams))');
+    expect(source).toContain('buildAlertCompatRouteUrlFromSearchParams(resolvedSearchParams)');
     expect(source).toContain("from '../../../lib/alert-manage/query-state'");
-    expect(source).toContain("from '../../../lib/compat/search-params'");
+    expect(source).toContain('type SearchParamsRecord');
     expect(source).not.toContain('AlertCenterSurface');
     expect(source).not.toContain('WorkbenchPage');
   });

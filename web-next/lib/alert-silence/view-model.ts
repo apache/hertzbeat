@@ -7,6 +7,7 @@ import {
 } from '../alert-rule-evidence-copy';
 import type { AlertSilenceFormDraft } from './controller';
 import {
+  buildSignalAlertMatchLabels,
   buildSignalEntityContextRows,
   stripReturnLabelFromHref,
   type SignalEntityContextRow,
@@ -36,30 +37,9 @@ function firstText(...values: Array<string | null | undefined>) {
   return values.map(value => value?.trim()).find((value): value is string => Boolean(value));
 }
 
-function formatAlertSilenceDays(days: string[] | null | undefined, emptyValue: string) {
-  const text = (days || []).map(day => day.trim()).filter(Boolean).join(', ');
+function formatAlertSilenceDays(days: Array<number | string> | null | undefined, emptyValue: string) {
+  const text = (days || []).map(day => String(day).trim()).filter(Boolean).join(', ');
   return text || emptyValue;
-}
-
-function buildAlertSilenceLabels(signal: string | undefined, context: SignalRouteContext) {
-  return [
-    ['hertzbeat.signal', signal],
-    ['hertzbeat.entity.id', context.entityId],
-    ['service.name', context.serviceName],
-    ['service.namespace', context.serviceNamespace],
-    ['deployment.environment', context.environment],
-    ['trace_id', context.traceId],
-    ['span_id', context.spanId],
-    ['hertzbeat.source', context.source],
-    ['hertzbeat.collector', context.collector],
-    ['hertzbeat.template', context.template]
-  ]
-    .map(([key, value]) => {
-      const normalizedValue = firstText(value);
-      return normalizedValue ? `${key}:${normalizedValue}` : undefined;
-    })
-    .filter((value): value is string => Boolean(value))
-    .join(', ');
 }
 
 export function buildAlertSilenceEvidenceContext(
@@ -69,7 +49,7 @@ export function buildAlertSilenceEvidenceContext(
 ): AlertSilenceEvidenceContext | null {
   const normalizedSignal = normalizeSignal(signal);
   const targetName = firstText(context.serviceName, context.entityName, context.entityId) || buildAlertRuleEvidenceFallbackTarget(t);
-  const labelsText = buildAlertSilenceLabels(normalizedSignal, context);
+  const labelsText = buildSignalAlertMatchLabels(normalizedSignal, context);
   const returnHref = stripReturnLabelFromHref(context.returnTo);
   const rows = buildSignalEntityContextRows(context, {}, t);
   if (!normalizedSignal && !labelsText && !returnHref) {

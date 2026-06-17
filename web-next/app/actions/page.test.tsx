@@ -12,7 +12,7 @@ vi.mock('../../components/providers/i18n-provider', () => ({
 }));
 
 describe('actions page', () => {
-  it('renders the OTLP cold-matte entry shell without the previous placeholder stack', async () => {
+  it('renders the OTLP hertzbeat-ui entry shell without the previous placeholder stack', async () => {
     const routeSource = readFileSync(resolve(process.cwd(), 'app/actions/page.tsx'), 'utf8');
     const source = readFileSync(resolve(process.cwd(), 'app/actions/actions-page.tsx'), 'utf8');
     const { default: ActionsPage } = await import('./actions-page');
@@ -23,7 +23,7 @@ describe('actions page', () => {
     expect(routeSource).toContain('const resolvedSearchParams = await searchParams');
     expect(routeSource).toContain('const suggestionContext = readActionsSuggestionContext(resolvedSearchParams)');
     expect(routeSource).toContain('return <ActionsPage suggestionContext={suggestionContext} />');
-    expect(html).toContain('data-actions-route="otlp-cold-ops-entry"');
+    expect(html).toContain('data-actions-route="otlp-hertzbeat-ui-ops-entry"');
     expect(html).toContain('data-actions-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-actions-placeholder-replacement="api-backed-workbench"');
     expect(html).toContain('data-actions-legacy-open-context="adapter-boundary-panel"');
@@ -32,9 +32,9 @@ describe('actions page', () => {
     expect(html).toContain('data-hz-ui="action-workbench"');
     expect(html).toContain('data-hz-action-workbench-owner="hertzbeat-ui-action-workbench"');
     expect(html).toContain('data-hz-action-workbench-density="operator-compact"');
-    expect(html).toContain('data-hz-action-workbench-style="cold-matte-hard-edge"');
-    expect(html).toContain('data-actions-shell-panel="cold-ops-shell-panel"');
-    expect(html).toContain('data-actions-launch-checklist="cold-ops-static-rail"');
+    expect(html).toContain('data-hz-action-workbench-style="hertzbeat-ui-matte-hard-edge"');
+    expect(html).toContain('data-actions-shell-panel="hertzbeat-ui-ops-shell-panel"');
+    expect(html).toContain('data-actions-launch-checklist="hertzbeat-ui-ops-static-rail"');
     expect(html).toContain('data-actions-adapter-boundary="adapter-pending"');
     expect(html).toContain('data-actions-catalog="manual-action-catalog-api"');
     expect(html).toContain('data-actions-catalog-state="loading"');
@@ -62,7 +62,7 @@ describe('actions page', () => {
     expect(html).toContain('data-actions-approval-decision-endpoint="/api/actions/approval-drafts/:draftId/decision"');
     expect(html).toContain('data-actions-approval-decision-execution-mode="manual-approval-draft-only"');
     expect(html).toContain('data-actions-approval-decision-execution-allowed="false"');
-    expect(html).toContain('data-actions-empty-state="cold-ops-domain-adapter"');
+    expect(html).toContain('data-actions-empty-state="hertzbeat-ui-ops-domain-adapter"');
     expect(html).toContain(t('actions.entry.title'));
     expect(html).toContain(t('actions.entry.subtitle'));
     expect(html).toContain(t('actions.entry.shell.eyebrow'));

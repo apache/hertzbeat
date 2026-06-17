@@ -9,7 +9,7 @@ export default async function PassportLoginPage({
   searchParams
 }: {
   searchParams?: Promise<PassportLoginSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const routeState = readPassportLoginRouteState(resolvedSearchParams);
 

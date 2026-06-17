@@ -131,7 +131,7 @@ describe('incidents page', () => {
     const routeSource = readFileSync(resolve(process.cwd(), 'app/incidents/page.tsx'), 'utf8');
     const source = readFileSync(resolve(process.cwd(), 'app/incidents/incidents-page.tsx'), 'utf8');
     const { default: IncidentsPage } = await import('./page');
-    const html = renderToStaticMarkup(await IncidentsPage());
+    const html = renderToStaticMarkup(await IncidentsPage({}));
     const lastLoad = loadState.lastLoad as (() => Promise<unknown>) | null;
     await lastLoad?.();
 
@@ -164,7 +164,7 @@ describe('incidents page', () => {
     expect(html).toContain('data-hz-ui="incident-workbench"');
     expect(html).toContain('data-hz-incident-workbench-owner="hertzbeat-ui-incident-workbench"');
     expect(html).toContain('data-hz-incident-workbench-density="operator-compact"');
-    expect(html).toContain('data-hz-incident-workbench-style="cold-matte-hard-edge"');
+    expect(html).toContain('data-hz-incident-workbench-style="hertzbeat-ui-matte-hard-edge"');
     expect(html).toContain('data-hz-incident-workbench-table="shared"');
     expect(html).toContain('data-hz-incident-workbench-query="/status/page/incident?pageIndex=0&amp;pageSize=8"');
     expect(html).toContain('data-hz-incident-transition-actions="shared"');

@@ -79,9 +79,9 @@ describe('label manage surface', () => {
       />
     );
 
-    expect(html).toContain('data-label-manage-surface="otlp-cold-label-console"');
+    expect(html).toContain('data-label-manage-surface="otlp-hertzbeat-ui-label-console"');
     expect(html).toContain('data-label-manage-style-baseline="hertzbeat-ui-matte"');
-    expect(html).toContain('data-label-header="cold-compact-header"');
+    expect(html).toContain('data-label-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-label-command-row="standard-equal-buttons"');
     expect(html).toContain('data-label-admin-layout="full-width-admin-list"');
     expect(html).toContain('data-label-save-feedback-contract="angular-new-edit-notify"');
@@ -160,10 +160,10 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-save-ok-loading="true"');
     expect(html).toContain('data-label-save-ok-loading-owner="angular-nz-ok-loading"');
     expect(html).toContain('aria-busy="true"');
-    expect(html).toContain('data-label-toolbar="cold-table-toolbar"');
+    expect(html).toContain('data-label-toolbar="hertzbeat-ui-table-toolbar"');
     expect(html).toContain('data-label-search-owner="shared-search-row"');
     expect(html).toContain('data-label-search-submit="angular-enter-and-clear"');
-    expect(html).toContain('data-label-search-submit-owner="cold-search-row"');
+    expect(html).toContain('data-label-search-submit-owner="hertzbeat-ui-search-row"');
     expect(html).toContain('data-label-action-feedback="angular-action-success"');
     expect(html).toContain('data-label-action-feedback-owner="hertzbeat-ui-inline-feedback"');
     expect(html).toContain('data-label-save-feedback="angular-save-success"');
@@ -181,12 +181,12 @@ describe('label manage surface', () => {
     expect(html).toContain('data-hz-ui="inline-feedback"');
     expect(html).toContain('data-hz-feedback-tone="success"');
     expect(html).toContain(t('common.notify.new-success'));
-    expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
-    expect(html).toContain('data-cold-search-input="fixed-width-direct"');
-    expect(html).toContain('data-cold-search-control="direct-input"');
-    expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
-    expect(html).toContain('data-cold-search-action="submit"');
-    expect(html).toContain('data-cold-search-action="clear"');
+    expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
+    expect(html).toContain('data-hz-search-input="fixed-width-direct"');
+    expect(html).toContain('data-hz-search-control="direct-input"');
+    expect(html).toContain('data-hz-search-chrome="no-extra-input-shell"');
+    expect(html).toContain('data-hz-search-action="submit"');
+    expect(html).toContain('data-hz-search-action="clear"');
     expect(html).toContain('data-label-card-grid="angular-card-grid"');
     expect(html).toContain('data-label-card-grid-owner="hertzbeat-ui-label-tag"');
     expect(html).toContain('data-label-card-column-contract="nz-xs-12-sm-8-md-6-lg-4"');
@@ -209,7 +209,7 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-row-action-owner="row-contextual-icon-button"');
     expect(html).toContain('data-label-row-action-label="team:ops"');
     expect(html).not.toContain('data-label-summary-rail=');
-    expect(html).not.toContain('data-cold-search-input-shell');
+    expect(html).not.toContain('data-hz-search-input-shell');
     expect(html).toContain(t('menu.advanced.labels'));
     expect(html).toContain(t('common.button.new'));
     expect(html).toContain(t('label.search'));
@@ -270,8 +270,8 @@ describe('label manage surface', () => {
       />
     );
 
-    expect(html).toContain('data-label-empty-state="cold-card-empty"');
-    expect(html).toContain('data-label-empty-icon="cold-empty-box"');
+    expect(html).toContain('data-label-empty-state="hertzbeat-ui-card-empty"');
+    expect(html).toContain('data-label-empty-icon="hertzbeat-ui-empty-box"');
     expect(html).toContain(t('setting.labels.empty.title'));
     expect(html).toContain(t('setting.labels.empty.copy'));
     expect(html).not.toContain('setting.labels.empty.title');
@@ -426,7 +426,7 @@ describe('label manage surface', () => {
 
     expect(html).toContain('data-label-dialog-preview-visibility="hidden"');
     expect(html).toContain('data-label-dialog-preview-visibility-owner="route-form-state"');
-    expect(html).not.toContain('data-label-dialog-preview="cold-preview"');
+    expect(html).not.toContain('data-label-dialog-preview="hertzbeat-ui-preview"');
     expect(html).toContain('data-label-dialog-name-input="angular-required-name"');
     expect(html).toContain('data-label-dialog-name-state="pristine"');
     expect(html).toContain('data-label-save-submit-state="pristine"');
@@ -473,7 +473,7 @@ describe('label manage surface', () => {
       />
     );
 
-    expect(html).toContain('data-label-dialog-preview="cold-preview"');
+    expect(html).toContain('data-label-dialog-preview="hertzbeat-ui-preview"');
     expect(html).toContain('data-label-dialog-preview-visibility="visible"');
     expect(html).toContain('data-label-dialog-preview-frame="angular-inline-tag-no-extra-frame"');
     expect(html).toContain('data-label-dialog-preview-frame-owner="route-form-field-grid"');
@@ -483,7 +483,7 @@ describe('label manage surface', () => {
     expect(html).toContain('data-label-dialog-field="display"');
     expect(html).toContain('data-label-dialog-label-span="7"');
     expect(html).toContain('data-label-dialog-control-span="12"');
-    expect(html).not.toContain('data-label-dialog-preview=&quot;cold-preview&quot; data-label-dialog-preview-visibility=&quot;visible&quot; data-label-dialog-preview-visibility-owner=&quot;route-form-state&quot; data-label-dialog-field=&quot;display&quot; data-label-dialog-field-layout-row=&quot;angular-label-7-control-12&quot; class=&quot;grid gap-2 text-[12px] font-semibold text-[#a9b0bb] sm:grid-cols-[minmax(96px,7fr)_minmax(0,12fr)] sm:items-start rounded-[4px] border');
+    expect(html).not.toContain('data-label-dialog-preview=&quot;hertzbeat-ui-preview&quot; data-label-dialog-preview-visibility=&quot;visible&quot; data-label-dialog-preview-visibility-owner=&quot;route-form-state&quot; data-label-dialog-field=&quot;display&quot; data-label-dialog-field-layout-row=&quot;angular-label-7-control-12&quot; class=&quot;grid gap-2 text-[12px] font-semibold text-[#a9b0bb] sm:grid-cols-[minmax(96px,7fr)_minmax(0,12fr)] sm:items-start rounded-[4px] border');
     expect(html).toContain('team');
   });
 
@@ -784,9 +784,9 @@ describe('label manage surface', () => {
     expect(source).toContain("data-label-save-feedback={actionError ? 'angular-save-error' : 'angular-save-success'}");
     expect(source).toContain('data-label-save-feedback-owner="hertzbeat-ui-inline-feedback"');
     expect(source).toContain('inputWidthClassName="w-[360px]"');
-    expect(source).toContain('data-label-manage-surface="otlp-cold-label-console"');
+    expect(source).toContain('data-label-manage-surface="otlp-hertzbeat-ui-label-console"');
     expect(source).toContain('data-label-manage-style-baseline={coldLabelVisual.canvasName}');
-    expect(source).toContain('data-label-header="cold-compact-header"');
+    expect(source).toContain('data-label-header="hertzbeat-ui-compact-header"');
     expect(source).toContain('data-label-command-row="standard-equal-buttons"');
     expect(source).toContain('data-label-admin-layout="full-width-admin-list"');
     expect(source).toContain('data-label-save-feedback-contract="angular-new-edit-notify"');
@@ -862,7 +862,7 @@ describe('label manage surface', () => {
     expect(source).toContain('data-label-dialog-control-span="12"');
     expect(source).toContain('sm:grid-cols-[minmax(96px,7fr)_minmax(0,12fr)]');
     expect(source).toContain('isLabelPreviewVisible');
-    expect(source).toContain("draftLabel?.name !== undefined");
+    expect(source).toContain("draftName !== undefined");
     expect(source).toContain('data-label-dialog-preview-frame="angular-inline-tag-no-extra-frame"');
     expect(source).toContain('data-label-dialog-preview-chrome="angular-nz-tag-inline"');
     expect(source).toContain('data-label-dialog-preview-chrome-mode="angular-tag-only-no-extra-frame"');
@@ -876,10 +876,10 @@ describe('label manage surface', () => {
     expect(source).toContain('disabled={Boolean(isSavePending)}');
     expect(source).toContain("data-label-save-ok-loading={isSavePending ? 'true' : 'false'}");
     expect(source).toContain('data-label-save-ok-loading-owner="angular-nz-ok-loading"');
-    expect(source).toContain('data-label-toolbar="cold-table-toolbar"');
+    expect(source).toContain('data-label-toolbar="hertzbeat-ui-table-toolbar"');
     expect(source).toContain('data-label-search-owner="shared-search-row"');
     expect(source).toContain('data-label-search-submit="angular-enter-and-clear"');
-    expect(source).toContain('data-label-search-submit-owner="cold-search-row"');
+    expect(source).toContain('data-label-search-submit-owner="hertzbeat-ui-search-row"');
     expect(source).toContain("clearLabel={t('common.clear')}");
     expect(source).toContain('onClear={onSearchClear}');
     expect(source).toContain('data-label-card-grid="angular-card-grid"');
@@ -901,11 +901,11 @@ describe('label manage surface', () => {
     expect(source).toContain('data-label-row-actions-owner="hertzbeat-ui-action-group"');
     expect(source).toContain('data-label-row-action-owner="row-contextual-icon-button"');
     expect(source).toContain('data-label-row-action-label={labelText}');
-    expect(source).toContain('data-label-empty-state="cold-card-empty"');
+    expect(source).toContain('data-label-empty-state="hertzbeat-ui-card-empty"');
     expect(source).not.toContain('data-label-summary-rail');
     expect(source).not.toContain('coldLabelVisual.search.row');
     expect(source).not.toContain('coldLabelVisual.search.input');
-    expect(source).not.toContain('data-cold-search-input-shell');
+    expect(source).not.toContain('data-hz-search-input-shell');
     expect(source).not.toContain('coldLabelVisual.layout.heroGrid');
     expect(source).not.toContain('coldLabelVisual.layout.railGrid');
     expect(source).not.toContain('coldLabelVisual.signal.band');

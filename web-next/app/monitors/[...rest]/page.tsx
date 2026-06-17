@@ -3,7 +3,7 @@ import { buildMonitorListCompatRouteUrl, type SearchParamsRecord } from '../../.
 
 export default async function MonitorUnknownRoutePage(props: {
   searchParams?: Promise<SearchParamsRecord>;
-} = {}) {
+}) {
   const resolvedSearchParams = await props?.searchParams;
   redirect(buildMonitorListCompatRouteUrl(resolvedSearchParams));
 }

@@ -21,6 +21,8 @@ export function readTopologyRouteContext(searchParams: TopologySearchParams = {}
     groupBy: firstParam(searchParams.groupBy),
     scaleProof: firstParam(searchParams.scaleProof),
     search: firstParam(searchParams.search),
-    edgeId: firstParam(searchParams.edgeId)
+    edgeId: firstParam(searchParams.edgeId),
+    topologyTargetId: firstParam(searchParams.topologyTargetId),
+    topologyTargetName: firstParam(searchParams.topologyTargetName)
   };
 }

@@ -7,7 +7,7 @@ export default async function EntitiesRoutePage({
   searchParams
 }: {
   searchParams?: Promise<EntityListSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const initialQuery = readEntityListQueryState(resolvedSearchParams);
   return <EntityListPage initialQuery={initialQuery} />;

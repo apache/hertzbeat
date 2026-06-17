@@ -24,11 +24,17 @@ type SelectOption = {
   disabled: boolean;
 };
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'defaultValue' | 'form' | 'name' | 'onChange' | 'value'> {
+  children?: React.ReactNode;
   containerClassName?: string;
   defaultOpen?: boolean;
+  defaultValue?: string | number | readonly string[];
+  form?: string;
+  name?: string;
+  onChange?: React.ChangeEventHandler<HTMLSelectElement>;
   searchable?: boolean;
   searchPlaceholder?: string;
+  value?: string | number | readonly string[];
   onValueChange?: (value: string) => void;
 }
 

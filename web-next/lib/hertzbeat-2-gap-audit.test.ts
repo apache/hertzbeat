@@ -41,10 +41,12 @@ describe('HertzBeat 2.0 release gap audit', () => {
         'Fold richer incident CRUD and public-status administration parity into the M10 public-status area.'
       ],
       evidence: expect.arrayContaining([
-        '@hertzbeat/ui and /ui-lab demonstrate HzIncidentWorkbench with operator-compact density and cold-matte-hard-edge styling',
+        '@hertzbeat/ui and /ui-lab demonstrate HzIncidentWorkbench with operator-compact density and hertzbeat-ui-matte-hard-edge styling',
+        '/incidents reuses HzIncidentWorkbench instead of page-local placeholder chrome',
         '/incidents reads GET /status/page/incident?pageIndex=0&pageSize=8 through the local BFF list adapter',
         '/incidents reads selected incident detail from GET /status/page/incident/{id} when list data exists',
         '/incidents writes status transitions through PUT /status/page/incident and refreshes list/detail after success',
+        'Browser verification: /ui-lab and /incidents expose the same hertzbeat-ui-incident-workbench and hertzbeat-ui-incident-transition-actions ownership markers',
         'Browser verification: local empty /incidents renders API-backed empty state with no placeholder copy, total=0, detail not-requested, and transition actions disabled',
         'Browser verification: seeded local incident transitioned from Identified to Monitoring through the shared state-2 action, detail state refreshed to state=2 with a new timeline entry, and temporary data was deleted afterwards'
       ]),

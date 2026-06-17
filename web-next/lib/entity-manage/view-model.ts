@@ -2,8 +2,9 @@ import type { EntitySummaryInfo } from '@/lib/types';
 import { buildLightweightEntityHealthAffordance } from '../entity-health-affordance';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+type EntityStatusTone = 'success' | 'warning' | 'danger' | 'neutral';
 
-function entityStatusTone(status: string | null | undefined) {
+function entityStatusTone(status: string | null | undefined): EntityStatusTone {
   const normalized = String(status || '').toLowerCase().replace(/[\s-]+/g, '_');
   if (normalized === 'healthy' || normalized === 'up' || normalized === 'normal') return 'success';
   if (normalized === 'warning') return 'warning';

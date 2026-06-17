@@ -179,6 +179,7 @@ import {
   HzTopologyEvidenceList,
   HzTopologyLegend,
   HzTopologyDetailDrawer,
+  type HzDataColumn,
   type HzTopologyMetricRow,
   type HzTopologyMetricTableRenderWindowFilter,
   HzUnderlineToggle,
@@ -213,10 +214,10 @@ import {
   buildHzTopologyG6ScaleFixture,
   buildHzTopologyG6ScaleProfile,
   getHzTopologyG6NodeIcon,
-  type HzTopologyG6GraphInput
+  type HzTopologyG6GraphInput,
+  type HzTopologyG6NodeIconKind
 } from '@hertzbeat/ui/topology-g6';
 import { AlertNoticeRuleSwitch } from '../../components/pages/alert-notice-rule-fields';
-import { HzCodeEditor } from '@/components/ui/hz-code-editor';
 import { LabelRecordInput } from '@/components/ui/label-record-input';
 import { SearchRow } from '@/components/ui/search-row';
 import { useI18n } from '@/components/providers/i18n-provider';
@@ -571,11 +572,19 @@ const topologyG6ScaleLabRenderWindowOverflow = buildHzTopologyG6RenderWindow(
   topologyG6ScaleLabGraphOverflow,
   topologyG6LargeGraphStrategyOverflow
 );
-const topologyG6LabVisibleNodeKinds = new Set(
-  topologyG6LabGraph.nodes.map(node => getHzTopologyG6NodeIcon(node.entityType).kind).filter(kind => kind !== 'unknown')
+type KnownTopologyG6NodeIconKind = Exclude<HzTopologyG6NodeIconKind, 'unknown'>;
+
+function isKnownTopologyG6NodeIconKind(kind: HzTopologyG6NodeIconKind): kind is KnownTopologyG6NodeIconKind {
+  return kind !== 'unknown';
+}
+
+const topologyG6LabVisibleNodeKinds = new Set<KnownTopologyG6NodeIconKind>(
+  topologyG6LabGraph.nodes
+    .map(node => getHzTopologyG6NodeIcon(node.entityType).kind)
+    .filter(isKnownTopologyG6NodeIconKind)
 );
 const topologyG6NodeTypeLegendItems = HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(icon =>
-  topologyG6LabVisibleNodeKinds.has(icon.kind)
+  isKnownTopologyG6NodeIconKind(icon.kind) && topologyG6LabVisibleNodeKinds.has(icon.kind)
 ).map(icon => ({
   id: `node-type-${icon.kind}`,
   label: icon.label,
@@ -594,6 +603,7 @@ const monitorRows = [
   { name: 'flink-yarn-main', app: 'Flink on Yarn', collector: 'collector-a', signal: 'metrics', status: 'Alerting', latency: '118 ms', tone: 'warning' as const },
   { name: 'snmp-core-sw-02', app: 'SNMP Device', collector: 'collector-c', signal: 'metrics', status: 'Available', latency: '45 ms', tone: 'success' as const }
 ];
+type UiLabMonitorRow = typeof monitorRows[number];
 
 const filterGroups: HzFilterGroup[] = [
   {
@@ -1891,13 +1901,13 @@ export default function HertzBeatUiLabPage() {
     setToastItems([{ id: 'template-reset', tone: 'warning', title: 'YAML draft reset', description: 'Local edits were removed from the lab.' }]);
   }, []);
   const visibleResultColumnIds = new Set(resultColumns.filter(column => column.visible).map(column => column.id));
-  const resultColumnDefinitions = [
-    { key: 'resource', header: 'Resource', render: row => <span className="font-semibold">{row.name}</span> },
-    { key: 'type', header: 'Type', render: row => row.app },
+  const resultColumnDefinitions: HzDataColumn<UiLabMonitorRow>[] = [
+    { key: 'resource', header: 'Resource', render: (row: UiLabMonitorRow) => <span className="font-semibold">{row.name}</span> },
+    { key: 'type', header: 'Type', render: (row: UiLabMonitorRow) => row.app },
     {
       key: 'collector',
       header: 'Collector',
-      render: row => (
+      render: (row: UiLabMonitorRow) => (
         <HzFieldValueActions
           field="collector"
           value={row.collector}
@@ -1909,7 +1919,7 @@ export default function HertzBeatUiLabPage() {
     {
       key: 'signal',
       header: 'Signal',
-      render: row => (
+      render: (row: UiLabMonitorRow) => (
         <HzFieldValueActions
           field="signal"
           value={<span className="font-mono text-[#9ca3af]">{row.signal}</span>}
@@ -1919,8 +1929,8 @@ export default function HertzBeatUiLabPage() {
         />
       )
     },
-    { key: 'status', header: 'Status', render: row => <HzStatusBadge tone={row.tone}>{row.status}</HzStatusBadge> },
-    { key: 'latency', header: 'Latency', render: row => <span className="font-mono text-[#cbd5e1]">{row.latency}</span> }
+    { key: 'status', header: 'Status', render: (row: UiLabMonitorRow) => <HzStatusBadge tone={row.tone}>{row.status}</HzStatusBadge> },
+    { key: 'latency', header: 'Latency', render: (row: UiLabMonitorRow) => <span className="font-mono text-[#cbd5e1]">{row.latency}</span> }
   ].filter(column => visibleResultColumnIds.has(column.key));
 
   return (
@@ -2549,7 +2559,7 @@ export default function HertzBeatUiLabPage() {
                     <div className="text-[12px] font-semibold text-[#f5f7fb]">Generated token</div>
                     <div className="text-[11px] text-[#98a2b3]">Visible once after /account/token/generate succeeds.</div>
                   </div>
-                  <HzButton size="sm" variant="secondary" data-hz-ui-lab-setting-token-copy-action="shared">
+                  <HzButton size="sm" intent="secondary" data-hz-ui-lab-setting-token-copy-action="shared">
                     Copy
                   </HzButton>
                 </div>
@@ -2640,7 +2650,7 @@ export default function HertzBeatUiLabPage() {
                 />
                 <div className="flex items-center justify-between gap-3">
                   <HzCheckbox checked readOnly label="Remember me" data-hz-ui-lab-passport-login-remember="true" />
-                  <HzButton size="sm" variant="primary" data-hz-ui-lab-passport-login-submit="shared">
+                  <HzButton size="sm" intent="primary" data-hz-ui-lab-passport-login-submit="shared">
                     Login
                   </HzButton>
                 </div>
@@ -3537,8 +3547,8 @@ export default function HertzBeatUiLabPage() {
                       data-hz-ui-lab-metrics-selected-series-context-rows="shared"
                       data-metrics-selected-series-context-rows-owner="hertzbeat-ui-detail-rows"
                       rows={[
-                        { label: 'Metric', value: 'checkout.latency', meta: 'real sample evidence' },
-                        { label: 'Entity', value: 'Checkout API', meta: 'entityId=7' }
+                        { key: 'metric', title: 'Metric', copy: 'checkout.latency', meta: 'real sample evidence' },
+                        { key: 'entity', title: 'Entity', copy: 'Checkout API', meta: 'entityId=7' }
                       ]}
                     />
                     <HzDetailRows
@@ -4557,7 +4567,7 @@ export default function HertzBeatUiLabPage() {
               className="border-x-0 border-b border-t-0 p-2 lg:border-r"
             >
               <div className="min-w-0">
-                <HzDataMetaText display="block" casing="upper">
+                <HzDataMetaText display="block" casing="meta">
                   Trace workbench
                 </HzDataMetaText>
                 <div className="mt-1 text-[13px] font-semibold text-[var(--hz-ui-text)]">Header title and copy</div>
@@ -8260,7 +8270,7 @@ export default function HertzBeatUiLabPage() {
             >
               <HzButton
                 size="sm"
-                variant="subtle"
+                intent="ghost"
                 data-alert-group-action="unacknowledge"
                 data-alert-group-action-status="acknowledged"
               >
@@ -8268,7 +8278,7 @@ export default function HertzBeatUiLabPage() {
               </HzButton>
               <HzButton
                 size="sm"
-                variant="subtle"
+                intent="ghost"
                 data-alert-group-action="resolve"
                 data-alert-group-action-status="acknowledged"
               >
@@ -10474,7 +10484,7 @@ export default function HertzBeatUiLabPage() {
             data-hz-ui-lab-alert-notice-token-normalizer="angular-on-change"
             data-alert-notice-receiver-token-normalizer-owner="route-form-field"
           >
-            <HzDataMetaText variant="type">Notice token</HzDataMetaText>
+            <HzDataMetaText variant="meta">Notice token</HzDataMetaText>
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <HzDataMetaText display="block" casing="plain">WeCom key= {'->'} token</HzDataMetaText>
               <HzDataMetaText display="block" casing="plain">Ding access_token= {'->'} token</HzDataMetaText>
@@ -10486,7 +10496,7 @@ export default function HertzBeatUiLabPage() {
             data-hz-ui-lab-alert-notice-template-query="backend-paginated"
             data-alert-notice-template-query-owner="route-query-contract"
           >
-            <HzDataMetaText variant="type">Template query</HzDataMetaText>
+            <HzDataMetaText variant="meta">Template query</HzDataMetaText>
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <HzDataMetaText display="block" casing="plain">preset + name + pageIndex + pageSize</HzDataMetaText>
               <HzDataMetaText display="block" casing="plain">rule options keep all templates</HzDataMetaText>
@@ -10650,7 +10660,7 @@ export default function HertzBeatUiLabPage() {
             data-alert-notice-rule-single-switch-frame="none"
             data-alert-notice-rule-single-switch-frame-owner="route-form-contract"
           >
-            <HzDataMetaText variant="type">Forward all</HzDataMetaText>
+            <HzDataMetaText variant="meta">Forward all</HzDataMetaText>
             <AlertNoticeRuleSwitch
               row="filter-all"
               checked={noticeRuleFilterAllDemo}
@@ -10799,7 +10809,7 @@ export default function HertzBeatUiLabPage() {
             data-alert-notice-template-viewer-code-editor="readonly-code-editor"
           >
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <HzDataMetaText variant="type">Template body</HzDataMetaText>
+              <HzDataMetaText variant="meta">Template body</HzDataMetaText>
               <HzDataMetaText display="block" casing="plain">editor and viewer use shared CodeMirror frame</HzDataMetaText>
             </div>
             <HzCodeEditor
@@ -10816,7 +10826,7 @@ export default function HertzBeatUiLabPage() {
             data-hz-ui-lab-alert-notice-delete-clamp="angular-update-page-index"
             data-alert-notice-delete-page-clamp-owner="route-state-contract"
           >
-            <HzDataMetaText variant="type">Notice delete</HzDataMetaText>
+            <HzDataMetaText variant="meta">Notice delete</HzDataMetaText>
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <HzDataMetaText display="block" casing="plain">receiver/rule/template clamp page after delete</HzDataMetaText>
               <HzDataMetaText display="block" casing="plain">matches Angular updatePageIndex(1)</HzDataMetaText>

@@ -93,7 +93,7 @@ export function mapAiChatSchedules(raw: AiChatSopSchedule[] | null | undefined):
 
 export function mapAiChatScheduleSkills(raw: RawSkillInfo[] | null | undefined): AiChatScheduleSkillState {
   const skills = (raw || [])
-    .map(skill => {
+    .map((skill): HzAiChatScheduleSkillOption | null => {
       const name = skill.name?.trim();
       if (!name) return null;
       const description = skill.description?.trim();

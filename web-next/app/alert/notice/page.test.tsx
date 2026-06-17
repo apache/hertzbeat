@@ -361,30 +361,30 @@ describe('alert notice page', () => {
     expect(html).toContain('data-tab="receiver"');
     expect(html).toContain('data-tab="rule"');
     expect(html).toContain('data-tab="template"');
-    expect(html).toContain('data-alert-notice-surface="otlp-cold-notice-console"');
+    expect(html).toContain('data-alert-notice-surface="otlp-hertzbeat-ui-notice-console"');
     expect(html).toContain('data-alert-notice-style-baseline="hertzbeat-ui-matte"');
-    expect(html).toContain('data-alert-notice-header="cold-compact-header"');
+    expect(html).toContain('data-alert-notice-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-alert-notice-admin-layout="full-width-admin-list"');
-    expect(html).toContain('data-alert-notice-inline-metrics="cold-inline-counts"');
+    expect(html).toContain('data-alert-notice-inline-metrics="hertzbeat-ui-inline-counts"');
     expect(html).toContain('data-alert-notice-command-bar="standard-equal-buttons"');
     expect(html).toContain('data-alert-notice-workbench-panel="cold-tabbed-table-panel"');
     expect(html).toContain('data-alert-notice-tabs="hertzbeat-ui-segmented-tabs"');
-    expect(html).toContain('data-alert-notice-receiver-toolbar="cold-query-toolbar"');
+    expect(html).toContain('data-alert-notice-receiver-toolbar="hertzbeat-ui-query-toolbar"');
     expect(html).toContain('data-alert-notice-receiver-toolbar-layout="compact-inline-actions-query"');
     expect(html).toContain('data-alert-notice-receiver-search="shared-compact"');
     expect(html).toContain('data-alert-notice-receiver-search-submit="angular-enter-and-clear"');
-    expect(html).toContain('data-alert-notice-receiver-search-submit-owner="cold-search-row"');
+    expect(html).toContain('data-alert-notice-receiver-search-submit-owner="hertzbeat-ui-search-row"');
     expect(html).toContain('data-alert-notice-receiver-sync="angular-load-table"');
     expect(html).toContain('data-alert-notice-receiver-sync-owner="route-refresh-contract"');
-    expect(html).toContain('data-cold-search-row-owner="cold-search-row"');
-    expect(html).toContain('data-cold-search-layout="compact-detached-button"');
-    expect(html).toContain('data-cold-search-input="fixed-width-direct"');
-    expect(html).toContain('data-cold-search-control="direct-input"');
-    expect(html).toContain('data-cold-search-chrome="no-extra-input-shell"');
-    expect(html).not.toContain('data-cold-search-input-shell');
-    expect(html).toContain('data-cold-search-action="submit"');
-    expect(html).toContain('data-alert-notice-receiver-table-shell="cold-dense-table"');
-    expect(html).toContain('data-alert-notice-pagination="cold-dense-pagination"');
+    expect(html).toContain('data-hz-search-row-owner="hertzbeat-ui-search-row"');
+    expect(html).toContain('data-hz-search-layout="compact-detached-button"');
+    expect(html).toContain('data-hz-search-input="fixed-width-direct"');
+    expect(html).toContain('data-hz-search-control="direct-input"');
+    expect(html).toContain('data-hz-search-chrome="no-extra-input-shell"');
+    expect(html).not.toContain('data-hz-search-input-shell');
+    expect(html).toContain('data-hz-search-action="submit"');
+    expect(html).toContain('data-alert-notice-receiver-table-shell="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-alert-notice-pagination="hertzbeat-ui-dense-pagination"');
     expect(html).toContain('data-alert-notice-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(html).toContain('data-hz-ui="pagination-bar"');
     expect(html).toContain('data-hz-pagination-page-size="select-menu"');
@@ -442,9 +442,9 @@ describe('alert notice page', () => {
     expect(source).not.toContain('loadAlertLabelOptions(apiMessageGet)');
     expect(source).not.toContain("from '../../../lib/api-client'");
     expect(source).toContain('labelOptions={labelOptions}');
-    expect(source).toContain('data-alert-notice-receiver-toolbar="cold-query-toolbar"');
-    expect(source).toContain('data-alert-notice-rule-toolbar="cold-query-toolbar"');
-    expect(source).toContain('data-alert-notice-template-toolbar="cold-query-toolbar"');
+    expect(source).toContain('data-alert-notice-receiver-toolbar="hertzbeat-ui-query-toolbar"');
+    expect(source).toContain('data-alert-notice-rule-toolbar="hertzbeat-ui-query-toolbar"');
+    expect(source).toContain('data-alert-notice-template-toolbar="hertzbeat-ui-query-toolbar"');
     expect(source).toContain('data-alert-notice-receiver-sync="angular-load-table"');
     expect(source).toContain('data-alert-notice-receiver-sync-owner="route-refresh-contract"');
     expect(source).toContain('data-alert-notice-rule-sync="angular-load-table"');
@@ -453,11 +453,11 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-template-sync-owner="route-refresh-contract"');
     expect(source).toContain('data-alert-notice-receiver-search="shared-compact"');
     expect(source).toContain('data-alert-notice-receiver-search-submit="angular-enter-and-clear"');
-    expect(source).toContain('data-alert-notice-receiver-search-submit-owner="cold-search-row"');
+    expect(source).toContain('data-alert-notice-receiver-search-submit-owner="hertzbeat-ui-search-row"');
     expect(source).toContain('data-alert-notice-rule-search="shared-compact"');
     expect(source).toContain('data-alert-notice-template-search="shared-compact"');
     expect(source).toContain('data-alert-notice-template-search-submit="angular-enter-and-clear"');
-    expect(source).toContain('data-alert-notice-template-search-submit-owner="cold-search-row"');
+    expect(source).toContain('data-alert-notice-template-search-submit-owner="hertzbeat-ui-search-row"');
     expect(source).not.toContain('data-alert-notice-receiver-toolbar="cold-table-toolbar"');
     expect(source).not.toContain('data-alert-notice-rule-toolbar="cold-table-toolbar"');
     expect(source).not.toContain('data-alert-notice-template-toolbar="cold-table-toolbar"');
@@ -609,14 +609,14 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-rule-template-display-owner="route-table-contract"');
     expect(source).toContain('data-alert-notice-rule-receiver-display="angular-array-interpolation"');
     expect(source).toContain('data-alert-notice-rule-receiver-display-owner="route-table-contract"');
-    expect(source).toContain('data-alert-notice-rule-toolbar="cold-query-toolbar"');
+    expect(source).toContain('data-alert-notice-rule-toolbar="hertzbeat-ui-query-toolbar"');
     expect(source).toContain('data-alert-notice-rule-toolbar-layout="compact-inline-actions-query"');
     expect(source).toContain('data-alert-notice-rule-search-submit="angular-enter-and-clear"');
-    expect(source).toContain('data-alert-notice-rule-search-submit-owner="cold-search-row"');
+    expect(source).toContain('data-alert-notice-rule-search-submit-owner="hertzbeat-ui-search-row"');
     expect(source).toContain('onSearch={commitRuleSearch}');
     expect(source).toContain('onClear={ruleSearchDraft || ruleSearch ? resetRuleSearch : undefined}');
     expect(source).toContain('setRulePageIndex(0);');
-    expect(source).toContain('data-alert-notice-rule-table-shell="cold-dense-table"');
+    expect(source).toContain('data-alert-notice-rule-table-shell="hertzbeat-ui-dense-table"');
     expect(source).toContain('function NoticeTableSwitch');
     expect(source).toContain('role="switch"');
     expect(source).toContain('data-alert-notice-rule-table-switch={field}');
@@ -771,14 +771,14 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-template-query-owner="backend-paginated"');
     expect(source).toContain('data-alert-notice-template-query-url={alertNoticeTemplateListUrl}');
     expect(source).toContain('data-alert-notice-template-preset-query="server-param"');
-    expect(source).toContain('data-alert-notice-template-toolbar="cold-query-toolbar"');
+    expect(source).toContain('data-alert-notice-template-toolbar="hertzbeat-ui-query-toolbar"');
     expect(source).toContain('data-alert-notice-template-toolbar-layout="compact-inline-actions-query"');
-    expect(source).toContain('data-alert-notice-template-preset-filter="cold-select"');
+    expect(source).toContain('data-alert-notice-template-preset-filter="hertzbeat-ui-select"');
     expect(source).toContain('onSearch={commitTemplateSearch}');
     expect(source).toContain('onClear={templateSearchDraft || templateSearch ? resetTemplateSearch : undefined}');
     expect(source).toContain('setTemplatePageIndex(0);');
-    expect(source).toContain('data-alert-notice-template-table-shell="cold-dense-table"');
-    expect(source).toContain('data-alert-notice-pagination="cold-dense-pagination"');
+    expect(source).toContain('data-alert-notice-template-table-shell="hertzbeat-ui-dense-table"');
+    expect(source).toContain('data-alert-notice-pagination="hertzbeat-ui-dense-pagination"');
     expect(source).toContain('data-alert-notice-pagination-owner="hertzbeat-ui-pagination-bar"');
     expect(source).toContain('data-alert-notice-pagination-page-jump-owner');
     expect(source).toContain('data-alert-notice-pagination-page-size-owner');
@@ -803,9 +803,9 @@ describe('alert notice page', () => {
 
     expect(source).toContain("from '../../../components/workbench/overlay-dialog'");
     expect(source).toContain('<OverlayDialog');
-    expect(source).toContain('data-alert-notice-receiver-editor-dialog="cold-modal-editor"');
-    expect(source).toContain('data-alert-notice-rule-editor-dialog="cold-modal-editor"');
-    expect(source).toContain('data-alert-notice-template-editor-dialog="cold-modal-editor"');
+    expect(source).toContain('data-alert-notice-receiver-editor-dialog="hertzbeat-ui-modal-editor"');
+    expect(source).toContain('data-alert-notice-rule-editor-dialog="hertzbeat-ui-modal-editor"');
+    expect(source).toContain('data-alert-notice-template-editor-dialog="hertzbeat-ui-modal-editor"');
     expect(source).toContain('open={editingReceiver}');
     expect(source).toContain('open={editingRule}');
     expect(source).toContain('open={editingTemplate}');
@@ -831,8 +831,8 @@ describe('alert notice page', () => {
     expect(source).toContain('const rowDraft = buildNoticeTemplateDraft(template);');
     expect(source).toContain('setTemplateDraft(rowDraft);');
     expect(source).toContain('api.alertNotice.templates.detail(template.id)');
-    expect(source).toContain('data-alert-notice-template-view-trigger="cold-modal-viewer-trigger"');
-    expect(source).toContain('data-alert-notice-template-viewer-dialog="cold-modal-viewer"');
+    expect(source).toContain('data-alert-notice-template-view-trigger="hertzbeat-ui-modal-viewer-trigger"');
+    expect(source).toContain('data-alert-notice-template-viewer-dialog="hertzbeat-ui-modal-viewer"');
     expect(source).toContain('readOnly={templateReadOnly}');
     expect(source).toContain('onClick={() => void handleViewTemplate(template)}');
     expect(source).toContain('onClick={() => void handleEditTemplate(template)}');
@@ -955,9 +955,9 @@ describe('alert notice page', () => {
   it('keeps notice editor validation feedback inside the active cold editor dialogs', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/alert/notice/alert-notice-page.tsx'), 'utf8');
 
-    expect(source).toContain('data-alert-notice-receiver-validation="cold-validation-feedback"');
-    expect(source).toContain('data-alert-notice-rule-validation="cold-validation-feedback"');
-    expect(source).toContain('data-alert-notice-template-validation="cold-validation-feedback"');
+    expect(source).toContain('data-alert-notice-receiver-validation="hertzbeat-ui-validation-feedback"');
+    expect(source).toContain('data-alert-notice-rule-validation="hertzbeat-ui-validation-feedback"');
+    expect(source).toContain('data-alert-notice-template-validation="hertzbeat-ui-validation-feedback"');
     expect(source.match(/role="alert"/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
     expect(source).toContain('editingReceiver && receiverError');
     expect(source).toContain('editingRule && ruleError');
@@ -1124,10 +1124,18 @@ describe('alert notice page', () => {
     expect(receiverFieldsSource).toContain('data-alert-notice-receiver-default-type-owner="route-form-contract"');
     expect(source).toContain('aria-busy={testingReceiver}');
     expect(source).toContain('disabled={testingReceiver || savingReceiver}');
-    expect(source).toContain('data-alert-notice-receiver-test-feedback="cold-test-feedback"');
+    expect(source).toContain('data-alert-notice-receiver-test-feedback="hertzbeat-ui-test-feedback"');
+    expect(source).toContain('data-alert-notice-receiver-test-preview="signal-route"');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-owner="signal-alert-handoff"');
+    expect(source).toContain('noticeEvidenceContext.receiverTestPreview.labelsText');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-payload="sample-alert"');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-payload-owner="signal-alert-handoff"');
+    expect(source).toContain('noticeEvidenceContext.receiverTestPreview.payloadRows.map');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-payload-message="sample-rendered"');
     expect(source).toContain('editingReceiver && receiverMessage');
     expect(source).toContain('!editingReceiver && receiverMessage');
     expect(handleTestSendSource).toContain('await api.alertNotice.receivers.sendTest(receiverDraft)');
+    expect(handleTestSendSource).not.toContain('noticeEvidenceContext');
     expect(handleTestSendSource).not.toContain('validateNoticeReceiverDraft(receiverDraft, t)');
   });
 
@@ -1184,6 +1192,16 @@ describe('alert notice page', () => {
     expect(source).toContain('data-alert-notice-rule-editor-return="evidence-context"');
     expect(source).toContain('noticeEvidenceContext?.returnHref');
     expect(source).toContain('buildNoticeRuleDraft(null, noticeEvidenceContext?.ruleDraftPatch)');
+    expect(source).toContain('sourceLabelsText={noticeEvidenceContext?.labelsText}');
+    expect(source).toContain('sourceSignal={noticeEvidenceContext?.signal}');
+    expect(source).toContain('noticeEvidenceContext?.receiverTestPreview');
+    expect(source).toContain('data-alert-notice-receiver-test-preview="signal-route"');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-owner="signal-alert-handoff"');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-signal={noticeEvidenceContext.signal}');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-labels-text="signal-route"');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-payload="sample-alert"');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-payload-row={row.key}');
+    expect(source).toContain('data-alert-notice-receiver-test-preview-payload-message="sample-rendered"');
   }, 30_000);
 
   it('renders missing evidence labels with the localized empty fallback', async () => {
@@ -1219,8 +1237,8 @@ describe('alert notice page', () => {
       const html = await renderAlertNoticePage();
       const t = createTranslatorMock({ locale: 'zh-CN' });
 
-      expect(html).toContain('data-alert-notice-receiver-empty-state="cold-empty-state"');
-      expect(html).toContain('data-alert-notice-receiver-empty-icon="cold-empty-icon"');
+      expect(html).toContain('data-alert-notice-receiver-empty-state="hertzbeat-ui-empty-state"');
+      expect(html).toContain('data-alert-notice-receiver-empty-icon="hertzbeat-ui-empty-icon"');
       expect(html).toContain(t('common.no-data'));
     } finally {
       mockState.renderData = previousData;

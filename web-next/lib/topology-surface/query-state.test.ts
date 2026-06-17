@@ -28,6 +28,8 @@ describe('topology query state', () => {
         scaleProof: ['greptime-real', 'ignored-scale-proof'],
         search: ['Service 420', 'ignored-search'],
         edgeId: ['svc-checkout--res-orders-db', 'ignored-edge'],
+        topologyTargetId: ['4201', 'ignored-target'],
+        topologyTargetName: ['checkout-node-a', 'ignored-target-name'],
         returnTo: [`/alert?status=firing&returnLabel=${encodeURIComponent(alertReturnLabel)}`]
       })
     ).toEqual({
@@ -53,6 +55,8 @@ describe('topology query state', () => {
       scaleProof: 'greptime-real',
       search: 'Service 420',
       edgeId: 'svc-checkout--res-orders-db',
+      topologyTargetId: '4201',
+      topologyTargetName: 'checkout-node-a',
       returnTo: '/alert?status=firing'
     });
   });

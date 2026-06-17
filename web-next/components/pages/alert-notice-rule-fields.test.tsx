@@ -73,9 +73,9 @@ describe('AlertNoticeRuleFields', () => {
     expect(html).toContain('data-alert-notice-rule-period-limit-state-owner="route-form-contract"');
     expect(html).toContain('data-alert-notice-rule-edit-option-seeding="angular-detail-options"');
     expect(html).toContain('data-alert-notice-rule-edit-option-seeding-owner="route-form-contract"');
-    expect(html).toContain('data-alert-notice-rule-receiver-selector="cold-multi-select"');
-    expect(html).toContain('data-alert-notice-rule-template-selector="cold-select"');
-    expect(html).toContain('data-alert-notice-rule-days-selector="cold-weekday-checkboxes"');
+    expect(html).toContain('data-alert-notice-rule-receiver-selector="hertzbeat-ui-multi-select"');
+    expect(html).toContain('data-alert-notice-rule-template-selector="hertzbeat-ui-select"');
+    expect(html).toContain('data-alert-notice-rule-days-selector="hertzbeat-ui-weekday-checkboxes"');
     expect(html).toContain(t('alert.notice.rule.name'));
     expect(html).not.toContain('alert.notice.rule.name');
     expect(html).toContain('data-testid="notice-rule-field-name"');
@@ -123,6 +123,44 @@ describe('AlertNoticeRuleFields', () => {
     expect(html).not.toContain('accent-[var(--ops-primary)]');
   });
 
+  it('shows signal-route alert labels as a live notification match preview', () => {
+    const signalLabels = 'hertzbeat.signal:logs, service.name:checkout, hertzbeat.alert.query_type:logs';
+    const html = renderToStaticMarkup(
+      <AlertNoticeRuleFields
+        t={t}
+        draft={{
+          name: 'Logs notice',
+          receiverIdsText: '1',
+          templateId: '-1',
+          enable: true,
+          filterAll: false,
+          labelsText: signalLabels,
+          daysText: '1,2,3,4,5,6,7',
+          periodStart: '',
+          periodEnd: ''
+        }}
+        receiverOptions={[{ value: '1', label: emailReceiverLabel, type: '1' }]}
+        templateOptions={[{ value: '-1', label: t('alert.notice.template.preset.true') }]}
+        receiverIdsPlaceholder={receiverIdsPlaceholder}
+        templateIdPlaceholder={templateIdPlaceholder}
+        labelsPlaceholder={labelsPlaceholder}
+        daysPlaceholder={daysPlaceholder}
+        sourceLabelsText={signalLabels}
+        sourceSignal="logs"
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-notice-rule-live-label-preview="signal-route"');
+    expect(html).toContain('data-alert-notice-rule-live-label-preview-owner="signal-alert-handoff"');
+    expect(html).toContain('data-alert-notice-rule-live-label-preview-status="prefilled"');
+    expect(html).toContain('data-alert-notice-rule-live-label-preview-signal="logs"');
+    expect(html).toContain('data-alert-notice-rule-live-labels="prefilled"');
+    expect(html).toContain(t('alert.notice.rule.labels.prefill'));
+    expect(html).toContain(signalLabels);
+    expect(html).not.toContain('alert.notice.rule.labels.prefill');
+  });
+
   it('keeps Angular all-weekday defaults when turning notice rule custom period on', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/pages/alert-notice-rule-fields.tsx'), 'utf8');
     expect(source).toContain('data-alert-notice-rule-period-default-days="angular-all-days"');
@@ -157,7 +195,7 @@ describe('AlertNoticeRuleFields', () => {
       />
     );
 
-    expect(html).toContain('data-alert-notice-rule-days-selector="cold-weekday-checkboxes"');
+    expect(html).toContain('data-alert-notice-rule-days-selector="hertzbeat-ui-weekday-checkboxes"');
     expect(html).toContain('aria-checked="true"');
     expect(html.match(/data-hz-checkbox-owner="hertzbeat-ui-checkbox"/g)?.length).toBeGreaterThanOrEqual(7);
   });
@@ -363,7 +401,7 @@ describe('AlertNoticeRuleFields', () => {
       />
     );
 
-    expect(html).toContain('data-alert-notice-rule-receiver-selector="cold-multi-select"');
+    expect(html).toContain('data-alert-notice-rule-receiver-selector="hertzbeat-ui-multi-select"');
     expect(html).toContain('data-testid="notice-rule-field-receiverIdsText"');
     expect(html).toContain(t('alert.notice.rule.receivers.empty'));
 
@@ -387,11 +425,11 @@ describe('AlertNoticeRuleFields', () => {
     expect(source).toContain('templateOptions');
     expect(source).toContain('type?: string | number | null');
     expect(source).toContain('data-alert-notice-rule-label-selector="searchable-label-record"');
-    expect(source).toContain('data-alert-notice-rule-receiver-selector="cold-multi-select"');
-    expect(source).toContain('data-alert-notice-rule-template-selector="cold-select"');
+    expect(source).toContain('data-alert-notice-rule-receiver-selector="hertzbeat-ui-multi-select"');
+    expect(source).toContain('data-alert-notice-rule-template-selector="hertzbeat-ui-select"');
     expect(source).toContain('data-alert-notice-rule-template-type-filter="angular-selected-receiver-type"');
     expect(source).toContain('data-alert-notice-rule-template-active-type="angular-switch-receiver"');
-    expect(source).toContain('data-alert-notice-rule-days-selector="cold-weekday-checkboxes"');
+    expect(source).toContain('data-alert-notice-rule-days-selector="hertzbeat-ui-weekday-checkboxes"');
     expect(source).toContain('export function AlertNoticeRuleSwitch');
     expect(source).toContain('data-alert-notice-rule-switch={row}');
     expect(source).toContain('data-alert-notice-rule-single-switch-frame="none"');

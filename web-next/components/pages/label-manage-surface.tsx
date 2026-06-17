@@ -95,8 +95,9 @@ export function LabelManageSurface({
   const dialogTitle = isManageModalAdd ? t('label.new') : t('label.edit');
   const displayName = draftLabel ? buildLabelDisplayName(draftLabel) : '';
   const previewDisplayName = displayName || t('common.none');
-  const isLabelPreviewVisible = Boolean(draftLabel) && draftLabel?.name !== undefined;
-  const isDraftNameMissing = Boolean(draftLabel) && (draftLabel.name == undefined || draftLabel.name.length === 0);
+  const draftName = draftLabel?.name;
+  const isLabelPreviewVisible = draftName !== undefined;
+  const isDraftNameMissing = Boolean(draftLabel) && (draftName == undefined || draftName.length === 0);
   const shouldShowNameValidation = isDraftNameMissing && Boolean(isNameValidationVisible);
   const isCardGridLoading = Boolean(isLoadPending || isDeletePending);
   const isDeleteFailureFeedback = actionError === t('common.notify.delete-fail');

@@ -124,7 +124,7 @@ export default function AlertInhibitPage({ initialRouteState }: { initialRouteSt
   const [editorMessage, setEditorMessage] = useState<string | null>(null);
   const [editorError, setEditorError] = useState<string | null>(null);
   const [editorErrorDetail, setEditorErrorDetail] = useState<string | null>(null);
-  const [editorErrorContract, setEditorErrorContract] = useState<'save' | 'enable' | null>(null);
+  const [editorErrorContract, setEditorErrorContract] = useState<'save' | 'enable' | 'delete' | null>(null);
   const [draft, setDraft] = useState<AlertInhibitFormDraft>(() => buildAlertInhibitFormDraft(null, inhibitEvidenceContext?.draftPatch));
   const [refreshTick, setRefreshTick] = useState(0);
   const [checkedIds, setCheckedIds] = useState<number[]>([]);

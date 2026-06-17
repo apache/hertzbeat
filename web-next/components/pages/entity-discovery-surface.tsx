@@ -287,12 +287,11 @@ export function EntityDiscoverySurface({ presets, activities, catalog, candidate
           <div className="space-y-5">
             <div data-entity-discovery-count-strip="hertzbeat-ui-inline-counts" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
               {[
-                [t('entities.discovery.metric.clues'), rows.length, Search],
-                [t('entities.discovery.metric.matched'), matchedCount, Users],
-                [t('entities.discovery.metric.create-suggested'), createCount, Plus],
-                [t('entities.discovery.metric.catalog-sources'), sourceCount, Database]
-              ].map(([label, value, Icon]) => {
-                const MetricIcon = Icon as typeof Search;
+                { label: t('entities.discovery.metric.clues'), value: rows.length, Icon: Search },
+                { label: t('entities.discovery.metric.matched'), value: matchedCount, Icon: Users },
+                { label: t('entities.discovery.metric.create-suggested'), value: createCount, Icon: Plus },
+                { label: t('entities.discovery.metric.catalog-sources'), value: sourceCount, Icon: Database }
+              ].map(({ label, value, Icon: MetricIcon }) => {
                 return (
                   <div
                     key={String(label)}
@@ -302,7 +301,7 @@ export function EntityDiscoverySurface({ presets, activities, catalog, candidate
                       <MetricIcon className="h-3.5 w-3.5 shrink-0 text-[#858d9a]" aria-hidden="true" />
                       <span className="truncate">{label}</span>
                     </span>
-                    <span className="text-[17px] font-semibold tabular-nums text-[#eef2f7]">{value as number}</span>
+                    <span className="text-[17px] font-semibold tabular-nums text-[#eef2f7]">{value}</span>
                   </div>
                 );
               })}

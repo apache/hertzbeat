@@ -7,7 +7,7 @@ export default async function EntityNewRoutePage({
   searchParams
 }: {
   searchParams?: Promise<EntityNewSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const initialSeed = readEntityNewDraftSeed(resolvedSearchParams);
   return <EntityNewPage initialSeed={initialSeed} />;

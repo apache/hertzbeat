@@ -7,7 +7,7 @@ export default async function AlertSilenceRoutePage({
   searchParams
 }: {
   searchParams?: Promise<AlertSilenceSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const routeState = readAlertSilenceRouteState(resolvedSearchParams);
   return <AlertSilencePage initialRouteState={routeState} />;

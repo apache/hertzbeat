@@ -43,7 +43,8 @@ describe('alert authoring cold-workbench chrome', () => {
     expect(inhibitSource).toContain("from './alert-authoring-primitives'");
     expect(silenceSource).toContain("from './alert-authoring-primitives'");
     expect(noticeSource).not.toContain("from './alert-authoring-primitives'");
-    expect(noticeSource).toContain("from '../ui/hz-code-editor'");
+    expect(noticeSource).toContain("from '@hertzbeat/ui'");
+    expect(noticeSource).toContain('HzCodeEditor');
     expect(noticeSource).toContain('data-alert-notice-template-code-editor="template-content"');
     expect(noticeSource).not.toContain('AlertAuthoringTextarea');
     expect(noticeSource).not.toContain('EditorRow');

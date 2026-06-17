@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Input } from '../ui/input';
-import { Select } from '../ui/select';
+import { Select, type SelectProps } from '../ui/select';
 import { cn } from '../../lib/utils';
 
 export function SettingsForm({
@@ -57,7 +57,7 @@ export const SettingsFormInput = React.forwardRef<HTMLInputElement, React.InputH
 
 SettingsFormInput.displayName = 'SettingsFormInput';
 
-export const SettingsFormSelect = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(
+export const SettingsFormSelect = React.forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, children, ...props }, ref) => (
     <Select
       ref={ref}

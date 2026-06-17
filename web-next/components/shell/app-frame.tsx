@@ -472,10 +472,10 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
   const [aiConfigOpen, setAiConfigOpen] = useState(false);
   const [aiProviderConfig, setAiProviderConfig] = useState<HzAiChatProviderConfigValue>(() => buildDefaultAiChatProviderConfig());
   const [aiConfigStatus, setAiConfigStatus] = useState<HzAiChatConfigStatus>('idle');
-  const [aiConfigStatusLabelKey, setAiConfigStatusLabelKey] = useState(AI_CHAT_CONFIG_STATUS_LABEL_KEYS.idle);
+  const [aiConfigStatusLabelKey, setAiConfigStatusLabelKey] = useState<string>(AI_CHAT_CONFIG_STATUS_LABEL_KEYS.idle);
   const [aiScheduleOpen, setAiScheduleOpen] = useState(false);
   const [aiScheduleStatus, setAiScheduleStatus] = useState<HzAiChatScheduleStatus>('idle');
-  const [aiScheduleStatusLabelKey, setAiScheduleStatusLabelKey] = useState(AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS.idle);
+  const [aiScheduleStatusLabelKey, setAiScheduleStatusLabelKey] = useState<string>(AI_CHAT_SCHEDULE_STATUS_LABEL_KEYS.idle);
   const [aiSchedules, setAiSchedules] = useState<HzAiChatScheduleRow[]>([]);
   const [aiScheduleSkills, setAiScheduleSkills] = useState<Array<{ value: string; label: string }>>([]);
   const [aiScheduleDraft, setAiScheduleDraft] = useState<HzAiChatScheduleDraft>({ sopName: '', cronExpression: '', enabled: true });

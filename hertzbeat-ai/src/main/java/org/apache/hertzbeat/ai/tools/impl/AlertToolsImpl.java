@@ -152,7 +152,8 @@ public class AlertToolsImpl implements AlertTools {
                     response.append("\n");
                 }
 
-                Page<GroupAlert> groupResult = alertService.getGroupAlerts(status, search, null, sort, order, pageIndex, pageSize);
+                Page<GroupAlert> groupResult = alertService.getGroupAlerts(status, search, null, null, null, null,
+                        sort, order, pageIndex, pageSize);
 
                 response.append("GROUP ALERTS:\n");
                 response.append("Found ").append(groupResult.getContent().size()).append(" group alerts (Total: ").append(groupResult.getTotalElements()).append("):\n\n");

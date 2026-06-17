@@ -28,6 +28,8 @@ type AlertNoticeRuleFieldsProps = {
   receiverOptions?: NoticeRuleOption[];
   templateOptions?: NoticeRuleOption[];
   labelOptions?: AlertLabelOptions;
+  sourceLabelsText?: string;
+  sourceSignal?: string;
   onDraftChange: React.Dispatch<React.SetStateAction<NoticeRuleDraft>>;
 };
 
@@ -72,6 +74,23 @@ function normalizeNoticeType(value?: string | number | null) {
     return '';
   }
   return String(value).trim();
+}
+
+function normalizeLabelsText(value?: string | null) {
+  return value?.trim() || '';
+}
+
+function getSourceLabelPreviewStatus(sourceLabelsText: string, draftLabelsText: string) {
+  if (!sourceLabelsText) {
+    return 'none';
+  }
+  if (draftLabelsText === sourceLabelsText) {
+    return 'prefilled';
+  }
+  if (draftLabelsText.startsWith(`${sourceLabelsText},`)) {
+    return 'extended';
+  }
+  return 'edited';
 }
 
 function filterTemplateOptionsForReceivers(
@@ -190,6 +209,8 @@ export function AlertNoticeRuleFields({
   receiverOptions = [],
   templateOptions = [],
   labelOptions = DEFAULT_ALERT_LABEL_OPTIONS,
+  sourceLabelsText,
+  sourceSignal,
   onDraftChange
 }: AlertNoticeRuleFieldsProps) {
   const selectedReceivers = new Set(parseCsvValues(draft.receiverIdsText));
@@ -226,6 +247,8 @@ export function AlertNoticeRuleFields({
     templateValueExists || selectedReceivers.size > 0 || detailTemplateOption
       ? currentTemplateOptions
       : [{ value: templateValue, label: templateValue }, ...filteredTemplateOptions];
+  const normalizedSourceLabelsText = normalizeLabelsText(sourceLabelsText);
+  const sourceLabelPreviewStatus = getSourceLabelPreviewStatus(normalizedSourceLabelsText, normalizeLabelsText(draft.labelsText));
 
   return (
     <div
@@ -330,6 +353,25 @@ export function AlertNoticeRuleFields({
               valuePlaceholder={t('alert.notice.rule.label.value.placeholder')}
               onValueChange={value => onDraftChange(prev => ({ ...prev, labelsText: value }))}
             />
+            {normalizedSourceLabelsText ? (
+              <div
+                data-alert-notice-rule-live-label-preview="signal-route"
+                data-alert-notice-rule-live-label-preview-owner="signal-alert-handoff"
+                data-alert-notice-rule-live-label-preview-status={sourceLabelPreviewStatus}
+                data-alert-notice-rule-live-label-preview-signal={sourceSignal || 'context'}
+                className="mt-2 rounded-[3px] border border-[#26303d] bg-[#080a0e] px-2.5 py-2"
+              >
+                <div className="mb-1 text-[11px] font-semibold uppercase text-[#8e99aa]">
+                  {t('alert.notice.rule.labels.prefill')}
+                </div>
+                <code
+                  data-alert-notice-rule-live-labels={sourceLabelPreviewStatus}
+                  className="block whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-[#aab4c3]"
+                >
+                  {normalizedSourceLabelsText}
+                </code>
+              </div>
+            ) : null}
           </div>
         </FieldRow>
       ) : null}

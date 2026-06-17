@@ -22,8 +22,8 @@ describe('AlertNoticeConsoleShell', () => {
     );
 
     expect(html).toContain('data-alert-notice-console="true"');
-    expect(html).toContain('data-alert-notice-workbench-panel="cold-tabbed-table-panel"');
-    expect(html).toContain('data-alert-notice-global-panel="cold-matte-tabbed-table"');
+    expect(html).toContain('data-alert-notice-workbench-panel="hertzbeat-ui-tabbed-table-panel"');
+    expect(html).toContain('data-alert-notice-global-panel="hertzbeat-ui-matte-tabbed-table"');
     expect(html).toContain('data-alert-notice-tabs="hertzbeat-ui-segmented-tabs"');
     expect(html).toContain('role="tablist"');
     expect(html).toContain('data-tab="receiver"');

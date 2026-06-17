@@ -78,4 +78,33 @@ describe('AlertGroupAuthoringFields', () => {
     expect(source).not.toContain('md:col-span-2');
     expect(source).not.toContain('AlertAuthoringToggleRow');
   });
+
+  it('shows signal-route group-by labels as a live grouping preview', () => {
+    const groupLabels = 'hertzbeat.signal, service.name, hertzbeat.alert.query_type';
+    const html = renderToStaticMarkup(
+      <AlertGroupAuthoringFields
+        t={t}
+        mode="workspace"
+        draft={{
+          name: 'metrics checkout group',
+          enable: true,
+          groupLabelsText: groupLabels,
+          groupWait: '30',
+          groupInterval: '300',
+          repeatInterval: '14400'
+        }}
+        sourceGroupLabelsText={groupLabels}
+        sourceSignal="metrics"
+        onDraftChange={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('data-alert-group-live-label-preview="signal-route"');
+    expect(html).toContain('data-alert-group-live-label-preview-owner="signal-alert-handoff"');
+    expect(html).toContain('data-alert-group-live-label-preview-status="prefilled"');
+    expect(html).toContain('data-alert-group-live-label-preview-signal="metrics"');
+    expect(html).toContain('data-alert-group-live-labels="prefilled"');
+    expect(html).toContain(t('alert.group.preview.title'));
+    expect(html).toContain(groupLabels);
+  });
 });

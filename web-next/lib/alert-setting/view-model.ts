@@ -1,5 +1,7 @@
 import type { AlertDefine, PageResult } from '@/lib/types';
 import {
+  buildSignalAlertMatchLabels,
+  buildSignalAlertWorkspaceHref,
   buildSignalEntityContextRows,
   stripReturnLabelFromHref,
   type SignalEntityContextRow,
@@ -8,6 +10,14 @@ import {
 import type { DatasourceStatusPayload } from './controller';
 
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+type AlertSettingWorkflowActionKey = 'notice' | 'group' | 'silence' | 'inhibit';
+
+export type AlertSettingWorkflowAction = {
+  key: AlertSettingWorkflowActionKey;
+  label: string;
+  copy: string;
+  href: string;
+};
 
 export type AlertSettingEvidenceContext = {
   signal: string;
@@ -18,6 +28,7 @@ export type AlertSettingEvidenceContext = {
   sourceQueryType?: string;
   returnHref?: string;
   rows: SignalEntityContextRow[];
+  workflowActions: AlertSettingWorkflowAction[];
 };
 
 function normalizeSignal(signal: string | null | undefined) {
@@ -36,31 +47,23 @@ function formatAlertSettingFact(value: string | null | undefined, emptyValue: st
   return text || emptyValue;
 }
 
-function buildAlertSettingPrefillLabels(signal: string | undefined, context: SignalRouteContext) {
-  return [
-    ['hertzbeat.signal', signal],
-    ['hertzbeat.entity.id', context.entityId],
-    ['service.name', context.serviceName],
-    ['service.namespace', context.serviceNamespace],
-    ['deployment.environment', context.environment],
-    ['trace_id', context.traceId],
-    ['span_id', context.spanId],
-    ['hertzbeat.source', context.source],
-    ['hertzbeat.collector', context.collector],
-    ['hertzbeat.template', context.template]
-  ]
-    .map(([key, value]) => {
-      const normalizedValue = firstText(value);
-      return normalizedValue ? `${key}:${normalizedValue}` : undefined;
-    })
-    .filter((value): value is string => Boolean(value))
-    .join(', ');
-}
-
 function compactSourceQuery(value: string | null | undefined) {
   const normalized = firstText(value);
   if (!normalized) return undefined;
   return normalized.length > 240 ? `${normalized.slice(0, 237)}...` : normalized;
+}
+
+function buildAlertSettingWorkflowActions(
+  signal: 'metrics' | 'logs' | 'traces' | undefined,
+  context: SignalRouteContext,
+  t: Translator
+): AlertSettingWorkflowAction[] {
+  return (['notice', 'group', 'silence', 'inhibit'] as const).map(key => ({
+    key,
+    label: t(`alert.center.operation.${key}.label`),
+    copy: t(`alert.center.operation.${key}.copy`),
+    href: buildSignalAlertWorkspaceHref(key, signal, context)
+  }));
 }
 
 function formatAlertDefineType(type: string | undefined, t: Translator) {
@@ -85,7 +88,7 @@ export function buildAlertSettingEvidenceContext(
   t: Translator
 ): AlertSettingEvidenceContext | null {
   const normalizedSignal = normalizeSignal(signal);
-  const labelsText = buildAlertSettingPrefillLabels(normalizedSignal, context);
+  const labelsText = buildSignalAlertMatchLabels(normalizedSignal, context);
   const returnHref = stripReturnLabelFromHref(context.returnTo);
   const rows = buildSignalEntityContextRows(context, {}, t);
   const sourceQuery = compactSourceQuery(context.alertQuery);
@@ -110,7 +113,8 @@ export function buildAlertSettingEvidenceContext(
     sourceQuery,
     sourceQueryType,
     returnHref,
-    rows
+    rows,
+    workflowActions: buildAlertSettingWorkflowActions(normalizedSignal, context, t)
   };
 }
 

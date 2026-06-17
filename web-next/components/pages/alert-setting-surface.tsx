@@ -182,6 +182,25 @@ export function AlertSettingSurface({
                     </div>
                   ))}
                 </div>
+                {evidenceContext.workflowActions.length > 0 ? (
+                  <div
+                    data-alert-setting-workflow-actions="signal-alert-next-steps"
+                    data-alert-setting-workflow-actions-owner="signal-alert-handoff"
+                    className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4"
+                  >
+                    {evidenceContext.workflowActions.map(action => (
+                      <a
+                        key={action.key}
+                        data-alert-setting-workflow-action={action.key}
+                        href={action.href}
+                        className="rounded-[3px] border border-[#2b3039] bg-[#101217] px-3 py-2 text-left transition hover:border-[#4e74f8] hover:bg-[#151b28]"
+                      >
+                        <span className="block text-[12px] font-semibold text-[#eef2f7]">{action.label}</span>
+                        <span className="mt-1 block text-[11px] leading-5 text-[#8f99ab]">{action.copy}</span>
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
               </section>
             ) : null}
             <section className="min-w-0">

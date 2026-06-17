@@ -219,7 +219,7 @@ export function buildIncidentWorkbenchData(
     tone: incident.severity
   }));
 
-  const ownershipRows = mappedIncidents.slice(0, 4).map(incident => ({
+  const ownershipRows: IncidentWorkbenchData['ownershipRows'] = mappedIncidents.slice(0, 4).map(incident => ({
     id: `incident-owner-${incident.id}`,
     owner: incident.owner,
     queue: incident.stage,

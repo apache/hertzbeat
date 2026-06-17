@@ -1911,7 +1911,7 @@ export type HzPanelSurfaceProps = React.HTMLAttributes<HTMLElement> & {
   padding?: 'none' | 'query' | 'header' | 'chart' | 'chart-inner' | 'view-switch';
   selected?: boolean;
   stickiness?: 'none' | 'top-4';
-  variant?: 'default' | 'chart-inner';
+  variant?: 'default' | 'chart-inner' | 'view-switch';
 };
 
 export const HzPanelSurface = React.forwardRef<HTMLElement, HzPanelSurfaceProps>(
@@ -1923,6 +1923,7 @@ export const HzPanelSurface = React.forwardRef<HTMLElement, HzPanelSurfaceProps>
         selected ? 'border-[var(--hz-ui-accent-muted)]' : 'border-[#252b35]',
         clip ? 'overflow-hidden' : null,
         variant === 'chart-inner' ? 'bg-[#10141b] shadow-none' : null,
+        variant === 'view-switch' ? 'bg-[#0f131a] shadow-none' : null,
         stickiness === 'top-4' ? 'xl:sticky xl:top-4 xl:self-start' : null,
         padding === 'header' ? 'px-5 py-4' : null,
         padding === 'chart' ? 'px-4 py-4' : null,
@@ -1976,7 +1977,7 @@ export const HzPanelSection = React.forwardRef<HTMLDivElement, HzPanelSectionPro
 
 HzPanelSection.displayName = 'HzPanelSection';
 
-export type HzPanelHeaderProps = React.HTMLAttributes<HTMLElement> & {
+export type HzPanelHeaderProps = Omit<React.HTMLAttributes<HTMLElement>, 'title'> & {
   eyebrow?: React.ReactNode;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
@@ -2655,7 +2656,7 @@ HzPassportLockSurface.displayName = 'HzPassportLockSurface';
 
 export type HzActionGroupProps = React.HTMLAttributes<HTMLDivElement> & {
   density?: 'compact-icons' | 'inline';
-  layout?: 'default' | 'end-wrap' | 'full-end' | 'grid-2' | 'split' | 'stack';
+  layout?: 'center' | 'default' | 'end-wrap' | 'full-end' | 'grid-2' | 'inline-wrap' | 'split' | 'stack' | 'start';
 };
 
 export const HzActionGroup = React.forwardRef<HTMLDivElement, HzActionGroupProps>(
@@ -2668,8 +2669,11 @@ export const HzActionGroup = React.forwardRef<HTMLDivElement, HzActionGroupProps
         layout === 'end-wrap' ? 'ml-auto justify-end' : null,
         layout === 'full-end' ? 'w-full justify-end' : null,
         layout === 'grid-2' ? 'grid w-full grid-cols-2 gap-2' : null,
+        layout === 'center' ? 'justify-center' : null,
+        layout === 'inline-wrap' ? 'w-full flex-wrap' : null,
         layout === 'split' ? 'w-full justify-between' : null,
         layout === 'stack' ? 'flex-col items-start' : null,
+        layout === 'start' ? 'justify-start' : null,
         className
       )}
       data-hz-ui="action-group"
@@ -3152,7 +3156,7 @@ export function HzMonitorDetailTabLabel({
           data-monitor-detail-tab-icon={tabKey}
           data-monitor-detail-tab-icon-owner="hertzbeat-ui-detail-tab-label"
         >
-          <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+          <Icon aria-hidden={true} className="h-3.5 w-3.5" />
         </span>
       ) : null}
       <span>{children}</span>
@@ -3332,8 +3336,8 @@ export type HzAttributeDiagnosticRow = {
   state: string;
   stateLabel: React.ReactNode;
   tone?: HzStatusTone;
-  rowProps?: React.HTMLAttributes<HTMLDivElement>;
-  badgeProps?: React.HTMLAttributes<HTMLSpanElement>;
+  rowProps?: React.HTMLAttributes<HTMLDivElement> | (React.HTMLAttributes<HTMLDivElement> & HzDataAttributeProps);
+  badgeProps?: React.HTMLAttributes<HTMLSpanElement> | (React.HTMLAttributes<HTMLSpanElement> & HzDataAttributeProps);
 };
 
 export type HzAttributeDiagnosticsProps = React.HTMLAttributes<HTMLDivElement> & {
@@ -3456,18 +3460,19 @@ export const HzInput = React.forwardRef<HTMLInputElement, HzInputProps>(({ class
 
 HzInput.displayName = 'HzInput';
 
-export type HzQueryTokenFieldWidth = 'trace-id' | 'span-id' | 'compact';
+export type HzQueryTokenFieldWidth = 'trace-id' | 'span-id' | 'root-span' | 'compact';
 
 const queryTokenFieldWidthClassName: Record<HzQueryTokenFieldWidth, string> = {
   'trace-id': 'w-[240px]',
   'span-id': 'w-[220px]',
+  'root-span': 'w-[240px]',
   compact: 'w-[180px]'
 };
 
-export type HzQueryTokenFieldProps = HzInputProps & {
+export type HzQueryTokenFieldProps = Omit<HzInputProps, 'width'> & {
   width?: HzQueryTokenFieldWidth;
   fieldClassName?: string;
-  fieldProps?: React.HTMLAttributes<HTMLDivElement>;
+  fieldProps?: React.HTMLAttributes<HTMLDivElement> & HzDataAttributeProps;
 };
 
 export const HzQueryTokenField = React.forwardRef<HTMLInputElement, HzQueryTokenFieldProps>(
@@ -3597,11 +3602,17 @@ export function HzCodeEditorFrame({
 }
 
 export type HzCodeEditorLanguage = 'yaml' | 'json' | 'html' | 'javascript' | 'shell' | 'text';
+export type HzCodeEditorTheme = 'vs' | 'vs-dark';
 
-export type HzCodeEditorProps = Omit<HzCodeEditorFrameProps, 'children'> & {
+export type HzCodeEditorProps = Omit<HzCodeEditorFrameProps, 'children' | 'onChange'> & {
   value: string;
   onChange?: (value: string) => void;
   language?: HzCodeEditorLanguage;
+  theme?: HzCodeEditorTheme;
+  loading?: boolean;
+  loadingLabel?: React.ReactNode;
+  folding?: boolean;
+  automaticLayout?: boolean;
   readOnly?: boolean;
   height?: string;
   minHeight?: string;
@@ -3682,6 +3693,11 @@ export function HzCodeEditor({
   value,
   onChange,
   language = 'text',
+  theme = 'vs-dark',
+  loading = false,
+  loadingLabel = 'Loading editor',
+  folding = true,
+  automaticLayout = true,
   readOnly = false,
   height,
   minHeight = '220px',
@@ -3698,12 +3714,12 @@ export function HzCodeEditor({
     const languageExtension = getHzCodeEditorLanguageExtension(language);
     return [
       basicSetup,
-      hzCodeEditorTheme,
+      ...(theme === 'vs-dark' ? [hzCodeEditorTheme] : []),
       EditorView.lineWrapping,
       ...(languageExtension ? [languageExtension] : []),
-      ...(readOnly ? [EditorState.readOnly.of(true)] : [])
+      ...(readOnly || loading ? [EditorState.readOnly.of(true)] : [])
     ];
-  }, [language, readOnly]);
+  }, [language, loading, readOnly, theme]);
 
   return (
     <HzCodeEditorFrame {...props} className={className} bodyClassName={bodyClassName}>
@@ -3712,9 +3728,24 @@ export function HzCodeEditor({
         style={{ minHeight, ...editorStyle }}
         data-hz-code-editor-runtime="codemirror"
         data-hz-code-editor-language={language}
-        data-hz-code-editor-readonly={readOnly ? 'true' : undefined}
+        data-hz-code-editor-theme={theme}
+        data-hz-code-editor-loading={loading ? 'true' : 'false'}
+        data-hz-code-editor-loading-owner="hz-code-editor"
+        data-hz-code-editor-folding={folding ? 'true' : 'false'}
+        data-hz-code-editor-automatic-layout={automaticLayout ? 'true' : 'false'}
+        data-hz-code-editor-readonly={readOnly || loading ? 'true' : undefined}
         data-hz-code-editor-license="codemirror-mit"
       >
+        {loading ? (
+          <div
+            className="border border-b-0 border-[var(--hz-ui-line-strong)] bg-[var(--hz-ui-control)] px-3 py-2 text-[11px] font-semibold text-[#a9b4c4]"
+            aria-busy="true"
+            data-hz-code-editor-loading-state="angular-nz-code-editor-loading"
+            data-hz-code-editor-loading-state-owner="hz-code-editor"
+          >
+            {loadingLabel}
+          </div>
+        ) : null}
         {name ? (
           <input
             type="hidden"
@@ -3731,10 +3762,10 @@ export function HzCodeEditor({
           minHeight={minHeight}
           placeholder={placeholder}
           basicSetup={false}
-          theme={oneDark}
+          theme={theme === 'vs-dark' ? oneDark : 'light'}
           extensions={extensions}
-          readOnly={readOnly}
-          editable={!readOnly}
+          readOnly={readOnly || loading}
+          editable={!readOnly && !loading}
           aria-label={ariaLabel}
           onChange={nextValue => onChange?.(nextValue)}
         />
@@ -4050,7 +4081,7 @@ export type HzConfigurableFieldRow = Record<string, string>;
 export type HzConfigurableFieldColumn = {
   key: string;
   placeholder?: string;
-  inputProps?: Omit<HzInputProps, 'value' | 'onChange' | 'placeholder'>;
+  inputProps?: Omit<HzInputProps, 'value' | 'onChange' | 'placeholder'> & HzDataAttributeProps;
   className?: string;
 };
 
@@ -4063,8 +4094,8 @@ export type HzKeyValueEditorProps = {
   keyPlaceholder?: string;
   valuePlaceholder?: string;
   rowClassName?: string;
-  keyInputProps?: Omit<HzInputProps, 'value' | 'onChange' | 'placeholder'>;
-  valueInputProps?: Omit<HzInputProps, 'value' | 'onChange' | 'placeholder'>;
+  keyInputProps?: Omit<HzInputProps, 'value' | 'onChange' | 'placeholder'> & HzDataAttributeProps;
+  valueInputProps?: Omit<HzInputProps, 'value' | 'onChange' | 'placeholder'> & HzDataAttributeProps;
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onChange' | 'title'>;
 
 function ensureHzKeyValueRows(rows: HzKeyValueRow[]) {
@@ -4251,10 +4282,12 @@ export type HzSelectOption = {
   label: string;
 };
 
+export type HzSelectSize = 'default' | 'sm';
 export type HzSelectWidth = 'default' | 'metrics-aggregation' | 'metrics-temporal-aggregation' | 'metrics-group-by' | 'metrics-inventory-sort' | 'log-severity' | 'trace-span-scope';
 export type HzSelectTriggerTone = 'default' | 'signal-query';
 
 export type HzSelectProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onChange' | 'defaultValue'> & {
+  [key: `data-${string}`]: string | number | boolean | undefined;
   options: HzSelectOption[];
   value?: string;
   defaultValue?: string;
@@ -4262,6 +4295,7 @@ export type HzSelectProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children
   name?: string;
   onChange?: React.ChangeEventHandler<HTMLSelectElement>;
   placeholder?: string;
+  size?: HzSelectSize;
   triggerClassName?: string;
   triggerTone?: HzSelectTriggerTone;
   width?: HzSelectWidth;
@@ -4283,6 +4317,11 @@ const hzSelectTriggerToneClassName: Record<HzSelectTriggerTone, string | null> =
   'signal-query': 'text-[#d5dce8]'
 };
 
+const hzSelectSizeClassName: Record<HzSelectSize, string | null> = {
+  default: null,
+  sm: 'h-7 text-[11px]'
+};
+
 export const HzSelect = React.forwardRef<HTMLDivElement, HzSelectProps>(
   (
     {
@@ -4294,6 +4333,7 @@ export const HzSelect = React.forwardRef<HTMLDivElement, HzSelectProps>(
       name,
       onChange,
       placeholder,
+      size = 'default',
       triggerClassName,
       triggerTone = 'default',
       width = 'default',
@@ -4317,6 +4357,7 @@ export const HzSelect = React.forwardRef<HTMLDivElement, HzSelectProps>(
         ref={ref}
         className={cn('min-w-0', hzSelectWidthClassName[width], className)}
         data-hz-ui="select"
+        data-hz-select-size={size}
         data-hz-select-width={width}
         data-hz-select-trigger-tone={triggerTone}
         {...props}
@@ -4329,7 +4370,7 @@ export const HzSelect = React.forwardRef<HTMLDivElement, HzSelectProps>(
           options={options}
           placeholder={placeholder}
           value={resolvedValue}
-          triggerClassName={cn(hzSelectTriggerToneClassName[triggerTone], triggerClassName)}
+          triggerClassName={cn(hzSelectSizeClassName[size], hzSelectTriggerToneClassName[triggerTone], triggerClassName)}
           optionDataAttributes={optionDataAttributes}
           onChange={handleChange}
         />
@@ -4347,7 +4388,7 @@ const queryStatusSelectWidthClassName: Record<HzQueryStatusSelectWidth, string> 
   compact: 'w-[132px]'
 };
 
-export type HzQueryStatusSelectProps = HzSelectProps & {
+export type HzQueryStatusSelectProps = Omit<HzSelectProps, 'width'> & {
   width?: HzQueryStatusSelectWidth;
 };
 
@@ -4457,7 +4498,7 @@ export type HzTimeRangeToolbarProps = Omit<React.HTMLAttributes<HTMLDivElement>,
   railLayout?: 'wrap' | 'nowrap';
   previewSource?: string;
   timePickerDefaultOpen?: boolean;
-  presetSelectProps?: React.HTMLAttributes<HTMLDivElement>;
+  presetSelectProps?: Omit<HzSelectProps, 'defaultValue' | 'onChange' | 'options' | 'value'>;
   presetOptionDataAttribute?: string;
   refreshActionProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
 };
@@ -5272,9 +5313,11 @@ function getHzExpressionTimeRangeMatchedPresetLabel({
   presets: HzSelectOption[];
 }) {
   const normalizedTimeRange = timeRange?.trim();
+  const normalizedFrom = from?.trim();
+  const normalizedTo = to?.trim();
   if (!normalizedTimeRange?.startsWith('last-')) return null;
-  if (to.trim() !== 'now') return null;
-  if (from.trim() !== `now-${normalizedTimeRange.slice(5)}`) return null;
+  if (normalizedTo !== 'now') return null;
+  if (normalizedFrom !== `now-${normalizedTimeRange.slice(5)}`) return null;
   return presets.find(option => option.value === normalizedTimeRange)?.label || null;
 }
 
@@ -6904,7 +6947,7 @@ export function HzMonitorFilterBar({
   searchPlaceholder?: string;
   searchValue: string;
   onSearchChange?: (value: string) => void;
-  searchInputProps?: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'placeholder' | 'aria-label'>;
+  searchInputProps?: Omit<HzInputProps, 'aria-label' | 'onChange' | 'placeholder' | 'value'>;
   searchClearLabel?: string;
   onSearchClear?: () => void;
   searchClearButtonProps?: Omit<HzIconButtonProps, 'label' | 'children' | 'onClick'>;
@@ -6912,7 +6955,7 @@ export function HzMonitorFilterBar({
   labelFilterPlaceholder?: string;
   labelFilterValue?: string;
   onLabelFilterChange?: (value: string) => void;
-  labelFilterInputProps?: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'placeholder' | 'aria-label'>;
+  labelFilterInputProps?: Omit<HzInputProps, 'aria-label' | 'onChange' | 'placeholder' | 'value'>;
   labelFilterClearLabel?: string;
   onLabelFilterClear?: () => void;
   labelFilterClearButtonProps?: Omit<HzIconButtonProps, 'label' | 'children' | 'onClick'>;
@@ -6923,7 +6966,8 @@ export function HzMonitorFilterBar({
   typeSelectProps?: Omit<HzSelectProps, 'value' | 'options' | 'onChange'>;
   typePickerLabel?: React.ReactNode;
   onTypePickerOpen?: () => void;
-  typePickerButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>;
+  typePickerButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>
+    | (Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & HzDataAttributeProps);
   statusLabel: string;
   statusValue: string;
   statusOptions: HzSelectOption[];
@@ -6933,8 +6977,10 @@ export function HzMonitorFilterBar({
   clearLabel: React.ReactNode;
   onApply?: () => void;
   onClear?: () => void;
-  applyButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>;
-  clearButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>;
+  applyButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>
+    | (Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & HzDataAttributeProps);
+  clearButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>
+    | (Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & HzDataAttributeProps);
 } & React.HTMLAttributes<HTMLDivElement>) {
   const typePickerText = typeof typePickerLabel === 'string' ? typePickerLabel : typeLabel;
   const handleEnterSubmit = (
@@ -7460,7 +7506,7 @@ export function HzMonitorRefreshToolbar({
           triggerClassName="h-8 !rounded-none border-[var(--hz-ui-line-soft)] bg-transparent px-2 !shadow-none hover:border-[var(--hz-ui-accent-muted)] hover:bg-[var(--hz-ui-surface-soft)]"
           options={refreshOptions.map(option => ({
             value: option.value,
-            label: option.label
+            label: typeof option.label === 'string' ? option.label : String(option.value)
           }))}
           onChange={event => onRefreshChange?.(event.target.value)}
         />
@@ -7831,7 +7877,7 @@ export type HzDataMetaTextProps = React.HTMLAttributes<HTMLSpanElement> & {
 };
 
 export type HzDataCellTextProps = React.HTMLAttributes<HTMLSpanElement> & {
-  variant?: 'title' | 'copy' | 'meta' | 'type' | 'timestamp' | 'value' | 'identifier';
+  variant?: 'title' | 'copy' | 'meta' | 'type' | 'timestamp' | 'value' | 'identifier' | 'mono';
   display?: 'inline' | 'block';
   spacing?: 'none' | 'stack-tight' | 'stack';
   width?: 'auto' | 'trace-id';
@@ -7904,6 +7950,7 @@ export const HzDataCellText = React.forwardRef<HTMLSpanElement, HzDataCellTextPr
         variant === 'timestamp' ? cn('font-mono text-[11px]', tone === 'default' ? 'text-[#c8d2df]' : null) : null,
         variant === 'value' ? (tone === 'default' ? 'text-[#c8d2df]' : null) : null,
         variant === 'identifier' ? cn('font-mono text-[11px]', tone === 'default' ? 'text-[#8792a5]' : null) : null,
+        variant === 'mono' ? cn('font-mono text-[12px]', tone === 'default' ? 'text-[#c8d2df]' : null) : null,
         tone === 'strong' ? 'text-[#dbe5f3]' : null,
         tone === 'bright' ? 'text-[#e6edf7]' : null,
         tone === 'success' ? 'text-[#75c795]' : null,
@@ -7944,11 +7991,15 @@ export const HzDataMetaText = React.forwardRef<HTMLSpanElement, HzDataMetaTextPr
 );
 HzDataMetaText.displayName = 'HzDataMetaText';
 
+type HzDataTableRowProps = React.HTMLAttributes<HTMLTableRowElement> & {
+  [key: `data-${string}`]: string | number | boolean | undefined;
+};
+
 export type HzDataTableProps<Row> = Omit<React.HTMLAttributes<HTMLDivElement>, 'onClick'> & {
   columns: HzDataColumn<Row>[];
   rows: Row[];
   getRowKey: (row: Row, index: number) => React.Key;
-  getRowProps?: (row: Row, index: number) => React.HTMLAttributes<HTMLTableRowElement>;
+  getRowProps?: (row: Row, index: number) => HzDataTableRowProps | undefined;
   emptyLabel?: React.ReactNode;
   selectedRowKey?: React.Key;
   onRowClick?: (row: Row, index: number) => void;
@@ -9433,14 +9484,16 @@ export function HzEChartsPanel({
     }
     const chart = chartRef.current;
 
-    const handleClick = (params: { dataIndex?: number }) => {
-      if (typeof params.dataIndex === 'number') {
-        onChartClick?.(params.dataIndex);
+    const handleClick = (params: unknown) => {
+      const payload = params as { dataIndex?: unknown };
+      if (typeof payload.dataIndex === 'number') {
+        onChartClick?.(payload.dataIndex);
       }
     };
-    const handleDataZoom = (params: { batch?: Array<Record<string, unknown>> } & Record<string, unknown>) => {
+    const handleDataZoom = (params: unknown) => {
       if (!dataZoomInteractionRef.current) return;
-      const payload = Array.isArray(params.batch) ? params.batch[0] : params;
+      const zoomParams = params as { batch?: Array<Record<string, unknown>> } & Record<string, unknown>;
+      const payload = Array.isArray(zoomParams.batch) ? zoomParams.batch[0] : zoomParams;
       const range: HzEChartsDataZoomRange = {
         start: readHzDataZoomNumber(payload?.start),
         end: readHzDataZoomNumber(payload?.end),
@@ -9578,7 +9631,7 @@ export function HzMetricTimeSeriesPanel({
   className?: string;
   surfaceClassName?: string;
   chartClassName?: string;
-  surfaceProps?: React.HTMLAttributes<HTMLElement>;
+  surfaceProps?: React.HTMLAttributes<HTMLElement> & HzDataAttributeProps;
 }) {
   const zoomAction = zoomActionLabel ? (
     <HzButton
@@ -9685,7 +9738,7 @@ export function HzMonitorHistoryChartCard({
   cardKey: string;
   selected?: boolean;
   onSelect?: () => void;
-  surfaceProps?: React.HTMLAttributes<HTMLElement>;
+  surfaceProps?: React.HTMLAttributes<HTMLElement> & HzDataAttributeProps;
 }) {
   const handleClick: React.MouseEventHandler<HTMLElement> = event => {
     surfaceProps?.onClick?.(event);
@@ -10614,12 +10667,12 @@ export type HzTopologyDetailDrawerFact = {
   factProps?: React.HTMLAttributes<HTMLDivElement>;
 };
 
-export type HzTopologyDetailDrawerAction = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'children'> & {
+export type HzTopologyDetailDrawerAction = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'children'> & HzDataAttributeProps & {
   id: string;
   label: React.ReactNode;
   emphasis?: 'primary' | 'neutral';
   copy?: React.ReactNode;
-  copyProps?: React.HTMLAttributes<HTMLSpanElement>;
+  copyProps?: React.HTMLAttributes<HTMLSpanElement> | (React.HTMLAttributes<HTMLSpanElement> & HzDataAttributeProps);
 };
 
 export type HzTopologyDetailDrawerSurface = 'default' | 'framed' | 'flush';
@@ -10648,7 +10701,7 @@ export type HzTopologyDetailDrawerProps = React.HTMLAttributes<HTMLElement> & {
 
 export type HzTopologyEvidenceListKind = 'fault-context' | 'impact-timeline' | 'evidence';
 
-export type HzTopologyEvidenceListItem = Omit<React.HTMLAttributes<HTMLDivElement>, 'id'> & {
+export type HzTopologyEvidenceListItem = Omit<React.HTMLAttributes<HTMLDivElement>, 'id'> & HzDataAttributeProps & {
   id: string;
   label: React.ReactNode;
   value: React.ReactNode;
@@ -10851,13 +10904,13 @@ const topologyPathSummaryMetricClassName: Record<HzStatusTone, string> = {
   critical: 'border-[#61323a] bg-[#2a1318] text-[#ff9aa9]'
 };
 
-export type HzTopologyScopeBarItem = React.HTMLAttributes<HTMLSpanElement> & {
+export type HzTopologyScopeBarItem = React.HTMLAttributes<HTMLSpanElement> & HzDataAttributeProps & {
   id: string;
   label?: React.ReactNode;
   value: React.ReactNode;
 };
 
-export type HzTopologyScopeBarAction = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+export type HzTopologyScopeBarAction = React.ButtonHTMLAttributes<HTMLButtonElement> & HzDataAttributeProps & {
   id: string;
   label: React.ReactNode;
   emphasis?: 'primary' | 'neutral';
@@ -12949,7 +13002,7 @@ export type HzTopologyToolbarOption = {
   label: string;
 };
 
-export type HzTopologyToolbarStateItem = React.HTMLAttributes<HTMLSpanElement> & {
+export type HzTopologyToolbarStateItem = React.HTMLAttributes<HTMLSpanElement> & HzDataAttributeProps & {
   id: string;
   label: React.ReactNode;
   value: React.ReactNode;
@@ -15999,7 +16052,7 @@ export type HzMonitorEditorActionBarAction = {
   size?: HzButtonSize;
   disabled?: boolean;
   onSelect?: HzButtonProps['onClick'];
-  buttonProps?: Omit<HzButtonProps, 'children' | 'type' | 'intent' | 'size' | 'disabled' | 'onClick'>;
+  buttonProps?: Omit<HzButtonProps, 'children' | 'type' | 'intent' | 'size' | 'disabled' | 'onClick'> & HzDataAttributeProps;
 };
 
 export type HzMonitorEditorActionBarProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> & {
@@ -16070,7 +16123,7 @@ export type HzBatchToolbarAction = {
   tone?: HzStatusTone;
   disabled?: boolean;
   onSelect?: () => void;
-  buttonProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
+  buttonProps?: React.ButtonHTMLAttributes<HTMLButtonElement> | (React.ButtonHTMLAttributes<HTMLButtonElement> & HzDataAttributeProps);
   presentation?: 'inline' | 'menu';
 };
 
@@ -16090,8 +16143,8 @@ export function HzBatchToolbar({
   actions: HzBatchToolbarAction[];
   variant?: 'default' | 'embedded';
   overflowLabel?: string;
-  overflowButtonProps?: Omit<HzIconButtonProps, 'label' | 'children' | 'onClick'>;
-  overflowPanelProps?: React.HTMLAttributes<HTMLDivElement>;
+  overflowButtonProps?: Omit<HzIconButtonProps, 'label' | 'children' | 'onClick'> & HzDataAttributeProps;
+  overflowPanelProps?: React.HTMLAttributes<HTMLDivElement> & HzDataAttributeProps;
 }) {
   const [overflowOpen, setOverflowOpen] = React.useState(false);
   const inlineActions = actions.filter(action => action.presentation !== 'menu');
@@ -16180,6 +16233,10 @@ export function HzBatchToolbar({
   );
 }
 
+type HzDataAttributeProps = {
+  [key: `data-${string}`]: string | number | boolean | undefined;
+};
+
 export function HzPaginationBar({
   summary,
   pageSizeLabel,
@@ -16219,9 +16276,9 @@ export function HzPaginationBar({
   onPrevious?: () => void;
   onNext?: () => void;
   pageSizeSelectProps?: Omit<HzSelectProps, 'value' | 'options' | 'onChange'>;
-  pageJumpInputProps?: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'aria-label'>;
-  previousButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'disabled'>;
-  nextButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'disabled'>;
+  pageJumpInputProps?: Omit<HzInputProps, 'aria-label' | 'onChange' | 'value'> & HzDataAttributeProps;
+  previousButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'disabled'> & HzDataAttributeProps;
+  nextButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'disabled'> & HzDataAttributeProps;
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'children'>) {
   return (
     <div
@@ -16297,6 +16354,7 @@ export function HzConfirmDialog({
   confirmLabel = 'Confirm',
   closable = false,
   tone = 'info',
+  onCancel,
   onClose,
   onConfirm,
   confirmDisabled,
@@ -16315,17 +16373,21 @@ export function HzConfirmDialog({
   confirmLabel?: React.ReactNode;
   closable?: boolean;
   tone?: HzStatusTone;
+  onCancel?: () => void;
   onClose?: () => void;
   onConfirm?: () => void;
   confirmDisabled?: boolean;
   footerClassName?: string;
-  cancelButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>;
-  confirmButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'disabled'>;
+  cancelButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>
+    | (Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & HzDataAttributeProps);
+  confirmButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'disabled'>
+    | (Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'disabled'> & HzDataAttributeProps);
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'title'>) {
   if (!open) return null;
 
   const titleLabel = stringifyNode(title, 'Confirm action');
   const danger = tone === 'critical';
+  const handleCancel = onCancel ?? onClose;
 
   return (
     <div
@@ -16381,7 +16443,7 @@ export function HzConfirmDialog({
             {...cancelButtonProps}
             size="sm"
             intent="ghost"
-            onClick={onClose}
+            onClick={handleCancel}
             data-hz-confirm-action="cancel"
           >
             {cancelLabel}
@@ -16437,7 +16499,7 @@ export function HzExportTypeDialog({
   onSelect?: (type: HzExportTypeDialogType) => void;
   jsonButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'disabled'>;
   excelButtonProps?: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'disabled'>;
-} & Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'title'>) {
+} & Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onSelect' | 'title'>) {
   if (!open) return null;
 
   const titleLabel = stringifyNode(title, 'Choose export type');
@@ -17914,9 +17976,9 @@ export function HzTemplatePicker({
   showItemIcon?: boolean;
   showItemMeta?: boolean;
   loading?: boolean;
-  searchInputProps?: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'placeholder'>;
+  searchInputProps?: Omit<HzInputProps, 'onChange' | 'placeholder' | 'value'>;
   labels?: HzTemplatePickerLabels;
-} & Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect'>) {
+} & Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'title'>) {
   const visibleCategories = filterHzTemplateCategories(categories, search);
   const total = categories.reduce((sum, category) => sum + category.items.length, 0);
   const useGridLayout = itemLayout === 'grid';
@@ -18093,7 +18155,7 @@ export function HzTypePickerDialog({
   onSearchChange: (value: string) => void;
   onSelect?: (id: string) => void;
   onClose: () => void;
-  searchInputProps?: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'placeholder'>;
+  searchInputProps?: Omit<HzInputProps, 'onChange' | 'placeholder' | 'value'>;
   labels?: HzTypePickerDialogLabels;
 }) {
   if (!open) return null;

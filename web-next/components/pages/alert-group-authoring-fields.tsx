@@ -17,16 +17,42 @@ type AlertGroupAuthoringFieldsProps = {
   onDraftChange: (nextDraft: AlertGroupFormDraft) => void;
   mode?: 'workspace' | 'dialog';
   labelOptions?: AlertLabelOptions;
+  sourceGroupLabelsText?: string;
+  sourceSignal?: string;
 };
+
+function normalizeGroupLabelsText(value?: string | null) {
+  return value?.trim() || '';
+}
+
+function getSourceGroupPreviewStatus(sourceGroupLabelsText: string, draftGroupLabelsText: string) {
+  if (!sourceGroupLabelsText) {
+    return 'none';
+  }
+  if (draftGroupLabelsText === sourceGroupLabelsText) {
+    return 'prefilled';
+  }
+  if (draftGroupLabelsText.startsWith(`${sourceGroupLabelsText},`)) {
+    return 'extended';
+  }
+  return 'edited';
+}
 
 export function AlertGroupAuthoringFields({
   t,
   draft,
   onDraftChange,
   mode = 'workspace',
-  labelOptions
+  labelOptions,
+  sourceGroupLabelsText,
+  sourceSignal
 }: AlertGroupAuthoringFieldsProps) {
   const effectiveLabelOptions = labelOptions ?? DEFAULT_ALERT_LABEL_OPTIONS;
+  const normalizedSourceGroupLabelsText = normalizeGroupLabelsText(sourceGroupLabelsText);
+  const sourceGroupPreviewStatus = getSourceGroupPreviewStatus(
+    normalizedSourceGroupLabelsText,
+    normalizeGroupLabelsText(draft.groupLabelsText)
+  );
 
   return (
     <div
@@ -67,6 +93,25 @@ export function AlertGroupAuthoringFields({
               placeholder={t('alert.group.labels.placeholder')}
               suggestions={effectiveLabelOptions.keys}
             />
+            {normalizedSourceGroupLabelsText ? (
+              <div
+                data-alert-group-live-label-preview="signal-route"
+                data-alert-group-live-label-preview-owner="signal-alert-handoff"
+                data-alert-group-live-label-preview-status={sourceGroupPreviewStatus}
+                data-alert-group-live-label-preview-signal={sourceSignal || 'context'}
+                className="mt-2 rounded-[3px] border border-[#26303d] bg-[#080a0e] px-2.5 py-2"
+              >
+                <div className="mb-1 text-[11px] font-semibold uppercase text-[#8e99aa]">
+                  {t('alert.group.preview.title')}
+                </div>
+                <code
+                  data-alert-group-live-labels={sourceGroupPreviewStatus}
+                  className="block whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-[#aab4c3]"
+                >
+                  {normalizedSourceGroupLabelsText}
+                </code>
+              </div>
+            ) : null}
           </div>
         </AlertAuthoringFieldLabel>
         <AlertAuthoringFieldLabel>

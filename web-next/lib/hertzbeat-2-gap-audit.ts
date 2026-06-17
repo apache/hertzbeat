@@ -8,7 +8,7 @@ export type HertzBeat2GapArea =
   | 'entity-evidence'
   | 'ui-i18n';
 
-export type BackendApiStatus = 'available' | 'partial' | 'missing' | 'not-applicable';
+export type BackendApiStatus = 'available' | 'partial' | 'missing' | 'not-applicable' | 'verified';
 
 export type HertzBeat2Gap = {
   code: string;

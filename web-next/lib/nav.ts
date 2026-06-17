@@ -242,15 +242,14 @@ export const routeCatalog: RouteCatalogEntry[] = [
   },
   {
     key: 'dashboard',
-    labelKey: 'menu.overview',
-    label: 'Dashboard',
+    labelKey: 'menu.section.dashboards',
+    label: 'Dashboards',
     href: '/dashboard',
     icon: 'overview',
-    routeKind: 'legacy-alias',
+    routeKind: 'primary',
     cutoverStatus: 'candidate',
     smokePath: '/dashboard',
-    includeInRouteMatrix: true,
-    redirectTo: '/overview'
+    includeInRouteMatrix: true
   },
   {
     key: 'otlp',

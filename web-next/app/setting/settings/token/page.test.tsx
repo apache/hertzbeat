@@ -125,21 +125,21 @@ describe('setting token page', () => {
 
     expect(html).toContain('data-client-workbench="true"');
     expect(html).toContain('data-settings-console-title="true"');
-    expect(html).toContain('data-setting-token-surface="otlp-cold-token-console"');
+    expect(html).toContain('data-setting-token-surface="otlp-hertzbeat-ui-token-console"');
     expect(html).toContain('data-setting-token-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-setting-token-layout-contract="full-width-admin-no-rail"');
     expect(html).toContain('data-setting-token-generate-dialog-layout-contract="angular-vertical-form"');
     expect(html).toContain('data-setting-token-generated-dialog-width-contract="angular-width-50-percent"');
     expect(html).toContain('data-setting-token-generated-dialog-mask-contract="angular-mask-closable-false"');
-    expect(html).toContain('data-setting-token-header="cold-compact-header"');
+    expect(html).toContain('data-setting-token-header="hertzbeat-ui-compact-header"');
     expect(html).toContain('data-setting-token-command-row="standard-equal-buttons"');
     expect(html).toContain('data-setting-token-generate-trigger="angular-generate-token-modal"');
     expect(html).toContain('data-setting-token-admin-layout="full-width-admin-list"');
-    expect(html).toContain('data-setting-token-strip="cold-token-strip"');
-    expect(html).toContain('data-setting-token-strip-style="cold-inline-counts"');
-    expect(html).toContain('data-setting-token-table-panel="cold-dense-table"');
-    expect(html).toContain('data-setting-token-table="cold-token-table"');
-    expect(html).toContain('data-setting-token-row-action="cold-row-action"');
+    expect(html).toContain('data-setting-token-strip="hertzbeat-ui-token-strip"');
+    expect(html).toContain('data-setting-token-strip-style="hertzbeat-ui-inline-counts"');
+    expect(html).toContain('data-setting-token-table-panel="hertzbeat-ui-dense-table"');
+    expect(html).toContain('data-setting-token-table="hertzbeat-ui-token-table"');
+    expect(html).toContain('data-setting-token-row-action="hertzbeat-ui-row-action"');
     expect(html).toContain('data-setting-token-delete-confirm="angular-modal-confirm"');
     expect(html).toContain('data-setting-token-delete-confirm-owner="hertzbeat-ui-confirm-dialog"');
     expect(html).toContain('data-setting-token-delete-confirm-state="closed"');
@@ -190,10 +190,10 @@ describe('setting token page', () => {
     const source = readFileSync(resolve(__dirname, 'setting-token-page.tsx'), 'utf8');
 
     expect(source).toContain('hzOpsCatalogVisual');
-    expect(source).toContain('data-setting-token-surface="otlp-cold-token-console"');
+    expect(source).toContain('data-setting-token-surface="otlp-hertzbeat-ui-token-console"');
     expect(source).toContain('data-setting-token-style-baseline={coldTokenVisual.canvasName}');
     expect(source).toContain('data-setting-token-layout-contract="full-width-admin-no-rail"');
-    expect(source).toContain('data-setting-token-header="cold-compact-header"');
+    expect(source).toContain('data-setting-token-header="hertzbeat-ui-compact-header"');
     expect(source).toContain('data-setting-token-command-row="standard-equal-buttons"');
     expect(source).toContain('data-setting-token-generate-trigger="angular-generate-token-modal"');
     expect(source).toContain('data-setting-token-generate-form="angular-generate-token-modal"');
@@ -229,8 +229,8 @@ describe('setting token page', () => {
     expect(source).toContain('generateTokenValue(apiGet');
     expect(source).toContain('buildTokenExpirationOptions(t)');
     expect(source).toContain('data-setting-token-admin-layout="full-width-admin-list"');
-    expect(source).toContain('data-setting-token-table="cold-token-table"');
-    expect(source).toContain('data-setting-token-strip-style="cold-inline-counts"');
+    expect(source).toContain('data-setting-token-table="hertzbeat-ui-token-table"');
+    expect(source).toContain('data-setting-token-strip-style="hertzbeat-ui-inline-counts"');
     expect(source).toContain('SettingsConsoleTitle');
     expect(source).not.toContain('data-setting-token-summary-rail');
     expect(source).not.toContain('angular-token-console');
@@ -265,7 +265,7 @@ describe('setting token page', () => {
       const html = renderToStaticMarkup(<SettingTokenPage />);
       const t = createTranslatorMock({ locale: 'zh-CN' });
 
-      expect(html).toContain('data-setting-token-table="cold-token-table"');
+      expect(html).toContain('data-setting-token-table="hertzbeat-ui-token-table"');
       expect(html).toContain(t('common.none'));
       expect(html).toContain(t('settings.token.expire.never'));
       expect(html).not.toContain('<td class="border-b border-r border-[#2b3039] bg-[#0b0c0e] px-3 py-3 text-[#d0d5dd] last:border-r-0">-</td>');

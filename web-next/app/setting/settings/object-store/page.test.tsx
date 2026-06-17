@@ -95,17 +95,17 @@ describe('setting object store page', () => {
 
     expect(html).toContain('data-client-workbench="true"');
     expect(html).toContain('data-settings-console-title="true"');
-    expect(html).toContain('data-setting-object-store-page="otlp-cold-object-store"');
+    expect(html).toContain('data-setting-object-store-page="otlp-hertzbeat-ui-object-store"');
     expect(html).toContain('data-setting-object-store-style-baseline="hertzbeat-ui-matte"');
     expect(html).toContain('data-setting-object-store-layout="full-width-settings-form"');
     expect(html).toContain('data-setting-object-store-type-change-contract="angular-reset-config-on-type-change"');
     expect(html).toContain('data-setting-object-store-provider-select-contract="angular-centered-bold-dropdown"');
-    expect(html).toContain('data-setting-object-store-form="cold-settings-form"');
+    expect(html).toContain('data-setting-object-store-form="hertzbeat-ui-settings-form"');
     expect(html).toContain('data-setting-object-store-apply-contract="angular-apply-notify"');
-    expect(html).toContain('data-setting-object-store-provider="cold-provider-select"');
+    expect(html).toContain('data-setting-object-store-provider="hertzbeat-ui-provider-select"');
     expect(html).toContain('data-setting-object-store-provider-select="angular-centered-bold-dropdown"');
     expect(html).toContain('data-setting-object-store-type-change="angular-reset-config-on-type-change"');
-    expect(html).toContain('data-setting-object-store-obs-fields="cold-obs-fields"');
+    expect(html).toContain('data-setting-object-store-obs-fields="hertzbeat-ui-obs-fields"');
     expect(html).toContain('data-setting-object-store-actions="standard-equal-buttons"');
     expect(html).toContain(t('settings.object-store'));
     expect(html).toContain('data-settings-form-owner="cold-settings-form-owner"');
@@ -144,14 +144,14 @@ describe('setting object store page', () => {
     const source = readFileSync(resolve(__dirname, 'setting-object-store-page.tsx'), 'utf8');
 
     expect(source).toContain('hzOpsCatalogVisual');
-    expect(source).toContain('data-setting-object-store-page="otlp-cold-object-store"');
+    expect(source).toContain('data-setting-object-store-page="otlp-hertzbeat-ui-object-store"');
     expect(source).toContain('data-setting-object-store-style-baseline={coldObjectStoreVisual.canvasName}');
     expect(source).toContain('data-setting-object-store-layout="full-width-settings-form"');
     expect(source).toContain('data-setting-object-store-type-change-contract="angular-reset-config-on-type-change"');
     expect(source).toContain('data-setting-object-store-provider-select-contract="angular-centered-bold-dropdown"');
-    expect(source).toContain('data-setting-object-store-form="cold-settings-form"');
+    expect(source).toContain('data-setting-object-store-form="hertzbeat-ui-settings-form"');
     expect(source).toContain('data-setting-object-store-apply-contract="angular-apply-notify"');
-    expect(source).toContain('data-setting-object-store-provider="cold-provider-select"');
+    expect(source).toContain('data-setting-object-store-provider="hertzbeat-ui-provider-select"');
     expect(source).toContain('data-setting-object-store-provider-select="angular-centered-bold-dropdown"');
     expect(source).toContain('data-setting-object-store-type-change="angular-reset-config-on-type-change"');
     expect(source).toContain('updateObjectStoreType(prev || data.config || {}, e.target.value)');

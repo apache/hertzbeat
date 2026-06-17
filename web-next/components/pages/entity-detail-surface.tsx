@@ -546,7 +546,7 @@ export function EntityDetailSurface({ detail, routeContext, actionError, isPendi
               copy={translateEntityDetail('entities.detail.panel.relationships.copy')}
             >
               <div data-entity-detail-relationships-panel="upstream-downstream">
-                <RowStack rows={buildRelationshipRows(detail, translateEntityDetail)} />
+                <RowStack rows={buildRelationshipRows(detail, routeContext || 'last-1h', translateEntityDetail)} />
               </div>
             </DetailPanel>
 

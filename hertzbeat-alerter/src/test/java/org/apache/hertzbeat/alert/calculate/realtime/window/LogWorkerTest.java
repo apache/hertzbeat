@@ -272,6 +272,23 @@ class LogWorkerTest {
     }
 
     @Test
+    void testLogExpressionCanMatchAttributeContainsAndExists() {
+        LogEntry detailedLogEntry = LogEntry.builder()
+                .body("checkout failed")
+                .resource(Map.of("service.name", "checkout", "k8s.pod.name", "checkout-7d9"))
+                .attributes(Map.of("http.route", "/checkout/{id}", "error.message", "inventory timed out"))
+                .build();
+
+        JexlExprCalculator calculator = new JexlExprCalculator();
+
+        assertTrue(calculator.execAlertExpression(
+                Map.of("log", detailedLogEntry),
+                "log.resource['service.name'] != '' && contains(log.resource['k8s.pod.name'], 'checkout') && "
+                        + "log.attributes['http.route'] != '' && contains(log.attributes['error.message'], 'INVENTORY')",
+                false));
+    }
+
+    @Test
     void testLogExpressionCanReadTraceAndSpanIds() {
         LogEntry detailedLogEntry = LogEntry.builder()
                 .traceId("trace-123")

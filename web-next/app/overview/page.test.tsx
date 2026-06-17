@@ -305,8 +305,10 @@ describe('overview page', () => {
   it('persists dashboard panel drafts as bounded local snapshots', async () => {
     const {
       DASHBOARD_PANEL_DRAFT_STORAGE_KEY,
+      createSignalDashboardPanelDraftFromOverviewIntent,
       readSavedDashboardPanelDrafts,
-      saveDashboardPanelDraft
+      saveDashboardPanelDraft,
+      signalDashboardPanelDraftToSavedDraft
     } = await import('./overview-page');
     const storage = {
       value: '',
@@ -356,6 +358,42 @@ describe('overview page', () => {
       createdAt: index
     }))]);
     expect(readSavedDashboardPanelDrafts(storage)).toHaveLength(6);
+
+    expect(createSignalDashboardPanelDraftFromOverviewIntent(draft)).toEqual(expect.objectContaining({
+      signal: 'logs',
+      title: 'Checkout errors',
+      description: 'search=checkout failed',
+      visualization: 'table',
+      route: '/log/manage?serviceName=checkout&returnTo=%2Foverview',
+      querySnapshot: '/log/manage?serviceName=checkout&returnTo=%2Foverview'
+    }));
+
+    expect(signalDashboardPanelDraftToSavedDraft({
+      id: 7,
+      signal: 'traces',
+      draftKey: 'traces-panel-checkout',
+      title: 'Checkout trace latency',
+      description: 'Trace latency panel',
+      visualization: 'trace',
+      route: '/trace/manage?serviceName=checkout&timeRange=last-1h&panelQuery=duration%3E1s&panelQueryType=traces',
+      payload: JSON.stringify({ createdAt: 1713200001000 }),
+      createTime: '2026-06-06T10:00:00'
+    })).toEqual(expect.objectContaining({
+      id: 'traces:traces-panel-checkout',
+      createdAt: new Date('2026-06-06T10:00:00').getTime(),
+      signal: 'traces',
+      signalLabelKey: 'dashboard.add-panel.signal.traces',
+      panelTitle: 'Checkout trace latency',
+      explorerHref: '/trace/manage?serviceName=checkout&timeRange=last-1h&panelQuery=duration%3E1s&panelQueryType=traces',
+      panelQuery: 'duration>1s',
+      panelQueryType: 'traces',
+      serverDraftKey: 'traces-panel-checkout',
+      persistence: 'server',
+      context: expect.objectContaining({
+        serviceName: 'checkout',
+        timeRange: 'last-1h'
+      })
+    }));
   });
 
   it('keeps overview remounts on a short settled cache window without bypassing refresh keys', () => {

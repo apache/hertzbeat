@@ -8,7 +8,7 @@ export default async function MonitorsRoutePage({
   searchParams
 }: {
   searchParams?: Promise<MonitorManageSearchParams>;
-} = {}) {
+}) {
   const resolvedSearchParams = await searchParams;
   const routeState = readMonitorManageRouteState(resolvedSearchParams);
 

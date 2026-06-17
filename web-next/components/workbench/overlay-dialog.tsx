@@ -7,6 +7,10 @@ import { cn } from '../../lib/utils';
 
 const DEFAULT_OVERLAY_DIALOG_CLOSE_LABEL = SUPPLEMENTAL_MESSAGES['en-US']?.['common.dialog.close'] ?? 'common.dialog.close';
 
+type OverlayDialogDataAttributes = {
+  [key: `data-${string}`]: string | number | boolean | undefined;
+};
+
 type OverlayDialogProps = {
   open: boolean;
   title: React.ReactNode;
@@ -20,7 +24,7 @@ type OverlayDialogProps = {
   placement?: 'center' | 'right';
   closeLabel?: string;
   maskClosable?: boolean;
-  overlayProps?: Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'className' | 'onClick' | 'title'>;
+  overlayProps?: Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'className' | 'onClick' | 'title'> & OverlayDialogDataAttributes;
 };
 
 export function OverlayDialog({

@@ -51,7 +51,8 @@ import {
   buildHzTopologyG6RenderWindow,
   getHzTopologyG6NodeIcon,
   type HzTopologyG6GraphInput,
-  type HzTopologyG6HoverAnchor
+  type HzTopologyG6HoverAnchor,
+  type HzTopologyG6NodeIconKind
 } from '@hertzbeat/ui/topology-g6';
 import { useI18n } from '../../components/providers/i18n-provider';
 import { api } from '../../lib/api-facade';
@@ -78,6 +79,7 @@ import {
 
 type TopologyLocalSelectionSource = 'none' | 'node-click' | 'edge-click' | 'table-row-click';
 type TopologyLayoutMode = 'layered-service' | 'force' | 'grid-table';
+type TopologyCompanionJumpActiveId = 'current-node' | 'edge-detail' | 'edge-red' | 'legend' | 'timeline' | 'view-mode';
 type TopologyApiLoadError = {
   status?: number;
   code?: number;
@@ -101,7 +103,8 @@ function topologyEdgeMatchesCanvasView(edge: TopologyServiceEdge, viewMode: Topo
     edge.relationshipType === 'template-dependency' ||
     edge.relationshipType === 'k8s-ownership' ||
     edge.relationshipType === 'database-connection' ||
-    edge.relationshipType === 'middleware-connection'
+    edge.relationshipType === 'middleware-connection' ||
+    edge.relationshipType === 'resource-ownership'
   );
 }
 
@@ -263,9 +266,9 @@ function topologyMetricTone(edge: TopologyServiceEdge): HzStatusTone {
 }
 
 function topologyNodeHealthTone(node: TopologyServiceNode): HzStatusTone {
-  if (node.health === 'critical' || node.tone === 'red') return 'critical';
-  if (node.health === 'warning' || node.tone === 'orange') return 'warning';
-  if (node.health === 'healthy' || node.tone === 'green') return 'success';
+  if (node.health === 'critical' || node.tone === 'danger') return 'critical';
+  if (node.health === 'warning' || node.tone === 'warning') return 'warning';
+  if (node.health === 'healthy' || node.tone === 'success') return 'success';
   return 'neutral';
 }
 
@@ -1351,7 +1354,9 @@ export default function TopologyPage({
   const topologyShouldShowCompanionRail = Boolean(primaryNode || topologyDetailEdge);
   const topologyWorkbenchLayout = topologyShouldShowCompanionRail ? 'canvas-companion' : 'canvas-only';
   const topologyCompanionRailVisibility = topologyShouldShowCompanionRail ? 'visible-side-rail' : 'hidden-from-layout';
-  const topologyCompanionJumpActiveId = topologyDetailEdge ? 'edge-detail' : primaryNode ? 'current-node' : 'view-mode';
+  const topologyCompanionJumpActiveId = (
+    topologyDetailEdge ? 'edge-detail' : primaryNode ? 'current-node' : 'view-mode'
+  ) as TopologyCompanionJumpActiveId;
   const topologyCompanionJumpActiveResetKey = [
     topologyCompanionJumpActiveId,
     primaryNode?.id ?? 'none',
@@ -1490,9 +1495,9 @@ export default function TopologyPage({
       const visibleNodeKinds = new Set(
         topologyG6Graph.nodes
           .map(node => getHzTopologyG6NodeIcon(node.entityType).kind)
-          .filter(kind => kind !== 'unknown')
+          .filter((kind): kind is Exclude<HzTopologyG6NodeIconKind, 'unknown'> => kind !== 'unknown')
       );
-      return HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(icon => visibleNodeKinds.has(icon.kind)).map(icon => ({
+      return HZ_TOPOLOGY_G6_NODE_ICON_CATALOG.filter(icon => icon.kind !== 'unknown' && visibleNodeKinds.has(icon.kind)).map(icon => ({
         id: `node-type-${icon.kind}`,
         label: t(`topology.legend.node-type.${icon.kind}`),
         iconSrc: icon.iconSrc,
