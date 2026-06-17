@@ -1224,6 +1224,7 @@
   "bulletin.help.link": "https://hertzbeat.apache.org/docs/help/bulletin",
   "bulletin.monitor.metrics": "Métricas do Monitor",
   "bulletin.monitor.name": "Nome do Monitor",
+  "bulletin.monitor.name.placeholder": "Pesquisar por nome / rótulo / valor",
   "bulletin.monitor.type": "Tipo de Monitor",
   "bulletin.name": "Nome do Boletim",
   "bulletin.name.placeholder": "Digite o nome do boletim",
