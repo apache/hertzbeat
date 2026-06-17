@@ -181,6 +181,8 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setDefaultInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
+        appDefine.setScheduleType(monitor.getScheduleType());
+        appDefine.setCronExpression(monitor.getCronExpression());
 
         String instance = monitor.getInstance();
         // The port field may be null
@@ -780,6 +782,8 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
+                appDefine.setScheduleType(monitor.getScheduleType());
+                appDefine.setCronExpression(monitor.getCronExpression());
                 Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
                         CommonConstants.LABEL_INSTANCE, monitor.getInstance());
                 appDefine.setMetadata(metadata);
