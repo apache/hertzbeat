@@ -142,7 +142,7 @@
 <div class="monitor-card-list">
   <div class="monitor-list-header" *ngIf="monitors?.length">
     <div class="monitor-header-actions">
-      <label nz-checkbox [(ngModel)]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
+      <label nz-checkbox [ngModel]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
       <nz-pagination
         [(nzPageIndex)]="pageIndex"
         [nzPageSize]="pageSize"
