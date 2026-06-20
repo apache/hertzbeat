@@ -636,6 +636,7 @@
   "monitor.export": "Exportar monitor",
   "monitor.selected-count": "{{count}} selecionado(s)",
   "monitor.clear-selection": "Limpar",
+  "monitor.select-current-page": "Selecionar esta página",
   "monitor.export.switch-type": "Selecione o formato do arquivo de exportação!",
   "monitor.export.use-type": "Exportar monitor no formato {{type}}",
   "monitor.grafana.enabled.label": "Habilitar Grafana",

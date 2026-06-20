@@ -142,7 +142,9 @@
 <div class="monitor-card-list">
   <div class="monitor-list-header" *ngIf="monitors?.length">
     <div class="monitor-header-actions">
-      <label nz-checkbox [ngModel]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
+      <label nz-checkbox [ngModel]="checkedAll" (ngModelChange)="onAllChecked($event)">
+        {{ 'monitor.select-current-page' | i18n }}
+      </label>
       <ng-container *ngIf="checkedMonitorIds.size > 0">
         <span class="monitor-selected-count">{{ 'monitor.selected-count' | i18n : { count: checkedMonitorIds.size } }}</span>
         <button nz-button nzType="link" nzSize="small" (click)="clearSelection()">
