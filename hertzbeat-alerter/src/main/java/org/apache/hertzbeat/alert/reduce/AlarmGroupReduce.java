@@ -293,7 +293,6 @@ public class AlarmGroupReduce implements DisposableBean {
             AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
             long repeatInterval = ruleConfig.getRepeatInterval() != null
                     ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
-
             // Skip if within repeat interval. The throttle only suppresses repeated firing
             // notifications; it must never swallow a pending resolved transition, so we still
             // send when the batch carries a member that has just recovered.
@@ -402,7 +401,7 @@ public class AlarmGroupReduce implements DisposableBean {
                 .anyMatch(alert -> CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())) 
                 ? CommonConstants.ALERT_STATUS_FIRING : CommonConstants.ALERT_STATUS_RESOLVED;
     }
-    
+
     @Data
     private static class GroupAlertCache {
         private String groupDefineName;
