@@ -19,11 +19,13 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.junit.jupiter.api.BeforeEach;
@@ -120,6 +122,50 @@ class DbAlertStoreHandlerImplTest {
         verify(singleAlertDao).save(any(SingleAlert.class));
         verify(groupAlertDao).save(groupAlert);
         assertEquals(1L, groupAlert.getId());
+    }
+
+    @Test
+    public void storeResolvedAlertKeepsGroupFiringWhenOtherGroupAlertsStillFire() {
+        String groupKey = "instance:host1";
+        String resolvedFingerprint = "cpu";
+        String firingFingerprint = "memory";
+        groupAlert.setGroupKey(groupKey);
+        groupAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
+        singleAlert.setFingerprint(resolvedFingerprint);
+        singleAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
+
+        GroupAlert existingGroup = new GroupAlert();
+        existingGroup.setId(1L);
+        existingGroup.setAlertFingerprints(List.of(resolvedFingerprint, firingFingerprint));
+        when(groupAlertDao.findByGroupKey(groupKey)).thenReturn(existingGroup);
+
+        SingleAlert previousFiringAlert = new SingleAlert();
+        previousFiringAlert.setId(1L);
+        previousFiringAlert.setFingerprint(resolvedFingerprint);
+        previousFiringAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+        previousFiringAlert.setStartAt(1000L);
+        previousFiringAlert.setActiveAt(2000L);
+        previousFiringAlert.setTriggerTimes(3);
+        when(singleAlertDao.findByFingerprint(resolvedFingerprint)).thenReturn(previousFiringAlert);
+
+        SingleAlert savedResolvedAlert = new SingleAlert();
+        savedResolvedAlert.setId(1L);
+        savedResolvedAlert.setFingerprint(resolvedFingerprint);
+        savedResolvedAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
+        when(singleAlertDao.save(any(SingleAlert.class))).thenReturn(savedResolvedAlert);
+
+        SingleAlert existingFiringAlert = new SingleAlert();
+        existingFiringAlert.setFingerprint(firingFingerprint);
+        existingFiringAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+        when(singleAlertDao.findSingleAlertsByFingerprintIn(anyList()))
+                .thenReturn(List.of(savedResolvedAlert, existingFiringAlert));
+
+        when(groupAlertDao.save(any(GroupAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        GroupAlert savedGroupAlert = dbAlertStoreHandler.store(groupAlert);
+
+        assertEquals(CommonConstants.ALERT_STATUS_FIRING, savedGroupAlert.getStatus());
+        assertEquals(CommonConstants.ALERT_STATUS_FIRING, groupAlert.getStatus());
     }
 
 }

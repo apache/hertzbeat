@@ -127,9 +127,26 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             }
             // Save alert group
             groupAlert.setAlertFingerprints(alertFingerprints.stream().toList());
+            refreshGroupStatus(groupAlert);
             GroupAlert savedGroupAlert = groupAlertDao.save(groupAlert);
             savedGroupAlert.setAlerts(groupAlert.getAlerts());
             return savedGroupAlert;
         }
+    }
+
+    private void refreshGroupStatus(GroupAlert groupAlert) {
+        List<String> alertFingerprints = groupAlert.getAlertFingerprints();
+        if (alertFingerprints == null || alertFingerprints.isEmpty()) {
+            return;
+        }
+        List<SingleAlert> alerts = singleAlertDao.findSingleAlertsByFingerprintIn(alertFingerprints);
+        if (alerts == null) {
+            return;
+        }
+        boolean hasFiringAlert = alerts.stream()
+                .anyMatch(alert -> CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus()));
+        groupAlert.setStatus(hasFiringAlert
+                ? CommonConstants.ALERT_STATUS_FIRING
+                : CommonConstants.ALERT_STATUS_RESOLVED);
     }
 }
