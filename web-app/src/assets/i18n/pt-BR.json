@@ -634,6 +634,8 @@
   "monitor.edit.success": "Monitor modificado com sucesso",
   "monitor.enable": "Retomar monitoramento",
   "monitor.export": "Exportar monitor",
+  "monitor.selected-count": "{{count}} selecionado(s)",
+  "monitor.clear-selection": "Limpar",
   "monitor.export.switch-type": "Selecione o formato do arquivo de exportação!",
   "monitor.export.use-type": "Exportar monitor no formato {{type}}",
   "monitor.grafana.enabled.label": "Habilitar Grafana",

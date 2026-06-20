@@ -822,6 +822,8 @@
   "monitor.edit.success": "モニターの更新に成功しました",
   "monitor.enable": "モニターを再開",
   "monitor.export": "モニターをエクスポート",
+  "monitor.selected-count": "{{count}} 件選択中",
+  "monitor.clear-selection": "クリア",
   "monitor.export.switch-type": "エクスポートファイル形式を選択してください！",
   "monitor.export.use-type": "{{type}}ファイル形式でモニターをエクスポート",
   "monitor.grafana.enabled.label": "Grafanaを有効化",

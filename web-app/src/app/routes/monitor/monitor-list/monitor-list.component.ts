@@ -557,6 +557,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Clear the whole cross-page selection in one click, so users aren't forced to page back to deselect (#4164).
+  clearSelection() {
+    this.checkedMonitorIds.clear();
+  }
+
   onItemChecked(monitorId: number, checked: boolean) {
     if (checked) {
       this.checkedMonitorIds.add(monitorId);

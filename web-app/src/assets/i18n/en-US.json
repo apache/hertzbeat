@@ -863,6 +863,8 @@
   "monitor.edit.success": "Update Monitor Success",
   "monitor.enable": "Enable",
   "monitor.export": "Export Selected",
+  "monitor.selected-count": "{{count}} selected",
+  "monitor.clear-selection": "Clear",
   "monitor.export-all": "Export All",
   "monitor.export.switch-type": "Please select the export file format",
   "monitor.export.use-type": "Export selected monitors in {{type}} format",
