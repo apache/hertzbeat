@@ -149,13 +149,6 @@
           {{ 'monitor.clear-selection' | i18n }}
         </button>
       </ng-container>
-      <nz-pagination
-        [(nzPageIndex)]="pageIndex"
-        [nzPageSize]="pageSize"
-        [nzTotal]="total"
-        (nzPageIndexChange)="onPageIndexChange($event)"
-        nzSimple
-      ></nz-pagination>
     </div>
   </div>
 
@@ -299,6 +292,16 @@
       </div>
     </div>
   </nz-spin>
+
+  <div class="monitor-list-footer" *ngIf="monitors?.length">
+    <nz-pagination
+      [(nzPageIndex)]="pageIndex"
+      [nzPageSize]="pageSize"
+      [nzTotal]="total"
+      [nzShowTotal]="rangeTemplate"
+      (nzPageIndexChange)="onPageIndexChange($event)"
+    ></nz-pagination>
+  </div>
 </div>
 
 <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
