@@ -114,13 +114,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       clearInterval(this.intervalId);
     }
 
-    if (this.previousMonitors) {
-      this.previousMonitors.forEach(monitor => {
-        if (monitor._graceTimer) {
-          clearTimeout(monitor._graceTimer);
-        }
-      });
-    }
+    this.clearGraceTimers();
   }
 
   onAppChanged(): void {
@@ -160,7 +154,8 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   sync() {
-    this.loadMonitorTable(this.currentSortField, this.currentSortOrder);
+    // Reconcile only on auto-refresh so externally removed monitors fade out instead of blinking away.
+    this.loadMonitorTable(this.currentSortField, this.currentSortOrder, true);
   }
 
   getAppIconName(app: string | undefined): string {
@@ -178,7 +173,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     return icon;
   }
 
-  loadMonitorTable(sortField?: string | null, sortOrder?: string | null) {
+  loadMonitorTable(sortField?: string | null, sortOrder?: string | null, reconcile: boolean = false) {
     this.tableLoading = true;
     let monitorInit$ = this.monitorSvc
       .searchMonitors(this.app, this.labels, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize, sortField, sortOrder)
@@ -189,7 +184,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.checkedMonitorIds.clear();
           if (message.code === 0) {
             let page = message.data;
-            this.monitors = this.reconcileMonitorStates(page.content);
+            this.monitors = reconcile ? this.reconcileMonitorStates(page.content) : this.resetMonitorStates(page.content);
             this.pageIndex = page.number + 1;
             this.total = page.totalElements;
           } else {
@@ -214,7 +209,8 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.checkedMonitorIds.clear();
           if (message.code === 0) {
             let page = message.data;
-            this.monitors = this.reconcileMonitorStates(page.content);
+            // Pagination changes the result set, so reconcile here would flag the previous page as "disappeared" (#4156).
+            this.monitors = this.resetMonitorStates(page.content);
             this.pageIndex = page.number + 1;
             this.total = page.totalElements;
           } else {
@@ -663,6 +659,25 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         }
       }
     );
+  }
+
+  // Replace the list as-is for result-set swaps (load, pagination, filter, post-CRUD reload), without keeping stale rows.
+  private resetMonitorStates(newMonitors: Monitor[]): Monitor[] {
+    this.clearGraceTimers();
+    const processedMonitors = newMonitors.map(monitor => ({
+      ...monitor,
+      _displayStatus: 'ACTIVE' as const
+    }));
+    this.previousMonitors = [...processedMonitors];
+    return processedMonitors;
+  }
+
+  private clearGraceTimers(): void {
+    this.previousMonitors?.forEach(monitor => {
+      if (monitor._graceTimer) {
+        clearTimeout(monitor._graceTimer);
+      }
+    });
   }
 
   private reconcileMonitorStates(newMonitors: Monitor[]): Monitor[] {

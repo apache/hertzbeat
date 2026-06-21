@@ -393,6 +393,7 @@
   "bulletin.help.link": "https://hertzbeat.apache.org/docs/help/bulletin",
   "bulletin.monitor.metrics": "モニターメトリクス",
   "bulletin.monitor.name": "モニタータスク名",
+  "bulletin.monitor.name.placeholder": "名前 / ラベル / 値で検索",
   "bulletin.monitor.type": "モニタータイプ",
   "bulletin.name": "速報名",
   "bulletin.name.placeholder": "カスタム速報名を入力してください",

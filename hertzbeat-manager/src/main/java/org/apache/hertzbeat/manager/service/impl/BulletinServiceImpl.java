@@ -78,7 +78,8 @@ public class BulletinServiceImpl implements BulletinService {
         if (bulletin.getMonitorIds() == null || bulletin.getMonitorIds().isEmpty()) {
             throw new IllegalArgumentException("Bulletin monitorIds cannot be null or empty");
         }
-        if (bulletinDao.countByName(bulletin.getName()) > 0) {
+        Bulletin existBulletin = bulletinDao.findByName(bulletin.getName());
+        if (existBulletin != null && !existBulletin.getId().equals(bulletin.getId())) {
             throw new IllegalArgumentException("Bulletin name duplicated");
         }
     }
