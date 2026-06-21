@@ -86,22 +86,6 @@
   position: relative;
 }
 
-.monitor-list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding: 8px 0;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.monitor-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .monitor-selected-count {
   color: rgba(0, 0, 0, 0.45);
   font-size: 12px;
@@ -109,11 +93,20 @@
 
 .monitor-list-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   margin-top: 16px;
   padding: 8px 0;
   flex-wrap: wrap;
+  gap: 8px;
+}
+
+.monitor-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  // Align the select-all checkbox with the per-row checkboxes, which sit at the card's 12px padding.
+  padding-left: 12px;
 }
 
 .monitor-card-list-content {
