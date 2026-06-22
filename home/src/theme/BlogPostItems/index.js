@@ -29,7 +29,7 @@ import './styles.css'
 
 
 // _________________________________________________________________
-// REFACTORED BLOG SITE
+// REFACTORED BLOG SITE - Serafin O. Gargantiel III.
 // _________________________________________________________________
 
 // Renders a blog card out of data from a blog post
