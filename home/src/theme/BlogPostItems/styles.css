@@ -1,10 +1,16 @@
+/* Blog Grid Styling */
+/* _______________________________________________________ */
 .blog-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   padding: 2rem 0;
 }
+/* _______________________________________________________ */
 
+
+/* Blog Card Styling */
+/* _______________________________________________________ */
 .blog-card {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -12,24 +18,20 @@
   transition: box-shadow 0.2s ease;
   background: #fff;
 }
-
 .blog-card:hover {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
-
 .blog-card__content {
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
-
 .blog-card__tags {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
-
 .blog-card__tag {
   background: #eff6ff;
   color: #3b82f6;
@@ -38,7 +40,6 @@
   border-radius: 999px;
   font-weight: 500;
 }
-
 .blog-card__title {
   font-size: 1.1rem;
   font-weight: 700;
@@ -46,11 +47,9 @@
   text-decoration: none;
   line-height: 1.4;
 }
-
 .blog-card__title:hover {
   color: #3b82f6;
 }
-
 .blog-card__description {
   font-size: 0.9rem;
   color: #6b7280;
@@ -60,21 +59,24 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
 .blog-card__footer {
   font-size: 0.8rem;
   color: #9ca3af;
   margin-top: auto;
 }
+/* _______________________________________________________ */
 
+
+/* Mobile Friendly Styling */
+/* _______________________________________________________ */
 @media (max-width: 996px) {
   .blog-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
 @media (max-width: 600px) {
   .blog-grid {
     grid-template-columns: 1fr;
   }
 }
+/* _______________________________________________________ */
