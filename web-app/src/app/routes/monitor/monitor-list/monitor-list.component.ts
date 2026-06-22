@@ -53,7 +53,8 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   app!: string | undefined;
   labels!: string | undefined;
   pageIndex: number = 1;
-  pageSize: number = 8;
+  pageSize: number = 10;
+  pageSizeOptions: number[] = [10, 20, 50];
   total: number = 0;
   monitors!: Monitor[];
   tableLoading: boolean = true;
@@ -98,7 +99,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         this.app = undefined;
       }
       this.pageIndex = 1;
-      this.pageSize = 8;
+      this.pageSize = 10;
       this.checkedMonitorIds = new Set<number>();
       this.tableLoading = true;
       this.loadMonitorTable();
@@ -578,6 +579,12 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   onPageIndexChange(pageIndex: number) {
     this.pageIndex = pageIndex;
+    this.changeMonitorTable(this.currentSortField, this.currentSortOrder);
+  }
+
+  onPageSizeChange(pageSize: number) {
+    this.pageSize = pageSize;
+    this.pageIndex = 1;
     this.changeMonitorTable(this.currentSortField, this.currentSortOrder);
   }
 

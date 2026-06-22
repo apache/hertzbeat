@@ -298,7 +298,10 @@
       [nzPageSize]="pageSize"
       [nzTotal]="total"
       [nzShowTotal]="rangeTemplate"
+      nzShowSizeChanger
+      [nzPageSizeOptions]="pageSizeOptions"
       (nzPageIndexChange)="onPageIndexChange($event)"
+      (nzPageSizeChange)="onPageSizeChange($event)"
     ></nz-pagination>
   </div>
 </div>
