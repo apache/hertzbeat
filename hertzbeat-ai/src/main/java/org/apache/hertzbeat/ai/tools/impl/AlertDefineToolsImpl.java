@@ -53,10 +53,9 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
 
     @Override
     @Tool(name = "create_alert_rule", description = """
-            HertzBeat: ALERT RULE means when to alert a user
-            THESE ARE ALERT RULES WITH THRESHOLD VALUES. USERS CAN SPECIFY THE THRESHOLD VALUES FOR EXAMPLE,
-            IF THE USER SAYS "ALERT ME WHEN MY COST EXCEEDS 700, THE EXPRESSION SHOULD BE 'cost > 700' NOT 'cost < 700'.
-            APPLY THE SAME LOGIC FOR LESS THAN OPERATOR.
+            HertzBeat: Create an alert rule that defines when HertzBeat should alert a user.
+            Preserve the user's threshold direction: "exceeds", "greater than", or "over" maps to `>`;
+            "less than", "below", or "under" maps to `<`.
             Create a HertzBeat alert rule based on app hierarchy structure and user requirements.
             It is important to first understand the hierarchy of apps, metrics, and field conditions
             Each app has its own metrics and each metric has its own field conditions.

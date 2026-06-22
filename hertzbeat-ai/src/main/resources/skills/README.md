@@ -29,7 +29,7 @@ output:
 steps:
   - id: get_data
     type: tool
-    tool: queryMonitors
+    tool: query_monitors
     args:
       status: 9
       
