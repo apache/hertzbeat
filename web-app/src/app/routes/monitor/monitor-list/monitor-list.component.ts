@@ -53,7 +53,8 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   app!: string | undefined;
   labels!: string | undefined;
   pageIndex: number = 1;
-  pageSize: number = 8;
+  pageSize: number = 10;
+  pageSizeOptions: number[] = [10, 20, 50];
   total: number = 0;
   monitors!: Monitor[];
   tableLoading: boolean = true;
@@ -98,7 +99,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         this.app = undefined;
       }
       this.pageIndex = 1;
-      this.pageSize = 8;
+      this.pageSize = 10;
       this.checkedMonitorIds = new Set<number>();
       this.tableLoading = true;
       this.loadMonitorTable();
@@ -134,7 +135,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         message => {
           filter$.unsubscribe();
           this.tableLoading = false;
-          this.checkedAll = false;
+          // Filtering changes the result set, so the previous selection no longer applies.
           this.checkedMonitorIds.clear();
           if (message.code === 0) {
             let page = message.data;
@@ -180,8 +181,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       .subscribe(
         message => {
           this.tableLoading = false;
-          this.checkedAll = false;
-          this.checkedMonitorIds.clear();
+          // Keep the selection across reloads (pagination, auto-refresh, post-CRUD) so multi-page checks persist (#4164).
           if (message.code === 0) {
             let page = message.data;
             this.monitors = reconcile ? this.reconcileMonitorStates(page.content) : this.resetMonitorStates(page.content);
@@ -205,8 +205,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       .subscribe(
         message => {
           this.tableLoading = false;
-          this.checkedAll = false;
-          this.checkedMonitorIds.clear();
+          // Keep the selection across pagination so checks made on other pages persist (#4164).
           if (message.code === 0) {
             let page = message.data;
             // Pagination changes the result set, so reconcile here would flag the previous page as "disappeared" (#4156).
@@ -305,6 +304,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         deleteMonitors$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+          monitors.forEach(id => this.checkedMonitorIds.delete(id));
           this.updatePageIndex(monitors.size);
           this.loadMonitorTable();
         } else {
@@ -450,6 +450,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         cancelManage$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.cancel-success'), '');
+          monitors.forEach(id => this.checkedMonitorIds.delete(id));
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
@@ -511,6 +512,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         enableManage$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.enable-success'), '');
+          monitors.forEach(id => this.checkedMonitorIds.delete(id));
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
@@ -537,14 +539,28 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   // begin: List multiple choice paging
-  checkedAll: boolean = false;
+  // Reflects only the current page: checked when every selectable monitor on this page is selected.
+  get checkedAll(): boolean {
+    const selectable = this.monitors?.filter(monitor => !this.isMonitorDisabled(monitor)) ?? [];
+    return selectable.length > 0 && selectable.every(monitor => this.checkedMonitorIds.has(monitor.id));
+  }
 
   onAllChecked(checked: boolean) {
-    if (checked) {
-      this.monitors.forEach(monitor => this.checkedMonitorIds.add(monitor.id));
-    } else {
-      this.checkedMonitorIds.clear();
-    }
+    // Only toggle the current page's selectable monitors, leaving selections on other pages untouched (#4164).
+    this.monitors
+      ?.filter(monitor => !this.isMonitorDisabled(monitor))
+      .forEach(monitor => {
+        if (checked) {
+          this.checkedMonitorIds.add(monitor.id);
+        } else {
+          this.checkedMonitorIds.delete(monitor.id);
+        }
+      });
+  }
+
+  // Clear the whole cross-page selection in one click, so users aren't forced to page back to deselect (#4164).
+  clearSelection() {
+    this.checkedMonitorIds.clear();
   }
 
   onItemChecked(monitorId: number, checked: boolean) {
@@ -563,6 +579,12 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   onPageIndexChange(pageIndex: number) {
     this.pageIndex = pageIndex;
+    this.changeMonitorTable(this.currentSortField, this.currentSortOrder);
+  }
+
+  onPageSizeChange(pageSize: number) {
+    this.pageSize = pageSize;
+    this.pageIndex = 1;
     this.changeMonitorTable(this.currentSortField, this.currentSortOrder);
   }
 
