@@ -27,7 +27,7 @@ import { features } from '../constants'
 // _____________________________________________________________________
 
 
-// 
+//Home() - A refactored UI blog design for the site's home page
 function Home() {
 
   const context = useDocusaurusContext() //Access site's global configuration (docusarus.config.js)
@@ -173,5 +173,5 @@ function autoRedirect() {
       window.location.href = '/zh-cn'
     }
   }
-  
+
 }
