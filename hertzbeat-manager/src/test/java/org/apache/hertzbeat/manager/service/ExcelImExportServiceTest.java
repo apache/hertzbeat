@@ -171,4 +171,46 @@ class ExcelImExportServiceTest {
         }
     }
 
+    @Test
+    public void testWriteThenParsePreservesAllFields() throws IOException {
+
+        AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
+        monitorDTO.setName("Monitor1");
+        monitorDTO.setApp("linux");
+        monitorDTO.setHost("Host1");
+        monitorDTO.setIntervals(10);
+        monitorDTO.setStatus((byte) 1);
+        monitorDTO.setLabels(Map.of("env", "prod"));
+        monitorDTO.setAnnotations(Map.of("owner", "ops"));
+        monitorDTO.setScheduleType("cron");
+        monitorDTO.setCronExpression("0 0/5 * * * ?");
+
+        AbstractImExportServiceImpl.ParamDTO paramDTO = new AbstractImExportServiceImpl.ParamDTO();
+        paramDTO.setField("host");
+        paramDTO.setValue("192.168.1.1");
+        paramDTO.setType((byte) 1);
+
+        AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO = new AbstractImExportServiceImpl.ExportMonitorDTO();
+        exportMonitorDTO.setMonitor(monitorDTO);
+        exportMonitorDTO.setParams(List.of(paramDTO));
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        excelImExportService.writeOs(List.of(exportMonitorDTO), bos);
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> result = excelImExportService.parseImport(bis);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        AbstractImExportServiceImpl.MonitorDTO parsed = result.get(0).getMonitor();
+        assertEquals("prod", parsed.getLabels().get("env"));
+        assertEquals("ops", parsed.getAnnotations().get("owner"));
+        assertEquals("cron", parsed.getScheduleType());
+        assertEquals("0 0/5 * * * ?", parsed.getCronExpression());
+        // verify the shifted param columns still round-trip correctly
+        assertEquals(1, result.get(0).getParams().size());
+        assertEquals("host", result.get(0).getParams().get(0).getField());
+        assertEquals("192.168.1.1", result.get(0).getParams().get(0).getValue());
+    }
+
 }

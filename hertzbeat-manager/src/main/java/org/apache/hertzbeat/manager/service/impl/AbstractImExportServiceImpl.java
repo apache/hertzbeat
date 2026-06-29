@@ -215,6 +215,12 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         private String description;
         @Excel(name = "Labels")
         private Map<String, String> labels;
+        @Excel(name = "Annotations")
+        private Map<String, String> annotations;
+        @Excel(name = "ScheduleType")
+        private String scheduleType;
+        @Excel(name = "CronExpression")
+        private String cronExpression;
         @Excel(name = "Collector")
         private String collector;
     }
