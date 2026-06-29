@@ -1,6 +1,6 @@
 ---
-id: ssl-cert-practice  
-title: SSL 证书过期监控案例    
+id: ssl-cert-practice
+title: SSL 证书过期监控案例
 sidebar_label: SSL 证书过期监控案例
 ---
 
@@ -34,28 +34,28 @@ github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbea
 
     > 系统页面 -> 监控中心 -> 新增监控 -> 应用服务监控 -> SSL 证书 -> 新增 SSL 证书
 
-    ![HertzBeat](/img/docs/start/ssl_1.png)
+    ![HertzBeat](home/static/img/docs/start/ssl_1.png)
 
 2. 配置监控网站
 
     > 我们这里举例监控百度网站, 配置监控host域名，名称，采集间隔等。
 
-    ![HertzBeat](/img/docs/start/ssl_2.png)
+    ![HertzBeat](home/static/img/docs/start/ssl_2.png)
 
 3. 查看检测指标数据
 
     > 在监控列表可以查看任务状态，进监控详情可以查看指标数据图表等。
 
-    ![HertzBeat](/img/docs/start/ssl_3.png)
+    ![HertzBeat](home/static/img/docs/start/ssl_3.png)
 
-    ![HertzBeat](/img/docs/start/ssl_4.png)
+    ![HertzBeat](home/static/img/docs/start/ssl_4.png)
 
 4. 设置阈值(证书过期时触发)
 
-    > 系统页面 -> 告警 -> 告警阈值 -> 新增阈值 -> 新增实时阈值规则  
+    > 系统页面 -> 告警 -> 告警阈值 -> 新增阈值 -> 新增实时阈值规则
     > 配置阈值，选择SSL证书指标对象，配置告警表达式-当指标`expired`为`true`触发，即`equals(expired,"true")` , 设置告警级别通知模板信息等。
 
-    ![HertzBeat](/img/docs/start/ssl_5.png)
+    ![HertzBeat](home/static/img/docs/start/ssl_5.png)
 
     > 阈值规则还有其它功能可以配置, 比如阈值关联指定监控, 触发次数, 关联标签等等。
 
@@ -63,17 +63,17 @@ github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbea
 
     > 同理如上，选择代码阈值规则，新增配置阈值，配置告警表达式-当指标有效期时间戳 `end_timestamp`，`now()`函数为当前时间戳，若配置提前一周触发告警即：`end_timestamp <= (now()  + 604800000)` , 其中 `604800000` 为7天总时间差毫秒值。
 
-    ![HertzBeat](/img/docs/start/ssl_6.png)
+    ![HertzBeat](home/static/img/docs/start/ssl_6.png)
 
     > 最终可以在告警中心看到已触发的告警。
 
-    ![HertzBeat](/img/docs/start/ssl_7.png)
+    ![HertzBeat](home/static/img/docs/start/ssl_7.png)
 
 6. 告警通知(通过钉钉微信飞书等及时通知)
 
     > 系统页面 -> 消息通知 -> 通知媒介 -> 新增接收对象
 
-    ![HertzBeat](/img/docs/start/notice_receiver_1.png)
+    ![HertzBeat](home/static/img/docs/start/notice_receiver_1.png)
 
     钉钉微信飞书等 token 配置可以参考帮助文档
 
@@ -81,11 +81,11 @@ github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbea
 
     > 消息通知 -> 通知策略 -> 新增告警通知策略 -> 将刚才配置的接收人启用通知
 
-    ![HertzBeat](/img/docs/start/notice_policy_1.png)
+    ![HertzBeat](home/static/img/docs/start/notice_policy_1.png)
 
 7. OK 当阈值触发后我们就可以收到对应告警消息啦，如果没有配通知，也可以在告警中心查看告警信息。
 
-----  
+----
 
 ## 结束搞定
 

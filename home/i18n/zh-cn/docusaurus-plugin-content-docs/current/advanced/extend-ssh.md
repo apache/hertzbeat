@@ -1,6 +1,6 @@
 ---
-id: extend-ssh  
-title: SSH协议自定义监控  
+id: extend-ssh
+title: SSH协议自定义监控
 sidebar_label: SSH协议自定义监控
 ---
 
@@ -31,7 +31,7 @@ SHELL脚本查询回来的数据字段和我们需要的指标映射，就能获
 
 ```shell
 tombook
-14:00:15 up 72 days  
+14:00:15 up 72 days
 ```
 
 则最后采集到的指标数据一一映射为：
@@ -54,7 +54,7 @@ Mem:           7962        4065         333           1        3562        3593
 Swap:          8191          33        8158
 ```
 
-在hertzbeat中multiRow格式解析需要响应数据列名称和指标值一一映射，则对应的查询SHELL脚本为：  
+在hertzbeat中multiRow格式解析需要响应数据列名称和指标值一一映射，则对应的查询SHELL脚本为：
 `free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'`
 控制台响应为：
 
@@ -69,7 +69,7 @@ total  used  free  buff_cache  available
 
 **HertzBeat页面** -> **监控模板菜单** -> **新增监控类型** -> **配置自定义监控模板YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
-![HertzBeat](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](home/static/img/docs/advanced/extend-point-1.png)
 
 -------
 

@@ -70,7 +70,7 @@ If your monitoring workload does not depend on external JDBC drivers from `ext-l
 Before choosing it, review the trade-offs in [Native Collector Guide](native-collector).
 :::
 
-![HertzBeat](/img/docs/cluster-arch.png)
+![HertzBeat](home/static/img/docs/cluster-arch.png)
 
 1. Download installation package
 

@@ -1,6 +1,6 @@
 ---
 id: extend-http-example-token
-title: 教程二:基于HTTP协议获取TOKEN指标值，给后续采集认证使用   
+title: 教程二:基于HTTP协议获取TOKEN指标值，给后续采集认证使用
 sidebar_label: 教程二:获取TOKEN后续认证使用
 ---
 
@@ -221,13 +221,13 @@ metrics:
 }
 ```
 
-![HertzBeat](/img/docs/advanced/extend-http-example-5.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-5.png)
 
 **新增成功后我们就可以在详情页面看到我们采集的 `token`, `refreshToken`指标数据。**
 
-![HertzBeat](/img/docs/advanced/extend-http-example-6.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-6.png)
 
-![HertzBeat](/img/docs/advanced/extend-http-example-7.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-7.png)
 
 ### 将`token`作为变量参数给后面的监控指标采集使用
 
@@ -381,15 +381,15 @@ metrics:
 
 **配置完成后，再次重启 `hertzbeat` 系统，查看监控详情页面**
 
-![HertzBeat](/img/docs/advanced/extend-http-example-8.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-8.png)
 
-![HertzBeat](/img/docs/advanced/extend-http-example-9.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-9.png)
 
 ### 设置阈值告警通知
 
 > 接下来我们就可以正常设置阈值，告警触发后可以在告警中心查看，也可以新增接收人，设置告警通知等，Have Fun!!!
 
-----  
+----
 
 #### 完
 

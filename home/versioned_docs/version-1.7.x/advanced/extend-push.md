@@ -1,6 +1,6 @@
 ---
-id: extend-push 
-title: Push Style Custom Monitoring  
+id: extend-push
+title: Push Style Custom Monitoring
 sidebar_label: Push Style Custom Monitoring
 ---
 
@@ -23,4 +23,4 @@ HertzBeat DashBoard -> Service Monitor -> Push Style Monitor -> New Push Style M
 
 ### Monitor Configuration Example
 
-![HertzBeat](/img/docs/advanced/extend-push-example-1.png)
+![HertzBeat](home/static/img/docs/advanced/extend-push-example-1.png)

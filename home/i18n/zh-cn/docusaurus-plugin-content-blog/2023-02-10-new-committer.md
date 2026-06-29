@@ -1,12 +1,12 @@
 ---
-title: 恭喜 HertzBeat 又迎来了两位新晋社区 Committer   
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: 恭喜 HertzBeat 又迎来了两位新晋社区 Committer
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource]
 ---
 
-![hertzBeat](/img/blog/new-committer.png)
+![HertzBeat](home/static/img/blog/new-committer.png)
 
 ## 欢迎 HertzBeat 新晋两位 Committer
 

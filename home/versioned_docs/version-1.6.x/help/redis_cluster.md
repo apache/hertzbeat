@@ -98,7 +98,7 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
                "187b879f73c473b3cbb82ff95f668e65af46115ddaa27f3ff1a712332b981531": {
                    ...
                    "Name": "redis-slave-2",
-                   "IPv4Address": "192.168.117.6/24", 
+                   "IPv4Address": "192.168.117.6/24",
                    ...
                },
                "45e22b64c82e51857fc104436cdd6cc0c5776ad10a2e4b9d8e52e36cfb87217e": {
@@ -155,11 +155,11 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
 
    Add a redis monitor center, fill require parameters.
 
-   ![HertzBeat](/img/docs/help/redis-cluster-add.png)
+   ![HertzBeat](home/static/img/docs/help/redis-cluster-add.png)
 
    final effect.
 
-   ![HertzBeat](/img/docs/help/redis-cluster-view.png)
+   ![HertzBeat](home/static/img/docs/help/redis-cluster-view.png)
 
 ### Configuration Parameters
 

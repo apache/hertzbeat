@@ -1,13 +1,13 @@
 ---
-title: HertzBeat v1.4.0 released, cluster is coming! 
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: HertzBeat v1.4.0 released, cluster is coming!
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
-![HertzBeat](/img/home/0.png)
+![HertzBeat](home/static/img/home/0.png)
 
 ## What is HertzBeat?
 
@@ -23,7 +23,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.
 
-![HertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
@@ -42,7 +42,7 @@ The cluster version not only brings us more powerful monitoring performance, but
 * The monitoring task is self-scheduled in the collector cluster. A single collector hangs up and migrates the collection task without perceptual failure. Newly added collector nodes are automatically scheduled to share the collection pressure.
 * It is very convenient to switch between stand-alone mode and cluster mode and deploy without additional components.
 
-![HertzBeat](/img/docs/cluster-arch.png)
+![HertzBeat](home/static/img/docs/cluster-arch.png)
 
 #### Cloud Edge Collaboration
 
@@ -52,7 +52,7 @@ In the isolated network where multiple networks are not connected, in the previo
 HertzBeat provides cloud-edge collaboration capabilities. Edge collectors can be deployed on multiple isolated networks. When monitoring is added, collectors are specified. The collectors collect monitoring tasks within the isolated network, and report the collected data. The main HertzBeat service performs unified scheduling, management and display.
 This is mostly used in unified monitoring scenarios of multiple isolated data centers or cloud resources and resources under the cloud of different vendors.
 
-![HertzBeat](/img/docs/cluster-arch.png)
+![HertzBeat](home/static/img/docs/cluster-arch.png)
 
 ### Why open source cluster version?
 

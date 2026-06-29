@@ -7,7 +7,7 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-![hertzBeat](/img/blog/new-committer.png)
+![HertzBeat](home/static/img/blog/new-committer.png)
 
 > 非常荣幸能成为Apache HertzBeat的Committer
 >

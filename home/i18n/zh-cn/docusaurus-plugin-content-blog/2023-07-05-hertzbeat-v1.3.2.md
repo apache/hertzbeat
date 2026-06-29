@@ -1,15 +1,15 @@
 ---
 title: 开源实时监控 HertzBeat v1.3.2 发布, 更稳定更易用
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
 官网: hertzbeat.com | tancloud.cn
 
-![hertzBeat](/img/home/0.png)
+![HertzBeat](home/static/img/home/0.png)
 
 ## HertzBeat 介绍
 >

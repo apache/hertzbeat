@@ -1,8 +1,8 @@
 ---
-title: Monitoring Practices for DynamicTp Thread Pooling Framework with HertzBeat    
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: Monitoring Practices for DynamicTp Thread Pooling Framework with HertzBeat
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 ---
 
@@ -83,28 +83,28 @@ tags: [opensource, practice]
 
     Path: Menu -> Middleware Monitor -> DynamicTp Monitor -> Add DynamicTp Monitor
 
-    ![HertzBeat](/img/blog/monitor-dynamic-tp-1.png)
+    ![HertzBeat](home/static/img/blog/monitor-dynamic-tp-1.png)
 
 2. Configure the parameters required for monitoring DynamicTp.
 
     On the monitor page, fill in DynamicTp **service IP**, **monitoring port** (default 8080), and finally click OK to add it.
     For other parameters such as **collection interval**, **timeout**, etc., you can refer to [help](https://hertzbeat.apache.org/docs/help/dynamic_tp/) [https://hertzbeat.apache.org/docs/help/dynamic_tp/](https://hertzbeat.apache.org/docs/help/dynamic_tp/)
 
-    ![HertzBeat](/img/blog/monitor-dynamic-tp-2.png)
+    ![HertzBeat](home/static/img/blog/monitor-dynamic-tp-2.png)
 
 3. Done ✅, now we have added monitoring for DynamicTp, check the monitor list to see our additions.
 
-    ![HertzBeat](/img/blog/monitor-dynamic-tp-1.png)
+    ![HertzBeat](home/static/img/blog/monitor-dynamic-tp-1.png)
 
 4. Click **Options**->**Monitor Details icon** in the Monitor list to view the real-time monitoring metrics of the DynamicTp thread pool.
 
-    ![HertzBeat](/img/blog/monitor-dynamic-tp-3.png)
+    ![HertzBeat](home/static/img/blog/monitor-dynamic-tp-3.png)
 
 5. Click the **Monitoring History TAB** to view a graphical representation of the historical monitoring metrics for the DynamicTp thread pool 📈.
 
-    ![HertzBeat](/img/blog/monitor-dynamic-tp-4.png)
+    ![HertzBeat](home/static/img/blog/monitor-dynamic-tp-4.png)
 
-    ![HertzBeat](/img/blog/monitor-dynamic-tp-5.png)
+    ![HertzBeat](home/static/img/blog/monitor-dynamic-tp-5.png)
 
 **DONE! With the above steps, it's really just two steps**
 
@@ -127,7 +127,7 @@ Of course, just watching is not perfect, monitoring is often accompanied by alar
    - DynamicTp monitors some thread pool related metrics, for example, we set the threshold for the `run_timeout_count` `thread_pool_running` -> `run_timeout_count` metric, which will raise an alarm when the thread_timeout_count is greater than one.
    - Here we configure an alert to be issued when `thread_pool_running` has a `run_timeout_count>1`, with an alert level of **Serious Alert**, which is triggered three times, as shown in the following figure.
 
-    ![HertzBeat](/img/blog/monitor-dynamic-tp-6.png)
+    ![HertzBeat](home/static/img/blog/monitor-dynamic-tp-6.png)
 
 2. Add message notification recipients
 
@@ -142,13 +142,13 @@ Of course, just watching is not perfect, monitoring is often accompanied by alar
 
     [Alert Notification] -> [Add Recipient] -> [Choose Dingtalk bot notification method] -> [Set Dingtalk bot ACCESS_TOKEN] -> [OK]
 
-    ![HertzBeat](/img/blog/alert-notice-1.png)
+    ![HertzBeat](home/static/img/blog/alert-notice-1.png)
 
 3. Configure the associated alert notification policy ⚠️ [Add Notification Policy] -> [Associate the recipient you just set] -> [OK] !
 
     > Configure the alert notification policy to bind alert messages to recipients so that you can decide which alerts go to which person.
 
-    ![HertzBeat](/img/blog/alert-notice-2.png)
+    ![HertzBeat](home/static/img/blog/alert-notice-2.png)
 
 ### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding
 
@@ -165,7 +165,7 @@ Details : DynamicTp has run timeout thread, count is 2
 ## Summary
 
 :::tip
-This practical article takes us to experience how to use HertzBeat to monitor DynamicTp thread pool metrics data, and we can find that HertzBeat with ``monitoring-alerting-notification`` is much more convenient to operate and use, and you only need to point and click on a page to include DynamicTp thread pool into the monitoring and alert notification, and you don't need to deploy multiple components to write YML configuration files anymore. There is no need to deploy multiple components and write YML configuration files.  
+This practical article takes us to experience how to use HertzBeat to monitor DynamicTp thread pool metrics data, and we can find that HertzBeat with ``monitoring-alerting-notification`` is much more convenient to operate and use, and you only need to point and click on a page to include DynamicTp thread pool into the monitoring and alert notification, and you don't need to deploy multiple components to write YML configuration files anymore. There is no need to deploy multiple components and write YML configuration files.
 :::
 
 DynamicTp Github: [https://github.com/dromara/dynamic-tp](https://github.com/dromara/dynamic-tp)

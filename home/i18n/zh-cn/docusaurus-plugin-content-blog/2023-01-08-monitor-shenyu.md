@@ -1,8 +1,8 @@
 ---
-title: 使用 HertzBeat 对 API 网关 Apache ShenYu 的监控实践    
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: 使用 HertzBeat 对 API 网关 Apache ShenYu 的监控实践
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 ---
 
@@ -55,7 +55,7 @@ tags: [opensource, practice]
     shenyu:
       metrics:
         enabled: true  #设置为 true 表示开启
-        name : prometheus 
+        name : prometheus
         host: 127.0.0.1 #暴露的ip
         port: 8090 #暴露的端口
         jmxConfig: #jmx配置
@@ -71,30 +71,30 @@ tags: [opensource, practice]
 
     路径：菜单 -> 中间件监控 -> ShenYu监控 -> 新增ShenYu监控
 
-    ![HertzBeat](/img/blog/monitor-shenyu-1.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-1.png)
 
 2. 配置监控 ShenYu 所需参数
 
     在监控页面填写 ShenYu **服务IP**，**监控端口**(默认8090)，最后点击确定添加即可。
     其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.apache.org/docs/help/shenyu/) [https://hertzbeat.apache.org/docs/help/shenyu/](https://hertzbeat.apache.org/docs/help/shenyu/)
 
-    ![HertzBeat](/img/blog/monitor-shenyu-1.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-1.png)
 
 3. 完成✅,现在我们已经添加好对 ShenYu 的监控了，查看监控列表即可看到我们的添加项。
 
-    ![HertzBeat](/img/blog/monitor-shenyu-3.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-3.png)
 
 4. 点击监控列表项的**操作**->**监控详情图标** 即可浏览 ShenYu 的实时监控指标数据。
 
-    ![HertzBeat](/img/blog/monitor-shenyu-4.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-4.png)
 
 5. 点击**监控历史详情TAB** 即可浏览 ShenYu 的历史监控指标数据图表📈。
 
-    ![HertzBeat](/img/blog/monitor-shenyu-5.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-5.png)
 
-    ![HertzBeat](/img/blog/monitor-shenyu-6.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-6.png)
 
-**DONE！完成啦！通过上面几步，总结起来其实也就只用两步**  
+**DONE！完成啦！通过上面几步，总结起来其实也就只用两步**
 
 - **第一步开启 ShenYu 端`metrics`插件功能**
 - **第二步在 HertzBeat 监控页面配置IP端口添加监控即可**
@@ -115,7 +115,7 @@ tags: [opensource, practice]
    - 选择配置的指标对象，ShenYu 监控有非常多的指标，我们举例对 `打开的文件描述符的数量` `process_open_fds` -> `value` 这个指标进行阈值设置， 当服务端打开文件描述符数量大于3000时发出告警。
    - 这里我们就配置当此指标`process_open_fds` 的 `value>3000` 时发出告警，告警级别为**警告告警**，三次即触发，具体如下图。
 
-    ![HertzBeat](/img/blog/monitor-shenyu-7.png)
+    ![HertzBeat](home/static/img/blog/monitor-shenyu-7.png)
 
 2. 新增消息通知接收人
 
@@ -130,13 +130,13 @@ tags: [opensource, practice]
 
     【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
 
-    ![HertzBeat](/img/blog/alert-notice-1.png)
+    ![HertzBeat](home/static/img/blog/alert-notice-1.png)
 
 3. 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】
 
     > 配置告警通知策略，让告警消息与接收人绑定，这样就能决定哪些告警发给哪个人。
 
-    ![HertzBeat](/img/blog/alert-notice-2.png)
+    ![HertzBeat](home/static/img/blog/alert-notice-2.png)
 
 ### 完毕，现在坐等告警消息过来啦。叮叮叮叮
 
@@ -153,7 +153,7 @@ tags: [opensource, practice]
 ## 小结
 
 :::tip
-这篇实践文章带我们体验了如何使用 HertzBeat 监控 Apache ShenYu 指标数据，可以发现将 `监控-告警-通知` 集一体的 HertzBeat 在操作与使用方面更加的便捷，在页面上简单点一点就能把 ShenYu 纳入监控，再也不需要部署多个组件，写多个有门槛的YML配置文件了。  
+这篇实践文章带我们体验了如何使用 HertzBeat 监控 Apache ShenYu 指标数据，可以发现将 `监控-告警-通知` 集一体的 HertzBeat 在操作与使用方面更加的便捷，在页面上简单点一点就能把 ShenYu 纳入监控，再也不需要部署多个组件，写多个有门槛的YML配置文件了。
 :::
 
 Apache ShenYu Github: [https://github.com/apache/shenyu](https://github.com/apache/shenyu)

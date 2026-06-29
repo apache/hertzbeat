@@ -1,8 +1,8 @@
 ---
-title: HertzBeat v1.4.3 released, prometheus-compatible! 
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: HertzBeat v1.4.3 released, prometheus-compatible!
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
@@ -22,7 +22,7 @@ keywords: [open source monitoring system, alerting system]
 
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.
 
-![HertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 

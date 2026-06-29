@@ -1,6 +1,6 @@
 ---
-id: template  
-title: 监控模板中心     
+id: template
+title: 监控模板中心
 sidebar_label: 监控模板
 ---
 
@@ -11,11 +11,11 @@ sidebar_label: 监控模板
 
 这是它的架构原理:
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 **我们将所有监控采集类型(mysql,website,jvm,k8s)都定义为yml模板，用户可以导入这些模板到hertzbeat系统中，使其支持对应类型的监控，非常方便！**
 
-![HertzBeat](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](home/static/img/docs/advanced/extend-point-1.png)
 
 **欢迎大家一起贡献你使用过程中自定义的通用监控类型YML模板，可用的模板如下:**
 

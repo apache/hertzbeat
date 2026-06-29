@@ -17,7 +17,7 @@ tags: [opensource, apache]
 
 [Apache HertzBeat](https://github.com/apache/hertzbeat) is an easy-to-use, open-source, real-time monitoring and alerting system that requires no agent, features a high-performance cluster, is compatible with Prometheus, and offers powerful custom monitoring and status page building capabilities.
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 ### Features
 

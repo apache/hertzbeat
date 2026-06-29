@@ -5,8 +5,8 @@ sidebar_label: Alarm Threshold
 ---
 
 :::tip
-Alarm Threshold are the core function of `HertzBeat`, users can configure the trigger conditions of the alarm through the threshold rules.  
-Support real-time threshold and scheduled threshold, real-time threshold can directly trigger the alarm when monitoring data is collected, scheduled threshold supports PromQL and other expressions to calculate the trigger alarm within a specified time period.  
+Alarm Threshold are the core function of `HertzBeat`, users can configure the trigger conditions of the alarm through the threshold rules.
+Support real-time threshold and scheduled threshold, real-time threshold can directly trigger the alarm when monitoring data is collected, scheduled threshold supports PromQL and other expressions to calculate the trigger alarm within a specified time period.
 Support visual page configuration or more flexible expression rule configuration, support configuring trigger times, alarm levels, notification templates, associated specified monitoring and so on.
 :::
 
@@ -22,7 +22,7 @@ Support visual page configuration or more flexible expression rule configuration
 
 Configure the threshold, for example: Select the SSL certificate metric object, configure the alarm expression-triggered when the metric `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
 
-![HertzBeat](/img/docs/start/ssl_5.png)
+![HertzBeat](home/static/img/docs/start/ssl_5.png)
 
 Configuration item details:
 

@@ -7,7 +7,7 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-![HertzBeat](/img/blog/new-committer.png)
+![HertzBeat](home/static/img/blog/new-committer.png)
 
 > It's an honor for me to become a Committer of Apache HertzBeat
 
@@ -17,7 +17,7 @@ In the open-source community, every contribution not only pushes the project for
 
 ## Starting from the Details: Optimizing Visuals and Interactions
 
-I firmly believe that details determine success or failure. When I first joined the project, I began by optimizing the interface to enhance the user's visual and interactive experience. I refined the modal window layout of the monitoring selection menu to better align with user operation habits.  
+I firmly believe that details determine success or failure. When I first joined the project, I began by optimizing the interface to enhance the user's visual and interactive experience. I refined the modal window layout of the monitoring selection menu to better align with user operation habits.
 I adjusted the header style and content layout of the monitoring details page to make information presentation clearer and more intuitive. Additionally, I unified the border-radius values of components and addressed issues such as missing internationalization translations, ensuring the consistency and completeness of the system interface.
 
 These seemingly minor changes significantly enhanced the overall aesthetics and user experience of the system. Through this process, I gained a profound understanding of the importance of interface design for user experience and honed my attention to detail.

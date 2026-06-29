@@ -1,8 +1,8 @@
 ---
 title: 更好的用户体验, 开源实时监控 HertzBeat v1.4.1 发布
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
@@ -10,7 +10,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 哈喽大家好，时间很快两个月又过去了，HertzBeat 经过近两个月的迭代终于发布了 v1.4.1 版本。为什么是终于，因为有点难哈哈。我们参考 rocketmq 重构了 netty 的 server client 端模块，重构了采集器集群调度。比起上一版本有了更优雅的通讯代码，更完善全面的集群。
 采集任务一致性hash调度，集群心跳保活，断开主动重连，主动上线下线，主动停机等等这些都有。设计了新的控制台登陆界面和欢迎页面，支持了采集器集群的UI管理，合并了开源之夏两位同学的帮助提示头特性和阈值表达式特性，很多用户需要的监控指标名称国际化等等，最重要的当然是修复若干BUG，体验下来确实增强了用户体验。
 
-![hertzBeat](/img/home/0.png)
+![HertzBeat](home/static/img/home/0.png)
 
 ## 总结起来如下
 
@@ -59,7 +59,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 

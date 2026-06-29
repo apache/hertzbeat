@@ -1,17 +1,17 @@
 ---
-title: HertzBeat First Apache version v1.6.0 released now! 
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: HertzBeat First Apache version v1.6.0 released now!
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source, monitoring, alerting]
 ---
 
 **Hi guys, We are excited to announce that Apache HertzBeat™ has released its first Apache version v1.6.0! 🎉.**
 
-Through nearly five months of community development iteration and two months of Apache Incubator incubation process, Apache HertzBeat™ v1.6.0 is finally out.  
-In this version, we added monitoring for OpenAi, Redfish protocol servers, plugin mechanism, and support for NebulaGraph, Apache Yarn, HDFS, Hbase, Storm, and more functional features.  
-Due to license compatibility issues, we replaced multiple dependencies at the bottom layer, Hibernate -> EclipseLink, which is also a rare migration pitfall practice in the JPA ecosystem.  
+Through nearly five months of community development iteration and two months of Apache Incubator incubation process, Apache HertzBeat™ v1.6.0 is finally out.
+In this version, we added monitoring for OpenAi, Redfish protocol servers, plugin mechanism, and support for NebulaGraph, Apache Yarn, HDFS, Hbase, Storm, and more functional features.
+Due to license compatibility issues, we replaced multiple dependencies at the bottom layer, Hibernate -> EclipseLink, which is also a rare migration pitfall practice in the JPA ecosystem.
 At the same time, some bugs were fixed and some functions were optimized, and more complete documents. Welcome everyone to try to use, put forward valuable opinions and suggestions, and promote the development of HertzBeat together.
 
 **Of course, the most important thing is to give the best thanks to the contributors in the community!**
@@ -36,7 +36,7 @@ Upgrade Guide: [https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.
 
-![HertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 

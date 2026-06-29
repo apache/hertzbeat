@@ -229,13 +229,13 @@ metrics:
 }
 ```
 
-![HertzBeat](/img/docs/advanced/extend-http-example-5.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-5.png)
 
 **After the addition is successful, we can see the `token`, `refreshToken` metric data we collected on the details page.**
 
-![HertzBeat](/img/docs/advanced/extend-http-example-6.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-6.png)
 
-![HertzBeat](/img/docs/advanced/extend-http-example-7.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-7.png)
 
 ### Use `token` as a variable parameter to collect and use the following metricss
 
@@ -389,9 +389,9 @@ metrics:
 
 **After the configuration is complete, save and apply, and check the monitoring details page**
 
-![HertzBeat](/img/docs/advanced/extend-http-example-8.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-8.png)
 
-![HertzBeat](/img/docs/advanced/extend-http-example-9.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-9.png)
 
 ### Set threshold alarm notification
 

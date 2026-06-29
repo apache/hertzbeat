@@ -1,13 +1,13 @@
 ---
-title: HertzBeat v1.4.1 released, better experience! 
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: HertzBeat v1.4.1 released, better experience!
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
-![HertzBeat](/img/home/0.png)
+![HertzBeat](home/static/img/home/0.png)
 
 ## What is HertzBeat?
 
@@ -23,7 +23,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.
 
-![HertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)
 
 **Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
@@ -33,23 +33,23 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 * new login page
 
-  ![HertzBeat](/img/blog/blog-new-login-page.png)
+  ![HertzBeat](home/static/img/blog/blog-new-login-page.png)
 
-  ![HertzBeat](/img/blog/blog-new-dashboard.png)
+  ![HertzBeat](home/static/img/blog/blog-new-dashboard.png)
 
 * collector manage
 
-  ![HertzBeat](/img/blog/blog-collector-manage.png)
+  ![HertzBeat](home/static/img/blog/blog-collector-manage.png)
 
-  ![HertzBeat](/img/blog/blog-collector-manage-form.png)
+  ![HertzBeat](home/static/img/blog/blog-collector-manage-form.png)
 
 * new help moudle
 
-  ![HertzBeat](/img/blog/blog-new-help-moudle.png)
+  ![HertzBeat](home/static/img/blog/blog-new-help-moudle.png)
 
 * monitor metrics dashboard name i18n
 
-  ![HertzBeat](/img/blog/blog-name-i18n.png)
+  ![HertzBeat](home/static/img/blog/blog-name-i18n.png)
 
 * refactor collector dispatcher and more
 

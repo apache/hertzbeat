@@ -1,6 +1,6 @@
 ---
 id: extend-http-example-hertzbeat
-title: 教程一:适配一款基于HTTP协议的监控类型   
+title: 教程一:适配一款基于HTTP协议的监控类型
 sidebar_label: 教程一:适配一款HTTP协议监控
 ---
 
@@ -188,25 +188,25 @@ metrics:
 
 **新增完毕，现在我们重启hertzbeat系统。我们可以看到系统页面已经多了一个`hertzbeat`监控类型了。**
 
-![HertzBeat](/img/docs/advanced/extend-http-example-1.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-1.png)
 
 ### 系统页面添加对`hertzbeat`监控类型的监控
 
 > 我们点击新增 `HertzBeat监控系统`，配置监控IP，端口，采集周期，高级设置里的账户密码等, 点击确定添加监控。
 
-![HertzBeat](/img/docs/advanced/extend-http-example-2.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-2.png)
 
-![HertzBeat](/img/docs/advanced/extend-http-example-3.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-3.png)
 
 > 过一定时间(取决于采集周期)我们就可以在监控详情看到具体的指标数据和历史图表啦！
 
-![HertzBeat](/img/docs/advanced/extend-http-example-4.png)
+![HertzBeat](home/static/img/docs/advanced/extend-http-example-4.png)
 
 ### 设置阈值告警通知
 
 > 接下来我们就可以正常的设置阈值，告警触发后可以在告警中心查看，也可以新增接收人，设置告警通知等，Have Fun!!!
 
-----  
+----
 
 #### 完
 

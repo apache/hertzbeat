@@ -1,5 +1,5 @@
 ---
-id: contribution  
+id: contribution
 title: 贡献指南
 sidebar_position: 0
 ---
@@ -89,27 +89,27 @@ limitations under the License.
 2. 然后 用 git 命令 将代码下载到本地:
 
     ```shell
-    git clone git@github.com:`YOUR_USERNAME`/hertzbeat.git #Recommended  
+    git clone git@github.com:`YOUR_USERNAME`/hertzbeat.git #Recommended
     ```
 
 3. 下载完成后，请参考目标仓库的入门指南或者 README 文件对项目进行初始化。
 4. 接着，您可以参考如下命令进行代码的提交, 切换新的分支, 进行开发:
 
     ```shell
-    git checkout -b a-feature-branch #Recommended  
+    git checkout -b a-feature-branch #Recommended
     ```
 
 5. 提交 commit, commit 描述信息需要符合约定格式: [module name or type name]feature or bugfix or doc: custom message.
 
     ```shell
-    git add <modified file/path> 
-    git commit -m '[docs]feature: necessary instructions' #Recommended 
+    git add <modified file/path>
+    git commit -m '[docs]feature: necessary instructions' #Recommended
     ```
 
 6. 推送到远程仓库
 
     ```shell
-    git push origin a-feature-branch   
+    git push origin a-feature-branch
     ```
 
 7. 然后您就可以在 GitHub 上发起新的 PR (Pull Request)。
@@ -139,7 +139,7 @@ git push origin --delete a-dev-branch
 
 ```shell
 git remote add upstream https://github.com/apache/hertzbeat.git #Bind the remote warehouse, if it has been executed, it does not need to be executed again
-git checkout master 
+git checkout master
 git pull upstream master
 ```
 
@@ -168,4 +168,4 @@ git pull upstream master
 > - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](home/static/img/docs/hertzbeat-arch.png)

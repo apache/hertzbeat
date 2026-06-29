@@ -111,11 +111,11 @@ See the [official documentation](https://hertzbeat.apache.org/zh-cn/docs/start/d
 
 Here's the picture: !
 
-![HertzBeat](/img/blog/greptime-1.png)
+![HertzBeat](home/static/img/blog/greptime-1.png)
 
-![HertzBeat](/img/blog/greptime-2.png)
+![HertzBeat](home/static/img/blog/greptime-2.png)
 
-![HertzBeat](/img/blog/greptime-3.png)
+![HertzBeat](home/static/img/blog/greptime-3.png)
 
 ## Summary
 
