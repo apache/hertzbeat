@@ -9,20 +9,40 @@ keywords: [bulletin, custom]
 
 ## Add Bulletin Item
 
-1. Click `Add New Bulletin Item`, enter the `Bulletin Name`, scroll down to select the `Monitoring Type`, select the associated `Monitoring Task Name`, You can filter `Monitor Task Name` by `Label`, and then select the `Monitoring Metrics` you want to show in the shuttle box.
+1. Click the `New` button in the toolbar to open the bulletin creation dialog.
 
-2. Click `OK` button to finish creating the customized bulletin.
+2. Enter the `Bulletin Name`, select the `Monitor Type`, and then select the associated `Monitor Task Name`.
 
-    ![new-bulletin](/img/docs/help/bulletin-1.png)
+    - The `Monitor Task Name` is a multi-select field. Type in its search box to filter monitors by **name, label key, or label value**; each option also shows its labels as `key:value` tags.
 
-### Viewing Multiple Bulletins
+3. In the `Monitor Metrics` tree, check the metrics you want to show. The tree is grouped by metric, and checking a parent node selects all of its fields at once.
 
-1. Click the name of the bulletin in the tab to view the details of that bulletin.
+4. Click the `OK` button to finish creating the customized bulletin.
 
-### Deleting Bulletins
+   ![new-bulletin](/img/docs/help/bulletin-1.png)
 
-1. Click the `Delete Bulletin Item` button to delete the current bulletin. 2.
+## Edit Bulletin Item
 
-2. Click the `Batch delete Bulletin Items` button to delete selected bulletins in a batch.
+1. Click a bulletin name in the tab bar to make it the current bulletin.
 
-    ![bulletin](/img/docs/help/bulletin-2.png)
+2. Click the `...` (more) button in the toolbar and choose `Edit`. The dialog opens pre-filled with the current bulletin's name, monitor tasks, and selected metrics.
+
+    - The `Monitor Type` cannot be changed while editing. To use a different monitor type, create a new bulletin instead.
+
+3. Adjust the name, monitor tasks, or metrics as needed, then click `OK` to save.
+
+   ![edit-bulletin](/img/docs/help/bulletin-2.png)
+
+## Viewing Multiple Bulletins
+
+1. Each bulletin appears as a tab. Click the name of a bulletin in the tab bar to view its details.
+
+   ![dashboard-bulletin](/img/docs/help/bulletin-3.png)
+
+## Deleting Bulletins
+
+1. Select the bulletin you want to remove, click the `...` (more) button in the toolbar, and choose `Delete Bulletin` to delete the current bulletin.
+
+2. Choose `Batch Delete Bulletin` from the same `...` menu to select and delete multiple bulletins at once.
+
+   ![bulletin](/img/docs/help/bulletin-4.png)
