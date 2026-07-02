@@ -23,15 +23,24 @@ import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Test case for {@link JdbcCommonCollect}
@@ -166,6 +175,25 @@ class JdbcCommonCollectTest {
     }
 
     @Test
+    void testCloseConnectionWhenCreateStatementFails() throws Exception {
+        String url = "jdbc:postgresql://localhost:5432/hertzbeat";
+        String username = "root";
+        String password = "root";
+        Connection connection = mock(Connection.class);
+        when(connection.createStatement()).thenThrow(new SQLException("create statement failed"));
+
+        try (MockedStatic<DriverManager> driverManager = mockStatic(DriverManager.class)) {
+            driverManager.when(() -> DriverManager.getConnection(url, username, password)).thenReturn(connection);
+
+            SQLException exception = assertThrows(SQLException.class,
+                    () -> getConnection(jdbcCommonCollect, username, password, url, 1000, false));
+
+            assertEquals("create statement failed", exception.getMessage());
+            verify(connection).close();
+        }
+    }
+
+    @Test
     void testConstructDatabaseUrlSecurityInterception() {
         JdbcCommonCollect jdbcCollect = new JdbcCommonCollect();
         String[] maliciousUrls = {
@@ -209,6 +237,27 @@ class JdbcCommonCollectTest {
                     .getDeclaredMethod("constructDatabaseUrl", JdbcProtocol.class, String.class, String.class);
             constructMethod.setAccessible(true);
             return (String) constructMethod.invoke(jdbcCollect, jdbcProtocol, host, port);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof Exception exception) {
+                throw exception;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new RuntimeException(cause);
+        }
+    }
+
+    private Statement getConnection(JdbcCommonCollect jdbcCollect, String username, String password, String url,
+                                    Integer timeout, boolean reuseConnection) throws Exception {
+        try {
+            Method getConnectionMethod = JdbcCommonCollect.class
+                    .getDeclaredMethod("getConnection", String.class, String.class, String.class,
+                            Integer.class, boolean.class);
+            getConnectionMethod.setAccessible(true);
+            return (Statement) getConnectionMethod.invoke(jdbcCollect, username, password, url, timeout,
+                    reuseConnection);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             if (cause instanceof Exception exception) {

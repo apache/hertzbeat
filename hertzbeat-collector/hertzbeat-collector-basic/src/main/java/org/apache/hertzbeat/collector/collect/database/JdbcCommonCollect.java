@@ -348,17 +348,36 @@ public class JdbcCommonCollect extends AbstractCollect {
                 return statement;
             }
         }
-        // renew connection when failed
-        Connection connection = DriverManager.getConnection(url, username, password);
-        connection.setReadOnly(true);
-        statement = connection.createStatement();
-        int timeoutSecond = timeout / 1000;
-        timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
-        statement.setQueryTimeout(timeoutSecond);
-        statement.setMaxRows(1000);
-        if (reuseConnection) {
-            JdbcConnect jdbcConnect = new JdbcConnect(connection);
-            connectionCommonCache.addCache(identifier, jdbcConnect);
+        Connection connection = null;
+        try {
+            // renew connection when failed
+            connection = DriverManager.getConnection(url, username, password);
+            connection.setReadOnly(true);
+            statement = connection.createStatement();
+            int timeoutSecond = timeout / 1000;
+            timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
+            statement.setQueryTimeout(timeoutSecond);
+            statement.setMaxRows(1000);
+            if (reuseConnection) {
+                JdbcConnect jdbcConnect = new JdbcConnect(connection);
+                connectionCommonCache.addCache(identifier, jdbcConnect);
+            }
+        } catch (Exception exception) {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+            } catch (Exception closeException) {
+                log.error("Jdbc close statement error: {}", closeException.getMessage());
+            }
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (Exception closeException) {
+                log.error("Jdbc close connection error: {}", closeException.getMessage());
+            }
+            throw exception;
         }
         return statement;
     }
