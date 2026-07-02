@@ -44,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.Arrays;
@@ -55,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -83,7 +85,7 @@ class AlarmGroupReduceTest {
         when(alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue())
             .thenReturn(Collections.emptyList());
         alarmGroupReduce = new AlarmGroupReduce(alarmInhibitReduce, alertGroupConvergeDao,
-                new VirtualThreadProperties(), false);
+                new VirtualThreadProperties(false, null, null, null, null, null, null), false);
     }
 
     @AfterEach
@@ -130,6 +132,35 @@ class AlarmGroupReduceTest {
     }
 
     @Test
+    void resolvedAlertInFiringGroupShouldBypassRepeatThrottle() {
+        AlertGroupConverge rule = new AlertGroupConverge();
+        rule.setName("test-rule");
+        rule.setGroupLabels(Collections.singletonList("instance"));
+        rule.setGroupWait(0L);
+        rule.setGroupInterval(0L);
+        rule.setRepeatInterval(60L);
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(rule));
+
+        alarmGroupReduce.processGroupAlert(createAlert("cpu", CommonConstants.ALERT_STATUS_FIRING));
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+        verify(alarmInhibitReduce).inhibitAlarm(argThat(group ->
+                CommonConstants.ALERT_STATUS_FIRING.equals(group.getStatus())
+                        && group.getAlerts().size() == 1
+                        && group.getAlerts().get(0).getFingerprint().equals("cpu")));
+        clearInvocations(alarmInhibitReduce);
+
+        alarmGroupReduce.processGroupAlert(createAlert("cpu", CommonConstants.ALERT_STATUS_FIRING));
+        alarmGroupReduce.processGroupAlert(createAlert("memory", CommonConstants.ALERT_STATUS_RESOLVED));
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+
+        verify(alarmInhibitReduce).inhibitAlarm(argThat(group ->
+                CommonConstants.ALERT_STATUS_FIRING.equals(group.getStatus())
+                        && group.getAlerts().stream()
+                        .anyMatch(alert -> "memory".equals(alert.getFingerprint())
+                                && CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()))));
+    }
+
+    @Test
     void dispatchCheckAndSendGroupsRunsOnVirtualThread() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicBoolean virtualThread = new AtomicBoolean(false);
@@ -171,6 +202,15 @@ class AlarmGroupReduceTest {
             labels.put(keyValues[i], keyValues[i + 1]);
         }
         return labels;
+    }
+
+    private SingleAlert createAlert(String fingerprint, String status) {
+        return SingleAlert.builder()
+                .fingerprint(fingerprint)
+                .status(status)
+                .labels(createLabels("instance", "host1"))
+                .annotations(Collections.emptyMap())
+                .build();
     }
 
     private static final class TestAlarmGroupReduce extends AlarmGroupReduce {
