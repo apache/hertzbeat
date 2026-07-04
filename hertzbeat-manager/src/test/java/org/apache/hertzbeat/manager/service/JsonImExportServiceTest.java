@@ -165,4 +165,25 @@ class JsonImExportServiceTest {
         Monitor captured = monitorCaptor.getValue();
         assertEquals(null, captured.getInstance());
     }
+
+    @Test
+    void testImportConfig_shouldPreserveAnnotationsAndSchedule() {
+        String json = "[{\"monitor\":{\"name\":\"test\",\"app\":\"linux\",\"intervals\":6000,\"status\":1,"
+                + "\"labels\":{\"env\":\"prod\"},\"annotations\":{\"owner\":\"ops\"},"
+                + "\"scheduleType\":\"cron\",\"cronExpression\":\"0 0/5 * * * ?\"},"
+                + "\"params\":[{\"field\":\"host\",\"type\":1,\"value\":\"192.168.1.1\"}]}]";
+
+        ArgumentCaptor<Monitor> monitorCaptor = ArgumentCaptor.forClass(Monitor.class);
+        doNothing().when(monitorService).addMonitor(monitorCaptor.capture(),
+                org.mockito.Mockito.any(), org.mockito.Mockito.any(), org.mockito.Mockito.any());
+
+        ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        jsonImExportService.importConfig("test.json", bis);
+
+        Monitor captured = monitorCaptor.getValue();
+        assertEquals("prod", captured.getLabels().get("env"));
+        assertEquals("ops", captured.getAnnotations().get("owner"));
+        assertEquals("cron", captured.getScheduleType());
+        assertEquals("0 0/5 * * * ?", captured.getCronExpression());
+    }
 }
