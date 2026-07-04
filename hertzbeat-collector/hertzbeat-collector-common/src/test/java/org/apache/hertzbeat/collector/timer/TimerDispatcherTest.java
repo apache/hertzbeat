@@ -17,8 +17,14 @@
 
 package org.apache.hertzbeat.collector.timer;
 
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.collector.constants.ScheduleTypeEnum;
+import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.timer.Timeout;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -26,6 +32,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 /**
@@ -178,5 +187,85 @@ public class TimerDispatcherTest {
 
         // Verify - Should fall back to interval value
         assertEquals(180L, result);
+    }
+
+    @Test
+    void testAddCyclicJobCancelsPreviousTimeoutForSameJob() {
+        Job firstJob = Job.builder()
+                .id(1L)
+                .app("test")
+                .isCyclic(true)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(60L).build()))
+                .build();
+        timerDispatcher.addJob(firstJob, null);
+
+        Timeout firstTimeout = currentCyclicTaskMap().get(1L);
+
+        Job updatedJob = Job.builder()
+                .id(1L)
+                .app("test")
+                .isCyclic(true)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(60L).build()))
+                .build();
+        timerDispatcher.addJob(updatedJob, null);
+
+        Timeout updatedTimeout = currentCyclicTaskMap().get(1L);
+        assertNotSame(firstTimeout, updatedTimeout);
+        assertTrue(firstTimeout.isCancelled());
+        assertFalse(updatedTimeout.isCancelled());
+    }
+
+    @Test
+    void testAddTemporaryJobCancelsPreviousTimeoutForSameJob() {
+        Job firstJob = Job.builder()
+                .id(1L)
+                .app("test")
+                .isCyclic(false)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(60L).build()))
+                .build();
+        timerDispatcher.addJob(firstJob, new CollectResponseEventListener() {
+        });
+
+        Timeout firstTimeout = currentTempTaskMap().get(1L);
+
+        Job updatedJob = Job.builder()
+                .id(1L)
+                .app("test")
+                .isCyclic(false)
+                .configmap(List.of())
+                .metrics(List.of(Metrics.builder().interval(60L).build()))
+                .build();
+        timerDispatcher.addJob(updatedJob, new CollectResponseEventListener() {
+        });
+
+        Timeout updatedTimeout = currentTempTaskMap().get(1L);
+        assertNotSame(firstTimeout, updatedTimeout);
+        assertTrue(firstTimeout.isCancelled());
+        assertFalse(updatedTimeout.isCancelled());
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Long, Timeout> currentCyclicTaskMap() {
+        try {
+            Field field = TimerDispatcher.class.getDeclaredField("currentCyclicTaskMap");
+            field.setAccessible(true);
+            return (Map<Long, Timeout>) field.get(timerDispatcher);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Long, Timeout> currentTempTaskMap() {
+        try {
+            Field field = TimerDispatcher.class.getDeclaredField("currentTempTaskMap");
+            field.setAccessible(true);
+            return (Map<Long, Timeout>) field.get(timerDispatcher);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
     }
 }
