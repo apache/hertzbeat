@@ -31,7 +31,6 @@ import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.MonitorService;
-import org.apache.hertzbeat.base.service.LabelService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.CollectionUtils;
@@ -40,9 +39,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * class AbstractImExportServiceImpl
@@ -55,9 +56,6 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
     private MonitorService monitorService;
 
     @Resource
-    private LabelService tagService;
-
-    @Resource
     private ManagerSseManager managerSseManager;
 
     @Override
@@ -65,16 +63,36 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var formList = parseImport(is).stream().map(this::convert).toList();
         if (!CollectionUtils.isEmpty(formList)) {
             int totalElements = formList.size();
+            validateImportBatch(formList);
             int progressInterval = Math.max(1, totalElements / 10);
             for (int i = 0; i < totalElements; i++) {
                 MonitorDto monitorDto = formList.get(i);
-                monitorService.validate(monitorDto, false);
                 monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
                 if (totalElements >= ImExportTaskConstant.IMPORT_TASK_PROCESS_THRESHOLD && ((i + 1) % progressInterval == 0) && (i + 1 < totalElements)) {
                     managerSseManager.broadcastImportTaskInProgress(taskName, (int) ((i + 1) * 100.0 / totalElements));
                 }
             }
             managerSseManager.broadcastImportTaskSuccess(taskName);
+        }
+    }
+
+    /**
+     * Validate every entry of an import batch before any monitor is persisted.
+     * Beyond the per-entry checks (params/collector/name uniqueness against the DB), this also detects
+     * duplicate monitor names within the import file itself, which the single-entry validation cannot
+     * catch because nothing has been persisted yet when the conflicting rows are validated.
+     *
+     * @param formList parsed monitors to import
+     * @throws IllegalArgumentException if any entry is invalid or names collide within the file
+     */
+    private void validateImportBatch(List<MonitorDto> formList) {
+        Set<String> names = new HashSet<>(formList.size());
+        for (MonitorDto monitorDto : formList) {
+            monitorService.validate(monitorDto, false);
+            String name = monitorDto.getMonitorInfo().getName();
+            if (!names.add(name)) {
+                throw new IllegalArgumentException("Duplicate monitor name in import file: " + name);
+            }
         }
     }
 
@@ -197,6 +215,12 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         private String description;
         @Excel(name = "Labels")
         private Map<String, String> labels;
+        @Excel(name = "Annotations")
+        private Map<String, String> annotations;
+        @Excel(name = "ScheduleType")
+        private String scheduleType;
+        @Excel(name = "CronExpression")
+        private String cronExpression;
         @Excel(name = "Collector")
         private String collector;
     }
