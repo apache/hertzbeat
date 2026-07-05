@@ -135,6 +135,9 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
     }
 
     private void refreshGroupStatus(GroupAlert groupAlert) {
+        if (!CommonConstants.ALERT_STATUS_RESOLVED.equals(groupAlert.getStatus())) {
+            return;
+        }
         List<String> alertFingerprints = groupAlert.getAlertFingerprints();
         if (alertFingerprints == null || alertFingerprints.isEmpty()) {
             return;
@@ -148,5 +151,6 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
         groupAlert.setStatus(hasFiringAlert
                 ? CommonConstants.ALERT_STATUS_FIRING
                 : CommonConstants.ALERT_STATUS_RESOLVED);
+        groupAlert.setAlerts(alerts);
     }
 }
