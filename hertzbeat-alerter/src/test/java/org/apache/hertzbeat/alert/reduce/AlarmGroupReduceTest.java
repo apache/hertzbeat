@@ -34,6 +34,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -143,6 +145,25 @@ class AlarmGroupReduceTest {
                         && group.getAlerts().stream()
                         .anyMatch(alert -> "memory".equals(alert.getFingerprint())
                                 && CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()))));
+    }
+
+    @Test
+    void cachedGroupUsesDefaultRepeatIntervalWhenGroupRuleWasRemoved() throws Exception {
+        AlertGroupConverge rule = new AlertGroupConverge();
+        rule.setName("test-rule");
+        rule.setGroupLabels(Collections.singletonList("instance"));
+        alarmGroupReduce.refreshGroupDefines(Collections.singletonList(rule));
+
+        alarmGroupReduce.processGroupAlert(createAlert("cpu", CommonConstants.ALERT_STATUS_FIRING));
+        ageCachedGroupsPastDefaultWait();
+        alarmGroupReduce.refreshGroupDefines(Collections.emptyList());
+
+        alarmGroupReduce.dispatchCheckAndSendGroups();
+
+        verify(alarmInhibitReduce).inhibitAlarm(argThat(group ->
+                CommonConstants.ALERT_STATUS_FIRING.equals(group.getStatus())
+                        && group.getAlerts().size() == 1
+                        && group.getAlerts().get(0).getFingerprint().equals("cpu")));
     }
 
     @Test
@@ -277,6 +298,17 @@ class AlarmGroupReduceTest {
                 .labels(createLabels("instance", "host1"))
                 .annotations(Collections.emptyMap())
                 .build();
+    }
+
+    private void ageCachedGroupsPastDefaultWait() throws Exception {
+        Field groupCacheMapField = AlarmGroupReduce.class.getDeclaredField("groupCacheMap");
+        groupCacheMapField.setAccessible(true);
+        Map<?, ?> groupCacheMap = (Map<?, ?>) groupCacheMapField.get(alarmGroupReduce);
+        for (Object cache : groupCacheMap.values()) {
+            Method setCreateTime = cache.getClass().getDeclaredMethod("setCreateTime", long.class);
+            setCreateTime.setAccessible(true);
+            setCreateTime.invoke(cache, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1));
+        }
     }
 
     private static final class TestAlarmGroupReduce extends AlarmGroupReduce {

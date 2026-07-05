@@ -291,7 +291,7 @@ public class AlarmGroupReduce implements DisposableBean {
         // For firing alerts, check repeat interval
         if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
             AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
-            long repeatInterval = ruleConfig.getRepeatInterval() != null
+            long repeatInterval = ruleConfig != null && ruleConfig.getRepeatInterval() != null
                     ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
             // Skip if within repeat interval. The throttle only suppresses repeated firing
             // notifications; it must never swallow a pending resolved transition, so we still

@@ -183,6 +183,27 @@ class DbAlertStoreHandlerImplTest {
 
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, savedGroupAlert.getStatus());
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, groupAlert.getStatus());
+        assertEquals(2, savedGroupAlert.getAlerts().size());
+        assertTrue(savedGroupAlert.getAlerts().stream()
+                .anyMatch(alert -> firingFingerprint.equals(alert.getFingerprint())
+                        && CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())));
+    }
+
+    @Test
+    public void storeFiringGroupDoesNotQueryHistoricalAlerts() {
+        String groupKey = "instance:host1";
+        groupAlert.setGroupKey(groupKey);
+        groupAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+        singleAlert.setFingerprint("cpu");
+        singleAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+        when(groupAlertDao.findByGroupKey(groupKey)).thenReturn(null);
+        when(singleAlertDao.save(any(SingleAlert.class))).thenReturn(singleAlert);
+        when(groupAlertDao.save(any(GroupAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        GroupAlert savedGroupAlert = dbAlertStoreHandler.store(groupAlert);
+
+        assertEquals(CommonConstants.ALERT_STATUS_FIRING, savedGroupAlert.getStatus());
+        verify(singleAlertDao, never()).findSingleAlertsByFingerprintIn(anyList());
     }
 
 }
