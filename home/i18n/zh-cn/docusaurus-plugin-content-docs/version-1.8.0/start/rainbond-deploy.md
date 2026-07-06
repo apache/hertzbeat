@@ -14,7 +14,7 @@ sidebar_label: 基于Rainbond部署
 
 ![HertzBeat应用详情](/img/docs/start/hertzbeat-desc.png)
 
-- 登录 Rainbond Cloud 帐号，没有帐号，提前注册帐号！
+- 登录 Rainbond Cloud 账号，没有账号，提前注册账号！
 
 ![Rainbond Cloud](/img/docs/start/rainbond-cloud.png)
 
