@@ -1,6 +1,6 @@
 ---
 id: springboot2
-Title: Monitoring SpringBoot 2.0
+title: Monitoring SpringBoot 2.0
 sidebar_label: SpringBoot 2.0
 keywords: [open source monitoring tool, open source springboot2 monitoring tool, monitoring springboot2 metrics]
 ---

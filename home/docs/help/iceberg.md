@@ -1,6 +1,6 @@
 ---
 id: iceberg 
-Title: Monitoring Apache Iceberg
+title: Monitoring Apache Iceberg
 sidebar_label: Apache Iceberg
 keywords: [open source monitoring tool, open source apache hive monitoring tool, monitoring apache iceberg metrics]
 ---

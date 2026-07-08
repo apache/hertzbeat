@@ -1,6 +1,6 @@
 ---
 id: iceberg
-Title: 监控 Apache Iceberg
+title: 监控 Apache Iceberg
 sidebar_label: Apache Iceberg
 keywords: [开源监控工具, 开源 Apache Iceberg 监控工具, 监控 Apache Iceberg 指标]
 ---

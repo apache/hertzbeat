@@ -1,6 +1,6 @@
 ---
 id: spring_gateway
-Title: Monitoring Spring Cloud Gateway
+title: Monitoring Spring Cloud Gateway
 sidebar_label: Spring Cloud Gateway
 keywords: [open source monitoring tool, open source Spring Cloud Gateway monitoring tool, monitoring Spring Cloud Gateway metrics]
 ---

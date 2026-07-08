@@ -1,6 +1,6 @@
 ---
 id: hive 
-Title: Monitoring Apache Hive  
+title: Monitoring Apache Hive  
 sidebar_label: Apache Hive
 keywords: [open source monitoring tool, open source apache hive monitoring tool, monitoring apache hive metrics]
 ---
