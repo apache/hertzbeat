@@ -22,6 +22,7 @@ import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
+import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
@@ -38,7 +39,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -283,5 +287,47 @@ class NoticeConfigServiceTest {
         final NoticeTemplate noticeTemplate = null;
         noticeConfigService.sendTestMsg(noticeReceiver);
         verify(dispatcherAlarm, times(1)).sendNoticeMsg(eq(noticeReceiver), eq(noticeTemplate), any(GroupAlert.class));
+    }
+
+    @Test
+    void getReceiverFilterRuleMatchesPeriodContainingNow() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(now.minusHours(6), now.plusHours(6));
+        assertEquals(1, matched.size());
+    }
+
+    @Test
+    void getReceiverFilterRuleFiltersPeriodExcludingNow() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(now.plusHours(1), now.plusHours(2));
+        assertEquals(0, matched.size());
+    }
+
+    @Test
+    void getReceiverFilterRuleMatchesCrossMidnightPeriod() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(now.minusHours(1), now.minusHours(2).plusDays(1));
+        assertEquals(1, matched.size());
+    }
+
+    @Test
+    void getReceiverFilterRuleNormalizesStoredOffsetToServerZone() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<NoticeRule> matched = filterWithPeriod(
+                now.minusHours(6).withZoneSameInstant(ZoneOffset.ofHours(-7)),
+                now.plusHours(6).withZoneSameInstant(ZoneOffset.ofHours(9)));
+        assertEquals(1, matched.size());
+    }
+
+    private List<NoticeRule> filterWithPeriod(ZonedDateTime periodStart, ZonedDateTime periodEnd) {
+        NoticeRule rule = new NoticeRule();
+        rule.setId(10L);
+        rule.setName("PeriodRule");
+        rule.setFilterAll(true);
+        rule.setPeriodStart(periodStart);
+        rule.setPeriodEnd(periodEnd);
+        CacheFactory.clearNoticeCache();
+        when(noticeRuleDao.findNoticeRulesByEnableTrue()).thenReturn(Collections.singletonList(rule));
+        return noticeConfigService.getReceiverFilterRule(new GroupAlert());
     }
 }
