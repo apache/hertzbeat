@@ -1,6 +1,6 @@
 ---
 id: yarn
-title: Monitoring Apache Yarn Monitoring
+title: Monitoring Apache Yarn
 sidebar_label: Apache Yarn
 keywords: [Big Data Monitoring System, Apache Yarn Monitoring, ResourceManager Monitoring]
 ---

@@ -1,6 +1,6 @@
 ---
 id: process
-title: Monitoring Linux Process Monitoring
+title: Monitoring Linux Process
 sidebar_label: Process
 keywords: [Open Source Monitoring System, Operating System Process Monitoring, Process Monitoring]
 ---

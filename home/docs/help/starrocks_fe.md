@@ -1,6 +1,6 @@
 ---
 id: starrocks_fe
-title: Monitoring StarRocks Database FE Monitoring
+title: Monitoring StarRocks Database FE
 sidebar_label: StarRocks Database FE
 keywords: [Open Source Monitoring System, Open Source Database Monitoring, StarRocks Database FE Monitoring]
 ---

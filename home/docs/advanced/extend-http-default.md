@@ -43,7 +43,7 @@ Multilayer format：Set key value in the array
 ```
 
 eg：
-Query the CPU information of the custom system. The exposed interface is `/metrics/cpu`. We need `hostname,core,useage` Metric.
+Query the CPU information of the custom system. The exposed interface is `/metrics/cpu`. We need `hostname,core,usage` Metric.
 If there is only one virtual machine, its single-layer format is :
 
 ```json

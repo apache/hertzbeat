@@ -1,6 +1,6 @@
 ---
 id: clickhouse  
-title: Monitoring ClickHouse Database Monitoring  
+title: Monitoring ClickHouse Database  
 sidebar_label: ClickHouse Database  
 keywords: [open source monitoring system, open source database monitoring, ClickHouse database monitoring]
 ---
