@@ -13,6 +13,10 @@ keywords: [ open source monitoring system, open source database monitoring, pres
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | Target Host         | The IP address, IPv4, IPv6, or domain name of the target to be monitored. Note: ⚠️ Do not include protocol headers (e.g., https://, http://). |
 | port                | Port                                                                                                                                          |
+| HTTPS               | Whether to enable HTTPS for the PrestoDB API endpoint.                                                                                        |
+| Auth Type           | Optional HTTP authentication mode. Supported values are `Basic Auth` and `Digest Auth`.                                                      |
+| Username            | Username used when `Basic Auth` or `Digest Auth` is enabled.                                                                                  |
+| Password            | Password used when `Basic Auth` or `Digest Auth` is enabled.                                                                                  |
 | Task Name           | The name identifying this monitor, which must be unique.                                                                                      |
 | Connection Timeout  | Timeout for PrestoDB connection when no response is received, in milliseconds (ms). Default is 6000 ms.                                       |
 | Collection Interval | Interval for periodic data collection, in seconds. The minimum interval is 30 seconds.                                                        |
