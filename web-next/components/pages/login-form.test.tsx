@@ -1,5 +1,4 @@
 import { createTranslatorMock } from '../../test/i18n-test-helper';
-/* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

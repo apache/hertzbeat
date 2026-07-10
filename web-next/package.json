@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack -p 4200",
     "build": "next build && node ./scripts/standalone-server.mjs prepare",
     "start": "node ./scripts/standalone-server.mjs start",
-    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint .",
     "test": "vitest run",
     "parity:runtime": "node ./scripts/parity/runtime.mjs",
     "parity:smoke": "node ./scripts/parity/harness.mjs",
@@ -47,6 +47,7 @@
     "tailwind-merge": "3.3.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "3.3.5",
     "@types/node": "22.15.21",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",

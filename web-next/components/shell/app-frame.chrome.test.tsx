@@ -7,7 +7,7 @@ import { createTranslatorMock } from '../../test/i18n-test-helper';
 
 vi.mock('next/image', () => ({
   default: ({ alt, priority: _priority, ...props }: React.ComponentProps<'img'> & { priority?: boolean }) => (
-    <img alt={alt} {...props} />
+    React.createElement('img', { alt, ...props })
   )
 }));
 

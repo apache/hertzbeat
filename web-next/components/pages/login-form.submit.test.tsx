@@ -26,7 +26,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/image', () => ({
-  default: ({ alt, src, priority: _priority, ...props }: any) => <img alt={alt} src={src} {...props} />
+  default: ({ alt, src, priority: _priority, ...props }: any) => React.createElement('img', { alt, src, ...props })
 }));
 
 vi.mock('../providers/i18n-provider', () => ({

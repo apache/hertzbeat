@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import { resolve } from 'node:path';
 import {
   buildExpectedQueryEntries,
   findMismatchedQueryEntries,
   resolveNextRedirectDigestUrl
 } from './release-shell-smoke.mjs';
+import { resolveLocalReleaseLaunch } from './release-shell.mjs';
 
 describe('release-shell smoke helpers', () => {
   it('normalizes expected query entries into string pairs', () => {
@@ -34,6 +37,25 @@ describe('release-shell smoke helpers', () => {
       )
     ).toBe('http://127.0.0.1:4200/log/manage?search=checkout+timeout&view=stream');
     expect(resolveNextRedirectDigestUrl('<html><body>no redirect digest</body></html>', 'http://127.0.0.1:4200')).toBeNull();
+  });
+
+  it('runs release checks through the standalone server when a production build exists', async () => {
+    const rootDir = await mkdtemp(resolve(os.tmpdir(), 'hertzbeat-release-shell-'));
+    try {
+      const appDir = resolve(rootDir, '.next', 'standalone', 'web-next');
+      const serverFile = resolve(appDir, 'server.js');
+      await mkdir(appDir, { recursive: true });
+      await writeFile(resolve(rootDir, '.next', 'BUILD_ID'), 'build-id');
+      await writeFile(serverFile, 'server');
+
+      expect(resolveLocalReleaseLaunch({ port: 4300, rootDir })).toEqual({
+        args: [serverFile],
+        cwd: appDir,
+        env: { PORT: '4300', HOSTNAME: '127.0.0.1' }
+      });
+    } finally {
+      await rm(rootDir, { recursive: true, force: true });
+    }
   });
 
   it('keeps the release route browser smoke on the required route and console contracts', () => {

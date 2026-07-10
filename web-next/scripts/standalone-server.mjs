@@ -41,8 +41,7 @@ export function parseStartArgs(args, env = process.env) {
   return parsed;
 }
 
-export function resolveStandalonePaths(rootDir = process.cwd()) {
-  const distDir = process.env.NEXT_DIST_DIR || '.next';
+export function resolveStandalonePaths(rootDir = process.cwd(), distDir = process.env.NEXT_DIST_DIR || '.next') {
   const standaloneRoot = path.join(rootDir, distDir, 'standalone');
   const candidates = [path.join(standaloneRoot, 'web-next'), standaloneRoot];
   const appDir = candidates.find((candidate) => existsSync(path.join(candidate, 'server.js')));

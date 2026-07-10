@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { fileURLToPath } from 'node:url';
 import {
   applySeedContextToRoutePair,
   resolveSeedContext,
@@ -222,18 +223,18 @@ describe('parity seed-state helpers', () => {
       execFileSyncImpl
     });
 
-    expect(execFileSyncImpl).toHaveBeenCalledWith(
-      'bash',
-      [expect.stringContaining('seed-trace-rich-demo.sh')],
-      expect.objectContaining({
-        cwd: expect.stringContaining('/Users/zhaoqingran/IdeaProjects/hertzbeat'),
-        encoding: 'utf8',
-        stdio: 'pipe',
-        env: expect.objectContaining({
-          TRACE_WINDOW_END_MS: '1776751800000',
-          GREPTIME_HTTP: 'http://127.0.0.1:14000'
-        })
-      })
-    );
+    const [command, args, options] = execFileSyncImpl.mock.lastCall as unknown as [
+      string,
+      string[],
+      { cwd: string; encoding: string; stdio: string; env: NodeJS.ProcessEnv }
+    ];
+
+    expect(command).toBe('bash');
+    expect(args).toEqual([fileURLToPath(new URL('../../../script/dev/seed-trace-rich-demo.sh', import.meta.url))]);
+    expect(options.cwd).toBe(fileURLToPath(new URL('../../../', import.meta.url)));
+    expect(options.encoding).toBe('utf8');
+    expect(options.stdio).toBe('pipe');
+    expect(options.env.TRACE_WINDOW_END_MS).toBe('1776751800000');
+    expect(options.env.GREPTIME_HTTP).toBe('http://127.0.0.1:14000');
   });
 });
