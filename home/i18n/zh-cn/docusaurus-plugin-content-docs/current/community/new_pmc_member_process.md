@@ -285,7 +285,7 @@ A PMC member will announce your election to the dev list soon.
 
 ```text
 To: dev@hertzbeat.apache.org
-[ANNONCE] New PMC member: `NEW_PMC_NAME`
+[ANNOUNCE] New PMC member: `NEW_PMC_NAME`
 ```
 
 ```text
